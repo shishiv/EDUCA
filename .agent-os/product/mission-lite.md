@@ -1,0 +1,5 @@
+# Diário Digital SME Fronteira MG Mission (Lite)
+
+O Diário Digital SME Fronteira MG é uma plataforma educacional unificada que digitaliza e integra todos os processos pedagógicos do município de Fronteira MG, conectando professores, diretores e a Secretaria Municipal de Educação em um sistema intuitivo para registro de atividades, controle de frequência e geração de relatórios educacionais.
+
+Desenvolvido especificamente para professores, diretores e gestores educacionais de Fronteira MG, oferece uma interface ultra-simples adaptada para usuários com baixa alfabetização digital. O diferencial principal é a integração completa entre escolas e secretaria, permitindo que dados fluam automaticamente e gerando relatórios municipais em tempo real, eliminando a fragmentação atual onde 90% dos processos são manuais.
