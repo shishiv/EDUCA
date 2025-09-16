@@ -89,9 +89,40 @@
       "Bash(timeout 60s npm run build)",
       "Bash(timeout 30s npm run dev)",
       "Bash(head:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(./.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(./.specify/scripts/bash/create-new-feature.sh:*)",
+      "mcp__supabase__list_tables",
+      "Bash(./.specify/scripts/bash/check-task-prerequisites.sh:*)",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__generate_typescript_types",
+      "Bash(sed:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "mcp__supabase__get_advisors",
+      "WebSearch",
+      "mcp__shadcn-ui__get_component_demo",
+      "mcp__shadcn-ui__get_component",
+      "mcp__github_com_upstash_context7-mcp__resolve-library-id",
+      "Bash(npx playwright:*)",
+      "Bash(ls:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__supabase__execute_sql",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_type"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase",
+    "playwright",
+    "shadcn-ui",
+    "github.com/upstash/context7-mcp",
+    "Bright Data"
+  ]
 }
