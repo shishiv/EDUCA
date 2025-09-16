@@ -1,0 +1,459 @@
+openapi: 3.0.3
+info:
+  title: Production Readiness Audit API
+  description: API contracts for production readiness audit system
+  version: 1.0.0
+  contact:
+    name: SRE Educational Management System
+    email: dev@fronteira.municipal.gov.br
+
+servers:
+  - url: http://localhost:3000/api/audit
+    description: Development server
+  - url: https://staging.fronteira-edu.com/api/audit
+    description: Staging server
+
+paths:
+  /audit/checklist:
+    get:
+      summary: Retrieve audit checklists
+      description: Get all audit checklists with optional filtering
+      parameters:
+        - name: project
+          in: query
+          schema:
+            type: string
+          description: Filter by project name
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, failed]
+          description: Filter by audit status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checklists:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditChecklist'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+
+    post:
+      summary: Create new audit checklist
+      description: Initialize a new production readiness audit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - project_name
+                - auditor
+              properties:
+                project_name:
+                  type: string
+                  example: "gestao_fronteira"
+                auditor:
+                  type: string
+                  example: "Claude Code"
+                categories:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AuditCategory'
+      responses:
+        '201':
+          description: Audit checklist created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditChecklist'
+
+  /audit/checklist/{id}:
+    get:
+      summary: Get specific audit checklist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit checklist details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditChecklist'
+
+    put:
+      summary: Update audit checklist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditChecklist'
+      responses:
+        '200':
+          description: Audit checklist updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditChecklist'
+
+  /audit/mockups:
+    get:
+      summary: Retrieve mockup inventory
+      description: Get all identified mockups with replacement status
+      parameters:
+        - name: project
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, high, medium, low]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [identified, planned, in_progress, completed]
+      responses:
+        '200':
+          description: Mockup inventory
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mockups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockupInventory'
+                  summary:
+                    $ref: '#/components/schemas/MockupSummary'
+
+    post:
+      summary: Add new mockup finding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockupInventory'
+      responses:
+        '201':
+          description: Mockup added to inventory
+
+  /audit/mcp:
+    get:
+      summary: Get MCP configurations
+      responses:
+        '200':
+          description: MCP configuration status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MCPConfiguration'
+
+    post:
+      summary: Configure new MCP integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MCPConfiguration'
+      responses:
+        '201':
+          description: MCP configuration created
+
+  /audit/mcp/{name}/health:
+    get:
+      summary: Check MCP health status
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: MCP health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, down]
+                  last_check:
+                    type: string
+                    format: date-time
+                  response_time:
+                    type: number
+                  error_message:
+                    type: string
+
+  /audit/validation:
+    post:
+      summary: Run production validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - project_name
+                - environment
+              properties:
+                project_name:
+                  type: string
+                environment:
+                  type: string
+                  enum: [staging, production]
+                categories:
+                  type: array
+                  items:
+                    type: string
+                    enum: [security, performance, functionality, compliance]
+      responses:
+        '200':
+          description: Validation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionValidation'
+
+components:
+  schemas:
+    AuditChecklist:
+      type: object
+      required:
+        - id
+        - project_name
+        - audit_date
+        - auditor
+        - status
+      properties:
+        id:
+          type: string
+          example: "audit_001"
+        project_name:
+          type: string
+          example: "gestao_fronteira"
+        audit_date:
+          type: string
+          format: date
+        auditor:
+          type: string
+        completion_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditCategory'
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    AuditCategory:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Security Validation"
+        weight:
+          type: number
+          minimum: 0
+          maximum: 1
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditItem'
+        score:
+          type: number
+
+    AuditItem:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        status:
+          type: string
+          enum: [pass, fail, not_applicable]
+        evidence:
+          type: string
+        notes:
+          type: string
+        remediation_required:
+          type: boolean
+
+    MockupInventory:
+      type: object
+      required:
+        - project_name
+        - file_path
+        - mockup_type
+        - severity
+      properties:
+        id:
+          type: string
+        project_name:
+          type: string
+        file_path:
+          type: string
+        component_name:
+          type: string
+        mockup_type:
+          type: string
+          enum: [hardcoded_data, placeholder_text, test_users, demo_content, fake_api_responses]
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        description:
+          type: string
+        replacement_status:
+          type: string
+          enum: [identified, planned, in_progress, completed]
+        replacement_plan:
+          type: string
+        estimated_effort:
+          type: number
+        assigned_to:
+          type: string
+        deadline:
+          type: string
+          format: date
+
+    MockupSummary:
+      type: object
+      properties:
+        total_mockups:
+          type: integer
+        by_severity:
+          type: object
+          properties:
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+        by_status:
+          type: object
+          properties:
+            identified:
+              type: integer
+            planned:
+              type: integer
+            in_progress:
+              type: integer
+            completed:
+              type: integer
+
+    MCPConfiguration:
+      type: object
+      required:
+        - name
+        - type
+        - status
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [supabase, shadcn-ui, playwright, custom]
+        status:
+          type: string
+          enum: [not_configured, configured, active, error]
+        config:
+          type: object
+        last_updated:
+          type: string
+          format: date-time
+        health_check_url:
+          type: string
+          format: uri
+
+    ProductionValidation:
+      type: object
+      properties:
+        id:
+          type: string
+        validation_date:
+          type: string
+          format: date-time
+        project_name:
+          type: string
+        environment:
+          type: string
+          enum: [staging, production]
+        validator:
+          type: string
+        validation_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationResult'
+        overall_status:
+          type: string
+          enum: [pass, fail, partial]
+        deployment_ready:
+          type: boolean
+
+    ValidationResult:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [security, performance, functionality, compliance, usability, reliability]
+        test_name:
+          type: string
+        status:
+          type: string
+          enum: [pass, fail, warning]
+        metrics:
+          type: object
+        error_details:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
