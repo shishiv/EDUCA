@@ -130,7 +130,10 @@
       "Bash(pnpm run:*)",
       "Bash(timeout 15s pnpm run dev)",
       "Bash(timeout 60s pnpm run build)",
-      "Bash(pnpm update:*)"
+      "Bash(pnpm update:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git submodule:*)"
     ],
     "deny": [],
     "ask": []
