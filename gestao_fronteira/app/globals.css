@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 220 90% 56%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 142 69% 58%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 220 90% 56%;
+    --chart-1: 220 90% 56%;
+    --chart-2: 142 69% 58%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 268 83% 57%;
+    --chart-5: 340 82% 52%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 220 90% 56%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 220 90% 56%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .sidebar-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
+  }
+
+  /* Safe area support for modern mobile devices */
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile-first responsive improvements */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  .mobile-form-spacing {
+    @apply space-y-6 md:space-y-4;
+  }
+
+  .mobile-card-spacing {
+    @apply space-y-4 md:space-y-3;
+  }
+  
+  .stat-card {
+    @apply bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-6 shadow-sm card-hover;
+  }
+  
+  .stat-card-primary {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200;
+  }
+  
+  .stat-card-secondary {
+    @apply bg-gradient-to-br from-green-50 to-green-100 border-green-200;
+  }
+  
+  .stat-card-accent {
+    @apply bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200;
+  }
+  
+  .stat-card-warning {
+    @apply bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200;
+  }
+
+  /* High Contrast Mode Styles for Accessibility */
+  .high-contrast {
+    --background: 255 255 255;
+    --foreground: 0 0 0;
+    --card: 255 255 255;
+    --card-foreground: 0 0 0;
+    --primary: 0 0 139;
+    --primary-foreground: 255 255 255;
+    --secondary: 105 105 105;
+    --secondary-foreground: 255 255 255;
+    --muted: 245 245 245;
+    --muted-foreground: 0 0 0;
+    --accent: 0 0 139;
+    --accent-foreground: 255 255 255;
+    --destructive: 139 0 0;
+    --destructive-foreground: 255 255 255;
+    --border: 0 0 0;
+    --input: 0 0 0;
+    --ring: 0 0 139;
+  }
+
+  .extra-high-contrast {
+    --background: 0 0 0;
+    --foreground: 255 255 255;
+    --card: 0 0 0;
+    --card-foreground: 255 255 255;
+    --primary: 255 255 0;
+    --primary-foreground: 0 0 0;
+    --secondary: 255 255 255;
+    --secondary-foreground: 0 0 0;
+    --muted: 64 64 64;
+    --muted-foreground: 255 255 255;
+    --accent: 255 255 0;
+    --accent-foreground: 0 0 0;
+    --destructive: 255 0 0;
+    --destructive-foreground: 0 0 0;
+    --border: 255 255 255;
+    --input: 255 255 255;
+    --ring: 255 255 0;
+  }
+
+  /* Enhanced interactive elements for high contrast */
+  .high-contrast button,
+  .extra-high-contrast button {
+    border-width: 2px !important;
+    font-weight: bold;
+  }
+
+  .high-contrast a,
+  .extra-high-contrast a {
+    text-decoration: underline;
+    font-weight: bold;
+  }
+
+  /* Enhanced focus indicators for accessibility */
+  .high-contrast *:focus,
+  .extra-high-contrast *:focus {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .high-contrast .focus\:ring-2:focus,
+  .extra-high-contrast .focus\:ring-2:focus {
+    ring-width: 4px !important;
+  }
+
+  /* Image adjustments for high contrast */
+  .high-contrast img:not([alt]),
+  .extra-high-contrast img:not([alt]) {
+    opacity: 0.8;
+    filter: contrast(1.5);
+  }
+
+  .high-contrast svg,
+  .extra-high-contrast svg {
+    filter: contrast(2);
+  }
+
+  /* Accessibility utilities */
+  .skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #000;
+    color: #fff;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 4px;
+    border: 2px solid #fff;
+    transition: top 0.3s ease;
+    z-index: 10000;
+  }
+
+  .skip-to-content:focus {
+    top: 6px;
+    outline: 2px solid #ffff00;
+    outline-offset: 2px;
+  }
+
+  /* Touch target size compliance (minimum 44px) */
+  .touch-target-compliant {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Screen reader utilities */
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+}
