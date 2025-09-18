@@ -1,142 +1,91 @@
 # Product Mission
 
-> Last Updated: 2025-09-05
-> Version: 1.0.0
-
 ## Pitch
 
-O Diário Digital SME Fronteira MG é uma plataforma educacional unificada que digitaliza e integra todos os processos pedagógicos do município de Fronteira MG, conectando professores, diretores e a Secretaria Municipal de Educação em um sistema intuitivo para registro de atividades, controle de frequência e geração de relatórios educacionais.
+Sistema de Gestão Educacional Fronteira is a comprehensive educational management platform that helps Brazilian municipalities digitally transform student registration, attendance tracking, and educational reporting by providing legally-compliant, mobile-optimized tools that ensure student safety and educational continuity.
 
 ## Users
 
 ### Primary Customers
-- **Secretaria Municipal de Educação de Fronteira MG**: Órgão público responsável pela gestão educacional municipal
-- **Escolas Municipais**: Instituições de ensino fundamental da rede municipal
-- **Gestores Educacionais**: Diretores e coordenadores pedagógicos das escolas municipais
+
+- **Municipal Education Secretaries**: Administrators who need comprehensive oversight and reporting across all schools in their municipality
+- **School Directors**: Educational leaders who require real-time visibility into attendance, enrollment, and compliance metrics
+- **Teachers**: Daily users who need fast, reliable tools for classroom attendance marking and student management
 
 ### User Personas
 
-**Professora Maria (45 anos) - Professora do Ensino Fundamental**
-- Experiência: 15 anos no magistério, alfabetização digital básica
-- Necessidades: Registrar atividades diárias de forma simples, controlar frequência dos alunos, acompanhar desenvolvimento pedagógico
-- Frustrações: Processos burocráticos manuais, dificuldade com tecnologias complexas
-- Objetivos: Focar mais no ensino e menos na papelada administrativa
+**Professor Maria** (25-55 years old)
+- **Role:** Elementary School Teacher
+- **Context:** Teaches 2nd grade with 25 students, uses tablet in classroom for daily attendance
+- **Pain Points:** Paper-based attendance is slow, error-prone, and doesn't provide real-time alerts for at-risk students
+- **Goals:** Mark attendance quickly during class, identify students approaching 80% threshold, maintain legal compliance
 
-**João Silva (52 anos) - Diretor Escolar**
-- Experiência: 20 anos na educação, 5 anos como diretor
-- Necessidades: Supervisionar registro de atividades, gerar relatórios escolares, acompanhar indicadores pedagógicos
-- Frustrações: Falta de visibilidade dos dados da escola, relatórios manuais demorados
-- Objetivos: Ter controle completo da gestão pedagógica e administrativa da escola
+**Diretor Carlos** (35-60 years old)
+- **Role:** School Principal
+- **Context:** Manages 400 students across multiple grades, responsible for municipal compliance reporting
+- **Pain Points:** Manual report generation takes hours, difficult to track at-risk students across classes
+- **Goals:** Generate accurate attendance reports instantly, monitor school-wide performance, ensure compliance
 
-**Ana Santos (38 anos) - Secretária Municipal de Educação**
-- Experiência: 8 anos na gestão pública educacional
-- Necessidades: Relatórios consolidados de todas as escolas, indicadores municipais, dados para prestação de contas
-- Frustrações: Dados fragmentados entre escolas, dificuldade para consolidar informações
-- Objetivos: Ter visão estratégica da educação municipal e dados confiáveis para tomada de decisões
+**Secretária Ana** (30-50 years old)
+- **Role:** Municipal Education Secretary
+- **Context:** Oversees 12 schools with 2,800 students across Fronteira municipality
+- **Pain Points:** No real-time visibility across schools, manual data consolidation for government reporting
+- **Goals:** Monitor municipal-wide attendance rates, generate Educacenso reports efficiently, identify systemic issues
 
 ## The Problem
 
-### Problemas Específicos
+### Paper-Based Attendance Creates Legal and Safety Risks
 
-**Falta de Digitalização (90% dos processos são manuais)**
-- Diários de classe em papel sujeitos a perda e deterioração
-- Registro de frequência manual propenso a erros
-- Relatórios pedagógicos feitos manualmente consomem 40% do tempo dos professores
+Traditional paper attendance systems are error-prone, time-consuming, and don't provide real-time alerts when students approach the 80% attendance threshold required by Brazilian law. Manual processes delay identification of at-risk students, creating safety and compliance issues.
 
-**Fragmentação de Dados (Dados isolados em cada escola)**
-- Cada escola mantém seus próprios registros sem integração
-- Secretaria Municipal não tem visão consolidada em tempo real
-- Dificuldade para gerar relatórios municipais para órgãos estaduais e federais
+**Our Solution:** Digital attendance with instant threshold alerts and immutable record-keeping.
 
-**Ineficiência Administrativa (60% do tempo perdido com burocracia)**
-- Professores gastam mais tempo com papelada do que planejando aulas
-- Diretores não conseguem acompanhar indicadores pedagógicos em tempo real
-- Retrabalho constante para consolidação de dados
+### Fragmented Student Data Across Schools
 
-**Baixa Alfabetização Digital dos Usuários**
-- 70% dos professores têm dificuldades com tecnologias complexas
-- Necessidade de soluções simples e intuitivas
-- Resistência a mudanças tecnológicas sem suporte adequado
+Municipal education systems struggle with disconnected data across schools, making it impossible to track student transfers, generate consolidated reports, or identify systemic attendance patterns.
+
+**Our Solution:** Centralized municipal platform with school-based data isolation and real-time synchronization.
+
+### Slow Compliance Reporting for Government Requirements
+
+Generating required reports for Educacenso and state education departments currently takes weeks of manual data compilation, often with errors that require corrections.
+
+**Our Solution:** Automated report generation with one-click export to government-required formats.
 
 ## Differentiators
 
-### Vantagens Competitivas
+### Brazilian Educational Law Compliance by Design
 
-**Especialização Municipal Específica**
-- Desenvolvido especificamente para as necessidades de Fronteira MG
-- Conhecimento profundo dos processos educacionais locais
-- Adaptação às peculiaridades de municípios de pequeno porte
+Unlike generic school management systems, we build specifically for Brazilian educational requirements including CPF validation, INEP integration, and the legal principle that attendance records are "único documento oficial" for student safety. This results in zero compliance violations and immediate government report generation.
 
-**Interface Ultra-Simples**
-- Design focado em usuários com baixa alfabetização digital
-- Fluxos de trabalho intuitivos que seguem processos já conhecidos
-- Treinamento mínimo necessário para adoção
+### Mobile-First Attendance for Classroom Reality
 
-**Integração Completa Escola-Secretaria**
-- Dados fluem automaticamente das escolas para a secretaria
-- Relatórios municipais gerados automaticamente
-- Visibilidade em tempo real para todos os níveis de gestão
+Unlike desktop-focused systems, our mobile-optimized interface is designed for teachers using tablets and phones in classrooms. The "Abrir aula" workflow ensures attendance integrity while being fast enough for daily classroom use. This results in 90% faster attendance marking and zero retroactive data corruption.
 
-**Suporte Local Dedicado**
-- Equipe de desenvolvimento local com conhecimento do contexto educacional
-- Suporte presencial quando necessário
-- Evolução contínua baseada no feedback dos usuários reais
+### i-Educar Architecture Foundation
 
-**Custo-Benefício Superior**
-- Solução própria sem custos de licenciamento externo
-- Manutenção e evolução controladas pelo município
-- ROI através da redução de tempo administrativo e melhoria na qualidade dos dados
+Unlike new systems built from scratch, we leverage the proven architecture patterns from i-Educar, Brazil's leading open-source educational platform, adapted for modern Next.js technology. This results in mature educational domain modeling and compliance features from day one.
 
 ## Key Features
 
 ### Core Features
 
-**Diário Digital Inteligente**
-- Registro rápido de atividades pedagógicas com templates pré-definidos
-- Controle de frequência com interface touch-friendly
-- Anotações sobre desenvolvimento individual dos alunos
-- Sincronização automática entre dispositivos
+- **Multi-School Municipal Management:** Complete oversight across all schools in the municipality with school-based data isolation
+- **5-Role RBAC System:** Brazilian educational hierarchy support (admin, diretor, coordenador, professor, secretário)
+- **Student Lifecycle Management:** Complete registration, enrollment, and transfer workflows with CPF validation
+- **Digital Diary with "Abrir aula":** Legally-compliant attendance workflow that prevents retroactive changes
+- **Real-time Attendance Alerts:** Automatic notifications when students approach 80% attendance threshold
+- **Brazilian Document Validation:** CPF, RG, and other Brazilian-specific data validation and formatting
 
-**Gestão de Frequência Avançada**
-- Marcação de presença/falta em poucos cliques
-- Alertas automáticos para alunos com faltas excessivas
-- Relatórios de frequência por turma, aluno ou período
-- Integração com sistemas de bolsa família
+### Compliance Features
 
-**Relatórios Educacionais Automatizados**
-- Geração automática de boletins e relatórios pedagógicos
-- Dashboards visuais para diretores e secretaria
-- Relatórios customizáveis por período, turma ou disciplina
-- Exportação para formatos exigidos pelos órgãos superiores
+- **Immutable Attendance Records:** Once saved, attendance cannot be modified to ensure legal compliance
+- **Active Search Integration:** Automated identification and tracking of at-risk students below 80% attendance
+- **Government Report Generation:** One-click PDF/Excel export for Educacenso and state reporting requirements
+- **Audit Trail System:** Complete change tracking for all educational data modifications
 
-**Painel de Indicadores Pedagógicos**
-- Métricas de desempenho por escola, turma e aluno
-- Comparativos temporais e entre escolas
-- Identificação automática de alunos em situação de risco
-- Indicadores para tomada de decisão pedagógica
+### Mobile & Performance Features
 
-### Collaboration Features
-
-**Comunicação Escola-Secretaria**
-- Canal direto entre professores, diretores e secretaria
-- Notificações automáticas sobre eventos importantes
-- Compartilhamento de boas práticas entre escolas
-- Comunicados oficiais integrados ao sistema
-
-**Gestão Colaborativa de Turmas**
-- Visibilidade para todos os professores da turma
-- Histórico completo do desenvolvimento dos alunos
-- Planejamento colaborativo entre professores
-- Acompanhamento longitudinal do progresso educacional
-
-**Biblioteca de Recursos Pedagógicos**
-- Compartilhamento de planos de aula entre professores
-- Biblioteca de atividades pedagógicas aprovadas pela secretaria
-- Templates de relatórios padronizados
-- Base de conhecimento educacional local
-
-**Sistema de Aprovações e Workflows**
-- Fluxo de aprovação para relatórios oficiais
-- Validação automática de dados críticos
-- Controle de versões para documentos importantes
-- Auditoria completa de todas as alterações realizadas
+- **Tablet-Optimized Interface:** Fast attendance marking designed for classroom tablet use
+- **Offline Capability:** Teachers can mark attendance without internet, syncing when connected
+- **Sub-3-second Performance:** Dashboard loads in under 3 seconds, attendance marking under 1 second per student
