@@ -1,8 +1,9 @@
 # Product Roadmap
 
-> Last Updated: 2025-09-05
-> Version: 2.0.0
-> Status: Planning
+> Last Updated: 2025-09-16
+> Version: 3.0.0 - Brazilian Educational Management System
+> Status: Active Development - 80% MVP Complete
+> Reference Architecture: i-Educar (cloned as i-educar-reference)
 
 ## Development Effort Scale
 
@@ -23,7 +24,58 @@
 
 ---
 
-## Phase 1: MVP Foundation (~200h total)
+## Phase 0: Already Completed (gestao_fronteira project - 80% MVP)
+
+The following features have been implemented in the gestao_fronteira project and are production-ready:
+
+- [x] **Complete User Management & RBAC** - Brazilian 5-role educational hierarchy implemented
+  - Admin, Diretor, Coordenador, Professor, Secretário roles with granular permissions
+  - Supabase Auth JWT authentication with role-based access control
+  - Multi-school data isolation using Row Level Security (RLS) policies
+
+- [x] **Student Registration System** - Full student lifecycle management
+  - Comprehensive student registration with CPF validation
+  - Guardian/responsible relationship tracking
+  - Brazilian document validation (CPF, RG) with proper formatting
+  - Student enrollment and transfer workflows
+
+- [x] **School & Class Management** - Complete institutional framework
+  - Multi-school municipal system support
+  - Teacher assignment workflows
+  - Brazilian school type categorization (creche, pre_escola, fundamental)
+  - Class (turma) creation and management
+
+- [x] **Database Schema & Infrastructure** - Production-ready foundation
+  - Comprehensive gestao_fronteira schema with 8 core tables
+  - Row Level Security (RLS) policies for multi-school isolation
+  - Complete audit logging system
+  - Real-time subscriptions for live attendance updates
+
+- [x] **Core Attendance Components** - 85% complete attendance system
+  - Real-time attendance tracking interface
+  - "Abrir aula" workflow component exists
+  - Justification system for absences
+  - Mobile-responsive design for classroom tablet use
+
+- [x] **Reporting Infrastructure** - PDF/Excel export capabilities
+  - PDF generation system (jsPDF 3.0.2)
+  - Excel export functionality (exceljs 4.4.0)
+  - Frequency report templates
+  - 80% attendance threshold monitoring foundation
+
+- [x] **Testing & Quality Assurance** - Comprehensive testing suite
+  - Jest + React Testing Library for unit tests
+  - Playwright for E2E testing with accessibility compliance
+  - Visual regression testing for Brazilian UI components
+  - TypeScript strict mode with Supabase generated types
+
+**Current Status**: 80% MVP complete with production-ready infrastructure. Primary foundation: `gestao_fronteira/` project.
+
+**Reference Architecture**: i-Educar patterns successfully adapted for modern Next.js stack.
+
+---
+
+## Phase 1: MVP Completion (~40h total - Critical Gap Resolution)
 
 **Goal:** Establish core digital diary functionality with essential features for daily classroom operations
 **Duration:** 8-10 weeks (20-25h/week) or 20-25 weeks (10h/week)

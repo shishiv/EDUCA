@@ -1,71 +1,91 @@
 # Technical Stack
 
-> Last Updated: 2025-09-05
-> Version: 1.0.0
+> Last Updated: 2025-09-16
+> Version: 2.0.0 - Brazilian Educational Management System
 
 ## Application Framework
 
-- **Framework:** Next.js
-- **Version:** 14.2+
+- **Framework:** Next.js 15.5.3 with App Router
+- **Runtime:** React 19.1.1 with concurrent features
+- **Language:** TypeScript 5.9.2 (strict mode enabled)
+- **Build Tool:** Turbopack (development), Webpack (production)
 
-## Database
+## Database & Backend
 
-- **Primary Database:** PostgreSQL (via Supabase)
+- **Primary Database:** PostgreSQL via Supabase 2.57.4
+- **Database Schema:** gestao_fronteira with Row Level Security (RLS)
+- **Authentication:** Supabase Auth with JWT tokens
+- **Real-time Features:** Supabase real-time subscriptions
+- **File Storage:** Supabase Storage for student photos and documents
 
-## JavaScript
+## Package Management
 
-- **Framework:** React 18+
-- **Import Strategy:** node
+- **Package Manager:** npm (primary project: gestao_fronteira)
+- **Import Strategy:** node (ES modules)
 
-## CSS Framework
+## Styling & UI
 
-- **Framework:** Tailwind CSS 3.4+
-
-## UI Component Library
-
-- **Library:** shadcn/ui + Radix UI
-- **Fonts Provider:** Next.js Fonts (Geist)
-- **Icon Library:** Lucide React
-
-## Package Manager
-
-- **Package Manager:** pnpm
-
-## Type Safety
-
-- **Language:** TypeScript
-- **Purpose:** Static typing and enhanced developer experience
+- **CSS Framework:** Tailwind CSS 3.4.17 with educational theme
+- **UI Component Library:** shadcn/ui (Radix UI primitives)
+- **Icon Library:** Lucide React 0.544.0
+- **Fonts Provider:** Inter (Google Fonts)
 
 ## State Management & Data Fetching
 
-- **Client State:** TanStack Query (React Query)
-- **Server State:** TanStack Query with React Suspense
+- **Global State:** Zustand 5.0.8 for client-side state
+- **Server State:** TanStack Query 5.87.4 for server state management
+- **Form Handling:** React Hook Form 7.62.0
+- **Validation:** Zod schemas for Brazilian data validation
 
-## Form Handling & Validation
+## Brazilian-Specific Features
 
-- **Form Library:** React Hook Form
-- **Validation:** Zod schemas
-- **Purpose:** Type-safe form validation and error handling
+- **CPF Validation:** Custom algorithms for Brazilian taxpayer ID validation
+- **Phone Formatting:** Brazilian phone number patterns (11) 99999-9999
+- **CEP Integration:** Postal code address lookup via ViaCEP API
+- **PDF Generation:** jsPDF 3.0.2 for official reports
+- **Excel Export:** exceljs 4.4.0 for government compliance reports
+- **Charts & Analytics:** recharts 3.2.0 for attendance visualization
 
-## UI Enhancements
+## Development & Testing
 
-- **Notifications:** Sonner
-- **Charts:** Recharts
-- **Purpose:** Rich user interface components
+- **Testing Framework:** Jest with React Testing Library
+- **E2E Testing:** Playwright with accessibility testing
+- **Visual Regression:** Playwright snapshots for Brazilian UI components
+- **Linting:** ESLint with Brazilian educational domain rules
+- **Type Checking:** TypeScript strict mode with Supabase generated types
+
+## Mobile & Performance
+
+- **Mobile Strategy:** Responsive design with tablet-first attendance interface
+- **Performance Monitoring:** Built-in performance metrics for classroom usage
+- **Offline Support:** Service Worker for attendance marking without internet
+- **Bundle Optimization:** Code splitting and lazy loading for mobile performance
 
 ## Hosting & Infrastructure
 
-- **Application Hosting:** Vercel
-- **Database Hosting:** Supabase
-- **Asset Hosting:** Supabase Storage
-- **Deployment Solution:** Vercel CI/CD
+- **Application Hosting:** Vercel (planned) or Supabase hosting
+- **Database Hosting:** Supabase (managed PostgreSQL)
+- **Asset Hosting:** Supabase Storage for student photos and documents
+- **Deployment Solution:** Automated deployment via GitHub Actions
 
 ## Repository
 
-- **Code Repository URL:** (a definir quando repo for criado)
+- **Code Repository URL:** https://github.com/shishiv/SRE (current)
+- **Primary Project:** gestao_fronteira/ (80% MVP ready)
+- **Reference Architecture:** i-educar-reference/ (cloned from portabilis/i-educar)
 
-## Development Tools
+## Development Environment
 
-- **Build Tool:** Next.js built-in bundler
-- **Dev Server:** Next.js development server
-- **Linting:** ESLint + Prettier (inherited from Next.js)
+- **Local Database:** Supabase CLI with local development environment
+- **Environment Variables:** Next.js environment configuration
+- **Hot Reload:** Turbopack for instant development feedback
+- **Database Migrations:** Supabase migration system
+- **Type Generation:** Automated TypeScript types from Supabase schema
+
+## Security & Compliance
+
+- **Multi-tenancy:** School-based Row Level Security (RLS) policies
+- **Audit Logging:** Complete change tracking for all educational data
+- **LGPD Compliance:** Brazilian data protection law compliance
+- **Session Management:** Secure JWT token handling via Supabase Auth
+- **Input Validation:** Comprehensive Zod schemas for Brazilian educational data
