@@ -1,0 +1,75 @@
+/.build
+/database/backups
+/database/data
+/database/migrations/extras
+/packages/*
+/public/modules
+/public/vendor/legacy/Reports
+/docker/jasper/
+/vendor
+/ieducar-*
+composer-plug-and-play.json
+composer-plug-and-play.lock
+laravel-echo-server.json
+package-lock.json
+
+ieducar-*.tar.gz
+.env
+.env.host
+.env.testing
+.php-cs-fixer.cache
+docker-compose.override.yml
+
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.phpunit.result.cache
+
+# IDE Files
+## PHPStorm InteliJ
+*.idea
+
+## Visual Studio
+*.vscode
+
+## Eclipse
+.buildpath
+.project
+.settings
+
+## Vi
+*~
+*.swp
+
+# Vagrant
+/.gitkeep
+/.vagrant
+/deploy
+Vagrantfile
+deploy/.ruby-version
+ieducar/modules/Reports
+
+
+# Docusauros
+.DS_Store
+node_modules
+lib/core/metadata.js
+lib/core/MetadataBlog.js
+website/translated_docs
+website/build/
+website/yarn.lock
+website/node_modules
+website/i18n/*
+!website/i18n/en.json
+
+# this is the code coverage generated when running phpunit.
+ieducar/tests/log
+
+programmatic-types.graphql
+schema-directives.graphql
+_lighthouse_ide_helper.php
