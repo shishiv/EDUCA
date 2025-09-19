@@ -137,7 +137,10 @@
       "Bash(git push:*)",
       "Bash(git log:*)",
       "Bash(test:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "mcp__supabase__list_migrations",
+      "Bash(npx jest:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
