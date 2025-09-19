@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { StatsCard } from '@/components/dashboard/stats-card'
+import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calendar, Clock } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface DashboardStats {
   totalAlunos: number
@@ -29,6 +31,7 @@ interface RecentActivity {
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
+  const router = useRouter()
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -110,6 +113,11 @@ export default function DashboardPage() {
     }
   }
 
+  const handleNavigateToAttendance = (classInfo: any, sessionData?: any) => {
+    // Navigate to attendance marking page
+    router.push(`/dashboard/frequencia?turma=${classInfo.id}&sessao=${sessionData?.id || ''}`)
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -121,6 +129,15 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+    )
+  }
+
+  // Show teacher-specific dashboard for professors
+  if (userProfile?.tipo_usuario === 'professor') {
+    return (
+      <TeacherDashboardEnhanced
+        onNavigateToAttendance={handleNavigateToAttendance}
+      />
     )
   }
 

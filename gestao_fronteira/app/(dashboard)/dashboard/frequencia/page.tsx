@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { classesApi } from '@/lib/api/classes'
 import { AbrirAulaWorkflow } from '@/components/attendance/abrir-aula-workflow'
+import { AbrirAulaButton } from '@/components/attendance/abrir-aula-button'
+import { AulaStatusIndicatorEnhanced as AulaStatusIndicator } from '@/components/attendance/aula-status-indicator-enhanced'
 import { AttendanceMarkingMobile } from '@/components/attendance/attendance-marking-mobile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -95,6 +97,14 @@ export default function FrequenciaPage() {
     })
   }
 
+  const handleAulaOpened = (sessionData: any, classInfo: ClassInfo) => {
+    setPageState({
+      step: 'marking',
+      selectedClass: classInfo,
+      sessionData
+    })
+  }
+
   const handleSessionOpened = (sessionData: any) => {
     setPageState({
       ...pageState,
@@ -174,6 +184,13 @@ export default function FrequenciaPage() {
             </p>
           </div>
         </div>
+
+        {/* Status da aula em tempo real */}
+        <AulaStatusIndicator
+          turmaId={pageState.selectedClass.id}
+          professorId={user?.id || ''}
+          className="mb-6"
+        />
 
         <AbrirAulaWorkflow
           classId={pageState.selectedClass.id}
@@ -294,34 +311,56 @@ export default function FrequenciaPage() {
       {/* Classes List */}
       <div className="grid gap-4">
         {filteredClasses.map((classInfo) => (
-          <Card key={classInfo.id} className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleClassSelection(classInfo)}>
+          <Card key={classInfo.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-100 p-3 rounded-lg">
-                    <BookOpen className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {classInfo.nome} - {classInfo.serie}
-                    </h3>
-                    <p className="text-gray-600">{classInfo.escola?.nome}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-500">
-                        {classInfo.total_alunos} alunos
-                      </span>
+              <div className="space-y-4">
+                {/* Header da turma */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-blue-100 p-3 rounded-lg">
+                      <BookOpen className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {classInfo.nome} - {classInfo.serie}
+                      </h3>
+                      <p className="text-gray-600">{classInfo.escola?.nome}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-500">
+                          {classInfo.total_alunos} alunos
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleClassSelection(classInfo)}
+                    className="shrink-0"
+                  >
+                    Ver Detalhes
+                  </Button>
                 </div>
-                <div className="text-right">
-                  <Badge variant="outline" className="mb-2">
-                    Disponível
-                  </Badge>
-                  <div className="text-sm text-gray-500">
-                    Clique para iniciar
-                  </div>
+
+                {/* Status da aula em tempo real */}
+                <AulaStatusIndicator
+                  turmaId={classInfo.id}
+                  professorId={user?.id || ''}
+                  className="mb-2"
+                />
+
+                {/* Botão para abrir aula diretamente */}
+                <div className="flex items-center gap-3">
+                  <AbrirAulaButton
+                    turmaId={classInfo.id}
+                    professorId={user?.id || ''}
+                    turmaNome={`${classInfo.nome} - ${classInfo.serie}`}
+                    onSuccess={(sessionData) => handleAulaOpened(sessionData, classInfo)}
+                    onError={(error) => {
+                      console.error('Erro ao abrir aula:', error)
+                    }}
+                    className="flex-1"
+                  />
                 </div>
               </div>
             </CardContent>
