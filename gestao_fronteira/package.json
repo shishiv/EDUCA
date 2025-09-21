@@ -9,8 +9,11 @@
   },
   "scripts": {
     "dev": "next dev --turbo",
+    "dev:fronteira": "next dev --turbo --hostname fronteira.localhost",
+    "dev:municipal": "next dev --turbo --hostname fronteira.localhost --port 3000",
     "build": "next build",
     "start": "next start",
+    "start:fronteira": "next start --hostname fronteira.localhost",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "seed:dev": "tsx scripts/seed-dev.ts",

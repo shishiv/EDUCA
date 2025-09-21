@@ -6,12 +6,13 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  GraduationCap, 
-  Users, 
-  School, 
-  UserCheck, 
-  Calendar, 
+import { MunicipalBrasao } from '@/components/identity/municipal-assets'
+import {
+  GraduationCap,
+  Users,
+  School,
+  UserCheck,
+  Calendar,
   ClipboardList,
   BarChart3,
   Settings,
@@ -87,22 +88,23 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <div className={cn(
-      "relative flex flex-col bg-white border-r border-gray-200 sidebar-transition",
+      "relative flex flex-col bg-white border-r border-fronteira-gray-100 sidebar-transition",
       collapsed ? "w-16" : "w-64",
       className
     )}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      {/* Municipal Header */}
+      <div className="flex items-center justify-between p-4 border-b border-fronteira-gray-100 bg-gradient-to-r from-fronteira-primary/5 to-transparent">
         <div className={cn(
           "flex items-center space-x-3 sidebar-transition",
           collapsed && "opacity-0"
         )}>
-          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <GraduationCap className="h-5 w-5 text-white" />
+          {/* Municipal Brasão */}
+          <div className="flex-shrink-0">
+            <MunicipalBrasao size="sm" priority />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Sistema Escolar</h2>
-            <p className="text-xs text-gray-500">Fronteira/MG</p>
+            <h2 className="text-sm font-bold text-fronteira-primary">Sistema Escolar</h2>
+            <p className="text-xs text-fronteira-gray-500">Prefeitura de Fronteira/MG</p>
           </div>
         </div>
         
@@ -110,7 +112,7 @@ export function Sidebar({ className }: SidebarProps) {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -132,7 +134,9 @@ export function Sidebar({ className }: SidebarProps) {
                   className={cn(
                     "w-full justify-start h-10 sidebar-transition",
                     collapsed && "px-2",
-                    isActive && "bg-primary text-white hover:bg-primary/90"
+                    isActive
+                      ? "bg-fronteira-primary text-fronteira-primary-foreground hover:bg-fronteira-primary/90 shadow-sm"
+                      : "text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
                   )}
                 >
                   <item.icon className={cn(
