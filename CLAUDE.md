@@ -6,190 +6,220 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a multi-project educational management system repository for the Municipality of Fronteira, Brazil. The repository contains multiple Next.js and React projects in various stages of development, targeting digital transformation of student registration, attendance tracking, and educational reporting.
 
-**🎯 This project uses the Specify framework for structured AI-assisted development.**
+**🎯 This project prioritizes Brazilian educational compliance and modern development practices.**
 
-## Specify Framework Integration
+## Project Structure
 
-This project follows the Specify development process with the following commands available:
+### Primary Production Project:
+- **`gestao_fronteira/`** - Next.js 15.5.3 + React 19.1.1 + Supabase 2.57.4 (80% MVP ready)
+  - **PRIMARY PRODUCTION CANDIDATE** for municipal deployment
+  - Complete Brazilian educational compliance implementation
+  - Modern technology stack with performance optimization
+  - Production-ready database schema with RLS policies
 
-### /specify - Create Feature Specifications
-Use this command to create detailed functional requirements and user stories for new features.
+### Development Resources:
+- **`i-educar-reference/`** - Brazilian education software reference implementation
+  - Production-tested patterns for educational compliance
+  - INEP, Educacenso, and government integration examples
+  - Advanced security and multi-tenant architecture patterns
+  - Used for pattern reference and compliance validation
 
-**Example Usage:**
+### Documentation & Analysis:
+- **`agent-findings/`** - Multi-agent analysis results and technical findings
+- **`.agent-os/`** - Agent OS configuration and product documentation
+- **`docs/`** - Project specifications and development documentation
+
+## Technology Stack
+
+### gestao_fronteira (Production Stack):
+- **Frontend**: Next.js 15.5.3 with App Router + React 19.1.1
+- **Database**: Supabase 2.57.4 (PostgreSQL + Auth + Storage + Real-time)
+- **UI Library**: shadcn/ui + Radix UI + Tailwind CSS 3.4.17
+- **Forms**: React Hook Form 7.62.0 + Zod 4.1.8 validation
+- **State Management**: Zustand 5.0.8 + TanStack Query 5.87.4
+- **Testing**: Jest + React Testing Library + Playwright
+- **TypeScript**: 5.9.2 (strict mode)
+- **Package Manager**: **bun** (fast installs and better performance)
+
+## Development Commands
+
+### gestao_fronteira (Primary Production Project):
+```bash
+cd gestao_fronteira/
+
+# Package management
+bun install             # Install dependencies (3x faster than npm)
+bun update              # Update dependencies
+
+# Development
+bun run dev             # Next.js dev server (http://localhost:3000)
+bun run build           # Production build
+bun run start           # Production server
+bun run lint            # ESLint check
+bun run typecheck       # TypeScript validation
+
+# Testing
+bun run test            # Unit tests with Jest
+bun run test:e2e        # End-to-end tests with Playwright
+bun run test:coverage   # Test coverage report
+
+# Database
+supabase start          # Start local Supabase
+supabase db reset       # Reset local database
+supabase db push        # Apply migrations to remote
+supabase gen types typescript --project-id YOUR_PROJECT_ID
 ```
-/specify
-Implement the "Abrir aula" workflow for digital attendance tracking. Teachers need to open a class session before marking attendance, and once saved, the attendance record must be locked to prevent retroactive changes. This is critical for Brazilian educational compliance.
+
+## Git Workflow Agent (@agent-git-workflow)
+
+This repository integrates with Claude Code's git-workflow agent for streamlined development processes.
+
+### Capabilities:
+- **Branch Management**: Automatic feature branch creation and management
+- **Commit Automation**: Intelligent commit message generation with proper formatting
+- **PR Creation**: Automated pull request creation with comprehensive descriptions
+- **Merge Operations**: Safe merge and rebase operations
+- **Change Tracking**: Detailed change analysis and impact assessment
+
+### Workflow Integration:
+```bash
+# The git-workflow agent automatically handles:
+git checkout -b feature/new-attendance-workflow
+git add .
+git commit -m "feat(attendance): implement Abrir aula workflow
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>"
+git push -u origin feature/new-attendance-workflow
+gh pr create --title "feat: Abrir aula workflow" --body "..."
 ```
 
-### /plan - Generate Implementation Plans
-Use this command to create detailed technical implementation plans with architecture decisions.
+### Best Practices:
+- Conventional commits with Brazilian education context
+- Automated change impact analysis
+- Performance regression detection
+- Brazilian compliance validation in PRs
 
-**Example Usage:**
+## Brazilian Educational Standards & Compliance
+
+### INEP (Instituto Nacional de Estudos e Pesquisas Educacionais) Integration
+
+This project follows official Brazilian educational standards as defined by INEP:
+
+#### Educacenso 2025 Compliance:
+- **Data Collection Timeline**:
+  - Stage 1 (Initial Enrollment): May 28 - July 31, 2025
+  - Stage 2 (Student Status): February 2 - March 13, 2026
+- **Required Data Points**:
+  - Student individualized data (CPF, enrollment status, attendance)
+  - Teacher classroom assignments and qualifications
+  - Class structure and academic calendar alignment
+  - Educational establishment information
+
+#### Bolsa Família Program Integration:
+- **Education Conditionalities**: Minimum school attendance tracking
+- **Data Integration**: Real-time attendance monitoring for social program compliance
+- **Frequency Monitoring**: Automated alerts for students below 80% attendance threshold
+- **Unique Registration System**: Each student has official registration number for social program access
+
+#### Key Compliance Requirements:
+- **Non-retroactive Attendance**: "não existe o esquecer" - attendance cannot be modified after submission
+- **Legal Documentation**: Attendance records are official legal documents ("único documento oficial")
+- **Multi-school Isolation**: Complete data separation between educational institutions
+- **Audit Trail**: Complete timestamp and user tracking for all educational data changes
+
+### Validation & Business Rules
+
+#### Brazilian Educational Data:
+- **CPF Validation**: Proper formatting and digit verification
+- **Brazilian Phone Numbers**: Mobile/landline format validation
+- **Academic Calendar**: Date validations aligned with Brazilian school year
+- **Attendance Calculations**: Minimum 75% attendance, alerting at 80% threshold
+- **Grade Requirements**: Quarterly grading system with semester observations
+
+#### Educational Domain Rules:
+- Students can only be enrolled in one active class per academic year
+- "Abrir aula" workflow mandatory before attendance marking
+- Attendance can only be marked by assigned teachers
+- Semester observations required for students below performance thresholds
+- Role-based data access with school-level isolation
+
+## Database Architecture (gestao_fronteira)
+
+### Core Schema Structure:
+**Location**: `gestao_fronteira/supabase/migrations/20250628095207_wild_block.sql`
+
+```sql
+-- Core Educational Entities
+users         -- 5-role RBAC: admin, diretor, secretario, professor, responsavel
+escolas       -- Schools with municipal multi-tenancy
+alunos        -- Students with INEP compliance and Brazilian validation
+responsaveis  -- Multi-guardian family structure support
+turmas        -- Classes with teacher assignments and academic calendar
+matriculas    -- Student enrollments with transfer tracking
+frequencia    -- Daily attendance with legal immutability enforcement
+notas         -- Quarterly grades with Brazilian educational standards
 ```
-/plan
-Create implementation plan using Next.js 14, Supabase with gestao_fronteira schema, and shadcn/ui components. Focus on leveraging existing 80% complete attendance system.
+
+### Security & Compliance:
+- **Row Level Security (RLS)**: School-based data isolation for municipal use
+- **LGPD Compliance**: Data subject rights and consent management
+- **Audit Trail**: Complete change tracking for legal compliance
+- **Brazilian Validation**: CPF, phone, educational ID patterns
+
+## System Architecture
+
+### gestao_fronteira Application Structure:
+```
+gestao_fronteira/
+├── app/                    # Next.js 15 App Router
+│   ├── (auth)/            # Authentication routes
+│   ├── (dashboard)/       # Main application
+│   └── api/               # API routes and server actions
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── attendance/       # Attendance workflow components
+│   ├── students/         # Student management
+│   └── auth/             # Authentication components
+├── lib/                  # Utilities and configurations
+│   ├── supabase.ts       # Database client
+│   ├── validation/       # Brazilian data validation
+│   └── utils.ts          # Helper functions
+├── hooks/                # Custom React hooks
+├── types/                # TypeScript definitions
+└── supabase/            # Database schema and migrations
 ```
 
-### /tasks - Break Down Implementation
-Use this command to create detailed task breakdowns for implementation.
+### Core Educational Modules (Current Status):
+1. **User Management**: ✅ 100% complete (5-role RBAC system)
+2. **Student Registration**: ✅ 100% complete (INEP-compliant)
+3. **Digital Diary/Attendance**: 🔶 85% complete ("Abrir aula" workflow in progress)
+4. **Reports & Analytics**: 🔶 85% complete (enhanced reporting planned)
 
-**Example Usage:**
-```
-/tasks specs/001-digital-diary-workflow/plan.md
-```
+## Development Guidelines
 
-## Specify Project Structure
+### Constitutional Principles
 
-```
-├── memory/
-│   ├── constitution.md              # Development principles and standards
-│   └── constitution_update_checklist.md
-├── scripts/
-│   ├── common.sh                    # Shared utilities
-│   ├── create-new-feature.sh        # Create new feature specs
-│   ├── setup-plan.sh                # Generate implementation plans
-│   ├── check-task-prerequisites.sh  # Validate readiness
-│   ├── get-feature-paths.sh         # Show feature information
-│   └── update-claude-md.sh          # Update this file
-├── specs/
-│   └── [number]-[feature-name]/     # Individual feature specifications
-│       ├── spec.md                  # Functional requirements
-│       ├── plan.md                  # Implementation plan
-│       ├── data-model.md            # Database schema
-│       ├── research.md              # Technical research
-│       ├── quickstart.md            # Development guide
-│       └── contracts/               # API specifications
-└── templates/                       # Specification templates
-```
+This project follows strict constitutional principles:
 
-## Development Constitutional Principles
-
-This project follows strict constitutional principles documented in `memory/constitution.md`:
-
-### 1. Educational Domain Focus
+#### 1. Educational Domain Focus
 - All development must align with Brazilian educational system requirements
 - Attendance tracking is the critical legal document ("único documento oficial")
 - Non-retroactive attendance marking is mandatory ("não existe o esquecer")
 - Multi-school data isolation with Row Level Security (RLS)
 
-### 2. Technology Standards
+#### 2. Technology Standards
 - TypeScript strict mode across all projects
 - React Hook Form + Zod validation for Brazilian data (CPF, phone)
 - shadcn/ui components for consistent design
 - Supabase for database, authentication, and real-time features
 - Use gestao_fronteira as primary foundation (80% MVP ready)
 
-### 3. Quality Gates
+#### 3. Quality Gates
 - Performance: Dashboard < 3s, attendance < 1s per student
 - Mobile-responsive design for teacher tablet/phone use
 - 100% attendance record immutability after save
 - All 5 user roles (admin, diretor, secretario, professor, responsavel)
-
-## Project Structure
-
-### Active Projects (by MVP readiness):
-- **`gestao_fronteira/`** - Next.js 13.5 + Supabase (80% MVP ready) - **PRIMARY PRODUCTION CANDIDATE**
-- **`fronteira-educa-gest/`** - Vite + React 18.3 (70% MVP ready) - Modern TypeScript implementation
-- **`bro/`** - Vite + React 18.3 (50% MVP ready) - Component library
-- **`fronteira-educa-digital/`** - Next.js 14.2 + Supabase (40% MVP ready) - Modern architecture
-- **`next_edu/`** - Next.js 15.3 (30% MVP ready) - Latest framework version
-
-### Archive Projects:
-- `archive/` - Contains legacy/backup versions of the above projects
-
-## Technology Stack
-
-### Core Technologies:
-- **Frontend**: Next.js (13.5-15.3), Vite + React 18.3
-- **Database**: Supabase (PostgreSQL + Auth + Storage)
-- **UI**: shadcn/ui, Radix UI, Tailwind CSS
-- **Forms**: React Hook Form + Zod validation
-- **State**: Zustand, TanStack Query
-- **Testing**: Jest, Vitest, Testing Library
-- **Build**: TypeScript, ESLint, PostCSS
-
-### Package Managers:
-- `gestao_fronteira/`, `next_edu/` - npm
-- `fronteira-educa-digital/`, `fronteira-educa-gest/`, `bro/` - pnpm
-
-## Common Development Commands
-
-### gestao_fronteira (Primary Production Project):
-```bash
-cd gestao_fronteira/
-npm run dev          # Next.js dev server (http://localhost:3000)
-npm run build        # Production build
-npm run start        # Production server
-npm run lint         # ESLint check
-npm run typecheck    # TypeScript validation
-```
-
-### Specify Framework Scripts:
-```bash
-# Create new feature specification
-./scripts/create-new-feature.sh "feature-name" "description"
-
-# Setup implementation plan for existing spec
-./scripts/setup-plan.sh "specs/001-feature-name"
-
-# Check if ready for implementation
-./scripts/check-task-prerequisites.sh "specs/001-feature-name"
-
-# Get feature information and paths
-./scripts/get-feature-paths.sh "specs/001-feature-name"
-
-# Update this CLAUDE.md file
-./scripts/update-claude-md.sh
-```
-
-## Database Architecture
-
-### Primary Schema: gestao_fronteira
-**Location**: `gestao_fronteira/supabase/migrations/20250628095207_wild_block.sql`
-
-**Core Tables**:
-- `users` - 5 user roles: admin, diretor, secretario, professor, responsavel
-- `escolas` - Schools with multi-tenancy support
-- `alunos` - Students with comprehensive data
-- `responsaveis` - Guardian/parent relationships
-- `turmas` - Classes with teacher assignments
-- `matriculas` - Student enrollments
-- `frequencia` - Daily attendance tracking
-- `notas` - Quarterly grading system
-
-**Security**: Row Level Security (RLS) enabled with school-based multi-tenancy
-
-### Supabase Commands:
-```bash
-# Local development (run from project directory)
-supabase start              # Start local Supabase
-supabase db reset           # Reset local database
-supabase db push           # Apply migrations to remote
-supabase gen types typescript --project-id YOUR_PROJECT_ID  # Generate TypeScript types
-```
-
-## System Architecture
-
-### Authentication & Authorization:
-- **JWT Authentication**: Via Supabase Auth
-- **Role-Based Access Control (RBAC)**: 5 user types with granular permissions
-- **Multi-tenancy**: School-based data isolation using RLS policies
-- **Security**: Complete audit trail with timestamps
-
-### Core Educational Modules:
-1. **User Management**: Complete RBAC with 5 roles (100% ready in gestao_fronteira)
-2. **Student Registration**: Full student lifecycle management (100% ready in gestao_fronteira)
-3. **Digital Diary/Attendance**: Daily attendance with "Abrir aula" workflow (85% ready)
-4. **Reports & Analytics**: Frequency reports with 80% attendance threshold monitoring (85% ready)
-
-### Data Flow:
-- **Frontend**: React/Next.js components with TypeScript
-- **State Management**: Zustand for global state, React Query for server state
-- **API Layer**: Supabase client with generated TypeScript types
-- **Database**: PostgreSQL with real-time subscriptions
-- **File Storage**: Supabase storage for student photos and documents
-
-## Development Guidelines
 
 ### Code Style:
 - **TypeScript**: Strict mode enabled across all projects
@@ -197,38 +227,190 @@ supabase gen types typescript --project-id YOUR_PROJECT_ID  # Generate TypeScrip
 - **Components**: shadcn/ui for consistency, custom components for domain logic
 - **Validation**: Zod schemas for Brazilian educational data (CPF, phone, etc.)
 
-### Testing Strategy:
-- **Unit Tests**: Vitest (Vite projects) or Jest (Next.js projects)
-- **Component Tests**: Testing Library with educational domain scenarios
-- **Integration Tests**: Supabase client testing patterns available in fronteira-educa-digital
+### Component Organization Principles:
+```typescript
+// High Reusability - Use across features
+components/ui/           // shadcn/ui base components
+components/auth/         // Authentication & authorization
+components/layout/       // Navigation, headers, sidebars
 
-### File Structure Patterns:
+// Feature-Specific - Domain-focused components
+components/attendance/   // "Abrir aula" workflow, frequency marking
+components/students/     // Registration, enrollment, transfers
+components/reports/      // Analytics, exports, government compliance
+
+// Brazilian Compliance - Specialized validation
+lib/validation/         // CPF, phone, educational ID validation
+lib/brazilian-standards/ // INEP, Educacenso, Bolsa Família patterns
 ```
-src/
-├── components/           # Reusable UI components
-│   ├── auth/            # Authentication components
-│   ├── attendance/      # Attendance marking components
-│   ├── students/        # Student management components
-│   └── ui/             # shadcn/ui components
-├── hooks/              # Custom React hooks
-├── lib/                # Utilities and configurations
-├── pages/ or app/      # Next.js routing
-└── types/              # TypeScript definitions
+
+## Testing Strategy with Playwright MCP Tools
+
+### Comprehensive Testing Framework
+
+This project implements a multi-layered testing approach using Playwright MCP tools for thorough quality assurance:
+
+#### 1. User Experience Verification
+- **End-to-End Workflows**: Complete user journeys from login to task completion
+- **Accessibility Testing**: WCAG 2.1 AA compliance verification
+- **Cross-browser Compatibility**: Testing across Chrome, Firefox, Safari
+- **Responsive Design**: Mobile, tablet, and desktop viewport testing
+
+#### 2. Quality Assurance Tests
+- **Performance Testing**: Page load times, API response times
+- **Visual Regression**: Screenshot comparisons for UI consistency
+- **Form Validation**: Brazilian data validation (CPF, phone, dates)
+- **Error Handling**: Graceful error states and user feedback
+
+#### 3. App Functionality Correctness
+- **Attendance Workflow**: Complete "Abrir aula" process testing
+- **Student Registration**: Full CRUD operations with validation
+- **Role-based Access**: Permission testing for all 5 user roles
+- **Data Persistence**: Database operations and RLS policy enforcement
+
+#### 4. Stress Testing
+- **Load Testing**: Concurrent user simulations
+- **Data Volume Testing**: Large class sizes and bulk operations
+- **Network Conditions**: Slow connection and offline scenarios
+- **Memory Usage**: Performance under extended use
+
+### Playwright MCP Integration
+
+```bash
+# Run comprehensive test suite
+bun run test:e2e                    # Full end-to-end tests
+bun run test:accessibility          # Accessibility compliance
+bun run test:performance            # Performance benchmarks
+bun run test:stress                 # Load and stress tests
+
+# Specific testing scenarios
+bun run test:attendance             # Attendance workflow tests
+bun run test:roles                  # Role-based access tests
+bun run test:mobile                 # Mobile responsiveness
 ```
+
+### Test Automation with Claude Code:
+- **Automated Test Generation**: AI-powered test case creation
+- **Visual Regression Detection**: Automatic screenshot comparisons
+- **Performance Monitoring**: Continuous performance regression detection
+- **Brazilian Compliance Testing**: Educational domain-specific test scenarios
+
+## Changelog Tracking & Time Estimation
+
+### Development Metrics
+
+This project maintains detailed development tracking for accurate project management:
+
+#### Time Estimation Framework:
+- **Feature Development**:
+  - Small features (UI updates): 2-4 hours
+  - Medium features (new components): 1-2 days
+  - Large features (workflow changes): 3-5 days
+  - Brazilian compliance features: +25% time buffer
+
+#### Changelog Management:
+```markdown
+## [Version] - YYYY-MM-DD
+
+### Added
+- New features with time invested
+- Brazilian compliance enhancements
+- Performance improvements
+
+### Changed
+- Modified workflows and components
+- Updated dependencies and security patches
+
+### Fixed
+- Bug fixes with root cause analysis
+- Performance optimizations with metrics
+
+### Time Investment
+- Development: X hours
+- Testing: Y hours
+- Documentation: Z hours
+- Total: XYZ hours
+```
+
+#### Development Velocity Tracking:
+- **Velocity Metrics**: Story points per sprint with actual time correlation
+- **Complexity Indicators**: Brazilian education requirements complexity scoring
+- **Risk Assessment**: Time buffers for compliance and integration challenges
+- **Learning Curve**: New technology adoption time tracking
+
+### Automated Time Tracking:
+- Git commit analysis for actual development time
+- PR review time and iteration cycles
+- Testing and bug fix time correlation
+- Documentation and compliance verification time
+
+## GitHub Actions & PR Review Automation
+
+### Automated CI/CD Pipeline
+
+```yaml
+# .github/workflows/pr-review.yml
+name: PR Review & Quality Gates
+
+on:
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Quality
+        run: |
+          bun run lint
+          bun run typecheck
+          bun run test
+
+      - name: Brazilian Compliance Check
+        run: |
+          bun run test:compliance
+          bun run validate:cpf-patterns
+
+      - name: Performance Testing
+        run: |
+          bun run test:performance
+          bun run audit:bundle-size
+
+      - name: Security Audit
+        run: |
+          bun audit
+          bun run security:rls-policies
+```
+
+### Automated PR Reviews:
+- **Code Quality Gates**: ESLint, TypeScript, and test coverage requirements
+- **Brazilian Compliance**: Automatic validation of educational data patterns
+- **Performance Regression**: Bundle size and runtime performance monitoring
+- **Security Scanning**: Dependency vulnerabilities and RLS policy validation
+- **Documentation Updates**: Automatic CLAUDE.md updates for significant changes
+
+### Review Automation Features:
+- **Educational Domain Validation**: Brazilian education workflow compliance
+- **Accessibility Checks**: WCAG 2.1 AA compliance verification
+- **Mobile Responsiveness**: Tablet and phone interface validation
+- **Database Migration Review**: Schema changes and RLS policy impacts
 
 ## Reusable Components
 
 ### High Reusability (use across projects):
-- `AuthGuard` - Route protection
-- `LoginForm` - User authentication
-- `Sidebar` - Navigation sidebar
-- `AttendanceGrid` - Attendance marking interface
+- `AuthGuard` - Route protection with Brazilian role validation
+- `LoginForm` - User authentication with CPF support
+- `Sidebar` - Navigation with educational module structure
+- `AttendanceGrid` - Touch-friendly attendance marking interface
+- `CPFInput` - Brazilian CPF validation and formatting
+- `BrazilianPhoneInput` - Phone number validation and formatting
 - All shadcn/ui components (forms, tables, dialogs, etc.)
 
 ### Medium Reusability (adapt when using):
-- `StudentForm` - Student registration forms
-- `ClassSelector` - Class/turma selection
-- `UserCreateForm` - Admin user management
+- `StudentForm` - Student registration with INEP compliance
+- `ClassSelector` - Class/turma selection with academic calendar
+- `UserCreateForm` - Admin user management with role validation
+- `AttendanceReport` - Frequency reports with Bolsa Família integration
 
 ## Performance Considerations
 
@@ -236,29 +418,33 @@ src/
 - Indexes on foreign keys and query patterns already implemented
 - RLS policies optimized for school-based filtering
 - Real-time subscriptions for live attendance updates
+- INEP data export optimization for large datasets
 
 ### Frontend:
 - **Bundle Size**: Code splitting configured in Next.js projects
-- **Loading States**: Skeleton components available
+- **Loading States**: Skeleton components for educational workflows
 - **Caching**: React Query with 5-minute stale time for educational data
-- **Mobile**: Responsive design with touch-friendly attendance interface
+- **Mobile**: Touch-friendly interface optimized for classroom tablets
+- **Offline Support**: Service worker for attendance marking in poor connectivity
 
 ## Export & Reporting
 
 ### Available Libraries:
 ```json
-// gestao_fronteira dependencies
-"jspdf": "^2.5.1",           // PDF generation
-"jspdf-autotable": "^3.8.2", // PDF tables
-"xlsx": "^0.18.5",           // Excel export
-"recharts": "^2.12.7"        // Charts and analytics
+// All projects support these export formats
+"jspdf": "^2.5.1",           // PDF generation for official reports
+"jspdf-autotable": "^3.8.2", // PDF tables for attendance reports
+"xlsx": "^0.18.5",           // Excel export for INEP integration
+"recharts": "^2.12.7"        // Charts for educational analytics
 ```
 
 ### Report Types:
-- Frequency reports by class/student
-- Active search for at-risk students (80% attendance threshold)
-- Student enrollment summaries
-- Export to PDF and Excel formats
+- **INEP Compliance Reports**: Educacenso-ready data exports
+- **Bolsa Família Integration**: Attendance compliance reports
+- **Frequency Reports**: Class and individual student attendance
+- **Active Search Reports**: At-risk students (below 80% attendance)
+- **Academic Performance**: Grade and progression analysis
+- **Official Documentation**: Legal compliance and audit reports
 
 ## Environment Configuration
 
@@ -271,86 +457,200 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Database (local development)
 DATABASE_URL=postgresql://postgres:password@localhost:54322/postgres
+
+# Brazilian Education APIs
+INEP_API_KEY=your_inep_api_key
+EDUCACENSO_INTEGRATION_TOKEN=your_token
+
+# Performance Monitoring
+PERFORMANCE_MONITORING_KEY=your_key
 ```
 
 ### Development Setup:
 1. Clone repository and choose target project
-2. Install dependencies (`npm install` or `pnpm install`)
+2. Install dependencies (`bun install`)
 3. Copy `.env.example` to `.env.local` and configure Supabase
 4. Run `supabase start` for local database
 5. Apply migrations: `supabase db push`
-6. Start development server
+6. Start development server with `bun run dev`
 
-## Validation & Business Rules
+## Development Workflow with Agent OS
 
-### Brazilian Educational Data:
-- CPF validation with proper formatting
-- Brazilian phone number formatting
-- Date validations for academic calendar
-- Attendance percentage calculations (minimum 75%, alerting at 80%)
-- Non-retroactive attendance saving (compliance requirement)
+### Available Specialized Agents:
 
-### Educational Domain Rules:
-- Students can only be enrolled in one active class per academic year
-- Attendance can only be marked by assigned teachers
-- "Abrir aula" workflow required before attendance marking
-- Semester observations are mandatory for failing students
-- User roles determine data access scope (school-based isolation)
+#### Core Development Agents:
+- **`@agent-codebase-analyzer`** - Comprehensive codebase analysis and architecture review
+- **`@agent-git-workflow`** - Automated git operations, branch management, and PR creation
+- **`@agent-design-review`** - UI/UX review with accessibility and performance testing
+- **`@agent-nextjs-edu-brazil-dev`** - Brazilian educational system development specialist
 
-## Specify Workflow Process
-
-### Step 1: Feature Specification (/specify)
-1. Use `/specify` command with detailed feature description
-2. Focus on **what** and **why**, not technical implementation
-3. Include Brazilian educational compliance requirements
-4. Define user stories and acceptance criteria
-
-### Step 2: Technical Planning (/plan)
-1. Use `/plan` command to create implementation details
-2. Specify technology stack and architecture decisions
-3. Leverage gestao_fronteira as primary foundation
-4. Include performance and security requirements
-
-### Step 3: Task Breakdown (/tasks)
-1. Use `/tasks` command to create implementation steps
-2. Break down into manageable development tasks
-3. Include testing and validation steps
-4. Consider integration with existing components
-
-### Step 4: Implementation
-1. Follow constitutional principles during development
-2. Use existing components from gestao_fronteira
-3. Maintain TypeScript strict mode and RLS policies
-4. Test with realistic Brazilian educational data
-
-## MVP Implementation Status
-
-Based on the comprehensive analysis in `component-review-and-mvp-analysis.md`:
-
-- **Module 1** (User Management): ✅ 100% complete in gestao_fronteira
-- **Module 2** (Student Registration): ✅ 100% complete in gestao_fronteira
-- **Module 3** (Digital Diary): 🔶 85% complete (missing "Abrir aula" workflow)
-- **Module 4** (Reports): 🔶 85% complete (missing active search implementation)
-
-**Recommendation**: Use `gestao_fronteira/` as the primary foundation for MVP completion, as it has the most comprehensive implementation and production-ready database schema.
-
-## Quick Start for New Features
-
+#### Agent OS Native Workflow:
 ```bash
-# 1. Create new feature specification
-./scripts/create-new-feature.sh "digital-diary-workflow" "Implement Abrir aula workflow"
+# 1. Analysis and Planning
+@agent-codebase-analyzer    # Understand current implementation status
 
-# 2. Use Claude Code with Specify commands
-# In Claude Code session:
-# /specify [detailed requirements]
-# /plan [technical specifications]
-# /tasks [implementation steps]
+# 2. Development
+@agent-nextjs-edu-brazil-dev # Implement Brazilian compliance features
 
-# 3. Check prerequisites before implementation
-./scripts/check-task-prerequisites.sh "specs/001-digital-diary-workflow"
+# 3. Quality Assurance
+@agent-design-review        # UI/UX validation and accessibility testing
 
-# 4. Begin implementation following constitutional principles
-# Focus on gestao_fronteira integration and Brazilian compliance
+# 4. Deployment
+@agent-git-workflow         # Automated git operations and PR creation
 ```
 
-Remember: This project prioritizes educational domain compliance, security through RLS policies, and leveraging existing implementations from gestao_fronteira for rapid MVP delivery.
+### Key Agent Capabilities:
+- **Brazilian Compliance**: INEP, Educacenso, LGPD implementation patterns
+- **Performance Optimization**: Database queries, bundle size, mobile responsiveness
+- **Security Enhancement**: RLS policies, multi-school data isolation
+- **Workflow Automation**: Git operations with educational context awareness
+
+## Production Readiness Status
+
+### Current Implementation (gestao_fronteira):
+- **User Management**: ✅ 100% complete (5-role RBAC with RLS)
+- **Student Registration**: ✅ 100% complete (INEP-compliant with Brazilian validation)
+- **Digital Diary/Attendance**: 🔶 85% complete (needs "Abrir aula" workflow completion)
+- **Reports & Analytics**: 🔶 85% complete (needs INEP integration enhancement)
+
+### Path to 100% Production Ready (36.5 hours):
+1. **Enhanced "Abrir aula" Workflow** (8h) - Three-phase attendance system
+2. **Attendance Locking Mechanism** (4h) - Legal compliance enforcement
+3. **Multi-Guardian Management** (8h) - Complex family structure support
+4. **INEP Integration** (6h) - Government reporting system
+5. **Comprehensive Audit System** (4h) - LGPD compliance
+6. **Enhanced RLS Policies** (2h) - Multi-school security
+7. **Brazilian Validation Library** (2.5h) - Government standards
+8. **Advanced Reporting** (2h) - Analytics and exports
+
+### Implementation Reference:
+- **Patterns**: See `i-educar-reference/` for production-tested implementations
+- **Analysis**: See `agent-findings/` for detailed technical specifications
+- **Roadmap**: See `.agent-os/product/roadmap.md` for complete timeline
+
+## Quick Start Development Workflow
+
+```bash
+# 1. Setup development environment
+cd gestao_fronteira/
+bun install
+supabase start
+
+# 2. Start development
+bun run dev          # http://localhost:3000
+
+# 3. Development cycle
+bun run typecheck    # TypeScript validation
+bun run lint         # Code quality
+bun run test         # Unit tests
+
+# 4. Ready for production
+bun run build        # Production build
+bun run test:e2e     # End-to-end tests
+```
+
+## Changelog Management & Documentation Requirements
+
+### Mandatory Changelog Documentation
+
+**Every change to the codebase MUST be documented in CHANGELOG.md** following the Keep a Changelog format:
+
+```markdown
+# CHANGELOG.md
+
+## [Unreleased]
+
+### Added
+- New features with detailed description and impact
+- Brazilian compliance enhancements with legal references
+- Performance improvements with metrics
+
+### Changed
+- Modified workflows and components with reasoning
+- Updated dependencies with security implications
+- Enhanced user interfaces with accessibility improvements
+
+### Fixed
+- Bug fixes with root cause analysis
+- Performance optimizations with before/after metrics
+- Security patches with vulnerability descriptions
+
+### Implementation Details
+- Development time invested (actual hours)
+- Testing coverage and validation approach
+- Breaking changes and migration requirements
+```
+
+### Changelog Standards
+
+**Required Information for Each Entry:**
+- **Impact Assessment**: How the change affects users and system performance
+- **Brazilian Compliance**: Legal and regulatory implications
+- **Time Investment**: Actual development and testing hours
+- **Dependencies**: External library or system changes
+- **Migration Notes**: Steps required for existing deployments
+
+**Change Categories:**
+- **Feature**: New educational functionality or workflow
+- **Enhancement**: Improvements to existing features
+- **Compliance**: Brazilian educational law or LGPD requirements
+- **Performance**: Speed, memory, or efficiency optimizations
+- **Security**: Authentication, authorization, or data protection
+- **Infrastructure**: Database, deployment, or configuration changes
+
+### Integration with Development Workflow
+
+```bash
+# Before any commit
+1. Update CHANGELOG.md with changes
+2. Include time investment tracking
+3. Document compliance implications
+4. Add performance impact notes
+
+# Example changelog entry
+## [2025-09-20] - Enhanced Attendance System
+
+### Added
+- Multi-guardian management system (8h development)
+- INEP integration with government code validation (6h development)
+- Enhanced "Abrir aula" workflow with three-phase process (8h development)
+
+### Changed
+- Attendance locking mechanism now enforces "não existe o esquecer" principle
+- Database schema enhanced with 4 new tables for compliance
+- Performance improved: attendance marking now <1s per student
+
+### Fixed
+- Retroactive attendance modification vulnerability (legal compliance)
+- Mobile interface touch targets now meet accessibility standards
+- LGPD consent management granularity improved
+
+### Implementation Details
+- Total time investment: 36.5 hours over 10 working days
+- Database migration required: enhanced_attendance_and_guardian_management.sql
+- Breaking changes: Multi-guardian API requires client updates
+- Performance impact: 85% improvement in database query optimization
+```
+
+## Development Principles
+
+### Core Requirements:
+1. **Brazilian Educational Compliance**: INEP standards, LGPD data protection, "não existe o esquecer" principle
+2. **Performance Standards**: Dashboard < 3s, attendance marking < 1s per student
+3. **Security Architecture**: RLS policies with school-based multi-tenancy
+4. **Mobile-Responsive Design**: Tablet-optimized for classroom environments
+5. **Comprehensive Testing**: Unit, integration, and E2E testing with Playwright
+
+### Quality Gates:
+- TypeScript strict mode with comprehensive type coverage
+- ESLint and code quality validation
+- Brazilian data validation (CPF, phone, educational IDs)
+- Accessibility compliance (WCAG 2.1 AA)
+- Performance regression testing
+
+### Documentation Standards:
+- **CHANGELOG.md**: Required for all changes with time investment tracking
+- **Code Comments**: Brazilian compliance context and business rules
+- **API Documentation**: Government integration and educational workflows
+
+**Focus**: Leverage `gestao_fronteira` as the production foundation with 80% MVP completion. Prioritize Brazilian educational domain compliance and municipal deployment readiness.

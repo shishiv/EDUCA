@@ -1,0 +1,8 @@
+
+# Reference projects for Brazilian education standards
+#i-educar-reference/
+
+# Development artifacts
+.playwright-mcp/
+.agent-os/
+.claude/agents/

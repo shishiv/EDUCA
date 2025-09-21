@@ -140,7 +140,11 @@
       "Bash(git rm:*)",
       "mcp__supabase__list_migrations",
       "Bash(npx jest:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "WebFetch(domain:www.fronteira.mg.gov.br)",
+      "Bash(bun run test:*)",
+      "Bash(bun test)",
+      "Bash(bun test:*)"
     ],
     "deny": [],
     "ask": []
