@@ -6,6 +6,85 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+
+  /* Fronteira Municipal Identity Colors */
+  /* Based on official brasão and municipal website */
+  --fronteira-red: 220 76% 50%;        /* #DC2626 - Brasão red */
+  --fronteira-green: 166 77% 40%;      /* #059669 - Brasão green */
+  --fronteira-blue: 221 83% 53%;       /* #1D4ED8 - Brasão blue */
+  --fronteira-yellow: 45 93% 58%;      /* #FBBF24 - Brasão yellow */
+
+  /* Municipal Primary Colors */
+  --fronteira-primary: 200 100% 34%;   /* rgb(0, 115, 172) - Official website blue */
+  --fronteira-primary-foreground: 0 0% 100%;
+  --fronteira-secondary: 221 77% 20%;  /* #1E3A8A - Deep institutional blue */
+  --fronteira-secondary-foreground: 0 0% 100%;
+
+  /* Municipal Neutral Palette */
+  --fronteira-gray-50: 216 50% 98%;    /* #F8FAFC */
+  --fronteira-gray-100: 216 33% 97%;   /* #F1F5F9 */
+  --fronteira-gray-500: 215 20% 58%;   /* #64748B */
+  --fronteira-gray-900: 222 67% 5%;    /* #0F172A */
+}
+
+/* Tablet & Mobile Touch Optimization for Brazilian Classrooms */
+@layer utilities {
+  /* Touch-friendly buttons for tablets (minimum 44px as per WCAG) */
+  .touch-target-large {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px;
+  }
+
+  /* Mobile layout optimizations */
+  .mobile-layout {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Enhanced mobile header */
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  /* Brazilian educational phase indicators */
+  .phase-planning { @apply bg-blue-500 text-white; }
+  .phase-chamada { @apply bg-green-500 text-white; }
+  .phase-finalizada { @apply bg-orange-500 text-white; }
+  .phase-bloqueada { @apply bg-red-500 text-white; }
+
+  /* Responsive text sizing for tablets */
+  @media (min-width: 640px) and (max-width: 1024px) {
+    .tablet-text-sm { font-size: 0.875rem; }
+    .tablet-text-base { font-size: 1rem; }
+    .tablet-text-lg { font-size: 1.125rem; }
+  }
+
+  /* Connection status indicators */
+  .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .connection-status.connected .wifi-icon {
+    color: rgb(34, 197, 94); /* green-500 */
+  }
+
+  .connection-status.disconnected .wifi-icon,
+  .connection-status.error .wifi-icon {
+    color: rgb(239, 68, 68); /* red-500 */
+  }
 }
 
 @media (prefers-color-scheme: dark) {

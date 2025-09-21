@@ -17,6 +17,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
+      <head>
+        {/* Preload critical municipal assets for performance */}
+        <link
+          rel="preload"
+          href="/identity/brasao.png"
+          as="image"
+          type="image/png"
+        />
+        <link
+          rel="preload"
+          href="/identity/logo-completo.png"
+          as="image"
+          type="image/png"
+        />
+      </head>
       <body className={inter.className}>
         <Providers>
           {children}

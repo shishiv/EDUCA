@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { MunicipalLogo } from '@/components/identity/municipal-assets'
 import { Loader2, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -57,15 +58,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50 px-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto h-16 w-16 bg-primary rounded-full flex items-center justify-center">
-            <GraduationCap className="h-8 w-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-fronteira-primary/5 via-white to-fronteira-green/5 px-4">
+      <Card className="w-full max-w-md shadow-xl border-fronteira-gray-100">
+        <CardHeader className="text-center space-y-6">
+          {/* Municipal Logo */}
+          <div className="flex justify-center">
+            <MunicipalLogo size="md" priority />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Sistema Escolar</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-2xl font-bold text-fronteira-primary">Sistema Escolar</CardTitle>
+            <CardDescription className="text-fronteira-gray-500">
               Secretaria de Educação de Fronteira/MG
             </CardDescription>
           </div>
@@ -74,13 +76,13 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+              <Alert variant="destructive" className="border-fronteira-red/20 bg-fronteira-red/5">
+                <AlertDescription className="text-fronteira-red">{error}</AlertDescription>
               </Alert>
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-fronteira-gray-900 font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -88,12 +90,12 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu.email@fronteira.mg.gov.br"
                 required
-                className="h-11"
+                className="h-11 border-fronteira-gray-100 focus:border-fronteira-primary focus:ring-fronteira-primary/20"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="text-fronteira-gray-900 font-medium">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -101,13 +103,13 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Digite sua senha"
                 required
-                className="h-11"
+                className="h-11 border-fronteira-gray-100 focus:border-fronteira-primary focus:ring-fronteira-primary/20"
               />
             </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full h-11 bg-primary hover:bg-primary/90"
+
+            <Button
+              type="submit"
+              className="w-full h-11 bg-fronteira-primary hover:bg-fronteira-primary/90 text-fronteira-primary-foreground shadow-sm"
               disabled={loading}
             >
               {loading ? (
