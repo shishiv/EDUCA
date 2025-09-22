@@ -39,16 +39,22 @@ This is a multi-project educational management system repository for the Municip
 - **State Management**: Zustand 5.0.8 + TanStack Query 5.87.4
 - **Testing**: Jest + React Testing Library + Playwright
 - **TypeScript**: 5.9.2 (strict mode)
-- **Package Manager**: **bun** (fast installs and better performance)
+- **Package Manager**: **bun** (MANDATORY - 3x faster than npm, required for all projects)
 
 ## Development Commands
+
+### ⚠️ MANDATORY: Use bun for ALL package management operations
+
+**CRITICAL: Claude Code MUST use bun exclusively. Never use npm, yarn, or pnpm. All commands should use bun.**
 
 ### gestao_fronteira (Primary Production Project):
 ```bash
 cd gestao_fronteira/
 
-# Package management
+# Package management (ALWAYS use bun, never npm/yarn/pnpm)
 bun install             # Install dependencies (3x faster than npm)
+bun add [package]       # Add new dependencies
+bun remove [package]    # Remove dependencies
 bun update              # Update dependencies
 
 # Development
@@ -59,9 +65,10 @@ bun run lint            # ESLint check
 bun run typecheck       # TypeScript validation
 
 # Testing
-bun run test            # Unit tests with Jest
-bun run test:e2e        # End-to-end tests with Playwright
-bun run test:coverage   # Test coverage report
+bun test               # Unit tests with Jest (fast execution)
+bun test:watch         # Unit tests in watch mode
+bun run test:e2e       # End-to-end tests with Playwright
+bun run test:coverage  # Test coverage report
 
 # Database
 supabase start          # Start local Supabase
@@ -88,9 +95,7 @@ git checkout -b feature/new-attendance-workflow
 git add .
 git commit -m "feat(attendance): implement Abrir aula workflow
 
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-Co-Authored-By: Myke Matos <myke.matos@gmail.com>"
+Authored-By: Myke Matos <myke.matos@gmail.com>"
 git push -u origin feature/new-attendance-workflow
 gh pr create --title "feat: Abrir aula workflow" --body "..."
 ```
@@ -100,7 +105,6 @@ gh pr create --title "feat: Abrir aula workflow" --body "..."
 - Automated change impact analysis
 - Performance regression detection
 - Brazilian compliance validation in PRs
-- **Always include Myke Matos (myke.matos@gmail.com) as co-author in all commits**
 
 ## Brazilian Educational Standards & Compliance
 
@@ -469,12 +473,20 @@ PERFORMANCE_MONITORING_KEY=your_key
 ```
 
 ### Development Setup:
-1. Clone repository and choose target project
-2. Install dependencies (`bun install`)
-3. Copy `.env.example` to `.env.local` and configure Supabase
-4. Run `supabase start` for local database
-5. Apply migrations: `supabase db push`
-6. Start development server with `bun run dev`
+1. **Install bun globally** (REQUIRED):
+   ```bash
+   # Windows
+   powershell -c "irm bun.sh/install.ps1 | iex"
+
+   # macOS/Linux
+   curl -fsSL https://bun.sh/install | bash
+   ```
+2. Clone repository and choose target project
+3. Install dependencies (`bun install`) - NEVER use npm/yarn/pnpm
+4. Copy `.env.example` to `.env.local` and configure Supabase
+5. Run `supabase start` for local database
+6. Apply migrations: `supabase db push`
+7. Start development server with `bun run dev`
 
 ## Development Workflow with Agent OS
 
