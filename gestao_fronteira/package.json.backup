@@ -16,10 +16,6 @@
     "start:fronteira": "next start --hostname fronteira.localhost",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test",
     "seed:dev": "tsx scripts/seed-dev.ts",
     "seed:clear": "tsx scripts/seed-dev.ts clear",
     "db:types": "echo 'Run: supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.ts'"
@@ -95,13 +91,6 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.3",
-    "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/jest": "^29.5.12",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "@playwright/test": "^1.48.2",
     "tsx": "^4.20.5"
   }
 }
