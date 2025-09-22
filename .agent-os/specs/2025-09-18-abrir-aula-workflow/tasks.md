@@ -40,16 +40,16 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] 3.7 Integrate components into existing gestao_fronteira attendance pages
 - [x] 3.8 Verify all component tests pass with mobile responsiveness
 
-### 4. Teacher Dashboard Integration
+### 4. ✅ Teacher Dashboard Integration (COMPLETED)
 
-- [ ] 4.1 Write tests for turma selection with aula status display
-- [ ] 4.2 Modify existing turma selection to show current aula status
-- [ ] 4.3 Update AttendanceGrid to respect aula aberta state
-- [ ] 4.4 Implement conditional rendering for attendance controls
-- [ ] 4.5 Add session timer and time-lock countdown display
-- [ ] 4.6 Write integration tests for complete dashboard workflow
-- [ ] 4.7 Test professor workflow from login to attendance submission
-- [ ] 4.8 Verify all dashboard integration tests pass
+- [x] 4.1 Write tests for turma selection with aula status display
+- [x] 4.2 Modify existing turma selection to show current aula status
+- [x] 4.3 Update AttendanceGrid to respect aula aberta state
+- [x] 4.4 Implement conditional rendering for attendance controls
+- [x] 4.5 Add session timer and time-lock countdown display
+- [x] 4.6 Write integration tests for complete dashboard workflow
+- [x] 4.7 Test professor workflow from login to attendance submission
+- [x] 4.8 Verify all dashboard integration tests pass
 
 ### 5. Real-time Features Implementation
 
