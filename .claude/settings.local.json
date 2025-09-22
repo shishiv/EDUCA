@@ -147,7 +147,10 @@
       "Bash(bun test:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(pnpm add:*)",
+      "Bash(curl:*)",
+      "Bash(bash)"
     ],
     "deny": [],
     "ask": []

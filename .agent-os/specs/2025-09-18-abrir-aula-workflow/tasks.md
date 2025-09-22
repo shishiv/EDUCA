@@ -29,16 +29,16 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] 2.7 Write tests for PUT /api/frequencia/submit with time-lock verification
 - [x] 2.8 Implement enhanced attendance submission with immutability enforcement
 
-### 3. Frontend Components Development
+### 3. ✅ Frontend Components Development (COMPLETED)
 
-- [ ] 3.1 Write unit tests for AbrirAulaButton component
-- [ ] 3.2 Create AbrirAulaButton component with loading states and error handling
-- [ ] 3.3 Implement click handler with API integration and optimistic updates
-- [ ] 3.4 Add visual feedback for success/error states with Portuguese messages
-- [ ] 3.5 Write unit tests for AulaStatusIndicator component
-- [ ] 3.6 Create AulaStatusIndicator component with real-time status updates
-- [ ] 3.7 Integrate components into existing gestao_fronteira attendance pages
-- [ ] 3.8 Verify all component tests pass with mobile responsiveness
+- [x] 3.1 Write unit tests for AbrirAulaButton component
+- [x] 3.2 Create AbrirAulaButton component with loading states and error handling
+- [x] 3.3 Implement click handler with API integration and optimistic updates
+- [x] 3.4 Add visual feedback for success/error states with Portuguese messages
+- [x] 3.5 Write unit tests for AulaStatusIndicator component
+- [x] 3.6 Create AulaStatusIndicator component with real-time status updates
+- [x] 3.7 Integrate components into existing gestao_fronteira attendance pages
+- [x] 3.8 Verify all component tests pass with mobile responsiveness
 
 ### 4. Teacher Dashboard Integration
 
