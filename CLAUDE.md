@@ -89,7 +89,8 @@ git add .
 git commit -m "feat(attendance): implement Abrir aula workflow
 
 🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Myke Matos <myke.matos@gmail.com>"
 git push -u origin feature/new-attendance-workflow
 gh pr create --title "feat: Abrir aula workflow" --body "..."
 ```
@@ -99,6 +100,7 @@ gh pr create --title "feat: Abrir aula workflow" --body "..."
 - Automated change impact analysis
 - Performance regression detection
 - Brazilian compliance validation in PRs
+- **Always include Myke Matos (myke.matos@gmail.com) as co-author in all commits**
 
 ## Brazilian Educational Standards & Compliance
 
