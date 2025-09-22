@@ -150,7 +150,8 @@
       "Bash(tasklist)",
       "Bash(pnpm add:*)",
       "Bash(curl:*)",
-      "Bash(bash)"
+      "Bash(bash)",
+      "Bash(pnpm test:*)"
     ],
     "deny": [],
     "ask": []
