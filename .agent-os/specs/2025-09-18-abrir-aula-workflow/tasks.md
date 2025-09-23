@@ -51,16 +51,16 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] 4.7 Test professor workflow from login to attendance submission
 - [x] 4.8 Verify all dashboard integration tests pass
 
-### 5. Real-time Features Implementation
+### 5. ✅ Real-time Features Implementation (COMPLETED)
 
-- [ ] 5.1 Write tests for Supabase real-time subscriptions
-- [ ] 5.2 Set up real-time listener for aulas_abertas table changes
-- [ ] 5.3 Implement automatic UI updates on aula status transitions
-- [ ] 5.4 Add real-time notifications for session events
-- [ ] 5.5 Handle connection states and error recovery gracefully
-- [ ] 5.6 Test real-time features across multiple browser sessions
-- [ ] 5.7 Optimize subscription performance and memory cleanup
-- [ ] 5.8 Verify all real-time feature tests pass
+- [x] 5.1 Write tests for Supabase real-time subscriptions
+- [x] 5.2 Set up real-time listener for aulas_abertas table changes
+- [x] 5.3 Implement automatic UI updates on aula status transitions
+- [x] 5.4 Add real-time notifications for session events
+- [x] 5.5 Handle connection states and error recovery gracefully
+- [x] 5.6 Test real-time features across multiple browser sessions
+- [x] 5.7 Optimize subscription performance and memory cleanup
+- [x] 5.8 Verify all real-time feature tests pass
 
 ### 6. Testing and Integration
 
