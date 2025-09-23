@@ -108,7 +108,29 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
    pnpm install
    ```
 
-3. **Configure as variáveis de ambiente**
+3. **Configure o domínio municipal (recomendado)**
+
+   Para usar a identidade municipal completa, execute o script de configuração:
+
+   **Windows (como Administrador):**
+   ```cmd
+   scripts\setup-municipal-domain.bat
+   ```
+
+   **macOS/Linux:**
+   ```bash
+   chmod +x scripts/setup-municipal-domain.sh
+   sudo ./scripts/setup-municipal-domain.sh
+   ```
+
+   **Configuração manual:**
+   ```bash
+   # Windows: C:\Windows\System32\drivers\etc\hosts
+   # macOS/Linux: /etc/hosts
+   127.0.0.1    fronteira.localhost
+   ```
+
+4. **Configure as variáveis de ambiente**
    ```bash
    cp .env.example .env.local
    ```
@@ -117,6 +139,7 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
    ```env
    NEXT_PUBLIC_SUPABASE_URL=seu_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_anon_key
+   NEXT_PUBLIC_APP_URL=http://fronteira.localhost:3000
    SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key
    ```
 
@@ -176,10 +199,25 @@ gestao_fronteira/
 
 ### Desenvolvimento
 ```bash
+# Desenvolvimento padrão
 pnpm dev          # Servidor de desenvolvimento (Turbopack)
-pnpm build        # Build de produção
-pnpm start        # Servidor de produção
+
+# 🏛️ Desenvolvimento Municipal (Recomendado)
+pnpm dev:fronteira    # Servidor com domínio municipal
+pnpm dev:municipal    # Servidor municipal na porta 3000
+
+# Produção
+pnpm build            # Build de produção
+pnpm start            # Servidor de produção
+pnpm start:fronteira  # Servidor de produção com domínio municipal
 ```
+
+### 🌐 Acesso ao Sistema
+
+Após configurar o domínio municipal:
+- **Municipal:** http://fronteira.localhost:3001 (recomendado)
+- **Municipal (3000):** http://fronteira.localhost:3000
+- **Padrão:** http://localhost:3001
 
 ### Qualidade de Código
 ```bash
