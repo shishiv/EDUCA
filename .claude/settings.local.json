@@ -152,7 +152,9 @@
       "Bash(pnpm add:*)",
       "Bash(curl:*)",
       "Bash(bash)",
-      "Bash(pnpm test:*)"
+      "Bash(pnpm test:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote:*)"
     ],
     "deny": [],
     "ask": []
