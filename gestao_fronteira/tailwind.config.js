@@ -120,6 +120,27 @@ module.exports = {
           pre_escola: '#8b5cf6',  // Purple for pre-school (4-5 years)
           fundamental: '#0ea5e9', // Blue for elementary (6-14 years)
         },
+        // Fronteira Municipal Colors
+        fronteira: {
+          red: 'hsl(var(--fronteira-red))',           // #DC2626 - Brasão red
+          green: 'hsl(var(--fronteira-green))',       // #059669 - Brasão green
+          blue: 'hsl(var(--fronteira-blue))',         // #1D4ED8 - Brasão blue
+          yellow: 'hsl(var(--fronteira-yellow))',     // #FBBF24 - Brasão yellow
+          primary: {
+            DEFAULT: 'hsl(var(--fronteira-primary))',         // rgb(0, 115, 172) - Municipal blue
+            foreground: 'hsl(var(--fronteira-primary-foreground))',
+          },
+          secondary: {
+            DEFAULT: 'hsl(var(--fronteira-secondary))',       // #1E3A8A - Deep institutional blue
+            foreground: 'hsl(var(--fronteira-secondary-foreground))',
+          },
+          gray: {
+            50: 'hsl(var(--fronteira-gray-50))',      // #F8FAFC
+            100: 'hsl(var(--fronteira-gray-100))',    // #F1F5F9
+            500: 'hsl(var(--fronteira-gray-500))',    // #64748B
+            900: 'hsl(var(--fronteira-gray-900))',    // #0F172A
+          },
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

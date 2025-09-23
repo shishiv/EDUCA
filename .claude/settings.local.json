@@ -141,7 +141,18 @@
       "mcp__supabase__list_migrations",
       "Bash(npx jest:*)",
       "Bash(echo:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "WebFetch(domain:www.fronteira.mg.gov.br)",
+      "Bash(bun run test:*)",
+      "Bash(bun test)",
+      "Bash(bun test:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(tasklist)",
+      "Bash(pnpm add:*)",
+      "Bash(curl:*)",
+      "Bash(bash)",
+      "Bash(pnpm test:*)"
     ],
     "deny": [],
     "ask": []

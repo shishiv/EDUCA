@@ -29,38 +29,38 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] 2.7 Write tests for PUT /api/frequencia/submit with time-lock verification
 - [x] 2.8 Implement enhanced attendance submission with immutability enforcement
 
-### 3. Frontend Components Development
+### 3. ✅ Frontend Components Development (COMPLETED)
 
-- [ ] 3.1 Write unit tests for AbrirAulaButton component
-- [ ] 3.2 Create AbrirAulaButton component with loading states and error handling
-- [ ] 3.3 Implement click handler with API integration and optimistic updates
-- [ ] 3.4 Add visual feedback for success/error states with Portuguese messages
-- [ ] 3.5 Write unit tests for AulaStatusIndicator component
-- [ ] 3.6 Create AulaStatusIndicator component with real-time status updates
-- [ ] 3.7 Integrate components into existing gestao_fronteira attendance pages
-- [ ] 3.8 Verify all component tests pass with mobile responsiveness
+- [x] 3.1 Write unit tests for AbrirAulaButton component
+- [x] 3.2 Create AbrirAulaButton component with loading states and error handling
+- [x] 3.3 Implement click handler with API integration and optimistic updates
+- [x] 3.4 Add visual feedback for success/error states with Portuguese messages
+- [x] 3.5 Write unit tests for AulaStatusIndicator component
+- [x] 3.6 Create AulaStatusIndicator component with real-time status updates
+- [x] 3.7 Integrate components into existing gestao_fronteira attendance pages
+- [x] 3.8 Verify all component tests pass with mobile responsiveness
 
-### 4. Teacher Dashboard Integration
+### 4. ✅ Teacher Dashboard Integration (COMPLETED)
 
-- [ ] 4.1 Write tests for turma selection with aula status display
-- [ ] 4.2 Modify existing turma selection to show current aula status
-- [ ] 4.3 Update AttendanceGrid to respect aula aberta state
-- [ ] 4.4 Implement conditional rendering for attendance controls
-- [ ] 4.5 Add session timer and time-lock countdown display
-- [ ] 4.6 Write integration tests for complete dashboard workflow
-- [ ] 4.7 Test professor workflow from login to attendance submission
-- [ ] 4.8 Verify all dashboard integration tests pass
+- [x] 4.1 Write tests for turma selection with aula status display
+- [x] 4.2 Modify existing turma selection to show current aula status
+- [x] 4.3 Update AttendanceGrid to respect aula aberta state
+- [x] 4.4 Implement conditional rendering for attendance controls
+- [x] 4.5 Add session timer and time-lock countdown display
+- [x] 4.6 Write integration tests for complete dashboard workflow
+- [x] 4.7 Test professor workflow from login to attendance submission
+- [x] 4.8 Verify all dashboard integration tests pass
 
-### 5. Real-time Features Implementation
+### 5. ✅ Real-time Features Implementation (COMPLETED)
 
-- [ ] 5.1 Write tests for Supabase real-time subscriptions
-- [ ] 5.2 Set up real-time listener for aulas_abertas table changes
-- [ ] 5.3 Implement automatic UI updates on aula status transitions
-- [ ] 5.4 Add real-time notifications for session events
-- [ ] 5.5 Handle connection states and error recovery gracefully
-- [ ] 5.6 Test real-time features across multiple browser sessions
-- [ ] 5.7 Optimize subscription performance and memory cleanup
-- [ ] 5.8 Verify all real-time feature tests pass
+- [x] 5.1 Write tests for Supabase real-time subscriptions
+- [x] 5.2 Set up real-time listener for aulas_abertas table changes
+- [x] 5.3 Implement automatic UI updates on aula status transitions
+- [x] 5.4 Add real-time notifications for session events
+- [x] 5.5 Handle connection states and error recovery gracefully
+- [x] 5.6 Test real-time features across multiple browser sessions
+- [x] 5.7 Optimize subscription performance and memory cleanup
+- [x] 5.8 Verify all real-time feature tests pass
 
 ### 6. Testing and Integration
 
