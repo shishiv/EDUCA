@@ -129,11 +129,11 @@ export default function PerfilPage() {
                 </Avatar>
               </div>
               <CardTitle>{userProfile?.nome || 'Usuário'}</CardTitle>
-              <CardDescription>
+              <div className="flex justify-center mt-2">
                 <Badge variant="secondary">
                   {getRoleLabel(userProfile?.tipo_usuario || '')}
                 </Badge>
-              </CardDescription>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-3 text-sm">

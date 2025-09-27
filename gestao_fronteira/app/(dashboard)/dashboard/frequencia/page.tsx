@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { classesApi } from '@/lib/api/classes'
-import { AbrirAulaWorkflow } from '@/components/attendance/abrir-aula-workflow'
+import { AbrirAulaWorkflow } from '@/components/attendance/AbrirAulaWorkflow'
 import { AbrirAulaButton } from '@/components/attendance/abrir-aula-button'
 import { AulaStatusIndicatorEnhanced as AulaStatusIndicator } from '@/components/attendance/aula-status-indicator-enhanced'
-import { AttendanceMarkingMobile } from '@/components/attendance/attendance-marking-mobile'
+import { AttendanceGrid } from '@/components/attendance/AttendanceGrid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -65,7 +65,46 @@ export default function FrequenciaPage() {
 
     setLoading(true)
     try {
-      // Get classes assigned to the current teacher
+      // DEVELOPMENT MODE: Use mock data when Supabase isn't available
+      if (process.env.NODE_ENV === 'development') {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        const mockClasses: ClassInfo[] = [
+          {
+            id: 'turma-123',
+            nome: '5º Ano A',
+            serie: '5º Ano',
+            escola: {
+              id: 'escola-123',
+              nome: 'E.M. Monteiro Lobato'
+            },
+            professor: {
+              id: user.id,
+              nome: user.nome || 'Professor de Teste'
+            },
+            total_alunos: 25
+          },
+          {
+            id: 'turma-456',
+            nome: '3º Ano B',
+            serie: '3º Ano',
+            escola: {
+              id: 'escola-123',
+              nome: 'E.M. Monteiro Lobato'
+            },
+            professor: {
+              id: user.id,
+              nome: user.nome || 'Professor de Teste'
+            },
+            total_alunos: 22
+          }
+        ]
+        setClasses(mockClasses)
+        return
+      }
+
+      // Production code: Get classes assigned to the current teacher
       const teacherClasses = await classesApi.getClassesByTeacher(user.id)
       const formattedClasses: ClassInfo[] = teacherClasses.map(tc => ({
         id: (tc as any).id ?? '',
@@ -221,7 +260,7 @@ export default function FrequenciaPage() {
           </div>
         </div>
 
-        <AttendanceMarkingMobile
+        <AttendanceGrid
           classId={pageState.selectedClass.id}
           sessionId={pageState.sessionData.id || 'mock-session'}
           sessionDate={new Date().toISOString().split('T')[0]}

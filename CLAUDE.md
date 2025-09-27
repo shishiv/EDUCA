@@ -39,20 +39,20 @@ This is a multi-project educational management system repository for the Municip
 - **State Management**: Zustand 5.0.8 + TanStack Query 5.87.4
 - **Testing**: Jest + React Testing Library + Playwright
 - **TypeScript**: 5.9.2 (strict mode)
-- **Package Manager**: **bun** (MANDATORY - 3x faster than npm, required for all projects)
+- **Package Manager**: **bun** (MANDATORY - 3x faster than other package managers, required for all projects; npm, yarn, and pnpm are explicitly prohibited)
 
 ## Development Commands
 
 ### ⚠️ MANDATORY: Use bun for ALL package management operations
 
-**CRITICAL: Claude Code MUST use bun exclusively. Never use npm, yarn, or pnpm. All commands should use bun.**
+**CRITICAL: Claude Code MUST use bun exclusively. npm, yarn, and pnpm are explicitly blocked and must never be used under any circumstances. All commands should use bun.**
 
 ### gestao_fronteira (Primary Production Project):
 ```bash
 cd gestao_fronteira/
 
-# Package management (ALWAYS use bun, never npm/yarn/pnpm)
-bun install             # Install dependencies (3x faster than npm)
+# Package management (ALWAYS use bun; npm, yarn, pnpm are blocked)
+bun install             # Install dependencies (fast execution)
 bun add [package]       # Add new dependencies
 bun remove [package]    # Remove dependencies
 bun update              # Update dependencies
@@ -482,7 +482,7 @@ PERFORMANCE_MONITORING_KEY=your_key
    curl -fsSL https://bun.sh/install | bash
    ```
 2. Clone repository and choose target project
-3. Install dependencies (`bun install`) - NEVER use npm/yarn/pnpm
+3. Install dependencies (`bun install`) - npm, yarn, pnpm are blocked and must never be used
 4. Copy `.env.example` to `.env.local` and configure Supabase
 5. Run `supabase start` for local database
 6. Apply migrations: `supabase db push`
@@ -668,3 +668,4 @@ bun run test:e2e     # End-to-end tests
 - **API Documentation**: Government integration and educational workflows
 
 **Focus**: Leverage `gestao_fronteira` as the production foundation with 80% MVP completion. Prioritize Brazilian educational domain compliance and municipal deployment readiness.
+- Garantia de UI/UX com Playwright ## 1. Filosofia Central e Fluxo de Trabalho (TDD) * **Prioridade:** A qualidade do código (limpeza e testes) e a experiência do usuário (UI/UX) são a prioridade máxima. * **Fluxo de Trabalho:** Adote o Desenvolvimento Orientado por Testes (TDD) [1, 6]. * Antes de implementar qualquer nova funcionalidade ou fluxo de usuário, **primeiro escreva os testes de ponta a ponta (End-to-End - E2E)** focados no comportamento [6]. * **Gestão de Código:** * Sempre crie uma nova branch para funcionalidades ou correções (feature/* ou fix/*) [3]. * **NUNCA** faça *push* diretamente para a branch main [3]. ## 2. Regras para o Playwright MCP (Model Context Protocol) **O Playwright MCP fornece a visão visual da UI e o contexto do navegador, o que é crucial para encontrar 99% dos erros difíceis de front-end [4, 5, 7].** ### 2.1. Uso Mandatório do Playwright * Sempre que você criar uma página, alterar o front-end, ou implementar um novo fluxo de usuário, **você deve usar o Playwright MCP** para verificar o resultado no navegador [8]. * Gere testes E2E focados no **fluxo de usuário** e não em detalhes específicos de implementação [6]. ### 2.2. Verificações Essenciais de UI/UX O Playwright MCP deve ser usado para garantir as seguintes verificações visuais em **todas as páginas e links** do projeto [8, 9]: * **Responsividade:** A página deve ter uma **boa aparência no desktop e no mobile** [8]. * **Contraste de Cores:** Verifique o contraste das cores, inspecionando o estilo computado para garantir a acessibilidade [9]. Não utilize combinações de cores ruins (ex: cor de fonte escura em fundo escuro, ou clara em fundo claro) [8]. * **Formatação:** Garanta que **não há formatação estranha** (e.g., quebras de linha inesperadas, desalinhamentos) e que a página pareça **profissional** [8]. ## 3. Estratégias de Debugging e Análise de Contexto * **Contexto do Navegador:** Em caso de um bug no front-end que o Claude não consiga identificar apenas olhando o código do servidor, instrua-o a **processar o código que está realmente sendo executado no navegador** (código do lado do cliente: HTML, CSS, JavaScript) [10, 11]. * **Screenshots:** Utilize screenshots de problemas de UI como entrada para o prompt. Isso fornece ao Claude o contexto visual necessário para fazer a correção [12]. ## 4. Revisão e Design * **Documentação de UI/UX:** Sempre que uma decisão de design significativa for tomada, atualize este arquivo claude.md ou crie documentos de requisitos (.md) para que o Claude possa referenciá-los [13, 14]. * **Agentes Especializados:** Se houver um sub-agente especializado para design (ex: UXReviewer), o Claude deve delegar explicitamente a revisão de grandes alterações de UI a ele [15-17].

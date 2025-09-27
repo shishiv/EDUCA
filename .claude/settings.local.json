@@ -154,7 +154,22 @@
       "Bash(bash)",
       "Bash(pnpm test:*)",
       "Bash(git branch:*)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "Bash(bun run:*)",
+      "Bash(bun install:*)",
+      "Bash(export BUN_INSTALL=\"$HOME/.bun\")",
+      "Bash(export PATH=\"$BUN_INSTALL/bin:$PATH\")",
+      "mcp__playwright__browser_install",
+      "Bash(bun add:*)",
+      "Bash(bunx playwright:*)",
+      "WebFetch(domain:localhost)",
+      "mcp__Bright_Data__scrape_as_markdown",
+      "Bash(export PATH=\"C:\\Users\\Desenvolvimento\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\\bun-windows-x64:$PATH\")",
+      "Bash(bun:*)",
+      "Bash(timeout:*)",
+      "mcp__playwright__browser_navigate_back",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_evaluate"
     ],
     "deny": [],
     "ask": []
