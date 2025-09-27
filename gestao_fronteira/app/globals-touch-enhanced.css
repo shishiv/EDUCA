@@ -1,0 +1,323 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base touch and accessibility enhancements */
+@layer base {
+  /* Touch target minimum sizes for accessibility */
+  .touch-target-large {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target-medium {
+    min-height: 36px;
+    min-width: 36px;
+  }
+
+  /* Touch manipulation for better mobile experience */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Focus styles for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Improved tap highlighting */
+  button, [role="button"], a {
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+  }
+
+  /* Custom scrollbars for better mobile experience */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .border {
+      border-width: 2px;
+    }
+
+    .text-muted-foreground {
+      color: #000000;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Enhanced button variants for touch */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+
+  .btn-touch-sm {
+    @apply min-h-[36px] min-w-[36px] touch-manipulation;
+  }
+
+  /* Card hover effects optimized for touch */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md;
+  }
+
+  /* Sidebar transition for smooth collapse/expand */
+  .sidebar-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Attendance grid specific styles */
+  .attendance-card {
+    @apply card-hover border-2 transition-all duration-200;
+  }
+
+  .attendance-card.selected {
+    @apply border-blue-500 bg-blue-50;
+  }
+
+  .attendance-card.marked {
+    @apply border-green-500 bg-green-50;
+  }
+
+  /* Mobile header specific styles */
+  .mobile-header {
+    @apply sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur;
+  }
+
+  /* Form enhancements */
+  .form-field-enhanced {
+    @apply relative;
+  }
+
+  .form-field-enhanced input:focus + label,
+  .form-field-enhanced input:not(:placeholder-shown) + label {
+    @apply transform -translate-y-2 scale-75 bg-white px-1 text-primary;
+  }
+
+  /* Status indicators */
+  .status-presente {
+    @apply bg-green-100 border-green-200 text-green-800;
+  }
+
+  .status-falta {
+    @apply bg-red-100 border-red-200 text-red-800;
+  }
+
+  .status-justificada {
+    @apply bg-orange-100 border-orange-200 text-orange-800;
+  }
+
+  .status-atestado {
+    @apply bg-blue-100 border-blue-200 text-blue-800;
+  }
+
+  /* Brazilian color scheme */
+  .fronteira-primary {
+    color: #1e40af; /* Blue 700 */
+  }
+
+  .fronteira-primary-foreground {
+    color: #ffffff;
+  }
+
+  .fronteira-gray-50 {
+    color: #f9fafb;
+  }
+
+  .fronteira-gray-100 {
+    color: #f3f4f6;
+  }
+
+  .fronteira-gray-500 {
+    color: #6b7280;
+  }
+
+  .fronteira-red {
+    color: #dc2626;
+  }
+}
+
+@layer utilities {
+  /* Tablet-specific responsive utilities */
+  .tablet-only {
+    @apply hidden md:block lg:hidden;
+  }
+
+  .mobile-tablet {
+    @apply block lg:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden lg:block;
+  }
+
+  /* Text truncation utilities */
+  .truncate-2-lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3-lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Accessibility utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Focus trap utilities */
+  .focus-trap {
+    @apply focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2;
+  }
+
+  /* Animation utilities for micro-interactions */
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-in;
+  }
+}
+
+/* Keyframe animations */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Brazilian educational context specific styles */
+.brasao-brasil {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.compliance-banner {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.legal-warning {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.inep-compliant {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+/* Print styles for educational reports */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-break-before {
+    page-break-before: always;
+  }
+
+  .print-break-after {
+    page-break-after: always;
+  }
+
+  .print-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Header for printed reports */
+  .print-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: white;
+    border-bottom: 2px solid #000;
+    padding: 20px;
+  }
+
+  /* Footer for printed reports */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: white;
+    border-top: 1px solid #000;
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+}

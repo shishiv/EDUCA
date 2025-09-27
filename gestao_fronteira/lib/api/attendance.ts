@@ -2,6 +2,7 @@
 
 import { BaseApiService } from './base'
 import { supabase, Tables } from '@/lib/supabase'
+import { attendanceImmutability } from '@/lib/services/attendance-immutability'
 
 export interface AttendanceSession {
   id: string
@@ -132,7 +133,7 @@ export class AttendanceApiService extends BaseApiService {
     }
   }
 
-  // Save attendance records for a session
+  // Save attendance records for a session with enhanced immutability
   async saveAttendanceRecords(
     sessionId: string,
     turmaId: string,
@@ -140,55 +141,35 @@ export class AttendanceApiService extends BaseApiService {
     records: { student_id: string; status: 'presente' | 'falta' | 'justificada' | 'atestado'; observacoes?: string }[]
   ): Promise<AttendanceRecord[]> {
     try {
-      // CRITICAL: Check session status first - immutability enforcement
-      const session = await supabase
-        .from('sessoes_aula')
-        .select('status')
-        .eq('id', sessionId)
-        .single()
+      // Get current user for audit trail (in a real app, this would come from auth context)
+      const { data: { user } } = await supabase.auth.getUser()
+      const userId = user?.id || 'unknown'
 
-      if (session.error) throw session.error
+      // Use enhanced immutability service
+      const result = await attendanceImmutability.createImmutableAttendanceRecords(
+        sessionId,
+        records,
+        userId
+      )
 
-      if (session.data.status === 'fechada') {
-        throw new Error('ERRO_IMUTABILIDADE: Esta sessão já foi finalizada e os registros não podem ser alterados. Conforme legislação educacional brasileira, registros de frequência são documentos oficiais imutáveis.')
+      if (!result.success) {
+        // Transform immutability error into standard error format
+        const error = result.error!
+        throw new Error(`${error.code}: ${error.message}`)
       }
 
-      // Check if attendance records already exist (immutability enforcement)
-      const existingRecords = await supabase
-        .from('frequencia')
-        .select('id')
-        .eq('sessao_id', sessionId)
-
-      if (existingRecords.error) throw existingRecords.error
-
-      if (existingRecords.data.length > 0) {
-        throw new Error('ERRO_IMUTABILIDADE: Registros de frequência já existem para esta sessão e não podem ser alterados. Este é o documento oficial conforme a lei brasileira.')
-      }
-
-      // Insert new records (first and only time)
-      const attendanceData = records.map(record => ({
-        sessao_id: sessionId,
-        aluno_id: record.student_id,
-        turma_id: turmaId,
-        data: date,
-        status: record.status,
-        observacoes: record.observacoes,
-        created_at: new Date().toISOString()
-      }))
-
-      const { data, error } = await supabase
-        .from('frequencia')
-        .insert(attendanceData)
-        .select()
-
-      if (error) throw error
-
-      // After saving attendance, automatically close the session to enforce immutability
-      await this.closeSession(sessionId)
-
-      return data as AttendanceRecord[]
+      return result.data!
     } catch (error) {
-      // console.error('Error saving attendance records:', error)
+      // Enhanced error logging for legal compliance
+      console.error('Attendance save error:', {
+        sessionId,
+        turmaId,
+        date,
+        recordCount: records.length,
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      })
+
       throw error
     }
   }
@@ -483,6 +464,62 @@ export class AttendanceApiService extends BaseApiService {
     } catch (error) {
       // console.error('Error fetching attendance by date range:', error)
       throw error
+    }
+  }
+
+  // Get legal compliance report for a session
+  async getLegalComplianceReport(sessionId: string) {
+    try {
+      return await attendanceImmutability.generateLegalComplianceReport(sessionId)
+    } catch (error) {
+      console.error('Error generating legal compliance report:', error)
+      throw error
+    }
+  }
+
+  // Get audit trail for a session
+  async getSessionAuditTrail(sessionId: string) {
+    try {
+      return await attendanceImmutability.getSessionAuditTrail(sessionId)
+    } catch (error) {
+      console.error('Error fetching session audit trail:', error)
+      throw error
+    }
+  }
+
+  // Verify record integrity
+  async verifyAttendanceIntegrity(recordId: string) {
+    try {
+      return await attendanceImmutability.verifyRecordIntegrity(recordId, 'attendance')
+    } catch (error) {
+      console.error('Error verifying attendance integrity:', error)
+      throw error
+    }
+  }
+
+  // Check if modification is allowed (for UI purposes)
+  async canModifyAttendance(sessionId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const userId = user?.id || 'unknown'
+
+      const permission = await attendanceImmutability.validateModificationPermission(
+        sessionId,
+        userId,
+        'UPDATE'
+      )
+
+      return {
+        allowed: permission.allowed,
+        reason: permission.error?.message || null,
+        legalReference: permission.error?.legalReference || null
+      }
+    } catch (error) {
+      return {
+        allowed: false,
+        reason: 'Erro ao verificar permissões de modificação',
+        legalReference: null
+      }
     }
   }
 }

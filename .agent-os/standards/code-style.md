@@ -19,9 +19,11 @@ ELSE:
 - Align nested structures for readability
 
 ### Naming Conventions
-- **Methods and Variables**: Use snake_case (e.g., `user_profile`, `calculate_total`)
-- **Classes and Modules**: Use PascalCase (e.g., `UserProfile`, `PaymentProcessor`)
-- **Constants**: Use UPPER_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`)
+- **TypeScript/JavaScript Variables and Functions**: Use camelCase (e.g., `userProfile`, `calculateTotal`)
+- **TypeScript Interfaces and Types**: Use PascalCase (e.g., `UserProfile`, `StudentData`)
+- **React Components**: Use PascalCase (e.g., `StudentForm`, `AttendanceGrid`)
+- **Constants**: Use UPPER_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`, `INEP_API_URL`)
+- **File Names**: Use kebab-case for components (e.g., `student-form.tsx`, `attendance-grid.tsx`)
 
 ### String Formatting
 - Use single quotes for strings: `'Hello World'`
@@ -74,4 +76,81 @@ IF current task involves writing or updating JavaScript:
     </context_fetcher_strategy>
 ELSE:
   SKIP: JavaScript style guide not relevant to current task
+</conditional-block>
+
+<conditional-block task-condition="typescript" context-check="typescript-style">
+IF current task involves writing or updating TypeScript:
+  IF typescript-style.md already in context:
+    SKIP: Re-reading this file
+    NOTE: "Using TypeScript style guide already in context"
+  ELSE:
+    <context_fetcher_strategy>
+      IF current agent is Claude Code AND context-fetcher agent exists:
+        USE: @agent:context-fetcher
+        REQUEST: "Get TypeScript style rules from code-style/typescript-style.md"
+        PROCESS: Returned style rules
+      ELSE:
+        READ: @.agent-os/standards/code-style/typescript-style.md
+    </context_fetcher_strategy>
+ELSE:
+  SKIP: TypeScript style guide not relevant to current task
+</conditional-block>
+
+<conditional-block task-condition="package-management" context-check="bun-requirements">
+IF current task involves installing packages or running scripts:
+  IF Package Management section already read in current context:
+    SKIP: Re-reading this section
+    NOTE: "Using Package Management requirements already in context"
+  ELSE:
+    READ: The following package management requirements
+
+## Package Management Requirements
+
+### Mandatory bun Usage
+**CRITICAL**: Use `bun` exclusively for ALL package operations:
+```bash
+# Installation (never npm install)
+bun install
+
+# Adding packages (never npm install [package])
+bun add [package]
+bun add -d [dev-package]  # Development dependencies
+
+# Removing packages (never npm uninstall)
+bun remove [package]
+
+# Running scripts (never npm run)
+bun run dev
+bun run build
+bun run test
+bun run lint
+bun run typecheck
+
+# Testing (never npm test)
+bun test
+bun test --watch
+```
+
+### File Extensions and Commands
+- Use `bun` prefix for all package.json scripts
+- TypeScript files: `.ts` for utilities, `.tsx` for React components
+- Configuration files: Prefer TypeScript versions (e.g., `tailwind.config.ts`)
+</conditional-block>
+
+<conditional-block task-condition="nextjs-app-router" context-check="nextjs-style">
+IF current task involves Next.js development:
+  IF nextjs-style.md already in context:
+    SKIP: Re-reading this file
+    NOTE: "Using Next.js style guide already in context"
+  ELSE:
+    <context_fetcher_strategy>
+      IF current agent is Claude Code AND context-fetcher agent exists:
+        USE: @agent:context-fetcher
+        REQUEST: "Get Next.js style rules from code-style/nextjs-style.md"
+        PROCESS: Returned style rules
+      ELSE:
+        READ: @.agent-os/standards/code-style/nextjs-style.md
+    </context_fetcher_strategy>
+ELSE:
+  SKIP: Next.js style guide not relevant to current task
 </conditional-block>
