@@ -93,40 +93,61 @@ export function Sidebar({ className }: SidebarProps) {
       className
     )}>
       {/* Municipal Header */}
-      <div className="flex items-center justify-between p-4 border-b border-fronteira-gray-100 bg-gradient-to-r from-fronteira-primary/5 to-transparent">
-        <div className={cn(
-          "flex items-center space-x-3 sidebar-transition",
-          collapsed && "opacity-0"
-        )}>
-          {/* Municipal Brasão */}
-          <div className="flex-shrink-0">
+      <div className="flex items-center justify-between px-4 h-[73px] border-b border-fronteira-gray-100 bg-gradient-to-r from-fronteira-primary/5 via-fronteira-primary/3 to-transparent">
+        {collapsed ? (
+          /* Collapsed state - show only small icon */
+          <div className="flex items-center justify-center w-full">
             <MunicipalBrasao size="sm" priority />
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-fronteira-primary">Sistema Escolar</h2>
-            <p className="text-xs text-fronteira-gray-500">Prefeitura de Fronteira/MG</p>
+        ) : (
+          /* Expanded state - show full identity */
+          <div className="flex items-center space-x-3 sidebar-transition">
+            {/* Municipal Brasão */}
+            <div className="flex-shrink-0">
+              <MunicipalBrasao size="sm" priority />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-fronteira-primary">Sistema Escolar</h2>
+              <p className="text-xs text-fronteira-gray-500">Prefeitura de Fronteira/MG</p>
+            </div>
           </div>
-        </div>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 p-0 text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+        )}
+
       </div>
+
+      {/* Subtle side expand button when collapsed */}
+      {collapsed && (
+        <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-6 w-6 p-0 rounded-full bg-white border border-fronteira-gray-200 text-fronteira-gray-400 hover:text-fronteira-primary hover:bg-fronteira-primary/5 hover:border-fronteira-primary/20 shadow-sm transition-all duration-200"
+          >
+            <ChevronRight className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      {/* Subtle side collapse button when expanded */}
+      {!collapsed && (
+        <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-6 w-6 p-0 rounded-full bg-white border border-fronteira-gray-200 text-fronteira-gray-400 hover:text-fronteira-primary hover:bg-fronteira-primary/5 hover:border-fronteira-primary/20 shadow-sm transition-all duration-200"
+          >
+            <ChevronLeft className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
 
       {/* Navigation */}
       <ScrollArea className="flex-1 p-4">
         <nav className="space-y-2">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
             return (
               <Link key={item.name} href={item.href}>
                 <Button

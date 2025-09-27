@@ -51,7 +51,7 @@ const mockWarnings: ComplianceWarning[] = [
     actionRequired: true,
     actionUrl: '/dashboard/frequencia',
     actionText: 'Verificar Frequência',
-    dismissible: false,
+    dismissible: true,
     created_at: new Date()
   },
   {
@@ -216,7 +216,7 @@ export default function ComplianceWarningBanner({
     <div
       className={cn(
         'w-full space-y-2 z-40',
-        position === 'top' && 'fixed top-16 left-0 right-0 px-4',
+        position === 'top' && 'px-4 py-2',
         position === 'bottom' && 'fixed bottom-0 left-0 right-0 px-4 pb-4',
         position === 'inline' && 'relative'
       )}

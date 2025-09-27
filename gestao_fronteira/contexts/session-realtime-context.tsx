@@ -8,7 +8,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { SessionRealtimeManager, type SessionRealtimeData, type AttendanceStats, type SessionRealtimeCallbacks } from '@/lib/realtime/session-realtime'
-import { toast } from '@/components/ui/use-toast'
+import { toast } from '@/hooks/use-toast'
 
 // Context Types
 interface SessionRealtimeContextValue {

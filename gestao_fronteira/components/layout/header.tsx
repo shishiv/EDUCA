@@ -14,14 +14,40 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MunicipalHeaderIdentity } from '@/components/identity/municipal-assets'
-import ComplianceWarningBanner from '@/components/compliance/compliance-warning-banner'
-import { Bell, LogOut, User, Settings, Wifi, WifiOff } from 'lucide-react'
+import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
 export function Header() {
   const { userProfile, signOut } = useAuth()
   const { connectionStatus, notifications, clearNotification } = useSessionRealtime()
+
+  // Mock compliance notifications - in production, this would come from API
+  const complianceNotifications = [
+    {
+      id: 'attendance-lock-pending',
+      title: 'Bloqueio Automático de Frequência',
+      message: 'As sessões de hoje serão bloqueadas automaticamente às 18:00. Confirme toda a frequência antes deste horário.',
+      type: 'critical' as const,
+      icon: Clock,
+      actionUrl: '/dashboard/frequencia',
+      actionText: 'Verificar Frequência',
+      deadline: new Date(Date.now() + 2 * 60 * 60 * 1000) // 2 hours from now
+    },
+    {
+      id: 'educacenso-deadline',
+      title: 'Prazo Educacenso 2025',
+      message: 'Primeira etapa de coleta termina em 15 dias. Verifique se todos os dados de matrícula estão atualizados.',
+      type: 'warning' as const,
+      icon: FileText,
+      actionUrl: '/dashboard/relatorios/educacenso',
+      actionText: 'Revisar Dados',
+      deadline: new Date('2025-07-31')
+    }
+  ]
+
+  // Combine system notifications with compliance notifications
+  const allNotifications = [...notifications, ...complianceNotifications]
 
   const handleSignOut = async () => {
     try {
@@ -30,6 +56,22 @@ export function Header() {
     } catch (error) {
       toast.error('Erro ao fazer logout')
     }
+  }
+
+  const formatTimeRemaining = (deadline: Date) => {
+    const now = new Date()
+    const diff = deadline.getTime() - now.getTime()
+
+    if (diff <= 0) return 'Vencido'
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(hours / 24)
+
+    if (days > 0) return `${days} dia${days !== 1 ? 's' : ''}`
+    if (hours > 0) return `${hours} hora${hours !== 1 ? 's' : ''}`
+
+    const minutes = Math.floor(diff / (1000 * 60))
+    return `${minutes} minuto${minutes !== 1 ? 's' : ''}`
   }
 
   const getInitials = (name: string) => {
@@ -54,114 +96,173 @@ export function Header() {
 
   return (
     <>
-      <header className="hidden md:flex items-center justify-between px-6 py-3 bg-white border-b border-fronteira-gray-100 shadow-sm">
+      <header className="hidden md:flex items-center justify-end px-8 h-[73px] bg-gradient-to-r from-white via-fronteira-gray-50/30 to-fronteira-primary/8 border-b border-fronteira-gray-100 shadow-sm backdrop-blur-sm">
         <div className="flex items-center space-x-6">
-          {/* Municipal Identity Section */}
-          <MunicipalHeaderIdentity variant="full" className="flex-shrink-0" />
-
-          {/* System Title with Municipal Context */}
-          <div className="hidden md:flex flex-col border-l border-fronteira-gray-100 pl-6">
-            <h1 className="text-lg font-bold text-fronteira-primary">
-              Sistema de Gestão Escolar
-            </h1>
-            <p className="text-sm text-fronteira-gray-500">
-              Secretaria Municipal de Educação
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {/* Connection Status */}
-          <div className="flex items-center gap-2" title={`Conexão: ${connectionStatus}`}>
+          {/* Enhanced Connection Status */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 shadow-sm border border-fronteira-gray-200" title={`Conexão: ${connectionStatus}`}>
             {connectionStatus === 'connected' ? (
               <Wifi className="h-4 w-4 text-green-500" />
             ) : (
               <WifiOff className="h-4 w-4 text-red-500" />
             )}
-            <span className="text-xs text-muted-foreground hidden lg:inline">
+            <span className="text-xs font-medium text-gray-600 hidden lg:inline">
               {connectionStatus === 'connected' ? 'Online' : 'Offline'}
             </span>
           </div>
 
-          {/* User Info - Hidden on Mobile */}
-          <div className="hidden lg:flex flex-col text-right">
-            <p className="text-sm font-medium text-fronteira-primary">
+          {/* Enhanced User Info */}
+          <div className="hidden lg:flex flex-col items-end px-4 py-2 rounded-lg bg-white/80 shadow-sm border border-fronteira-gray-200">
+            <p className="text-sm font-semibold text-fronteira-primary">
               {userProfile?.nome || 'Usuário'}
             </p>
-            <p className="text-xs text-fronteira-gray-500">
+            <p className="text-xs text-fronteira-gray-600 font-medium">
               {getRoleLabel(userProfile?.tipo_usuario || '')}
             </p>
           </div>
 
-          {/* Notificações with count */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="relative text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
-          >
-            <Bell className="h-5 w-5" />
-            {notifications.length > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+          {/* Enhanced Notifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative h-10 w-10 rounded-full bg-white/80 hover:bg-white shadow-sm border border-fronteira-gray-200 text-fronteira-gray-600 hover:text-fronteira-primary transition-all duration-200"
               >
-                {notifications.length > 9 ? '9+' : notifications.length}
-              </Badge>
-            )}
-          </Button>
+                <Bell className="h-5 w-5" />
+                {allNotifications.length > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-600 shadow-lg animate-pulse"
+                  >
+                    {allNotifications.length > 9 ? '9+' : allNotifications.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-96 max-h-96 overflow-y-auto shadow-xl border-0 ring-1 ring-black/5" align="end">
+              <DropdownMenuLabel className="font-semibold text-fronteira-primary">
+                Notificações do Sistema
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allNotifications.length > 0 ? (
+                allNotifications.map((notification, index) => {
+                  const Icon = notification.icon || Bell
+                  const isCompliance = 'deadline' in notification
+                  return (
+                    <DropdownMenuItem
+                      key={notification.id || index}
+                      className="p-4 hover:bg-fronteira-primary/5 cursor-pointer"
+                      onClick={() => {
+                        if (notification.actionUrl) {
+                          window.location.href = notification.actionUrl
+                        }
+                      }}
+                    >
+                      <div className="flex items-start space-x-3 w-full">
+                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                          notification.type === 'critical'
+                            ? 'bg-red-100 text-red-600'
+                            : notification.type === 'warning'
+                            ? 'bg-yellow-100 text-yellow-600'
+                            : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-gray-900 mb-1">
+                                {notification.title}
+                              </p>
+                              <p className="text-xs text-gray-600 leading-relaxed">
+                                {notification.message}
+                              </p>
+                              {isCompliance && notification.deadline && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs ${
+                                      notification.type === 'critical'
+                                        ? 'border-red-200 bg-red-50 text-red-800'
+                                        : 'border-yellow-200 bg-yellow-50 text-yellow-800'
+                                    }`}
+                                  >
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {formatTimeRemaining(notification.deadline)}
+                                  </Badge>
+                                </div>
+                              )}
+                              {notification.actionText && notification.actionUrl && (
+                                <div className="flex items-center gap-1 mt-2 text-xs text-fronteira-primary hover:text-fronteira-blue">
+                                  <span>{notification.actionText}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  )
+                })
+              ) : (
+                <DropdownMenuItem disabled className="p-3">
+                  <div className="flex items-center space-x-3 text-gray-500">
+                    <Bell className="h-4 w-4" />
+                    <span className="text-sm">Nenhuma notificação</span>
+                  </div>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/* Profile Menu */}
+        {/* Enhanced Profile Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-fronteira-gray-50">
+            <Button variant="ghost" className="relative h-12 w-12 rounded-full bg-white/90 hover:bg-white shadow-md border border-fronteira-gray-200 transition-all duration-200 hover:shadow-lg">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-fronteira-primary text-fronteira-primary-foreground">
+                <AvatarFallback className="bg-gradient-to-r from-fronteira-primary to-fronteira-blue text-white font-bold text-sm">
                   {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
+          <DropdownMenuContent className="w-64 shadow-xl border-0 ring-1 ring-black/5" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal p-4">
+              <div className="flex flex-col space-y-2">
+                <p className="text-sm font-semibold leading-none text-fronteira-primary">
                   {userProfile?.nome || 'Usuário'}
                 </p>
-                <p className="text-xs leading-none text-muted-foreground">
+                <p className="text-xs leading-none text-fronteira-gray-600">
                   {getRoleLabel(userProfile?.tipo_usuario || '')}
                 </p>
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <p className="text-xs text-gray-500">Sistema Educacional Fronteira/MG</p>
+                </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="p-3 hover:bg-fronteira-primary/5">
               <Link href="/dashboard/perfil">
-                <User className="mr-2 h-4 w-4" />
-                <span>Meu Perfil</span>
+                <User className="mr-3 h-4 w-4 text-fronteira-primary" />
+                <span className="font-medium">Meu Perfil</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="p-3 hover:bg-fronteira-primary/5">
               <Link href="/dashboard/configuracoes">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Configurações</span>
+                <Settings className="mr-3 h-4 w-4 text-fronteira-primary" />
+                <span className="font-medium">Configurações</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-fronteira-red hover:text-fronteira-red hover:bg-red-50">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair</span>
+            <DropdownMenuItem onClick={handleSignOut} className="p-3 text-red-600 hover:text-red-700 hover:bg-red-50 font-medium">
+              <LogOut className="mr-3 h-4 w-4" />
+              <span>Sair do Sistema</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-    </header>
-
-    {/* Brazilian Compliance Warning Banner */}
-    <ComplianceWarningBanner
-      position="top"
-      maxVisible={2}
-      autoRefresh={true}
-      onWarningDismiss={clearNotification}
-    />
+        </div>
+      </header>
     </>
   )
 }

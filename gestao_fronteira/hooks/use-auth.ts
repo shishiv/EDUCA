@@ -14,57 +14,94 @@ export function useAuth() {
     // Get current user
     const getUser = async () => {
       try {
+        // Check for development bypass first
+        if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+          const devBypass = localStorage.getItem('dev_auth_bypass')
+          const devProfile = localStorage.getItem('dev_user_profile')
+
+          // If we have development bypass enabled, use it exclusively
+          if (devBypass === 'true') {
+            if (devProfile) {
+              const profile = JSON.parse(devProfile)
+              const mockUser = {
+                id: profile.id,
+                email: profile.email,
+                user_metadata: {},
+                app_metadata: {},
+                aud: 'authenticated',
+                created_at: profile.created_at
+              } as User
+
+              setUser(mockUser)
+              setUserProfile(profile)
+              setLoading(false)
+              return
+            } else {
+              // Development bypass is enabled but no profile, clear auth state
+              setUser(null)
+              setUserProfile(null)
+              setLoading(false)
+              return
+            }
+          }
+        }
+
+        // Only use Supabase if not in development bypass mode
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
 
         if (user) {
           // Fetch real user profile
-          // console.log('Fetching profile for user:', user.id)
           const profile = await getUserProfile(user.id)
-          // console.log('Profile loaded:', profile)
           setUserProfile(profile)
-        } else {
-          // console.log('No authenticated user found')
         }
 
         setLoading(false)
-        // console.log('Auth loading complete')
       } catch (error) {
-        // console.error('Error getting user:', error)
+        console.error('Error getting user:', error)
         setLoading(false)
       }
     }
 
     getUser()
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null)
+    // Listen for auth changes only if not in development bypass mode
+    let subscription: any = null
 
-        if (session?.user) {
-          try {
-            // Fetch real user profile
-            const profile = await getUserProfile(session.user.id)
-            setUserProfile(profile)
-          } catch (error) {
-            // console.error('Error fetching user profile:', error)
+    if (process.env.NODE_ENV !== 'development' ||
+        (typeof window !== 'undefined' && localStorage.getItem('dev_auth_bypass') !== 'true')) {
+      const result = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setUser(session?.user ?? null)
+
+          if (session?.user) {
+            try {
+              // Fetch real user profile
+              const profile = await getUserProfile(session.user.id)
+              setUserProfile(profile)
+            } catch (error) {
+              setUserProfile(null)
+            }
+          } else {
             setUserProfile(null)
-          }
-        } else {
-          setUserProfile(null)
 
-          // Log session expired if event indicates it
-          if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
-            await logAuthEvent('session_expired')
+            // Log session expired if event indicates it
+            if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+              await logAuthEvent('session_expired')
+            }
           }
+
+          setLoading(false)
         }
+      )
+      subscription = result.data.subscription
+    }
 
-        setLoading(false)
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe()
       }
-    )
-
-    return () => subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
