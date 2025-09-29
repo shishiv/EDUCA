@@ -1,24 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/types/database'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Enhanced Supabase client with JWT token configuration
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'gestao-fronteira@1.0.0',
-    },
-  },
-})
+// Enhanced Supabase client with proper SSR cookie handling
+export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
 
 // Alternative: Mock client for development (comment out when using real Supabase)
 

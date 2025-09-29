@@ -39,6 +39,7 @@ export function MunicipalBrasao({
       className={cn(
         'object-contain',
         'drop-shadow-sm', // Subtle shadow for better visibility
+        'w-auto h-auto', // Maintain aspect ratio
         className
       )}
       priority={priority}

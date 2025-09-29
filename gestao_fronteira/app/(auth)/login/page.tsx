@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { MunicipalLogo } from '@/components/identity/municipal-assets'
-import { DevAuthBypass } from '@/components/debug/dev-auth-bypass'
 import { Loader2, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -28,35 +27,10 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // Development mode bypass when Supabase is unavailable
-      if (process.env.NODE_ENV === 'development' && email === 'admin@fronteira.mg.gov.br') {
-        // Clear any existing session data
-        localStorage.removeItem('dev_user_profile')
-        localStorage.removeItem('dev_selected_role')
-        // Set development bypass flag
-        localStorage.setItem('dev_auth_bypass', 'true')
-        // Simulate successful login for development
-        toast.success('Login realizado com sucesso! (Modo desenvolvimento)')
-        router.push('/role-selection')
-        return
-      }
-
       await signIn(email, password)
       toast.success('Login realizado com sucesso!')
       router.push('/dashboard')
     } catch (err: any) {
-      // In development, allow bypass for admin user
-      if (process.env.NODE_ENV === 'development' && email === 'admin@fronteira.mg.gov.br') {
-        // Clear any existing session data
-        localStorage.removeItem('dev_user_profile')
-        localStorage.removeItem('dev_selected_role')
-        // Set development bypass flag
-        localStorage.setItem('dev_auth_bypass', 'true')
-        toast.success('Login realizado com sucesso! (Modo desenvolvimento)')
-        router.push('/role-selection')
-        return
-      }
-
       setError(err.message || 'Erro ao fazer login')
       toast.error('Erro ao fazer login')
     } finally {
@@ -173,7 +147,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {process.env.NODE_ENV === 'development' && <DevAuthBypass />}
     </div>
   )
 }

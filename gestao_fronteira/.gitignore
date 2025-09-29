@@ -3,6 +3,11 @@
 # reference
 /i-educar-reference
 
+# Development artifacts
+.playwright-mcp/
+.agent-os/
+.claude/agents/
+
 # dependencies
 /node_modules
 /.pnp
@@ -37,3 +42,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Temporary and backup files
+*.backup
+*.bak
+*.old
+*-fixed.*
+*-temp.*
+*-tmp.*
+
+# Analysis and reports (keep in docs/ only)
+*-report.md
+*-findings.md
+*-analysis.md
+CODEBASE_ANALYSIS.md
+*UX_*.md
+*_UX_*.md

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -50,10 +51,23 @@ export default function UsuariosPage() {
 
   const loadUsuarios = async () => {
     try {
-      const data = await usersApi.getUsersWithSchool()
-      setUsuarios(data)
+      console.log('Loading usuarios...')
+      // Simple query without joins first
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('ativo', true)
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+
+      console.log('Success! Users found:', data?.length)
+      console.log('Users data:', data)
+      setUsuarios(data || [])
     } catch (error) {
-      // console.error('Erro ao carregar usuários:', error)
+      console.error('Erro ao carregar usuários:', error)
       toast.error('Erro ao carregar lista de usuários')
     } finally {
       setLoading(false)

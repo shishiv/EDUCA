@@ -9,6 +9,8 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar'
 import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
+import { ModalProvider } from '@/components/ui/modal-manager'
+import { ModalRenderer } from '@/components/ui/modal-renderer'
 
 export default function DashboardLayout({
   children,
@@ -17,12 +19,15 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard allowedRoles={['admin', 'diretor', 'secretario', 'professor']}>
-      <DashboardWithRealtime>
-        <DashboardLayoutInner>
-          {children}
-        </DashboardLayoutInner>
-        <Toaster />
-      </DashboardWithRealtime>
+      <ModalProvider>
+        <DashboardWithRealtime>
+          <DashboardLayoutInner>
+            {children}
+          </DashboardLayoutInner>
+          <Toaster />
+        </DashboardWithRealtime>
+        <ModalRenderer />
+      </ModalProvider>
     </AuthGuard>
   )
 }
