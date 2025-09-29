@@ -29,9 +29,10 @@ const BatchAttendanceSchema = z.object({
   bulk_observations: z.string().max(300, 'Observações gerais muito longas').optional()
 })
 
-// Create Supabase client with optimized settings
-function createSupabaseClient() {
-  const cookieStore = cookies()
+// Create Supabase client with proper cookie handling for Next.js 15
+async function createSupabaseClient(request: NextRequest) {
+  const cookieStore = await cookies()
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -39,6 +40,12 @@ function createSupabaseClient() {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          // In API routes, we can't set cookies but we can read them
+        },
+        remove(name: string, options: any) {
+          // In API routes, we can't remove cookies but we can read them
         },
       },
     }
@@ -272,7 +279,7 @@ export async function POST(
   const startTime = performance.now()
 
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient(request)
     const { profile } = await validateAuth(supabase)
 
     // Validate request parameters

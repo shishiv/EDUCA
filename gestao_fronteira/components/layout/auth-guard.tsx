@@ -25,15 +25,6 @@ export function AuthGuard({
 
   useEffect(() => {
     if (!loading) {
-      // Development mode bypass
-      if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-        const devBypass = localStorage.getItem('dev_auth_bypass')
-        if (devBypass === 'true') {
-          // console.log('Development auth bypass active')
-          return
-        }
-      }
-
       // Check if user is authenticated
       if (!user) {
         router.push('/login')
@@ -77,14 +68,6 @@ export function AuthGuard({
         </div>
       </div>
     )
-  }
-
-  // Development mode bypass check
-  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-    const devBypass = localStorage.getItem('dev_auth_bypass')
-    if (devBypass === 'true') {
-      return <>{children}</>
-    }
   }
 
   // User not authenticated

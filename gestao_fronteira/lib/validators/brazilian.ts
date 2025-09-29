@@ -133,6 +133,39 @@ export function formatCEP(cep: string): string {
 }
 
 /**
+ * Validates Brazilian INEP school code (8 digits)
+ * @param inepCode INEP code string to validate
+ * @returns boolean indicating if INEP code is valid
+ */
+export function validateINEPCode(inepCode: string): boolean {
+  if (!inepCode) return false
+
+  // Remove non-numeric characters
+  inepCode = inepCode.replace(/\D/g, '')
+
+  // INEP code must have exactly 8 digits
+  return inepCode.length === 8
+}
+
+/**
+ * Formats INEP code for display
+ * @param inepCode Raw INEP code string
+ * @returns Formatted INEP code
+ */
+export function formatINEPCode(inepCode: string): string {
+  if (!inepCode) return ''
+
+  inepCode = inepCode.replace(/\D/g, '')
+
+  // Format as XX.XXX.XXX for better readability (optional)
+  if (inepCode.length === 8) {
+    inepCode = inepCode.replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2.$3')
+  }
+
+  return inepCode
+}
+
+/**
  * Validates Brazilian academic year
  * @param year Academic year to validate
  * @returns boolean indicating if year is valid
@@ -307,6 +340,12 @@ export const userFormSchema = z.object({
     .optional(),
 })
 
+// INEP code schema
+export const inepCodeSchema = z
+  .string()
+  .refine(validateINEPCode, { message: 'Código INEP inválido (deve ter 8 dígitos)' })
+  .transform(formatINEPCode)
+
 // School form validation schema
 export const schoolFormSchema = z.object({
   nome: z
@@ -318,6 +357,8 @@ export const schoolFormSchema = z.object({
     .string()
     .min(3, { message: 'Código da escola deve ter pelo menos 3 caracteres' })
     .max(20, { message: 'Código da escola não pode exceder 20 caracteres' }),
+
+  codigo_inep: inepCodeSchema.optional(),
 
   endereco: z
     .string()

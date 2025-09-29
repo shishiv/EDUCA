@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
+import { useAuth } from '@/hooks/use-auth'
 import {
   GraduationCap,
   Users,
@@ -29,62 +30,82 @@ interface SidebarProps {
   className?: string
 }
 
-const navigation = [
+// Define menu items with role permissions
+const navigationItems = [
   {
     name: 'Dashboard',
     href: '/dashboard',
     icon: Home,
+    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos podem ver
   },
   {
     name: 'Alunos',
     href: '/dashboard/alunos',
     icon: Users,
+    roles: ['admin', 'diretor', 'secretario'], // Professor não gerencia alunos diretamente
   },
   {
     name: 'Usuários',
     href: '/dashboard/usuarios',
     icon: User,
+    roles: ['admin'], // Apenas admin gerencia usuários
   },
   {
     name: 'Escolas',
     href: '/dashboard/escolas',
     icon: School,
+    roles: ['admin'], // Apenas admin gerencia escolas
   },
   {
     name: 'Turmas',
     href: '/dashboard/turmas',
     icon: BookOpen,
+    roles: ['admin', 'diretor', 'secretario'], // Professor vê apenas suas turmas
   },
   {
     name: 'Matrículas',
     href: '/dashboard/matriculas',
     icon: UserCheck,
+    roles: ['admin', 'diretor', 'secretario'], // Professor não gerencia matrículas
   },
   {
     name: 'Frequência',
     href: '/dashboard/frequencia',
     icon: CheckSquare,
+    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos trabalham com frequência
   },
   {
     name: 'Notas',
     href: '/dashboard/notas',
     icon: ClipboardList,
+    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos trabalham com notas
   },
   {
     name: 'Relatórios',
     href: '/dashboard/relatorios',
     icon: FileText,
+    roles: ['admin', 'diretor', 'secretario'], // Professor tem relatórios limitados
   },
   {
     name: 'Configurações',
     href: '/dashboard/configuracoes',
     icon: Settings,
+    roles: ['admin', 'diretor'], // Apenas admin e diretor configuram
   },
 ]
+
+// Filter navigation based on user role
+function getNavigationForRole(userRole: string) {
+  return navigationItems.filter(item => item.roles.includes(userRole))
+}
 
 export function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const { userProfile } = useAuth()
+
+  // Get navigation items based on user role
+  const navigation = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
 
   return (
     <div className={cn(

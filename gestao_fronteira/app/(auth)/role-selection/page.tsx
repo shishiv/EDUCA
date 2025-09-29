@@ -72,23 +72,7 @@ export default function RoleSelectionPage() {
     setSelectedRole(role)
 
     try {
-      // Create mock user profile in localStorage for development
-      const mockUserProfile = {
-        id: '550e8400-e29b-41d4-a716-446655440010',
-        email: 'admin@fronteira.mg.gov.br',
-        nome: getNameForRole(role),
-        tipo_usuario: role,
-        escola_id: role === 'admin' || role === 'secretario' ? null : '550e8400-e29b-41d4-a716-446655440001',
-        ativo: true,
-        created_at: new Date().toISOString()
-      }
-
-      // Store in localStorage for development
-      localStorage.setItem('dev_user_profile', JSON.stringify(mockUserProfile))
-      localStorage.setItem('dev_auth_bypass', 'true')
-      localStorage.setItem('dev_selected_role', role)
-
-      // Navigate to dashboard
+      // Navigate to dashboard with selected role
       router.push('/dashboard')
     } catch (error) {
       console.error('Error setting role:', error)

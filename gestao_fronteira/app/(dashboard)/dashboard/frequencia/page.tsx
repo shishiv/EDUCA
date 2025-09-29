@@ -1,18 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { classesApi } from '@/lib/api/classes'
-import { AbrirAulaWorkflow } from '@/components/attendance/AbrirAulaWorkflow'
-import { AbrirAulaButton } from '@/components/attendance/abrir-aula-button'
-import { AulaStatusIndicatorEnhanced as AulaStatusIndicator } from '@/components/attendance/aula-status-indicator-enhanced'
-import { AttendanceGrid } from '@/components/attendance/AttendanceGrid'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Label } from '@/components/ui/label'
 import {
   BookOpen,
   Users,
@@ -20,177 +13,18 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  ArrowLeft,
-  Search
+  Info,
+  Play
 } from 'lucide-react'
-import { toast } from 'sonner'
-
-interface AttendancePageState {
-  step: 'class-selection' | 'workflow' | 'marking' | 'completed'
-  selectedClass?: any
-  sessionData?: any
-  attendanceRecords?: any[]
-}
-
-interface ClassInfo {
-  id: string
-  nome: string
-  serie: string
-  escola?: {
-    id: string
-    nome: string
-  }
-  professor?: {
-    id: string
-    nome: string
-  }
-  total_alunos: number
-}
+import { FrequenciaWorkflow } from '@/components/attendance/FrequenciaWorkflow'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export default function FrequenciaPage() {
-  const { user } = useAuth()
-  const [pageState, setPageState] = useState<AttendancePageState>({
-    step: 'class-selection'
-  })
-  const [classes, setClasses] = useState<ClassInfo[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const { userProfile } = useAuth()
+  const [showWorkflow, setShowWorkflow] = useState(false)
 
-  useEffect(() => {
-    loadTeacherClasses()
-  }, [])
-
-  const loadTeacherClasses = async () => {
-    if (!user) return
-
-    setLoading(true)
-    try {
-      // DEVELOPMENT MODE: Use mock data when Supabase isn't available
-      if (process.env.NODE_ENV === 'development') {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
-        const mockClasses: ClassInfo[] = [
-          {
-            id: 'turma-123',
-            nome: '5º Ano A',
-            serie: '5º Ano',
-            escola: {
-              id: 'escola-123',
-              nome: 'E.M. Monteiro Lobato'
-            },
-            professor: {
-              id: user.id,
-              nome: user.nome || 'Professor de Teste'
-            },
-            total_alunos: 25
-          },
-          {
-            id: 'turma-456',
-            nome: '3º Ano B',
-            serie: '3º Ano',
-            escola: {
-              id: 'escola-123',
-              nome: 'E.M. Monteiro Lobato'
-            },
-            professor: {
-              id: user.id,
-              nome: user.nome || 'Professor de Teste'
-            },
-            total_alunos: 22
-          }
-        ]
-        setClasses(mockClasses)
-        return
-      }
-
-      // Production code: Get classes assigned to the current teacher
-      const teacherClasses = await classesApi.getClassesByTeacher(user.id)
-      const formattedClasses: ClassInfo[] = teacherClasses.map(tc => ({
-        id: (tc as any).id ?? '',
-        nome: (tc as any).nome ?? '',
-        serie: (tc as any).serie ?? '',
-        escola: tc.escola ? {
-          id: tc.escola.id,
-          nome: tc.escola.nome
-        } : undefined,
-        professor: tc.professor ? {
-          id: tc.professor.id,
-          nome: tc.professor.nome
-        } : undefined,
-        total_alunos: tc._count?.students || 0
-      }))
-      setClasses(formattedClasses)
-    } catch (error) {
-      // console.error('Error loading teacher classes:', error)
-      toast.error('Erro ao carregar suas turmas')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleClassSelection = (classInfo: ClassInfo) => {
-    setPageState({
-      step: 'workflow',
-      selectedClass: classInfo
-    })
-  }
-
-  const handleAulaOpened = (sessionData: any, classInfo: ClassInfo) => {
-    setPageState({
-      step: 'marking',
-      selectedClass: classInfo,
-      sessionData
-    })
-  }
-
-  const handleSessionOpened = (sessionData: any) => {
-    setPageState({
-      ...pageState,
-      step: 'marking',
-      sessionData
-    })
-  }
-
-  const handleAttendanceSaved = (records: any[]) => {
-    setPageState({
-      ...pageState,
-      step: 'completed',
-      attendanceRecords: records
-    })
-  }
-
-  const handleGoBack = () => {
-    if (pageState.step === 'workflow') {
-      setPageState({ step: 'class-selection' })
-    } else if (pageState.step === 'marking') {
-      setPageState({
-        step: 'workflow',
-        selectedClass: pageState.selectedClass
-      })
-    } else if (pageState.step === 'completed') {
-      setPageState({ step: 'class-selection' })
-    }
-  }
-
-  const getCurrentDate = () => {
-    return new Date().toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'America/Sao_Paulo'
-    })
-  }
-
-  const filteredClasses = classes.filter(classInfo => {
-    const matchesSearch = classInfo.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         classInfo.escola?.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         classInfo.professor?.nome.toLowerCase().includes(search.toLowerCase())
-    return matchesSearch
-  })
-
-  if (loading) {
+  if (!userProfile) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
@@ -205,227 +39,195 @@ export default function FrequenciaPage() {
     )
   }
 
-  // Workflow step: Abrir Aula
-  if (pageState.step === 'workflow' && pageState.selectedClass) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleGoBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Frequência - {pageState.selectedClass.nome}
-            </h1>
-            <p className="text-gray-600">
-              {pageState.selectedClass.escola.nome} • {getCurrentDate()}
-            </p>
-          </div>
-        </div>
+  const today = new Date()
+  const dayOfWeek = format(today, 'EEEE', { locale: ptBR })
+  const fullDate = format(today, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
 
-        {/* Status da aula em tempo real */}
-        <AulaStatusIndicator
-          turmaId={pageState.selectedClass.id}
-          professorId={user?.id || ''}
-          className="mb-6"
-        />
-
-        <AbrirAulaWorkflow
-          classId={pageState.selectedClass.id}
-          teacherId={user?.id || ''}
-          onSessionOpened={handleSessionOpened}
-          onCancel={handleGoBack}
-        />
-      </div>
-    )
-  }
-
-  // Marking step: Mark Attendance
-  if (pageState.step === 'marking' && pageState.selectedClass && pageState.sessionData) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleGoBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Plano de Aula
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Marcar Presença - {pageState.selectedClass.nome}
-            </h1>
-            <p className="text-gray-600">
-              {pageState.selectedClass.escola.nome} • {getCurrentDate()}
-            </p>
-          </div>
-        </div>
-
-        <AttendanceGrid
-          classId={pageState.selectedClass.id}
-          sessionId={pageState.sessionData.id || 'mock-session'}
-          sessionDate={new Date().toISOString().split('T')[0]}
-          onSave={handleAttendanceSaved}
-          onCancel={handleGoBack}
-        />
-      </div>
-    )
-  }
-
-  // Completed step: Show success
-  if (pageState.step === 'completed') {
-    return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Frequência Registrada com Sucesso!
-          </h1>
-          <p className="text-gray-600 mb-6">
-            A presença foi salva e os registros estão bloqueados para alterações.
-          </p>
-          <Button onClick={() => setPageState({ step: 'class-selection' })}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Registrar Nova Frequência
-          </Button>
-        </div>
-
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Documento Legal:</strong> Este registro de frequência serve como documento oficial
-            conforme a legislação educacional brasileira e não pode mais ser alterado.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  // Class selection step (default)
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Controle de Frequência</h1>
-          <p className="text-gray-600 mt-1">
-            Selecione uma turma para iniciar o registro de presença
+          <h1 className="text-2xl font-bold tracking-tight">Controle de Frequência</h1>
+          <p className="text-muted-foreground">
+            {userProfile.tipo_usuario === 'admin'
+              ? 'Visão administrativa de todas as turmas'
+              : 'Registre a frequência dos seus alunos'
+            }
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Clock className="h-4 w-4" />
-          <span>{getCurrentDate()}</span>
+        <div className="flex items-center space-x-2 mt-4 md:mt-0">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            {dayOfWeek}, {fullDate}
+          </span>
         </div>
       </div>
 
-      {/* Legal Notice */}
+      {/* User Info */}
       <Alert>
-        <AlertCircle className="h-4 w-4" />
+        <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Processo de Frequência:</strong> Você irá primeiro abrir a aula com o plano de conteúdo,
-          depois marcar a presença dos alunos. Após salvar, os registros ficam imutáveis por lei.
+          <strong>Usuário Atual:</strong> {userProfile.nome} ({userProfile.tipo_usuario})
+          {userProfile.escola_id && (
+            <>
+              <br />
+              <strong>Escola:</strong> {userProfile.escola?.nome || 'Escola não informada'}
+            </>
+          )}
         </AlertDescription>
       </Alert>
 
-      {/* Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Suas Turmas</CardTitle>
-          <CardDescription>
-            Turmas atribuídas para você lecionar
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar por turma, escola..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Classes List */}
-      <div className="grid gap-4">
-        {filteredClasses.map((classInfo) => (
-          <Card key={classInfo.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {/* Header da turma */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <BookOpen className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {classInfo.nome} - {classInfo.serie}
-                      </h3>
-                      <p className="text-gray-600">{classInfo.escola?.nome}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Users className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-500">
-                          {classInfo.total_alunos} alunos
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleClassSelection(classInfo)}
-                    className="shrink-0"
-                  >
-                    Ver Detalhes
-                  </Button>
+      {/* Workflow Toggle */}
+      {!showWorkflow && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              Sistema de Frequência
+            </CardTitle>
+            <CardDescription>
+              Sistema completo para controle de frequência escolar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
                 </div>
-
-                {/* Status da aula em tempo real */}
-                <AulaStatusIndicator
-                  turmaId={classInfo.id}
-                  professorId={user?.id || ''}
-                  className="mb-2"
-                />
-
-                {/* Botão para abrir aula diretamente */}
-                <div className="flex items-center gap-3">
-                  <AbrirAulaButton
-                    turmaId={classInfo.id}
-                    professorId={user?.id || ''}
-                    turmaNome={`${classInfo.nome} - ${classInfo.serie}`}
-                    onSuccess={(sessionData) => handleAulaOpened(sessionData, classInfo)}
-                    onError={(error) => {
-                      console.error('Erro ao abrir aula:', error)
-                    }}
-                    className="flex-1"
-                  />
+                <div>
+                  <p className="font-medium">1. Selecionar Disciplina</p>
+                  <p className="text-sm text-gray-500">Escolha a matéria</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
 
-        {filteredClasses.length === 0 && (
+              <div className="flex items-center space-x-3">
+                <div className="bg-green-100 p-2 rounded-lg">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium">2. Selecionar Turma</p>
+                  <p className="text-sm text-gray-500">Escolha a classe</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <div className="bg-purple-100 p-2 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-medium">3. Registrar Presença</p>
+                  <p className="text-sm text-gray-500">Marque a frequência</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              {userProfile.tipo_usuario === 'professor' ? (
+                <Button
+                  onClick={() => setShowWorkflow(true)}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Iniciar Controle de Frequência
+                </Button>
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {userProfile.tipo_usuario === 'admin' &&
+                      'Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores.'
+                    }
+                    {userProfile.tipo_usuario === 'diretor' &&
+                      'Como diretor, você pode acompanhar a frequência, mas o registro é feito pelos professores.'
+                    }
+                    {userProfile.tipo_usuario === 'secretario' &&
+                      'Como secretário, você pode acessar relatórios de frequência.'
+                    }
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Workflow */}
+      {showWorkflow && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Controle de Frequência</h2>
+              <p className="text-sm text-gray-500">Professor: {userProfile.nome}</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowWorkflow(false)}
+            >
+              Voltar ao Início
+            </Button>
+          </div>
+
+          <FrequenciaWorkflow />
+        </div>
+      )}
+
+      {/* Features Overview - Apenas quando não está no workflow */}
+      {!showWorkflow && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
-            <CardContent className="text-center py-12">
-              <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-2">
-                {classes.length === 0
-                  ? 'Nenhuma turma atribuída para você'
-                  : 'Nenhuma turma encontrada para os filtros aplicados'
-                }
-              </p>
-              <p className="text-sm text-gray-400">
-                {classes.length === 0
-                  ? 'Entre em contato com a coordenação para atribuição de turmas'
-                  : 'Tente ajustar os filtros de busca'
-                }
-              </p>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                Controle em Tempo Real
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  Abertura e fechamento automático de aulas
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  Registro seguro de presença
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  Interface otimizada para tablets
+                </li>
+              </ul>
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-amber-600" />
+                Conformidade Legal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  Princípio "não existe o esquecer"
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  Hash de integridade legal
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  Auditoria completa de ações
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

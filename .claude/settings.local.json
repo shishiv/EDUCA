@@ -169,7 +169,13 @@
       "Bash(timeout:*)",
       "mcp__playwright__browser_navigate_back",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_evaluate"
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_handle_dialog",
+      "Bash(npx supabase:*)",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_anon_key",
+      "mcp__playwright__browser_select_option",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []
@@ -180,5 +186,6 @@
     "shadcn-ui",
     "github.com/upstash/context7-mcp",
     "Bright Data"
-  ]
+  ],
+  "outputStyle": "Explanatory"
 }

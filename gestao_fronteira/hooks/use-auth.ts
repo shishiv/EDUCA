@@ -14,39 +14,7 @@ export function useAuth() {
     // Get current user
     const getUser = async () => {
       try {
-        // Check for development bypass first
-        if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-          const devBypass = localStorage.getItem('dev_auth_bypass')
-          const devProfile = localStorage.getItem('dev_user_profile')
-
-          // If we have development bypass enabled, use it exclusively
-          if (devBypass === 'true') {
-            if (devProfile) {
-              const profile = JSON.parse(devProfile)
-              const mockUser = {
-                id: profile.id,
-                email: profile.email,
-                user_metadata: {},
-                app_metadata: {},
-                aud: 'authenticated',
-                created_at: profile.created_at
-              } as User
-
-              setUser(mockUser)
-              setUserProfile(profile)
-              setLoading(false)
-              return
-            } else {
-              // Development bypass is enabled but no profile, clear auth state
-              setUser(null)
-              setUserProfile(null)
-              setLoading(false)
-              return
-            }
-          }
-        }
-
-        // Only use Supabase if not in development bypass mode
+        // Get current authenticated user from Supabase
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
 
@@ -65,12 +33,8 @@ export function useAuth() {
 
     getUser()
 
-    // Listen for auth changes only if not in development bypass mode
-    let subscription: any = null
-
-    if (process.env.NODE_ENV !== 'development' ||
-        (typeof window !== 'undefined' && localStorage.getItem('dev_auth_bypass') !== 'true')) {
-      const result = supabase.auth.onAuthStateChange(
+    // Listen for auth changes
+    const result = supabase.auth.onAuthStateChange(
         async (event, session) => {
           setUser(session?.user ?? null)
 
@@ -94,8 +58,7 @@ export function useAuth() {
           setLoading(false)
         }
       )
-      subscription = result.data.subscription
-    }
+    const subscription = result.data.subscription
 
     return () => {
       if (subscription) {
