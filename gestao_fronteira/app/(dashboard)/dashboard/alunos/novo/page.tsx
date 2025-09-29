@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowLeft, Save, User, Users, FileText, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { studentsApi } from '@/lib/api/students'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
@@ -70,14 +71,59 @@ export default function NovoAlunoPage() {
     setLoading(true)
 
     try {
-      // Simular criação do aluno
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+      // Prepare student data in API format
+      const studentData = {
+        nome_completo: formData.nome_completo,
+        data_nascimento: formData.data_nascimento,
+        cpf: formData.cpf?.replace(/\D/g, '') || undefined, // Clean CPF
+        sexo: formData.sexo as 'M' | 'F',
+        telefone: formData.telefone?.replace(/\D/g, '') || undefined, // Clean phone
+        email: formData.email || undefined,
+        endereco: formData.endereco,
+        nome_mae: formData.nome_mae,
+        nome_pai: formData.nome_pai || undefined,
+        necessidades_especiais: formData.necessidades_especiais || undefined,
+      }
+
+      // Prepare guardian data if provided
+      let guardianData = undefined
+      if (responsavelData.nome) {
+        guardianData = {
+          nome: responsavelData.nome,
+          telefone: responsavelData.telefone?.replace(/\D/g, '') || undefined,
+          email: responsavelData.email || undefined,
+          grau_parentesco: responsavelData.parentesco || 'Responsável',
+        }
+      }
+
+      // Create student via API
+      const createdStudent = await studentsApi.createStudent({
+        ...studentData,
+        responsavel: guardianData,
+      })
+
       toast.success('Aluno cadastrado com sucesso!')
       router.push('/dashboard/alunos')
-    } catch (error) {
-      // console.error('Erro ao cadastrar aluno:', error)
-      toast.error('Erro ao cadastrar aluno')
+    } catch (error: any) {
+      console.error('Erro ao cadastrar aluno:', error)
+
+      // Enhanced error handling with Brazilian context
+      let errorMessage = 'Erro ao cadastrar aluno'
+      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        if (error.message.includes('cpf')) {
+          errorMessage = 'CPF já cadastrado no sistema'
+        } else if (error.message.includes('email')) {
+          errorMessage = 'E-mail já cadastrado no sistema'
+        } else {
+          errorMessage = 'Dados já existem no sistema'
+        }
+      } else if (error.message?.includes('violates check constraint')) {
+        errorMessage = 'Dados inválidos. Verifique as informações inseridas'
+      } else if (error.message) {
+        errorMessage = `Erro ao cadastrar aluno: ${error.message}`
+      }
+
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -128,22 +174,22 @@ export default function NovoAlunoPage() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="pessoais" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="pessoais" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Dados Pessoais</span>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 h-auto p-1">
+            <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+              <User className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium">Dados Pessoais</span>
             </TabsTrigger>
-            <TabsTrigger value="responsavel" className="flex items-center space-x-2">
-              <Users className="h-4 w-4" />
-              <span>Responsável</span>
+            <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+              <Users className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium">Responsável</span>
             </TabsTrigger>
-            <TabsTrigger value="medicos" className="flex items-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span>Dados Médicos</span>
+            <TabsTrigger value="medicos" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+              <FileText className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium">Dados Médicos</span>
             </TabsTrigger>
-            <TabsTrigger value="documentos" className="flex items-center space-x-2">
-              <Upload className="h-4 w-4" />
-              <span>Documentos</span>
+            <TabsTrigger value="documentos" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+              <Upload className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium">Documentos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -526,59 +572,69 @@ export default function NovoAlunoPage() {
                   Anexe os documentos necessários para a matrícula
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Documentos Obrigatórios</h4>
-                    
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Certidão de Nascimento</p>
-                      <Button variant="outline" size="sm">
+              <CardContent className="space-y-8">
+                {/* Documentos Obrigatórios */}
+                <div className="space-y-6">
+                  <div className="border-l-4 border-blue-500 pl-4">
+                    <h4 className="font-semibold text-lg text-gray-900">Documentos Obrigatórios</h4>
+                    <p className="text-sm text-gray-600 mt-1">Necessários para completar a matrícula</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
+                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-700 mb-3">Certidão de Nascimento</p>
+                      <Button variant="outline" size="sm" className="w-full">
                         Selecionar Arquivo
                       </Button>
                     </div>
 
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Cartão de Vacina</p>
-                      <Button variant="outline" size="sm">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
+                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-700 mb-3">Cartão de Vacina</p>
+                      <Button variant="outline" size="sm" className="w-full">
                         Selecionar Arquivo
                       </Button>
                     </div>
 
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Comprovante de Residência</p>
-                      <Button variant="outline" size="sm">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
+                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-700 mb-3">Comprovante de Residência</p>
+                      <Button variant="outline" size="sm" className="w-full">
                         Selecionar Arquivo
                       </Button>
                     </div>
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Documentos Opcionais</h4>
-                    
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Foto 3x4</p>
-                      <Button variant="outline" size="sm">
+                {/* Documentos Opcionais */}
+                <div className="space-y-6">
+                  <div className="border-l-4 border-gray-400 pl-4">
+                    <h4 className="font-semibold text-lg text-gray-900">Documentos Opcionais</h4>
+                    <p className="text-sm text-gray-600 mt-1">Podem ser anexados posteriormente</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
+                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-600 mb-3">Foto 3x4</p>
+                      <Button variant="outline" size="sm" className="w-full" disabled>
                         Selecionar Arquivo
                       </Button>
                     </div>
 
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Histórico Escolar</p>
-                      <Button variant="outline" size="sm">
+                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
+                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-600 mb-3">Histórico Escolar</p>
+                      <Button variant="outline" size="sm" className="w-full" disabled>
                         Selecionar Arquivo
                       </Button>
                     </div>
 
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Laudos Médicos</p>
-                      <Button variant="outline" size="sm">
+                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
+                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-600 mb-3">Laudos Médicos</p>
+                      <Button variant="outline" size="sm" className="w-full" disabled>
                         Selecionar Arquivo
                       </Button>
                     </div>
@@ -588,17 +644,18 @@ export default function NovoAlunoPage() {
             </Card>
           </TabsContent>
 
-          <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" asChild>
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-200">
+            <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/dashboard/alunos">
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 Cancelar
               </Link>
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Salvando...
+                  Cadastrando...
                 </>
               ) : (
                 <>

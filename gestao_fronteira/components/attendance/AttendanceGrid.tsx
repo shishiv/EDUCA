@@ -35,12 +35,10 @@ interface Student {
   id: string
   nome_completo: string
   data_nascimento: string
-  foto_url?: string
   matriculas: Array<{
     id: string
-    numero_matricula: string
-    ativo: boolean
     turma_id: string
+    situacao: string
   }>
 }
 
@@ -93,23 +91,21 @@ export function AttendanceGrid({
     try {
       setLoading(true)
 
-      // Load students
+      // Load students from Supabase with simpler query
       const { data: studentsData, error: studentsError } = await supabase
         .from('alunos')
         .select(`
           id,
           nome_completo,
           data_nascimento,
-          foto_url,
           matriculas!inner (
             id,
-            numero_matricula,
-            ativo,
-            turma_id
+            turma_id,
+            situacao
           )
         `)
         .eq('matriculas.turma_id', turmaId)
-        .eq('matriculas.ativo', true)
+        .eq('matriculas.situacao', 'ativa')
         .order('nome_completo')
 
       if (studentsError) throw studentsError
@@ -120,13 +116,22 @@ export function AttendanceGrid({
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('frequencia')
         .select('*')
-        .eq('aula_session_id', sessionId)
+        .eq('sessao_id', sessionId)
 
       if (attendanceError) throw attendanceError
 
       const attendanceMap = new Map<string, AttendanceRecord>()
       attendanceData?.forEach(record => {
-        attendanceMap.set(record.aluno_id, record)
+        attendanceMap.set(record.matricula_id, {
+          id: record.id,
+          aluno_id: record.matricula_id,
+          presente: record.presente || record.status_presenca === 'presente',
+          observacoes: record.observacoes_frequencia,
+          horario_marcacao: record.marcado_em || record.created_at,
+          is_locked: record.bloqueado,
+          created_by: record.marcado_por,
+          updated_by: record.marcado_por
+        })
       })
 
       setAttendance(attendanceMap)
@@ -154,10 +159,13 @@ export function AttendanceGrid({
 
     const pending = total - (present + absent)
 
-    const result = { total, present, absent, pending, locked }
-    onAttendanceChange?.(result)
-    return result
-  }, [students.length, attendance, onAttendanceChange])
+    return { total, present, absent, pending, locked }
+  }, [students.length, attendance])
+
+  // Notify parent component of attendance changes (outside render phase)
+  useEffect(() => {
+    onAttendanceChange?.(stats)
+  }, [stats, onAttendanceChange])
 
   // Filter students based on search term
   const filteredStudents = useMemo(() => {

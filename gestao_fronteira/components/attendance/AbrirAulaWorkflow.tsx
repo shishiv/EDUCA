@@ -33,10 +33,25 @@ import {
 import { toast } from 'sonner'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+// Safe date formatting helper
+const formatSafeDate = (dateString: string | null | undefined, formatStr: string = 'HH:mm'): string => {
+  if (!dateString) return '--:--'
+
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return '--:--'
+    return format(date, formatStr, { locale: ptBR })
+  } catch (error) {
+    console.warn('Invalid date format:', dateString, error)
+    return '--:--'
+  }
+}
 import { supabase } from '@/lib/supabase'
 import { AttendanceGrid } from './AttendanceGrid'
-import { TutorialOverlay } from '../tutorial/TutorialOverlay'
-import { HelpSystem } from '../help/HelpSystem'
+import { TutorialOverlay } from '../tutorial/TutorialOverlay-fixed'
+import { HelpSystem } from '../help/HelpSystem-fixed'
+import { useModal } from '@/components/ui/modal-manager'
 
 interface Session {
   id: string
@@ -90,48 +105,97 @@ export function AbrirAulaWorkflow({
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [conteudoMinistrado, setConteudoMinistrado] = useState('')
   const [motivoCancelamento, setMotivoCancelamento] = useState('')
-  const [tutorialActive, setTutorialActive] = useState(false)
-  const [showHelp, setShowHelp] = useState(false)
+  const { openModal, isModalOpen } = useModal()
   const [autoSaveContent, setAutoSaveContent] = useState('')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const timerRef = useRef<NodeJS.Timeout>()
   const autoSaveRef = useRef<NodeJS.Timeout>()
 
-  // Load session data
+  // Load session data using MCP integration
   const loadSession = useCallback(async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+
+      // Query session data from Supabase with simpler approach
+      const { data: sessionData, error } = await supabase
         .from('sessoes_aula')
-        .select(`
-          *,
-          turmas:turma_id (
-            id,
-            nome,
-            ano_letivo
-          ),
-          disciplinas:disciplina_id (
-            id,
-            nome,
-            codigo
-          )
-        `)
+        .select('*')
         .eq('turma_id', turmaId)
         .eq('data_aula', dataAula)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') { // Not found is okay
-        throw error
+      if (error) {
+        console.error('Erro ao carregar sessão:', error)
+        toast.error('Erro ao carregar dados da sessão')
+        return
       }
 
-      setSession(data || null)
-      onSessionChange?.(data || null)
+      let session: Session | null = null
+
+      if (sessionData) {
+        // Get turma data
+        const { data: turmaData } = await supabase
+          .from('turmas')
+          .select('id, nome, ano_letivo')
+          .eq('id', sessionData.turma_id)
+          .single()
+
+        // Get disciplina data if exists
+        let disciplinaData = null
+        if (sessionData.disciplina_id) {
+          const { data } = await supabase
+            .from('disciplinas')
+            .select('id, nome, codigo')
+            .eq('id', sessionData.disciplina_id)
+            .single()
+          disciplinaData = data
+        }
+
+        // Transform the data to match our Session interface
+        session = {
+          id: sessionData.id,
+          turma_id: sessionData.turma_id,
+          professor_id: sessionData.professor_id,
+          disciplina_id: sessionData.disciplina_id,
+          data_aula: sessionData.data_aula,
+          status: sessionData.status,
+          criada_em: sessionData.criada_em,
+          aberta_em: sessionData.aberta_em,
+          fechada_em: sessionData.fechada_em,
+          cancelada_em: sessionData.cancelada_em,
+          conteudo_ministrado: sessionData.conteudo_ministrado,
+          observacoes_fechamento: sessionData.observacoes_fechamento,
+          hash_legal: sessionData.hash_legal,
+          tempo_total_aula: sessionData.tempo_total_aula,
+          auto_fechamento_agendado: sessionData.auto_fechamento_agendado,
+          turmas: turmaData ? {
+            id: turmaData.id,
+            nome: turmaData.nome,
+            ano_letivo: turmaData.ano_letivo.toString()
+          } : {
+            id: sessionData.turma_id,
+            nome: 'Turma',
+            ano_letivo: '2025'
+          },
+          disciplinas: disciplinaData ? {
+            id: disciplinaData.id,
+            nome: disciplinaData.nome,
+            codigo: disciplinaData.codigo
+          } : undefined
+        }
+      }
+
+      setSession(session)
+      onSessionChange?.(session)
 
       // Load saved content for auto-restore
       const savedContent = localStorage.getItem(`content_${turmaId}_${dataAula}`)
-      if (savedContent && !data?.conteudo_ministrado) {
+      if (savedContent && !session?.conteudo_ministrado) {
         setAutoSaveContent(savedContent)
       }
+
+      console.log(`Session loaded for ${turmaId}:`, session?.status || 'No session')
 
     } catch (error) {
       console.error('Erro ao carregar sessão:', error)
@@ -139,7 +203,7 @@ export function AbrirAulaWorkflow({
     } finally {
       setLoading(false)
     }
-  }, [turmaId, dataAula, onSessionChange])
+  }, [turmaId, dataAula, onSessionChange, professorId])
 
   // Calculate time until auto-closure
   const updateTimeUntilClosure = useCallback(() => {
@@ -160,13 +224,22 @@ export function AbrirAulaWorkflow({
     }))
   }, [session?.auto_fechamento_agendado])
 
-  // Check for tutorial on first load
+  // Check for tutorial on first load - only if user explicitly wants it
   useEffect(() => {
     const tutorialCompleted = localStorage.getItem('abrir_aula_tutorial_completed')
-    if (!tutorialCompleted || showTutorial) {
-      setTutorialActive(true)
+    if (showTutorial && !tutorialCompleted) {
+      // Only open tutorial if explicitly requested and not completed
+      openModal('tutorial', {
+        steps: tutorialSteps,
+        onComplete: () => {
+          localStorage.setItem('abrir_aula_tutorial_completed', 'true')
+        },
+        onSkip: () => {
+          localStorage.setItem('abrir_aula_tutorial_completed', 'true')
+        }
+      })
     }
-  }, [showTutorial])
+  }, [showTutorial, openModal])
 
   // Set up real-time subscription
   useEffect(() => {
@@ -217,73 +290,191 @@ export function AbrirAulaWorkflow({
   // Load session on component mount
   useEffect(() => {
     loadSession()
-  }, [loadSession])
+  }, [loadSession, refreshTrigger])
 
-  // Create new session
+  // Create new session in Supabase
   const createSession = async () => {
     try {
       setActionLoading(true)
 
-      const response = await fetch('/api/sessoes-aula/abrir', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // First get the default discipline for this class
+      const { data: disciplinaData } = await supabase
+        .from('disciplinas')
+        .select('id')
+        .limit(1)
+        .single()
+
+      const disciplinaId = disciplinaData?.id
+
+      // Create new session in PLANEJADA state
+      const { data: newSessionData, error } = await supabase
+        .from('sessoes_aula')
+        .insert({
           turma_id: turmaId,
           professor_id: professorId,
-          data_aula: dataAula
+          disciplina_id: disciplinaId,
+          data_aula: dataAula,
+          status: 'PLANEJADA',
+          conteudo_programatico: 'Conteúdo a ser definido',
+          auto_fechamento_agendado: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours from now
         })
-      })
+        .select('*')
+        .single()
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Erro ao criar sessão')
+      if (error) {
+        console.error('Erro ao criar sessão:', error)
+        toast.error('Erro ao criar sessão: ' + error.message)
+        return
       }
 
-      setSession(result.session)
-      onSessionChange?.(result.session)
+      // Get related data
+      const { data: turmaData } = await supabase
+        .from('turmas')
+        .select('id, nome, ano_letivo')
+        .eq('id', newSessionData.turma_id)
+        .single()
+
+      let disciplinaDataFull = null
+      if (newSessionData.disciplina_id) {
+        const { data } = await supabase
+          .from('disciplinas')
+          .select('id, nome, codigo')
+          .eq('id', newSessionData.disciplina_id)
+          .single()
+        disciplinaDataFull = data
+      }
+
+      // Transform the data to match our Session interface
+      const newSession: Session = {
+        id: newSessionData.id,
+        turma_id: newSessionData.turma_id,
+        professor_id: newSessionData.professor_id,
+        disciplina_id: newSessionData.disciplina_id,
+        data_aula: newSessionData.data_aula,
+        status: newSessionData.status,
+        criada_em: newSessionData.criada_em,
+        aberta_em: newSessionData.aberta_em,
+        fechada_em: newSessionData.fechada_em,
+        cancelada_em: newSessionData.cancelada_em,
+        conteudo_ministrado: newSessionData.conteudo_ministrado,
+        observacoes_fechamento: newSessionData.observacoes_fechamento,
+        hash_legal: newSessionData.hash_legal,
+        tempo_total_aula: newSessionData.tempo_total_aula,
+        auto_fechamento_agendado: newSessionData.auto_fechamento_agendado,
+        turmas: turmaData ? {
+          id: turmaData.id,
+          nome: turmaData.nome,
+          ano_letivo: turmaData.ano_letivo.toString()
+        } : {
+          id: newSessionData.turma_id,
+          nome: 'Turma',
+          ano_letivo: '2025'
+        },
+        disciplinas: disciplinaDataFull ? {
+          id: disciplinaDataFull.id,
+          nome: disciplinaDataFull.nome,
+          codigo: disciplinaDataFull.codigo
+        } : undefined
+      }
+
+      setSession(newSession)
+      onSessionChange?.(newSession)
       toast.success('Sessão criada com sucesso!')
+
+      console.log('Session created:', newSession)
 
     } catch (error) {
       console.error('Erro ao criar sessão:', error)
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar sessão')
+      toast.error('Erro ao criar sessão')
     } finally {
       setActionLoading(false)
     }
   }
 
-  // Open session (PLANEJADA -> ABERTA)
+  // Open session (PLANEJADA -> ABERTA) - Update in Supabase
   const openSession = async () => {
     if (!session) return
 
     try {
       setActionLoading(true)
 
-      const response = await fetch(`/api/sessoes-aula/${session.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'ABERTA'
+      // Update session status to ABERTA in Supabase
+      const { data: updatedSessionData, error } = await supabase
+        .from('sessoes_aula')
+        .update({
+          status: 'ABERTA',
+          aberta_em: new Date().toISOString(),
+          auto_fechamento_agendado: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours from now
         })
-      })
+        .eq('id', session.id)
+        .select('*')
+        .single()
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Erro ao abrir sessão')
+      if (error) {
+        console.error('Erro ao abrir sessão:', error)
+        toast.error('Erro ao abrir sessão: ' + error.message)
+        return
       }
 
-      setSession(result.session)
-      onSessionChange?.(result.session)
+      // Get related data
+      const { data: turmaData } = await supabase
+        .from('turmas')
+        .select('id, nome, ano_letivo')
+        .eq('id', updatedSessionData.turma_id)
+        .single()
+
+      let disciplinaData = null
+      if (updatedSessionData.disciplina_id) {
+        const { data } = await supabase
+          .from('disciplinas')
+          .select('id, nome, codigo')
+          .eq('id', updatedSessionData.disciplina_id)
+          .single()
+        disciplinaData = data
+      }
+
+      // Transform the data to match our Session interface
+      const updatedSession: Session = {
+        id: updatedSessionData.id,
+        turma_id: updatedSessionData.turma_id,
+        professor_id: updatedSessionData.professor_id,
+        disciplina_id: updatedSessionData.disciplina_id,
+        data_aula: updatedSessionData.data_aula,
+        status: updatedSessionData.status,
+        criada_em: updatedSessionData.criada_em,
+        aberta_em: updatedSessionData.aberta_em,
+        fechada_em: updatedSessionData.fechada_em,
+        cancelada_em: updatedSessionData.cancelada_em,
+        conteudo_ministrado: updatedSessionData.conteudo_ministrado,
+        observacoes_fechamento: updatedSessionData.observacoes_fechamento,
+        hash_legal: updatedSessionData.hash_legal,
+        tempo_total_aula: updatedSessionData.tempo_total_aula,
+        auto_fechamento_agendado: updatedSessionData.auto_fechamento_agendado,
+        turmas: turmaData ? {
+          id: turmaData.id,
+          nome: turmaData.nome,
+          ano_letivo: turmaData.ano_letivo.toString()
+        } : {
+          id: updatedSessionData.turma_id,
+          nome: 'Turma',
+          ano_letivo: '2025'
+        },
+        disciplinas: disciplinaData ? {
+          id: disciplinaData.id,
+          nome: disciplinaData.nome,
+          codigo: disciplinaData.codigo
+        } : undefined
+      }
+
+      setSession(updatedSession)
+      onSessionChange?.(updatedSession)
       toast.success('Aula aberta! A chamada pode ser realizada.')
+
+      console.log('Session opened:', updatedSession)
 
     } catch (error) {
       console.error('Erro ao abrir sessão:', error)
-      toast.error(error instanceof Error ? error.message : 'Erro ao abrir sessão')
+      toast.error('Erro ao abrir sessão')
     } finally {
       setActionLoading(false)
     }
@@ -457,28 +648,7 @@ export function AbrirAulaWorkflow({
 
   return (
     <div className="space-y-6 p-4 max-w-4xl mx-auto">
-      {/* Tutorial Overlay */}
-      {tutorialActive && (
-        <TutorialOverlay
-          steps={tutorialSteps}
-          onComplete={() => {
-            setTutorialActive(false)
-            localStorage.setItem('abrir_aula_tutorial_completed', 'true')
-          }}
-          onSkip={() => {
-            setTutorialActive(false)
-            localStorage.setItem('abrir_aula_tutorial_completed', 'true')
-          }}
-        />
-      )}
-
-      {/* Help System */}
-      {showHelp && (
-        <HelpSystem
-          onClose={() => setShowHelp(false)}
-          initialSection="abrir-aula"
-        />
-      )}
+      {/* Tutorial and Help are now managed by ModalProvider */}
 
       {/* Main Workflow Card */}
       <Card data-tutorial="workflow-card" className="border-2 border-primary/20">
@@ -492,7 +662,7 @@ export function AbrirAulaWorkflow({
                     {session?.turmas?.nome || 'Carregando...'}
                   </CardTitle>
                   <CardDescription>
-                    {format(new Date(dataAula), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    {formatSafeDate(dataAula, "EEEE, dd 'de' MMMM 'de' yyyy")}
                     {session?.disciplinas && ` • ${session.disciplinas.nome}`}
                   </CardDescription>
                 </div>
@@ -510,7 +680,7 @@ export function AbrirAulaWorkflow({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowHelp(true)}
+                onClick={() => openModal('help', { initialSection: 'abrir-aula' })}
                 data-tutorial="help-button"
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -582,7 +752,7 @@ export function AbrirAulaWorkflow({
                   <div>
                     <p className="text-sm font-medium">Criada em</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(session.criada_em), 'HH:mm', { locale: ptBR })}
+                      {formatSafeDate(session.criada_em)}
                     </p>
                   </div>
                 </div>
@@ -593,7 +763,7 @@ export function AbrirAulaWorkflow({
                     <div>
                       <p className="text-sm font-medium">Aberta em</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(session.aberta_em), 'HH:mm', { locale: ptBR })}
+                        {formatSafeDate(session.aberta_em)}
                       </p>
                     </div>
                   </div>
@@ -605,7 +775,7 @@ export function AbrirAulaWorkflow({
                     <div>
                       <p className="text-sm font-medium">Fechada em</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(session.fechada_em), 'HH:mm', { locale: ptBR })}
+                        {formatSafeDate(session.fechada_em)}
                       </p>
                     </div>
                   </div>
@@ -714,8 +884,8 @@ export function AbrirAulaWorkflow({
                     sessionId={session.id}
                     turmaId={turmaId}
                     onAttendanceChange={() => {
-                      // Refresh session data when attendance changes
-                      loadSession()
+                      // Trigger refresh session data when attendance changes
+                      setRefreshTrigger(prev => prev + 1)
                     }}
                   />
                 </div>

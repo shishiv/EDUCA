@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { 
   Settings, 
   Save, 
@@ -51,20 +52,46 @@ export default function ConfiguracoesPage() {
 
   const handleSave = async () => {
     setSaving(true)
+    let hasErrors = false
+    let savedCount = 0
+
     try {
-      // Simular salvamento das configurações
+      // Validate all changes first
       for (const config of configs) {
-        if (configValues[config.chave] !== config.valor) {
-          await configsApi.update(config.id, {
-            ...config,
-            valor: configValues[config.chave]
-          })
+        const newValue = configValues[config.chave]
+        if (newValue !== config.valor) {
+          if (!configsApi.validateConfigValue(config.chave, newValue)) {
+            toast.error(`${config.descricao}: ${configsApi.getValidationMessage(config.chave)}`)
+            hasErrors = true
+          }
         }
       }
-      
-      toast.success('Configurações salvas com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao salvar configurações')
+
+      if (hasErrors) {
+        return
+      }
+
+      // Save all valid changes
+      for (const config of configs) {
+        const newValue = configValues[config.chave]
+        if (newValue !== config.valor) {
+          await configsApi.update(config.id, {
+            valor: newValue
+          })
+          savedCount++
+        }
+      }
+
+      if (savedCount > 0) {
+        toast.success(`${savedCount} configuração(ões) salva(s) com sucesso!`)
+        // Reload configs to reflect changes
+        await loadConfigs()
+      } else {
+        toast.info('Nenhuma alteração foi detectada')
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar configurações:', error)
+      toast.error(error.message || 'Erro ao salvar configurações')
     } finally {
       setSaving(false)
     }
@@ -78,27 +105,94 @@ export default function ConfiguracoesPage() {
     return configs.filter(config => config.categoria === categoria)
   }
 
+  const handleResetToDefault = async (config: Config) => {
+    try {
+      await configsApi.resetToDefault(config.id)
+      toast.success(`Configuração "${config.descricao}" resetada para valor padrão`)
+      await loadConfigs()
+    } catch (error: any) {
+      console.error('Erro ao resetar configuração:', error)
+      toast.error('Erro ao resetar configuração')
+    }
+  }
+
+  const isConfigChanged = (config: Config): boolean => {
+    return configValues[config.chave] !== config.valor
+  }
+
+  const isConfigValid = (config: Config): boolean => {
+    const value = configValues[config.chave]
+    return configsApi.validateConfigValue(config.chave, value)
+  }
+
   const renderConfigInput = (config: Config) => {
     const value = configValues[config.chave] || config.valor
+    const isChanged = isConfigChanged(config)
+    const isValid = isConfigValid(config)
 
-    if (config.chave.includes('email_') || config.chave.includes('backup_') || config.chave.includes('_ativo')) {
+    // Boolean configs (switches)
+    if (config.tipo_valor === 'boolean' || config.chave.includes('email_') || config.chave.includes('backup_') || config.chave.includes('_ativo')) {
       return (
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={value === 'true'}
-            onCheckedChange={(checked) => handleConfigChange(config.chave, checked ? 'true' : 'false')}
-          />
-          <Label>{value === 'true' ? 'Ativado' : 'Desativado'}</Label>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={value === 'true'}
+              onCheckedChange={(checked) => handleConfigChange(config.chave, checked ? 'true' : 'false')}
+            />
+            <Label>{value === 'true' ? 'Ativado' : 'Desativado'}</Label>
+          </div>
+          {isChanged && (
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="text-xs">Alterado</Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleResetToDefault(config)}
+                className="h-8 px-2"
+              >
+                Resetar
+              </Button>
+            </div>
+          )}
         </div>
       )
     }
 
+    // Text/Number inputs
     return (
-      <Input
-        value={value}
-        onChange={(e) => handleConfigChange(config.chave, e.target.value)}
-        placeholder={config.descricao}
-      />
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Input
+            value={value}
+            onChange={(e) => handleConfigChange(config.chave, e.target.value)}
+            placeholder={config.descricao}
+            className={cn(
+              !isValid && "border-red-500 focus-visible:ring-red-500",
+              isChanged && isValid && "border-orange-500 focus-visible:ring-orange-500"
+            )}
+          />
+          {isChanged && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleResetToDefault(config)}
+              className="h-8 px-2 text-xs"
+            >
+              Resetar
+            </Button>
+          )}
+        </div>
+        {!isValid && (
+          <p className="text-sm text-red-600">
+            {configsApi.getValidationMessage(config.chave)}
+          </p>
+        )}
+        {isChanged && isValid && (
+          <p className="text-sm text-orange-600">
+            Valor alterado (não salvo)
+          </p>
+        )}
+      </div>
     )
   }
 
