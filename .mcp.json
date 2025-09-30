@@ -21,6 +21,15 @@
         "@playwright/mcp@latest"
       ]
     },
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
+    },
     "shadcn-ui": {
       "command": "cmd",
       "args": [
@@ -43,17 +52,6 @@
       ],
       "disabled": false,
       "autoApprove": []
-    },
-    "Bright Data": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "@brightdata/mcp"
-      ],
-      "env": {
-        "API_TOKEN": "5b21ee49e120c3474b2b806f22b1ae57eb5c537c24d000c57e45b8d596573a7b"
-      }
     }
   }
 }
