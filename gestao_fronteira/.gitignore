@@ -5,7 +5,6 @@
 
 # Development artifacts
 .playwright-mcp/
-.agent-os/
 .claude/agents/
 
 # dependencies
@@ -47,9 +46,6 @@ next-env.d.ts
 *.backup
 *.bak
 *.old
-*-fixed.*
-*-temp.*
-*-tmp.*
 
 # Analysis and reports (keep in docs/ only)
 *-report.md
