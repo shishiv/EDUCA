@@ -4,5 +4,4 @@
 
 # Development artifacts
 .playwright-mcp/
-.agent-os/
 .claude/agents/
