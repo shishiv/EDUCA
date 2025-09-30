@@ -77,6 +77,265 @@ supabase db push        # Apply migrations to remote
 supabase gen types typescript --project-id YOUR_PROJECT_ID
 ```
 
+## UI/UX Quality Assurance with Playwright MCP
+
+### 🎯 Filosofia Central: TDD com Foco em UX
+
+**PRIORIDADE MÁXIMA:** A qualidade do código (limpeza e testes) e a experiência do usuário (UI/UX) são a prioridade máxima do projeto.
+
+### Fluxo de Trabalho Obrigatório
+
+1. **Test-Driven Development (TDD)**
+   - Antes de implementar qualquer nova funcionalidade ou fluxo de usuário, **primeiro escreva os testes de ponta a ponta (E2E)** focados no comportamento
+   - Testes devem validar o fluxo de usuário, não detalhes de implementação
+
+2. **Gestão de Código**
+   - Sempre crie uma nova branch para funcionalidades ou correções (`feature/*` ou `fix/*`)
+   - **NUNCA** faça push diretamente para a branch main
+
+### Uso Mandatório do Playwright MCP
+
+**O Playwright MCP fornece a visão visual da UI e o contexto do navegador, crucial para encontrar 99% dos erros difíceis de front-end.**
+
+#### Quando Usar (OBRIGATÓRIO):
+
+Sempre que você:
+- ✅ Criar uma nova página
+- ✅ Alterar o front-end existente
+- ✅ Implementar um novo fluxo de usuário
+- ✅ Modificar estilos ou layout
+- ✅ Adicionar componentes visuais
+
+**VOCÊ DEVE usar o Playwright MCP** para verificar o resultado no navegador.
+
+#### Verificações Essenciais de UI/UX
+
+O Playwright MCP deve garantir **em todas as páginas e links**:
+
+1. **Responsividade**
+   - Boa aparência no desktop (1920x1080, 1366x768)
+   - Boa aparência no mobile (375x667, 414x896)
+   - Boa aparência no tablet (768x1024, 1024x768)
+   - Teste com `browser_resize` do Playwright MCP
+
+2. **Contraste de Cores e Acessibilidade**
+   - Verifique contraste usando DevTools (inspeção computada)
+   - Não utilize combinações ruins (ex: fonte escura em fundo escuro)
+   - Garantir conformidade WCAG 2.1 AA
+   - Use Google DevTools Lighthouse para validação
+
+3. **Formatação e Profissionalismo**
+   - Sem quebras de linha inesperadas
+   - Sem desalinhamentos ou elementos sobrepostos
+   - Sem textos truncados ou cortados
+   - Aparência profissional e polida
+
+4. **Funcionalidade Completa**
+   - Todos os links funcionam
+   - Todos os botões respondem
+   - Formulários validam corretamente
+   - Mensagens de erro são claras e úteis
+
+### Processo de Validação UI/UX (Passo a Passo)
+
+#### Passo 1: Playwright MCP Visual Testing
+```bash
+# 1. Navegue para a página
+mcp__playwright__browser_navigate(url: "http://localhost:3000/sua-pagina")
+
+# 2. Capture screenshot desktop
+mcp__playwright__browser_take_screenshot(filename: "page-desktop.png")
+
+# 3. Teste responsividade mobile
+mcp__playwright__browser_resize(width: 375, height: 667)
+mcp__playwright__browser_take_screenshot(filename: "page-mobile.png")
+
+# 4. Teste responsividade tablet
+mcp__playwright__browser_resize(width: 768, height: 1024)
+mcp__playwright__browser_take_screenshot(filename: "page-tablet.png")
+
+# 5. Verifique console para erros
+mcp__playwright__browser_console_messages()
+```
+
+#### Passo 2: Chrome DevTools MCP Deep Inspection (AUTOMATIZADO - MANDATÓRIO)
+
+**CRÍTICO:** Chrome DevTools **É um MCP** (`chrome-devtools-mcp@0.5.1`) - publicado 29/09/2025 pelo Google Chrome DevTools team.
+
+**Por que usar AMBOS MCPs:**
+- **Playwright MCP:** Automação de testes visuais, interações, screenshots
+- **Chrome DevTools MCP:** Inspeção automatizada (Console errors, Network, Performance, Lighthouse)
+
+Use SEMPRE os dois MCPs em conjunto para cobertura completa de QA.
+
+##### Chrome DevTools MCP Tools (Automatizados)
+
+**Captura Automatizada de Erros:**
+```typescript
+// Console Errors - JavaScript errors invisíveis ao Playwright
+mcp__chrome_devtools__get_console_messages()
+
+// Tipos de erros detectados:
+// - Uncaught TypeError/ReferenceError
+// - Failed to fetch (API calls)
+// - CORS errors
+// - React Hydration errors
+```
+
+**Network Analysis:**
+```typescript
+// Requisições HTTP e status codes
+mcp__chrome_devtools__get_network_requests()
+
+// Valide:
+// ✅ Todas requisições 2xx (200, 201, 204)
+// ❌ ZERO 4xx/5xx errors
+// ⚠️ Requisições >1s precisam otimização
+```
+
+**Performance Profiling:**
+```typescript
+// Gravar trace de performance
+mcp__chrome_devtools__record_trace(duration?: number)
+mcp__chrome_devtools__get_performance_metrics()
+
+// Detecta:
+// - Memory leaks
+// - Long tasks (>50ms)
+// - FPS drops (<30fps)
+// - Heap size crescimento
+```
+
+**Lighthouse Audits (Automatizados):**
+```typescript
+// Scores completos de qualidade
+mcp__chrome_devtools__run_lighthouse(categories?: Array)
+
+// Scores mínimos obrigatórios:
+// - Performance: > 90
+// - Accessibility: > 95
+// - Best Practices: > 90
+// - SEO: > 90
+```
+
+**📚 Referência Completa de MCPs:**
+Para lista completa de todos os MCPs e seus tools, veja:
+`.agent-os/MCP-REFERENCE.md`
+
+### Workflow Completo: Playwright MCP + Chrome DevTools MCP
+
+**Sequência Obrigatória para TODA alteração de UI:**
+
+```
+ETAPA 1: Playwright MCP - Visual Testing Automatizado
+  ↓
+  mcp__playwright__browser_navigate(url)
+  mcp__playwright__browser_take_screenshot(filename, fullPage)
+  mcp__playwright__browser_resize(375, 667) // Mobile
+  mcp__playwright__browser_take_screenshot("mobile.png")
+  mcp__playwright__browser_resize(768, 1024) // Tablet
+  mcp__playwright__browser_take_screenshot("tablet.png")
+  mcp__playwright__browser_console_messages()
+  mcp__playwright__browser_network_requests()
+  ↓
+ETAPA 2: Chrome DevTools MCP - Deep Inspection Automatizada
+  ↓
+  mcp__chrome_devtools__get_console_messages() // Errors invisíveis
+  mcp__chrome_devtools__get_network_requests() // Status codes
+  mcp__chrome_devtools__record_trace() // Performance profiling
+  mcp__chrome_devtools__run_lighthouse() // Scores > 90/95
+  ↓
+ETAPA 3: Validação dos Resultados
+  ↓
+  3.1. Console: ZERO errors/warnings ✅
+  3.2. Network: Todas requisições 2xx ✅
+  3.3. Performance: FPS > 30, sem memory leaks ✅
+  3.4. Lighthouse: Performance>90, Accessibility>95 ✅
+  3.5. Screenshots: Responsive OK ✅
+  ↓
+ETAPA 4: Documentação & Commit
+  ↓
+  4.1. Screenshots finais em docs/
+  4.2. Atualizar CLAUDE.md se necessário
+  4.3. Commit em feature branch
+```
+
+### Quando Chrome DevTools MCP Encontra Erro que Playwright MCP Perdeu
+
+**Exemplo Real:**
+- **Playwright MCP:** "Página carrega, botão visível, snapshot OK" ✅
+- **Chrome DevTools MCP:** `TypeError: Cannot read 'map' of undefined` ❌
+- **ROOT CAUSE:** Dados da API estão undefined, mas UI renderiza sem erros visuais
+
+**Por que Chrome DevTools MCP é essencial:**
+Chrome DevTools MCP pode detectar erros JavaScript internos que não afetam a renderização visual mas quebram funcionalidades:
+- `TypeError` / `ReferenceError` - Variáveis undefined
+- `Failed to fetch` - API calls falhando silenciosamente
+- Memory leaks - Crescimento gradual de memória
+- Performance bottlenecks - Long tasks bloqueando UI
+
+**Regra de Ouro:**
+> "Se Chrome DevTools MCP Console tem erro, a página NÃO está pronta - mesmo que Playwright MCP diga que está visualmente OK"
+
+**Fluxo de Correção:**
+1. Use `mcp__chrome_devtools__get_console_messages()` para capturar stack trace
+2. Identifique linha/arquivo do erro
+3. Corrija validação de dados (optional chaining, default values, error boundaries)
+4. Re-teste com ambos MCPs até ambos reportarem 100% OK
+
+### Estratégias de Debugging
+
+#### Contexto do Navegador
+Em caso de bug de front-end que não consegue identificar apenas olhando o código:
+1. Use Playwright MCP para processar o código **realmente executado no navegador**
+2. Capture HTML renderizado: `browser_snapshot()`
+3. Capture console messages: `browser_console_messages()`
+4. Capture network requests: `browser_network_requests()`
+
+#### Screenshots para Análise
+- Utilize screenshots de problemas de UI como entrada
+- Isso fornece contexto visual necessário para correção precisa
+- Compare before/after screenshots para validar fixes
+
+### Documentação de Design
+
+#### Quando Atualizar
+Sempre que uma decisão de design significativa for tomada:
+1. Atualize este arquivo `CLAUDE.md`
+2. Ou crie documentos específicos em `docs/design/`
+3. Documente padrões de UI estabelecidos
+4. Registre decisões de acessibilidade
+
+#### Agentes Especializados
+Se houver sub-agente especializado para design (ex: `ux-reviewer`):
+- Delegue revisão de grandes alterações de UI
+- Solicite audit completo antes de merge
+- Valide conformidade com padrões estabelecidos
+
+### Checklist de Qualidade UI/UX
+
+Antes de considerar qualquer alteração de UI completa, verifique:
+
+- [ ] Testes E2E criados com foco no fluxo de usuário
+- [ ] Playwright MCP validou desktop, mobile, tablet
+- [ ] Google DevTools Lighthouse score > 90 em todas categorias
+- [ ] Console limpo (sem errors)
+- [ ] Contraste de cores validado (WCAG AA)
+- [ ] Todos os links e botões funcionam
+- [ ] Formulários validam corretamente
+- [ ] Mensagens de erro são claras
+- [ ] Screenshots documentam estado final
+- [ ] Branch criada (não commit direto em main)
+
+### ⚠️ Regras Críticas
+
+1. **NUNCA** sugira alternativas de auth simplificada - sempre use MCP para logar
+2. **SEMPRE** use Playwright MCP + DevTools para validar UI
+3. **NUNCA** faça push direto para main sem validação UI/UX
+4. **SEMPRE** priorize acessibilidade e experiência do usuário
+
+---
+
 ## Git Workflow Agent (@agent-git-workflow)
 
 This repository integrates with Claude Code's git-workflow agent for streamlined development processes.
