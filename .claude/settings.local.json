@@ -176,7 +176,8 @@
       "mcp__playwright__browser_select_option",
       "Bash(git mv:*)",
       "Bash(git stash drop:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
