@@ -77,7 +77,7 @@ const navigationItems: NavigationItem[] = [
   {
     name: 'Turmas',
     href: '/dashboard/turmas',
-    icon: BookOpen,
+    icon: GraduationCap,
     description: 'Gerenciar turmas e classes'
   },
   {
@@ -92,6 +92,13 @@ const navigationItems: NavigationItem[] = [
     icon: CheckSquare,
     description: 'Controle de presença diária',
     badge: 'Crítico'
+  },
+  {
+    name: 'Diário de Classe',
+    href: '/dashboard/diario',
+    icon: BookOpen,
+    description: 'Histórico de aulas e frequência',
+    isNew: true
   },
   {
     name: 'Notas',
