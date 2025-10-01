@@ -21,8 +21,8 @@ const SessionParamsSchema = z.object({
 })
 
 // Create Supabase client
-function createSupabaseClient() {
-  const cookieStore = cookies()
+async function createSupabaseClient() {
+  const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -75,13 +75,14 @@ function validatePhaseTransition(currentPhase: string, newPhase: string): boolea
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
+    const { id } = await params
 
-    const validatedParams = SessionParamsSchema.parse(params)
+    const validatedParams = SessionParamsSchema.parse({ id })
 
     // Fetch session with related data
     const { data: session, error } = await supabase
@@ -178,13 +179,14 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
+    const { id } = await params
 
-    const validatedParams = SessionParamsSchema.parse(params)
+    const validatedParams = SessionParamsSchema.parse({ id })
     const body = await request.json()
     const validatedData = UpdateSessionSchema.parse(body)
 
@@ -354,13 +356,14 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
+    const { id } = await params
 
-    const validatedParams = SessionParamsSchema.parse(params)
+    const validatedParams = SessionParamsSchema.parse({ id })
 
     // Get session to check permissions and lock status
     const { data: session, error: fetchError } = await supabase
