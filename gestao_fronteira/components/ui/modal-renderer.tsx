@@ -8,8 +8,8 @@
 
 import React from 'react'
 import { useModal } from './modal-manager'
-import { TutorialOverlay } from '../tutorial/TutorialOverlay-fixed'
-import { HelpSystem } from '../help/HelpSystem-fixed'
+import { TutorialOverlay } from '../tutorial/TutorialOverlay'
+import { HelpSystem } from '../help/HelpSystem'
 import { AbrirAulaWorkflow } from '../attendance/AbrirAulaWorkflow'
 import { AttendanceGrid } from '../attendance/AttendanceGrid'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog'
