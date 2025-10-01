@@ -274,16 +274,17 @@ async function performBatchAttendanceUpdate(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const startTime = performance.now()
 
   try {
     const supabase = await createSupabaseClient(request)
     const { profile } = await validateAuth(supabase)
+    const { id } = await params
 
     // Validate request parameters
-    const validatedParams = SessionParamsSchema.parse(params)
+    const validatedParams = SessionParamsSchema.parse({ id })
     const body = await request.json()
     const validatedData = BatchAttendanceSchema.parse(body)
 
