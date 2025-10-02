@@ -53,6 +53,6 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 5.3 Write tests for database query optimization: indexed queries on (turma_id, data), (trancada_em)
   - [x] 5.4 Add database indexes and verify query performance with EXPLAIN ANALYZE
   - [x] 5.5 Write stress tests with Playwright: 50 concurrent users marking attendance simultaneously
-  - [ ] 5.6 Run full E2E test suite with Playwright MCP (open aula → mark 30 students → close aula)
+  - [x] 5.6 Run full E2E test suite with Playwright MCP (open aula → mark 30 students → close aula)
   - [ ] 5.7 Run Chrome DevTools MCP performance profiling: validate no memory leaks, FPS > 30
   - [ ] 5.8 Verify all performance benchmarks met and full test suite passes (unit + integration + E2E)
