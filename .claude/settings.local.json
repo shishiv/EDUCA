@@ -184,7 +184,9 @@
       "Bash(~/.bun/bin/supabase.exe status)",
       "Bash(lsof:*)",
       "Bash(git cherry-pick:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh auth:*)"
     ],
     "deny": [],
     "ask": []
