@@ -46,8 +46,8 @@ const SyncRequestSchema = z.object({
 })
 
 // Create Supabase client
-function createSupabaseClient() {
-  const cookieStore = cookies()
+async function createSupabaseClient() {
+  const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -88,7 +88,7 @@ async function validateAuth(supabase: any) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
 
     const body = await request.json()
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
 
     const url = new URL(request.url)
