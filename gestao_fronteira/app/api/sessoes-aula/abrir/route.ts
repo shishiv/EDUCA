@@ -21,8 +21,8 @@ const AbrirAulaSchema = z.object({
 })
 
 // Create Supabase client with proper cookie handling
-function createSupabaseClient() {
-  const cookieStore = cookies()
+async function createSupabaseClient() {
+  const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -134,7 +134,7 @@ function calculateAutoClosureTime(sessionDate: string): string {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
 
     // Parse and validate request body
