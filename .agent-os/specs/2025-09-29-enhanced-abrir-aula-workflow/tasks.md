@@ -46,6 +46,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 4.6 Implement service worker for offline UI caching (attendance grid accessible without network)
   - [x] 4.7 Run Chrome DevTools MCP Lighthouse audit and fix any issues below threshold
   - [x] 4.8 Verify all mobile responsiveness and accessibility tests pass
+
 - [x] 5. Performance Optimization and Quality Assurance
   - [x] 5.1 Write performance tests: attendance marking < 1s per student, batch save < 2s for 30 students
   - [x] 5.2 Implement optimistic UI updates with immediate visual feedback and background API calls
