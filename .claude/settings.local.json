@@ -177,7 +177,14 @@
       "Bash(git mv:*)",
       "Bash(git stash drop:*)",
       "Bash(git fetch:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Read(//c/Users/Desenvolvimento/.bun/**)",
+      "Read(//c/Users/Desenvolvimento/.bun/bin/**)",
+      "Bash(~/.bun/bin/supabase.exe --version)",
+      "Bash(~/.bun/bin/supabase.exe status)",
+      "Bash(lsof:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []
