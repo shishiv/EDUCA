@@ -47,12 +47,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 4.7 Run Chrome DevTools MCP Lighthouse audit and fix any issues below threshold
   - [x] 4.8 Verify all mobile responsiveness and accessibility tests pass
 
-- [ ] 5. Performance Optimization and Quality Assurance
+- [x] 5. Performance Optimization and Quality Assurance
   - [x] 5.1 Write performance tests: attendance marking < 1s per student, batch save < 2s for 30 students
   - [x] 5.2 Implement optimistic UI updates with immediate visual feedback and background API calls
   - [x] 5.3 Write tests for database query optimization: indexed queries on (turma_id, data), (trancada_em)
   - [x] 5.4 Add database indexes and verify query performance with EXPLAIN ANALYZE
   - [x] 5.5 Write stress tests with Playwright: 50 concurrent users marking attendance simultaneously
   - [x] 5.6 Run full E2E test suite with Playwright MCP (open aula → mark 30 students → close aula)
-  - [ ] 5.7 Run Chrome DevTools MCP performance profiling: validate no memory leaks, FPS > 30
-  - [ ] 5.8 Verify all performance benchmarks met and full test suite passes (unit + integration + E2E)
+  - [x] 5.7 Run Chrome DevTools MCP performance profiling: validate no memory leaks, FPS > 30
+  - [x] 5.8 Verify all performance benchmarks met and full test suite passes (unit + integration + E2E)
