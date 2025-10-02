@@ -33,8 +33,8 @@ const SessionListSchema = z.object({
 })
 
 // Create Supabase client
-function createSupabaseClient() {
-  const cookieStore = cookies()
+async function createSupabaseClient() {
+  const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -88,7 +88,7 @@ function validatePhaseTransition(currentPhase: string, newPhase: string): boolea
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
 
     // Parse and validate query parameters
@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseClient()
     const { profile } = await validateAuth(supabase)
 
     const body = await request.json()
