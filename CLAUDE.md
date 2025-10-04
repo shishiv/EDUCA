@@ -77,7 +77,7 @@ supabase db push        # Apply migrations to remote
 supabase gen types typescript --project-id YOUR_PROJECT_ID
 ```
 
-## UI/UX Quality Assurance with Playwright MCP
+## UI/UX Quality Assurance com Chrome DevTools MCP
 
 ### 🎯 Filosofia Central: TDD com Foco em UX
 
@@ -93,9 +93,13 @@ supabase gen types typescript --project-id YOUR_PROJECT_ID
    - Sempre crie uma nova branch para funcionalidades ou correções (`feature/*` ou `fix/*`)
    - **NUNCA** faça push diretamente para a branch main
 
-### Uso Mandatório do Playwright MCP
+### Chrome DevTools MCP: Ferramenta Unificada de QA
 
-**O Playwright MCP fornece a visão visual da UI e o contexto do navegador, crucial para encontrar 99% dos erros difíceis de front-end.**
+**O Chrome DevTools MCP fornece visão visual completa da UI, debugging profundo, e performance profiling - tudo em uma única ferramenta integrada.**
+
+**Versão:** `chrome-devtools-mcp@0.6.0` (Outubro 2025)
+**Maintainer:** Google Chrome DevTools Team
+**Status:** Public Preview (9k+ stars, produção-ready)
 
 #### Quando Usar (OBRIGATÓRIO):
 
@@ -105,24 +109,26 @@ Sempre que você:
 - ✅ Implementar um novo fluxo de usuário
 - ✅ Modificar estilos ou layout
 - ✅ Adicionar componentes visuais
+- ✅ Otimizar performance
+- ✅ Preparar deploy para produção
 
-**VOCÊ DEVE usar o Playwright MCP** para verificar o resultado no navegador.
+**VOCÊ DEVE usar o Chrome DevTools MCP** para validação completa de UI/UX.
 
 #### Verificações Essenciais de UI/UX
 
-O Playwright MCP deve garantir **em todas as páginas e links**:
+O Chrome DevTools MCP deve garantir **em todas as páginas e links**:
 
 1. **Responsividade**
    - Boa aparência no desktop (1920x1080, 1366x768)
    - Boa aparência no mobile (375x667, 414x896)
    - Boa aparência no tablet (768x1024, 1024x768)
-   - Teste com `browser_resize` do Playwright MCP
+   - Teste com `resize_page` do Chrome DevTools MCP
 
 2. **Contraste de Cores e Acessibilidade**
    - Verifique contraste usando DevTools (inspeção computada)
    - Não utilize combinações ruins (ex: fonte escura em fundo escuro)
    - Garantir conformidade WCAG 2.1 AA
-   - Use Google DevTools Lighthouse para validação
+   - Lighthouse audits automatizados
 
 3. **Formatação e Profissionalismo**
    - Sem quebras de linha inesperadas
@@ -136,166 +142,183 @@ O Playwright MCP deve garantir **em todas as páginas e links**:
    - Formulários validam corretamente
    - Mensagens de erro são claras e úteis
 
-### Processo de Validação UI/UX (Passo a Passo)
+5. **Performance**
+   - LCP (Largest Contentful Paint) < 2.5s
+   - FPS (Frames Per Second) > 30
+   - Sem memory leaks
+   - Network requests otimizados
 
-#### Passo 1: Playwright MCP Visual Testing
+### Workflow 1: Validação UI/UX Padrão (90% dos casos)
+
+**Use este workflow para:** Mudanças de UI, novos componentes, alterações de estilo, novos fluxos de usuário
+
+#### Passo 1: Validação Visual
 ```bash
 # 1. Navegue para a página
-mcp__playwright__browser_navigate(url: "http://localhost:3000/sua-pagina")
+mcp__chrome_devtools__navigate_page(url: "http://localhost:3000/sua-pagina")
 
 # 2. Capture screenshot desktop
-mcp__playwright__browser_take_screenshot(filename: "page-desktop.png")
+mcp__chrome_devtools__take_screenshot(filename: "page-desktop.png")
 
 # 3. Teste responsividade mobile
-mcp__playwright__browser_resize(width: 375, height: 667)
-mcp__playwright__browser_take_screenshot(filename: "page-mobile.png")
+mcp__chrome_devtools__resize_page(width: 375, height: 667)
+mcp__chrome_devtools__take_screenshot(filename: "page-mobile.png")
 
 # 4. Teste responsividade tablet
-mcp__playwright__browser_resize(width: 768, height: 1024)
-mcp__playwright__browser_take_screenshot(filename: "page-tablet.png")
-
-# 5. Verifique console para erros
-mcp__playwright__browser_console_messages()
+mcp__chrome_devtools__resize_page(width: 768, height: 1024)
+mcp__chrome_devtools__take_screenshot(filename: "page-tablet.png")
 ```
 
-#### Passo 2: Chrome DevTools MCP Deep Inspection (AUTOMATIZADO - MANDATÓRIO)
+#### Passo 2: Validação Funcional
+```bash
+# 1. Verifique console para erros JavaScript
+mcp__chrome_devtools__list_console_messages()
 
-**CRÍTICO:** Chrome DevTools **É um MCP** (`chrome-devtools-mcp@0.5.1`) - publicado 29/09/2025 pelo Google Chrome DevTools team.
+# 2. Analise network requests (status codes, timing)
+mcp__chrome_devtools__list_network_requests()
 
-**Por que usar AMBOS MCPs:**
-- **Playwright MCP:** Automação de testes visuais, interações, screenshots
-- **Chrome DevTools MCP:** Inspeção automatizada (Console errors, Network, Performance, Lighthouse)
+# 3. Capture accessibility snapshot
+mcp__chrome_devtools__take_snapshot()
+```
 
-Use SEMPRE os dois MCPs em conjunto para cobertura completa de QA.
+#### Passo 3: Critérios de Aprovação
+- ✅ Screenshots responsivos OK (desktop, mobile, tablet)
+- ✅ Console sem errors/warnings
+- ✅ Network requests retornam 2xx (200, 201, 204)
+- ✅ Accessibility snapshot estruturado corretamente
+- ✅ Todos links e botões interativos funcionam
 
-##### Chrome DevTools MCP Tools (Automatizados)
+**Se TODOS critérios atendidos:** ✅ PRONTO - Commit em feature branch
 
-**Captura Automatizada de Erros:**
+### Workflow 2: Performance Profiling (10% dos casos)
+
+**Use este workflow para:** Antes de produção, página com lentidão, otimização de bundle, investigação de memory leaks
+
+#### Passo 1: Baseline Visual
+Execute **Workflow 1** completo primeiro.
+
+#### Passo 2: Emulation de Condições Adversas
+```bash
+# 1. Simule rede lenta (Slow 3G)
+mcp__chrome_devtools__emulate_network(throttlingOption: "Slow 3G")
+
+# 2. Simule CPU lento (4x throttling)
+mcp__chrome_devtools__emulate_cpu(throttlingRate: 4)
+```
+
+#### Passo 3: Performance Tracing
+```bash
+# 1. Inicie gravação de trace com reload automático
+mcp__chrome_devtools__performance_start_trace(reload: true, autoStop: true)
+
+# 2. Pare gravação (se autoStop: false)
+mcp__chrome_devtools__performance_stop_trace()
+```
+
+#### Passo 4: Análise de Insights
+```bash
+# 1. Analise Largest Contentful Paint (LCP)
+mcp__chrome_devtools__performance_analyze_insight(insightName: "LCPBreakdown")
+
+# 2. Analise Document Latency
+mcp__chrome_devtools__performance_analyze_insight(insightName: "DocumentLatency")
+
+# 3. Verifique console para erros profundos
+mcp__chrome_devtools__list_console_messages()
+```
+
+#### Passo 5: Network Deep Dive (se necessário)
+```bash
+# 1. Liste todas requisições
+mcp__chrome_devtools__list_network_requests()
+
+# 2. Inspecione requisição problemática em detalhe
+mcp__chrome_devtools__get_network_request(url: "https://api.exemplo.com/endpoint-lento")
+```
+
+#### Passo 6: Critérios de Performance
+- ✅ LCP < 2.5s (Core Web Vital)
+- ✅ FPS > 30 (sem drops significativos)
+- ✅ No memory leaks (heap size estável)
+- ✅ Network requests < 1s (otimizados)
+- ✅ Funciona em Slow 3G + CPU throttling
+
+**Se TODOS critérios atendidos:** ✅ PRONTO - Performance validada para produção
+
+### Ferramentas Disponíveis no Chrome DevTools MCP
+
+#### 📋 Navegação (7 tools)
 ```typescript
-// Console Errors - JavaScript errors invisíveis ao Playwright
-mcp__chrome_devtools__get_console_messages()
-
-// Tipos de erros detectados:
-// - Uncaught TypeError/ReferenceError
-// - Failed to fetch (API calls)
-// - CORS errors
-// - React Hydration errors
+navigate_page(url: string, timeout?: number)
+navigate_page_history(navigate: "back" | "forward")
+list_pages()
+new_page(url: string)
+close_page(pageIdx: number)
+select_page(pageIdx: number)
+wait_for(text?: string, textGone?: string, time?: number)
 ```
 
-**Network Analysis:**
+#### 🎯 Interações (7 tools)
 ```typescript
-// Requisições HTTP e status codes
-mcp__chrome_devtools__get_network_requests()
-
-// Valide:
-// ✅ Todas requisições 2xx (200, 201, 204)
-// ❌ ZERO 4xx/5xx errors
-// ⚠️ Requisições >1s precisam otimização
+click(uid: string, dblClick?: boolean)
+fill(uid: string, value: string)
+fill_form(elements: Array<{uid, value}>)
+hover(uid: string)
+drag(from_uid: string, to_uid: string)
+upload_file(uid: string, filePath: string)
+handle_dialog(action: "accept" | "dismiss", promptText?: string)
 ```
 
-**Performance Profiling:**
+#### 📸 Visual Testing (2 tools)
 ```typescript
-// Gravar trace de performance
-mcp__chrome_devtools__record_trace(duration?: number)
-mcp__chrome_devtools__get_performance_metrics()
-
-// Detecta:
-// - Memory leaks
-// - Long tasks (>50ms)
-// - FPS drops (<30fps)
-// - Heap size crescimento
+take_screenshot(filename?: string, fullPage?: boolean, uid?: string)
+take_snapshot() // Accessibility tree
 ```
 
-**Lighthouse Audits (Automatizados):**
+#### 🔍 Debugging (4 tools)
 ```typescript
-// Scores completos de qualidade
-mcp__chrome_devtools__run_lighthouse(categories?: Array)
-
-// Scores mínimos obrigatórios:
-// - Performance: > 90
-// - Accessibility: > 95
-// - Best Practices: > 90
-// - SEO: > 90
+list_console_messages(onlyErrors?: boolean)
+list_network_requests(resourceTypes?: Array, pageIdx?: number, pageSize?: number)
+get_network_request(url: string)
+evaluate_script(function: string, args?: Array)
 ```
 
-**📚 Referência Completa de MCPs:**
-Para lista completa de todos os MCPs e seus tools, veja:
-`.agent-os/MCP-REFERENCE.md`
-
-### Workflow Completo: Playwright MCP + Chrome DevTools MCP
-
-**Sequência Obrigatória para TODA alteração de UI:**
-
-```
-ETAPA 1: Playwright MCP - Visual Testing Automatizado
-  ↓
-  mcp__playwright__browser_navigate(url)
-  mcp__playwright__browser_take_screenshot(filename, fullPage)
-  mcp__playwright__browser_resize(375, 667) // Mobile
-  mcp__playwright__browser_take_screenshot("mobile.png")
-  mcp__playwright__browser_resize(768, 1024) // Tablet
-  mcp__playwright__browser_take_screenshot("tablet.png")
-  mcp__playwright__browser_console_messages()
-  mcp__playwright__browser_network_requests()
-  ↓
-ETAPA 2: Chrome DevTools MCP - Deep Inspection Automatizada
-  ↓
-  mcp__chrome_devtools__get_console_messages() // Errors invisíveis
-  mcp__chrome_devtools__get_network_requests() // Status codes
-  mcp__chrome_devtools__record_trace() // Performance profiling
-  mcp__chrome_devtools__run_lighthouse() // Scores > 90/95
-  ↓
-ETAPA 3: Validação dos Resultados
-  ↓
-  3.1. Console: ZERO errors/warnings ✅
-  3.2. Network: Todas requisições 2xx ✅
-  3.3. Performance: FPS > 30, sem memory leaks ✅
-  3.4. Lighthouse: Performance>90, Accessibility>95 ✅
-  3.5. Screenshots: Responsive OK ✅
-  ↓
-ETAPA 4: Documentação & Commit
-  ↓
-  4.1. Screenshots finais em docs/
-  4.2. Atualizar CLAUDE.md se necessário
-  4.3. Commit em feature branch
+#### ⚡ Performance (3 tools)
+```typescript
+performance_start_trace(reload?: boolean, autoStop?: boolean)
+performance_stop_trace()
+performance_analyze_insight(insightName: string)
 ```
 
-### Quando Chrome DevTools MCP Encontra Erro que Playwright MCP Perdeu
+#### 🌐 Emulation (3 tools)
+```typescript
+resize_page(width: number, height: number)
+emulate_cpu(throttlingRate: 1-20) // 1 = normal, 20 = 20x slower
+emulate_network(throttlingOption: "Slow 3G" | "Fast 3G" | "Slow 4G" | "Fast 4G")
+```
 
-**Exemplo Real:**
-- **Playwright MCP:** "Página carrega, botão visível, snapshot OK" ✅
-- **Chrome DevTools MCP:** `TypeError: Cannot read 'map' of undefined` ❌
-- **ROOT CAUSE:** Dados da API estão undefined, mas UI renderiza sem erros visuais
+**📚 Referência Completa:** `.agent-os/MCP-REFERENCE.md`
 
-**Por que Chrome DevTools MCP é essencial:**
-Chrome DevTools MCP pode detectar erros JavaScript internos que não afetam a renderização visual mas quebram funcionalidades:
-- `TypeError` / `ReferenceError` - Variáveis undefined
-- `Failed to fetch` - API calls falhando silenciosamente
-- Memory leaks - Crescimento gradual de memória
-- Performance bottlenecks - Long tasks bloqueando UI
-
-**Regra de Ouro:**
-> "Se Chrome DevTools MCP Console tem erro, a página NÃO está pronta - mesmo que Playwright MCP diga que está visualmente OK"
-
-**Fluxo de Correção:**
-1. Use `mcp__chrome_devtools__get_console_messages()` para capturar stack trace
-2. Identifique linha/arquivo do erro
-3. Corrija validação de dados (optional chaining, default values, error boundaries)
-4. Re-teste com ambos MCPs até ambos reportarem 100% OK
-
-### Estratégias de Debugging
+### Debugging Avançado
 
 #### Contexto do Navegador
 Em caso de bug de front-end que não consegue identificar apenas olhando o código:
-1. Use Playwright MCP para processar o código **realmente executado no navegador**
-2. Capture HTML renderizado: `browser_snapshot()`
-3. Capture console messages: `browser_console_messages()`
-4. Capture network requests: `browser_network_requests()`
+1. Use `take_snapshot()` para capturar HTML renderizado e accessibility tree
+2. Use `list_console_messages()` para capturar JavaScript errors com stack traces
+3. Use `list_network_requests()` para identificar API calls falhando
+4. Use `evaluate_script()` para inspecionar estado interno do DOM/JavaScript
 
 #### Screenshots para Análise
-- Utilize screenshots de problemas de UI como entrada
-- Isso fornece contexto visual necessário para correção precisa
+- Utilize `take_screenshot()` com fullPage: true para documentar problemas visuais
 - Compare before/after screenshots para validar fixes
+- Use `take_screenshot(uid: "elemento-específico")` para focar em componentes
+
+#### Performance Insights
+Chrome DevTools MCP oferece análise automatizada de performance:
+- **LCPBreakdown**: Identifica o que está atrasando o Largest Contentful Paint
+- **DocumentLatency**: Analisa tempo de carregamento do documento
+- **RenderBlocking**: Detecta recursos bloqueando renderização
+- **SlowCSSSelector**: Identifica seletores CSS lentos
 
 ### Documentação de Design
 
@@ -317,9 +340,10 @@ Se houver sub-agente especializado para design (ex: `ux-reviewer`):
 Antes de considerar qualquer alteração de UI completa, verifique:
 
 - [ ] Testes E2E criados com foco no fluxo de usuário
-- [ ] Playwright MCP validou desktop, mobile, tablet
-- [ ] Google DevTools Lighthouse score > 90 em todas categorias
-- [ ] Console limpo (sem errors)
+- [ ] Chrome DevTools MCP validou desktop, mobile, tablet (screenshots)
+- [ ] Console limpo (sem errors/warnings)
+- [ ] Network requests retornam 2xx (sem 4xx/5xx)
+- [ ] Accessibility snapshot estruturado corretamente
 - [ ] Contraste de cores validado (WCAG AA)
 - [ ] Todos os links e botões funcionam
 - [ ] Formulários validam corretamente
@@ -327,12 +351,21 @@ Antes de considerar qualquer alteração de UI completa, verifique:
 - [ ] Screenshots documentam estado final
 - [ ] Branch criada (não commit direto em main)
 
+#### Checklist Performance (Antes de Produção):
+- [ ] LCP < 2.5s (Largest Contentful Paint)
+- [ ] FPS > 30 (sem drops significativos)
+- [ ] No memory leaks (heap size estável)
+- [ ] Network requests < 1s (otimizados)
+- [ ] Funciona em Slow 3G + CPU throttling (4x)
+- [ ] Performance insights analisados e otimizados
+
 ### ⚠️ Regras Críticas
 
 1. **NUNCA** sugira alternativas de auth simplificada - sempre use MCP para logar
-2. **SEMPRE** use Playwright MCP + DevTools para validar UI
-3. **NUNCA** faça push direto para main sem validação UI/UX
+2. **SEMPRE** use Chrome DevTools MCP para validar UI (visual + funcional + performance)
+3. **NUNCA** faça push direto para main sem validação UI/UX completa
 4. **SEMPRE** priorize acessibilidade e experiência do usuário
+5. **SEMPRE** execute Workflow 2 (Performance) antes de deploy em produção
 
 ---
 
