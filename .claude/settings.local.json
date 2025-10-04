@@ -173,7 +173,8 @@
       "Bash(gh auth:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh pr list:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(bunx tsc:*)"
     ],
     "deny": [],
     "ask": []
