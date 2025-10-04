@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAvailableTurmas } from '@/lib/api/class-diary'
 import type { ClassDiaryFilters } from '@/lib/api/class-diary'
+import { supabase } from '@/lib/supabase'
 
 interface ClassDiaryFilterProps {
   onFilterChange: (filters: ClassDiaryFilters) => void
@@ -49,7 +50,7 @@ export function ClassDiaryFilter({
 
   // Available turmas for dropdown
   const [turmas, setTurmas] = useState<
-    Array<{ id: string; nome: string; serie: string }>
+    Array<{ id: string; nome: string; ano: number }>
   >([])
   const [loadingTurmas, setLoadingTurmas] = useState(true)
 
@@ -57,7 +58,7 @@ export function ClassDiaryFilter({
   useEffect(() => {
     async function fetchTurmas() {
       setLoadingTurmas(true)
-      const { data, error } = await getAvailableTurmas(profesor_id, escola_id)
+      const { data, error } = await getAvailableTurmas(supabase, profesor_id, escola_id)
 
       if (error) {
         console.error('Error fetching turmas:', error)
@@ -79,7 +80,7 @@ export function ClassDiaryFilter({
     if (turmaId) filters.turma_id = turmaId
     if (dateFrom) filters.date_from = dateFrom
     if (dateTo) filters.date_to = dateTo
-    if (fase) filters.fase = fase as any
+    if (fase) filters.status = fase as 'aberta' | 'fechada' | 'travada'
     if (profesor_id) filters.professor_id = profesor_id
     if (escola_id) filters.escola_id = escola_id
 
@@ -130,7 +131,7 @@ export function ClassDiaryFilter({
                 ) : (
                   turmas.map((turma) => (
                     <SelectItem key={turma.id} value={turma.id}>
-                      {turma.nome} - {turma.serie}
+                      {turma.nome} - {turma.ano}º Ano
                     </SelectItem>
                   ))
                 )}
@@ -171,10 +172,9 @@ export function ClassDiaryFilter({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Todos os status</SelectItem>
-                <SelectItem value="planejamento">Planejamento</SelectItem>
-                <SelectItem value="chamada">Chamada</SelectItem>
-                <SelectItem value="finalizada">Finalizada</SelectItem>
-                <SelectItem value="bloqueada">Bloqueada</SelectItem>
+                <SelectItem value="aberta">Aberta</SelectItem>
+                <SelectItem value="fechada">Fechada</SelectItem>
+                <SelectItem value="travada">Travada</SelectItem>
               </SelectContent>
             </Select>
           </div>

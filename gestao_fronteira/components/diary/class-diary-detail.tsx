@@ -42,6 +42,7 @@ import {
 } from 'lucide-react'
 import { getClassDetail } from '@/lib/api/class-diary'
 import type { DetailedSession } from '@/lib/api/class-diary'
+import { supabase } from '@/lib/supabase'
 
 interface ClassDiaryDetailProps {
   session_id: string | null
@@ -66,7 +67,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await getClassDetail(session_id)
+      const { data, error: fetchError } = await getClassDetail(supabase, session_id)
 
       if (fetchError || !data) {
         console.error('Error fetching session detail:', fetchError)

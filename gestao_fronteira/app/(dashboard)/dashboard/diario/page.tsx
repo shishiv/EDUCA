@@ -107,7 +107,7 @@ export default function DiarioPage() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await getClassDiary({
+      const { data, error: fetchError } = await getClassDiary(createClient, {
         ...currentFilters,
         limit: itemsPerPage,
         offset: (currentPage - 1) * itemsPerPage,
