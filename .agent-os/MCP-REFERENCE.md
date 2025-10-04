@@ -5,97 +5,83 @@
 
 ---
 
-## 🎭 Playwright MCP - Browser Automation
 
-**Package:** `@playwright/mcp@latest`
-**Use Case:** Visual testing, UI automation, screenshot capture
+## 🔧 Chrome DevTools MCP - Unified UI/UX Testing & Performance
 
-### Key Tools:
+**Package:** `chrome-devtools-mcp@0.6.0`
+**Published:** October 2025 by Google Chrome DevTools team
+**Status:** Public Preview (9k+ stars, production-ready)
+**Use Case:** Complete UI/UX testing, performance profiling, debugging
+
+### Categories & Complete Tool List (26 tools):
+
+#### 📋 Navigation (7 tools)
 ```typescript
-// Navigation
-mcp__playwright__browser_navigate(url: string)
-mcp__playwright__browser_navigate_back()
-
-// Visual Testing
-mcp__playwright__browser_take_screenshot(filename?: string, fullPage?: boolean)
-mcp__playwright__browser_snapshot() // Accessibility snapshot
-
-// Interactions
-mcp__playwright__browser_click(element: string, ref: string)
-mcp__playwright__browser_type(element: string, ref: string, text: string)
-mcp__playwright__browser_fill_form(fields: Array)
-
-// Inspection
-mcp__playwright__browser_console_messages()
-mcp__playwright__browser_network_requests()
-
-// Window Management
-mcp__playwright__browser_resize(width: number, height: number)
-mcp__playwright__browser_close()
+mcp__chrome_devtools__navigate_page(url: string, timeout?: number)
+mcp__chrome_devtools__navigate_page_history(navigate: "back" | "forward", timeout?: number)
+mcp__chrome_devtools__list_pages()
+mcp__chrome_devtools__new_page(url: string, timeout?: number)
+mcp__chrome_devtools__close_page(pageIdx: number)
+mcp__chrome_devtools__select_page(pageIdx: number)
+mcp__chrome_devtools__wait_for(text?: string, textGone?: string, time?: number, timeout?: number)
 ```
 
-**When to Use:**
-- ✅ Screenshot responsiveness (desktop/mobile/tablet)
-- ✅ Test user interactions (clicks, forms)
-- ✅ Capture console messages
-- ✅ Monitor network requests
-- ✅ Accessibility snapshots
-
----
-
-## 🔧 Chrome DevTools MCP - Deep Debugging
-
-**Package:** `chrome-devtools-mcp@0.5.1`
-**Use Case:** Performance analysis, detailed debugging, Lighthouse audits
-**Published:** 2025-09-29 (10 hours ago) by Google Chrome DevTools team
-
-### Key Features (from official docs):
+#### 🎯 Interactions (7 tools)
 ```typescript
-// Performance Insights
-- Record performance traces
-- Extract actionable insights
-- Identify bottlenecks
-
-// Network Analysis
-- Inspect HTTP requests/responses
-- Analyze request timing
-- Check status codes
-
-// Console Debugging
-- Capture JavaScript errors
-- Get stack traces
-- Monitor warnings
-
-// Screenshots & Visual
-- Capture page screenshots
-- Compare visual states
-- Document UI state
+mcp__chrome_devtools__click(uid: string, dblClick?: boolean)
+mcp__chrome_devtools__fill(uid: string, value: string)
+mcp__chrome_devtools__fill_form(elements: Array<{uid, value}>)
+mcp__chrome_devtools__hover(uid: string)
+mcp__chrome_devtools__drag(from_uid: string, to_uid: string)
+mcp__chrome_devtools__upload_file(uid: string, filePath: string)
+mcp__chrome_devtools__handle_dialog(action: "accept" | "dismiss", promptText?: string)
 ```
 
-### Tools (Estimated - needs verification):
+#### 📸 Visual Testing (2 tools)
 ```typescript
-// Console
-mcp__chrome_devtools__get_console_messages()
-mcp__chrome_devtools__get_errors()
-
-// Network
-mcp__chrome_devtools__get_network_requests()
-mcp__chrome_devtools__analyze_request(requestId: string)
-
-// Performance
-mcp__chrome_devtools__record_trace(duration?: number)
-mcp__chrome_devtools__get_performance_metrics()
-
-// Lighthouse
-mcp__chrome_devtools__run_lighthouse(categories?: Array)
+mcp__chrome_devtools__take_screenshot(filename?: string, fullPage?: boolean, format?: "png" | "jpeg" | "webp", quality?: number, uid?: string)
+mcp__chrome_devtools__take_snapshot() // Accessibility tree + rendered HTML
 ```
 
-**When to Use:**
-- ✅ Detect JavaScript errors invisible to Playwright
-- ✅ Performance profiling and bottleneck analysis
-- ✅ Lighthouse audits (Performance, Accessibility, SEO)
-- ✅ Network request deep inspection
-- ✅ Memory leak detection
+#### 🔍 Debugging (4 tools)
+```typescript
+mcp__chrome_devtools__list_console_messages(onlyErrors?: boolean)
+mcp__chrome_devtools__list_network_requests(resourceTypes?: Array, pageIdx?: number, pageSize?: number)
+mcp__chrome_devtools__get_network_request(url: string) // Deep inspection with headers, timing, body
+mcp__chrome_devtools__evaluate_script(function: string, args?: Array<{uid}>)
+```
+
+#### ⚡ Performance (3 tools)
+```typescript
+mcp__chrome_devtools__performance_start_trace(reload?: boolean, autoStop?: boolean)
+mcp__chrome_devtools__performance_stop_trace()
+mcp__chrome_devtools__performance_analyze_insight(insightName: "LCPBreakdown" | "DocumentLatency" | "RenderBlocking" | "SlowCSSSelector")
+```
+
+#### 🌐 Emulation (3 tools)
+```typescript
+mcp__chrome_devtools__resize_page(width: number, height: number)
+mcp__chrome_devtools__emulate_cpu(throttlingRate: 1-20) // 1 = normal, 20 = 20x slower
+mcp__chrome_devtools__emulate_network(throttlingOption: "No emulation" | "Slow 3G" | "Fast 3G" | "Slow 4G" | "Fast 4G")
+```
+
+### When to Use (100% of UI/UX Cases):
+
+#### Always Use For:
+- ✅ Visual testing (screenshots desktop/mobile/tablet)
+- ✅ User interaction testing (clicks, forms, navigation)
+- ✅ Console error detection (JavaScript errors, warnings)
+- ✅ Network request monitoring (status codes, timing)
+- ✅ Accessibility snapshots and validation
+- ✅ Performance profiling (LCP, FPS, memory leaks)
+- ✅ Slow connection simulation (Slow 3G, CPU throttling)
+- ✅ Network request deep inspection (headers, response bodies)
+
+#### Specific Use Cases:
+- **90% of cases (Workflow 1):** Basic UI/UX validation (visual + functional)
+- **10% of cases (Workflow 2):** Performance profiling before production
+- **Debugging:** Deep JavaScript error investigation with stack traces
+- **Optimization:** LCP breakdown, render-blocking resource detection
 
 ---
 
@@ -198,18 +184,35 @@ mcp__github_com_upstash_context7_mcp__get_library_docs(
 
 ## 🔄 MCP Workflow Patterns
 
-### Pattern 1: Complete UI/UX Validation
+### Pattern 1: Complete UI/UX Validation (Standard - 90% of cases)
 ```
-1. Playwright MCP - Visual testing
+1. Chrome DevTools MCP - Visual testing (screenshots desktop/mobile/tablet)
    ↓
-2. Chrome DevTools MCP - Deep inspection
+2. Chrome DevTools MCP - Functional validation (console, network, accessibility)
    ↓
-3. shadcn/ui MCP - Component consistency check
+3. shadcn/ui MCP - Component consistency check (if using shadcn components)
    ↓
-4. Document results
+4. Document results (screenshots, checklist)
+   ↓
+✅ Commit to feature branch
 ```
 
-### Pattern 2: Database Development
+### Pattern 2: Performance Profiling (Before Production - 10% of cases)
+```
+1. Chrome DevTools MCP - Baseline visual (Pattern 1)
+   ↓
+2. Chrome DevTools MCP - Emulation (Slow 3G, CPU throttling)
+   ↓
+3. Chrome DevTools MCP - Performance trace + insights (LCP, FPS, memory)
+   ↓
+4. Chrome DevTools MCP - Network deep dive (slow endpoints)
+   ↓
+5. Optimize based on insights
+   ↓
+✅ Production-ready
+```
+
+### Pattern 3: Database Development
 ```
 1. Supabase MCP - Check advisors (security/performance)
    ↓
@@ -217,10 +220,10 @@ mcp__github_com_upstash_context7_mcp__get_library_docs(
    ↓
 3. Supabase MCP - Generate TypeScript types
    ↓
-4. Test with Playwright MCP
+4. Chrome DevTools MCP - Test UI changes
 ```
 
-### Pattern 3: Learning & Implementation
+### Pattern 4: Learning & Implementation
 ```
 1. Context7 MCP - Get library documentation
    ↓
@@ -228,7 +231,7 @@ mcp__github_com_upstash_context7_mcp__get_library_docs(
    ↓
 3. Implement feature
    ↓
-4. Playwright + Chrome DevTools MCPs - Validate
+4. Chrome DevTools MCP - Complete UI/UX validation
 ```
 
 ---
@@ -236,16 +239,19 @@ mcp__github_com_upstash_context7_mcp__get_library_docs(
 ## ⚠️ MCP Best Practices
 
 ### DO:
-- ✅ Use Playwright MCP + Chrome DevTools MCP together (not one or the other)
+- ✅ Use Chrome DevTools MCP for ALL UI/UX validation (visual + functional + performance)
+- ✅ Run Workflow 1 (visual + functional) for every UI change
+- ✅ Run Workflow 2 (performance profiling) before production deploy
 - ✅ Run Supabase advisors before production deploy
 - ✅ Check shadcn/ui MCP for existing components before creating custom ones
 - ✅ Use Context7 MCP for up-to-date documentation (not Google search)
 
 ### DON'T:
-- ❌ Skip Chrome DevTools MCP thinking Playwright is enough
+- ❌ Skip performance profiling before production (Workflow 2 is mandatory)
 - ❌ Make database changes without running migration through Supabase MCP
-- ❌ Ignore Supabase security advisors
+- ❌ Ignore Supabase security/performance advisors
 - ❌ Forget to generate TypeScript types after schema changes
+- ❌ Use external browser testing tools when Chrome DevTools MCP provides everything
 
 ---
 
@@ -253,13 +259,17 @@ mcp__github_com_upstash_context7_mcp__get_library_docs(
 
 | MCP | Usage Frequency | Primary Use Case |
 |-----|----------------|------------------|
-| Playwright | High | Every UI change |
-| Chrome DevTools | High | Every UI change |
+| Chrome DevTools | **Very High** | Every UI change (visual + functional + performance) |
 | Supabase | Medium | DB operations, advisors |
 | shadcn/ui | Medium | Component development |
 | Context7 | Low | Research documentation |
 
 ---
 
-**Next Review:** After first week of MVP development (2025-10-05)
+**Migration Notes:**
+- **October 2025:** Migrated from Playwright MCP + Chrome DevTools MCP to Chrome DevTools MCP unified
+- **Rationale:** Chrome DevTools MCP is a superset of Playwright (26 tools vs 16), eliminating redundancy
+- **Benefits:** Simplified workflow, no tool duplication, performance profiling built-in
+
+**Next Review:** After one month of Chrome DevTools MCP exclusive usage (2025-11-03)
 **Document Owner:** Development Team

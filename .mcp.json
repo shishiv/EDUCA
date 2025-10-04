@@ -13,14 +13,6 @@
         "SUPABASE_ACCESS_TOKEN": "sbp_44d4e8ccd001f87f55075811b67287ea5d358e86"
       }
     },
-    "playwright": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "@playwright/mcp@latest"
-      ]
-    },
     "chrome-devtools": {
       "command": "cmd",
       "args": [
