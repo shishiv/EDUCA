@@ -9,10 +9,15 @@
  * - Be auditable and immutable after locking
  * - Support director/secretary review
  *
- * Data Source: aula_sessions table (with frequencia relationship)
+ * Data Source: aulas_abertas table (with frequencia relationship)
+ *
+ * IMPORTANT: All functions accept a Supabase client as first parameter.
+ * The client should be created in the calling context (API route or Server Component)
+ * using createServerClient from @supabase/ssr with proper cookie handling.
  */
 
-import { supabase as createClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 /**
  * Interface: Class Diary Entry
@@ -23,19 +28,21 @@ export interface ClassDiaryEntry {
   data_aula: string // ISO date format YYYY-MM-DD
   turma_id: string
   turma_nome: string
-  turma_serie: string
+  turma_ano: number
   escola_id: string
   escola_nome: string
   professor_id: string
   professor_nome: string
-  fase: 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada'
-  bloqueado: boolean
-  observacoes: string | null
+  disciplina: string | null
+  status: 'aberta' | 'fechada' | 'travada'
+  observacoes_abertura: string | null
+  observacoes_fechamento: string | null
   total_alunos: number
   total_presentes: number
   total_ausentes: number
-  created_at: string
-  updated_at: string
+  aberta_em: string
+  fechada_em: string | null
+  travada_em: string | null
 }
 
 /**
@@ -44,13 +51,12 @@ export interface ClassDiaryEntry {
  */
 export interface AttendanceHistoryRecord {
   id: string
-  session_id: string
-  data_aula: string
+  aula_id: string
+  data: string
   aluno_id: string
   aluno_nome: string
   presente: boolean
-  observacoes: string | null
-  is_locked: boolean
+  observacao: string | null
   turma_nome: string
 }
 
@@ -61,8 +67,6 @@ export interface AttendanceHistoryRecord {
 export interface DetailedSession extends ClassDiaryEntry {
   attendance_records: AttendanceHistoryRecord[]
   attendance_percentage: number
-  hash_integridade: string | null
-  bloqueado_em: string | null
 }
 
 /**
@@ -73,9 +77,10 @@ export interface ClassDiaryFilters {
   turma_id?: string
   professor_id?: string
   escola_id?: string
+  disciplina?: string
   date_from?: string // YYYY-MM-DD
   date_to?: string // YYYY-MM-DD
-  fase?: 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada'
+  status?: 'aberta' | 'fechada' | 'travada'
   limit?: number
   offset?: number
 }
@@ -86,47 +91,47 @@ export interface ClassDiaryFilters {
  * Returns a paginated list of class sessions with attendance statistics
  * Ordered by date descending (most recent first)
  *
+ * @param supabase - Supabase client instance
  * @param filters - Optional filters for turma, professor, date range, etc.
  * @returns Array of ClassDiaryEntry objects
  *
  * @example
- * const diary = await getClassDiary({ turma_id: 'uuid', date_from: '2025-09-01' })
+ * const diary = await getClassDiary(supabase, { turma_id: 'uuid', date_from: '2025-09-01' })
  */
 export async function getClassDiary(
+  supabase: SupabaseClient<Database>,
   filters: ClassDiaryFilters = {}
 ): Promise<{ data: ClassDiaryEntry[] | null; error: any }> {
-  const supabase = createClient()
-
   try {
+
     // Build query with relationships
     let query = supabase
-      .from('aula_sessions')
+      .from('aulas_abertas')
       .select(`
         id,
         data_aula,
         turma_id,
         professor_id,
-        fase,
-        bloqueado,
-        observacoes,
-        total_alunos,
-        total_presentes,
-        total_ausentes,
-        created_at,
-        updated_at,
-        turmas:turma_id (
+        disciplina,
+        status,
+        observacoes_abertura,
+        observacoes_fechamento,
+        aberta_em,
+        fechada_em,
+        travada_em,
+        turmas!inner(
           id,
           nome,
-          serie,
+          ano,
           escola_id,
-          escolas:escola_id (
+          escolas!inner(
             id,
             nome
           )
         ),
-        users:professor_id (
+        users!inner(
           id,
-          nome
+          name
         )
       `)
 
@@ -139,8 +144,12 @@ export async function getClassDiary(
       query = query.eq('professor_id', filters.professor_id)
     }
 
-    if (filters.fase) {
-      query = query.eq('fase', filters.fase)
+    if (filters.disciplina) {
+      query = query.eq('disciplina', filters.disciplina)
+    }
+
+    if (filters.status) {
+      query = query.eq('status', filters.status)
     }
 
     if (filters.date_from) {
@@ -164,33 +173,68 @@ export async function getClassDiary(
     const offset = filters.offset || 0
     query = query.range(offset, offset + limit - 1)
 
-    const { data, error } = await query
+    const { data: aulas, error } = await query
 
     if (error) {
       console.error('Error fetching class diary:', error)
       return { data: null, error }
     }
 
+    if (!aulas || aulas.length === 0) {
+      return { data: [], error: null }
+    }
+
+    // Fetch attendance statistics for each aula
+    const aulaIds = aulas.map((a) => a.id)
+    const { data: frequencias } = await supabase
+      .from('frequencia')
+      .select('aula_id, presente')
+      .in('aula_id', aulaIds)
+
+    // Build frequency map
+    const frequenciaMap = new Map<string, { presentes: number; ausentes: number; total: number }>()
+    frequencias?.forEach((freq) => {
+      if (!frequenciaMap.has(freq.aula_id)) {
+        frequenciaMap.set(freq.aula_id, { presentes: 0, ausentes: 0, total: 0 })
+      }
+      const stats = frequenciaMap.get(freq.aula_id)!
+      stats.total++
+      if (freq.presente) {
+        stats.presentes++
+      } else {
+        stats.ausentes++
+      }
+    })
+
     // Transform data to match ClassDiaryEntry interface
-    const transformedData: ClassDiaryEntry[] = (data || []).map((session: any) => ({
-      id: session.id,
-      data_aula: session.data_aula,
-      turma_id: session.turma_id,
-      turma_nome: session.turmas?.nome || 'N/A',
-      turma_serie: session.turmas?.serie || 'N/A',
-      escola_id: session.turmas?.escolas?.id || '',
-      escola_nome: session.turmas?.escolas?.nome || 'N/A',
-      professor_id: session.professor_id,
-      professor_nome: session.users?.nome || 'N/A',
-      fase: session.fase,
-      bloqueado: session.bloqueado,
-      observacoes: session.observacoes,
-      total_alunos: session.total_alunos || 0,
-      total_presentes: session.total_presentes || 0,
-      total_ausentes: session.total_ausentes || 0,
-      created_at: session.created_at,
-      updated_at: session.updated_at,
-    }))
+    const transformedData: ClassDiaryEntry[] = (aulas as any[]).map((aula) => {
+      const stats = frequenciaMap.get(aula.id) || { presentes: 0, ausentes: 0, total: 0 }
+      const turma = aula.turmas as any
+      const escola = turma?.escolas as any
+      const professor = aula.users as any
+
+      return {
+        id: aula.id,
+        data_aula: aula.data_aula,
+        turma_id: aula.turma_id,
+        turma_nome: turma?.nome || 'N/A',
+        turma_ano: turma?.ano || 1,
+        escola_id: escola?.id || '',
+        escola_nome: escola?.nome || 'N/A',
+        professor_id: aula.professor_id,
+        professor_nome: professor?.name || 'N/A',
+        disciplina: aula.disciplina,
+        status: aula.status,
+        observacoes_abertura: aula.observacoes_abertura,
+        observacoes_fechamento: aula.observacoes_fechamento,
+        total_alunos: stats.total,
+        total_presentes: stats.presentes,
+        total_ausentes: stats.ausentes,
+        aberta_em: aula.aberta_em,
+        fechada_em: aula.fechada_em,
+        travada_em: aula.travada_em,
+      }
+    })
 
     return { data: transformedData, error: null }
   } catch (error) {
@@ -205,6 +249,7 @@ export async function getClassDiary(
  * Returns all attendance records for a student within a specific turma
  * Ordered by date ascending (chronological order)
  *
+ * @param supabase - Supabase client instance
  * @param aluno_id - Student UUID
  * @param turma_id - Class UUID
  * @param date_from - Optional start date filter (YYYY-MM-DD)
@@ -212,43 +257,40 @@ export async function getClassDiary(
  * @returns Array of AttendanceHistoryRecord objects
  *
  * @example
- * const history = await getAttendanceHistory('aluno-uuid', 'turma-uuid')
+ * const history = await getAttendanceHistory(supabase, 'aluno-uuid', 'turma-uuid')
  */
 export async function getAttendanceHistory(
+  supabase: SupabaseClient<Database>,
   aluno_id: string,
   turma_id: string,
   date_from?: string,
   date_to?: string
 ): Promise<{ data: AttendanceHistoryRecord[] | null; error: any }> {
-  const supabase = createClient()
-
   try {
+
     let query = supabase
       .from('frequencia')
       .select(`
         id,
-        session_id,
+        aula_id,
         data,
         aluno_id,
         presente,
-        observacoes,
-        is_locked,
-        alunos:aluno_id (
+        observacao,
+        alunos!inner(
           id,
           nome_completo
         ),
-        aula_sessions:session_id (
+        aulas_abertas!inner(
+          id,
           turma_id,
-          turmas:turma_id (
+          turmas!inner(
             nome
           )
         )
       `)
       .eq('aluno_id', aluno_id)
-
-    // Filter by turma through session relationship
-    // Note: This requires the session to be part of the specified turma
-    // We'll need to verify turma_id matches in the post-processing
+      .eq('aulas_abertas.turma_id', turma_id)
 
     if (date_from) {
       query = query.gte('data', date_from)
@@ -267,20 +309,17 @@ export async function getAttendanceHistory(
       return { data: null, error }
     }
 
-    // Filter by turma_id and transform data
-    const transformedData: AttendanceHistoryRecord[] = (data || [])
-      .filter((record: any) => record.aula_sessions?.turma_id === turma_id)
-      .map((record: any) => ({
-        id: record.id,
-        session_id: record.session_id,
-        data_aula: record.data,
-        aluno_id: record.aluno_id,
-        aluno_nome: record.alunos?.nome_completo || 'N/A',
-        presente: record.presente,
-        observacoes: record.observacoes,
-        is_locked: record.is_locked,
-        turma_nome: record.aula_sessions?.turmas?.nome || 'N/A',
-      }))
+    // Transform data
+    const transformedData: AttendanceHistoryRecord[] = (data || []).map((record: any) => ({
+      id: record.id,
+      aula_id: record.aula_id,
+      data: record.data,
+      aluno_id: record.aluno_id,
+      aluno_nome: record.alunos?.nome_completo || 'N/A',
+      presente: record.presente,
+      observacao: record.observacao,
+      turma_nome: record.aulas_abertas?.turmas?.nome || 'N/A',
+    }))
 
     return { data: transformedData, error: null }
   } catch (error) {
@@ -297,76 +336,73 @@ export async function getAttendanceHistory(
  * - All attendance records for that session
  * - Calculated attendance percentage
  *
- * @param session_id - Session UUID
+ * @param supabase - Supabase client instance
+ * @param aula_id - Aula UUID
  * @returns DetailedSession object or null
  *
  * @example
- * const session = await getClassDetail('session-uuid')
+ * const session = await getClassDetail(supabase, 'aula-uuid')
  */
 export async function getClassDetail(
-  session_id: string
+  supabase: SupabaseClient<Database>,
+  aula_id: string
 ): Promise<{ data: DetailedSession | null; error: any }> {
-  const supabase = createClient()
-
   try {
-    // Fetch session data
-    const { data: sessionData, error: sessionError } = await supabase
-      .from('aula_sessions')
+
+    // Fetch aula data
+    const { data: aulaData, error: aulaError } = await supabase
+      .from('aulas_abertas')
       .select(`
         id,
         data_aula,
         turma_id,
         professor_id,
-        fase,
-        bloqueado,
-        bloqueado_em,
-        observacoes,
-        hash_integridade,
-        total_alunos,
-        total_presentes,
-        total_ausentes,
-        created_at,
-        updated_at,
-        turmas:turma_id (
+        disciplina,
+        status,
+        observacoes_abertura,
+        observacoes_fechamento,
+        aberta_em,
+        fechada_em,
+        travada_em,
+        turmas!inner(
           id,
           nome,
-          serie,
+          ano,
           escola_id,
-          escolas:escola_id (
+          escolas!inner(
             id,
             nome
           )
         ),
-        users:professor_id (
+        users!inner(
           id,
-          nome
+          name
         )
       `)
-      .eq('id', session_id)
+      .eq('id', aula_id)
       .single()
 
-    if (sessionError || !sessionData) {
-      console.error('Error fetching session:', sessionError)
-      return { data: null, error: sessionError }
+    if (aulaError || !aulaData) {
+      console.error('Error fetching aula:', aulaError)
+      return { data: null, error: aulaError }
     }
 
-    // Fetch attendance records for this session
+    // Fetch attendance records for this aula
     const { data: attendanceData, error: attendanceError } = await supabase
       .from('frequencia')
       .select(`
         id,
-        session_id,
+        aula_id,
         data,
         aluno_id,
         presente,
-        observacoes,
-        is_locked,
-        alunos:aluno_id (
+        observacao,
+        alunos!inner(
           id,
           nome_completo
         )
       `)
-      .eq('session_id', session_id)
+      .eq('aula_id', aula_id)
       .order('alunos(nome_completo)', { ascending: true })
 
     if (attendanceError) {
@@ -374,48 +410,58 @@ export async function getClassDetail(
       return { data: null, error: attendanceError }
     }
 
+    // Calculate attendance statistics
+    const totalAlunos = attendanceData?.length || 0
+    const totalPresentes = attendanceData?.filter(r => r.presente).length || 0
+    const totalAusentes = totalAlunos - totalPresentes
+
+    // Type assertions for relationships
+    const aula = aulaData as any
+    const turma = aula.turmas as any
+    const escola = turma?.escolas as any
+    const professor = aula.users as any
+
     // Transform attendance records
     const attendanceRecords: AttendanceHistoryRecord[] = (attendanceData || []).map(
       (record: any) => ({
         id: record.id,
-        session_id: record.session_id,
-        data_aula: record.data,
+        aula_id: record.aula_id,
+        data: record.data,
         aluno_id: record.aluno_id,
         aluno_nome: record.alunos?.nome_completo || 'N/A',
         presente: record.presente,
-        observacoes: record.observacoes,
-        is_locked: record.is_locked,
-        turma_nome: sessionData.turmas?.nome || 'N/A',
+        observacao: record.observacao,
+        turma_nome: turma?.nome || 'N/A',
       })
     )
 
     // Calculate attendance percentage
     const attendance_percentage =
-      sessionData.total_alunos > 0
-        ? Math.round((sessionData.total_presentes / sessionData.total_alunos) * 100)
+      totalAlunos > 0
+        ? Math.round((totalPresentes / totalAlunos) * 100)
         : 0
 
     // Build detailed session object
     const detailedSession: DetailedSession = {
-      id: sessionData.id,
-      data_aula: sessionData.data_aula,
-      turma_id: sessionData.turma_id,
-      turma_nome: sessionData.turmas?.nome || 'N/A',
-      turma_serie: sessionData.turmas?.serie || 'N/A',
-      escola_id: sessionData.turmas?.escolas?.id || '',
-      escola_nome: sessionData.turmas?.escolas?.nome || 'N/A',
-      professor_id: sessionData.professor_id,
-      professor_nome: sessionData.users?.nome || 'N/A',
-      fase: sessionData.fase,
-      bloqueado: sessionData.bloqueado,
-      bloqueado_em: sessionData.bloqueado_em,
-      observacoes: sessionData.observacoes,
-      hash_integridade: sessionData.hash_integridade,
-      total_alunos: sessionData.total_alunos || 0,
-      total_presentes: sessionData.total_presentes || 0,
-      total_ausentes: sessionData.total_ausentes || 0,
-      created_at: sessionData.created_at,
-      updated_at: sessionData.updated_at,
+      id: aula.id,
+      data_aula: aula.data_aula,
+      turma_id: aula.turma_id,
+      turma_nome: turma?.nome || 'N/A',
+      turma_ano: turma?.ano || 1,
+      escola_id: escola?.id || '',
+      escola_nome: escola?.nome || 'N/A',
+      professor_id: aula.professor_id,
+      professor_nome: professor?.name || 'N/A',
+      disciplina: aula.disciplina,
+      status: aula.status,
+      observacoes_abertura: aula.observacoes_abertura,
+      observacoes_fechamento: aula.observacoes_fechamento,
+      total_alunos: totalAlunos,
+      total_presentes: totalPresentes,
+      total_ausentes: totalAusentes,
+      aberta_em: aula.aberta_em,
+      fechada_em: aula.fechada_em,
+      travada_em: aula.travada_em,
       attendance_records: attendanceRecords,
       attendance_percentage,
     }
@@ -431,25 +477,26 @@ export async function getClassDetail(
  * Get list of unique turmas (classes) that have diary entries
  * Useful for populating filter dropdowns
  *
+ * @param supabase - Supabase client instance
  * @param professor_id - Optional professor filter
  * @param escola_id - Optional school filter
  * @returns Array of turma objects with basic info
  */
 export async function getAvailableTurmas(
+  supabase: SupabaseClient<Database>,
   professor_id?: string,
   escola_id?: string
-): Promise<{ data: Array<{ id: string; nome: string; serie: string }> | null; error: any }> {
-  const supabase = createClient()
-
+): Promise<{ data: Array<{ id: string; nome: string; ano: number }> | null; error: any }> {
   try {
+
     let query = supabase
-      .from('aula_sessions')
+      .from('aulas_abertas')
       .select(`
         turma_id,
-        turmas:turma_id (
+        turmas!inner(
           id,
           nome,
-          serie,
+          ano,
           escola_id
         )
       `)
@@ -471,12 +518,12 @@ export async function getAvailableTurmas(
 
     // Extract unique turmas
     const turmasMap = new Map()
-    data?.forEach((session: any) => {
-      if (session.turmas) {
-        turmasMap.set(session.turmas.id, {
-          id: session.turmas.id,
-          nome: session.turmas.nome,
-          serie: session.turmas.serie,
+    data?.forEach((aula: any) => {
+      if (aula.turmas) {
+        turmasMap.set(aula.turmas.id, {
+          id: aula.turmas.id,
+          nome: aula.turmas.nome,
+          ano: aula.turmas.ano,
         })
       }
     })
