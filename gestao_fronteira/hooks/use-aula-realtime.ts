@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 export interface AulaStatus {
   id: string
@@ -195,11 +196,11 @@ export function useAulaRealtime({
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Real-time subscription active for aula status')
+          logger.info('Real-time subscription active for aula status')
         } else if (status === 'CLOSED') {
-          console.log('Real-time subscription closed')
+          logger.info('Real-time subscription closed')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('Real-time subscription error')
+          logger.error('Real-time subscription error')
           setState(prev => ({ ...prev, error: 'Erro na conexão em tempo real' }))
         }
       })

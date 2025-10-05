@@ -44,6 +44,7 @@ import {
   Clock
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export default function RelatoriosPage() {
   const [relatorios, setRelatorios] = useState<Report[]>([])
@@ -63,7 +64,7 @@ export default function RelatoriosPage() {
       const data = await reportsApi.getAll()
       setRelatorios(data)
     } catch (error) {
-      // console.error('Erro ao carregar relatórios:', error)
+      // logger.error('Erro ao carregar relatórios:', { error: error })
       toast.error('Erro ao carregar lista de relatórios')
     } finally {
       setLoading(false)

@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner'
 import { format, formatDistanceToNow, differenceInMinutes } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { logger } from '@/lib/logger'
 
 interface Session {
   id: string
@@ -167,7 +168,7 @@ export function FecharAulaDialog({
 
       await onConfirm(closureData)
     } catch (error) {
-      console.error('Erro no fechamento automático:', error)
+      logger.error('Erro no fechamento automático:', { error: error })
       toast.error('Erro no fechamento automático da aula')
     }
   }
@@ -241,7 +242,7 @@ export function FecharAulaDialog({
 
       await onConfirm(closureData)
     } catch (error) {
-      console.error('Erro ao fechar aula:', error)
+      logger.error('Erro ao fechar aula:', { error: error })
       toast.error('Erro ao fechar aula: ' + (error instanceof Error ? error.message : 'Erro desconhecido'))
     }
   }

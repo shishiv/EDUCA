@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const CreateSessionSchema = z.object({
@@ -174,7 +175,7 @@ export async function GET(request: NextRequest) {
     const { data: sessions, error } = await query
 
     if (error) {
-      console.error('Error fetching sessions:', error)
+      logger.error('Error fetching sessions:', { error: error })
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 })
     }
 
@@ -195,7 +196,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Session list error:', error)
+    logger.error('Session list error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -300,7 +301,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating session:', error)
+      logger.error('Error creating session:', { error: error })
 
       if (error.code === '23505') { // Unique constraint violation
         return NextResponse.json({
@@ -320,7 +321,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Session creation error:', error)
+    logger.error('Session creation error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

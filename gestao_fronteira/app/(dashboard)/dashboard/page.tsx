@@ -12,6 +12,7 @@ import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calen
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 interface DashboardStats {
   totalAlunos: number
@@ -51,7 +52,7 @@ export default function DashboardPage() {
 
   const loadDashboardData = async () => {
     try {
-      console.log('Loading dashboard data...')
+      logger.info('Loading dashboard data...')
 
       // Load real data from Supabase in parallel for better performance
       const [
@@ -114,7 +115,7 @@ export default function DashboardPage() {
         alunosComDocumentosPendentes
       }
 
-      console.log('Dashboard stats loaded:', newStats)
+      logger.info('Dashboard stats loaded:', { newStats })
       setStats(newStats)
 
       // Load recent activities from recent data
@@ -153,11 +154,11 @@ export default function DashboardPage() {
         )
       }
 
-      console.log('Recent activities loaded:', recentActivities.length)
+      logger.info('Recent activities loaded', { count: recentActivities.length })
       setActivities(recentActivities.slice(0, 3))
 
     } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error)
+      logger.error('Erro ao carregar dados do dashboard:', { error: error })
       // Fallback to basic stats if there's an error
       setStats({
         totalAlunos: 0,

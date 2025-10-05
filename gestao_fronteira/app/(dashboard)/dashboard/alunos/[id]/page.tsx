@@ -33,6 +33,7 @@ import {
   Heart
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface AlunoDetalhado {
   id: string
@@ -214,7 +215,7 @@ export default function AlunoDetalhesPage() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       setAluno(mockAlunoDetalhado)
     } catch (error) {
-      // console.error('Erro ao carregar aluno:', error)
+      // logger.error('Erro ao carregar aluno:', { error: error })
       toast.error('Erro ao carregar dados do aluno')
     } finally {
       setLoading(false)

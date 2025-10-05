@@ -9,6 +9,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { SessionRealtimeManager, type SessionRealtimeData, type AttendanceStats, type SessionRealtimeCallbacks } from '@/lib/realtime/session-realtime'
 import { toast } from '@/hooks/use-toast'
+import { logger } from '@/lib/logger'
 
 // Context Types
 interface SessionRealtimeContextValue {
@@ -181,7 +182,7 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
     },
 
     onError: (error) => {
-      console.error('Session realtime error:', error)
+      logger.error('Session realtime error:', { error: error })
 
       createNotification(
         'compliance_warning',
@@ -259,7 +260,7 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
     try {
       await realtimeManager.current?.broadcastSessionUpdate(sessionId, updateType, data)
     } catch (error) {
-      console.error('Failed to broadcast session update:', error)
+      logger.error('Failed to broadcast session update:', { error: error })
       setPendingSync(prev => prev + 1)
     }
   }, [])

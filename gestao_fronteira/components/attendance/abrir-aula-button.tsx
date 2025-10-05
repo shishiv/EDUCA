@@ -37,13 +37,16 @@ export function AbrirAulaButton({
     setLoading(true)
 
     try {
-      const response = await fetch('/api/aulas/abrir', {
+      // Enhanced endpoint with three-phase workflow support
+      const response = await fetch('/api/sessoes-aula/abrir', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           turma_id: turmaId,
+          professor_id: professorId,
+          data_aula: new Date().toISOString().split('T')[0],
           observacoes: 'Aula aberta via interface do professor'
         })
       })
@@ -56,8 +59,21 @@ export function AbrirAulaButton({
 
       if (result.success) {
         setSessionOpened(true)
+
+        // Show success message with auto-closure info
+        const autoCloseTime = result.data?.auto_fechamento_agendado
+          ? new Date(result.data.auto_fechamento_agendado).toLocaleTimeString('pt-BR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'America/Sao_Paulo'
+            })
+          : null
+
         toast.success(
-          'Aula aberta com sucesso! Agora você pode marcar a frequência dos alunos.'
+          'Aula aberta com sucesso! Agora você pode marcar a frequência dos alunos.',
+          autoCloseTime ? {
+            description: `Fechamento automático às ${autoCloseTime}`
+          } : undefined
         )
         onSuccess?.(result.data)
       } else {

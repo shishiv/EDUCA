@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/select'
 import { Plus, Search, Eye, Edit, Trash2, UserCheck, Calendar, School, Download } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface Matricula {
   id: string
@@ -223,14 +225,84 @@ export default function MatriculasPage() {
 
   const loadMatriculas = async () => {
     try {
-      // Simular carregamento
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setMatriculas(mockMatriculas)
+      const { data, error } = await supabase
+        .from('matriculas')
+        .select(`
+          *,
+          aluno:alunos(id, nome_completo, data_nascimento),
+          turma:turmas(id, nome, serie, ano_letivo, escola:escolas(id, nome))
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      // Transform data to match component interface
+      const formattedMatriculas = data?.map(matricula => ({
+        id: matricula.id,
+        aluno: {
+          id: matricula.aluno?.id || '',
+          nome: matricula.aluno?.nome_completo || 'Aluno desconhecido',
+          dataNascimento: matricula.aluno?.data_nascimento || ''
+        },
+        turma: {
+          id: matricula.turma?.id || '',
+          nome: matricula.turma?.nome || 'Turma desconhecida',
+          serie: matricula.turma?.serie || ''
+        },
+        escola: {
+          id: matricula.turma?.escola?.id || '',
+          nome: matricula.turma?.escola?.nome || 'Escola desconhecida'
+        },
+        ano_letivo: matricula.ano_letivo,
+        data_matricula: matricula.data_matricula,
+        situacao: matricula.situacao,
+        created_at: matricula.created_at
+      })) || []
+
+      setMatriculas(formattedMatriculas)
     } catch (error) {
-      // console.error('Erro ao carregar matrículas:', error)
+      logger.error('Error loading matriculas', { error })
       toast.error('Erro ao carregar lista de matrículas')
+      setMatriculas([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteMatricula = async (matriculaId: string, alunoNome: string) => {
+    if (!confirm(`Tem certeza que deseja cancelar a matrícula de "${alunoNome}"? Esta ação não pode ser desfeita.`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('matriculas')
+        .delete()
+        .eq('id', matriculaId)
+
+      if (error) throw error
+
+      toast.success(`Matrícula de "${alunoNome}" cancelada com sucesso!`)
+      await loadMatriculas() // Reload the list
+    } catch (error: any) {
+      logger.error('Error deleting matricula', {
+        error,
+        errorMessage: error.message || 'Unknown error',
+        errorCode: error.code || 'NO_CODE',
+        errorDetails: error.details || 'No details',
+        errorHint: error.hint || 'No hint',
+        matriculaId,
+        alunoNome
+      })
+
+      // User-friendly error messages
+      if (error.code === '23503') {
+        toast.error('Não é possível cancelar esta matrícula pois existem registros de frequência ou notas vinculados.')
+      } else if (error.code === '42501' || error.message?.includes('permission')) {
+        toast.error('Você não tem permissão para cancelar esta matrícula.')
+      } else {
+        toast.error(`Erro ao cancelar matrícula: ${error.message || 'Tente novamente.'}`)
+      }
     }
   }
 
@@ -511,7 +583,12 @@ export default function MatriculasPage() {
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno.nome_completo)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

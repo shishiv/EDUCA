@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowLeft, Save, School, MapPin, Phone, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { schoolsApi } from '@/lib/api/schools'
+import { logger } from '@/lib/logger'
 
 export default function NovaEscolaPage() {
   const router = useRouter()
@@ -62,7 +63,7 @@ export default function NovaEscolaPage() {
       const diretores = await schoolsApi.getAvailableDirectors()
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
-      console.error('Erro ao carregar diretores:', error)
+      logger.error('Erro ao carregar diretores:', { error: error })
       toast.error('Erro ao carregar lista de diretores disponíveis')
     }
   }
@@ -106,7 +107,7 @@ export default function NovaEscolaPage() {
       toast.success('Escola cadastrada com sucesso!')
       router.push('/dashboard/escolas')
     } catch (error: any) {
-      console.error('Erro ao cadastrar escola:', error)
+      logger.error('Erro ao cadastrar escola:', { error: error })
 
       // Mensagens de erro contextualizadas
       let errorMessage = 'Erro ao cadastrar escola'

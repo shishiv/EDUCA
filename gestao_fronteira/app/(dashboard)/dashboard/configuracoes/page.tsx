@@ -20,6 +20,7 @@ import {
   Building
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export default function ConfiguracoesPage() {
   const [configs, setConfigs] = useState<Config[]>([])
@@ -43,7 +44,7 @@ export default function ConfiguracoesPage() {
       })
       setConfigValues(values)
     } catch (error) {
-      // console.error('Erro ao carregar configurações:', error)
+      // logger.error('Erro ao carregar configurações:', { error: error })
       toast.error('Erro ao carregar configurações')
     } finally {
       setLoading(false)
@@ -90,7 +91,7 @@ export default function ConfiguracoesPage() {
         toast.info('Nenhuma alteração foi detectada')
       }
     } catch (error: any) {
-      console.error('Erro ao salvar configurações:', error)
+      logger.error('Erro ao salvar configurações:', { error: error })
       toast.error(error.message || 'Erro ao salvar configurações')
     } finally {
       setSaving(false)
@@ -111,7 +112,7 @@ export default function ConfiguracoesPage() {
       toast.success(`Configuração "${config.descricao}" resetada para valor padrão`)
       await loadConfigs()
     } catch (error: any) {
-      console.error('Erro ao resetar configuração:', error)
+      logger.error('Erro ao resetar configuração:', { error: error })
       toast.error('Erro ao resetar configuração')
     }
   }

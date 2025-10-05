@@ -33,6 +33,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface UserActivity {
   id: string
@@ -108,7 +109,7 @@ export default function UsuarioDetalhesPage() {
         router.push('/dashboard/usuarios')
       }
     } catch (error) {
-      // console.error('Erro ao carregar usuário:', error)
+      // logger.error('Erro ao carregar usuário:', { error: error })
       toast.error('Erro ao carregar dados do usuário')
     } finally {
       setLoading(false)
@@ -121,7 +122,7 @@ export default function UsuarioDetalhesPage() {
       await new Promise(resolve => setTimeout(resolve, 500))
       setActivities(mockActivities)
     } catch (error) {
-      // console.error('Erro ao carregar atividades:', error)
+      // logger.error('Erro ao carregar atividades:', { error: error })
     }
   }
 

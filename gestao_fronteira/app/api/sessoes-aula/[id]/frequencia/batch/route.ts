@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const SessionParamsSchema = z.object({
@@ -156,7 +157,7 @@ async function checkExistingAttendance(supabase: any, sessionId: string, student
     .in('aluno_id', studentIds)
 
   if (error) {
-    console.warn('Erro ao verificar frequência existente:', error)
+    logger.warn('Erro ao verificar frequência existente:', { error })
     return []
   }
 
@@ -320,14 +321,14 @@ export async function POST(
           session_id: validatedParams.id
         })
         .then()
-        .catch(err => console.warn('Erro ao atualizar estatísticas:', err))
+        .catch(err => logger.warn('Erro ao atualizar estatísticas:', { err }))
     }
 
     const endTime = performance.now()
     const executionTime = endTime - startTime
 
     // Log performance metrics
-    console.log(`Frequência em lote processada em ${executionTime.toFixed(2)}ms para ${totalRecords} registros`)
+    logger.info(`Frequência em lote processada em ${executionTime.toFixed(2)}ms para ${totalRecords} registros`)
 
     // Check performance requirement (<1 second)
     const performanceCompliant = executionTime < 1000
@@ -361,7 +362,7 @@ export async function POST(
     const endTime = performance.now()
     const executionTime = endTime - startTime
 
-    console.error('Erro no processamento em lote da frequência:', error)
+    logger.error('Erro no processamento em lote da frequência:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

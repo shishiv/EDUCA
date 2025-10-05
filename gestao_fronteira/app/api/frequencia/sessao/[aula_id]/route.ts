@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
@@ -238,7 +239,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Erro inesperado em /api/frequencia/sessao/[aula_id]:', error)
+    logger.error('Erro inesperado em /api/frequencia/sessao/[aula_id]:', { error: error })
     return NextResponse.json(
       {
         success: false,

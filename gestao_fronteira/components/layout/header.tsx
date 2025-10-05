@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { useSessionRealtime } from '@/contexts/session-realtime-context'
+import { useComplianceWarnings } from '@/hooks/use-compliance-warnings'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -14,37 +15,38 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MunicipalHeaderIdentity } from '@/components/identity/municipal-assets'
-import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, ExternalLink } from 'lucide-react'
+import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, AlertCircle, XCircle, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+
+// Helper function to map icon names to components
+function getIconComponent(iconName: string) {
+  const iconMap: Record<string, any> = {
+    Clock,
+    FileText,
+    AlertTriangle,
+    AlertCircle,
+    XCircle
+  }
+  return iconMap[iconName] || Bell
+}
 
 export function Header() {
   const { userProfile, signOut } = useAuth()
   const { connectionStatus, notifications, clearNotification } = useSessionRealtime()
+  const { data: complianceWarnings = [] } = useComplianceWarnings()
 
-  // Mock compliance notifications - in production, this would come from API
-  const complianceNotifications = [
-    {
-      id: 'attendance-lock-pending',
-      title: 'Bloqueio Automático de Frequência',
-      message: 'As sessões de hoje serão bloqueadas automaticamente às 18:00. Confirme toda a frequência antes deste horário.',
-      type: 'critical' as const,
-      icon: Clock,
-      actionUrl: '/dashboard/frequencia',
-      actionText: 'Verificar Frequência',
-      deadline: new Date(Date.now() + 2 * 60 * 60 * 1000) // 2 hours from now
-    },
-    {
-      id: 'educacenso-deadline',
-      title: 'Prazo Educacenso 2025',
-      message: 'Primeira etapa de coleta termina em 15 dias. Verifique se todos os dados de matrícula estão atualizados.',
-      type: 'warning' as const,
-      icon: FileText,
-      actionUrl: '/dashboard/relatorios/educacenso',
-      actionText: 'Revisar Dados',
-      deadline: new Date('2025-07-31')
-    }
-  ]
+  // Map compliance warnings to notification format
+  const complianceNotifications = complianceWarnings.map(warning => ({
+    id: warning.id,
+    title: warning.title,
+    message: warning.message,
+    type: warning.type,
+    icon: getIconComponent(warning.icon),
+    actionUrl: warning.actionUrl,
+    actionText: warning.actionText,
+    deadline: warning.deadline ? new Date(warning.deadline) : undefined
+  }))
 
   // Combine system notifications with compliance notifications
   const allNotifications = [...notifications, ...complianceNotifications]

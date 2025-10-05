@@ -8,6 +8,7 @@ import { AbrirAulaButton } from '@/components/attendance/abrir-aula-button'
 import { AulaStatusIndicatorEnhanced as AulaStatusIndicator } from '@/components/attendance/aula-status-indicator-enhanced'
 import { classesApi, ClassWithDetails } from '@/lib/api/classes'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase'
 import {
   BookOpen,
   Users,
@@ -22,6 +23,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface TeacherStats {
   totalClasses: number
@@ -96,7 +98,7 @@ function ClassCard({ classInfo, teacherId, onSessionOpened }: ClassCardProps) {
               turmaNome={`${classInfo.nome} - ${classInfo.serie}`}
               onSuccess={(sessionData) => onSessionOpened(sessionData, classInfo)}
               onError={(error) => {
-                console.error('Erro ao abrir aula:', error)
+                logger.error('Erro ao abrir aula:', { error: error })
                 toast.error('Erro ao abrir aula. Tente novamente.')
               }}
               className="w-full"
@@ -143,19 +145,40 @@ export function TeacherDashboardEnhanced({ onNavigateToAttendance }: TeacherDash
       const totalStudents = teacherClasses.reduce((sum, c) => sum + (c._count?.students || 0), 0)
       const activeClasses = teacherClasses.filter(c => c.ativo).length
 
-      // Mock data for today's active sessions (would come from aulas_abertas table)
-      const todayActiveSessions = Math.floor(Math.random() * teacherClasses.length)
+      // Get today's active sessions from aulas_abertas table
+      const today = new Date().toISOString().split('T')[0]
+      const { data: activeSessions } = await supabase
+        .from('sessoes_aula')
+        .select('id')
+        .eq('professor_id', user.id)
+        .eq('data_aula', today)
+        .in('status', ['PLANEJADA', 'ABERTA'])
+
+      const todayActiveSessions = activeSessions?.length || 0
+
+      // Calculate average attendance from frequencia table
+      const { data: attendanceData } = await supabase
+        .from('frequencia')
+        .select('presente')
+        .eq('professor_id', user.id)
+        .gte('data_aula', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // Last 30 days
+
+      let averageAttendance = 85 // Default
+      if (attendanceData && attendanceData.length > 0) {
+        const presentCount = attendanceData.filter(a => a.presente).length
+        averageAttendance = Math.round((presentCount / attendanceData.length) * 100)
+      }
 
       setStats({
         totalClasses: teacherClasses.length,
         activeClasses,
         totalStudents,
-        averageAttendance: 85, // Would be calculated from frequencia table
+        averageAttendance,
         todayActiveSessions
       })
 
     } catch (error) {
-      console.error('Error loading teacher data:', error)
+      logger.error('Error loading teacher data:', { error: error })
       toast.error('Erro ao carregar dados do professor')
     } finally {
       setLoading(false)

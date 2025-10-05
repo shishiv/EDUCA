@@ -1,5 +1,3 @@
-'use client'
-
 import { BaseApiService } from './base'
 import { supabase, Tables, Escola } from '@/lib/supabase'
 import { SchoolFormData } from '@/lib/validators/brazilian'
