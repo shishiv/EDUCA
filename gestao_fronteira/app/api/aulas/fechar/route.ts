@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const fecharAulaSchema = z.object({
   aula_id: z.string().uuid('ID da aula deve ser um UUID válido'),
@@ -168,7 +169,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (sqlError) {
-      console.error('Erro ao fechar aula:', sqlError)
+      logger.error('Erro ao fechar aula:', { error: sqlError })
       return NextResponse.json(
         {
           success: false,
@@ -214,7 +215,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro inesperado em /api/aulas/fechar:', error)
+    logger.error('Erro inesperado em /api/aulas/fechar:', { error: error })
     return NextResponse.json(
       {
         success: false,

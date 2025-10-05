@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/select'
 import { Plus, Search, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface Turma {
   id: string
@@ -229,14 +231,71 @@ export default function TurmasPage() {
 
   const loadTurmas = async () => {
     try {
-      // Simular carregamento
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setTurmas(mockTurmas)
+      const { data, error } = await supabase
+        .from('turmas')
+        .select(`
+          *,
+          escola:escolas(id, nome),
+          professor:users!professor_id(id, nome, email)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      // Transform data to match component interface
+      const formattedTurmas = data?.map(turma => ({
+        id: turma.id,
+        nome: turma.nome,
+        ano_letivo: turma.ano_letivo,
+        serie: turma.serie || '',
+        turno: turma.turno,
+        capacidade: turma.capacidade || 0,
+        alunos_matriculados: 0, // TODO: Count from matriculas table
+        escola: {
+          id: turma.escola?.id || '',
+          nome: turma.escola?.nome || 'Sem escola'
+        },
+        professor: turma.professor ? {
+          id: turma.professor.id,
+          nome: turma.professor.nome,
+          email: turma.professor.email
+        } : null
+      })) || []
+
+      setTurmas(formattedTurmas)
     } catch (error) {
-      // console.error('Erro ao carregar turmas:', error)
+      logger.error('Error loading turmas', { error })
       toast.error('Erro ao carregar lista de turmas')
+      setTurmas([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteTurma = async (turmaId: string, turmaNome: string) => {
+    if (!confirm(`Tem certeza que deseja excluir a turma "${turmaNome}"? Esta ação não pode ser desfeita.`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('turmas')
+        .delete()
+        .eq('id', turmaId)
+
+      if (error) throw error
+
+      toast.success(`Turma "${turmaNome}" excluída com sucesso!`)
+      await loadTurmas() // Reload the list
+    } catch (error: any) {
+      logger.error('Error deleting turma', { error, turmaId })
+
+      // User-friendly error messages
+      if (error.code === '23503') {
+        toast.error('Não é possível excluir esta turma pois existem alunos matriculados ou outros registros vinculados.')
+      } else {
+        toast.error('Erro ao excluir turma. Tente novamente.')
+      }
     }
   }
 
@@ -548,7 +607,12 @@ export default function TurmasPage() {
                               <Edit className="h-4 w-4" />
                             </Link>
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteTurma(turma.id, turma.nome)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

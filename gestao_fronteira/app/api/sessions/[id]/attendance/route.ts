@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const SessionParamsSchema = z.object({
@@ -139,7 +140,7 @@ export async function GET(
       .order('alunos(nome_completo)', { ascending: true })
 
     if (error) {
-      console.error('Error fetching attendance:', error)
+      logger.error('Error fetching attendance:', { error: error })
       return NextResponse.json({ error: 'Failed to fetch attendance records' }, { status: 500 })
     }
 
@@ -213,7 +214,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Attendance fetch error:', error)
+    logger.error('Attendance fetch error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -342,7 +343,7 @@ export async function POST(
       `)
 
     if (upsertError) {
-      console.error('Attendance upsert error:', upsertError)
+      logger.error('Attendance upsert error:', { error: upsertError })
 
       if (upsertError.message.includes('locked')) {
         return NextResponse.json({
@@ -375,7 +376,7 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Attendance creation error:', error)
+    logger.error('Attendance creation error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -457,7 +458,7 @@ export async function PATCH(
       .single()
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Error fetching attendance record:', fetchError)
+      logger.error('Error fetching attendance record:', { error: fetchError })
       return NextResponse.json({ error: 'Failed to fetch attendance record' }, { status: 500 })
     }
 
@@ -494,7 +495,7 @@ export async function PATCH(
         .single()
 
       if (updateError) {
-        console.error('Attendance update error:', updateError)
+        logger.error('Attendance update error:', { error: updateError })
 
         if (updateError.message.includes('locked')) {
           return NextResponse.json({
@@ -532,7 +533,7 @@ export async function PATCH(
         .single()
 
       if (insertError) {
-        console.error('Attendance insert error:', insertError)
+        logger.error('Attendance insert error:', { error: insertError })
         return NextResponse.json({ error: 'Failed to create attendance record' }, { status: 500 })
       }
 
@@ -551,7 +552,7 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error('Attendance update error:', error)
+    logger.error('Attendance update error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

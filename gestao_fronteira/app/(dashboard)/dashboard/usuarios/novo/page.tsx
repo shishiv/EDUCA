@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save, User } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { logger } from '@/lib/logger'
 
 export default function NovoUsuarioPage() {
   const router = useRouter()
@@ -41,7 +42,7 @@ export default function NovoUsuarioPage() {
       const data = await schoolsApi.getAll()
       setEscolas(data)
     } catch (error) {
-      // console.error("Erro ao carregar escolas:", error)
+      // logger.error("Erro ao carregar escolas:", { error: error })
       toast.error("Erro ao carregar lista de escolas")
     }
   }

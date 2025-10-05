@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const SessionParamsSchema = z.object({
@@ -125,7 +126,7 @@ async function checkExistingAttendance(supabase: any, sessionId: string) {
     .eq('aula_session_id', sessionId)
 
   if (error) {
-    console.warn('Erro ao verificar registros de frequência:', error)
+    logger.warn('Erro ao verificar registros de frequência:', { error })
     return []
   }
 
@@ -202,7 +203,7 @@ export async function PUT(
       .single()
 
     if (updateError) {
-      console.error('Erro ao cancelar sessão:', updateError)
+      logger.error('Erro ao cancelar sessão:', { error: updateError })
       throw new Error('Falha ao cancelar sessão')
     }
 
@@ -219,14 +220,14 @@ export async function PUT(
         .eq('aula_session_id', validatedParams.id)
 
       if (attendanceError) {
-        console.warn('Erro ao atualizar registros de frequência:', attendanceError)
+        logger.warn('Erro ao atualizar registros de frequência:', { attendanceError })
       } else {
         attendanceMessage = ` ${attendanceRecords.length} registro(s) de frequência foram marcados como cancelados.`
       }
     }
 
     // Log successful cancellation
-    console.log(`Sessão ${validatedParams.id} cancelada por ${profile.nome_completo}: ${validatedData.motivo_cancelamento}`)
+    logger.info(`Sessão ${validatedParams.id} cancelada por ${profile.nome_completo}: ${validatedData.motivo_cancelamento}`)
 
     // Return success response
     return NextResponse.json({
@@ -253,7 +254,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Erro no endpoint de cancelamento:', error)
+    logger.error('Erro no endpoint de cancelamento:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
