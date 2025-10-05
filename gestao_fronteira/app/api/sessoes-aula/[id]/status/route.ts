@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const SessionParamsSchema = z.object({
@@ -214,12 +215,12 @@ export async function PUT(
       .single()
 
     if (updateError) {
-      console.error('Erro ao atualizar status da sessão:', updateError)
+      logger.error('Erro ao atualizar status da sessão:', { error: updateError })
       throw new Error('Falha ao atualizar status da sessão')
     }
 
     // Log the status change
-    console.log(`Status da sessão ${validatedParams.id} alterado de ${session.status} para ${validatedData.status}`)
+    logger.info(`Status da sessão ${validatedParams.id} alterado de ${session.status} para ${validatedData.status}`)
 
     // Return success response with workflow information
     return NextResponse.json({
@@ -244,7 +245,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Erro no endpoint de status da sessão:', error)
+    logger.error('Erro no endpoint de status da sessão:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

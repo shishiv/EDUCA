@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, Search, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface Escola {
   id: string
@@ -88,7 +89,7 @@ export default function EscolasPage() {
 
       setEscolas(formattedSchools)
     } catch (error) {
-      // console.error('Erro ao carregar escolas:', error)
+      // logger.error('Erro ao carregar escolas:', { error: error })
       toast.error('Erro ao carregar lista de escolas. Verifique a conexão.')
 
       // Show empty state instead of mock data

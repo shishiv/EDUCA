@@ -35,6 +35,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus, Search, GraduationCap, Edit, Eye, Download, Save, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface NotaAluno {
   id: string
@@ -194,7 +195,7 @@ export default function NotasPage() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       setTurmas(mockTurmasNotas)
     } catch (error) {
-      // console.error('Erro ao carregar notas:', error)
+      // logger.error('Erro ao carregar notas:', { error: error })
       toast.error('Erro ao carregar dados de notas')
     } finally {
       setLoading(false)

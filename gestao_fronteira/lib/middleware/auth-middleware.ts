@@ -3,6 +3,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 export async function createSupabaseServerClient(request: NextRequest) {
   let response = NextResponse.next({
@@ -86,7 +87,7 @@ export async function getServerUser(request: NextRequest) {
       userProfile: userProfile || null,
     }
   } catch (error) {
-    // console.error('Error getting server user:', error)
+    // logger.error('Error getting server user:', { error: error })
     return null
   }
 }
@@ -94,7 +95,7 @@ export async function getServerUser(request: NextRequest) {
 // Route protection configuration
 export const routeProtection = {
   // Public routes (no authentication required)
-  public: ['/login', '/'],
+  public: ['/login', '/onboarding', '/'],
 
   // Role-based protected routes
   protected: {
@@ -229,7 +230,7 @@ export async function authMiddleware(request: NextRequest) {
 
     return response
   } catch (error) {
-    // console.error('Auth middleware error:', error)
+    // logger.error('Auth middleware error:', { error: error })
     return response
   }
 }

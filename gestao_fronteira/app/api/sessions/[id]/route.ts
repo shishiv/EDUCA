@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const UpdateSessionSchema = z.object({
@@ -156,7 +157,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Session fetch error:', error)
+    logger.error('Session fetch error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -304,7 +305,7 @@ export async function PATCH(
       .single()
 
     if (updateError) {
-      console.error('Session update error:', updateError)
+      logger.error('Session update error:', { error: updateError })
 
       if (updateError.message.includes('locked')) {
         return NextResponse.json({
@@ -333,7 +334,7 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error('Session update error:', error)
+    logger.error('Session update error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -427,14 +428,14 @@ export async function DELETE(
       .eq('id', validatedParams.id)
 
     if (deleteError) {
-      console.error('Session deletion error:', deleteError)
+      logger.error('Session deletion error:', { error: deleteError })
       return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Session deleted successfully' })
 
   } catch (error) {
-    console.error('Session deletion error:', error)
+    logger.error('Session deletion error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

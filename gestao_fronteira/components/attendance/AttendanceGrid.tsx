@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface Student {
   id: string
@@ -137,7 +138,7 @@ export function AttendanceGrid({
       setAttendance(attendanceMap)
 
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      logger.error('Erro ao carregar dados:', { error: error })
       toast.error('Erro ao carregar dados dos alunos')
     } finally {
       setLoading(false)
@@ -262,7 +263,7 @@ export function AttendanceGrid({
       )
 
     } catch (error) {
-      console.error('Erro ao marcar presença:', error)
+      logger.error('Erro ao marcar presença:', { error: error })
       setSyncStatus('error')
 
       // Revert optimistic update
@@ -324,7 +325,7 @@ export function AttendanceGrid({
       )
 
     } catch (error) {
-      console.error('Erro ao marcar presença em lote:', error)
+      logger.error('Erro ao marcar presença em lote:', { error: error })
       setSyncStatus('error')
 
       // Revert optimistic update

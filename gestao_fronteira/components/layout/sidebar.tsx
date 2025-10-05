@@ -23,7 +23,8 @@ import {
   FileText,
   User,
   BookOpen,
-  CheckSquare
+  CheckSquare,
+  BookText
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -73,6 +74,12 @@ const navigationItems = [
     href: '/dashboard/frequencia',
     icon: CheckSquare,
     roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos trabalham com frequência
+  },
+  {
+    name: 'Diário de Classe',
+    href: '/dashboard/diario',
+    icon: BookText,
+    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos podem visualizar o diário
   },
   {
     name: 'Notas',

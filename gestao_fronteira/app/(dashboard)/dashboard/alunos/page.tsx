@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, Search, Download, Eye, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -74,7 +75,7 @@ export default function AlunosPage() {
       // Use real data from Supabase
       setAlunos(data || [])
     } catch (error) {
-      console.error('Erro ao carregar alunos:', error)
+      logger.error('Erro ao carregar alunos:', { error: error })
       toast.error('Erro ao carregar lista de alunos')
       setAlunos([])
     } finally {

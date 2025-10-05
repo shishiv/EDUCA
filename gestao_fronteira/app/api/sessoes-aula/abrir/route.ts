@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schema for opening a session
 const AbrirAulaSchema = z.object({
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('Erro ao criar sessão:', insertError)
+      logger.error('Erro ao criar sessão', { error: insertError, turma_id: validatedData.turma_id, professor_id: validatedData.professor_id })
 
       // Handle specific database errors
       if (insertError.code === '23505') { // Unique constraint violation
@@ -219,7 +220,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log successful session creation
-    console.log(`Sessão criada com sucesso: ${newSession.id} para turma ${turma.nome}`)
+    logger.info('Sessão criada com sucesso', { session_id: newSession.id, turma: turma.nome, professor_id: profile.id })
 
     // Return success response with enhanced session data
     return NextResponse.json({
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Erro no endpoint abrir aula:', error)
+    logger.error('Erro no endpoint abrir aula', { error })
 
     // Handle validation errors
     if (error instanceof z.ZodError) {

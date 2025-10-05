@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schemas
 const BatchSessionUpdateSchema = z.object({
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Batch operations error:', error)
+    logger.error('Batch operations error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -227,7 +228,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Sync data fetch error:', error)
+    logger.error('Sync data fetch error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -646,7 +647,7 @@ async function logBatchOperation(supabase: any, userId: string, requestData: any
         }
       })
   } catch (error) {
-    console.error('Failed to log batch operation:', error)
+    logger.error('Failed to log batch operation:', { error: error })
     // Don't fail the whole operation if audit logging fails
   }
 }

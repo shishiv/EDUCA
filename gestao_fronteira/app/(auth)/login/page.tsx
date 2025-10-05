@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
+import { getUserProfile } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,15 +13,41 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { MunicipalLogo } from '@/components/identity/municipal-assets'
 import { Loader2, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
+  const [mounted, setMounted] = useState(false)
+
   const { signIn } = useAuth()
   const router = useRouter()
+
+  // Check if system has users on mount
+  useEffect(() => {
+    setMounted(true)
+
+    const checkForUsers = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+
+        if (error) throw error
+
+        // If no users exist, redirect to onboarding
+        if (count === 0) {
+          router.push('/onboarding')
+        }
+      } catch (error) {
+        logger.error('Error checking users', { error })
+      }
+    }
+
+    checkForUsers()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,7 +55,28 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await signIn(email, password)
+      const result = await signIn(email, password)
+
+      // Wait for user profile to be available in database
+      if (result && result.user) {
+        let retries = 0
+        const maxRetries = 5
+        let profile = null
+
+        while (retries < maxRetries && !profile) {
+          profile = await getUserProfile(result.user.id)
+          if (!profile) {
+            // Wait 500ms before retrying
+            await new Promise(resolve => setTimeout(resolve, 500))
+            retries++
+          }
+        }
+
+        if (!profile) {
+          throw new Error('Não foi possível carregar o perfil do usuário. Tente novamente.')
+        }
+      }
+
       toast.success('Login realizado com sucesso!')
       router.push('/dashboard')
     } catch (err: any) {
@@ -36,6 +85,11 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Don't render login form until mounted (prevents hydration issues)
+  if (!mounted) {
+    return null
   }
 
   return (
