@@ -13,6 +13,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { logger } from '@/lib/logger'
 
 interface ServiceWorkerState {
   isInstalled: boolean
@@ -39,13 +40,13 @@ export function useServiceWorker() {
 
     const registerSW = async () => {
       try {
-        console.log('[SW Hook] Registering service worker...')
+        logger.info('[SW Hook] Registering service worker...')
 
         registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/'
         })
 
-        console.log('[SW Hook] Service worker registered successfully')
+        logger.info('[SW Hook] Service worker registered successfully')
 
         setState(prev => ({
           ...prev,
@@ -60,7 +61,7 @@ export function useServiceWorker() {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[SW Hook] New service worker available')
+                logger.info('[SW Hook] New service worker available')
                 setState(prev => ({ ...prev, needsUpdate: true }))
               }
             })
@@ -69,12 +70,12 @@ export function useServiceWorker() {
 
         // Listen for controller changes
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('[SW Hook] Service worker controller changed')
+          logger.info('[SW Hook] Service worker controller changed')
           window.location.reload()
         })
 
       } catch (error) {
-        console.error('[SW Hook] Service worker registration failed:', error)
+        logger.error('[SW Hook] Service worker registration failed:', { error: error })
       }
     }
 
@@ -91,19 +92,19 @@ export function useServiceWorker() {
     if (typeof window === 'undefined') return
 
     const handleOnline = () => {
-      console.log('[SW Hook] Back online')
+      logger.info('[SW Hook] Back online')
       setState(prev => ({ ...prev, isOnline: true }))
 
       // Trigger background sync for offline attendance
       if (state.registration && 'sync' in state.registration) {
         state.registration.sync.register('attendance-sync').catch(err => {
-          console.error('[SW Hook] Background sync registration failed:', err)
+          logger.error('[SW Hook] Background sync registration failed:', { error: err })
         })
       }
     }
 
     const handleOffline = () => {
-      console.log('[SW Hook] Went offline')
+      logger.info('[SW Hook] Went offline')
       setState(prev => ({ ...prev, isOnline: false }))
     }
 
@@ -122,9 +123,9 @@ export function useServiceWorker() {
 
     try {
       await state.registration.update()
-      console.log('[SW Hook] Service worker update triggered')
+      logger.info('[SW Hook] Service worker update triggered')
     } catch (error) {
-      console.error('[SW Hook] Service worker update failed:', error)
+      logger.error('[SW Hook] Service worker update failed:', { error: error })
     }
   }
 
@@ -147,14 +148,14 @@ export function useServiceWorker() {
     try {
       const cacheNames = await caches.keys()
       await Promise.all(cacheNames.map(name => caches.delete(name)))
-      console.log('[SW Hook] All caches cleared')
+      logger.info('[SW Hook] All caches cleared')
 
       // Notify service worker
       if (state.registration.active) {
         state.registration.active.postMessage({ type: 'CLEAR_CACHE' })
       }
     } catch (error) {
-      console.error('[SW Hook] Failed to clear caches:', error)
+      logger.error('[SW Hook] Failed to clear caches:', { error: error })
     }
   }
 
@@ -171,7 +172,7 @@ export function useServiceWorker() {
         countRequest.onerror = () => reject(countRequest.error)
       })
     } catch (error) {
-      console.error('[SW Hook] Failed to get offline count:', error)
+      logger.error('[SW Hook] Failed to get offline count:', { error: error })
       return 0
     }
   }

@@ -1,7 +1,28 @@
+/**
+ * @deprecated This endpoint is deprecated as of 2025-10-05
+ *
+ * **Migration Notice:**
+ * This legacy endpoint uses the `aulas_abertas` table and will be removed in v2.0.0
+ *
+ * **Use instead:** `/api/sessoes-aula/abrir`
+ *
+ * **Why migrating:**
+ * - Enhanced three-phase workflow (PLANEJADA → ABERTA → FECHADA)
+ * - Auto-closure at 6 PM São Paulo time for Brazilian compliance
+ * - Comprehensive audit trail for legal requirements
+ * - INEP/Educacenso metadata tracking
+ * - "Não existe o esquecer" enforcement
+ *
+ * **Timeline:**
+ * - Deprecated: 2025-10-05
+ * - Removal: 2025-11-05 (30 days)
+ */
+
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const abrirAulaSchema = z.object({
   turma_id: z.string().uuid('ID da turma deve ser um UUID válido'),
@@ -10,6 +31,13 @@ const abrirAulaSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  // Log deprecation warning
+  logger.warn('DEPRECATED: /api/aulas/abrir endpoint called - migrate to /api/sessoes-aula/abrir', {
+    endpoint: '/api/aulas/abrir',
+    deprecation_date: '2025-10-05',
+    removal_date: '2025-11-05',
+    migration_target: '/api/sessoes-aula/abrir'
+  })
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -146,7 +174,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (sqlError) {
-      console.error('Erro ao abrir aula:', sqlError)
+      logger.error('Erro ao abrir aula', { error: sqlError, turma_id, professor_id: user.id })
       return NextResponse.json(
         {
           success: false,
@@ -193,7 +221,8 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro inesperado em /api/aulas/abrir:', error)
+    const userId = (error as any)?.user?.id || 'unknown'
+    logger.error('Erro inesperado em /api/aulas/abrir', { error, user_id: userId })
     return NextResponse.json(
       {
         success: false,

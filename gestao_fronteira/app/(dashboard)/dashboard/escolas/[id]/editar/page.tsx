@@ -20,6 +20,7 @@ import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save, School, MapPin, Phone, Users, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { schoolsApi } from '@/lib/api/schools'
+import { logger } from '@/lib/logger'
 
 export default function EditarEscolaPage() {
   const router = useRouter()
@@ -93,7 +94,7 @@ export default function EditarEscolaPage() {
         observacoes: ''
       })
     } catch (error) {
-      console.error('Erro ao carregar escola:', error)
+      logger.error('Erro ao carregar escola:', { error: error })
       toast.error('Erro ao carregar dados da escola')
       router.push('/dashboard/escolas')
     } finally {
@@ -106,7 +107,7 @@ export default function EditarEscolaPage() {
       const diretores = await schoolsApi.getAvailableDirectors()
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
-      console.error('Erro ao carregar diretores:', error)
+      logger.error('Erro ao carregar diretores:', { error: error })
     }
   }
 
@@ -148,7 +149,7 @@ export default function EditarEscolaPage() {
       toast.success('Escola atualizada com sucesso!')
       router.push('/dashboard/escolas')
     } catch (error: any) {
-      console.error('Erro ao atualizar escola:', error)
+      logger.error('Erro ao atualizar escola:', { error: error })
 
       let errorMessage = 'Erro ao atualizar escola'
       if (error.message?.includes('duplicate') || error.message?.includes('unique')) {

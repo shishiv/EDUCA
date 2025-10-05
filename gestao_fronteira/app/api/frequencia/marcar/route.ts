@@ -2,14 +2,19 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const marcarFrequenciaSchema = z.object({
-  aula_id: z.string().uuid('ID da aula deve ser um UUID válido'),
+  // Support both legacy aula_id and enhanced sessao_id
+  aula_id: z.string().uuid('ID da aula deve ser um UUID válido').optional(),
+  sessao_id: z.string().uuid('ID da sessão deve ser um UUID válido').optional(),
   frequencias: z.array(z.object({
     aluno_id: z.string().uuid('ID do aluno deve ser um UUID válido'),
     presente: z.boolean(),
     observacoes: z.string().optional(),
   })).min(1, 'Deve haver pelo menos uma frequência para marcar')
+}).refine(data => data.aula_id || data.sessao_id, {
+  message: 'Deve fornecer aula_id ou sessao_id'
 })
 
 export async function POST(request: NextRequest) {
@@ -67,7 +72,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { aula_id, frequencias } = validation.data
+    const { aula_id, sessao_id, frequencias } = validation.data
+    const sessionId = sessao_id || aula_id // Prefer sessao_id, fallback to aula_id
 
     // Verificar se o usuário é professor
     const { data: usuario } = await supabase
@@ -90,22 +96,60 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar se a aula existe e pertence ao professor
-    const { data: aula } = await supabase
-      .from('aulas_abertas')
-      .select(`
-        id,
-        status,
-        professor_id,
-        turma_id,
-        fechada_em,
-        tempo_limite_minutos,
-        turmas!inner(escola_id)
-      `)
-      .eq('id', aula_id)
-      .single()
+    // Verificar se a sessão existe e pertence ao professor
+    // Try enhanced sessoes_aula first, fallback to legacy aulas_abertas
+    let sessao: any = null
+    let turmaId: string = ''
+    let sessionStatus: string = ''
+    let isClosed: boolean = false
 
-    if (!aula) {
+    if (sessao_id) {
+      // Enhanced system - use sessoes_aula
+      const { data } = await supabase
+        .from('sessoes_aula')
+        .select(`
+          id,
+          status,
+          professor_id,
+          turma_id,
+          escola_id,
+          fechada_em,
+          turmas!inner(escola_id)
+        `)
+        .eq('id', sessao_id)
+        .single()
+
+      sessao = data
+      if (sessao) {
+        turmaId = sessao.turma_id
+        sessionStatus = sessao.status
+        isClosed = sessao.status === 'FECHADA' || sessao.status === 'CANCELADA'
+      }
+    } else {
+      // Legacy system - use aulas_abertas
+      const { data } = await supabase
+        .from('aulas_abertas')
+        .select(`
+          id,
+          status,
+          professor_id,
+          turma_id,
+          fechada_em,
+          tempo_limite_minutos,
+          turmas!inner(escola_id)
+        `)
+        .eq('id', aula_id!)
+        .single()
+
+      sessao = data
+      if (sessao) {
+        turmaId = sessao.turma_id
+        sessionStatus = sessao.status
+        isClosed = sessao.status === 'fechada' || sessao.status === 'travada'
+      }
+    }
+
+    if (!sessao) {
       return NextResponse.json(
         {
           success: false,
@@ -120,7 +164,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    if (aula.professor_id !== user.id || aula.turmas.escola_id !== usuario.escola_id) {
+    if (sessao.professor_id !== user.id || sessao.turmas.escola_id !== usuario.escola_id) {
       return NextResponse.json(
         {
           success: false,
@@ -134,14 +178,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar se a sessão está travada
-    if (aula.status === 'travada') {
+    // Verificar se a sessão está fechada ou cancelada (enhanced) or travada (legacy)
+    if (isClosed) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            code: 'SESSION_LOCKED',
-            message: 'Esta sessão está travada e não pode ser alterada'
+            code: 'SESSION_CLOSED',
+            message: `Esta sessão está ${sessionStatus} e não permite marcação de frequência. "Não existe o esquecer" - compliance brasileiro.`,
+            details: { status: sessionStatus }
           },
           timestamp: new Date().toISOString()
         },
@@ -149,10 +194,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar tempo limite se a sessão está fechada
-    if (aula.status === 'fechada' && aula.fechada_em && aula.tempo_limite_minutos) {
-      const fechadaEm = new Date(aula.fechada_em)
-      const seraTravadasEm = new Date(fechadaEm.getTime() + (aula.tempo_limite_minutos * 60 * 1000))
+    // For enhanced system, ensure session is ABERTA
+    if (sessao_id && sessionStatus !== 'ABERTA') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'SESSION_NOT_OPEN',
+            message: `Sessão está ${sessionStatus}. Apenas sessões ABERTA permitem marcação de frequência.`,
+            details: { status: sessionStatus }
+          },
+          timestamp: new Date().toISOString()
+        },
+        { status: 403 }
+      )
+    }
+
+    // Legacy time limit check for aulas_abertas
+    if (aula_id && sessionStatus === 'fechada' && sessao.fechada_em && sessao.tempo_limite_minutos) {
+      const fechadaEm = new Date(sessao.fechada_em)
+      const seraTravadasEm = new Date(fechadaEm.getTime() + (sessao.tempo_limite_minutos * 60 * 1000))
       const agora = new Date()
 
       if (agora >= seraTravadasEm) {
@@ -175,7 +236,7 @@ export async function POST(request: NextRequest) {
     const { data: matriculas } = await supabase
       .from('matriculas')
       .select('aluno_id')
-      .eq('turma_id', aula.turma_id)
+      .eq('turma_id', turmaId)
       .eq('status', 'ativa')
       .in('aluno_id', alunoIds)
 
@@ -200,7 +261,7 @@ export async function POST(request: NextRequest) {
     // Usar stored procedure para marcar frequência em lote
     const { data: resultado, error: sqlError } = await supabase
       .rpc('marcar_frequencia_lote', {
-        p_aula_id: aula_id,
+        p_aula_id: sessionId!, // Works for both systems (migration handles FK update)
         p_professor_id: user.id,
         p_frequencias: frequencias.map(f => ({
           aluno_id: f.aluno_id,
@@ -210,7 +271,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (sqlError) {
-      console.error('Erro ao marcar frequência:', sqlError)
+      logger.error('Erro ao marcar frequência:', { error: sqlError, sessao_id, aula_id })
       return NextResponse.json(
         {
           success: false,
@@ -225,10 +286,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar estatísticas atualizadas
+    // Check both aula_id and sessao_id for statistics
     const { data: estatisticas } = await supabase
       .from('frequencia')
       .select('presente')
-      .eq('aula_id', aula_id)
+      .or(`aula_id.eq.${sessionId},sessao_id.eq.${sessionId}`)
 
     const resumo = {
       presentes: 0,
@@ -253,7 +315,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro inesperado em /api/frequencia/marcar:', error)
+    logger.error('Erro inesperado em /api/frequencia/marcar:', { error: error })
     return NextResponse.json(
       {
         success: false,

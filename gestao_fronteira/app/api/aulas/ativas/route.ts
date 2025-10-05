@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
       .order('aberta_em', { ascending: false })
 
     if (sqlError) {
-      console.error('Erro ao buscar aulas ativas:', sqlError)
+      logger.error('Erro ao buscar aulas ativas:', { error: sqlError })
       return NextResponse.json(
         {
           success: false,
@@ -154,7 +155,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro inesperado em /api/aulas/ativas:', error)
+    logger.error('Erro inesperado em /api/aulas/ativas:', { error: error })
     return NextResponse.json(
       {
         success: false,

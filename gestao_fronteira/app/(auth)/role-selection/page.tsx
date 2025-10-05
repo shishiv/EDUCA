@@ -118,7 +118,7 @@ export default function RoleSelectionPage() {
     <div className="min-h-screen relative overflow-hidden">
       {/* Enhanced Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-fronteira-primary/8 via-white to-fronteira-green/6">
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,theme(colors.fronteira-blue),transparent_60%)]" />
+        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,hsl(var(--fronteira-blue)),transparent_60%)]" />
       </div>
 
       {/* Content */}
