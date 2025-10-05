@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
+import { getUserProfile } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,15 +13,41 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { MunicipalLogo } from '@/components/identity/municipal-assets'
 import { Loader2, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
+  const [mounted, setMounted] = useState(false)
+
   const { signIn } = useAuth()
   const router = useRouter()
+
+  // Check if system has users on mount
+  useEffect(() => {
+    setMounted(true)
+
+    const checkForUsers = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+
+        if (error) throw error
+
+        // If no users exist, redirect to onboarding
+        if (count === 0) {
+          router.push('/onboarding')
+        }
+      } catch (error) {
+        logger.error('Error checking users', { error })
+      }
+    }
+
+    checkForUsers()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,10 +55,28 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await signIn(email, password)
-      toast.success('Login realizado com sucesso!')
-      router.push('/dashboard')
+      const result = await signIn(email, password)
+
+      if (result && result.user) {
+        // The getUserProfile function has fallback mock data,
+        // so it should always return a profile
+        const profile = await getUserProfile(result.user.id)
+
+        logger.info('Login successful', {
+          userId: result.user.id,
+          email: result.user.email,
+          hasProfile: !!profile,
+          profileRole: profile?.tipo_usuario
+        })
+
+        // Proceed to dashboard even if profile has fallback data
+        toast.success('Login realizado com sucesso!')
+
+        // Use router.replace to avoid back button issues
+        router.replace('/dashboard')
+      }
     } catch (err: any) {
+      logger.error('Login error', { error: err })
       setError(err.message || 'Erro ao fazer login')
       toast.error('Erro ao fazer login')
     } finally {
@@ -38,11 +84,16 @@ export default function LoginPage() {
     }
   }
 
+  // Don't render login form until mounted (prevents hydration issues)
+  if (!mounted) {
+    return null
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Enhanced Background with Municipal Pattern */}
       <div className="absolute inset-0 bg-gradient-to-br from-fronteira-primary/8 via-white to-fronteira-green/6">
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,theme(colors.fronteira-primary),transparent_50%)]" />
+        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,hsl(var(--fronteira-primary)),transparent_50%)]" />
       </div>
 
       {/* Content */}

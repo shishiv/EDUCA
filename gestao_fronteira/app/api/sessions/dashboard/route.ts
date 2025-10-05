@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Validation schema
 const DashboardQuerySchema = z.object({
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Dashboard fetch error:', error)
+    logger.error('Dashboard fetch error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

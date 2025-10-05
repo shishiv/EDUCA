@@ -4,7 +4,7 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { useAulaRealtime } from '@/hooks/use-aula-realtime'
+import { useSessaoRealtime } from '@/hooks/use-sessao-realtime'
 import { cn } from '@/lib/utils'
 import {
   Lock,
@@ -19,7 +19,7 @@ import {
 interface AulaStatusIndicatorEnhancedProps {
   turmaId: string
   professorId: string
-  aulaId?: string
+  sessaoId?: string // Updated from aulaId to sessaoId
   className?: string
   onStatusChange?: (status: any) => void
 }
@@ -27,26 +27,29 @@ interface AulaStatusIndicatorEnhancedProps {
 export function AulaStatusIndicatorEnhanced({
   turmaId,
   professorId,
-  aulaId,
+  sessaoId,
   className,
   onStatusChange
 }: AulaStatusIndicatorEnhancedProps) {
   const {
-    status,
+    sessao,
     loading,
     error,
-    remainingTime,
+    remainingMinutes,
+    autoCloseTime,
     refreshStatus,
-    isOpen,
-    isClosed,
-    isLocked
-  } = useAulaRealtime({
+    isPlanejada,
+    isAberta,
+    isFechada,
+    isCancelada,
+    isApproachingClosure
+  } = useSessaoRealtime({
     turmaId,
     professorId,
-    aulaId,
+    sessaoId,
     enableAutoRefresh: true,
     onStatusChange,
-    onError: (error) => console.error('Aula status error:', error)
+    onError: (error) => console.error('Sessão status error:', error)
   })
 
   const formatTime = (minutes: number): string => {
@@ -58,61 +61,78 @@ export function AulaStatusIndicatorEnhanced({
   const getStatusColor = () => {
     if (loading) return 'bg-gray-100 border-gray-300'
     if (error) return 'bg-red-50 border-red-200'
-    if (isLocked) return 'bg-red-50 border-red-200'
-    if (isClosed) return 'bg-yellow-50 border-yellow-200'
-    if (isOpen) return 'bg-green-50 border-green-200'
+    if (isCancelada) return 'bg-red-50 border-red-200'
+    if (isFechada) return 'bg-yellow-50 border-yellow-200'
+    if (isAberta) {
+      if (isApproachingClosure) return 'bg-orange-50 border-orange-200'
+      return 'bg-green-50 border-green-200'
+    }
+    if (isPlanejada) return 'bg-blue-50 border-blue-200'
     return 'bg-gray-50 border-gray-200'
   }
 
   const getStatusIcon = () => {
     if (loading) return <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
     if (error) return <AlertTriangle className="h-4 w-4 text-red-600" />
-    if (isLocked) return <Lock className="h-4 w-4 text-red-600" />
-    if (isClosed) return <Clock className="h-4 w-4 text-yellow-600" />
-    if (isOpen) return <Unlock className="h-4 w-4 text-green-600" />
+    if (isCancelada) return <Lock className="h-4 w-4 text-red-600" />
+    if (isFechada) return <Clock className="h-4 w-4 text-yellow-600" />
+    if (isAberta) {
+      if (isApproachingClosure) return <AlertTriangle className="h-4 w-4 text-orange-600" />
+      return <Unlock className="h-4 w-4 text-green-600" />
+    }
+    if (isPlanejada) return <Clock className="h-4 w-4 text-blue-600" />
     return <Lock className="h-4 w-4 text-gray-600" />
   }
 
   const getStatusBadge = () => {
     if (loading) return <Badge variant="outline">Carregando...</Badge>
     if (error) return <Badge variant="destructive">Erro</Badge>
-    if (isLocked) return <Badge variant="destructive">Travada</Badge>
-    if (isClosed) return <Badge variant="secondary">Fechada</Badge>
-    if (isOpen) return <Badge variant="default" className="bg-green-600">Aberta</Badge>
+    if (isCancelada) return <Badge variant="destructive">Cancelada</Badge>
+    if (isFechada) return <Badge variant="secondary">Fechada</Badge>
+    if (isAberta) return <Badge variant="default" className="bg-green-600">Aberta</Badge>
+    if (isPlanejada) return <Badge variant="outline" className="border-blue-300">Planejada</Badge>
     return <Badge variant="outline">Inativa</Badge>
   }
 
   const getStatusText = () => {
-    if (loading) return 'Verificando status da aula...'
+    if (loading) return 'Verificando status da sessão...'
     if (error) return 'Erro ao verificar status'
 
-    if (isLocked) {
-      const isAutoLocked = status?.travada_automaticamente
-      return isAutoLocked
-        ? 'Aula travada automaticamente por tempo excedido'
-        : 'Aula travada manualmente'
-    }
-
-    if (isClosed) {
-      const fechadaEm = status?.fechada_em ? new Date(status.fechada_em).toLocaleTimeString('pt-BR', {
+    if (isCancelada) {
+      const canceladaEm = sessao?.cancelada_em ? new Date(sessao.cancelada_em).toLocaleTimeString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit'
       }) : ''
-      return `Aula fechada${fechadaEm ? ` às ${fechadaEm}` : ''}`
+      return `Sessão cancelada${canceladaEm ? ` às ${canceladaEm}` : ''}`
     }
 
-    if (isOpen) {
-      const abertaEm = status?.aberta_em ? new Date(status.aberta_em).toLocaleTimeString('pt-BR', {
+    if (isFechada) {
+      const fechadaEm = sessao?.fechada_em ? new Date(sessao.fechada_em).toLocaleTimeString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit'
       }) : ''
-      return `Aula aberta${abertaEm ? ` às ${abertaEm}` : ''} - Frequência disponível`
+      return `Sessão fechada${fechadaEm ? ` às ${fechadaEm}` : ''}. "Não existe o esquecer" - compliance brasileiro.`
     }
 
-    return 'Nenhuma aula ativa hoje. Abra uma aula para marcar presença.'
+    if (isAberta) {
+      const abertaEm = sessao?.aberta_em ? new Date(sessao.aberta_em).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : ''
+      if (isApproachingClosure && autoCloseTime) {
+        return `Sessão aberta${abertaEm ? ` às ${abertaEm}` : ''}. ⚠️ Fechamento automático às ${autoCloseTime}`
+      }
+      return `Sessão aberta${abertaEm ? ` às ${abertaEm}` : ''} - Frequência disponível`
+    }
+
+    if (isPlanejada) {
+      return 'Sessão planejada. Clique em "Abrir Aula" para iniciar.'
+    }
+
+    return 'Nenhuma sessão ativa hoje. Abra uma aula para marcar presença.'
   }
 
-  if (loading && !status) {
+  if (loading && !sessao) {
     return (
       <div className={cn("flex items-center space-x-3 p-4 rounded-lg border bg-gray-50", className)}>
         <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
@@ -143,10 +163,17 @@ export function AulaStatusIndicatorEnhanced({
           <div className="flex items-center space-x-2">
             {getStatusBadge()}
 
-            {isOpen && remainingTime !== null && (
-              <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+            {isAberta && remainingMinutes !== null && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  isApproachingClosure
+                    ? "bg-orange-50 border-orange-200 text-orange-700"
+                    : "bg-blue-50 border-blue-200 text-blue-700"
+                )}
+              >
                 <Clock className="h-3 w-3 mr-1" />
-                {remainingTime > 0 ? formatTime(remainingTime) : 'Tempo esgotado'}
+                {remainingMinutes > 0 ? formatTime(remainingMinutes) : 'Fechamento iminente'}
               </Badge>
             )}
           </div>
@@ -167,11 +194,11 @@ export function AulaStatusIndicatorEnhanced({
         </p>
 
         {/* Additional information for active sessions */}
-        {isOpen && status && (
+        {isAberta && sessao && autoCloseTime && (
           <div className="mt-2 text-xs text-gray-600">
             <p>
-              Tempo limite: {status.tempo_limite_minutos} minutos
-              {status.observacoes && ` • ${status.observacoes}`}
+              Fechamento automático: {autoCloseTime}
+              {sessao.conteudo_ministrado && ` • ${sessao.conteudo_ministrado}`}
             </p>
           </div>
         )}

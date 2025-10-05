@@ -34,6 +34,10 @@ This is a multi-project educational management system repository for the Municip
 ### gestao_fronteira (Production Stack):
 - **Frontend**: Next.js 15.5.3 with App Router + React 19.1.1
 - **Database**: Supabase 2.57.4 (PostgreSQL + Auth + Storage + Real-time)
+  - **⚠️ CRITICAL**: Database access is through **Supabase MCP** only
+  - **DO NOT** use local Supabase CLI commands (`supabase start`, `supabase db push`, etc.)
+  - All database operations (migrations, queries, schema changes) must use **MCP tools**
+  - Available MCP tools: `mcp__supabase__apply_migration`, `mcp__supabase__execute_sql`, `mcp__supabase__list_tables`
 - **UI Library**: shadcn/ui + Radix UI + Tailwind CSS 3.4.17
 - **Forms**: React Hook Form 7.62.0 + Zod 4.1.8 validation
 - **State Management**: Zustand 5.0.8 + TanStack Query 5.87.4
@@ -70,11 +74,12 @@ bun test:watch         # Unit tests in watch mode
 bun run test:e2e       # End-to-end tests with Playwright
 bun run test:coverage  # Test coverage report
 
-# Database
-supabase start          # Start local Supabase
-supabase db reset       # Reset local database
-supabase db push        # Apply migrations to remote
-supabase gen types typescript --project-id YOUR_PROJECT_ID
+# Database (via Supabase MCP - DO NOT use CLI commands)
+# Use MCP tools instead:
+# - mcp__supabase__apply_migration: Apply database migrations
+# - mcp__supabase__execute_sql: Run SQL queries
+# - mcp__supabase__list_tables: List database tables
+# - mcp__supabase__generate_typescript_types: Generate TypeScript types
 ```
 
 ## UI/UX Quality Assurance com Chrome DevTools MCP
