@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const SessionParamsSchema = z.object({
   id: z.string().uuid('Invalid session ID')
@@ -165,7 +166,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Session status fetch error:', error)
+    logger.error('Session status fetch error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -218,7 +219,7 @@ export async function POST(
     }
 
   } catch (error) {
-    console.error('Session status update error:', error)
+    logger.error('Session status update error:', { error: error })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({

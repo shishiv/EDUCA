@@ -26,6 +26,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { getClassDiary } from '@/lib/api/class-diary'
 import type { ClassDiaryEntry, ClassDiaryFilters } from '@/lib/api/class-diary'
 import { supabase as createClient } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 export default function DiarioPage() {
   const router = useRouter()
@@ -60,7 +61,7 @@ export default function DiarioPage() {
       } = await supabase.auth.getUser()
 
       if (authError || !user) {
-        console.error('Auth error:', authError)
+        logger.error('Auth error:', { error: authError })
         router.push('/login')
         return
       }
@@ -72,7 +73,7 @@ export default function DiarioPage() {
         .single()
 
       if (profileError || !profile) {
-        console.error('Profile error:', profileError)
+        logger.error('Profile error:', { error: profileError })
         setError('Erro ao carregar informações do usuário.')
         return
       }
@@ -114,7 +115,7 @@ export default function DiarioPage() {
       })
 
       if (fetchError || !data) {
-        console.error('Error fetching class diary:', fetchError)
+        logger.error('Error fetching class diary:', { error: fetchError })
         setError('Erro ao carregar o diário de classe. Tente novamente.')
         setLoading(false)
         return

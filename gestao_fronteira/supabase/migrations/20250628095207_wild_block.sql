@@ -234,40 +234,6 @@ CREATE POLICY "Usuários podem ver notas"
   TO authenticated
   USING (true);
 
--- Inserir dados de exemplo
-INSERT INTO escolas (id, nome, codigo, endereco, telefone, tipo) VALUES
-  ('550e8400-e29b-41d4-a716-446655440001', 'CEMEI Pequenos Passos', 'FRT001', 'Rua das Flores, 123 - Centro', '(34) 3555-0001', 'creche'),
-  ('550e8400-e29b-41d4-a716-446655440002', 'EMEI Jardim da Infância', 'FRT002', 'Av. Educação, 456 - Vila Nova', '(34) 3555-0002', 'pre_escola'),
-  ('550e8400-e29b-41d4-a716-446655440003', 'EMEF Professor João Silva', 'FRT003', 'Praça da Escola, 789 - São José', '(34) 3555-0003', 'fundamental');
-
-INSERT INTO users (id, email, nome, tipo_usuario, escola_id) VALUES
-  ('550e8400-e29b-41d4-a716-446655440010', 'admin@fronteira.mg.gov.br', 'Administrador do Sistema', 'admin', null),
-  ('550e8400-e29b-41d4-a716-446655440011', 'maria.santos@fronteira.mg.gov.br', 'Maria Santos', 'diretor', '550e8400-e29b-41d4-a716-446655440001'),
-  ('550e8400-e29b-41d4-a716-446655440012', 'carlos.oliveira@fronteira.mg.gov.br', 'Carlos Oliveira', 'diretor', '550e8400-e29b-41d4-a716-446655440002'),
-  ('550e8400-e29b-41d4-a716-446655440013', 'ana.pereira@fronteira.mg.gov.br', 'Ana Pereira', 'diretor', '550e8400-e29b-41d4-a716-446655440003');
-
--- Atualizar diretores das escolas
-UPDATE escolas SET diretor_id = '550e8400-e29b-41d4-a716-446655440011' WHERE id = '550e8400-e29b-41d4-a716-446655440001';
-UPDATE escolas SET diretor_id = '550e8400-e29b-41d4-a716-446655440012' WHERE id = '550e8400-e29b-41d4-a716-446655440002';
-UPDATE escolas SET diretor_id = '550e8400-e29b-41d4-a716-446655440013' WHERE id = '550e8400-e29b-41d4-a716-446655440003';
-
-INSERT INTO responsaveis (id, nome, cpf, telefone, email, parentesco) VALUES
-  ('650e8400-e29b-41d4-a716-446655440001', 'José da Silva', '12345678901', '(34) 99999-0001', 'jose.silva@email.com', 'Pai'),
-  ('650e8400-e29b-41d4-a716-446655440002', 'Maria Oliveira', '12345678902', '(34) 99999-0002', 'maria.oliveira@email.com', 'Mãe'),
-  ('650e8400-e29b-41d4-a716-446655440003', 'Carlos Santos', '12345678903', '(34) 99999-0003', 'carlos.santos@email.com', 'Pai');
-
-INSERT INTO alunos (id, nome_completo, data_nascimento, cpf, sexo, nome_mae, nome_pai, responsavel_id) VALUES
-  ('750e8400-e29b-41d4-a716-446655440001', 'Pedro Silva Santos', '2020-03-15', null, 'M', 'Ana Silva', 'José Santos', '650e8400-e29b-41d4-a716-446655440001'),
-  ('750e8400-e29b-41d4-a716-446655440002', 'Julia Oliveira Costa', '2019-07-22', null, 'F', 'Maria Oliveira', 'João Costa', '650e8400-e29b-41d4-a716-446655440002'),
-  ('750e8400-e29b-41d4-a716-446655440003', 'Lucas Santos Pereira', '2015-11-08', '12345678904', 'M', 'Carmen Santos', 'Carlos Pereira', '650e8400-e29b-41d4-a716-446655440003');
-
-INSERT INTO turmas (id, nome, ano_letivo, serie, escola_id, capacidade, turno) VALUES
-  ('850e8400-e29b-41d4-a716-446655440001', 'Berçário A', 2024, 'Berçário', '550e8400-e29b-41d4-a716-446655440001', 15, 'integral'),
-  ('850e8400-e29b-41d4-a716-446655440002', 'Maternal B', 2024, 'Maternal', '550e8400-e29b-41d4-a716-446655440001', 20, 'matutino'),
-  ('850e8400-e29b-41d4-a716-446655440003', 'Pré I A', 2024, 'Pré I', '550e8400-e29b-41d4-a716-446655440002', 25, 'matutino'),
-  ('850e8400-e29b-41d4-a716-446655440004', '5º Ano A', 2024, '5º Ano', '550e8400-e29b-41d4-a716-446655440003', 30, 'matutino');
-
-INSERT INTO matriculas (id, aluno_id, turma_id, ano_letivo, data_matricula, situacao) VALUES
-  ('950e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001', '850e8400-e29b-41d4-a716-446655440001', 2024, '2024-02-01', 'ativa'),
-  ('950e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440002', '850e8400-e29b-41d4-a716-446655440003', 2024, '2024-02-01', 'ativa'),
-  ('950e8400-e29b-41d4-a716-446655440003', '750e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440004', 2024, '2024-02-01', 'ativa');
+-- NOTE: Seed data has been moved to separate seed scripts
+-- For development seed data, run: bun run scripts/seed-dev.ts
+-- This migration now contains ONLY schema definitions and RLS policies

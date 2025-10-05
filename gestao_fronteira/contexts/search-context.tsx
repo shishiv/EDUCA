@@ -9,6 +9,7 @@
 import * as React from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 // Types
 interface SearchFilter {
@@ -167,7 +168,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
         ...(userPreferences ? JSON.parse(userPreferences) : {})
       }))
     } catch (error) {
-      console.error('Failed to load saved search data:', error)
+      logger.error('Failed to load saved search data:', { error: error })
     }
   }
 
@@ -182,7 +183,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
       }
       localStorage.setItem('gestao-fronteira-search-preferences', JSON.stringify(preferences))
     } catch (error) {
-      console.error('Failed to save user preferences:', error)
+      logger.error('Failed to save user preferences:', { error: error })
     }
   }
 
@@ -206,74 +207,37 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
 
   // Perform search API call
   const performSearchAPI = async (query: string, filters: Record<string, any>, sortConfig: any) => {
-    // This would be your actual API call
-    // For now, return mock data
-    return new Promise<{ results: SearchResult[]; totalCount: number }>((resolve) => {
-      setTimeout(() => {
-        const mockResults: SearchResult[] = [
-          {
-            id: '1',
-            type: 'student',
-            data: {
-              nome_completo: 'João Silva Santos',
-              cpf: '123.456.789-00',
-              serie_ano: '5º Ano EF',
-              turno: 'matutino',
-              escola: 'E.M. José de Alencar',
-              telefone: '(31) 99999-8888',
-              endereco: 'Rua das Flores, 123',
-              bairro: 'Centro'
-            },
-            relevanceScore: 0.95,
-            matchedFields: ['nome_completo', 'cpf'],
-            lastUpdated: new Date(),
-            status: 'active'
-          },
-          {
-            id: '2',
-            type: 'teacher',
-            data: {
-              nome_completo: 'Maria Eduarda Oliveira',
-              cpf: '987.654.321-00',
-              disciplina: 'Matemática',
-              escola: 'E.M. José de Alencar',
-              telefone: '(31) 88888-7777'
-            },
-            relevanceScore: 0.87,
-            matchedFields: ['nome_completo'],
-            lastUpdated: new Date(),
-            status: 'active'
-          }
-        ]
+    try {
+      // Build query parameters
+      const params = new URLSearchParams({
+        query,
+        type: filters.type || 'all',
+        limit: String(filters.limit || 50),
+        offset: String(filters.offset || 0)
+      })
 
-        // Filter by query
-        let filtered = mockResults
-        if (query.trim()) {
-          filtered = mockResults.filter(result =>
-            result.data.nome_completo?.toLowerCase().includes(query.toLowerCase()) ||
-            result.data.cpf?.includes(query)
-          )
-        }
+      // Call real search API
+      const response = await fetch(`/api/search?${params.toString()}`)
 
-        // Apply filters
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-            filtered = filtered.filter(result => {
-              const fieldValue = result.data[key]
-              if (Array.isArray(value)) {
-                return value.includes(fieldValue)
-              }
-              return fieldValue === value || fieldValue?.toString().includes(value.toString())
-            })
-          }
-        })
+      if (!response.ok) {
+        throw new Error(`Search API error: ${response.status}`)
+      }
 
-        resolve({
-          results: filtered,
-          totalCount: filtered.length
-        })
-      }, 1000) // Simulate API delay
-    })
+      const data = await response.json()
+
+      return {
+        results: data.results || [],
+        totalCount: data.totalCount || 0
+      }
+    } catch (error) {
+      logger.error('Error calling search API', { error })
+
+      // Return empty results on error
+      return {
+        results: [],
+        totalCount: 0
+      }
+    }
   }
 
   // Actions
@@ -338,7 +302,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
 
       toast.success(`${results.length} resultados encontrados`)
     } catch (error) {
-      console.error('Search failed:', error)
+      logger.error('Search failed:', { error: error })
       setState(prev => ({ ...prev, error: 'Erro na busca. Tente novamente.' }))
       toast.error('Erro na busca. Tente novamente.')
     } finally {
@@ -387,7 +351,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
       localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
       toast.success('Busca salva com sucesso!')
     } catch (error) {
-      console.error('Failed to save search:', error)
+      logger.error('Failed to save search:', { error: error })
       toast.error('Erro ao salvar busca')
     }
   }
@@ -410,7 +374,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     try {
       localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
     } catch (error) {
-      console.error('Failed to update saved search:', error)
+      logger.error('Failed to update saved search:', { error: error })
     }
   }
 
@@ -422,7 +386,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
       localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
       toast.success('Busca removida')
     } catch (error) {
-      console.error('Failed to delete saved search:', error)
+      logger.error('Failed to delete saved search:', { error: error })
       toast.error('Erro ao remover busca')
     }
   }
@@ -454,7 +418,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     try {
       localStorage.setItem('gestao-fronteira-recent-searches', JSON.stringify(updatedRecent))
     } catch (error) {
-      console.error('Failed to save recent search:', error)
+      logger.error('Failed to save recent search:', { error: error })
     }
   }
 
@@ -533,7 +497,7 @@ export function useSearchSuggestions() {
       const results = await getSearchSuggestions(query)
       setSuggestions(results)
     } catch (error) {
-      console.error('Failed to load suggestions:', error)
+      logger.error('Failed to load suggestions:', { error: error })
       setSuggestions([])
     } finally {
       setLoading(false)

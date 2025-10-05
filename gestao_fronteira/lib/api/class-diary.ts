@@ -18,6 +18,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 /**
  * Interface: Class Diary Entry
@@ -28,7 +29,7 @@ export interface ClassDiaryEntry {
   data_aula: string // ISO date format YYYY-MM-DD
   turma_id: string
   turma_nome: string
-  turma_ano: number
+  turma_serie: string
   escola_id: string
   escola_nome: string
   professor_id: string
@@ -122,7 +123,7 @@ export async function getClassDiary(
         turmas!inner(
           id,
           nome,
-          ano,
+          serie,
           escola_id,
           escolas!inner(
             id,
@@ -176,7 +177,7 @@ export async function getClassDiary(
     const { data: aulas, error } = await query
 
     if (error) {
-      console.error('Error fetching class diary:', error)
+      logger.error('Error fetching class diary:', { error: error })
       return { data: null, error }
     }
 
@@ -218,7 +219,7 @@ export async function getClassDiary(
         data_aula: aula.data_aula,
         turma_id: aula.turma_id,
         turma_nome: turma?.nome || 'N/A',
-        turma_ano: turma?.ano || 1,
+        turma_serie: turma?.serie || 'N/A',
         escola_id: escola?.id || '',
         escola_nome: escola?.nome || 'N/A',
         professor_id: aula.professor_id,
@@ -238,7 +239,7 @@ export async function getClassDiary(
 
     return { data: transformedData, error: null }
   } catch (error) {
-    console.error('Exception in getClassDiary:', error)
+    logger.error('Exception in getClassDiary:', { error: error })
     return { data: null, error }
   }
 }
@@ -305,7 +306,7 @@ export async function getAttendanceHistory(
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching attendance history:', error)
+      logger.error('Error fetching attendance history:', { error: error })
       return { data: null, error }
     }
 
@@ -323,7 +324,7 @@ export async function getAttendanceHistory(
 
     return { data: transformedData, error: null }
   } catch (error) {
-    console.error('Exception in getAttendanceHistory:', error)
+    logger.error('Exception in getAttendanceHistory:', { error: error })
     return { data: null, error }
   }
 }
@@ -367,7 +368,7 @@ export async function getClassDetail(
         turmas!inner(
           id,
           nome,
-          ano,
+          serie,
           escola_id,
           escolas!inner(
             id,
@@ -383,7 +384,7 @@ export async function getClassDetail(
       .single()
 
     if (aulaError || !aulaData) {
-      console.error('Error fetching aula:', aulaError)
+      logger.error('Error fetching aula:', { error: aulaError })
       return { data: null, error: aulaError }
     }
 
@@ -406,7 +407,7 @@ export async function getClassDetail(
       .order('alunos(nome_completo)', { ascending: true })
 
     if (attendanceError) {
-      console.error('Error fetching attendance records:', attendanceError)
+      logger.error('Error fetching attendance records:', { error: attendanceError })
       return { data: null, error: attendanceError }
     }
 
@@ -447,7 +448,7 @@ export async function getClassDetail(
       data_aula: aula.data_aula,
       turma_id: aula.turma_id,
       turma_nome: turma?.nome || 'N/A',
-      turma_ano: turma?.ano || 1,
+      turma_serie: turma?.serie || 'N/A',
       escola_id: escola?.id || '',
       escola_nome: escola?.nome || 'N/A',
       professor_id: aula.professor_id,
@@ -468,7 +469,7 @@ export async function getClassDetail(
 
     return { data: detailedSession, error: null }
   } catch (error) {
-    console.error('Exception in getClassDetail:', error)
+    logger.error('Exception in getClassDetail:', { error: error })
     return { data: null, error }
   }
 }
@@ -486,7 +487,7 @@ export async function getAvailableTurmas(
   supabase: SupabaseClient<Database>,
   professor_id?: string,
   escola_id?: string
-): Promise<{ data: Array<{ id: string; nome: string; ano: number }> | null; error: any }> {
+): Promise<{ data: Array<{ id: string; nome: string; serie: string }> | null; error: any }> {
   try {
 
     let query = supabase
@@ -496,7 +497,7 @@ export async function getAvailableTurmas(
         turmas!inner(
           id,
           nome,
-          ano,
+          serie,
           escola_id
         )
       `)
@@ -512,7 +513,7 @@ export async function getAvailableTurmas(
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching available turmas:', error)
+      logger.error('Error fetching available turmas:', { error: error })
       return { data: null, error }
     }
 
@@ -523,7 +524,7 @@ export async function getAvailableTurmas(
         turmasMap.set(aula.turmas.id, {
           id: aula.turmas.id,
           nome: aula.turmas.nome,
-          ano: aula.turmas.ano,
+          serie: aula.turmas.serie,
         })
       }
     })
@@ -532,7 +533,7 @@ export async function getAvailableTurmas(
 
     return { data: uniqueTurmas, error: null }
   } catch (error) {
-    console.error('Exception in getAvailableTurmas:', error)
+    logger.error('Exception in getAvailableTurmas:', { error: error })
     return { data: null, error }
   }
 }

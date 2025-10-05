@@ -20,6 +20,7 @@ import { markAttendanceAction } from '@/app/actions/attendance/mark-attendance'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
 import { checkLockStatusAction } from '@/app/actions/attendance/check-lock-status'
 import { useAttendanceSessionStore } from '@/lib/stores/attendance-session-store'
+import { logger } from '@/lib/logger'
 
 // Query keys for cache management
 export const attendanceKeys = {
@@ -116,7 +117,7 @@ export function useOpenSession() {
       }
     },
     onError: (error) => {
-      console.error('Erro ao abrir sessão:', error)
+      logger.error('Erro ao abrir sessão:', { error: error })
     },
   })
 }
@@ -219,7 +220,7 @@ export function useCloseSession() {
       }
     },
     onError: (error) => {
-      console.error('Erro ao fechar sessão:', error)
+      logger.error('Erro ao fechar sessão:', { error: error })
     },
   })
 }

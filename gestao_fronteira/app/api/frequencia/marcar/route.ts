@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const marcarFrequenciaSchema = z.object({
   aula_id: z.string().uuid('ID da aula deve ser um UUID válido'),
@@ -210,7 +211,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (sqlError) {
-      console.error('Erro ao marcar frequência:', sqlError)
+      logger.error('Erro ao marcar frequência:', { error: sqlError })
       return NextResponse.json(
         {
           success: false,
@@ -253,7 +254,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro inesperado em /api/frequencia/marcar:', error)
+    logger.error('Erro inesperado em /api/frequencia/marcar:', { error: error })
     return NextResponse.json(
       {
         success: false,

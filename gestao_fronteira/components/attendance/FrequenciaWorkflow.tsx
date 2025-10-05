@@ -13,13 +13,21 @@ import {
   ChevronRight,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Calculator,
+  Palette,
+  FlaskConical,
+  MapPin,
+  Landmark,
+  Languages,
+  Dumbbell
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { AttendanceGrid } from './AttendanceGrid'
 import { FecharAulaDialog } from './FecharAulaDialog'
+import { logger } from '@/lib/logger'
 
 interface Disciplina {
   id: string
@@ -48,6 +56,22 @@ interface SessaoAtiva {
 }
 
 type WorkflowStep = 'disciplina' | 'turma' | 'aula-aberta' | 'presenca' | 'fechamento'
+
+// Mapear disciplinas para ícones e cores
+const getDisciplinaIcon = (nome: string) => {
+  const iconMap: Record<string, { icon: any; color: string; bgColor: string }> = {
+    'Matemática': { icon: Calculator, color: 'text-blue-600', bgColor: 'bg-blue-50 hover:bg-blue-100' },
+    'Língua Portuguesa': { icon: BookOpen, color: 'text-green-600', bgColor: 'bg-green-50 hover:bg-green-100' },
+    'Arte': { icon: Palette, color: 'text-purple-600', bgColor: 'bg-purple-50 hover:bg-purple-100' },
+    'Ciências': { icon: FlaskConical, color: 'text-cyan-600', bgColor: 'bg-cyan-50 hover:bg-cyan-100' },
+    'Geografia': { icon: MapPin, color: 'text-emerald-600', bgColor: 'bg-emerald-50 hover:bg-emerald-100' },
+    'História': { icon: Landmark, color: 'text-amber-600', bgColor: 'bg-amber-50 hover:bg-amber-100' },
+    'Inglês': { icon: Languages, color: 'text-rose-600', bgColor: 'bg-rose-50 hover:bg-rose-100' },
+    'Educação Física': { icon: Dumbbell, color: 'text-orange-600', bgColor: 'bg-orange-50 hover:bg-orange-100' },
+  }
+
+  return iconMap[nome] || { icon: BookOpen, color: 'text-gray-600', bgColor: 'bg-gray-50 hover:bg-gray-100' }
+}
 
 export function FrequenciaWorkflow() {
   const { userProfile } = useAuth()
@@ -95,21 +119,47 @@ export function FrequenciaWorkflow() {
           setCurrentStep('aula-aberta')
         }
       } catch (error) {
-        console.log('Nenhuma sessão ativa encontrada')
+        logger.info('Nenhuma sessão ativa encontrada')
       }
     }
 
     const loadDisciplinas = async () => {
       try {
-        const { data, error } = await supabase
-          .from('disciplinas')
-          .select('id, nome')
-          .order('nome')
+        // Se for professor, buscar apenas disciplinas que ele já ministrou ou está ministrando
+        if (userProfile.tipo_usuario === 'professor') {
+          const { data: sessoesData, error: sessoesError } = await supabase
+            .from('sessoes_aula')
+            .select('disciplina_id, disciplinas(id, nome)')
+            .eq('professor_id', userProfile.id)
 
-        if (error) throw error
-        setDisciplinas(data || [])
+          if (sessoesError) throw sessoesError
+
+          // Extrair disciplinas únicas
+          const disciplinasUnicas = new Map()
+          sessoesData?.forEach((sessao: any) => {
+            if (sessao.disciplinas) {
+              disciplinasUnicas.set(sessao.disciplinas.id, {
+                id: sessao.disciplinas.id,
+                nome: sessao.disciplinas.nome
+              })
+            }
+          })
+
+          const disciplinasArray = Array.from(disciplinasUnicas.values())
+          setDisciplinas(disciplinasArray.sort((a, b) => a.nome.localeCompare(b.nome)))
+        } else {
+          // Admin ou diretor vê todas as disciplinas
+          const { data, error } = await supabase
+            .from('disciplinas')
+            .select('id, nome')
+            .eq('ativa', true)
+            .order('nome')
+
+          if (error) throw error
+          setDisciplinas(data || [])
+        }
       } catch (error) {
-        console.error('Erro ao carregar disciplinas:', error)
+        logger.error('Erro ao carregar disciplinas:', { error: error })
         toast.error('Erro ao carregar disciplinas')
       }
     }
@@ -155,7 +205,7 @@ export function FrequenciaWorkflow() {
 
       setTurmas(turmasComAlunos)
     } catch (error) {
-      console.error('Erro ao carregar turmas:', error)
+      logger.error('Erro ao carregar turmas:', { error: error })
       toast.error('Erro ao carregar turmas')
     }
   }
@@ -178,7 +228,7 @@ export function FrequenciaWorkflow() {
 
     // Validar se o usuário tem escola_id
     if (!userProfile.escola_id) {
-      console.error('Usuário não possui escola_id definida')
+      logger.error('Usuário não possui escola_id definida')
       alert('Erro: Professor deve estar vinculado a uma escola para abrir aulas')
       return
     }
@@ -266,7 +316,7 @@ export function FrequenciaWorkflow() {
       setCurrentStep('aula-aberta')
       toast.success('Aula aberta com sucesso! Pode iniciar a chamada.')
     } catch (error) {
-      console.error('Erro ao abrir aula:', error)
+      logger.error('Erro ao abrir aula:', { error: error })
       toast.error('Erro ao abrir aula')
     } finally {
       setLoading(false)
@@ -381,18 +431,66 @@ export function FrequenciaWorkflow() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Select value={selectedDisciplina} onValueChange={handleDisciplinaSelect}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma disciplina" />
-              </SelectTrigger>
-              <SelectContent>
-                {disciplinas.map((disciplina) => (
-                  <SelectItem key={disciplina.id} value={disciplina.id}>
-                    {disciplina.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {disciplinas.map((disciplina) => {
+                const { icon: Icon, color, bgColor } = getDisciplinaIcon(disciplina.nome)
+                const isSelected = selectedDisciplina === disciplina.id
+
+                return (
+                  <button
+                    key={disciplina.id}
+                    onClick={() => handleDisciplinaSelect(disciplina.id)}
+                    className={`
+                      relative p-6 rounded-lg border-2 transition-all duration-200
+                      flex flex-col items-center justify-center gap-3
+                      min-h-[140px] group
+                      ${isSelected
+                        ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
+                        : `border-gray-200 ${bgColor} hover:shadow-md`
+                      }
+                    `}
+                  >
+                    {/* Ícone */}
+                    <div className={`
+                      p-3 rounded-full transition-transform duration-200
+                      ${isSelected ? 'bg-blue-100 scale-110' : 'bg-white group-hover:scale-110'}
+                    `}>
+                      <Icon className={`h-8 w-8 ${isSelected ? 'text-blue-600' : color}`} />
+                    </div>
+
+                    {/* Nome da Disciplina */}
+                    <span className={`
+                      text-sm font-medium text-center
+                      ${isSelected ? 'text-blue-900' : 'text-gray-700'}
+                    `}>
+                      {disciplina.nome}
+                    </span>
+
+                    {/* Indicador de Seleção */}
+                    {isSelected && (
+                      <div className="absolute top-2 right-2">
+                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Mensagem quando não há disciplinas */}
+            {disciplinas.length === 0 && (
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  Nenhuma disciplina disponível.
+                  {userProfile?.tipo_usuario === 'professor' && (
+                    <span className="block mt-2 text-sm">
+                      Você precisa ministrar pelo menos uma aula antes de ver disciplinas aqui.
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

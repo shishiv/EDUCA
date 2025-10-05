@@ -6,6 +6,7 @@ import { queryKeys, invalidateQueries } from '@/lib/react-query'
 import { useAppStore } from '@/lib/stores/app-store'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
+import { logger } from '@/lib/logger'
 
 // Get users with school information
 export function useUsersWithSchool(options?: {
@@ -79,7 +80,7 @@ export function useCreateUser() {
       toast.success('Usuário criado com sucesso!')
     },
     onError: (error: any) => {
-      // console.error('Error creating user:', error)
+      // logger.error('Error creating user:', { error: error })
       toast.error(error.message || 'Erro ao criar usuário')
     },
   })
@@ -103,7 +104,7 @@ export function useUpdateUser() {
       toast.success('Usuário atualizado com sucesso!')
     },
     onError: (error: any) => {
-      // console.error('Error updating user:', error)
+      // logger.error('Error updating user:', { error: error })
       toast.error(error.message || 'Erro ao atualizar usuário')
     },
   })
@@ -128,7 +129,7 @@ export function useUpdateUserStatus() {
       toast.success(`Usuário ${action} com sucesso!`)
     },
     onError: (error: any) => {
-      // console.error('Error updating user status:', error)
+      // logger.error('Error updating user status:', { error: error })
       toast.error(error.message || 'Erro ao atualizar status do usuário')
     },
   })
@@ -154,7 +155,7 @@ export function useBulkUpdateUserStatus() {
       toast.success(`${variables.userIds.length} usuários ${action} com sucesso!`)
     },
     onError: (error: any) => {
-      // console.error('Error bulk updating user status:', error)
+      // logger.error('Error bulk updating user status:', { error: error })
       toast.error(error.message || 'Erro ao atualizar status dos usuários')
     },
   })
@@ -179,7 +180,7 @@ export function useBulkAssignSchool() {
       toast.success(`${variables.userIds.length} usuários atribuídos à escola com sucesso!`)
     },
     onError: (error: any) => {
-      // console.error('Error bulk assigning school:', error)
+      // logger.error('Error bulk assigning school:', { error: error })
       toast.error(error.message || 'Erro ao atribuir escola aos usuários')
     },
   })
@@ -192,7 +193,7 @@ export function useUsersSubscription() {
 
   useEffect(() => {
     const subscription = usersApi.subscribe((payload) => {
-      // console.log('User change received:', payload)
+      // logger.info('User change received:', { payload })
 
       // Invalidate user queries on any change
       invalidateQueries.users()

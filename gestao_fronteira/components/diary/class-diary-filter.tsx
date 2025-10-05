@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAvailableTurmas } from '@/lib/api/class-diary'
 import type { ClassDiaryFilters } from '@/lib/api/class-diary'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface ClassDiaryFilterProps {
   onFilterChange: (filters: ClassDiaryFilters) => void
@@ -43,14 +44,14 @@ export function ClassDiaryFilter({
   escola_id,
 }: ClassDiaryFilterProps) {
   // Local state for filter values
-  const [turmaId, setTurmaId] = useState<string>(initialFilters.turma_id || '')
+  const [turmaId, setTurmaId] = useState<string>(initialFilters.turma_id || 'all')
   const [dateFrom, setDateFrom] = useState<string>(initialFilters.date_from || '')
   const [dateTo, setDateTo] = useState<string>(initialFilters.date_to || '')
-  const [fase, setFase] = useState<string>(initialFilters.fase || '')
+  const [fase, setFase] = useState<string>(initialFilters.status || 'all')
 
   // Available turmas for dropdown
   const [turmas, setTurmas] = useState<
-    Array<{ id: string; nome: string; ano: number }>
+    Array<{ id: string; nome: string; serie: string }>
   >([])
   const [loadingTurmas, setLoadingTurmas] = useState(true)
 
@@ -61,7 +62,7 @@ export function ClassDiaryFilter({
       const { data, error } = await getAvailableTurmas(supabase, profesor_id, escola_id)
 
       if (error) {
-        console.error('Error fetching turmas:', error)
+        logger.error('Error fetching turmas:', { error: error })
         setLoadingTurmas(false)
         return
       }
@@ -77,10 +78,10 @@ export function ClassDiaryFilter({
   const handleApplyFilters = () => {
     const filters: ClassDiaryFilters = {}
 
-    if (turmaId) filters.turma_id = turmaId
+    if (turmaId && turmaId !== 'all') filters.turma_id = turmaId
     if (dateFrom) filters.date_from = dateFrom
     if (dateTo) filters.date_to = dateTo
-    if (fase) filters.status = fase as 'aberta' | 'fechada' | 'travada'
+    if (fase && fase !== 'all') filters.status = fase as 'aberta' | 'fechada' | 'travada'
     if (profesor_id) filters.professor_id = profesor_id
     if (escola_id) filters.escola_id = escola_id
 
@@ -89,10 +90,10 @@ export function ClassDiaryFilter({
 
   // Handle filter reset
   const handleResetFilters = () => {
-    setTurmaId('')
+    setTurmaId('all')
     setDateFrom('')
     setDateTo('')
-    setFase('')
+    setFase('all')
 
     const filters: ClassDiaryFilters = {}
     if (profesor_id) filters.professor_id = profesor_id
@@ -119,7 +120,7 @@ export function ClassDiaryFilter({
                 <SelectValue placeholder="Selecione uma turma" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as turmas</SelectItem>
+                <SelectItem value="all">Todas as turmas</SelectItem>
                 {loadingTurmas ? (
                   <SelectItem value="loading" disabled>
                     Carregando...
@@ -131,7 +132,7 @@ export function ClassDiaryFilter({
                 ) : (
                   turmas.map((turma) => (
                     <SelectItem key={turma.id} value={turma.id}>
-                      {turma.nome} - {turma.ano}º Ano
+                      {turma.nome} - {turma.serie}
                     </SelectItem>
                   ))
                 )}
@@ -171,7 +172,7 @@ export function ClassDiaryFilter({
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="aberta">Aberta</SelectItem>
                 <SelectItem value="fechada">Fechada</SelectItem>
                 <SelectItem value="travada">Travada</SelectItem>

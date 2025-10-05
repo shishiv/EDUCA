@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Plus, Search, Eye, Edit, Trash2, UserCheck, UserX, Download } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<UserWithSchool[]>([])
@@ -51,7 +52,7 @@ export default function UsuariosPage() {
 
   const loadUsuarios = async () => {
     try {
-      console.log('Loading usuarios...')
+      logger.info('Loading usuarios...')
       // Simple query without joins first
       const { data, error } = await supabase
         .from('users')
@@ -59,15 +60,15 @@ export default function UsuariosPage() {
         .eq('ativo', true)
 
       if (error) {
-        console.error('Supabase error:', error)
+        logger.error('Supabase error:', { error: error })
         throw error
       }
 
-      console.log('Success! Users found:', data?.length)
-      console.log('Users data:', data)
+      logger.info('Success! Users found', { count: data?.length })
+      logger.info('Users data', { data })
       setUsuarios(data || [])
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
+      logger.error('Erro ao carregar usuários:', { error: error })
       toast.error('Erro ao carregar lista de usuários')
     } finally {
       setLoading(false)
