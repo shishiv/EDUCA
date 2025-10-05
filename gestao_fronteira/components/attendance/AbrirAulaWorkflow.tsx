@@ -43,7 +43,7 @@ const formatSafeDate = (dateString: string | null | undefined, formatStr: string
     if (isNaN(date.getTime())) return '--:--'
     return format(date, formatStr, { locale: ptBR })
   } catch (error) {
-    console.warn('Invalid date format:', dateString, error)
+    logger.warn('Invalid date format:', { dateString, error })
     return '--:--'
   }
 }
@@ -52,6 +52,7 @@ import { AttendanceGrid } from './AttendanceGrid'
 import { TutorialOverlay } from '../tutorial/TutorialOverlay-fixed'
 import { HelpSystem } from '../help/HelpSystem-fixed'
 import { useModal } from '@/components/ui/modal-manager'
+import { logger } from '@/lib/logger'
 
 interface Session {
   id: string
@@ -126,7 +127,7 @@ export function AbrirAulaWorkflow({
         .maybeSingle()
 
       if (error) {
-        console.error('Erro ao carregar sessão:', error)
+        logger.error('Erro ao carregar sessão:', { error: error })
         toast.error('Erro ao carregar dados da sessão')
         return
       }
@@ -195,10 +196,10 @@ export function AbrirAulaWorkflow({
         setAutoSaveContent(savedContent)
       }
 
-      console.log(`Session loaded for ${turmaId}:`, session?.status || 'No session')
+      logger.info(`Session loaded for ${turmaId}`, { status: session?.status || 'No session' })
 
     } catch (error) {
-      console.error('Erro ao carregar sessão:', error)
+      logger.error('Erro ao carregar sessão:', { error: error })
       toast.error('Erro ao carregar dados da sessão')
     } finally {
       setLoading(false)
@@ -322,7 +323,7 @@ export function AbrirAulaWorkflow({
         .single()
 
       if (error) {
-        console.error('Erro ao criar sessão:', error)
+        logger.error('Erro ao criar sessão:', { error: error })
         toast.error('Erro ao criar sessão: ' + error.message)
         return
       }
@@ -381,10 +382,10 @@ export function AbrirAulaWorkflow({
       onSessionChange?.(newSession)
       toast.success('Sessão criada com sucesso!')
 
-      console.log('Session created:', newSession)
+      logger.info('Session created:', { newSession })
 
     } catch (error) {
-      console.error('Erro ao criar sessão:', error)
+      logger.error('Erro ao criar sessão:', { error: error })
       toast.error('Erro ao criar sessão')
     } finally {
       setActionLoading(false)
@@ -411,7 +412,7 @@ export function AbrirAulaWorkflow({
         .single()
 
       if (error) {
-        console.error('Erro ao abrir sessão:', error)
+        logger.error('Erro ao abrir sessão:', { error: error })
         toast.error('Erro ao abrir sessão: ' + error.message)
         return
       }
@@ -470,10 +471,10 @@ export function AbrirAulaWorkflow({
       onSessionChange?.(updatedSession)
       toast.success('Aula aberta! A chamada pode ser realizada.')
 
-      console.log('Session opened:', updatedSession)
+      logger.info('Session opened:', { updatedSession })
 
     } catch (error) {
-      console.error('Erro ao abrir sessão:', error)
+      logger.error('Erro ao abrir sessão:', { error: error })
       toast.error('Erro ao abrir sessão')
     } finally {
       setActionLoading(false)
@@ -516,7 +517,7 @@ export function AbrirAulaWorkflow({
       toast.success('Aula fechada com sucesso! Registro legal criado.')
 
     } catch (error) {
-      console.error('Erro ao fechar sessão:', error)
+      logger.error('Erro ao fechar sessão:', { error: error })
       toast.error(error instanceof Error ? error.message : 'Erro ao fechar sessão')
     } finally {
       setActionLoading(false)
@@ -554,7 +555,7 @@ export function AbrirAulaWorkflow({
       toast.success('Sessão cancelada com sucesso.')
 
     } catch (error) {
-      console.error('Erro ao cancelar sessão:', error)
+      logger.error('Erro ao cancelar sessão:', { error: error })
       toast.error(error instanceof Error ? error.message : 'Erro ao cancelar sessão')
     } finally {
       setActionLoading(false)

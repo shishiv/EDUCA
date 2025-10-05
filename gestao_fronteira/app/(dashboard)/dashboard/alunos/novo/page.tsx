@@ -20,6 +20,7 @@ import { ArrowLeft, Save, User, Users, FileText, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { studentsApi } from '@/lib/api/students'
+import { logger } from '@/lib/logger'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
@@ -105,7 +106,7 @@ export default function NovoAlunoPage() {
       toast.success('Aluno cadastrado com sucesso!')
       router.push('/dashboard/alunos')
     } catch (error: any) {
-      console.error('Erro ao cadastrar aluno:', error)
+      logger.error('Erro ao cadastrar aluno:', { error: error })
 
       // Enhanced error handling with Brazilian context
       let errorMessage = 'Erro ao cadastrar aluno'
