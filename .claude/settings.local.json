@@ -174,7 +174,8 @@
       "Bash(gh pr merge:*)",
       "Bash(gh pr list:*)",
       "Bash(tee:*)",
-      "Bash(bunx tsc:*)"
+      "Bash(bunx tsc:*)",
+      "Bash(npx vercel:*)"
     ],
     "deny": [],
     "ask": []
