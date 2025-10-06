@@ -1,4 +1,4 @@
-import { createBrowserClient, createClient } from '@supabase/ssr'
+import { createBrowserClient, createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { Database } from '@/types/database'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -14,10 +14,15 @@ export type Updates<T extends keyof Database['public']['Tables']> = Database['pu
 
 // Server-side Supabase client for API routes
 export function createServerClient() {
-  return createClient<Database>(
+  return createSupabaseServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
+      cookies: {
+        get: () => undefined,
+        set: () => {},
+        remove: () => {},
+      },
       auth: {
         autoRefreshToken: false,
         persistSession: false,
