@@ -16,6 +16,7 @@
     "test:e2e:headed": "playwright test --headed",
     "seed:dev": "tsx scripts/seed-dev.ts",
     "seed:clear": "tsx scripts/seed-dev.ts clear",
+    "seed:superadmin": "tsx scripts/seed-superadmin.ts",
     "db:types": "echo 'Run: supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.ts'",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
