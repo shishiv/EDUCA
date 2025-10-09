@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(true)
 
   const { signIn } = useAuth()
   const router = useRouter()
@@ -42,7 +42,7 @@ export default function LoginPage() {
           router.push('/onboarding')
         }
       } catch (error) {
-        logger.error('Error checking users', { error })
+        logger.error('Error checking users', error as Error)
       }
     }
 
@@ -63,10 +63,7 @@ export default function LoginPage() {
         const profile = await getUserProfile(result.user.id)
 
         logger.info('Login successful', {
-          userId: result.user.id,
-          email: result.user.email,
-          hasProfile: !!profile,
-          profileRole: profile?.tipo_usuario
+          userId: result.user.id
         })
 
         // Proceed to dashboard even if profile has fallback data
@@ -76,7 +73,7 @@ export default function LoginPage() {
         router.replace('/dashboard')
       }
     } catch (err: any) {
-      logger.error('Login error', { error: err })
+      logger.error('Login error', err as Error)
       setError(err.message || 'Erro ao fazer login')
       toast.error('Erro ao fazer login')
     } finally {
@@ -84,10 +81,7 @@ export default function LoginPage() {
     }
   }
 
-  // Don't render login form until mounted (prevents hydration issues)
-  if (!mounted) {
-    return null
-  }
+  // Removed mounted gating to avoid hydration mismatch
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -192,7 +186,7 @@ export default function LoginPage() {
 
           {/* Municipal Footer */}
           <div className="text-center mt-6 text-xs text-fronteira-gray-500">
-            <p>© 2024 Prefeitura de Fronteira/MG</p>
+            <p>© 2025 Prefeitura de Fronteira/MG</p>
             <p className="mt-1">Todos os direitos reservados</p>
           </div>
         </div>
