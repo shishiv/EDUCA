@@ -18,6 +18,12 @@ import { useWizardStore } from './_store/useWizardStore'
 import { StepIndicator } from './_components/StepIndicator'
 import { Step1Welcome } from './_components/Step1Welcome'
 import { Step2Diretores } from './_components/Step2Diretores'
+import { Step3Coordenadores } from './_components/Step3Coordenadores'
+import { Step4Secretarios } from './_components/Step4Secretarios'
+import { Step5Professores } from './_components/Step5Professores'
+import { Step6Review } from './_components/Step6Review'
+import { finalizeWizard } from './_actions/finalize-wizard'
+import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
 interface Escola {
@@ -41,7 +47,17 @@ export default function WizardOnboardingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { currentStep, nextStep, previousStep } = useWizardStore()
+  const router = useRouter()
+  const {
+    currentStep,
+    nextStep,
+    previousStep,
+    diretores,
+    coordenadores,
+    secretarios,
+    professores,
+    resetWizard,
+  } = useWizardStore()
 
   // Carregar escolas do banco
   useEffect(() => {
@@ -72,6 +88,26 @@ export default function WizardOnboardingPage() {
 
     loadEscolas()
   }, [])
+
+  // Handler para finalizar wizard
+  async function handleFinalize() {
+    const result = await finalizeWizard({
+      diretores,
+      coordenadores,
+      secretarios,
+      professores,
+    })
+
+    if (result.success) {
+      // Limpar wizard store
+      resetWizard()
+
+      // Redirecionar para dashboard
+      router.push('/dashboard')
+    } else {
+      throw new Error(result.message)
+    }
+  }
 
   // Loading state
   if (loading) {
@@ -120,88 +156,31 @@ export default function WizardOnboardingPage() {
       )}
 
       {currentStep === 3 && (
-        <div className="text-center py-20 bg-white rounded-lg border-2 border-dashed">
-          <p className="text-gray-500">
-            Step 3: Criar Coordenadores (em desenvolvimento)
-          </p>
-          <div className="flex gap-3 justify-center mt-4">
-            <button
-              onClick={previousStep}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
-            >
-              Voltar
-            </button>
-            <button
-              onClick={nextStep}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Próximo (temporário)
-            </button>
-          </div>
-        </div>
+        <Step3Coordenadores onNext={nextStep} onPrevious={previousStep} />
       )}
 
       {currentStep === 4 && (
-        <div className="text-center py-20 bg-white rounded-lg border-2 border-dashed">
-          <p className="text-gray-500">
-            Step 4: Criar Secretários (em desenvolvimento)
-          </p>
-          <div className="flex gap-3 justify-center mt-4">
-            <button
-              onClick={previousStep}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
-            >
-              Voltar
-            </button>
-            <button
-              onClick={nextStep}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Próximo (temporário)
-            </button>
-          </div>
-        </div>
+        <Step4Secretarios
+          escolas={escolas}
+          onNext={nextStep}
+          onPrevious={previousStep}
+        />
       )}
 
       {currentStep === 5 && (
-        <div className="text-center py-20 bg-white rounded-lg border-2 border-dashed">
-          <p className="text-gray-500">
-            Step 5: Criar Professores (em desenvolvimento)
-          </p>
-          <div className="flex gap-3 justify-center mt-4">
-            <button
-              onClick={previousStep}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
-            >
-              Voltar
-            </button>
-            <button
-              onClick={nextStep}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Próximo (temporário)
-            </button>
-          </div>
-        </div>
+        <Step5Professores
+          escolas={escolas}
+          onNext={nextStep}
+          onPrevious={previousStep}
+        />
       )}
 
       {currentStep === 6 && (
-        <div className="text-center py-20 bg-white rounded-lg border-2 border-dashed">
-          <p className="text-gray-500">
-            Step 6: Review + PDF (em desenvolvimento)
-          </p>
-          <div className="flex gap-3 justify-center mt-4">
-            <button
-              onClick={previousStep}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
-            >
-              Voltar
-            </button>
-            <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-              Finalizar (temporário)
-            </button>
-          </div>
-        </div>
+        <Step6Review
+          escolas={escolas}
+          onPrevious={previousStep}
+          onFinalize={handleFinalize}
+        />
       )}
     </div>
   )
