@@ -285,14 +285,15 @@ export default function MatriculasPage() {
       toast.success(`Matrícula de "${alunoNome}" cancelada com sucesso!`)
       await loadMatriculas() // Reload the list
     } catch (error: any) {
-      logger.error('Error deleting matricula', {
-        error,
-        errorMessage: error.message || 'Unknown error',
-        errorCode: error.code || 'NO_CODE',
-        errorDetails: error.details || 'No details',
-        errorHint: error.hint || 'No hint',
-        matriculaId,
-        alunoNome
+      logger.error('Error deleting matricula', error, {
+        metadata: {
+          errorMessage: error.message || 'Unknown error',
+          errorCode: error.code || 'NO_CODE',
+          errorDetails: error.details || 'No details',
+          errorHint: error.hint || 'No hint',
+          matriculaId,
+          alunoNome
+        }
       })
 
       // User-friendly error messages
