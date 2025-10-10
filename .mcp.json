@@ -4,7 +4,8 @@
       "command": "cmd",
       "args": [
         "/c",
-        "bunx",
+        "npx",
+        "-y",
         "@supabase/mcp-server-supabase@latest",
         "--project-ref=SUPABASE-PROJECT-REF"
       ],
