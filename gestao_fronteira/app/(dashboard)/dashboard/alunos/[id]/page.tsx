@@ -215,7 +215,7 @@ export default function AlunoDetalhesPage() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       setAluno(mockAlunoDetalhado)
     } catch (error) {
-      // logger.error('Erro ao carregar aluno:', { error: error })
+      // logger.error('Erro ao carregar aluno:', error)
       toast.error('Erro ao carregar dados do aluno')
     } finally {
       setLoading(false)

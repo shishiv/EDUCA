@@ -281,8 +281,12 @@ export const studentFormSchema = z.object({
     .max(100, { message: 'Nome não pode exceder 100 caracteres' }),
 
   data_nascimento: z
-    .coerce.date()
-    .refine((date) => date <= new Date(), { message: 'Data de nascimento não pode ser no futuro' }),
+    .string()
+    .refine((dateStr) => {
+      if (!dateStr) return false
+      const date = new Date(dateStr)
+      return !isNaN(date.getTime()) && date <= new Date()
+    }, { message: 'Data de nascimento inválida ou no futuro' }),
 
   cpf: cpfSchema.optional(),
 

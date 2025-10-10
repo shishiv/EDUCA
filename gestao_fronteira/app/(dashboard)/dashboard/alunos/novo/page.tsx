@@ -106,7 +106,7 @@ export default function NovoAlunoPage() {
       toast.success('Aluno cadastrado com sucesso!')
       router.push('/dashboard/alunos')
     } catch (error: any) {
-      logger.error('Erro ao cadastrar aluno:', { error: error })
+      logger.error('Erro ao cadastrar aluno:', error)
 
       // Enhanced error handling with Brazilian context
       let errorMessage = 'Erro ao cadastrar aluno'

@@ -44,7 +44,7 @@ export default function ConfiguracoesPage() {
       })
       setConfigValues(values)
     } catch (error) {
-      // logger.error('Erro ao carregar configurações:', { error: error })
+      // logger.error('Erro ao carregar configurações:', error)
       toast.error('Erro ao carregar configurações')
     } finally {
       setLoading(false)
@@ -91,7 +91,7 @@ export default function ConfiguracoesPage() {
         toast.info('Nenhuma alteração foi detectada')
       }
     } catch (error: any) {
-      logger.error('Erro ao salvar configurações:', { error: error })
+      logger.error('Erro ao salvar configurações:', error)
       toast.error(error.message || 'Erro ao salvar configurações')
     } finally {
       setSaving(false)
@@ -112,7 +112,7 @@ export default function ConfiguracoesPage() {
       toast.success(`Configuração "${config.descricao}" resetada para valor padrão`)
       await loadConfigs()
     } catch (error: any) {
-      logger.error('Erro ao resetar configuração:', { error: error })
+      logger.error('Erro ao resetar configuração:', error)
       toast.error('Erro ao resetar configuração')
     }
   }

@@ -94,7 +94,7 @@ export default function EditarEscolaPage() {
         observacoes: ''
       })
     } catch (error) {
-      logger.error('Erro ao carregar escola:', { error: error })
+      logger.error('Erro ao carregar escola:', error)
       toast.error('Erro ao carregar dados da escola')
       router.push('/dashboard/escolas')
     } finally {
@@ -107,7 +107,7 @@ export default function EditarEscolaPage() {
       const diretores = await schoolsApi.getAvailableDirectors()
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
-      logger.error('Erro ao carregar diretores:', { error: error })
+      logger.error('Erro ao carregar diretores:', error)
     }
   }
 
@@ -149,7 +149,7 @@ export default function EditarEscolaPage() {
       toast.success('Escola atualizada com sucesso!')
       router.push('/dashboard/escolas')
     } catch (error: any) {
-      logger.error('Erro ao atualizar escola:', { error: error })
+      logger.error('Erro ao atualizar escola:', error)
 
       let errorMessage = 'Erro ao atualizar escola'
       if (error.message?.includes('duplicate') || error.message?.includes('unique')) {

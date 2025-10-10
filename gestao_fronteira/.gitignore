@@ -3,10 +3,6 @@
 # reference
 /i-educar-reference
 
-# Development artifacts
-.playwright-mcp/
-.claude/agents/
-
 # dependencies
 /node_modules
 /.pnp
@@ -47,10 +43,3 @@ next-env.d.ts
 *.bak
 *.old
 
-# Analysis and reports (keep in docs/ only)
-*-report.md
-*-findings.md
-*-analysis.md
-CODEBASE_ANALYSIS.md
-*UX_*.md
-*_UX_*.md

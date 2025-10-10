@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun test:*)",
+      "Bash(bun run:*)",
+      "Bash(ls:*)",
+      "Read(//c/Users/Desenvolvimento/**)",
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enabledMcpjsonServers": [
+    "supabase",
+    "chrome-devtools",
+    "shadcn-ui",
+    "github.com/upstash/context7-mcp"
+  ]
+}
