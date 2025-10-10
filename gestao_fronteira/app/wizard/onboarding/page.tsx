@@ -13,7 +13,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { supabase as createClient } from '@/lib/supabase'
 import { useWizardStore } from './_store/useWizardStore'
 import { StepIndicator } from './_components/StepIndicator'
 import { Step1Welcome } from './_components/Step1Welcome'
