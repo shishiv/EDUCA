@@ -1253,6 +1253,7 @@ export type Database = {
           id: string
           nome: string
           tipo_usuario: string
+          wizard_completed: boolean | null
         }
         Insert: {
           ativo?: boolean | null
@@ -1262,6 +1263,7 @@ export type Database = {
           id?: string
           nome: string
           tipo_usuario: string
+          wizard_completed?: boolean | null
         }
         Update: {
           ativo?: boolean | null
@@ -1271,6 +1273,7 @@ export type Database = {
           id?: string
           nome?: string
           tipo_usuario?: string
+          wizard_completed?: boolean | null
         }
         Relationships: [
           {

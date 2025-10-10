@@ -264,7 +264,7 @@ export default function TurmasPage() {
 
       setTurmas(formattedTurmas)
     } catch (error) {
-      logger.error('Error loading turmas', { error })
+      logger.error('Error loading turmas', error)
       toast.error('Erro ao carregar lista de turmas')
       setTurmas([])
     } finally {
@@ -288,14 +288,15 @@ export default function TurmasPage() {
       toast.success(`Turma "${turmaNome}" excluída com sucesso!`)
       await loadTurmas() // Reload the list
     } catch (error: any) {
-      logger.error('Error deleting turma', {
-        error,
-        errorMessage: error.message || 'Unknown error',
-        errorCode: error.code || 'NO_CODE',
-        errorDetails: error.details || 'No details',
-        errorHint: error.hint || 'No hint',
-        turmaId,
-        turmaNome
+      logger.error('Error deleting turma', error, {
+        metadata: {
+          errorMessage: error.message || 'Unknown error',
+          errorCode: error.code || 'NO_CODE',
+          errorDetails: error.details || 'No details',
+          errorHint: error.hint || 'No hint',
+          turmaId,
+          turmaNome
+        }
       })
 
       // User-friendly error messages
