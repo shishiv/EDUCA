@@ -63,7 +63,7 @@ export default function NovaEscolaPage() {
       const diretores = await schoolsApi.getAvailableDirectors()
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
-      logger.error('Erro ao carregar diretores:', { error: error })
+      logger.error('Erro ao carregar diretores:', error)
       toast.error('Erro ao carregar lista de diretores disponíveis')
     }
   }
@@ -107,7 +107,7 @@ export default function NovaEscolaPage() {
       toast.success('Escola cadastrada com sucesso!')
       router.push('/dashboard/escolas')
     } catch (error: any) {
-      logger.error('Erro ao cadastrar escola:', { error: error })
+      logger.error('Erro ao cadastrar escola:', error)
 
       // Mensagens de erro contextualizadas
       let errorMessage = 'Erro ao cadastrar escola'

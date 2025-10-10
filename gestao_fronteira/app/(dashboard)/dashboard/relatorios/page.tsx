@@ -64,7 +64,7 @@ export default function RelatoriosPage() {
       const data = await reportsApi.getAll()
       setRelatorios(data)
     } catch (error) {
-      // logger.error('Erro ao carregar relatórios:', { error: error })
+      // logger.error('Erro ao carregar relatórios:', error)
       toast.error('Erro ao carregar lista de relatórios')
     } finally {
       setLoading(false)

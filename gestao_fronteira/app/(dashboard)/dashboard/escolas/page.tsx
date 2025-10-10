@@ -89,7 +89,7 @@ export default function EscolasPage() {
 
       setEscolas(formattedSchools)
     } catch (error) {
-      // logger.error('Erro ao carregar escolas:', { error: error })
+      // logger.error('Erro ao carregar escolas:', error)
       toast.error('Erro ao carregar lista de escolas. Verifique a conexão.')
 
       // Show empty state instead of mock data

@@ -60,7 +60,7 @@ export default function UsuariosPage() {
         .eq('ativo', true)
 
       if (error) {
-        logger.error('Supabase error:', { error: error })
+        logger.error('Supabase error:', error)
         throw error
       }
 
@@ -68,7 +68,7 @@ export default function UsuariosPage() {
       logger.info('Users data', { data })
       setUsuarios(data || [])
     } catch (error) {
-      logger.error('Erro ao carregar usuários:', { error: error })
+      logger.error('Erro ao carregar usuários:', error)
       toast.error('Erro ao carregar lista de usuários')
     } finally {
       setLoading(false)

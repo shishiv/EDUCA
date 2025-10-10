@@ -195,7 +195,7 @@ export default function NotasPage() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       setTurmas(mockTurmasNotas)
     } catch (error) {
-      // logger.error('Erro ao carregar notas:', { error: error })
+      // logger.error('Erro ao carregar notas:', error)
       toast.error('Erro ao carregar dados de notas')
     } finally {
       setLoading(false)

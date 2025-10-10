@@ -42,7 +42,7 @@ export default function NovoUsuarioPage() {
       const data = await schoolsApi.getAll()
       setEscolas(data)
     } catch (error) {
-      // logger.error("Erro ao carregar escolas:", { error: error })
+      // logger.error("Erro ao carregar escolas:", error)
       toast.error("Erro ao carregar lista de escolas")
     }
   }

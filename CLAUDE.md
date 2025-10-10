@@ -11,7 +11,7 @@ This is a multi-project educational management system repository for the Municip
 ## Project Structure
 
 ### Primary Production Project:
-- **`gestao_fronteira/`** - Next.js 15.5.3 + React 19.1.1 + Supabase 2.57.4 (80% MVP ready)
+- **`gestao_fronteira/`** - Next.js 15.5.3 + React 18.2.0 + Supabase 2.57.4 (80% MVP ready)
   - **PRIMARY PRODUCTION CANDIDATE** for municipal deployment
   - Complete Brazilian educational compliance implementation
   - Modern technology stack with performance optimization
@@ -25,25 +25,56 @@ This is a multi-project educational management system repository for the Municip
   - Used for pattern reference and compliance validation
 
 ### Documentation & Analysis:
-- **`agent-findings/`** - Multi-agent analysis results and technical findings
-- **`.agent-os/`** - Agent OS configuration and product documentation
 - **`docs/`** - Project specifications and development documentation
+- **`tests/`** - Cross-project test suites and quality assurance
+- **`gestao_fronteira/BUGS-ANALYSIS.md`** - Known bugs and fixes tracking
 
 ## Technology Stack
 
 ### gestao_fronteira (Production Stack):
-- **Frontend**: Next.js 15.5.3 with App Router + React 19.1.1
+- **Frontend**: Next.js 15.5.3 with App Router + React 18.2.0
 - **Database**: Supabase 2.57.4 (PostgreSQL + Auth + Storage + Real-time)
   - **⚠️ CRITICAL**: Database access is through **Supabase MCP** only
   - **DO NOT** use local Supabase CLI commands (`supabase start`, `supabase db push`, etc.)
   - All database operations (migrations, queries, schema changes) must use **MCP tools**
   - Available MCP tools: `mcp__supabase__apply_migration`, `mcp__supabase__execute_sql`, `mcp__supabase__list_tables`
-- **UI Library**: shadcn/ui + Radix UI + Tailwind CSS 3.4.17
-- **Forms**: React Hook Form 7.62.0 + Zod 4.1.8 validation
-- **State Management**: Zustand 5.0.8 + TanStack Query 5.87.4
-- **Testing**: Jest + React Testing Library + Playwright
-- **TypeScript**: 5.9.2 (strict mode)
+- **UI Library**: shadcn/ui + Radix UI + Tailwind CSS 3.3.3
+- **Forms**: React Hook Form 7.53.0 + Zod 3.23.8 validation
+- **State Management**: Zustand 4.4.7 + TanStack Query 5.17.9
+- **Testing**: Jest 30.2.0 + React Testing Library 16.3.0 + Playwright 1.55.1
+- **TypeScript**: 5.2.2 (strict mode)
 - **Package Manager**: **bun** (MANDATORY - 3x faster than other package managers, required for all projects; npm, yarn, and pnpm are explicitly prohibited)
+
+## MCP Servers Configuration
+
+This project uses the following MCP servers (configured in `.mcp.json`):
+
+### Active MCP Servers:
+1. **Supabase MCP** (`@supabase/mcp-server-supabase`)
+   - **MANDATORY** for all database operations
+   - Project reference: wxvxlybwpvpenqveycon
+   - Handles migrations, SQL queries, table operations
+
+2. **Chrome DevTools MCP** (`chrome-devtools-mcp`)
+   - **MANDATORY** for UI/UX validation and testing
+   - Real browser automation and performance profiling
+   - See detailed workflow documentation below
+
+3. **shadcn-ui MCP** (`@jpisnice/shadcn-ui-mcp-server`)
+   - Component generation and documentation
+   - shadcn/ui best practices and patterns
+   - Use for creating new UI components
+
+4. **Context7 MCP** (`@upstash/context7-mcp`)
+   - Documentation and code pattern lookup
+   - Framework-specific guidance
+   - Use for technical documentation needs
+
+### MCP Server Usage Priority:
+1. **Database operations** → Always use Supabase MCP
+2. **UI/UX validation** → Always use Chrome DevTools MCP
+3. **Component creation** → Prefer shadcn-ui MCP
+4. **Documentation lookup** → Use Context7 MCP
 
 ## Development Commands
 
@@ -72,6 +103,7 @@ bun run typecheck       # TypeScript validation
 bun test               # Unit tests with Jest (fast execution)
 bun test:watch         # Unit tests in watch mode
 bun run test:e2e       # End-to-end tests with Playwright
+bun run test:e2e:ui    # Playwright tests with UI
 bun run test:coverage  # Test coverage report
 
 # Database (via Supabase MCP - DO NOT use CLI commands)
@@ -80,6 +112,11 @@ bun run test:coverage  # Test coverage report
 # - mcp__supabase__execute_sql: Run SQL queries
 # - mcp__supabase__list_tables: List database tables
 # - mcp__supabase__generate_typescript_types: Generate TypeScript types
+
+# Seeding (development only)
+bun run seed:dev          # Seed development data
+bun run seed:clear        # Clear development data
+bun run seed:superadmin   # Create superadmin user
 ```
 
 ## UI/UX Quality Assurance com Chrome DevTools MCP
@@ -102,9 +139,8 @@ bun run test:coverage  # Test coverage report
 
 **O Chrome DevTools MCP fornece visão visual completa da UI, debugging profundo, e performance profiling - tudo em uma única ferramenta integrada.**
 
-**Versão:** `chrome-devtools-mcp@0.6.0` (Outubro 2025)
-**Maintainer:** Google Chrome DevTools Team
-**Status:** Public Preview (9k+ stars, produção-ready)
+**Versão:** `chrome-devtools-mcp@latest`
+**Status:** Production-ready
 
 #### Quando Usar (OBRIGATÓRIO):
 
@@ -302,8 +338,6 @@ emulate_cpu(throttlingRate: 1-20) // 1 = normal, 20 = 20x slower
 emulate_network(throttlingOption: "Slow 3G" | "Fast 3G" | "Slow 4G" | "Fast 4G")
 ```
 
-**📚 Referência Completa:** `.agent-os/MCP-REFERENCE.md`
-
 ### Debugging Avançado
 
 #### Contexto do Navegador
@@ -324,21 +358,6 @@ Chrome DevTools MCP oferece análise automatizada de performance:
 - **DocumentLatency**: Analisa tempo de carregamento do documento
 - **RenderBlocking**: Detecta recursos bloqueando renderização
 - **SlowCSSSelector**: Identifica seletores CSS lentos
-
-### Documentação de Design
-
-#### Quando Atualizar
-Sempre que uma decisão de design significativa for tomada:
-1. Atualize este arquivo `CLAUDE.md`
-2. Ou crie documentos específicos em `docs/design/`
-3. Documente padrões de UI estabelecidos
-4. Registre decisões de acessibilidade
-
-#### Agentes Especializados
-Se houver sub-agente especializado para design (ex: `ux-reviewer`):
-- Delegue revisão de grandes alterações de UI
-- Solicite audit completo antes de merge
-- Valide conformidade com padrões estabelecidos
 
 ### Checklist de Qualidade UI/UX
 
@@ -374,34 +393,47 @@ Antes de considerar qualquer alteração de UI completa, verifique:
 
 ---
 
-## Git Workflow Agent (@agent-git-workflow)
+## Git Workflow & Version Control
 
-This repository integrates with Claude Code's git-workflow agent for streamlined development processes.
+### Branch Strategy
 
-### Capabilities:
-- **Branch Management**: Automatic feature branch creation and management
-- **Commit Automation**: Intelligent commit message generation with proper formatting
-- **PR Creation**: Automated pull request creation with comprehensive descriptions
-- **Merge Operations**: Safe merge and rebase operations
-- **Change Tracking**: Detailed change analysis and impact assessment
+- **Main Branch** (`main`): Production-ready code only
+- **Feature Branches** (`feature/*`): New features and enhancements
+- **Fix Branches** (`fix/*`): Bug fixes and corrections
+- **NEVER** commit directly to `main` - always use pull requests
 
-### Workflow Integration:
+### Conventional Commits
+
+All commits follow conventional commit format with Brazilian education context:
+
 ```bash
-# The git-workflow agent automatically handles:
-git checkout -b feature/new-attendance-workflow
-git add .
-git commit -m "feat(attendance): implement Abrir aula workflow
+feat(attendance): implement Abrir aula workflow
+fix(students): correct CPF validation for edge cases
+perf(database): optimize RLS policies for attendance queries
+docs(api): update student registration endpoint documentation
+test(e2e): add Brazilian compliance validation tests
 
-Authored-By: Myke Matos <myke.matos@gmail.com>"
-git push -u origin feature/new-attendance-workflow
-gh pr create --title "feat: Abrir aula workflow" --body "..."
+Authored-By: [Developer Name] <email@example.com>
 ```
 
-### Best Practices:
-- Conventional commits with Brazilian education context
-- Automated change impact analysis
-- Performance regression detection
-- Brazilian compliance validation in PRs
+**Commit Types:**
+- `feat`: New feature or functionality
+- `fix`: Bug fix
+- `perf`: Performance improvement
+- `refactor`: Code refactoring without behavior change
+- `test`: Adding or updating tests
+- `docs`: Documentation changes
+- `chore`: Maintenance tasks (dependencies, config, etc.)
+
+**Scopes (Brazilian Education Context):**
+- `attendance`: Frequency/attendance system
+- `students`: Student registration and management
+- `schools`: School management
+- `classes`: Class/turma management
+- `reports`: Reporting and analytics
+- `compliance`: INEP, LGPD, Educacenso compliance
+- `database`: Schema, migrations, queries
+- `auth`: Authentication and authorization
 
 ## Brazilian Educational Standards & Compliance
 
@@ -450,7 +482,7 @@ This project follows official Brazilian educational standards as defined by INEP
 ## Database Architecture (gestao_fronteira)
 
 ### Core Schema Structure:
-**Location**: `gestao_fronteira/supabase/migrations/20250628095207_wild_block.sql`
+**Location**: `gestao_fronteira/supabase/migrations/`
 
 ```sql
 -- Core Educational Entities
@@ -478,15 +510,27 @@ gestao_fronteira/
 ├── app/                    # Next.js 15 App Router
 │   ├── (auth)/            # Authentication routes
 │   ├── (dashboard)/       # Main application
-│   └── api/               # API routes and server actions
+│   ├── onboarding/        # New user setup wizard
+│   ├── wizard/            # Multi-step onboarding flow
+│   ├── actions/           # Server actions
+│   └── api/               # API routes
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
 │   ├── attendance/       # Attendance workflow components
 │   ├── students/         # Student management
-│   └── auth/             # Authentication components
+│   ├── auth/             # Authentication components
+│   ├── admin/            # Admin-specific components
+│   ├── charts/           # Data visualization
+│   ├── classes/          # Class management
+│   ├── compliance/       # Brazilian compliance components
+│   ├── dashboard/        # Dashboard widgets
+│   ├── diary/            # Class diary components
+│   ├── forms/            # Form components
+│   └── identity/         # User identity components
 ├── lib/                  # Utilities and configurations
 │   ├── supabase.ts       # Database client
 │   ├── validation/       # Brazilian data validation
+│   ├── api/              # API client functions
 │   └── utils.ts          # Helper functions
 ├── hooks/                # Custom React hooks
 ├── types/                # TypeScript definitions
@@ -496,8 +540,32 @@ gestao_fronteira/
 ### Core Educational Modules (Current Status):
 1. **User Management**: ✅ 100% complete (5-role RBAC system)
 2. **Student Registration**: ✅ 100% complete (INEP-compliant)
-3. **Digital Diary/Attendance**: 🔶 85% complete ("Abrir aula" workflow in progress)
-4. **Reports & Analytics**: 🔶 85% complete (enhanced reporting planned)
+3. **Onboarding Wizard**: ✅ 100% complete (6-step school setup)
+4. **Digital Diary/Attendance**: 🔶 85% complete ("Abrir aula" workflow in progress)
+5. **Reports & Analytics**: 🔶 85% complete (enhanced reporting planned)
+
+## Known Issues & Bug Tracking
+
+**IMPORTANT**: Before starting new work, check `gestao_fronteira/BUGS-ANALYSIS.md` for known issues.
+
+### Critical Known Bugs:
+1. **Login Redirect Issue**: Login sometimes gets stuck on loading (partially fixed)
+   - See BUGS-ANALYSIS.md for detailed root cause analysis
+   - Requires profile wait logic implementation
+
+2. **Toaster setState Error**: React 19 compatibility issue
+   - Component update during render warning
+   - Needs dynamic import fix
+
+3. **Delete Operations**: Delete buttons not working in some routes
+   - Affects `/turmas/2` and `/matriculas`
+   - Likely RLS policy or foreign key constraint issue
+
+### Before Making Changes:
+1. Read `gestao_fronteira/BUGS-ANALYSIS.md` for context
+2. Check if your work might affect known bugs
+3. Update BUGS-ANALYSIS.md if you fix any issues
+4. Add new bugs to BUGS-ANALYSIS.md when discovered
 
 ## Development Guidelines
 
@@ -541,17 +609,20 @@ components/layout/       // Navigation, headers, sidebars
 components/attendance/   // "Abrir aula" workflow, frequency marking
 components/students/     // Registration, enrollment, transfers
 components/reports/      // Analytics, exports, government compliance
+components/admin/        // Administrative functions
+components/classes/      // Class management
+components/diary/        // Class diary and lesson planning
 
 // Brazilian Compliance - Specialized validation
 lib/validation/         // CPF, phone, educational ID validation
-lib/brazilian-standards/ // INEP, Educacenso, Bolsa Família patterns
+components/compliance/  // INEP, Educacenso, Bolsa Família components
 ```
 
-## Testing Strategy with Playwright MCP Tools
+## Testing Strategy
 
 ### Comprehensive Testing Framework
 
-This project implements a multi-layered testing approach using Playwright MCP tools for thorough quality assurance:
+This project implements a multi-layered testing approach using Playwright for thorough quality assurance:
 
 #### 1. User Experience Verification
 - **End-to-End Workflows**: Complete user journeys from login to task completion
@@ -577,126 +648,19 @@ This project implements a multi-layered testing approach using Playwright MCP to
 - **Network Conditions**: Slow connection and offline scenarios
 - **Memory Usage**: Performance under extended use
 
-### Playwright MCP Integration
+### Playwright Integration
 
 ```bash
 # Run comprehensive test suite
 bun run test:e2e                    # Full end-to-end tests
-bun run test:accessibility          # Accessibility compliance
-bun run test:performance            # Performance benchmarks
-bun run test:stress                 # Load and stress tests
+bun run test:e2e:ui                 # Playwright tests with UI
+bun run test:e2e:headed             # Run tests in headed mode
 
-# Specific testing scenarios
-bun run test:attendance             # Attendance workflow tests
-bun run test:roles                  # Role-based access tests
-bun run test:mobile                 # Mobile responsiveness
+# Unit testing
+bun test                            # Unit tests with Jest
+bun test:watch                      # Unit tests in watch mode
+bun run test:coverage               # Test coverage report
 ```
-
-### Test Automation with Claude Code:
-- **Automated Test Generation**: AI-powered test case creation
-- **Visual Regression Detection**: Automatic screenshot comparisons
-- **Performance Monitoring**: Continuous performance regression detection
-- **Brazilian Compliance Testing**: Educational domain-specific test scenarios
-
-## Changelog Tracking & Time Estimation
-
-### Development Metrics
-
-This project maintains detailed development tracking for accurate project management:
-
-#### Time Estimation Framework:
-- **Feature Development**:
-  - Small features (UI updates): 2-4 hours
-  - Medium features (new components): 1-2 days
-  - Large features (workflow changes): 3-5 days
-  - Brazilian compliance features: +25% time buffer
-
-#### Changelog Management:
-```markdown
-## [Version] - YYYY-MM-DD
-
-### Added
-- New features with time invested
-- Brazilian compliance enhancements
-- Performance improvements
-
-### Changed
-- Modified workflows and components
-- Updated dependencies and security patches
-
-### Fixed
-- Bug fixes with root cause analysis
-- Performance optimizations with metrics
-
-### Time Investment
-- Development: X hours
-- Testing: Y hours
-- Documentation: Z hours
-- Total: XYZ hours
-```
-
-#### Development Velocity Tracking:
-- **Velocity Metrics**: Story points per sprint with actual time correlation
-- **Complexity Indicators**: Brazilian education requirements complexity scoring
-- **Risk Assessment**: Time buffers for compliance and integration challenges
-- **Learning Curve**: New technology adoption time tracking
-
-### Automated Time Tracking:
-- Git commit analysis for actual development time
-- PR review time and iteration cycles
-- Testing and bug fix time correlation
-- Documentation and compliance verification time
-
-## GitHub Actions & PR Review Automation
-
-### Automated CI/CD Pipeline
-
-```yaml
-# .github/workflows/pr-review.yml
-name: PR Review & Quality Gates
-
-on:
-  pull_request:
-    branches: [master, develop]
-
-jobs:
-  quality-gates:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Code Quality
-        run: |
-          bun run lint
-          bun run typecheck
-          bun run test
-
-      - name: Brazilian Compliance Check
-        run: |
-          bun run test:compliance
-          bun run validate:cpf-patterns
-
-      - name: Performance Testing
-        run: |
-          bun run test:performance
-          bun run audit:bundle-size
-
-      - name: Security Audit
-        run: |
-          bun audit
-          bun run security:rls-policies
-```
-
-### Automated PR Reviews:
-- **Code Quality Gates**: ESLint, TypeScript, and test coverage requirements
-- **Brazilian Compliance**: Automatic validation of educational data patterns
-- **Performance Regression**: Bundle size and runtime performance monitoring
-- **Security Scanning**: Dependency vulnerabilities and RLS policy validation
-- **Documentation Updates**: Automatic CLAUDE.md updates for significant changes
-
-### Review Automation Features:
-- **Educational Domain Validation**: Brazilian education workflow compliance
-- **Accessibility Checks**: WCAG 2.1 AA compliance verification
-- **Mobile Responsiveness**: Tablet and phone interface validation
-- **Database Migration Review**: Schema changes and RLS policy impacts
 
 ## Reusable Components
 
@@ -735,9 +699,9 @@ jobs:
 ### Available Libraries:
 ```json
 // All projects support these export formats
-"jspdf": "^2.5.1",           // PDF generation for official reports
-"jspdf-autotable": "^3.8.2", // PDF tables for attendance reports
-"xlsx": "^0.18.5",           // Excel export for INEP integration
+"jspdf": "^3.0.3",           // PDF generation for official reports
+"jspdf-autotable": "^5.0.2", // PDF tables for attendance reports
+"xlsx": "0.18.5",            // Excel export for INEP integration
 "recharts": "^2.12.7"        // Charts for educational analytics
 ```
 
@@ -761,11 +725,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 # Database (local development)
 DATABASE_URL=postgresql://postgres:password@localhost:54322/postgres
 
-# Brazilian Education APIs
+# Brazilian Education APIs (optional)
 INEP_API_KEY=your_inep_api_key
 EDUCACENSO_INTEGRATION_TOKEN=your_token
 
-# Performance Monitoring
+# Performance Monitoring (optional)
 PERFORMANCE_MONITORING_KEY=your_key
 ```
 
@@ -781,46 +745,15 @@ PERFORMANCE_MONITORING_KEY=your_key
 2. Clone repository and choose target project
 3. Install dependencies (`bun install`) - npm, yarn, pnpm are blocked and must never be used
 4. Copy `.env.example` to `.env.local` and configure Supabase
-5. Run `supabase start` for local database
-6. Apply migrations: `supabase db push`
-7. Start development server with `bun run dev`
-
-## Development Workflow with Agent OS
-
-### Available Specialized Agents:
-
-#### Core Development Agents:
-- **`@agent-codebase-analyzer`** - Comprehensive codebase analysis and architecture review
-- **`@agent-git-workflow`** - Automated git operations, branch management, and PR creation
-- **`@agent-design-review`** - UI/UX review with accessibility and performance testing
-- **`@agent-nextjs-edu-brazil-dev`** - Brazilian educational system development specialist
-
-#### Agent OS Native Workflow:
-```bash
-# 1. Analysis and Planning
-@agent-codebase-analyzer    # Understand current implementation status
-
-# 2. Development
-@agent-nextjs-edu-brazil-dev # Implement Brazilian compliance features
-
-# 3. Quality Assurance
-@agent-design-review        # UI/UX validation and accessibility testing
-
-# 4. Deployment
-@agent-git-workflow         # Automated git operations and PR creation
-```
-
-### Key Agent Capabilities:
-- **Brazilian Compliance**: INEP, Educacenso, LGPD implementation patterns
-- **Performance Optimization**: Database queries, bundle size, mobile responsiveness
-- **Security Enhancement**: RLS policies, multi-school data isolation
-- **Workflow Automation**: Git operations with educational context awareness
+5. Start development server with `bun run dev`
+6. For database operations, use Supabase MCP tools (not CLI)
 
 ## Production Readiness Status
 
 ### Current Implementation (gestao_fronteira):
 - **User Management**: ✅ 100% complete (5-role RBAC with RLS)
 - **Student Registration**: ✅ 100% complete (INEP-compliant with Brazilian validation)
+- **Onboarding Wizard**: ✅ 100% complete (6-step school initialization)
 - **Digital Diary/Attendance**: 🔶 85% complete (needs "Abrir aula" workflow completion)
 - **Reports & Analytics**: 🔶 85% complete (needs INEP integration enhancement)
 
@@ -836,8 +769,7 @@ PERFORMANCE_MONITORING_KEY=your_key
 
 ### Implementation Reference:
 - **Patterns**: See `i-educar-reference/` for production-tested implementations
-- **Analysis**: See `agent-findings/` for detailed technical specifications
-- **Roadmap**: See `.agent-os/product/roadmap.md` for complete timeline
+- **Known Issues**: See `gestao_fronteira/BUGS-ANALYSIS.md` for current bugs and fixes
 
 ## Quick Start Development Workflow
 
@@ -845,7 +777,6 @@ PERFORMANCE_MONITORING_KEY=your_key
 # 1. Setup development environment
 cd gestao_fronteira/
 bun install
-supabase start
 
 # 2. Start development
 bun run dev          # http://localhost:3000
@@ -853,7 +784,7 @@ bun run dev          # http://localhost:3000
 # 3. Development cycle
 bun run typecheck    # TypeScript validation
 bun run lint         # Code quality
-bun run test         # Unit tests
+bun test             # Unit tests
 
 # 4. Ready for production
 bun run build        # Production build
@@ -864,86 +795,9 @@ bun run test:e2e     # End-to-end tests
 
 ### Mandatory Changelog Documentation
 
-**Every change to the codebase MUST be documented in CHANGELOG.md** following the Keep a Changelog format:
+**Every change to the codebase SHOULD be documented** following the Keep a Changelog format when appropriate for significant changes.
 
-```markdown
-# CHANGELOG.md
-
-## [Unreleased]
-
-### Added
-- New features with detailed description and impact
-- Brazilian compliance enhancements with legal references
-- Performance improvements with metrics
-
-### Changed
-- Modified workflows and components with reasoning
-- Updated dependencies with security implications
-- Enhanced user interfaces with accessibility improvements
-
-### Fixed
-- Bug fixes with root cause analysis
-- Performance optimizations with before/after metrics
-- Security patches with vulnerability descriptions
-
-### Implementation Details
-- Development time invested (actual hours)
-- Testing coverage and validation approach
-- Breaking changes and migration requirements
-```
-
-### Changelog Standards
-
-**Required Information for Each Entry:**
-- **Impact Assessment**: How the change affects users and system performance
-- **Brazilian Compliance**: Legal and regulatory implications
-- **Time Investment**: Actual development and testing hours
-- **Dependencies**: External library or system changes
-- **Migration Notes**: Steps required for existing deployments
-
-**Change Categories:**
-- **Feature**: New educational functionality or workflow
-- **Enhancement**: Improvements to existing features
-- **Compliance**: Brazilian educational law or LGPD requirements
-- **Performance**: Speed, memory, or efficiency optimizations
-- **Security**: Authentication, authorization, or data protection
-- **Infrastructure**: Database, deployment, or configuration changes
-
-### Integration with Development Workflow
-
-```bash
-# Before any commit
-1. Update CHANGELOG.md with changes
-2. Include time investment tracking
-3. Document compliance implications
-4. Add performance impact notes
-
-# Example changelog entry
-## [2025-09-20] - Enhanced Attendance System
-
-### Added
-- Multi-guardian management system (8h development)
-- INEP integration with government code validation (6h development)
-- Enhanced "Abrir aula" workflow with three-phase process (8h development)
-
-### Changed
-- Attendance locking mechanism now enforces "não existe o esquecer" principle
-- Database schema enhanced with 4 new tables for compliance
-- Performance improved: attendance marking now <1s per student
-
-### Fixed
-- Retroactive attendance modification vulnerability (legal compliance)
-- Mobile interface touch targets now meet accessibility standards
-- LGPD consent management granularity improved
-
-### Implementation Details
-- Total time investment: 36.5 hours over 10 working days
-- Database migration required: enhanced_attendance_and_guardian_management.sql
-- Breaking changes: Multi-guardian API requires client updates
-- Performance impact: 85% improvement in database query optimization
-```
-
-## Development Principles
+### Development Principles
 
 ### Core Requirements:
 1. **Brazilian Educational Compliance**: INEP standards, LGPD data protection, "não existe o esquecer" principle
@@ -960,10 +814,8 @@ bun run test:e2e     # End-to-end tests
 - Performance regression testing
 
 ### Documentation Standards:
-- **CHANGELOG.md**: Required for all changes with time investment tracking
 - **Code Comments**: Brazilian compliance context and business rules
 - **API Documentation**: Government integration and educational workflows
+- **Bug Tracking**: Update BUGS-ANALYSIS.md for known issues
 
 **Focus**: Leverage `gestao_fronteira` as the production foundation with 80% MVP completion. Prioritize Brazilian educational domain compliance and municipal deployment readiness.
-- Garantia de UI/UX com Playwright ## 1. Filosofia Central e Fluxo de Trabalho (TDD) * **Prioridade:** A qualidade do código (limpeza e testes) e a experiência do usuário (UI/UX) são a prioridade máxima. * **Fluxo de Trabalho:** Adote o Desenvolvimento Orientado por Testes (TDD) [1, 6]. * Antes de implementar qualquer nova funcionalidade ou fluxo de usuário, **primeiro escreva os testes de ponta a ponta (End-to-End - E2E)** focados no comportamento [6]. * **Gestão de Código:** * Sempre crie uma nova branch para funcionalidades ou correções (feature/* ou fix/*) [3]. * **NUNCA** faça *push* diretamente para a branch main [3]. ## 2. Regras para o Playwright MCP (Model Context Protocol) **O Playwright MCP fornece a visão visual da UI e o contexto do navegador, o que é crucial para encontrar 99% dos erros difíceis de front-end [4, 5, 7].** ### 2.1. Uso Mandatório do Playwright * Sempre que você criar uma página, alterar o front-end, ou implementar um novo fluxo de usuário, **você deve usar o Playwright MCP** para verificar o resultado no navegador [8]. * Gere testes E2E focados no **fluxo de usuário** e não em detalhes específicos de implementação [6]. ### 2.2. Verificações Essenciais de UI/UX O Playwright MCP deve ser usado para garantir as seguintes verificações visuais em **todas as páginas e links** do projeto [8, 9]: * **Responsividade:** A página deve ter uma **boa aparência no desktop e no mobile** [8]. * **Contraste de Cores:** Verifique o contraste das cores, inspecionando o estilo computado para garantir a acessibilidade [9]. Não utilize combinações de cores ruins (ex: cor de fonte escura em fundo escuro, ou clara em fundo claro) [8]. * **Formatação:** Garanta que **não há formatação estranha** (e.g., quebras de linha inesperadas, desalinhamentos) e que a página pareça **profissional** [8]. ## 3. Estratégias de Debugging e Análise de Contexto * **Contexto do Navegador:** Em caso de um bug no front-end que o Claude não consiga identificar apenas olhando o código do servidor, instrua-o a **processar o código que está realmente sendo executado no navegador** (código do lado do cliente: HTML, CSS, JavaScript) [10, 11]. * **Screenshots:** Utilize screenshots de problemas de UI como entrada para o prompt. Isso fornece ao Claude o contexto visual necessário para fazer a correção [12]. ## 4. Revisão e Design * **Documentação de UI/UX:** Sempre que uma decisão de design significativa for tomada, atualize este arquivo claude.md ou crie documentos de requisitos (.md) para que o Claude possa referenciá-los [13, 14]. * **Agentes Especializados:** Se houver um sub-agente especializado para design (ex: UXReviewer), o Claude deve delegar explicitamente a revisão de grandes alterações de UI a ele [15-17].
-- não sugira alternativas de auth simplificada, uso de mcp para logar
