@@ -61,7 +61,7 @@ export default function DiarioPage() {
       } = await supabase.auth.getUser()
 
       if (authError || !user) {
-        logger.error('Auth error:', { error: authError })
+        logger.error('Auth error:', authError)
         router.push('/login')
         return
       }
@@ -73,7 +73,7 @@ export default function DiarioPage() {
         .single()
 
       if (profileError || !profile) {
-        logger.error('Profile error:', { error: profileError })
+        logger.error('Profile error:', profileError)
         setError('Erro ao carregar informações do usuário.')
         return
       }
@@ -115,7 +115,7 @@ export default function DiarioPage() {
       })
 
       if (fetchError || !data) {
-        logger.error('Error fetching class diary:', { error: fetchError })
+        logger.error('Error fetching class diary:', fetchError)
         setError('Erro ao carregar o diário de classe. Tente novamente.')
         setLoading(false)
         return

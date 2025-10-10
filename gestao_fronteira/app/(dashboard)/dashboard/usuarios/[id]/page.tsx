@@ -109,7 +109,7 @@ export default function UsuarioDetalhesPage() {
         router.push('/dashboard/usuarios')
       }
     } catch (error) {
-      // logger.error('Erro ao carregar usuário:', { error: error })
+      // logger.error('Erro ao carregar usuário:', error)
       toast.error('Erro ao carregar dados do usuário')
     } finally {
       setLoading(false)
@@ -122,7 +122,7 @@ export default function UsuarioDetalhesPage() {
       await new Promise(resolve => setTimeout(resolve, 500))
       setActivities(mockActivities)
     } catch (error) {
-      // logger.error('Erro ao carregar atividades:', { error: error })
+      // logger.error('Erro ao carregar atividades:', error)
     }
   }
 

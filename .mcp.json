@@ -4,8 +4,7 @@
       "command": "cmd",
       "args": [
         "/c",
-        "npx",
-        "-y",
+        "bunx",
         "@supabase/mcp-server-supabase@latest",
         "--project-ref=SUPABASE-PROJECT-REF"
       ],
@@ -17,8 +16,7 @@
       "command": "cmd",
       "args": [
         "/c",
-        "npx",
-        "-y",
+        "bunx",
         "chrome-devtools-mcp@latest"
       ]
     },
@@ -26,7 +24,7 @@
       "command": "cmd",
       "args": [
         "/c",
-        "npx",
+        "bunx",
         "@jpisnice/shadcn-ui-mcp-server",
         "--github-api-key",
         "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"
@@ -36,8 +34,7 @@
       "command": "cmd",
       "args": [
         "/c",
-        "npx",
-        "-y",
+        "bunx",
         "@upstash/context7-mcp",
         "--api-key",
         "ctx7sk-4b8eff9a-ed6c-4f93-806a-94f6ecf380c1"

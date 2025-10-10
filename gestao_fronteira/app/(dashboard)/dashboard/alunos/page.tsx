@@ -75,7 +75,7 @@ export default function AlunosPage() {
       // Use real data from Supabase
       setAlunos(data || [])
     } catch (error) {
-      logger.error('Erro ao carregar alunos:', { error: error })
+      logger.error('Erro ao carregar alunos:', error)
       toast.error('Erro ao carregar lista de alunos')
       setAlunos([])
     } finally {

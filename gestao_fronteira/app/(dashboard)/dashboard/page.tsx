@@ -158,7 +158,7 @@ export default function DashboardPage() {
       setActivities(recentActivities.slice(0, 3))
 
     } catch (error) {
-      logger.error('Erro ao carregar dados do dashboard:', { error: error })
+      logger.error('Erro ao carregar dados do dashboard:', error)
       // Fallback to basic stats if there's an error
       setStats({
         totalAlunos: 0,
