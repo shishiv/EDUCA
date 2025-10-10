@@ -161,39 +161,82 @@ Check these files:
 
 ---
 
-## 🔴 BUG #4: Delete Operations Not Working
+## ✅ BUG #4: Delete Operations Not Working - FIXED
 
 ### Affected Routes:
 - `/turmas/2` - Delete button doesn't work
 - `/matriculas` - Delete button doesn't work
 
-### Root Cause:
-Likely one of:
-1. **RLS Policies**: Row Level Security blocking DELETE operations
-2. **Foreign Key Constraints**: Cannot delete due to child records
-3. **Missing API Route**: DELETE endpoint not implemented
-4. **Permission Check**: User role doesn't have delete permission
+### Root Cause (IDENTIFIED):
+**RLS Policies:** Row Level Security policies used `FOR ALL` which only applies to SELECT by default. No explicit DELETE policies existed for turmas and matriculas tables.
 
-### Investigation Steps:
-```sql
--- Check RLS policies for turmas
-SELECT * FROM pg_policies WHERE tablename = 'turmas';
+**Evidence:**
+1. `supabase/migrations/20250115000001_enable_rls_security.sql` lines 77-92 and 95-112
+2. Policy "turmas_school_isolation" and "matriculas_school_isolation" used `FOR ALL`
+3. Attendance table has correct explicit DELETE denial (lines 237-240)
+4. But turmas/matriculas had NO DELETE policies at all
 
--- Check foreign key constraints
-SELECT
-  tc.table_name,
-  kcu.column_name,
-  ccu.table_name AS foreign_table_name,
-  ccu.column_name AS foreign_column_name
-FROM information_schema.table_constraints AS tc
-JOIN information_schema.key_column_usage AS kcu
-  ON tc.constraint_name = kcu.constraint_name
-JOIN information_schema.constraint_column_usage AS ccu
-  ON ccu.constraint_name = tc.constraint_name
-WHERE tc.table_name = 'turmas' AND tc.constraint_type = 'FOREIGN KEY';
+### Fix Applied:
+**Migration:** `supabase/migrations/20250116000000_fix_delete_rls_policies.sql`
+
+**Changes:**
+1. Created explicit DELETE policies for turmas:
+   - Admins can delete any class
+   - Directors can delete classes from their school
+   - Secretaries can delete classes from their school
+   - Teachers CANNOT delete classes
+
+2. Created explicit DELETE policies for matriculas:
+   - Admins can delete any enrollment
+   - Directors can delete enrollments from their school
+   - Secretaries can delete enrollments from their school
+
+3. Split generic "FOR ALL" policies into specific operations:
+   - SELECT (view data)
+   - INSERT (create new records)
+   - UPDATE (modify existing records)
+   - DELETE (remove records)
+
+4. Fixed logger.error signature bug in matriculas/page.tsx line 288:
+   ```typescript
+   // BEFORE (WRONG):
+   logger.error('Error deleting matricula', { error, errorMessage, ... })
+
+   // AFTER (CORRECT):
+   logger.error('Error deleting matricula', error, { metadata: { errorMessage, ... } })
+   ```
+
+### Migration Application:
+**⚠️ IMPORTANT:** Apply this migration to your Supabase database:
+
+```bash
+# Option 1: Via Supabase Dashboard
+# Go to: SQL Editor → New Query
+# Paste contents of: supabase/migrations/20250116000000_fix_delete_rls_policies.sql
+# Click "Run"
+
+# Option 2: Via Supabase CLI (if locally configured)
+supabase db push
+
+# Option 3: Via MCP Server (if available)
+# Use mcp__supabase__apply_migration tool
 ```
 
-### Status: 🔴 NEEDS INVESTIGATION
+### Testing Required:
+- [ ] Test delete as admin (should work for all tables)
+- [ ] Test delete as diretor (should work only for their school)
+- [ ] Test delete as secretario (should work only for their school)
+- [ ] Test delete as professor (should fail - no permission)
+- [ ] Verify foreign key constraints still prevent deletes with dependencies
+- [ ] Confirm audit_logs table captures delete events
+
+### Security Impact:
+✅ Maintains multi-tenant isolation (school-based access control)
+✅ Follows Brazilian compliance standards (audit logging preserved)
+✅ Prevents accidental data loss (teachers can't delete)
+✅ Respects role hierarchy (admin > diretor > secretario > professor)
+
+### Status: ✅ FIXED - Migration ready, needs database application
 
 ---
 
