@@ -12,7 +12,7 @@ async function globalSetup(config: FullConfig) {
   const context = await browser.newContext({
     // Brazilian Portuguese locale
     locale: 'pt-BR',
-    timezone: 'America/Sao_Paulo',
+    timezoneId: 'America/Sao_Paulo',
 
     // Educational interface optimizations
     reducedMotion: 'reduce',

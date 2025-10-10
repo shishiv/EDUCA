@@ -310,7 +310,7 @@ class EducationalLogger {
     const message = `Performance: ${label} completed in ${metrics.duration}ms`
 
     if (level === 'warn') {
-      this.warn(message, { ...context, feature: label, action: 'performance_slow' }, undefined, metrics)
+      this.warn(message, { ...context, feature: label, action: 'performance_slow', metadata: { ...metrics } })
     } else {
       this.info(message, { ...context, feature: label, action: 'performance_complete' })
     }
