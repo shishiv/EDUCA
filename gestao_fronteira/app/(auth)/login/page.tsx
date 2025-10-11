@@ -37,9 +37,9 @@ export default function LoginPage() {
 
         if (error) throw error
 
-        // If no users exist, redirect to onboarding
+        // If no users exist, redirect to new wizard
         if (count === 0) {
-          router.push('/onboarding')
+          router.push('/wizard/onboarding')
         }
       } catch (error) {
         logger.error('Error checking users', error as Error)
@@ -58,15 +58,33 @@ export default function LoginPage() {
       const result = await signIn(email, password)
 
       if (result && result.user) {
-        // The getUserProfile function has fallback mock data,
-        // so it should always return a profile
-        const profile = await getUserProfile(result.user.id)
+        // Wait for profile to be available with retry mechanism
+        let retries = 0
+        const maxRetries = 5
+        let profile = null
+
+        while (retries < maxRetries && !profile) {
+          profile = await getUserProfile(result.user.id)
+
+          // If profile exists but is fallback/mock data, wait for real profile
+          if (profile && !profile.created_at) {
+            profile = null
+          }
+
+          if (!profile) {
+            await new Promise(resolve => setTimeout(resolve, 500)) // Wait 500ms
+            retries++
+          }
+        }
 
         logger.info('Login successful', {
-          userId: result.user.id
+          userId: result.user.id,
+          metadata: {
+            profileFound: !!profile,
+            retries
+          }
         })
 
-        // Proceed to dashboard even if profile has fallback data
         toast.success('Login realizado com sucesso!')
 
         // Use router.replace to avoid back button issues

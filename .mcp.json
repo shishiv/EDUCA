@@ -10,8 +10,69 @@
         "--project-ref=SUPABASE-PROJECT-REF"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "sbp_44d4e8ccd001f87f55075811b67287ea5d358e86"
+        "SUPABASE_ACCESS_TOKEN": "sbp_690b52adad7672b214112f4cdf3c414d7f65c15d"
       }
+    },
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
+    },
+    "shadcn-ui": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@jpisnice/shadcn-ui-mcp-server",
+        "--github-api-key",
+        "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"
+      ]
+    },
+    "context7": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-4b8eff9a-ed6c-4f93-806a-94f6ecf380c1"
+      ]
+    },
+    "tavily": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-tavily@latest"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "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"
+      }
+    },
+    "playwright": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@executeautomation/playwright-mcp-server@latest"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking@latest"
+      ]
     }
   }
 }

@@ -3,6 +3,7 @@
 import { BaseApiService } from './base'
 import { supabase, Tables, Turma } from '@/lib/supabase'
 import { ClassFormData } from '@/lib/validators/brazilian'
+import { logger } from '@/lib/logger'
 
 export type ClassWithDetails = Turma & {
   escola?: Tables<'escolas'>
@@ -268,12 +269,21 @@ export class ClassesApiService extends BaseApiService {
     try {
       const result = await this.update(id, { ativo })
 
-      // TODO: Add audit logging for status changes
-      // console.log(`Class ${id} status updated to ${ativo ? 'active' : 'inactive'}`, { reason })
+      logger.info(`Class status updated to ${ativo ? 'active' : 'inactive'}`, {
+        feature: 'classes',
+        action: 'update_class_status',
+        classId: id,
+        ativo,
+        reason
+      })
 
       return result
     } catch (error) {
-      // console.error('Error updating class status:', error)
+      logger.error('Error updating class status', error as Error, {
+        feature: 'classes',
+        action: 'update_class_status',
+        classId: id
+      })
       throw error
     }
   }

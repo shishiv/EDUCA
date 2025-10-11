@@ -18,6 +18,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 /**
  * Interface: Class Diary Entry
@@ -176,7 +177,7 @@ export async function getClassDiary(
     const { data: aulas, error } = await query
 
     if (error) {
-      console.error('Error fetching class diary:', error)
+      logger.error('Error fetching class diary', error as Error, { feature: 'class-diary', action: 'fetch_diary' })
       return { data: null, error }
     }
 
@@ -238,7 +239,7 @@ export async function getClassDiary(
 
     return { data: transformedData, error: null }
   } catch (error) {
-    console.error('Exception in getClassDiary:', error)
+    logger.error('Exception in getClassDiary', error as Error, { feature: 'class-diary', action: 'fetch_diary_exception' })
     return { data: null, error }
   }
 }
@@ -305,7 +306,7 @@ export async function getAttendanceHistory(
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching attendance history:', error)
+      logger.error('Error fetching attendance history', error as Error, { feature: 'class-diary', action: 'fetch_attendance_history' })
       return { data: null, error }
     }
 
@@ -323,7 +324,7 @@ export async function getAttendanceHistory(
 
     return { data: transformedData, error: null }
   } catch (error) {
-    console.error('Exception in getAttendanceHistory:', error)
+    logger.error('Exception in getAttendanceHistory', error as Error, { feature: 'class-diary', action: 'fetch_attendance_history_exception' })
     return { data: null, error }
   }
 }
@@ -383,7 +384,7 @@ export async function getClassDetail(
       .single()
 
     if (aulaError || !aulaData) {
-      console.error('Error fetching aula:', aulaError)
+      logger.error('Error fetching aula', aulaError as Error, { feature: 'class-diary', action: 'fetch_aula_detail' })
       return { data: null, error: aulaError }
     }
 
@@ -406,7 +407,7 @@ export async function getClassDetail(
       .order('alunos(nome_completo)', { ascending: true })
 
     if (attendanceError) {
-      console.error('Error fetching attendance records:', attendanceError)
+      logger.error('Error fetching attendance records', attendanceError as Error, { feature: 'class-diary', action: 'fetch_attendance_records' })
       return { data: null, error: attendanceError }
     }
 
@@ -468,7 +469,7 @@ export async function getClassDetail(
 
     return { data: detailedSession, error: null }
   } catch (error) {
-    console.error('Exception in getClassDetail:', error)
+    logger.error('Exception in getClassDetail', error as Error, { feature: 'class-diary', action: 'fetch_class_detail_exception' })
     return { data: null, error }
   }
 }
@@ -512,7 +513,7 @@ export async function getAvailableTurmas(
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching available turmas:', error)
+      logger.error('Error fetching available turmas', error as Error, { feature: 'class-diary', action: 'fetch_available_turmas' })
       return { data: null, error }
     }
 
@@ -532,7 +533,7 @@ export async function getAvailableTurmas(
 
     return { data: uniqueTurmas, error: null }
   } catch (error) {
-    console.error('Exception in getAvailableTurmas:', error)
+    logger.error('Exception in getAvailableTurmas', error as Error, { feature: 'class-diary', action: 'fetch_available_turmas_exception' })
     return { data: null, error }
   }
 }

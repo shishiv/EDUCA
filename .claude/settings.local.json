@@ -11,7 +11,17 @@
       "Bash(find:*)",
       "Bash(bun add:*)",
       "Bash(echo:*)",
-      "Bash(bunx:*)"
+      "Bash(bunx:*)",
+      "Bash(npx:*)",
+      "Bash(xargs:*)",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__execute_sql",
+      "Bash(mkdir:*)",
+      "Bash([ -d \"app/onboarding\" ])",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm build)"
     ],
     "deny": [],
     "ask": []
@@ -20,6 +30,10 @@
     "supabase",
     "chrome-devtools",
     "shadcn-ui",
-    "github.com/upstash/context7-mcp"
+    "github.com/upstash/context7-mcp",
+    "context7",
+    "tavily",
+    "playwright",
+    "sequential-thinking"
   ]
 }
