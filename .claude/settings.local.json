@@ -21,7 +21,9 @@
       "Bash([ -d \"app/onboarding\" ])",
       "Bash(pnpm typecheck)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm build)"
+      "Bash(pnpm build)",
+      "Bash(git push:*)",
+      "Bash(vercel:*)"
     ],
     "deny": [],
     "ask": []
