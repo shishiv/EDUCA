@@ -242,6 +242,23 @@ export default function TurmasPage() {
 
       if (error) throw error
 
+      // Get enrollment counts for each turma
+      const turmaIds = data?.map(t => t.id) || []
+      const enrollmentCounts = new Map<string, number>()
+
+      if (turmaIds.length > 0) {
+        const { data: enrollments } = await supabase
+          .from('matriculas')
+          .select('turma_id')
+          .in('turma_id', turmaIds)
+          .eq('situacao', 'ativa')
+
+        enrollments?.forEach(enrollment => {
+          const count = enrollmentCounts.get(enrollment.turma_id) || 0
+          enrollmentCounts.set(enrollment.turma_id, count + 1)
+        })
+      }
+
       // Transform data to match component interface
       const formattedTurmas = data?.map(turma => ({
         id: turma.id,
@@ -250,7 +267,7 @@ export default function TurmasPage() {
         serie: turma.serie || '',
         turno: turma.turno,
         capacidade: turma.capacidade || 0,
-        alunos_matriculados: 0, // TODO: Count from matriculas table
+        alunos_matriculados: enrollmentCounts.get(turma.id) || 0,
         escola: {
           id: turma.escola?.id || '',
           nome: turma.escola?.nome || 'Sem escola'

@@ -17,6 +17,13 @@ const customJestConfig = {
     '**/__tests__/**/*.{js,jsx,ts,tsx}',
     '**/*.{test,spec}.{js,jsx,ts,tsx}'
   ],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/.next/',
+    '<rootDir>/tests/e2e/',
+    '<rootDir>/__tests__/e2e/',
+    '\\.spec\\.(ts|tsx|js|jsx)$' // Ignore .spec files (Playwright convention)
+  ],
   collectCoverageFrom: [
     'lib/**/*.{js,ts,tsx}',
     'app/**/*.{js,ts,tsx}',

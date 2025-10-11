@@ -43,7 +43,7 @@ This is a multi-project educational management system repository for the Municip
 - **State Management**: Zustand 4.4.7 + TanStack Query 5.17.9
 - **Testing**: Jest 30.2.0 + React Testing Library 16.3.0 + Playwright 1.55.1
 - **TypeScript**: 5.2.2 (strict mode)
-- **Package Manager**: **bun** (MANDATORY - 3x faster than other package managers, required for all projects; npm, yarn, and pnpm are explicitly prohibited)
+- **Package Manager**: **pnpm** (fast, disk-efficient package manager)
 
 ## MCP Servers Configuration
 
@@ -78,33 +78,29 @@ This project uses the following MCP servers (configured in `.mcp.json`):
 
 ## Development Commands
 
-### ⚠️ MANDATORY: Use bun for ALL package management operations
-
-**CRITICAL: Claude Code MUST use bun exclusively. npm, yarn, and pnpm are explicitly blocked and must never be used under any circumstances. All commands should use bun.**
-
 ### gestao_fronteira (Primary Production Project):
 ```bash
 cd gestao_fronteira/
 
-# Package management (ALWAYS use bun; npm, yarn, pnpm are blocked)
-bun install             # Install dependencies (fast execution)
-bun add [package]       # Add new dependencies
-bun remove [package]    # Remove dependencies
-bun update              # Update dependencies
+# Package management (using pnpm)
+pnpm install             # Install dependencies
+pnpm add [package]       # Add new dependencies
+pnpm remove [package]    # Remove dependencies
+pnpm update              # Update dependencies
 
 # Development
-bun run dev             # Next.js dev server (http://localhost:3000)
-bun run build           # Production build
-bun run start           # Production server
-bun run lint            # ESLint check
-bun run typecheck       # TypeScript validation
+pnpm dev                 # Next.js dev server (http://localhost:3000)
+pnpm build               # Production build
+pnpm start               # Production server
+pnpm lint                # ESLint check
+pnpm typecheck           # TypeScript validation
 
 # Testing
-bun test               # Unit tests with Jest (fast execution)
-bun test:watch         # Unit tests in watch mode
-bun run test:e2e       # End-to-end tests with Playwright
-bun run test:e2e:ui    # Playwright tests with UI
-bun run test:coverage  # Test coverage report
+pnpm test                # Unit tests with Jest
+pnpm test:watch          # Unit tests in watch mode
+pnpm test:e2e            # End-to-end tests with Playwright
+pnpm test:e2e:ui         # Playwright tests with UI
+pnpm test:coverage       # Test coverage report
 
 # Database (via Supabase MCP - DO NOT use CLI commands)
 # Use MCP tools instead:
@@ -114,9 +110,9 @@ bun run test:coverage  # Test coverage report
 # - mcp__supabase__generate_typescript_types: Generate TypeScript types
 
 # Seeding (development only)
-bun run seed:dev          # Seed development data
-bun run seed:clear        # Clear development data
-bun run seed:superadmin   # Create superadmin user
+pnpm seed:dev            # Seed development data
+pnpm seed:clear          # Clear development data
+pnpm seed:superadmin     # Create superadmin user
 ```
 
 ## UI/UX Quality Assurance com Chrome DevTools MCP
@@ -652,14 +648,14 @@ This project implements a multi-layered testing approach using Playwright for th
 
 ```bash
 # Run comprehensive test suite
-bun run test:e2e                    # Full end-to-end tests
-bun run test:e2e:ui                 # Playwright tests with UI
-bun run test:e2e:headed             # Run tests in headed mode
+pnpm test:e2e                    # Full end-to-end tests
+pnpm test:e2e:ui                 # Playwright tests with UI
+pnpm test:e2e:headed             # Run tests in headed mode
 
 # Unit testing
-bun test                            # Unit tests with Jest
-bun test:watch                      # Unit tests in watch mode
-bun run test:coverage               # Test coverage report
+pnpm test                        # Unit tests with Jest
+pnpm test:watch                  # Unit tests in watch mode
+pnpm test:coverage               # Test coverage report
 ```
 
 ## Reusable Components
@@ -734,18 +730,14 @@ PERFORMANCE_MONITORING_KEY=your_key
 ```
 
 ### Development Setup:
-1. **Install bun globally** (REQUIRED):
+1. **Install pnpm globally** (if not already installed):
    ```bash
-   # Windows
-   powershell -c "irm bun.sh/install.ps1 | iex"
-
-   # macOS/Linux
-   curl -fsSL https://bun.sh/install | bash
+   npm install -g pnpm
    ```
 2. Clone repository and choose target project
-3. Install dependencies (`bun install`) - npm, yarn, pnpm are blocked and must never be used
+3. Install dependencies with `pnpm install`
 4. Copy `.env.example` to `.env.local` and configure Supabase
-5. Start development server with `bun run dev`
+5. Start development server with `pnpm dev`
 6. For database operations, use Supabase MCP tools (not CLI)
 
 ## Production Readiness Status
@@ -776,19 +768,19 @@ PERFORMANCE_MONITORING_KEY=your_key
 ```bash
 # 1. Setup development environment
 cd gestao_fronteira/
-bun install
+pnpm install
 
 # 2. Start development
-bun run dev          # http://localhost:3000
+pnpm dev             # http://localhost:3000
 
 # 3. Development cycle
-bun run typecheck    # TypeScript validation
-bun run lint         # Code quality
-bun test             # Unit tests
+pnpm typecheck       # TypeScript validation
+pnpm lint            # Code quality
+pnpm test            # Unit tests
 
 # 4. Ready for production
-bun run build        # Production build
-bun run test:e2e     # End-to-end tests
+pnpm build           # Production build
+pnpm test:e2e        # End-to-end tests
 ```
 
 ## Changelog Management & Documentation Requirements

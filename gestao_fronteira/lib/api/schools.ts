@@ -1,6 +1,7 @@
 import { BaseApiService } from './base'
 import { supabase, Tables, Escola } from '@/lib/supabase'
 import { SchoolFormData } from '@/lib/validators/brazilian'
+import { logger } from '@/lib/logger'
 
 export type SchoolWithDetails = Escola & {
   diretor?: Tables<'users'>
@@ -103,7 +104,7 @@ export class SchoolsApiService extends BaseApiService {
 
       return schoolsWithCounts
     } catch (error) {
-      // console.error('Error fetching schools with details:', error)
+      logger.error('Error fetching schools with details', error as Error, { feature: 'schools', action: 'fetch_schools_with_details' })
       throw error
     }
   }
@@ -129,7 +130,7 @@ export class SchoolsApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      // console.error('Error creating school:', error)
+      logger.error('Error creating school', error as Error, { feature: 'schools', action: 'create_school' })
       throw error
     }
   }
@@ -155,7 +156,7 @@ export class SchoolsApiService extends BaseApiService {
 
       return { school: schoolResult.data, director: userResult.data }
     } catch (error) {
-      // console.error('Error assigning director:', error)
+      logger.error('Error assigning director', error as Error, { feature: 'schools', action: 'assign_director' })
       throw error
     }
   }
@@ -163,11 +164,20 @@ export class SchoolsApiService extends BaseApiService {
   // Get school statistics
   private async getSchoolCounts(schoolId: string) {
     try {
-      // Count students (through matriculas)
+      // Count students (through matriculas with turmas relationship)
+      // First, get all turma IDs for this school
+      const { data: turmasData } = await supabase
+        .from('turmas')
+        .select('id')
+        .eq('escola_id', schoolId)
+
+      const turmaIds = turmasData?.map(t => t.id) || []
+
+      // Count students enrolled in those turmas
       const { count: studentsCount } = await supabase
         .from('matriculas')
         .select('*', { count: 'exact', head: true })
-        .eq('turmas.escola_id', schoolId)
+        .in('turma_id', turmaIds.length > 0 ? turmaIds : [''])
         .eq('situacao', 'ativa')
 
       // Count teachers
@@ -191,7 +201,7 @@ export class SchoolsApiService extends BaseApiService {
         classes: classesCount || 0
       }
     } catch (error) {
-      // console.error('Error getting school counts:', error)
+      logger.error('Error getting school counts', error as Error, { feature: 'schools', action: 'get_school_counts', schoolId })
       return {
         students: 0,
         teachers: 0,
@@ -206,6 +216,14 @@ export class SchoolsApiService extends BaseApiService {
       const school = await this.getById(schoolId)
       const counts = await this.getSchoolCounts(schoolId)
 
+      // Get turma IDs for this school
+      const { data: turmasData } = await supabase
+        .from('turmas')
+        .select('id')
+        .eq('escola_id', schoolId)
+
+      const turmaIds = turmasData?.map(t => t.id) || []
+
       // Get recent activities
       const recentEnrollments = await supabase
         .from('matriculas')
@@ -214,7 +232,7 @@ export class SchoolsApiService extends BaseApiService {
           aluno:alunos(nome_completo),
           turma:turmas(nome)
         `)
-        .eq('turmas.escola_id', schoolId)
+        .in('turma_id', turmaIds.length > 0 ? turmaIds : [''])
         .order('data_matricula', { ascending: false })
         .limit(10)
 
@@ -223,7 +241,7 @@ export class SchoolsApiService extends BaseApiService {
       const attendanceData = await supabase
         .from('frequencia')
         .select('status, data')
-        .eq('turmas.escola_id', schoolId)
+        .in('turma_id', turmaIds.length > 0 ? turmaIds : [''])
         .gte('data', `${currentMonth}-01`)
         .lte('data', `${currentMonth}-31`)
 
@@ -239,7 +257,7 @@ export class SchoolsApiService extends BaseApiService {
         attendanceSummary
       }
     } catch (error) {
-      // console.error('Error fetching school dashboard:', error)
+      logger.error('Error fetching school dashboard', error as Error, { feature: 'schools', action: 'get_school_dashboard', schoolId })
       throw error
     }
   }
@@ -262,7 +280,7 @@ export class SchoolsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error('Error fetching available teachers:', error)
+      logger.error('Error fetching available teachers', error as Error, { feature: 'schools', action: 'get_available_teachers' })
       throw error
     }
   }
@@ -280,7 +298,7 @@ export class SchoolsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error('Error fetching available directors:', error)
+      logger.error('Error fetching available directors', error as Error, { feature: 'schools', action: 'get_available_directors' })
       throw error
     }
   }
@@ -291,11 +309,17 @@ export class SchoolsApiService extends BaseApiService {
       const result = await this.update(id, { ativo })
 
       // TODO: Add audit logging for status changes
-      // console.log(`School ${id} status updated to ${ativo ? 'active' : 'inactive'}`, { reason })
+      logger.info(`School status updated to ${ativo ? 'active' : 'inactive'}`, {
+        feature: 'schools',
+        action: 'update_school_status',
+        schoolId: id,
+        ativo,
+        reason
+      })
 
       return result
     } catch (error) {
-      // console.error('Error updating school status:', error)
+      logger.error('Error updating school status', error as Error, { feature: 'schools', action: 'update_school_status', schoolId: id })
       throw error
     }
   }
@@ -350,7 +374,7 @@ export class SchoolsApiService extends BaseApiService {
 
       return stats
     } catch (error) {
-      // console.error('Error fetching system stats:', error)
+      logger.error('Error fetching system stats', error as Error, { feature: 'schools', action: 'get_system_stats' })
       return {
         total: 0,
         active: 0,

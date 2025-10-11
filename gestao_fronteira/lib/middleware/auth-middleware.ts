@@ -95,7 +95,7 @@ export async function getServerUser(request: NextRequest) {
 // Route protection configuration
 export const routeProtection = {
   // Public routes (no authentication required)
-  public: ['/login', '/onboarding', '/wizard', '/'],
+  public: ['/login', '/wizard/onboarding', '/'],
 
   // Role-based protected routes
   protected: {
