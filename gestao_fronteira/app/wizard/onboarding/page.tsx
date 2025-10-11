@@ -13,7 +13,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase as createClient } from '@/lib/supabase'
 import { useWizardStore } from './_store/useWizardStore'
 import { StepIndicator } from './_components/StepIndicator'
 import { Step1Welcome } from './_components/Step1Welcome'
@@ -23,15 +22,9 @@ import { Step4Secretarios } from './_components/Step4Secretarios'
 import { Step5Professores } from './_components/Step5Professores'
 import { Step6Review } from './_components/Step6Review'
 import { finalizeWizard } from './_actions/finalize-wizard'
+import { getSchools, type Escola } from './_actions/get-schools'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-
-interface Escola {
-  id: string
-  nome: string
-  codigo: string
-  tipo: 'creche' | 'pre_escola' | 'fundamental'
-}
 
 const WIZARD_STEPS = [
   { number: 1, title: 'Boas-vindas', description: 'Visão geral' },
@@ -59,23 +52,19 @@ export default function WizardOnboardingPage() {
     resetWizard,
   } = useWizardStore()
 
-  // Carregar escolas do banco
+  // Carregar escolas do banco usando Server Action
   useEffect(() => {
     async function loadEscolas() {
       try {
         setLoading(true)
-        const supabase = createClient()
 
-        const { data, error: fetchError } = await supabase
-          .from('escolas')
-          .select('id, nome, codigo, tipo')
-          .eq('ativo', true)
-          .order('tipo', { ascending: true })
-          .order('nome', { ascending: true })
+        const result = await getSchools()
 
-        if (fetchError) throw fetchError
+        if (!result.success || !result.data) {
+          throw new Error(result.error || 'Erro ao carregar escolas')
+        }
 
-        setEscolas(data || [])
+        setEscolas(result.data)
       } catch (err) {
         console.error('Erro ao carregar escolas:', err)
         setError(
