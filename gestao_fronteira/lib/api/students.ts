@@ -3,6 +3,7 @@
 import { BaseApiService } from './base'
 import { supabase, Tables, Aluno } from '@/lib/supabase'
 import { StudentFormData } from '@/lib/validators/brazilian'
+import { logger } from '@/lib/logger'
 
 export type StudentWithDetails = Aluno & {
   responsavel?: Tables<'responsaveis'>
@@ -318,12 +319,21 @@ export class StudentsApiService extends BaseApiService {
     try {
       const result = await this.update(id, { ativo })
 
-      // TODO: Add audit logging for status changes
-      // console.log(`Student ${id} status updated to ${ativo ? 'active' : 'inactive'}`, { reason })
+      logger.info(`Student status updated to ${ativo ? 'active' : 'inactive'}`, {
+        feature: 'students',
+        action: 'update_student_status',
+        studentId: id,
+        ativo,
+        reason
+      })
 
       return result
     } catch (error) {
-      // console.error('Error updating student status:', error)
+      logger.error('Error updating student status', error as Error, {
+        feature: 'students',
+        action: 'update_student_status',
+        studentId: id
+      })
       throw error
     }
   }
