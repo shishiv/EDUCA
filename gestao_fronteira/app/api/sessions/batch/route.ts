@@ -6,9 +6,49 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import type { Database } from '@/types/database'
+
+// Type for Supabase client with database schema
+type SupabaseClientType = SupabaseClient<Database>
+
+// User profile type
+interface UserProfile {
+  id: string
+  tipo_usuario: 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+  escola_id: string | null
+  nome_completo: string | null
+}
+
+// Session data type
+interface SessionData {
+  id: string
+  bloqueado: boolean
+  updated_at: string
+  professor_id: string | null
+  turma_id: string
+  data_aula: string
+  turmas?: {
+    escola_id: string | null
+  } | null
+}
+
+// Batch results type
+interface BatchResults {
+  successful: number
+  failed: number
+  conflicts: number
+  errors: Array<{
+    session_id?: string
+    aluno_id?: string
+    error: string
+    type: string
+    server_data?: unknown
+  }>
+}
 
 // Validation schemas
 const BatchSessionUpdateSchema = z.object({
@@ -63,7 +103,7 @@ async function createSupabaseClient() {
 }
 
 // Validate user authentication
-async function validateAuth(supabase: any) {
+async function validateAuth(supabase: SupabaseClientType) {
   const { data: { user }, error } = await supabase.auth.getUser()
 
   if (error || !user) {
@@ -80,7 +120,7 @@ async function validateAuth(supabase: any) {
     throw new Error('User profile not found')
   }
 
-  return { user, profile }
+  return { user, profile: profile as UserProfile }
 }
 
 /**
@@ -95,18 +135,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = BatchOperationsSchema.parse(body)
 
-    const results = {
+    const results: {
+      session_updates: BatchResults
+      attendance_updates: BatchResults
+      sync_timestamp: string
+      server_time: string
+    } = {
       session_updates: {
         successful: 0,
         failed: 0,
         conflicts: 0,
-        errors: [] as any[]
+        errors: []
       },
       attendance_updates: {
         successful: 0,
         failed: 0,
         conflicts: 0,
-        errors: [] as any[]
+        errors: []
       },
       sync_timestamp: new Date().toISOString(),
       server_time: new Date().toISOString()
@@ -245,18 +290,22 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Batch update types
+type BatchSessionUpdate = z.infer<typeof BatchSessionUpdateSchema>
+type BatchAttendanceUpdate = z.infer<typeof BatchAttendanceUpdateSchema>
+
 // Helper functions
 async function processBatchSessionUpdates(
-  supabase: any,
-  updates: any[],
-  profile: any,
+  supabase: SupabaseClientType,
+  updates: BatchSessionUpdate[],
+  profile: UserProfile,
   conflictResolution: string
-) {
-  const results = {
+): Promise<BatchResults> {
+  const results: BatchResults = {
     successful: 0,
     failed: 0,
     conflicts: 0,
-    errors: [] as any[]
+    errors: []
   }
 
   for (const update of updates) {
@@ -323,7 +372,7 @@ async function processBatchSessionUpdates(
       }
 
       // Perform update
-      const updateData: any = {}
+      const updateData: Record<string, unknown> = {}
       if (update.fase) updateData.fase = update.fase
       if (update.observacoes !== undefined) updateData.observacoes = update.observacoes
 
@@ -357,16 +406,16 @@ async function processBatchSessionUpdates(
 }
 
 async function processBatchAttendanceUpdates(
-  supabase: any,
-  updates: any[],
-  profile: any,
+  supabase: SupabaseClientType,
+  updates: BatchAttendanceUpdate[],
+  profile: UserProfile,
   conflictResolution: string
-) {
-  const results = {
+): Promise<BatchResults> {
+  const results: BatchResults = {
     successful: 0,
     failed: 0,
     conflicts: 0,
-    errors: [] as any[]
+    errors: []
   }
 
   for (const update of updates) {
@@ -493,14 +542,28 @@ async function processBatchAttendanceUpdates(
   return results
 }
 
-async function buildSyncData(supabase: any, options: {
-  lastSyncTimestamp?: string,
-  escolaId?: string,
-  professorId?: string,
-  includeLocked: boolean,
-  userProfile: any
-}) {
-  const syncData: any = {
+// Sync options type
+interface SyncOptions {
+  lastSyncTimestamp?: string
+  escolaId?: string
+  professorId?: string
+  includeLocked: boolean
+  userProfile: UserProfile
+}
+
+// Sync data type
+interface SyncData {
+  sessions: unknown[]
+  attendance: unknown[]
+  students: unknown[]
+  classes: unknown[]
+}
+
+async function buildSyncData(
+  supabase: SupabaseClientType,
+  options: SyncOptions
+): Promise<SyncData> {
+  const syncData: SyncData = {
     sessions: [],
     attendance: [],
     students: [],
@@ -624,7 +687,17 @@ async function buildSyncData(supabase: any, options: {
   return syncData
 }
 
-async function logBatchOperation(supabase: any, userId: string, requestData: any, results: any) {
+async function logBatchOperation(
+  supabase: SupabaseClientType,
+  userId: string,
+  requestData: z.infer<typeof BatchOperationsSchema>,
+  results: {
+    session_updates: BatchResults
+    attendance_updates: BatchResults
+    sync_timestamp: string
+    server_time: string
+  }
+) {
   try {
     await supabase
       .from('audit_logs')
@@ -652,7 +725,7 @@ async function logBatchOperation(supabase: any, userId: string, requestData: any
   }
 }
 
-function checkSessionModifyAccess(session: any, profile: any): boolean {
+function checkSessionModifyAccess(session: SessionData, profile: UserProfile): boolean {
   if (profile.tipo_usuario === 'admin') return true
 
   if (profile.tipo_usuario === 'professor') {

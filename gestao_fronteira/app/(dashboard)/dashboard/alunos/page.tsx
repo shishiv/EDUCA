@@ -23,9 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Search, Download, Eye, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, Download, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatsCard } from '@/components/dashboard/stats-card'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -73,8 +75,12 @@ export default function AlunosPage() {
       if (error) throw error
 
       // Use real data from Supabase
-      setAlunos(data || [])
-    } catch (error) {
+      const transformedData = data?.map(aluno => ({
+        ...aluno,
+        responsaveis: aluno.responsaveis || undefined
+      })) || []
+      setAlunos(transformedData)
+    } catch (error: any) {
       logger.error('Erro ao carregar alunos:', error)
       toast.error('Erro ao carregar lista de alunos')
       setAlunos([])
@@ -158,59 +164,51 @@ export default function AlunosPage() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Alunos</h1>
-          <p className="text-gray-600 mt-1">
-            Gerencie o cadastro de todos os alunos da rede municipal
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Exportar
-          </Button>
-          <Button asChild className="gap-2">
-            <Link href="/dashboard/alunos/novo">
-              <Plus className="h-4 w-4" />
-              Novo Aluno
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Alunos"
+        description="Gerencie o cadastro de todos os alunos da rede municipal"
+        actions={
+          <>
+            <Button variant="outline" className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+            <Button asChild className="gap-2">
+              <Link href="/dashboard/alunos/novo">
+                <Plus className="h-4 w-4" />
+                Novo Aluno
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Estatísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{alunos.length}</div>
-            <div className="text-sm text-gray-600">Total de Alunos</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length}
-            </div>
-            <div className="text-sm text-gray-600">Matriculados</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length}
-            </div>
-            <div className="text-sm text-gray-600">Não Matriculados</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-600">
-              {alunos.filter(a => a.necessidades_especiais).length}
-            </div>
-            <div className="text-sm text-gray-600">Necessidades Especiais</div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total de Alunos"
+          value={alunos.length}
+          icon={Users}
+          variant="primary"
+        />
+        <StatsCard
+          title="Matriculados"
+          value={alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length}
+          icon={UserCheck}
+          variant="secondary"
+        />
+        <StatsCard
+          title="Não Matriculados"
+          value={alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length}
+          icon={UserX}
+          variant="accent"
+        />
+        <StatsCard
+          title="Necessidades Especiais"
+          value={alunos.filter(a => a.necessidades_especiais).length}
+          icon={Heart}
+          variant="rose"
+        />
       </div>
 
       {/* Filtros */}

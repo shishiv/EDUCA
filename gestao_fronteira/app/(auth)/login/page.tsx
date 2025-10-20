@@ -25,29 +25,10 @@ export default function LoginPage() {
   const { signIn } = useAuth()
   const router = useRouter()
 
-  // Check if system has users on mount
+  // Set mounted state
   useEffect(() => {
     setMounted(true)
-
-    const checkForUsers = async () => {
-      try {
-        const { count, error } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-
-        if (error) throw error
-
-        // If no users exist, redirect to new wizard
-        if (count === 0) {
-          router.push('/wizard/onboarding')
-        }
-      } catch (error) {
-        logger.error('Error checking users', error as Error)
-      }
-    }
-
-    checkForUsers()
-  }, [router])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,36 +39,13 @@ export default function LoginPage() {
       const result = await signIn(email, password)
 
       if (result && result.user) {
-        // Wait for profile to be available with retry mechanism
-        let retries = 0
-        const maxRetries = 5
-        let profile = null
-
-        while (retries < maxRetries && !profile) {
-          profile = await getUserProfile(result.user.id)
-
-          // If profile exists but is fallback/mock data, wait for real profile
-          if (profile && !profile.created_at) {
-            profile = null
-          }
-
-          if (!profile) {
-            await new Promise(resolve => setTimeout(resolve, 500)) // Wait 500ms
-            retries++
-          }
-        }
-
         logger.info('Login successful', {
-          userId: result.user.id,
-          metadata: {
-            profileFound: !!profile,
-            retries
-          }
+          userId: result.user.id
         })
 
         toast.success('Login realizado com sucesso!')
 
-        // Use router.replace to avoid back button issues
+        // Redirect to dashboard immediately
         router.replace('/dashboard')
       }
     } catch (err: any) {
