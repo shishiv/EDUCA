@@ -3,6 +3,21 @@
 import { QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+// Type definitions for error handling
+interface ApiError {
+  message?: string
+  status?: number
+}
+
+// Type guard for API errors
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    ('message' in error || 'status' in error)
+  )
+}
+
 // Create a client
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -12,10 +27,12 @@ export const queryClient = new QueryClient({
       // Garbage collect time - 10 minutes
       gcTime: 10 * 60 * 1000,
       // Retry configuration
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors except 408, 429
-        if (error?.status >= 400 && error?.status < 500 && ![408, 429].includes(error?.status)) {
-          return false
+        if (isApiError(error) && error.status) {
+          if (error.status >= 400 && error.status < 500 && ![408, 429].includes(error.status)) {
+            return false
+          }
         }
         // Retry up to 3 times for other errors
         return failureCount < 3
@@ -27,21 +44,27 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       // Global error handling
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         // console.error('Mutation error:', error)
 
         // Show user-friendly error messages
-        const message = error?.message || 'Ocorreu um erro inesperado'
+        const message = isApiError(error) && error.message
+          ? error.message
+          : 'Ocorreu um erro inesperado'
 
         // Handle common error types
-        if (error?.status === 401) {
-          toast.error('Sessão expirada. Faça login novamente.')
-        } else if (error?.status === 403) {
-          toast.error('Você não tem permissão para realizar esta ação.')
-        } else if (error?.status === 404) {
-          toast.error('Recurso não encontrado.')
-        } else if (error?.status >= 500) {
-          toast.error('Erro interno do servidor. Tente novamente.')
+        if (isApiError(error) && error.status) {
+          if (error.status === 401) {
+            toast.error('Sessão expirada. Faça login novamente.')
+          } else if (error.status === 403) {
+            toast.error('Você não tem permissão para realizar esta ação.')
+          } else if (error.status === 404) {
+            toast.error('Recurso não encontrado.')
+          } else if (error.status >= 500) {
+            toast.error('Erro interno do servidor. Tente novamente.')
+          } else {
+            toast.error(message)
+          }
         } else {
           toast.error(message)
         }
@@ -54,13 +77,23 @@ export const queryClient = new QueryClient({
   }
 })
 
+// Type definitions for query filters
+export interface QueryFilters {
+  search?: string
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+  [key: string]: string | number | boolean | undefined
+}
+
 // Query keys for consistent cache management
 export const queryKeys = {
   // Users
   users: {
     all: () => ['users'] as const,
     lists: () => [...queryKeys.users.all(), 'list'] as const,
-    list: (filters?: any) => [...queryKeys.users.lists(), { filters }] as const,
+    list: (filters?: QueryFilters) => [...queryKeys.users.lists(), { filters }] as const,
     details: () => [...queryKeys.users.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
     stats: () => [...queryKeys.users.all(), 'stats'] as const,
@@ -71,7 +104,7 @@ export const queryKeys = {
   schools: {
     all: () => ['schools'] as const,
     lists: () => [...queryKeys.schools.all(), 'list'] as const,
-    list: (filters?: any) => [...queryKeys.schools.lists(), { filters }] as const,
+    list: (filters?: QueryFilters) => [...queryKeys.schools.lists(), { filters }] as const,
     details: () => [...queryKeys.schools.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.schools.details(), id] as const,
   },
@@ -80,7 +113,7 @@ export const queryKeys = {
   students: {
     all: () => ['students'] as const,
     lists: () => [...queryKeys.students.all(), 'list'] as const,
-    list: (filters?: any) => [...queryKeys.students.lists(), { filters }] as const,
+    list: (filters?: QueryFilters) => [...queryKeys.students.lists(), { filters }] as const,
     details: () => [...queryKeys.students.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.students.details(), id] as const,
     bySchool: (schoolId: string) => [...queryKeys.students.all(), 'bySchool', schoolId] as const,
@@ -91,7 +124,7 @@ export const queryKeys = {
   classes: {
     all: () => ['classes'] as const,
     lists: () => [...queryKeys.classes.all(), 'list'] as const,
-    list: (filters?: any) => [...queryKeys.classes.lists(), { filters }] as const,
+    list: (filters?: QueryFilters) => [...queryKeys.classes.lists(), { filters }] as const,
     details: () => [...queryKeys.classes.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.classes.details(), id] as const,
     bySchool: (schoolId: string) => [...queryKeys.classes.all(), 'bySchool', schoolId] as const,
@@ -101,20 +134,20 @@ export const queryKeys = {
   attendance: {
     all: () => ['attendance'] as const,
     lists: () => [...queryKeys.attendance.all(), 'list'] as const,
-    list: (filters?: any) => [...queryKeys.attendance.lists(), { filters }] as const,
+    list: (filters?: QueryFilters) => [...queryKeys.attendance.lists(), { filters }] as const,
     byClass: (classId: string, date?: string) =>
       [...queryKeys.attendance.all(), 'byClass', classId, date] as const,
     byStudent: (studentId: string, period?: string) =>
       [...queryKeys.attendance.all(), 'byStudent', studentId, period] as const,
-    stats: (filters?: any) => [...queryKeys.attendance.all(), 'stats', { filters }] as const,
+    stats: (filters?: QueryFilters) => [...queryKeys.attendance.all(), 'stats', { filters }] as const,
   },
 
   // Reports
   reports: {
     all: () => ['reports'] as const,
-    attendance: (filters?: any) => [...queryKeys.reports.all(), 'attendance', { filters }] as const,
-    frequency: (filters?: any) => [...queryKeys.reports.all(), 'frequency', { filters }] as const,
-    students: (filters?: any) => [...queryKeys.reports.all(), 'students', { filters }] as const,
+    attendance: (filters?: QueryFilters) => [...queryKeys.reports.all(), 'attendance', { filters }] as const,
+    frequency: (filters?: QueryFilters) => [...queryKeys.reports.all(), 'frequency', { filters }] as const,
+    students: (filters?: QueryFilters) => [...queryKeys.reports.all(), 'students', { filters }] as const,
   }
 } as const
 
@@ -138,23 +171,43 @@ export const invalidateQueries = {
   reports: () => queryClient.invalidateQueries({ queryKey: queryKeys.reports.all() }),
 }
 
+// Generic type for entity updates
+type EntityUpdates = Record<string, unknown>
+
+// Generic type for list items with id
+interface EntityWithId {
+  id: string
+  [key: string]: unknown
+}
+
 // Optimistic update helpers
 export const optimisticUpdates = {
-  updateUser: (userId: string, updates: any) => {
-    queryClient.setQueryData(queryKeys.users.detail(userId), (old: any) => ({
-      ...old,
-      ...updates
-    }))
+  updateUser: (userId: string, updates: EntityUpdates) => {
+    queryClient.setQueryData(
+      queryKeys.users.detail(userId),
+      (old: unknown) => {
+        if (!old || typeof old !== 'object') return old
+        return { ...old, ...updates }
+      }
+    )
   },
 
-  updateUserInList: (userId: string, updates: any) => {
+  updateUserInList: (userId: string, updates: EntityUpdates) => {
     queryClient.setQueriesData(
       { queryKey: queryKeys.users.lists() },
-      (old: any) => {
-        if (!old) return old
-        return old.map((user: any) =>
-          user.id === userId ? { ...user, ...updates } : user
-        )
+      (old: unknown) => {
+        if (!old || !Array.isArray(old)) return old
+        return old.map((user: unknown) => {
+          if (
+            typeof user === 'object' &&
+            user !== null &&
+            'id' in user &&
+            (user as EntityWithId).id === userId
+          ) {
+            return { ...user, ...updates }
+          }
+          return user
+        })
       }
     )
   },
@@ -170,7 +223,7 @@ export const prefetchQueries = {
     })
   },
 
-  usersList: async (filters?: any) => {
+  usersList: async (filters?: QueryFilters) => {
     await queryClient.prefetchQuery({
       queryKey: queryKeys.users.list(filters),
       queryFn: () => import('@/lib/api/users').then(({ usersApi }) =>

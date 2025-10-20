@@ -22,10 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Search, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download, BookOpen, UserCheck, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatsCard } from '@/components/dashboard/stats-card'
 
 interface Turma {
   id: string
@@ -235,7 +237,7 @@ export default function TurmasPage() {
         .from('turmas')
         .select(`
           *,
-          escola:escolas(id, nome),
+          escola:escolas(id, nome, tipo),
           professor:users!professor_id(id, nome, email)
         `)
         .order('created_at', { ascending: false })
@@ -268,19 +270,22 @@ export default function TurmasPage() {
         turno: turma.turno,
         capacidade: turma.capacidade || 0,
         alunos_matriculados: enrollmentCounts.get(turma.id) || 0,
+        ativo: turma.ativo ?? true,
+        created_at: turma.created_at || new Date().toISOString(),
         escola: {
           id: turma.escola?.id || '',
-          nome: turma.escola?.nome || 'Sem escola'
+          nome: turma.escola?.nome || 'Sem escola',
+          tipo: turma.escola?.tipo || 'escola'
         },
         professor: turma.professor ? {
           id: turma.professor.id,
           nome: turma.professor.nome,
-          email: turma.professor.email
+          email: turma.professor.email || ''
         } : null
       })) || []
 
       setTurmas(formattedTurmas)
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error loading turmas', error)
       toast.error('Erro ao carregar lista de turmas')
       setTurmas([])
@@ -411,55 +416,51 @@ export default function TurmasPage() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Turmas</h1>
-          <p className="text-gray-600 mt-1">
-            Gerencie as turmas e classes da rede municipal
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Exportar
-          </Button>
-          <Button asChild className="gap-2">
-            <Link href="/dashboard/turmas/nova">
-              <Plus className="h-4 w-4" />
-              Nova Turma
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Turmas"
+        description="Gerencie as turmas e classes da rede municipal"
+        actions={
+          <>
+            <Button variant="outline" className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+            <Button asChild className="gap-2">
+              <Link href="/dashboard/turmas/nova">
+                <Plus className="h-4 w-4" />
+                Nova Turma
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Estatísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{totalTurmas}</div>
-            <div className="text-sm text-gray-600">Total de Turmas</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{turmasAtivas}</div>
-            <div className="text-sm text-gray-600">Turmas Ativas</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">{totalAlunos}</div>
-            <div className="text-sm text-gray-600">Alunos Matriculados</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">
-              {Math.round((totalAlunos / capacidadeTotal) * 100)}%
-            </div>
-            <div className="text-sm text-gray-600">Ocupação Geral</div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total de Turmas"
+          value={totalTurmas}
+          icon={BookOpen}
+          variant="primary"
+        />
+        <StatsCard
+          title="Turmas Ativas"
+          value={turmasAtivas}
+          icon={UserCheck}
+          variant="secondary"
+        />
+        <StatsCard
+          title="Alunos Matriculados"
+          value={totalAlunos}
+          icon={Users}
+          variant="accent"
+        />
+        <StatsCard
+          title="Ocupação Geral"
+          value={`${capacidadeTotal > 0 ? Math.round((totalAlunos / capacidadeTotal) * 100) : 0}%`}
+          icon={TrendingUp}
+          variant="violet"
+        />
       </div>
 
       {/* Filtros */}

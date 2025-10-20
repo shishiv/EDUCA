@@ -6,9 +6,22 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import type { Database } from '@/types/database'
+
+// Type for Supabase client with database schema
+type SupabaseClientType = SupabaseClient<Database>
+
+// User profile type
+interface UserProfile {
+  id: string
+  tipo_usuario: 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+  escola_id: string | null
+  nome_completo: string | null
+}
 
 // Validation schema
 const DashboardQuerySchema = z.object({
@@ -36,7 +49,7 @@ async function createSupabaseClient() {
 }
 
 // Validate user authentication
-async function validateAuth(supabase: any) {
+async function validateAuth(supabase: SupabaseClientType) {
   const { data: { user }, error } = await supabase.auth.getUser()
 
   if (error || !user) {
@@ -53,7 +66,7 @@ async function validateAuth(supabase: any) {
     throw new Error('User profile not found')
   }
 
-  return { user, profile }
+  return { user, profile: profile as UserProfile }
 }
 
 /**
@@ -136,8 +149,45 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Response types
+interface ComplianceData {
+  compliance_score: number
+  session_date: string
+  turma_nome: string
+  professor_nome: string
+  total_actions: number
+}
+
+interface SessionData {
+  id: string
+  fase: string
+  bloqueado: boolean
+  data_aula: string
+  total_alunos: number
+  total_presentes: number
+  turmas: {
+    escola_id: string | null
+  } | null
+}
+
+interface ActivityItem {
+  id: string
+  action: string
+  timestamp: string
+  details: Record<string, unknown> | null
+  users: {
+    nome_completo: string | null
+  } | null
+}
+
 // Helper functions
-async function getSessionOverview(supabase: any, escolaId?: string, dateFrom?: string, dateTo?: string, professorId?: string) {
+async function getSessionOverview(
+  supabase: SupabaseClientType,
+  escolaId?: string,
+  dateFrom?: string,
+  dateTo?: string,
+  professorId?: string
+) {
   let query = supabase
     .from('aula_sessions')
     .select(`
@@ -175,38 +225,41 @@ async function getSessionOverview(supabase: any, escolaId?: string, dateFrom?: s
 
   if (!sessions) return null
 
+  // Type assertion for sessions data
+  const typedSessions = sessions as SessionData[]
+
   // Calculate overview statistics
   const overview = {
-    total_sessions: sessions.length,
+    total_sessions: typedSessions.length,
     by_phase: {
-      planejamento: sessions.filter(s => s.fase === 'planejamento').length,
-      chamada: sessions.filter(s => s.fase === 'chamada').length,
-      finalizada: sessions.filter(s => s.fase === 'finalizada').length,
-      bloqueada: sessions.filter(s => s.fase === 'bloqueada').length
+      planejamento: typedSessions.filter(s => s.fase === 'planejamento').length,
+      chamada: typedSessions.filter(s => s.fase === 'chamada').length,
+      finalizada: typedSessions.filter(s => s.fase === 'finalizada').length,
+      bloqueada: typedSessions.filter(s => s.fase === 'bloqueada').length
     },
     compliance: {
-      compliant: sessions.filter(s => s.bloqueado).length,
-      non_compliant: sessions.filter(s => {
+      compliant: typedSessions.filter(s => s.bloqueado).length,
+      non_compliant: typedSessions.filter(s => {
         const sessionDate = new Date(s.data_aula)
         const today = new Date()
         return sessionDate < today && !s.bloqueado
       }).length,
-      pending: sessions.filter(s => {
+      pending: typedSessions.filter(s => {
         const sessionDate = new Date(s.data_aula)
         const today = new Date()
         return sessionDate >= today && !s.bloqueado
       }).length
     },
     attendance: {
-      total_students: sessions.reduce((sum, s) => sum + (s.total_alunos || 0), 0),
-      total_present: sessions.reduce((sum, s) => sum + (s.total_presentes || 0), 0),
-      average_attendance: sessions.length > 0
-        ? (sessions.reduce((sum, s) => {
+      total_students: typedSessions.reduce((sum, s) => sum + (s.total_alunos || 0), 0),
+      total_present: typedSessions.reduce((sum, s) => sum + (s.total_presentes || 0), 0),
+      average_attendance: typedSessions.length > 0
+        ? (typedSessions.reduce((sum, s) => {
             if (s.total_alunos > 0) {
               return sum + (s.total_presentes / s.total_alunos)
             }
             return sum
-          }, 0) / sessions.filter(s => s.total_alunos > 0).length) * 100
+          }, 0) / typedSessions.filter(s => s.total_alunos > 0).length) * 100
         : 0
     }
   }
@@ -214,7 +267,11 @@ async function getSessionOverview(supabase: any, escolaId?: string, dateFrom?: s
   return overview
 }
 
-async function getActiveSessions(supabase: any, escolaId?: string, professorId?: string) {
+async function getActiveSessions(
+  supabase: SupabaseClientType,
+  escolaId?: string,
+  professorId?: string
+) {
   const today = new Date().toISOString().split('T')[0]
 
   let query = supabase
@@ -266,7 +323,12 @@ async function getActiveSessions(supabase: any, escolaId?: string, professorId?:
   }))
 }
 
-async function getComplianceOverview(supabase: any, escolaId?: string, dateFrom?: string, dateTo?: string) {
+async function getComplianceOverview(
+  supabase: SupabaseClientType,
+  escolaId?: string,
+  dateFrom?: string,
+  dateTo?: string
+) {
   if (!escolaId) return null
 
   const { data: complianceData } = await supabase.rpc('get_compliance_audit_report', {
@@ -284,17 +346,20 @@ async function getComplianceOverview(supabase: any, escolaId?: string, dateFrom?
     }
   }
 
-  const avgScore = complianceData.reduce((sum: number, item: any) => sum + item.compliance_score, 0) / complianceData.length
-  const sessionsWithIssues = complianceData.filter((item: any) => item.compliance_score < 90).length
+  // Type assertion for compliance data
+  const typedComplianceData = complianceData as ComplianceData[]
+
+  const avgScore = typedComplianceData.reduce((sum, item) => sum + item.compliance_score, 0) / typedComplianceData.length
+  const sessionsWithIssues = typedComplianceData.filter((item) => item.compliance_score < 90).length
 
   return {
     average_compliance_score: Math.round(avgScore * 100) / 100,
-    total_sessions: complianceData.length,
+    total_sessions: typedComplianceData.length,
     sessions_with_issues: sessionsWithIssues,
-    recent_violations: complianceData
-      .filter((item: any) => item.compliance_score < 80)
+    recent_violations: typedComplianceData
+      .filter((item) => item.compliance_score < 80)
       .slice(0, 5)
-      .map((item: any) => ({
+      .map((item) => ({
         session_date: item.session_date,
         turma: item.turma_nome,
         professor: item.professor_nome,
@@ -304,7 +369,7 @@ async function getComplianceOverview(supabase: any, escolaId?: string, dateFrom?
   }
 }
 
-async function getRecentActivity(supabase: any, escolaId?: string) {
+async function getRecentActivity(supabase: SupabaseClientType, escolaId?: string) {
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
 
   let query = supabase
@@ -331,7 +396,10 @@ async function getRecentActivity(supabase: any, escolaId?: string) {
 
   const { data: activity } = await query
 
-  return (activity || []).map(item => ({
+  // Type assertion for activity data
+  const typedActivity = (activity || []) as ActivityItem[]
+
+  return typedActivity.map(item => ({
     id: item.id,
     action: item.action,
     timestamp: item.timestamp,
@@ -340,7 +408,12 @@ async function getRecentActivity(supabase: any, escolaId?: string) {
   }))
 }
 
-async function getAttendanceStatistics(supabase: any, escolaId?: string, dateFrom?: string, dateTo?: string) {
+async function getAttendanceStatistics(
+  supabase: SupabaseClientType,
+  escolaId?: string,
+  dateFrom?: string,
+  dateTo?: string
+) {
   if (!escolaId) return null
 
   const { data: stats } = await supabase.rpc('get_session_statistics', {
@@ -357,7 +430,7 @@ async function getAttendanceStatistics(supabase: any, escolaId?: string, dateFro
   }
 }
 
-async function getSystemAlerts(supabase: any, escolaId?: string) {
+async function getSystemAlerts(supabase: SupabaseClientType, escolaId?: string) {
   const alerts = []
   const today = new Date()
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
@@ -418,7 +491,7 @@ async function getSystemAlerts(supabase: any, escolaId?: string) {
 }
 
 // Utility functions
-function determineAttentionStatus(session: any): boolean {
+function determineAttentionStatus(session: SessionData): boolean {
   const sessionDate = new Date(session.data_aula)
   const today = new Date()
 
@@ -453,7 +526,7 @@ function calculateTimeUntilLock(sessionDate: string): { hours: number; minutes: 
   return { hours, minutes, overdue: false }
 }
 
-function generateActivityDescription(action: string, details: any): string {
+function generateActivityDescription(action: string, details: Record<string, unknown> | null): string {
   const descriptions: Record<string, string> = {
     'SESSION_CREATED': 'Created new session',
     'SESSION_PHASE_CHANGED': 'Changed session phase',
@@ -465,8 +538,11 @@ function generateActivityDescription(action: string, details: any): string {
   const baseDescription = descriptions[action] || action.toLowerCase().replace(/_/g, ' ')
 
   // Add context from details if available
-  if (details?.compliance_context?.session_phase) {
-    return `${baseDescription} (${details.compliance_context.session_phase})`
+  if (details && typeof details === 'object' && 'compliance_context' in details) {
+    const complianceContext = details.compliance_context as Record<string, unknown>
+    if (complianceContext && 'session_phase' in complianceContext) {
+      return `${baseDescription} (${complianceContext.session_phase})`
+    }
   }
 
   return baseDescription

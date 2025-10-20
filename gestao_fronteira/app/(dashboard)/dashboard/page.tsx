@@ -8,11 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calendar, Clock, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3 } from 'lucide-react'
+import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calendar, Clock, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import type { Database } from '@/types/database'
+
+type FrequenciaRow = Database['public']['Tables']['frequencia']['Row']
+type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
+type AlunoRow = Database['public']['Tables']['alunos']['Row']
 
 interface DashboardStats {
   totalAlunos: number
@@ -30,6 +35,25 @@ interface RecentActivity {
   description: string
   timestamp: string
 }
+
+interface QuickAccessItem {
+  name: string
+  href: string
+  icon: LucideIcon
+  color: string
+  iconColor: string
+  borderColor: string
+  roles: Array<'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'>
+}
+
+const quickAccessItems: QuickAccessItem[] = [
+  { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600', borderColor: 'hover:border-blue-300', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600', borderColor: 'hover:border-emerald-300', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Frequência', href: '/dashboard/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, color: 'bg-violet-50 hover:bg-violet-100', iconColor: 'text-violet-600', borderColor: 'hover:border-violet-300', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, color: 'bg-rose-50 hover:bg-rose-100', iconColor: 'text-rose-600', borderColor: 'hover:border-rose-300', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, color: 'bg-slate-50 hover:bg-slate-100', iconColor: 'text-slate-600', borderColor: 'hover:border-slate-300', roles: ['admin', 'diretor'] },
+]
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
@@ -129,11 +153,15 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(3)
 
-      const recentActivities: RecentActivity[] = (recentMatriculas || []).map((matricula, index) => ({
+      type MatriculaWithAluno = MatriculaRow & {
+        alunos: Pick<AlunoRow, 'nome_completo'> | null
+      }
+
+      const recentActivities: RecentActivity[] = ((recentMatriculas || []) as MatriculaWithAluno[]).map((matricula) => ({
         id: matricula.id,
         type: 'matricula' as const,
         description: `Nova matrícula: ${matricula.alunos?.nome_completo || 'Aluno'}`,
-        timestamp: matricula.created_at
+        timestamp: matricula.created_at || new Date().toISOString()
       }))
 
       // Add some sample activities if we don't have enough real data
@@ -199,7 +227,10 @@ export default function DashboardPage() {
     }
   }
 
-  const handleNavigateToAttendance = (classInfo: any, sessionData?: any) => {
+  const handleNavigateToAttendance = (
+    classInfo: { id: string },
+    sessionData?: { id: string }
+  ) => {
     // Navigate to attendance marking page
     router.push(`/dashboard/frequencia?turma=${classInfo.id}&sessao=${sessionData?.id || ''}`)
   }
@@ -241,14 +272,9 @@ export default function DashboardPage() {
 
       {/* Quick Access - Moved to Top */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-        {[
-          { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600', borderColor: 'hover:border-blue-300', roles: ['admin', 'diretor', 'secretario'] },
-          { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600', borderColor: 'hover:border-emerald-300', roles: ['admin', 'diretor', 'secretario'] },
-          { name: 'Frequência', href: '/dashboard/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-          { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, color: 'bg-violet-50 hover:bg-violet-100', iconColor: 'text-violet-600', borderColor: 'hover:border-violet-300', roles: ['admin', 'diretor', 'secretario'] },
-          { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, color: 'bg-rose-50 hover:bg-rose-100', iconColor: 'text-rose-600', borderColor: 'hover:border-rose-300', roles: ['admin', 'diretor', 'secretario'] },
-          { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, color: 'bg-slate-50 hover:bg-slate-100', iconColor: 'text-slate-600', borderColor: 'hover:border-slate-300', roles: ['admin', 'diretor'] },
-        ].filter((item) => userProfile && item.roles.includes(userProfile.tipo_usuario)).map((item) => {
+        {(quickAccessItems satisfies QuickAccessItem[]).filter((item) =>
+          userProfile && item.roles.includes(userProfile.tipo_usuario as QuickAccessItem['roles'][number])
+        ).map((item) => {
           const IconComponent = item.icon
           return (
             <Link key={item.name} href={item.href}>

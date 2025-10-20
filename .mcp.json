@@ -43,7 +43,10 @@
         "--api-key",
         "ctx7sk-4b8eff9a-ed6c-4f93-806a-94f6ecf380c1"
       ]
-    },
+    }
+  },
+  "_disabled_mcpServers": {
+    "_comment": "MCPs desabilitados para reduzir token usage. Reative movendo para mcpServers.",
     "tavily": {
       "command": "cmd",
       "args": [

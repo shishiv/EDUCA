@@ -40,57 +40,60 @@ export type {
 
 /**
  * Validation utilities for all models
+ * Generic validation data type for unknown input structures
  */
+type ValidationData = Record<string, unknown>
+
 export const ModelValidation = {
   // Audit checklist validation
-  auditChecklist: (data: any) => {
+  auditChecklist: (data: ValidationData) => {
     const { AuditChecklistUtils } = require('./audit-checklist')
     return AuditChecklistUtils.validateChecklist(data)
   },
 
-  auditChecklistItem: (data: any) => {
+  auditChecklistItem: (data: ValidationData) => {
     const { AuditChecklistUtils } = require('./audit-checklist')
     return AuditChecklistUtils.validateItem(data)
   },
 
   // Mockup inventory validation
-  mockupInventory: (data: any) => {
+  mockupInventory: (data: ValidationData) => {
     const { MockupInventoryUtils } = require('./mockup-inventory')
     return MockupInventoryUtils.validateInventory(data)
   },
 
-  mockupComponent: (data: any) => {
+  mockupComponent: (data: ValidationData) => {
     const { MockupInventoryUtils } = require('./mockup-inventory')
     return MockupInventoryUtils.validateComponent(data)
   },
 
-  mockupScreen: (data: any) => {
+  mockupScreen: (data: ValidationData) => {
     const { MockupInventoryUtils } = require('./mockup-inventory')
     return MockupInventoryUtils.validateScreen(data)
   },
 
-  mockupFile: (data: any) => {
+  mockupFile: (data: ValidationData) => {
     const { MockupInventoryUtils } = require('./mockup-inventory')
     return MockupInventoryUtils.validateFile(data)
   },
 
   // MCP configuration validation
-  mcpConfiguration: (data: any) => {
+  mcpConfiguration: (data: ValidationData) => {
     const { MCPConfigurationUtils } = require('./mcp-configuration')
     return MCPConfigurationUtils.validateConfiguration(data)
   },
 
-  mcpServer: (data: any) => {
+  mcpServer: (data: ValidationData) => {
     const { MCPConfigurationUtils } = require('./mcp-configuration')
     return MCPConfigurationUtils.validateServer(data)
   },
 
-  mcpTool: (data: any) => {
+  mcpTool: (data: ValidationData) => {
     const { MCPConfigurationUtils } = require('./mcp-configuration')
     return MCPConfigurationUtils.validateTool(data)
   },
 
-  mcpWorkflow: (data: any) => {
+  mcpWorkflow: (data: ValidationData) => {
     const { MCPConfigurationUtils } = require('./mcp-configuration')
     return MCPConfigurationUtils.validateWorkflow(data)
   }

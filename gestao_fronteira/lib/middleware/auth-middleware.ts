@@ -95,7 +95,7 @@ export async function getServerUser(request: NextRequest) {
 // Route protection configuration
 export const routeProtection = {
   // Public routes (no authentication required)
-  public: ['/login', '/wizard/onboarding', '/'],
+  public: ['/login', '/'],
 
   // Role-based protected routes
   protected: {
@@ -213,17 +213,6 @@ export async function authMiddleware(request: NextRequest) {
   try {
     const serverUser = await getServerUser(request)
     const userRole = serverUser?.userProfile?.tipo_usuario
-    const userProfile = serverUser?.userProfile
-
-    // WIZARD ONBOARDING CHECK: Redirect admin to wizard if not completed
-    if (userProfile && userRole === 'admin' && !userProfile.wizard_completed) {
-      // Se não estiver indo para o wizard, redirecionar
-      if (!pathname.startsWith('/wizard/onboarding')) {
-        const redirectUrl = request.nextUrl.clone()
-        redirectUrl.pathname = '/wizard/onboarding'
-        return NextResponse.redirect(redirectUrl)
-      }
-    }
 
     const { hasAccess, redirectTo } = checkRouteAccess(pathname, userRole)
 
