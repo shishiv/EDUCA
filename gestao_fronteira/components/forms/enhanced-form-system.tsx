@@ -73,7 +73,7 @@ export interface FormFieldConfig {
   placeholder?: string
   helpText?: string
   required?: boolean
-  validation?: z.ZodSchema<any>
+  validation?: z.ZodSchema
   options?: { value: string; label: string }[]
   educationalContext?: string // Brazilian educational explanation
   inepRequired?: boolean // Required for INEP reporting
@@ -82,15 +82,18 @@ export interface FormFieldConfig {
   formatOnChange?: (value: string) => string
 }
 
-export interface EnhancedFormProps {
+// Generic form data type
+export type FormData = Record<string, unknown>
+
+export interface EnhancedFormProps<TFormData extends FormData = FormData> {
   formId: string
   title: string
   subtitle?: string
   fields: FormFieldConfig[]
-  schema: z.ZodSchema<any>
-  onSubmit: (data: any) => Promise<void>
-  onAutoSave?: (data: any) => Promise<void>
-  defaultValues?: any
+  schema: z.ZodSchema<TFormData>
+  onSubmit: (data: TFormData) => Promise<void>
+  onAutoSave?: (data: TFormData) => Promise<void>
+  defaultValues?: Partial<TFormData>
   showProgress?: boolean
   allowDrafts?: boolean
   educationalCompliance?: {
@@ -102,10 +105,10 @@ export interface EnhancedFormProps {
   className?: string
 }
 
-// Auto-save hook
-const useAutoSave = (
-  formData: any,
-  onAutoSave?: (data: any) => Promise<void>,
+// Auto-save hook with generic type
+const useAutoSave = <TFormData extends FormData = FormData>(
+  formData: TFormData | undefined,
+  onAutoSave?: (data: TFormData) => Promise<void>,
   delay: number = 3000
 ) => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -148,19 +151,28 @@ const useAutoSave = (
   return { saveStatus, lastSaved }
 }
 
-// Progress calculation
-const calculateProgress = (fields: FormFieldConfig[], formData: any): number => {
+// Helper function to check if value exists and is not empty
+const hasFilledValue = (value: unknown): boolean => {
+  if (value === null || value === undefined) return false
+  if (typeof value === 'string') return value.trim() !== ''
+  if (typeof value === 'number' || typeof value === 'boolean') return true
+  return false
+}
+
+// Progress calculation with generic type
+const calculateProgress = <TFormData extends FormData = FormData>(
+  fields: FormFieldConfig[],
+  formData: TFormData
+): number => {
   const requiredFields = fields.filter(field => field.required)
-  const completedRequired = requiredFields.filter(field => {
-    const value = formData[field.name]
-    return value && value.toString().trim() !== ''
-  })
+  const completedRequired = requiredFields.filter(field =>
+    hasFilledValue(formData[field.name])
+  )
 
   const allFields = fields.length
-  const completedAll = fields.filter(field => {
-    const value = formData[field.name]
-    return value && value.toString().trim() !== ''
-  })
+  const completedAll = fields.filter(field =>
+    hasFilledValue(formData[field.name])
+  )
 
   // Weight required fields more heavily
   const requiredWeight = 0.7
@@ -177,16 +189,20 @@ const calculateProgress = (fields: FormFieldConfig[], formData: any): number => 
   return Math.round((requiredProgress + optionalProgress) * 100)
 }
 
-// Field validation status
-const getFieldValidationStatus = (
+// Type for form errors (from react-hook-form)
+type FormErrors = Record<string, { message?: string } | undefined>
+type TouchedFields = Record<string, boolean | undefined>
+
+// Field validation status with typed parameters
+const getFieldValidationStatus = <TFormData extends FormData = FormData>(
   fieldName: string,
-  errors: any,
-  touchedFields: any,
-  formData: any
+  errors: FormErrors,
+  touchedFields: TouchedFields,
+  formData: TFormData
 ): 'idle' | 'valid' | 'invalid' | 'required' => {
   const hasError = errors[fieldName]
   const isTouched = touchedFields[fieldName]
-  const hasValue = formData[fieldName] && formData[fieldName].toString().trim() !== ''
+  const hasValue = hasFilledValue(formData[fieldName])
 
   if (hasError && isTouched) return 'invalid'
   if (hasValue && !hasError) return 'valid'
@@ -194,7 +210,7 @@ const getFieldValidationStatus = (
   return 'idle'
 }
 
-export const EnhancedFormSystem: React.FC<EnhancedFormProps> = ({
+export const EnhancedFormSystem = <TFormData extends FormData = FormData>({
   formId,
   title,
   subtitle,
@@ -202,13 +218,13 @@ export const EnhancedFormSystem: React.FC<EnhancedFormProps> = ({
   schema,
   onSubmit,
   onAutoSave,
-  defaultValues = {},
+  defaultValues = {} as Partial<TFormData>,
   showProgress = true,
   allowDrafts = true,
   educationalCompliance,
   sessionTimeout = 30,
   className = ''
-}) => {
+}: EnhancedFormProps<TFormData>) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({})
   const [sessionWarning, setSessionWarning] = useState(false)
@@ -278,8 +294,8 @@ export const EnhancedFormSystem: React.FC<EnhancedFormProps> = ({
   // Progress calculation
   const progress = showProgress ? calculateProgress(fields, formData) : 0
 
-  // Handle form submission
-  const handleFormSubmit = async (data: any) => {
+  // Handle form submission with typed data
+  const handleFormSubmit = async (data: TFormData) => {
     setIsSubmitting(true)
     try {
       await onSubmit(data)
@@ -602,6 +618,17 @@ export const EnhancedFormSystem: React.FC<EnhancedFormProps> = ({
   )
 }
 
+// Student registration form data type
+interface StudentRegistrationData extends FormData {
+  nome_completo: string
+  cpf: string
+  data_nascimento: string
+  responsavel_nome: string
+  responsavel_telefone: string
+  endereco: string
+  observacoes?: string
+}
+
 // Usage example with Brazilian educational context
 export const StudentRegistrationForm: React.FC = () => {
   const studentSchema = z.object({
@@ -612,7 +639,7 @@ export const StudentRegistrationForm: React.FC = () => {
     responsavel_telefone: z.string().min(10, 'Telefone inválido'),
     endereco: z.string().min(10, 'Endereço deve ser completo'),
     observacoes: z.string().optional()
-  })
+  }) satisfies z.ZodSchema<StudentRegistrationData>
 
   const fields: FormFieldConfig[] = [
     {
@@ -680,18 +707,18 @@ export const StudentRegistrationForm: React.FC = () => {
     }
   ]
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: StudentRegistrationData) => {
     console.log('Student registration data:', data)
     // Handle submission
   }
 
-  const handleAutoSave = async (data: any) => {
+  const handleAutoSave = async (data: StudentRegistrationData) => {
     console.log('Auto-saving student registration:', data)
     // Handle auto-save
   }
 
   return (
-    <EnhancedFormSystem
+    <EnhancedFormSystem<StudentRegistrationData>
       formId="student-registration"
       title="Matrícula de Aluno"
       subtitle="Cadastro de novo aluno na rede municipal de Fronteira/MG"

@@ -5,13 +5,11 @@
  * Executar: bun run seed:superadmin
  *
  * Este script cria APENAS:
- * - 1 Superadmin (precisa completar perfil no primeiro login)
+ * - 1 Superadmin com acesso completo ao sistema
  * - 9 Escolas municipais com dados REAIS de Fronteira/MG
  *
  * IMPORTANTE:
- * - Superadmin precisa completar perfil no primeiro login
- * - Após login, superadmin é redirecionado para wizard de onboarding
- * - No wizard, superadmin cria toda hierarquia: diretores, coordenadores, secretários, professores
+ * - Após login, superadmin tem acesso completo ao sistema
  * - Escolas já estão cadastradas e prontas para receber equipe
  */
 
@@ -80,9 +78,8 @@ async function main() {
         tipo_usuario: 'admin',
         escola_id: null,  // Admin não pertence a escola específica
         ativo: true,
-        primeiro_login: true,   // ✅ Admin precisa completar perfil
-        senha_padrao: false,
-        wizard_completed: false  // ✅ Wizard de onboarding não completado
+        primeiro_login: true,
+        senha_padrao: false
       })
 
       if (profileAdminError && !profileAdminError.message.includes('duplicate key')) {
@@ -234,11 +231,10 @@ async function main() {
     console.log('│ Email: admin@fronteira.mg.gov.br                                │')
     console.log('│ Senha: Admin@Fronteira2025                                      │')
     console.log('│                                                                 │')
-    console.log('│ ⚠️  PRIMEIRO LOGIN:                                              │')
-    console.log('│ 1. Complete seu perfil (CPF, telefone, endereço)              │')
-    console.log('│ 2. Sistema redireciona para Wizard de Onboarding              │')
-    console.log('│ 3. No wizard, crie: diretores, coordenadores, secretários,    │')
-    console.log('│    professores para as 9 escolas                              │')
+    console.log('│ ⚠️  ACESSO COMPLETO AO SISTEMA:                                  │')
+    console.log('│ - Gerenciar escolas, usuários e configurações                 │')
+    console.log('│ - Criar e gerenciar turmas e matrículas                       │')
+    console.log('│ - Acessar todos os módulos administrativos                    │')
     console.log('└─────────────────────────────────────────────────────────────────┘')
     console.log('\n🏫 Escolas Cadastradas:')
     escolasCriadas.forEach((escola, idx) => {
@@ -247,8 +243,7 @@ async function main() {
     console.log('\n🚀 Próximos Passos:')
     console.log('   1. Acesse: http://localhost:3000/login')
     console.log('   2. Login: admin@fronteira.mg.gov.br / Admin@Fronteira2025')
-    console.log('   3. Complete perfil no primeiro login')
-    console.log('   4. Use o Wizard para criar toda hierarquia educacional')
+    console.log('   3. Gerencie usuários, escolas e configurações do sistema')
     console.log('\n')
 
   } catch (error: any) {
