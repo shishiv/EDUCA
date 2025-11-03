@@ -59,7 +59,9 @@ export function ModalRenderer() {
             </DialogHeader>
             <AbrirAulaWorkflow
               turmaId={activeModal.props?.classInfo?.id}
-              onWorkflowComplete={closeModal}
+              professorId={activeModal.props?.professorId || ''}
+              onSuccess={closeModal}
+              onCancel={closeModal}
             />
           </DialogContent>
         </Dialog>

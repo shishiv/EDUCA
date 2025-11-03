@@ -43,32 +43,8 @@
         "--api-key",
         "ctx7sk-4b8eff9a-ed6c-4f93-806a-94f6ecf380c1"
       ]
-    }
-  },
-  "_disabled_mcpServers": {
-    "_comment": "MCPs desabilitados para reduzir token usage. Reative movendo para mcpServers.",
-    "tavily": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-tavily@latest"
-      ],
-      "env": {
-        "TAVILY_API_KEY": "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"
-      }
     },
-    "playwright": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@executeautomation/playwright-mcp-server@latest"
-      ]
-    },
-    "sequential-thinking": {
+      "sequential-thinking": {
       "command": "cmd",
       "args": [
         "/c",

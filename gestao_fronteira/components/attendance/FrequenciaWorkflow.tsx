@@ -612,10 +612,10 @@ export function FrequenciaWorkflow() {
       {/* Dialog de Fechar Aula */}
       {showFecharDialog && sessaoAtiva && (
         <FecharAulaDialog
-          sessionId={sessaoAtiva.id}
-          isOpen={showFecharDialog}
-          onClose={() => setShowFecharDialog(false)}
-          onSuccess={handleAulaFechada}
+          sessaoId={sessaoAtiva.id}
+          open={showFecharDialog}
+          onOpenChange={setShowFecharDialog}
+          onConfirm={async () => await handleAulaFechada()}
         />
       )}
     </div>
