@@ -45,19 +45,25 @@
       "mcp__chrome-devtools__get_network_request",
       "mcp__chrome-devtools__resize_page",
       "mcp__chrome-devtools__list_pages",
-      "Bash(git status \"app/(dashboard)/dashboard/turmas/page.tsx\")"
+      "Bash(git status \"app/(dashboard)/dashboard/turmas/page.tsx\")",
+      "Bash(rm:*)",
+      "Bash(timeout 60 pnpm test:*)",
+      "Bash(grep:*)",
+      "Bash(dir /s \"c:\\Repos\\SRE\\gestao_fronteira\\lib\")",
+      "Bash(test:*)",
+      "Bash(__NEW_LINE__ echo \"=== ATTENDANCE COMPONENTS USAGE ===\")",
+      "Bash(awk '{print $9, \"\"\"\"(\"\"\"\" $5 \"\"\"\" bytes)\"\"\"\"}')",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase",
     "chrome-devtools",
     "shadcn-ui",
-    "github.com/upstash/context7-mcp",
     "context7",
-    "tavily",
-    "playwright",
     "sequential-thinking"
   ]
 }

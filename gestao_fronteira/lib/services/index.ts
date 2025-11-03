@@ -1,49 +1,59 @@
 /**
- * Services index - Central export for all service classes
- * Brazilian Educational Management System services with validation and audit
+ * Services index - Central export for active service classes
+ * Brazilian Educational Management System services with validation
+ *
+ * ACTIVE SERVICES (MVP):
+ * - attendance-workflow: 3-phase attendance workflow management
+ * - attendance-locking: Attendance locking for legal compliance
+ * - attendance-immutability: Immutability enforcement (não existe o esquecer)
+ * - attendance-bulk-operations: Bulk attendance operations
+ *
+ * PLANNED SERVICES (Phase 2):
+ * See lib/services/planned/ for future features:
+ * - audit-service: Audit checklist management
+ * - attendance-history: Comprehensive audit trail
+ * - mockup-scan-service: Code analysis tooling
  */
 
-// Audit service
-export * from './audit-service'
-export type {
-  AuditServiceResponse,
-  ChecklistSearchFilters
-} from './audit-service'
+// Active attendance services exported for production use
+export {
+  AttendanceWorkflowManager,
+  type WorkflowPhase,
+  type WorkflowState,
+  type WorkflowTransition,
+  createAttendanceWorkflow
+} from './attendance-workflow'
 
-// Mockup scan service
-export * from './mockup-scan-service'
-export type {
-  ScanResult,
-  MockAPIDetection,
-  MockDataFile,
-  ComponentDetection,
-  PageDetection,
-  AccessibilityIssue,
-  ComplianceIssue,
-  PerformanceIssue,
-  ScanSummary,
-  ScanRecommendation,
-  ScanServiceResponse
-} from './mockup-scan-service'
+export {
+  attendanceLocking,
+  type LockingStatus,
+  type LockingRule,
+  type UnlockRequest,
+  type UnlockPermission
+} from './attendance-locking'
+
+export {
+  attendanceImmutability,
+  type ImmutabilityViolation,
+  type ImmutabilityStatus
+} from './attendance-immutability'
+
+export {
+  AttendanceBulkOperationsService,
+  type BulkOperationResult,
+  type BulkMarkingRequest
+} from './attendance-bulk-operations'
 
 /**
  * Service factory functions for creating service instances
  */
 export const ServiceFactory = {
   /**
-   * Create audit service instance
+   * Create attendance workflow manager instance
    */
-  createAuditService: (userId: string, schoolId?: string) => {
-    const { createAuditService } = require('./audit-service')
-    return createAuditService(userId, schoolId)
-  },
-
-  /**
-   * Create mockup scan service instance
-   */
-  createMockupScanService: (userId: string, schoolId?: string) => {
-    const { createMockupScanService } = require('./mockup-scan-service')
-    return createMockupScanService(userId, schoolId)
+  createAttendanceWorkflow: (classId: string, teacherId: string, date: string) => {
+    const { AttendanceWorkflowManager } = require('./attendance-workflow')
+    return new AttendanceWorkflowManager(classId, teacherId, date)
   }
 }
 
@@ -90,8 +100,6 @@ export const ServiceUtils = {
     error: string
     timestamp: string
   } => {
-    // console.error(`Service error in ${operation}:`, error)
-
     let errorMessage = 'Erro interno do servidor'
 
     if (error instanceof Error) {
@@ -118,7 +126,6 @@ export const ServiceUtils = {
    */
   checkServiceHealth: () => {
     try {
-      // Basic checks for service availability
       const hasLocalStorage = typeof window !== 'undefined' && window.localStorage
       const hasCrypto = typeof crypto !== 'undefined' && crypto.randomUUID
       const hasDateSupport = !isNaN(new Date().getTime())
@@ -160,9 +167,9 @@ export const BrazilianEducationalServiceConfig = {
    * Required user roles for service operations
    */
   requiredRoles: {
-    auditManagement: ['admin', 'diretor'],
-    scanOperations: ['admin', 'diretor', 'secretario'],
-    configurationChanges: ['admin'],
+    attendanceManagement: ['admin', 'diretor', 'professor'],
+    workflowOperations: ['admin', 'diretor', 'professor'],
+    configurationChanges: ['admin', 'diretor'],
     reportGeneration: ['admin', 'diretor', 'secretario']
   },
 
@@ -170,7 +177,7 @@ export const BrazilianEducationalServiceConfig = {
    * Brazilian compliance validation rules
    */
   complianceRules: {
-    requireAuditLogging: true,
+    requireImmutabilityEnforcement: true,
     requireSchoolIsolation: true,
     requireLGPDValidation: true,
     requireLBIAccessibility: true,
@@ -181,10 +188,10 @@ export const BrazilianEducationalServiceConfig = {
    * Performance thresholds for educational applications
    */
   performanceThresholds: {
-    maxDashboardLoadTime: 3000, // 3 seconds
-    maxAttendanceMarkingTime: 1000, // 1 second per student
-    maxReportGenerationTime: 10000, // 10 seconds
-    maxScanOperationTime: 300000 // 5 minutes
+    maxDashboardLoadTime: 3000,
+    maxAttendanceMarkingTime: 1000,
+    maxBulkOperationTime: 5000,
+    maxSessionTransitionTime: 2000
   }
 }
 
@@ -192,20 +199,26 @@ export const BrazilianEducationalServiceConfig = {
  * Service event types for audit logging
  */
 export const ServiceEventTypes = {
-  // Audit service events
-  AUDIT_CHECKLIST_CREATED: 'audit_checklist_created',
-  AUDIT_CHECKLIST_UPDATED: 'audit_checklist_updated',
-  AUDIT_CHECKLIST_DELETED: 'audit_checklist_deleted',
-  AUDIT_ITEM_COMPLETED: 'audit_item_completed',
-  AUDIT_REPORT_GENERATED: 'audit_report_generated',
+  // Attendance workflow events
+  WORKFLOW_INITIALIZED: 'workflow_initialized',
+  PHASE_TRANSITIONED: 'phase_transitioned',
+  SESSION_OPENED: 'session_opened',
+  MARKING_STARTED: 'marking_started',
+  SESSION_CLOSED: 'session_closed',
+  WORKFLOW_COMPLETED: 'workflow_completed',
 
-  // Scan service events
-  SCAN_STARTED: 'scan_started',
-  SCAN_COMPLETED: 'scan_completed',
-  SCAN_CANCELLED: 'scan_cancelled',
-  SCAN_FAILED: 'scan_failed',
-  MOCK_ANALYSIS_COMPLETED: 'mock_analysis_completed',
-  COMPLIANCE_CHECK_COMPLETED: 'compliance_check_completed',
+  // Attendance marking events
+  STUDENT_MARKED: 'student_marked',
+  BULK_MARKING_EXECUTED: 'bulk_marking_executed',
+
+  // Locking events
+  SESSION_LOCKED: 'session_locked',
+  SESSION_UNLOCKED: 'session_unlocked',
+  UNLOCK_REQUESTED: 'unlock_requested',
+
+  // Immutability events
+  IMMUTABILITY_ENFORCED: 'immutability_enforced',
+  ILLEGAL_MODIFICATION_PREVENTED: 'illegal_modification_prevented',
 
   // General service events
   SERVICE_ERROR: 'service_error',

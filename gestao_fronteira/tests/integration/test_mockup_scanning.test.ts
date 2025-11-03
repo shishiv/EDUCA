@@ -10,8 +10,8 @@ import path from 'path'
 
 // Test imports - these will initially fail until implementation is created
 // This is expected for TDD approach
-import { MockupScanService } from '../../lib/services/mockup-scan-service'
-import { AuditService } from '../../lib/services/audit-service'
+import { MockupScanService } from '../../lib/services/planned/mockup-scan-service'
+import { AuditService } from '../../lib/services/planned/audit-service'
 
 describe('Integration Test: Mockup Scanning Workflow', () => {
   let mockupScanService: MockupScanService
