@@ -8,8 +8,8 @@ import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from
 
 // Test imports - these will initially fail until implementation is created
 // This is expected for TDD approach
-import { AuditService } from '../../lib/services/audit-service'
-import { MockupScanService } from '../../lib/services/mockup-scan-service'
+import { AuditService } from '../../lib/services/planned/audit-service'
+import { MockupScanService } from '../../lib/services/planned/mockup-scan-service'
 
 // MCP integration imports for validation
 const mcpSupabase = {

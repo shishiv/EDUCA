@@ -1,52 +1,23 @@
-'use client'
-
 import { useQuery } from '@tanstack/react-query'
-import { logger } from '@/lib/logger'
 
-export interface ComplianceWarning {
+interface ComplianceWarning {
   id: string
+  type: 'attendance' | 'enrollment' | 'reporting' | 'lgpd'
+  severity: 'low' | 'medium' | 'high' | 'critical'
   title: string
-  message: string
-  type: 'critical' | 'warning' | 'info'
-  icon: string
-  actionUrl: string
-  actionText: string
-  deadline?: string
-  count?: number
-}
-
-interface ComplianceResponse {
-  success: boolean
-  warnings: ComplianceWarning[]
-  total: number
-  timestamp: string
+  description: string
+  created_at: string
 }
 
 export function useComplianceWarnings() {
-  return useQuery({
+  return useQuery<ComplianceWarning[]>({
     queryKey: ['compliance-warnings'],
-    queryFn: async (): Promise<ComplianceWarning[]> => {
-      try {
-        const response = await fetch('/api/compliance/warnings')
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data: ComplianceResponse = await response.json()
-
-        if (!data.success) {
-          throw new Error('Failed to fetch compliance warnings')
-        }
-
-        return data.warnings
-      } catch (error) {
-        logger.error('Error fetching compliance warnings', { error })
-        return []
-      }
+    queryFn: async () => {
+      // TODO: Implement actual compliance warnings logic
+      // For now, return empty array
+      return []
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
-    refetchOnWindowFocus: true
+    refetchInterval: 10 * 60 * 1000 // 10 minutes
   })
 }
