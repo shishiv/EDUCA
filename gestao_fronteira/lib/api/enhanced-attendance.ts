@@ -13,6 +13,7 @@
 
 import { BaseApiService } from './enhanced-base'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 // ===== ENHANCED INTERFACES =====
 export interface EnhancedAttendanceSession {
@@ -198,7 +199,7 @@ export class EnhancedAttendanceService extends BaseApiService {
 
       return updatedSession as EnhancedAttendanceSession
     } catch (error) {
-      console.error('Error creating attendance session:', error)
+      logger.error('Error creating attendance session', error as Error)
       throw error
     }
   }
@@ -265,7 +266,7 @@ export class EnhancedAttendanceService extends BaseApiService {
 
       return data as EnhancedAttendanceSession
     } catch (error) {
-      console.error('Error closing attendance session:', error)
+      logger.error('Error closing attendance session', error as Error)
       throw error
     }
   }
@@ -285,7 +286,7 @@ export class EnhancedAttendanceService extends BaseApiService {
       if (error && error.code !== 'PGRST116') throw error
       return data as EnhancedAttendanceSession | null
     } catch (error) {
-      console.error('Error fetching session by date:', error)
+      logger.error('Error fetching session by date', error as Error)
       throw error
     }
   }
@@ -313,7 +314,7 @@ export class EnhancedAttendanceService extends BaseApiService {
       if (error && error.code !== 'PGRST116') throw error
       return data as EnhancedAttendanceSession | null
     } catch (error) {
-      console.error('Error fetching session by ID:', error)
+      logger.error('Error fetching session by ID', error as Error)
       throw error
     }
   }
@@ -388,7 +389,7 @@ export class EnhancedAttendanceService extends BaseApiService {
 
       return data as EnhancedAttendanceRecord[]
     } catch (error) {
-      console.error('Error saving attendance records:', error)
+      logger.error('Error saving attendance records', error as Error)
       throw error
     }
   }

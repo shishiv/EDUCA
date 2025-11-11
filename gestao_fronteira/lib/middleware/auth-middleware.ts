@@ -55,6 +55,12 @@ export async function createSupabaseServerClient(request: NextRequest) {
           })
         },
       },
+      auth: {
+        // CRITICAL: Disable auto-refresh in Edge Runtime to prevent fetch errors
+        autoRefreshToken: false,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
     }
   )
 
@@ -211,6 +217,9 @@ export async function authMiddleware(request: NextRequest) {
   }
 
   try {
+    // NOTE: Session validation is done via cookies, not network calls
+    // The client-side code (hooks/use-auth.ts) handles token refresh
+    // Middleware only validates existing session from cookies
     const serverUser = await getServerUser(request)
     const userRole = serverUser?.userProfile?.tipo_usuario
 

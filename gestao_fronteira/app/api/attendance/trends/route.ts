@@ -4,24 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
-
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        }
-      }
-    }
-  )
-}
+import { createClient } from '@/lib/supabase/server'
 
 interface TrendDataPoint {
   date: string
@@ -34,7 +18,7 @@ interface TrendDataPoint {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
 
     // Verify authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

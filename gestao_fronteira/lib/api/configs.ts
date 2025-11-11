@@ -1,6 +1,7 @@
 'use client'
 
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 export interface Config {
   id: string
@@ -25,13 +26,13 @@ export class ConfigsApiService {
         .order('chave', { ascending: true })
 
       if (error) {
-        console.error('Erro ao buscar configurações:', error)
+        logger.error('Erro ao buscar configurações', error)
         throw error
       }
 
       return data || []
     } catch (error) {
-      console.error('Erro na API getAll:', error)
+      logger.error('Erro na API getAll', error as Error)
       throw new Error('Erro ao carregar configurações do sistema')
     }
   }
@@ -57,7 +58,7 @@ export class ConfigsApiService {
         .single()
 
       if (error) {
-        console.error('Erro ao atualizar configuração:', error)
+        logger.error('Erro ao atualizar configuração', error)
         throw error
       }
 
@@ -67,7 +68,7 @@ export class ConfigsApiService {
 
       return updatedData
     } catch (error) {
-      console.error('Erro na API update:', error)
+      logger.error('Erro na API update', error as Error)
       throw error
     }
   }
@@ -87,13 +88,13 @@ export class ConfigsApiService {
           // No rows returned
           return null
         }
-        console.error('Erro ao buscar configuração por chave:', error)
+        logger.error('Erro ao buscar configuração por chave', error)
         throw error
       }
 
       return data
     } catch (error) {
-      console.error('Erro na API getByKey:', error)
+      logger.error('Erro na API getByKey', error as Error)
       return null
     }
   }
@@ -124,13 +125,13 @@ export class ConfigsApiService {
         .single()
 
       if (error) {
-        console.error('Erro ao resetar configuração:', error)
+        logger.error('Erro ao resetar configuração', error)
         throw error
       }
 
       return updatedData
     } catch (error) {
-      console.error('Erro na API resetToDefault:', error)
+      logger.error('Erro na API resetToDefault', error as Error)
       throw error
     }
   }
@@ -149,7 +150,7 @@ export class ConfigsApiService {
       const updatedConfigs = await Promise.all(updatePromises)
       return updatedConfigs
     } catch (error) {
-      console.error('Erro na API resetAllToDefaults:', error)
+      logger.error('Erro na API resetAllToDefaults', error as Error)
       throw error
     }
   }

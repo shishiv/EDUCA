@@ -5,10 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { createClient } from '@/lib/supabase/server'
 
 // Validation schema for opening a session
 const AbrirAulaSchema = z.object({
@@ -20,22 +19,6 @@ const AbrirAulaSchema = z.object({
   hora_fim: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (HH:MM)').optional(),
   observacoes: z.string().max(500, 'Observações muito longas (máximo 500 caracteres)').optional()
 })
-
-// Create Supabase client with proper cookie handling
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-}
 
 // Validate user authentication and permissions
 async function validateAuth(supabase: any) {
@@ -135,7 +118,7 @@ function calculateAutoClosureTime(sessionDate: string): string {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
 
     // Parse and validate request body

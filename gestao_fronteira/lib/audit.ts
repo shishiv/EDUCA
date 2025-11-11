@@ -5,6 +5,7 @@
  */
 
 import { supabase } from './supabase'
+import { getClientIP, getClientInfo } from './ip-tracking'
 
 export interface AuditLog {
   id?: string
@@ -62,19 +63,23 @@ export type AuditAction =
 /**
  * Core audit logging function
  * Logs all significant actions for regulatory compliance
+ * @param auditData - The audit data to log
+ * @param headers - Optional request headers for server-side IP detection
  */
-export const logAuditEvent = async (auditData: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> => {
+export const logAuditEvent = async (
+  auditData: Omit<AuditLog, 'id' | 'timestamp'>,
+  headers?: Headers
+): Promise<void> => {
   try {
-    // Get additional context
+    // Get additional context with improved IP tracking
     const timestamp = new Date().toISOString()
-    const userAgent = typeof window !== 'undefined' ? navigator.userAgent : 'server'
-    const ipAddress = await getClientIP()
+    const clientInfo = await getClientInfo(headers)
 
     const completeAuditData: AuditLog = {
       ...auditData,
       timestamp,
-      ip_address: ipAddress,
-      user_agent: userAgent
+      ip_address: clientInfo.ip_address,
+      user_agent: clientInfo.user_agent
     }
 
     // In production, save to audit_logs table
@@ -143,28 +148,7 @@ const saveAuditLogLocally = async (auditData: AuditLog): Promise<void> => {
   }
 }
 
-/**
- * Get client IP address
- * In production, this would use a proper IP detection service
- */
-const getClientIP = async (): Promise<string> => {
-  if (typeof window === 'undefined') return 'server-side'
-
-  // In development, return placeholder
-  if (process.env.NODE_ENV === 'development') {
-    return 'localhost'
-  }
-
-  // In production, integrate with your IP detection service
-  try {
-    // Example: const response = await fetch('https://api.ipify.org?format=json')
-    // const data = await response.json()
-    // return data.ip
-    return 'client-side'
-  } catch {
-    return 'unknown'
-  }
-}
+// Note: getClientIP is now imported from './ip-tracking' for improved accuracy
 
 /**
  * Brazilian Educational Compliance Helpers

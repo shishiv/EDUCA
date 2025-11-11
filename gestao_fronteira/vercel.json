@@ -1,9 +1,9 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "bun run build",
-  "devCommand": "bun run dev",
-  "installCommand": "bun install",
+  "buildCommand": "pnpm run build",
+  "devCommand": "pnpm run dev",
+  "installCommand": "pnpm install",
   "regions": ["gru1"],
   "headers": [
     {
