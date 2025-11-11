@@ -4,10 +4,9 @@
  */
 
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
 import { recordMetric, recordTiming } from '@/lib/monitoring/metrics'
+import { createClient } from '@/lib/supabase/server'
 
 interface HealthCheck {
   name: string
@@ -17,21 +16,6 @@ interface HealthCheck {
   details?: any
 }
 
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        }
-      }
-    }
-  )
-}
-
 /**
  * Check database connectivity and performance
  */
@@ -39,7 +23,7 @@ async function checkDatabase(): Promise<HealthCheck> {
   const start = Date.now()
 
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
 
     // Simple query to verify database is responsive
     const { data, error } = await supabase
@@ -84,7 +68,7 @@ async function checkComplianceMetrics(): Promise<HealthCheck> {
   const start = Date.now()
 
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
 
     // Check if we can query attendance data (critical for Brazilian compliance)
     const { data: attendanceCheck, error } = await supabase
@@ -123,7 +107,7 @@ async function checkComplianceMetrics(): Promise<HealthCheck> {
  */
 async function getSystemMetrics() {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
 
     // Get student count
     const { count: totalStudents } = await supabase
@@ -230,7 +214,7 @@ export async function GET() {
  */
 export async function HEAD() {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { error } = await supabase.from('escolas').select('id').limit(1)
 
     return new NextResponse(null, { status: error ? 503 : 200 })

@@ -3,6 +3,7 @@
 import { BaseApiService } from './base'
 import { supabase, Tables } from '@/lib/supabase'
 import { attendanceImmutability } from '@/lib/services/attendance-immutability'
+import { logger } from '@/lib/logger'
 
 export interface AttendanceSession {
   id: string
@@ -161,13 +162,13 @@ export class AttendanceApiService extends BaseApiService {
       return result.data!
     } catch (error) {
       // Enhanced error logging for legal compliance
-      console.error('Attendance save error:', {
-        sessionId,
-        turmaId,
-        date,
-        recordCount: records.length,
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString()
+      logger.error('Attendance save error', error as Error, {
+        metadata: {
+          sessionId,
+          turmaId,
+          date,
+          recordCount: records.length
+        }
       })
 
       throw error

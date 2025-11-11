@@ -5,12 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/server'
 
 // Type for Supabase client with database schema
 type SupabaseClientType = SupabaseClient<Database>
@@ -31,22 +30,6 @@ const DashboardQuerySchema = z.object({
   professor_id: z.string().uuid().optional(),
   include_stats: z.string().transform(val => val === 'true').optional()
 })
-
-// Create Supabase client
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-}
 
 // Validate user authentication
 async function validateAuth(supabase: SupabaseClientType) {
@@ -75,7 +58,7 @@ async function validateAuth(supabase: SupabaseClientType) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
 
     // Parse query parameters

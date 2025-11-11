@@ -5,12 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/server'
 
 // Type for Supabase client with database schema
 type SupabaseClientType = SupabaseClient<Database>
@@ -86,22 +85,6 @@ const SyncRequestSchema = z.object({
   include_locked: z.boolean().default(false)
 })
 
-// Create Supabase client
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-}
-
 // Validate user authentication
 async function validateAuth(supabase: SupabaseClientType) {
   const { data: { user }, error } = await supabase.auth.getUser()
@@ -129,7 +112,7 @@ async function validateAuth(supabase: SupabaseClientType) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
 
     const body = await request.json()
@@ -225,7 +208,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
 
     const url = new URL(request.url)

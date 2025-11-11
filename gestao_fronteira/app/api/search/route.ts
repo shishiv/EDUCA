@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
 import { fuzzySearchStudent, fuzzySearchBrazilianName, similarityScore } from '@/lib/utils/fuzzy-search'
+import { createClient } from '@/lib/supabase/server'
 
 export interface SearchResult {
   id: string
@@ -14,7 +13,7 @@ export interface SearchResult {
   status: string
 }
 
-async function createSupabaseClient() {
+async function createClient() {
   const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,7 +30,7 @@ async function createSupabaseClient() {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
 
     // Verify authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

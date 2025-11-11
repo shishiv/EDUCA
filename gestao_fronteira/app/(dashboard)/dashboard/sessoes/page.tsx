@@ -49,12 +49,14 @@ interface Sessao {
   turma_id: string
   professor_id: string
   data_aula: string
-  hora_inicio: string | null
-  hora_fim: string | null
-  status: 'PLANEJADA' | 'ABERTA' | 'FECHADA' | 'CANCELADA'
-  criada_em: string
+  inicio_aula: string
+  hora_inicio?: string | null
+  hora_fim?: string | null
+  status: string
+  criada_em?: string
   aberta_em: string | null
   fechada_em: string | null
+  conteudo_programatico: string
   turmas?: {
     nome: string
     serie: string
@@ -199,7 +201,7 @@ export default function SessoesPage() {
       }
     }
 
-    const config = statusConfig[status]
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['PLANEJADA']
     const Icon = config.icon
 
     return (
@@ -245,7 +247,7 @@ export default function SessoesPage() {
   const handleViewDetails = (sessaoId: string) => {
     // Navigate to session details or open modal
     // For now, we'll just log it
-    logger.info('View session details:', sessaoId)
+    logger.info('View session details:', { metadata: { sessaoId } })
     toast.info('Visualização de detalhes em desenvolvimento')
   }
 
@@ -464,11 +466,11 @@ export default function SessoesPage() {
                         {sessao.turmas?.escolas?.nome || '-'}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {formatTime(sessao.hora_inicio)} - {formatTime(sessao.hora_fim)}
+                        {formatTime(sessao.hora_inicio || null)} - {formatTime(sessao.hora_fim || null)}
                       </TableCell>
                       <TableCell>{getStatusBadge(sessao.status)}</TableCell>
                       <TableCell className="text-sm text-gray-600">
-                        {formatDateTime(sessao.criada_em)}
+                        {formatDateTime(sessao.criada_em || null)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">

@@ -13,6 +13,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logger } from '@/lib/logger'
 
 interface OpenSessionParams {
   turma_id: string
@@ -104,7 +105,13 @@ export async function openSessionAction(
       .single()
 
     if (insertError) {
-      console.error('Erro ao criar sessão:', insertError)
+      logger.error('Erro ao criar sessão', insertError, {
+        metadata: {
+          turmaId: params.turma_id,
+          professorId: params.professor_id,
+          dataAula: params.data_aula
+        }
+      })
       return {
         success: false,
         error: `Erro ao abrir aula: ${insertError.message}`,
@@ -120,7 +127,12 @@ export async function openSessionAction(
       session: newSession,
     }
   } catch (error) {
-    console.error('Erro inesperado ao abrir sessão:', error)
+    logger.error('Erro inesperado ao abrir sessão', error as Error, {
+      metadata: {
+        turmaId: params.turma_id,
+        professorId: params.professor_id
+      }
+    })
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

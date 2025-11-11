@@ -43,9 +43,59 @@ export default function LoginPage() {
           userId: result.user.id
         })
 
+        // WAIT FOR PROFILE WITH RETRY (prevents race condition)
+        let retries = 0
+        const maxRetries = 5
+        let profile = null
+
+        while (retries < maxRetries && !profile) {
+          profile = await getUserProfile(result.user.id)
+
+          if (!profile) {
+            retries++
+            logger.info('Profile not found, retrying...', {
+              userId: result.user.id,
+              metadata: {
+                retry: retries,
+                maxRetries
+              }
+            })
+
+            if (retries < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 500))
+            }
+          }
+        }
+
+        if (!profile) {
+          // Profile doesn't exist after all retries
+          logger.error('Profile not found after login', new Error('PROFILE_NOT_FOUND'), {
+            userId: result.user.id,
+            metadata: {
+              retriesMade: retries
+            }
+          })
+
+          setError('Perfil de usuário não encontrado. Contate o administrador.')
+          toast.error('Erro: Perfil não encontrado')
+
+          // Logout user since profile doesn't exist
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+
+        logger.info('Profile loaded successfully', {
+          userId: result.user.id,
+          userRole: profile.tipo_usuario,
+          metadata: {
+            retriesNeeded: retries
+          }
+        })
+
         toast.success('Login realizado com sucesso!')
 
-        // Redirect to dashboard immediately
+        // Only redirect after profile is confirmed to exist
         router.replace('/dashboard')
       }
     } catch (err: any) {

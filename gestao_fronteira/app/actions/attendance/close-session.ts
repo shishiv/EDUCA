@@ -13,6 +13,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logger } from '@/lib/logger'
 
 interface CloseSessionParams {
   session_id: string
@@ -76,7 +77,11 @@ export async function closeSessionAction(
       .single()
 
     if (updateError) {
-      console.error('Erro ao fechar sessão:', updateError)
+      logger.error('Erro ao fechar sessão', updateError, {
+        metadata: {
+          sessionId: params.session_id
+        }
+      })
       return {
         success: false,
         error: `Erro ao encerrar aula: ${updateError.message}`,
@@ -96,7 +101,11 @@ export async function closeSessionAction(
       session: closedSession,
     }
   } catch (error) {
-    console.error('Erro inesperado ao fechar sessão:', error)
+    logger.error('Erro inesperado ao fechar sessão', error as Error, {
+      metadata: {
+        sessionId: params.session_id
+      }
+    })
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

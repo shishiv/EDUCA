@@ -139,7 +139,7 @@ export default function DashboardPage() {
         alunosComDocumentosPendentes
       }
 
-      logger.info('Dashboard stats loaded:', { newStats })
+      logger.info('Dashboard stats loaded:', { metadata: { newStats } })
       setStats(newStats)
 
       // Load recent activities from recent data
@@ -182,11 +182,11 @@ export default function DashboardPage() {
         )
       }
 
-      logger.info('Recent activities loaded', { count: recentActivities.length })
+      logger.info('Recent activities loaded', { metadata: { count: recentActivities.length } })
       setActivities(recentActivities.slice(0, 3))
 
     } catch (error) {
-      logger.error('Erro ao carregar dados do dashboard:', error)
+      logger.error('Erro ao carregar dados do dashboard:', error as any)
       // Fallback to basic stats if there's an error
       setStats({
         totalAlunos: 0,
@@ -253,7 +253,7 @@ export default function DashboardPage() {
   if (userProfile?.tipo_usuario === 'professor') {
     return (
       <TeacherDashboardEnhanced
-        onNavigateToAttendance={handleNavigateToAttendance}
+        professorId={userProfile.id}
       />
     )
   }

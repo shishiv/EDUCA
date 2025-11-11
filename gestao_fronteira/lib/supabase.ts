@@ -18,25 +18,10 @@ export type Tables<T extends keyof Database['public']['Tables']> = Database['pub
 export type Inserts<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
 export type Updates<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
 
-// Server-side Supabase client for API routes
-export function createServerClient() {
-  return createSupabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        get: () => undefined,
-        set: () => {},
-        remove: () => {},
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-        detectSessionInUrl: false
-      }
-    }
-  )
-}
+// NOTA: Para clientes server-side, use:
+// - lib/supabase/server.ts createClient() para Server Components e Server Actions
+// - lib/supabase/server.ts createAdminClient() para operações admin (bypass RLS)
+// NUNCA crie clientes server-side diretamente neste arquivo!
 
 // Aliases para facilitar o uso
 export type User = Tables<'users'>

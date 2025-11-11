@@ -2,6 +2,8 @@
 
 import { supabase, Tables } from './supabase'
 import { User } from '@supabase/supabase-js'
+import { logger } from './logger'
+import { getClientIP } from './ip-tracking'
 
 export interface AuthUser extends User {
   user_metadata?: {
@@ -24,15 +26,24 @@ export interface AuditLog {
   created_at?: string
 }
 
-// Audit logging function
-export const logAuthEvent = async (action: AuditLog['action'], userId?: string, details?: Record<string, any>) => {
+// Audit logging function with improved IP tracking
+export const logAuthEvent = async (
+  action: AuditLog['action'],
+  userId?: string,
+  details?: Record<string, any>,
+  headers?: Headers
+) => {
   try {
+    // Get real IP address using improved IP tracking
+    const ipAddress = await getClientIP(headers)
+    const userAgent = headers?.get('user-agent') || (typeof window !== 'undefined' ? navigator.userAgent : 'server')
+
     const auditData: AuditLog = {
       user_id: userId || 'anonymous',
       action,
       details,
-      ip_address: typeof window !== 'undefined' ? 'client-side' : 'server-side',
-      user_agent: typeof window !== 'undefined' ? navigator.userAgent : 'server',
+      ip_address: ipAddress,
+      user_agent: userAgent,
     }
 
     // In a real implementation, this would save to an audit_logs table
@@ -113,46 +124,19 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       .single()
 
     if (error) {
-      // If user doesn't exist in users table, get their email from auth and create a basic profile
-      // console.warn('Failed to fetch user profile from database:', error.message)
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (user && user.id === userId) {
-          // Create a mock profile with user's actual email
-          const mockProfile: UserProfile = {
-            id: userId,
-            email: user.email || 'user@fronteira.mg.gov.br',
-            nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário',
-            tipo_usuario: 'admin', // Default to admin for now
-            escola_id: null,
-            ativo: true,
-            created_at: new Date().toISOString()
-          }
-
-          // console.log('Created mock profile for user:', mockProfile)
-          return mockProfile
+      // SECURITY: Never return mock profile - this prevents privilege escalation
+      logger.error('[AUTH] Failed to fetch user profile from database', error, {
+        metadata: {
+          userId,
+          errorCode: error.code
         }
-      } catch (authError) {
-        // console.error('Error getting auth user:', authError)
-      }
-
-      // Fallback mock data
-      return {
-        id: userId,
-        email: 'admin@fronteira.mg.gov.br',
-        nome: 'Administrador do Sistema',
-        tipo_usuario: 'admin',
-        escola_id: null,
-        ativo: true,
-        created_at: new Date().toISOString()
-      }
+      })
+      return null
     }
 
     return data
   } catch (error) {
-    // console.error('Error fetching user profile:', error)
+    logger.error('[AUTH] Error fetching user profile', error as Error)
     return null
   }
 }
@@ -179,22 +163,19 @@ export const createUserProfile = async (userData: {
       .single()
 
     if (error) {
-      // console.warn('Failed to create user profile in database, returning mock data:', error.message)
-      // Return mock data if database operation fails
-      return {
-        id: userData.id,
-        email: userData.email,
-        nome: userData.nome,
-        tipo_usuario: userData.tipo_usuario,
-        escola_id: userData.escola_id || null,
-        ativo: true,
-        created_at: new Date().toISOString()
-      }
+      // SECURITY: Never return mock data - throw error instead
+      logger.error('[AUTH] Failed to create user profile in database', error, {
+        metadata: {
+          userId: userData.id,
+          errorCode: error.code
+        }
+      })
+      throw new Error(`Failed to create user profile: ${error.message}`)
     }
 
     return data
   } catch (error) {
-    // console.error('Error creating user profile:', error)
+    logger.error('[AUTH] Error creating user profile', error as Error)
     throw error
   }
 }

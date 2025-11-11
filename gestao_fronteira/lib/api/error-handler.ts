@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
+import { logger } from '@/lib/logger'
 
 export interface ApiError {
   code: string
@@ -144,7 +145,7 @@ export class DatabaseError extends ApiErrorBase {}
  * Função principal para tratamento de erros
  */
 export function handleApiError(error: unknown): NextResponse {
-  console.error('API Error:', error)
+  logger.error('API Error', error as Error)
 
   // Erro customizado da API
   if (error instanceof ApiErrorBase) {

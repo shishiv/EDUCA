@@ -143,18 +143,14 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
    SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key
    ```
 
-4. **Execute as migrações do banco**
-   ```bash
-   supabase start
-   supabase db push
-   ```
-
-5. **Inicie o servidor de desenvolvimento**
+4. **Inicie o servidor de desenvolvimento**
    ```bash
    pnpm dev
    ```
 
    Acesse http://localhost:3000 no seu navegador.
+
+   **Nota**: As migrações do banco são aplicadas automaticamente através do Supabase MCP. Para desenvolvimento local, use a CLI do Supabase: `supabase start` e `supabase db push`.
 
 ## 📁 Estrutura do Projeto
 
@@ -210,6 +206,13 @@ pnpm dev:municipal    # Servidor municipal na porta 3000
 pnpm build            # Build de produção
 pnpm start            # Servidor de produção
 pnpm start:fronteira  # Servidor de produção com domínio municipal
+
+# Código e Banco de Dados (pnpm recomendado)
+pnpm install          # Instalar dependências
+pnpm lint             # ESLint check
+pnpm typecheck        # Validação TypeScript
+pnpm test             # Testes unitários (Jest)
+pnpm test:e2e         # Testes end-to-end (Playwright)
 ```
 
 ### 🌐 Acesso ao Sistema
@@ -231,6 +234,27 @@ pnpm seed:dev     # Popula banco com dados de desenvolvimento
 pnpm seed:clear   # Limpa dados de desenvolvimento
 pnpm db:types     # Gera tipos TypeScript do Supabase
 ```
+
+### Logging Centralizado
+O projeto usa um sistema centralizado de logging para substituir `console.log/error`:
+```typescript
+import { logger } from '@/lib/logger'
+
+// Erro com contexto
+logger.error('Operação falhou', error, {
+  feature: 'attendance',
+  action: 'mark_absence',
+  studentId: 123
+})
+
+// Info/debug
+logger.info('Operação bem-sucedida', {
+  feature: 'attendance',
+  studentCount: 42
+})
+```
+
+**Importante**: Não use `console.log()` ou `console.error()` diretamente. Use sempre `logger` para manter logs estruturados e rastreáveis.
 
 ## 🏗️ Arquitetura do Sistema
 
@@ -266,6 +290,13 @@ pnpm db:types     # Gera tipos TypeScript do Supabase
 2. JWT token do Supabase
 3. Verificação de role e escola
 4. Redirecionamento baseado em permissões
+5. Retry logic com 5 tentativas para garantir profile disponível
+
+#### Row Level Security (RLS)
+- **Isolamento por escola**: Cada usuário só acessa dados de sua escola
+- **Controle de operações**: Políticas específicas para SELECT, INSERT, UPDATE, DELETE
+- **Auditoria completa**: Todas as mudanças registradas em `audit_logs`
+- **Conformidade legal**: Cumprimento de LGPD e padrões educacionais brasileiros
 
 ## 🔧 Configuração de Desenvolvimento
 

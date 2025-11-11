@@ -5,10 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { createClient } from '@/lib/supabase/server'
 
 // Validation schemas
 const SessionParamsSchema = z.object({
@@ -31,22 +30,6 @@ const StatusUpdateSchema = z.object({
     .max(500, 'Motivo muito longo (máximo 500 caracteres)')
     .optional()
 })
-
-// Create Supabase client
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-}
 
 // Validate authentication
 async function validateAuth(supabase: any) {
@@ -147,7 +130,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
     const { id } = await params
 

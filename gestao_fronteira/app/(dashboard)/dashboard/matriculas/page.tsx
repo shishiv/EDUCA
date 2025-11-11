@@ -34,25 +34,29 @@ interface Matricula {
     nome_completo: string
     data_nascimento: string
     cpf?: string
-    sexo: 'M' | 'F'
+    sexo?: string
   }
   turma: {
     id: string
     nome: string
     serie: string
-    escola: {
+    escola?: {
       nome: string
-      tipo: string
+      tipo?: string
     }
     professor?: {
       nome: string
     }
   }
+  escola?: {
+    id: string
+    nome: string
+  }
   ano_letivo: number
   data_matricula: string
-  situacao: 'ativa' | 'transferida' | 'concluida' | 'cancelada'
+  situacao: string
   observacoes?: string
-  created_at: string
+  created_at: string | null
 }
 
 const mockMatriculas: Matricula[] = [
@@ -259,9 +263,9 @@ export default function MatriculasPage() {
         created_at: matricula.created_at
       })) || []
 
-      setMatriculas(formattedMatriculas)
+      setMatriculas(formattedMatriculas as any)
     } catch (error) {
-      logger.error('Error loading matriculas', { error })
+      logger.error('Error loading matriculas', error as any)
       toast.error('Erro ao carregar lista de matrículas')
       setMatriculas([])
     } finally {
@@ -353,11 +357,11 @@ export default function MatriculasPage() {
     const matchesSearch = matricula.aluno.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
                          matricula.aluno.cpf?.includes(search) ||
                          matricula.turma.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         matricula.turma.escola.nome.toLowerCase().includes(search.toLowerCase())
-    
+                         matricula.turma.escola?.nome.toLowerCase().includes(search.toLowerCase())
+
     const matchesSituacao = situacaoFilter === 'todas' || matricula.situacao === situacaoFilter
     const matchesAno = anoFilter === 'todos' || matricula.ano_letivo.toString() === anoFilter
-    const matchesEscola = escolaFilter === 'todas' || matricula.turma.escola.nome === escolaFilter
+    const matchesEscola = escolaFilter === 'todas' || matricula.turma.escola?.nome === escolaFilter
 
     return matchesSearch && matchesSituacao && matchesAno && matchesEscola
   })
@@ -368,7 +372,7 @@ export default function MatriculasPage() {
   const matriculasConcluidas = matriculas.filter(m => m.situacao === 'concluida').length
 
   const anos = Array.from(new Set(matriculas.map(m => m.ano_letivo))).sort((a, b) => b - a)
-  const escolas = Array.from(new Set(matriculas.map(m => m.turma.escola.nome)))
+  const escolas = Array.from(new Set(matriculas.map(m => m.turma.escola?.nome).filter(Boolean)))
 
   if (loading) {
     return (
@@ -489,7 +493,7 @@ export default function MatriculasPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
-                {escolas.map((escola) => (
+                {escolas.map((escola) => escola && (
                   <SelectItem key={escola} value={escola}>
                     {escola}
                   </SelectItem>
@@ -542,7 +546,7 @@ export default function MatriculasPage() {
                       <div className="space-y-1">
                         <div className="font-medium">{matricula.turma.nome}</div>
                         <div className="text-sm text-gray-500">
-                          {matricula.turma.serie} • {matricula.turma.escola.nome}
+                          {matricula.turma.serie} • {matricula.turma.escola?.nome || '-'}
                         </div>
                         {matricula.turma.professor && (
                           <div className="text-xs text-gray-400">

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '../logger'
 
 export interface AuthenticatedUser {
   id: string
@@ -49,7 +50,7 @@ export class ValidationError extends Error {
  * Verifica se o usuário está autenticado e retorna dados do usuário
  */
 export async function authenticateUser(): Promise<AuthenticatedUser> {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -153,7 +154,7 @@ export function withAuth<T = any>(
       } as ApiResponse<T>)
 
     } catch (error) {
-      console.error('API Error:', error)
+      logger.error('API Error', error as Error)
 
       if (error instanceof AuthenticationError) {
         return NextResponse.json(
@@ -258,7 +259,7 @@ export async function validateClassAccess(
   user: AuthenticatedUser,
   turmaId: string
 ): Promise<any> {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -308,7 +309,7 @@ export async function validateSessionAccess(
   user: AuthenticatedUser,
   aulaId: string
 ): Promise<any> {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

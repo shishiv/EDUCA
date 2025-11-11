@@ -110,7 +110,7 @@ export default function NovoResponsavelPage() {
         return
       }
 
-      logger.info('Responsável cadastrado:', data)
+      logger.info('Responsável cadastrado:', { metadata: data })
       toast.success('Responsável cadastrado com sucesso!')
       router.push('/dashboard/responsaveis')
     } catch (error: any) {

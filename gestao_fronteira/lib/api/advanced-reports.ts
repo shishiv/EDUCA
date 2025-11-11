@@ -14,6 +14,7 @@
 
 import { BaseApiService } from './enhanced-base'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 // ===== INTERFACES =====
 export interface AttendanceComplianceReport {
@@ -427,7 +428,7 @@ export class AdvancedReportsService extends BaseApiService {
         monthly_trends: monthlyTrends
       }
     } catch (error) {
-      console.error('Error generating attendance compliance report:', error)
+      logger.error('Error generating attendance compliance report', error as Error)
       throw error
     }
   }
@@ -618,7 +619,7 @@ export class AdvancedReportsService extends BaseApiService {
         recommendations
       }
     } catch (error) {
-      console.error('Error generating Educacenso validation report:', error)
+      logger.error('Error generating Educacenso validation report', error as Error)
       throw error
     }
   }
@@ -742,7 +743,7 @@ export class AdvancedReportsService extends BaseApiService {
         recommendations: this.generateStudentRecommendations(attendanceStatus, finalStatus, annualAverage)
       }
     } catch (error) {
-      console.error('Error generating student progress report:', error)
+      logger.error('Error generating student progress report', error as Error)
       throw error
     }
   }

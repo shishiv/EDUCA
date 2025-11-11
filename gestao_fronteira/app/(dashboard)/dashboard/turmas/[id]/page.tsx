@@ -28,8 +28,8 @@ interface Turma {
   serie: string
   capacidade: number
   turno: string
-  ativo: boolean
-  created_at: string
+  ativo: boolean | null
+  created_at: string | null
   escola_id: string
   professor_id: string | null
   escolas: {
@@ -48,7 +48,7 @@ interface Matricula {
     nome_completo: string
     data_nascimento: string
     sexo: string
-    ativo: boolean
+    ativo: boolean | null
   }
 }
 
@@ -142,7 +142,7 @@ export default function TurmaDetalhesPage() {
         ausentes: 0
       }))
 
-      setSessoes(transformedSessoes)
+      setSessoes(transformedSessoes as any)
 
       // Calculate frequency stats
       const matriculasAtivas = matriculasData?.filter(m => m.situacao === 'ativa') || []
@@ -155,12 +155,14 @@ export default function TurmaDetalhesPage() {
       setFrequenciaStats(stats)
 
       logger.info('Detalhes da turma carregados:', {
-        turma: turmaData.nome,
-        matriculas: matriculasData?.length || 0,
-        sessoes: sessoesData?.length || 0
+        metadata: {
+          turma: turmaData.nome,
+          matriculas: matriculasData?.length || 0,
+          sessoes: sessoesData?.length || 0
+        }
       })
     } catch (error) {
-      logger.error('Erro ao carregar detalhes da turma:', error)
+      logger.error('Erro ao carregar detalhes da turma:', error as any)
       toast.error('Erro ao carregar dados da turma')
       router.push('/dashboard/turmas')
     } finally {

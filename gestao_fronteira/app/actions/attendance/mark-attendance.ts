@@ -13,6 +13,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logger } from '@/lib/logger'
 
 interface MarkAttendanceParams {
   sessao_aula_id: string
@@ -97,7 +98,13 @@ export async function markAttendanceAction(
       .single()
 
     if (upsertError) {
-      console.error('Erro ao marcar frequência:', upsertError)
+      logger.error('Erro ao marcar frequência', upsertError, {
+        metadata: {
+          sessaoAulaId: params.sessao_aula_id,
+          alunoId: params.aluno_id,
+          data: params.data
+        }
+      })
       return {
         success: false,
         error: `Erro ao salvar frequência: ${upsertError.message}`,
@@ -112,7 +119,12 @@ export async function markAttendanceAction(
       record: attendanceRecord,
     }
   } catch (error) {
-    console.error('Erro inesperado ao marcar frequência:', error)
+    logger.error('Erro inesperado ao marcar frequência', error as Error, {
+      metadata: {
+        sessaoAulaId: params.sessao_aula_id,
+        alunoId: params.aluno_id
+      }
+    })
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

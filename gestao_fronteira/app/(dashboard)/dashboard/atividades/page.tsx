@@ -61,10 +61,10 @@ interface AuditLog {
   users?: {
     nome: string
     tipo_usuario: string
-  }
+  } | null
   escolas?: {
     nome: string
-  }
+  } | null
 }
 
 interface StatsData {

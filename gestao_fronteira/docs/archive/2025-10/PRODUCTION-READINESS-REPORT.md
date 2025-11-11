@@ -1,3 +1,15 @@
+# ⚠️ ARCHIVED DOCUMENT - SUPERSEDED
+
+**Archived Date**: 2025-01-20
+**Superseded By**: `gestao_fronteira/BUGS-ANALYSIS.md`
+**Reason**: Outdated analysis from October 2025. Project status has significantly improved:
+- **Old Status (2025-10-10)**: "NOT READY FOR PRODUCTION" (60% estimate)
+- **Current Status (2025-01-11)**: **90% Production-Ready** with all 6 critical bugs fixed ✅
+
+**👉 For current project status, see**: `gestao_fronteira/BUGS-ANALYSIS.md`
+
+---
+
 # 📊 RELATÓRIO DE PRONTIDÃO PARA PRODUÇÃO
 **Sistema de Gestão Escolar - Fronteira/MG**
 
@@ -251,7 +263,7 @@ Referenced from: C:\Repos\SRE\gestao_fronteira\.eslintrc.json
    - Alinhar StudentFormData com API expectations
    - Resolver Control<> incompatibilities
 
-**Success Criteria**: `bun run typecheck` passa sem erros
+**Success Criteria**: `pnpm run typecheck` passa sem erros
 
 ---
 
@@ -270,17 +282,17 @@ Referenced from: C:\Repos\SRE\gestao_fronteira\.eslintrc.json
 
 3. **[2h] Fix ESLint Config**
    - Atualizar .eslintrc.json
-   - Rodar `bun run lint` e verificar
+   - Rodar `pnpm run lint` e verificar
    - Documentar regras ignoradas (se necessário)
 
 4. **[1h] Run Test Suite**
-   - `bun test` deve ter >80% passing
+   - `pnpm test` deve ter >80% passing
    - Documentar falhas conhecidas
 
 **Success Criteria**:
-- `bun run typecheck` ✅
-- `bun run lint` ✅
-- `bun test` >80% passing ✅
+- `pnpm run typecheck` ✅
+- `pnpm run lint` ✅
+- `pnpm test` >80% passing ✅
 
 ---
 

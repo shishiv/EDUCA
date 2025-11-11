@@ -72,7 +72,7 @@ export default function FrequenciaPage() {
           {userProfile.escola_id && (
             <>
               <br />
-              <strong>Escola:</strong> {userProfile.escola?.nome || 'Escola não informada'}
+              <strong>Escola:</strong> {(userProfile as any).escola?.nome || 'Escola não informada'}
             </>
           )}
         </AlertDescription>
