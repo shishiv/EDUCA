@@ -27,7 +27,7 @@ export default function NovaEscolaPage() {
   const [diretoresDisponiveis, setDiretoresDisponiveis] = useState<Array<{
     id: string
     nome: string
-    email: string
+    email: string | null
   }>>([])
 
   const [formData, setFormData] = useState({
@@ -60,10 +60,10 @@ export default function NovaEscolaPage() {
 
   const loadDiretores = async () => {
     try {
-      const diretores = await schoolsApi.getAvailableDirectors()
+      const diretores = await schoolsApi.getAvailableDirectors() as any
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
-      logger.error('Erro ao carregar diretores:', error)
+      logger.error('Erro ao carregar diretores:', error as any)
       toast.error('Erro ao carregar lista de diretores disponíveis')
     }
   }

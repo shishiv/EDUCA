@@ -187,10 +187,10 @@ enhanced-abrir-aula-workflow.tsx // Three-phase attendance workflow
 **Day 5: Testing & Validation**
 ```bash
 # Comprehensive testing suite
-bun run test:compliance       # Brazilian educational compliance
-bun run test:attendance      # Attendance workflow validation
-bun run test:performance     # Performance target verification
-bun run test:accessibility   # WCAG 2.1 AA compliance
+pnpm run test:compliance       # Brazilian educational compliance
+pnpm run test:attendance      # Attendance workflow validation
+pnpm run test:performance     # Performance target verification
+pnpm run test:accessibility   # WCAG 2.1 AA compliance
 ```
 
 ### **Week 2: Government Integration & Security (Days 6-8)**
@@ -232,10 +232,10 @@ accessibility-enhancement.ts // WCAG 2.1 AA compliance
 **Day 10: Production Deployment**
 ```bash
 # Production readiness
-bun run build               # Production build optimization
-bun run test:e2e           # End-to-end testing
-bun run deploy:production  # Production deployment
-bun run monitor:performance # Performance monitoring setup
+pnpm run build               # Production build optimization
+pnpm run test:e2e           # End-to-end testing
+pnpm run deploy:production  # Production deployment
+pnpm run monitor:performance # Performance monitoring setup
 ```
 
 ---

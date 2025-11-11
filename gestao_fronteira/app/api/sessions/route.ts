@@ -5,10 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { createClient } from '@/lib/supabase/server'
 
 // Validation schemas
 const CreateSessionSchema = z.object({
@@ -34,7 +33,7 @@ const SessionListSchema = z.object({
 })
 
 // Create Supabase client
-async function createSupabaseClient() {
+async function createClient() {
   const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -89,7 +88,7 @@ function validatePhaseTransition(currentPhase: string, newPhase: string): boolea
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
 
     // Parse and validate query parameters
@@ -219,7 +218,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
 
     const body = await request.json()

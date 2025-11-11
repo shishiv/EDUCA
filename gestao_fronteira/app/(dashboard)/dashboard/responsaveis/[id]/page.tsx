@@ -39,7 +39,7 @@ interface Responsavel {
   parentesco: string
   endereco: string | null
   profissao: string | null
-  created_at: string
+  created_at: string | null
 }
 
 interface Aluno {
@@ -47,7 +47,7 @@ interface Aluno {
   nome_completo: string
   data_nascimento: string
   sexo: string
-  ativo: boolean
+  ativo: boolean | null
   matriculas?: Array<{
     situacao: string
     turmas: {
@@ -136,11 +136,13 @@ export default function ResponsavelDetalhesPage() {
       setAlunos(alunosData || [])
 
       logger.info('Responsável e alunos carregados:', {
-        responsavel: respData.nome,
-        alunos: alunosData?.length || 0
+        metadata: {
+          responsavel: respData.nome,
+          alunos: alunosData?.length || 0
+        }
       })
     } catch (error) {
-      logger.error('Erro ao carregar responsável:', error)
+      logger.error('Erro ao carregar responsável:', error as any)
       toast.error('Erro ao carregar dados do responsável')
       router.push('/dashboard/responsaveis')
     } finally {

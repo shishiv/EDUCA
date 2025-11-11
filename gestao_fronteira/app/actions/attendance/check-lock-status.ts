@@ -16,6 +16,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
 
 interface CheckLockStatusResult {
   success: boolean
@@ -140,7 +141,12 @@ export async function checkLockStatusAction(
       lockReason,
     }
   } catch (error) {
-    console.error('Erro inesperado ao verificar status de bloqueio:', error)
+    logger.error('Erro inesperado ao verificar status de bloqueio', error as Error, {
+      metadata: {
+        sessionIdOrTurmaId,
+        date
+      }
+    })
     return {
       success: false,
       isLocked: false,

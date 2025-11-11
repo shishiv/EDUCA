@@ -64,11 +64,11 @@ export default function UsuariosPage() {
         throw error
       }
 
-      logger.info('Success! Users found', { count: data?.length })
-      logger.info('Users data', { data })
+      logger.info('Success! Users found', { metadata: { count: data?.length } })
+      logger.info('Users data', { metadata: { data } })
       setUsuarios(data || [])
     } catch (error) {
-      logger.error('Erro ao carregar usuários:', error)
+      logger.error('Erro ao carregar usuários:', error as any)
       toast.error('Erro ao carregar lista de usuários')
     } finally {
       setLoading(false)

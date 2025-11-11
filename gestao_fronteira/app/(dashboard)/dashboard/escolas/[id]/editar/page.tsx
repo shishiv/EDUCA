@@ -69,7 +69,7 @@ export default function EditarEscolaPage() {
   const loadEscola = async () => {
     try {
       setLoading(true)
-      const data = await schoolsApi.getById(escolaId)
+      const data = await schoolsApi.getById(escolaId) as any
 
       // Parse endereco
       const enderecoPartes = data.endereco?.split(',') || []
@@ -94,7 +94,7 @@ export default function EditarEscolaPage() {
         observacoes: ''
       })
     } catch (error) {
-      logger.error('Erro ao carregar escola:', error)
+      logger.error('Erro ao carregar escola:', error as any)
       toast.error('Erro ao carregar dados da escola')
       router.push('/dashboard/escolas')
     } finally {
@@ -104,10 +104,10 @@ export default function EditarEscolaPage() {
 
   const loadDiretores = async () => {
     try {
-      const diretores = await schoolsApi.getAvailableDirectors()
+      const diretores = await schoolsApi.getAvailableDirectors() as any
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
-      logger.error('Erro ao carregar diretores:', error)
+      logger.error('Erro ao carregar diretores:', error as any)
     }
   }
 

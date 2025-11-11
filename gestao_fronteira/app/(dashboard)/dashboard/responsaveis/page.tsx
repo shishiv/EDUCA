@@ -36,7 +36,17 @@ interface Responsavel {
   parentesco: string
   endereco: string | null
   profissao: string | null
-  created_at: string
+  created_at: string | null
+  data_nascimento: string | null
+  escolaridade: string | null
+  estado_civil: string | null
+  nacionalidade: string | null
+  rg: string | null
+  orgao_emissor_rg: string | null
+  renda_familiar: number | null
+  ativo: boolean
+  lgpd_consentimento: boolean
+  lgpd_data_consentimento: string | null
 }
 
 interface ResponsavelWithAlunos extends Responsavel {
@@ -82,9 +92,9 @@ export default function ResponsaveisPage() {
       }))
 
       setResponsaveis(responsaveisWithCount)
-      logger.info('Responsáveis carregados:', { count: responsaveisWithCount.length })
+      logger.info('Responsáveis carregados:', { metadata: { count: responsaveisWithCount.length } })
     } catch (error) {
-      logger.error('Erro ao carregar responsáveis:', error)
+      logger.error('Erro ao carregar responsáveis:', error as any)
       toast.error('Erro ao carregar lista de responsáveis')
       setResponsaveis([])
     } finally {

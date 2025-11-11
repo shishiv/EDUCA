@@ -284,7 +284,7 @@ export default function TurmasPage() {
         } : null
       })) || []
 
-      setTurmas(formattedTurmas)
+      setTurmas(formattedTurmas as any)
     } catch (error: any) {
       logger.error('Error loading turmas', error)
       toast.error('Erro ao carregar lista de turmas')

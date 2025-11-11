@@ -54,18 +54,18 @@ interface Matricula {
   turma_id: string
   ano_letivo: number
   data_matricula: string
-  situacao: 'ativa' | 'transferida' | 'concluida' | 'cancelada'
+  situacao: string
   observacoes: string | null
-  created_at: string
-  alunos?: {
+  created_at: string | null
+  alunos: {
     id: string
     nome_completo: string
     data_nascimento: string
     cpf: string | null
     sexo: string
-    ativo: boolean
+    ativo: boolean | null
   }
-  turmas?: {
+  turmas: {
     id: string
     nome: string
     serie: string
@@ -233,14 +233,14 @@ export default function MatriculaDetailsPage() {
   }
 
   const getSituacaoBadge = (situacao: Matricula['situacao']) => {
-    const config = {
+    const config: Record<string, { variant: any; icon: any; label: string; color: string }> = {
       ativa: { variant: 'default' as const, icon: CheckCircle2, label: 'Ativa', color: 'text-green-600 bg-green-50' },
       transferida: { variant: 'secondary' as const, icon: TrendingUp, label: 'Transferida', color: 'text-blue-600 bg-blue-50' },
       concluida: { variant: 'outline' as const, icon: CheckCircle2, label: 'Concluída', color: 'text-gray-600 bg-gray-50' },
       cancelada: { variant: 'destructive' as const, icon: XCircle, label: 'Cancelada', color: 'text-red-600 bg-red-50' }
     }
 
-    const cfg = config[situacao]
+    const cfg = config[situacao] || config['ativa']
     const Icon = cfg.icon
 
     return (
@@ -500,7 +500,7 @@ export default function MatriculaDetailsPage() {
             </div>
             <div className="pt-2 border-t">
               <Label className="text-gray-600">Data de Cadastro</Label>
-              <p className="text-sm text-gray-600">{formatDate(matricula.created_at)}</p>
+              <p className="text-sm text-gray-600">{formatDate(matricula.created_at || '')}</p>
             </div>
           </CardContent>
         </Card>

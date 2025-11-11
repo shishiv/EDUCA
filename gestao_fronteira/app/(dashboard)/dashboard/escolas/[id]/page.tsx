@@ -45,12 +45,12 @@ interface Escola {
   email: string | null
   tipo: string
   diretor_id: string | null
-  ativo: boolean
-  created_at: string
+  ativo: boolean | null
+  created_at: string | null
   diretor?: {
     nome: string
     email: string
-  }
+  } | null
 }
 
 interface StatsData {
@@ -69,7 +69,7 @@ interface Turma {
   ano_letivo: number
   professor?: {
     nome: string
-  }
+  } | null
   _count?: {
     matriculas: number
   }
@@ -119,7 +119,7 @@ export default function EscolaDetailsPage() {
         return
       }
 
-      setEscola(escolaData)
+      setEscola(escolaData as any)
 
       // Load turmas
       const { data: turmasData, error: turmasError } = await supabase

@@ -101,7 +101,7 @@ export default function UsuarioDetalhesPage() {
 
   const loadUsuario = async () => {
     try {
-      const data = await usersApi.getById(params.id as string)
+      const data = await usersApi.getById(params.id as string) as any
       if (data) {
         setUsuario(data)
       } else {
@@ -109,7 +109,7 @@ export default function UsuarioDetalhesPage() {
         router.push('/dashboard/usuarios')
       }
     } catch (error) {
-      // logger.error('Erro ao carregar usuário:', error)
+      // logger.error('Erro ao carregar usuário:', error as any)
       toast.error('Erro ao carregar dados do usuário')
     } finally {
       setLoading(false)

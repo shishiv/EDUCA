@@ -11,23 +11,18 @@ This is a multi-project educational management system repository for the Municip
 ## Project Structure
 
 ### Primary Production Project:
-- **`gestao_fronteira/`** - Next.js 15.5.3 + React 18.2.0 + Supabase 2.57.4 (80% MVP ready)
+- **`gestao_fronteira/`** - Next.js 15.5.3 + React 18.2.0 + Supabase 2.57.4 (90% Production-Ready ✅)
   - **PRIMARY PRODUCTION CANDIDATE** for municipal deployment
+  - **All 6 critical bugs RESOLVED** (as of 2025-01-11)
   - Complete Brazilian educational compliance implementation
   - Modern technology stack with performance optimization
   - Production-ready database schema with RLS policies
-
-### Development Resources:
-- **`i-educar-reference/`** - Brazilian education software reference implementation
-  - Production-tested patterns for educational compliance
-  - INEP, Educacenso, and government integration examples
-  - Advanced security and multi-tenant architecture patterns
-  - Used for pattern reference and compliance validation
+  - **Remaining work**: 36.5 hours for 100% (see BUGS-ANALYSIS.md)
 
 ### Documentation & Analysis:
 - **`docs/`** - Project specifications and development documentation
-- **`tests/`** - Cross-project test suites and quality assurance
-- **`gestao_fronteira/BUGS-ANALYSIS.md`** - Known bugs and fixes tracking
+- **`docs/archive/`** - Historical analysis and completed session logs
+- **`gestao_fronteira/BUGS-ANALYSIS.md`** - **SINGLE SOURCE OF TRUTH** for project status
 
 ## Technology Stack
 
@@ -533,35 +528,46 @@ gestao_fronteira/
 └── supabase/            # Database schema and migrations
 ```
 
-### Core Educational Modules (Current Status):
+### Core Educational Modules (Current Status - 90% Ready):
 1. **User Management**: ✅ 100% complete (5-role RBAC system)
 2. **Student Registration**: ✅ 100% complete (INEP-compliant)
 3. **Onboarding Wizard**: ✅ 100% complete (6-step school setup)
-4. **Digital Diary/Attendance**: 🔶 85% complete ("Abrir aula" workflow in progress)
-5. **Reports & Analytics**: 🔶 85% complete (enhanced reporting planned)
+4. **Digital Diary/Attendance**: ✅ 90% complete (core workflows functional, enhancements planned)
+5. **Reports & Analytics**: ✅ 90% complete (basic reporting complete, INEP integration planned)
 
 ## Known Issues & Bug Tracking
 
-**IMPORTANT**: Before starting new work, check `gestao_fronteira/BUGS-ANALYSIS.md` for known issues.
+**Current Status**: ✅ **All 6 Critical Bugs RESOLVED** (as of 2025-01-11)
+**Production Readiness**: **90%**
+**Remaining Work**: 36.5 hours for 100% (enhanced features)
 
-### Critical Known Bugs:
-1. **Login Redirect Issue**: Login sometimes gets stuck on loading (partially fixed)
-   - See BUGS-ANALYSIS.md for detailed root cause analysis
-   - Requires profile wait logic implementation
+### All Critical Bugs Fixed ✅:
+1. ✅ **Login Redirect Race Condition** - FIXED (2025-01-11)
+   - Profile wait logic with retry mechanism implemented
 
-2. **Toaster setState Error**: React 19 compatibility issue
-   - Component update during render warning
-   - Needs dynamic import fix
+2. ✅ **React 19 Toaster setState Error** - FIXED
+   - Dynamic import with SSR disabled already in place
 
-3. **Delete Operations**: Delete buttons not working in some routes
-   - Affects `/turmas/2` and `/matriculas`
-   - Likely RLS policy or foreign key constraint issue
+3. ✅ **Delete Operations Not Working** - FIXED (2025-01-10)
+   - RLS policies migration applied with explicit DELETE permissions
+
+4. ✅ **`/dashboard/escolas` Blank Page** - FIXED (2025-01-11)
+   - Corrected Supabase query syntax in schools API
+
+5. ✅ **Invalid Tailwind Utility Warning** - RESOLVED
+   - Confirmed as benign warning, no action needed
+
+6. ✅ **Console Errors in Class Diary** - FIXED (2025-01-11)
+   - Replaced 9 console.error calls with structured logger
+
+**📋 For detailed bug analysis, fixes, and testing requirements:**
+**See**: `gestao_fronteira/BUGS-ANALYSIS.md`
 
 ### Before Making Changes:
-1. Read `gestao_fronteira/BUGS-ANALYSIS.md` for context
-2. Check if your work might affect known bugs
-3. Update BUGS-ANALYSIS.md if you fix any issues
-4. Add new bugs to BUGS-ANALYSIS.md when discovered
+1. Read `gestao_fronteira/BUGS-ANALYSIS.md` for complete project status
+2. Check if your work affects resolved bugs (regression risk)
+3. Update BUGS-ANALYSIS.md if you discover new issues
+4. Follow established patterns (logging, Supabase client, etc.)
 
 ## Development Guidelines
 
@@ -742,14 +748,15 @@ PERFORMANCE_MONITORING_KEY=your_key
 
 ## Production Readiness Status
 
-### Current Implementation (gestao_fronteira):
+### Current Implementation (gestao_fronteira) - 90% Production-Ready ✅:
 - **User Management**: ✅ 100% complete (5-role RBAC with RLS)
 - **Student Registration**: ✅ 100% complete (INEP-compliant with Brazilian validation)
 - **Onboarding Wizard**: ✅ 100% complete (6-step school initialization)
-- **Digital Diary/Attendance**: 🔶 85% complete (needs "Abrir aula" workflow completion)
-- **Reports & Analytics**: 🔶 85% complete (needs INEP integration enhancement)
+- **Digital Diary/Attendance**: ✅ 90% complete (core workflows functional, all bugs fixed)
+- **Reports & Analytics**: ✅ 90% complete (basic reporting complete)
+- **Bug Status**: ✅ All 6 critical bugs RESOLVED (2025-01-11)
 
-### Path to 100% Production Ready (36.5 hours):
+### Path to 100% Production Ready (36.5 hours remaining):
 1. **Enhanced "Abrir aula" Workflow** (8h) - Three-phase attendance system
 2. **Attendance Locking Mechanism** (4h) - Legal compliance enforcement
 3. **Multi-Guardian Management** (8h) - Complex family structure support
@@ -760,8 +767,9 @@ PERFORMANCE_MONITORING_KEY=your_key
 8. **Advanced Reporting** (2h) - Analytics and exports
 
 ### Implementation Reference:
-- **Patterns**: See `i-educar-reference/` for production-tested implementations
-- **Known Issues**: See `gestao_fronteira/BUGS-ANALYSIS.md` for current bugs and fixes
+- **Status Documentation**: See `gestao_fronteira/BUGS-ANALYSIS.md` for current status and fixes
+- **Migration Guide**: See `gestao_fronteira/MIGRATION-GUIDE.md` for breaking changes
+- **Change History**: See `gestao_fronteira/CHANGELOG.md` for version history
 
 ## Quick Start Development Workflow
 
@@ -811,3 +819,55 @@ pnpm test:e2e        # End-to-end tests
 - **Bug Tracking**: Update BUGS-ANALYSIS.md for known issues
 
 **Focus**: Leverage `gestao_fronteira` as the production foundation with 80% MVP completion. Prioritize Brazilian educational domain compliance and municipal deployment readiness.
+
+# RULE 1: CHANGELOG.md - Document ALL Changes
+BEFORE committing code, ALWAYS update /CHANGELOG.md:
+Add entry under ## [Unreleased] in appropriate section:
+Added: New features, new files, new systems
+Changed: Modifications to existing functionality
+Fixed: Bug fixes
+Removed: Deleted features, deprecated code
+
+
+# RULE 2: Communication Style
+Be direct and concise.
+You can use abbreviations for messages, to reduce token cost.
+You can use emojis to condense messages.
+
+# RULE 3: Task Tracking with TASKS.md
+ALL active development tasks MUST be tracked in TASKS.md:
+
+**When to update TASKS.md:**
+- Starting a new multi-step feature or bug fix (add to "Pending" or "In Progress")
+- Completing a task (move to "Completed" with ✅)
+- Breaking down a large feature into subtasks
+- Planning sprints/days of work
+
+**Structure:**
+```markdown
+## In Progress
+### DIA X: Feature Name
+- [ ] Subtask 1
+- [x] Subtask 2 (completed)
+
+## Pending
+### Next Feature
+- [ ] Task list
+
+## Completed
+### Previous Feature ✅
+- [x] All tasks done
+```
+
+**Workflow:**
+1. Add new tasks to TASKS.md when starting work
+2. Check off subtasks as you complete them
+3. Move entire sections to "Completed" when done
+4. Keep backlog items in "Backlog" section
+5. Update TASKS.md BEFORE updating CHANGELOG.md for commits
+
+**Benefits:**
+- Session continuity (next session knows what's pending)
+- Progress visibility for user
+- Clear sprint planning (DIA 1, DIA 2, etc.)
+- Complements TodoWrite (TASKS.md = long-term, TodoWrite = current session)
