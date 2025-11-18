@@ -47,6 +47,7 @@ import {
   Send
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { brazilianEducationalFieldHelp } from '@/lib/field-help/brazilian-educational-help'
 import { studentFormSchema } from '@/lib/validators/brazilian'
 
@@ -171,7 +172,11 @@ export function EnhancedStudentRegistrationForm({
     key: `student-registration-${student?.cpf || 'new'}`,
     onSave: async (data: EnhancedStudentFormData) => {
       // Save draft to localStorage or API
-      console.log('Auto-saving student data:', data)
+      logger.info('Auto-saving student data', {
+        feature: 'students',
+        action: 'auto_save',
+        metadata: { cpf: data.cpf, hasPhoto: !!data.foto_url }
+      })
       // In real implementation, this would call an API endpoint
     }
   }
@@ -179,7 +184,11 @@ export function EnhancedStudentRegistrationForm({
   // Handle form submission
   const handleSubmit = async (data: EnhancedStudentFormData) => {
     try {
-      console.log('Submitting student data:', data)
+      logger.info('Submitting student data', {
+        feature: 'students',
+        action: 'create',
+        metadata: { cpf: data.cpf, nome: data.nome_completo }
+      })
 
       // Here you would call your API
       // const result = await studentsApi.create(data)
@@ -188,7 +197,11 @@ export function EnhancedStudentRegistrationForm({
       onSuccess?.(data)
       router.push('/dashboard/alunos')
     } catch (error) {
-      console.error('Error submitting student:', error)
+      logger.error('Error submitting student', error as Error, {
+        feature: 'students',
+        action: 'create',
+        metadata: { cpf: data.cpf }
+      })
       toast.error('Erro ao cadastrar estudante. Tente novamente.')
       throw error
     }
@@ -197,14 +210,22 @@ export function EnhancedStudentRegistrationForm({
   // Handle draft save
   const handleSaveDraft = async (data: EnhancedStudentFormData) => {
     try {
-      console.log('Saving draft:', data)
+      logger.info('Saving draft', {
+        feature: 'students',
+        action: 'save_draft',
+        metadata: { cpf: data.cpf, nome: data.nome_completo }
+      })
 
       // Save to API as draft
       // const result = await studentsApi.saveDraft(data)
 
       toast.success('Rascunho salvo com sucesso!')
     } catch (error) {
-      console.error('Error saving draft:', error)
+      logger.error('Error saving draft', error as Error, {
+        feature: 'students',
+        action: 'save_draft',
+        metadata: { cpf: data.cpf }
+      })
       toast.error('Erro ao salvar rascunho.')
       throw error
     }
@@ -213,14 +234,22 @@ export function EnhancedStudentRegistrationForm({
   // Handle form validation
   const handleValidate = async (data: EnhancedStudentFormData) => {
     try {
-      console.log('Validating student data:', data)
+      logger.info('Validating student data', {
+        feature: 'students',
+        action: 'validate',
+        metadata: { cpf: data.cpf }
+      })
 
       // Perform additional validations
       // const validation = await studentsApi.validate(data)
 
       toast.success('Dados validados com sucesso!')
     } catch (error) {
-      console.error('Validation failed:', error)
+      logger.error('Validation failed', error as Error, {
+        feature: 'students',
+        action: 'validate',
+        metadata: { cpf: data.cpf }
+      })
       throw error
     }
   }

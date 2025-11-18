@@ -4,6 +4,8 @@
  * Supports Brazilian educational compliance requirements (LGPD)
  */
 
+import { logger } from '@/lib/logger'
+
 /**
  * Get client IP address from Next.js request headers
  * Checks multiple headers in order of reliability:
@@ -112,7 +114,11 @@ function sanitizeIP(ip: string): string {
   }
 
   // If invalid format, return 'invalid' instead of potentially malicious input
-  console.warn(`Invalid IP format detected: ${ip}`)
+  logger.warn(`Invalid IP format detected: ${ip}`, {
+    feature: 'security',
+    action: 'ip_validation',
+    metadata: { invalidIp: ip }
+  })
   return 'invalid-ip-format'
 }
 

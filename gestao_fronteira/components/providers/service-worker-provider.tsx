@@ -13,6 +13,7 @@ import React, { useEffect } from 'react'
 import { useServiceWorker } from '@/hooks/use-service-worker'
 import { toast } from 'sonner'
 import { WifiOff, Wifi, Download } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface ServiceWorkerProviderProps {
   children: React.ReactNode
@@ -24,7 +25,10 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
   // Show installation notification
   useEffect(() => {
     if (isInstalled) {
-      console.log('[SW Provider] Service worker installed successfully')
+      logger.info('Service worker installed successfully', {
+        feature: 'offline',
+        action: 'sw_installed'
+      })
 
       toast.success('Sistema preparado para uso offline', {
         description: 'Você pode marcar frequência mesmo sem internet.',
