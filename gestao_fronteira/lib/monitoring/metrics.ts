@@ -3,6 +3,8 @@
  * Free monitoring with enterprise-grade features
  */
 
+import { logger } from '@/lib/logger'
+
 interface Metric {
   name: string
   value: number
@@ -25,7 +27,12 @@ class MetricsCollector {
 
   private startAutoFlush() {
     this.flushTimer = setInterval(() => {
-      this.flush().catch(console.error)
+      this.flush().catch((error) => {
+        logger.error('Auto-flush failed', error, {
+          feature: 'monitoring',
+          action: 'auto_flush'
+        })
+      })
     }, this.flushInterval)
   }
 
@@ -46,7 +53,13 @@ class MetricsCollector {
 
     // Auto-flush if buffer is full
     if (this.metrics.length >= this.maxBufferSize) {
-      this.flush().catch(console.error)
+      this.flush().catch((error) => {
+        logger.error('Buffer flush failed', error, {
+          feature: 'monitoring',
+          action: 'buffer_flush',
+          metadata: { bufferSize: this.metrics.length }
+        })
+      })
     }
   }
 
@@ -129,10 +142,18 @@ class MetricsCollector {
       })
 
       if (!response.ok) {
-        console.error('Failed to send metrics to Grafana:', response.status)
+        logger.error('Failed to send metrics to Grafana', new Error(`HTTP ${response.status}`), {
+          feature: 'monitoring',
+          action: 'send_metrics',
+          metadata: { status: response.status, metricsCount: metricsToSend.length }
+        })
       }
     } catch (error) {
-      console.error('Metrics flush error:', error)
+      logger.error('Metrics flush error', error as Error, {
+        feature: 'monitoring',
+        action: 'flush_metrics',
+        metadata: { metricsCount: metricsToSend.length }
+      })
       // Don't throw - monitoring failures shouldn't break the app
     }
   }
@@ -176,7 +197,12 @@ const metricsCollector = new MetricsCollector()
 // Graceful shutdown
 if (typeof process !== 'undefined') {
   process.on('beforeExit', () => {
-    metricsCollector.shutdown().catch(console.error)
+    metricsCollector.shutdown().catch((error) => {
+      logger.error('Metrics shutdown failed', error, {
+        feature: 'monitoring',
+        action: 'shutdown'
+      })
+    })
   })
 }
 

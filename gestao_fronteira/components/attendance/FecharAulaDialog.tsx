@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Loader2, XCircle, CheckCircle } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface FecharAulaDialogProps {
   open: boolean
@@ -25,7 +26,11 @@ export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: Fe
       onOpenChange(false)
       setObservacoes('')
     } catch (error) {
-      console.error('Erro ao fechar aula:', error)
+      logger.error('Erro ao fechar aula', error as Error, {
+        feature: 'attendance',
+        action: 'close_session',
+        metadata: { sessaoId, hasObservacoes: !!observacoes }
+      })
     } finally {
       setLoading(false)
     }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Loader2, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface AbrirAulaWorkflowProps {
   turmaId: string
@@ -23,7 +24,11 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
       toast.success('Aula aberta com sucesso!')
       onSuccess?.()
     } catch (error) {
-      console.error('Erro ao abrir aula:', error)
+      logger.error('Erro ao abrir aula', error as Error, {
+        feature: 'attendance',
+        action: 'open_session',
+        metadata: { turmaId, professorId }
+      })
       toast.error('Erro ao abrir aula')
     } finally {
       setLoading(false)
