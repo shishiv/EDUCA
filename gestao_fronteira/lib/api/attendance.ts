@@ -464,7 +464,11 @@ export class AttendanceApiService extends BaseApiService {
     try {
       return await attendanceImmutability.generateLegalComplianceReport(sessionId)
     } catch (error) {
-      console.error('Error generating legal compliance report:', error)
+      logger.error('Error generating legal compliance report', error as Error, {
+        feature: 'attendance',
+        action: 'generate_compliance_report',
+        metadata: { sessionId }
+      })
       throw error
     }
   }
@@ -474,7 +478,11 @@ export class AttendanceApiService extends BaseApiService {
     try {
       return await attendanceImmutability.getSessionAuditTrail(sessionId)
     } catch (error) {
-      console.error('Error fetching session audit trail:', error)
+      logger.error('Error fetching session audit trail', error as Error, {
+        feature: 'attendance',
+        action: 'fetch_audit_trail',
+        metadata: { sessionId }
+      })
       throw error
     }
   }
@@ -484,7 +492,11 @@ export class AttendanceApiService extends BaseApiService {
     try {
       return await attendanceImmutability.verifyRecordIntegrity(recordId, 'attendance')
     } catch (error) {
-      console.error('Error verifying attendance integrity:', error)
+      logger.error('Error verifying attendance integrity', error as Error, {
+        feature: 'attendance',
+        action: 'verify_integrity',
+        metadata: { recordId }
+      })
       throw error
     }
   }

@@ -13,6 +13,7 @@ import {
   BookOpen,
   ChevronRight
 } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 type UserRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
 
@@ -75,7 +76,11 @@ export default function RoleSelectionPage() {
       // Navigate to dashboard with selected role
       router.push('/dashboard')
     } catch (error) {
-      console.error('Error setting role:', error)
+      logger.error('Error setting role', error as Error, {
+        feature: 'auth',
+        action: 'set_role',
+        metadata: { selectedRole: role }
+      })
       setLoading(false)
     }
   }
