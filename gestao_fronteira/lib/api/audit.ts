@@ -43,7 +43,6 @@ class AuditApi {
       // This will be replaced when the database schema is updated
       return this.generateMockActivities(userId, limit)
     } catch (error) {
-      // console.error('Error fetching user activities:', error)
       throw error
     }
   }
@@ -60,10 +59,8 @@ class AuditApi {
         ...activity
       }
 
-      // console.log('Activity logged (mock):', mockActivity)
       return mockActivity
     } catch (error) {
-      // console.error('Error logging activity:', error)
       throw error
     }
   }
@@ -76,7 +73,6 @@ class AuditApi {
       // For now, return mock data until the audit_logs table is created
       return this.generateMockAuditLogs(resourceType, resourceId)
     } catch (error) {
-      // console.error('Error fetching audit logs:', error)
       throw error
     }
   }
@@ -93,10 +89,8 @@ class AuditApi {
         ...audit
       }
 
-      // console.log('Audit logged (mock):', mockAudit)
       return mockAudit
     } catch (error) {
-      // console.error('Error logging audit:', error)
       throw error
     }
   }
@@ -132,7 +126,6 @@ class AuditApi {
         recentActivities: this.generateMockActivities('recent', 10)
       }
     } catch (error) {
-      // console.error('Error fetching activity summary:', error)
       throw error
     }
   }

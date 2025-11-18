@@ -106,7 +106,6 @@ export function SchoolRegistrationForm({
 
       onSuccess?.(result)
     } catch (error) {
-      // console.error('Error saving school:', error)
       toast.error('Erro ao salvar dados da escola')
     } finally {
       setLoading(false)

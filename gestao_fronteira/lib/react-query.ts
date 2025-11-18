@@ -45,7 +45,6 @@ export const queryClient = new QueryClient({
     mutations: {
       // Global error handling
       onError: (error: unknown) => {
-        // console.error('Mutation error:', error)
 
         // Show user-friendly error messages
         const message = isApiError(error) && error.message

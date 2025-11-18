@@ -455,7 +455,6 @@ export const fakeApiResponse = {
         await fs.writeFile(filePath, file.content)
       }
     } catch (error) {
-      // console.error('Error setting up test project:', error)
       throw error
     }
   }
@@ -464,7 +463,6 @@ export const fakeApiResponse = {
     try {
       await fs.rm(testProjectPath, { recursive: true, force: true })
     } catch (error) {
-      // console.error('Error cleaning up test project:', error)
     }
   }
 })

@@ -294,9 +294,7 @@ export const offlineSync = {
       try {
         // Process each queued mutation
         // This would integrate with your mutation functions
-        // console.log('Processing queued mutation:', item)
       } catch (error) {
-        // console.error('Failed to process queued mutation:', error)
       }
     }
 

@@ -73,7 +73,8 @@
       "Bash(powershell:*)",
       "Bash(timeout 30 pnpm typecheck:*)",
       "Bash(openspec validate:*)",
-      "Bash(openspec show:*)"
+      "Bash(openspec show:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

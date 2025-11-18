@@ -48,7 +48,6 @@ export const logAuthEvent = async (
 
     // In a real implementation, this would save to an audit_logs table
     // For now, we'll log to console and local storage for development
-    // console.log('Auth Event:', auditData)
 
     if (typeof window !== 'undefined') {
       const existingLogs = JSON.parse(localStorage.getItem('auth_audit_logs') || '[]')
@@ -60,7 +59,6 @@ export const logAuthEvent = async (
       localStorage.setItem('auth_audit_logs', JSON.stringify(existingLogs))
     }
   } catch (error) {
-    // console.error('Failed to log auth event:', error)
   }
 }
 
@@ -100,7 +98,6 @@ export const signOut = async () => {
       await logAuthEvent('logout', userId)
     }
   } catch (error) {
-    // console.error('Logout error:', error)
     throw error
   }
 }

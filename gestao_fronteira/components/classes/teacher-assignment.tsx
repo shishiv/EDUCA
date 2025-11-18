@@ -65,7 +65,6 @@ export function TeacherAssignment({
           setCurrentTeacher(teacher)
         }
       } catch (error) {
-        // console.error('Error loading data:', error)
         toast.error('Erro ao carregar dados')
       }
     }
@@ -91,7 +90,6 @@ export function TeacherAssignment({
 
       onAssignmentChange?.(selectedTeacherId)
     } catch (error) {
-      // console.error('Error assigning teacher:', error)
       toast.error('Erro ao atribuir professor')
     } finally {
       setLoading(false)
@@ -114,7 +112,6 @@ export function TeacherAssignment({
 
       onAssignmentChange?.(null)
     } catch (error) {
-      // console.error('Error removing teacher:', error)
       toast.error('Erro ao remover professor')
     } finally {
       setLoading(false)
