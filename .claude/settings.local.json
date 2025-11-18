@@ -71,7 +71,9 @@
       "Bash(dir:*)",
       "Bash(findstr:*)",
       "Bash(powershell:*)",
-      "Bash(timeout 30 pnpm typecheck:*)"
+      "Bash(timeout 30 pnpm typecheck:*)",
+      "Bash(openspec validate:*)",
+      "Bash(openspec show:*)"
     ],
     "deny": [],
     "ask": []
