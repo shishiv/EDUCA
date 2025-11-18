@@ -70,7 +70,6 @@ export function UserProfileComponent({ editable = false, showCreateForm = false 
       toast.success('Perfil salvo com sucesso!')
       setIsEditing(false)
     } catch (error) {
-      // console.error('Error saving profile:', error)
       toast.error('Erro ao salvar perfil')
     } finally {
       setIsSaving(false)

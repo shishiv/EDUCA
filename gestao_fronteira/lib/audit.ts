@@ -92,18 +92,15 @@ export const logAuditEvent = async (
         .insert(completeAuditData)
 
       if (error) {
-        // console.warn('Failed to save audit log to database:', error.message)
         // Fall back to local storage for development
         await saveAuditLogLocally(completeAuditData)
       }
     } catch (dbError) {
-      // console.warn('Database audit logging failed, using local storage:', dbError)
       await saveAuditLogLocally(completeAuditData)
     }
 
     // 2. Also log to console for development (remove in production)
     if (process.env.NODE_ENV === 'development') {
-      // console.log('🔍 Audit Event:', {
     //         action: completeAuditData.action,
     //         user: completeAuditData.user_id,
     //         table: completeAuditData.table_name,
@@ -114,7 +111,6 @@ export const logAuditEvent = async (
 
   } catch (error) {
     // Critical: Audit logging must never fail silently
-    // console.error('🚨 CRITICAL: Audit logging failed:', error)
 
     // Send to error monitoring service in production
     if (typeof window !== 'undefined' && (window as any).Sentry) {
@@ -144,7 +140,6 @@ const saveAuditLogLocally = async (auditData: AuditLog): Promise<void> => {
 
     localStorage.setItem('audit_logs', JSON.stringify(existingLogs))
   } catch (error) {
-    // console.error('Failed to save audit log locally:', error)
   }
 }
 
@@ -317,13 +312,11 @@ export const getAuditLogs = async (options?: {
     const { data, error } = await query
 
     if (error) {
-      // console.error('Failed to retrieve audit logs:', error)
       return []
     }
 
     return data || []
   } catch (error) {
-    // console.error('Error retrieving audit logs:', error)
     return []
   }
 }

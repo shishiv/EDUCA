@@ -111,7 +111,6 @@ export function UserForm({ user, onSuccess, onCancel, className }: UserFormProps
       onSuccess?.()
     } catch (error) {
       // Error is handled by the mutation
-      // console.error('Form submission error:', error)
     }
   }
 

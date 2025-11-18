@@ -169,7 +169,6 @@ export class AuditService {
         data: checklist
       }
     } catch (error) {
-      // console.error('Error creating checklist:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -196,7 +195,6 @@ export class AuditService {
         data: checklist
       }
     } catch (error) {
-      // console.error('Error retrieving checklist:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -267,7 +265,6 @@ export class AuditService {
         data: updatedChecklist
       }
     } catch (error) {
-      // console.error('Error updating checklist:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -317,7 +314,6 @@ export class AuditService {
         success: true
       }
     } catch (error) {
-      // console.error('Error deleting checklist:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -375,7 +371,6 @@ export class AuditService {
         }
       }
     } catch (error) {
-      // console.error('Error listing checklists:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -448,7 +443,6 @@ export class AuditService {
         data: updatedChecklist
       }
     } catch (error) {
-      // console.error('Error completing checklist item:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -500,7 +494,6 @@ export class AuditService {
         data: report
       }
     } catch (error) {
-      // console.error('Error generating production readiness report:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -519,7 +512,6 @@ export class AuditService {
 
       return await this.createChecklist(defaultChecklist)
     } catch (error) {
-      // console.error('Error creating default production checklist:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -547,7 +539,6 @@ export class AuditService {
 
       return {}
     } catch (error) {
-      // console.error('Storage error:', error)
       return { error: 'Storage failed' }
     }
   }
@@ -563,7 +554,6 @@ export class AuditService {
 
       return JSON.parse(data) as AuditChecklist
     } catch (error) {
-      // console.error('Load error:', error)
       return null
     }
   }
@@ -584,7 +574,6 @@ export class AuditService {
 
       return checklists.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     } catch (error) {
-      // console.error('Load all error:', error)
       return []
     }
   }
@@ -603,7 +592,6 @@ export class AuditService {
 
       return {}
     } catch (error) {
-      // console.error('Remove error:', error)
       return { error: 'Remove failed' }
     }
   }

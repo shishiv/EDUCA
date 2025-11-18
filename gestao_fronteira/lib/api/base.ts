@@ -48,7 +48,6 @@ export class BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error(`Error fetching ${this.tableName}:`, error)
       throw error
     }
   }
@@ -64,7 +63,6 @@ export class BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error(`Error fetching ${this.tableName} by id ${id}:`, error)
       throw error
     }
   }
@@ -80,7 +78,6 @@ export class BaseApiService {
       if (error) throw error
       return result
     } catch (error) {
-      // console.error(`Error creating ${this.tableName}:`, error)
       throw error
     }
   }
@@ -97,7 +94,6 @@ export class BaseApiService {
       if (error) throw error
       return result
     } catch (error) {
-      // console.error(`Error updating ${this.tableName} with id ${id}:`, error)
       throw error
     }
   }
@@ -112,7 +108,6 @@ export class BaseApiService {
       if (error) throw error
       return true
     } catch (error) {
-      // console.error(`Error deleting ${this.tableName} with id ${id}:`, error)
       throw error
     }
   }
@@ -127,7 +122,6 @@ export class BaseApiService {
       if (error) throw error
       return result
     } catch (error) {
-      // console.error(`Error bulk creating ${this.tableName}:`, error)
       throw error
     }
   }
@@ -139,7 +133,6 @@ export class BaseApiService {
       )
       return results
     } catch (error) {
-      // console.error(`Error bulk updating ${this.tableName}:`, error)
       throw error
     }
   }
@@ -154,7 +147,6 @@ export class BaseApiService {
       if (error) throw error
       return true
     } catch (error) {
-      // console.error(`Error bulk deleting ${this.tableName}:`, error)
       throw error
     }
   }

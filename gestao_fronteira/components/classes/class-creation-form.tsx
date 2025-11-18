@@ -114,7 +114,6 @@ export function ClassCreationForm({
         setSchoolData(school)
         setAvailableTeachers(teachers)
       } catch (error) {
-        // console.error('Error loading data:', error)
         toast.error('Erro ao carregar dados da escola')
       }
     }
@@ -148,7 +147,6 @@ export function ClassCreationForm({
       reset()
       onSuccess?.(result)
     } catch (error) {
-      // console.error('Error creating class:', error)
       toast.error('Erro ao criar turma')
     } finally {
       setLoading(false)

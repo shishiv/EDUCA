@@ -59,7 +59,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error) throw error
       return data as AttendanceSession
     } catch (error) {
-      // console.error('Error creating attendance session:', error)
       throw error
     }
   }
@@ -81,7 +80,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error) throw error
       return data as AttendanceSession
     } catch (error) {
-      // console.error('Error closing attendance session:', error)
       throw error
     }
   }
@@ -99,7 +97,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error && error.code !== 'PGRST116') throw error // PGRST116 = not found
       return data as AttendanceSession | null
     } catch (error) {
-      // console.error('Error fetching session by date:', error)
       throw error
     }
   }
@@ -129,7 +126,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error) throw error
       return data as AttendanceSession[]
     } catch (error) {
-      // console.error('Error fetching sessions by class:', error)
       throw error
     }
   }
@@ -206,7 +202,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error) throw error
       return data as AttendanceWithDetails[]
     } catch (error) {
-      // console.error('Error fetching attendance by session:', error)
       throw error
     }
   }
@@ -253,7 +248,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error) throw error
       return data as AttendanceWithDetails[]
     } catch (error) {
-      // console.error('Error fetching attendance by student:', error)
       throw error
     }
   }
@@ -358,7 +352,6 @@ export class AttendanceApiService extends BaseApiService {
         studentsWithLowAttendance
       }
     } catch (error) {
-      // console.error('Error calculating attendance stats:', error)
       throw error
     }
   }
@@ -405,7 +398,6 @@ export class AttendanceApiService extends BaseApiService {
 
       return summary
     } catch (error) {
-      // console.error('Error calculating student attendance summary:', error)
       throw error
     }
   }
@@ -463,7 +455,6 @@ export class AttendanceApiService extends BaseApiService {
       if (error) throw error
       return data as AttendanceWithDetails[]
     } catch (error) {
-      // console.error('Error fetching attendance by date range:', error)
       throw error
     }
   }

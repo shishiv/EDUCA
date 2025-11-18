@@ -110,7 +110,6 @@ export class ReportsApiService extends BaseApiService {
 
       return report
     } catch (error) {
-      // console.error('Erro ao gerar relatório:', error)
       return {
         id: reportId,
         titulo: 'Erro na Geração',

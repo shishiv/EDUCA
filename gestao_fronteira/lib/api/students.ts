@@ -50,7 +50,6 @@ export class StudentsApiService extends BaseApiService {
       if (error) throw error
       return data as StudentWithDetails[]
     } catch (error) {
-      // console.error('Error fetching students by class:', error)
       throw error
     }
   }
@@ -136,7 +135,6 @@ export class StudentsApiService extends BaseApiService {
       if (error) throw error
       return data as StudentWithDetails[]
     } catch (error) {
-      // console.error('Error fetching students with details:', error)
       throw error
     }
   }
@@ -176,7 +174,6 @@ export class StudentsApiService extends BaseApiService {
 
       return studentResult
     } catch (error) {
-      // console.error('Error creating student:', error)
       throw error
     }
   }
@@ -199,7 +196,6 @@ export class StudentsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error('Error enrolling student:', error)
       throw error
     }
   }
@@ -217,7 +213,6 @@ export class StudentsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error('Error updating enrollment status:', error)
       throw error
     }
   }
@@ -256,7 +251,6 @@ export class StudentsApiService extends BaseApiService {
         details: data
       }
     } catch (error) {
-      // console.error('Error fetching student attendance:', error)
       throw error
     }
   }
@@ -285,7 +279,6 @@ export class StudentsApiService extends BaseApiService {
 
       return atRiskStudents.sort((a, b) => a.attendanceRate - b.attendanceRate)
     } catch (error) {
-      // console.error('Error fetching at-risk students:', error)
       throw error
     }
   }
@@ -309,7 +302,6 @@ export class StudentsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      // console.error('Error bulk enrolling students:', error)
       throw error
     }
   }
@@ -385,7 +377,6 @@ export class StudentsApiService extends BaseApiService {
 
       return stats
     } catch (error) {
-      // console.error('Error fetching student stats:', error)
       return {
         total: 0,
         active: 0,

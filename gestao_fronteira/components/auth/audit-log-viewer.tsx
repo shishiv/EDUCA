@@ -27,7 +27,6 @@ export function AuditLogViewer() {
 
       setLogs(sortedLogs)
     } catch (error) {
-      // console.error('Error loading audit logs:', error)
       setLogs([])
     } finally {
       setLoading(false)

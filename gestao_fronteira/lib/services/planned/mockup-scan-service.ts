@@ -299,7 +299,6 @@ export class MockupScanService {
         data: scanResult
       }
     } catch (error) {
-      // console.error('Error starting scan:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -333,7 +332,6 @@ export class MockupScanService {
         error: 'Scan não encontrado'
       }
     } catch (error) {
-      // console.error('Error getting scan status:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -366,7 +364,6 @@ export class MockupScanService {
         error: 'Scan não encontrado ou não está rodando'
       }
     } catch (error) {
-      // console.error('Error cancelling scan:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -432,7 +429,6 @@ export class MockupScanService {
         data: mockAPIs
       }
     } catch (error) {
-      // console.error('Error analyzing mock APIs:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -496,7 +492,6 @@ export class MockupScanService {
         data: components
       }
     } catch (error) {
-      // console.error('Error analyzing components:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -550,7 +545,6 @@ export class MockupScanService {
         data: complianceIssues
       }
     } catch (error) {
-      // console.error('Error checking Brazilian compliance:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -635,7 +629,6 @@ export class MockupScanService {
         data: recommendations
       }
     } catch (error) {
-      // console.error('Error generating recommendations:', error)
       return {
         success: false,
         error: 'Erro interno do servidor'
@@ -720,7 +713,6 @@ export class MockupScanService {
         })
       }
     } catch (error) {
-      // console.error('Error performing scan:', error)
       scanResult.status = 'failed'
     } finally {
       this.saveScanToStorage(scanResult)
@@ -783,7 +775,6 @@ export class MockupScanService {
       const key = `scan_result_${scanResult.id}`
       localStorage.setItem(key, JSON.stringify(scanResult))
     } catch (error) {
-      // console.error('Failed to save scan to storage:', error)
     }
   }
 
@@ -795,7 +786,6 @@ export class MockupScanService {
       const data = localStorage.getItem(key)
       return data ? JSON.parse(data) : null
     } catch (error) {
-      // console.error('Failed to load scan from storage:', error)
       return null
     }
   }
