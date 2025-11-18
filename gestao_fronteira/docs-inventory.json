@@ -1,0 +1,177 @@
+{
+  "total_files": 47,
+  "total_size_kb": 491,
+  "categories": {
+    "chapter_1_project_overview": {
+      "files": [
+        {"path": "README.md", "size": "16K", "action": "consolidate", "destination": "Chapter 1.1"},
+        {"path": "CLAUDE.md", "size": "660B", "action": "keep_reference", "destination": "Entry point to MASTER-DOCUMENTATION"},
+        {"path": "AGENTS.md", "size": "660B", "action": "keep_reference", "destination": "Entry point to MASTER-DOCUMENTATION"}
+      ]
+    },
+    "chapter_2_status_progress": {
+      "files": [
+        {"path": "BUGS-ANALYSIS.md", "size": "18K", "action": "consolidate", "destination": "Chapter 2.1"},
+        {"path": "CHANGELOG.md", "size": "9.1K", "action": "consolidate", "destination": "Chapter 2.2"},
+        {"path": "NEXT-STEPS.md", "size": "9.4K", "action": "consolidate", "destination": "Chapter 2.3"}
+      ]
+    },
+    "chapter_3_architecture": {
+      "files": [
+        {"path": "lib/services/README.md", "size": "14K", "action": "consolidate", "destination": "Chapter 3.1"},
+        {"path": "lib/services/SERVICES_ANALYSIS.md", "size": "14K", "action": "consolidate", "destination": "Chapter 3.1"},
+        {"path": "lib/services/ORGANIZATION_SUMMARY.md", "size": "8.8K", "action": "consolidate", "destination": "Chapter 3.1"},
+        {"path": "lib/services/FINAL_REPORT.md", "size": "7.1K", "action": "consolidate", "destination": "Chapter 3.1"},
+        {"path": "lib/services/planned/README.md", "size": "8.4K", "action": "consolidate", "destination": "Chapter 3.1"},
+        {"path": "lib/validation/README.md", "size": "12K", "action": "consolidate", "destination": "Chapter 3.2"},
+        {"path": "lib/validation/VALIDATION_GUIDE.md", "size": "13K", "action": "consolidate", "destination": "Chapter 3.2"},
+        {"path": "lib/validation/INTEGRATION_EXAMPLES.md", "size": "26K", "action": "consolidate", "destination": "Chapter 3.2"},
+        {"path": "lib/validation/CENTRALIZATION_SUMMARY.md", "size": "15K", "action": "consolidate", "destination": "Chapter 3.2"},
+        {"path": "BARREL_EXPORTS_IMPLEMENTATION.md", "size": "9.5K", "action": "consolidate", "destination": "Chapter 3.3"},
+        {"path": "BARREL_EXPORTS_SUMMARY.md", "size": "8.7K", "action": "consolidate", "destination": "Chapter 3.3"},
+        {"path": "VALIDATION_CENTRALIZATION_REPORT.md", "size": "13K", "action": "archive", "destination": "Chapter 8.2"},
+        {"path": "lib/hooks/README.md", "size": "9.8K", "action": "consolidate", "destination": "Chapter 3.4"},
+        {"path": "hooks/README.md", "size": "6.4K", "action": "consolidate", "destination": "Chapter 3.4"}
+      ]
+    },
+    "chapter_4_product_business": {
+      "files": [
+        {"path": "product/mission.md", "size": "6.4K", "action": "consolidate", "destination": "Chapter 4.1"},
+        {"path": "product/mission-lite.md", "size": "1.1K", "action": "consolidate", "destination": "Chapter 4.1"},
+        {"path": "product/roadmap.md", "size": "16K", "action": "consolidate", "destination": "Chapter 4.2"},
+        {"path": "product/roadmap-apresentacao.md", "size": "12K", "action": "consolidate", "destination": "Chapter 4.2"},
+        {"path": "product/roadmap-apresentacao-sme.md", "size": "11K", "action": "consolidate", "destination": "Chapter 4.2"},
+        {"path": "product/tech-stack.md", "size": "7.1K", "action": "consolidate", "destination": "Chapter 4.3"}
+      ]
+    },
+    "chapter_5_testing_qa": {
+      "files": [
+        {"path": "tests/e2e/auth/INDEX.md", "size": "6.2K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "tests/e2e/auth/QUICK-START.md", "size": "5.2K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "tests/e2e/auth/README-LOGIN-RETRY-TESTS.md", "size": "7.9K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "tests/e2e/auth/TEST-SUMMARY.md", "size": "9.4K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "tests/e2e/auth/INTERPRETING-RESULTS.md", "size": "12K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "tests/e2e/auth/FASE7-COMPLETE-SUMMARY.md", "size": "17K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "tests/e2e/auth/VISUAL-FLOW.md", "size": "20K", "action": "consolidate", "destination": "Chapter 5.1"},
+        {"path": "CHROME-DEVTOOLS-VALIDATION-GUIDE.md", "size": "17K", "action": "consolidate", "destination": "Chapter 5.2"},
+        {"path": "__tests__/manual/mobile-responsiveness-check.md", "size": "4.7K", "action": "consolidate", "destination": "Chapter 5.3"},
+        {"path": "__tests__/manual/abrir-aula-workflow-completion-summary.md", "size": "9.2K", "action": "consolidate", "destination": "Chapter 5.3"}
+      ]
+    },
+    "chapter_6_deployment_operations": {
+      "files": [
+        {"path": "DEPLOYMENT.md", "size": "1.3K", "action": "consolidate", "destination": "Chapter 6.1"},
+        {"path": "MIGRATION-GUIDE.md", "size": "11K", "action": "consolidate", "destination": "Chapter 6.2"}
+      ]
+    },
+    "chapter_7_code_guidelines": {
+      "files": [
+        {"path": "SPECIALIST-AGENTS-PROMPTS.md", "size": "44K", "action": "consolidate", "destination": "Chapter 7.2"}
+      ]
+    },
+    "chapter_8_archives": {
+      "files": [
+        {"path": "claudedocs/CODE_IMPROVEMENTS_2025-01-11.md", "size": "15K", "action": "archive", "destination": "Chapter 8.1"},
+        {"path": "claudedocs/TROUBLESHOOTING-SUMMARY-2025-01-11.md", "size": "12K", "action": "archive", "destination": "Chapter 8.1"},
+        {"path": "SINGLE-SCHOOL-READINESS-ASSESSMENT.md", "size": "25K", "action": "archive", "destination": "Chapter 8.3"}
+      ]
+    },
+    "component_docs": {
+      "files": [
+        {"path": "components/identity/README.md", "size": "5.6K", "action": "consolidate", "destination": "Chapter 3.5"},
+        {"path": "public/identity/README.md", "size": "2.3K", "action": "consolidate", "destination": "Chapter 3.5"}
+      ]
+    },
+    "openspec": {
+      "files": [
+        {"path": ".claude/commands/openspec/apply.md", "size": "1.3K", "action": "keep", "destination": "OpenSpec commands"},
+        {"path": ".claude/commands/openspec/archive.md", "size": "2.0K", "action": "keep", "destination": "OpenSpec commands"},
+        {"path": ".claude/commands/openspec/proposal.md", "size": "2.3K", "action": "keep", "destination": "OpenSpec commands"}
+      ]
+    }
+  },
+  "consolidation_map": {
+    "Chapter 1: Project Overview": ["README.md", "CLAUDE.md (reference)", "AGENTS.md (reference)"],
+    "Chapter 2: Status & Progress": ["BUGS-ANALYSIS.md", "CHANGELOG.md", "NEXT-STEPS.md"],
+    "Chapter 3: Architecture": [
+      "3.1 Services: lib/services/*.md (5 files)",
+      "3.2 Validation: lib/validation/*.md (4 files)",
+      "3.3 Code Organization: BARREL_EXPORTS*.md (2 files)",
+      "3.4 Hooks: hooks/README.md, lib/hooks/README.md",
+      "3.5 Identity: components/identity/README.md, public/identity/README.md"
+    ],
+    "Chapter 4: Product & Business": [
+      "4.1 Mission: product/mission*.md (2 files)",
+      "4.2 Roadmap: product/roadmap*.md (3 files)",
+      "4.3 Tech Stack: product/tech-stack.md"
+    ],
+    "Chapter 5: Testing & QA": [
+      "5.1 Auth Testing: tests/e2e/auth/*.md (7 files)",
+      "5.2 UI/UX Validation: CHROME-DEVTOOLS-VALIDATION-GUIDE.md",
+      "5.3 Manual Tests: __tests__/manual/*.md (2 files)"
+    ],
+    "Chapter 6: Deployment & Operations": [
+      "6.1 Deployment: DEPLOYMENT.md",
+      "6.2 Migration: MIGRATION-GUIDE.md"
+    ],
+    "Chapter 7: Code Guidelines": [
+      "7.1 Chrome DevTools: (from CHROME-DEVTOOLS-VALIDATION-GUIDE.md)",
+      "7.2 AI Patterns: SPECIALIST-AGENTS-PROMPTS.md"
+    ],
+    "Chapter 8: Archives": [
+      "8.1 Session Reports: claudedocs/*.md (2 files)",
+      "8.2 Historical Analysis: VALIDATION_CENTRALIZATION_REPORT.md",
+      "8.3 Assessments: SINGLE-SCHOOL-READINESS-ASSESSMENT.md"
+    ]
+  },
+  "files_to_delete": [
+    "lib/services/README.md",
+    "lib/services/SERVICES_ANALYSIS.md",
+    "lib/services/ORGANIZATION_SUMMARY.md",
+    "lib/services/FINAL_REPORT.md",
+    "lib/services/planned/README.md",
+    "lib/validation/README.md",
+    "lib/validation/VALIDATION_GUIDE.md",
+    "lib/validation/INTEGRATION_EXAMPLES.md",
+    "lib/validation/CENTRALIZATION_SUMMARY.md",
+    "lib/hooks/README.md",
+    "hooks/README.md",
+    "components/identity/README.md",
+    "public/identity/README.md",
+    "BARREL_EXPORTS_IMPLEMENTATION.md",
+    "BARREL_EXPORTS_SUMMARY.md",
+    "VALIDATION_CENTRALIZATION_REPORT.md",
+    "product/mission.md",
+    "product/mission-lite.md",
+    "product/roadmap.md",
+    "product/roadmap-apresentacao.md",
+    "product/roadmap-apresentacao-sme.md",
+    "product/tech-stack.md",
+    "tests/e2e/auth/INDEX.md",
+    "tests/e2e/auth/QUICK-START.md",
+    "tests/e2e/auth/README-LOGIN-RETRY-TESTS.md",
+    "tests/e2e/auth/TEST-SUMMARY.md",
+    "tests/e2e/auth/INTERPRETING-RESULTS.md",
+    "tests/e2e/auth/FASE7-COMPLETE-SUMMARY.md",
+    "tests/e2e/auth/VISUAL-FLOW.md",
+    "CHROME-DEVTOOLS-VALIDATION-GUIDE.md",
+    "__tests__/manual/mobile-responsiveness-check.md",
+    "__tests__/manual/abrir-aula-workflow-completion-summary.md",
+    "DEPLOYMENT.md",
+    "MIGRATION-GUIDE.md",
+    "SPECIALIST-AGENTS-PROMPTS.md",
+    "claudedocs/CODE_IMPROVEMENTS_2025-01-11.md",
+    "claudedocs/TROUBLESHOOTING-SUMMARY-2025-01-11.md",
+    "SINGLE-SCHOOL-READINESS-ASSESSMENT.md"
+  ],
+  "files_to_keep": [
+    "README.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "BUGS-ANALYSIS.md",
+    "CHANGELOG.md",
+    "NEXT-STEPS.md",
+    "HOURS-LOG.md",
+    ".claude/commands/openspec/*.md"
+  ]
+}

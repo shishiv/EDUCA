@@ -1,5 +1,0 @@
-# Sistema de Gestão Educacional Fronteira Mission (Lite)
-
-Sistema de Gestão Educacional Fronteira is a comprehensive educational management platform that helps Brazilian municipalities digitally transform student registration, attendance tracking, and educational reporting by providing legally-compliant, mobile-optimized tools that ensure student safety and educational continuity.
-
-Sistema de Gestão Educacional Fronteira serves municipal education administrators, school directors, and teachers who need real-time, legally-compliant educational management tools. Unlike generic school management systems, we build specifically for Brazilian educational requirements including CPF validation, INEP integration, and immutable attendance records that serve as "único documento oficial" for student safety. Our mobile-first design enables fast classroom attendance marking while automatically alerting administrators when students approach the 80% attendance threshold required by Brazilian law, all built on the proven i-Educar architecture patterns adapted for modern Next.js technology.

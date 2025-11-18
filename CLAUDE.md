@@ -890,3 +890,42 @@ ALL active development tasks MUST be tracked in TASKS.md:
 - Progress visibility for user
 - Clear sprint planning (DIA 1, DIA 2, etc.)
 - Complements TodoWrite (TASKS.md = long-term, TodoWrite = current session)
+
+# RULE 4: Time Tracking - Rastreamento de Horas
+TODAS as mudanças feitas no repositório DEVEM ser registradas com tempo gasto.
+
+**Quando registrar:**
+- Ao completar qualquer commit significativo
+- Ao finalizar uma sessão de trabalho
+- Antes de fazer push/merge de branches
+
+**Formato do registro (não-técnico):**
+```markdown
+Data: DD/MM/YYYY
+Horas: X.Xh
+Descrição: [Descrição simples e não-técnica da atividade]
+```
+
+**Exemplos:**
+- ✅ "Organização geral dos arquivos do sistema" (não "repository cleanup")
+- ✅ "Correção de erros no cadastro de alunos" (não "fix student registration bugs")
+- ✅ "Melhorias na tela inicial" (não "homepage UI refactor")
+- ✅ "Configuração de ferramentas de desenvolvimento" (não "MCP server setup")
+
+**Localização:**
+- Registros mensais em: `apontamento/[mes-ano].md`
+- Formato compatível com folha de ponto da Secretaria Municipal
+
+**Estimativa de horas por tipo de commit:**
+- Documentação/planejamento: 2-3h
+- Correção de bugs simples: 2-3h
+- Melhorias e refatoração: 3-4h
+- Novas funcionalidades: 4-6h
+- Limpeza/organização: 2-4h
+- Testes e validação: 2-3h
+
+**Workflow obrigatório:**
+1. Completar trabalho e fazer commit
+2. Estimar tempo gasto baseado na complexidade
+3. Registrar em apontamento/[mes-ano].md
+4. Descrição simples em português, não-técnica
