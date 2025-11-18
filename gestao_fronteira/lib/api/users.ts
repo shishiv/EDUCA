@@ -80,7 +80,6 @@ export class UsersApiService extends BaseApiService {
       if (error) throw error
       return data as UserWithSchool[]
     } catch (error) {
-      // console.error('Error fetching users with school:', error)
       throw error
     }
   }
@@ -109,7 +108,6 @@ export class UsersApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      // console.error('Error creating user:', error)
       throw error
     }
   }
@@ -127,7 +125,6 @@ export class UsersApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      // console.error('Error updating user status:', error)
       throw error
     }
   }
@@ -153,7 +150,6 @@ export class UsersApiService extends BaseApiService {
 
       return results
     } catch (error) {
-      // console.error('Error bulk updating user status:', error)
       throw error
     }
   }
@@ -178,7 +174,6 @@ export class UsersApiService extends BaseApiService {
 
       return results
     } catch (error) {
-      // console.error('Error bulk assigning school:', error)
       throw error
     }
   }
@@ -233,7 +228,6 @@ export class UsersApiService extends BaseApiService {
         bySchool
       }
     } catch (error) {
-      // console.error('Error fetching user stats:', error)
       return {
         total: 0,
         active: 0,

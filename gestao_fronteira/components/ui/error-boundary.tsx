@@ -43,7 +43,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     })
 
     // Log error
-    // console.error('Error caught by ErrorBoundary:', error, errorInfo)
 
     // Call custom error handler
     if (this.props.onError) {
@@ -146,7 +145,6 @@ export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
 // Hook for easier error reporting
 export function useErrorHandler() {
   return (error: Error, context?: string) => {
-    // console.error(`Error in ${context || 'component'}:`, error)
 
     // In production, send to monitoring service
     if (process.env.NODE_ENV === 'production') {

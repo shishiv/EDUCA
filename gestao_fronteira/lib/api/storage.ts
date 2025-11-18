@@ -28,7 +28,6 @@ export class StorageApiService {
 
       return urlData.publicUrl
     } catch (error) {
-      // console.error('Error uploading photo:', error)
       throw error
     }
   }
@@ -42,7 +41,6 @@ export class StorageApiService {
 
       if (error) throw error
     } catch (error) {
-      // console.error('Error deleting photo:', error)
       throw error
     }
   }
@@ -77,7 +75,6 @@ export class StorageApiService {
 
       return urlData.publicUrl
     } catch (error) {
-      // console.error('Error uploading document:', error)
       throw error
     }
   }

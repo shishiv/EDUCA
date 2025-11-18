@@ -48,7 +48,6 @@ export function BulkUserOperations() {
       setActiveOperation(null)
       setReason('')
     } catch (error) {
-      // console.error('Error activating users:', error)
     }
   }
 
@@ -62,7 +61,6 @@ export function BulkUserOperations() {
       setActiveOperation(null)
       setReason('')
     } catch (error) {
-      // console.error('Error deactivating users:', error)
     }
   }
 
@@ -77,7 +75,6 @@ export function BulkUserOperations() {
       setActiveOperation(null)
       setSelectedSchool('')
     } catch (error) {
-      // console.error('Error assigning school:', error)
     }
   }
 

@@ -118,9 +118,7 @@ export function StudentRegistrationForm({
           // Update student record with photo URL
           await studentsApi.update(result.id, { foto_url: photoUrl })
 
-          // console.log('Photo uploaded successfully:', photoUrl)
         } catch (photoError) {
-          // console.error('Error uploading photo:', photoError)
           toast.error('Foto não pôde ser salva, mas dados do aluno foram salvos')
         }
       }
@@ -135,7 +133,6 @@ export function StudentRegistrationForm({
 
       onSuccess?.(result)
     } catch (error) {
-      // console.error('Error saving student:', error)
       toast.error('Erro ao salvar dados do aluno')
     } finally {
       setLoading(false)

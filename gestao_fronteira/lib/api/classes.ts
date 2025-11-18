@@ -129,7 +129,6 @@ export class ClassesApiService extends BaseApiService {
 
       return classesWithCounts
     } catch (error) {
-      // console.error('Error fetching classes with details:', error)
       throw error
     }
   }
@@ -145,7 +144,6 @@ export class ClassesApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      // console.error('Error creating class:', error)
       throw error
     }
   }
@@ -157,7 +155,6 @@ export class ClassesApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      // console.error('Error assigning teacher:', error)
       throw error
     }
   }
@@ -209,7 +206,6 @@ export class ClassesApiService extends BaseApiService {
         students: activeEnrollments.map(e => e.aluno).filter(Boolean)
       }
     } catch (error) {
-      // console.error('Error fetching class stats:', error)
       throw error
     }
   }
@@ -225,7 +221,6 @@ export class ClassesApiService extends BaseApiService {
 
       return this.getClassesWithDetails(options)
     } catch (error) {
-      // console.error('Error fetching classes by school:', error)
       throw error
     }
   }
@@ -241,7 +236,6 @@ export class ClassesApiService extends BaseApiService {
 
       return this.getClassesWithDetails(options)
     } catch (error) {
-      // console.error('Error fetching classes by teacher:', error)
       throw error
     }
   }
@@ -259,7 +253,6 @@ export class ClassesApiService extends BaseApiService {
       const result = await this.update(classId, { capacidade: newCapacity })
       return result
     } catch (error) {
-      // console.error('Error updating class capacity:', error)
       throw error
     }
   }
@@ -339,7 +332,6 @@ export class ClassesApiService extends BaseApiService {
 
       return availableStudents.map(({ matriculas, ...student }) => student)
     } catch (error) {
-      // console.error('Error fetching available students:', error)
       throw error
     }
   }
@@ -393,7 +385,6 @@ export class ClassesApiService extends BaseApiService {
 
       return stats
     } catch (error) {
-      // console.error('Error fetching system stats:', error)
       return {
         total: 0,
         active: 0,

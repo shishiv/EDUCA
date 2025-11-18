@@ -201,7 +201,6 @@ export class MCPEducationalHelpers {
           })
         }
       } catch (error) {
-        // console.log(`Element not found or not accessible: ${selector}`)
       }
     }
 

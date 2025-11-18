@@ -209,7 +209,6 @@ export function RefreshButton({ onRefresh, loading = false, className }: Refresh
     try {
       await onRefresh()
     } catch (error) {
-      // console.error('Refresh failed:', error)
     }
   }
 

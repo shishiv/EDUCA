@@ -33,7 +33,6 @@ export function AuthGuard({
 
       // Check if user profile is loaded
       if (!userProfile) {
-        // console.warn('User authenticated but profile not loaded')
         return
       }
 

@@ -317,11 +317,9 @@ export const seedData: SeedData = {
  * This function should be called during development setup
  */
 export async function insertSeedData() {
-  // console.log('🌱 Starting seed data insertion...')
 
   try {
     // Insert schools first (needed for user school associations)
-    // console.log('📚 Inserting schools...')
     const { data: escolas, error: escolasError } = await supabase
       .from('escolas')
       .insert(seedData.escolas)
@@ -331,10 +329,8 @@ export async function insertSeedData() {
       throw new Error(`Failed to insert schools: ${escolasError.message}`)
     }
 
-    // console.log(`✅ Inserted ${escolas?.length} schools`)
 
     // Insert responsaveis
-    // console.log('👨‍👩‍👧‍👦 Inserting guardians...')
     const { data: responsaveis, error: responsaveisError } = await supabase
       .from('responsaveis')
       .insert(seedData.responsaveis)
@@ -344,7 +340,6 @@ export async function insertSeedData() {
       throw new Error(`Failed to insert guardians: ${responsaveisError.message}`)
     }
 
-    // console.log(`✅ Inserted ${responsaveis?.length} guardians`)
 
     // Insert users with school associations
     const usersWithSchools = seedData.users.map((user, index) => ({
@@ -352,7 +347,6 @@ export async function insertSeedData() {
       escola_id: user.tipo_usuario === 'admin' ? null : escolas?.[0]?.id || null
     }))
 
-    // console.log('👥 Inserting users...')
     const { data: users, error: usersError } = await supabase
       .from('users')
       .insert(usersWithSchools)
@@ -362,7 +356,6 @@ export async function insertSeedData() {
       throw new Error(`Failed to insert users: ${usersError.message}`)
     }
 
-    // console.log(`✅ Inserted ${users?.length} users`)
 
     // Update schools with directors
     if (users && users.length > 1) {
@@ -374,7 +367,6 @@ export async function insertSeedData() {
           .eq('id', escolas[0].id)
 
         if (!updateError) {
-          // console.log('✅ Updated school director assignment')
         }
       }
     }
@@ -386,7 +378,6 @@ export async function insertSeedData() {
       professor_id: users?.find(u => u.tipo_usuario === 'professor')?.id || null
     }))
 
-    // console.log('🎓 Inserting classes...')
     const { data: turmas, error: turmasError } = await supabase
       .from('turmas')
       .insert(turmasWithAssociations)
@@ -396,7 +387,6 @@ export async function insertSeedData() {
       throw new Error(`Failed to insert classes: ${turmasError.message}`)
     }
 
-    // console.log(`✅ Inserted ${turmas?.length} classes`)
 
     // Insert students with guardian associations
     const alunosWithResponsaveis = seedData.alunos.map((aluno, index) => ({
@@ -404,7 +394,6 @@ export async function insertSeedData() {
       responsavel_id: responsaveis?.[index % responsaveis.length]?.id || null
     }))
 
-    // console.log('👦👧 Inserting students...')
     const { data: alunos, error: alunosError } = await supabase
       .from('alunos')
       .insert(alunosWithResponsaveis)
@@ -414,7 +403,6 @@ export async function insertSeedData() {
       throw new Error(`Failed to insert students: ${alunosError.message}`)
     }
 
-    // console.log(`✅ Inserted ${alunos?.length} students`)
 
     // Insert matriculas (enrollments)
     if (alunos && turmas && alunos.length > 0 && turmas.length > 0) {
@@ -426,7 +414,6 @@ export async function insertSeedData() {
         observacoes: 'Matrícula inicial - seed data'
       }))
 
-      // console.log('📝 Inserting enrollments...')
       const { data: matriculasData, error: matriculasError } = await supabase
         .from('matriculas')
         .insert(matriculas)
@@ -436,20 +423,8 @@ export async function insertSeedData() {
         throw new Error(`Failed to insert enrollments: ${matriculasError.message}`)
       }
 
-      // console.log(`✅ Inserted ${matriculasData?.length} enrollments`)
     }
 
-    // console.log('🎉 Seed data insertion completed successfully!')
-    // console.log('\n📋 Summary:')
-    // console.log(`   • ${escolas?.length || 0} schools`)
-    // console.log(`   • ${users?.length || 0} users (all 5 roles)`)
-    // console.log(`   • ${responsaveis?.length || 0} guardians`)
-    // console.log(`   • ${alunos?.length || 0} students`)
-    // console.log(`   • ${turmas?.length || 0} classes`)
-    // console.log('\n🔐 Test Accounts:')
-    // console.log('   • admin@fronteira.mg.gov.br (Admin)')
-    // console.log('   • maria.silva@fronteira.mg.gov.br (Diretor)')
-    // console.log('   • prof.ana@fronteira.mg.gov.br (Professor)')
 
     return {
       success: true,
@@ -463,7 +438,6 @@ export async function insertSeedData() {
     }
 
   } catch (error) {
-    // console.error('❌ Seed data insertion failed:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -475,7 +449,6 @@ export async function insertSeedData() {
  * Clear all seed data (useful for testing)
  */
 export async function clearSeedData() {
-  // console.log('🧹 Clearing seed data...')
 
   try {
     const tables = ['frequencia', 'notas', 'matriculas', 'turmas', 'alunos', 'responsaveis', 'users', 'escolas']
@@ -483,17 +456,13 @@ export async function clearSeedData() {
     for (const table of tables) {
       const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000')
       if (error) {
-        // console.warn(`Warning: Could not clear ${table}:`, error.message)
       } else {
-        // console.log(`✅ Cleared ${table}`)
       }
     }
 
-    // console.log('🧹 Seed data cleared successfully!')
     return { success: true }
 
   } catch (error) {
-    // console.error('❌ Failed to clear seed data:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
