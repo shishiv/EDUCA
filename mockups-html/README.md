@@ -72,12 +72,25 @@ Mockups **interativos e responsivos** do sistema EDUCA criados em **HTML + Tailw
 - ✅ Botões de ação (editar, relatório)
 - **Status**: Completa ✓
 
-### 8. Diário de Classe (`diario.html`) ✅
+### 8. Diário de Classe - Moderno (`diario.html`) ✅
 - ✅ Timeline de aulas registradas
 - ✅ Painel de detalhes de cada aula
 - ✅ Modal para criar nova aula
 - ✅ Setor de conteúdo, frequência e observações
 - ✅ Funcionalidade completa
+- **Status**: Completa ✓
+
+### 8b. Diário de Classe - Tipo Papel (`diario-papel.html`) ✅ NOVO
+- ✅ Layout 3 colunas (sidebar + main + painel)
+- ✅ Grid de frequência mensal (28-31 dias × alunos)
+- ✅ Lista de alunos fixa à esquerda (selecionável com checkboxes)
+- ✅ Coluna "TOTAL FALTAS" calculada automaticamente
+- ✅ Inputs de conteúdo ministrado por dia (1-31)
+- ✅ Navegação entre meses (Janeiro-Dezembro com atalhos)
+- ✅ Ficha individual de aluno (painel direito colapsável - 320px)
+- ✅ Interatividade: click em célula cicla P (verde) → F (vermelho) → vazio
+- ✅ Salvamento em localStorage + modal de sucesso (3s auto-close)
+- ✅ Dados de 5 alunos pré-carregados com CPF, telefone, notas
 - **Status**: Completa ✓
 
 ### 9. Calendário (`calendario.html`) ✅
@@ -231,7 +244,7 @@ mockups-html/
 
 ## ✅ Status de Completude
 
-Todas as 10 páginas principais foram criadas com sucesso:
+**11 páginas + 1 bonus** criadas com sucesso:
 
 - [x] Landing Page (`index.html`)
 - [x] Login (`login.html`)
@@ -240,7 +253,8 @@ Todas as 10 páginas principais foram criadas com sucesso:
 - [x] Frequência (`frequencia.html`)
 - [x] Alunos (`alunos.html`)
 - [x] Turmas (`turmas.html`)
-- [x] Diário de Classe (`diario.html`)
+- [x] Diário de Classe - Moderno (`diario.html`)
+- [x] **Diário de Classe - Tipo Papel** (`diario-papel.html`) ⭐ NOVO
 - [x] Calendário (`calendario.html`)
 - [x] Help Center (`help.html`)
 
