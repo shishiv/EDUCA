@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUCA - Calendário</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 12px;
+            overflow-y: auto;
+            z-index: 40;
+        }
+        .main-content {
+            margin-left: 240px;
+            padding-top: 64px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #334155;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover {
+            background-color: #f1f5f9;
+        }
+        .nav-item.active {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            background: #1e40af;
+            z-index: 30;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            overflow-y: auto;
+            max-height: 120px;
+        }
+        .calendar-day:hover {
+            background: #f1f5f9;
+            border-color: #1e40af;
+        }
+        .calendar-day.other-month {
+            background: #f8fafc;
+            color: #cbd5e1;
+        }
+        .calendar-day.today {
+            background: #dbeafe;
+            border-color: #1e40af;
+            border-width: 2px;
+            font-weight: bold;
+        }
+        .day-number {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+        .day-event {
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-holiday {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .event-class {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .event-assessment {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .event-activity {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- HEADER -->
+    <header class="header-sticky h-16 bg-blue-900 text-white flex items-center px-6 shadow-lg">
+        <div class="flex justify-between items-center w-full ml-60">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">📚</span>
+                <span class="font-bold text-lg">EDUCA</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <button class="text-white hover:bg-blue-800 p-2 rounded transition-all">🔔</button>
+                <div class="flex items-center gap-2 cursor-pointer hover:bg-blue-800 p-2 rounded transition-all">
+                    <div class="w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center font-bold">JS</div>
+                    <span class="text-sm">João</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-nav">
+        <div class="space-y-1">
+            <div class="nav-item">
+                <span class="text-2xl">📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">👥</span>
+                <span>Alunos</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📚</span>
+                <span>Turmas</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📋</span>
+                <span>Frequência</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📖</span>
+                <span>Diário</span>
+            </div>
+            <div class="nav-item active">
+                <span class="text-2xl">📅</span>
+                <span>Calendário</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">❓</span>
+                <span>Help</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">⚙️</span>
+                <span>Configurações</span>
+            </div>
+        </div>
+        <div class="border-t border-gray-200 my-6"></div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center font-bold text-white">JS</div>
+                <div class="text-sm">
+                    <div class="font-bold text-gray-900">João Silva</div>
+                    <div class="text-gray-600 text-xs">Professor</div>
+                </div>
+            </div>
+            <button class="w-full p-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition-all">🚪 Sair</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content px-10 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-4xl font-bold text-gray-900">Calendário Escolar 📅</h1>
+                <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all">+ Novo Evento</button>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-4 items-center mb-6 bg-white p-4 rounded-lg border border-gray-200">
+                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">← Anterior</button>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Janeiro 2024</option>
+                    <option>Fevereiro 2024</option>
+                    <option selected>Dezembro 2024</option>
+                </select>
+                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">Próximo →</button>
+                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all ml-auto">Hoje</button>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mb-6 bg-white p-4 rounded-lg border border-gray-200">
+            <div class="text-sm font-semibold text-gray-900 mb-3">Legenda:</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="legend-item">
+                    <div class="legend-color event-holiday"></div>
+                    <span>Feriado</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color event-class"></div>
+                    <span>Aula Normal</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color event-assessment"></div>
+                    <span>Avaliação</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color event-activity"></div>
+                    <span>Atividade Especial</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <!-- Days of week header -->
+            <div class="grid grid-cols-7 gap-2 mb-2">
+                <div class="font-bold text-center text-gray-900 py-2">Dom</div>
+                <div class="font-bold text-center text-gray-900 py-2">Seg</div>
+                <div class="font-bold text-center text-gray-900 py-2">Ter</div>
+                <div class="font-bold text-center text-gray-900 py-2">Qua</div>
+                <div class="font-bold text-center text-gray-900 py-2">Qui</div>
+                <div class="font-bold text-center text-gray-900 py-2">Sex</div>
+                <div class="font-bold text-center text-gray-900 py-2">Sab</div>
+            </div>
+
+            <!-- Calendar Days -->
+            <div class="grid grid-cols-7 gap-2">
+                <!-- Previous month days -->
+                <div class="calendar-day other-month">
+                    <div class="day-number">24</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">25</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">26</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">27</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">28</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">29</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">30</div>
+                </div>
+
+                <!-- Current month days -->
+                <div class="calendar-day">
+                    <div class="day-number">1</div>
+                    <div class="day-event event-activity">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">2</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">3</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">4</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">5</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">6</div>
+                    <div class="day-event event-holiday">Feriado</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">7</div>
+                </div>
+
+                <div class="calendar-day">
+                    <div class="day-number">8</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">9</div>
+                    <div class="day-event event-assessment">Avaliação</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">10</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day today">
+                    <div class="day-number">11</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">12</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">13</div>
+                    <div class="day-event event-activity">Projeto Final</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">14</div>
+                </div>
+
+                <div class="calendar-day">
+                    <div class="day-number">15</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">16</div>
+                    <div class="day-event event-assessment">Avaliação</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">17</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">18</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">19</div>
+                    <div class="day-event event-activity">Atividade Especial</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">20</div>
+                    <div class="day-event event-holiday">Feriado</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">21</div>
+                </div>
+
+                <div class="calendar-day">
+                    <div class="day-number">22</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">23</div>
+                    <div class="day-event event-class">Aula Normal</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">24</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">25</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">26</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">27</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">28</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+
+                <div class="calendar-day">
+                    <div class="day-number">29</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">30</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">31</div>
+                    <div class="day-event event-holiday">Recesso</div>
+                </div>
+
+                <!-- Next month days -->
+                <div class="calendar-day other-month">
+                    <div class="day-number">1</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">2</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">3</div>
+                </div>
+                <div class="calendar-day other-month">
+                    <div class="day-number">4</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <h3 class="font-bold text-gray-900 mb-4">📋 Próximas Aulas</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="pb-2 border-b">
+                        <div class="font-semibold text-gray-900">Amanhã - 12 Dez</div>
+                        <div class="text-gray-600">Aula Normal</div>
+                    </div>
+                    <div class="pb-2 border-b">
+                        <div class="font-semibold text-gray-900">13 Dez</div>
+                        <div class="text-gray-600">Projeto Final</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">16 Dez</div>
+                        <div class="text-gray-600">Avaliação</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <h3 class="font-bold text-gray-900 mb-4">📊 Avaliações</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="pb-2 border-b">
+                        <div class="font-semibold text-gray-900">09 Dez</div>
+                        <div class="text-gray-600">Prova de Matemática</div>
+                    </div>
+                    <div class="pb-2 border-b">
+                        <div class="font-semibold text-gray-900">16 Dez</div>
+                        <div class="text-gray-600">Prova de Português</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">20 Dez</div>
+                        <div class="text-gray-600">Trabalho Final</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <h3 class="font-bold text-gray-900 mb-4">🎓 Recesso/Feriados</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="pb-2 border-b">
+                        <div class="font-semibold text-gray-900">06 Dez</div>
+                        <div class="text-gray-600">Feriado Nacional</div>
+                    </div>
+                    <div class="pb-2 border-b">
+                        <div class="font-semibold text-gray-900">20 Dez</div>
+                        <div class="text-gray-600">Feriado Nacional</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">24 Dez - 31 Dez</div>
+                        <div class="text-gray-600">Recesso Escolar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Calendar interactivity can be added here
+        // For now, this is a static mockup
+    </script>
+</body>
+</html>
