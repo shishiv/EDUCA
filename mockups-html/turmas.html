@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUCA - Turmas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 12px;
+            overflow-y: auto;
+            z-index: 40;
+        }
+        .main-content {
+            margin-left: 240px;
+            padding-top: 64px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #334155;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover {
+            background-color: #f1f5f9;
+        }
+        .nav-item.active {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            background: #1e40af;
+            z-index: 30;
+        }
+        .class-card {
+            background: white;
+            border-top: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .class-card.serie-5 {
+            border-top-color: #3b82f6;
+        }
+        .class-card.serie-6 {
+            border-top-color: #16a34a;
+        }
+        .class-card.serie-7 {
+            border-top-color: #7c3aed;
+        }
+        .class-card.serie-8 {
+            border-top-color: #f59e0b;
+        }
+        .class-card.serie-9 {
+            border-top-color: #ef4444;
+        }
+        .class-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            border-top-width: 6px;
+        }
+        .class-card.active {
+            background: #dbeafe;
+            border-top-color: #1e40af;
+            border-top-width: 6px;
+        }
+        .serie-text {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .class-card.serie-5 .serie-text { color: #3b82f6; }
+        .class-card.serie-6 .serie-text { color: #16a34a; }
+        .class-card.serie-7 .serie-text { color: #7c3aed; }
+        .class-card.serie-8 .serie-text { color: #f59e0b; }
+        .class-card.serie-9 .serie-text { color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- HEADER -->
+    <header class="header-sticky h-16 bg-blue-900 text-white flex items-center px-6 shadow-lg">
+        <div class="flex justify-between items-center w-full ml-60">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">📚</span>
+                <span class="font-bold text-lg">EDUCA</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <button class="text-white hover:bg-blue-800 p-2 rounded transition-all">🔔</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-nav">
+        <div class="space-y-1">
+            <div class="nav-item">
+                <span class="text-2xl">📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">👥</span>
+                <span>Alunos</span>
+            </div>
+            <div class="nav-item active">
+                <span class="text-2xl">📚</span>
+                <span>Turmas</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📋</span>
+                <span>Frequência</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📖</span>
+                <span>Diário</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📅</span>
+                <span>Calendário</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">❓</span>
+                <span>Help</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">⚙️</span>
+                <span>Configurações</span>
+            </div>
+        </div>
+        <div class="border-t border-gray-200 my-6"></div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center font-bold text-white">JS</div>
+                <div class="text-sm">
+                    <div class="font-bold text-gray-900">João Silva</div>
+                    <div class="text-gray-600 text-xs">Professor</div>
+                </div>
+            </div>
+            <button class="w-full p-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100">🚪 Sair</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content px-10 py-8">
+        <!-- Filters -->
+        <div class="mb-8 bg-gray-100 p-6 rounded-lg border border-gray-200">
+            <div class="flex gap-4 flex-wrap items-end">
+                <div class="flex-1 min-w-max">
+                    <input type="text" placeholder="Procurar turma (ex: 5º A, 6º B)..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Todas as séries</option>
+                    <option>5º</option>
+                    <option>6º</option>
+                    <option>7º</option>
+                </select>
+                <button class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all">+ NOVA TURMA</button>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Class Cards (2 columns) -->
+            <div class="lg:col-span-2">
+                <div class="grid grid-cols-2 gap-6">
+                    <!-- Class Card 5º A -->
+                    <div class="class-card serie-5" onclick="selectClass(this, '5º A', 'Prof. Maria Silva')">
+                        <div class="serie-text">5º A</div>
+                        <div class="text-gray-900 text-sm font-semibold mb-1">Prof. Maria Silva</div>
+                        <div class="text-gray-600 text-xs">24 alunos | 94% freq</div>
+                    </div>
+
+                    <!-- Class Card 5º B -->
+                    <div class="class-card serie-5" onclick="selectClass(this, '5º B', 'Prof. João Santos')">
+                        <div class="serie-text">5º B</div>
+                        <div class="text-gray-900 text-sm font-semibold mb-1">Prof. João Santos</div>
+                        <div class="text-gray-600 text-xs">22 alunos | 88% freq</div>
+                    </div>
+
+                    <!-- Class Card 6º A -->
+                    <div class="class-card serie-6" onclick="selectClass(this, '6º A', 'Prof. Carlos Costa')">
+                        <div class="serie-text">6º A</div>
+                        <div class="text-gray-900 text-sm font-semibold mb-1">Prof. Carlos Costa</div>
+                        <div class="text-gray-600 text-xs">28 alunos | 91% freq</div>
+                    </div>
+
+                    <!-- Class Card 6º B -->
+                    <div class="class-card serie-6" onclick="selectClass(this, '6º B', 'Prof. Ana Lima')">
+                        <div class="serie-text">6º B</div>
+                        <div class="text-gray-900 text-sm font-semibold mb-1">Prof. Ana Lima</div>
+                        <div class="text-gray-600 text-xs">25 alunos | 85% freq</div>
+                    </div>
+
+                    <!-- Class Card 7º A -->
+                    <div class="class-card serie-7" onclick="selectClass(this, '7º A', 'Prof. Pedro Oliveira')">
+                        <div class="serie-text">7º A</div>
+                        <div class="text-gray-900 text-sm font-semibold mb-1">Prof. Pedro Oliveira</div>
+                        <div class="text-gray-600 text-xs">26 alunos | 89% freq</div>
+                    </div>
+
+                    <!-- Class Card 7º B -->
+                    <div class="class-card serie-7" onclick="selectClass(this, '7º B', 'Prof. Lucia Ferreira')">
+                        <div class="serie-text">7º B</div>
+                        <div class="text-gray-900 text-sm font-semibold mb-1">Prof. Lucia Ferreira</div>
+                        <div class="text-gray-600 text-xs">23 alunos | 87% freq</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Details Panel -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 h-fit sticky top-24">
+                <div id="emptyState" class="text-center py-12">
+                    <div class="text-4xl text-gray-300 mb-4">ℹ️</div>
+                    <div class="text-gray-600">Nenhuma turma selecionada</div>
+                    <div class="text-sm text-gray-500 mt-2">Clique em um card à esquerda para visualizar detalhes</div>
+                </div>
+
+                <div id="detailsState" class="hidden">
+                    <h2 id="className" class="text-2xl font-bold text-gray-900 mb-6">5º A - Turma de Matemática</h2>
+
+                    <div class="space-y-6">
+                        <!-- Teacher -->
+                        <div class="pb-6 border-b">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-lg">👤</span>
+                                <h3 class="font-bold text-gray-900">Professor</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div id="teacherName" class="font-semibold text-gray-900">Prof. Maria Silva da Costa</div>
+                                <div class="text-gray-600">maria.silva@escola.local</div>
+                                <div class="text-gray-600">(35) 99999-9999</div>
+                            </div>
+                        </div>
+
+                        <!-- Students -->
+                        <div class="pb-6 border-b">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-lg">👥</span>
+                                <h3 class="font-bold text-gray-900">Alunos (24)</h3>
+                            </div>
+                            <div class="space-y-1 text-sm text-gray-600">
+                                <div>1. João Silva</div>
+                                <div>2. Maria Santos</div>
+                                <div>3. Pedro Costa</div>
+                                <div>4. Ana Oliveira</div>
+                                <div>5. Carlos Mendes</div>
+                                <div class="text-blue-600 cursor-pointer font-semibold mt-2">[Ver lista completa →]</div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="pb-6 border-b">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-lg">📊</span>
+                                <h3 class="font-bold text-gray-900">Estatísticas</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-semibold text-gray-900">Frequência:</span> <span class="text-gray-600">94%</span></div>
+                                <div><span class="font-semibold text-gray-900">Aulas registradas:</span> <span class="text-gray-600">15</span></div>
+                                <a href="#" class="text-blue-600 font-semibold text-xs mt-2 inline-block hover:underline">[Últimas aulas →]</a>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="space-y-2">
+                            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition-all">Editar Turma</button>
+                            <button class="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 py-2 rounded-lg text-sm font-semibold transition-all">Gerar Relatório</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function selectClass(element, className, teacher) {
+            document.querySelectorAll('.class-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('detailsState').classList.remove('hidden');
+            document.getElementById('className').textContent = className + ' - Turma de Matemática';
+            document.getElementById('teacherName').textContent = teacher;
+        }
+    </script>
+</body>
+</html>
