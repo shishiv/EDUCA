@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -19,100 +19,176 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Home,
   FileText,
   User,
   BookOpen,
   CheckSquare,
-  BookText
+  BookText,
+  FolderOpen,
+  type LucideIcon
 } from 'lucide-react'
 
 interface SidebarProps {
   className?: string
 }
 
-// Define menu items with role permissions
-const navigationItems = [
+interface NavigationItem {
+  name: string
+  href: string
+  icon: LucideIcon
+  roles: string[]
+}
+
+interface NavigationGroup {
+  name: string
+  icon: LucideIcon
+  items: NavigationItem[]
+  defaultOpen?: boolean
+}
+
+// Organized navigation with groups (Notion-style)
+const navigationGroups: NavigationGroup[] = [
   {
-    name: 'Dashboard',
-    href: '/dashboard',
+    name: 'Principal',
     icon: Home,
-    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos podem ver
+    defaultOpen: true,
+    items: [
+      {
+        name: 'Dashboard',
+        href: '/dashboard',
+        icon: Home,
+        roles: ['admin', 'diretor', 'secretario', 'professor'],
+      },
+    ],
   },
   {
-    name: 'Alunos',
-    href: '/dashboard/alunos',
-    icon: Users,
-    roles: ['admin', 'diretor', 'secretario'], // Professor não gerencia alunos diretamente
+    name: 'Cadastros',
+    icon: FolderOpen,
+    defaultOpen: true,
+    items: [
+      {
+        name: 'Alunos',
+        href: '/dashboard/alunos',
+        icon: Users,
+        roles: ['admin', 'diretor', 'secretario'],
+      },
+      {
+        name: 'Usuários',
+        href: '/dashboard/usuarios',
+        icon: User,
+        roles: ['admin'],
+      },
+      {
+        name: 'Escolas',
+        href: '/dashboard/escolas',
+        icon: School,
+        roles: ['admin'],
+      },
+      {
+        name: 'Turmas',
+        href: '/dashboard/turmas',
+        icon: BookOpen,
+        roles: ['admin', 'diretor', 'secretario'],
+      },
+      {
+        name: 'Matrículas',
+        href: '/dashboard/matriculas',
+        icon: UserCheck,
+        roles: ['admin', 'diretor', 'secretario'],
+      },
+    ],
   },
   {
-    name: 'Usuários',
-    href: '/dashboard/usuarios',
-    icon: User,
-    roles: ['admin'], // Apenas admin gerencia usuários
+    name: 'Acadêmico',
+    icon: GraduationCap,
+    defaultOpen: true,
+    items: [
+      {
+        name: 'Frequência',
+        href: '/dashboard/frequencia',
+        icon: CheckSquare,
+        roles: ['admin', 'diretor', 'secretario', 'professor'],
+      },
+      {
+        name: 'Diário de Classe',
+        href: '/dashboard/diario',
+        icon: BookText,
+        roles: ['admin', 'diretor', 'secretario', 'professor'],
+      },
+      {
+        name: 'Notas',
+        href: '/dashboard/notas',
+        icon: ClipboardList,
+        roles: ['admin', 'diretor', 'secretario', 'professor'],
+      },
+    ],
   },
   {
-    name: 'Escolas',
-    href: '/dashboard/escolas',
-    icon: School,
-    roles: ['admin'], // Apenas admin gerencia escolas
-  },
-  {
-    name: 'Turmas',
-    href: '/dashboard/turmas',
-    icon: BookOpen,
-    roles: ['admin', 'diretor', 'secretario'], // Professor vê apenas suas turmas
-  },
-  {
-    name: 'Matrículas',
-    href: '/dashboard/matriculas',
-    icon: UserCheck,
-    roles: ['admin', 'diretor', 'secretario'], // Professor não gerencia matrículas
-  },
-  {
-    name: 'Frequência',
-    href: '/dashboard/frequencia',
-    icon: CheckSquare,
-    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos trabalham com frequência
-  },
-  {
-    name: 'Diário de Classe',
-    href: '/dashboard/diario',
-    icon: BookText,
-    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos podem visualizar o diário
-  },
-  {
-    name: 'Notas',
-    href: '/dashboard/notas',
-    icon: ClipboardList,
-    roles: ['admin', 'diretor', 'secretario', 'professor'], // Todos trabalham com notas
-  },
-  {
-    name: 'Relatórios',
-    href: '/dashboard/relatorios',
-    icon: FileText,
-    roles: ['admin', 'diretor', 'secretario'], // Professor tem relatórios limitados
-  },
-  {
-    name: 'Configurações',
-    href: '/dashboard/configuracoes',
-    icon: Settings,
-    roles: ['admin', 'diretor'], // Apenas admin e diretor configuram
+    name: 'Gestão',
+    icon: BarChart3,
+    defaultOpen: false,
+    items: [
+      {
+        name: 'Relatórios',
+        href: '/dashboard/relatorios',
+        icon: FileText,
+        roles: ['admin', 'diretor', 'secretario'],
+      },
+      {
+        name: 'Configurações',
+        href: '/dashboard/configuracoes',
+        icon: Settings,
+        roles: ['admin', 'diretor'],
+      },
+    ],
   },
 ]
 
-// Filter navigation based on user role
-function getNavigationForRole(userRole: string) {
-  return navigationItems.filter(item => item.roles.includes(userRole))
+// Filter navigation groups based on user role
+function getNavigationForRole(userRole: string): NavigationGroup[] {
+  return navigationGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => item.roles.includes(userRole)),
+    }))
+    .filter(group => group.items.length > 0)
 }
 
 export function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const pathname = usePathname()
   const { userProfile } = useAuth()
 
-  // Get navigation items based on user role
-  const navigation = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
+  // Get navigation groups based on user role
+  const navigationGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
+
+  // Initialize expanded groups from defaults
+  useEffect(() => {
+    const defaults: Record<string, boolean> = {}
+    navigationGroups.forEach(group => {
+      if (defaults[group.name] === undefined) {
+        defaults[group.name] = group.defaultOpen ?? true
+      }
+    })
+    setExpandedGroups(prev => ({ ...defaults, ...prev }))
+  }, [userProfile])
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }))
+  }
+
+  // Check if any item in a group is active
+  const isGroupActive = (group: NavigationGroup) => {
+    return group.items.some(item =>
+      pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+    )
+  }
 
   return (
     <div className={cn(
@@ -143,60 +219,108 @@ export function Sidebar({ className }: SidebarProps) {
 
       </div>
 
-      {/* Subtle side expand button when collapsed */}
-      {collapsed && (
-        <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-6 w-6 p-0 rounded-full bg-white border border-fronteira-gray-200 text-fronteira-gray-400 hover:text-fronteira-primary hover:bg-fronteira-primary/5 hover:border-fronteira-primary/20 shadow-sm transition-all duration-200"
-          >
-            <ChevronRight className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
+      {/* Subtle side expand/collapse button */}
+      <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCollapsed(!collapsed)}
+          className="h-6 w-6 p-0 rounded-full bg-white border border-fronteira-gray-200 text-fronteira-gray-400 hover:text-fronteira-primary hover:bg-fronteira-primary/5 hover:border-fronteira-primary/20 shadow-sm transition-all duration-200"
+        >
+          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+        </Button>
+      </div>
 
-      {/* Subtle side collapse button when expanded */}
-      {!collapsed && (
-        <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-6 w-6 p-0 rounded-full bg-white border border-fronteira-gray-200 text-fronteira-gray-400 hover:text-fronteira-primary hover:bg-fronteira-primary/5 hover:border-fronteira-primary/20 shadow-sm transition-all duration-200"
-          >
-            <ChevronLeft className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
+      {/* Navigation with Groups */}
+      <ScrollArea className="flex-1 py-4">
+        <nav className="space-y-1 px-2">
+          {navigationGroups.map((group) => {
+            const isExpanded = expandedGroups[group.name] ?? group.defaultOpen
+            const groupActive = isGroupActive(group)
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 p-4">
-        <nav className="space-y-2">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+            // If sidebar is collapsed, just show icons for first item of each group
+            if (collapsed) {
+              return (
+                <div key={group.name} className="space-y-1">
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+                    return (
+                      <Link key={item.name} href={item.href}>
+                        <Button
+                          variant={isActive ? "default" : "ghost"}
+                          className={cn(
+                            "w-full justify-center h-10 px-2 sidebar-transition",
+                            isActive
+                              ? "bg-fronteira-primary text-fronteira-primary-foreground hover:bg-fronteira-primary/90 shadow-sm"
+                              : "text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
+                          )}
+                          title={item.name}
+                        >
+                          <item.icon className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )
+            }
+
+            // Expanded sidebar with collapsible groups
             return (
-              <Link key={item.name} href={item.href}>
-                <Button
-                  variant={isActive ? "default" : "ghost"}
+              <div key={group.name} className="space-y-1">
+                {/* Group Header - only show if group has more than 1 item */}
+                {group.items.length > 1 ? (
+                  <button
+                    onClick={() => toggleGroup(group.name)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors",
+                      groupActive
+                        ? "text-fronteira-primary bg-fronteira-primary/5"
+                        : "text-fronteira-gray-400 hover:text-fronteira-gray-600 hover:bg-fronteira-gray-50"
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      <group.icon className="h-3.5 w-3.5" />
+                      {group.name}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform duration-200",
+                        isExpanded ? "rotate-0" : "-rotate-90"
+                      )}
+                    />
+                  </button>
+                ) : null}
+
+                {/* Group Items */}
+                <div
                   className={cn(
-                    "w-full justify-start h-10 sidebar-transition",
-                    collapsed && "px-2",
-                    isActive
-                      ? "bg-fronteira-primary text-fronteira-primary-foreground hover:bg-fronteira-primary/90 shadow-sm"
-                      : "text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
+                    "space-y-1 overflow-hidden transition-all duration-200",
+                    group.items.length > 1 && !isExpanded ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100",
+                    group.items.length > 1 && "ml-2"
                   )}
                 >
-                  <item.icon className={cn(
-                    "h-4 w-4",
-                    !collapsed && "mr-3"
-                  )} />
-                  {!collapsed && (
-                    <span className="sidebar-transition">{item.name}</span>
-                  )}
-                </Button>
-              </Link>
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+                    return (
+                      <Link key={item.name} href={item.href}>
+                        <Button
+                          variant={isActive ? "default" : "ghost"}
+                          className={cn(
+                            "w-full justify-start h-9 text-sm sidebar-transition",
+                            isActive
+                              ? "bg-fronteira-primary text-fronteira-primary-foreground hover:bg-fronteira-primary/90 shadow-sm"
+                              : "text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4 mr-3" />
+                          <span className="sidebar-transition">{item.name}</span>
+                        </Button>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
             )
           })}
         </nav>

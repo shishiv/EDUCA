@@ -10,6 +10,7 @@ export { TeacherDashboardEnhanced } from './teacher-dashboard-enhanced'
 
 // Dashboard utility components
 export { StatsCard } from './stats-card'
+export { StatsBar } from './stats-bar'
 
 // Type exports
 export type { StatsCardProps } from './stats-card'

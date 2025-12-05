@@ -9,7 +9,7 @@
 
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useServiceWorker } from '@/hooks/use-service-worker'
 import { toast } from 'sonner'
 import { WifiOff, Wifi, Download } from 'lucide-react'
@@ -22,9 +22,21 @@ interface ServiceWorkerProviderProps {
 export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) {
   const { isInstalled, isOnline, needsUpdate, activateUpdate, getOfflineCount } = useServiceWorker()
 
+  // Track if initial render is complete to avoid ForwardRef warning
+  const isInitialRender = useRef(true)
+
+  // Mark initial render as complete after mount
+  useEffect(() => {
+    // Use setTimeout to ensure we're past the initial render cycle
+    const timer = setTimeout(() => {
+      isInitialRender.current = false
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
   // Show installation notification
   useEffect(() => {
-    if (isInstalled) {
+    if (isInstalled && !isInitialRender.current) {
       logger.info('Service worker installed successfully', {
         feature: 'offline',
         action: 'sw_installed'
@@ -40,6 +52,9 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
 
   // Show offline/online notifications
   useEffect(() => {
+    // Skip during initial render to avoid ForwardRef warning
+    if (isInitialRender.current) return
+
     if (!isOnline) {
       toast.warning('Você está offline', {
         description: 'Suas marcações serão sincronizadas quando a conexão retornar.',
@@ -61,6 +76,9 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
 
   // Show update notification
   useEffect(() => {
+    // Skip during initial render to avoid ForwardRef warning
+    if (isInitialRender.current) return
+
     if (needsUpdate) {
       toast('Nova versão disponível', {
         description: 'Clique para atualizar o sistema.',
