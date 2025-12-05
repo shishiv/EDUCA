@@ -193,7 +193,8 @@ export async function getBolsaFamiliaStudents(
       },
     });
 
-    // Build query for students with NIS or bolsa_familia flag
+    // Build query for students - filter Bolsa Família in code since Supabase
+    // doesn't support .or() on related table columns in PostgREST syntax
     let query = supabase
       .from('matriculas')
       .select(`
@@ -218,8 +219,7 @@ export async function getBolsaFamiliaStudents(
           )
         )
       `)
-      .eq('situacao', 'Ativa')
-      .or('alunos.nis.not.is.null,alunos.bolsa_familia.eq.true');
+      .eq('situacao', 'Ativa');
 
     // Apply optional filters
     if (filters.turmaId) {
@@ -237,7 +237,13 @@ export async function getBolsaFamiliaStudents(
       return { data: null, error: matriculasError.message };
     }
 
-    const matriculas = matriculasData || [];
+    // Filter for Bolsa Família students (has NIS or bolsa_familia flag)
+    // This filtering is done in code because Supabase PostgREST doesn't support
+    // .or() filters on columns from related tables
+    const matriculas = (matriculasData || []).filter((m: any) => {
+      const aluno = m.alunos;
+      return aluno && (aluno.nis || aluno.bolsa_familia);
+    });
 
     if (matriculas.length === 0) {
       const emptyReport: BolsaFamiliaReport = {
