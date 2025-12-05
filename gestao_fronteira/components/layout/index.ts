@@ -18,6 +18,7 @@ export { NavigationProvider, useNavigation } from './navigation-provider'
 
 // Mobile responsive components
 export { MobileSidebar } from './mobile-sidebar'
+export { MobileNav, MobileNavSpacer } from './MobileNav'
 
 // Authentication and access control
 export { AuthGuard } from './auth-guard'

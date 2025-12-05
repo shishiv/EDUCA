@@ -1,6 +1,7 @@
 /**
  * Attendance Reports Page
  * Task Group 4.1.4: Attendance Report Page
+ * Task Group 5.1.2: Mobile responsiveness fixes
  * OpenSpec Change: 2025-12-04-diario-de-classe
  *
  * Features:
@@ -9,6 +10,7 @@
  * - Table visualization with AttendanceReportTable
  * - Optional bar chart visualization
  * - Export to PDF and Excel
+ * - Mobile-optimized layout
  *
  * Route: /relatorios/frequencia
  *
@@ -354,56 +356,70 @@ export default function AttendanceReportsPage() {
   }, [turmas, selectedTurma])
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6 text-blue-600" />
-            Relatorios de Frequencia
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+            <span className="hidden xs:inline">Relatorios de </span>Frequencia
           </h1>
-          <p className="text-gray-600 mt-1">
-            Visualize e exporte relatorios de frequencia por turma e periodo
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            <span className="hidden sm:inline">Visualize e exporte relatorios de frequencia por turma e periodo</span>
+            <span className="sm:hidden">Relatorios por turma e periodo</span>
           </p>
         </div>
 
+        {/* Export buttons - stack on mobile */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportExcel}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Excel
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            className="min-h-[44px] flex-1 sm:flex-none"
+          >
+            <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Excel</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportPDF}>
-            <FileText className="h-4 w-4 mr-2" />
-            PDF
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPDF}
+            className="min-h-[44px] flex-1 sm:flex-none"
+          >
+            <FileText className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">PDF</span>
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Mobile optimized grid */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
+        <CardHeader className="pb-3 px-3 sm:px-6">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Filtros
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <CardContent className="px-3 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Turma Selector */}
-            <div className="space-y-2">
-              <Label htmlFor="turma">Turma</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="turma" className="text-xs sm:text-sm">Turma</Label>
               {isLoadingTurmas ? (
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 sm:h-11 w-full" />
               ) : (
                 <Select value={selectedTurma} onValueChange={handleTurmaChange}>
-                  <SelectTrigger id="turma">
+                  <SelectTrigger id="turma" className="min-h-[44px]">
                     <SelectValue placeholder="Selecione uma turma" />
                   </SelectTrigger>
                   <SelectContent>
                     {turmas.map((turma) => (
-                      <SelectItem key={turma.id} value={turma.id}>
+                      <SelectItem key={turma.id} value={turma.id} className="py-3">
                         {turma.serie} - {turma.nome}
-                        {turma.escola && ` (${turma.escola.nome})`}
+                        {turma.escola && (
+                          <span className="hidden sm:inline"> ({turma.escola.nome})</span>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -412,15 +428,15 @@ export default function AttendanceReportsPage() {
             </div>
 
             {/* Period Selector */}
-            <div className="space-y-2">
-              <Label htmlFor="periodo">Periodo</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="periodo" className="text-xs sm:text-sm">Periodo</Label>
               <Select value={periodOption} onValueChange={setPeriodOption}>
-                <SelectTrigger id="periodo">
+                <SelectTrigger id="periodo" className="min-h-[44px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {PERIOD_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <SelectItem key={opt.value} value={opt.value} className="py-3">
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -431,14 +447,14 @@ export default function AttendanceReportsPage() {
             {/* Date Range (for custom period) */}
             {periodOption === 'custom' && (
               <>
-                <div className="space-y-2">
-                  <Label>Data Inicio</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm">Data Inicio</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          'w-full justify-start text-left font-normal',
+                          'w-full justify-start text-left font-normal min-h-[44px]',
                           !dateRange.from && 'text-muted-foreground'
                         )}
                       >
@@ -459,14 +475,14 @@ export default function AttendanceReportsPage() {
                   </Popover>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Data Fim</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm">Data Fim</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          'w-full justify-start text-left font-normal',
+                          'w-full justify-start text-left font-normal min-h-[44px]',
                           !dateRange.to && 'text-muted-foreground'
                         )}
                       >
@@ -490,12 +506,15 @@ export default function AttendanceReportsPage() {
               </>
             )}
 
-            {/* Generate Button */}
-            <div className="flex items-end">
+            {/* Generate Button - Full width on mobile when custom period */}
+            <div className={cn(
+              'flex items-end',
+              periodOption === 'custom' ? 'col-span-1 sm:col-span-2 lg:col-span-4' : ''
+            )}>
               <Button
                 onClick={fetchReport}
                 disabled={!selectedTurma || isLoadingReport}
-                className="w-full"
+                className="w-full min-h-[44px]"
               >
                 {isLoadingReport ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -520,16 +539,16 @@ export default function AttendanceReportsPage() {
       {/* Report Content */}
       {reportData && (
         <>
-          {/* View Mode Tabs */}
+          {/* View Mode Tabs - Full width on mobile */}
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'table' | 'chart')}>
-            <TabsList className="grid w-full max-w-[200px] grid-cols-2">
-              <TabsTrigger value="table" className="flex items-center gap-1">
+            <TabsList className="grid w-full sm:w-auto sm:max-w-[200px] grid-cols-2">
+              <TabsTrigger value="table" className="flex items-center gap-1 min-h-[44px]">
                 <TableIcon className="h-4 w-4" />
-                Tabela
+                <span className="hidden xs:inline">Tabela</span>
               </TabsTrigger>
-              <TabsTrigger value="chart" className="flex items-center gap-1">
+              <TabsTrigger value="chart" className="flex items-center gap-1 min-h-[44px]">
                 <BarChart3 className="h-4 w-4" />
-                Grafico
+                <span className="hidden xs:inline">Grafico</span>
               </TabsTrigger>
             </TabsList>
 
@@ -556,10 +575,10 @@ export default function AttendanceReportsPage() {
                   <CardTitle className="text-base">Visualizacao Grafica</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12 text-gray-500">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">Grafico em desenvolvimento</p>
-                    <p className="text-sm mt-1">
+                  <div className="text-center py-8 sm:py-12 text-gray-500">
+                    <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-base sm:text-lg font-medium">Grafico em desenvolvimento</p>
+                    <p className="text-xs sm:text-sm mt-1">
                       A visualizacao grafica sera implementada em breve.
                     </p>
                   </div>
@@ -573,10 +592,10 @@ export default function AttendanceReportsPage() {
       {/* Empty State */}
       {!reportData && !isLoadingReport && !error && (
         <Card>
-          <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium text-gray-600">Selecione uma turma e periodo</p>
-            <p className="text-sm text-gray-500 mt-1">
+          <CardContent className="text-center py-8 sm:py-12">
+            <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-base sm:text-lg font-medium text-gray-600">Selecione uma turma e periodo</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Use os filtros acima para gerar o relatorio de frequencia.
             </p>
           </CardContent>
