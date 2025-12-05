@@ -11,17 +11,17 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 16h 00min |
-| **Dias trabalhados** | 2 dias |
-| **Horas médias por dia** | 8h 00min |
-| **Total de commits** | 12 commits |
+| **Total de horas trabalhadas** | 20h 00min |
+| **Dias trabalhados** | 3 dias |
+| **Horas médias por dia** | 6h 40min |
+| **Total de commits** | 15 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
 ---
 
 ## Detalhamento de Atividades
 
-### Semana 1: 01/12 - 07/12 (16h 00min)
+### Semana 1: 01/12 - 07/12 (20h 00min)
 
 #### Quarta-feira, 04/12/2025
 **Horas:** 6h 00min
@@ -50,6 +50,18 @@
 - `2650e3e` - Conclusão das Fases 1.1 e 1.2 do Diário de Classe
 - `66902ba` - Revisão de testes e análise de gaps (Fase 6)
 - `d49377c` - Correção de bugs encontrados na verificação visual
+
+---
+
+#### Sexta-feira (cont.), 05/12/2025
+**Horas:** 4h 00min
+**Atividade:** Melhorias de Interface e Usabilidade do Sistema
+**Descrição:** Correção de erros de autenticação e navegação, implementação de melhorias visuais inspiradas no Notion e Google Classroom, incluindo menu lateral colapsável, estatísticas compactas, filtros integrados nas tabelas, mensagens de estado vazio com ações sugeridas e padronização do formato de datas brasileiro.
+
+**Commits relacionados:**
+- `0aa791c` - Correção de bugs e implementação de menu lateral estilo Notion
+- `194fc16` - Novo componente de filtros integrados nas tabelas
+- `73b24a4` - Componente de estado vazio e formatação de datas brasileira
 
 ---
 
@@ -135,11 +147,11 @@ Use estas categorias para classificar o trabalho:
 
 | Categoria | Horas | % do Total |
 |-----------|-------|------------|
-| Desenvolvimento | 8h 00min | 50% |
-| Correção de erros | 2h 00min | 12.5% |
-| Melhorias | 2h 00min | 12.5% |
-| Documentação | 2h 00min | 12.5% |
-| Testes | 2h 00min | 12.5% |
+| Desenvolvimento | 8h 00min | 40% |
+| Correção de erros | 3h 00min | 15% |
+| Melhorias | 5h 00min | 25% |
+| Documentação | 2h 00min | 10% |
+| Testes | 2h 00min | 10% |
 | Limpeza | 0h 00min | 0% |
 | Deploy | 0h 00min | 0% |
 
@@ -155,6 +167,9 @@ Use estas categorias para classificar o trabalho:
 - [x] Página de relatório de conteúdo ministrado (BNCC)
 - [x] Otimizações de performance (skeletons, React Query, índices)
 - [x] Melhorias de acessibilidade e responsividade mobile
+- [x] Menu lateral colapsável estilo Notion
+- [x] Componentes reutilizáveis (StatsBar, InlineFilters, EmptyState)
+- [x] Padronização de formatação de datas brasileiras
 
 ### Pendências e Próximos Passos
 - [ ] Conclusão da Fase 5.1 (Otimização Mobile)
