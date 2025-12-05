@@ -14,13 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download, BookOpen, CheckCircle, TrendingUp } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download, BookOpen, CheckCircle, TrendingUp, Search as SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
+import { TableEmptyState } from '@/components/ui/empty-state'
 
 interface Turma {
   id: string
@@ -621,11 +622,43 @@ export default function TurmasPage() {
                   )
                 })}
                 {filteredTurmas.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      Nenhuma turma encontrada com os filtros aplicados.
-                    </TableCell>
-                  </TableRow>
+                  <TableEmptyState
+                    colSpan={7}
+                    icon={search || escolaFilter !== 'todas' || serieFilter !== 'todas' || turnoFilter !== 'todos' || statusFilter !== 'todos' ? SearchIcon : BookOpen}
+                    title={
+                      search || escolaFilter !== 'todas' || serieFilter !== 'todas' || turnoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? 'Nenhuma turma encontrada'
+                        : 'Nenhuma turma cadastrada'
+                    }
+                    description={
+                      search || escolaFilter !== 'todas' || serieFilter !== 'todas' || turnoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? 'Tente ajustar os filtros para encontrar o que procura.'
+                        : 'Comece adicionando a primeira turma.'
+                    }
+                    actions={
+                      search || escolaFilter !== 'todas' || serieFilter !== 'todas' || turnoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? [
+                            {
+                              label: 'Limpar filtros',
+                              variant: 'outline',
+                              onClick: () => {
+                                setSearch('')
+                                setEscolaFilter('todas')
+                                setSerieFilter('todas')
+                                setTurnoFilter('todos')
+                                setStatusFilter('todos')
+                              },
+                            },
+                          ]
+                        : [
+                            {
+                              label: 'Nova Turma',
+                              href: '/dashboard/turmas/nova',
+                              icon: Plus,
+                            },
+                          ]
+                    }
+                  />
                 )}
               </TableBody>
             </Table>

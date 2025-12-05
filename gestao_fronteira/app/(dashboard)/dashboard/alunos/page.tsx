@@ -15,12 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Download, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart } from 'lucide-react'
+import { Plus, Download, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart, Search as SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
+import { TableEmptyState } from '@/components/ui/empty-state'
+import { formatDateBR } from '@/lib/date-utils'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -268,7 +270,7 @@ export default function AlunosPage() {
                     <TableCell>
                       <div>{calculateAge(aluno.data_nascimento)} anos</div>
                       <div className="text-sm text-gray-500">
-                        {new Date(aluno.data_nascimento).toLocaleDateString('pt-BR')}
+                        {formatDateBR(aluno.data_nascimento)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -315,11 +317,41 @@ export default function AlunosPage() {
                   </TableRow>
                 ))}
                 {filteredAlunos.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      Nenhum aluno encontrado com os filtros aplicados.
-                    </TableCell>
-                  </TableRow>
+                  <TableEmptyState
+                    colSpan={6}
+                    icon={search || statusFilter !== 'todos' || sexoFilter !== 'todos' ? SearchIcon : Users}
+                    title={
+                      search || statusFilter !== 'todos' || sexoFilter !== 'todos'
+                        ? 'Nenhum aluno encontrado'
+                        : 'Nenhum aluno cadastrado'
+                    }
+                    description={
+                      search || statusFilter !== 'todos' || sexoFilter !== 'todos'
+                        ? 'Tente ajustar os filtros para encontrar o que procura.'
+                        : 'Comece adicionando o primeiro aluno ao sistema.'
+                    }
+                    actions={
+                      search || statusFilter !== 'todos' || sexoFilter !== 'todos'
+                        ? [
+                            {
+                              label: 'Limpar filtros',
+                              variant: 'outline',
+                              onClick: () => {
+                                setSearch('')
+                                setStatusFilter('todos')
+                                setSexoFilter('todos')
+                              },
+                            },
+                          ]
+                        : [
+                            {
+                              label: 'Novo Aluno',
+                              href: '/dashboard/alunos/novo',
+                              icon: Plus,
+                            },
+                          ]
+                    }
+                  />
                 )}
               </TableBody>
             </Table>

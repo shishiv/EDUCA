@@ -15,9 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download, CheckCircle, BookOpen } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download, CheckCircle, BookOpen, Search as SearchIcon } from 'lucide-react'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
+import { TableEmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
@@ -347,11 +348,41 @@ export default function EscolasPage() {
                   )
                 })}
                 {filteredEscolas.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      Nenhuma escola encontrada com os filtros aplicados.
-                    </TableCell>
-                  </TableRow>
+                  <TableEmptyState
+                    colSpan={7}
+                    icon={search || tipoFilter !== 'todos' || statusFilter !== 'todos' ? SearchIcon : School}
+                    title={
+                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? 'Nenhuma escola encontrada'
+                        : 'Nenhuma escola cadastrada'
+                    }
+                    description={
+                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? 'Tente ajustar os filtros para encontrar o que procura.'
+                        : 'Comece adicionando a primeira escola da rede.'
+                    }
+                    actions={
+                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? [
+                            {
+                              label: 'Limpar filtros',
+                              variant: 'outline',
+                              onClick: () => {
+                                setSearch('')
+                                setTipoFilter('todos')
+                                setStatusFilter('todos')
+                              },
+                            },
+                          ]
+                        : [
+                            {
+                              label: 'Nova Escola',
+                              href: '/dashboard/escolas/nova',
+                              icon: Plus,
+                            },
+                          ]
+                    }
+                  />
                 )}
               </TableBody>
             </Table>
