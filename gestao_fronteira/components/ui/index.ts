@@ -12,11 +12,13 @@ export { AspectRatio } from './aspect-ratio'
 export { Avatar, AvatarFallback, AvatarImage } from './avatar'
 export { Badge, badgeVariants } from './badge'
 export { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from './breadcrumb'
-export { Button, ButtonProps, buttonVariants } from './button'
+export { Button, buttonVariants } from './button'
+export type { ButtonProps } from './button'
 export { Calendar } from './calendar'
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card'
 export { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './carousel'
-export { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from './chart'
+export { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from './chart'
+export type { ChartConfig } from './chart'
 export { Checkbox } from './checkbox'
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible'
 export { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from './command'
@@ -26,7 +28,8 @@ export { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, Dr
 export { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from './dropdown-menu'
 export { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, useFormField } from './form'
 export { HoverCard, HoverCardContent, HoverCardTrigger } from './hover-card'
-export { Input, InputProps } from './input'
+export { Input } from './input'
+export type { InputProps } from './input'
 export { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from './input-otp'
 export { Label } from './label'
 export { Menubar, MenubarCheckboxItem, MenubarContent, MenubarItem, MenubarLabel, MenubarMenu, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator, MenubarShortcut, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger } from './menubar'
@@ -54,7 +57,29 @@ export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tool
 
 // Custom UI Components for Educational System
 export { ErrorBoundary } from './error-boundary'
-export { LoadingButton, LoadingSpinner, LoadingCard, LoadingSkeleton } from './loading-states'
+export {
+  LoadingButton,
+  LoadingSpinner as LoadingStatesSpinner,
+  LoadingCenter,
+  PageLoading,
+  TableLoading,
+  CardLoading,
+  ListLoading,
+  InlineLoading,
+  RefreshButton,
+  OverlayLoading,
+} from './loading-states'
+
+// New Loading Components (Task 5.3.2)
+export {
+  LoadingSpinner,
+  LoadingOverlay,
+  LoadingInline,
+  ButtonLoading,
+  LoadingCard,
+  LoadingTable,
+  LoadingProgress,
+} from './loading-spinner'
 
 // Brazilian Educational Input Components
 export { CPFInput, BrazilianPhoneInput, CEPInput, BrazilianDateInput, BrazilianInputHelp } from './brazilian-inputs'
@@ -93,4 +118,4 @@ export {
 } from './mobile-responsive-dialog'
 
 // Sonner Toast Integration
-export { toast } from './sonner'
+export { Toaster as SonnerToaster } from './sonner'

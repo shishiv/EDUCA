@@ -11,19 +11,43 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 0h 00min |
-| **Dias trabalhados** | 0 dias |
-| **Horas médias por dia** | 0h 00min |
-| **Total de commits** | 0 commits |
+| **Total de horas trabalhadas** | 14h 00min |
+| **Dias trabalhados** | 2 dias |
+| **Horas médias por dia** | 7h 00min |
+| **Total de commits** | 10 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
 ---
 
 ## Detalhamento de Atividades
 
-### Semana 1: 01/12 - 07/12 (0h 00min)
+### Semana 1: 01/12 - 07/12 (14h 00min)
 
-*Registros em andamento...*
+#### Quarta-feira, 04/12/2025
+**Horas:** 6h 00min
+**Atividade:** Planejamento e Protótipos do Diário de Classe
+**Descrição:** Criação de protótipos interativos (mockups HTML) para o novo módulo de Diário de Classe, incluindo design de interface e correções de segurança em dependências do sistema.
+
+**Commits relacionados:**
+- `8fe0ea0` - Criação de 10 páginas de mockup interativas
+- `2e9b34d` - Mockup estilo papel do diário de classe
+- `2751301` - Correções de segurança em dependências
+- `7622024` - Atualização do changelog de segurança
+- `7fd9a9e` - Plano de orquestração do Diário de Classe
+
+---
+
+#### Sexta-feira, 05/12/2025
+**Horas:** 8h 00min
+**Atividade:** Desenvolvimento do Diário de Classe - Relatórios e Exportação
+**Descrição:** Implementação completa do sistema de relatórios escolares incluindo alertas de frequência do Bolsa Família, exportação de documentos em PDF e Excel, relatórios de conteúdo ministrado, e melhorias de performance e acessibilidade para uso em tablets.
+
+**Commits relacionados:**
+- `223f7c4` - Otimizações de performance (skeletons, React Query, índices de banco)
+- `f9d98c7` - Relatórios de conteúdo ministrado com habilidades BNCC
+- `e20462b` - Alertas Bolsa Família e exportação PDF/Excel
+- `fdb20b3` - Dashboard de status da Fase 1
+- `2650e3e` - Conclusão das Fases 1.1 e 1.2 do Diário de Classe
 
 ---
 
@@ -109,10 +133,10 @@ Use estas categorias para classificar o trabalho:
 
 | Categoria | Horas | % do Total |
 |-----------|-------|------------|
-| Desenvolvimento | 0h 00min | 0% |
-| Correção de erros | 0h 00min | 0% |
-| Melhorias | 0h 00min | 0% |
-| Documentação | 0h 00min | 0% |
+| Desenvolvimento | 8h 00min | 57% |
+| Correção de erros | 1h 00min | 7% |
+| Melhorias | 2h 00min | 14% |
+| Documentação | 3h 00min | 22% |
 | Limpeza | 0h 00min | 0% |
 | Testes | 0h 00min | 0% |
 | Deploy | 0h 00min | 0% |
@@ -122,10 +146,18 @@ Use estas categorias para classificar o trabalho:
 ## Observações Técnicas
 
 ### Principais Entregas
-- [ ] *A preencher*
+- [x] 10 mockups interativos HTML para o Diário de Classe
+- [x] Correções de segurança críticas (CVE-2025-66478, CVE-2023-30533)
+- [x] Sistema de alertas Bolsa Família com threshold de 80%
+- [x] Exportação de relatórios em PDF e Excel
+- [x] Página de relatório de conteúdo ministrado (BNCC)
+- [x] Otimizações de performance (skeletons, React Query, índices)
+- [x] Melhorias de acessibilidade e responsividade mobile
 
 ### Pendências e Próximos Passos
-- [ ] *A preencher*
+- [ ] Conclusão da Fase 5.1 (Otimização Mobile)
+- [ ] Conclusão da Fase 5.3 (Feedback Visual e Acessibilidade)
+- [ ] Fase 6 - Revisão de Testes e Gap Analysis
 
 ---
 
