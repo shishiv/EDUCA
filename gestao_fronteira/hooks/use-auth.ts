@@ -16,7 +16,30 @@ export function useAuth() {
     const getUser = async () => {
       try {
         // Get current authenticated user from Supabase
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user }, error } = await supabase.auth.getUser()
+
+        // Handle invalid refresh token error by clearing session gracefully
+        if (error) {
+          // Check if it's a refresh token or session error
+          if (error.message?.includes('Refresh Token') ||
+              error.message?.includes('refresh_token') ||
+              error.message?.includes('session') ||
+              error.name === 'AuthApiError') {
+            logger.info('Invalid session detected, clearing tokens')
+            // Sign out to clear invalid tokens from localStorage
+            try {
+              await supabase.auth.signOut()
+            } catch {
+              // Ignore signOut errors when clearing invalid session
+            }
+            setUser(null)
+            setUserProfile(null)
+            setLoading(false)
+            return
+          }
+          throw error
+        }
+
         setUser(user)
 
         if (user) {
@@ -28,6 +51,9 @@ export function useAuth() {
         setLoading(false)
       } catch (error) {
         logger.error('Error getting user', { error })
+        // On any auth error, clear state gracefully
+        setUser(null)
+        setUserProfile(null)
         setLoading(false)
       }
     }

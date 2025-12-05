@@ -245,21 +245,25 @@ export default function MatriculasPage() {
         id: matricula.id,
         aluno: {
           id: matricula.aluno?.id || '',
-          nome: matricula.aluno?.nome_completo || 'Aluno desconhecido',
-          dataNascimento: matricula.aluno?.data_nascimento || ''
+          nome_completo: matricula.aluno?.nome_completo || 'Aluno desconhecido',
+          data_nascimento: matricula.aluno?.data_nascimento || '',
+          cpf: undefined,
+          sexo: undefined
         },
         turma: {
           id: matricula.turma?.id || '',
           nome: matricula.turma?.nome || 'Turma desconhecida',
-          serie: matricula.turma?.serie || ''
-        },
-        escola: {
-          id: matricula.turma?.escola?.id || '',
-          nome: matricula.turma?.escola?.nome || 'Escola desconhecida'
+          serie: matricula.turma?.serie || '',
+          escola: {
+            nome: matricula.turma?.escola?.nome || 'Escola desconhecida',
+            tipo: undefined
+          },
+          professor: undefined
         },
         ano_letivo: matricula.ano_letivo,
         data_matricula: matricula.data_matricula,
         situacao: matricula.situacao,
+        observacoes: matricula.observacoes || undefined,
         created_at: matricula.created_at
       })) || []
 
@@ -311,7 +315,8 @@ export default function MatriculasPage() {
     }
   }
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return '??'
     return name
       .split(' ')
       .map(n => n[0])
@@ -340,28 +345,36 @@ export default function MatriculasPage() {
     }
   }
 
-  const calculateAge = (birthDate: string) => {
+  const calculateAge = (birthDate: string | undefined | null) => {
+    if (!birthDate) return null
     const today = new Date()
     const birth = new Date(birthDate)
+    if (isNaN(birth.getTime())) return null
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--
     }
-    
+
     return age
   }
 
   const filteredMatriculas = matriculas.filter(matricula => {
-    const matchesSearch = matricula.aluno.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
-                         matricula.aluno.cpf?.includes(search) ||
-                         matricula.turma.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         matricula.turma.escola?.nome.toLowerCase().includes(search.toLowerCase())
+    // Safe access with optional chaining to prevent undefined errors
+    const alunoNome = matricula.aluno?.nome_completo || ''
+    const alunoCpf = matricula.aluno?.cpf || ''
+    const turmaNome = matricula.turma?.nome || ''
+    const escolaNome = matricula.turma?.escola?.nome || ''
+
+    const matchesSearch = alunoNome.toLowerCase().includes(search.toLowerCase()) ||
+                         alunoCpf.includes(search) ||
+                         turmaNome.toLowerCase().includes(search.toLowerCase()) ||
+                         escolaNome.toLowerCase().includes(search.toLowerCase())
 
     const matchesSituacao = situacaoFilter === 'todas' || matricula.situacao === situacaoFilter
-    const matchesAno = anoFilter === 'todos' || matricula.ano_letivo.toString() === anoFilter
-    const matchesEscola = escolaFilter === 'todas' || matricula.turma.escola?.nome === escolaFilter
+    const matchesAno = anoFilter === 'todos' || matricula.ano_letivo?.toString() === anoFilter
+    const matchesEscola = escolaFilter === 'todas' || escolaNome === escolaFilter
 
     return matchesSearch && matchesSituacao && matchesAno && matchesEscola
   })
@@ -529,26 +542,28 @@ export default function MatriculasPage() {
                       <div className="flex items-center space-x-3">
                         <Avatar>
                           <AvatarFallback>
-                            {getInitials(matricula.aluno.nome_completo)}
+                            {getInitials(matricula.aluno?.nome_completo)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{matricula.aluno.nome_completo}</div>
+                          <div className="font-medium">{matricula.aluno?.nome_completo || 'Aluno desconhecido'}</div>
                           <div className="text-sm text-gray-500">
-                            {calculateAge(matricula.aluno.data_nascimento)} anos • 
-                            {matricula.aluno.sexo === 'M' ? ' Masculino' : ' Feminino'}
-                            {matricula.aluno.cpf && ` • CPF: ${matricula.aluno.cpf}`}
+                            {calculateAge(matricula.aluno?.data_nascimento) !== null
+                              ? `${calculateAge(matricula.aluno?.data_nascimento)} anos`
+                              : 'Idade não informada'}
+                            {matricula.aluno?.sexo && (matricula.aluno.sexo === 'M' ? ' • Masculino' : ' • Feminino')}
+                            {matricula.aluno?.cpf && ` • CPF: ${matricula.aluno.cpf}`}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{matricula.turma.nome}</div>
+                        <div className="font-medium">{matricula.turma?.nome || 'Turma desconhecida'}</div>
                         <div className="text-sm text-gray-500">
-                          {matricula.turma.serie} • {matricula.turma.escola?.nome || '-'}
+                          {matricula.turma?.serie || '-'} • {matricula.turma?.escola?.nome || '-'}
                         </div>
-                        {matricula.turma.professor && (
+                        {matricula.turma?.professor && (
                           <div className="text-xs text-gray-400">
                             Prof. {matricula.turma.professor.nome}
                           </div>
@@ -592,7 +607,7 @@ export default function MatriculasPage() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno.nome_completo)}
+                          onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno?.nome_completo || 'Aluno')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
