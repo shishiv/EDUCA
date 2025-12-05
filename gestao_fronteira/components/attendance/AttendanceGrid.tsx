@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { AttendanceCell, type AttendanceStatus } from './AttendanceCell'
 
 interface Student {
   id: string
@@ -47,6 +48,7 @@ interface AttendanceRecord {
   id?: string
   aluno_id: string
   presente: boolean
+  status_presenca?: 'presente' | 'falta' | 'attestado' | 'empty'
   observacoes?: string
   horario_marcacao: string
   is_locked?: boolean
@@ -66,8 +68,10 @@ interface AttendanceStats {
   total: number
   present: number
   absent: number
+  attestado: number
   pending: number
   locked: number
+  attendanceRate: number
 }
 
 export function AttendanceGrid({
@@ -150,17 +154,30 @@ export function AttendanceGrid({
     const total = students.length
     let present = 0
     let absent = 0
+    let attestado = 0
     let locked = 0
 
     attendance.forEach(record => {
-      if (record.presente) present++
-      else absent++
+      // Check status_presenca first for 3-state support
+      if (record.status_presenca === 'attestado') {
+        attestado++
+      } else if (record.status_presenca === 'presente' || (record.presente && !record.status_presenca)) {
+        present++
+      } else if (record.status_presenca === 'falta' || (!record.presente && record.status_presenca !== 'empty')) {
+        absent++
+      }
+
       if (record.is_locked) locked++
     })
 
-    const pending = total - (present + absent)
+    const pending = total - (present + absent + attestado)
 
-    return { total, present, absent, pending, locked }
+    // Calculate attendance rate (present + attestado = attended)
+    const attended = present + attestado
+    const marked = present + absent + attestado
+    const attendanceRate = marked > 0 ? Math.round((attended / marked) * 100) : 0
+
+    return { total, present, absent, attestado, pending, locked, attendanceRate }
   }, [students.length, attendance])
 
   // Notify parent component of attendance changes (outside render phase)
@@ -220,21 +237,40 @@ export function AttendanceGrid({
     loadData()
   }, [loadData])
 
-  // Mark attendance for individual student
-  const markAttendance = async (studentId: string, present: boolean) => {
+  // Mark attendance for individual student (3-state support)
+  const markAttendanceStatus = async (studentId: string, status: AttendanceStatus) => {
     if (readonly) return
 
     try {
       setSyncStatus('pending')
 
+      // Map status to record fields
+      const statusMap: Record<AttendanceStatus, { presente: boolean; status_presenca: string }> = {
+        'presente': { presente: true, status_presenca: 'presente' },
+        'falta': { presente: false, status_presenca: 'falta' },
+        'attestado': { presente: true, status_presenca: 'attestado' }, // Attestado counts as attended
+        'empty': { presente: false, status_presenca: 'empty' }
+      }
+
+      const statusFields = statusMap[status]
+
       // Optimistic update
       const newRecord: AttendanceRecord = {
         aluno_id: studentId,
-        presente: present,
+        presente: statusFields.presente,
+        status_presenca: statusFields.status_presenca as 'presente' | 'falta' | 'attestado' | 'empty',
         horario_marcacao: new Date().toISOString()
       }
 
-      setAttendance(prev => new Map(prev).set(studentId, newRecord))
+      setAttendance(prev => {
+        const newMap = new Map(prev)
+        if (status === 'empty') {
+          newMap.delete(studentId)
+        } else {
+          newMap.set(studentId, newRecord)
+        }
+        return newMap
+      })
 
       // Send to server
       const response = await fetch(`/api/sessoes-aula/${sessionId}/frequencia/batch`, {
@@ -243,7 +279,7 @@ export function AttendanceGrid({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          attendance: [newRecord]
+          attendance: status === 'empty' ? [] : [newRecord]
         })
       })
 
@@ -257,8 +293,15 @@ export function AttendanceGrid({
       setLastSyncTime(new Date())
 
       // Show quick feedback
+      const statusLabels = {
+        'presente': 'presente',
+        'falta': 'ausente',
+        'attestado': 'com attestado',
+        'empty': 'desmarcado'
+      }
+      const studentName = students.find(s => s.id === studentId)?.nome_completo || 'Aluno'
       toast.success(
-        `${students.find(s => s.id === studentId)?.nome_completo} marcado como ${present ? 'presente' : 'ausente'}`,
+        `${studentName} marcado como ${statusLabels[status]}`,
         { duration: 2000 }
       )
 
@@ -267,14 +310,15 @@ export function AttendanceGrid({
       setSyncStatus('error')
 
       // Revert optimistic update
-      setAttendance(prev => {
-        const newMap = new Map(prev)
-        newMap.delete(studentId)
-        return newMap
-      })
+      loadData()
 
       toast.error('Erro ao marcar presença. Tente novamente.')
     }
+  }
+
+  // Legacy function for backward compatibility
+  const markAttendance = async (studentId: string, present: boolean) => {
+    await markAttendanceStatus(studentId, present ? 'presente' : 'falta')
   }
 
   // Batch mark attendance for selected students
@@ -347,11 +391,26 @@ export function AttendanceGrid({
       .toUpperCase()
   }
 
-  // Get attendance status for student
-  const getAttendanceStatus = (studentId: string) => {
+  // Get attendance status for student (3-state support)
+  const getAttendanceStatus = (studentId: string): AttendanceStatus => {
     const record = attendance.get(studentId)
-    if (!record) return 'pending'
-    return record.presente ? 'present' : 'absent'
+    if (!record) return 'empty'
+
+    // Use status_presenca if available (new 3-state system)
+    if (record.status_presenca) {
+      return record.status_presenca === 'empty' ? 'empty' : record.status_presenca as AttendanceStatus
+    }
+
+    // Fallback to old boolean system
+    return record.presente ? 'presente' : 'falta'
+  }
+
+  // Get legacy status for compatibility
+  const getLegacyStatus = (studentId: string): 'present' | 'absent' | 'pending' => {
+    const status = getAttendanceStatus(studentId)
+    if (status === 'empty') return 'pending'
+    if (status === 'presente' || status === 'attestado') return 'present'
+    return 'absent'
   }
 
   // Calculate age from birth date
@@ -440,10 +499,26 @@ export function AttendanceGrid({
             <UserX className="h-3 w-3" />
             <span>Ausentes: {stats.absent}</span>
           </Badge>
+          <Badge variant="default" className="flex items-center space-x-1 bg-yellow-500">
+            <AlertTriangle className="h-3 w-3" />
+            <span>Attestados: {stats.attestado}</span>
+          </Badge>
           <Badge variant="outline" className="flex items-center space-x-1">
             <Clock className="h-3 w-3" />
             <span>Pendentes: {stats.pending}</span>
           </Badge>
+          {stats.attendanceRate > 0 && (
+            <Badge
+              variant="outline"
+              className={`flex items-center space-x-1 ${
+                stats.attendanceRate >= 80 ? 'bg-green-50 border-green-600 text-green-700' :
+                stats.attendanceRate >= 75 ? 'bg-yellow-50 border-yellow-600 text-yellow-700' :
+                'bg-red-50 border-red-600 text-red-700'
+              }`}
+            >
+              <span>Taxa: {stats.attendanceRate}%</span>
+            </Badge>
+          )}
         </div>
 
         {/* Batch Actions */}
@@ -497,6 +572,7 @@ export function AttendanceGrid({
         <div className="space-y-2">
           {filteredStudents.map((student) => {
             const attendanceStatus = getAttendanceStatus(student.id)
+            const legacyStatus = getLegacyStatus(student.id)
             const isSelected = selectedStudents.has(student.id)
             const record = attendance.get(student.id)
             const isLocked = record?.is_locked || false
@@ -506,9 +582,10 @@ export function AttendanceGrid({
                 key={student.id}
                 className={`
                   flex items-center justify-between p-3 rounded-lg border-2 transition-all
-                  ${attendanceStatus === 'present' ? 'border-green-200 bg-green-50' : ''}
-                  ${attendanceStatus === 'absent' ? 'border-red-200 bg-red-50' : ''}
-                  ${attendanceStatus === 'pending' ? 'border-gray-200 bg-gray-50' : ''}
+                  ${legacyStatus === 'present' || attendanceStatus === 'attestado' ? 'border-green-200 bg-green-50' : ''}
+                  ${legacyStatus === 'absent' && attendanceStatus !== 'attestado' ? 'border-red-200 bg-red-50' : ''}
+                  ${attendanceStatus === 'attestado' ? 'border-yellow-200 bg-yellow-50' : ''}
+                  ${legacyStatus === 'pending' ? 'border-gray-200 bg-gray-50' : ''}
                   ${isSelected ? 'ring-2 ring-primary' : ''}
                   ${isLocked ? 'opacity-60' : ''}
                 `}
@@ -564,41 +641,31 @@ export function AttendanceGrid({
 
                   {/* Status indicator */}
                   <div className="flex items-center space-x-1">
-                    {attendanceStatus === 'present' && (
+                    {legacyStatus === 'present' && attendanceStatus !== 'attestado' && (
                       <div className="h-3 w-3 bg-green-600 rounded-full"></div>
                     )}
-                    {attendanceStatus === 'absent' && (
+                    {legacyStatus === 'absent' && (
                       <div className="h-3 w-3 bg-red-600 rounded-full"></div>
                     )}
-                    {attendanceStatus === 'pending' && (
+                    {attendanceStatus === 'attestado' && (
+                      <div className="h-3 w-3 bg-yellow-600 rounded-full"></div>
+                    )}
+                    {legacyStatus === 'pending' && (
                       <div className="h-3 w-3 bg-gray-400 rounded-full"></div>
                     )}
                   </div>
                 </div>
 
-                {/* Action buttons */}
+                {/* AttendanceCell - 3-state button */}
                 {!readonly && !isLocked && (
-                  <div className="flex space-x-2 ml-3">
-                    <Button
-                      size="sm"
-                      variant={attendanceStatus === 'present' ? 'default' : 'outline'}
-                      onClick={() => markAttendance(student.id, true)}
-                      className="min-h-[44px] min-w-[80px]" // Touch-friendly
+                  <div className="ml-3">
+                    <AttendanceCell
+                      studentId={student.id}
+                      studentName={student.nome_completo}
+                      currentStatus={attendanceStatus}
+                      onStatusChange={(newStatus) => markAttendanceStatus(student.id, newStatus)}
                       disabled={saving}
-                    >
-                      <UserCheck className="h-4 w-4 mr-1" />
-                      P
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={attendanceStatus === 'absent' ? 'destructive' : 'outline'}
-                      onClick={() => markAttendance(student.id, false)}
-                      className="min-h-[44px] min-w-[80px]" // Touch-friendly
-                      disabled={saving}
-                    >
-                      <UserX className="h-4 w-4 mr-1" />
-                      F
-                    </Button>
+                    />
                   </div>
                 )}
 
@@ -606,13 +673,18 @@ export function AttendanceGrid({
                   <div className="ml-3">
                     <Badge
                       variant={
-                        attendanceStatus === 'present' ? 'default' :
-                        attendanceStatus === 'absent' ? 'destructive' : 'secondary'
+                        attendanceStatus === 'presente' ? 'default' :
+                        attendanceStatus === 'falta' ? 'destructive' :
+                        attendanceStatus === 'attestado' ? 'default' : 'secondary'
+                      }
+                      className={
+                        attendanceStatus === 'attestado' ? 'bg-yellow-500' : ''
                       }
                     >
-                      {attendanceStatus === 'present' && 'Presente'}
-                      {attendanceStatus === 'absent' && 'Ausente'}
-                      {attendanceStatus === 'pending' && 'Não marcado'}
+                      {attendanceStatus === 'presente' && 'Presente'}
+                      {attendanceStatus === 'falta' && 'Ausente'}
+                      {attendanceStatus === 'attestado' && 'Attestado'}
+                      {attendanceStatus === 'empty' && 'Não marcado'}
                     </Badge>
                   </div>
                 )}
