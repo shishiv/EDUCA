@@ -1,5 +1,5 @@
 -- Migration: 20250204003_rls_diario_classe.sql
--- Purpose: Update RLS policies for Diário de Classe Digital with time-based restrictions
+-- Purpose: Update RLS policies for Diario de Classe Digital with time-based restrictions
 -- Task: 1.1.3 - Update RLS policies
 -- Date: 2025-12-04
 -- OpenSpec Change: 2025-12-04-diario-de-classe
@@ -9,16 +9,21 @@
 -- ============================================================================
 
 -- Drop existing frequencia policies that may conflict
-DROP POLICY IF EXISTS "Professores podem inserir frequência" ON frequencia;
-DROP POLICY IF EXISTS "Professores podem atualizar frequência" ON frequencia;
+DROP POLICY IF EXISTS "Professores podem inserir frequencia" ON frequencia;
+DROP POLICY IF EXISTS "Professores podem atualizar frequencia" ON frequencia;
 DROP POLICY IF EXISTS "Teachers can insert attendance for their classes" ON frequencia;
 DROP POLICY IF EXISTS "Teachers can update attendance for their classes" ON frequencia;
+DROP POLICY IF EXISTS "Professor can insert attendance for their classes" ON frequencia;
+DROP POLICY IF EXISTS "Professor can update attendance before 18:00" ON frequencia;
 
 -- Policy: INSERT - Professor can insert frequency for their classes
 CREATE POLICY "Professor can insert attendance for their classes"
   ON frequencia
   FOR INSERT
   WITH CHECK (
+    -- Allow if no sessao_id (backward compatibility with old records)
+    frequencia.sessao_id IS NULL
+    OR
     EXISTS (
       SELECT 1 FROM sessoes_aula s
       JOIN turmas t ON t.id = s.turma_id
@@ -38,11 +43,14 @@ CREATE POLICY "Professor can insert attendance for their classes"
   );
 
 -- Policy: UPDATE - Professor can update frequency BEFORE 18:00 (6 PM)
--- This enforces Brazilian compliance: "não existe o esquecer" after 18:00
+-- This enforces Brazilian compliance: "nao existe o esquecer" after 18:00
 CREATE POLICY "Professor can update attendance before 18:00"
   ON frequencia
   FOR UPDATE
   USING (
+    -- Allow if no sessao_id (backward compatibility)
+    frequencia.sessao_id IS NULL
+    OR
     EXISTS (
       SELECT 1 FROM sessoes_aula s
       JOIN turmas t ON t.id = s.turma_id
@@ -85,7 +93,7 @@ COMMENT ON POLICY "Professor can insert attendance for their classes" ON frequen
 'Brazilian compliance: Professor can insert attendance for their assigned classes. Director/Secretary can also insert for their school.';
 
 COMMENT ON POLICY "Professor can update attendance before 18:00" ON frequencia IS
-'Brazilian compliance: Attendance can only be updated before 18:00 (6 PM São Paulo time) on the same day, enforcing "não existe o esquecer" principle.';
+'Brazilian compliance: Attendance can only be updated before 18:00 (6 PM Sao Paulo time) on the same day, enforcing "nao existe o esquecer" principle.';
 
 -- ============================================================================
 -- PHASE 2: ENHANCED SESSOES_AULA RLS POLICIES
@@ -98,6 +106,9 @@ DROP POLICY IF EXISTS "Users can view class sessions from their school" ON sesso
 DROP POLICY IF EXISTS "Teachers can create class sessions for their classes" ON sessoes_aula;
 DROP POLICY IF EXISTS "Only creator can update session status" ON sessoes_aula;
 DROP POLICY IF EXISTS "Only admin can delete sessions" ON sessoes_aula;
+DROP POLICY IF EXISTS "Users can view sessions from their school" ON sessoes_aula;
+DROP POLICY IF EXISTS "Teachers can create sessions for their classes" ON sessoes_aula;
+DROP POLICY IF EXISTS "Teachers can update sessions before closure" ON sessoes_aula;
 
 -- Policy: SELECT - Users can view sessions from their school
 CREATE POLICY "Users can view sessions from their school"
@@ -194,7 +205,7 @@ COMMENT ON POLICY "Teachers can update sessions before closure" ON sessoes_aula 
 -- PHASE 3: CREATE HELPER FUNCTION FOR TIME VALIDATION
 -- ============================================================================
 
--- Function to check if current time is before 18:00 São Paulo time
+-- Function to check if current time is before 18:00 Sao Paulo time
 CREATE OR REPLACE FUNCTION is_before_18h_sao_paulo()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -203,7 +214,7 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 
 COMMENT ON FUNCTION is_before_18h_sao_paulo() IS
-'Helper function to check if current time is before 18:00 (6 PM) in São Paulo timezone. Used for Brazilian compliance enforcement.';
+'Helper function to check if current time is before 18:00 (6 PM) in Sao Paulo timezone. Used for Brazilian compliance enforcement.';
 
 -- Function to check if user can edit attendance
 CREATE OR REPLACE FUNCTION can_edit_attendance(
@@ -219,6 +230,11 @@ DECLARE
   v_is_teacher BOOLEAN;
   v_is_admin BOOLEAN;
 BEGIN
+  -- If no session_id provided, allow edit (backward compatibility)
+  IF p_sessao_id IS NULL THEN
+    RETURN true;
+  END IF;
+
   -- Get current Brazilian time
   v_current_br_time := NOW() AT TIME ZONE 'America/Sao_Paulo';
 
@@ -226,6 +242,11 @@ BEGIN
   SELECT s.status, s.data_aula INTO v_session_status, v_session_date
   FROM sessoes_aula s
   WHERE s.id = p_sessao_id;
+
+  -- If session not found, return false
+  IF v_session_status IS NULL THEN
+    RETURN false;
+  END IF;
 
   -- Get user information
   SELECT u.tipo_usuario INTO v_user_tipo
@@ -285,7 +306,7 @@ BEGIN
   IF array_length(tables_without_rls, 1) > 0 THEN
     RAISE WARNING 'RLS not enabled on tables: %', array_to_string(tables_without_rls, ', ');
   ELSE
-    RAISE NOTICE '✅ RLS enabled on all Diário de Classe tables';
+    RAISE NOTICE '[OK] RLS enabled on all Diario de Classe tables';
   END IF;
 END $$;
 
@@ -293,28 +314,39 @@ END $$;
 -- PHASE 5: CREATE AUDIT LOG FOR RLS POLICY CHANGES
 -- ============================================================================
 
--- Log RLS policy updates
-INSERT INTO audit_logs (
-  user_id,
-  action,
-  table_name,
-  record_id,
-  details
-) VALUES (
-  '00000000-0000-0000-0000-000000000000'::UUID,
-  'system_config_changed',
-  'all_tables',
-  'diario_classe_rls_update',
-  jsonb_build_object(
-    'migration', '20250204003_rls_diario_classe',
-    'date', NOW(),
-    'tables_updated', ARRAY['frequencia', 'sessoes_aula'],
-    'policies_created', 6,
-    'compliance_level', 'brazilian_educational_lgpd',
-    'time_restriction', '18:00 São Paulo time',
-    'principle', 'não existe o esquecer'
-  )
-);
+-- Log RLS policy updates (only if audit_logs table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'audit_logs'
+  ) THEN
+    INSERT INTO audit_logs (
+      user_id,
+      action,
+      table_name,
+      record_id,
+      details
+    ) VALUES (
+      '00000000-0000-0000-0000-000000000000'::UUID,
+      'system_config_changed',
+      'all_tables',
+      'diario_classe_rls_update',
+      jsonb_build_object(
+        'migration', '20250204003_rls_diario_classe',
+        'date', NOW(),
+        'tables_updated', ARRAY['frequencia', 'sessoes_aula'],
+        'policies_created', 6,
+        'compliance_level', 'brazilian_educational_lgpd',
+        'time_restriction', '18:00 Sao Paulo time',
+        'principle', 'nao existe o esquecer'
+      )
+    );
+    RAISE NOTICE '[OK] Audit log entry created for RLS policy update';
+  ELSE
+    RAISE NOTICE 'Audit log table not found, skipping audit entry';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- PHASE 6: GRANT NECESSARY PERMISSIONS
@@ -328,7 +360,7 @@ GRANT EXECUTE ON FUNCTION can_edit_attendance(UUID, UUID) TO authenticated;
 -- PHASE 7: CREATE VALIDATION VIEW
 -- ============================================================================
 
--- View to monitor RLS policy coverage for Diário de Classe
+-- View to monitor RLS policy coverage for Diario de Classe
 CREATE OR REPLACE VIEW vw_diario_classe_rls_status AS
 SELECT
   p.schemaname AS schema_name,
@@ -344,7 +376,7 @@ GROUP BY p.schemaname, p.tablename, t.rowsecurity
 ORDER BY p.tablename;
 
 COMMENT ON VIEW vw_diario_classe_rls_status IS
-'Monitoring view for RLS policy coverage on Diário de Classe tables.';
+'Monitoring view for RLS policy coverage on Diario de Classe tables.';
 
 GRANT SELECT ON vw_diario_classe_rls_status TO authenticated;
 
@@ -352,7 +384,7 @@ GRANT SELECT ON vw_diario_classe_rls_status TO authenticated;
 -- VALIDATION
 -- ============================================================================
 
--- List all policies for Diário de Classe tables
+-- List all policies for Diario de Classe tables
 DO $$
 DECLARE
   frequencia_policies INTEGER;
@@ -380,7 +412,7 @@ BEGIN
   RAISE NOTICE '';
 
   IF frequencia_policies >= 2 AND sessoes_aula_policies >= 4 AND conteudo_aula_policies >= 4 THEN
-    RAISE NOTICE '✅ All tables have adequate RLS policy coverage';
+    RAISE NOTICE '[OK] All tables have adequate RLS policy coverage';
   ELSE
     RAISE WARNING 'Incomplete RLS policy coverage detected';
   END IF;
@@ -396,16 +428,16 @@ BEGIN
   RAISE NOTICE 'Migration 20250204003_rls_diario_classe COMPLETED';
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE 'Features implemented:';
-  RAISE NOTICE '  ✓ Enhanced frequencia RLS policies with time restrictions';
-  RAISE NOTICE '  ✓ Enhanced sessoes_aula RLS policies for session management';
-  RAISE NOTICE '  ✓ Time validation function (18:00 São Paulo time cutoff)';
-  RAISE NOTICE '  ✓ can_edit_attendance() helper function';
-  RAISE NOTICE '  ✓ RLS monitoring view (vw_diario_classe_rls_status)';
-  RAISE NOTICE '  ✓ Audit log for policy changes';
+  RAISE NOTICE '  [OK] Enhanced frequencia RLS policies with time restrictions';
+  RAISE NOTICE '  [OK] Enhanced sessoes_aula RLS policies for session management';
+  RAISE NOTICE '  [OK] Time validation function (18:00 Sao Paulo time cutoff)';
+  RAISE NOTICE '  [OK] can_edit_attendance() helper function';
+  RAISE NOTICE '  [OK] RLS monitoring view (vw_diario_classe_rls_status)';
+  RAISE NOTICE '  [OK] Audit log for policy changes';
   RAISE NOTICE '';
   RAISE NOTICE 'Brazilian Compliance Enforced:';
-  RAISE NOTICE '  - "Não existe o esquecer" principle';
-  RAISE NOTICE '  - Attendance editing blocked after 18:00 (6 PM) São Paulo time';
+  RAISE NOTICE '  - "Nao existe o esquecer" principle';
+  RAISE NOTICE '  - Attendance editing blocked after 18:00 (6 PM) Sao Paulo time';
   RAISE NOTICE '  - Session closure prevents further edits';
   RAISE NOTICE '  - School-based multi-tenancy isolation';
   RAISE NOTICE '';
@@ -417,6 +449,6 @@ BEGIN
   RAISE NOTICE 'Next Steps:';
   RAISE NOTICE '  - Test RLS policies manually with different user roles';
   RAISE NOTICE '  - Integrate frontend with time validation';
-  RAISE NOTICE '  - Implement Task Group 1.2 (TypeScript types)';
+  RAISE NOTICE '  - Implement Task Group 1.2 (AttendanceGrid 3 states)';
   RAISE NOTICE '=============================================================================';
 END $$;

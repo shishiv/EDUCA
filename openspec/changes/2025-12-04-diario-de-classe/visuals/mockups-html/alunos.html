@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUCA - Alunos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 12px;
+            overflow-y: auto;
+            z-index: 40;
+        }
+        .main-content {
+            margin-left: 240px;
+            padding-top: 64px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #334155;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover {
+            background-color: #f1f5f9;
+        }
+        .nav-item.active {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        .nav-icon {
+            font-size: 24px;
+        }
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            background: #1e40af;
+            z-index: 30;
+        }
+        .student-card {
+            background: white;
+            border-left: 4px solid #16a34a;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .student-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            border-left-color: #7c3aed;
+        }
+        .student-card.active {
+            background: #dbeafe;
+            border-left-color: #1e40af;
+        }
+        .action-buttons {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .student-card:hover .action-buttons {
+            opacity: 1;
+        }
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- HEADER -->
+    <header class="header-sticky h-16 bg-blue-900 text-white flex items-center px-6 shadow-lg">
+        <div class="flex justify-between items-center w-full ml-60">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">📚</span>
+                <span class="font-bold text-lg">EDUCA</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <button class="text-white hover:bg-blue-800 p-2 rounded transition-all">🔔</button>
+                <div class="flex items-center gap-2 cursor-pointer hover:bg-blue-800 p-2 rounded transition-all">
+                    <div class="w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center font-bold">JS</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-nav">
+        <div class="space-y-1">
+            <div class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item active">
+                <span class="nav-icon">👥</span>
+                <span>Alunos</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">📚</span>
+                <span>Turmas</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">📋</span>
+                <span>Frequência</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">📖</span>
+                <span>Diário</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">📅</span>
+                <span>Calendário</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">❓</span>
+                <span>Help</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span>Configurações</span>
+            </div>
+        </div>
+        <div class="border-t border-gray-200 my-6"></div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center font-bold text-white">JS</div>
+                <div class="text-sm">
+                    <div class="font-bold text-gray-900">João Silva</div>
+                    <div class="text-gray-600 text-xs">Professor</div>
+                </div>
+            </div>
+            <button class="w-full p-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition-all">🚪 Sair</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content px-10 py-8">
+        <!-- Filters -->
+        <div class="mb-8 bg-gray-100 p-6 rounded-lg border border-gray-200">
+            <div class="flex gap-4 flex-wrap items-end">
+                <div class="flex-1 min-w-max">
+                    <input type="text" placeholder="Procurar aluno por nome/CPF..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Todas as turmas</option>
+                    <option>5º A</option>
+                    <option>5º B</option>
+                </select>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Todos os status</option>
+                    <option>Ativo</option>
+                    <option>Inativo</option>
+                </select>
+                <button class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all">+ NOVO ALUNO</button>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Student Cards (2 columns) -->
+            <div class="lg:col-span-2">
+                <div class="grid grid-cols-2 gap-4 auto-rows-max">
+                    <!-- Student Card 1 -->
+                    <div class="student-card" onclick="selectStudent(this, 1)">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center font-bold text-white text-sm">JS</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-gray-900">João Silva Costa</div>
+                                <div class="text-xs text-gray-600">📚 5º A</div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-600 mb-2">123.456.789-00</div>
+                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✓ Ativo</span>
+                        <div class="action-buttons">
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">✏️</div>
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">👁️</div>
+                            <div class="btn-action bg-red-600 text-white hover:bg-red-700">🗑️</div>
+                        </div>
+                    </div>
+
+                    <!-- Student Card 2 -->
+                    <div class="student-card" onclick="selectStudent(this, 2)">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-green-300 rounded-full flex items-center justify-center font-bold text-white text-sm">MS</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-gray-900">Maria Santos</div>
+                                <div class="text-xs text-gray-600">📚 5º B</div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-600 mb-2">987.654.321-00</div>
+                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✓ Ativo</span>
+                        <div class="action-buttons">
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">✏️</div>
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">👁️</div>
+                            <div class="btn-action bg-red-600 text-white hover:bg-red-700">🗑️</div>
+                        </div>
+                    </div>
+
+                    <!-- Student Card 3 -->
+                    <div class="student-card" onclick="selectStudent(this, 3)">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-purple-300 rounded-full flex items-center justify-center font-bold text-white text-sm">PC</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-gray-900">Pedro Costa</div>
+                                <div class="text-xs text-gray-600">📚 6º A</div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-600 mb-2">555.666.777-88</div>
+                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✓ Ativo</span>
+                        <div class="action-buttons">
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">✏️</div>
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">👁️</div>
+                            <div class="btn-action bg-red-600 text-white hover:bg-red-700">🗑️</div>
+                        </div>
+                    </div>
+
+                    <!-- Student Card 4 -->
+                    <div class="student-card" onclick="selectStudent(this, 4)">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-pink-300 rounded-full flex items-center justify-center font-bold text-white text-sm">AO</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-gray-900">Ana Oliveira</div>
+                                <div class="text-xs text-gray-600">📚 6º B</div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-600 mb-2">444.333.222-11</div>
+                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✓ Ativo</span>
+                        <div class="action-buttons">
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">✏️</div>
+                            <div class="btn-action bg-blue-600 text-white hover:bg-blue-700">👁️</div>
+                            <div class="btn-action bg-red-600 text-white hover:bg-red-700">🗑️</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Details Panel -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 h-fit sticky top-24">
+                <div id="emptyState" class="text-center py-12">
+                    <div class="text-4xl text-gray-300 mb-4">ℹ️</div>
+                    <div class="text-gray-600">Nenhum aluno selecionado</div>
+                    <div class="text-sm text-gray-500 mt-2">Clique em um card à esquerda para visualizar detalhes</div>
+                </div>
+
+                <div id="detailsState" class="hidden">
+                    <h2 id="studentName" class="text-2xl font-bold text-gray-900 mb-6">JOÃO SILVA COSTA</h2>
+
+                    <div class="space-y-6">
+                        <!-- Personal Info -->
+                        <div class="pb-6 border-b">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-lg">📍</span>
+                                <h3 class="font-bold text-gray-900">Informações Pessoais</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-semibold text-gray-900">CPF:</span> <span class="text-gray-600">123.456.789-00</span></div>
+                                <div><span class="font-semibold text-gray-900">Data Nasc:</span> <span class="text-gray-600">15/05/2010</span></div>
+                                <div><span class="font-semibold text-gray-900">Gênero:</span> <span class="text-gray-600">Masculino</span></div>
+                            </div>
+                        </div>
+
+                        <!-- School Info -->
+                        <div class="pb-6 border-b">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-lg">📚</span>
+                                <h3 class="font-bold text-gray-900">Escolar</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-semibold text-gray-900">Turma:</span> <span class="text-gray-600">5º A</span></div>
+                                <div><span class="font-semibold text-gray-900">Ano letivo:</span> <span class="text-gray-600">2024</span></div>
+                                <div><span class="font-semibold text-gray-900">Matrícula:</span> <span class="text-gray-600">15/02/2024</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Frequency -->
+                        <div class="pb-6 border-b">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-lg">📊</span>
+                                <h3 class="font-bold text-gray-900">Frequência</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-semibold text-gray-900">Semana:</span> <span class="text-gray-600">94%</span></div>
+                                <div><span class="font-semibold text-gray-900">Mês:</span> <span class="text-gray-600">91%</span></div>
+                                <a href="#" class="text-blue-600 font-semibold text-xs mt-2 inline-block hover:underline">[Abrir histórico →]</a>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="space-y-2">
+                            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition-all">Editar Aluno</button>
+                            <button class="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 py-2 rounded-lg text-sm font-semibold transition-all">Gerar Relatório</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function selectStudent(element, id) {
+            document.querySelectorAll('.student-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('detailsState').classList.remove('hidden');
+            document.getElementById('studentName').textContent = element.querySelector('.font-bold').textContent;
+        }
+    </script>
+</body>
+</html>

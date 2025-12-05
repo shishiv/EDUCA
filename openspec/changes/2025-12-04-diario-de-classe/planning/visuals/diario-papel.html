@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUCA - Diário de Classe (Tipo Papel)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 12px;
+            overflow-y: auto;
+            z-index: 40;
+        }
+        .main-content {
+            margin-left: 240px;
+            padding-top: 64px;
+            margin-right: 0;
+            transition: margin-right 0.3s ease;
+        }
+        .main-content.with-panel {
+            margin-right: 320px;
+        }
+        .student-panel {
+            position: fixed;
+            right: -320px;
+            top: 64px;
+            width: 320px;
+            height: calc(100vh - 64px);
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 20px;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+            z-index: 35;
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+        }
+        .student-panel.active {
+            right: 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #334155;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover {
+            background-color: #f1f5f9;
+        }
+        .nav-item.active {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            background: #1e40af;
+            z-index: 30;
+        }
+        .frequency-grid {
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+        }
+        .frequency-table {
+            border-collapse: collapse;
+            min-width: 100%;
+        }
+        .frequency-table thead {
+            background: #f3f4f6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .frequency-table th {
+            padding: 8px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            min-width: 30px;
+            color: #334155;
+        }
+        .frequency-table td {
+            padding: 0;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            min-width: 30px;
+            height: 40px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .freq-cell {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            background: white;
+            color: #334155;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .freq-cell:hover {
+            background: #f3f4f6;
+        }
+        .freq-cell.present {
+            background: #16a34a;
+            color: white;
+            font-weight: bold;
+        }
+        .freq-cell.absent {
+            background: #dc2626;
+            color: white;
+            font-weight: bold;
+        }
+        .freq-cell.weekend {
+            background: #f9fafb;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .student-name-cell {
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 500;
+            color: #1e40af;
+            min-width: 150px;
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 5;
+            border-right: 2px solid #1e40af;
+        }
+        .total-cell {
+            padding: 8px 6px;
+            font-weight: 600;
+            color: #1e40af;
+            background: #dbeafe;
+            min-width: 50px;
+        }
+        .month-selector {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+        .month-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .month-btn:hover {
+            background: #f3f4f6;
+        }
+        .month-btn.active {
+            background: #1e40af;
+            color: white;
+            border-color: #1e40af;
+        }
+        .content-input {
+            width: 100%;
+            padding: 6px;
+            margin: 4px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        .student-checkbox {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: #1e40af;
+        }
+        .student-list-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        .student-list-item:hover {
+            background: #f1f5f9;
+        }
+        .student-list-item.selected {
+            background: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        @media (max-width: 1024px) {
+            .main-content.with-panel {
+                margin-right: 0;
+            }
+            .student-panel {
+                right: -320px;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 56px 12px 12px;
+            }
+            .frequency-table th,
+            .frequency-table td {
+                min-width: 24px;
+                height: 36px;
+                padding: 2px;
+                font-size: 10px;
+            }
+            .student-name-cell {
+                min-width: 100px;
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- HEADER -->
+    <header class="header-sticky h-16 bg-blue-900 text-white flex items-center px-6 shadow-lg">
+        <div class="flex justify-between items-center w-full" style="margin-left: -240px; padding-left: 240px;">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">📚</span>
+                <span class="font-bold text-lg">EDUCA</span>
+                <span class="text-sm opacity-75">| Diário de Classe</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <button class="text-white hover:bg-blue-800 p-2 rounded transition-all">🔔</button>
+                <div class="flex items-center gap-2 cursor-pointer hover:bg-blue-800 p-2 rounded transition-all">
+                    <div class="w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center font-bold">JS</div>
+                    <span class="text-sm">João</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-nav">
+        <div class="space-y-1 mb-6">
+            <div class="nav-item">
+                <span class="text-2xl">📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">👥</span>
+                <span>Alunos</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📚</span>
+                <span>Turmas</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📋</span>
+                <span>Frequência</span>
+            </div>
+            <div class="nav-item active">
+                <span class="text-2xl">📓</span>
+                <span>Diário</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">📅</span>
+                <span>Calendário</span>
+            </div>
+            <div class="nav-item">
+                <span class="text-2xl">❓</span>
+                <span>Help</span>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-200 my-4 pt-4">
+            <div class="text-xs font-bold text-gray-700 mb-3 uppercase">Alunos da Turma</div>
+            <div class="space-y-1" id="studentList">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="border-t border-gray-200 my-6"></div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center font-bold text-white">JS</div>
+                <div class="text-sm">
+                    <div class="font-bold text-gray-900">João Silva</div>
+                    <div class="text-gray-600 text-xs">Professor</div>
+                </div>
+            </div>
+            <button class="w-full p-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition-all">🚪 Sair</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content px-8 py-8" id="mainContent">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Diário de Classe - Turma 5º A 📓</h1>
+            <p class="text-gray-600">
+                Registre frequência, conteúdo ministrado e observações de forma organizada
+            </p>
+        </div>
+
+        <!-- Month Navigation -->
+        <div class="bg-white p-6 rounded-lg border border-gray-200 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <span id="currentMonthDisplay">Dezembro 2024</span>
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="previousMonth()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">← Anterior</button>
+                    <button onclick="nextMonth()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">Próximo →</button>
+                </div>
+            </div>
+
+            <div class="month-selector" id="monthSelector">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Frequency Grid -->
+        <div class="bg-white rounded-lg border border-gray-200 mb-8 p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">📊 Frequência & Total de Faltas</h2>
+            <div class="frequency-grid">
+                <table class="frequency-table" id="frequencyTable">
+                    <!-- Populated by JavaScript -->
+                </table>
+            </div>
+        </div>
+
+        <!-- Content by Day -->
+        <div class="bg-white rounded-lg border border-gray-200 mb-8 p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">📝 Conteúdo Ministrado por Dia</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="contentGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex gap-4 mb-8">
+            <button onclick="saveMonth()" class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-all">
+                💾 SALVAR MÊS
+            </button>
+            <button onclick="exportPDF()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">
+                📄 EXPORTAR PDF (em breve)
+            </button>
+        </div>
+    </main>
+
+    <!-- STUDENT PANEL -->
+    <div class="student-panel" id="studentPanel">
+        <div class="flex justify-between items-start mb-6">
+            <h2 id="studentPanelTitle" class="text-2xl font-bold text-gray-900">Ficha do Aluno</h2>
+            <button onclick="closeStudentPanel()" class="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+        </div>
+
+        <div id="emptyPanelState" class="text-center py-8">
+            <div class="text-4xl text-gray-300 mb-4">👤</div>
+            <p class="text-gray-600">Clique em um aluno para ver sua ficha</p>
+        </div>
+
+        <div id="studentDataState" class="hidden space-y-6">
+            <!-- Personal Data -->
+            <div class="pb-4 border-b">
+                <h3 class="font-bold text-gray-900 mb-3">📋 Dados Pessoais</h3>
+                <div class="text-sm space-y-2">
+                    <div><span class="font-semibold text-gray-700">Nome:</span> <span id="panelName">-</span></div>
+                    <div><span class="font-semibold text-gray-700">CPF:</span> <span id="panelCPF">-</span></div>
+                    <div><span class="font-semibold text-gray-700">Telefone:</span> <span id="panelPhone">-</span></div>
+                    <div><span class="font-semibold text-gray-700">Email:</span> <span id="panelEmail">-</span></div>
+                </div>
+            </div>
+
+            <!-- Grades -->
+            <div class="pb-4 border-b">
+                <h3 class="font-bold text-gray-900 mb-3">📊 Notas</h3>
+                <div class="text-sm space-y-2">
+                    <div><span class="font-semibold text-gray-700">Matemática:</span> <span id="panelMath">-</span></div>
+                    <div><span class="font-semibold text-gray-700">Português:</span> <span id="panelPortuguese">-</span></div>
+                    <div><span class="font-semibold text-gray-700">Ciências:</span> <span id="panelScience">-</span></div>
+                </div>
+            </div>
+
+            <!-- Attendance -->
+            <div class="pb-4 border-b">
+                <h3 class="font-bold text-gray-900 mb-3">📅 Frequência</h3>
+                <div class="text-sm space-y-2">
+                    <div><span class="font-semibold text-gray-700">Faltas no Mês:</span> <span id="panelAbsentMonth">-</span></div>
+                    <div><span class="font-semibold text-gray-700">Taxa Anual:</span> <span id="panelAttendanceRate">-</span></div>
+                </div>
+            </div>
+
+            <!-- Observations -->
+            <div class="pb-4">
+                <h3 class="font-bold text-gray-900 mb-3">💬 Observações</h3>
+                <textarea id="panelObservations" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" rows="4" placeholder="Observações sobre o aluno..."></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-4 border-t">
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition-all">✏️ Editar Ficha</button>
+                <button class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg text-sm font-semibold transition-all">🖨️ Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-content">
+            <div class="text-5xl mb-4">✅</div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Salvo com Sucesso!</h2>
+            <p class="text-gray-600 mb-6">Os dados do mês foram salvos no sistema.</p>
+            <p class="text-sm text-gray-500">Redirecionando...</p>
+        </div>
+    </div>
+
+    <script>
+        // ===== DATA =====
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        const daysInMonth = (month, year) => new Date(year, month, 0).getDate();
+
+        const students = [
+            { id: 1, name: 'João Silva', cpf: '123.456.789-00', phone: '(35) 99999-1111', email: 'joao@school.local', math: 8.5, portuguese: 7.0, science: 9.0, observations: 'Participativo e dedicado' },
+            { id: 2, name: 'Maria Santos', cpf: '234.567.890-11', phone: '(35) 99999-2222', email: 'maria@school.local', math: 9.0, portuguese: 8.5, science: 8.0, observations: 'Aluna exemplar' },
+            { id: 3, name: 'Pedro Costa', cpf: '345.678.901-22', phone: '(35) 99999-3333', email: 'pedro@school.local', math: 7.0, portuguese: 7.5, science: 8.5, observations: 'Aluno com dificuldade em Matemática' },
+            { id: 4, name: 'Ana Oliveira', cpf: '456.789.012-33', phone: '(35) 99999-4444', email: 'ana@school.local', math: 8.0, portuguese: 8.0, science: 7.5, observations: 'Desempenho regular' },
+            { id: 5, name: 'Lucas Ferreira', cpf: '567.890.123-44', phone: '(35) 99999-5555', email: 'lucas@school.local', math: 9.5, portuguese: 9.0, science: 9.5, observations: 'Melhor aluno da turma' },
+        ];
+
+        let currentMonth = 11; // Dezembro
+        let currentYear = 2024;
+        let selectedStudent = null;
+
+        // ===== INITIALIZATION =====
+        function init() {
+            renderStudentList();
+            renderMonthSelector();
+            renderFrequencyTable();
+            renderContentGrid();
+            loadDataFromLocalStorage();
+        }
+
+        // ===== STUDENT LIST =====
+        function renderStudentList() {
+            const list = document.getElementById('studentList');
+            list.innerHTML = students.map(student => `
+                <div class="student-list-item" onclick="selectStudent(${student.id})">
+                    <input type="checkbox" class="student-checkbox" id="student-${student.id}" onchange="event.stopPropagation()">
+                    <label for="student-${student.id}" style="cursor: pointer; flex: 1; margin: 0;">${student.name}</label>
+                </div>
+            `).join('');
+        }
+
+        // ===== MONTH SELECTOR =====
+        function renderMonthSelector() {
+            const selector = document.getElementById('monthSelector');
+            selector.innerHTML = months.map((m, i) => `
+                <button class="month-btn ${i === currentMonth ? 'active' : ''}" onclick="jumpToMonth(${i})">
+                    ${m.substring(0, 3)}
+                </button>
+            `).join('');
+            document.getElementById('currentMonthDisplay').textContent = `${months[currentMonth]} ${currentYear}`;
+        }
+
+        function previousMonth() {
+            if (currentMonth > 0) currentMonth--;
+            else { currentMonth = 11; currentYear--; }
+            updateMonth();
+        }
+
+        function nextMonth() {
+            if (currentMonth < 11) currentMonth++;
+            else { currentMonth = 0; currentYear++; }
+            updateMonth();
+        }
+
+        function jumpToMonth(monthIndex) {
+            currentMonth = monthIndex;
+            updateMonth();
+        }
+
+        function updateMonth() {
+            renderMonthSelector();
+            renderFrequencyTable();
+            renderContentGrid();
+            loadDataFromLocalStorage();
+        }
+
+        // ===== FREQUENCY TABLE =====
+        function renderFrequencyTable() {
+            const table = document.getElementById('frequencyTable');
+            const days = daysInMonth(currentMonth + 1, currentYear);
+
+            let html = '<thead><tr><th>Alunos</th>';
+            for (let i = 1; i <= days; i++) html += `<th>${i}</th>`;
+            html += '<th>TOTAL</th></tr></thead><tbody>';
+
+            students.forEach(student => {
+                html += `<tr><td class="student-name-cell">${student.name}</td>`;
+                for (let day = 1; day <= days; day++) {
+                    const key = `freq-${student.id}-${day}`;
+                    const status = localStorage.getItem(key) || '';
+                    const cssClass = status === 'P' ? 'present' : status === 'F' ? 'absent' : '';
+                    const display = status === 'P' ? '✓' : status === 'F' ? '✗' : '';
+                    html += `<td><div class="freq-cell ${cssClass}" onclick="toggleFrequency(${student.id}, ${day})">${display}</div></td>`;
+                }
+                const total = countAbsences(student.id);
+                html += `<td class="total-cell">${total}</td></tr>`;
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function toggleFrequency(studentId, day) {
+            const key = `freq-${studentId}-${day}`;
+            let current = localStorage.getItem(key) || '';
+            let next = current === '' ? 'P' : current === 'P' ? 'F' : '';
+            localStorage.setItem(key, next);
+            renderFrequencyTable();
+        }
+
+        function countAbsences(studentId) {
+            const days = daysInMonth(currentMonth + 1, currentYear);
+            let count = 0;
+            for (let day = 1; day <= days; day++) {
+                const status = localStorage.getItem(`freq-${studentId}-${day}`) || '';
+                if (status === 'F') count++;
+            }
+            return count;
+        }
+
+        // ===== CONTENT GRID =====
+        function renderContentGrid() {
+            const grid = document.getElementById('contentGrid');
+            const days = daysInMonth(currentMonth + 1, currentYear);
+
+            let html = '';
+            for (let day = 1; day <= days; day++) {
+                const key = `content-${currentMonth}-${day}`;
+                const content = localStorage.getItem(key) || '';
+                html += `
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">Dia ${day}</label>
+                        <input type="text"
+                               class="content-input"
+                               placeholder="Conteúdo do dia ${day}..."
+                               value="${content}"
+                               onchange="saveContent(${day}, this.value)">
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        function saveContent(day, value) {
+            const key = `content-${currentMonth}-${day}`;
+            if (value) {
+                localStorage.setItem(key, value);
+            } else {
+                localStorage.removeItem(key);
+            }
+        }
+
+        // ===== STUDENT PANEL =====
+        function selectStudent(studentId) {
+            selectedStudent = students.find(s => s.id === studentId);
+
+            // Update checkbox
+            document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById(`student-${studentId}`).checked = true;
+
+            // Update styling
+            document.querySelectorAll('.student-list-item').forEach(el => el.classList.remove('selected'));
+            event.target.closest('.student-list-item')?.classList.add('selected');
+
+            // Show panel
+            document.getElementById('emptyPanelState').classList.add('hidden');
+            document.getElementById('studentDataState').classList.remove('hidden');
+            document.getElementById('studentPanel').classList.add('active');
+            document.getElementById('mainContent').classList.add('with-panel');
+
+            // Populate data
+            document.getElementById('studentPanelTitle').textContent = selectedStudent.name;
+            document.getElementById('panelName').textContent = selectedStudent.name;
+            document.getElementById('panelCPF').textContent = selectedStudent.cpf;
+            document.getElementById('panelPhone').textContent = selectedStudent.phone;
+            document.getElementById('panelEmail').textContent = selectedStudent.email;
+            document.getElementById('panelMath').textContent = selectedStudent.math;
+            document.getElementById('panelPortuguese').textContent = selectedStudent.portuguese;
+            document.getElementById('panelScience').textContent = selectedStudent.science;
+            document.getElementById('panelAbsentMonth').textContent = countAbsences(studentId);
+            document.getElementById('panelAttendanceRate').textContent = '92%';
+            document.getElementById('panelObservations').textContent = selectedStudent.observations;
+        }
+
+        function closeStudentPanel() {
+            document.getElementById('studentPanel').classList.remove('active');
+            document.getElementById('mainContent').classList.remove('with-panel');
+            document.getElementById('emptyPanelState').classList.remove('hidden');
+            document.getElementById('studentDataState').classList.add('hidden');
+            document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.student-list-item').forEach(el => el.classList.remove('selected'));
+            selectedStudent = null;
+        }
+
+        // ===== SAVE & EXPORT =====
+        function saveMonth() {
+            const monthData = {
+                month: currentMonth,
+                year: currentYear,
+                savedAt: new Date().toLocaleString()
+            };
+            localStorage.setItem(`month-data-${currentMonth}-${currentYear}`, JSON.stringify(monthData));
+
+            // Show modal
+            const modal = document.getElementById('successModal');
+            modal.classList.add('active');
+            setTimeout(() => {
+                modal.classList.remove('active');
+            }, 3000);
+        }
+
+        function exportPDF() {
+            alert('🚀 Exportar PDF em breve!\n\nIsso permitirá gerar relatórios profissionais do diário.');
+        }
+
+        function loadDataFromLocalStorage() {
+            // Data is loaded on-demand by renderFrequencyTable and renderContentGrid
+        }
+
+        // ===== INIT =====
+        init();
+    </script>
+</body>
+</html>
