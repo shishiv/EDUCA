@@ -11,17 +11,17 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 14h 00min |
+| **Total de horas trabalhadas** | 16h 00min |
 | **Dias trabalhados** | 2 dias |
-| **Horas médias por dia** | 7h 00min |
-| **Total de commits** | 10 commits |
+| **Horas médias por dia** | 8h 00min |
+| **Total de commits** | 12 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
 ---
 
 ## Detalhamento de Atividades
 
-### Semana 1: 01/12 - 07/12 (14h 00min)
+### Semana 1: 01/12 - 07/12 (16h 00min)
 
 #### Quarta-feira, 04/12/2025
 **Horas:** 6h 00min
@@ -38,9 +38,9 @@
 ---
 
 #### Sexta-feira, 05/12/2025
-**Horas:** 8h 00min
-**Atividade:** Desenvolvimento do Diário de Classe - Relatórios e Exportação
-**Descrição:** Implementação completa do sistema de relatórios escolares incluindo alertas de frequência do Bolsa Família, exportação de documentos em PDF e Excel, relatórios de conteúdo ministrado, e melhorias de performance e acessibilidade para uso em tablets.
+**Horas:** 10h 00min
+**Atividade:** Desenvolvimento do Diário de Classe - Relatórios, Testes e Validação Visual
+**Descrição:** Implementação completa do sistema de relatórios escolares incluindo alertas de frequência do Bolsa Família, exportação de documentos em PDF e Excel, relatórios de conteúdo ministrado, melhorias de performance e acessibilidade para uso em tablets, revisão completa de testes (74/87 passando), e verificação visual das páginas implementadas.
 
 **Commits relacionados:**
 - `223f7c4` - Otimizações de performance (skeletons, React Query, índices de banco)
@@ -48,6 +48,8 @@
 - `e20462b` - Alertas Bolsa Família e exportação PDF/Excel
 - `fdb20b3` - Dashboard de status da Fase 1
 - `2650e3e` - Conclusão das Fases 1.1 e 1.2 do Diário de Classe
+- `66902ba` - Revisão de testes e análise de gaps (Fase 6)
+- `d49377c` - Correção de bugs encontrados na verificação visual
 
 ---
 
@@ -133,12 +135,12 @@ Use estas categorias para classificar o trabalho:
 
 | Categoria | Horas | % do Total |
 |-----------|-------|------------|
-| Desenvolvimento | 8h 00min | 57% |
-| Correção de erros | 1h 00min | 7% |
-| Melhorias | 2h 00min | 14% |
-| Documentação | 3h 00min | 22% |
+| Desenvolvimento | 8h 00min | 50% |
+| Correção de erros | 2h 00min | 12.5% |
+| Melhorias | 2h 00min | 12.5% |
+| Documentação | 2h 00min | 12.5% |
+| Testes | 2h 00min | 12.5% |
 | Limpeza | 0h 00min | 0% |
-| Testes | 0h 00min | 0% |
 | Deploy | 0h 00min | 0% |
 
 ---
@@ -157,7 +159,7 @@ Use estas categorias para classificar o trabalho:
 ### Pendências e Próximos Passos
 - [ ] Conclusão da Fase 5.1 (Otimização Mobile)
 - [ ] Conclusão da Fase 5.3 (Feedback Visual e Acessibilidade)
-- [ ] Fase 6 - Revisão de Testes e Gap Analysis
+- [x] Fase 6 - Revisão de Testes e Gap Analysis (74/87 testes passando)
 
 ---
 
