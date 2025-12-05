@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -16,14 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Plus, Search, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download, CheckCircle, BookOpen } from 'lucide-react'
+import { StatsBar } from '@/components/dashboard'
+import { InlineFilters } from '@/components/filters'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
@@ -194,86 +188,63 @@ export default function EscolasPage() {
         </div>
       </div>
 
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{totalEscolas}</div>
-            <div className="text-sm text-gray-600">Total de Escolas</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{escolasAtivas}</div>
-            <div className="text-sm text-gray-600">Escolas Ativas</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">{totalAlunos}</div>
-            <div className="text-sm text-gray-600">Total de Alunos</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{totalTurmas}</div>
-            <div className="text-sm text-gray-600">Total de Turmas</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Use os filtros abaixo para encontrar escolas específicas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nome, código ou diretor..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Tipo de escola" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os tipos</SelectItem>
-                <SelectItem value="creche">Creche</SelectItem>
-                <SelectItem value="pre_escola">Pré-Escola</SelectItem>
-                <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="ativo">Ativas</SelectItem>
-                <SelectItem value="inativo">Inativas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Estatísticas compactas */}
+      <StatsBar
+        stats={[
+          { label: 'Total', value: totalEscolas, icon: School },
+          { label: 'Ativas', value: escolasAtivas, icon: CheckCircle, variant: 'success' },
+          { label: 'Alunos', value: totalAlunos, icon: Users, variant: 'info' },
+          { label: 'Turmas', value: totalTurmas, icon: BookOpen, variant: 'warning' },
+        ]}
+      />
 
       {/* Lista de Escolas */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Escolas ({filteredEscolas.length})</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="text-lg">Escolas ({filteredEscolas.length})</CardTitle>
+          </div>
+          <InlineFilters
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: 'Buscar por nome, código ou diretor...',
+            }}
+            filters={[
+              {
+                id: 'tipo',
+                placeholder: 'Tipo',
+                value: tipoFilter,
+                options: [
+                  { value: 'todos', label: 'Todos os tipos' },
+                  { value: 'creche', label: 'Creche' },
+                  { value: 'pre_escola', label: 'Pré-Escola' },
+                  { value: 'fundamental', label: 'Ensino Fundamental' },
+                ],
+                onChange: setTipoFilter,
+                width: 'w-full sm:w-48',
+              },
+              {
+                id: 'status',
+                placeholder: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'ativo', label: 'Ativas' },
+                  { value: 'inativo', label: 'Inativas' },
+                ],
+                onChange: setStatusFilter,
+                width: 'w-full sm:w-32',
+              },
+            ]}
+            onClearAll={() => {
+              setSearch('')
+              setTipoFilter('todos')
+              setStatusFilter('todos')
+            }}
+          />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

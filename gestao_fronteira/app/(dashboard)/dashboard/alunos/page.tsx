@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase, Aluno } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -16,18 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Plus, Search, Download, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart } from 'lucide-react'
+import { Plus, Download, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
-import { StatsCard } from '@/components/dashboard/stats-card'
+import { StatsBar } from '@/components/dashboard'
+import { InlineFilters } from '@/components/filters'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -183,87 +176,64 @@ export default function AlunosPage() {
         }
       />
 
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total de Alunos"
-          value={alunos.length}
-          icon={Users}
-          variant="primary"
-        />
-        <StatsCard
-          title="Matriculados"
-          value={alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length}
-          icon={UserCheck}
-          variant="secondary"
-        />
-        <StatsCard
-          title="Não Matriculados"
-          value={alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length}
-          icon={UserX}
-          variant="accent"
-        />
-        <StatsCard
-          title="Necessidades Especiais"
-          value={alunos.filter(a => a.necessidades_especiais).length}
-          icon={Heart}
-          variant="rose"
-        />
-      </div>
-
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Use os filtros abaixo para encontrar alunos específicos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nome, CPF ou responsável..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os Status</SelectItem>
-                <SelectItem value="matriculado">Matriculados</SelectItem>
-                <SelectItem value="nao_matriculado">Não Matriculados</SelectItem>
-                <SelectItem value="ativo">Ativos</SelectItem>
-                <SelectItem value="inativo">Inativos</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sexoFilter} onValueChange={setSexoFilter}>
-              <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Sexo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="M">Masculino</SelectItem>
-                <SelectItem value="F">Feminino</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Estatísticas compactas */}
+      <StatsBar
+        stats={[
+          { label: 'Total', value: alunos.length, icon: Users },
+          { label: 'Matriculados', value: alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserCheck, variant: 'success' },
+          { label: 'Não Matriculados', value: alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserX, variant: 'warning' },
+          { label: 'NEE', value: alunos.filter(a => a.necessidades_especiais).length, icon: Heart, variant: 'info' },
+        ]}
+      />
 
       {/* Lista de Alunos */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Alunos ({filteredAlunos.length})</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="text-lg">Alunos ({filteredAlunos.length})</CardTitle>
+          </div>
+          <InlineFilters
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: 'Buscar por nome, CPF ou responsável...',
+            }}
+            filters={[
+              {
+                id: 'status',
+                placeholder: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'todos', label: 'Todos os Status' },
+                  { value: 'matriculado', label: 'Matriculados' },
+                  { value: 'nao_matriculado', label: 'Não Matriculados' },
+                  { value: 'ativo', label: 'Ativos' },
+                  { value: 'inativo', label: 'Inativos' },
+                ],
+                onChange: setStatusFilter,
+                width: 'w-full sm:w-44',
+              },
+              {
+                id: 'sexo',
+                placeholder: 'Sexo',
+                value: sexoFilter,
+                options: [
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'M', label: 'Masculino' },
+                  { value: 'F', label: 'Feminino' },
+                ],
+                onChange: setSexoFilter,
+                width: 'w-full sm:w-32',
+              },
+            ]}
+            onClearAll={() => {
+              setSearch('')
+              setStatusFilter('todos')
+              setSexoFilter('todos')
+            }}
+          />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
