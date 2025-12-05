@@ -5,13 +5,29 @@
 -- OpenSpec Change: 2025-12-04-diario-de-classe
 
 -- ============================================================================
+-- PREREQUISITE: Ensure update_updated_at_column function exists
+-- ============================================================================
+
+-- Create the function if it doesn't exist (for dependency safety)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION update_updated_at_column() IS
+'Generic trigger function to automatically update updated_at column on record modifications.';
+
+-- ============================================================================
 -- PHASE 1: CREATE CONTEUDO_AULA TABLE
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS conteudo_aula (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-  -- Foreign key to session (aulas_abertas/sessoes_aula)
+  -- Foreign key to session (sessoes_aula)
   sessao_id UUID NOT NULL REFERENCES sessoes_aula(id) ON DELETE CASCADE,
 
   -- Lesson planning fields (BNCC-aligned)
@@ -59,6 +75,9 @@ CREATE INDEX IF NOT EXISTS idx_conteudo_aula_created_at
 -- ============================================================================
 -- PHASE 3: CREATE TRIGGER FOR UPDATED_AT
 -- ============================================================================
+
+-- Drop existing trigger if exists to avoid conflicts
+DROP TRIGGER IF EXISTS update_conteudo_aula_updated_at ON conteudo_aula;
 
 -- Trigger to automatically update updated_at timestamp
 CREATE TRIGGER update_conteudo_aula_updated_at
@@ -167,25 +186,25 @@ CREATE POLICY "Only admin can delete lesson content"
 -- ============================================================================
 
 COMMENT ON TABLE conteudo_aula IS
-'Lesson content planning aligned with Brazilian BNCC (Base Nacional Comum Curricular). Links to sessoes_aula for Diário de Classe Digital.';
+'Lesson content planning aligned with Brazilian BNCC (Base Nacional Comum Curricular). Links to sessoes_aula for Diario de Classe Digital.';
 
 COMMENT ON COLUMN conteudo_aula.sessao_id IS
 'Foreign key to sessoes_aula. Each session can have one lesson plan.';
 
 COMMENT ON COLUMN conteudo_aula.tema IS
-'Lesson theme/topic (required). Example: "Adição e Subtração de Números Naturais"';
+'Lesson theme/topic (required). Example: "Adicao e Subtracao de Numeros Naturais"';
 
 COMMENT ON COLUMN conteudo_aula.objetivo IS
-'Learning objectives for the lesson (required). Example: "Compreender operações básicas de adição"';
+'Learning objectives for the lesson (required). Example: "Compreender operacoes basicas de adicao"';
 
 COMMENT ON COLUMN conteudo_aula.habilidades_bncc IS
 'Array of BNCC skill codes. Example: ["EF01MA06", "EF01MA08"]. See https://basenacionalcomum.mec.gov.br/';
 
 COMMENT ON COLUMN conteudo_aula.metodologia IS
-'Teaching methodology used. Example: "Aula expositiva com atividades práticas"';
+'Teaching methodology used. Example: "Aula expositiva com atividades praticas"';
 
 COMMENT ON COLUMN conteudo_aula.recursos IS
-'Teaching resources used. Example: "Quadro branco, material dourado, livro didático"';
+'Teaching resources used. Example: "Quadro branco, material dourado, livro didatico"';
 
 COMMENT ON COLUMN conteudo_aula.observacoes IS
 'Additional observations or notes about the lesson.';
@@ -201,29 +220,41 @@ COMMENT ON POLICY "Teachers can create lesson content for their sessions" ON con
 -- ============================================================================
 
 -- Function to validate BNCC skill codes format
+-- Supports both Ensino Fundamental (EF) and Educacao Infantil (EI) patterns
 CREATE OR REPLACE FUNCTION validate_bncc_skills(skills TEXT[])
 RETURNS BOOLEAN AS $$
 BEGIN
-  -- BNCC skill codes follow pattern: EF[0-9]{2}[A-Z]{2}[0-9]{2}
-  -- Example: EF01MA06 (Ensino Fundamental, 1º ano, Matemática, skill 06)
+  -- BNCC skill codes follow patterns:
+  -- Ensino Fundamental: EF[0-9]{2}[A-Z]{2}[0-9]{2} (e.g., EF01MA06)
+  -- Educacao Infantil: EI[0-9]{2}[A-Z]{2}[0-9]{2} (e.g., EI03EO01)
+  -- Also allow empty arrays or NULL
   RETURN (
     skills IS NULL OR
     array_length(skills, 1) IS NULL OR
     NOT EXISTS (
       SELECT 1 FROM unnest(skills) AS skill
-      WHERE skill !~ '^EF[0-9]{2}[A-Z]{2}[0-9]{2}$'
+      WHERE skill !~ '^E[FI][0-9]{2}[A-Z]{2}[0-9]{2}$'
     )
   );
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
 COMMENT ON FUNCTION validate_bncc_skills(TEXT[]) IS
-'Validates BNCC skill codes format. Pattern: EF[year][subject][skill_number]. Example: EF01MA06';
+'Validates BNCC skill codes format. Supports EF (Ensino Fundamental) and EI (Educacao Infantil) patterns. Example: EF01MA06, EI03EO01';
 
--- Add CHECK constraint for BNCC skills validation
-ALTER TABLE conteudo_aula
-  ADD CONSTRAINT check_bncc_skills_format
-  CHECK (validate_bncc_skills(habilidades_bncc));
+-- Add CHECK constraint for BNCC skills validation (if not exists)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'check_bncc_skills_format'
+      AND table_name = 'conteudo_aula'
+  ) THEN
+    ALTER TABLE conteudo_aula
+      ADD CONSTRAINT check_bncc_skills_format
+      CHECK (validate_bncc_skills(habilidades_bncc));
+  END IF;
+END $$;
 
 -- ============================================================================
 -- PHASE 7: CREATE VIEW FOR EASY QUERYING
@@ -322,20 +353,26 @@ BEGIN
   RAISE NOTICE 'Migration 20250204002_conteudo_aula_bncc COMPLETED';
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE 'Features implemented:';
-  RAISE NOTICE '  ✓ conteudo_aula table with BNCC alignment';
-  RAISE NOTICE '  ✓ Foreign key to sessoes_aula (one lesson plan per session)';
-  RAISE NOTICE '  ✓ BNCC skills array with validation (EF format)';
-  RAISE NOTICE '  ✓ Performance indexes (sessao, turma, BNCC skills)';
-  RAISE NOTICE '  ✓ RLS policies for school-based isolation';
-  RAISE NOTICE '  ✓ Detailed view (vw_conteudo_aula_detalhado)';
-  RAISE NOTICE '  ✓ BNCC skill code validation function';
+  RAISE NOTICE '  [OK] conteudo_aula table with BNCC alignment';
+  RAISE NOTICE '  [OK] Foreign key to sessoes_aula (one lesson plan per session)';
+  RAISE NOTICE '  [OK] BNCC skills array with validation (EF/EI format)';
+  RAISE NOTICE '  [OK] Performance indexes (sessao, turma, BNCC skills)';
+  RAISE NOTICE '  [OK] RLS policies for school-based isolation';
+  RAISE NOTICE '  [OK] Detailed view (vw_conteudo_aula_detalhado)';
+  RAISE NOTICE '  [OK] BNCC skill code validation function';
   RAISE NOTICE '';
-  RAISE NOTICE 'BNCC Skill Code Format: EF[year][subject][number]';
-  RAISE NOTICE '  Example: EF01MA06 (1st year, Mathematics, skill 06)';
+  RAISE NOTICE 'BNCC Skill Code Format:';
+  RAISE NOTICE '  - Ensino Fundamental: EF[year][subject][number] (e.g., EF01MA06)';
+  RAISE NOTICE '  - Educacao Infantil: EI[year][subject][number] (e.g., EI03EO01)';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Subject Codes:';
+  RAISE NOTICE '  LP = Lingua Portuguesa, MA = Matematica, CI = Ciencias';
+  RAISE NOTICE '  HI = Historia, GE = Geografia, AR = Arte';
+  RAISE NOTICE '  EF = Educacao Fisica, ER = Ensino Religioso, LI = Lingua Inglesa';
+  RAISE NOTICE '  EO = Eu, Outro e Nos (Ed. Infantil), CG = Corpo, Gestos, Movimentos';
   RAISE NOTICE '';
   RAISE NOTICE 'Next Steps:';
   RAISE NOTICE '  - Update RLS policies for time-based editing restrictions (Task 1.1.3)';
   RAISE NOTICE '  - Integrate with frontend lesson planning UI';
-  RAISE NOTICE '  - Populate BNCC skills reference table (optional)';
   RAISE NOTICE '=============================================================================';
 END $$;
