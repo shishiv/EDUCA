@@ -27,9 +27,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Eye, Edit, Trash2, UserCheck, UserX, Download, Users, CheckCircle, GraduationCap, Crown } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, UserCheck, UserX, Download, Users, CheckCircle, GraduationCap, Crown, UserPlus, Search as SearchIcon } from 'lucide-react'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
+import { TableEmptyState } from '@/components/ui/empty-state'
+import { formatDateTimeBR } from '@/lib/date-utils'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
@@ -272,10 +274,7 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {usuario.created_at ? 
-                          new Date(usuario.created_at).toLocaleString('pt-BR') : 
-                          'Nunca acessou'
-                        }
+                        {usuario.created_at ? formatDateTimeBR(usuario.created_at) : 'Nunca acessou'}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -333,11 +332,41 @@ export default function UsuariosPage() {
                   </TableRow>
                 ))}
                 {filteredUsuarios.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      Nenhum usuário encontrado com os filtros aplicados.
-                    </TableCell>
-                  </TableRow>
+                  <TableEmptyState
+                    colSpan={6}
+                    icon={search || tipoFilter !== 'todos' || statusFilter !== 'todos' ? SearchIcon : Users}
+                    title={
+                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? 'Nenhum usuário encontrado'
+                        : 'Nenhum usuário cadastrado'
+                    }
+                    description={
+                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? 'Tente ajustar os filtros para encontrar o que procura.'
+                        : 'Comece adicionando o primeiro usuário do sistema.'
+                    }
+                    actions={
+                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
+                        ? [
+                            {
+                              label: 'Limpar filtros',
+                              variant: 'outline',
+                              onClick: () => {
+                                setSearch('')
+                                setTipoFilter('todos')
+                                setStatusFilter('todos')
+                              },
+                            },
+                          ]
+                        : [
+                            {
+                              label: 'Novo Usuário',
+                              href: '/dashboard/usuarios/novo',
+                              icon: UserPlus,
+                            },
+                          ]
+                    }
+                  />
                 )}
               </TableBody>
             </Table>
