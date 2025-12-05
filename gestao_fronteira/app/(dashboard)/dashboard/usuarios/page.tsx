@@ -5,11 +5,10 @@ import Link from 'next/link'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,14 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -35,7 +27,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Eye, Edit, Trash2, UserCheck, UserX, Download } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, UserCheck, UserX, Download, Users, CheckCircle, GraduationCap, Crown } from 'lucide-react'
+import { StatsBar } from '@/components/dashboard'
+import { InlineFilters } from '@/components/filters'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
@@ -180,93 +174,64 @@ export default function UsuariosPage() {
         </div>
       </div>
 
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{usuarios.length}</div>
-            <div className="text-sm text-gray-600">Total de Usuários</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {usuarios.filter(u => u.ativo).length}
-            </div>
-            <div className="text-sm text-gray-600">Usuários Ativos</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {usuarios.filter(u => u.tipo_usuario === 'professor').length}
-            </div>
-            <div className="text-sm text-gray-600">Professores</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">
-              {usuarios.filter(u => u.tipo_usuario === 'diretor').length}
-            </div>
-            <div className="text-sm text-gray-600">Diretores</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Use os filtros abaixo para encontrar usuários específicos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nome ou email..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Tipo de usuário" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os tipos</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="diretor">Diretor</SelectItem>
-                <SelectItem value="secretario">Secretário</SelectItem>
-                <SelectItem value="professor">Professor</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="ativo">Ativos</SelectItem>
-                <SelectItem value="inativo">Inativos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Estatísticas compactas */}
+      <StatsBar
+        stats={[
+          { label: 'Total', value: usuarios.length, icon: Users },
+          { label: 'Ativos', value: usuarios.filter(u => u.ativo).length, icon: CheckCircle, variant: 'success' },
+          { label: 'Professores', value: usuarios.filter(u => u.tipo_usuario === 'professor').length, icon: GraduationCap, variant: 'info' },
+          { label: 'Diretores', value: usuarios.filter(u => u.tipo_usuario === 'diretor').length, icon: Crown, variant: 'warning' },
+        ]}
+      />
 
       {/* Lista de Usuários */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Usuários ({filteredUsuarios.length})</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="text-lg">Usuários ({filteredUsuarios.length})</CardTitle>
+          </div>
+          <InlineFilters
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: 'Buscar por nome ou email...',
+            }}
+            filters={[
+              {
+                id: 'tipo',
+                placeholder: 'Tipo',
+                value: tipoFilter,
+                options: [
+                  { value: 'todos', label: 'Todos os tipos' },
+                  { value: 'admin', label: 'Administrador' },
+                  { value: 'diretor', label: 'Diretor' },
+                  { value: 'secretario', label: 'Secretário' },
+                  { value: 'professor', label: 'Professor' },
+                ],
+                onChange: setTipoFilter,
+                width: 'w-full sm:w-44',
+              },
+              {
+                id: 'status',
+                placeholder: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'ativo', label: 'Ativos' },
+                  { value: 'inativo', label: 'Inativos' },
+                ],
+                onChange: setStatusFilter,
+                width: 'w-full sm:w-32',
+              },
+            ]}
+            onClearAll={() => {
+              setSearch('')
+              setTipoFilter('todos')
+              setStatusFilter('todos')
+            }}
+          />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

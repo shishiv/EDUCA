@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -15,19 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Plus, Search, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download, BookOpen, UserCheck, TrendingUp } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, GraduationCap, Users, School, Clock, Download, BookOpen, CheckCircle, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
-import { StatsCard } from '@/components/dashboard/stats-card'
+import { StatsBar } from '@/components/dashboard'
+import { InlineFilters } from '@/components/filters'
 
 interface Turma {
   id: string
@@ -435,112 +428,90 @@ export default function TurmasPage() {
         }
       />
 
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total de Turmas"
-          value={totalTurmas}
-          icon={BookOpen}
-          variant="primary"
-        />
-        <StatsCard
-          title="Turmas Ativas"
-          value={turmasAtivas}
-          icon={UserCheck}
-          variant="secondary"
-        />
-        <StatsCard
-          title="Alunos Matriculados"
-          value={totalAlunos}
-          icon={Users}
-          variant="accent"
-        />
-        <StatsCard
-          title="Ocupação Geral"
-          value={`${capacidadeTotal > 0 ? Math.round((totalAlunos / capacidadeTotal) * 100) : 0}%`}
-          icon={TrendingUp}
-          variant="violet"
-        />
-      </div>
-
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Use os filtros abaixo para encontrar turmas específicas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nome, série, escola ou professor..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={escolaFilter} onValueChange={setEscolaFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Escola" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as escolas</SelectItem>
-                {escolas.map((escola) => (
-                  <SelectItem key={escola?.id} value={escola?.id || ''}>
-                    {escola?.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={serieFilter} onValueChange={setSerieFilter}>
-              <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Série" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
-                {series.map((serie) => (
-                  <SelectItem key={serie} value={serie}>
-                    {serie}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={turnoFilter} onValueChange={setTurnoFilter}>
-              <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Turno" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="matutino">Matutino</SelectItem>
-                <SelectItem value="vespertino">Vespertino</SelectItem>
-                <SelectItem value="integral">Integral</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="ativo">Ativas</SelectItem>
-                <SelectItem value="inativo">Inativas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Estatísticas compactas */}
+      <StatsBar
+        stats={[
+          { label: 'Total', value: totalTurmas, icon: BookOpen },
+          { label: 'Ativas', value: turmasAtivas, icon: CheckCircle, variant: 'success' },
+          { label: 'Alunos', value: totalAlunos, icon: Users, variant: 'info' },
+          { label: 'Ocupação', value: `${capacidadeTotal > 0 ? Math.round((totalAlunos / capacidadeTotal) * 100) : 0}%`, icon: TrendingUp, variant: 'warning' },
+        ]}
+      />
 
       {/* Lista de Turmas */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Turmas ({filteredTurmas.length})</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="text-lg">Turmas ({filteredTurmas.length})</CardTitle>
+          </div>
+          <InlineFilters
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: 'Buscar por nome, série, escola ou professor...',
+            }}
+            filters={[
+              {
+                id: 'escola',
+                placeholder: 'Escola',
+                value: escolaFilter,
+                options: [
+                  { value: 'todas', label: 'Todas as escolas' },
+                  ...escolas.filter(Boolean).map(escola => ({
+                    value: escola?.id || '',
+                    label: escola?.nome || '',
+                  })),
+                ],
+                onChange: setEscolaFilter,
+                width: 'w-full sm:w-48',
+              },
+              {
+                id: 'serie',
+                placeholder: 'Série',
+                value: serieFilter,
+                options: [
+                  { value: 'todas', label: 'Todas' },
+                  ...series.map(serie => ({ value: serie, label: serie })),
+                ],
+                onChange: setSerieFilter,
+                width: 'w-full sm:w-32',
+              },
+              {
+                id: 'turno',
+                placeholder: 'Turno',
+                value: turnoFilter,
+                options: [
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'matutino', label: 'Matutino' },
+                  { value: 'vespertino', label: 'Vespertino' },
+                  { value: 'integral', label: 'Integral' },
+                ],
+                onChange: setTurnoFilter,
+                width: 'w-full sm:w-32',
+              },
+              {
+                id: 'status',
+                placeholder: 'Status',
+                value: statusFilter,
+                options: [
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'ativo', label: 'Ativas' },
+                  { value: 'inativo', label: 'Inativas' },
+                ],
+                onChange: setStatusFilter,
+                width: 'w-full sm:w-32',
+              },
+            ]}
+            onClearAll={() => {
+              setSearch('')
+              setEscolaFilter('todas')
+              setSerieFilter('todas')
+              setTurnoFilter('todos')
+              setStatusFilter('todos')
+            }}
+          />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
