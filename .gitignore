@@ -1,0 +1,34 @@
+# Beads database (local issue tracking)
+.beads/
+
+# Claude Code local configs
+.claude/agents/
+.claude/commands/
+.claude/skills/
+
+# Python virtual environment
+scripts/venv/
+**/venv/
+
+# Screenshots (test artifacts)
+screenshots/
+**/screenshots/
+
+# Large binaries - keep local, don't version
+*.pdf
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules at root (if any)
+node_modules/
+
+# Lock files at root (project uses pnpm in gestao_fronteira/)
+package-lock.json

@@ -43,3 +43,11 @@ next-env.d.ts
 *.bak
 *.old
 
+# Python virtual environment
+scripts/venv/
+
+# Screenshots (test artifacts)
+screenshots/
+
+# Large binaries
+*.pdf
