@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { MobileHeader } from '@/components/layout/mobile-header'
 import { MobileSidebar } from '@/components/layout/mobile-sidebar'
+import { MobileNav } from '@/components/layout/MobileNav'
 import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
@@ -68,10 +69,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           />
         </div>
 
-        <main className="flex-1 overflow-auto p-6">
+        {/* Main content with bottom padding for mobile nav */}
+        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation - Visible on mobile only */}
+      <MobileNav />
     </div>
   )
 }
@@ -89,7 +94,7 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
       user={{
         id: userProfile.id,
         tipo_usuario: userProfile.tipo_usuario,
-        escola_id: userProfile.escola_id
+        escola_id: userProfile.escola_id || '' // Default to empty string if null
       }}
     >
       {children}

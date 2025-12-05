@@ -1,11 +1,12 @@
 'use client';
 
 /**
- * Bolsa Família Report Page
+ * Bolsa Familia Report Page
  * OpenSpec Change: 2025-12-04-diario-de-classe
- * Task Group 4.2: Alerta Bolsa Família
+ * Task Group 4.2: Alerta Bolsa Familia
+ * Task Group 5.1.2: Mobile responsiveness fixes
  *
- * Page for viewing and exporting Bolsa Família compliance reports.
+ * Page for viewing and exporting Bolsa Familia compliance reports.
  * Shows students with NIS who are at risk of losing benefits due to
  * low attendance (< 80% threshold).
  */
@@ -50,6 +51,7 @@ import {
   generateBolsaFamiliaReportPDF,
   generateBolsaFamiliaReportExcel,
 } from '@/lib/export';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // TYPES
@@ -113,21 +115,21 @@ function getPeriodDates(period: PeriodOption, customStart?: Date, customEnd?: Da
 function getPeriodLabel(period: PeriodOption): string {
   switch (period) {
     case 'current_month':
-      return 'Mês Atual';
+      return 'Mes Atual';
     case 'last_month':
-      return 'Mês Anterior';
+      return 'Mes Anterior';
     case 'bimester_1':
-      return '1º Bimestre';
+      return '1o Bimestre';
     case 'bimester_2':
-      return '2º Bimestre';
+      return '2o Bimestre';
     case 'bimester_3':
-      return '3º Bimestre';
+      return '3o Bimestre';
     case 'bimester_4':
-      return '4º Bimestre';
+      return '4o Bimestre';
     case 'custom':
       return 'Personalizado';
     default:
-      return 'Período';
+      return 'Periodo';
   }
 }
 
@@ -225,7 +227,7 @@ export default function BolsaFamiliaReportPage() {
       setReport(result.data);
     } catch (error) {
       console.error('Error fetching report:', error);
-      toast.error('Erro ao gerar relatório');
+      toast.error('Erro ao gerar relatorio');
     } finally {
       setLoading(false);
     }
@@ -239,7 +241,7 @@ export default function BolsaFamiliaReportPage() {
   // Export handlers
   const handleExportExcel = async () => {
     if (!report) {
-      toast.error('Nenhum relatório para exportar');
+      toast.error('Nenhum relatorio para exportar');
       return;
     }
     try {
@@ -257,7 +259,7 @@ export default function BolsaFamiliaReportPage() {
 
   const handleExportPDF = () => {
     if (!report) {
-      toast.error('Nenhum relatório para exportar');
+      toast.error('Nenhum relatorio para exportar');
       return;
     }
     try {
@@ -280,56 +282,71 @@ export default function BolsaFamiliaReportPage() {
     : `${format(new Date(start), 'dd/MM/yyyy')} - ${format(new Date(end), 'dd/MM/yyyy')}`;
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page Header - Mobile optimized */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-amber-500" />
-            Relatório Bolsa Família
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
+            <span className="hidden xs:inline">Relatorio </span>Bolsa Familia
           </h1>
-          <p className="text-gray-600 mt-1">
-            Monitoramento de frequência para alunos do programa
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            <span className="hidden sm:inline">Monitoramento de frequencia para alunos do programa</span>
+            <span className="sm:hidden">Frequencia alunos BF</span>
           </p>
         </div>
 
+        {/* Action buttons - Touch-friendly */}
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchReport} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
+          <Button
+            variant="outline"
+            onClick={fetchReport}
+            disabled={loading}
+            className="min-h-[44px] flex-1 sm:flex-none"
+          >
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2', loading && 'animate-spin')} />
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
-          <Button variant="outline" onClick={handleExportExcel}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Excel
+          <Button
+            variant="outline"
+            onClick={handleExportExcel}
+            className="min-h-[44px] flex-1 sm:flex-none"
+          >
+            <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Excel</span>
           </Button>
-          <Button variant="outline" onClick={handleExportPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            PDF
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            className="min-h-[44px] flex-1 sm:flex-none"
+          >
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">PDF</span>
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Mobile optimized */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 px-3 sm:px-6">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500" />
-            <CardTitle className="text-base">Filtros</CardTitle>
+            <CardTitle className="text-sm sm:text-base">Filtros</CardTitle>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="px-3 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* School Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Escola</label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="text-xs sm:text-sm font-medium text-gray-700">Escola</label>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-                <SelectTrigger>
+                <SelectTrigger className="min-h-[44px]">
                   <SelectValue placeholder="Todas as escolas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as escolas</SelectItem>
+                  <SelectItem value="all" className="py-3">Todas as escolas</SelectItem>
                   {schools.map((school) => (
-                    <SelectItem key={school.id} value={school.id}>
+                    <SelectItem key={school.id} value={school.id} className="py-3">
                       {school.nome}
                     </SelectItem>
                   ))}
@@ -338,20 +355,20 @@ export default function BolsaFamiliaReportPage() {
             </div>
 
             {/* Turma Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Turma</label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="text-xs sm:text-sm font-medium text-gray-700">Turma</label>
               <Select
                 value={selectedTurma}
                 onValueChange={setSelectedTurma}
                 disabled={selectedSchool === 'all'}
               >
-                <SelectTrigger>
+                <SelectTrigger className="min-h-[44px]">
                   <SelectValue placeholder="Todas as turmas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as turmas</SelectItem>
+                  <SelectItem value="all" className="py-3">Todas as turmas</SelectItem>
                   {turmas.map((turma) => (
-                    <SelectItem key={turma.id} value={turma.id}>
+                    <SelectItem key={turma.id} value={turma.id} className="py-3">
                       {turma.nome} ({turma.serie})
                     </SelectItem>
                   ))}
@@ -360,34 +377,34 @@ export default function BolsaFamiliaReportPage() {
             </div>
 
             {/* Period Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Período</label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="text-xs sm:text-sm font-medium text-gray-700">Periodo</label>
               <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as PeriodOption)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o período" />
+                <SelectTrigger className="min-h-[44px]">
+                  <SelectValue placeholder="Selecione o periodo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="current_month">Mês Atual</SelectItem>
-                  <SelectItem value="last_month">Mês Anterior</SelectItem>
-                  <SelectItem value="bimester_1">1º Bimestre</SelectItem>
-                  <SelectItem value="bimester_2">2º Bimestre</SelectItem>
-                  <SelectItem value="bimester_3">3º Bimestre</SelectItem>
-                  <SelectItem value="bimester_4">4º Bimestre</SelectItem>
-                  <SelectItem value="custom">Personalizado</SelectItem>
+                  <SelectItem value="current_month" className="py-3">Mes Atual</SelectItem>
+                  <SelectItem value="last_month" className="py-3">Mes Anterior</SelectItem>
+                  <SelectItem value="bimester_1" className="py-3">1o Bimestre</SelectItem>
+                  <SelectItem value="bimester_2" className="py-3">2o Bimestre</SelectItem>
+                  <SelectItem value="bimester_3" className="py-3">3o Bimestre</SelectItem>
+                  <SelectItem value="bimester_4" className="py-3">4o Bimestre</SelectItem>
+                  <SelectItem value="custom" className="py-3">Personalizado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Custom Date Range */}
             {selectedPeriod === 'custom' && (
-              <div className="space-y-2 lg:col-span-1">
-                <label className="text-sm font-medium text-gray-700">Datas</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium text-gray-700">Datas</label>
                 <div className="flex gap-2">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Button variant="outline" className="w-full justify-start text-left font-normal min-h-[44px]">
                         <Calendar className="mr-2 h-4 w-4" />
-                        {customStartDate ? format(customStartDate, 'dd/MM', { locale: ptBR }) : 'Início'}
+                        {customStartDate ? format(customStartDate, 'dd/MM', { locale: ptBR }) : 'Inicio'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -402,7 +419,7 @@ export default function BolsaFamiliaReportPage() {
                   </Popover>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Button variant="outline" className="w-full justify-start text-left font-normal min-h-[44px]">
                         <Calendar className="mr-2 h-4 w-4" />
                         {customEndDate ? format(customEndDate, 'dd/MM', { locale: ptBR }) : 'Fim'}
                       </Button>
@@ -424,87 +441,105 @@ export default function BolsaFamiliaReportPage() {
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Mobile optimized grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
-              <CardContent className="pt-6">
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-4 w-24" />
+              <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+                <Skeleton className="h-6 sm:h-8 w-12 sm:w-16 mb-2" />
+                <Skeleton className="h-3 sm:h-4 w-16 sm:w-24" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : report && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Total */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900">
                     {report.resumo.totalAlunosBolsaFamilia}
                   </div>
-                  <p className="text-sm text-gray-600">Alunos Bolsa Família</p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    <span className="hidden sm:inline">Alunos Bolsa Familia</span>
+                    <span className="sm:hidden">Total BF</span>
+                  </p>
                 </div>
-                <Users className="h-8 w-8 text-blue-500" />
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 hidden xs:block" />
               </div>
             </CardContent>
           </Card>
 
           {/* Conformes */}
           <Card className="border-green-200">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">
                     {report.resumo.conformes}
                   </div>
-                  <p className="text-sm text-gray-600">Conformes (&gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    <span className="hidden sm:inline">Conformes (&gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</span>
+                    <span className="sm:hidden">OK</span>
+                  </p>
                 </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
+                <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 hidden xs:block" />
               </div>
             </CardContent>
           </Card>
 
           {/* Em Alerta */}
           <Card className="border-amber-200">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-amber-600">
+                  <div className="text-xl sm:text-2xl font-bold text-amber-600">
                     {report.resumo.emAlerta}
                   </div>
-                  <p className="text-sm text-gray-600">Em Alerta ({BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    <span className="hidden sm:inline">Em Alerta ({BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</span>
+                    <span className="sm:hidden">Alerta</span>
+                  </p>
                 </div>
-                <AlertCircle className="h-8 w-8 text-amber-500" />
+                <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 hidden xs:block" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Críticos */}
+          {/* Criticos */}
           <Card className="border-red-200">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-xl sm:text-2xl font-bold text-red-600">
                     {report.resumo.emRiscoCritico}
                   </div>
-                  <p className="text-sm text-gray-600">Críticos (&lt;{BOLSA_FAMILIA_THRESHOLD}%)</p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    <span className="hidden sm:inline">Criticos (&lt;{BOLSA_FAMILIA_THRESHOLD}%)</span>
+                    <span className="sm:hidden">Critico</span>
+                  </p>
                 </div>
-                <AlertTriangle className="h-8 w-8 text-red-500" />
+                <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 hidden xs:block" />
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Report Content */}
+      {/* Report Content - Mobile optimized tabs */}
       <Tabs defaultValue="alert" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="alert">Alerta Visual</TabsTrigger>
-          <TabsTrigger value="table">Tabela Completa</TabsTrigger>
+        <TabsList className="grid w-full sm:w-auto sm:max-w-[280px] grid-cols-2">
+          <TabsTrigger value="alert" className="min-h-[44px]">
+            <span className="hidden sm:inline">Alerta Visual</span>
+            <span className="sm:hidden">Alertas</span>
+          </TabsTrigger>
+          <TabsTrigger value="table" className="min-h-[44px]">
+            <span className="hidden sm:inline">Tabela Completa</span>
+            <span className="sm:hidden">Tabela</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="alert">
@@ -513,7 +548,7 @@ export default function BolsaFamiliaReportPage() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-24 w-full" />
+                    <Skeleton key={i} className="h-20 sm:h-24 w-full" />
                   ))}
                 </div>
               </CardContent>
@@ -529,87 +564,92 @@ export default function BolsaFamiliaReportPage() {
 
         <TabsContent value="table">
           <Card>
-            <CardHeader>
-              <CardTitle>Lista Completa de Alunos</CardTitle>
-              <CardDescription>
-                Período: {periodLabel}
+            <CardHeader className="px-3 sm:px-6">
+              <CardTitle className="text-base sm:text-lg">Lista Completa de Alunos</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Periodo: {periodLabel}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-0 sm:px-6">
               {loading ? (
-                <div className="space-y-2">
+                <div className="space-y-2 px-3 sm:px-0">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                    <Skeleton key={i} className="h-10 sm:h-12 w-full" />
                   ))}
                 </div>
               ) : report && report.alunos.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>Nenhum aluno do Bolsa Família encontrado</p>
-                  <p className="text-sm mt-1">Verifique os filtros ou se os alunos possuem NIS cadastrado</p>
+                <div className="text-center py-8 text-gray-500 px-3">
+                  <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-sm sm:text-base">Nenhum aluno do Bolsa Familia encontrado</p>
+                  <p className="text-xs sm:text-sm mt-1">Verifique os filtros ou se os alunos possuem NIS cadastrado</p>
                 </div>
               ) : report && (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>NIS</TableHead>
-                        <TableHead>Turma</TableHead>
-                        <TableHead>Escola</TableHead>
-                        <TableHead className="text-center">P</TableHead>
-                        <TableHead className="text-center">F</TableHead>
-                        <TableHead className="text-center">A</TableHead>
-                        <TableHead className="text-center">Total</TableHead>
-                        <TableHead className="text-center">%</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="min-w-[150px]">Nome</TableHead>
+                        <TableHead className="hidden sm:table-cell">NIS</TableHead>
+                        <TableHead className="hidden lg:table-cell">Turma</TableHead>
+                        <TableHead className="hidden xl:table-cell">Escola</TableHead>
+                        <TableHead className="text-center w-10">P</TableHead>
+                        <TableHead className="text-center w-10">F</TableHead>
+                        <TableHead className="text-center w-10 hidden xs:table-cell">A</TableHead>
+                        <TableHead className="text-center w-12 hidden sm:table-cell">Total</TableHead>
+                        <TableHead className="text-center w-14">%</TableHead>
+                        <TableHead className="text-center w-16 sm:w-20">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {report.alunos.map((aluno) => (
                         <TableRow
                           key={aluno.matriculaId}
-                          className={
-                            aluno.status === 'CRITICO'
-                              ? 'bg-red-50'
-                              : aluno.status === 'ALERTA'
-                              ? 'bg-amber-50'
-                              : ''
-                          }
+                          className={cn(
+                            'min-h-[44px]',
+                            aluno.status === 'CRITICO' && 'bg-red-50',
+                            aluno.status === 'ALERTA' && 'bg-amber-50'
+                          )}
                         >
-                          <TableCell className="font-medium">{aluno.nome}</TableCell>
-                          <TableCell className="font-mono text-sm">{aluno.nis || '-'}</TableCell>
-                          <TableCell>{aluno.turmaNome}</TableCell>
-                          <TableCell>{aluno.escolaNome}</TableCell>
-                          <TableCell className="text-center text-green-600">{aluno.presencas}</TableCell>
-                          <TableCell className="text-center text-red-600">{aluno.faltas}</TableCell>
-                          <TableCell className="text-center text-amber-600">{aluno.atestados}</TableCell>
-                          <TableCell className="text-center">{aluno.totalAulas}</TableCell>
-                          <TableCell className="text-center font-bold">
+                          <TableCell className="font-medium text-xs sm:text-sm py-3">
+                            {aluno.nome}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs hidden sm:table-cell">
+                            {aluno.nis || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs hidden lg:table-cell">{aluno.turmaNome}</TableCell>
+                          <TableCell className="text-xs hidden xl:table-cell">{aluno.escolaNome}</TableCell>
+                          <TableCell className="text-center text-green-600 text-xs sm:text-sm">{aluno.presencas}</TableCell>
+                          <TableCell className="text-center text-red-600 text-xs sm:text-sm">{aluno.faltas}</TableCell>
+                          <TableCell className="text-center text-amber-600 text-xs sm:text-sm hidden xs:table-cell">{aluno.atestados}</TableCell>
+                          <TableCell className="text-center text-xs sm:text-sm hidden sm:table-cell">{aluno.totalAulas}</TableCell>
+                          <TableCell className="text-center font-bold text-xs sm:text-sm">
                             <span
-                              className={
-                                aluno.status === 'CRITICO'
-                                  ? 'text-red-600'
-                                  : aluno.status === 'ALERTA'
-                                  ? 'text-amber-600'
-                                  : 'text-green-600'
-                              }
+                              className={cn(
+                                aluno.status === 'CRITICO' && 'text-red-600',
+                                aluno.status === 'ALERTA' && 'text-amber-600',
+                                aluno.status === 'CONFORME' && 'text-green-600'
+                              )}
                             >
                               {aluno.percentual}%
                             </span>
                           </TableCell>
                           <TableCell className="text-center">
                             {aluno.status === 'CRITICO' && (
-                              <Badge variant="destructive">Crítico</Badge>
+                              <Badge variant="destructive" className="text-[10px] sm:text-xs px-1 sm:px-2">
+                                <span className="hidden sm:inline">Critico</span>
+                                <AlertTriangle className="h-3 w-3 sm:hidden" />
+                              </Badge>
                             )}
                             {aluno.status === 'ALERTA' && (
-                              <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                                Alerta
+                              <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-[10px] sm:text-xs px-1 sm:px-2">
+                                <span className="hidden sm:inline">Alerta</span>
+                                <AlertCircle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}
                             {aluno.status === 'CONFORME' && (
-                              <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
-                                OK
+                              <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-[10px] sm:text-xs px-1 sm:px-2">
+                                <span className="hidden sm:inline">OK</span>
+                                <CheckCircle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}
                           </TableCell>
@@ -624,23 +664,23 @@ export default function BolsaFamiliaReportPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Info Footer */}
+      {/* Info Footer - Mobile optimized */}
       <Card className="bg-gray-50">
-        <CardContent className="pt-6">
-          <div className="text-sm text-gray-600 space-y-2">
+        <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+          <div className="text-xs sm:text-sm text-gray-600 space-y-1.5 sm:space-y-2">
             <p>
-              <strong>Legenda:</strong> P = Presença, F = Falta, A = Atestado
+              <strong>Legenda:</strong> P = Presenca, F = Falta, A = Atestado
+            </p>
+            <p className="hidden sm:block">
+              <strong>Calculo de Frequencia:</strong> Atestados medicos (A) contam como presenca
+              para o calculo de conformidade do Bolsa Familia.
             </p>
             <p>
-              <strong>Cálculo de Frequência:</strong> Atestados médicos (A) contam como presença
-              para o cálculo de conformidade do Bolsa Família.
-            </p>
-            <p>
-              <strong>Thresholds:</strong> Crítico &lt;{BOLSA_FAMILIA_THRESHOLD}% | Alerta {BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}% | Conforme &gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%
+              <strong>Thresholds:</strong> Critico &lt;{BOLSA_FAMILIA_THRESHOLD}% | Alerta {BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}% | Conforme &gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%
             </p>
             {report && (
               <p className="text-gray-400">
-                Relatório gerado em: {format(new Date(report.geradoEm), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                Gerado em: {format(new Date(report.geradoEm), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}
               </p>
             )}
           </div>

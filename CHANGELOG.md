@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Diário de Classe - Fase 4 Completa:**
+  - Sistema de alertas Bolsa Família com monitoramento de frequência (threshold 80%)
+  - Página de relatório `/relatorios/bolsa-familia` com filtros por escola, turma e período
+  - Exportação de relatórios em PDF (jsPDF) e Excel (ExcelJS)
+  - Relatório de conteúdo ministrado com agregação de habilidades BNCC
+  - Página `/relatorios/conteudo` com visualização em cards, tabela e resumo BNCC
+- **Diário de Classe - Fase 5 (Performance e UX):**
+  - Skeletons de carregamento para lista de aulas, grid de frequência e painéis
+  - Hooks React Query com cache otimizado para dados do diário
+  - Índices de banco de dados para consultas de frequência e sessões
+  - Sistema centralizado de toasts de feedback (Sonner)
+  - Animações sutis em células de frequência e cards
+  - Componentes de loading (spinner, overlay, progress)
+  - Melhorias de acessibilidade (WCAG 2.1 AA) com aria-labels e navegação por teclado
+
+### Changed
+- Otimização de responsividade mobile nas páginas de relatório
+- Targets de toque mínimo de 44px para tablets
+- Layout adaptativo em `/relatorios/frequencia`
+
 ### Security
 - **CRITICAL**: Fixed CVE-2025-66478 (Next.js RCE in React flight protocol) - upgraded Next.js 15.5.3 → 15.5.7
 - **HIGH**: Removed xlsx library vulnerable to Prototype Pollution (CVE-2023-30533) and ReDoS (CVE-2024-22363), replaced with secure exceljs 4.4.0
