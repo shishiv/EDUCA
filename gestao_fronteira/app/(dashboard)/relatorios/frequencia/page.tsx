@@ -1,0 +1,587 @@
+/**
+ * Attendance Reports Page
+ * Task Group 4.1.4: Attendance Report Page
+ * OpenSpec Change: 2025-12-04-diario-de-classe
+ *
+ * Features:
+ * - Class (turma) filter dropdown
+ * - Period selector (date range)
+ * - Table visualization with AttendanceReportTable
+ * - Optional bar chart visualization
+ * - Export to PDF and Excel
+ *
+ * Route: /relatorios/frequencia
+ *
+ * @see openspec/changes/2025-12-04-diario-de-classe/tasks.md
+ * @see components/reports/AttendanceReportTable.tsx
+ */
+
+'use client'
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Calendar } from '@/components/ui/calendar'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  BarChart3,
+  Calendar as CalendarIcon,
+  FileSpreadsheet,
+  FileText,
+  Filter,
+  RefreshCw,
+  TableIcon,
+  Users,
+  AlertTriangle,
+} from 'lucide-react'
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
+
+import { AttendanceReportTable, type AttendanceTableRow } from '@/components/reports/AttendanceReportTable'
+import {
+  generateClassAttendanceReport,
+  getStudentsAtRisk,
+  type ClassAttendanceReport,
+  type AttendanceReportFilters,
+} from '@/lib/reports/attendance-reports'
+import {
+  generateAttendanceReportPDF,
+  generateAttendanceReportExcel,
+} from '@/lib/export'
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface Turma {
+  id: string
+  nome: string
+  serie: string
+  ano_letivo: number
+  escola_id: string
+  escola?: {
+    nome: string
+  }
+}
+
+interface DateRange {
+  from: Date
+  to: Date
+}
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const RISK_THRESHOLD = 80
+const CRITICAL_THRESHOLD = 75
+
+// Quick period options
+const PERIOD_OPTIONS = [
+  { value: 'current_month', label: 'Mes Atual' },
+  { value: 'last_month', label: 'Mes Anterior' },
+  { value: 'bimestre_1', label: '1o Bimestre' },
+  { value: 'bimestre_2', label: '2o Bimestre' },
+  { value: 'bimestre_3', label: '3o Bimestre' },
+  { value: 'bimestre_4', label: '4o Bimestre' },
+  { value: 'custom', label: 'Personalizado' },
+]
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Get date range from period option
+ */
+function getPeriodDates(period: string, anoLetivo: number): DateRange {
+  const today = new Date()
+
+  switch (period) {
+    case 'current_month':
+      return {
+        from: startOfMonth(today),
+        to: endOfMonth(today),
+      }
+    case 'last_month':
+      const lastMonth = subMonths(today, 1)
+      return {
+        from: startOfMonth(lastMonth),
+        to: endOfMonth(lastMonth),
+      }
+    case 'bimestre_1':
+      return {
+        from: new Date(anoLetivo, 1, 1), // February
+        to: new Date(anoLetivo, 3, 30), // April
+      }
+    case 'bimestre_2':
+      return {
+        from: new Date(anoLetivo, 4, 1), // May
+        to: new Date(anoLetivo, 6, 31), // July
+      }
+    case 'bimestre_3':
+      return {
+        from: new Date(anoLetivo, 7, 1), // August
+        to: new Date(anoLetivo, 9, 31), // October
+      }
+    case 'bimestre_4':
+      return {
+        from: new Date(anoLetivo, 10, 1), // November
+        to: new Date(anoLetivo, 11, 31), // December
+      }
+    default:
+      return {
+        from: startOfMonth(today),
+        to: endOfMonth(today),
+      }
+  }
+}
+
+/**
+ * Format date for display
+ */
+function formatDateDisplay(date: Date): string {
+  return format(date, 'dd/MM/yyyy', { locale: ptBR })
+}
+
+/**
+ * Format date for API
+ */
+function formatDateApi(date: Date): string {
+  return format(date, 'yyyy-MM-dd')
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+export default function AttendanceReportsPage() {
+  // State
+  const [turmas, setTurmas] = useState<Turma[]>([])
+  const [selectedTurma, setSelectedTurma] = useState<string>('')
+  const [periodOption, setPeriodOption] = useState<string>('current_month')
+  const [dateRange, setDateRange] = useState<DateRange>(() => ({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  }))
+  const [reportData, setReportData] = useState<ClassAttendanceReport | null>(null)
+  const [isLoadingTurmas, setIsLoadingTurmas] = useState(true)
+  const [isLoadingReport, setIsLoadingReport] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'table' | 'chart'>('table')
+
+  // Current year for bimestre calculations
+  const currentYear = new Date().getFullYear()
+
+  // Transform report data to table format
+  const tableData: AttendanceTableRow[] = useMemo(() => {
+    if (!reportData?.students) return []
+
+    return reportData.students.map((student) => ({
+      matriculaId: student.matriculaId,
+      alunoId: student.alunoId,
+      nome: student.nome,
+      presencas: student.presencas,
+      faltas: student.faltas,
+      atestados: student.atestados,
+      totalAulas: student.totalAulas,
+      percentual: student.percentual,
+      emRisco: student.emRisco,
+    }))
+  }, [reportData])
+
+  // Period label
+  const periodoLabel = useMemo(() => {
+    return `${formatDateDisplay(dateRange.from)} a ${formatDateDisplay(dateRange.to)}`
+  }, [dateRange])
+
+  // Fetch turmas on mount
+  useEffect(() => {
+    async function fetchTurmas() {
+      setIsLoadingTurmas(true)
+      setError(null)
+
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('turmas')
+          .select(`
+            id,
+            nome,
+            serie,
+            ano_letivo,
+            escola_id,
+            escolas (
+              nome
+            )
+          `)
+          .order('ano_letivo', { ascending: false })
+          .order('serie', { ascending: true })
+          .order('nome', { ascending: true })
+
+        if (fetchError) throw fetchError
+
+        const formattedTurmas: Turma[] = (data || []).map((t: any) => ({
+          id: t.id,
+          nome: t.nome,
+          serie: t.serie,
+          ano_letivo: t.ano_letivo,
+          escola_id: t.escola_id,
+          escola: t.escolas ? { nome: t.escolas.nome } : undefined,
+        }))
+
+        setTurmas(formattedTurmas)
+
+        // Auto-select first turma if only one
+        if (formattedTurmas.length === 1) {
+          setSelectedTurma(formattedTurmas[0].id)
+        }
+      } catch (err) {
+        console.error('Error fetching turmas:', err)
+        setError('Erro ao carregar turmas')
+      } finally {
+        setIsLoadingTurmas(false)
+      }
+    }
+
+    fetchTurmas()
+  }, [supabase])
+
+  // Update date range when period option changes
+  useEffect(() => {
+    if (periodOption !== 'custom') {
+      setDateRange(getPeriodDates(periodOption, currentYear))
+    }
+  }, [periodOption, currentYear])
+
+  // Fetch report data
+  const fetchReport = useCallback(async () => {
+    if (!selectedTurma) {
+      toast.error('Selecione uma turma')
+      return
+    }
+
+    setIsLoadingReport(true)
+    setError(null)
+
+    try {
+      const filters: AttendanceReportFilters = {
+        startDate: formatDateApi(dateRange.from),
+        endDate: formatDateApi(dateRange.to),
+        riskThreshold: RISK_THRESHOLD,
+      }
+
+      const result = await generateClassAttendanceReport(supabase, selectedTurma, filters)
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      setReportData(result.data)
+      toast.success('Relatorio gerado com sucesso')
+    } catch (err) {
+      console.error('Error generating report:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao gerar relatorio'
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsLoadingReport(false)
+    }
+  }, [supabase, selectedTurma, dateRange])
+
+  // Handle turma selection
+  const handleTurmaChange = (turmaId: string) => {
+    setSelectedTurma(turmaId)
+    setReportData(null) // Clear previous report
+  }
+
+  // Handle row click
+  const handleRowClick = (row: AttendanceTableRow) => {
+    // Navigate to student details
+    window.open(`/dashboard/alunos/${row.alunoId}`, '_blank')
+  }
+
+  // Handle export PDF
+  const handleExportPDF = () => {
+    if (!reportData) {
+      toast.error('Gere um relatorio primeiro')
+      return
+    }
+    try {
+      generateAttendanceReportPDF(reportData, selectedTurmaInfo?.escola?.nome)
+      toast.success('PDF gerado com sucesso')
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+      toast.error('Erro ao gerar PDF')
+    }
+  }
+
+  // Handle export Excel
+  const handleExportExcel = async () => {
+    if (!reportData) {
+      toast.error('Gere um relatorio primeiro')
+      return
+    }
+    try {
+      await generateAttendanceReportExcel(reportData, selectedTurmaInfo?.escola?.nome)
+      toast.success('Excel gerado com sucesso')
+    } catch (err) {
+      console.error('Error generating Excel:', err)
+      toast.error('Erro ao gerar Excel')
+    }
+  }
+
+  // Get selected turma info
+  const selectedTurmaInfo = useMemo(() => {
+    return turmas.find((t) => t.id === selectedTurma)
+  }, [turmas, selectedTurma])
+
+  return (
+    <div className="container mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="h-6 w-6 text-blue-600" />
+            Relatorios de Frequencia
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Visualize e exporte relatorios de frequencia por turma e periodo
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportPDF}>
+            <FileText className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Turma Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="turma">Turma</Label>
+              {isLoadingTurmas ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Select value={selectedTurma} onValueChange={handleTurmaChange}>
+                  <SelectTrigger id="turma">
+                    <SelectValue placeholder="Selecione uma turma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {turmas.map((turma) => (
+                      <SelectItem key={turma.id} value={turma.id}>
+                        {turma.serie} - {turma.nome}
+                        {turma.escola && ` (${turma.escola.nome})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Period Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="periodo">Periodo</Label>
+              <Select value={periodOption} onValueChange={setPeriodOption}>
+                <SelectTrigger id="periodo">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Range (for custom period) */}
+            {periodOption === 'custom' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Data Inicio</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          'w-full justify-start text-left font-normal',
+                          !dateRange.from && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange.from ? formatDateDisplay(dateRange.from) : 'Selecione'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateRange.from}
+                        onSelect={(date) =>
+                          date && setDateRange((prev) => ({ ...prev, from: date }))
+                        }
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Data Fim</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          'w-full justify-start text-left font-normal',
+                          !dateRange.to && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange.to ? formatDateDisplay(dateRange.to) : 'Selecione'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateRange.to}
+                        onSelect={(date) =>
+                          date && setDateRange((prev) => ({ ...prev, to: date }))
+                        }
+                        locale={ptBR}
+                        disabled={(date) => date < dateRange.from}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </>
+            )}
+
+            {/* Generate Button */}
+            <div className="flex items-end">
+              <Button
+                onClick={fetchReport}
+                disabled={!selectedTurma || isLoadingReport}
+                className="w-full"
+              >
+                {isLoadingReport ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                )}
+                Gerar Relatorio
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Report Content */}
+      {reportData && (
+        <>
+          {/* View Mode Tabs */}
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'table' | 'chart')}>
+            <TabsList className="grid w-full max-w-[200px] grid-cols-2">
+              <TabsTrigger value="table" className="flex items-center gap-1">
+                <TableIcon className="h-4 w-4" />
+                Tabela
+              </TabsTrigger>
+              <TabsTrigger value="chart" className="flex items-center gap-1">
+                <BarChart3 className="h-4 w-4" />
+                Grafico
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="table" className="mt-4">
+              <AttendanceReportTable
+                data={tableData}
+                turmaName={
+                  selectedTurmaInfo
+                    ? `${selectedTurmaInfo.serie} - ${selectedTurmaInfo.nome}`
+                    : undefined
+                }
+                periodoLabel={periodoLabel}
+                riskThreshold={RISK_THRESHOLD}
+                isLoading={isLoadingReport}
+                onRowClick={handleRowClick}
+                onPrint={() => window.print()}
+                onExportPDF={handleExportPDF}
+              />
+            </TabsContent>
+
+            <TabsContent value="chart" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Visualizacao Grafica</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-gray-500">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">Grafico em desenvolvimento</p>
+                    <p className="text-sm mt-1">
+                      A visualizacao grafica sera implementada em breve.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
+
+      {/* Empty State */}
+      {!reportData && !isLoadingReport && !error && (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium text-gray-600">Selecione uma turma e periodo</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Use os filtros acima para gerar o relatorio de frequencia.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
