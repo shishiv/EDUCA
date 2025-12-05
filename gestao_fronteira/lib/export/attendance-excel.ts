@@ -4,10 +4,13 @@
  * Task Group 4.3: Exportacao PDF e Excel
  *
  * Generates Excel reports for attendance and Bolsa Família compliance
- * using ExcelJS library.
+ * using SheetJS (xlsx) library - lightweight alternative to ExcelJS.
+ *
+ * Note: SheetJS free version has limited styling support.
+ * Colors/borders are not available without the Pro version.
  */
 
-import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,7 +31,7 @@ export interface ExcelStyles {
 }
 
 // ============================================================================
-// DEFAULT STYLES
+// DEFAULT STYLES (kept for API compatibility, not used in SheetJS free)
 // ============================================================================
 
 const DEFAULT_STYLES: ExcelStyles = {
@@ -62,105 +65,29 @@ function formatDateBR(date: Date | string): string {
 }
 
 /**
- * Apply header style to a row
+ * Set column widths for a worksheet
  */
-function applyHeaderStyle(row: ExcelJS.Row, styles: ExcelStyles): void {
-  row.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: styles.headerBgColor },
-    };
-    cell.font = {
-      bold: true,
-      color: { argb: styles.headerTextColor },
-    };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
-  });
-}
-
-/**
- * Apply data row style
- */
-function applyDataRowStyle(row: ExcelJS.Row, isAlternate: boolean, styles: ExcelStyles): void {
-  row.eachCell((cell) => {
-    if (isAlternate) {
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: styles.alternateBgColor },
-      };
-    }
-    cell.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
-    cell.alignment = { vertical: 'middle' };
-  });
-}
-
-/**
- * Apply risk-based background color to a cell
- */
-function applyRiskColor(cell: ExcelJS.Cell, percentual: number, styles: ExcelStyles): void {
-  if (percentual < 80) {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: styles.riskBgColor },
-    };
-  } else if (percentual < 85) {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: styles.warningBgColor },
-    };
-  } else {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: styles.successBgColor },
-    };
-  }
-}
-
-/**
- * Add title row to worksheet
- */
-function addTitleRow(worksheet: ExcelJS.Worksheet, title: string, colCount: number): void {
-  const titleRow = worksheet.addRow([title]);
-  worksheet.mergeCells(titleRow.number, 1, titleRow.number, colCount);
-  titleRow.getCell(1).font = { bold: true, size: 14 };
-  titleRow.getCell(1).alignment = { horizontal: 'center' };
-  titleRow.height = 25;
-}
-
-/**
- * Add subtitle row to worksheet
- */
-function addSubtitleRow(worksheet: ExcelJS.Worksheet, subtitle: string, colCount: number): void {
-  const subtitleRow = worksheet.addRow([subtitle]);
-  worksheet.mergeCells(subtitleRow.number, 1, subtitleRow.number, colCount);
-  subtitleRow.getCell(1).font = { size: 11, italic: true };
-  subtitleRow.getCell(1).alignment = { horizontal: 'center' };
+function setColumnWidths(worksheet: XLSX.WorkSheet, widths: number[]): void {
+  worksheet['!cols'] = widths.map(w => ({ wch: w }));
 }
 
 /**
  * Save workbook to file
  */
-async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string): Promise<void> {
-  const buffer = await workbook.xlsx.writeBuffer();
+function saveWorkbook(workbook: XLSX.WorkBook, filename: string): void {
+  const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const name = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
   saveAs(blob, name);
+}
+
+/**
+ * Get status text based on percentage
+ */
+function getStatusText(percentual: number): string {
+  if (percentual < 80) return 'RISCO';
+  if (percentual < 85) return 'ALERTA';
+  return 'OK';
 }
 
 // ============================================================================
@@ -174,72 +101,34 @@ export async function generateAttendanceReportExcel(
   report: ClassAttendanceReport,
   schoolName?: string
 ): Promise<void> {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Sistema de Gestão Educacional';
-  workbook.created = new Date();
+  const workbook = XLSX.utils.book_new();
 
-  const worksheet = workbook.addWorksheet('Frequência');
+  // Build data array
+  const data: (string | number)[][] = [];
 
-  // Column widths
-  worksheet.columns = [
-    { width: 35 }, // Nome
-    { width: 10 }, // P
-    { width: 10 }, // F
-    { width: 10 }, // A
-    { width: 10 }, // Total
-    { width: 12 }, // %
-    { width: 12 }, // Status
-  ];
-
-  const colCount = 7;
-
-  // Title
-  addTitleRow(worksheet, 'Relatório de Frequência', colCount);
-
-  // Subtitle with class info
-  addSubtitleRow(
-    worksheet,
-    `${report.turmaNome}${report.turmaSerie ? ` - ${report.turmaSerie}` : ''}`,
-    colCount
-  );
-
-  // Period
-  addSubtitleRow(
-    worksheet,
-    `Período: ${formatDateBR(report.periodo.inicio)} - ${formatDateBR(report.periodo.fim)}`,
-    colCount
-  );
-
+  // Title rows
+  data.push(['Relatório de Frequência']);
+  data.push([`${report.turmaNome}${report.turmaSerie ? ` - ${report.turmaSerie}` : ''}`]);
+  data.push([`Período: ${formatDateBR(report.periodo.inicio)} - ${formatDateBR(report.periodo.fim)}`]);
   if (schoolName) {
-    addSubtitleRow(worksheet, `Escola: ${schoolName}`, colCount);
+    data.push([`Escola: ${schoolName}`]);
   }
+  data.push([]); // Empty row
 
-  // Empty row
-  worksheet.addRow([]);
-
-  // Summary row
-  const summaryRow = worksheet.addRow([
+  // Summary
+  data.push([
     `Total: ${report.totalAlunos} alunos`,
     `Média: ${report.mediaFrequencia}%`,
     `Em Risco: ${report.alunosEmRisco}`,
   ]);
-  worksheet.mergeCells(summaryRow.number, 1, summaryRow.number, 2);
-  worksheet.mergeCells(summaryRow.number, 3, summaryRow.number, 5);
-  worksheet.mergeCells(summaryRow.number, 6, summaryRow.number, 7);
-  summaryRow.eachCell((cell) => {
-    cell.font = { bold: true };
-  });
-
-  // Empty row
-  worksheet.addRow([]);
+  data.push([]); // Empty row
 
   // Header row
-  const headerRow = worksheet.addRow(['Nome', 'P', 'F', 'A', 'Total', '%', 'Status']);
-  applyHeaderStyle(headerRow, DEFAULT_STYLES);
+  data.push(['Nome', 'P', 'F', 'A', 'Total', '%', 'Status']);
 
   // Data rows
-  report.students.forEach((student, index) => {
-    const row = worksheet.addRow([
+  report.students.forEach((student) => {
+    data.push([
       student.nome,
       student.presencas,
       student.faltas,
@@ -248,36 +137,24 @@ export async function generateAttendanceReportExcel(
       student.percentual,
       student.emRisco ? 'RISCO' : 'OK',
     ]);
-
-    applyDataRowStyle(row, index % 2 === 1, DEFAULT_STYLES);
-
-    // Apply risk color to percentage cell
-    applyRiskColor(row.getCell(6), student.percentual, DEFAULT_STYLES);
-
-    // Center align numbers
-    [2, 3, 4, 5, 6, 7].forEach((col) => {
-      row.getCell(col).alignment = { horizontal: 'center', vertical: 'middle' };
-    });
   });
 
-  // Empty row
-  worksheet.addRow([]);
+  data.push([]); // Empty row
+  data.push(['Legenda: P = Presença, F = Falta, A = Atestado. Risco = frequência < 80%']);
+  data.push([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 
-  // Legend
-  const legendRow = worksheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado. Risco = frequência < 80%']);
-  worksheet.mergeCells(legendRow.number, 1, legendRow.number, colCount);
-  legendRow.getCell(1).font = { italic: true, size: 9 };
+  // Create worksheet
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-  // Generated at
-  const generatedRow = worksheet.addRow([
-    `Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-  ]);
-  worksheet.mergeCells(generatedRow.number, 1, generatedRow.number, colCount);
-  generatedRow.getCell(1).font = { italic: true, size: 9, color: { argb: 'FF888888' } };
+  // Set column widths
+  setColumnWidths(worksheet, [35, 10, 10, 10, 10, 12, 12]);
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Frequência');
 
   // Save
   const filename = `frequencia_${report.turmaNome.replace(/\s+/g, '_')}_${report.periodo.inicio}_${report.periodo.fim}`;
-  await saveWorkbook(workbook, filename);
+  saveWorkbook(workbook, filename);
 }
 
 // ============================================================================
@@ -292,72 +169,42 @@ export async function generateBolsaFamiliaReportExcel(
   schoolName?: string,
   showAllStudents = true
 ): Promise<void> {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Sistema de Gestão Educacional';
-  workbook.created = new Date();
+  const workbook = XLSX.utils.book_new();
 
+  // ========================
   // Sheet 1: Resumo
-  const summarySheet = workbook.addWorksheet('Resumo');
-  summarySheet.columns = [
-    { width: 25 },
-    { width: 15 },
-  ];
+  // ========================
+  const summaryData: (string | number)[][] = [];
 
-  addTitleRow(summarySheet, 'Relatório Bolsa Família - Resumo', 2);
-  addSubtitleRow(
-    summarySheet,
-    `Período: ${formatDateBR(report.periodo.inicio)} - ${formatDateBR(report.periodo.fim)}`,
-    2
-  );
+  summaryData.push(['Relatório Bolsa Família - Resumo']);
+  summaryData.push([`Período: ${formatDateBR(report.periodo.inicio)} - ${formatDateBR(report.periodo.fim)}`]);
   if (schoolName) {
-    addSubtitleRow(summarySheet, `Escola: ${schoolName}`, 2);
+    summaryData.push([`Escola: ${schoolName}`]);
   }
-  summarySheet.addRow([]);
+  summaryData.push([]); // Empty row
 
-  const summaryData = [
-    ['Total Bolsa Família', report.resumo.totalAlunosBolsaFamilia],
-    ['Conformes (>85%)', report.resumo.conformes],
-    ['Em Alerta (80-85%)', report.resumo.emAlerta],
-    ['Críticos (<80%)', report.resumo.emRiscoCritico],
-    ['% Conformidade', `${report.resumo.percentualConformidade}%`],
-  ];
+  summaryData.push(['Métrica', 'Valor']);
+  summaryData.push(['Total Bolsa Família', report.resumo.totalAlunosBolsaFamilia]);
+  summaryData.push(['Conformes (>85%)', report.resumo.conformes]);
+  summaryData.push(['Em Alerta (80-85%)', report.resumo.emAlerta]);
+  summaryData.push(['Críticos (<80%)', report.resumo.emRiscoCritico]);
+  summaryData.push(['% Conformidade', `${report.resumo.percentualConformidade}%`]);
 
-  summaryData.forEach(([label, value]) => {
-    const row = summarySheet.addRow([label, value]);
-    row.getCell(1).font = { bold: true };
-    row.getCell(2).alignment = { horizontal: 'center' };
-  });
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+  setColumnWidths(summarySheet, [25, 15]);
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
 
+  // ========================
   // Sheet 2: Alunos
-  const studentsSheet = workbook.addWorksheet('Alunos');
-  studentsSheet.columns = [
-    { width: 35 }, // Nome
-    { width: 15 }, // NIS
-    { width: 20 }, // Turma
-    { width: 30 }, // Escola
-    { width: 8 },  // P
-    { width: 8 },  // F
-    { width: 8 },  // A
-    { width: 10 }, // Total
-    { width: 10 }, // %
-    { width: 12 }, // Status
-  ];
+  // ========================
+  const studentsData: (string | number)[][] = [];
 
-  const colCount = 10;
-
-  addTitleRow(studentsSheet, 'Relatório Bolsa Família - Alunos', colCount);
-  addSubtitleRow(
-    studentsSheet,
-    `Período: ${formatDateBR(report.periodo.inicio)} - ${formatDateBR(report.periodo.fim)}`,
-    colCount
-  );
-  studentsSheet.addRow([]);
+  studentsData.push(['Relatório Bolsa Família - Alunos']);
+  studentsData.push([`Período: ${formatDateBR(report.periodo.inicio)} - ${formatDateBR(report.periodo.fim)}`]);
+  studentsData.push([]); // Empty row
 
   // Header
-  const headerRow = studentsSheet.addRow([
-    'Nome', 'NIS', 'Turma', 'Escola', 'P', 'F', 'A', 'Total', '%', 'Status',
-  ]);
-  applyHeaderStyle(headerRow, BOLSA_FAMILIA_STYLES);
+  studentsData.push(['Nome', 'NIS', 'Turma', 'Escola', 'P', 'F', 'A', 'Total', '%', 'Status']);
 
   // Filter students
   const studentsToShow = showAllStudents
@@ -365,11 +212,11 @@ export async function generateBolsaFamiliaReportExcel(
     : report.alunos.filter((s) => s.status !== 'CONFORME');
 
   // Data rows
-  studentsToShow.forEach((student, index) => {
+  studentsToShow.forEach((student) => {
     const statusLabel = student.status === 'CRITICO' ? 'CRÍTICO' :
                         student.status === 'ALERTA' ? 'ALERTA' : 'OK';
 
-    const row = studentsSheet.addRow([
+    studentsData.push([
       student.nome,
       student.nis || '-',
       student.turmaNome,
@@ -381,32 +228,20 @@ export async function generateBolsaFamiliaReportExcel(
       student.percentual,
       statusLabel,
     ]);
-
-    applyDataRowStyle(row, index % 2 === 1, BOLSA_FAMILIA_STYLES);
-    applyRiskColor(row.getCell(9), student.percentual, BOLSA_FAMILIA_STYLES);
-
-    // Center align numbers
-    [5, 6, 7, 8, 9, 10].forEach((col) => {
-      row.getCell(col).alignment = { horizontal: 'center', vertical: 'middle' };
-    });
   });
 
-  // Legend
-  studentsSheet.addRow([]);
-  const legendRow = studentsSheet.addRow([
-    'Legenda: P = Presença, F = Falta, A = Atestado (conta como presença). Crítico = <80%, Alerta = 80-85%.',
-  ]);
-  studentsSheet.mergeCells(legendRow.number, 1, legendRow.number, colCount);
-  legendRow.getCell(1).font = { italic: true, size: 9 };
+  studentsData.push([]); // Empty row
+  studentsData.push(['Legenda: P = Presença, F = Falta, A = Atestado (conta como presença). Crítico = <80%, Alerta = 80-85%.']);
+  studentsData.push([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 
-  // Generated at
-  const generatedRow = studentsSheet.addRow([
-    `Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-  ]);
-  studentsSheet.mergeCells(generatedRow.number, 1, generatedRow.number, colCount);
-  generatedRow.getCell(1).font = { italic: true, size: 9, color: { argb: 'FF888888' } };
+  const studentsSheet = XLSX.utils.aoa_to_sheet(studentsData);
+  setColumnWidths(studentsSheet, [35, 15, 20, 30, 8, 8, 8, 10, 10, 12]);
+  XLSX.utils.book_append_sheet(workbook, studentsSheet, 'Alunos');
 
   // Save
   const filename = `bolsa_familia_${report.periodo.inicio}_${report.periodo.fim}`;
-  await saveWorkbook(workbook, filename);
+  saveWorkbook(workbook, filename);
 }
+
+// Re-export styles for API compatibility (unused in SheetJS free version)
+export { DEFAULT_STYLES, BOLSA_FAMILIA_STYLES };

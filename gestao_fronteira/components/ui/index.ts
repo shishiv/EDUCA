@@ -8,7 +8,7 @@
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion'
 export { Alert, AlertDescription, AlertTitle } from './alert'
 export { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './alert-dialog'
-export { AspectRatio } from './aspect-ratio'
+// AspectRatio removed - unused component
 export { Avatar, AvatarFallback, AvatarImage } from './avatar'
 export { Badge, badgeVariants } from './badge'
 export { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from './breadcrumb'
@@ -16,24 +16,24 @@ export { Button, buttonVariants } from './button'
 export type { ButtonProps } from './button'
 export { Calendar } from './calendar'
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card'
-export { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './carousel'
+// Carousel removed - unused component
 export { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from './chart'
 export type { ChartConfig } from './chart'
 export { Checkbox } from './checkbox'
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible'
 export { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from './command'
-export { ContextMenu, ContextMenuCheckboxItem, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuSeparator, ContextMenuShortcut, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger, ContextMenuTrigger } from './context-menu'
+// ContextMenu removed - unused component
 export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog'
 export { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from './drawer'
 export { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from './dropdown-menu'
 export { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, useFormField } from './form'
-export { HoverCard, HoverCardContent, HoverCardTrigger } from './hover-card'
+// HoverCard removed - unused component
 export { Input } from './input'
 export type { InputProps } from './input'
 export { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from './input-otp'
 export { Label } from './label'
-export { Menubar, MenubarCheckboxItem, MenubarContent, MenubarItem, MenubarLabel, MenubarMenu, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator, MenubarShortcut, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger } from './menubar'
-export { navigationMenuTriggerStyle, NavigationMenu, NavigationMenuContent, NavigationMenuIndicator, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, NavigationMenuViewport } from './navigation-menu'
+// Menubar removed - unused component
+// NavigationMenu removed - unused component
 export { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './pagination'
 export { Popover, PopoverContent, PopoverTrigger } from './popover'
 export { Progress } from './progress'
