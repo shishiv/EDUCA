@@ -147,7 +147,48 @@ export const queryKeys = {
     attendance: (filters?: QueryFilters) => [...queryKeys.reports.all(), 'attendance', { filters }] as const,
     frequency: (filters?: QueryFilters) => [...queryKeys.reports.all(), 'frequency', { filters }] as const,
     students: (filters?: QueryFilters) => [...queryKeys.reports.all(), 'students', { filters }] as const,
-  }
+  },
+
+  // Diary (Diario de Classe) - Task 5.2.3
+  diary: {
+    all: () => ['diary'] as const,
+
+    // Turmas
+    turmas: {
+      all: () => [...queryKeys.diary.all(), 'turmas'] as const,
+      list: (filters?: { escolaId?: string; professorId?: string }) =>
+        [...queryKeys.diary.turmas.all(), 'list', filters] as const,
+    },
+
+    // Lessons/Sessions
+    lessons: {
+      all: () => [...queryKeys.diary.all(), 'lessons'] as const,
+      list: (turmaId: string) => [...queryKeys.diary.lessons.all(), 'list', turmaId] as const,
+      detail: (lessonId: string) => [...queryKeys.diary.lessons.all(), 'detail', lessonId] as const,
+    },
+
+    // Sessions
+    sessions: {
+      all: () => [...queryKeys.diary.all(), 'sessions'] as const,
+      byTurmaDate: (turmaId: string, date: string) =>
+        [...queryKeys.diary.sessions.all(), turmaId, date] as const,
+    },
+
+    // Attendance
+    attendance: {
+      all: () => [...queryKeys.diary.all(), 'attendance'] as const,
+      bySession: (sessionId: string) =>
+        [...queryKeys.diary.attendance.all(), 'session', sessionId] as const,
+      students: (turmaId: string) =>
+        [...queryKeys.diary.attendance.all(), 'students', turmaId] as const,
+    },
+
+    // Risk
+    risk: {
+      all: () => [...queryKeys.diary.all(), 'risk'] as const,
+      byTurma: (turmaId: string) => [...queryKeys.diary.risk.all(), turmaId] as const,
+    },
+  },
 } as const
 
 // Cache invalidation helpers
@@ -168,6 +209,24 @@ export const invalidateQueries = {
     queryClient.invalidateQueries({ queryKey: queryKeys.attendance.byClass(classId) }),
 
   reports: () => queryClient.invalidateQueries({ queryKey: queryKeys.reports.all() }),
+
+  // Diary (Diario de Classe) - Task 5.2.3
+  diary: () => queryClient.invalidateQueries({ queryKey: queryKeys.diary.all() }),
+  diaryTurmas: () => queryClient.invalidateQueries({ queryKey: queryKeys.diary.turmas.all() }),
+  diaryLessons: (turmaId?: string) => {
+    if (turmaId) {
+      return queryClient.invalidateQueries({ queryKey: queryKeys.diary.lessons.list(turmaId) })
+    }
+    return queryClient.invalidateQueries({ queryKey: queryKeys.diary.lessons.all() })
+  },
+  diarySession: (turmaId: string, date: string) =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.diary.sessions.byTurmaDate(turmaId, date) }),
+  diaryRisk: (turmaId?: string) => {
+    if (turmaId) {
+      return queryClient.invalidateQueries({ queryKey: queryKeys.diary.risk.byTurma(turmaId) })
+    }
+    return queryClient.invalidateQueries({ queryKey: queryKeys.diary.risk.all() })
+  },
 }
 
 // Generic type for entity updates
