@@ -21,7 +21,25 @@ ALTER TABLE frequencia
 
 -- Add comment for documentation
 COMMENT ON COLUMN frequencia.status_presenca IS
-'Three-state attendance status: P (Presente), F (Falta), A (Falta Justificada). Brazilian educational compliance for Diário de Classe Digital.';
+'Three-state attendance status: P (Presente), F (Falta), A (Atestado/Falta Justificada). Brazilian educational compliance for Diario de Classe Digital.';
+
+-- ============================================================================
+-- PHASE 1.5: ADD SESSAO_ID COLUMN (Link to sessoes_aula)
+-- ============================================================================
+
+-- Add sessao_id column to link frequencia to sessoes_aula
+-- This establishes the relationship between attendance records and class sessions
+ALTER TABLE frequencia
+  ADD COLUMN IF NOT EXISTS sessao_id UUID REFERENCES sessoes_aula(id) ON DELETE SET NULL;
+
+-- Add comment for sessao_id column
+COMMENT ON COLUMN frequencia.sessao_id IS
+'Foreign key to sessoes_aula table. Links attendance record to a specific class session for Diario de Classe workflow.';
+
+-- Add index for sessao_id foreign key
+CREATE INDEX IF NOT EXISTS idx_frequencia_sessao_id
+  ON frequencia(sessao_id)
+  WHERE sessao_id IS NOT NULL;
 
 -- ============================================================================
 -- PHASE 2: MAINTAIN BACKWARD COMPATIBILITY
@@ -86,12 +104,14 @@ DECLARE
   presente_count INTEGER;
   falta_count INTEGER;
   justificada_count INTEGER;
+  sessao_linked_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO total_records FROM frequencia;
   SELECT COUNT(*) INTO migrated_records FROM frequencia WHERE status_presenca IS NOT NULL;
   SELECT COUNT(*) INTO presente_count FROM frequencia WHERE status_presenca = 'P';
   SELECT COUNT(*) INTO falta_count FROM frequencia WHERE status_presenca = 'F';
   SELECT COUNT(*) INTO justificada_count FROM frequencia WHERE status_presenca = 'A';
+  SELECT COUNT(*) INTO sessao_linked_count FROM frequencia WHERE sessao_id IS NOT NULL;
 
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE 'Three-State Attendance Migration Statistics';
@@ -100,7 +120,8 @@ BEGIN
   RAISE NOTICE 'Records migrated: %', migrated_records;
   RAISE NOTICE '  - Presente (P): %', presente_count;
   RAISE NOTICE '  - Falta (F): %', falta_count;
-  RAISE NOTICE '  - Falta Justificada (A): %', justificada_count;
+  RAISE NOTICE '  - Atestado (A): %', justificada_count;
+  RAISE NOTICE '  - Linked to sessao: %', sessao_linked_count;
   RAISE NOTICE '=============================================================================';
 END $$;
 
@@ -115,6 +136,11 @@ CREATE INDEX IF NOT EXISTS idx_frequencia_status_presenca
 -- Composite index for common queries (sessao_id + status)
 CREATE INDEX IF NOT EXISTS idx_frequencia_sessao_status
   ON frequencia(sessao_id, status_presenca)
+  WHERE sessao_id IS NOT NULL AND status_presenca IS NOT NULL;
+
+-- Composite index for attendance queries by date and status
+CREATE INDEX IF NOT EXISTS idx_frequencia_data_status
+  ON frequencia(data_aula, status_presenca)
   WHERE status_presenca IS NOT NULL;
 
 -- ============================================================================
@@ -149,11 +175,17 @@ BEGIN
   RAISE NOTICE 'Migration 20250204001_frequencia_tres_estados COMPLETED';
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE 'Features implemented:';
-  RAISE NOTICE '  ✓ Three-state attendance (P, F, A)';
-  RAISE NOTICE '  ✓ Backward compatibility with boolean "presente" field';
-  RAISE NOTICE '  ✓ Automatic sync between status_presenca and presente';
-  RAISE NOTICE '  ✓ Data migration from existing records';
-  RAISE NOTICE '  ✓ Performance indexes for attendance queries';
+  RAISE NOTICE '  [OK] Three-state attendance (P, F, A)';
+  RAISE NOTICE '  [OK] sessao_id column linking to sessoes_aula';
+  RAISE NOTICE '  [OK] Backward compatibility with boolean "presente" field';
+  RAISE NOTICE '  [OK] Automatic sync between status_presenca and presente';
+  RAISE NOTICE '  [OK] Data migration from existing records';
+  RAISE NOTICE '  [OK] Performance indexes for attendance queries';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Status Codes:';
+  RAISE NOTICE '  P = Presente (Present) - green';
+  RAISE NOTICE '  F = Falta (Absent) - red';
+  RAISE NOTICE '  A = Atestado (Excused absence) - yellow/orange';
   RAISE NOTICE '';
   RAISE NOTICE 'Next Steps:';
   RAISE NOTICE '  - Update UI components to use status_presenca instead of presente';

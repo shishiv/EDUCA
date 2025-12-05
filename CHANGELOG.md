@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Animações sutis em células de frequência e cards
   - Componentes de loading (spinner, overlay, progress)
   - Melhorias de acessibilidade (WCAG 2.1 AA) com aria-labels e navegação por teclado
+  - Navegação mobile com bottom nav (MobileNav component)
+- **Diário de Classe - Fase 6 (Revisão de Testes):**
+  - Gap Analysis documentado com 74/87 testes passando (85% pass rate)
+  - Testes de API lesson-content, grades, attendance-reports: 100% passando
+  - Testes de LessonContentForm: 14/14 passando
+  - Identificação de gaps para próxima iteração (mock Supabase realtime)
 
 ### Changed
 - Otimização de responsividade mobile nas páginas de relatório
