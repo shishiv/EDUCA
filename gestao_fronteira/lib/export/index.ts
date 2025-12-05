@@ -2,6 +2,7 @@
  * Export Module Index
  * OpenSpec Change: 2025-12-04-diario-de-classe
  * Task Group 4.3: Exportacao PDF e Excel
+ * Task Group 4.4: Relatorio de Conteudo Ministrado
  *
  * Centralized exports for PDF and Excel generation utilities.
  */
@@ -34,6 +35,13 @@ export {
   generateStudentReportPDF,
   type StudentReportData,
 } from './attendance-pdf';
+
+// Content PDF exports (Task Group 4.4)
+export {
+  generateContentReportPDF,
+  generateBNNCSkillsReportPDF,
+  generateLessonDetailPDF,
+} from './content-pdf';
 
 // Excel exports
 export {

@@ -952,27 +952,58 @@
 ### Grupo 4.4: Relatorio de Conteudo Ministrado
 **Dependencias:** 2.1
 **Especialidade:** Backend/Reports
+**Status:** COMPLETED (2025-12-05)
 
-- [ ] **4.4.1** Implementar funcao de relatorio de conteudo [M]
+- [x] **4.4.1** Implementar funcao de relatorio de conteudo [M]
   - Arquivo: `gestao_fronteira/lib/reports/content-reports.ts`
   - Funcao: generateContentReport()
   - Agrupar por periodo
   - Listar habilidades BNCC trabalhadas
+  - **Implementado:**
+    - generateContentReport() - Full content report with lessons and BNCC skills aggregation
+    - getContentByPeriod() - Group content by week, month, or bimestre
+    - getBNNCSkillsSummary() - Aggregated BNCC skills summary with counts
+    - Support for turma, disciplina, professor, escola filters
+    - BNCC skill description lookup and education level detection
+    - Discipline frequency analysis (top 5 most worked)
 
-- [ ] **4.4.2** Criar pagina de relatorio de conteudo [M]
+- [x] **4.4.2** Criar pagina de relatorio de conteudo [M]
   - Arquivo: `gestao_fronteira/app/(dashboard)/relatorios/conteudo/page.tsx`
   - Filtros: turma, disciplina, periodo
   - Lista de aulas com conteudo
   - Resumo de habilidades BNCC
+  - **Implementado:**
+    - Turma filter dropdown (with "All Classes" option)
+    - Discipline filter dropdown (optional, based on BNCC subjects)
+    - Period selector (current month, last month, bimesters, custom)
+    - Summary cards: total lessons, unique BNCC skills, average skills/lesson, disciplines
+    - Three-tab view: Cards (lesson cards), BNCC (skills summary with accordion), Table (sortable table)
+    - LessonCard component with date, theme, objective, BNCC badges
+    - BNNCSkillsSummary component with fundamental/infantil grouping
+    - ContentTable component with responsive design
+    - Export PDF button
 
-- [ ] **4.4.3** Exportar relatorio de conteudo em PDF [S]
+- [x] **4.4.3** Exportar relatorio de conteudo em PDF [S]
   - Arquivo: `gestao_fronteira/lib/export/content-pdf.ts`
   - Formato oficial para arquivamento
+  - **Implementado:**
+    - generateContentReportPDF() - Full content report PDF with lessons and BNCC summary
+    - generateBNNCSkillsReportPDF() - BNCC skills-only PDF with level breakdown
+    - generateLessonDetailPDF() - Individual lesson detail PDF for archiving
+    - Professional styling with blue (content) and purple (BNCC) color schemes
+    - Brazilian education compliance note in footer
+    - Added to lib/export/index.ts exports
 
 **Criterios de Aceitacao:**
-- Relatorio lista todo conteudo ministrado
-- Habilidades BNCC agregadas
-- Exportacao funciona
+- [x] Relatorio lista todo conteudo ministrado
+- [x] Habilidades BNCC agregadas
+- [x] Exportacao funciona
+
+**Arquivos Criados/Modificados:**
+- `gestao_fronteira/lib/reports/content-reports.ts` - Content report generation functions
+- `gestao_fronteira/app/(dashboard)/relatorios/conteudo/page.tsx` - Content report page with filters and tabs
+- `gestao_fronteira/lib/export/content-pdf.ts` - Content report PDF export functions
+- `gestao_fronteira/lib/export/index.ts` - Updated with content PDF exports
 
 ---
 
@@ -1118,8 +1149,8 @@ Fase 3 (Sistema de Notas) - MEDIA PRIORIDADE
 Fase 4 (Relatorios) - MEDIA PRIORIDADE
   4.1 Relatorios de Frequencia [COMPLETED]
   4.2 Alerta Bolsa Familia [COMPLETED]
-  4.3 Exportacao PDF/Excel
-  4.4 Relatorio de Conteudo
+  4.3 Exportacao PDF/Excel [COMPLETED]
+  4.4 Relatorio de Conteudo [COMPLETED]
 
 Fase 5 (Polimento) - BAIXA PRIORIDADE
   5.1 Otimizacao Mobile
