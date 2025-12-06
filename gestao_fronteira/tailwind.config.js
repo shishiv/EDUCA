@@ -52,93 +52,179 @@ module.exports = {
         'form-field': '1rem',     // 16px - Between individual form fields
       },
       colors: {
-        // Brazilian educational system colors
+        // ===========================================
+        // EDUCA Design System - Nova Identidade Visual
+        // "A educação não é quadrada"
+        // ===========================================
+
+        // EDUCA Primary Colors (derived from Fronteira coat of arms)
+        educa: {
+          blue: {
+            50: '#EEF2FF',
+            100: '#E0E7FF',
+            200: '#C7D2FE',
+            300: '#A5B4FC',
+            400: '#818CF8',
+            500: '#4361EE',  // Primary action color
+            600: '#3730A3',
+            700: '#312E81',
+            800: '#1E1B4B',
+            900: '#0F0D29',
+          },
+          green: {
+            50: '#ECFDF5',
+            100: '#D1FAE5',
+            200: '#A7F3D0',
+            300: '#6EE7B7',
+            400: '#34D399',
+            500: '#10B981',  // Success color
+            600: '#059669',
+            700: '#047857',
+            800: '#065F46',
+            900: '#064E3B',
+          },
+          gold: {
+            50: '#FFFBEB',
+            100: '#FEF3C7',
+            200: '#FDE68A',
+            300: '#FCD34D',
+            400: '#FBBF24',
+            500: '#F59E0B',  // Highlight/warning
+            600: '#D97706',
+            700: '#B45309',
+            800: '#92400E',
+            900: '#78350F',
+          },
+          coral: {
+            50: '#FEF2F2',
+            100: '#FEE2E2',
+            200: '#FECACA',
+            300: '#FCA5A5',
+            400: '#F87171',
+            500: '#EF6351',  // Alert/danger
+            600: '#DC2626',
+            700: '#B91C1C',
+            800: '#991B1B',
+            900: '#7F1D1D',
+          },
+        },
+
+        // Module Colors (Google Classroom style - each area has its color)
+        module: {
+          alunos: '#7C3AED',      // Violet - Students
+          turmas: '#0EA5E9',      // Sky - Classes
+          frequencia: '#10B981',  // Emerald - Attendance
+          notas: '#F97316',       // Orange - Grades
+          relatorios: '#EC4899', // Pink - Reports
+          escolas: '#6366F1',     // Indigo - Schools
+          matriculas: '#14B8A6', // Teal - Enrollments
+          config: '#6B7280',      // Gray - Settings
+        },
+
+        // Module Light Backgrounds
+        'module-bg': {
+          alunos: '#F5F3FF',
+          turmas: '#F0F9FF',
+          frequencia: '#ECFDF5',
+          notas: '#FFF7ED',
+          relatorios: '#FDF2F8',
+          escolas: '#EEF2FF',
+          matriculas: '#F0FDFA',
+          config: '#F9FAFB',
+        },
+
+        // Legacy support - map old names to new
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9', // Main primary color
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
+          50: '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          300: '#A5B4FC',
+          400: '#818CF8',
+          500: '#4361EE',
+          600: '#3730A3',
+          700: '#312E81',
+          800: '#1E1B4B',
+          900: '#0F0D29',
+          950: '#0A0818',
         },
         secondary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          50: '#FAFAFA',
+          100: '#F4F4F5',
+          200: '#E4E4E7',
+          300: '#D4D4D8',
+          400: '#A1A1AA',
+          500: '#71717A',
+          600: '#52525B',
+          700: '#3F3F46',
+          800: '#27272A',
+          900: '#18181B',
+          950: '#09090B',
         },
         success: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e', // Brazilian green
-          600: '#16a34a',
-          900: '#14532d',
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          500: '#10B981',
+          600: '#059669',
+          900: '#064E3B',
         },
         warning: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          500: '#f59e0b', // Brazilian yellow
-          600: '#d97706',
-          900: '#78350f',
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          500: '#F59E0B',
+          600: '#D97706',
+          900: '#78350F',
         },
         danger: {
-          50: '#fef2f2',
-          100: '#fecaca',
-          500: '#ef4444',
-          600: '#dc2626',
-          900: '#7f1d1d',
+          50: '#FEF2F2',
+          100: '#FEE2E2',
+          500: '#EF6351',
+          600: '#DC2626',
+          900: '#7F1D1D',
         },
-        // Educational attendance status colors (WCAG 2.1 AA compliant)
+
+        // Attendance status colors (WCAG 2.1 AA compliant)
         attendance: {
-          present: '#22c55e',      // Green for present (4.5:1 contrast)
-          absent: '#ef4444',       // Red for absent (4.5:1 contrast)
-          late: '#f59e0b',         // Yellow for late (4.5:1 contrast)
-          justified: '#3b82f6',    // Blue for justified absence (4.5:1 contrast)
+          present: '#22C55E',
+          absent: '#EF4444',
+          late: '#F59E0B',
+          justified: '#3B82F6',
         },
-        // Academic performance indicators
+
+        // Performance indicators
         performance: {
-          excellent: '#059669',       // Emerald for 90-100%
-          good: '#65a30d',           // Lime for 80-89%
-          satisfactory: '#ca8a04',   // Yellow for 70-79%
-          needs_improvement: '#dc2626', // Red for below 70%
+          excellent: '#10B981',
+          good: '#3B82F6',
+          satisfactory: '#F59E0B',
+          needs_improvement: '#EF4444',
         },
-        // Brazilian educational level identification
+
+        // Educational levels
         educational_level: {
-          creche: '#f97316',      // Orange for daycare (0-3 years)
-          pre_escola: '#8b5cf6',  // Purple for pre-school (4-5 years)
-          fundamental: '#0ea5e9', // Blue for elementary (6-14 years)
+          creche: '#F97316',
+          pre_escola: '#8B5CF6',
+          fundamental: '#0EA5E9',
         },
-        // Fronteira Municipal Colors
+
+        // Fronteira Municipal (legacy support + official use)
         fronteira: {
-          red: 'hsl(var(--fronteira-red))',           // #DC2626 - Brasão red
-          green: 'hsl(var(--fronteira-green))',       // #059669 - Brasão green
-          blue: 'hsl(var(--fronteira-blue))',         // #1D4ED8 - Brasão blue
-          yellow: 'hsl(var(--fronteira-yellow))',     // #FBBF24 - Brasão yellow
+          red: 'hsl(var(--fronteira-red))',
+          green: 'hsl(var(--fronteira-green))',
+          blue: 'hsl(var(--fronteira-blue))',
+          yellow: 'hsl(var(--fronteira-yellow))',
           primary: {
-            DEFAULT: 'hsl(var(--fronteira-primary))',         // rgb(0, 115, 172) - Municipal blue
+            DEFAULT: 'hsl(var(--fronteira-primary))',
             foreground: 'hsl(var(--fronteira-primary-foreground))',
           },
           secondary: {
-            DEFAULT: 'hsl(var(--fronteira-secondary))',       // #1E3A8A - Deep institutional blue
+            DEFAULT: 'hsl(var(--fronteira-secondary))',
             foreground: 'hsl(var(--fronteira-secondary-foreground))',
           },
           gray: {
-            50: 'hsl(var(--fronteira-gray-50))',      // #F8FAFC
-            100: 'hsl(var(--fronteira-gray-100))',    // #F1F5F9
-            500: 'hsl(var(--fronteira-gray-500))',    // #64748B
-            900: 'hsl(var(--fronteira-gray-900))',    // #0F172A
+            50: 'hsl(var(--fronteira-gray-50))',
+            100: 'hsl(var(--fronteira-gray-100))',
+            500: 'hsl(var(--fronteira-gray-500))',
+            600: '#52525B',
+            900: 'hsl(var(--fronteira-gray-900))',
           },
         },
         border: 'hsl(var(--border))',
@@ -167,6 +253,25 @@ module.exports = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        // EDUCA custom radii - "educação não é quadrada"
+        'educa-sm': '6px',
+        'educa': '8px',
+        'educa-md': '12px',
+        'educa-lg': '16px',
+        'educa-xl': '24px',
+      },
+      boxShadow: {
+        // EDUCA shadows - softer, more organic
+        'educa-sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
+        'educa': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        'educa-md': '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
+        'educa-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+        'educa-hover': '0 4px 12px rgba(67, 97, 238, 0.15)',
+        // Module-specific shadows on hover
+        'module-alunos': '0 4px 12px rgba(124, 58, 237, 0.15)',
+        'module-turmas': '0 4px 12px rgba(14, 165, 233, 0.15)',
+        'module-frequencia': '0 4px 12px rgba(16, 185, 129, 0.15)',
+        'module-notas': '0 4px 12px rgba(249, 115, 22, 0.15)',
       },
     },
   },
