@@ -1,16 +1,12 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import {
   GraduationCap,
   Users,
-  UserCheck,
-  Bell,
-  Calendar,
   ArrowRight,
-  Building2
+  Building2,
+  LogIn
 } from 'lucide-react'
 import { NoticiasBoard } from '@/components/landing/NoticiasBoard'
 
@@ -56,70 +52,30 @@ export default function HomePage() {
               <CardHeader>
                 <CardTitle className="text-xl">Acesso ao Sistema</CardTitle>
                 <CardDescription>
-                  Selecione seu perfil para fazer login
+                  Faça login para acessar o sistema
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Botão Gestor */}
-                <Link href="/login?role=gestor" className="block">
+              <CardContent className="space-y-6">
+                {/* Botão Único de Login */}
+                <Link href="/login" className="block">
                   <Button
                     size="lg"
-                    className="w-full bg-blue-600 hover:bg-blue-700 justify-start h-auto py-4"
+                    className="w-full bg-blue-600 hover:bg-blue-700 h-14 text-lg"
                   >
-                    <div className="flex items-center gap-3 w-full">
-                      <Users className="h-6 w-6" />
-                      <div className="text-left flex-1">
-                        <div className="font-semibold">Gestor / Secretário</div>
-                        <div className="text-xs font-normal opacity-90">
-                          Administração e relatórios
-                        </div>
-                      </div>
-                      <ArrowRight className="h-5 w-5" />
-                    </div>
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Entrar
+                    <ArrowRight className="h-5 w-5 ml-2" />
                   </Button>
                 </Link>
 
-                {/* Botão Professor */}
-                <Link href="/login?role=professor" className="block">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 justify-start h-auto py-4"
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <UserCheck className="h-6 w-6" />
-                      <div className="text-left flex-1">
-                        <div className="font-semibold">Professor</div>
-                        <div className="text-xs font-normal opacity-80">
-                          Diário, frequência e notas
-                        </div>
-                      </div>
-                      <ArrowRight className="h-5 w-5" />
-                    </div>
-                  </Button>
-                </Link>
-
-                {/* Botão Diretor */}
-                <Link href="/login?role=diretor" className="block">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-2 border-green-200 text-green-700 hover:bg-green-50 justify-start h-auto py-4"
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <Building2 className="h-6 w-6" />
-                      <div className="text-left flex-1">
-                        <div className="font-semibold">Diretor Escolar</div>
-                        <div className="text-xs font-normal opacity-80">
-                          Gestão da escola
-                        </div>
-                      </div>
-                      <ArrowRight className="h-5 w-5" />
-                    </div>
-                  </Button>
-                </Link>
-
-                <Separator className="my-4" />
+                {/* Descrição do Sistema */}
+                <div className="bg-blue-50 rounded-lg p-4 text-sm">
+                  <p className="font-medium text-blue-900 mb-2">Acesso Unificado</p>
+                  <p className="text-blue-700 text-xs leading-relaxed">
+                    O sistema identifica automaticamente seu perfil após o login
+                    e direciona você para o painel correto.
+                  </p>
+                </div>
 
                 {/* Informações de Suporte */}
                 <div className="bg-gray-50 rounded-lg p-4 text-sm">
