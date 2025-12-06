@@ -8,12 +8,13 @@ import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { MunicipalLogo } from '@/components/identity/municipal-assets'
-import { Loader2, GraduationCap } from 'lucide-react'
+import { EducaLogo } from '@/components/identity/educa-logo'
+import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -107,47 +108,42 @@ export default function LoginPage() {
     }
   }
 
-  // Removed mounted gating to avoid hydration mismatch
-
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Enhanced Background with Municipal Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-fronteira-primary/8 via-white to-fronteira-green/6">
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,hsl(var(--fronteira-primary)),transparent_50%)]" />
+      {/* EDUCA Background with soft gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-educa-blue-50 via-white to-educa-green-50">
+        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_30%_20%,#4361EE,transparent_40%),radial-gradient(circle_at_70%_80%,#10B981,transparent_40%)]" />
       </div>
 
       {/* Content */}
       <div className="relative flex items-center justify-center min-h-screen px-4 py-8">
         <div className="w-full max-w-md">
-          {/* Enhanced Municipal Header */}
+          {/* EDUCA Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 mb-6 bg-white rounded-full shadow-lg ring-1 ring-black/5">
-              <MunicipalLogo size="md" priority />
+            <div className="flex justify-center mb-6">
+              <EducaLogo size="xl" showText={false} />
             </div>
-            <h1 className="text-3xl font-bold text-fronteira-primary mb-2">
-              Sistema Escolar
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              EDUCA
             </h1>
-            <p className="text-fronteira-gray-600">
-              Secretaria Municipal de Educação
-            </p>
-            <p className="text-sm text-fronteira-gray-500 mt-1">
-              Fronteira/MG
+            <p className="text-gray-500">
+              Sistema Educacional de Fronteira/MG
             </p>
           </div>
 
-          {/* Enhanced Login Card */}
-          <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm ring-1 ring-black/5">
+          {/* Login Card - Notion/Google style */}
+          <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl">
             <CardContent className="p-8">
               {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800 mb-6">
+                <Alert variant="destructive" className="border-educa-coral-200 bg-educa-coral-50 text-educa-coral-700 mb-6 rounded-xl">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="email" className="text-sm font-semibold text-fronteira-gray-900">
-                    Endereço de Email
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email
                   </Label>
                   <Input
                     id="email"
@@ -156,12 +152,12 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu.email@fronteira.mg.gov.br"
                     required
-                    className="h-12 border-2 border-gray-200 rounded-lg focus:border-fronteira-primary focus:ring-4 focus:ring-fronteira-primary/10 transition-all duration-200 bg-gray-50 focus:bg-white"
+                    className="h-12 border border-gray-200 rounded-xl focus:border-educa-blue-500 focus:ring-2 focus:ring-educa-blue-500/20 transition-all duration-200 bg-gray-50 focus:bg-white"
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="password" className="text-sm font-semibold text-fronteira-gray-900">
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Senha
                   </Label>
                   <Input
@@ -171,14 +167,15 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Digite sua senha"
                     required
-                    className="h-12 border-2 border-gray-200 rounded-lg focus:border-fronteira-primary focus:ring-4 focus:ring-fronteira-primary/10 transition-all duration-200 bg-gray-50 focus:bg-white"
+                    className="h-12 border border-gray-200 rounded-xl focus:border-educa-blue-500 focus:ring-2 focus:ring-educa-blue-500/20 transition-all duration-200 bg-gray-50 focus:bg-white"
                   />
                 </div>
 
-                <Button
+                <button
                   type="submit"
-                  className="w-full h-12 mt-8 bg-gradient-to-r from-fronteira-primary to-fronteira-blue hover:from-fronteira-primary/90 hover:to-fronteira-blue/90 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
                   disabled={loading}
+                  className="w-full h-12 mt-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#4361EE', color: 'white' }}
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">
@@ -187,22 +184,22 @@ export default function LoginPage() {
                     </div>
                   ) : (
                     <div className="flex items-center justify-center">
-                      <GraduationCap className="h-5 w-5 mr-2" />
-                      <span>Acessar Sistema</span>
+                      <LogIn className="h-5 w-5 mr-2" />
+                      <span>Entrar</span>
                     </div>
                   )}
-                </Button>
+                </button>
               </form>
 
-              {/* Security & Trust Indicators */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-center space-x-4 text-xs text-fronteira-gray-500">
+              {/* Security Indicators */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="flex items-center justify-center space-x-6 text-xs text-gray-400">
                   <div className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5"></div>
+                    <div className="w-1.5 h-1.5 bg-educa-green-500 rounded-full mr-1.5"></div>
                     <span>Conexão Segura</span>
                   </div>
                   <div className="flex items-center">
-                    <div className="w-2 h-2 bg-fronteira-primary rounded-full mr-1.5"></div>
+                    <div className="w-1.5 h-1.5 bg-educa-blue-500 rounded-full mr-1.5"></div>
                     <span>Sistema Oficial</span>
                   </div>
                 </div>
@@ -210,14 +207,27 @@ export default function LoginPage() {
             </CardContent>
           </Card>
 
-          {/* Municipal Footer */}
-          <div className="text-center mt-6 text-xs text-fronteira-gray-500">
-            <p>© 2025 Prefeitura de Fronteira/MG</p>
-            <p className="mt-1">Todos os direitos reservados</p>
+          {/* Footer with Fronteira seal */}
+          <div className="mt-8 flex flex-col items-center">
+            <div className="flex items-center gap-3 mb-4">
+              <Image
+                src="/logo_pref.png"
+                alt="Brasão de Fronteira"
+                width={32}
+                height={32}
+                className="opacity-60"
+              />
+              <div className="h-6 w-px bg-gray-200" />
+              <span className="text-xs text-gray-400">
+                Prefeitura de Fronteira/MG
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">
+              &copy; 2025 EDUCA - Todos os direitos reservados
+            </p>
           </div>
         </div>
       </div>
-
     </div>
   )
 }
