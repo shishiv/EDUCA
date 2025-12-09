@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Proposta de Organização e Roadmap MVP:**
+  - Documento `PROPOSTA-ORGANIZACAO-CLEANUP-ROADMAP.md` com análise completa do repositório
+  - Identificação de 716 erros de TypeScript e suas causas raiz
+  - Mapeamento de código morto/não utilizado (endpoints deprecated, páginas de dev)
+  - Roadmap de 8 semanas para MVP do ano letivo 2025
+  - Propostas de melhoria do frontend (UX/UI, performance, acessibilidade)
+  - Estimativas de tempo para todas as tarefas identificadas
+
 - **Diário de Classe - Fase 4 Completa:**
   - Sistema de alertas Bolsa Família com monitoramento de frequência (threshold 80%)
   - Página de relatório `/relatorios/bolsa-familia` com filtros por escola, turma e período
