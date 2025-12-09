@@ -11,9 +11,9 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 20h 00min |
-| **Dias trabalhados** | 3 dias |
-| **Horas médias por dia** | 6h 40min |
+| **Total de horas trabalhadas** | 22h 00min |
+| **Dias trabalhados** | 4 dias |
+| **Horas médias por dia** | 5h 30min |
 | **Total de commits** | 15 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
@@ -65,9 +65,16 @@
 
 ---
 
-### Semana 2: 08/12 - 14/12 (0h 00min)
+### Semana 2: 08/12 - 14/12 (2h 00min)
 
-*Registros em andamento...*
+#### Segunda-feira, 09/12/2025
+**Horas:** 2h 00min
+**Atividade:** Revisão Completa do Sistema
+**Descrição:** Análise detalhada de todo o código do sistema educacional, identificando problemas de qualidade, segurança e áreas que precisam de melhorias. Criação de relatório técnico documentando 716 erros de tipagem, 614 avisos de código e 18 vulnerabilidades de segurança em dependências, com recomendações priorizadas.
+
+**Commits relacionados:**
+- `f42761c` - Análise inicial da estrutura do projeto
+- Nova entrada - Relatório completo de revisão do código
 
 ---
 
