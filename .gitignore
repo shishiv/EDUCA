@@ -5,6 +5,8 @@
 .claude/agents/
 .claude/commands/
 .claude/skills/
+.claude/
+.agent-os/
 
 # Python virtual environment
 scripts/venv/
