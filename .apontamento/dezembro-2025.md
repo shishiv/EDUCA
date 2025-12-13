@@ -11,10 +11,10 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 28h 00min |
-| **Dias trabalhados** | 5 dias |
-| **Horas médias por dia** | 5h 36min |
-| **Total de commits** | 24 commits |
+| **Total de horas trabalhadas** | 30h 00min |
+| **Dias trabalhados** | 6 dias |
+| **Horas médias por dia** | 5h 00min |
+| **Total de commits** | 25 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
 ---
@@ -65,7 +65,7 @@
 
 ---
 
-### Semana 2: 08/12 - 14/12 (8h 00min)
+### Semana 2: 08/12 - 14/12 (10h 00min)
 
 #### Segunda-feira, 09/12/2025
 **Horas:** 4h 00min
@@ -94,6 +94,18 @@
 - `4400981` - Remove all tests, mocks, and Playwright
 - `bd1f411` - Clean up config files after test removal
 - `3b08266` - Add pre-commit validation for CHANGELOG and .apontamento
+
+---
+
+#### Sábado, 14/12/2025
+**Horas:** 2h 00min
+**Atividade:** Correção de Erros na Página do Diário de Classe
+**Descrição:** Correção de erros de comunicação com o banco de dados na página do Diário de Classe que impediam a visualização dos dados. Também foi corrigido o hook de validação de commits para funcionar corretamente com comandos encadeados.
+
+**Commits relacionados:**
+- `268e423` - Correção de nomes de colunas na API do Diário de Classe
+- Correção do hook de validação de commits (regex)
+- Atualização do CHANGELOG.md
 
 ---
 
