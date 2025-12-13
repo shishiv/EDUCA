@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **Testes e Mocks removidos para refatoração:**
+  - Diretório `__tests__/` (43 arquivos de teste)
+  - Diretório `__mocks__/` (mock do Supabase)
+  - Diretório `tests/` (6 testes de segurança JS)
+  - Configurações: `jest.config.js`, `jest.setup.js`, `playwright.config.ts`
+  - Dependências: @playwright/test, playwright, @testing-library/*, jest, @types/jest
+  - Scripts de teste: test, test:watch, test:coverage, test:e2e*
+  - Chrome DevTools MCP substitui Playwright para testes de UI
+  - Novos testes serão escritos após refatoração de componentes
+
+### Changed
+- **Limpeza de configurações:**
+  - `tsconfig.json`: removidos excludes obsoletos de testes
+  - `next.config.js`: removida regra SVG não usada, corrigido wrapper do bundle analyzer
+  - Redução de ~1000+ para 859 pacotes npm
+
 ### Added
 - **Proposta de Organização e Roadmap MVP:**
   - Documento `PROPOSTA-ORGANIZACAO-CLEANUP-ROADMAP.md` com análise completa do repositório
