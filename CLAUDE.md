@@ -170,7 +170,7 @@ Seções:
 
 ## REGRA 2: Apontamento
 
-**TODO trabalho DEVE ser logado** em `apontamento/[mes-ano].md`
+**TODO trabalho DEVE ser logado** em `.apontamento/[mes-ano].md`
 
 Formato:
 ```markdown
