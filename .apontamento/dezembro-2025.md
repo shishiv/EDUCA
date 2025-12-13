@@ -11,10 +11,10 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 27h 30min |
+| **Total de horas trabalhadas** | 28h 00min |
 | **Dias trabalhados** | 5 dias |
-| **Horas médias por dia** | 5h 30min |
-| **Total de commits** | 22 commits |
+| **Horas médias por dia** | 5h 36min |
+| **Total de commits** | 24 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
 ---
@@ -65,7 +65,7 @@
 
 ---
 
-### Semana 2: 08/12 - 14/12 (7h 30min)
+### Semana 2: 08/12 - 14/12 (8h 00min)
 
 #### Segunda-feira, 09/12/2025
 **Horas:** 4h 00min
@@ -81,9 +81,9 @@
 ---
 
 #### Sexta-feira, 13/12/2025
-**Horas:** 3h 30min
+**Horas:** 4h 00min
 **Atividade:** Limpeza Geral do Projeto e Automação
-**Descrição:** Limpeza completa do projeto em 4 fases: remoção de código obsoleto e documentos antigos, atualização de dependências para versões mais recentes (React 19, Next 16), remoção de testes e mocks para preparar refatoração futura, limpeza de configurações do TypeScript e Next.js. Criação de hook para validar automaticamente as regras do projeto antes de cada commit.
+**Descrição:** Limpeza completa do projeto em 4 fases: remoção de código obsoleto e documentos antigos, atualização de dependências para versões mais recentes (React 19, Next 16), remoção de testes e mocks para preparar refatoração futura, limpeza de configurações do TypeScript e Next.js. Criação de hook para validar automaticamente as regras do projeto antes de cada commit. Migração do skill codebase-cleanup para estrutura XML com YAML frontmatter.
 
 **Commits relacionados:**
 - `493ac33` - Phase 3 code cleanup and organization
@@ -93,6 +93,7 @@
 - `4a588f4` - Update dependencies (React 19, Next 16, exceljs)
 - `4400981` - Remove all tests, mocks, and Playwright
 - `bd1f411` - Clean up config files after test removal
+- `3b08266` - Add pre-commit validation for CHANGELOG and .apontamento
 
 ---
 
