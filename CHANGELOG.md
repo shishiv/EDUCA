@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Hook de validação de commit:**
+  - Script `.claude/hooks/validate-commit.sh` que valida regras do projeto
+  - Bloqueia commits sem atualização de CHANGELOG.md
+  - Bloqueia commits sem atualização de `.apontamento/[mes-ano].md`
+  - Configurado em `.claude/hooks.json`
+
 ### Removed
 - **Testes e Mocks removidos para refatoração:**
   - Diretório `__tests__/` (43 arquivos de teste)
