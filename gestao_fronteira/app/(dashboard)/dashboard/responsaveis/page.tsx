@@ -241,7 +241,7 @@ export default function ResponsaveisPage() {
             </div>
 
             <Select value={parentescoFilter} onValueChange={setParentescoFilter}>
-              <SelectTrigger>
+              <SelectTrigger id="parentesco_filter">
                 <SelectValue placeholder="Filtrar por parentesco" />
               </SelectTrigger>
               <SelectContent>

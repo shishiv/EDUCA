@@ -218,7 +218,7 @@ export default function NovoResponsavelPage() {
                   onValueChange={(value) => handleInputChange('parentesco', value)}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="parentesco">
                     <SelectValue placeholder="Selecione o parentesco" />
                   </SelectTrigger>
                   <SelectContent>

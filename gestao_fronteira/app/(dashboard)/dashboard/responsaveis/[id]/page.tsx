@@ -359,7 +359,7 @@ export default function ResponsavelDetalhesPage() {
                   value={formData.parentesco}
                   onValueChange={(value) => handleInputChange('parentesco', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="parentesco">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

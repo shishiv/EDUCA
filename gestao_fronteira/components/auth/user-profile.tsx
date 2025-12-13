@@ -203,7 +203,7 @@ export function UserProfileComponent({ editable = false, showCreateForm = false 
                     setFormData({ ...formData, tipo_usuario: value as UserProfile['tipo_usuario'] })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="tipo_usuario">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>

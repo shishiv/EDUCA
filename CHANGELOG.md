@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Acessibilidade: SelectTrigger com id para Label htmlFor (21 campos):**
+  - `turmas/nova`: escola_id, serie, turno, professor_id
+  - `alunos/novo`: sexo, serie_pretendida, turno_preferencia, resp_parentesco, resp_renda
+  - `usuarios/novo`: tipo_usuario, escola
+  - `matriculas/nova`: turma_id
+  - `matriculas/[id]`: situacao
+  - `responsaveis/novo`: parentesco
+  - `responsaveis/page`: parentesco_filter
+  - `responsaveis/[id]`: parentesco
+  - `sessoes/page`: status
+  - `relatorios/page`: tipo
+  - `components/auth/user-profile`: tipo_usuario
+  - `components/classes/teacher-assignment`: professor
+  - `components/schools/school-registration-form`: diretor
+
 - **Erros 400 na página Diário de Classe:**
   - Corrigido nomes de colunas em `lib/api/class-diary.ts`
   - `ano` → `ano_letivo` (tabela turmas)

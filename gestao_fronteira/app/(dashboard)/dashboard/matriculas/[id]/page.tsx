@@ -466,7 +466,7 @@ export default function MatriculaDetailsPage() {
               <Label htmlFor="situacao">Situação</Label>
               {editMode ? (
                 <Select value={formData.situacao} onValueChange={(value: any) => setFormData({ ...formData, situacao: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="situacao">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

@@ -11,10 +11,10 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 31h 00min |
+| **Total de horas trabalhadas** | 33h 00min |
 | **Dias trabalhados** | 6 dias |
-| **Horas médias por dia** | 5h 10min |
-| **Total de commits** | 25 commits |
+| **Horas médias por dia** | 5h 30min |
+| **Total de commits** | 26 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
 ---
@@ -65,7 +65,7 @@
 
 ---
 
-### Semana 2: 08/12 - 14/12 (11h 00min)
+### Semana 2: 08/12 - 14/12 (13h 00min)
 
 #### Segunda-feira, 09/12/2025
 **Horas:** 4h 00min
@@ -98,15 +98,16 @@
 ---
 
 #### Sábado, 14/12/2025
-**Horas:** 3h 00min
-**Atividade:** Correção de Erros nas Páginas do Dashboard
-**Descrição:** Correção de erros de comunicação com o banco de dados nas páginas do Diário de Classe e Dashboard principal que impediam a visualização dos dados. Também foi corrigido o hook de validação de commits para funcionar corretamente com comandos encadeados.
+**Horas:** 5h 00min
+**Atividade:** Correção de Erros e Melhorias de Acessibilidade
+**Descrição:** Correção de erros de comunicação com o banco de dados nas páginas do Diário de Classe e Dashboard principal que impediam a visualização dos dados. Correção de 21 campos de formulário que não tinham a ligação correta entre etiqueta e campo (melhoria de acessibilidade para leitores de tela e navegação por teclado).
 
 **Commits relacionados:**
 - `268e423` - Correção de nomes de colunas na API do Diário de Classe
 - `b276730` - Correção de nomes de colunas na página Dashboard
 - `09e3316` - Limpeza de 24 arquivos de migration órfãos do diretório supabase/
 - Remoção de preloads não utilizados e imagens órfãs (~190KB)
+- Adição de atributos id em 21 SelectTriggers para acessibilidade
 
 ---
 
