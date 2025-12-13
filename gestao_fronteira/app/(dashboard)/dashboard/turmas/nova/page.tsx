@@ -156,7 +156,7 @@ export default function NovaTurmaPage() {
                     handleInputChange('professor_id', '') // Reset professor when school changes
                     handleInputChange('serie', '') // Reset serie when school changes
                   }}>
-                    <SelectTrigger>
+                    <SelectTrigger id="escola_id">
                       <SelectValue placeholder="Selecione a escola" />
                     </SelectTrigger>
                     <SelectContent>
@@ -172,12 +172,12 @@ export default function NovaTurmaPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="serie">Série *</Label>
-                    <Select 
-                      value={formData.serie} 
+                    <Select
+                      value={formData.serie}
                       onValueChange={(value) => handleInputChange('serie', value)}
                       disabled={!formData.escola_id}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="serie">
                         <SelectValue placeholder="Selecione a série" />
                       </SelectTrigger>
                       <SelectContent>
@@ -193,7 +193,7 @@ export default function NovaTurmaPage() {
                   <div className="space-y-2">
                     <Label htmlFor="turno">Turno *</Label>
                     <Select value={formData.turno} onValueChange={(value) => handleInputChange('turno', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger id="turno">
                         <SelectValue placeholder="Selecione o turno" />
                       </SelectTrigger>
                       <SelectContent>
@@ -208,12 +208,12 @@ export default function NovaTurmaPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="professor_id">Professor Responsável</Label>
-                    <Select 
-                      value={formData.professor_id} 
+                    <Select
+                      value={formData.professor_id}
                       onValueChange={(value) => handleInputChange('professor_id', value)}
                       disabled={!formData.escola_id}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="professor_id">
                         <SelectValue placeholder="Selecione o professor" />
                       </SelectTrigger>
                       <SelectContent>

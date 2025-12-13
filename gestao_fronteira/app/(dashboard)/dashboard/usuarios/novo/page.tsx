@@ -135,7 +135,7 @@ export default function NovoUsuarioPage() {
                   <div className="space-y-2">
                     <Label htmlFor="tipo_usuario">Tipo de Usuário *</Label>
                     <Select value={formData.tipo_usuario} onValueChange={(value) => handleInputChange('tipo_usuario', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger id="tipo_usuario">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -149,12 +149,12 @@ export default function NovoUsuarioPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="escola">Escola</Label>
-                    <Select 
-                      value={formData.escola_id} 
+                    <Select
+                      value={formData.escola_id}
                       onValueChange={(value) => handleInputChange('escola_id', value)}
                       disabled={formData.tipo_usuario === 'admin' || formData.tipo_usuario === 'secretario'}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="escola">
                         <SelectValue placeholder="Selecione a escola" />
                       </SelectTrigger>
                       <SelectContent>

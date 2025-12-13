@@ -180,7 +180,7 @@ export default function RelatoriosPage() {
               <div className="space-y-2">
                 <Label htmlFor="tipo">Tipo de Relatório</Label>
                 <Select value={newReport.tipo} onValueChange={(value) => setNewReport({...newReport, tipo: value})}>
-                  <SelectTrigger>
+                  <SelectTrigger id="tipo">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>

@@ -231,7 +231,7 @@ export default function NovoAlunoPage() {
                       <div className="space-y-2">
                         <Label htmlFor="sexo">Sexo *</Label>
                         <Select value={formData.sexo} onValueChange={(value) => handleInputChange('sexo', value)}>
-                          <SelectTrigger>
+                          <SelectTrigger id="sexo">
                             <SelectValue placeholder="Selecione o sexo" />
                           </SelectTrigger>
                           <SelectContent>
@@ -333,7 +333,7 @@ export default function NovoAlunoPage() {
                     <div className="space-y-2">
                       <Label htmlFor="serie_pretendida">Série Pretendida</Label>
                       <Select value={formData.serie_pretendida} onValueChange={(value) => handleInputChange('serie_pretendida', value)}>
-                        <SelectTrigger>
+                        <SelectTrigger id="serie_pretendida">
                           <SelectValue placeholder="Selecione a série" />
                         </SelectTrigger>
                         <SelectContent>
@@ -357,7 +357,7 @@ export default function NovoAlunoPage() {
                     <div className="space-y-2">
                       <Label htmlFor="turno_preferencia">Turno de Preferência</Label>
                       <Select value={formData.turno_preferencia} onValueChange={(value) => handleInputChange('turno_preferencia', value)}>
-                        <SelectTrigger>
+                        <SelectTrigger id="turno_preferencia">
                           <SelectValue placeholder="Selecione o turno" />
                         </SelectTrigger>
                         <SelectContent>
@@ -416,7 +416,7 @@ export default function NovoAlunoPage() {
                   <div className="space-y-2">
                     <Label htmlFor="resp_parentesco">Parentesco *</Label>
                     <Select value={responsavelData.parentesco} onValueChange={(value) => handleResponsavelChange('parentesco', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger id="resp_parentesco">
                         <SelectValue placeholder="Selecione o parentesco" />
                       </SelectTrigger>
                       <SelectContent>
@@ -493,7 +493,7 @@ export default function NovoAlunoPage() {
                 <div className="space-y-2">
                   <Label htmlFor="resp_renda">Renda Familiar</Label>
                   <Select value={responsavelData.renda_familiar} onValueChange={(value) => handleResponsavelChange('renda_familiar', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="resp_renda">
                       <SelectValue placeholder="Selecione a faixa de renda" />
                     </SelectTrigger>
                     <SelectContent>
