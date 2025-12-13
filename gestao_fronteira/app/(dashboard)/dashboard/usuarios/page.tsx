@@ -30,7 +30,7 @@ import {
 import { Plus, Eye, Edit, Trash2, UserCheck, UserX, Download, Users, CheckCircle, GraduationCap, Crown, UserPlus, Search as SearchIcon } from 'lucide-react'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
-import { TableEmptyState } from '@/components/ui/empty-state'
+import { TableEmptyState } from '@/components/ui/table-empty-state'
 import { formatDateTimeBR } from '@/lib/date-utils'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'

@@ -21,7 +21,7 @@ import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
-import { TableEmptyState } from '@/components/ui/empty-state'
+import { TableEmptyState } from '@/components/ui/table-empty-state'
 import { formatDateBR } from '@/lib/date-utils'
 
 interface AlunoWithDetails extends Aluno {
