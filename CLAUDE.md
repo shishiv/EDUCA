@@ -196,4 +196,4 @@ Descrição: [Descrição simples e não-técnica em português]
 | `.beads/` | Issue tracking |
 | `.claude/skills/` | Skills disponíveis |
 | `CHANGELOG.md` | Histórico de versões |
-| `apontamento/*.md` | Time tracking (português) |
+| `.apontamento/*.md` | Time tracking (português) |
