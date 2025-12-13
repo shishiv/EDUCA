@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Corrigido query de frequência: `aluno_id` → `matricula_id`
   - Página `/dashboard` agora exibe estatísticas corretamente
 
+### Removed
+- **Arquivos locais de migration órfãos (24 arquivos):**
+  - Removidos drafts/templates que nunca foram aplicados ao Supabase
+  - Migrations reais (42) são gerenciadas remotamente pelo Supabase MCP
+  - Edge function órfã `auto-lock-sessions` removida (não estava implantada)
+  - Diretório `.temp` do Supabase CLI removido
+
 - **Hook de validação de commit:**
   - Corrigido regex para detectar `git commit` em comandos encadeados
   - Antes: `^git\ commit` (só início do comando)

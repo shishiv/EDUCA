@@ -104,9 +104,9 @@
 
 **Commits relacionados:**
 - `268e423` - Correção de nomes de colunas na API do Diário de Classe
-- Correção de nomes de colunas na página Dashboard (matriculas.situacao, frequencia.matricula_id)
-- Correção do hook de validação de commits (regex)
-- Atualização do CHANGELOG.md
+- `b276730` - Correção de nomes de colunas na página Dashboard
+- Limpeza de 24 arquivos de migration órfãos do diretório supabase/
+- Remoção de edge function não implantada e arquivos temporários
 
 ---
 
