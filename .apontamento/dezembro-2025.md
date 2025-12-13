@@ -105,8 +105,8 @@
 **Commits relacionados:**
 - `268e423` - Correção de nomes de colunas na API do Diário de Classe
 - `b276730` - Correção de nomes de colunas na página Dashboard
-- Limpeza de 24 arquivos de migration órfãos do diretório supabase/
-- Remoção de edge function não implantada e arquivos temporários
+- `09e3316` - Limpeza de 24 arquivos de migration órfãos do diretório supabase/
+- Remoção de preloads não utilizados e imagens órfãs (~190KB)
 
 ---
 
