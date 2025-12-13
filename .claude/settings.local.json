@@ -55,7 +55,8 @@
       "mcp__Ref__ref_search_documentation",
       "Skill(superpowers:brainstorming)",
       "Skill(superpowers:using-superpowers)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []
