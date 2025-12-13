@@ -53,7 +53,7 @@ bd stats                          # Estatísticas
 
 ### Apontamento (Time Tracking)
 
-Separado em `apontamento/[mes-ano].md`
+Separado em `.apontamento/[mes-ano].md`
 
 ---
 
@@ -181,7 +181,7 @@ Seções:
 
 ## REGRA 2: Apontamento
 
-**TODO trabalho DEVE ser logado** em `apontamento/[mes-ano].md`
+**TODO trabalho DEVE ser logado** em `.apontamento/[mes-ano].md`
 
 Formato:
 ```markdown
@@ -206,6 +206,6 @@ Descrição: [Descrição simples e não-técnica em português]
 |---------|-----------|
 | `.beads/` | Issue tracking |
 | `CHANGELOG.md` | Histórico de versões |
-| `apontamento/*.md` | Time tracking (português) |
+| `.apontamento/*.md` | Time tracking (português) |
 | `docs/bncc.md` | Referência BNCC |
 | `docs/questionario-*.md` | Respostas validação |
