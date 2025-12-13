@@ -15,7 +15,7 @@
  */
 
 import { z } from 'zod'
-import { validateCPF, formatCPF, validatePhone, formatPhone } from '@/lib/validators/brazilian'
+import { validateCPF, formatCPF, validatePhone, formatPhone } from '@/lib/validation/brazilian'
 
 // ===== BASE STUDENT VALIDATION =====
 

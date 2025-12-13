@@ -411,3 +411,7 @@ export type StudentFormData = z.infer<typeof studentFormSchema>
 export type UserFormData = z.infer<typeof userFormSchema>
 export type SchoolFormData = z.infer<typeof schoolFormSchema>
 export type ClassFormData = z.infer<typeof classFormSchema>
+
+// Aliases for backward compatibility
+export const validatePhone = validateBrazilianPhone
+export const formatPhone = formatBrazilianPhone
