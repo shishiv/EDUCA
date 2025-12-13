@@ -1,21 +1,40 @@
-# Skill: Codebase Cleanup
+---
+name: codebase-cleanup
+description: Executes systematic 4-phase methodology for cleaning up codebases. Use after major features, before releases, during tech debt sprints, or when codebase grows unwieldy.
+---
 
-Systematic 4-phase methodology for cleaning up codebases, reducing technical debt, and improving maintainability.
+<objective>
+Reduce technical debt and improve maintainability through a structured 4-phase cleanup process:
+1. Dead Code Identification (analysis only)
+2. API Route Consolidation
+3. Component Organization
+4. Dependencies & Configuration
 
-## When to Use
+Each phase builds on the previous. Commit after each phase for easy rollback.
+</objective>
 
-- After major feature implementations
-- Before production releases
-- During technical debt sprints
-- When codebase grows unwieldy
-- Before onboarding new team members
+<quick_start>
+**Before starting ANY phase:**
+```bash
+pnpm typecheck && pnpm build  # MUST pass
+git status                     # MUST be clean
+```
 
-## Phases
+**Phase execution order:** Analysis → APIs → Components → Dependencies
 
-### Phase 1: Dead Code Identification
+**After EACH phase:**
+```bash
+pnpm typecheck && pnpm build  # Verify nothing broke
+git add -A && git commit -m "refactor(cleanup): Phase X - description"
+```
+</quick_start>
 
-**Goal:** Identify unused code without removing yet.
+<phases>
 
+<phase name="1" title="Dead Code Identification">
+**Goal:** Identify unused code WITHOUT removing yet.
+
+**Commands:**
 ```bash
 # Find components not imported anywhere
 grep -r "import.*ComponentName" --include="*.tsx" --include="*.ts" .
@@ -23,7 +42,7 @@ grep -r "import.*ComponentName" --include="*.tsx" --include="*.ts" .
 # Find unused exports
 grep -r "export.*functionName" --include="*.ts" .
 
-# Check for orphaned API routes (routes with no frontend calls)
+# Check for orphaned API routes
 grep -r "api/routeName" --include="*.tsx" --include="*.ts" app/ components/ lib/
 ```
 
@@ -33,51 +52,48 @@ grep -r "api/routeName" --include="*.tsx" --include="*.ts" app/ components/ lib/
 - [ ] Find exports with zero imports
 - [ ] Document files for removal (don't delete yet)
 
-### Phase 2: API Route Consolidation
+**Output:** List of files to review in subsequent phases.
+</phase>
 
+<phase name="2" title="API Route Consolidation">
 **Goal:** Standardize and consolidate API structure.
 
-**Naming Convention Check:**
-- Choose ONE language for route names (e.g., Portuguese: `/api/alunos/`, `/api/turmas/`)
-- Remove English/Portuguese duplicates (e.g., `/api/students/` vs `/api/alunos/`)
+**Naming conventions:**
+- Choose ONE language for routes (e.g., Portuguese: `/api/alunos/`, `/api/turmas/`)
+- Remove duplicates (e.g., `/api/students/` vs `/api/alunos/`)
 - Use nested structure: `/api/[resource]/[action]/` not `/api/[resource]-[action]/`
 
-**Actions:**
+**Commands:**
 ```bash
-# Find duplicate routes (same functionality, different names)
+# List all API routes
 ls -la app/api/
 
-# Check for similar route patterns
-find app/api -name "route.ts" | xargs grep -l "similar_table_name"
+# Find duplicate routes
+find app/api -name "route.ts" | xargs grep -l "table_name"
 ```
 
 **Checklist:**
 - [ ] Audit all API routes
 - [ ] Identify duplicates (same table, different paths)
 - [ ] Plan migration path (which to keep, which to remove)
-- [ ] Update frontend imports before removing routes
+- [ ] Update frontend imports BEFORE removing routes
 - [ ] Remove deprecated routes
+</phase>
 
-### Phase 3: Component Organization
+<phase name="3" title="Component Organization">
+**Goal:** Improve discoverability and reduce imports.
 
-**Goal:** Improve component discoverability and reduce imports.
-
-**Barrel Exports:**
-Create `index.ts` for each component directory:
+**Barrel exports:** Create `index.ts` for each component directory:
 ```typescript
 // components/students/index.ts
 export { StudentForm } from './student-form'
 export { StudentList } from './student-list'
-export { StudentCard } from './student-card'
 export type { StudentFormData } from './types'
 ```
 
-**File Naming:**
-- Use kebab-case: `student-form.tsx` not `StudentForm.tsx`
-- Group related files in directories
-- Remove prefix redundancy: `components/students/form.tsx` not `components/students/student-form.tsx`
+**File naming:** Use kebab-case (`student-form.tsx` not `StudentForm.tsx`)
 
-**Actions:**
+**Commands:**
 ```bash
 # Find directories without index.ts
 find components -type d ! -exec test -e "{}/index.ts" \; -print
@@ -92,24 +108,24 @@ find components -name "*.tsx" -exec wc -l {} \; | awk '$1 > 500'
 - [ ] Split files >500 lines into logical units
 - [ ] Standardize file naming convention
 - [ ] Update imports to use barrel exports
+</phase>
 
-### Phase 4: Dependencies & Configuration
-
+<phase name="4" title="Dependencies & Configuration">
 **Goal:** Optimize package.json and config files.
 
-**Dependencies Audit:**
+**Commands:**
 ```bash
 # List all dependencies
 cat package.json | jq '.dependencies, .devDependencies'
 
-# Find unused dependencies (requires depcheck)
+# Find unused dependencies
 npx depcheck
 
 # Check for duplicate type packages
 grep "@types" package.json
 ```
 
-**Configuration Files:**
+**Config files to check:**
 - `tsconfig.json` - Remove unused paths
 - `next.config.js` - Remove deprecated options
 - `vercel.json` - Remove catch-all rewrites that break APIs
@@ -119,38 +135,35 @@ grep "@types" package.json
 - [ ] Remove unused dependencies
 - [ ] Move `@types/*` to devDependencies
 - [ ] Verify all config file references are valid
-- [ ] Remove problematic catch-all rewrites
 - [ ] Consolidate duplicate utility modules
+</phase>
 
-## Validation Module Consolidation
+</phases>
 
-When consolidating validation/utility modules:
+<safety_checklist>
+**MUST do before each phase:**
+- All tests pass: `pnpm test`
+- TypeScript compiles: `pnpm typecheck`
+- Build succeeds: `pnpm build`
+- Git status clean (commit before starting)
 
-1. **Choose canonical location:** e.g., `lib/validation/`
-2. **Create backward-compatible aliases:**
-   ```typescript
-   // Keep old function names working
-   export const validatePhone = validateBrazilianPhone
-   export const formatPhone = formatBrazilianPhone
-   ```
-3. **Update all imports:**
-   ```bash
-   # Find files importing from old location
-   grep -r "@/lib/validators" --include="*.ts" --include="*.tsx"
+**MUST do after each phase:**
+- Run same checks above
+- Visual spot-check in browser
+- Commit with descriptive message
+</safety_checklist>
 
-   # Replace imports
-   sed -i 's/@\/lib\/validators/@\/lib\/validation/g' file.ts
-   ```
-4. **Remove old directory after all imports updated**
+<anti_patterns>
+**NEVER do these:**
+1. Delete without searching - ALWAYS grep before removing
+2. Break barrel exports - Update index.ts when removing components
+3. Remove "unused" deps used dynamically - Check for `require()` and dynamic imports
+4. Consolidate different implementations - Audit algorithm correctness first
+5. Remove type exports - May be used in external packages
+</anti_patterns>
 
-## Execution Order
-
-1. **Analysis First:** Run Phase 1 completely before making changes
-2. **Backend Before Frontend:** Phase 2 (APIs) before Phase 3 (Components)
-3. **Deps Last:** Phase 4 after code changes to accurately detect unused deps
-4. **Commit Per Phase:** One commit per phase for easy rollback
-
-## Metrics to Track
+<metrics>
+Track before/after:
 
 | Metric | Before | After |
 |--------|--------|-------|
@@ -164,39 +177,18 @@ Use `cloc` for line counts:
 ```bash
 cloc --exclude-dir=node_modules,.next --include-lang=TypeScript,JavaScript .
 ```
+</metrics>
 
-## Safety Checks
-
-Before each phase:
-- [ ] All tests pass: `pnpm test`
-- [ ] TypeScript compiles: `pnpm typecheck`
-- [ ] Build succeeds: `pnpm build`
-- [ ] Git status clean (commit before starting)
-
-After each phase:
-- [ ] Run same checks
-- [ ] Visual spot-check in browser
-- [ ] Commit with descriptive message
-
-## Anti-Patterns to Avoid
-
-1. **Don't delete without searching:** Always grep before removing
-2. **Don't break barrel exports:** Update index.ts when removing components
-3. **Don't remove "unused" deps that are used dynamically:** Check for `require()` and dynamic imports
-4. **Don't consolidate different implementations:** Audit algorithm correctness before merging (e.g., CPF validators)
-5. **Don't remove type exports:** They may be used in external packages
-
-## Example Commit Messages
-
+<commit_messages>
 ```
-refactor(cleanup): Phase 1 - identify dead code (-0 lines, analysis only)
-refactor(cleanup): Phase 2 - consolidate API routes (-X lines)
-refactor(cleanup): Phase 3 - organize components, add barrel exports (-X lines)
-refactor(cleanup): Phase 4 - remove unused deps, fix configs (-X lines)
+refactor(cleanup): Phase 1 - identify dead code (analysis only)
+refactor(cleanup): Phase 2 - consolidate API routes (-X files)
+refactor(cleanup): Phase 3 - organize components, add barrel exports (-X files)
+refactor(cleanup): Phase 4 - remove unused deps, fix configs (-X deps)
 ```
+</commit_messages>
 
-## Beads Integration
-
+<beads_integration>
 Track cleanup as issues:
 ```bash
 bd create --title="Codebase cleanup Phase 1: Analysis" --type=task
@@ -209,3 +201,14 @@ bd dep add <phase2-id> <phase1-id>
 bd dep add <phase3-id> <phase2-id>
 bd dep add <phase4-id> <phase3-id>
 ```
+</beads_integration>
+
+<success_criteria>
+Cleanup is complete when:
+- All 4 phases executed in order
+- `pnpm typecheck` passes
+- `pnpm build` succeeds
+- Each phase has its own commit
+- Metrics show reduction in files/deps
+- No regressions in functionality
+</success_criteria>
