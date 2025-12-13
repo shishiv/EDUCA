@@ -280,7 +280,7 @@ export function SchoolRegistrationForm({
                 onValueChange={setSelectedDirectorId}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger id="diretor">
                   <SelectValue placeholder="Selecione um diretor (opcional)" />
                 </SelectTrigger>
                 <SelectContent>

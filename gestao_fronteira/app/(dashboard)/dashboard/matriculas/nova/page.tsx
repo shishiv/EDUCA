@@ -301,7 +301,7 @@ export default function NovaMatriculaPage() {
                   <div className="space-y-2">
                     <Label htmlFor="turma_id">Turma *</Label>
                     <Select value={formData.turma_id} onValueChange={(value) => handleInputChange('turma_id', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger id="turma_id">
                         <SelectValue placeholder="Selecione a turma" />
                       </SelectTrigger>
                       <SelectContent>
