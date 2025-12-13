@@ -5,7 +5,7 @@
 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 /**
  * Format date to Brazilian format (DD/MM/YYYY)
@@ -32,7 +32,7 @@ export function formatBrazilianNumber(num: number, decimals: number = 2): string
 /**
  * Export data to Excel/CSV format
  */
-export function exportToExcel(
+export async function exportToExcel(
   data: any[],
   filename: string,
   options: {
@@ -72,36 +72,69 @@ export function exportToExcel(
       return formatted
     })
 
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(formattedData, {
-      header: headers
+    // Create workbook and worksheet
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'Sistema de Gestão Educacional'
+    workbook.created = new Date()
+
+    const worksheet = workbook.addWorksheet(sheetName)
+
+    // Get headers from first row if not provided
+    const columnHeaders = headers || (formattedData.length > 0 ? Object.keys(formattedData[0]) : [])
+
+    // Add header row
+    const headerRow = worksheet.addRow(columnHeaders)
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF3B82F6' }
+      }
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      }
+    })
+
+    // Add data rows
+    formattedData.forEach((row, index) => {
+      const values = columnHeaders.map(header => row[header] ?? '')
+      const dataRow = worksheet.addRow(values)
+
+      // Alternate row colors
+      if (index % 2 === 1) {
+        dataRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF5F5F5' }
+          }
+        })
+      }
     })
 
     // Auto-size columns
-    const maxWidths: number[] = []
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
+    worksheet.columns.forEach((column) => {
+      let maxLength = 10
+      column.eachCell?.({ includeEmpty: true }, (cell) => {
+        const cellValue = cell.value ? String(cell.value) : ''
+        maxLength = Math.max(maxLength, cellValue.length)
+      })
+      column.width = Math.min(maxLength + 2, 50) // Cap at 50
+    })
 
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      let maxWidth = 10
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
-        const cell = worksheet[cellAddress]
-        if (cell && cell.v) {
-          const cellValue = String(cell.v)
-          maxWidth = Math.max(maxWidth, cellValue.length)
-        }
-      }
-      maxWidths.push(Math.min(maxWidth, 50)) // Cap at 50
-    }
-
-    worksheet['!cols'] = maxWidths.map(w => ({ wch: w }))
-
-    // Create workbook
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
-
-    // Generate file
-    XLSX.writeFile(workbook, `${filename}.xlsx`)
+    // Generate file and download
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${filename}.xlsx`
+    link.click()
+    URL.revokeObjectURL(link.href)
 
     return { success: true, filename: `${filename}.xlsx` }
   } catch (error) {
