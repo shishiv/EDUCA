@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Skill codebase-cleanup migrado para estrutura XML:**
+  - YAML frontmatter com name e description
+  - Tags XML semânticas (objective, quick_start, phases, success_criteria)
+  - Removidos markdown headings do corpo
+  - Adicionado safety_checklist com MUST/NEVER constraints
+
 - **Hook de validação de commit:**
   - Script `.claude/hooks/validate-commit.sh` que valida regras do projeto
   - Bloqueia commits sem atualização de CHANGELOG.md
