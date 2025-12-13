@@ -51,7 +51,7 @@ export function ClassDiaryFilter({
 
   // Available turmas for dropdown
   const [turmas, setTurmas] = useState<
-    Array<{ id: string; nome: string; serie: string }>
+    Array<{ id: string; nome: string; serie: string; ano_letivo: number }>
   >([])
   const [loadingTurmas, setLoadingTurmas] = useState(true)
 
@@ -62,7 +62,7 @@ export function ClassDiaryFilter({
       const { data, error } = await getAvailableTurmas(supabase, profesor_id, escola_id)
 
       if (error) {
-        logger.error('Error fetching turmas:', { error: error })
+        logger.error('Error fetching turmas:', error)
         setLoadingTurmas(false)
         return
       }
