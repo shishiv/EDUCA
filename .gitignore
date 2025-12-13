@@ -4,9 +4,13 @@
 # Claude Code local configs
 .claude/agents/
 .claude/commands/
-.claude/skills/
-.claude/
+.claude/settings.local.json
 .agent-os/
+
+# Claude Code shared configs (NOT ignored)
+# .claude/hooks.json - commit validation hooks
+# .claude/hooks/ - hook scripts
+# .claude/skills/ - project skills
 
 # Python virtual environment
 scripts/venv/
