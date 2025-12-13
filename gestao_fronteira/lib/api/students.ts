@@ -2,7 +2,7 @@
 
 import { BaseApiService } from './base'
 import { supabase, Tables, Aluno } from '@/lib/supabase'
-import { StudentFormData } from '@/lib/validators/brazilian'
+import { StudentFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 
 export type StudentWithDetails = Aluno & {

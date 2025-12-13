@@ -9,7 +9,7 @@
 import * as React from 'react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { formatCPF, formatBrazilianPhone, formatCEP, validateCPF, validateBrazilianPhone, validateCEP } from '@/lib/validators/brazilian'
+import { formatCPF, formatBrazilianPhone, formatCEP, validateCPF, validateBrazilianPhone, validateCEP } from '@/lib/validation'
 
 interface BrazilianInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onFormattedChange?: (value: string, rawValue: string) => void
