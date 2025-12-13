@@ -2,7 +2,7 @@
 
 import { BaseApiService } from './base'
 import { supabase, Tables, Turma } from '@/lib/supabase'
-import { ClassFormData } from '@/lib/validators/brazilian'
+import { ClassFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 
 export type ClassWithDetails = Turma & {

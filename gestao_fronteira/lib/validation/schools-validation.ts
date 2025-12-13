@@ -16,7 +16,7 @@
  */
 
 import { z } from 'zod'
-import { validatePhone, formatPhone } from '@/lib/validators/brazilian'
+import { validatePhone, formatPhone } from '@/lib/validation/brazilian'
 
 // ===== INEP CODE VALIDATION =====
 

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { schoolFormSchema, SchoolFormData, formatBrazilianPhone } from '@/lib/validators/brazilian'
+import { schoolFormSchema, SchoolFormData, formatBrazilianPhone } from '@/lib/validation'
 import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

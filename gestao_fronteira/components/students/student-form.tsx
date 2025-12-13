@@ -49,7 +49,7 @@ import {
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { brazilianEducationalFieldHelp } from '@/lib/field-help/brazilian-educational-help'
-import { studentFormSchema } from '@/lib/validators/brazilian'
+import { studentFormSchema } from '@/lib/validation'
 
 // Enhanced form schema with comprehensive validation
 const enhancedStudentSchema = z.object({

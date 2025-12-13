@@ -1,6 +1,6 @@
 import { BaseApiService } from './base'
 import { supabase, Tables, Escola } from '@/lib/supabase'
-import { SchoolFormData } from '@/lib/validators/brazilian'
+import { SchoolFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 
 export type SchoolWithDetails = Escola & {

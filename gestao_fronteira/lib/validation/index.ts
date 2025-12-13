@@ -21,33 +21,67 @@
  * ```
  */
 
-// ===== BRAZILIAN EDUCATIONAL VALIDATORS =====
-// Core validation functions and Zod schemas for Brazilian data
+// ===== BRAZILIAN VALIDATORS (FORM SCHEMAS) =====
+// Core validation functions and Zod schemas for Brazilian data forms
 
 export {
   // CPF validation
   validateCPF,
   formatCPF,
   // Phone validation
-  validatePhone,
-  formatPhone,
-  getPhoneType,
+  validateBrazilianPhone,
+  formatBrazilianPhone,
+  // CEP validation
+  validateCEP,
+  formatCEP,
   // Educational
   validateINEPCode,
   formatINEPCode,
-  validateNIS,
+  validateAcademicYear,
+  calculateAge,
+  validateStudentAge,
   calculateAttendanceRate,
   getAttendanceStatus,
   validateMinimumAttendance,
-  calculateAge,
-  validateStudentAge,
   // Schemas
   cpfSchema,
   brazilianPhoneSchema,
+  cepSchema,
+  academicYearSchema,
+  attendanceRateSchema,
+  inepCodeSchema,
   studentFormSchema,
   userFormSchema,
   schoolFormSchema,
   classFormSchema,
+  // Types
+  type StudentFormData,
+  type UserFormData,
+  type SchoolFormData,
+  type ClassFormData,
+} from '@/lib/validation/brazilian'
+
+// ===== BRAZILIAN EDUCATIONAL VALIDATORS =====
+// Extended Brazilian educational validation (CNPJ, NIS, INEP, etc.)
+
+export {
+  validateCNPJ,
+  formatCNPJ,
+  validateINEP,
+  validateNIS,
+  validateStateRegistration,
+  validateSchoolDate,
+  validateAttendancePercentage,
+  // Schemas
+  brazilianCPFSchema,
+  brazilianCNPJSchema,
+  nisSchema,
+  studentRegistrationSchema as educationalStudentSchema,
+  guardianRegistrationSchema,
+  attendanceSessionSchema,
+  // Helpers
+  validationHelpers,
+  schemas as brazilianSchemas,
 } from '@/lib/validation/brazilian-educational'
 
 // ===== STUDENT VALIDATION =====
@@ -79,10 +113,6 @@ export {
   // Functions
   validateINEPCode as validateSchoolINEPCode,
   formatINEPCode as formatSchoolINEPCode,
-  validateCNPJ,
-  formatCNPJ,
-  validateCEP,
-  formatCEP,
   // Schemas
   baseSchoolSchema,
   schoolScheduleSchema,
@@ -138,22 +168,28 @@ export {
   validateProfileUpdate,
 } from '@/lib/validation/users-validation'
 
-// ===== RE-EXPORT FROM BRAZILIAN VALIDATORS =====
-// Make sure all functions from brazilian validators are available
+// ===== ACCESSIBILITY VALIDATION =====
+// WCAG 2.1 AA and Brazilian LBI 13.146/2015 compliance
+
+export * from '@/lib/validation/accessibility'
+
+// ===== ATTENDANCE WORKFLOW VALIDATION =====
+// Brazilian educational attendance compliance
+
+export * from '@/lib/validation/attendance'
+
+// ===== PERFORMANCE VALIDATION =====
+// Classroom-optimized application performance
+
+export * from '@/lib/validation/performance'
+
+// ===== PHONE VALIDATION ALIASES =====
+// Short function names for internal use
 
 export {
-  validateCPF as validateBrazilianCPF,
-  formatCPF as formatBrazilianCPF,
-  validatePhone as validateBrazilianPhone,
-  formatPhone as formatBrazilianPhone,
-  getPhoneType as getBrazilianPhoneType,
-  validateINEPCode as validateBrazilianINEPCode,
-  formatINEPCode as formatBrazilianINEPCode,
-  validateNIS as validateBrazilianNIS,
-  calculateAttendanceRate as calculateBrazilianAttendanceRate,
-  getAttendanceStatus as getBrazilianAttendanceStatus,
-  validateMinimumAttendance as validateBrazilianMinimumAttendance,
-} from '@/lib/validators/brazilian'
+  validatePhone,
+  formatPhone,
+} from '@/lib/validation/brazilian'
 
 /**
  * Summary of validation modules
@@ -191,24 +227,3 @@ export {
  * Union type for any user role
  */
 export type AnyUserRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
-
-/**
- * Union type for user data based on role
- */
-export type UserDataByRole = {
-  admin: AdminUserData
-  diretor: DiretorUserData
-  secretario: SecretarioUserData
-  professor: ProfessorUserData
-  responsavel: ResponsavelUserData
-}
-
-/**
- * Union type for any user data
- */
-export type AnyUserData =
-  | AdminUserData
-  | DiretorUserData
-  | SecretarioUserData
-  | ProfessorUserData
-  | ResponsavelUserData
