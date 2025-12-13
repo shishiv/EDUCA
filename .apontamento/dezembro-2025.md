@@ -11,9 +11,9 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de horas trabalhadas** | 30h 00min |
+| **Total de horas trabalhadas** | 31h 00min |
 | **Dias trabalhados** | 6 dias |
-| **Horas médias por dia** | 5h 00min |
+| **Horas médias por dia** | 5h 10min |
 | **Total de commits** | 25 commits |
 | **Tempo disponível diário** | 1h30 - 3h00 (dias úteis) / 3h00 - 6h00 (fins de semana) |
 
@@ -65,7 +65,7 @@
 
 ---
 
-### Semana 2: 08/12 - 14/12 (10h 00min)
+### Semana 2: 08/12 - 14/12 (11h 00min)
 
 #### Segunda-feira, 09/12/2025
 **Horas:** 4h 00min
@@ -98,12 +98,13 @@
 ---
 
 #### Sábado, 14/12/2025
-**Horas:** 2h 00min
-**Atividade:** Correção de Erros na Página do Diário de Classe
-**Descrição:** Correção de erros de comunicação com o banco de dados na página do Diário de Classe que impediam a visualização dos dados. Também foi corrigido o hook de validação de commits para funcionar corretamente com comandos encadeados.
+**Horas:** 3h 00min
+**Atividade:** Correção de Erros nas Páginas do Dashboard
+**Descrição:** Correção de erros de comunicação com o banco de dados nas páginas do Diário de Classe e Dashboard principal que impediam a visualização dos dados. Também foi corrigido o hook de validação de commits para funcionar corretamente com comandos encadeados.
 
 **Commits relacionados:**
 - `268e423` - Correção de nomes de colunas na API do Diário de Classe
+- Correção de nomes de colunas na página Dashboard (matriculas.situacao, frequencia.matricula_id)
 - Correção do hook de validação de commits (regex)
 - Atualização do CHANGELOG.md
 

@@ -97,8 +97,8 @@ export default function DashboardPage() {
         // Total de turmas ativas
         supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true),
 
-        // Total de matrículas ativas
-        supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('ativo', true),
+        // Total de matrículas ativas (using situacao column, not ativo)
+        supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa'),
 
         // Sample frequency data for calculation (can be expanded later)
         supabase.from('frequencia').select('presente').limit(100),
@@ -108,9 +108,9 @@ export default function DashboardPage() {
           .or('cpf.is.null,telefone.is.null')
           .eq('ativo', true),
 
-        // Frequência baixa: alunos com menos de 75% de presença
+        // Frequência baixa: registros de ausência (matricula_id instead of aluno_id)
         supabase.from('frequencia')
-          .select('aluno_id, presente')
+          .select('matricula_id, presente')
           .eq('presente', false)
           .limit(1000)
       ])

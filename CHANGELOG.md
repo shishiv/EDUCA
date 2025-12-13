@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Adicionado null check para `freq.aula_id`
   - Página `/dashboard/diario` agora carrega sem erros de API
 
+- **Erros 400 na página Dashboard principal:**
+  - Corrigido query de matrículas: `ativo=true` → `situacao='ativa'`
+  - Corrigido query de frequência: `aluno_id` → `matricula_id`
+  - Página `/dashboard` agora exibe estatísticas corretamente
+
 - **Hook de validação de commit:**
   - Corrigido regex para detectar `git commit` em comandos encadeados
   - Antes: `^git\ commit` (só início do comando)
