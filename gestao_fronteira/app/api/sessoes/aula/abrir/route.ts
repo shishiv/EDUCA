@@ -1,7 +1,7 @@
 /**
  * Enhanced "Abrir Aula" Endpoint - Session Opening
  * Implements the three-phase attendance workflow with Brazilian legal compliance
- * POST /api/sessoes-aula/abrir
+ * POST /api/sessoes/aula/abrir
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -113,7 +113,7 @@ function calculateAutoClosureTime(sessionDate: string): string {
 }
 
 /**
- * POST /api/sessoes-aula/abrir
+ * POST /api/sessoes/aula/abrir
  * Creates a new session in PLANEJADA state with Brazilian compliance
  */
 export async function POST(request: NextRequest) {
