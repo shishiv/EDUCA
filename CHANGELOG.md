@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Cache de Service Worker causando queries antigas:**
+  - Atualizado `CACHE_NAME` de `v1` para `v2` em `public/sw.js`
+  - Força refresh do cache para todos usuários, evitando JavaScript obsoleto
+  - Resolve problema de queries Supabase com nomes de colunas incorretos
+
 - **TypeScript error em class-diary-filter.tsx:**
   - Corrigido chamada logger.error com parâmetro incorreto
   - Adicionado `ano_letivo: number` ao tipo de turmas

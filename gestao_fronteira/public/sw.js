@@ -1,7 +1,7 @@
 // Service Worker for Educational Management System
 // Focused on offline attendance marking capability
 
-const CACHE_NAME = 'gestao-fronteira-v1'
+const CACHE_NAME = 'gestao-fronteira-v2'
 const OFFLINE_PAGE = '/offline'
 
 // Critical educational data patterns to cache
