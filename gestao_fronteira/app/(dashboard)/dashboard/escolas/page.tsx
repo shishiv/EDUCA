@@ -18,7 +18,7 @@ import {
 import { Plus, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download, CheckCircle, BookOpen, Search as SearchIcon } from 'lucide-react'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
-import { TableEmptyState } from '@/components/ui/empty-state'
+import { TableEmptyState } from '@/components/ui/table-empty-state'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
