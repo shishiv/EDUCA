@@ -1,7 +1,7 @@
 /**
  * Enhanced Session Status Management API
  * Handles three-phase workflow transitions with Brazilian legal compliance
- * PUT /api/sessoes-aula/[id]/status
+ * PUT /api/sessoes/aula/[id]/status
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -122,7 +122,7 @@ function generateLegalHash(sessionData: any): string {
 }
 
 /**
- * PUT /api/sessoes-aula/[id]/status
+ * PUT /api/sessoes/aula/[id]/status
  * Update session status with legal compliance validation
  */
 export async function PUT(

@@ -519,7 +519,7 @@ export function AttendanceGrid({
       })
 
       // Send to server
-      const response = await fetch(`/api/sessoes-aula/${sessionId}/frequencia/batch`, {
+      const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -604,7 +604,7 @@ export function AttendanceGrid({
       setAttendance(newAttendance)
 
       // Send to server
-      const response = await fetch(`/api/sessoes-aula/${sessionId}/frequencia/batch`, {
+      const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ attendance: attendanceRecords })
