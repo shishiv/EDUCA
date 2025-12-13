@@ -123,16 +123,17 @@ export async function getClassDiary(
         turmas!inner(
           id,
           nome,
-          ano,
+          serie,
+          ano_letivo,
           escola_id,
           escolas!inner(
             id,
             nome
           )
         ),
-        users!inner(
+        professor:users(
           id,
-          name
+          nome
         )
       `)
 
@@ -195,6 +196,7 @@ export async function getClassDiary(
     // Build frequency map
     const frequenciaMap = new Map<string, { presentes: number; ausentes: number; total: number }>()
     frequencias?.forEach((freq) => {
+      if (!freq.aula_id) return // Skip records without aula_id
       if (!frequenciaMap.has(freq.aula_id)) {
         frequenciaMap.set(freq.aula_id, { presentes: 0, ausentes: 0, total: 0 })
       }
@@ -212,18 +214,18 @@ export async function getClassDiary(
       const stats = frequenciaMap.get(aula.id) || { presentes: 0, ausentes: 0, total: 0 }
       const turma = aula.turmas as any
       const escola = turma?.escolas as any
-      const professor = aula.users as any
+      const professor = aula.professor as any
 
       return {
         id: aula.id,
         data_aula: aula.data_aula,
         turma_id: aula.turma_id,
         turma_nome: turma?.nome || 'N/A',
-        turma_ano: turma?.ano || 1,
+        turma_ano: turma?.ano_letivo || new Date().getFullYear(),
         escola_id: escola?.id || '',
         escola_nome: escola?.nome || 'N/A',
         professor_id: aula.professor_id,
-        professor_nome: professor?.name || 'N/A',
+        professor_nome: professor?.nome || 'N/A',
         disciplina: aula.disciplina,
         status: aula.status,
         observacoes_abertura: aula.observacoes_abertura,
@@ -274,13 +276,16 @@ export async function getAttendanceHistory(
       .select(`
         id,
         aula_id,
-        data,
-        aluno_id,
+        data_aula,
+        matricula_id,
         presente,
-        observacao,
-        alunos!inner(
-          id,
-          nome_completo
+        observacoes,
+        matriculas!inner(
+          aluno_id,
+          alunos!inner(
+            id,
+            nome_completo
+          )
         ),
         aulas_abertas!inner(
           id,
@@ -290,18 +295,18 @@ export async function getAttendanceHistory(
           )
         )
       `)
-      .eq('aluno_id', aluno_id)
+      .eq('matriculas.aluno_id', aluno_id)
       .eq('aulas_abertas.turma_id', turma_id)
 
     if (date_from) {
-      query = query.gte('data', date_from)
+      query = query.gte('data_aula', date_from)
     }
 
     if (date_to) {
-      query = query.lte('data', date_to)
+      query = query.lte('data_aula', date_to)
     }
 
-    query = query.order('data', { ascending: true })
+    query = query.order('data_aula', { ascending: true })
 
     const { data, error } = await query
 
@@ -314,11 +319,11 @@ export async function getAttendanceHistory(
     const transformedData: AttendanceHistoryRecord[] = (data || []).map((record: any) => ({
       id: record.id,
       aula_id: record.aula_id,
-      data: record.data,
-      aluno_id: record.aluno_id,
-      aluno_nome: record.alunos?.nome_completo || 'N/A',
+      data: record.data_aula,
+      aluno_id: record.matriculas?.alunos?.id || '',
+      aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
       presente: record.presente,
-      observacao: record.observacao,
+      observacao: record.observacoes,
       turma_nome: record.aulas_abertas?.turmas?.nome || 'N/A',
     }))
 
@@ -368,16 +373,17 @@ export async function getClassDetail(
         turmas!inner(
           id,
           nome,
-          ano,
+          serie,
+          ano_letivo,
           escola_id,
           escolas!inner(
             id,
             nome
           )
         ),
-        users!inner(
+        professor:users(
           id,
-          name
+          nome
         )
       `)
       .eq('id', aula_id)
@@ -394,17 +400,19 @@ export async function getClassDetail(
       .select(`
         id,
         aula_id,
-        data,
-        aluno_id,
+        data_aula,
+        matricula_id,
         presente,
-        observacao,
-        alunos!inner(
-          id,
-          nome_completo
+        observacoes,
+        matriculas!inner(
+          aluno_id,
+          alunos!inner(
+            id,
+            nome_completo
+          )
         )
       `)
       .eq('aula_id', aula_id)
-      .order('alunos(nome_completo)', { ascending: true })
 
     if (attendanceError) {
       logger.error('Error fetching attendance records', attendanceError as Error, { feature: 'class-diary', action: 'fetch_attendance_records' })
@@ -420,18 +428,18 @@ export async function getClassDetail(
     const aula = aulaData as any
     const turma = aula.turmas as any
     const escola = turma?.escolas as any
-    const professor = aula.users as any
+    const professor = aula.professor as any
 
     // Transform attendance records
     const attendanceRecords: AttendanceHistoryRecord[] = (attendanceData || []).map(
       (record: any) => ({
         id: record.id,
         aula_id: record.aula_id,
-        data: record.data,
-        aluno_id: record.aluno_id,
-        aluno_nome: record.alunos?.nome_completo || 'N/A',
+        data: record.data_aula,
+        aluno_id: record.matriculas?.alunos?.id || '',
+        aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
         presente: record.presente,
-        observacao: record.observacao,
+        observacao: record.observacoes,
         turma_nome: turma?.nome || 'N/A',
       })
     )
@@ -448,11 +456,11 @@ export async function getClassDetail(
       data_aula: aula.data_aula,
       turma_id: aula.turma_id,
       turma_nome: turma?.nome || 'N/A',
-      turma_ano: turma?.ano || 1,
+      turma_ano: turma?.ano_letivo || new Date().getFullYear(),
       escola_id: escola?.id || '',
       escola_nome: escola?.nome || 'N/A',
       professor_id: aula.professor_id,
-      professor_nome: professor?.name || 'N/A',
+      professor_nome: professor?.nome || 'N/A',
       disciplina: aula.disciplina,
       status: aula.status,
       observacoes_abertura: aula.observacoes_abertura,
@@ -487,7 +495,7 @@ export async function getAvailableTurmas(
   supabase: SupabaseClient<Database>,
   professor_id?: string,
   escola_id?: string
-): Promise<{ data: Array<{ id: string; nome: string; ano: number }> | null; error: any }> {
+): Promise<{ data: Array<{ id: string; nome: string; serie: string; ano_letivo: number }> | null; error: any }> {
   try {
 
     let query = supabase
@@ -497,7 +505,8 @@ export async function getAvailableTurmas(
         turmas!inner(
           id,
           nome,
-          ano,
+          serie,
+          ano_letivo,
           escola_id
         )
       `)
@@ -524,7 +533,8 @@ export async function getAvailableTurmas(
         turmasMap.set(aula.turmas.id, {
           id: aula.turmas.id,
           nome: aula.turmas.nome,
-          ano: aula.turmas.ano,
+          serie: aula.turmas.serie,
+          ano_letivo: aula.turmas.ano_letivo,
         })
       }
     })
