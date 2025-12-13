@@ -10,7 +10,7 @@ import {
   CheckSquare,
   School
 } from 'lucide-react'
-import { NoticiasBoard } from '@/components/landing/NoticiasBoard'
+// NoticiasBoard moved inline to simplify structure
 import { EducaLogo, EducaLogoWithSeal } from '@/components/identity/educa-logo'
 
 export default function HomePage() {
@@ -106,7 +106,20 @@ export default function HomePage() {
 
           {/* Área de Avisos e Notícias - Coluna Direita */}
           <div className="lg:col-span-2">
-            <NoticiasBoard />
+            <Card className="shadow-lg rounded-xl border-0 bg-white">
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-900">Avisos e Notícias</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Comunicados da Secretaria Municipal de Educação
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center py-8 text-gray-400">
+                  <p>Nenhum aviso no momento.</p>
+                  <p className="text-sm mt-1">Os avisos da SME aparecerão aqui.</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>

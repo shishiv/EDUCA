@@ -4,9 +4,8 @@
  * Educational Management System - Student Module
  */
 
-// Student registration components
-export { StudentRegistrationForm } from './student-registration-form'
-export { EnhancedStudentRegistrationForm } from './enhanced-student-registration-form'
+// Student form component (formerly enhanced-student-registration-form)
+export { EnhancedStudentRegistrationForm, EnhancedStudentRegistrationForm as StudentForm } from './student-form'
 
 // Type exports
-export type { StudentFormData } from '@/lib/validators/brazilian'
+export type { StudentFormData } from '@/lib/validation'
