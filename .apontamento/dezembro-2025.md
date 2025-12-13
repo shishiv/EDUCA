@@ -108,6 +108,7 @@
 - `09e3316` - Limpeza de 24 arquivos de migration órfãos do diretório supabase/
 - Remoção de preloads não utilizados e imagens órfãs (~190KB)
 - Adição de atributos id em 21 SelectTriggers para acessibilidade
+- Correção do cache do Service Worker que causava queries incorretas no Diário de Classe
 
 ---
 
