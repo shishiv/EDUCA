@@ -13,47 +13,25 @@ Sistema de gestão educacional para o Município de Fronteira, MG.
 | UI Testing | **Chrome DevTools MCP** |
 | Components | **shadcn-ui MCP** |
 | Library Docs | **Context7 MCP** ou **Ref MCP** |
-| Task Tracking | **Beads** (`bd` CLI) + **GitHub Issues** |
+| Issue Tracking | **Beads** (`bd` CLI) |
 
 ---
 
-## Tracking de Trabalho
+## Issue Tracking
 
-**Sistema único:** Beads (`bd` CLI) + GitHub Issues
+**Sistema:** Beads (`bd` CLI) - comandos disponíveis via hook SessionStart
 
-### Comandos Beads
+**Regra:** Usar Beads para tracking de issues e problemas. Comandos carregados automaticamente.
 
-```bash
-# Encontrar trabalho
-bd ready                          # Issues prontas (sem blockers)
-bd list --status=open             # Todas issues abertas
-bd list --status=in_progress      # Trabalho ativo
+---
 
-# Criar e atualizar
-bd create --title="..." --type=task|bug|feature
-bd update <id> --status=in_progress
-bd close <id>                     # Marcar como concluído
+## Skills Disponíveis
 
-# Sincronizar
-bd sync                           # Push para git
-bd stats                          # Estatísticas
-```
+| Skill | Uso |
+|-------|-----|
+| `codebase-cleanup` | Limpeza sistemática em 4 fases |
 
-### Protocolo de Fechamento de Sessão
-
-**CRÍTICO**: Antes de dizer "pronto", execute:
-
-```bash
-[ ] git status              # Verificar mudanças
-[ ] git add <files>         # Stage código
-[ ] bd sync                 # Commit beads
-[ ] git commit -m "..."     # Commit código
-[ ] git push                # Push para remote
-```
-
-### Apontamento (Time Tracking)
-
-Separado em `.apontamento/[mes-ano].md`
+Invocar com: `skill: "codebase-cleanup"`
 
 ---
 
@@ -124,18 +102,29 @@ pnpm test         # Unit tests
 
 ```
 gestao_fronteira/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Rotas de auth
-│   ├── (dashboard)/       # App principal
-│   └── api/               # API routes
+├── app/
+│   ├── (auth)/             # Rotas de auth
+│   ├── (dashboard)/        # App principal
+│   └── api/
+│       ├── alunos/
+│       ├── turmas/
+│       ├── escolas/
+│       ├── sessoes/aula/   # Sessões de aula
+│       ├── frequencia/
+│       ├── notas/
+│       └── relatorios/
 ├── components/
-│   ├── ui/                # shadcn/ui
-│   ├── attendance/        # Frequência
-│   └── diary/             # Diário de classe
+│   ├── ui/                 # shadcn/ui
+│   ├── attendance/         # Frequência
+│   ├── diary/              # Diário de classe
+│   ├── students/           # Alunos
+│   ├── grades/             # Notas
+│   └── reports/            # Relatórios
 ├── lib/
-│   ├── supabase.ts        # Cliente DB
-│   └── validators/        # Validação brasileira
-└── types/                 # TypeScript defs
+│   ├── supabase.ts         # Cliente DB
+│   ├── validation/         # Validação brasileira (CPF, CNPJ, NIS, etc.)
+│   └── api/                # API helpers
+└── types/                  # TypeScript defs
 ```
 
 ---
@@ -181,7 +170,7 @@ Seções:
 
 ## REGRA 2: Apontamento
 
-**TODO trabalho DEVE ser logado** em `.apontamento/[mes-ano].md`
+**TODO trabalho DEVE ser logado** em `apontamento/[mes-ano].md`
 
 Formato:
 ```markdown
@@ -205,7 +194,6 @@ Descrição: [Descrição simples e não-técnica em português]
 | Arquivo | Propósito |
 |---------|-----------|
 | `.beads/` | Issue tracking |
+| `.claude/skills/` | Skills disponíveis |
 | `CHANGELOG.md` | Histórico de versões |
-| `.apontamento/*.md` | Time tracking (português) |
-| `docs/bncc.md` | Referência BNCC |
-| `docs/questionario-*.md` | Respostas validação |
+| `apontamento/*.md` | Time tracking (português) |
