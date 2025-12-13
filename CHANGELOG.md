@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Edge function órfã `auto-lock-sessions` removida (não estava implantada)
   - Diretório `.temp` do Supabase CLI removido
 
+- **Preloads não utilizados e imagens órfãs:**
+  - Removidos `<link rel="preload">` para brasao.png e logo-completo.png em `layout.tsx`
+  - Componentes usam ícones Lucide, não as PNGs
+  - Diretório `/public/identity/` removido (~190KB)
+  - Elimina warnings "preloaded but not used" em todas as páginas
+
+### Fixed
 - **Hook de validação de commit:**
   - Corrigido regex para detectar `git commit` em comandos encadeados
   - Antes: `^git\ commit` (só início do comando)
