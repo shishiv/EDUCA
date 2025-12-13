@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **TypeScript error em class-diary-filter.tsx:**
+  - Corrigido chamada logger.error com parâmetro incorreto
+  - Adicionado `ano_letivo: number` ao tipo de turmas
+
 - **Acessibilidade: SelectTrigger com id para Label htmlFor (21 campos):**
   - `turmas/nova`: escola_id, serie, turno, professor_id
   - `alunos/novo`: sexo, serie_pretendida, turno_preferencia, resp_parentesco, resp_renda
