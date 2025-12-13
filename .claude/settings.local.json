@@ -64,7 +64,10 @@
       "Bash(do if [ -d \"$dir\" ])",
       "Bash([ ! -f \"$dirindex.ts\" ])",
       "Bash(then echo \"❌ $dir\")",
-      "Bash(timeout 30 npx depcheck:*)"
+      "Bash(timeout 30 npx depcheck:*)",
+      "Bash(pnpm update:*)",
+      "Bash(timeout 180 pnpm build:*)",
+      "Bash(pnpm install:*)"
     ],
     "deny": [],
     "ask": []
