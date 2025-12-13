@@ -13,21 +13,6 @@ export interface SearchResult {
   status: string
 }
 
-async function createClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-}
-
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
