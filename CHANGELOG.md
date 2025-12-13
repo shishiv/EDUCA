@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Erros 400 na página Diário de Classe:**
+  - Corrigido nomes de colunas em `lib/api/class-diary.ts`
+  - `ano` → `ano_letivo` (tabela turmas)
+  - `users!inner(id, name)` → `professor:users(id, nome)`
+  - Adicionado null check para `freq.aula_id`
+  - Página `/dashboard/diario` agora carrega sem erros de API
+
+- **Hook de validação de commit:**
+  - Corrigido regex para detectar `git commit` em comandos encadeados
+  - Antes: `^git\ commit` (só início do comando)
+  - Depois: `git\ commit` (qualquer posição no comando)
+
 ### Added
 - **Skill codebase-cleanup migrado para estrutura XML:**
   - YAML frontmatter com name e description

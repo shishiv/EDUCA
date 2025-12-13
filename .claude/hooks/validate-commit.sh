@@ -10,8 +10,8 @@ INPUT=$(cat)
 # Extract command from JSON
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 
-# Only check for git commit commands
-if [[ ! "$COMMAND" =~ ^git\ commit ]]; then
+# Only check for git commit commands (anywhere in the command chain)
+if [[ ! "$COMMAND" =~ git\ commit ]]; then
   # Not a commit, approve
   echo '{"decision": "approve"}'
   exit 0
