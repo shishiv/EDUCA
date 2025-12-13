@@ -1,7 +1,7 @@
 /**
  * Enhanced Session Cancellation API
  * Handles session cancellation with Brazilian legal compliance
- * PUT /api/sessoes-aula/[id]/cancelar
+ * PUT /api/sessoes/aula/[id]/cancelar
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -117,7 +117,7 @@ async function checkExistingAttendance(supabase: any, sessionId: string) {
 }
 
 /**
- * PUT /api/sessoes-aula/[id]/cancelar
+ * PUT /api/sessoes/aula/[id]/cancelar
  * Cancel a session with proper audit trail and legal compliance
  */
 export async function PUT(

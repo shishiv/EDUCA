@@ -1,7 +1,7 @@
 /**
  * Enhanced Batch Attendance Marking API
  * High-performance attendance recording with <1 second requirement
- * POST /api/sessoes-aula/[id]/frequencia/batch
+ * POST /api/sessoes/aula/[id]/frequencia/batch
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -270,7 +270,7 @@ async function performBatchAttendanceUpdate(
 }
 
 /**
- * POST /api/sessoes-aula/[id]/frequencia/batch
+ * POST /api/sessoes/aula/[id]/frequencia/batch
  * Process batch attendance marking with <1 second performance requirement
  */
 export async function POST(

@@ -56,7 +56,15 @@
       "Skill(superpowers:brainstorming)",
       "Skill(superpowers:using-superpowers)",
       "Bash(git pull:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git -C /home/shiv/repos/EDUCA status --short)",
+      "Bash(git -C /home/shiv/repos/EDUCA add .claude/skills/codebase-cleanup.md)",
+      "Bash(for dir in components/*/)",
+      "Bash(do [ ! -f \"$dirindex.ts\" ])",
+      "Bash(do if [ -d \"$dir\" ])",
+      "Bash([ ! -f \"$dirindex.ts\" ])",
+      "Bash(then echo \"❌ $dir\")",
+      "Bash(timeout 30 npx depcheck:*)"
     ],
     "deny": [],
     "ask": []
