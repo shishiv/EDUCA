@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Calendário Escolar (F009):**
+  - Tabela `calendario_escolar` com RLS por escola
+  - Funções `is_dia_letivo()` e `contar_dias_letivos()` para integração com frequência
+  - Página `/dashboard/calendario` com visualização mensal
+  - Componentes `CalendarioEventForm` e `CalendarioEventList`
+  - 6 tipos de evento: feriado, recesso, dia_letivo, evento, reuniao, conselho
+  - Eventos que "afetam frequência" são excluídos do cálculo de dias letivos
+  - Link adicionado nas sidebars desktop e mobile
+
 - **Compliance LGPD para dados de menores (Art. 14):**
   - Página pública `/politica-privacidade` com política completa (9 seções)
   - Componente `ConsentCheckbox` em `components/lgpd/`
