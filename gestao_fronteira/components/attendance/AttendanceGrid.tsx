@@ -9,7 +9,7 @@
  * - Real-time summary with attendance rate badge (green >= 80%, yellow >= 75%, red < 75%)
  * - Batch operations and real-time sync
  * - Visual lock indicator when session is locked after 18:00
- * - Brazilian educational compliance: "nao existe o esquecer"
+ * - Brazilian educational compliance: "não existe o esquecer"
  *
  * @see openspec/changes/2025-12-04-diario-de-classe/spec.md
  * @see types/diario-classe.ts for TypeScript types
@@ -66,7 +66,7 @@ interface AttendanceRecord {
   id?: string
   aluno_id: string
   presente: boolean
-  status_presenca?: AttendanceStatus
+  status_presença?: AttendanceStatus
   observacoes?: string
   horario_marcacao: string
   is_locked?: boolean
@@ -204,7 +204,7 @@ function getSessionLockInfo(
       isLocked: true,
       lockReason: 'session_closed',
       canEdit: false,
-      message: 'Sessao finalizada. Frequencia nao pode ser modificada.',
+      message: 'Sessão finalizada. Frequência não pode ser modificada.',
       timeUntilLockMinutes: null
     }
   }
@@ -215,7 +215,7 @@ function getSessionLockInfo(
       isLocked: true,
       lockReason: 'past_date',
       canEdit: false,
-      message: 'Data passada. Frequencia bloqueada para garantir integridade dos registros.',
+      message: 'Data passada. Frequência bloqueada para garantir integridade dos registros.',
       timeUntilLockMinutes: null
     }
   }
@@ -230,7 +230,7 @@ function getSessionLockInfo(
         isLocked: true,
         lockReason: 'time_18h',
         canEdit: false,
-        message: 'Frequencia bloqueada apos 18:00. Principio "nao existe o esquecer" da legislacao educacional brasileira.',
+        message: 'Frequência bloqueada após 18:00. Princípio "não existe o esquecer" da legislação educacional brasileira.',
         timeUntilLockMinutes: 0
       }
     }
@@ -241,7 +241,7 @@ function getSessionLockInfo(
       lockReason: null,
       canEdit: true,
       message: timeUntilLock <= 60
-        ? `Atencao: Bloqueio automatico em ${formatTimeUntilLock(timeUntilLock)}`
+        ? `Atenção: Bloqueio automático em ${formatTimeUntilLock(timeUntilLock)}`
         : '',
       timeUntilLockMinutes: timeUntilLock
     }
@@ -339,7 +339,7 @@ export function AttendanceGrid({
 
       // Load existing attendance records
       const { data: attendanceData, error: attendanceError } = await supabase
-        .from('frequencia')
+        .from('frequência')
         .select('*')
         .eq('sessao_id', sessionId)
 
@@ -347,11 +347,11 @@ export function AttendanceGrid({
 
       const attendanceMap = new Map<string, AttendanceRecord>()
       attendanceData?.forEach(record => {
-        // Map database status_presenca to our AttendanceStatus type
+        // Map database status_presença to our AttendanceStatus type
         let status: AttendanceStatus = 'empty'
-        if (record.status_presenca === 'P') status = 'presente'
-        else if (record.status_presenca === 'F') status = 'falta'
-        else if (record.status_presenca === 'A') status = 'attestado'
+        if (record.status_presença === 'P') status = 'presente'
+        else if (record.status_presença === 'F') status = 'falta'
+        else if (record.status_presença === 'A') status = 'attestado'
         else if (record.presente) status = 'presente'
         else if (record.presente === false) status = 'falta'
 
@@ -359,8 +359,8 @@ export function AttendanceGrid({
           id: record.id,
           aluno_id: record.matricula_id,
           presente: record.presente || status === 'presente' || status === 'attestado',
-          status_presenca: status,
-          observacoes: record.observacoes_frequencia,
+          status_presença: status,
+          observacoes: record.observacoes_frequência,
           horario_marcacao: record.marcado_em || record.created_at,
           is_locked: record.bloqueado,
           created_by: record.marcado_por,
@@ -390,7 +390,7 @@ export function AttendanceGrid({
     let locked = 0
 
     attendance.forEach(record => {
-      const status = record.status_presenca || 'empty'
+      const status = record.status_presença || 'empty'
 
       if (status === 'attestado') {
         attestado++
@@ -456,7 +456,7 @@ export function AttendanceGrid({
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'frequencia',
+        table: 'frequência',
         filter: `sessao_id=eq.${sessionId}`
       }, () => {
         // Reload data on any change
@@ -483,7 +483,7 @@ export function AttendanceGrid({
   const markAttendanceStatus = async (studentId: string, status: AttendanceStatus) => {
     // Task 1.3.2: Block if locked
     if (isEffectivelyReadonly) {
-      toast.error('Frequencia bloqueada. Nao e possivel fazer alteracoes.')
+      toast.error('Frequência bloqueada. Não é possível fazer alterações.')
       return
     }
 
@@ -491,11 +491,11 @@ export function AttendanceGrid({
       setSyncStatus('pending')
 
       // Map status to database fields
-      const statusMap: Record<AttendanceStatus, { presente: boolean; status_presenca: string }> = {
-        'presente': { presente: true, status_presenca: 'P' },
-        'falta': { presente: false, status_presenca: 'F' },
-        'attestado': { presente: true, status_presenca: 'A' },
-        'empty': { presente: false, status_presenca: '' }
+      const statusMap: Record<AttendanceStatus, { presente: boolean; status_presença: string }> = {
+        'presente': { presente: true, status_presença: 'P' },
+        'falta': { presente: false, status_presença: 'F' },
+        'attestado': { presente: true, status_presença: 'A' },
+        'empty': { presente: false, status_presença: '' }
       }
 
       const statusFields = statusMap[status]
@@ -504,7 +504,7 @@ export function AttendanceGrid({
       const newRecord: AttendanceRecord = {
         aluno_id: studentId,
         presente: statusFields.presente,
-        status_presenca: status,
+        status_presença: status,
         horario_marcacao: new Date().toISOString()
       }
 
@@ -519,7 +519,7 @@ export function AttendanceGrid({
       })
 
       // Send to server
-      const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
+      const response = await fetch(`/api/sessoes/aula/${sessionId}/frequência/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -528,7 +528,7 @@ export function AttendanceGrid({
           attendance: status === 'empty' ? [] : [{
             aluno_id: studentId,
             presente: statusFields.presente,
-            status_presenca: statusFields.status_presenca,
+            status_presença: statusFields.status_presença,
             horario_marcacao: new Date().toISOString()
           }]
         })
@@ -540,9 +540,9 @@ export function AttendanceGrid({
         // Check if it's a lock-related error
         if (result.error?.includes('18:00') || result.error?.includes('bloqueado') || result.error?.includes('locked') || result.error?.includes('IMUTABILIDADE')) {
           setLockInfo(getSessionLockInfo(sessionDate, sessionStatus))
-          toast.error('Frequencia bloqueada. Atualizando status...')
+          toast.error('Frequência bloqueada. Atualizando status...')
         }
-        throw new Error(result.error || 'Erro ao marcar presenca')
+        throw new Error(result.error || 'Erro ao marcar presença')
       }
 
       setSyncStatus('synced')
@@ -562,10 +562,10 @@ export function AttendanceGrid({
       )
 
     } catch (error) {
-      logger.error('Erro ao marcar presenca:', { error: error })
+      logger.error('Erro ao marcar presença:', { error: error })
       setSyncStatus('error')
       loadData() // Revert optimistic update
-      toast.error('Erro ao marcar presenca. Tente novamente.')
+      toast.error('Erro ao marcar presença. Tente novamente.')
     }
   }
 
@@ -574,7 +574,7 @@ export function AttendanceGrid({
     // Task 1.3.2: Block if locked
     if (isEffectivelyReadonly || selectedStudents.size === 0) {
       if (isEffectivelyReadonly) {
-        toast.error('Frequencia bloqueada. Nao e possivel fazer alteracoes.')
+        toast.error('Frequência bloqueada. Não é possível fazer alterações.')
       }
       return
     }
@@ -589,7 +589,7 @@ export function AttendanceGrid({
       const attendanceRecords = Array.from(selectedStudents).map(studentId => ({
         aluno_id: studentId,
         presente: present,
-        status_presenca: dbStatus,
+        status_presença: dbStatus,
         horario_marcacao: new Date().toISOString()
       }))
 
@@ -598,13 +598,13 @@ export function AttendanceGrid({
       attendanceRecords.forEach(record => {
         newAttendance.set(record.aluno_id, {
           ...record,
-          status_presenca: status
+          status_presença: status
         })
       })
       setAttendance(newAttendance)
 
       // Send to server
-      const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
+      const response = await fetch(`/api/sessoes/aula/${sessionId}/frequência/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ attendance: attendanceRecords })
@@ -613,7 +613,7 @@ export function AttendanceGrid({
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao marcar presenca em lote')
+        throw new Error(result.error || 'Erro ao marcar presença em lote')
       }
 
       setSyncStatus('synced')
@@ -626,10 +626,10 @@ export function AttendanceGrid({
       )
 
     } catch (error) {
-      logger.error('Erro ao marcar presenca em lote:', { error: error })
+      logger.error('Erro ao marcar presença em lote:', { error: error })
       setSyncStatus('error')
       loadData()
-      toast.error('Erro ao marcar presenca em lote. Tente novamente.')
+      toast.error('Erro ao marcar presença em lote. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -651,7 +651,7 @@ export function AttendanceGrid({
   const getAttendanceStatus = (studentId: string): AttendanceStatus => {
     const record = attendance.get(studentId)
     if (!record) return 'empty'
-    return record.status_presenca || 'empty'
+    return record.status_presença || 'empty'
   }
 
   const calculateAge = (birthDate: string) => {
@@ -720,13 +720,13 @@ export function AttendanceGrid({
           <Alert variant="destructive" className="mb-4 border-orange-500 bg-orange-50">
             <Lock className="h-5 w-5 text-orange-600" />
             <AlertTitle className="text-orange-800 font-semibold">
-              Frequencia Bloqueada
+              Frequência Bloqueada
             </AlertTitle>
             <AlertDescription className="text-orange-700">
               {lockInfo.message}
               {lockInfo.lockReason === 'time_18h' && (
                 <p className="mt-1 text-sm">
-                  Conforme legislacao educacional brasileira, os registros de frequencia sao imutaveis apos as 18:00.
+                  Conforme legislação educacional brasileira, os registros de frequência são imutáveis após as 18:00.
                 </p>
               )}
             </AlertDescription>
@@ -738,12 +738,12 @@ export function AttendanceGrid({
           <Alert className="mb-4 border-yellow-500 bg-yellow-50">
             <AlertTriangle className="h-5 w-5 text-yellow-600" />
             <AlertTitle className="text-yellow-800 font-semibold">
-              Atencao: Bloqueio Proximo
+              Atenção: Bloqueio Próximo
             </AlertTitle>
             <AlertDescription className="text-yellow-700">
               {lockInfo.message}
               <p className="mt-1 text-sm">
-                Finalize as marcacoes de frequencia antes do bloqueio automatico as 18:00.
+                Finalize as marcações de frequência antes do bloqueio automático as 18:00.
               </p>
             </AlertDescription>
           </Alert>
@@ -767,7 +767,7 @@ export function AttendanceGrid({
               ) : (
                 <>
                   <LockOpen className="h-4 w-4 text-green-600" />
-                  <span className="text-green-600">Editavel</span>
+                  <span className="text-green-600">Editável</span>
                 </>
               )}
             </div>
@@ -792,7 +792,7 @@ export function AttendanceGrid({
               <span className="text-muted-foreground">
                 {syncStatus === 'synced' && 'Sincronizado'}
                 {syncStatus === 'pending' && 'Sincronizando...'}
-                {syncStatus === 'error' && 'Erro na sincronizacao'}
+                {syncStatus === 'error' && 'Erro na sincronização'}
               </span>
             </div>
           </div>
@@ -885,7 +885,7 @@ export function AttendanceGrid({
               onClick={() => setSelectedStudents(new Set())}
               className="min-h-[36px]"
             >
-              Limpar Selecao
+              Limpar Seleção
             </Button>
           </div>
         )}
@@ -895,7 +895,7 @@ export function AttendanceGrid({
           <Alert variant="destructive" className="mt-4">
             <WifiOff className="h-4 w-4" />
             <AlertDescription>
-              Voce esta offline. As marcacoes serao sincronizadas quando a conexao for reestabelecida.
+              Você está offline. As marcações serão sincronizadas quando a conexão for reestabelecida.
             </AlertDescription>
           </Alert>
         )}
@@ -1015,7 +1015,7 @@ export function AttendanceGrid({
                       {attendanceStatus === 'presente' && 'Presente'}
                       {attendanceStatus === 'falta' && 'Ausente'}
                       {attendanceStatus === 'attestado' && 'Atestado'}
-                      {attendanceStatus === 'empty' && 'Nao marcado'}
+                      {attendanceStatus === 'empty' && 'Não marcado'}
                     </Badge>
                     {isRecordLocked && (
                       <Lock className="h-4 w-4 text-orange-500" />
@@ -1051,7 +1051,7 @@ export function AttendanceGrid({
               className="min-h-[36px]"
             >
               <CheckSquare className="h-3 w-3 mr-1" />
-              Selecionar Nao Marcados
+              Selecionar Não Marcados
             </Button>
             <Button
               variant="outline"
@@ -1060,7 +1060,7 @@ export function AttendanceGrid({
               className="min-h-[36px]"
             >
               <Square className="h-3 w-3 mr-1" />
-              Limpar Selecao
+              Limpar Seleção
             </Button>
           </div>
         )}
@@ -1069,7 +1069,7 @@ export function AttendanceGrid({
         {lockInfo.isLocked && (
           <div className="mt-6 pt-4 border-t flex items-center justify-center text-sm text-orange-600">
             <Lock className="h-4 w-4 mr-2" />
-            <span>Frequencia bloqueada - Somente visualizacao disponivel</span>
+            <span>Frequência bloqueada - Somente visualização disponível</span>
           </div>
         )}
       </CardContent>
