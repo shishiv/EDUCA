@@ -107,6 +107,13 @@ const navigationItems: NavigationItem[] = [
     description: 'Lançamento de avaliações'
   },
   {
+    name: 'Calendário',
+    href: '/dashboard/calendario',
+    icon: Calendar,
+    description: 'Feriados e eventos escolares',
+    isNew: true
+  },
+  {
     name: 'Relatórios',
     href: '/dashboard/relatorios',
     icon: FileText,
