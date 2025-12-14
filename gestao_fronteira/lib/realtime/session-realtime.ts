@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 // Type definitions
@@ -80,7 +81,7 @@ export class SessionRealtimeManager {
     const channelName = `session-updates-${this.generateFilterId(filter)}`
 
     if (this.channels.has(channelName)) {
-      console.warn(`Already subscribed to channel: ${channelName}`)
+      logger.warn(`Already subscribed to channel: ${channelName}`)
       return channelName
     }
 
@@ -88,14 +89,14 @@ export class SessionRealtimeManager {
     if (process.env.NODE_ENV === 'development' &&
         typeof window !== 'undefined' &&
         localStorage.getItem('dev_auth_bypass') === 'true') {
-      console.log(`Development mode: Mocking subscription to ${channelName}`)
+      logger.debug(`Development mode: Mocking subscription to ${channelName}`)
       // Create a mock channel entry
       const mockChannel = { unsubscribe: () => {} } as any
       this.channels.set(channelName, mockChannel)
 
       // Simulate successful subscription after a delay
       setTimeout(() => {
-        console.log(`Mock subscribed to session updates: ${channelName}`)
+        logger.debug(`Mock subscribed to session updates: ${channelName}`)
         this.callbacks.onConnectionStatus?.('disconnected') // Keep showing offline in dev mode
       }, 100)
 
@@ -118,15 +119,15 @@ export class SessionRealtimeManager {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log(`Subscribed to session updates: ${channelName}`)
+          logger.debug(`Subscribed to session updates: ${channelName}`)
           this.isConnected = true
           this.reconnectAttempts = 0
           this.callbacks.onConnectionStatus?.('connected')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error(`Channel error: ${channelName}`)
+          logger.error(`Channel error: ${channelName}`)
           this.handleConnectionError()
         } else if (status === 'TIMED_OUT') {
-          console.error(`Channel timeout: ${channelName}`)
+          logger.error(`Channel timeout: ${channelName}`)
           this.handleConnectionError()
         }
       })
@@ -142,7 +143,7 @@ export class SessionRealtimeManager {
     const channelName = `attendance-updates-${sessionIds.join('-')}`
 
     if (this.channels.has(channelName)) {
-      console.warn(`Already subscribed to channel: ${channelName}`)
+      logger.warn(`Already subscribed to channel: ${channelName}`)
       return channelName
     }
 
@@ -162,7 +163,7 @@ export class SessionRealtimeManager {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log(`Subscribed to attendance updates: ${channelName}`)
+          logger.debug(`Subscribed to attendance updates: ${channelName}`)
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           this.handleConnectionError()
         }
@@ -216,7 +217,7 @@ export class SessionRealtimeManager {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log(`Subscribed to dashboard updates: ${channelName}`)
+          logger.debug(`Subscribed to dashboard updates: ${channelName}`)
         }
       })
 
@@ -232,7 +233,7 @@ export class SessionRealtimeManager {
     if (channel) {
       supabase.removeChannel(channel)
       this.channels.delete(channelName)
-      console.log(`Unsubscribed from channel: ${channelName}`)
+      logger.debug(`Unsubscribed from channel: ${channelName}`)
     }
   }
 
@@ -242,7 +243,7 @@ export class SessionRealtimeManager {
   unsubscribeAll(): void {
     for (const [channelName, channel] of this.channels) {
       supabase.removeChannel(channel)
-      console.log(`Unsubscribed from channel: ${channelName}`)
+      logger.debug(`Unsubscribed from channel: ${channelName}`)
     }
     this.channels.clear()
     this.isConnected = false
@@ -268,7 +269,7 @@ export class SessionRealtimeManager {
         }
       })
     } catch (error) {
-      console.error('Failed to broadcast session update:', error)
+      logger.error('Failed to broadcast session update:', error)
       this.callbacks.onError?.(error as Error)
     }
   }
@@ -335,7 +336,7 @@ export class SessionRealtimeManager {
         this.callbacks.onSessionUpdate?.(oldRecord, eventType)
       }
     } catch (error) {
-      console.error('Error handling session change:', error)
+      logger.error('Error handling session change:', error)
       this.callbacks.onError?.(error as Error)
     }
   }
@@ -356,7 +357,7 @@ export class SessionRealtimeManager {
         this.updateAttendanceStats(oldRecord.session_id)
       }
     } catch (error) {
-      console.error('Error handling attendance change:', error)
+      logger.error('Error handling attendance change:', error)
       this.callbacks.onError?.(error as Error)
     }
   }
@@ -404,7 +405,7 @@ export class SessionRealtimeManager {
         this.callbacks.onAttendanceStats?.(sessionId, stats)
       }
     } catch (error) {
-      console.error('Error updating attendance stats:', error)
+      logger.error('Error updating attendance stats:', error)
     }
   }
 
@@ -415,7 +416,7 @@ export class SessionRealtimeManager {
     if (process.env.NODE_ENV === 'development') {
       // Check if development bypass is enabled - if so, don't try to connect to Supabase
       if (typeof window !== 'undefined' && localStorage.getItem('dev_auth_bypass') === 'true') {
-        console.log('Development mode: Bypassing real-time connections')
+        logger.debug('Development mode: Bypassing real-time connections')
         setTimeout(() => {
           this.isConnected = false // Keep as false to prevent real connections
           this.callbacks.onConnectionStatus?.('disconnected')
@@ -439,7 +440,7 @@ export class SessionRealtimeManager {
       this.isConnected = true
       this.callbacks.onConnectionStatus?.('connected')
     } catch (error) {
-      console.error('Realtime connection error:', error)
+      logger.error('Realtime connection error:', error)
       this.callbacks.onConnectionStatus?.('error')
       this.callbacks.onError?.(new Error('Realtime connection error'))
     }
@@ -508,10 +509,10 @@ export function createTeacherRealtimeManager(
       onUpdate(Array.from(sessions.values()))
     },
     onConnectionStatus: (status) => {
-      console.log(`Teacher realtime connection: ${status}`)
+      logger.debug(`Teacher realtime connection: ${status}`)
     },
     onError: (error) => {
-      console.error('Teacher realtime error:', error)
+      logger.error('Teacher realtime error:', error)
     }
   })
 }
@@ -525,10 +526,10 @@ export function createAdminRealtimeManager(
 ): SessionRealtimeManager {
   return new SessionRealtimeManager({
     onConnectionStatus: (status) => {
-      console.log(`Admin realtime connection: ${status}`)
+      logger.debug(`Admin realtime connection: ${status}`)
     },
     onError: (error) => {
-      console.error('Admin realtime error:', error)
+      logger.error('Admin realtime error:', error)
     },
     ...callbacks
   })
@@ -557,7 +558,7 @@ export function createAttendanceRealtimeManager(
       onStatsUpdate(stats)
     },
     onConnectionStatus: (status) => {
-      console.log(`Attendance realtime connection: ${status}`)
+      logger.debug(`Attendance realtime connection: ${status}`)
     }
   })
 }

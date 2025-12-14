@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 export type ConnectionState = 'connected' | 'disconnected' | 'reconnecting' | 'error' | 'degraded'
 
@@ -491,7 +492,7 @@ export class ConnectionManager {
 
   private logComplianceEvent(event: string, data: any): void {
     if (this.complianceRequirements.auditLogRequired) {
-      console.log(`[COMPLIANCE] Connection Event: ${event}`, {
+      logger.info(`[COMPLIANCE] Connection Event: ${event}`, {
         timestamp: new Date().toISOString(),
         event,
         data,

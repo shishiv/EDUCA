@@ -6,6 +6,7 @@
 
 import { AulasAbertasListener } from './aulas-abertas-listener'
 import { SessionRealtimeManager } from './session-realtime'
+import { logger } from '@/lib/logger'
 
 export interface PerformanceMetrics {
   subscriptionCount: number
@@ -347,7 +348,7 @@ export class RealtimePerformanceOptimizer {
         this.processMessageImmediate(message)
       })
     } catch (error) {
-      console.error('Batch processing error:', error)
+      logger.error('Batch processing error:', error)
     }
 
     // Update metrics
@@ -379,12 +380,12 @@ export class RealtimePerformanceOptimizer {
           try {
             callback(message.data)
           } catch (error) {
-            console.error('Message callback error:', error)
+            logger.error('Message callback error:', error)
           }
         })
       }
     } catch (error) {
-      console.error('Message processing error:', error)
+      logger.error('Message processing error:', error)
     } finally {
       // Mark end and measure
       performance.mark('realtime-message-end')
@@ -439,7 +440,7 @@ export class RealtimePerformanceOptimizer {
     // Remove inactive subscriptions
     this.subscriptions.forEach((subscription, id) => {
       if (subscription.lastActivity.getTime() < cutoffTime) {
-        console.log(`Cleaning up inactive subscription: ${id}`)
+        logger.debug(`Cleaning up inactive subscription: ${id}`)
         this.unregisterSubscription(id)
       }
     })
@@ -457,14 +458,14 @@ export class RealtimePerformanceOptimizer {
 
     const cleaned = oldLength - this.messageQueue.length
     if (cleaned > 0) {
-      console.log(`Cleaned ${cleaned} old messages from queue`)
+      logger.debug(`Cleaned ${cleaned} old messages from queue`)
     }
 
     this.metrics.queuedMessages = this.messageQueue.length
   }
 
   private performEmergencyCleanup(): void {
-    console.warn('Memory threshold exceeded, performing emergency cleanup')
+    logger.warn('Memory threshold exceeded, performing emergency cleanup')
 
     // Aggressive cleanup
     this.messageQueue = this.messageQueue.slice(-10) // Keep only last 10 messages
