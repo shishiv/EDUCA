@@ -67,7 +67,16 @@
       "Bash(timeout 30 npx depcheck:*)",
       "Bash(pnpm update:*)",
       "Bash(timeout 180 pnpm build:*)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Skill(taches-cc-resources:create-hooks)",
+      "Bash(.claude/hooks/validate-commit.sh)",
+      "Bash(git check-ignore:*)",
+      "Bash(git reset:*)",
+      "Skill(taches-cc-resources:create-agent-skills)",
+      "Bash(bd ready:*)",
+      "Bash(wget:*)",
+      "Bash(google-chrome:*)",
+      "Skill(taches-cc-resources:create-meta-prompts)"
     ],
     "deny": [],
     "ask": []

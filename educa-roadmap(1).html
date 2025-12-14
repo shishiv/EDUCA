@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUCA — Roadmap de Features</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green-600: #059669;
+            --green-500: #10b981;
+            --green-100: #d1fae5;
+            --green-50: #ecfdf5;
+            
+            --blue-500: #0ea5e9;
+            --blue-100: #e0f2fe;
+            --blue-50: #f0f9ff;
+            
+            --yellow-500: #eab308;
+            --yellow-100: #fef3c7;
+            --yellow-50: #fefce8;
+            
+            --pink-500: #ec4899;
+            --pink-100: #fce7f3;
+            
+            --purple-500: #8b5cf6;
+            --purple-100: #ede9fe;
+            --purple-50: #f5f3ff;
+            
+            --orange-500: #f97316;
+            --orange-100: #ffedd5;
+            
+            --gray-900: #0f172a;
+            --gray-800: #1e293b;
+            --gray-700: #334155;
+            --gray-600: #475569;
+            --gray-500: #64748b;
+            --gray-400: #94a3b8;
+            --gray-300: #cbd5e1;
+            --gray-200: #e2e8f0;
+            --gray-100: #f1f5f9;
+            --gray-50: #f8fafc;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo {
+            margin-bottom: 24px;
+        }
+
+        .logo svg {
+            height: 50px;
+        }
+
+        header h1 {
+            font-family: 'Lexend', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 1rem;
+            color: var(--gray-500);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Summary Stats */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .summary-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .summary-value {
+            font-family: 'Lexend', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .legend-dot.done { background: var(--green-500); }
+        .legend-dot.progress { background: var(--blue-500); }
+        .legend-dot.planned { background: var(--gray-300); }
+        .legend-dot.critical { background: var(--pink-500); }
+
+        /* Phase */
+        .phase {
+            margin-bottom: 48px;
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .phase-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Lexend', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .phase-info {
+            flex: 1;
+        }
+
+        .phase-title {
+            font-family: 'Lexend', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .phase-period {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        .phase-status {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .phase-status.done {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .phase-status.progress {
+            background: var(--blue-100);
+            color: var(--blue-500);
+        }
+
+        .phase-status.planned {
+            background: var(--gray-100);
+            color: var(--gray-500);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            display: flex;
+            gap: 16px;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--green-300);
+            box-shadow: 0 4px 20px rgba(5, 150, 105, 0.08);
+        }
+
+        .feature-card.done {
+            border-left: 4px solid var(--green-500);
+        }
+
+        .feature-card.progress {
+            border-left: 4px solid var(--blue-500);
+        }
+
+        .feature-card.planned {
+            border-left: 4px solid var(--gray-300);
+        }
+
+        .feature-card.critical {
+            border-left: 4px solid var(--pink-500);
+            background: var(--pink-50);
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke-width: 2;
+        }
+
+        .feature-icon.green { background: var(--green-100); color: var(--green-600); }
+        .feature-icon.blue { background: var(--blue-100); color: var(--blue-500); }
+        .feature-icon.yellow { background: var(--yellow-100); color: var(--yellow-500); }
+        .feature-icon.pink { background: var(--pink-100); color: var(--pink-500); }
+        .feature-icon.purple { background: var(--purple-100); color: var(--purple-500); }
+        .feature-icon.orange { background: var(--orange-100); color: var(--orange-500); }
+        .feature-icon.gray { background: var(--gray-100); color: var(--gray-500); }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-family: 'Lexend', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        .feature-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .feature-tag {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .feature-tag.module {
+            background: var(--purple-100);
+            color: var(--purple-500);
+        }
+
+        .feature-tag.compliance {
+            background: var(--pink-100);
+            color: var(--pink-500);
+        }
+
+        .feature-tag.integration {
+            background: var(--orange-100);
+            color: var(--orange-500);
+        }
+
+        .feature-tag.ux {
+            background: var(--blue-100);
+            color: var(--blue-500);
+        }
+
+        /* Timeline connector */
+        .timeline-connector {
+            width: 4px;
+            height: 32px;
+            background: linear-gradient(180deg, var(--green-300), var(--blue-300));
+            margin: 0 auto 0 22px;
+            border-radius: 2px;
+        }
+
+        /* Roles Section */
+        .roles-section {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 48px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .roles-section h2 {
+            font-family: 'Lexend', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .role-card {
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .role-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .role-name {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+
+        .role-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        /* Notes */
+        .notes-section {
+            background: var(--yellow-50);
+            border: 1px solid var(--yellow-100);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 48px;
+        }
+
+        .notes-section h3 {
+            font-family: 'Lexend', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .notes-list li {
+            font-size: 0.85rem;
+            color: #a16207;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .notes-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #d97706;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--gray-400);
+            font-size: 0.8rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; }
+            .phase { page-break-inside: avoid; }
+            .feature-card { break-inside: avoid; }
+        }
+
+        @media (max-width: 768px) {
+            .summary { grid-template-columns: repeat(2, 1fr); }
+            .features-grid { grid-template-columns: 1fr; }
+            .roles-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 180 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gradLogo" x1="0%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" style="stop-color:#059669"/>
+                            <stop offset="100%" style="stop-color:#0ea5e9"/>
+                        </linearGradient>
+                    </defs>
+                    <text x="5" y="36" font-family="Lexend, sans-serif" font-weight="700" font-size="40" fill="url(#gradLogo)">EDUCA</text>
+                    <path d="M8 46 Q40 51 75 46 Q110 41 146 46" stroke="#fcd34d" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                </svg>
+            </div>
+            <h1>Roadmap de Features</h1>
+            <p>Planejamento de desenvolvimento do Sistema de Gestão Escolar para a rede municipal de Fronteira, MG</p>
+        </header>
+
+        <!-- Summary -->
+        <div class="summary">
+            <div class="summary-card">
+                <div class="summary-value" style="color: var(--green-500);">6</div>
+                <div class="summary-label">Concluídas</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" style="color: var(--blue-500);">8</div>
+                <div class="summary-label">Em Desenvolvimento</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" style="color: var(--gray-400);">18</div>
+                <div class="summary-label">Planejadas</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" style="color: var(--pink-500);">3</div>
+                <div class="summary-label">Críticas (LGPD)</div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot done"></div>
+                <span>Concluído</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot progress"></div>
+                <span>Em desenvolvimento</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot planned"></div>
+                <span>Planejado</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot critical"></div>
+                <span>Crítico / Compliance</span>
+            </div>
+        </div>
+
+        <!-- FASE 0: Fundação -->
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-number" style="background: linear-gradient(135deg, var(--green-500), var(--green-600));">0</div>
+                <div class="phase-info">
+                    <h2 class="phase-title">Fundação & Infraestrutura</h2>
+                    <p class="phase-period">✓ Concluído</p>
+                </div>
+                <span class="phase-status done">100% Completo</span>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card done">
+                    <div class="feature-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Arquitetura do Sistema</h3>
+                        <p class="feature-desc">Estrutura de banco de dados, API, autenticação e autorização por níveis de acesso.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Core</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card done">
+                    <div class="feature-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Importação de Dados</h3>
+                        <p class="feature-desc">Importação em massa de alunos, escolas, responsáveis e turmas via planilhas.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Core</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card done">
+                    <div class="feature-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Log de Alterações</h3>
+                        <p class="feature-desc">Auditoria completa de todas as ações: quem alterou, o quê e quando.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag compliance">Compliance</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card done">
+                    <div class="feature-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Níveis de Acesso</h3>
+                        <p class="feature-desc">Permissões por perfil: Professor, Diretor, Coordenador, Nutricionista, Gestor.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag compliance">Segurança</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-connector"></div>
+
+        <!-- FASE 1: Core Acadêmico -->
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-number" style="background: linear-gradient(135deg, var(--blue-500), var(--purple-500));">1</div>
+                <div class="phase-info">
+                    <h2 class="phase-title">Core Acadêmico</h2>
+                    <p class="phase-period">Janeiro — Fevereiro 2025</p>
+                </div>
+                <span class="phase-status progress">Em andamento</span>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card progress">
+                    <div class="feature-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Cadastro de Alunos</h3>
+                        <p class="feature-desc">CRUD completo com dados pessoais, NIS (Bolsa Família), responsáveis e documentos.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Cadastro</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card progress">
+                    <div class="feature-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Chamada Digital</h3>
+                        <p class="feature-desc">Registro de frequência por aula, com cálculo automático de percentual e alertas.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Frequência</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card progress">
+                    <div class="feature-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Diário de Classe — Fundamental</h3>
+                        <p class="feature-desc">Conteúdos, notas, avaliações por área do conhecimento conforme BNCC.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Acadêmico</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card progress">
+                    <div class="feature-icon purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Diário de Classe — Ed. Infantil</h3>
+                        <p class="feature-desc">Campos de Experiência, Direitos de Aprendizagem, observações e relatórios BNCC.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Acadêmico</span>
+                            <span class="feature-tag compliance">BNCC</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Calendário Escolar</h3>
+                        <p class="feature-desc">Feriados, recessos, dias letivos, eventos. Integrado ao cálculo de frequência.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Acadêmico</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Grade Curricular</h3>
+                        <p class="feature-desc">Disciplinas, carga horária, professores por turma e horários das aulas.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Acadêmico</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-connector"></div>
+
+        <!-- FASE 2: Compliance & LGPD -->
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-number" style="background: linear-gradient(135deg, var(--pink-500), #e11d48);">2</div>
+                <div class="phase-info">
+                    <h2 class="phase-title">Compliance, LGPD & Segurança</h2>
+                    <p class="phase-period">Fevereiro — Março 2025</p>
+                </div>
+                <span class="phase-status planned">Crítico</span>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card critical">
+                    <div class="feature-icon pink">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Política de Privacidade (LGPD)</h3>
+                        <p class="feature-desc">Termos de uso, consentimento dos responsáveis, política de dados de menores.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag compliance">Obrigatório</span>
+                            <span class="feature-tag compliance">LGPD</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card critical">
+                    <div class="feature-icon pink">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Backup Automático</h3>
+                        <p class="feature-desc">Rotina de backup diário, retenção de 30 dias, restore testado. Redundância geográfica.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag compliance">Segurança</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card critical">
+                    <div class="feature-icon pink">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Termo de Consentimento</h3>
+                        <p class="feature-desc">Assinatura digital dos responsáveis autorizando uso de dados e imagem.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag compliance">LGPD</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Criptografia de Dados Sensíveis</h3>
+                        <p class="feature-desc">CPF, NIS, dados de saúde e endereços criptografados em repouso.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag compliance">Segurança</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-connector"></div>
+
+        <!-- FASE 3: Módulos Auxiliares -->
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-number" style="background: linear-gradient(135deg, var(--orange-500), var(--yellow-500));">3</div>
+                <div class="phase-info">
+                    <h2 class="phase-title">Módulos Auxiliares</h2>
+                    <p class="phase-period">Março — Abril 2025</p>
+                </div>
+                <span class="phase-status planned">Planejado</span>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card planned">
+                    <div class="feature-icon orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Transporte Escolar</h3>
+                        <p class="feature-desc">Cadastro de rotas, veículos, motoristas. Vínculo do aluno com rota de transporte.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Transporte</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon yellow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Módulo Nutrição / Merenda</h3>
+                        <p class="feature-desc">Cardápio, controle de refeições servidas, restrições alimentares, relatórios.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Nutrição</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Relatórios Bolsa Família</h3>
+                        <p class="feature-desc">Acompanhamento de frequência dos beneficiários, alertas e exportação para o MEC.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Relatórios</span>
+                            <span class="feature-tag compliance">MEC</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Exportação Educacenso</h3>
+                        <p class="feature-desc">Geração de arquivos no formato exigido pelo Censo Escolar / INEP.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag integration">Integração</span>
+                            <span class="feature-tag compliance">MEC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-connector"></div>
+
+        <!-- FASE 4: UX & Comunicação -->
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-number" style="background: linear-gradient(135deg, #06b6d4, var(--blue-500));">4</div>
+                <div class="phase-info">
+                    <h2 class="phase-title">Experiência do Usuário & Comunicação</h2>
+                    <p class="phase-period">Abril — Maio 2025</p>
+                </div>
+                <span class="phase-status planned">Planejado</span>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card planned">
+                    <div class="feature-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Onboarding & Tour Guiado</h3>
+                        <p class="feature-desc">Tutorial interativo no primeiro acesso. Central de ajuda com toggle para ativar/desativar.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag ux">UX</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Integração WhatsApp</h3>
+                        <p class="feature-desc">Notificações automáticas: faltas, reuniões, comunicados, alertas de frequência.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag integration">Integração</span>
+                            <span class="feature-tag ux">Comunicação</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Central de Ajuda</h3>
+                        <p class="feature-desc">Documentação in-app, tooltips contextuais, FAQ e vídeos tutoriais.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag ux">UX</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Responsivo Mobile</h3>
+                        <p class="feature-desc">Interface otimizada para tablets e celulares. Chamada pelo celular do professor.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag ux">UX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-connector"></div>
+
+        <!-- FASE 5: Dashboards -->
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-number" style="background: linear-gradient(135deg, var(--purple-500), var(--pink-500));">5</div>
+                <div class="phase-info">
+                    <h2 class="phase-title">Dashboards por Perfil</h2>
+                    <p class="phase-period">Maio — Junho 2025</p>
+                </div>
+                <span class="phase-status planned">Planejado</span>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card planned">
+                    <div class="feature-icon purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Dashboard Professor</h3>
+                        <p class="feature-desc">Minhas turmas, chamadas pendentes, alertas de alunos, acesso rápido ao diário.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Dashboard Diretor</h3>
+                        <p class="feature-desc">Visão da escola: todas as turmas, frequência geral, indicadores, pendências.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Dashboard Coordenador</h3>
+                        <p class="feature-desc">Acompanhamento pedagógico, diários preenchidos, observações pendentes.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Dashboard Gestor (Secretaria)</h3>
+                        <p class="feature-desc">Visão de todas as 9 escolas, comparativos, relatórios consolidados, exportações.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon yellow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Dashboard Nutricionista</h3>
+                        <p class="feature-desc">Cardápios, restrições alimentares, refeições servidas, estoque.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag module">Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card planned">
+                    <div class="feature-icon gray">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="feature-content">
+                        <h3 class="feature-title">Layout A4 para Impressão</h3>
+                        <p class="feature-desc">Todos os relatórios com layout otimizado para impressão em papel A4.</p>
+                        <div class="feature-tags">
+                            <span class="feature-tag ux">UX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles Section -->
+        <div class="roles-section">
+            <h2>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Perfis de Acesso
+            </h2>
+            <div class="roles-grid">
+                <div class="role-card">
+                    <div class="role-avatar" style="background: linear-gradient(135deg, var(--green-400), var(--green-600));">👩‍🏫</div>
+                    <h4 class="role-name">Professor(a)</h4>
+                    <p class="role-desc">Chamada, diário, notas, observações das suas turmas</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-avatar" style="background: linear-gradient(135deg, var(--blue-400), var(--blue-600));">👨‍💼</div>
+                    <h4 class="role-name">Diretor(a)</h4>
+                    <p class="role-desc">Visão completa da escola, aprovações, relatórios</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-avatar" style="background: linear-gradient(135deg, var(--purple-400), var(--purple-600));">📋</div>
+                    <h4 class="role-name">Coordenador(a)</h4>
+                    <p class="role-desc">Acompanhamento pedagógico, diários, observações</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-avatar" style="background: linear-gradient(135deg, var(--orange-400), var(--orange-600));">🏛️</div>
+                    <h4 class="role-name">Gestor (Secretaria)</h4>
+                    <p class="role-desc">Todas as escolas, relatórios consolidados, exportações</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-avatar" style="background: linear-gradient(135deg, var(--yellow-400), var(--yellow-600));">🍎</div>
+                    <h4 class="role-name">Nutricionista</h4>
+                    <p class="role-desc">Cardápios, restrições, controle de merenda</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-avatar" style="background: linear-gradient(135deg, var(--pink-400), var(--pink-600));">📝</div>
+                    <h4 class="role-name">Secretário(a) Escolar</h4>
+                    <p class="role-desc">Matrículas, transferências, documentos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="notes-section">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Pontos de Atenção
+            </h3>
+            <ul class="notes-list">
+                <li><strong>LGPD:</strong> Definir DPO (encarregado de dados), documentar bases legais para tratamento de dados de menores.</li>
+                <li><strong>Backup:</strong> Definir política de retenção, local de armazenamento (cloud provider), processo de restore.</li>
+                <li><strong>WhatsApp:</strong> Utilizar API oficial (Evolution API já configurada) para evitar bloqueios.</li>
+                <li><strong>Educacenso:</strong> Validar layout do arquivo de exportação com a Secretaria antes de implementar.</li>
+                <li><strong>Treinamento:</strong> Planejar capacitação presencial para professores e gestores antes do lançamento.</li>
+                <li><strong>Piloto:</strong> Sugestão de rodar piloto em 1-2 escolas antes do rollout completo.</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>EDUCA — Sistema de Gestão Escolar</p>
+            <p>Secretaria Municipal de Educação — Fronteira, MG</p>
+            <p style="margin-top: 8px;">Roadmap v1.0 • Dezembro 2024</p>
+        </footer>
+
+    </div>
+</body>
+</html>
