@@ -72,6 +72,11 @@ const navigation = [
     icon: ClipboardList,
   },
   {
+    name: 'Calendário',
+    href: '/dashboard/calendario',
+    icon: Calendar,
+  },
+  {
     name: 'Relatórios',
     href: '/dashboard/relatorios',
     icon: FileText,
