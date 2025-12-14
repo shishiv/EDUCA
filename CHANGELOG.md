@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Compliance LGPD para dados de menores (Art. 14):**
+  - Página pública `/politica-privacidade` com política completa (9 seções)
+  - Componente `ConsentCheckbox` em `components/lgpd/`
+  - Checkbox obrigatório no cadastro de responsável
+  - Campos `lgpd_consentimento` e `lgpd_data_consentimento` salvos automaticamente
+  - Bloqueia cadastro sem aceite da política
+  - Seção especial destacando tratamento de dados de menores (LGPD Art. 14)
+
 ### Fixed
 - **Cache de Service Worker causando queries antigas:**
   - Atualizado `CACHE_NAME` de `v1` para `v2` em `public/sw.js`

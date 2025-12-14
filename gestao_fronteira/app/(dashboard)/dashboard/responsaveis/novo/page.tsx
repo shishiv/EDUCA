@@ -14,11 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Save, User, Phone, Mail, Briefcase } from 'lucide-react'
+import { ArrowLeft, Save, User, Phone, Mail, Briefcase, Shield } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { ConsentCheckbox } from '@/components/lgpd'
 
 export default function NovoResponsavelPage() {
   const router = useRouter()
@@ -31,6 +32,7 @@ export default function NovoResponsavelPage() {
     parentesco: '',
     endereco: '',
     profissao: '',
+    lgpd_consentimento: false,
   })
 
   const validateCPF = (cpf: string): boolean => {
@@ -74,6 +76,13 @@ export default function NovoResponsavelPage() {
         return
       }
 
+      // Validate LGPD consent
+      if (!formData.lgpd_consentimento) {
+        toast.error('É necessário aceitar a Política de Privacidade para continuar')
+        setLoading(false)
+        return
+      }
+
       // Validate CPF
       const cleanedCPF = formData.cpf.replace(/\D/g, '')
       if (!validateCPF(cleanedCPF)) {
@@ -91,6 +100,8 @@ export default function NovoResponsavelPage() {
         parentesco: formData.parentesco,
         endereco: formData.endereco || null,
         profissao: formData.profissao || null,
+        lgpd_consentimento: formData.lgpd_consentimento,
+        lgpd_data_consentimento: new Date().toISOString(),
       }
 
       // Insert into database
@@ -319,6 +330,26 @@ export default function NovoResponsavelPage() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* LGPD Consent */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-amber-600" />
+              <CardTitle>Consentimento LGPD</CardTitle>
+            </div>
+            <CardDescription>
+              Autorização para tratamento de dados pessoais
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ConsentCheckbox
+              checked={formData.lgpd_consentimento}
+              onCheckedChange={(checked) => handleInputChange('lgpd_consentimento', checked)}
+              disabled={loading}
+            />
           </CardContent>
         </Card>
 
