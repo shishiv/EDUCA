@@ -7,28 +7,116 @@
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
 
-  /* Fronteira Municipal Identity Colors */
-  /* Based on official brasão and municipal website */
-  --fronteira-red: 220 76% 50%;        /* #DC2626 - Brasão red */
-  --fronteira-green: 166 77% 40%;      /* #059669 - Brasão green */
-  --fronteira-blue: 221 83% 53%;       /* #1D4ED8 - Brasão blue */
-  --fronteira-yellow: 45 93% 58%;      /* #FBBF24 - Brasão yellow */
+  /* ===========================================
+   * EDUCA Brand Guidelines v1.0 - Paleta Jardim
+   * Dezembro 2024 - Secretaria de Educação Fronteira/MG
+   * =========================================== */
+
+  /* Logo Colors */
+  --logo-green: #059669;
+  --logo-blue: #0ea5e9;
+  --logo-underline: #fcd34d;
+
+  /* Brand Gradients */
+  --educa-gradient: linear-gradient(135deg, #059669 0%, #0ea5e9 100%);
+  --educa-gradient-light: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
+  --educa-gradient-bg: linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 100%);
+
+  /* Layout Dimensions (Brand Guidelines) */
+  --sidebar-width: 260px;
+  --header-height: 70px;
+
+  /* Card Styles */
+  --card-radius: 16px;
+  --input-radius: 12px;
+  --button-radius: 12px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 30px rgba(5, 150, 105, 0.12);
+
+  /* Fronteira Municipal Identity Colors (Legacy) */
+  --fronteira-red: 220 76% 50%;
+  --fronteira-green: 166 77% 40%;
+  --fronteira-blue: 221 83% 53%;
+  --fronteira-yellow: 45 93% 58%;
 
   /* Municipal Primary Colors */
-  --fronteira-primary: 200 100% 34%;   /* rgb(0, 115, 172) - Official website blue */
+  --fronteira-primary: 200 100% 34%;
   --fronteira-primary-foreground: 0 0% 100%;
-  --fronteira-secondary: 221 77% 20%;  /* #1E3A8A - Deep institutional blue */
+  --fronteira-secondary: 221 77% 20%;
   --fronteira-secondary-foreground: 0 0% 100%;
 
   /* Municipal Neutral Palette */
-  --fronteira-gray-50: 216 50% 98%;    /* #F8FAFC */
-  --fronteira-gray-100: 216 33% 97%;   /* #F1F5F9 */
-  --fronteira-gray-500: 215 20% 58%;   /* #64748B */
-  --fronteira-gray-900: 222 67% 5%;    /* #0F172A */
+  --fronteira-gray-50: 216 50% 98%;
+  --fronteira-gray-100: 216 33% 97%;
+  --fronteira-gray-500: 215 20% 58%;
+  --fronteira-gray-900: 222 67% 5%;
 }
 
-/* Tablet & Mobile Touch Optimization for Brazilian Classrooms */
+/* ===========================================
+ * EDUCA Brand Guidelines v1.0 - Utility Classes
+ * =========================================== */
 @layer utilities {
+  /* Brand Gradients */
+  .bg-educa-gradient {
+    background: var(--educa-gradient);
+  }
+
+  .bg-educa-gradient-light {
+    background: var(--educa-gradient-light);
+  }
+
+  .bg-educa-gradient-bg {
+    background: var(--educa-gradient-bg);
+  }
+
+  .text-educa-gradient {
+    background: var(--educa-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Typography Classes */
+  .text-display {
+    font-family: var(--font-lexend), 'Lexend', sans-serif;
+    font-size: 3rem;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  .text-h1 {
+    font-family: var(--font-lexend), 'Lexend', sans-serif;
+    font-size: 2rem;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+
+  .text-h2 {
+    font-family: var(--font-lexend), 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+
+  .text-h3 {
+    font-family: var(--font-lexend), 'Lexend', sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    font-weight: 600;
+  }
+
+  .text-cursive {
+    font-family: var(--font-caveat), 'Caveat', cursive;
+  }
+
+  .text-quote {
+    font-family: var(--font-caveat), 'Caveat', cursive;
+    font-size: 1.25rem;
+    color: #64748b;
+  }
+
   /* Touch-friendly buttons for tablets (minimum 44px as per WCAG) */
   .touch-target-large {
     min-height: 44px;

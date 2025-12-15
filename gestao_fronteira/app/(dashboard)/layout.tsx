@@ -46,7 +46,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen">
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar />
@@ -55,7 +55,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Mobile Sidebar Overlay */}
       <MobileSidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main content area - offset by sidebar width */}
+      <main className="flex-1 md:ml-[260px] min-h-screen bg-gray-100">
         {/* Desktop Header - Hidden on mobile */}
         <div className="hidden md:block">
           <Header />
@@ -69,11 +70,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           />
         </div>
 
-        {/* Main content with bottom padding for mobile nav */}
-        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 md:pb-6">
+        {/* Page content with padding */}
+        <div className="p-8 pb-20 md:pb-8">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Mobile Bottom Navigation - Visible on mobile only */}
       <MobileNav />

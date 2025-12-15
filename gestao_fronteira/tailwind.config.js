@@ -8,21 +8,34 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // Educational design system
+      // ===========================================
+      // EDUCA Brand Guidelines v1.0 - Paleta Jardim
+      // Dezembro 2024 - Secretaria de Educação Fronteira/MG
+      // ===========================================
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['var(--font-inter)', 'Inter', 'ui-sans-serif', 'system-ui'],
+        display: ['var(--font-lexend)', 'Lexend', 'ui-sans-serif', 'system-ui'],
+        cursive: ['var(--font-caveat)', 'Caveat', 'cursive'],
         mono: ['JetBrains Mono', 'ui-monospace'],
       },
       fontSize: {
-        '2xs': '0.625rem', // For compact mobile interfaces
-        // Educational typography scales
-        'attendance-status': '0.875rem',  // 14px - Attendance marking buttons
-        'student-name': '1rem',           // 16px - Student names in lists
-        'student-id': '0.75rem',          // 12px - Student ID numbers
-        'grade-display': '1.125rem',      // 18px - Grade/score display
-        'official-doc': '0.875rem',       // 14px - Official document text
-        'form-label': '0.875rem',         // 14px - Form field labels
-        'mobile-touch': '1rem',           // 16px - Mobile touch targets minimum
+        '2xs': '0.625rem',
+        // EDUCA Type Scale (Brand Guidelines)
+        'display': ['3rem', { lineHeight: '1.2', fontWeight: '700' }],      // 48px - Logo, destaque
+        'h1': ['2rem', { lineHeight: '1.3', fontWeight: '700' }],           // 32px - Título principal
+        'h2': ['1.5rem', { lineHeight: '1.4', fontWeight: '600' }],         // 24px - Subtítulo
+        'h3': ['1.125rem', { lineHeight: '1.5', fontWeight: '600' }],       // 18px - Seção
+        'body': ['1rem', { lineHeight: '1.6', fontWeight: '400' }],         // 16px - Texto corrido
+        'small': ['0.875rem', { lineHeight: '1.5', fontWeight: '400' }],    // 14px - Legendas
+        'caption': ['0.75rem', { lineHeight: '1.4', fontWeight: '400' }],   // 12px - Metadados
+        // Legacy educational scales
+        'attendance-status': '0.875rem',
+        'student-name': '1rem',
+        'student-id': '0.75rem',
+        'grade-display': '1.125rem',
+        'official-doc': '0.875rem',
+        'form-label': '0.875rem',
+        'mobile-touch': '1rem',
       },
       screens: {
         'tablet': '768px', // Teacher tablets
@@ -53,59 +66,82 @@ module.exports = {
       },
       colors: {
         // ===========================================
-        // EDUCA Design System - Nova Identidade Visual
-        // "A educação não é quadrada"
+        // EDUCA Brand Guidelines v1.0 - Paleta Jardim
+        // "Crescimento, acolhimento e tecnologia"
         // ===========================================
 
-        // EDUCA Primary Colors (derived from Fronteira coat of arms)
+        // Paleta Jardim - Cores Principais
+        jardim: {
+          // Verde Principal (crescimento, educação, desenvolvimento)
+          green: {
+            50: '#ecfdf5',
+            100: '#d1fae5',
+            400: '#34d399',
+            500: '#10b981',
+            600: '#059669',  // PRIMARY - Logo gradient start
+          },
+          // Azul Principal (confiança, modernidade, tecnologia)
+          blue: {
+            50: '#f0f9ff',
+            100: '#e0f2fe',
+            400: '#38bdf8',
+            500: '#0ea5e9',  // PRIMARY - Logo gradient end
+          },
+          // Amarelo (destaque, alegria, underline do logo)
+          yellow: {
+            100: '#fef3c7',
+            300: '#fde68a',
+            400: '#fcd34d',  // Logo underline
+          },
+          // Rosa (acento, alertas especiais)
+          pink: {
+            100: '#fce7f3',
+            400: '#fb7185',
+          },
+        },
+
+        // Neutros (Brand Guidelines)
+        gray: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+
+        // Legacy EDUCA colors (mantido para compatibilidade)
         educa: {
           blue: {
-            50: '#EEF2FF',
-            100: '#E0E7FF',
-            200: '#C7D2FE',
-            300: '#A5B4FC',
-            400: '#818CF8',
-            500: '#4361EE',  // Primary action color
-            600: '#3730A3',
-            700: '#312E81',
-            800: '#1E1B4B',
-            900: '#0F0D29',
+            50: '#f0f9ff',
+            100: '#e0f2fe',
+            400: '#38bdf8',
+            500: '#0ea5e9',
+            600: '#0284c7',
           },
           green: {
-            50: '#ECFDF5',
-            100: '#D1FAE5',
-            200: '#A7F3D0',
-            300: '#6EE7B7',
-            400: '#34D399',
-            500: '#10B981',  // Success color
+            50: '#ecfdf5',
+            100: '#d1fae5',
+            400: '#34d399',
+            500: '#10b981',
             600: '#059669',
-            700: '#047857',
-            800: '#065F46',
-            900: '#064E3B',
           },
           gold: {
-            50: '#FFFBEB',
-            100: '#FEF3C7',
-            200: '#FDE68A',
-            300: '#FCD34D',
-            400: '#FBBF24',
-            500: '#F59E0B',  // Highlight/warning
-            600: '#D97706',
-            700: '#B45309',
-            800: '#92400E',
-            900: '#78350F',
+            100: '#fef3c7',
+            300: '#fde68a',
+            400: '#fcd34d',
+            500: '#f59e0b',
           },
           coral: {
-            50: '#FEF2F2',
-            100: '#FEE2E2',
-            200: '#FECACA',
-            300: '#FCA5A5',
-            400: '#F87171',
-            500: '#EF6351',  // Alert/danger
-            600: '#DC2626',
-            700: '#B91C1C',
-            800: '#991B1B',
-            900: '#7F1D1D',
+            50: '#fef2f2',
+            100: '#fee2e2',
+            400: '#f87171',
+            500: '#ef4444',
+            600: '#dc2626',
           },
         },
 
@@ -253,7 +289,14 @@ module.exports = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        // EDUCA custom radii - "educação não é quadrada"
+        // EDUCA Brand Guidelines radii
+        'card': '16px',      // Cards
+        'input': '12px',     // Inputs, buttons
+        'button': '12px',    // Buttons
+        'nav-item': '10px',  // Navigation items
+        'badge': '10px',     // Badges
+        'avatar': '10px',    // Avatars
+        // Legacy EDUCA radii
         'educa-sm': '6px',
         'educa': '8px',
         'educa-md': '12px',
@@ -261,12 +304,18 @@ module.exports = {
         'educa-xl': '24px',
       },
       boxShadow: {
-        // EDUCA shadows - softer, more organic
+        // EDUCA Brand Guidelines shadows - softer, more organic
+        'card': '0 4px 20px rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 8px 30px rgba(5, 150, 105, 0.12)',
+        'button': '0 4px 14px rgba(5, 150, 105, 0.3)',
+        'button-hover': '0 6px 20px rgba(5, 150, 105, 0.4)',
+        'nav': '0 10px 40px rgba(0, 0, 0, 0.3)',
+        // Legacy EDUCA shadows
         'educa-sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
         'educa': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
         'educa-md': '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
         'educa-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
-        'educa-hover': '0 4px 12px rgba(67, 97, 238, 0.15)',
+        'educa-hover': '0 4px 12px rgba(5, 150, 105, 0.15)',
         // Module-specific shadows on hover
         'module-alunos': '0 4px 12px rgba(124, 58, 237, 0.15)',
         'module-turmas': '0 4px 12px rgba(14, 165, 233, 0.15)',

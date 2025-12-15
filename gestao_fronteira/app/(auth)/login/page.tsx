@@ -5,16 +5,11 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { getUserProfile } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { EducaLogo } from '@/components/identity/educa-logo'
-import { Loader2, LogIn } from 'lucide-react'
+import { EducaLogo } from '@/components/identity/educa-logo-v2'
+import { Loader2, CheckCircle, Users, FileText, BarChart3, Shield } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -108,124 +103,125 @@ export default function LoginPage() {
     }
   }
 
+  // Features list for the hero section
+  const features = [
+    { icon: CheckCircle, text: 'Chamada digital em tempo real' },
+    { icon: Users, text: 'Gestão completa de alunos' },
+    { icon: FileText, text: 'Diário de classe integrado' },
+    { icon: BarChart3, text: 'Relatórios automáticos' },
+  ]
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* EDUCA Background with soft gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-educa-blue-50 via-white to-educa-green-50">
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_30%_20%,#4361EE,transparent_40%),radial-gradient(circle_at_70%_80%,#10B981,transparent_40%)]" />
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left Panel - Hero with Gradient */}
+      <div className="hidden lg:flex bg-gradient-to-br from-jardim-green-600 to-jardim-blue-500 p-15 flex-col justify-center relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute -top-1/5 -right-1/5 w-3/5 h-3/5 bg-white/10 rounded-full" />
+        <div className="absolute -bottom-1/10 -left-1/10 w-2/5 h-2/5 bg-white/5 rounded-full" />
+
+        <div className="relative z-10 px-8 lg:px-12">
+          <h1 className="font-display text-4xl lg:text-5xl font-bold text-white mb-4">
+            Bem-vindo ao EDUCA
+          </h1>
+          <p className="text-lg text-white/85 max-w-md mb-12">
+            O sistema que simplifica a gestão escolar da rede municipal de Fronteira, MG.
+          </p>
+
+          {/* Features List */}
+          <div className="space-y-4">
+            {features.map((feature, index) => (
+              <div key={index} className="flex items-center gap-3 text-white/90">
+                <div className="w-9 h-9 bg-white/20 rounded-nav-item flex items-center justify-center">
+                  <feature.icon className="w-5 h-5" />
+                </div>
+                <span className="font-medium">{feature.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="relative flex items-center justify-center min-h-screen px-4 py-8">
-        <div className="w-full max-w-md">
-          {/* EDUCA Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-6">
-              <EducaLogo size="xl" showText={false} />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              EDUCA
-            </h1>
-            <p className="text-gray-500">
-              Sistema Educacional de Fronteira/MG
-            </p>
+      {/* Right Panel - Login Form */}
+      <div className="bg-white p-8 lg:p-15 flex items-center justify-center">
+        <div className="w-full max-w-[380px]">
+          {/* Logo */}
+          <div className="mb-10 text-center lg:text-left">
+            <EducaLogo size="lg" />
           </div>
 
-          {/* Login Card - Notion/Google style */}
-          <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl">
-            <CardContent className="p-8">
-              {error && (
-                <Alert variant="destructive" className="border-educa-coral-200 bg-educa-coral-50 text-educa-coral-700 mb-6 rounded-xl">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+          <h2 className="font-display text-2xl font-semibold text-gray-800 mb-2">
+            Entrar no sistema
+          </h2>
+          <p className="text-gray-500 mb-8">
+            Digite suas credenciais para acessar
+          </p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu.email@fronteira.mg.gov.br"
-                    required
-                    className="h-12 border border-gray-200 rounded-xl focus:border-educa-blue-500 focus:ring-2 focus:ring-educa-blue-500/20 transition-all duration-200 bg-gray-50 focus:bg-white"
-                  />
-                </div>
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-700 mb-6 rounded-xl">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Senha
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Digite sua senha"
-                    required
-                    className="h-12 border border-gray-200 rounded-xl focus:border-educa-blue-500 focus:ring-2 focus:ring-educa-blue-500/20 transition-all duration-200 bg-gray-50 focus:bg-white"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 mt-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#4361EE', color: 'white' }}
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      <span>Entrando...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <LogIn className="h-5 w-5 mr-2" />
-                      <span>Entrar</span>
-                    </div>
-                  )}
-                </button>
-              </form>
-
-              {/* Security Indicators */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <div className="flex items-center justify-center space-x-6 text-xs text-gray-400">
-                  <div className="flex items-center">
-                    <div className="w-1.5 h-1.5 bg-educa-green-500 rounded-full mr-1.5"></div>
-                    <span>Conexão Segura</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-1.5 h-1.5 bg-educa-blue-500 rounded-full mr-1.5"></div>
-                    <span>Sistema Oficial</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Footer with Fronteira seal */}
-          <div className="mt-8 flex flex-col items-center">
-            <div className="flex items-center gap-3 mb-4">
-              <Image
-                src="/logo_pref.png"
-                alt="Brasão de Fronteira"
-                width={32}
-                height={32}
-                className="opacity-60"
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                E-mail
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu.email@fronteira.mg.gov.br"
+                required
+                className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl bg-gray-50 focus:border-jardim-green-500 focus:bg-white focus:ring-4 focus:ring-jardim-green-100 transition-all outline-none"
               />
-              <div className="h-6 w-px bg-gray-200" />
-              <span className="text-xs text-gray-400">
-                Prefeitura de Fronteira/MG
-              </span>
             </div>
-            <p className="text-xs text-gray-400">
-              &copy; 2025 EDUCA - Todos os direitos reservados
-            </p>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Senha
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                required
+                className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl bg-gray-50 focus:border-jardim-green-500 focus:bg-white focus:ring-4 focus:ring-jardim-green-100 transition-all outline-none"
+              />
+            </div>
+
+            {/* Submit Button - Brand Guidelines */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-6 py-3.5 px-6 bg-gradient-to-r from-jardim-green-600 to-jardim-green-500 text-white font-semibold rounded-xl shadow-lg shadow-jardim-green-600/30 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Entrando...
+                </span>
+              ) : (
+                'Entrar'
+              )}
+            </button>
+          </form>
+
+          {/* Security Badge */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
+            <Shield className="w-4 h-4" />
+            <span>Conexão segura • Dados protegidos</span>
           </div>
+
+          {/* Footer */}
+          <p className="mt-8 text-center text-sm text-gray-400">
+            Secretaria Municipal de Educação — Fronteira, MG
+          </p>
         </div>
       </div>
     </div>

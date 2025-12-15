@@ -6,11 +6,11 @@ interface StatsCardProps {
   title: string
   value: number | string
   icon: LucideIcon
-  trend?: {
-    value: number
-    isPositive: boolean
-  }
-  variant?: 'default' | 'primary' | 'secondary' | 'accent' | 'warning' | 'emerald' | 'violet' | 'rose'
+  iconBg?: string
+  iconColor?: string
+  change?: string
+  changeType?: 'up' | 'down' | 'neutral'
+  variant?: 'default' | 'green' | 'blue' | 'yellow' | 'pink'
   className?: string
 }
 
@@ -18,42 +18,72 @@ export function StatsCard({
   title,
   value,
   icon: Icon,
-  trend,
+  iconBg,
+  iconColor,
+  change,
+  changeType = 'neutral',
   variant = 'default',
   className
 }: StatsCardProps) {
+  // Default icon styles based on variant
+  const getIconStyles = () => {
+    if (iconBg && iconColor) {
+      return { bg: iconBg, color: iconColor }
+    }
+    switch (variant) {
+      case 'green':
+        return { bg: 'bg-jardim-green-100', color: 'text-jardim-green-600' }
+      case 'blue':
+        return { bg: 'bg-jardim-blue-100', color: 'text-jardim-blue-500' }
+      case 'yellow':
+        return { bg: 'bg-jardim-yellow-100', color: 'text-amber-600' }
+      case 'pink':
+        return { bg: 'bg-jardim-pink-100', color: 'text-jardim-pink-400' }
+      default:
+        return { bg: 'bg-gray-100', color: 'text-gray-600' }
+    }
+  }
+
+  const iconStyles = getIconStyles()
+
   return (
     <Card className={cn(
-      'stat-card transition-all duration-200 hover:shadow-md border border-transparent shadow-sm',
-      variant === 'primary' && 'bg-blue-50 hover:bg-blue-100 hover:border-blue-300',
-      variant === 'secondary' && 'bg-green-50 hover:bg-green-100 hover:border-green-300',
-      variant === 'accent' && 'bg-amber-50 hover:bg-amber-100 hover:border-amber-300',
-      variant === 'warning' && 'bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300',
-      variant === 'emerald' && 'bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300',
-      variant === 'violet' && 'bg-violet-50 hover:bg-violet-100 hover:border-violet-300',
-      variant === 'rose' && 'bg-rose-50 hover:bg-rose-100 hover:border-rose-300',
-      variant === 'default' && 'bg-white hover:bg-gray-50 hover:border-gray-300',
+      'bg-white rounded-card border border-gray-200 shadow-card hover:shadow-card-hover transition-all duration-200',
       className
     )}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-600 leading-tight">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-          </div>
+      <CardContent className="p-5">
+        <div className="flex items-center gap-4">
+          {/* Icon */}
           <div className={cn(
-            "h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0",
-            variant === 'primary' && 'bg-blue-100 text-blue-600',
-            variant === 'secondary' && 'bg-green-100 text-green-600',
-            variant === 'accent' && 'bg-amber-100 text-amber-600',
-            variant === 'warning' && 'bg-yellow-100 text-yellow-600',
-            variant === 'emerald' && 'bg-emerald-100 text-emerald-600',
-            variant === 'violet' && 'bg-violet-100 text-violet-600',
-            variant === 'rose' && 'bg-rose-100 text-rose-600',
-            variant === 'default' && 'bg-gray-100 text-gray-600'
+            "w-12 h-12 rounded-nav-item flex items-center justify-center flex-shrink-0",
+            iconStyles.bg,
+            iconStyles.color
           )}>
-            <Icon className="h-5 w-5" />
+            <Icon className="h-6 w-6" />
           </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p className="font-display text-2xl font-bold text-gray-800">
+              {value}
+            </p>
+            <p className="text-sm text-gray-500 truncate">
+              {title}
+            </p>
+          </div>
+
+          {/* Change indicator */}
+          {change && (
+            <div className={cn(
+              "text-sm font-semibold px-2 py-1 rounded-md",
+              changeType === 'up' && "text-jardim-green-600 bg-jardim-green-50",
+              changeType === 'down' && "text-red-600 bg-red-50",
+              changeType === 'neutral' && "text-gray-600 bg-gray-50"
+            )}>
+              {changeType === 'up' && '+'}
+              {change}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

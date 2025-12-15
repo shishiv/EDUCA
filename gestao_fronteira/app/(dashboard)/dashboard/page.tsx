@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
+import { MinhasTurmasCard } from '@/components/dashboard/minhas-turmas-card'
+import { AlertasCard } from '@/components/dashboard/alertas-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -259,207 +261,90 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Simplified Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
+    <div className="space-y-8">
+      {/* Page Header - Brand Guidelines */}
+      <div>
+        <h1 className="font-display text-2xl font-bold text-gray-800">
           {getGreeting()}, {userProfile?.nome?.split(' ')[0] || 'Usuário'}!
         </h1>
-        <p className="text-gray-600 mt-1">
-          Sistema de Gestão Educacional - Ano Letivo 2024
+        <p className="text-gray-500 mt-1">
+          Ano Letivo 2024 — Secretaria Municipal de Educação
         </p>
       </div>
 
-      {/* Quick Access - Moved to Top */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-        {(quickAccessItems satisfies QuickAccessItem[]).filter((item) =>
-          userProfile && item.roles.includes(userProfile.tipo_usuario as QuickAccessItem['roles'][number])
-        ).map((item) => {
-          const IconComponent = item.icon
-          return (
-            <Link key={item.name} href={item.href}>
-              <div className={`flex flex-col items-center p-4 rounded-lg ${item.color} border border-transparent ${item.borderColor} transition-all duration-200 hover:scale-105 cursor-pointer shadow-sm hover:shadow-md`}>
-                <IconComponent className={`h-6 w-6 mb-2 ${item.iconColor}`} />
-                <span className="text-xs font-medium text-center text-gray-700">
-                  {item.name}
-                </span>
-              </div>
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Statistics Cards - Brand Guidelines Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatsCard
-          title="Total de Alunos"
+          title="Alunos nas suas turmas"
           value={stats.totalAlunos}
           icon={Users}
-          variant="primary"
+          variant="green"
+          change="+12"
+          changeType="up"
         />
         <StatsCard
           title="Escolas Ativas"
           value={stats.totalEscolas}
           icon={School}
-          variant="emerald"
+          variant="blue"
         />
         <StatsCard
           title="Turmas Ativas"
           value={stats.totalTurmas}
           icon={GraduationCap}
-          variant="violet"
+          variant="yellow"
         />
         <StatsCard
           title="Matrículas Ativas"
           value={stats.totalMatriculas}
           icon={UserCheck}
-          variant="rose"
+          variant="pink"
         />
       </div>
 
-      {/* Enhanced Dashboard Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Enhanced Attendance Card */}
-        <Card className="group hover:shadow-xl transition-all duration-300 bg-teal-50 border border-transparent hover:border-teal-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-teal-500 to-teal-600 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-teal-900 group-hover:text-teal-700 transition-colors">
-                  Frequência Geral
-                </span>
-              </div>
-            </CardTitle>
-            <CardDescription className="text-base text-teal-700">
-              Média de frequência dos alunos matriculados
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="flex items-end justify-between">
-                <div>
-                  <span className="text-3xl font-bold text-green-600">
-                    {stats.frequenciaMedia}%
-                  </span>
-                  <p className="text-sm text-gray-500">Taxa atual</p>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-800 px-3 py-1">
-                  🎯 Meta: 75%
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <Progress value={stats.frequenciaMedia} className="h-3 bg-gray-200" />
-                <p className="text-sm text-green-600 font-medium">
-                  ✅ Resultado excelente! Acima da meta estabelecida.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Two-column layout - Brand Guidelines */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+        {/* Minhas Turmas Card - Dynamic */}
+        <MinhasTurmasCard />
 
-        {/* Enhanced Alerts Card */}
-        <Card className="group hover:shadow-xl transition-all duration-300 bg-orange-50 border border-transparent hover:border-orange-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-3 text-lg">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-orange-900 group-hover:text-orange-800 transition-colors">
-                Alertas Importantes
-              </span>
-            </CardTitle>
-            <CardDescription className="text-base text-orange-700">
-              Itens que precisam de atenção imediata
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white/80 rounded-xl border border-amber-200 hover:bg-white transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <span className="text-red-600 text-xs font-bold">{stats.alunosComBaixaFrequencia}</span>
+        {/* Alertas Card - Dynamic */}
+        <AlertasCard />
+      </div>
+
+      {/* Recent Activities - Full Width */}
+      <Card className="bg-white rounded-card border border-gray-200 shadow-card">
+        <CardHeader className="flex flex-row justify-between items-center border-b border-gray-100 px-6 py-5">
+          <CardTitle className="font-display font-semibold text-gray-800">
+            Atividades Recentes
+          </CardTitle>
+          <Link href="/dashboard/atividades" className="text-sm text-jardim-green-600 font-medium hover:underline">
+            Ver todas →
+          </Link>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {activities.map((activity) => {
+              const Icon = getActivityIcon(activity.type)
+              return (
+                <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div className={`h-10 w-10 rounded-nav-item flex items-center justify-center ${getActivityColor(activity.type)}`}>
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Baixa Frequência</p>
-                    <p className="text-sm text-gray-600">
-                      {stats.alunosComBaixaFrequencia} aluno abaixo de 75%
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">
+                      {activity.description}
+                    </p>
+                    <p className="text-xs text-gray-500 flex items-center mt-1">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {new Date(activity.timestamp).toLocaleString('pt-BR')}
                     </p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" asChild className="border-amber-300 text-amber-700 hover:bg-amber-50">
-                  <Link href="/dashboard/frequencia">
-                    Ver Detalhes
-                  </Link>
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-white/80 rounded-xl border border-amber-200 hover:bg-white transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-600 text-xs font-bold">{stats.alunosComDocumentosPendentes}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Documentos Pendentes</p>
-                    <p className="text-sm text-gray-600">{stats.alunosComDocumentosPendentes} alunos com docs incompletos</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" asChild className="border-amber-300 text-amber-700 hover:bg-amber-50">
-                  <Link href="/dashboard/alunos">
-                    Verificar
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Enhanced Recent Activities Card */}
-        <Card className="group hover:shadow-xl transition-all duration-300 bg-indigo-50 border border-transparent hover:border-indigo-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-3 text-lg">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-indigo-900 group-hover:text-indigo-700 transition-colors">
-                Atividades Recentes
-              </span>
-            </CardTitle>
-            <CardDescription className="text-base text-indigo-700">
-              Últimas ações realizadas no sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {activities.map((activity) => {
-                const Icon = getActivityIcon(activity.type)
-                return (
-                  <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-sm ${getActivityColor(activity.type)}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 mb-1">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {new Date(activity.timestamp).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-              <Button variant="outline" className="w-full mt-6 bg-white hover:bg-indigo-600 hover:text-white transition-all duration-200 border-indigo-300 text-indigo-700" asChild>
-                <Link href="/dashboard/atividades">
-                  📊 Ver Todas Atividades
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
