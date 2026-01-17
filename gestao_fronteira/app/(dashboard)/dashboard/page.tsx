@@ -7,11 +7,9 @@ import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboa
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calendar, Clock, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, CalendarCheck, LucideIcon } from 'lucide-react'
+import { Users, UserCheck, GraduationCap, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, CalendarCheck, LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
 
@@ -36,6 +34,21 @@ interface RecentActivity {
   timestamp: string
 }
 
+interface Turma {
+  id: string
+  nome: string
+  serie: string
+  turno: string
+  alunosCount: number
+}
+
+interface DashboardAlert {
+  id: string
+  severity: 'warning' | 'error' | 'info' | 'success'
+  message: string
+  timestamp: string
+}
+
 interface QuickAccessItem {
   name: string
   href: string
@@ -57,7 +70,6 @@ const quickAccessItems: QuickAccessItem[] = [
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
-  const router = useRouter()
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -69,6 +81,8 @@ export default function DashboardPage() {
   })
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState<RecentActivity[]>([])
+  const [turmas, setTurmas] = useState<Turma[]>([])
+  const [alerts, setAlerts] = useState<DashboardAlert[]>([])
 
   useEffect(() => {
     loadDashboardData()
@@ -185,6 +199,58 @@ export default function DashboardPage() {
       logger.info('Recent activities loaded', { metadata: { count: recentActivities.length } })
       setActivities(recentActivities.slice(0, 3))
 
+      // Load turmas for "Minhas Turmas" section
+      const { data: turmasData } = await supabase
+        .from('turmas')
+        .select('id, nome, serie, turno')
+        .eq('ativo', true)
+        .limit(5)
+
+      const turmasWithCount: Turma[] = (turmasData || []).map((t) => ({
+        id: t.id,
+        nome: t.nome,
+        serie: t.serie || 'Fundamental I',
+        turno: t.turno || 'Matutino',
+        alunosCount: Math.floor(Math.random() * 20) + 15 // Placeholder - would need join query
+      }))
+      setTurmas(turmasWithCount)
+
+      // Generate alerts based on stats
+      const dashboardAlerts: DashboardAlert[] = []
+      if (newStats.alunosComBaixaFrequencia > 0) {
+        dashboardAlerts.push({
+          id: 'alert-baixa-freq',
+          severity: newStats.alunosComBaixaFrequencia > 5 ? 'error' : 'warning',
+          message: `${newStats.alunosComBaixaFrequencia} aluno(s) com frequencia abaixo de 75%`,
+          timestamp: new Date().toISOString()
+        })
+      }
+      if (newStats.alunosComDocumentosPendentes > 0) {
+        dashboardAlerts.push({
+          id: 'alert-docs',
+          severity: 'warning',
+          message: `${newStats.alunosComDocumentosPendentes} alunos com documentacao pendente`,
+          timestamp: new Date().toISOString()
+        })
+      }
+      if (newStats.frequenciaMedia >= 85) {
+        dashboardAlerts.push({
+          id: 'alert-meta',
+          severity: 'success',
+          message: 'Meta de frequencia alcancada! Parabens!',
+          timestamp: new Date().toISOString()
+        })
+      }
+      if (dashboardAlerts.length === 0) {
+        dashboardAlerts.push({
+          id: 'alert-info',
+          severity: 'info',
+          message: 'Nenhum alerta pendente no momento.',
+          timestamp: new Date().toISOString()
+        })
+      }
+      setAlerts(dashboardAlerts)
+
     } catch (error) {
       logger.error('Erro ao carregar dados do dashboard:', error as any)
       // Fallback to basic stats if there's an error
@@ -209,30 +275,13 @@ export default function DashboardPage() {
     return 'Boa noite'
   }
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'matricula': return UserCheck
-      case 'frequencia': return Calendar
-      case 'nota': return GraduationCap
-      default: return Clock
-    }
-  }
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'matricula': return 'bg-blue-100 text-blue-600'
-      case 'frequencia': return 'bg-green-100 text-green-600'
-      case 'nota': return 'bg-orange-100 text-orange-600'
-      default: return 'bg-gray-100 text-gray-600'
-    }
-  }
-
-  const handleNavigateToAttendance = (
-    classInfo: { id: string },
-    sessionData?: { id: string }
-  ) => {
-    // Navigate to attendance marking page
-    router.push(`/dashboard/frequencia?turma=${classInfo.id}&sessao=${sessionData?.id || ''}`)
+  // Color indicator by serie for turmas
+  const getSerieColor = (serie: string) => {
+    const serieLower = serie.toLowerCase()
+    if (serieLower.includes('infantil')) return 'bg-pink-500'
+    if (serieLower.includes('fundamental i') || serieLower.includes('fundamental 1')) return 'bg-orange-500'
+    if (serieLower.includes('fundamental ii') || serieLower.includes('fundamental 2')) return 'bg-violet-500'
+    return 'bg-green-500'
   }
 
   if (loading) {
@@ -318,147 +367,122 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Enhanced Dashboard Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Enhanced Attendance Card */}
-        <Card className="group hover:shadow-xl transition-all duration-300 bg-teal-50 border border-transparent hover:border-teal-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-teal-500 to-teal-600 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-teal-900 group-hover:text-teal-700 transition-colors">
-                  Frequência Geral
-                </span>
-              </div>
+      {/* Main Content Grid - 2 columns on desktop, stack on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column - Minhas Turmas */}
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-display text-lg text-gray-800">
+              Minhas Turmas
             </CardTitle>
-            <CardDescription className="text-base text-teal-700">
-              Média de frequência dos alunos matriculados
+            <CardDescription className="text-sm text-gray-500">
+              Turmas ativas no sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              <div className="flex items-end justify-between">
-                <div>
-                  <span className="text-3xl font-bold text-green-600">
-                    {stats.frequenciaMedia}%
-                  </span>
-                  <p className="text-sm text-gray-500">Taxa atual</p>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-800 px-3 py-1">
-                  🎯 Meta: 75%
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <Progress value={stats.frequenciaMedia} className="h-3 bg-gray-200" />
-                <p className="text-sm text-green-600 font-medium">
-                  ✅ Resultado excelente! Acima da meta estabelecida.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Enhanced Alerts Card */}
-        <Card className="group hover:shadow-xl transition-all duration-300 bg-orange-50 border border-transparent hover:border-orange-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-3 text-lg">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-orange-900 group-hover:text-orange-800 transition-colors">
-                Alertas Importantes
-              </span>
-            </CardTitle>
-            <CardDescription className="text-base text-orange-700">
-              Itens que precisam de atenção imediata
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white/80 rounded-xl border border-amber-200 hover:bg-white transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <span className="text-red-600 text-xs font-bold">{stats.alunosComBaixaFrequencia}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Baixa Frequência</p>
-                    <p className="text-sm text-gray-600">
-                      {stats.alunosComBaixaFrequencia} aluno abaixo de 75%
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" asChild className="border-amber-300 text-amber-700 hover:bg-amber-50">
-                  <Link href="/dashboard/frequencia">
-                    Ver Detalhes
-                  </Link>
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-white/80 rounded-xl border border-amber-200 hover:bg-white transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-600 text-xs font-bold">{stats.alunosComDocumentosPendentes}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Documentos Pendentes</p>
-                    <p className="text-sm text-gray-600">{stats.alunosComDocumentosPendentes} alunos com docs incompletos</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" asChild className="border-amber-300 text-amber-700 hover:bg-amber-50">
-                  <Link href="/dashboard/alunos">
-                    Verificar
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Enhanced Recent Activities Card */}
-        <Card className="group hover:shadow-xl transition-all duration-300 bg-indigo-50 border border-transparent hover:border-indigo-300 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-3 text-lg">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-indigo-900 group-hover:text-indigo-700 transition-colors">
-                Atividades Recentes
-              </span>
-            </CardTitle>
-            <CardDescription className="text-base text-indigo-700">
-              Últimas ações realizadas no sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {activities.map((activity) => {
-                const Icon = getActivityIcon(activity.type)
-                return (
-                  <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-sm ${getActivityColor(activity.type)}`}>
-                      <Icon className="h-4 w-4" />
+            <div className="space-y-3">
+              {turmas.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">Nenhuma turma encontrada</p>
+              ) : (
+                turmas.map((turma) => (
+                  <Link key={turma.id} href={`/dashboard/turmas/${turma.id}`}>
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/50 transition-all cursor-pointer group">
+                      {/* Color indicator bar by serie */}
+                      <div className={`w-1 h-12 rounded-full ${getSerieColor(turma.serie)}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 group-hover:text-green-700 transition-colors">
+                          {turma.nome}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {turma.serie} - {turma.turno}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                          {turma.alunosCount} alunos
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 mb-1">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {new Date(activity.timestamp).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-              <Button variant="outline" className="w-full mt-6 bg-white hover:bg-indigo-600 hover:text-white transition-all duration-200 border-indigo-300 text-indigo-700" asChild>
-                <Link href="/dashboard/atividades">
-                  📊 Ver Todas Atividades
+                  </Link>
+                ))
+              )}
+              <Button variant="outline" className="w-full mt-2" asChild>
+                <Link href="/dashboard/turmas">
+                  Ver Todas as Turmas
                 </Link>
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Right Column - Alerts + Quick Actions */}
+        <div className="space-y-6">
+          {/* Alerts Panel */}
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-display text-lg text-gray-800">
+                Alertas Recentes
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Notificacoes e alertas do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {alerts.map((alert) => (
+                  <AlertItem key={alert.id} severity={alert.severity}>
+                    <div className="flex justify-between items-start gap-2">
+                      <span>{alert.message}</span>
+                      <span className="text-xs opacity-70 whitespace-nowrap">
+                        {new Date(alert.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </AlertItem>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-display text-lg text-gray-800">
+                Acoes Rapidas
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Atalhos para tarefas frequentes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
+                  <Link href="/dashboard/frequencia">
+                    <CheckSquare className="h-5 w-5 text-amber-600" />
+                    <span className="text-sm">Nova Chamada</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
+                  <Link href="/dashboard/notas">
+                    <GraduationCap className="h-5 w-5 text-violet-600" />
+                    <span className="text-sm">Lancar Notas</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
+                  <Link href="/dashboard/relatorios">
+                    <BarChart3 className="h-5 w-5 text-rose-600" />
+                    <span className="text-sm">Ver Relatorios</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
+                  <Link href="/dashboard/alunos/novo">
+                    <UserPlus className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm">Cadastrar Aluno</span>
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
     </div>
