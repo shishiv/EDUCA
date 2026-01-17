@@ -25,6 +25,66 @@
   --fronteira-gray-100: 216 33% 97%;   /* #F1F5F9 */
   --fronteira-gray-500: 215 20% 58%;   /* #64748B */
   --fronteira-gray-900: 222 67% 5%;    /* #0F172A */
+
+  /* ============================================
+     EDUCA Design System Tokens
+     ============================================ */
+
+  /* Font Families (populated by next/font) */
+  --font-display: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-cursive: var(--font-caveat), cursive;
+
+  /* Type Scale */
+  --text-display: 3rem;      /* 48px - Hero, Logo */
+  --text-h1: 2rem;           /* 32px - Page titles */
+  --text-h2: 1.5rem;         /* 24px - Section titles */
+  --text-h3: 1.125rem;       /* 18px - Card headers */
+  --text-body: 1rem;         /* 16px - Paragraphs */
+  --text-small: 0.875rem;    /* 14px - Captions */
+  --text-caption: 0.75rem;   /* 12px - Metadata */
+
+  /* BNCC Campos de Experiencia Colors */
+  /* O eu, o outro e o nos */
+  --campo-eu: #ec4899;
+  --campo-eu-bg: #fdf2f8;
+  --campo-eu-light: #fce7f3;
+
+  /* Corpo, gestos e movimentos */
+  --campo-corpo: #f97316;
+  --campo-corpo-bg: #fff7ed;
+  --campo-corpo-light: #ffedd5;
+
+  /* Tracos, sons, cores e formas */
+  --campo-tracos: #8b5cf6;
+  --campo-tracos-bg: #f5f3ff;
+  --campo-tracos-light: #ede9fe;
+
+  /* Escuta, fala, pensamento e imaginacao */
+  --campo-escuta: #0ea5e9;
+  --campo-escuta-bg: #f0f9ff;
+  --campo-escuta-light: #e0f2fe;
+
+  /* Espacos, tempos, quantidades, relacoes e transformacoes */
+  --campo-espacos: #10b981;
+  --campo-espacos-bg: #ecfdf5;
+  --campo-espacos-light: #d1fae5;
+
+  /* Layout Constants */
+  --sidebar-width: 260px;
+  --header-height: 70px;
+  --content-max-width: 1400px;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
 }
 
 /* Tablet & Mobile Touch Optimization for Brazilian Classrooms */
