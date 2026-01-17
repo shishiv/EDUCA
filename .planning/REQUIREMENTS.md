@@ -52,18 +52,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Turmas
 
-- [ ] **TURM-01**: Card grid with 3→2→1 column responsive layout
-- [ ] **TURM-02**: Turma card with gradient header and stats display
-- [ ] **TURM-03**: Action buttons per card (Chamada, Diário, etc.)
-- [ ] **TURM-04**: Hover effects with shadow and translate transform
+- [x] **TURM-01**: Card grid with 3→2→1 column responsive layout ✓
+- [x] **TURM-02**: Turma card with gradient header and stats display ✓
+- [x] **TURM-03**: Action buttons per card (Chamada, Diário, etc.) ✓
+- [x] **TURM-04**: Hover effects with shadow and translate transform ✓
 
 ### Chamada
 
-- [ ] **CHAM-01**: Header with turma info + date picker
-- [ ] **CHAM-02**: Table with student rows showing photo and name
-- [ ] **CHAM-03**: Attendance buttons (Presente verde, Falta vermelho, Justificada amarelo)
-- [ ] **CHAM-04**: Frequency percentage with color coding (green >75%, yellow 60-75%, red <60%)
-- [ ] **CHAM-05**: Auto-save on each attendance button click
+- [x] **CHAM-01**: Header with turma info + date picker ✓
+- [x] **CHAM-02**: Table with student rows showing photo and name ✓
+- [x] **CHAM-03**: Attendance buttons (Presente verde, Falta vermelho, Justificada amarelo) ✓
+- [x] **CHAM-04**: Frequency percentage with color coding (green >75%, yellow 60-75%, red <60%) ✓
+- [x] **CHAM-05**: Batch save with dirty state indicator (improved from auto-save) ✓
 
 ### Perfil do Aluno
 
@@ -160,15 +160,15 @@ Which phases cover which requirements. Updated by create-roadmap.
 | DASH-02 | Phase 3 | Complete |
 | DASH-03 | Phase 3 | Complete |
 | DASH-04 | Phase 3 | Complete |
-| TURM-01 | Phase 4 | Pending |
-| TURM-02 | Phase 4 | Pending |
-| TURM-03 | Phase 4 | Pending |
-| TURM-04 | Phase 4 | Pending |
-| CHAM-01 | Phase 4 | Pending |
-| CHAM-02 | Phase 4 | Pending |
-| CHAM-03 | Phase 4 | Pending |
-| CHAM-04 | Phase 4 | Pending |
-| CHAM-05 | Phase 4 | Pending |
+| TURM-01 | Phase 4 | Complete |
+| TURM-02 | Phase 4 | Complete |
+| TURM-03 | Phase 4 | Complete |
+| TURM-04 | Phase 4 | Complete |
+| CHAM-01 | Phase 4 | Complete |
+| CHAM-02 | Phase 4 | Complete |
+| CHAM-03 | Phase 4 | Complete |
+| CHAM-04 | Phase 4 | Complete |
+| CHAM-05 | Phase 4 | Complete |
 | ALUN-01 | Phase 5 | Pending |
 | ALUN-02 | Phase 5 | Pending |
 | ALUN-03 | Phase 5 | Pending |
