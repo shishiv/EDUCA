@@ -16,11 +16,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Layout
 
-- [ ] **LAY-01**: Fixed sidebar with hierarchical navigation
-- [ ] **LAY-02**: Header with global search field
-- [ ] **LAY-03**: Header notification bell indicator
-- [ ] **LAY-04**: Header user dropdown with quick actions
-- [ ] **LAY-05**: Responsive grid (desktop 1200+, tablet 768-1199, mobile <768)
+- [x] **LAY-01**: Fixed sidebar with hierarchical navigation ✓
+- [x] **LAY-02**: Header with global search field ✓
+- [x] **LAY-03**: Header notification bell indicator ✓
+- [x] **LAY-04**: Header user dropdown with quick actions ✓
+- [x] **LAY-05**: Responsive grid (desktop 1200+, tablet 768-1199, mobile <768) ✓
 
 ### Components
 
@@ -30,10 +30,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **COMP-04**: Avatar component with image and fallback
 - [ ] **COMP-05**: Badge/Tag component with color variants
 - [ ] **COMP-06**: Label component for form fields
-- [ ] **COMP-07**: Stat card component with icon, value, and label
-- [ ] **COMP-08**: Alert item component with severity levels
-- [ ] **COMP-09**: Attendance table component with action buttons
-- [ ] **COMP-10**: Campo de Experiência card with BNCC color coding
+- [x] **COMP-07**: Stat card component with icon, value, and label ✓
+- [x] **COMP-08**: Alert item component with severity levels ✓
+- [x] **COMP-09**: Attendance table component with action buttons ✓
+- [x] **COMP-10**: Campo de Experiência card with BNCC color coding ✓
 
 ### Login
 
@@ -81,7 +81,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Accessibility
 
-- [ ] **ACESS-01**: Text contrast minimum 4.5:1 on all surfaces
+- [x] **ACESS-01**: Text contrast minimum 4.5:1 on all surfaces ✓
 - [ ] **ACESS-02**: Labels associated with all form fields
 - [ ] **ACESS-03**: Error messages displayed below fields (not just red border)
 
@@ -141,16 +141,16 @@ Which phases cover which requirements. Updated by create-roadmap.
 | COMP-06 | Phase 1 | Complete |
 | ACESS-02 | Phase 1 | Complete |
 | ACESS-03 | Phase 1 | Complete |
-| LAY-01 | Phase 2 | Pending |
-| LAY-02 | Phase 2 | Pending |
-| LAY-03 | Phase 2 | Pending |
-| LAY-04 | Phase 2 | Pending |
-| LAY-05 | Phase 2 | Pending |
-| COMP-07 | Phase 2 | Pending |
-| COMP-08 | Phase 2 | Pending |
-| COMP-09 | Phase 2 | Pending |
-| COMP-10 | Phase 2 | Pending |
-| ACESS-01 | Phase 2 | Pending |
+| LAY-01 | Phase 2 | Complete |
+| LAY-02 | Phase 2 | Complete |
+| LAY-03 | Phase 2 | Complete |
+| LAY-04 | Phase 2 | Complete |
+| LAY-05 | Phase 2 | Complete |
+| COMP-07 | Phase 2 | Complete |
+| COMP-08 | Phase 2 | Complete |
+| COMP-09 | Phase 2 | Complete |
+| COMP-10 | Phase 2 | Complete |
+| ACESS-01 | Phase 2 | Complete |
 | LOGIN-01 | Phase 3 | Pending |
 | LOGIN-02 | Phase 3 | Pending |
 | LOGIN-03 | Phase 3 | Pending |

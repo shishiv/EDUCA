@@ -11,7 +11,7 @@ Refatorar a interface do sistema EDUCA Fronteira em 5 fases incrementais: estabe
 - Decimal phases (1.1, 1.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Design System Foundation** - Tokens CSS + componentes primitivos ✓
-- [ ] **Phase 2: Layout & Composites** - Shell da aplicação + padrões compostos
+- [x] **Phase 2: Layout & Composites** - Shell da aplicação + padrões compostos ✓
 - [ ] **Phase 3: Login & Dashboard** - Primeiras telas refatoradas
 - [ ] **Phase 4: Turmas & Chamada** - Telas de gestão de turma
 - [ ] **Phase 5: Aluno & Diário Infantil** - Perfil + módulo BNCC novo
@@ -52,8 +52,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 02-01: Sidebar + Header layout
-- [ ] 02-02: Composite components (StatCard, AlertItem, AttendanceTable, CampoExperiencia)
+- [x] 02-01: Sidebar + Header layout ✓
+- [x] 02-02: Composite components (StatCard, AlertItem, AttendanceTable, CampoExperiencia) ✓
 
 ### Phase 3: Login & Dashboard
 **Goal**: Refatorar Login e Dashboard seguindo design system
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Design System Foundation | 2/2 | Complete | 2026-01-17 |
-| 2. Layout & Composites | 0/2 | Not started | - |
+| 2. Layout & Composites | 2/2 | Complete | 2026-01-17 |
 | 3. Login & Dashboard | 0/2 | Not started | - |
 | 4. Turmas & Chamada | 0/2 | Not started | - |
 | 5. Aluno & Diário Infantil | 0/3 | Not started | - |
