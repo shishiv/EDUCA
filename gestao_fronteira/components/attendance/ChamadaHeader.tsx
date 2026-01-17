@@ -27,6 +27,7 @@ export interface ChamadaHeaderProps {
   presentCount: number
   hasUnsavedChanges: boolean
   isLocked: boolean
+  lockReason?: string | null
   onSave: () => void
   isSaving: boolean
 }
@@ -42,6 +43,7 @@ export function ChamadaHeader({
   presentCount,
   hasUnsavedChanges,
   isLocked,
+  lockReason,
   onSave,
   isSaving,
 }: ChamadaHeaderProps) {
@@ -66,9 +68,9 @@ export function ChamadaHeader({
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold text-foreground">{turma.nome}</h1>
             {isLocked && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1" title={lockReason || undefined}>
                 <Lock className="h-3 w-3" />
-                Chamada travada
+                Travada
               </Badge>
             )}
           </div>
