@@ -76,25 +76,26 @@ Plans:
 - [x] 03-02: Dashboard screen refactor ✓
 
 ### Phase 4: Turmas & Chamada
-**Goal**: Refatorar telas de gestão de turma (crítico para compliance)
+**Goal**: Refatorar telas de gestão de turma com card grid e chamada streamlined (crítico para compliance)
 **Depends on**: Phase 3
 **Requirements**: TURM-01, TURM-02, TURM-03, TURM-04, CHAM-01, CHAM-02, CHAM-03, CHAM-04, CHAM-05
 **Success Criteria** (what must be TRUE):
   1. Turmas displays as card grid (3→2→1 columns)
-  2. Turma card shows gradient header, stats, action buttons
+  2. Turma card shows serie color band (pink/orange/violet), stats, action buttons
   3. Cards have hover effects (shadow + translate)
   4. Chamada header shows turma info + date picker
-  5. Student table displays photo and name per row
-  6. Attendance buttons work (Presente verde, Falta vermelho, Justificada amarelo)
+  5. Student rows display photo and name
+  6. Attendance P/F/J toggle buttons with proper colors
   7. Frequency percentage shows color coding (green >75%, yellow 60-75%, red <60%)
-  8. Attendance auto-saves on each button click
-**Research**: Likely (document compliance flow before refactoring)
-**Research topics**: Imutabilidade de frequência, auto-lock 18h, fluxo Bolsa Família
-**Plans**: TBD
+  8. Batch save with dirty state indicator (per CONTEXT.md decision)
+  9. New chamada starts with all Present
+  10. Future dates view-only, 18:00 lock enforced
+**Research**: Complete (04-RESEARCH.md)
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Turmas screen refactor
-- [ ] 04-02: Chamada screen refactor
+- [ ] 04-01-PLAN.md — Turmas card grid (TurmaCard, TurmaCardGrid, page refactor)
+- [ ] 04-02-PLAN.md — Chamada screen (P/F/J toggle, date nav, batch save, compliance)
 
 ### Phase 5: Aluno & Diário Infantil
 **Goal**: Completar perfil do aluno e implementar módulo BNCC (greenfield)
@@ -128,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Design System Foundation | 2/2 | Complete | 2026-01-17 |
 | 2. Layout & Composites | 2/2 | Complete | 2026-01-17 |
 | 3. Login & Dashboard | 2/2 | Complete | 2026-01-17 |
-| 4. Turmas & Chamada | 0/2 | Not started | - |
+| 4. Turmas & Chamada | 0/2 | Planned | - |
 | 5. Aluno & Diário Infantil | 0/3 | Not started | - |
 
 ---
