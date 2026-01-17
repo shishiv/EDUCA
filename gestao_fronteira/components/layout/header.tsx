@@ -15,9 +15,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MunicipalHeaderIdentity } from '@/components/identity/municipal-assets'
-import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, AlertCircle, XCircle, ExternalLink } from 'lucide-react'
+import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, AlertCircle, XCircle, ExternalLink, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+
+/**
+ * Header Component - EDUCA Design System
+ *
+ * Updated to match EDUCA mockups with:
+ * - Global search field (LAY-02)
+ * - Notification bell with indicator
+ * - User dropdown with quick actions
+ * - Responsive behavior (search hidden on mobile)
+ */
 
 // Helper function to map icon names to components
 function getIconComponent(iconName: string) {
@@ -98,51 +108,53 @@ export function Header() {
 
   return (
     <>
-      <header className="hidden md:flex items-center justify-end px-8 h-[73px] bg-gradient-to-r from-white via-fronteira-gray-50/30 to-fronteira-primary/8 border-b border-fronteira-gray-100 shadow-sm backdrop-blur-sm">
-        <div className="flex items-center space-x-6">
-          {/* Enhanced Connection Status */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 shadow-sm border border-fronteira-gray-200" title={`Conexão: ${connectionStatus}`}>
+      {/* Header - EDUCA mockup: 70px height, white bg, border-bottom */}
+      <header className="hidden md:flex items-center justify-between px-8 h-[70px] bg-white border-b border-gray-200">
+        {/* Header Left - Page title area (can be used by pages) */}
+        <div className="flex items-center gap-6">
+          {/* Page title placeholder - will be set by individual pages via context/props if needed */}
+        </div>
+
+        {/* Header Right - Search, notifications, user */}
+        <div className="flex items-center gap-4">
+          {/* Global Search Box - EDUCA mockup: LAY-02 requirement */}
+          {/* Mockup: padding 10px 16px, bg gray-50, border 1px gray-200, border-radius 10px, width 280px */}
+          <div className="hidden lg:flex items-center gap-2.5 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-[10px] w-[280px]">
+            <Search className="h-[18px] w-[18px] text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Buscar alunos, turmas..."
+              className="border-none bg-transparent outline-none font-sans text-[0.9rem] text-gray-800 w-full placeholder:text-gray-400"
+            />
+          </div>
+
+          {/* Connection Status - compact indicator */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-gray-50 border border-gray-200" title={`Conexão: ${connectionStatus}`}>
             {connectionStatus === 'connected' ? (
               <Wifi className="h-4 w-4 text-green-500" />
             ) : (
               <WifiOff className="h-4 w-4 text-red-500" />
             )}
-            <span className="text-xs font-medium text-gray-600 hidden lg:inline">
+            <span className="text-xs font-medium text-gray-600 hidden xl:inline">
               {connectionStatus === 'connected' ? 'Online' : 'Offline'}
             </span>
           </div>
 
-          {/* Enhanced User Info */}
-          <div className="hidden lg:flex flex-col items-end px-4 py-2 rounded-lg bg-white/80 shadow-sm border border-fronteira-gray-200">
-            <p className="text-sm font-semibold text-fronteira-primary">
-              {userProfile?.nome || 'Usuário'}
-            </p>
-            <p className="text-xs text-fronteira-gray-600 font-medium">
-              {getRoleLabel(userProfile?.tipo_usuario || '')}
-            </p>
-          </div>
-
-          {/* Enhanced Notifications */}
+          {/* Notifications - EDUCA mockup: 40px button, rounded-[10px], notification dot */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative h-10 w-10 rounded-full bg-white/80 hover:bg-white shadow-sm border border-fronteira-gray-200 text-fronteira-gray-600 hover:text-fronteira-primary transition-all duration-200"
+              <button
+                type="button"
+                className="relative h-10 w-10 rounded-[10px] bg-gray-50 hover:bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
               >
                 <Bell className="h-5 w-5" />
                 {allNotifications.length > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-600 shadow-lg animate-pulse"
-                  >
-                    {allNotifications.length > 9 ? '9+' : allNotifications.length}
-                  </Badge>
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-pink-400 rounded-full border-2 border-white" />
                 )}
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-96 max-h-96 overflow-y-auto shadow-xl border-0 ring-1 ring-black/5" align="end">
-              <DropdownMenuLabel className="font-semibold text-fronteira-primary">
+              <DropdownMenuLabel className="font-semibold text-green-600">
                 Notificações do Sistema
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -153,7 +165,7 @@ export function Header() {
                   return (
                     <DropdownMenuItem
                       key={notification.id || index}
-                      className="p-4 hover:bg-fronteira-primary/5 cursor-pointer"
+                      className="p-4 hover:bg-green-50 cursor-pointer"
                       onClick={() => {
                         if (notification.actionUrl) {
                           window.location.href = notification.actionUrl
@@ -195,7 +207,7 @@ export function Header() {
                                 </div>
                               )}
                               {notification.actionText && notification.actionUrl && (
-                                <div className="flex items-center gap-1 mt-2 text-xs text-fronteira-primary hover:text-fronteira-blue">
+                                <div className="flex items-center gap-1 mt-2 text-xs text-green-600 hover:text-green-700">
                                   <span>{notification.actionText}</span>
                                   <ExternalLink className="h-3 w-3" />
                                 </div>
@@ -218,24 +230,20 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-        {/* Enhanced Profile Menu */}
+        {/* Profile Menu - EDUCA styled avatar with gradient */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-12 w-12 rounded-full bg-white/90 hover:bg-white shadow-md border border-fronteira-gray-200 transition-all duration-200 hover:shadow-lg">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-gradient-to-r from-fronteira-primary to-fronteira-blue text-white font-bold text-sm">
-                  {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
+            <button type="button" className="relative h-10 w-10 rounded-[10px] bg-gradient-to-br from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 flex items-center justify-center text-white font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md">
+              {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-64 shadow-xl border-0 ring-1 ring-black/5" align="end" forceMount>
             <DropdownMenuLabel className="font-normal p-4">
               <div className="flex flex-col space-y-2">
-                <p className="text-sm font-semibold leading-none text-fronteira-primary">
+                <p className="text-sm font-semibold leading-none text-green-600">
                   {userProfile?.nome || 'Usuário'}
                 </p>
-                <p className="text-xs leading-none text-fronteira-gray-600">
+                <p className="text-xs leading-none text-gray-500">
                   {getRoleLabel(userProfile?.tipo_usuario || '')}
                 </p>
                 <div className="mt-2 pt-2 border-t border-gray-100">
@@ -244,15 +252,15 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="p-3 hover:bg-fronteira-primary/5">
+            <DropdownMenuItem asChild className="p-3 hover:bg-green-50">
               <Link href="/dashboard/perfil">
-                <User className="mr-3 h-4 w-4 text-fronteira-primary" />
+                <User className="mr-3 h-4 w-4 text-green-600" />
                 <span className="font-medium">Meu Perfil</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="p-3 hover:bg-fronteira-primary/5">
+            <DropdownMenuItem asChild className="p-3 hover:bg-green-50">
               <Link href="/dashboard/configuracoes">
-                <Settings className="mr-3 h-4 w-4 text-fronteira-primary" />
+                <Settings className="mr-3 h-4 w-4 text-green-600" />
                 <span className="font-medium">Configurações</span>
               </Link>
             </DropdownMenuItem>
