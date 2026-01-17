@@ -8,17 +8,17 @@ import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { EducaLogo } from '@/components/identity/educa-logo'
-import { Loader2, LogIn } from 'lucide-react'
+import { Loader2, LogIn, CheckCircle, FileText, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import Image from 'next/image'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(true)
@@ -109,123 +109,145 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* EDUCA Background with soft gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-educa-blue-50 via-white to-educa-green-50">
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_30%_20%,#4361EE,transparent_40%),radial-gradient(circle_at_70%_80%,#10B981,transparent_40%)]" />
+    <div className="min-h-screen grid md:grid-cols-2">
+      {/* Left Panel - Hero with gradient */}
+      <div className="hidden md:flex flex-col justify-center items-center p-12 bg-gradient-to-br from-green-600 to-blue-500 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-white/10 rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full" />
+
+        <div className="relative z-10 max-w-md text-center">
+          <h1 className="font-display text-4xl font-bold text-white mb-4">
+            Bem-vindo ao EDUCA
+          </h1>
+          <p className="text-lg text-white/85 mb-12">
+            O sistema que simplifica a gestao escolar da rede municipal de Fronteira, MG.
+          </p>
+
+          {/* Features list */}
+          <div className="flex flex-col gap-4 text-left">
+            <div className="flex items-center gap-3 text-white/90">
+              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <span>Chamada digital sem papel</span>
+            </div>
+            <div className="flex items-center gap-3 text-white/90">
+              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <span>Relatorios automaticos</span>
+            </div>
+            <div className="flex items-center gap-3 text-white/90">
+              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <span>Gestao de 9 escolas integradas</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="relative flex items-center justify-center min-h-screen px-4 py-8">
-        <div className="w-full max-w-md">
-          {/* EDUCA Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-6">
-              <EducaLogo size="xl" showText={false} />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              EDUCA
-            </h1>
-            <p className="text-gray-500">
-              Sistema Educacional de Fronteira/MG
-            </p>
+      {/* Right Panel - Form */}
+      <div className="flex flex-col justify-center items-center p-8 bg-white">
+        <div className="w-full max-w-[380px]">
+          {/* Logo */}
+          <div className="mb-10 text-center">
+            <svg viewBox="0 0 180 52" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[50px] mx-auto">
+              <defs>
+                <linearGradient id="gradLogin" x1="0%" y1="50%" x2="100%" y2="50%">
+                  <stop offset="0%" stopColor="#059669"/>
+                  <stop offset="100%" stopColor="#0ea5e9"/>
+                </linearGradient>
+              </defs>
+              <text x="5" y="36" fontFamily="Lexend, sans-serif" fontWeight="700" fontSize="40" fill="url(#gradLogin)">EDUCA</text>
+              <path d="M8 46 Q40 51 75 46 Q110 41 146 46" stroke="#fcd34d" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+            </svg>
           </div>
 
-          {/* Login Card - Notion/Google style */}
-          <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl">
-            <CardContent className="p-8">
-              {error && (
-                <Alert variant="destructive" className="border-educa-coral-200 bg-educa-coral-50 text-educa-coral-700 mb-6 rounded-xl">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+          <h2 className="font-display text-2xl font-semibold text-gray-800 mb-2">
+            Entrar no sistema
+          </h2>
+          <p className="text-gray-500 mb-8">
+            Digite suas credenciais para acessar
+          </p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu.email@fronteira.mg.gov.br"
-                    required
-                    className="h-12 border border-gray-200 rounded-xl focus:border-educa-blue-500 focus:ring-2 focus:ring-educa-blue-500/20 transition-all duration-200 bg-gray-50 focus:bg-white"
-                  />
-                </div>
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Senha
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Digite sua senha"
-                    required
-                    className="h-12 border border-gray-200 rounded-xl focus:border-educa-blue-500 focus:ring-2 focus:ring-educa-blue-500/20 transition-all duration-200 bg-gray-50 focus:bg-white"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 mt-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#4361EE', color: 'white' }}
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      <span>Entrando...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <LogIn className="h-5 w-5 mr-2" />
-                      <span>Entrar</span>
-                    </div>
-                  )}
-                </button>
-              </form>
-
-              {/* Security Indicators */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <div className="flex items-center justify-center space-x-6 text-xs text-gray-400">
-                  <div className="flex items-center">
-                    <div className="w-1.5 h-1.5 bg-educa-green-500 rounded-full mr-1.5"></div>
-                    <span>Conexão Segura</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-1.5 h-1.5 bg-educa-blue-500 rounded-full mr-1.5"></div>
-                    <span>Sistema Oficial</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Footer with Fronteira seal */}
-          <div className="mt-8 flex flex-col items-center">
-            <div className="flex items-center gap-3 mb-4">
-              <Image
-                src="/logo_pref.png"
-                alt="Brasão de Fronteira"
-                width={32}
-                height={32}
-                className="opacity-60"
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                E-mail
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu.email@educafronteira.mg"
+                required
+                className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
               />
-              <div className="h-6 w-px bg-gray-200" />
-              <span className="text-xs text-gray-400">
-                Prefeitura de Fronteira/MG
-              </span>
             </div>
-            <p className="text-xs text-gray-400">
-              &copy; 2025 EDUCA - Todos os direitos reservados
-            </p>
-          </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Senha
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="********"
+                required
+                className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
+              />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <Checkbox
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  className="w-[18px] h-[18px] border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+                <span>Manter conectado</span>
+              </label>
+              <Link
+                href="/reset-password"
+                className="text-sm font-medium text-green-600 hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Entrando...
+                </>
+              ) : (
+                <>
+                  Entrar
+                  <LogIn className="h-5 w-5 ml-2" />
+                </>
+              )}
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-gray-400">
+            Secretaria Municipal de Educacao - Fronteira, MG
+          </p>
         </div>
       </div>
     </div>
