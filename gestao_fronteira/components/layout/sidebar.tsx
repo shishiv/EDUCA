@@ -38,6 +38,11 @@ import {
  * - 0.7rem uppercase section titles
  * - Hierarchical navigation with collapsible groups
  * - Lexend font for header title
+ *
+ * Responsive behavior (LAY-05):
+ * - Desktop (1200+): Full sidebar visible (260px width)
+ * - Tablet (768-1199): Sidebar can be collapsed via button
+ * - Mobile (<768): Sidebar hidden, MobileNav used instead
  */
 
 interface SidebarProps {
@@ -202,8 +207,12 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <div className={cn(
-      "relative flex flex-col bg-white border-r border-gray-200 sidebar-transition",
+      // Base styles
+      "relative flex-col bg-white border-r border-gray-200 sidebar-transition",
+      // Width based on collapsed state
       collapsed ? "w-16" : "w-[260px]",
+      // Responsive: hidden on mobile (<768px), flex on tablet+
+      "hidden md:flex",
       className
     )}>
       {/* Sidebar Header - EDUCA styled */}

@@ -1,15 +1,18 @@
 /**
  * MobileNav - Bottom Navigation for Mobile Devices
- * Task 5.1.3: Implement bottom navigation for mobile
+ *
+ * EDUCA Design System - Mobile Navigation
  *
  * Features:
- * - Fixed bottom navigation bar for mobile (hidden on desktop)
+ * - Fixed bottom navigation bar for mobile (hidden on desktop md+)
  * - Icons for: Dashboard, Frequencia, Diario, Relatorios
- * - Active state indicator
- * - Touch-friendly with 44px minimum targets
- * - Uses existing shadcn/ui patterns
+ * - EDUCA green active state (bg-green-50, text-green-600)
+ * - Touch-friendly with 44px minimum targets (WCAG)
+ * - 10px border-radius per mockup styling
  *
- * @see openspec/changes/2025-12-04-diario-de-classe/tasks.md
+ * Responsive (LAY-05):
+ * - Mobile (<768px): Visible, hamburger menu pattern
+ * - Tablet/Desktop (768+): Hidden, full sidebar used instead
  */
 
 'use client'
@@ -120,16 +123,16 @@ export function MobileNav() {
               className={cn(
                 // Base button styling
                 'flex flex-col items-center justify-center',
-                // Touch-friendly size (minimum 44px)
+                // Touch-friendly size (minimum 44px per WCAG)
                 'min-w-[64px] min-h-[44px] px-2 py-1',
                 // Transition
                 'transition-all duration-200',
-                // Rounded for better visual
-                'rounded-lg',
-                // Active/inactive states
+                // EDUCA mockup: 10px border-radius
+                'rounded-[10px]',
+                // Active/inactive states - EDUCA green styling
                 active ? [
-                  'text-blue-600',
-                  'bg-blue-50',
+                  'text-green-600',
+                  'bg-green-50',
                 ] : [
                   'text-gray-500',
                   'hover:text-gray-700',
@@ -143,7 +146,7 @@ export function MobileNav() {
               <Icon
                 className={cn(
                   'w-5 h-5 mb-0.5',
-                  active ? 'text-blue-600' : 'text-gray-500'
+                  active ? 'text-green-600' : 'text-gray-500'
                 )}
                 aria-hidden="true"
               />
@@ -152,16 +155,16 @@ export function MobileNav() {
               <span
                 className={cn(
                   'text-[10px] font-medium leading-tight',
-                  active ? 'text-blue-600' : 'text-gray-500'
+                  active ? 'text-green-600' : 'text-gray-500'
                 )}
               >
                 {item.name}
               </span>
 
-              {/* Active indicator dot */}
+              {/* Active indicator dot - EDUCA green */}
               {active && (
                 <div
-                  className="absolute bottom-1 w-1 h-1 bg-blue-600 rounded-full"
+                  className="absolute bottom-1 w-1 h-1 bg-green-600 rounded-full"
                   aria-hidden="true"
                 />
               )}
