@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Refatorar a interface do sistema EDUCA Fronteira para seguir o novo design system definido nos mockups HTML em `/docs`, criando uma experiencia visual consistente, moderna e acessivel para gestao escolar municipal.
-**Current focus:** Phase 4 in progress - Turmas & Chamada
+**Current focus:** Phase 4 complete - Ready for Phase 5
 
 ## Current Position
 
-Phase: 4 of 5 (Turmas & Chamada)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-01-17 - Completed 04-01-PLAN.md (Turmas Card Grid)
+Phase: 4 of 5 (Turmas & Chamada) - COMPLETE
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-01-17 - Completed 04-02-PLAN.md (Chamada Screen Refactor)
 
-Progress: ███████░░░ 70% (7/10 plans)
+Progress: ████████░░ 80% (8/10 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 4.6 min
-- Total execution time: 0.54 hours
+- Total plans completed: 8
+- Average duration: 5.0 min
+- Total execution time: 0.67 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: ███████░░░ 70% (7/10 plans)
 | 01-design-system-foundation | 2/2 | 7 min | 3.5 min |
 | 02-layout-composites | 2/2 | 11 min | 5.5 min |
 | 03-login-dashboard | 2/2 | 13 min | 6.5 min |
-| 04-turmas-chamada | 1/2 | 1 min | 1 min |
+| 04-turmas-chamada | 2/2 | 9 min | 4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (7 min), 03-01 (5 min), 03-02 (8 min), 04-01 (1 min)
-- Trend: Fast (work pre-staged for 04-01)
+- Last 5 plans: 03-01 (5 min), 03-02 (8 min), 04-01 (1 min), 04-02 (8 min)
+- Trend: Consistent execution
 
 ## Accumulated Context
 
@@ -66,19 +66,24 @@ Recent decisions affecting current work:
 - 04-01: Full class lookup object for dynamic Tailwind colors (avoids purge issues)
 - 04-01: Card wraps Link for navigation, buttons use stopPropagation
 - 04-01: Ocupacao percentage with color coding (green <75%, orange 75-90%, red >=90%)
+- 04-02: All students start as Present for new chamada (teacher marks absences)
+- 04-02: P/F/J toggle behavior: click same = deselect (returns to null)
+- 04-02: J requires mandatory justification via modal before status change
+- 04-02: Frequency colors: green >=75%, amber 60-75%, red <60%
+- 04-02: BF badge visible only for gestores (diretor, supervisor, secretaria, admin)
 
 ### Pending Todos
 
-- Execute Phase 04 Plan 02 (Chamada page)
-- Complete Phase 04
-- Execute Phase 05 (Reports & Analytics)
+- Execute Phase 05 (Reports & Analytics) - 2 plans
+- Complete project
 
 ### Blockers/Concerns
 
 - Browser support in municipal schools needs validation (Tailwind v4 requires Safari 16.4+, Chrome 111+)
+- Frequency percentage in chamada currently hardcoded (TODO: calculate from actual data)
 
 ## Session Continuity
 
-Last session: 2026-01-17
-Stopped at: Completed 04-01-PLAN.md (Turmas Card Grid)
-Resume file: .planning/phases/04-turmas-chamada/04-02-PLAN.md
+Last session: 2026-01-17T23:22:42Z
+Stopped at: Completed 04-02-PLAN.md (Chamada Screen Refactor)
+Resume file: .planning/phases/05-reports-analytics/ (Phase 5 plans)
