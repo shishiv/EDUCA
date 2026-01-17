@@ -109,6 +109,7 @@ export default function ChamadaPage() {
 
   // Lock state
   const [isLocked, setIsLocked] = useState(false)
+  const [lockReason, setLockReason] = useState<string | null>(null)
   const [isFutureDate, setIsFutureDate] = useState(false)
 
   // Justification modal state
@@ -236,7 +237,11 @@ export default function ChamadaPage() {
 
       if (session) {
         setSessionId(session.id)
-        setIsLocked(session.status === 'fechada')
+        const sessionLocked = session.status === 'fechada'
+        setIsLocked(sessionLocked)
+        if (sessionLocked) {
+          setLockReason('Chamada finalizada')
+        }
 
         // Load existing attendance records
         const { data: frequencias } = await supabase
@@ -263,6 +268,7 @@ export default function ChamadaPage() {
       } else {
         setSessionId(null)
         setIsLocked(false)
+        setLockReason(null)
 
         // No session for this date
         const today = startOfDay(new Date())
@@ -329,10 +335,20 @@ export default function ChamadaPage() {
       const nowBrazilian = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
       const today = startOfDay(new Date())
 
+      // Past dates are always locked (can't modify historical records)
+      const currentDateStart = startOfDay(currentDate)
+      if (currentDateStart < today && !isSameDay(currentDate, today)) {
+        setIsLocked(true)
+        setLockReason('Data passada - nao e permitido modificar registros historicos')
+        return
+      }
+
+      // Today: check 18:00 cutoff
       if (isSameDay(currentDate, today)) {
         const hour = nowBrazilian.getHours()
         if (hour >= 18) {
           setIsLocked(true)
+          setLockReason('Apos 18:00 - chamada travada automaticamente')
         }
       }
     }
@@ -532,6 +548,7 @@ export default function ChamadaPage() {
         presentCount={presentCount}
         hasUnsavedChanges={hasUnsavedChanges}
         isLocked={isDisabled}
+        lockReason={isLocked ? lockReason : isFutureDate ? 'Data futura - somente visualizacao' : null}
         onSave={handleSave}
         isSaving={isSaving}
       />
