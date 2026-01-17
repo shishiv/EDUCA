@@ -13,7 +13,7 @@ Refatorar a interface do sistema EDUCA Fronteira em 5 fases incrementais: estabe
 - [x] **Phase 1: Design System Foundation** - Tokens CSS + componentes primitivos ✓
 - [x] **Phase 2: Layout & Composites** - Shell da aplicação + padrões compostos ✓
 - [x] **Phase 3: Login & Dashboard** - Primeiras telas refatoradas ✓
-- [ ] **Phase 4: Turmas & Chamada** - Telas de gestão de turma
+- [x] **Phase 4: Turmas & Chamada** - Telas de gestão de turma ✓
 - [ ] **Phase 5: Aluno & Diário Infantil** - Perfil + módulo BNCC novo
 
 ## Phase Details
@@ -94,8 +94,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Turmas card grid (TurmaCard, TurmaCardGrid, page refactor)
-- [ ] 04-02-PLAN.md — Chamada screen (P/F/J toggle, date nav, batch save, compliance)
+- [x] 04-01-PLAN.md — Turmas card grid (TurmaCard, TurmaCardGrid, page refactor) ✓
+- [x] 04-02-PLAN.md — Chamada screen (P/F/J toggle, date nav, batch save, compliance) ✓
 
 ### Phase 5: Aluno & Diário Infantil
 **Goal**: Completar perfil do aluno e implementar módulo BNCC (greenfield)
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Design System Foundation | 2/2 | Complete | 2026-01-17 |
 | 2. Layout & Composites | 2/2 | Complete | 2026-01-17 |
 | 3. Login & Dashboard | 2/2 | Complete | 2026-01-17 |
-| 4. Turmas & Chamada | 0/2 | Planned | - |
+| 4. Turmas & Chamada | 2/2 | Complete | 2026-01-17 |
 | 5. Aluno & Diário Infantil | 0/3 | Not started | - |
 
 ---
