@@ -129,18 +129,18 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DS-01 | Phase 1 | Pending |
-| DS-02 | Phase 1 | Pending |
-| DS-03 | Phase 1 | Pending |
-| DS-04 | Phase 1 | Pending |
-| COMP-01 | Phase 1 | Pending |
-| COMP-02 | Phase 1 | Pending |
-| COMP-03 | Phase 1 | Pending |
-| COMP-04 | Phase 1 | Pending |
-| COMP-05 | Phase 1 | Pending |
-| COMP-06 | Phase 1 | Pending |
-| ACESS-02 | Phase 1 | Pending |
-| ACESS-03 | Phase 1 | Pending |
+| DS-01 | Phase 1 | Complete |
+| DS-02 | Phase 1 | Complete |
+| DS-03 | Phase 1 | Complete |
+| DS-04 | Phase 1 | Complete |
+| COMP-01 | Phase 1 | Complete |
+| COMP-02 | Phase 1 | Complete |
+| COMP-03 | Phase 1 | Complete |
+| COMP-04 | Phase 1 | Complete |
+| COMP-05 | Phase 1 | Complete |
+| COMP-06 | Phase 1 | Complete |
+| ACESS-02 | Phase 1 | Complete |
+| ACESS-03 | Phase 1 | Complete |
 | LAY-01 | Phase 2 | Pending |
 | LAY-02 | Phase 2 | Pending |
 | LAY-03 | Phase 2 | Pending |

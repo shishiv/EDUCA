@@ -10,7 +10,7 @@ Refatorar a interface do sistema EDUCA Fronteira em 5 fases incrementais: estabe
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (1.1, 1.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Design System Foundation** - Tokens CSS + componentes primitivos
+- [x] **Phase 1: Design System Foundation** - Tokens CSS + componentes primitivos ✓
 - [ ] **Phase 2: Layout & Composites** - Shell da aplicação + padrões compostos
 - [ ] **Phase 3: Login & Dashboard** - Primeiras telas refatoradas
 - [ ] **Phase 4: Turmas & Chamada** - Telas de gestão de turma
@@ -33,8 +33,8 @@ Refatorar a interface do sistema EDUCA Fronteira em 5 fases incrementais: estabe
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: CSS tokens + Tailwind config
-- [ ] 01-02: Primitive components (Button, Card, Input, Avatar, Badge, Label)
+- [x] 01-01: CSS tokens + Tailwind config ✓
+- [x] 01-02: Primitive components (Button, Card, Input, Avatar, Badge, Label) ✓
 
 ### Phase 2: Layout & Composites
 **Goal**: Criar shell da aplicação e padrões de componentes compostos
@@ -125,7 +125,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Design System Foundation | 0/2 | Not started | - |
+| 1. Design System Foundation | 2/2 | Complete | 2026-01-17 |
 | 2. Layout & Composites | 0/2 | Not started | - |
 | 3. Login & Dashboard | 0/2 | Not started | - |
 | 4. Turmas & Chamada | 0/2 | Not started | - |
