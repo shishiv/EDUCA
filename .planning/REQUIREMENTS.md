@@ -37,18 +37,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Login
 
-- [ ] **LOGIN-01**: Split layout with gradient hero on left, form on right
-- [ ] **LOGIN-02**: EDUCA logo with gradient + yellow wave
-- [ ] **LOGIN-03**: Clean form with visible focus states
-- [ ] **LOGIN-04**: "Manter conectado" checkbox defaulted ON
-- [ ] **LOGIN-05**: Password reset link visible
+- [x] **LOGIN-01**: Split layout with gradient hero on left, form on right ✓
+- [x] **LOGIN-02**: EDUCA logo with gradient + yellow wave ✓
+- [x] **LOGIN-03**: Clean form with visible focus states ✓
+- [x] **LOGIN-04**: "Manter conectado" checkbox defaulted ON ✓
+- [x] **LOGIN-05**: Password reset link visible ✓
 
 ### Dashboard
 
-- [ ] **DASH-01**: Stats grid with 4→2→1 column responsive layout
-- [ ] **DASH-02**: Turmas list with color indicators by série
-- [ ] **DASH-03**: Alerts panel with semantic colors (warning, error, info)
-- [ ] **DASH-04**: Quick actions section for common tasks
+- [x] **DASH-01**: Stats grid with 4→2→1 column responsive layout ✓
+- [x] **DASH-02**: Turmas list with color indicators by série ✓
+- [x] **DASH-03**: Alerts panel with semantic colors (warning, error, info) ✓
+- [x] **DASH-04**: Quick actions section for common tasks ✓
 
 ### Turmas
 
@@ -151,15 +151,15 @@ Which phases cover which requirements. Updated by create-roadmap.
 | COMP-09 | Phase 2 | Complete |
 | COMP-10 | Phase 2 | Complete |
 | ACESS-01 | Phase 2 | Complete |
-| LOGIN-01 | Phase 3 | Pending |
-| LOGIN-02 | Phase 3 | Pending |
-| LOGIN-03 | Phase 3 | Pending |
-| LOGIN-04 | Phase 3 | Pending |
-| LOGIN-05 | Phase 3 | Pending |
-| DASH-01 | Phase 3 | Pending |
-| DASH-02 | Phase 3 | Pending |
-| DASH-03 | Phase 3 | Pending |
-| DASH-04 | Phase 3 | Pending |
+| LOGIN-01 | Phase 3 | Complete |
+| LOGIN-02 | Phase 3 | Complete |
+| LOGIN-03 | Phase 3 | Complete |
+| LOGIN-04 | Phase 3 | Complete |
+| LOGIN-05 | Phase 3 | Complete |
+| DASH-01 | Phase 3 | Complete |
+| DASH-02 | Phase 3 | Complete |
+| DASH-03 | Phase 3 | Complete |
+| DASH-04 | Phase 3 | Complete |
 | TURM-01 | Phase 4 | Pending |
 | TURM-02 | Phase 4 | Pending |
 | TURM-03 | Phase 4 | Pending |
