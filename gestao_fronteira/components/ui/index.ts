@@ -121,3 +121,13 @@ export {
 
 // Sonner Toast Integration
 export { Toaster as SonnerToaster } from './sonner'
+
+// EDUCA Composite Components (Phase 02)
+export { StatCard } from './stat-card'
+export type { StatCardProps } from './stat-card'
+export { AlertItem } from './alert-item'
+export type { AlertItemProps } from './alert-item'
+export { CampoExperiencia } from './campo-experiencia'
+export type { CampoExperienciaProps, CampoType } from './campo-experiencia'
+export { AttendanceButton, attendanceButtonVariants } from './attendance-button'
+export type { AttendanceButtonProps } from './attendance-button'
