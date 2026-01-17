@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { StatsCard } from '@/components/dashboard/stats-card'
+import { StatCard, AlertItem } from '@/components/ui'
 import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calendar, Clock, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, LucideIcon } from 'lucide-react'
+import { Users, School, UserCheck, GraduationCap, AlertCircle, TrendingUp, Calendar, Clock, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, CalendarCheck, LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -289,31 +289,32 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total de Alunos"
-          value={stats.totalAlunos}
+      {/* Statistics Cards - Responsive grid: 1 col mobile, 2 cols tablet, 4 cols desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
           icon={Users}
-          variant="primary"
+          iconColor="blue"
+          value={stats.totalAlunos}
+          label="Total de Alunos"
         />
-        <StatsCard
-          title="Escolas Ativas"
-          value={stats.totalEscolas}
-          icon={School}
-          variant="emerald"
-        />
-        <StatsCard
-          title="Turmas Ativas"
-          value={stats.totalTurmas}
+        <StatCard
           icon={GraduationCap}
-          variant="violet"
+          iconColor="green"
+          value={stats.totalTurmas}
+          label="Turmas Ativas"
         />
-        <StatsCard
-          title="Matrículas Ativas"
-          value={stats.totalMatriculas}
+        <StatCard
+          icon={CalendarCheck}
+          iconColor="yellow"
+          value={`${stats.frequenciaMedia}%`}
+          label="Frequencia Media"
+          trend={stats.frequenciaMedia >= 75 ? { value: "Acima da meta", direction: "up" } : undefined}
+        />
+        <StatCard
           icon={UserCheck}
-          variant="rose"
+          iconColor="pink"
+          value={stats.totalMatriculas}
+          label="Professores Ativos"
         />
       </div>
 
