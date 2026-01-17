@@ -32,6 +32,8 @@ export { Input } from './input'
 export type { InputProps } from './input'
 export { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from './input-otp'
 export { Label } from './label'
+export { FormField as SimpleFormField } from './form-field'
+export type { FormFieldProps as SimpleFormFieldProps } from './form-field'
 // Menubar removed - unused component
 // NavigationMenu removed - unused component
 export { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './pagination'
