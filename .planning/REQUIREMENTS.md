@@ -129,60 +129,60 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DS-01 | TBD | Pending |
-| DS-02 | TBD | Pending |
-| DS-03 | TBD | Pending |
-| DS-04 | TBD | Pending |
-| LAY-01 | TBD | Pending |
-| LAY-02 | TBD | Pending |
-| LAY-03 | TBD | Pending |
-| LAY-04 | TBD | Pending |
-| LAY-05 | TBD | Pending |
-| COMP-01 | TBD | Pending |
-| COMP-02 | TBD | Pending |
-| COMP-03 | TBD | Pending |
-| COMP-04 | TBD | Pending |
-| COMP-05 | TBD | Pending |
-| COMP-06 | TBD | Pending |
-| COMP-07 | TBD | Pending |
-| COMP-08 | TBD | Pending |
-| COMP-09 | TBD | Pending |
-| COMP-10 | TBD | Pending |
-| LOGIN-01 | TBD | Pending |
-| LOGIN-02 | TBD | Pending |
-| LOGIN-03 | TBD | Pending |
-| LOGIN-04 | TBD | Pending |
-| LOGIN-05 | TBD | Pending |
-| DASH-01 | TBD | Pending |
-| DASH-02 | TBD | Pending |
-| DASH-03 | TBD | Pending |
-| DASH-04 | TBD | Pending |
-| TURM-01 | TBD | Pending |
-| TURM-02 | TBD | Pending |
-| TURM-03 | TBD | Pending |
-| TURM-04 | TBD | Pending |
-| CHAM-01 | TBD | Pending |
-| CHAM-02 | TBD | Pending |
-| CHAM-03 | TBD | Pending |
-| CHAM-04 | TBD | Pending |
-| CHAM-05 | TBD | Pending |
-| ALUN-01 | TBD | Pending |
-| ALUN-02 | TBD | Pending |
-| ALUN-03 | TBD | Pending |
-| DIAR-01 | TBD | Pending |
-| DIAR-02 | TBD | Pending |
-| DIAR-03 | TBD | Pending |
-| DIAR-04 | TBD | Pending |
-| DIAR-05 | TBD | Pending |
-| ACESS-01 | TBD | Pending |
-| ACESS-02 | TBD | Pending |
-| ACESS-03 | TBD | Pending |
+| DS-01 | Phase 1 | Pending |
+| DS-02 | Phase 1 | Pending |
+| DS-03 | Phase 1 | Pending |
+| DS-04 | Phase 1 | Pending |
+| COMP-01 | Phase 1 | Pending |
+| COMP-02 | Phase 1 | Pending |
+| COMP-03 | Phase 1 | Pending |
+| COMP-04 | Phase 1 | Pending |
+| COMP-05 | Phase 1 | Pending |
+| COMP-06 | Phase 1 | Pending |
+| ACESS-02 | Phase 1 | Pending |
+| ACESS-03 | Phase 1 | Pending |
+| LAY-01 | Phase 2 | Pending |
+| LAY-02 | Phase 2 | Pending |
+| LAY-03 | Phase 2 | Pending |
+| LAY-04 | Phase 2 | Pending |
+| LAY-05 | Phase 2 | Pending |
+| COMP-07 | Phase 2 | Pending |
+| COMP-08 | Phase 2 | Pending |
+| COMP-09 | Phase 2 | Pending |
+| COMP-10 | Phase 2 | Pending |
+| ACESS-01 | Phase 2 | Pending |
+| LOGIN-01 | Phase 3 | Pending |
+| LOGIN-02 | Phase 3 | Pending |
+| LOGIN-03 | Phase 3 | Pending |
+| LOGIN-04 | Phase 3 | Pending |
+| LOGIN-05 | Phase 3 | Pending |
+| DASH-01 | Phase 3 | Pending |
+| DASH-02 | Phase 3 | Pending |
+| DASH-03 | Phase 3 | Pending |
+| DASH-04 | Phase 3 | Pending |
+| TURM-01 | Phase 4 | Pending |
+| TURM-02 | Phase 4 | Pending |
+| TURM-03 | Phase 4 | Pending |
+| TURM-04 | Phase 4 | Pending |
+| CHAM-01 | Phase 4 | Pending |
+| CHAM-02 | Phase 4 | Pending |
+| CHAM-03 | Phase 4 | Pending |
+| CHAM-04 | Phase 4 | Pending |
+| CHAM-05 | Phase 4 | Pending |
+| ALUN-01 | Phase 5 | Pending |
+| ALUN-02 | Phase 5 | Pending |
+| ALUN-03 | Phase 5 | Pending |
+| DIAR-01 | Phase 5 | Pending |
+| DIAR-02 | Phase 5 | Pending |
+| DIAR-03 | Phase 5 | Pending |
+| DIAR-04 | Phase 5 | Pending |
+| DIAR-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 48 total
-- Mapped to phases: 0 (TBD by create-roadmap)
-- Unmapped: 48 ⚠️
+- Mapped to phases: 48 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after initial definition*
+*Last updated: 2026-01-17 after roadmap creation*
