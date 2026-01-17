@@ -10,12 +10,19 @@ module.exports = {
     extend: {
       // Educational design system
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['var(--font-body)', 'ui-sans-serif', 'system-ui'],
+        display: ['var(--font-display)', 'ui-sans-serif', 'system-ui'],
+        cursive: ['var(--font-cursive)', 'cursive'],
         mono: ['JetBrains Mono', 'ui-monospace'],
       },
       fontSize: {
         '2xs': '0.625rem', // For compact mobile interfaces
-        // Educational typography scales
+        // EDUCA Design System typography scale
+        'display': ['var(--text-display)', { lineHeight: '1.1', fontWeight: '700' }],
+        'h1': ['var(--text-h1)', { lineHeight: '1.2', fontWeight: '600' }],
+        'h2': ['var(--text-h2)', { lineHeight: '1.3', fontWeight: '600' }],
+        'h3': ['var(--text-h3)', { lineHeight: '1.4', fontWeight: '500' }],
+        // Educational typography scales (legacy)
         'attendance-status': '0.875rem',  // 14px - Attendance marking buttons
         'student-name': '1rem',           // 16px - Student names in lists
         'student-id': '0.75rem',          // 12px - Student ID numbers
@@ -46,6 +53,9 @@ module.exports = {
         '18': '4.5rem', // 72px
         '88': '22rem',   // 352px
         '128': '32rem',  // 512px
+        // EDUCA Layout spacing (from CSS variables)
+        'sidebar': 'var(--sidebar-width)',
+        'header': 'var(--header-height)',
         // Educational form spacing
         'form-section': '2rem',   // 32px - Between major form sections
         'field-group': '1.5rem',  // 24px - Between related field groups
@@ -203,6 +213,25 @@ module.exports = {
           creche: '#F97316',
           pre_escola: '#8B5CF6',
           fundamental: '#0EA5E9',
+        },
+
+        // BNCC Campos de Experiencia (Early Childhood Education)
+        campo: {
+          eu: 'var(--campo-eu)',
+          'eu-bg': 'var(--campo-eu-bg)',
+          'eu-light': 'var(--campo-eu-light)',
+          corpo: 'var(--campo-corpo)',
+          'corpo-bg': 'var(--campo-corpo-bg)',
+          'corpo-light': 'var(--campo-corpo-light)',
+          tracos: 'var(--campo-tracos)',
+          'tracos-bg': 'var(--campo-tracos-bg)',
+          'tracos-light': 'var(--campo-tracos-light)',
+          escuta: 'var(--campo-escuta)',
+          'escuta-bg': 'var(--campo-escuta-bg)',
+          'escuta-light': 'var(--campo-escuta-light)',
+          espacos: 'var(--campo-espacos)',
+          'espacos-bg': 'var(--campo-espacos-bg)',
+          'espacos-light': 'var(--campo-espacos-light)',
         },
 
         // Fronteira Municipal (legacy support + official use)
