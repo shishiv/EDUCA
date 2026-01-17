@@ -13,7 +13,6 @@ import {
   Users,
   School,
   UserCheck,
-  Calendar,
   ClipboardList,
   BarChart3,
   Settings,
@@ -29,6 +28,17 @@ import {
   FolderOpen,
   type LucideIcon
 } from 'lucide-react'
+
+/**
+ * Sidebar Component - EDUCA Design System
+ *
+ * Updated to match EDUCA mockups with:
+ * - Green active states (bg-green-50, text-green-600)
+ * - 10px border-radius on nav items
+ * - 0.7rem uppercase section titles
+ * - Hierarchical navigation with collapsible groups
+ * - Lexend font for header title
+ */
 
 interface SidebarProps {
   className?: string
@@ -192,48 +202,48 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <div className={cn(
-      "relative flex flex-col bg-white border-r border-fronteira-gray-100 sidebar-transition",
-      collapsed ? "w-16" : "w-64",
+      "relative flex flex-col bg-white border-r border-gray-200 sidebar-transition",
+      collapsed ? "w-16" : "w-[260px]",
       className
     )}>
-      {/* Municipal Header */}
-      <div className="flex items-center justify-between px-4 h-[73px] border-b border-fronteira-gray-100 bg-gradient-to-r from-fronteira-primary/5 via-fronteira-primary/3 to-transparent">
+      {/* Sidebar Header - EDUCA styled */}
+      <div className="flex items-center justify-between px-6 h-[73px] border-b border-gray-100">
         {collapsed ? (
           /* Collapsed state - show only small icon */
           <div className="flex items-center justify-center w-full">
             <MunicipalBrasao size="sm" priority />
           </div>
         ) : (
-          /* Expanded state - show full identity */
+          /* Expanded state - show full EDUCA identity */
           <div className="flex items-center space-x-3 sidebar-transition">
             {/* Municipal Brasão */}
             <div className="flex-shrink-0">
               <MunicipalBrasao size="sm" priority />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-fronteira-primary">Sistema Escolar</h2>
-              <p className="text-xs text-fronteira-gray-500">Prefeitura de Fronteira/MG</p>
+              <h2 className="text-sm font-bold text-green-600 font-display">Sistema Escolar</h2>
+              <p className="text-xs text-gray-500">Prefeitura de Fronteira/MG</p>
             </div>
           </div>
         )}
 
       </div>
 
-      {/* Subtle side expand/collapse button */}
+      {/* Collapse/Expand button - EDUCA styled (rounded, subtle) */}
       <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="h-6 w-6 p-0 rounded-full bg-white border border-fronteira-gray-200 text-fronteira-gray-400 hover:text-fronteira-primary hover:bg-fronteira-primary/5 hover:border-fronteira-primary/20 shadow-sm transition-all duration-200"
+          className="h-6 w-6 p-0 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-green-600 hover:bg-green-50 hover:border-green-200 shadow-sm transition-all duration-200"
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
         </Button>
       </div>
 
-      {/* Navigation with Groups */}
+      {/* Navigation with Groups - EDUCA styled */}
       <ScrollArea className="flex-1 py-4">
-        <nav className="space-y-1 px-2">
+        <nav className="space-y-6 px-3">
           {navigationGroups.map((group) => {
             const isExpanded = expandedGroups[group.name] ?? group.defaultOpen
             const groupActive = isGroupActive(group)
@@ -247,16 +257,16 @@ export function Sidebar({ className }: SidebarProps) {
                     return (
                       <Link key={item.name} href={item.href}>
                         <Button
-                          variant={isActive ? "default" : "ghost"}
+                          variant="ghost"
                           className={cn(
-                            "w-full justify-center h-10 px-2 sidebar-transition",
+                            "w-full justify-center h-10 px-2 sidebar-transition rounded-[10px]",
                             isActive
-                              ? "bg-fronteira-primary text-fronteira-primary-foreground hover:bg-fronteira-primary/90 shadow-sm"
-                              : "text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
+                              ? "bg-green-50 text-green-600 hover:bg-green-100"
+                              : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                           )}
                           title={item.name}
                         >
-                          <item.icon className="h-4 w-4" />
+                          <item.icon className="h-5 w-5" />
                         </Button>
                       </Link>
                     )
@@ -267,16 +277,16 @@ export function Sidebar({ className }: SidebarProps) {
 
             // Expanded sidebar with collapsible groups
             return (
-              <div key={group.name} className="space-y-1">
-                {/* Group Header - only show if group has more than 1 item */}
+              <div key={group.name} className="space-y-2">
+                {/* Group Section Title - EDUCA mockup style: 0.7rem, uppercase, tracking-wide */}
                 {group.items.length > 1 ? (
                   <button
                     onClick={() => toggleGroup(group.name)}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors",
+                      "w-full flex items-center justify-between px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.5px] rounded-lg transition-colors",
                       groupActive
-                        ? "text-fronteira-primary bg-fronteira-primary/5"
-                        : "text-fronteira-gray-400 hover:text-fronteira-gray-600 hover:bg-fronteira-gray-50"
+                        ? "text-green-600"
+                        : "text-gray-400 hover:text-gray-600"
                     )}
                   >
                     <span className="flex items-center gap-2">
@@ -292,30 +302,29 @@ export function Sidebar({ className }: SidebarProps) {
                   </button>
                 ) : null}
 
-                {/* Group Items */}
+                {/* Group Items - EDUCA mockup style */}
                 <div
                   className={cn(
                     "space-y-1 overflow-hidden transition-all duration-200",
-                    group.items.length > 1 && !isExpanded ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100",
-                    group.items.length > 1 && "ml-2"
+                    group.items.length > 1 && !isExpanded ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
                   )}
                 >
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
                     return (
                       <Link key={item.name} href={item.href}>
-                        <Button
-                          variant={isActive ? "default" : "ghost"}
+                        {/* Nav item - EDUCA mockup: padding 12px, border-radius 10px, font-size 0.9rem, font-weight 500 */}
+                        <div
                           className={cn(
-                            "w-full justify-start h-9 text-sm sidebar-transition",
+                            "flex items-center gap-3 px-3 py-3 rounded-[10px] text-[0.9rem] font-medium cursor-pointer transition-all duration-200",
                             isActive
-                              ? "bg-fronteira-primary text-fronteira-primary-foreground hover:bg-fronteira-primary/90 shadow-sm"
-                              : "text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50"
+                              ? "bg-green-50 text-green-600"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
                           )}
                         >
-                          <item.icon className="h-4 w-4 mr-3" />
+                          <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
                           <span className="sidebar-transition">{item.name}</span>
-                        </Button>
+                        </div>
                       </Link>
                     )
                   })}
