@@ -1,0 +1,16 @@
+{
+  "project": "educa-ui-refactor",
+  "type": "brownfield",
+  "created": "2026-01-16",
+  "preferences": {
+    "autonomous_execution": true,
+    "checkpoint_frequency": "after_each_phase",
+    "commit_style": "atomic",
+    "testing": "manual_verification"
+  },
+  "workflow": {
+    "phases_require_approval": true,
+    "auto_commit_on_phase_complete": true,
+    "pause_on_error": true
+  }
+}
