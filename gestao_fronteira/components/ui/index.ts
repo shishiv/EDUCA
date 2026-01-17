@@ -72,17 +72,6 @@ export {
   OverlayLoading,
 } from './loading-states'
 
-// New Loading Components (Task 5.3.2)
-export {
-  LoadingSpinner,
-  LoadingOverlay,
-  LoadingInline,
-  ButtonLoading,
-  LoadingCard,
-  LoadingTable,
-  LoadingProgress,
-} from './loading-spinner'
-
 // Brazilian Educational Input Components
 export { CPFInput, BrazilianPhoneInput, CEPInput, BrazilianDateInput, BrazilianInputHelp } from './brazilian-inputs'
 
