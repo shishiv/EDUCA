@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -88,6 +89,7 @@ const getTurnoBadgeVariant = (turno: string): 'default' | 'secondary' | 'outline
 }
 
 export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
+  const router = useRouter()
   const serieColor = getSerieColor(turma.serie)
   const gradientClasses = serieColorClasses[serieColor]
   const ocupacao = turma.capacidade > 0
@@ -97,13 +99,21 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
   const handleChamadaClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    onChamada?.(turma.id)
+    if (onChamada) {
+      onChamada(turma.id)
+    } else {
+      router.push(`/dashboard/turmas/${turma.id}/chamada`)
+    }
   }
 
   const handleDiarioClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    onDiario?.(turma.id)
+    if (onDiario) {
+      onDiario(turma.id)
+    } else {
+      router.push(`/dashboard/turmas/${turma.id}/diario`)
+    }
   }
 
   return (
