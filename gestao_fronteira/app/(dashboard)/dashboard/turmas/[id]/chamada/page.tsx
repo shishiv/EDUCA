@@ -188,8 +188,12 @@ export default function ChamadaPage() {
   const loadStudents = useCallback(async () => {
     if (!turmaId) return
 
+    console.log('Loading students for turma:', turmaId)
+
     try {
       // Get students enrolled in this turma
+      // Note: .order() on nested relations can be PostgREST version-dependent
+      // So we sort in JavaScript for reliability
       const { data, error: studentsError } = await supabase
         .from('matriculas')
         .select(`
@@ -202,17 +206,27 @@ export default function ChamadaPage() {
         `)
         .eq('turma_id', turmaId)
         .eq('ativo', true)
-        .order('aluno(nome_completo)', { ascending: true })
 
-      if (studentsError) throw studentsError
+      if (studentsError) {
+        console.error('Students query failed:', {
+          message: studentsError.message,
+          code: studentsError.code,
+          details: studentsError.details,
+          hint: studentsError.hint,
+        })
+        throw studentsError
+      }
 
-      const studentsList: Student[] = (data || []).map((m: any) => ({
-        id: m.aluno?.id || '',
-        nome: m.aluno?.nome_completo || 'Aluno',
-        matriculaId: m.id,
-        frequencia: 85, // TODO: Calculate from actual attendance data
-        hasNis: !!m.aluno?.nis,
-      })).filter((s: Student) => s.id)
+      const studentsList: Student[] = (data || [])
+        .map((m: any) => ({
+          id: m.aluno?.id || '',
+          nome: m.aluno?.nome_completo || 'Aluno',
+          matriculaId: m.id,
+          frequencia: 85, // TODO: Calculate from actual attendance data
+          hasNis: !!m.aluno?.nis,
+        }))
+        .filter((s: Student) => s.id)
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 
       setStudents(studentsList)
     } catch (err: any) {
