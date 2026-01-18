@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Design System
 
-- [ ] **DS-01**: CSS variables defined for colors (primary palette, BNCC campos, semantic, neutrals)
-- [ ] **DS-02**: CSS variables defined for typography (Lexend/Inter/Caveat fonts, type scale)
-- [ ] **DS-03**: CSS variables defined for spacing and layout constants (sidebar-width, header-height, border-radius)
-- [ ] **DS-04**: Tailwind config extended with EDUCA palette and design tokens
+- [x] **DS-01**: CSS variables defined for colors (primary palette, BNCC campos, semantic, neutrals) ✓
+- [x] **DS-02**: CSS variables defined for typography (Lexend/Inter/Caveat fonts, type scale) ✓
+- [x] **DS-03**: CSS variables defined for spacing and layout constants (sidebar-width, header-height, border-radius) ✓
+- [x] **DS-04**: Tailwind config extended with EDUCA palette and design tokens ✓
 
 ### Layout
 
@@ -24,12 +24,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Components
 
-- [ ] **COMP-01**: Button component (primary, secondary, ghost variants)
-- [ ] **COMP-02**: Card component with header and content areas
-- [ ] **COMP-03**: Input/Form controls with focus states
-- [ ] **COMP-04**: Avatar component with image and fallback
-- [ ] **COMP-05**: Badge/Tag component with color variants
-- [ ] **COMP-06**: Label component for form fields
+- [x] **COMP-01**: Button component (primary, secondary, ghost variants) ✓
+- [x] **COMP-02**: Card component with header and content areas ✓
+- [x] **COMP-03**: Input/Form controls with focus states ✓
+- [x] **COMP-04**: Avatar component with image and fallback ✓
+- [x] **COMP-05**: Badge/Tag component with color variants ✓
+- [x] **COMP-06**: Label component for form fields ✓
 - [x] **COMP-07**: Stat card component with icon, value, and label ✓
 - [x] **COMP-08**: Alert item component with severity levels ✓
 - [x] **COMP-09**: Attendance table component with action buttons ✓
@@ -82,8 +82,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Accessibility
 
 - [x] **ACESS-01**: Text contrast minimum 4.5:1 on all surfaces ✓
-- [ ] **ACESS-02**: Labels associated with all form fields
-- [ ] **ACESS-03**: Error messages displayed below fields (not just red border)
+- [x] **ACESS-02**: Labels associated with all form fields ✓
+- [x] **ACESS-03**: Error messages displayed below fields (not just red border) ✓
 
 ## v2 Requirements
 

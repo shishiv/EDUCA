@@ -1,133 +1,113 @@
 ---
 phase: 05-aluno-diario-infantil
-verified: 2026-01-18T04:36:36Z
+verified: 2026-01-18T22:12:07Z
 status: passed
-score: 15/15 must-haves verified
-re_verification: false
+score: 8/8 success criteria verified
+re_verification:
+  previous_status: passed
+  previous_score: 15/15
+  gaps_closed:
+    - "Module import error in student-form.tsx"
+    - "TurmaCard navigation handlers not working"
+    - "Chamada page Supabase query issue"
+  gaps_remaining: []
+  regressions: []
 ---
 
-# Phase 5: Aluno & Diario Infantil Verification Report
+# Phase 5: Aluno and Diario Infantil Verification Report
 
-**Phase Goal:** Complete aluno profile page + Diario Infantil BNCC module
-**Verified:** 2026-01-18T04:36:36Z
+**Phase Goal:** Completar perfil do aluno e implementar modulo BNCC (greenfield)
+**Verified:** 2026-01-18T22:12:07Z
 **Status:** passed
-**Re-verification:** No - initial verification
+**Re-verification:** Yes - after UAT gap closure (05-04-PLAN)
 
 ## Goal Achievement
 
-### Observable Truths
+### Success Criteria from ROADMAP.md
 
-#### Plan 05-01: Student Profile Refactor
+| # | Success Criterion | Status | Evidence |
+|---|-------------------|--------|----------|
+| 1 | Perfil shows avatar + name + info + stats header | VERIFIED | StudentProfileHeader.tsx L64: h-24 w-24 lg:h-[120px] with name column, age, FaixaEtariaIndicator |
+| 2 | Two-column grid displays dados pessoais and historico | VERIFIED | StudentInfoGrid.tsx L106: grid-cols-1 lg:grid-cols-2 |
+| 3 | Tags display turma/turno/bolsa familia | VERIFIED | StudentTags.tsx L60-90: Badge components with proper variants |
+| 4 | Campo de Experiencia selector shows 5 BNCC colors | VERIFIED | CampoExperienciaSelector.tsx L133-139: pink/orange/violet/sky/emerald |
+| 5 | Vivencia form captures text description with date | VERIFIED | VivenciaForm.tsx L140-151: date input, L172-204: Textarea with validation |
+| 6 | Child observation cards group by date | VERIFIED | VivenciasTimeline.tsx L130-149: groupByDay() function |
+| 7 | Faixa etaria indicator works | VERIFIED | faixa-etaria.ts L72-76: bebes/criancas-bem-pequenas/criancas-pequenas |
+| 8 | Development report generates descriptive text (never grades) | VERIFIED | DevelopmentReportWriter.tsx L12: CRITICAL comment, 5 Textarea fields only |
 
-| # | Truth | Status | Evidence |
-|---|-------|--------|----------|
-| 1 | Perfil shows large avatar (~120px) left, name + info beside | VERIFIED | StudentProfileHeader.tsx L64: h-24 w-24 lg:h-[120px] lg:w-[120px] with name column beside |
-| 2 | Two-column grid displays dados pessoais and historico on desktop | VERIFIED | StudentInfoGrid.tsx L106: grid-cols-1 lg:grid-cols-2, left=personal data, right=history |
-| 3 | Tags display turma/turno/bolsa familia below name as colored chips | VERIFIED | StudentTags.tsx renders Badge components for turma/turno/BF with appropriate variants |
-| 4 | Faixa etaria indicator appears for Infantil students | VERIFIED | FaixaEtariaIndicator.tsx uses calculateFaixaEtaria() and renders colored Badge for 0-71 months |
-| 5 | Layout stacks to single column on mobile | VERIFIED | Uses grid-cols-1 base with lg:grid-cols-2 responsive breakpoint |
+**Score:** 8/8 success criteria verified
 
-#### Plan 05-02: Diario Infantil Module
+### Plan Completion Status
 
-| # | Truth | Status | Evidence |
-|---|-------|--------|----------|
-| 1 | Campo de Experiencia selector shows 5 colored cards in grid | VERIFIED | CampoExperienciaSelector.tsx L86: renders 5 cards from getAllCampos() with responsive grid |
-| 2 | Multiple campos can be selected (multi-select behavior) | VERIFIED | CampoExperienciaSelector.tsx L55-66: toggles array, adds/removes from selection |
-| 3 | Vivencia form captures date, campos, and text description | VERIFIED | VivenciaForm.tsx has date input, CampoExperienciaSelector, and validated Textarea fields |
-| 4 | Child observation cards display campo badges, date, and description | VERIFIED | VivenciaCard.tsx renders date, CampoBadge for each campo, and truncated description |
-| 5 | Timeline groups observations by date | VERIFIED | VivenciasTimeline.tsx L130-149: groupByDay() groups vivencias with formatted date headers |
+| Plan | Description | Status |
+|------|-------------|--------|
+| 05-01-PLAN | Perfil do Aluno refactor | Complete |
+| 05-02-PLAN | Diario Infantil module | Complete |
+| 05-03-PLAN | Development report | Complete |
+| 05-04-PLAN | UAT gap closure | Complete |
 
-#### Plan 05-03: Development Report
+### Required Artifacts - All Verified
 
-| # | Truth | Status | Evidence |
-|---|-------|--------|----------|
-| 1 | Development report shows text areas for each Campo de Experiencia | VERIFIED | DevelopmentReportWriter.tsx L257-281: maps 5 campos to CampoField textareas |
-| 2 | Vivencias reference panel displays as sidebar during report writing | VERIFIED | relatorio/page.tsx L376: grid lg:grid-cols-[1fr,350px] with VivenciasReference sidebar |
-| 3 | Report generates descriptive text (NEVER grades or numerical indicators) | VERIFIED | Grep for nota/score/grade returned NO matches in DevelopmentReportWriter.tsx |
-| 4 | Teacher can see student vivencias while writing report | VERIFIED | VivenciasReference.tsx renders scrollable list with filter tabs, syncs with campo focus |
-| 5 | Report page accessible from diario page | VERIFIED | diario/page.tsx L224: Link to /dashboard/alunos/${alunoId}/diario/relatorio |
+- StudentProfileHeader.tsx (117 lines) - VERIFIED
+- StudentTags.tsx (93 lines) - VERIFIED
+- StudentInfoGrid.tsx (324 lines) - VERIFIED
+- FaixaEtariaIndicator.tsx (77 lines) - VERIFIED
+- faixa-etaria.ts (107 lines) - VERIFIED
+- diario-infantil.ts (221+ lines) - VERIFIED
+- CampoExperienciaSelector.tsx (229 lines) - VERIFIED
+- VivenciaForm.tsx (262 lines) - VERIFIED
+- VivenciaCard.tsx (192 lines) - VERIFIED
+- VivenciasTimeline.tsx (220 lines) - VERIFIED
+- DevelopmentReportWriter.tsx (473 lines) - VERIFIED
+- VivenciasReference.tsx (349 lines) - VERIFIED
+- diario/page.tsx (248+ lines) - VERIFIED
+- relatorio/page.tsx (406+ lines) - VERIFIED
+- TurmaCard.tsx (197 lines) - VERIFIED
 
-**Score:** 15/15 truths verified
+### Key Link Verification - All Wired
 
-### Required Artifacts
-
-#### Plan 05-01 Artifacts
-
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| gestao_fronteira/components/students/StudentProfileHeader.tsx | Avatar + name + stats header | VERIFIED | 117 lines, exports StudentProfileHeader |
-| gestao_fronteira/components/students/StudentTags.tsx | Turma/turno/bolsa familia tags | VERIFIED | 93 lines, exports StudentTags |
-| gestao_fronteira/components/students/StudentInfoGrid.tsx | Two-column dados/historico grid | VERIFIED | 324 lines, exports StudentInfoGrid |
-| gestao_fronteira/components/students/FaixaEtariaIndicator.tsx | Age group badge for Infantil | VERIFIED | 77 lines, exports FaixaEtariaIndicator |
-| gestao_fronteira/lib/utils/faixa-etaria.ts | Age group calculation helpers | VERIFIED | 107 lines, exports calculateFaixaEtaria |
-
-#### Plan 05-02 Artifacts
-
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| gestao_fronteira/types/diario-infantil.ts | Types for Vivencia, VivenciaFormData | VERIFIED | 221 lines, exports types |
-| gestao_fronteira/components/diary/CampoExperienciaSelector.tsx | 5 colored cards with multi-select | VERIFIED | 229 lines, grid with toggle |
-| gestao_fronteira/components/diary/VivenciaForm.tsx | Vivencia registration form | VERIFIED | 262 lines, react-hook-form + zod |
-| gestao_fronteira/components/diary/VivenciaCard.tsx | Single observation card | VERIFIED | 192 lines, date/badges/description |
-| gestao_fronteira/components/diary/VivenciasTimeline.tsx | Observations grouped by date | VERIFIED | 220 lines, groupByDay/Week |
-| gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/diario/page.tsx | Diario Infantil page | VERIFIED | 248 lines, renders timeline |
-
-#### Plan 05-03 Artifacts
-
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| gestao_fronteira/components/diary/DevelopmentReportWriter.tsx | Report form with 5 textareas | VERIFIED | 473 lines, progress indicator |
-| gestao_fronteira/components/diary/VivenciasReference.tsx | Sidebar with vivencias | VERIFIED | 349 lines, filter tabs |
-| gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/diario/relatorio/page.tsx | Report writing page | VERIFIED | 406 lines, two-column layout |
-
-### Key Link Verification
-
-All key links WIRED:
-- alunos/[id]/page.tsx imports StudentProfileHeader, StudentTags, StudentInfoGrid from @/components/students
+- alunos/[id]/page.tsx imports and uses StudentProfileHeader, StudentTags, StudentInfoGrid
 - FaixaEtariaIndicator imports calculateFaixaEtaria from faixa-etaria.ts
-- diario/page.tsx imports and renders VivenciasTimeline
-- VivenciaForm uses CampoExperienciaSelector
-- VivenciaCard imports Vivencia type from diario-infantil.ts
-- relatorio/page.tsx imports and renders DevelopmentReportWriter + VivenciasReference
+- diario/page.tsx imports and uses VivenciasTimeline
+- diario/novo/page.tsx imports and uses VivenciaForm
+- relatorio/page.tsx imports and uses DevelopmentReportWriter and VivenciasReference
+- VivenciaForm imports and uses CampoExperienciaSelector
+- TurmaCard uses router.push for navigation with fallback
 
-### Requirements Coverage
+### UAT Gap Closure (05-04-PLAN)
 
-All ALUN-01 through DIAR-05 requirements SATISFIED. No blocking issues.
+| Gap | Fix Applied | Commit |
+|-----|-------------|--------|
+| Module import error | Changed to brazilian-inputs, replaced EnhancedSelectInput | 9b21f84 |
+| Chamada query error | Removed .order(), added JS sort | d24699f |
+| TurmaCard navigation | Added useRouter, router.push fallback | b3c6119 |
+
+### TypeScript Verification
+
+pnpm typecheck - PASSED (no type errors)
 
 ### Anti-Patterns Found
 
-| File | Pattern | Severity | Impact |
-|------|---------|----------|--------|
-| diario/page.tsx | TODO: Replace with API call | Info | Expected - mock data works |
-| diario/novo/page.tsx | TODO: Implement API call | Info | Expected - mock save works |
-| relatorio/page.tsx | TODO: API calls | Info | Expected - mock implementation |
-
-All TODOs are documented future work. No blockers.
+- diario/page.tsx: MOCK_VIVENCIAS - Info (expected for demo)
+- relatorio/page.tsx: Mock student data - Info (expected for demo)
+- diario/novo/page.tsx: TODO API call - Info (mock save works)
 
 ### Human Verification Required
 
-1. **Profile Header Visual Layout** - Navigate to /dashboard/alunos/1
-2. **Responsive Layout** - Resize from 1200px to 375px
-3. **Faixa Etaria Display** - View Infantil-age student
-4. **Campo Selector Multi-Select** - Click multiple cards
-5. **Timeline Grouping** - Navigate to /dashboard/alunos/1/diario
-6. **Report Writer Sidebar Sync** - Focus campo textarea
-7. **Mobile Sheet for Vivencias** - View relatorio on mobile
-
-### TypeScript Compilation
-
-TypeScript check passed with no errors.
+1. Profile Header Visual Layout - Navigate to /dashboard/alunos/1
+2. Responsive Layout - Resize browser
+3. Faixa Etaria Display - View Infantil-age student
+4. Campo Selector Multi-Select - Click multiple cards
+5. Timeline Grouping - View /dashboard/alunos/1/diario
+6. TurmaCard Navigation - Click Fazer Chamada button
+7. Development Report - No Grades - Check relatorio page
 
 ### Gaps Summary
 
-No gaps found. All 15 must-have truths verified:
-- Plan 05-01: 5/5 truths verified
-- Plan 05-02: 5/5 truths verified
-- Plan 05-03: 5/5 truths verified
-
-All artifacts exist, are substantive (not stubs), and are properly wired.
+No gaps found. All 8 success criteria verified. All 4 plans complete.
 
 ---
 
-_Verified: 2026-01-18T04:36:36Z_
+_Verified: 2026-01-18T22:12:07Z_
 _Verifier: Claude (gsd-verifier)_
