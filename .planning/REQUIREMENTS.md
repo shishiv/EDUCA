@@ -67,17 +67,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Perfil do Aluno
 
-- [ ] **ALUN-01**: Avatar + name + info + stats header section
-- [ ] **ALUN-02**: Two-column grid for data sections (dados pessoais, histórico)
-- [ ] **ALUN-03**: Tags for turma/turno/bolsa família
+- [x] **ALUN-01**: Avatar + name + info + stats header section ✓
+- [x] **ALUN-02**: Two-column grid for data sections (dados pessoais, histórico) ✓
+- [x] **ALUN-03**: Tags for turma/turno/bolsa família ✓
 
 ### Diário Infantil
 
-- [ ] **DIAR-01**: Campo de Experiência selector with 5 BNCC colors
-- [ ] **DIAR-02**: Vivência registration form with text description
-- [ ] **DIAR-03**: Child observation cards grouped by date
-- [ ] **DIAR-04**: Faixa etária indicator (Bebês, Crianças bem pequenas, Crianças pequenas)
-- [ ] **DIAR-05**: Development report generator with descriptive text (nunca notas)
+- [x] **DIAR-01**: Campo de Experiência selector with 5 BNCC colors ✓
+- [x] **DIAR-02**: Vivência registration form with text description ✓
+- [x] **DIAR-03**: Child observation cards grouped by date ✓
+- [x] **DIAR-04**: Faixa etária indicator (Bebês, Crianças bem pequenas, Crianças pequenas) ✓
+- [x] **DIAR-05**: Development report generator with descriptive text (nunca notas) ✓
 
 ### Accessibility
 
@@ -169,14 +169,14 @@ Which phases cover which requirements. Updated by create-roadmap.
 | CHAM-03 | Phase 4 | Complete |
 | CHAM-04 | Phase 4 | Complete |
 | CHAM-05 | Phase 4 | Complete |
-| ALUN-01 | Phase 5 | Pending |
-| ALUN-02 | Phase 5 | Pending |
-| ALUN-03 | Phase 5 | Pending |
-| DIAR-01 | Phase 5 | Pending |
-| DIAR-02 | Phase 5 | Pending |
-| DIAR-03 | Phase 5 | Pending |
-| DIAR-04 | Phase 5 | Pending |
-| DIAR-05 | Phase 5 | Pending |
+| ALUN-01 | Phase 5 | Complete |
+| ALUN-02 | Phase 5 | Complete |
+| ALUN-03 | Phase 5 | Complete |
+| DIAR-01 | Phase 5 | Complete |
+| DIAR-02 | Phase 5 | Complete |
+| DIAR-03 | Phase 5 | Complete |
+| DIAR-04 | Phase 5 | Complete |
+| DIAR-05 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 48 total
@@ -185,4 +185,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after roadmap creation*
+*Last updated: 2026-01-18 after Phase 5 completion*
