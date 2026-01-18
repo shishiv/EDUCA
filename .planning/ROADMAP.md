@@ -110,14 +110,13 @@ Plans:
   6. Child observation cards group by date
   7. Faixa etária indicator works (Bebês, Crianças bem pequenas, Crianças pequenas)
   8. Development report generates descriptive text (never grades)
-**Research**: Partial (confirm BNCC colors with official MEC materials)
-**Research topics**: Cores oficiais dos Campos de Experiência
-**Plans**: TBD
+**Research**: Complete (05-RESEARCH.md)
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: Perfil do Aluno refactor
-- [ ] 05-02: Diário Infantil module (Campo selector, Vivência form)
-- [ ] 05-03: Diário Infantil reports (observations, development report)
+- [ ] 05-01-PLAN.md — Perfil do Aluno refactor (profile header, tags, two-column grid, faixa etaria)
+- [ ] 05-02-PLAN.md — Diário Infantil module (Campo selector, Vivência form, timeline)
+- [ ] 05-03-PLAN.md — Development report (report writer, vivencias reference sidebar)
 
 ## Progress
 
@@ -130,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Layout & Composites | 2/2 | Complete | 2026-01-17 |
 | 3. Login & Dashboard | 2/2 | Complete | 2026-01-17 |
 | 4. Turmas & Chamada | 2/2 | Complete | 2026-01-17 |
-| 5. Aluno & Diário Infantil | 0/3 | Not started | - |
+| 5. Aluno & Diário Infantil | 0/3 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-17*
