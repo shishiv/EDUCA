@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Refatorar a interface do sistema EDUCA Fronteira para seguir o novo design system definido nos mockups HTML em `/docs`, criando uma experiencia visual consistente, moderna e acessivel para gestao escolar municipal.
-**Current focus:** PROJECT COMPLETE - All 5 phases executed
+**Current focus:** PROJECT COMPLETE - All 5 phases + UAT gap closure executed
 
 ## Current Position
 
 Phase: 5 of 5 (Aluno & Diario Infantil) - COMPLETE
-Plan: 3 of 3 complete
+Plan: 4 of 4 complete (includes UAT gap closure plan)
 Status: PROJECT COMPLETE
-Last activity: 2026-01-18 - Completed 05-03-PLAN.md (Development Report Writer)
+Last activity: 2026-01-18 - Completed 05-04-PLAN.md (UAT Gap Closure)
 
-Progress: ██████████ 100% (11/11 plans)
+Progress: ████████████ 100% (12/12 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 5.5 min
-- Total execution time: 1.0 hours
+- Total plans completed: 12
+- Average duration: 5.3 min
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: ██████████ 100% (11/11 plans)
 | 02-layout-composites | 2/2 | 11 min | 5.5 min |
 | 03-login-dashboard | 2/2 | 13 min | 6.5 min |
 | 04-turmas-chamada | 2/2 | 9 min | 4.5 min |
-| 05-aluno-diario-infantil | 3/3 | 20 min | 6.7 min |
+| 05-aluno-diario-infantil | 4/4 | 25 min | 6.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (1 min), 04-02 (8 min), 05-01 (5 min), 05-02 (6 min), 05-03 (9 min)
+- Last 5 plans: 04-02 (8 min), 05-01 (5 min), 05-02 (6 min), 05-03 (9 min), 05-04 (5 min)
 - Trend: Consistent execution
 
 ## Accumulated Context
@@ -82,6 +82,9 @@ Recent decisions affecting current work:
 - 05-03: Campo focus in writer triggers filter in sidebar for context
 - 05-03: 50 chars minimum per campo for finalization (flexible)
 - 05-03: Mobile uses Sheet for vivencias sidebar access
+- 05-04: Remove .order() on Supabase nested relations, sort in JS instead
+- 05-04: Use router.push fallback when optional callback props not provided
+- 05-04: Use shadcn Select instead of non-existent EnhancedSelectInput
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-01-18T04:26:00Z
-Stopped at: PROJECT COMPLETE - All 11 plans executed
+Last session: 2026-01-18T22:08:00Z
+Stopped at: PROJECT COMPLETE - All 12 plans executed (including UAT gap closure)
 Resume file: None - project complete
