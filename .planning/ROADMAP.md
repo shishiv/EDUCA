@@ -14,7 +14,7 @@ Refatorar a interface do sistema EDUCA Fronteira em 5 fases incrementais: estabe
 - [x] **Phase 2: Layout & Composites** - Shell da aplicação + padrões compostos ✓
 - [x] **Phase 3: Login & Dashboard** - Primeiras telas refatoradas ✓
 - [x] **Phase 4: Turmas & Chamada** - Telas de gestão de turma ✓
-- [x] **Phase 5: Aluno & Diário Infantil** - Perfil + módulo BNCC novo ✓
+- [ ] **Phase 5: Aluno & Diário Infantil** - Perfil + módulo BNCC novo (UAT fixes pending)
 
 ## Phase Details
 
@@ -111,12 +111,13 @@ Plans:
   7. Faixa etária indicator works (Bebês, Crianças bem pequenas, Crianças pequenas)
   8. Development report generates descriptive text (never grades)
 **Research**: Complete (05-RESEARCH.md)
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 05-01-PLAN.md — Perfil do Aluno refactor (profile header, tags, two-column grid, faixa etaria) ✓
 - [x] 05-02-PLAN.md — Diário Infantil module (Campo selector, Vivência form, timeline) ✓
 - [x] 05-03-PLAN.md — Development report (report writer, vivencias reference sidebar) ✓
+- [ ] 05-04-PLAN.md — UAT gap closure (import fix, chamada query fix, navigation fix)
 
 ## Progress
 
@@ -129,7 +130,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Layout & Composites | 2/2 | Complete | 2026-01-17 |
 | 3. Login & Dashboard | 2/2 | Complete | 2026-01-17 |
 | 4. Turmas & Chamada | 2/2 | Complete | 2026-01-17 |
-| 5. Aluno & Diário Infantil | 3/3 | Complete | 2026-01-18 |
+| 5. Aluno & Diário Infantil | 3/4 | UAT Fixes | - |
 
 ---
 *Roadmap created: 2026-01-17*
