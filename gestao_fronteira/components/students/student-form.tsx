@@ -11,12 +11,18 @@ import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 import { EnhancedFormProvider, EnhancedSubmitActions } from '@/components/ui/enhanced-form'
 import {
-  EnhancedCPFInput,
-  EnhancedPhoneInput,
-  EnhancedDateInput,
-  EnhancedCEPInput,
-  EnhancedSelectInput
-} from '@/components/ui/enhanced-brazilian-inputs'
+  CPFInput,
+  BrazilianPhoneInput,
+  BrazilianDateInput,
+  CEPInput,
+} from '@/components/ui/brazilian-inputs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -44,7 +50,8 @@ import {
   AlertCircle,
   CheckCircle,
   Save,
-  Send
+  Send,
+  Shield
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
@@ -404,12 +411,13 @@ export function EnhancedStudentRegistrationForm({
                     />
                   </div>
 
-                  <EnhancedCPFInput
-                    name="cpf"
-                    label="CPF"
-                    helpKey="cpf"
-                    required
-                  />
+                  <div>
+                    <Label htmlFor="cpf">CPF *</Label>
+                    <CPFInput
+                      id="cpf"
+                      className="mt-1"
+                    />
+                  </div>
 
                   <div>
                     <Label htmlFor="rg">RG</Label>
@@ -421,30 +429,45 @@ export function EnhancedStudentRegistrationForm({
                     />
                   </div>
 
-                  <EnhancedDateInput
-                    name="data_nascimento"
-                    label="Data de Nascimento"
-                    helpKey="data_nascimento"
-                    required
-                    maxDate={new Date()} // Cannot be in the future
-                    minDate={new Date(new Date().getFullYear() - 25, 0, 1)} // Max 25 years old
-                  />
+                  <div>
+                    <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
+                    <BrazilianDateInput
+                      id="data_nascimento"
+                      className="mt-1"
+                    />
+                  </div>
 
-                  <EnhancedSelectInput
-                    name="sexo"
-                    label="Sexo"
-                    helpKey="sexo"
-                    required
-                    options={sexoOptions}
-                  />
+                  <div>
+                    <Label htmlFor="sexo">Sexo *</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sexoOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                  <EnhancedSelectInput
-                    name="cor_raca"
-                    label="Cor/Raça"
-                    helpKey="cor_raca"
-                    required
-                    options={corRacaOptions}
-                  />
+                  <div>
+                    <Label htmlFor="cor_raca">Cor/Raca *</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {corRacaOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -458,12 +481,13 @@ export function EnhancedStudentRegistrationForm({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <EnhancedPhoneInput
-                    name="telefone"
-                    label="Telefone Principal"
-                    helpKey="phone"
-                    required
-                  />
+                  <div>
+                    <Label htmlFor="telefone">Telefone Principal *</Label>
+                    <BrazilianPhoneInput
+                      id="telefone"
+                      className="mt-1"
+                    />
+                  </div>
 
                   <div>
                     <Label htmlFor="email">E-mail</Label>
@@ -476,13 +500,13 @@ export function EnhancedStudentRegistrationForm({
                     />
                   </div>
 
-                  <EnhancedCEPInput
-                    name="cep"
-                    label="CEP"
-                    helpKey="cep"
-                    required
-                    onAddressFound={handleAddressFound}
-                  />
+                  <div>
+                    <Label htmlFor="cep">CEP *</Label>
+                    <CEPInput
+                      id="cep"
+                      className="mt-1"
+                    />
+                  </div>
 
                   <div>
                     <Label htmlFor="endereco">Endereço *</Label>
@@ -562,17 +586,21 @@ export function EnhancedStudentRegistrationForm({
                       />
                     </div>
 
-                    <EnhancedCPFInput
-                      name="cpf_mae"
-                      label="CPF da Mãe"
-                      helpKey="cpf"
-                    />
+                    <div>
+                      <Label htmlFor="cpf_mae">CPF da Mae</Label>
+                      <CPFInput
+                        id="cpf_mae"
+                        className="mt-1"
+                      />
+                    </div>
 
-                    <EnhancedPhoneInput
-                      name="telefone_mae"
-                      label="Telefone da Mãe"
-                      helpKey="phone"
-                    />
+                    <div>
+                      <Label htmlFor="telefone_mae">Telefone da Mae</Label>
+                      <BrazilianPhoneInput
+                        id="telefone_mae"
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -592,17 +620,21 @@ export function EnhancedStudentRegistrationForm({
                       />
                     </div>
 
-                    <EnhancedCPFInput
-                      name="cpf_pai"
-                      label="CPF do Pai"
-                      helpKey="cpf"
-                    />
+                    <div>
+                      <Label htmlFor="cpf_pai">CPF do Pai</Label>
+                      <CPFInput
+                        id="cpf_pai"
+                        className="mt-1"
+                      />
+                    </div>
 
-                    <EnhancedPhoneInput
-                      name="telefone_pai"
-                      label="Telefone do Pai"
-                      helpKey="phone"
-                    />
+                    <div>
+                      <Label htmlFor="telefone_pai">Telefone do Pai</Label>
+                      <BrazilianPhoneInput
+                        id="telefone_pai"
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -622,12 +654,13 @@ export function EnhancedStudentRegistrationForm({
                       />
                     </div>
 
-                    <EnhancedPhoneInput
-                      name="contato_emergencia_telefone"
-                      label="Telefone de Emergência"
-                      helpKey="phone"
-                      required
-                    />
+                    <div>
+                      <Label htmlFor="contato_emergencia_telefone">Telefone de Emergencia *</Label>
+                      <BrazilianPhoneInput
+                        id="contato_emergencia_telefone"
+                        className="mt-1"
+                      />
+                    </div>
 
                     <div>
                       <Label htmlFor="contato_emergencia_parentesco">Parentesco *</Label>
@@ -652,21 +685,37 @@ export function EnhancedStudentRegistrationForm({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <EnhancedSelectInput
-                    name="serie_ano"
-                    label="Série/Ano"
-                    helpKey="serie_ano"
-                    required
-                    options={serieAnoOptions}
-                  />
+                  <div>
+                    <Label htmlFor="serie_ano">Serie/Ano *</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serieAnoOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                  <EnhancedSelectInput
-                    name="turno"
-                    label="Turno"
-                    helpKey="turno"
-                    required
-                    options={turnoOptions}
-                  />
+                  <div>
+                    <Label htmlFor="turno">Turno *</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {turnoOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className="md:col-span-2">
                     <Label htmlFor="escola_origem">Escola de Origem (se transferência)</Label>
