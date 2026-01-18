@@ -9,19 +9,6 @@ Sistema de gestão educacional para o Município de Fronteira, MG.
 | Projeto Principal | `gestao_fronteira/` (Next.js 15 + Supabase) |
 | Package Manager | `pnpm` |
 | Dev Server | `pnpm dev` → http://localhost:3000 |
-| Database | **Supabase MCP** |
-| UI Testing | **Chrome DevTools MCP** |
-| Components | **shadcn-ui MCP** |
-| Library Docs | **Context7 MCP** ou **Ref MCP** |
-| Issue Tracking | **Beads** (`bd` CLI) |
-
----
-
-## Issue Tracking
-
-**Sistema:** Beads (`bd` CLI) - comandos disponíveis via hook SessionStart
-
-**Regra:** Usar Beads para tracking de issues e problemas. Comandos carregados automaticamente.
 
 ---
 
@@ -32,55 +19,6 @@ Sistema de gestão educacional para o Município de Fronteira, MG.
 | `codebase-cleanup` | Limpeza sistemática em 4 fases |
 
 Invocar com: `skill: "codebase-cleanup"`
-
----
-
-## MCP Servers (6 Ativos)
-
-### 1. Supabase MCP `mcp__supabase__*`
-
-**CRÍTICO:** Nunca use Supabase CLI. Sempre use MCP.
-
-| Tool | Uso |
-|------|-----|
-| `mcp__supabase__list_tables` | Ver schema |
-| `mcp__supabase__execute_sql` | Rodar queries |
-| `mcp__supabase__apply_migration` | Aplicar migrations |
-| `mcp__supabase__generate_typescript_types` | Gerar types |
-
-### 2. Chrome DevTools MCP `mcp__chrome-devtools__*`
-
-| Tool | Uso |
-|------|-----|
-| `mcp__chrome-devtools__navigate_page` | Navegar |
-| `mcp__chrome-devtools__take_screenshot` | Capturar tela |
-| `mcp__chrome-devtools__list_console_messages` | Ver erros JS |
-| `mcp__chrome-devtools__resize_page` | Testar responsivo |
-
-### 3. shadcn-ui MCP `mcp__shadcn-ui__*`
-
-| Tool | Uso |
-|------|-----|
-| `mcp__shadcn-ui__get_component` | Código do componente |
-| `mcp__shadcn-ui__get_component_demo` | Exemplos de uso |
-
-### 4. Context7 MCP `mcp__context7__*`
-
-| Tool | Uso |
-|------|-----|
-| `mcp__context7__resolve-library-id` | Encontrar biblioteca |
-| `mcp__context7__get-library-docs` | Buscar docs |
-
-### 5. Ref MCP `mcp__Ref__*`
-
-| Tool | Uso |
-|------|-----|
-| `mcp__Ref__ref_search_documentation` | Buscar docs (web, GitHub) |
-| `mcp__Ref__ref_read_url` | Ler URL como markdown |
-
-### 6. Sequential Thinking MCP
-
-Para problemas complexos e análise multi-step.
 
 ---
 
@@ -193,7 +131,6 @@ Descrição: [Descrição simples e não-técnica em português]
 
 | Arquivo | Propósito |
 |---------|-----------|
-| `.beads/` | Issue tracking |
 | `.claude/skills/` | Skills disponíveis |
 | `CHANGELOG.md` | Histórico de versões |
 | `.apontamento/*.md` | Time tracking (português) |
