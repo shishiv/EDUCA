@@ -1,186 +1,277 @@
 # External Integrations
 
-**Analysis Date:** 2026-01-16
+**Analysis Date:** 2026-01-18
 
 ## APIs & External Services
 
-**Database & Backend:**
-- Supabase - PostgreSQL database, authentication, realtime, storage
-  - SDK: `@supabase/supabase-js` 2.87.1, `@supabase/ssr` 0.7.0
-  - Auth: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-  - Clients:
-    - Browser: `gestao_fronteira/lib/supabase.ts`
-    - Server: `gestao_fronteira/lib/supabase/server.ts`
+**Supabase (Primary Backend):**
+- Database, authentication, and real-time subscriptions
+- SDK/Client: `@supabase/supabase-js` 2.87.1, `@supabase/ssr` 0.7.0
+- Auth: Cookie-based with SSR support
+- Env vars:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
 
-**Monitoring (Optional):**
-- Grafana Cloud - Metrics collection
-  - Implementation: `gestao_fronteira/lib/monitoring/metrics.ts`
-  - Auth: `GRAFANA_CLOUD_URL`, `GRAFANA_CLOUD_API_KEY`
-  - Features: Counter, gauge, timing metrics with Prometheus format
+**Vercel (Deployment):**
+- Hosting and CI/CD
+- SDK/Client: `vercel` 48.12.1 CLI
+- Region: gru1 (Sao Paulo, Brazil)
+
+**Brazilian Government APIs (Prepared):**
+- INEP/Educacenso - Data export prepared, not live integrated
+  - Implementation: `lib/api/inep-integration.ts`
+  - Educacenso export formats ready
+  - INEP code validation implemented
+- Bolsa Familia - Compliance tracking implemented
+  - Implementation: `lib/api/bolsa-familia.ts`
+  - 80% attendance threshold monitoring
+  - No direct API integration (internal tracking)
 
 ## Data Storage
 
 **Databases:**
-- Supabase PostgreSQL
-  - Connection: `NEXT_PUBLIC_SUPABASE_URL` (API), `DATABASE_URL` (direct)
-  - Client: Supabase JS SDK with typed queries
-  - Types: `gestao_fronteira/types/database.ts` (auto-generated)
-  - Tables: alunos, turmas, escolas, frequencia, matriculas, users, audit_logs, etc.
+- Supabase PostgreSQL (managed)
+  - Connection: Via Supabase client (no direct connection string exposed)
+  - Client: `@supabase/supabase-js` with SSR support
+  - RLS (Row Level Security): Enabled for data isolation per school
+
+**Database Schema (Key Tables):**
+- `users` - System users (admin, diretor, secretario, professor, responsavel)
+- `escolas` - Schools
+- `alunos` - Students
+- `responsaveis` - Guardians
+- `aluno_responsaveis` - Student-guardian relationships
+- `turmas` - Classes
+- `matriculas` - Enrollments
+- `frequencia` - Attendance records
+- `notas` - Grades
+- `sessoes_aula` - Lesson sessions
+- `aulas_abertas` - Open class sessions
+- `disciplinas` - Subjects
+- `audit_logs` / `audit_trail` / `audit_sessoes_aula` - Audit tables
+- `codigos_inep` - INEP codes
+- `educacenso_exports` - Educacenso export records
+- `configs` - System configuration
+
+**Database Views:**
+- `vw_frequencia_completa` - Complete attendance view
+- `audit_summary` - Audit log summary
+- `vw_bolsa_familia_frequencia` - Bolsa Familia attendance view (referenced)
+
+**Database Functions:**
+- `abrir_aula` - Open class session
+- `fechar_aula` - Close class session
+- `get_aula_status` - Get class session status
+- `marcar_frequencia_lote` - Batch attendance marking
+- `travar_frequencias_aula` - Lock attendance records
+- `get_session_phase` - Get session phase
+- `is_session_editable` - Check if session is editable
+- `calculate_bolsa_familia_frequency` - Calculate Bolsa Familia frequency
+- `get_bolsa_familia_students_at_risk` - Get at-risk students
 
 **File Storage:**
-- Supabase Storage (configured for images)
+- Supabase Storage (referenced in image config)
   - Pattern: `*.supabase.co/storage/v1/object/**`
-  - Use: Student photos, municipal assets
+  - Used for: Student photos, documents
 
 **Caching:**
-- TanStack Query (client-side)
-- IndexedDB (offline attendance via service worker)
-  - Database: `GestaoEducacional`
-  - Store: `offline-attendance`
+- TanStack Query client-side caching
+  - Stale time: 5 minutes
+  - GC time: 10 minutes
+  - Configuration: `lib/react-query.ts`
 
 ## Authentication & Identity
 
 **Auth Provider:**
 - Supabase Auth (built-in)
-  - Implementation: `gestao_fronteira/lib/auth.ts`
-  - Server auth: `gestao_fronteira/lib/supabase/server.ts`
-  - Features:
-    - Email/password sign-in
-    - Session management via cookies
-    - Role-based access control (admin, diretor, secretario, professor, responsavel)
-    - School-scoped data access (RLS)
-  - Audit logging: IP tracking, user agent, action logging
+  - Implementation: `lib/auth.ts` (client), `lib/supabase/server.ts` (server)
+  - Cookie-based sessions with SSR support
+  - Auto-refresh disabled in middleware (Edge Runtime compatibility)
 
-## Real-time Features
+**User Types:**
+- `admin` - System administrator
+- `diretor` - School director
+- `secretario` - School secretary
+- `professor` - Teacher
+- `responsavel` - Parent/guardian
 
-**WebSocket Connections:**
-- Supabase Realtime
-  - Implementation: `gestao_fronteira/lib/realtime/session-realtime.ts`
-  - Channels:
-    - `session-updates-*` - Lesson session changes
-    - `attendance-updates-*` - Attendance marking
-    - `dashboard-*` - Administrative overview
-    - `broadcast-*` - Client-to-client messages
-  - Tables monitored: `aula_sessions`, `frequencia`
+**Role Hierarchy:**
+```
+admin (5) > diretor (4) > secretario (3) > professor (2) > responsavel (1)
+```
+
+**Route Protection:**
+- Middleware: `lib/middleware/auth-middleware.ts`
+- Public routes: `/login`, `/`
+- Protected routes by role defined in middleware
+- School-based data isolation via RLS
+
+**Session Management:**
+- Cookie-based authentication
+- Browser client: `lib/supabase.ts` (createBrowserClient)
+- Server client: `lib/supabase/server.ts` (createClient)
+- Admin client: `lib/supabase/server.ts` (createAdminClient - bypasses RLS)
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- Custom logger with structured logging
-  - Implementation: `gestao_fronteira/lib/logger.ts`
-  - Levels: debug, info, warn, error, critical
-  - Features: Performance tracking, educational compliance events
-  - Buffer: Auto-flush every 30s, max 100 entries
+- Custom logger: `lib/logger.ts`
+- Console-based logging in development
+- Structured logging format
 
 **Logs:**
-- Custom logger to `/api/logs` endpoint
-- localStorage storage in development
-- Grafana Cloud integration (optional)
+- Application logs via custom logger
+- Audit logs stored in database (`audit_logs`, `audit_trail`, `audit_sessoes_aula`)
+- Compliance logging for Brazilian educational requirements
 
-**Health Checks:**
-- Endpoint: `/api/health`
-  - Checks: Database connectivity, compliance metrics
-  - Metrics: Total students, active teachers, open sessions
-  - Formats: JSON (GET), status-only (HEAD)
+**Performance Monitoring:**
+- Connection manager metrics: `lib/realtime/connection-manager.ts`
+  - Connection attempts, success/failure counts
+  - Average latency tracking
+  - Uptime/downtime tracking
+
+**Real-time Monitoring:**
+- Supabase Realtime subscriptions
+- Connection state tracking (connected, disconnected, reconnecting, error, degraded)
+- Automatic reconnection with exponential backoff
 
 ## CI/CD & Deployment
 
 **Hosting:**
 - Vercel (primary)
-  - Config: Automatic via `vercel.json` (not found, uses defaults)
-  - Scripts: `pnpm deploy`, `pnpm deploy:preview`
-  - Allowed origins: `*.vercel.app`, `*.netlify.app`
+  - Region: gru1 (Sao Paulo, Brazil)
+  - Build: `pnpm run build`
+  - Install: `pnpm install`
 
 **CI Pipeline:**
-- Not detected (no GitHub Actions or similar)
+- Vercel automatic deployments
+- Preview deployments for branches
 
-**Production Domain:**
-- Target: `sme.fronteira.mg.gov.br`
-- Municipal subdomains: `*.fronteira.mg.gov.br`
+**Deployment Commands:**
+```bash
+pnpm deploy         # Production deployment
+pnpm deploy:preview # Preview deployment
+vercel login        # Authenticate with Vercel
+vercel env pull     # Pull environment variables
+```
 
 ## Environment Configuration
 
 **Required env vars:**
-```bash
-# Supabase (required)
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
-# Auth (required)
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=
+# Application Settings
+NODE_ENV=development|production
+PORT=3000
+```
 
-# Optional
-DATABASE_URL=                    # Direct PostgreSQL for local dev
-GRAFANA_CLOUD_URL=              # Monitoring
-GRAFANA_CLOUD_API_KEY=          # Monitoring auth
+**Optional env vars:**
+```env
+# Bundle Analysis
+ANALYZE=true
 ```
 
 **Secrets location:**
 - Local: `.env.local` (gitignored)
 - Production: Vercel environment variables
-- Template: `gestao_fronteira/.env.example`
+- `.env.production` contains non-sensitive defaults
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None detected
+- None detected (no webhook endpoints implemented)
 
 **Outgoing:**
-- `/api/logs` - Log shipping (internal)
+- None detected (no external webhook calls)
 
-## Offline Support
+## Real-time Features
 
-**Service Worker:**
-- Implementation: `gestao_fronteira/lib/service-worker.ts`
-- Static file: `gestao_fronteira/public/sw.js`
+**Supabase Realtime:**
+- Connection management: `lib/realtime/connection-manager.ts`
+- Session subscriptions: `lib/realtime/session-realtime.ts`
+- Open class listener: `lib/realtime/aulas-abertas-listener.ts`
+- Performance optimizer: `lib/realtime/performance-optimizer.ts`
+
+**Use Cases:**
+- Real-time attendance updates
+- Lesson session status changes
+- Multi-user collaboration on attendance
+
+**Connection Recovery:**
+- Exponential backoff reconnection (1s base, 30s max)
+- Maximum 10 reconnection attempts
+- Health check every 30 seconds
+- Latency check every 5 seconds
+
+## Document Export
+
+**PDF Generation:**
+- Library: jspdf 3.0.4 with jspdf-autotable 5.0.2
+- Implementation: `lib/export/pdf-utils.ts`, `lib/export/attendance-pdf.ts`, `lib/export/content-pdf.ts`
 - Features:
-  - Offline attendance marking
-  - Background sync (`attendance-sync`)
-  - IndexedDB for offline queue
-  - Auto-update notifications
+  - Attendance reports
+  - Bolsa Familia reports
+  - Student reports
+  - Content/lesson reports
 
-**Provider:**
-- `gestao_fronteira/components/providers/service-worker-provider.tsx`
-- Hook: `gestao_fronteira/hooks/use-service-worker.ts`
+**Excel Generation:**
+- Library: exceljs 4.4.0
+- Implementation: `lib/export/attendance-excel.ts`
+- Features:
+  - Attendance spreadsheets
+  - Bolsa Familia reports
 
 ## Brazilian Compliance Integrations
 
-**Data Validation:**
-- CPF validation: `gestao_fronteira/lib/validation/brazilian.ts`
-- Phone formatting: Brazilian mobile/landline formats
-- CEP (postal code): 8-digit validation
-- INEP school codes: 8-digit educational institution IDs
-- NIS (Bolsa Familia): Welfare program identifier
+**INEP/Educacenso (Prepared):**
+- Implementation: `lib/api/inep-integration.ts`
+- INEP code management (escola, aluno, professor, turma)
+- Educacenso export generation:
+  - Student situation (situacao_aluno)
+  - School data (dados_escola)
+  - Class data (turma)
+  - Teacher data (docente)
+  - Manager data (gestor)
+- Data compliance checking
+- File hash verification
 
 **Bolsa Familia Monitoring:**
-- API: `gestao_fronteira/lib/api/bolsa-familia.ts`
-- Reports: `gestao_fronteira/lib/reports/bolsa-familia-reports.ts`
-- Database view: `vw_bolsa_familia_frequencia`
-- RPC: `get_bolsa_familia_students_at_risk`, `calculate_bolsa_familia_frequency`
-- Threshold: 80% minimum attendance for benefits
+- Implementation: `lib/api/bolsa-familia.ts`
+- 80% attendance threshold for benefit compliance
+- Risk status calculation (adequado, alerta, critico)
+- NIS-based student tracking
+- Reports for compliance monitoring
 
-**Attendance Immutability:**
-- Auto-lock: 18:00 Brazil time (Sao Paulo)
-- Audit trail: `audit_sessoes_aula`, `audit_trail` tables
-- Hash verification for integrity
+**Data Validation:**
+- CPF validation and formatting
+- Phone number validation (Brazilian format)
+- CEP (postal code) validation
+- INEP code validation (8 digits for schools)
+- Educational age validation by level
 
-## Image Configuration
+## API Layer
 
-**Remote Patterns (next.config.js):**
-```javascript
-[
-  { hostname: 'localhost' },
-  { hostname: 'fronteira.localhost' },
-  { hostname: '*.supabase.co', pathname: '/storage/v1/object/**' },
-  { hostname: '*.fronteira.mg.gov.br' }
-]
-```
+**Internal APIs:**
+- `app/api/` - Next.js API routes
+- Key endpoints:
+  - `api/frequencia/` - Attendance operations
+  - `api/sessoes/aula/` - Class session operations
+  - `api/attendance/trends/` - Attendance analytics
+  - `api/compliance/warnings/` - Compliance alerts
+  - `api/search/` - Global search
+  - `api/health/` - Health check
 
-**Formats:** WebP, AVIF
-**Device sizes:** 320, 420, 768, 1024, 1200
+**API Helpers:**
+- `lib/api/base.ts` - Base API service class
+- `lib/api/enhanced-base.ts` - Enhanced base with error handling
+- `lib/api/error-handler.ts` - Centralized error handling
+- `lib/api/rate-limiting.ts` - Rate limiting utilities
 
 ---
 
-*Integration audit: 2026-01-16*
+*Integration audit: 2026-01-18*
