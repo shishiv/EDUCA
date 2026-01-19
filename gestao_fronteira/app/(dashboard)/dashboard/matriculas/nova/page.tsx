@@ -20,6 +20,7 @@ import { ArrowLeft, Save, UserCheck, Search, Users, GraduationCap, Loader2 } fro
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface Aluno {
   id: string
@@ -121,7 +122,10 @@ export default function NovaMatriculaPage() {
         setAlunos(alunosFormatted)
         setTurmas(turmasWithCount)
       } catch (error) {
-        console.error('Error loading data:', error)
+        logger.error('Error loading data', error as Error, {
+          feature: 'matriculas',
+          action: 'load_matricula_data'
+        })
         toast.error('Erro ao carregar dados')
       } finally {
         setLoadingData(false)
@@ -152,7 +156,11 @@ export default function NovaMatriculaPage() {
       toast.success('Matricula realizada com sucesso!')
       router.push('/dashboard/matriculas')
     } catch (error) {
-      console.error('Error creating matricula:', error)
+      logger.error('Error creating matricula', error as Error, {
+        feature: 'matriculas',
+        action: 'create_matricula',
+        metadata: { alunoId: formData.aluno_id, turmaId: formData.turma_id }
+      })
       toast.error('Erro ao realizar matricula')
     } finally {
       setLoading(false)

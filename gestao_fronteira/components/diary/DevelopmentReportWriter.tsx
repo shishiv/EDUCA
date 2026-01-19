@@ -20,6 +20,7 @@ import * as React from 'react'
 import { useState, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import {
   Save,
   CheckCircle,
@@ -203,7 +204,10 @@ export function DevelopmentReportWriter({
       await onSave?.(values)
       toast.success('Rascunho salvo com sucesso!')
     } catch (error) {
-      console.error('Error saving draft:', error)
+      logger.error('Error saving draft', error as Error, {
+        feature: 'reports',
+        action: 'save_development_report_draft'
+      })
       toast.error('Erro ao salvar rascunho')
     } finally {
       setIsSaving(false)
@@ -223,7 +227,10 @@ export function DevelopmentReportWriter({
       await onFinalize?.(values)
       toast.success('Relatorio finalizado com sucesso!')
     } catch (error) {
-      console.error('Error finalizing report:', error)
+      logger.error('Error finalizing report', error as Error, {
+        feature: 'reports',
+        action: 'finalize_development_report'
+      })
       toast.error('Erro ao finalizar relatorio')
     } finally {
       setIsFinalizing(false)

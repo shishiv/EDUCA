@@ -32,6 +32,7 @@ import {
 } from '@/components/students'
 import { isInfantilAge } from '@/lib/utils/faixa-etaria'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface AlunoDetalhado {
   id: string
@@ -209,7 +210,11 @@ export default function AlunoDetalhesPage() {
 
         setAluno(studentData)
       } catch (err) {
-        console.error('Error loading student:', err)
+        logger.error('Error loading student', err as Error, {
+          feature: 'alunos',
+          action: 'load_student_profile',
+          metadata: { studentId: params?.id }
+        })
         setError('Erro ao carregar dados do aluno')
         toast.error('Erro ao carregar dados do aluno')
       } finally {
