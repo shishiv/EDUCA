@@ -55,6 +55,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { DescriptiveReportForm } from '@/components/reports/DescriptiveReportForm'
 import {
   type DescriptiveReportDetailed,
@@ -206,7 +207,11 @@ export default function StudentReportsPage() {
         .order('semestre', { ascending: false })
 
       if (reportsError) {
-        console.warn('Error fetching reports:', reportsError)
+        logger.warn('Error fetching reports', {
+          feature: 'relatorios-descritivos',
+          action: 'fetch_reports',
+          metadata: { error: reportsError.message }
+        })
         setReports([])
       } else {
         // Transform the data
@@ -256,7 +261,11 @@ export default function StudentReportsPage() {
         setReports(transformedReports)
       }
     } catch (err) {
-      console.error('Error fetching data:', err)
+      logger.error('Error fetching data', err as Error, {
+        feature: 'relatorios-descritivos',
+        action: 'fetch_data',
+        metadata: { alunoId }
+      })
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados')
     } finally {
       setIsLoading(false)
@@ -361,7 +370,11 @@ export default function StudentReportsPage() {
         // Refresh data
         await fetchData()
       } catch (err) {
-        console.error('Error saving draft:', err)
+        logger.error('Error saving draft', err as Error, {
+          feature: 'relatorios-descritivos',
+          action: 'save_draft',
+          metadata: { alunoId, isCreatingNew }
+        })
         throw err
       } finally {
         setIsSaving(false)
@@ -441,7 +454,11 @@ export default function StudentReportsPage() {
         setIsFormOpen(false)
         await fetchData()
       } catch (err) {
-        console.error('Error finalizing report:', err)
+        logger.error('Error finalizing report', err as Error, {
+          feature: 'relatorios-descritivos',
+          action: 'finalize_report',
+          metadata: { alunoId, isCreatingNew, selectedReportId: selectedReport?.id }
+        })
         throw err
       } finally {
         setIsSaving(false)
