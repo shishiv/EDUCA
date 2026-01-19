@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 7.1 of 11 (Admin School Selector)
-Plan: 1 of 4 complete
-Status: Plan 01 complete, ready for Plan 02
-Last activity: 2026-01-19 - Completed 07.1-01-PLAN.md (EscolaContext Provider)
+Plan: 2 of 4 complete
+Status: Plan 02 complete, ready for Plan 03
+Last activity: 2026-01-19 - Completed 07.1-02-PLAN.md (UI Components and Layout Integration)
 
-Progress: ████████░░ 33% (7/21 requirements)
+Progress: ████████░░ 38% (8/21 requirements)
 
 ## Milestone Summary
 
@@ -52,12 +52,15 @@ Progress: ████████░░ 33% (7/21 requirements)
 | 07.1-01 | SessionStorage over localStorage | Session-only persistence per CONTEXT.md |
 | 07.1-01 | Hydration-safe sessionStorage pattern | Read in useEffect, not useState initializer |
 | 07.1-01 | Auto-select escola for single-school users | diretor/secretario/professor with escola_id get it auto-selected |
+| 07.1-02 | EscolaProvider wraps SessionRealtimeProvider | Escola context outer for global access |
+| 07.1-02 | Yellow highlight for no escola selected | Visual emphasis per EDUCA design system |
+| 07.1-02 | Collapsed sidebar icon-only selector | Space-efficient School icon with popover |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 07.1-01-PLAN.md (EscolaContext Provider)
-Resume file: .planning/phases/07.1-admin-school-selector/07.1-02-PLAN.md
+Stopped at: Completed 07.1-02-PLAN.md (UI Components and Layout Integration)
+Resume file: .planning/phases/07.1-admin-school-selector/07.1-03-PLAN.md
 
 ### Roadmap Evolution
 
@@ -65,4 +68,4 @@ Resume file: .planning/phases/07.1-admin-school-selector/07.1-02-PLAN.md
 
 ---
 
-*State updated: 2026-01-19 after 07.1-01-PLAN.md complete*
+*State updated: 2026-01-19 after 07.1-02-PLAN.md complete*
