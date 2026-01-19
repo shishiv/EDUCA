@@ -20,6 +20,12 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 - [x] **DAT-02**: Dashboards usando dados reais (nao mock data)
 - [x] **DAT-03**: Diario Infantil Vivencias com API funcional (nao MOCK_VIVENCIAS)
 
+### Admin School Selector (INSERTED)
+
+- [x] **ADM-01**: Seletor de escola no header/sidebar para perfis admin
+- [x] **ADM-02**: Seleção persistente em sessionStorage/context global
+- [x] **ADM-03**: Páginas escola-scoped usam selectedEscolaId quando disponível
+
 ### Code Standards
 
 - [ ] **STD-01**: Padrao unico de data fetching documentado e aplicado (React Query + API layer)
@@ -94,6 +100,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DAT-01 | Phase 7 | Complete |
 | DAT-02 | Phase 7 | Complete |
 | DAT-03 | Phase 7 | Complete |
+| ADM-01 | Phase 7.1 | Complete |
+| ADM-02 | Phase 7.1 | Complete |
+| ADM-03 | Phase 7.1 | Complete |
 | STD-01 | Phase 8 | Pending |
 | STD-02 | Phase 8 | Pending |
 | STD-03 | Phase 8 | Pending |
@@ -109,10 +118,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TST-02 | Phase 11 | Pending |
 | TST-03 | Phase 11 | Pending |
 
-**Coverage:**
-- v1 requirements: 21 total
-- Mapped to phases: 21
-- Unmapped: 0
+**Coverage:** 24 requirements (21 original + 3 ADM inserted), all mapped to phases.
 
 ---
 *Requirements defined: 2026-01-18*

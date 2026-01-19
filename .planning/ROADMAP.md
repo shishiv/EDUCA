@@ -82,7 +82,7 @@ Plans:
 
 ---
 
-## Phase 7.1: Admin School Selector (INSERTED)
+## Phase 7.1: Admin School Selector (INSERTED) ✓
 
 **Goal:** Seletor de escola persistente para perfis admin conseguirem acessar dados escola-scoped (turmas, alunos, etc).
 
@@ -91,22 +91,22 @@ Plans:
 - ADM-02: Seleção persistente em sessionStorage/context global
 - ADM-03: Páginas escola-scoped usam selectedEscolaId quando disponível
 
-**Plans:** 3 plans in 3 waves
+**Plans:** 3 plans completed
 
 Plans:
-- [ ] 07.1-01-PLAN.md — Create EscolaContext provider and useEscola hook
-- [ ] 07.1-02-PLAN.md — Create UI components and integrate in layout/sidebar
-- [ ] 07.1-03-PLAN.md — Update escola-scoped pages to use context
+- [x] 07.1-01-PLAN.md — Create EscolaContext provider and useEscola hook (completed 2026-01-19)
+- [x] 07.1-02-PLAN.md — Create UI components and integrate in layout/sidebar (completed 2026-01-19)
+- [x] 07.1-03-PLAN.md — Update escola-scoped pages to use context (completed 2026-01-19)
 
 **Success Criteria:**
-- [ ] Admin pode selecionar escola no dashboard
-- [ ] Seleção persiste durante navegação
-- [ ] `/turmas`, `/alunos`, etc. funcionam com escola selecionada
-- [ ] Admin pode alternar entre escolas sem re-login
+- [x] Admin pode selecionar escola no dashboard
+- [x] Seleção persiste durante navegação
+- [x] `/turmas`, `/alunos`, etc. funcionam com escola selecionada
+- [x] Admin pode alternar entre escolas sem re-login
 
 **Dependencies:** Phase 7 (data integrity first)
 
-**Status:** Planned (2026-01-19)
+**Status:** Complete (2026-01-19)
 
 ---
 
