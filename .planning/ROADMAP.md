@@ -82,6 +82,34 @@ Plans:
 
 ---
 
+## Phase 7.1: Admin School Selector (INSERTED)
+
+**Goal:** Seletor de escola persistente para perfis admin conseguirem acessar dados escola-scoped (turmas, alunos, etc).
+
+**Requirements:**
+- ADM-01: Seletor de escola no header/sidebar para perfis admin
+- ADM-02: Seleção persistente em sessionStorage/context global
+- ADM-03: Páginas escola-scoped usam selectedEscolaId quando disponível
+
+**Plans:** 3 plans in 3 waves
+
+Plans:
+- [ ] 07.1-01-PLAN.md — Create EscolaContext provider and useEscola hook
+- [ ] 07.1-02-PLAN.md — Create UI components and integrate in layout/sidebar
+- [ ] 07.1-03-PLAN.md — Update escola-scoped pages to use context
+
+**Success Criteria:**
+- [ ] Admin pode selecionar escola no dashboard
+- [ ] Seleção persiste durante navegação
+- [ ] `/turmas`, `/alunos`, etc. funcionam com escola selecionada
+- [ ] Admin pode alternar entre escolas sem re-login
+
+**Dependencies:** Phase 7 (data integrity first)
+
+**Status:** Planned (2026-01-19)
+
+---
+
 ## Phase 8: Code Standards
 
 **Goal:** Padronizar data fetching e logging para manutenibilidade.
@@ -98,7 +126,7 @@ Plans:
 - [ ] Queries inline migradas para lib/api/*.ts
 - [ ] 30+ console.error calls substituidas por logger
 
-**Dependencies:** Phase 7 (data integrity first)
+**Dependencies:** Phase 7.1 (admin school selector first)
 
 ---
 
@@ -167,6 +195,8 @@ Phase 6 (Build)
     |
 Phase 7 (Data)
     |
+Phase 7.1 (Admin Selector) <-- INSERTED
+    |
 Phase 8 (Standards)
     |
 Phase 9 (Flags)
@@ -195,3 +225,4 @@ Linear dependency chain - each phase builds on previous.
 *Based on: .planning/REQUIREMENTS.md, .planning/codebase/CONCERNS.md*
 *Gap closure plans added: 2026-01-19*
 *Phase 7 planned: 2026-01-19*
+*Phase 7.1 planned: 2026-01-19*
