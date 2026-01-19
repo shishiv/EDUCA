@@ -295,6 +295,201 @@ export class StudentsApiService extends BaseApiService {
 export const studentsApi = new StudentsApiService()
 ```
 
+## Data Fetching Pattern
+
+**Three-layer architecture for all data fetching:**
+
+### Layer 1: API Service Layer (`lib/api/*.ts`)
+
+The API service layer handles all Supabase interactions. Use `VivenciasApiService` as the exemplar.
+
+**Pattern:**
+```typescript
+// lib/api/[domain].ts
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import { BaseApiService } from './base'
+
+// Define input/output types at top
+interface CreateInput { /* ... */ }
+interface DomainItem { /* ... */ }
+
+export class DomainApiService extends BaseApiService {
+  constructor() {
+    super('table_name')
+  }
+
+  async getWithFilters(filters: Filters): Promise<DomainItem[]> {
+    try {
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logger.error('Error fetching domain items:', error)
+        throw error
+      }
+
+      return (data || []) as DomainItem[]
+    } catch (error) {
+      logger.error('Error in getWithFilters:', error)
+      throw error
+    }
+  }
+
+  async create(input: CreateInput): Promise<DomainItem> {
+    try {
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .insert({ /* ... */ })
+        .select()
+        .single()
+
+      if (error) {
+        logger.error('Error creating domain item:', error)
+        throw error
+      }
+
+      // Log success for audit
+      logger.info('Domain item created', {
+        feature: 'domain',
+        action: 'create',
+        metadata: { id: data.id }
+      })
+
+      return data as DomainItem
+    } catch (error) {
+      logger.error('Error in create:', error)
+      throw error
+    }
+  }
+}
+
+// Export singleton instance
+export const domainApi = new DomainApiService()
+```
+
+**Key requirements:**
+- Class extends `BaseApiService`
+- Uses `logger.error` for errors, `logger.info` for success
+- Returns typed data, handles PGRST116 (not found) gracefully
+- Export singleton instance
+
+### Layer 2: React Query Layer (`hooks/use-*-query.ts`)
+
+The React Query layer manages caching and state synchronization.
+
+**Pattern:**
+```typescript
+// hooks/use-domain-query.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { domainApi } from '@/lib/api/domain'
+import { logger } from '@/lib/logger'
+
+// Query keys from lib/react-query.ts
+export const domainQueryKeys = {
+  all: ['domain'] as const,
+  lists: () => [...domainQueryKeys.all, 'list'] as const,
+  list: (filters: Filters) => [...domainQueryKeys.lists(), filters] as const,
+  details: () => [...domainQueryKeys.all, 'detail'] as const,
+  detail: (id: string) => [...domainQueryKeys.details(), id] as const,
+}
+
+export function useDomainList(filters: Filters) {
+  return useQuery({
+    queryKey: domainQueryKeys.list(filters),
+    queryFn: () => domainApi.getWithFilters(filters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+export function useCreateDomain() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: domainApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: domainQueryKeys.lists() })
+    },
+    onError: (error) => {
+      logger.error('Error creating domain item', error, {
+        feature: 'domain',
+        action: 'create_mutation'
+      })
+    }
+  })
+}
+```
+
+**staleTime guidelines:**
+
+| Data Type | staleTime | Rationale |
+|-----------|-----------|-----------|
+| Static data (turmas, escolas) | 5 min | Rarely changes |
+| Moderate data (lessons, alunos) | 2 min | Changes during session |
+| Active data (sessions, attendance) | 1 min | Real-time relevance |
+| Aggregates (risk indicators) | 3 min | Computed values |
+
+### Layer 3: Page Component Layer
+
+Page components use React Query hooks and handle UI state.
+
+**Pattern:**
+```typescript
+// app/(dashboard)/domain/page.tsx
+'use client'
+
+import { useDomainList } from '@/hooks/use-domain-query'
+
+export default function DomainPage() {
+  const [filter, setFilter] = useState('todos')
+
+  const { data, isLoading, error } = useDomainList({})
+
+  // Client-side filtering on cached data
+  const filteredData = useMemo(() => {
+    if (!data) return []
+    if (filter === 'todos') return data
+    return data.filter(item => item.status === filter)
+  }, [data, filter])
+
+  if (isLoading) return <Skeleton />
+  if (error) return <ErrorState error={error} />
+
+  return <DataTable data={filteredData} />
+}
+```
+
+### Decision Table: Where to Add Data Fetching
+
+| Data Type | Where to Add Method | staleTime | Example |
+|-----------|---------------------|-----------|---------|
+| List pages | Existing `*ApiService` | 5 min | `studentsApi.getAll()` |
+| Detail pages | Existing `*ApiService` | 2 min | `studentsApi.getById(id)` |
+| Active sessions | New hook if none exists | 1 min | `useActiveSession()` |
+| Cross-domain queries | New service method | 3 min | `reportsApi.getFrequencia()` |
+
+### Anti-pattern: Inline Supabase in Pages
+
+**Never do this:**
+```typescript
+// BAD: Inline Supabase query in page component
+useEffect(() => {
+  async function fetchData() {
+    const { data, error } = await supabase.from('turmas').select('*')
+    // ...
+  }
+  fetchData()
+}, [])
+```
+
+**Instead:**
+```typescript
+// GOOD: Use API service via React Query hook
+const { data, isLoading, error } = useTurmas()
+```
+
 ## Brazilian Localization
 
 **Messages in Portuguese:**
