@@ -179,7 +179,7 @@ export default function PoliticaPrivacidadePage() {
               <p className="text-gray-700 font-semibold">Encarregado de Dados (DPO)</p>
               <p className="text-gray-700">Secretaria Municipal de Educação de Fronteira/MG</p>
               <p className="text-gray-700 mt-2">
-                <strong>Endereço:</strong> Praça Getúlio Vargas, 28 - Centro<br />
+                <strong>Endereço:</strong> Rua Jandira Batista de Oliveira, 545 - Vila de Furnas<br />
                 Fronteira/MG - CEP 38280-000
               </p>
               <p className="text-gray-700 mt-2">
@@ -210,7 +210,7 @@ export default function PoliticaPrivacidadePage() {
           <div className="border-t pt-6 mt-8">
             <p className="text-sm text-gray-500 text-center">
               Secretaria Municipal de Educação de Fronteira/MG<br />
-              Praça Getúlio Vargas, 28 - Centro, CEP 38280-000<br />
+              Rua Jandira Batista de Oliveira, 545 - Vila de Furnas, CEP 38280-000<br />
               Sistema EDUCA - Gestão Educacional<br />
               © 2025-2026 - Todos os direitos reservados
             </p>
