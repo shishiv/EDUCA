@@ -39,6 +39,10 @@ interface Student {
   data_nascimento: string
 }
 
+interface Matricula {
+  turma_id: string
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -50,25 +54,43 @@ export default function NovaVivenciaPage() {
 
   // State
   const [student, setStudent] = useState<Student | null>(null)
+  const [matricula, setMatricula] = useState<Matricula | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Load student data
-  const loadStudent = useCallback(async () => {
+  // Load student data and active matricula
+  const loadData = useCallback(async () => {
     if (!alunoId) return
 
     try {
-      const { data, error: studentError } = await supabase
+      setLoading(true)
+
+      // Load student
+      const { data: studentData, error: studentError } = await supabase
         .from('alunos')
         .select('id, nome_completo, data_nascimento')
         .eq('id', alunoId)
         .single()
 
       if (studentError) throw studentError
+      setStudent(studentData)
 
-      setStudent(data)
-    } catch (err: any) {
-      console.error('Error loading student:', err)
+      // Load active matricula to get turma_id
+      const { data: matriculaData, error: matriculaError } = await supabase
+        .from('matriculas')
+        .select('turma_id')
+        .eq('aluno_id', alunoId)
+        .eq('status', 'ativo')
+        .single()
+
+      if (matriculaError) {
+        console.warn('No active matricula found:', matriculaError)
+        // Not a fatal error - user might need to select turma manually
+      } else {
+        setMatricula(matriculaData)
+      }
+    } catch (err) {
+      console.error('Error loading data:', err)
       setError('Erro ao carregar dados do aluno')
     } finally {
       setLoading(false)
@@ -77,23 +99,41 @@ export default function NovaVivenciaPage() {
 
   // Initial load
   useEffect(() => {
-    loadStudent()
-  }, [loadStudent])
+    loadData()
+  }, [loadData])
 
   // Handle form submission
   const handleSubmit = useCallback(async (data: VivenciaFormData) => {
     if (!alunoId || !student) return
 
+    if (!matricula?.turma_id) {
+      toast.error('Aluno nao possui matricula ativa', {
+        description: 'O aluno precisa estar matriculado em uma turma para registrar vivencias.',
+      })
+      return
+    }
+
     try {
-      // TODO: Implement actual API call to save vivencia
-      // For now, mock implementation
-      console.log('Saving vivencia:', {
-        aluno_id: alunoId,
-        ...data,
+      const response = await fetch('/api/vivencias', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          aluno_id: alunoId,
+          turma_id: matricula.turma_id,
+          data_vivencia: data.data_vivencia,
+          campos_experiencia: data.campos_experiencia,
+          descricao: data.descricao,
+          observacoes: data.observacoes || null,
+          escopo: 'individual'
+        })
       })
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800))
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro ao salvar vivencia')
+      }
 
       toast.success('Vivencia registrada com sucesso!', {
         description: `Vivencia de ${student.nome_completo} salva.`,
@@ -101,14 +141,15 @@ export default function NovaVivenciaPage() {
 
       // Redirect back to diario page
       router.push(`/dashboard/alunos/${alunoId}/diario`)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving vivencia:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Tente novamente.'
       toast.error('Erro ao salvar vivencia', {
-        description: err.message || 'Tente novamente.',
+        description: errorMessage,
       })
       throw err // Re-throw to keep form in submitting state
     }
-  }, [alunoId, student, router])
+  }, [alunoId, student, matricula, router])
 
   // Handle cancel
   const handleCancel = useCallback(() => {
