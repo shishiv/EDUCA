@@ -44,6 +44,7 @@ import {
 import { DevelopmentReportWriter, type ReportFormValues } from '@/components/diary/DevelopmentReportWriter'
 import { VivenciasReference } from '@/components/diary/VivenciasReference'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 // Types
 import { type Vivencia, type CampoType } from '@/types/diario-infantil'
@@ -114,7 +115,11 @@ export default function RelatorioPage() {
 
       setStudent(data)
     } catch (err: any) {
-      console.error('Error loading student:', err)
+      logger.error('Error loading student', err as Error, {
+        feature: 'diario-infantil',
+        action: 'load_student_relatorio',
+        metadata: { alunoId }
+      })
       setError('Erro ao carregar dados do aluno')
     }
   }, [alunoId])
@@ -134,7 +139,11 @@ export default function RelatorioPage() {
       const { data } = await response.json()
       setVivencias(data || [])
     } catch (err) {
-      console.error('Error loading vivencias:', err)
+      logger.error('Error loading vivencias', err as Error, {
+        feature: 'diario-infantil',
+        action: 'load_vivencias_relatorio',
+        metadata: { alunoId }
+      })
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar vivencias'
       toast.error(errorMessage)
     }
@@ -153,17 +162,25 @@ export default function RelatorioPage() {
   // Handlers
   const handleSaveDraft = useCallback(async (data: ReportFormValues) => {
     // TODO: Implement actual save to API
-    console.log('Saving draft:', data)
+    logger.info('Saving draft', {
+      feature: 'diario-infantil',
+      action: 'save_draft_relatorio',
+      metadata: { alunoId, camposPreenchidos: Object.values(data).filter(v => v).length }
+    })
     // Mock delay
     await new Promise((resolve) => setTimeout(resolve, 500))
-  }, [])
+  }, [alunoId])
 
   const handleFinalize = useCallback(async (data: ReportFormValues) => {
     // TODO: Implement actual finalization to API
-    console.log('Finalizing report:', data)
+    logger.info('Finalizing report', {
+      feature: 'diario-infantil',
+      action: 'finalize_relatorio',
+      metadata: { alunoId, selectedSemester, selectedYear }
+    })
     // Mock delay
     await new Promise((resolve) => setTimeout(resolve, 500))
-  }, [])
+  }, [alunoId, selectedSemester, selectedYear])
 
   const handleCampoFocus = useCallback((campo: CampoType | null) => {
     setSelectedCampo(campo)

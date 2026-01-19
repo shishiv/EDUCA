@@ -18,6 +18,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { ArrowLeft, Plus, FileText } from 'lucide-react'
 
 // Components
@@ -68,7 +69,11 @@ export default function DiarioInfantilPage() {
 
       setStudent(data)
     } catch (err: any) {
-      console.error('Error loading student:', err)
+      logger.error('Error loading student', err as Error, {
+        feature: 'diario-infantil',
+        action: 'load_student',
+        metadata: { alunoId }
+      })
       setError('Erro ao carregar dados do aluno')
     }
   }, [alunoId])
@@ -88,7 +93,11 @@ export default function DiarioInfantilPage() {
       const { data } = await response.json()
       setVivencias(data || [])
     } catch (err) {
-      console.error('Error loading vivencias:', err)
+      logger.error('Error loading vivencias', err as Error, {
+        feature: 'diario-infantil',
+        action: 'load_vivencias',
+        metadata: { alunoId }
+      })
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar vivencias'
       setError(errorMessage)
       toast.error(errorMessage)
