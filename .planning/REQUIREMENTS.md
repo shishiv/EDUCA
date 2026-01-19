@@ -28,10 +28,10 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Code Standards
 
-- [ ] **STD-01**: Padrao unico de data fetching documentado e aplicado (React Query + API layer)
-- [ ] **STD-02**: Padrao unico de filtros (valor default: 'todos')
-- [ ] **STD-03**: Queries Supabase centralizadas em lib/api/ (nao inline em pages)
-- [ ] **STD-04**: Console.error substituido por lib/logger.ts estruturado
+- [x] **STD-01**: Padrao unico de data fetching documentado e aplicado (React Query + API layer)
+- [x] **STD-02**: Padrao unico de filtros (valor default: 'todos')
+- [x] **STD-03**: Queries Supabase centralizadas em lib/api/ (nao inline em pages)
+- [x] **STD-04**: Console.error substituido por lib/logger.ts estruturado
 
 ### Feature Flags
 
@@ -103,10 +103,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADM-01 | Phase 7.1 | Complete |
 | ADM-02 | Phase 7.1 | Complete |
 | ADM-03 | Phase 7.1 | Complete |
-| STD-01 | Phase 8 | Pending |
-| STD-02 | Phase 8 | Pending |
-| STD-03 | Phase 8 | Pending |
-| STD-04 | Phase 8 | Pending |
+| STD-01 | Phase 8 | Complete |
+| STD-02 | Phase 8 | Complete |
+| STD-03 | Phase 8 | Complete |
+| STD-04 | Phase 8 | Complete |
 | FLG-01 | Phase 9 | Pending |
 | FLG-02 | Phase 9 | Pending |
 | FLG-03 | Phase 9 | Pending |

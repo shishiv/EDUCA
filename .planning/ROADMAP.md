@@ -110,7 +110,7 @@ Plans:
 
 ---
 
-## Phase 8: Code Standards
+## Phase 8: Code Standards ✓
 
 **Goal:** Padronizar data fetching e logging para manutenibilidade.
 
@@ -120,21 +120,23 @@ Plans:
 - STD-03: Queries Supabase centralizadas em lib/api/
 - STD-04: Console.error substituido por lib/logger.ts estruturado
 
-**Plans:** 4 plans
+**Plans:** 4 plans completed
 
 Plans:
-- [ ] 08-01-PLAN.md — Document data fetching and filter patterns in CONVENTIONS.md
-- [ ] 08-02-PLAN.md — Migrate console.error to logger in lib/ files
-- [ ] 08-03-PLAN.md — Centralize Supabase queries in report and chamada pages
-- [ ] 08-04-PLAN.md — Centralize remaining page queries and complete logger migration
+- [x] 08-01-PLAN.md — Document data fetching and filter patterns in CONVENTIONS.md (completed 2026-01-19)
+- [x] 08-02-PLAN.md — Migrate console.error to logger in lib/ files (completed 2026-01-19)
+- [x] 08-03-PLAN.md — Centralize Supabase queries in report and chamada pages (completed 2026-01-19)
+- [x] 08-04-PLAN.md — Centralize remaining page queries and complete logger migration (completed 2026-01-19)
 
 **Success Criteria:**
-- [ ] CONVENTIONS.md atualizado com data fetching pattern
-- [ ] Filtros usando 'todos' como default em toda a app
-- [ ] Queries inline migradas para lib/api/*.ts
-- [ ] 30+ console.error calls substituidas por logger
+- [x] CONVENTIONS.md atualizado com data fetching pattern
+- [x] Filtros usando 'todos' como default em toda a app
+- [x] Queries inline migradas para lib/api/*.ts
+- [x] 70+ console.error calls substituidas por logger
 
 **Dependencies:** Phase 7.1 (admin school selector first)
+
+**Status:** Complete (2026-01-19)
 
 ---
 
