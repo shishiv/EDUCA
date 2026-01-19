@@ -133,6 +133,54 @@ export class ClassesApiService extends BaseApiService {
     }
   }
 
+  /**
+   * Get a single class by ID with escola info
+   * Used by chamada page to display turma header
+   */
+  async getClassWithSchool(classId: string): Promise<{
+    id: string
+    nome: string
+    serie: string
+    escola: { nome: string }
+  } | null> {
+    try {
+      const { data, error } = await supabase
+        .from('turmas')
+        .select(`
+          id,
+          nome,
+          serie,
+          escola:escolas(nome)
+        `)
+        .eq('id', classId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') return null // Not found
+        logger.error('Error fetching class with school', error, {
+          feature: 'classes',
+          action: 'get_class_with_school',
+          metadata: { classId }
+        })
+        throw error
+      }
+
+      return {
+        id: data.id,
+        nome: data.nome,
+        serie: data.serie,
+        escola: { nome: (data.escola as { nome: string })?.nome || 'Escola' }
+      }
+    } catch (error) {
+      logger.error('Error in getClassWithSchool', error as Error, {
+        feature: 'classes',
+        action: 'get_class_with_school',
+        metadata: { classId }
+      })
+      throw error
+    }
+  }
+
   // Create class
   async createClass(classData: ClassFormData) {
     try {
