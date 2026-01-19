@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 7.1 of 11 (Admin School Selector)
-Plan: 2 of 4 complete
-Status: Plan 02 complete, ready for Plan 03
-Last activity: 2026-01-19 - Completed 07.1-02-PLAN.md (UI Components and Layout Integration)
+Plan: 3 of 4 complete
+Status: Plan 03 complete, ready for Plan 04
+Last activity: 2026-01-19 - Completed 07.1-03-PLAN.md (Update Escola-Scoped Pages)
 
-Progress: ████████░░ 38% (8/21 requirements)
+Progress: █████████░ 43% (9/21 requirements)
 
 ## Milestone Summary
 
@@ -55,12 +55,16 @@ Progress: ████████░░ 38% (8/21 requirements)
 | 07.1-02 | EscolaProvider wraps SessionRealtimeProvider | Escola context outer for global access |
 | 07.1-02 | Yellow highlight for no escola selected | Visual emphasis per EDUCA design system |
 | 07.1-02 | Collapsed sidebar icon-only selector | Space-efficient School icon with popover |
+| 07.1-03 | escolaIdToUse pattern for hybrid filtering | Computes effective escola from selector or profile |
+| 07.1-03 | Empty state shows PageHeader + EscolaRequiredState | Consistent UX for admin without selection |
+| 07.1-03 | Alunos filtered via matriculas->turmas chain | Escola doesn't have direct aluno relation |
+| 07.1-03 | Yellow EscolaRequiredState matches header indicator | Design consistency across empty states |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 07.1-02-PLAN.md (UI Components and Layout Integration)
-Resume file: .planning/phases/07.1-admin-school-selector/07.1-03-PLAN.md
+Stopped at: Completed 07.1-03-PLAN.md (Update Escola-Scoped Pages)
+Resume file: .planning/phases/07.1-admin-school-selector/07.1-04-PLAN.md
 
 ### Roadmap Evolution
 
@@ -68,4 +72,4 @@ Resume file: .planning/phases/07.1-admin-school-selector/07.1-03-PLAN.md
 
 ---
 
-*State updated: 2026-01-19 after 07.1-02-PLAN.md complete*
+*State updated: 2026-01-19 after 07.1-03-PLAN.md complete*
