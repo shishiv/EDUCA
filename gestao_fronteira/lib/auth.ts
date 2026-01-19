@@ -90,6 +90,11 @@ export const signOut = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     const userId = user?.id
 
+    // Clear escola selection on logout
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('gestao-fronteira-selected-escola')
+    }
+
     const { error } = await supabase.auth.signOut()
 
     if (error) throw error
