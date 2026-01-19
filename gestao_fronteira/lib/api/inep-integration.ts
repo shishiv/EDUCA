@@ -13,6 +13,7 @@
 
 import { BaseApiService } from './enhanced-base'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 // ===== INTERFACES =====
 export interface INEPCode {
@@ -147,7 +148,10 @@ export class INEPIntegrationService extends BaseApiService {
       if (error) throw error
       return data as INEPCode
     } catch (error) {
-      console.error('Error registering INEP code:', error)
+      logger.error('Error registering INEP code', error as Error, {
+        feature: 'inep-integration',
+        action: 'register_inep_code'
+      })
       throw error
     }
   }
@@ -175,7 +179,10 @@ export class INEPIntegrationService extends BaseApiService {
       if (error) throw error
       return data as INEPCode
     } catch (error) {
-      console.error('Error validating INEP code:', error)
+      logger.error('Error validating INEP code', error as Error, {
+        feature: 'inep-integration',
+        action: 'validate_inep_code'
+      })
       throw error
     }
   }
@@ -195,7 +202,10 @@ export class INEPIntegrationService extends BaseApiService {
       if (error && error.code !== 'PGRST116') throw error
       return data as INEPCode | null
     } catch (error) {
-      console.error('Error fetching INEP code:', error)
+      logger.error('Error fetching INEP code', error as Error, {
+        feature: 'inep-integration',
+        action: 'get_inep_code_for_entity'
+      })
       throw error
     }
   }
@@ -268,7 +278,10 @@ export class INEPIntegrationService extends BaseApiService {
 
       return updatedExport as EducacensoExport
     } catch (error) {
-      console.error('Error generating Educacenso export:', error)
+      logger.error('Error generating Educacenso export', error as Error, {
+        feature: 'inep-integration',
+        action: 'generate_educacenso_export'
+      })
       throw error
     }
   }
@@ -325,7 +338,10 @@ export class INEPIntegrationService extends BaseApiService {
         }
       }))
     } catch (error) {
-      console.error('Error generating student situation export:', error)
+      logger.error('Error generating student situation export', error as Error, {
+        feature: 'inep-integration',
+        action: 'generate_student_situation_export'
+      })
       throw error
     }
   }
@@ -399,7 +415,10 @@ export class INEPIntegrationService extends BaseApiService {
         total_docentes: docentes?.length || 0
       }
     } catch (error) {
-      console.error('Error generating school data export:', error)
+      logger.error('Error generating school data export', error as Error, {
+        feature: 'inep-integration',
+        action: 'generate_school_data_export'
+      })
       throw error
     }
   }
@@ -446,7 +465,10 @@ export class INEPIntegrationService extends BaseApiService {
         }
       }))
     } catch (error) {
-      console.error('Error generating class data export:', error)
+      logger.error('Error generating class data export', error as Error, {
+        feature: 'inep-integration',
+        action: 'generate_class_data_export'
+      })
       throw error
     }
   }
@@ -484,7 +506,10 @@ export class INEPIntegrationService extends BaseApiService {
         })) || []
       }))
     } catch (error) {
-      console.error('Error generating teacher data export:', error)
+      logger.error('Error generating teacher data export', error as Error, {
+        feature: 'inep-integration',
+        action: 'generate_teacher_data_export'
+      })
       throw error
     }
   }
@@ -517,7 +542,10 @@ export class INEPIntegrationService extends BaseApiService {
         codigo_inep: gestor.codigo_inep?.[0]?.codigo_inep
       }))
     } catch (error) {
-      console.error('Error generating manager data export:', error)
+      logger.error('Error generating manager data export', error as Error, {
+        feature: 'inep-integration',
+        action: 'generate_manager_data_export'
+      })
       throw error
     }
   }
@@ -569,7 +597,10 @@ export class INEPIntegrationService extends BaseApiService {
       if (error) throw error
       return data as EducacensoExport[]
     } catch (error) {
-      console.error('Error fetching export history:', error)
+      logger.error('Error fetching export history', error as Error, {
+        feature: 'inep-integration',
+        action: 'get_export_history'
+      })
       throw error
     }
   }
@@ -646,7 +677,10 @@ export class INEPIntegrationService extends BaseApiService {
         issues
       }
     } catch (error) {
-      console.error('Error checking Educacenso compliance:', error)
+      logger.error('Error checking Educacenso compliance', error as Error, {
+        feature: 'inep-integration',
+        action: 'check_educacenso_compliance'
+      })
       throw error
     }
   }
