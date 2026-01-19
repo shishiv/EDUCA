@@ -26,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { VivenciasTimeline } from '@/components/diary/VivenciasTimeline'
 
 // Types
-import { type Vivencia, type CampoType } from '@/types/diario-infantil'
+import { type Vivencia } from '@/types/diario-infantil'
 
 // ============================================================================
 // Types
@@ -37,48 +37,6 @@ interface Student {
   nome_completo: string
   data_nascimento: string
 }
-
-// ============================================================================
-// Mock Data (for initial implementation)
-// ============================================================================
-
-const MOCK_VIVENCIAS: Vivencia[] = [
-  {
-    id: '1',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-17',
-    campos_experiencia: ['eu', 'escuta'] as CampoType[],
-    descricao: 'Durante a roda de conversa, demonstrou interesse em ouvir as historias dos colegas e compartilhou uma experiencia de sua familia. Mostrou empatia ao consolar um colega que estava triste.',
-    observacoes: 'Continuar estimulando participacao nas rodas de conversa.',
-    created_at: '2026-01-17T10:30:00Z',
-    updated_at: '2026-01-17T10:30:00Z',
-  },
-  {
-    id: '2',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-17',
-    campos_experiencia: ['corpo', 'tracos'] as CampoType[],
-    descricao: 'Participou ativamente da atividade de pintura com as maos, explorando diferentes movimentos e texturas. Demonstrou coordenacao motora ao fazer tracos com precisao.',
-    created_at: '2026-01-17T14:00:00Z',
-    updated_at: '2026-01-17T14:00:00Z',
-  },
-  {
-    id: '3',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-15',
-    campos_experiencia: ['espacos'] as CampoType[],
-    descricao: 'Durante a exploracao do parque, observou formigas carregando folhas e fez perguntas sobre onde elas estavam levando. Demonstrou curiosidade sobre nocoes de distancia e direcao.',
-    observacoes: 'Planejar mais atividades ao ar livre para estimular exploracao.',
-    created_at: '2026-01-15T09:00:00Z',
-    updated_at: '2026-01-15T09:00:00Z',
-  },
-]
 
 // ============================================================================
 // Component
@@ -120,12 +78,20 @@ export default function DiarioInfantilPage() {
     if (!alunoId) return
 
     try {
-      // TODO: Replace with actual API call
-      // For now, use mock data
-      setVivencias(MOCK_VIVENCIAS.filter(v => v.aluno_id === alunoId || v.aluno_id === '1'))
-    } catch (err: any) {
+      const response = await fetch(`/api/vivencias?aluno_id=${alunoId}&limit=50`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro ao carregar vivencias')
+      }
+
+      const { data } = await response.json()
+      setVivencias(data || [])
+    } catch (err) {
       console.error('Error loading vivencias:', err)
-      toast.error('Erro ao carregar vivencias')
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar vivencias'
+      setError(errorMessage)
+      toast.error(errorMessage)
     }
   }, [alunoId])
 
@@ -235,13 +201,30 @@ export default function DiarioInfantilPage() {
         </div>
       </div>
 
+      {/* Empty state */}
+      {vivencias.length === 0 && (
+        <div className="text-center py-12 border rounded-lg bg-muted/30">
+          <p className="text-muted-foreground">
+            Nenhuma vivencia registrada ainda.
+          </p>
+          <Button asChild className="mt-4">
+            <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
+              <Plus className="h-4 w-4 mr-2" />
+              Registrar primeira vivencia
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* Timeline */}
-      <VivenciasTimeline
-        vivencias={vivencias}
-        groupBy="day"
-        onEditVivencia={handleEditVivencia}
-        onDeleteVivencia={handleDeleteVivencia}
-      />
+      {vivencias.length > 0 && (
+        <VivenciasTimeline
+          vivencias={vivencias}
+          groupBy="day"
+          onEditVivencia={handleEditVivencia}
+          onDeleteVivencia={handleDeleteVivencia}
+        />
+      )}
     </div>
   )
 }
