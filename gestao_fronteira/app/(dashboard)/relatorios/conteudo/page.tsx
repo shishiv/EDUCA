@@ -119,7 +119,7 @@ const PERIOD_OPTIONS = [
 ]
 
 const DISCIPLINE_OPTIONS = [
-  { value: 'all', label: 'Todas as Disciplinas' },
+  { value: 'todas', label: 'Todas as Disciplinas' },
   ...Object.values(BNCC_SUBJECTS).map((s) => ({
     value: s.code,
     label: s.fullName,
@@ -435,8 +435,8 @@ function ContentTable({ lessons }: { lessons: LessonContentReportItem[] }) {
 export default function ContentReportsPage() {
   // State
   const [turmas, setTurmas] = useState<Turma[]>([])
-  const [selectedTurma, setSelectedTurma] = useState<string>('all')
-  const [selectedDisciplina, setSelectedDisciplina] = useState<string>('all')
+  const [selectedTurma, setSelectedTurma] = useState<string>('todas')
+  const [selectedDisciplina, setSelectedDisciplina] = useState<string>('todas')
   const [periodOption, setPeriodOption] = useState<string>('current_month')
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
     from: startOfMonth(new Date()),
@@ -519,11 +519,11 @@ export default function ContentReportsPage() {
         endDate: formatDateApi(dateRange.to),
       }
 
-      if (selectedTurma !== 'all') {
+      if (selectedTurma !== 'todas') {
         filters.turmaId = selectedTurma
       }
 
-      if (selectedDisciplina !== 'all') {
+      if (selectedDisciplina !== 'todas') {
         filters.disciplina = selectedDisciplina as BNNCSubjectCode
       }
 
@@ -632,7 +632,7 @@ export default function ContentReportsPage() {
                     <SelectValue placeholder="Selecione uma turma" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas as Turmas</SelectItem>
+                    <SelectItem value="todas">Todas as Turmas</SelectItem>
                     {turmas.map((turma) => (
                       <SelectItem key={turma.id} value={turma.id}>
                         {turma.serie} - {turma.nome}
