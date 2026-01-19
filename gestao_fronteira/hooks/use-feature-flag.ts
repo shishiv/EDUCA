@@ -114,7 +114,7 @@ export function useFeatureFlagsWithStatus() {
   return useQuery({
     queryKey: featureFlagQueryKeys.withStatus(),
     queryFn: () => featureFlagsApi.getFlagsWithEscolaStatus(),
-    staleTime: 2 * 60 * 1000, // 2 minutes - admin may toggle frequently
+    staleTime: 0, // Always refetch - admin toggles need immediate updates
     gcTime: 5 * 60 * 1000, // 5 minutes
   })
 }
@@ -192,16 +192,15 @@ export function useToggleSingleFlag() {
         user.id
       )
     },
-    onSuccess: (_, variables) => {
-      // Invalidate specific flag query and matrix
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      // Invalidate and refetch immediately to ensure UI updates
+      await queryClient.invalidateQueries({
         queryKey: featureFlagQueryKeys.withStatus(),
       })
-      // Also invalidate the specific flag for this escola
-      // We don't know the flag name here, so invalidate all flags
-      queryClient.invalidateQueries({
-        queryKey: featureFlagQueryKeys.all(),
+      await queryClient.refetchQueries({
+        queryKey: featureFlagQueryKeys.withStatus(),
       })
+      toast.success('Flag atualizada')
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Erro ao atualizar flag')
