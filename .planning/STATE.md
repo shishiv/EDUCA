@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 7 of 11 (Data Integrity)
-Plan: 1 of 4 complete
+Plan: 2 of 4 complete
 Status: In progress
-Last activity: 2026-01-19 - Completed 07-01-PLAN.md (Vivencias API)
+Last activity: 2026-01-19 - Completed 07-02-PLAN.md (Dashboard real data)
 
-Progress: ████░░░░░░ 24% (5/21 requirements)
+Progress: █████░░░░░ 29% (6/21 requirements)
 
 ## Milestone Summary
 
@@ -42,14 +42,17 @@ Progress: ████░░░░░░ 24% (5/21 requirements)
 | 06-04 | pnpm 9 + Node.js 20 LTS for CI | Current LTS versions for stability and performance |
 | 07-01 | Followed AttendanceApiService pattern for Vivencias | Consistent architecture across API services |
 | 07-01 | Deferred foto_url behind feature flag | LGPD compliance per CONTEXT.md |
+| 07-02 | Promise.all for parallel dashboard queries | Faster page load by fetching all stats simultaneously |
+| 07-02 | Escola-scoped data for Diretor/Secretario | Data filtered by escola_id from authenticated user's profile |
+| 07-02 | ResponsavelDashboard real data fetch | Fetches children linked to parent, calculates per-student attendance |
 
 ## Session Continuity
 
-Last session: 2026-01-19 13:25 UTC
-Stopped at: Completed 07-01-PLAN.md (Vivencias API)
+Last session: 2026-01-19 13:26 UTC
+Stopped at: Completed 07-02-PLAN.md (Dashboard real data)
 Resume file: None
-Next step: Execute 07-02-PLAN.md (Student detail real data)
+Next step: Execute 07-03-PLAN.md or 07-04-PLAN.md
 
 ---
 
-*State updated: 2026-01-19 after 07-01-PLAN.md completed*
+*State updated: 2026-01-19 after 07-02-PLAN.md completed*
