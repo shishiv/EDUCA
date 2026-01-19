@@ -4,6 +4,7 @@ import { BaseApiService } from './base'
 import { supabase } from '@/lib/supabase'
 import { usersApi } from './users'
 import { schoolsApi } from './schools'
+import { logger } from '@/lib/logger'
 
 export interface Report {
   id: string
@@ -14,6 +15,28 @@ export interface Report {
   status: 'processando' | 'concluido' | 'erro'
   arquivo_url?: string
   dados?: any
+}
+
+/**
+ * Turma (class) data for reports filtering
+ */
+export interface ReportTurma {
+  id: string
+  nome: string
+  serie: string
+  ano_letivo: number
+  escola_id: string
+  escola?: {
+    nome: string
+  }
+}
+
+/**
+ * School data for reports filtering
+ */
+export interface ReportSchool {
+  id: string
+  nome: string
 }
 
 export class ReportsApiService extends BaseApiService {
@@ -153,6 +176,119 @@ export class ReportsApiService extends BaseApiService {
     // This is a placeholder - in real implementation would generate proper reports
     const mockData = { message: 'Relatório gerado com sucesso', reportId, timestamp: new Date().toISOString() }
     return new Blob([JSON.stringify(mockData, null, 2)], { type: 'application/json' })
+  }
+
+  // ============================================================================
+  // Report Filtering Data Methods
+  // ============================================================================
+
+  /**
+   * Get turmas (classes) for report filters
+   * Used by frequencia and conteudo report pages
+   */
+  async getTurmasForFilters(): Promise<ReportTurma[]> {
+    try {
+      const { data, error } = await supabase
+        .from('turmas')
+        .select(`
+          id,
+          nome,
+          serie,
+          ano_letivo,
+          escola_id,
+          escolas (
+            nome
+          )
+        `)
+        .order('ano_letivo', { ascending: false })
+        .order('serie', { ascending: true })
+        .order('nome', { ascending: true })
+
+      if (error) {
+        logger.error('Error fetching turmas for filters', error, {
+          feature: 'reports',
+          action: 'get_turmas_for_filters'
+        })
+        throw error
+      }
+
+      return (data || []).map((t: any) => ({
+        id: t.id,
+        nome: t.nome,
+        serie: t.serie,
+        ano_letivo: t.ano_letivo,
+        escola_id: t.escola_id,
+        escola: t.escolas ? { nome: t.escolas.nome } : undefined,
+      }))
+    } catch (error) {
+      logger.error('Error in getTurmasForFilters', error as Error, {
+        feature: 'reports',
+        action: 'get_turmas_for_filters'
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Get schools for report filters
+   * Used by bolsa-familia report page
+   */
+  async getSchoolsForFilters(): Promise<ReportSchool[]> {
+    try {
+      const { data, error } = await supabase
+        .from('escolas')
+        .select('id, nome')
+        .order('nome')
+
+      if (error) {
+        logger.error('Error fetching schools for filters', error, {
+          feature: 'reports',
+          action: 'get_schools_for_filters'
+        })
+        throw error
+      }
+
+      return (data || []) as ReportSchool[]
+    } catch (error) {
+      logger.error('Error in getSchoolsForFilters', error as Error, {
+        feature: 'reports',
+        action: 'get_schools_for_filters'
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Get turmas by school for cascading filters
+   * Used by bolsa-familia report page
+   */
+  async getTurmasBySchool(escolaId: string): Promise<ReportTurma[]> {
+    try {
+      const { data, error } = await supabase
+        .from('turmas')
+        .select('id, nome, serie, ano_letivo, escola_id')
+        .eq('escola_id', escolaId)
+        .order('serie')
+        .order('nome')
+
+      if (error) {
+        logger.error('Error fetching turmas by school', error, {
+          feature: 'reports',
+          action: 'get_turmas_by_school',
+          metadata: { escolaId }
+        })
+        throw error
+      }
+
+      return (data || []) as ReportTurma[]
+    } catch (error) {
+      logger.error('Error in getTurmasBySchool', error as Error, {
+        feature: 'reports',
+        action: 'get_turmas_by_school',
+        metadata: { escolaId }
+      })
+      throw error
+    }
   }
 }
 
