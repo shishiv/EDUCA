@@ -3,6 +3,7 @@
 import { useAuth } from '@/hooks/use-auth'
 import { useSessionRealtime } from '@/contexts/session-realtime-context'
 import { useComplianceWarnings } from '@/hooks/use-compliance-warnings'
+import { useEscola } from '@/contexts/escola-context'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -15,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MunicipalHeaderIdentity } from '@/components/identity/municipal-assets'
-import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, AlertCircle, XCircle, ExternalLink, Search } from 'lucide-react'
+import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, AlertCircle, XCircle, ExternalLink, Search, School } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -45,6 +46,7 @@ export function Header() {
   const { userProfile, signOut } = useAuth()
   const { connectionStatus, notifications, clearNotification } = useSessionRealtime()
   const { data: complianceWarnings = [] } = useComplianceWarnings()
+  const { selectedEscola, shouldShowSelector } = useEscola()
 
   // Map compliance warnings to notification format
   const complianceNotifications = complianceWarnings.map(warning => ({
@@ -139,6 +141,25 @@ export function Header() {
               {connectionStatus === 'connected' ? 'Online' : 'Offline'}
             </span>
           </div>
+
+          {/* Escola Indicator - shows selected escola for admin users */}
+          {shouldShowSelector && selectedEscola && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-green-50 border border-green-200">
+              <School className="h-4 w-4 text-green-600" />
+              <span className="text-xs font-medium text-green-700 hidden xl:inline truncate max-w-[150px]">
+                {selectedEscola.nome}
+              </span>
+            </div>
+          )}
+
+          {shouldShowSelector && !selectedEscola && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-yellow-50 border border-yellow-200">
+              <School className="h-4 w-4 text-yellow-600" />
+              <span className="text-xs font-medium text-yellow-700 hidden xl:inline">
+                Nenhuma escola
+              </span>
+            </div>
+          )}
 
           {/* Notifications - EDUCA mockup: 40px button, rounded-[10px], notification dot */}
           <DropdownMenu>
