@@ -6,6 +6,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import ExcelJS from 'exceljs'
+import { logger } from '@/lib/logger'
 
 /**
  * Format date to Brazilian format (DD/MM/YYYY)
@@ -138,7 +139,10 @@ export async function exportToExcel(
 
     return { success: true, filename: `${filename}.xlsx` }
   } catch (error) {
-    console.error('Error exporting to Excel:', error)
+    logger.error('Error exporting to Excel', error as Error, {
+      feature: 'export',
+      action: 'export_to_excel'
+    })
     return { success: false, error }
   }
 }
@@ -209,7 +213,10 @@ export function exportToCSV(
 
     return { success: true, filename: `${filename}.csv` }
   } catch (error) {
-    console.error('Error exporting to CSV:', error)
+    logger.error('Error exporting to CSV', error as Error, {
+      feature: 'export',
+      action: 'export_to_csv'
+    })
     return { success: false, error }
   }
 }
@@ -380,7 +387,10 @@ export function exportAttendanceToPDF(
 
     return { success: true, filename: `${filename}.pdf` }
   } catch (error) {
-    console.error('Error exporting to PDF:', error)
+    logger.error('Error exporting to PDF', error as Error, {
+      feature: 'export',
+      action: 'export_attendance_to_pdf'
+    })
     return { success: false, error }
   }
 }
@@ -464,7 +474,10 @@ export function exportClassRosterToPDF(
 
     return { success: true, filename: `${filename}.pdf` }
   } catch (error) {
-    console.error('Error exporting class roster:', error)
+    logger.error('Error exporting class roster', error as Error, {
+      feature: 'export',
+      action: 'export_class_roster_to_pdf'
+    })
     return { success: false, error }
   }
 }

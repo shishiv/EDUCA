@@ -7,6 +7,7 @@
 import { supabase } from '@/lib/supabase'
 import { AttendanceApiService } from '@/lib/api/attendance'
 import { attendanceImmutability } from './attendance-immutability'
+import { logger } from '@/lib/logger'
 
 interface BulkAttendanceRecord {
   student_id: string
@@ -179,10 +180,14 @@ export class AttendanceBulkOperationsService {
 
     // Validate performance requirement
     if (results.performance.averageTimePerStudent > 1000) {
-      console.warn('Performance target missed:', {
-        targetMs: 1000,
-        actualMs: results.performance.averageTimePerStudent,
-        recordCount: total
+      logger.warn('Performance target missed', {
+        feature: 'attendance',
+        action: 'bulk_mark_attendance',
+        metadata: {
+          targetMs: 1000,
+          actualMs: results.performance.averageTimePerStudent,
+          recordCount: total
+        }
       })
     }
 
@@ -271,7 +276,11 @@ export class AttendanceBulkOperationsService {
       return this.bulkMarkAttendance(sessionId, turmaId, date, records, onProgress)
     } catch (error) {
       // Fallback to mark all present if smart prediction fails
-      console.warn('Smart prediction failed, fallback to mark all present:', error)
+      logger.warn('Smart prediction failed, fallback to mark all present', {
+        feature: 'attendance',
+        action: 'smart_bulk_mark_attendance',
+        metadata: { error: String(error) }
+      })
       return this.markAllPresent(sessionId, turmaId, date, studentIds, [], onProgress)
     }
   }
@@ -451,7 +460,11 @@ export class AttendanceBulkOperationsService {
 
       return patterns
     } catch (error) {
-      console.warn('Failed to analyze attendance patterns:', error)
+      logger.warn('Failed to analyze attendance patterns', {
+        feature: 'attendance',
+        action: 'analyze_attendance_patterns',
+        metadata: { error: String(error) }
+      })
       return new Map()
     }
   }
@@ -506,7 +519,10 @@ export class AttendanceBulkOperationsService {
         performanceTarget: true // <1s per student met
       }
     } catch (error) {
-      console.error('Failed to get performance metrics:', error)
+      logger.error('Failed to get performance metrics', error as Error, {
+        feature: 'attendance',
+        action: 'get_performance_metrics'
+      })
       return {
         averageProcessingTime: 1.2,
         totalRecordsProcessed: 0,
