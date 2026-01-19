@@ -330,18 +330,85 @@ export function DiretorDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        totalAlunos: 256,
-        totalEscolas: 1,
-        totalTurmas: 12,
-        totalMatriculas: 248,
-        frequenciaMedia: 89.2,
-        alunosComBaixaFrequencia: 8,
-        totalProfessores: 18
-      })
-      setLoading(false)
-    }, 1000)
+    async function loadStats() {
+      try {
+        // Get director's escola_id from auth context
+        const { data: { user } } = await supabase.auth.getUser()
+        let escolaId: string | null = null
+
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('escola_id')
+            .eq('id', user.id)
+            .single()
+          escolaId = userData?.escola_id || null
+        }
+
+        // Build queries - filter by escola_id if available
+        const baseQueries = [
+          escolaId
+            ? supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('escola_id', escolaId)
+            : supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          escolaId
+            ? supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('escola_id', escolaId)
+            : supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          escolaId
+            ? supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa').eq('escola_id', escolaId)
+            : supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa'),
+          escolaId
+            ? supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario', 'professor').eq('escola_id', escolaId)
+            : supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario', 'professor'),
+          // Get attendance for current month
+          supabase.from('frequencia')
+            .select('presente, status_presenca')
+            .gte('data_aula', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+        ]
+
+        const [
+          alunosResult,
+          turmasResult,
+          matriculasResult,
+          professoresResult,
+          frequenciaResult
+        ] = await Promise.all(baseQueries)
+
+        // Calculate attendance rate
+        const attendanceRecords = frequenciaResult.data || []
+        const totalRecords = attendanceRecords.length
+        const presentCount = attendanceRecords.filter((r: { presente: boolean; status_presenca: string | null }) =>
+          r.presente || r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
+        ).length
+        const frequenciaMedia = totalRecords > 0
+          ? Math.round((presentCount / totalRecords) * 1000) / 10
+          : 0
+
+        setStats({
+          totalAlunos: alunosResult.count || 0,
+          totalEscolas: 1, // Director sees their own school
+          totalTurmas: turmasResult.count || 0,
+          totalMatriculas: matriculasResult.count || 0,
+          frequenciaMedia,
+          alunosComBaixaFrequencia: 0, // TODO: Calculate properly in Phase 8
+          totalProfessores: professoresResult.count || 0
+        })
+      } catch (error) {
+        console.error('Error loading director dashboard stats:', error)
+        setStats({
+          totalAlunos: 0,
+          totalEscolas: 1,
+          totalTurmas: 0,
+          totalMatriculas: 0,
+          frequenciaMedia: 0,
+          alunosComBaixaFrequencia: 0,
+          totalProfessores: 0
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStats()
   }, [])
 
   const quickActions: QuickAction[] = [
@@ -455,17 +522,79 @@ export function SecretarioDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        totalAlunos: 256,
-        totalEscolas: 1,
-        totalTurmas: 12,
-        totalMatriculas: 248,
-        frequenciaMedia: 89.2,
-        alunosComBaixaFrequencia: 8
-      })
-      setLoading(false)
-    }, 1000)
+    async function loadStats() {
+      try {
+        // Get secretary's escola_id from auth context
+        const { data: { user } } = await supabase.auth.getUser()
+        let escolaId: string | null = null
+
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('escola_id')
+            .eq('id', user.id)
+            .single()
+          escolaId = userData?.escola_id || null
+        }
+
+        // Build queries - filter by escola_id if available
+        const baseQueries = [
+          escolaId
+            ? supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('escola_id', escolaId)
+            : supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          escolaId
+            ? supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('escola_id', escolaId)
+            : supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          escolaId
+            ? supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa').eq('escola_id', escolaId)
+            : supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa'),
+          // Get attendance for current month
+          supabase.from('frequencia')
+            .select('presente, status_presenca')
+            .gte('data_aula', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+        ]
+
+        const [
+          alunosResult,
+          turmasResult,
+          matriculasResult,
+          frequenciaResult
+        ] = await Promise.all(baseQueries)
+
+        // Calculate attendance rate
+        const attendanceRecords = frequenciaResult.data || []
+        const totalRecords = attendanceRecords.length
+        const presentCount = attendanceRecords.filter((r: { presente: boolean; status_presenca: string | null }) =>
+          r.presente || r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
+        ).length
+        const frequenciaMedia = totalRecords > 0
+          ? Math.round((presentCount / totalRecords) * 1000) / 10
+          : 0
+
+        setStats({
+          totalAlunos: alunosResult.count || 0,
+          totalEscolas: 1, // Secretary sees their own school
+          totalTurmas: turmasResult.count || 0,
+          totalMatriculas: matriculasResult.count || 0,
+          frequenciaMedia,
+          alunosComBaixaFrequencia: 0 // TODO: Calculate properly in Phase 8
+        })
+      } catch (error) {
+        console.error('Error loading secretary dashboard stats:', error)
+        setStats({
+          totalAlunos: 0,
+          totalEscolas: 1,
+          totalTurmas: 0,
+          totalMatriculas: 0,
+          frequenciaMedia: 0,
+          alunosComBaixaFrequencia: 0
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStats()
   }, [])
 
   const quickActions: QuickAction[] = [
@@ -577,29 +706,128 @@ export function ProfessorDashboard({ onNavigateToAttendance }: { onNavigateToAtt
 }
 
 // Parent/Guardian Dashboard - Student-focused view
+interface StudentInfo {
+  id: string
+  name: string
+  class: string
+  attendance: number
+  grade: number
+}
+
 export function ResponsavelDashboard() {
   const [loading, setLoading] = useState(true)
+  const [students, setStudents] = useState<StudentInfo[]>([])
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1000)
+    async function loadStudentData() {
+      try {
+        // Get parent's user id
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user) {
+          // Get children linked to this responsavel
+          const { data: alunosData } = await supabase
+            .from('alunos')
+            .select(`
+              id,
+              nome_completo,
+              matriculas!inner (
+                id,
+                turma_id,
+                turmas (nome)
+              )
+            `)
+            .eq('responsavel_id', user.id)
+            .eq('ativo', true)
+            .limit(10)
+
+          if (alunosData && alunosData.length > 0) {
+            // For each student, calculate their attendance
+            const studentInfos: StudentInfo[] = await Promise.all(
+              alunosData.map(async (aluno: {
+                id: string
+                nome_completo: string
+                matriculas: Array<{
+                  id: string
+                  turma_id: string
+                  turmas: { nome: string } | null
+                }>
+              }) => {
+                // Get attendance for this student's matricula
+                const matriculaId = aluno.matriculas?.[0]?.id
+                let attendance = 0
+
+                if (matriculaId) {
+                  const { data: freqData } = await supabase
+                    .from('frequencia')
+                    .select('presente, status_presenca')
+                    .eq('matricula_id', matriculaId)
+                    .limit(100)
+
+                  if (freqData && freqData.length > 0) {
+                    const present = freqData.filter(f =>
+                      f.presente || f.status_presenca === 'justificada' || f.status_presenca === 'atestado'
+                    ).length
+                    attendance = Math.round((present / freqData.length) * 100)
+                  }
+                }
+
+                return {
+                  id: aluno.id,
+                  name: aluno.nome_completo,
+                  class: aluno.matriculas?.[0]?.turmas?.nome || 'Sem turma',
+                  attendance,
+                  grade: 0 // TODO: Calculate from notas table when available
+                }
+              })
+            )
+            setStudents(studentInfos)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading student data:', error)
+        // Keep empty students array on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStudentData()
   }, [])
 
-  if (loading) return <LoadingCenter message="Carregando informações dos estudantes..." />
+  if (loading) return <LoadingCenter message="Carregando informacoes dos estudantes..." />
+
+  // Show placeholder if no students linked
+  if (students.length === 0) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          title="Portal do Responsavel"
+          description="Acompanhe o desempenho dos seus filhos"
+        />
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-gray-500">Nenhum aluno vinculado a esta conta.</p>
+            <p className="text-sm text-gray-400 mt-2">
+              Entre em contato com a secretaria para vincular seus filhos.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Portal do Responsável"
+        title="Portal do Responsavel"
         description="Acompanhe o desempenho dos seus filhos"
       />
 
       {/* Student Cards */}
       <div className="grid gap-6">
-        {[
-          { name: 'Ana Clara Silva', class: '5º Ano A', attendance: 95, grade: 8.5 },
-          { name: 'Pedro Silva', class: '3º Ano B', attendance: 87, grade: 7.8 }
-        ].map((student, index) => (
-          <Card key={index}>
+        {students.map((student) => (
+          <Card key={student.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -607,14 +835,14 @@ export function ResponsavelDashboard() {
                   <CardDescription>{student.class}</CardDescription>
                 </div>
                 <Badge variant={student.attendance >= 90 ? 'default' : 'destructive'}>
-                  {student.attendance}% Frequência
+                  {student.attendance}% Frequencia
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium mb-2">Frequência</h4>
+                  <h4 className="font-medium mb-2">Frequencia</h4>
                   <Progress value={student.attendance} className="h-3" />
                 </div>
                 <div>
