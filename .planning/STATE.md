@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 8 of 11 (Code Standards)
-Plan: 4 of 4
+Plan: 4 of 4 (all complete)
 Status: Phase 8 complete
-Last activity: 2026-01-19 - Completed 08-04-PLAN.md (Logger migration pages/components)
+Last activity: 2026-01-19 - Completed 08-03-PLAN.md (Inline queries to API services)
 
 Progress: ██████████ 60% (14/24 requirements)
 
@@ -68,11 +68,14 @@ Progress: ██████████ 60% (14/24 requirements)
 | 08-04 | Feature names match domain | diario-infantil, relatorios-descritivos, alunos, matriculas, reports, dashboard |
 | 08-04 | Action names describe operation | load_student, create_vivencia, save_draft, etc. |
 | 08-04 | console.log -> logger.info | Draft/finalize operations benefit from structured logging |
+| 08-03 | API service methods for report filtering | getTurmasForFilters, getSchoolsForFilters, getTurmasBySchool in reportsApi |
+| 08-03 | Chamada-specific methods in attendanceApi | getStudentsForChamada, getAttendanceForDate, saveChamada |
+| 08-03 | Type reuse from API services | ReportTurma, ReportSchool types from lib/api/reports.ts |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 08-04-PLAN.md (Phase 8 complete)
+Stopped at: Completed 08-03-PLAN.md (All Phase 8 plans complete)
 Resume file: .planning/phases/09-feature-flags/09-01-PLAN.md
 
 ### Roadmap Evolution
@@ -82,9 +85,10 @@ Resume file: .planning/phases/09-feature-flags/09-01-PLAN.md
 - Phase 8 complete: Code Standards documentation and migration
   - 08-01: Standards document created
   - 08-02: 48 console.error/warn calls migrated to structured logger in lib/
+  - 08-03: Inline queries migrated to API services in report/chamada pages
   - 08-04: 22 console.error/warn/log calls migrated to structured logger in pages/components
 - Ready for Phase 9: Feature Flags
 
 ---
 
-*State updated: 2026-01-19 after 08-04 plan complete (Phase 8 finished)*
+*State updated: 2026-01-19 after 08-03 plan complete (All Phase 8 plans finished)*
