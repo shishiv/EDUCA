@@ -1,65 +1,94 @@
 # PROJECT.md
 
-## Project: EDUCA UI/UX Refactoring
+## Project: EDUCA - Sistema de Gestao Escolar
 
-**Status:** v1.0 Shipped
+**Status:** v2.0 In Progress
 **Started:** 2026-01-16
-**Shipped:** 2026-01-18
-**Type:** UI/UX Redesign (Brownfield)
+**Type:** School Management System (Brownfield)
+
+---
+
+## Current Milestone: v2.0 Architecture & Launch Prep
+
+**Goal:** Auditar codebase completo, padronizar arquitetura, implementar feature flags, e preparar sistema para piloto em 1-2 escolas.
+
+**Context:** Sistema construido por multiplos workflows com padroes inconsistentes. Precisa de auditoria profunda antes de adicionar novas features.
+
+**Target outcomes:**
+- Mapeamento completo: codigo existente vs roadmap planejado
+- Identificacao de padroes inconsistentes e tech debt
+- Arquitetura padronizada para suportar features futuras
+- Feature flags via Supabase config (Nutricao, Estoque Escolar)
+- Checklist de launch readiness para piloto
 
 ---
 
 ## Current State
 
-**v1.0 SHIPPED** - Complete UI/UX overhaul following EDUCA design system mockups.
+### v1.0 SHIPPED (2026-01-18)
 
-### What Was Delivered
+UI/UX overhaul following EDUCA design system:
+- Design system foundation (CSS variables, Tailwind, typography)
+- Responsive layout (Sidebar, Header, MobileNav)
+- Screens: Login, Dashboard, Turmas, Chamada, Aluno
+- New module: Diario Infantil (BNCC-compliant, mock API)
 
-- Design system foundation (CSS variables, Tailwind config, typography)
-- Responsive layout shell (Sidebar, Header, MobileNav)
-- Refactored screens: Login, Dashboard, Turmas, Chamada, Aluno
-- New module: Diario Infantil (BNCC-compliant)
-- 48 requirements satisfied across 5 phases
+### Known Issues
 
-### Tech Debt Carried Forward
+**Code Quality:**
+- Multiple coding styles (different workflows/developers)
+- Inconsistent patterns across modules
+- Unknown coverage of original roadmap features
 
-- 2 orphaned components (AttendanceButton, CampoExperiencia in ui/)
+**Tech Debt (from v1.0):**
+- 2 orphaned components (AttendanceButton, CampoExperiencia)
 - Frequency percentage hardcoded at 85%
 - Vivencias API not implemented (mock data)
 - PDF export not implemented
-- Browser validation pending for municipal schools
+
+**Unknown Status:**
+- Compliance features (LGPD, backups, encryption)
+- Core features from original roadmap (Fase 0-1)
+- Data import/export functionality
 
 ---
 
 ## Vision
 
-Refatorar a interface do sistema EDUCA Fronteira para seguir o novo design system definido nos mockups HTML em `/docs`, criando uma experiencia visual consistente, moderna e acessivel para gestao escolar municipal.
+Sistema de gestao escolar completo para a rede municipal de Fronteira, MG. Gerencia alunos, frequencia, diarios de classe, nutricao, transporte e relatorios para MEC/Bolsa Familia.
 
 ---
 
 ## Goals
 
-1. **Implementar Design System EDUCA** - v1.0
-   - CSS variables para cores, tipografia, espacamentos
-   - Componentes reutilizaveis seguindo padroes dos mockups
-   - Temas light/dark preparados
+### v2.0 Goals
 
-2. **Modernizar Layout Principal** - v1.0
-   - Sidebar fixa com navegacao hierarquica
-   - Header com busca global e notificacoes
-   - Grid responsivo para conteudo
+1. **Codebase Audit**
+   - Mapear codigo existente vs roadmap original
+   - Identificar o que funciona, o que esta incompleto, o que falta
+   - Documentar padroes de codigo encontrados
 
-3. **Refatorar Telas Existentes** - v1.0
-   - Login com split-screen (gradiente + formulario)
-   - Dashboard com stats cards e alertas
-   - Turmas como cards com metricas
-   - Chamada como tabela interativa
-   - Perfil do aluno com layout de duas colunas
+2. **Architecture Standardization**
+   - Definir padroes de codigo unificados
+   - Identificar refatoracoes necessarias
+   - Priorizar por impacto no piloto
 
-4. **Implementar Diario Infantil (BNCC)** - v1.0
-   - Campos de Experiencias com cores especificas
-   - Registro de Vivencias
-   - Relatorios de Desenvolvimento
+3. **Feature Flags System**
+   - Tabela de configuracao no Supabase
+   - Toggle por escola
+   - Preparar para: Nutricao, Estoque Escolar
+
+4. **Launch Readiness**
+   - Checklist para piloto em 1-2 escolas
+   - Validar fluxos E2E criticos
+   - Compliance basico (LGPD, seguranca)
+
+### Previous Goals (v1.0 - Complete)
+
+- Design System EDUCA
+- Layout Principal (Sidebar, Header)
+- Telas Refatoradas (Login, Dashboard, Turmas, Chamada, Aluno)
+- Diario Infantil BNCC
 
 ---
 
@@ -67,99 +96,56 @@ Refatorar a interface do sistema EDUCA Fronteira para seguir o novo design syste
 
 ### Validated (v1.0)
 
-- Design System: DS-01 to DS-04 (4 requirements)
-- Layout: LAY-01 to LAY-05 (5 requirements)
-- Components: COMP-01 to COMP-10 (10 requirements)
-- Login: LOGIN-01 to LOGIN-05 (5 requirements)
-- Dashboard: DASH-01 to DASH-04 (4 requirements)
-- Turmas: TURM-01 to TURM-04 (4 requirements)
-- Chamada: CHAM-01 to CHAM-05 (5 requirements)
-- Aluno: ALUN-01 to ALUN-03 (3 requirements)
-- Diario Infantil: DIAR-01 to DIAR-05 (5 requirements)
-- Accessibility: ACESS-01 to ACESS-03 (3 requirements)
+48 UI/UX requirements across:
+- Design System (4), Layout (5), Components (10)
+- Login (5), Dashboard (4), Turmas (4), Chamada (5)
+- Aluno (3), Diario Infantil (5), Accessibility (3)
 
-**Total: 48 requirements validated in v1.0**
+### Active (v2.0)
 
-### Active (v1.1+)
+To be defined after codebase audit. Expected categories:
+- Audit: Codebase mapping, pattern analysis
+- Standardization: Code patterns, refactoring priorities
+- Feature Flags: Infrastructure, admin UI
+- Launch: E2E flows, compliance, documentation
 
-- Backend: Vivencias API implementation
-- Enhancement: Real frequency calculation (not hardcoded)
-- Feature: PDF export for development reports
-- Cleanup: Remove orphaned components
-- Validation: Browser support in municipal schools
-
-### Out of Scope
+### Out of Scope (v2.0)
 
 | Feature | Reason |
 |---------|--------|
-| Edicao retroativa de frequencia | Compliance brasileiro proibe |
-| Notas numericas Ed. Infantil | LDB proibe avaliacao classificatoria |
-| Gamificacao para alunos | Sistema e para gestao, nao uso por alunos |
+| Novos modulos (Nutricao, Estoque) | Feature flags apenas, implementacao futura |
 | Integracao WhatsApp | Complexidade alta, deferida |
-
----
-
-## Design System Reference
-
-### Typography
-| Font | Usage | Weight |
-|------|-------|--------|
-| Lexend | Titulos, Logo, Display | 400-800 |
-| Inter | Corpo, UI, Forms | 400-700 |
-| Caveat | Cursivo decorativo | 400-700 |
-
-### Colors
-**Primary Palette (Jardim)**
-```css
---green-600: #059669  /* Primary brand */
---green-500: #10b981  /* Success */
---blue-500: #0ea5e9   /* Info, Secondary */
---yellow-400: #fcd34d /* Accent, Logo wave */
---pink-400: #fb7185   /* Alerts, Badges */
-```
-
-**BNCC Campos de Experiencias**
-```css
---campo-eu: #ec4899      /* O eu, o outro e o nos */
---campo-corpo: #f97316   /* Corpo, gestos e movimentos */
---campo-tracos: #8b5cf6  /* Tracos, sons, cores e formas */
---campo-escuta: #0ea5e9  /* Escuta, fala, pensamento */
---campo-espacos: #10b981 /* Espacos, tempos, quantidades */
-```
-
----
-
-## Key Decisions (v1.0)
-
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| CSS variables as tokens | Enables runtime theming | Good |
-| Font weights limited | Bundle size optimization | Good |
-| Full class lookup for colors | Avoids Tailwind purge issues | Good |
-| New chamada starts Present | Teacher marks absences | Good |
-| Faixa etaria dynamic | Age changes over time | Good |
-| Sort in JS not Supabase | Nested relation ordering | Good |
+| Edicao retroativa de frequencia | Compliance brasileiro proibe |
 
 ---
 
 ## Constraints
 
 - Must maintain existing Supabase API contracts
-- Must preserve Brazilian compliance features (attendance immutability, auto-lock)
+- Must preserve Brazilian compliance (attendance immutability, auto-lock)
 - Must work offline-first (existing PWA)
 - Must support Portuguese language
+- Pilot in 1-2 schools before full rollout
+
+---
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| v1.0: CSS variables as tokens | Enables runtime theming | Good |
+| v1.0: Sort in JS not Supabase | Nested relation ordering | Good |
+| v2.0: Supabase feature flags | Per-school toggle, no external deps | Pending |
+| v2.0: Audit before new features | Unknown codebase state | Pending |
 
 ---
 
 ## Source of Truth
 
+**Original roadmap:** `/docs/educa-roadmap(1).html`
 **Design mockups:** `/docs/*.html`
-- `educa-brand-guidelines.html` - Typography, colors, logo usage
-- `educa-ui-mockups.html` - Main screens
-- `educa-mockups-cobranded.html` - Co-branding with Prefeitura
-- `educa-diario-infantil.html` - BNCC/Educacao Infantil screens
-- `educa-logo-final.html` - Logo specifications
+**Codebase:** `gestao_fronteira/`
 
 ---
 
-*Last updated: 2026-01-18 after v1.0 milestone shipped*
+*Last updated: 2026-01-18 after v2.0 milestone start*
