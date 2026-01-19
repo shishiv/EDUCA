@@ -4,15 +4,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    // Temporarily disable ESLint during builds for performance testing
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Temporarily disable TypeScript type checking during builds for MVP
-    ignoreBuildErrors: true,
-  },
-
   // Performance optimizations for educational management system
   images: {
     // Next.js 15 - Updated image configuration for student photos and municipal assets
