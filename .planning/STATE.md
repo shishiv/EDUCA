@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 6 of 6 (Build & Quality)
-Plan: 2 of 2 in current phase
+Plan: 4 of 4 in current phase (gap closure plans included)
 Status: Phase complete
-Last activity: 2026-01-19 - Completed 06-02-PLAN.md (Build enforcement)
+Last activity: 2026-01-19 - Completed 06-04-PLAN.md (CI pipeline)
 
 Progress: ██░░░░░░░░ 19% (4/21 requirements)
 
@@ -38,13 +38,14 @@ Progress: ██░░░░░░░░ 19% (4/21 requirements)
 |-------|----------|-----------|
 | 06-01 | FlatCompat bridge for eslint-config-next | Official Next.js ESLint config is still legacy format |
 | 06-02 | Remove both ignore flags for full enforcement | Both eslint and typescript flags removed together |
+| 06-04 | pnpm 9 + Node.js 20 LTS for CI | Current LTS versions for stability and performance |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 06-02-PLAN.md (Phase 6 complete)
+Stopped at: Completed 06-04-PLAN.md (Phase 6 fully complete with gap closure)
 Next step: `/gsd:plan-phase 7` to plan Phase 7 (Data Integrity)
 
 ---
 
-*State updated: 2026-01-19 after 06-02-PLAN.md completion*
+*State updated: 2026-01-19 after 06-04-PLAN.md completion*
