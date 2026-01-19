@@ -317,6 +317,10 @@ export function logEducationalAction(
     timestamp: new Date().toISOString()
   }
 
-  // Em produção, isso seria enviado para um sistema de logging
-  console.log('AUDIT_LOG:', JSON.stringify(logEntry))
+  // Log audit entry using centralized logger
+  logger.info('AUDIT_LOG', {
+    feature: 'audit',
+    action: operacao,
+    metadata: logEntry
+  })
 }
