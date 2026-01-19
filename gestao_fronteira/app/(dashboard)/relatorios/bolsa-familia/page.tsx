@@ -38,6 +38,8 @@ import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
+import { reportsApi, type ReportSchool, type ReportTurma } from '@/lib/api/reports';
+import { logger } from '@/lib/logger';
 import { BolsaFamiliaAlert } from '@/components/reports/BolsaFamiliaAlert';
 import {
   getBolsaFamiliaStudents,
@@ -57,17 +59,9 @@ import { cn } from '@/lib/utils';
 // TYPES
 // ============================================================================
 
-interface School {
-  id: string;
-  nome: string;
-}
-
-interface Turma {
-  id: string;
-  nome: string;
-  serie: string;
-  escola_id: string;
-}
+// Using types from lib/api/reports.ts
+type School = ReportSchool
+type Turma = ReportTurma
 
 type PeriodOption = 'current_month' | 'last_month' | 'bimester_1' | 'bimester_2' | 'bimester_3' | 'bimester_4' | 'custom';
 
@@ -158,15 +152,13 @@ export default function BolsaFamiliaReportPage() {
   useEffect(() => {
     async function fetchSchools() {
       try {
-        const { data, error } = await supabase
-          .from('escolas')
-          .select('id, nome')
-          .order('nome');
-
-        if (error) throw error;
-        setSchools(data || []);
+        const schoolsData = await reportsApi.getSchoolsForFilters();
+        setSchools(schoolsData);
       } catch (error) {
-        console.error('Error fetching schools:', error);
+        logger.error('Error fetching schools', error as Error, {
+          feature: 'reports',
+          action: 'load_bolsa_familia_schools'
+        });
         toast.error('Erro ao carregar escolas');
       } finally {
         setLoadingSchools(false);
@@ -186,18 +178,15 @@ export default function BolsaFamiliaReportPage() {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('turmas')
-          .select('id, nome, serie, escola_id')
-          .eq('escola_id', selectedSchool)
-          .order('serie')
-          .order('nome');
-
-        if (error) throw error;
-        setTurmas(data || []);
+        const turmasData = await reportsApi.getTurmasBySchool(selectedSchool);
+        setTurmas(turmasData);
         setSelectedTurma('all');
       } catch (error) {
-        console.error('Error fetching turmas:', error);
+        logger.error('Error fetching turmas', error as Error, {
+          feature: 'reports',
+          action: 'load_bolsa_familia_turmas',
+          metadata: { escolaId: selectedSchool }
+        });
         toast.error('Erro ao carregar turmas');
       }
     }
@@ -226,7 +215,11 @@ export default function BolsaFamiliaReportPage() {
 
       setReport(result.data);
     } catch (error) {
-      console.error('Error fetching report:', error);
+      logger.error('Error fetching report', error as Error, {
+        feature: 'reports',
+        action: 'generate_bolsa_familia_report',
+        metadata: { escolaId: selectedSchool, turmaId: selectedTurma }
+      });
       toast.error('Erro ao gerar relatorio');
     } finally {
       setLoading(false);
@@ -252,7 +245,10 @@ export default function BolsaFamiliaReportPage() {
       await generateBolsaFamiliaReportExcel(report, selectedSchoolName, true);
       toast.success('Excel gerado com sucesso!', { id: 'export-excel' });
     } catch (error) {
-      console.error('Error exporting Excel:', error);
+      logger.error('Error exporting Excel', error as Error, {
+        feature: 'reports',
+        action: 'export_bolsa_familia_excel'
+      });
       toast.error('Erro ao gerar Excel', { id: 'export-excel' });
     }
   };
@@ -270,7 +266,10 @@ export default function BolsaFamiliaReportPage() {
       generateBolsaFamiliaReportPDF(report, selectedSchoolName, true);
       toast.success('PDF gerado com sucesso!', { id: 'export-pdf' });
     } catch (error) {
-      console.error('Error exporting PDF:', error);
+      logger.error('Error exporting PDF', error as Error, {
+        feature: 'reports',
+        action: 'export_bolsa_familia_pdf'
+      });
       toast.error('Erro ao gerar PDF', { id: 'export-pdf' });
     }
   };

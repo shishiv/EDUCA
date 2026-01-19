@@ -56,6 +56,8 @@ import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { reportsApi, type ReportTurma } from '@/lib/api/reports'
+import { logger } from '@/lib/logger'
 
 import { AttendanceReportTable, type AttendanceTableRow } from '@/components/reports/AttendanceReportTable'
 import {
@@ -73,16 +75,8 @@ import {
 // TYPES
 // ============================================================================
 
-interface Turma {
-  id: string
-  nome: string
-  serie: string
-  ano_letivo: number
-  escola_id: string
-  escola?: {
-    nome: string
-  }
-}
+// Using ReportTurma from lib/api/reports.ts
+type Turma = ReportTurma
 
 interface DateRange {
   from: Date
@@ -222,41 +216,18 @@ export default function AttendanceReportsPage() {
       setError(null)
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('turmas')
-          .select(`
-            id,
-            nome,
-            serie,
-            ano_letivo,
-            escola_id,
-            escolas (
-              nome
-            )
-          `)
-          .order('ano_letivo', { ascending: false })
-          .order('serie', { ascending: true })
-          .order('nome', { ascending: true })
-
-        if (fetchError) throw fetchError
-
-        const formattedTurmas: Turma[] = (data || []).map((t: any) => ({
-          id: t.id,
-          nome: t.nome,
-          serie: t.serie,
-          ano_letivo: t.ano_letivo,
-          escola_id: t.escola_id,
-          escola: t.escolas ? { nome: t.escolas.nome } : undefined,
-        }))
-
-        setTurmas(formattedTurmas)
+        const turmasData = await reportsApi.getTurmasForFilters()
+        setTurmas(turmasData)
 
         // Auto-select first turma if only one
-        if (formattedTurmas.length === 1) {
-          setSelectedTurma(formattedTurmas[0].id)
+        if (turmasData.length === 1) {
+          setSelectedTurma(turmasData[0].id)
         }
       } catch (err) {
-        console.error('Error fetching turmas:', err)
+        logger.error('Error fetching turmas', err as Error, {
+          feature: 'reports',
+          action: 'load_frequencia_turmas'
+        })
         setError('Erro ao carregar turmas')
       } finally {
         setIsLoadingTurmas(false)
@@ -264,7 +235,7 @@ export default function AttendanceReportsPage() {
     }
 
     fetchTurmas()
-  }, [supabase])
+  }, [])
 
   // Update date range when period option changes
   useEffect(() => {
@@ -299,14 +270,18 @@ export default function AttendanceReportsPage() {
       setReportData(result.data)
       toast.success('Relatorio gerado com sucesso')
     } catch (err) {
-      console.error('Error generating report:', err)
+      logger.error('Error generating report', err as Error, {
+        feature: 'reports',
+        action: 'generate_frequencia_report',
+        metadata: { turmaId: selectedTurma }
+      })
       const errorMessage = err instanceof Error ? err.message : 'Erro ao gerar relatorio'
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
       setIsLoadingReport(false)
     }
-  }, [supabase, selectedTurma, dateRange])
+  }, [selectedTurma, dateRange])
 
   // Handle turma selection
   const handleTurmaChange = (turmaId: string) => {
@@ -330,7 +305,10 @@ export default function AttendanceReportsPage() {
       generateAttendanceReportPDF(reportData, selectedTurmaInfo?.escola?.nome)
       toast.success('PDF gerado com sucesso')
     } catch (err) {
-      console.error('Error generating PDF:', err)
+      logger.error('Error generating PDF', err as Error, {
+        feature: 'reports',
+        action: 'export_frequencia_pdf'
+      })
       toast.error('Erro ao gerar PDF')
     }
   }
@@ -345,7 +323,10 @@ export default function AttendanceReportsPage() {
       await generateAttendanceReportExcel(reportData, selectedTurmaInfo?.escola?.nome)
       toast.success('Excel gerado com sucesso')
     } catch (err) {
-      console.error('Error generating Excel:', err)
+      logger.error('Error generating Excel', err as Error, {
+        feature: 'reports',
+        action: 'export_frequencia_excel'
+      })
       toast.error('Erro ao gerar Excel')
     }
   }

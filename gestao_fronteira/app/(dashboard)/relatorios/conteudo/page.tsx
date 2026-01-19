@@ -73,6 +73,8 @@ import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { reportsApi, type ReportTurma } from '@/lib/api/reports'
+import { logger } from '@/lib/logger'
 
 import {
   generateContentReport,
@@ -88,16 +90,8 @@ import { BNCC_SUBJECTS, type BNNCSubjectCode } from '@/types/lesson-content'
 // TYPES
 // ============================================================================
 
-interface Turma {
-  id: string
-  nome: string
-  serie: string
-  ano_letivo: number
-  escola_id: string
-  escola?: {
-    nome: string
-  }
-}
+// Using ReportTurma from lib/api/reports.ts
+type Turma = ReportTurma
 
 interface DateRange {
   from: Date
@@ -462,36 +456,13 @@ export default function ContentReportsPage() {
       setError(null)
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('turmas')
-          .select(`
-            id,
-            nome,
-            serie,
-            ano_letivo,
-            escola_id,
-            escolas (
-              nome
-            )
-          `)
-          .order('ano_letivo', { ascending: false })
-          .order('serie', { ascending: true })
-          .order('nome', { ascending: true })
-
-        if (fetchError) throw fetchError
-
-        const formattedTurmas: Turma[] = (data || []).map((t: any) => ({
-          id: t.id,
-          nome: t.nome,
-          serie: t.serie,
-          ano_letivo: t.ano_letivo,
-          escola_id: t.escola_id,
-          escola: t.escolas ? { nome: t.escolas.nome } : undefined,
-        }))
-
-        setTurmas(formattedTurmas)
+        const turmasData = await reportsApi.getTurmasForFilters()
+        setTurmas(turmasData)
       } catch (err) {
-        console.error('Error fetching turmas:', err)
+        logger.error('Error fetching turmas', err as Error, {
+          feature: 'reports',
+          action: 'load_conteudo_turmas'
+        })
         setError('Erro ao carregar turmas')
       } finally {
         setIsLoadingTurmas(false)
@@ -536,7 +507,11 @@ export default function ContentReportsPage() {
       setReportData(result.data)
       toast.success('Relatorio gerado com sucesso')
     } catch (err) {
-      console.error('Error generating report:', err)
+      logger.error('Error generating report', err as Error, {
+        feature: 'reports',
+        action: 'generate_conteudo_report',
+        metadata: { turmaId: selectedTurma, disciplina: selectedDisciplina }
+      })
       const errorMessage = err instanceof Error ? err.message : 'Erro ao gerar relatorio'
       setError(errorMessage)
       toast.error(errorMessage)
@@ -561,7 +536,10 @@ export default function ContentReportsPage() {
       generateContentReportPDF(reportData, selectedTurmaInfo?.escola?.nome)
       toast.success('PDF gerado com sucesso')
     } catch (err) {
-      console.error('Error generating PDF:', err)
+      logger.error('Error generating PDF', err as Error, {
+        feature: 'reports',
+        action: 'export_conteudo_pdf'
+      })
       toast.error('Erro ao gerar PDF')
     }
   }
@@ -581,7 +559,10 @@ export default function ContentReportsPage() {
       })
       toast.success('PDF de habilidades gerado com sucesso')
     } catch (err) {
-      console.error('Error generating BNCC PDF:', err)
+      logger.error('Error generating BNCC PDF', err as Error, {
+        feature: 'reports',
+        action: 'export_bncc_pdf'
+      })
       toast.error('Erro ao gerar PDF')
     }
   }
