@@ -120,6 +120,14 @@ Plans:
 - STD-03: Queries Supabase centralizadas em lib/api/
 - STD-04: Console.error substituido por lib/logger.ts estruturado
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Document data fetching and filter patterns in CONVENTIONS.md
+- [ ] 08-02-PLAN.md — Migrate console.error to logger in lib/ files
+- [ ] 08-03-PLAN.md — Centralize Supabase queries in report and chamada pages
+- [ ] 08-04-PLAN.md — Centralize remaining page queries and complete logger migration
+
 **Success Criteria:**
 - [ ] CONVENTIONS.md atualizado com data fetching pattern
 - [ ] Filtros usando 'todos' como default em toda a app
@@ -226,3 +234,4 @@ Linear dependency chain - each phase builds on previous.
 *Gap closure plans added: 2026-01-19*
 *Phase 7 planned: 2026-01-19*
 *Phase 7.1 planned: 2026-01-19*
+*Phase 8 planned: 2026-01-19*
