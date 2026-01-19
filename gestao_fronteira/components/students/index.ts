@@ -4,9 +4,6 @@
  * Educational Management System - Student Module
  */
 
-// Student form component (formerly enhanced-student-registration-form)
-export { EnhancedStudentRegistrationForm, EnhancedStudentRegistrationForm as StudentForm } from './student-form'
-
 // Student profile components
 export { FaixaEtariaIndicator } from './FaixaEtariaIndicator'
 export { StudentProfileHeader } from './StudentProfileHeader'
