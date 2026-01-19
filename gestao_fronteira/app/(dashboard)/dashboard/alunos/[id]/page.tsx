@@ -31,6 +31,7 @@ import {
   StudentInfoGrid,
 } from '@/components/students'
 import { isInfantilAge } from '@/lib/utils/faixa-etaria'
+import { supabase } from '@/lib/supabase'
 
 interface AlunoDetalhado {
   id: string
@@ -71,6 +72,7 @@ interface AlunoDetalhado {
     presencas: number
     faltas: number
     faltas_justificadas: number
+    formatted: string
   }
   notas: {
     disciplina: string
@@ -86,145 +88,137 @@ interface AlunoDetalhado {
   vivencias_count?: number
 }
 
-// Mock data with young student for Infantil demo
-const mockAlunoDetalhado: AlunoDetalhado = {
-  id: '1',
-  nome_completo: 'Lucas Santos Pereira',
-  data_nascimento: '2015-11-08',
-  cpf: '12345678904',
-  sexo: 'M',
-  endereco: 'Rua das Flores, 456 - Centro - Fronteira/MG',
-  telefone: '(34) 99999-0003',
-  nome_mae: 'Carmen Santos',
-  nome_pai: 'Carlos Pereira',
-  necessidades_especiais: 'Dislexia - acompanhamento pedagogico especializado',
-  ativo: true,
-  created_at: '2024-01-15T08:00:00Z',
-  responsavel: {
-    nome: 'Carlos Santos Pereira',
-    telefone: '(34) 99999-0003',
-    email: 'carlos.santos@email.com',
-    parentesco: 'Pai'
-  },
-  matriculas: [
-    {
-      id: '1',
-      ano_letivo: 2024,
-      situacao: 'ativa',
-      turma: {
-        nome: '5o Ano A',
-        serie: '5o Ano',
-        turno: 'Matutino',
-        escola: {
-          nome: 'EMEF Professor Joao Silva'
-        }
-      },
-      data_matricula: '2024-02-01'
-    },
-    {
-      id: '2',
-      ano_letivo: 2023,
-      situacao: 'concluida',
-      turma: {
-        nome: '4o Ano B',
-        serie: '4o Ano',
-        turno: 'Matutino',
-        escola: {
-          nome: 'EMEF Professor Joao Silva'
-        }
-      },
-      data_matricula: '2023-02-01'
-    }
-  ],
-  frequencia: {
-    percentual: 92.5,
-    total_aulas: 120,
-    presencas: 111,
-    faltas: 9,
-    faltas_justificadas: 6
-  },
-  notas: [
-    {
-      disciplina: 'Portugues',
-      bimestre1: 8.0,
-      bimestre2: 7.5,
-      bimestre3: 8.5,
-      media: 8.0,
-      situacao: 'cursando'
-    },
-    {
-      disciplina: 'Matematica',
-      bimestre1: 9.0,
-      bimestre2: 8.5,
-      bimestre3: 9.5,
-      media: 9.0,
-      situacao: 'cursando'
-    },
-    {
-      disciplina: 'Historia',
-      bimestre1: 7.5,
-      bimestre2: 8.0,
-      bimestre3: 7.0,
-      media: 7.5,
-      situacao: 'cursando'
-    },
-    {
-      disciplina: 'Geografia',
-      bimestre1: 8.5,
-      bimestre2: 8.0,
-      bimestre3: 8.5,
-      media: 8.33,
-      situacao: 'cursando'
-    },
-    {
-      disciplina: 'Ciencias',
-      bimestre1: 9.5,
-      bimestre2: 9.0,
-      bimestre3: 9.5,
-      media: 9.33,
-      situacao: 'cursando'
-    },
-    {
-      disciplina: 'Educacao Fisica',
-      bimestre1: 10.0,
-      bimestre2: 10.0,
-      bimestre3: 10.0,
-      media: 10.0,
-      situacao: 'cursando'
-    },
-    {
-      disciplina: 'Artes',
-      bimestre1: 8.0,
-      bimestre2: 8.5,
-      bimestre3: 8.0,
-      media: 8.17,
-      situacao: 'cursando'
-    }
-  ],
-  bolsa_familia: false,
-  vivencias_count: 0
-}
-
 export default function AlunoDetalhesPage() {
   const params = useParams()
   const [aluno, setAluno] = useState<AlunoDetalhado | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadAluno()
-  }, [params.id])
+    async function loadStudent() {
+      if (!params?.id) return
 
-  const loadAluno = async () => {
-    try {
-      // Simular carregamento
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setAluno(mockAlunoDetalhado)
-    } catch {
-      toast.error('Erro ao carregar dados do aluno')
-    } finally {
-      setLoading(false)
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch student with matriculas
+        const { data: alunoData, error: alunoError } = await supabase
+          .from('alunos')
+          .select(`
+            *,
+            matriculas:matriculas(
+              id,
+              ano_letivo,
+              situacao,
+              data_matricula,
+              turma:turmas(
+                nome,
+                serie,
+                turno,
+                escola:escolas(nome)
+              )
+            )
+          `)
+          .eq('id', params.id)
+          .single()
+
+        if (alunoError) throw alunoError
+        if (!alunoData) {
+          setError('Aluno nao encontrado')
+          return
+        }
+
+        // Get active matricula for current year
+        const currentYear = new Date().getFullYear()
+        const activeMatricula = alunoData.matriculas?.find(
+          (m: { situacao: string; ano_letivo: number }) => m.situacao === 'ativa' && m.ano_letivo === currentYear
+        )
+
+        // Calculate attendance for current month
+        let frequencia = {
+          percentual: 0,
+          total_aulas: 0,
+          presencas: 0,
+          faltas: 0,
+          faltas_justificadas: 0,
+          formatted: '0% (0/0 dias)'
+        }
+
+        if (activeMatricula) {
+          const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+            .toISOString().split('T')[0]
+          const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+            .toISOString().split('T')[0]
+
+          const { data: attendanceData } = await supabase
+            .from('frequencia')
+            .select('presente, status_presenca')
+            .eq('matricula_id', activeMatricula.id)
+            .gte('data_aula', monthStart)
+            .lte('data_aula', monthEnd)
+
+          if (attendanceData && attendanceData.length > 0) {
+            const total = attendanceData.length
+            const presentes = attendanceData.filter(r =>
+              r.presente || r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
+            ).length
+            const faltas = attendanceData.filter(r => r.status_presenca === 'falta').length
+            const justificadas = attendanceData.filter(r =>
+              r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
+            ).length
+            const percentual = Math.round((presentes / total) * 100)
+
+            frequencia = {
+              percentual,
+              total_aulas: total,
+              presencas: presentes,
+              faltas,
+              faltas_justificadas: justificadas,
+              formatted: `${percentual}% (${presentes}/${total} dias)`
+            }
+          }
+        }
+
+        // Build student object matching AlunoDetalhado interface
+        const studentData: AlunoDetalhado = {
+          id: alunoData.id,
+          nome_completo: alunoData.nome_completo,
+          data_nascimento: alunoData.data_nascimento,
+          cpf: alunoData.cpf || undefined,
+          sexo: alunoData.sexo as 'M' | 'F',
+          endereco: alunoData.endereco || undefined,
+          telefone: alunoData.telefone || undefined,
+          nome_mae: alunoData.nome_mae || undefined,
+          nome_pai: alunoData.nome_pai || undefined,
+          necessidades_especiais: alunoData.necessidades_especiais || undefined,
+          ativo: alunoData.ativo,
+          created_at: alunoData.created_at,
+          responsavel: {
+            nome: alunoData.nome_mae || alunoData.nome_pai || 'Nao informado',
+            telefone: alunoData.telefone || 'Nao informado',
+            email: undefined,
+            parentesco: alunoData.nome_mae ? 'Mae' : 'Pai'
+          },
+          matriculas: alunoData.matriculas || [],
+          frequencia,
+          notas: [], // Notas not implemented yet
+          bolsa_familia: alunoData.nis ? true : false,
+          vivencias_count: 0 // Will be populated when vivencias API exists
+        }
+
+        setAluno(studentData)
+      } catch (err) {
+        console.error('Error loading student:', err)
+        setError('Erro ao carregar dados do aluno')
+        toast.error('Erro ao carregar dados do aluno')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    loadStudent()
+  }, [params?.id])
 
   const getNotaColor = (nota: number) => {
     if (nota >= 8) return 'text-green-600 font-semibold'
@@ -256,12 +250,12 @@ export default function AlunoDetalhesPage() {
     )
   }
 
-  // Not found state
-  if (!aluno) {
+  // Not found or error state
+  if (!aluno || error) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Aluno nao encontrado</p>
-        <Button variant="link" asChild className="mt-2">
+        <p className="text-muted-foreground">{error || 'Aluno nao encontrado'}</p>
+        <Button asChild className="mt-4">
           <Link href="/dashboard/alunos">Voltar para lista</Link>
         </Button>
       </div>
