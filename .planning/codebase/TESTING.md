@@ -1,189 +1,220 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-01-16
+**Analysis Date:** 2026-01-18
 
 ## Test Framework
 
 **Runner:**
-- Playwright (E2E testing)
-- Config referenced in `test-results/results.json`
-- No unit test framework currently configured in package.json
+- Playwright (for E2E tests)
+- Version: 1.56.0 (per `test-results/results.json`)
+- Config: `playwright.config.ts` (referenced but not in current repo location)
 
-**E2E Configuration:**
-- Config file: `playwright.config.ts` (referenced, not found in current directory)
-- Test directory: `tests/e2e/`
-- Global setup: `tests/global-setup.ts`
-- Global teardown: `tests/global-teardown.ts`
+**Assertion Library:**
+- Playwright built-in assertions for E2E
+- No unit test framework configured (Jest/Vitest not installed)
+
+**CRITICAL GAP:** No unit test framework is configured. Only E2E testing infrastructure exists.
 
 **Run Commands:**
 ```bash
-# No test scripts in package.json
-# Playwright would typically be run with:
-npx playwright test          # Run all tests
-npx playwright test --ui     # Interactive UI mode
-npx playwright test --debug  # Debug mode
+# E2E Tests (Playwright)
+npx playwright test                    # Run all tests
+npx playwright test --ui               # Interactive UI mode
+npx playwright test --project="Desktop Chrome"  # Specific browser
+
+# No unit test command - NOT CONFIGURED
+# pnpm test                            # DOES NOT EXIST in package.json
 ```
 
 ## Test File Organization
 
 **Location:**
-- E2E tests: `tests/e2e/` (separate from source)
-- Unit tests: Not configured
+- E2E tests: `tests/e2e/` (configured, may be in different location)
+- Unit tests: **NOT PRESENT** - no test files in `app/`, `lib/`, `components/`
 
 **Naming:**
-- Pattern: `**/*.@(spec|test).?(c|m)[jt]s?(x)`
-- Example: `attendance.spec.ts`, `login.test.ts`
+- E2E pattern: `**/*.@(spec|test).?(c|m)[jt]s?(x)`
+- No unit test files found in source directories
 
-**Directory Structure (Playwright):**
+**Structure (from Playwright config):**
 ```
 tests/
-├── e2e/                    # E2E test specs
-├── global-setup.ts         # Setup before all tests
-├── global-teardown.ts      # Cleanup after all tests
-└── screenshots/            # Visual regression captures
+├── e2e/              # E2E test specs
+├── global-setup.ts   # Browser setup
+└── global-teardown.ts
 test-results/
-├── results.json            # JSON test results
-├── junit.xml               # JUnit format results
-└── .last-run.json          # Last run metadata
+├── results.json      # Test results
+├── junit.xml         # CI/CD reporting
+└── .last-run.json    # Last run state
 ```
 
-## Test Configuration
+## E2E Test Structure (Playwright)
 
-**Playwright Projects (from results.json):**
-```javascript
-[
-  { name: 'Desktop Chrome', timeout: 30000 },
-  { name: 'Mobile - iPhone 12 (Teachers)', timeout: 30000 },
-  { name: 'Mobile - Galaxy S9+ (Android)', timeout: 30000 },
-  { name: 'Tablet - iPad (Portrait)', timeout: 30000 },
-  { name: 'Tablet - iPad (Landscape)', timeout: 30000 },
-  { name: 'Custom Educational Tablet', timeout: 30000 }
-]
-```
-
-**Global Settings:**
-- `fullyParallel: true` - Tests run in parallel
-- `workers: 2` - Two worker processes
-- `reuseExistingServer: true` - Uses running dev server
-- Brazilian Portuguese locale (`pt-BR`)
-
-**Reporters:**
-```javascript
-reporter: [
-  ['html', null],
-  ['json', { outputFile: 'test-results/results.json' }],
-  ['junit', { outputFile: 'test-results/junit.xml' }]
-]
-```
-
-**Web Server Config:**
-```javascript
-webServer: {
-  command: 'npm run dev',
-  url: 'http://localhost:3000',
-  reuseExistingServer: true,
-  timeout: 120000
+**Suite Organization (from config):**
+```typescript
+// playwright.config.ts structure
+{
+  projects: [
+    { name: 'Desktop Chrome', testDir: 'tests/e2e' },
+    { name: 'Mobile - iPhone 12 (Teachers)', testDir: 'tests/e2e' },
+    { name: 'Mobile - Galaxy S9+ (Android)', testDir: 'tests/e2e' },
+    { name: 'Tablet - iPad (Portrait)', testDir: 'tests/e2e' },
+    { name: 'Tablet - iPad (Landscape)', testDir: 'tests/e2e' },
+    { name: 'Custom Educational Tablet', testDir: 'tests/e2e' }
+  ],
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: true,
+    timeout: 120000
+  }
 }
 ```
 
-## Test Structure
-
-**Suite Organization (Playwright pattern):**
+**Global Setup:**
 ```typescript
-import { test, expect } from '@playwright/test'
-
-test.describe('Attendance Feature', () => {
-  test.beforeEach(async ({ page }) => {
-    // Navigate to attendance page
-    await page.goto('/dashboard/frequencia')
-  })
-
-  test('should mark student as present', async ({ page }) => {
-    // Test implementation
-  })
-
-  test('should show lock after 18:00', async ({ page }) => {
-    // Test implementation
-  })
+// tests/global-setup.ts (structure from error)
+const browser = await chromium.launch()
+const context = await browser.newContext({
+  locale: 'pt-BR',
+  // Brazilian Portuguese locale for educational context
 })
 ```
-
-**Patterns:**
-- Setup: `test.beforeEach` for page navigation and state
-- Assertions: Playwright's `expect()` API
-- Async/await throughout
-- Brazilian Portuguese locale for date/time formatting
 
 ## Mocking
 
-**Framework:** Not configured (no Jest/Vitest mock utilities)
+**Framework:** Not configured for unit tests
 
-**Patterns for E2E:**
-- Use Playwright route interception for API mocking
-- Real Supabase database for E2E tests (test environment)
+**E2E Approach:**
+- Uses real dev server (`npm run dev`)
+- Real Supabase connection (dev environment)
+- No mocking layer observed
 
-```typescript
-// API route interception pattern
-await page.route('/api/frequencia/marcar', async route => {
-  await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ success: true, data: { ... } })
-  })
-})
-```
+**What Should be Mocked (if unit tests added):**
+- Supabase client (`@/lib/supabase`)
+- Logger (`@/lib/logger`)
+- External APIs (fetch calls)
+- Browser APIs (localStorage, navigator)
 
-**What to Mock (E2E):**
-- External API calls
-- Time-sensitive operations (18:00 lock)
-- Network failures
-
-**What NOT to Mock (E2E):**
-- UI interactions
-- Navigation flows
-- Real database operations
+**What NOT to Mock:**
+- Validation logic (`lib/validation/`)
+- Pure utility functions (`lib/utils.ts`)
+- Zod schemas
 
 ## Fixtures and Factories
 
 **Test Data:**
-- Seed scripts in `scripts/`:
-  - `seed-dev.ts` - Development seed data
-  - `seed-superadmin.ts` - Create superadmin user
+- Seed scripts exist: `scripts/seed-dev.ts`, `scripts/seed-superadmin.ts`
+- Run via: `pnpm seed:dev`, `pnpm seed:clear`, `pnpm seed:superadmin`
 
-```bash
-pnpm seed:dev          # Seed development data
-pnpm seed:clear        # Clear seed data
-pnpm seed:superadmin   # Create superadmin
+**No formal test fixtures or factories configured.**
+
+**Recommended Pattern (if implementing):**
+```typescript
+// tests/fixtures/students.ts
+export const createMockStudent = (overrides = {}) => ({
+  id: 'test-uuid',
+  nome_completo: 'João Silva',
+  data_nascimento: '2015-03-15',
+  sexo: 'M',
+  cpf: '123.456.789-00',
+  ativo: true,
+  ...overrides
+})
 ```
 
-**Location:**
-- `lib/seed-data.ts` - Seed data definitions
-- `scripts/` - Seed execution scripts
+**Location (recommended):**
+- `tests/fixtures/` - Test data factories
+- `tests/mocks/` - Service mocks
 
 ## Coverage
 
-**Requirements:** Not enforced (no coverage configuration)
+**Requirements:** None enforced
 
 **View Coverage:** Not configured
 
-**Recommendation:** Add Vitest or Jest for unit tests with coverage reporting
+**Recommended Setup:**
+```bash
+# If Jest/Vitest added:
+pnpm test --coverage
+```
 
 ## Test Types
 
 **Unit Tests:**
-- Not currently configured
-- Recommended: Vitest for component and utility testing
-- Should cover: validation functions, hooks, utility functions
+- **NOT IMPLEMENTED**
+- Should cover: Validation functions, utility helpers, Zod schemas, store logic
 
 **Integration Tests:**
-- Not currently configured
-- Recommended: Testing Library + Vitest for React component integration
+- **NOT IMPLEMENTED**
+- Should cover: API routes, Supabase queries, authentication flow
 
 **E2E Tests:**
-- Playwright configured
-- Tests full user flows
-- Multi-device testing (desktop, mobile, tablet)
-- Browser setup issue in results (needs `npx playwright install`)
+- Playwright configured with multiple device viewports
+- Focus on educational workflows
+- Brazilian locale support (`pt-BR`)
+
+**Visual Regression:**
+- Not configured
+- Playwright screenshots capability available
+
+## Device Testing Matrix (Playwright)
+
+From configuration:
+| Project | Description |
+|---------|-------------|
+| Desktop Chrome | Primary desktop testing |
+| Mobile - iPhone 12 | Teacher mobile workflow |
+| Mobile - Galaxy S9+ | Android student access |
+| Tablet - iPad (Portrait) | Tablet portrait mode |
+| Tablet - iPad (Landscape) | Tablet landscape mode |
+| Custom Educational Tablet | Specialized educational device |
+
+## Common Patterns
+
+**Async Testing:**
+```typescript
+// Using async/await in components
+useEffect(() => {
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const data = await fetchData()
+      setData(data)
+    } catch (error) {
+      setError(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  loadData()
+}, [])
+```
+
+**Error Testing (should implement):**
+```typescript
+// Pattern for testing error scenarios
+describe('validateCPF', () => {
+  it('should reject invalid CPF', () => {
+    expect(validateCPF('111.111.111-11')).toBe(false)
+  })
+
+  it('should accept valid CPF', () => {
+    expect(validateCPF('123.456.789-09')).toBe(true)
+  })
+})
+```
+
+**Brazilian Compliance Testing (recommended):**
+```typescript
+describe('Attendance Locking', () => {
+  it('should lock attendance after 18:00 São Paulo time', () => {
+    // Mock time to 18:01 São Paulo
+    // Attempt to mark attendance
+    // Expect error
+  })
+})
+```
 
 ## Current Test Status
 
@@ -196,149 +227,93 @@ pnpm seed:superadmin   # Create superadmin
     "unexpected": 0,
     "flaky": 0
   },
-  "errors": ["browserType.launch: Executable doesn't exist..."]
+  "errors": [
+    // Playwright browser not installed error
+    // "npx playwright install" needed
+  ]
 }
 ```
 
-**Issue:** Playwright browsers not installed
-**Fix:**
+**Status:** E2E tests configured but not running due to missing browser installation.
+
+## Recommended Testing Strategy
+
+**Priority 1 - Unit Tests:**
+1. Add Vitest as test runner
+2. Test validation functions (`lib/validation/brazilian.ts`)
+3. Test Zustand stores (`lib/stores/`)
+4. Test utility functions
+
+**Priority 2 - Integration Tests:**
+1. Test API routes with mocked Supabase
+2. Test authentication flow
+3. Test data transformations
+
+**Priority 3 - E2E Tests:**
+1. Install Playwright browsers (`npx playwright install`)
+2. Test critical user flows:
+   - Login/logout
+   - Student creation
+   - Attendance marking
+   - Report generation
+
+## Setup Instructions
+
+**To Enable E2E Testing:**
 ```bash
+cd gestao_fronteira
 npx playwright install
+npx playwright test
 ```
 
-## Recommended Testing Setup
-
-**Add to package.json:**
-```json
-{
-  "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "vitest": "^1.0.0",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/user-event": "^14.0.0"
-  },
-  "scripts": {
-    "test": "vitest",
-    "test:e2e": "playwright test",
-    "test:coverage": "vitest --coverage"
-  }
-}
-```
-
-## Common Patterns
-
-**Async Testing (Playwright):**
-```typescript
-test('should load students', async ({ page }) => {
-  await page.goto('/dashboard/frequencia')
-
-  // Wait for data to load
-  await expect(page.getByRole('heading', { name: /Chamada/ })).toBeVisible()
-
-  // Wait for specific element
-  await page.waitForSelector('[data-testid="student-list"]')
-
-  // Assert content
-  const students = await page.locator('[data-testid="student-row"]').count()
-  expect(students).toBeGreaterThan(0)
-})
-```
-
-**Error Testing (Playwright):**
-```typescript
-test('should show error on failed save', async ({ page }) => {
-  // Mock API failure
-  await page.route('/api/frequencia/marcar', async route => {
-    await route.fulfill({ status: 500 })
-  })
-
-  await page.click('[data-testid="save-attendance"]')
-
-  // Expect error toast
-  await expect(page.getByText('Erro ao marcar frequencia')).toBeVisible()
-})
-```
-
-**Brazilian Compliance Testing:**
-```typescript
-test('should lock attendance after 18:00 Sao Paulo time', async ({ page }) => {
-  // Mock time to 18:01
-  await page.evaluate(() => {
-    const mockDate = new Date('2026-01-16T21:01:00Z') // 18:01 Sao Paulo
-    // ... mock Date implementation
-  })
-
-  await page.goto('/dashboard/frequencia')
-
-  // Expect lock indicator
-  await expect(page.getByText('Frequencia Bloqueada')).toBeVisible()
-  await expect(page.getByRole('button', { name: /Marcar/ })).toBeDisabled()
-})
-```
-
-## Mobile Testing
-
-**Device Profiles (from Playwright config):**
-- iPhone 12 (Teachers) - Primary mobile device
-- Galaxy S9+ (Android) - Android coverage
-- iPad Portrait/Landscape - Tablet coverage
-- Custom Educational Tablet - Specialized device
-
-**Touch Targets:**
-- Minimum 44px touch targets (documented in components)
-- Test touch interactions with `page.tap()`
-
-```typescript
-test('touch-optimized attendance marking', async ({ page }) => {
-  // Mobile viewport
-  await page.setViewportSize({ width: 375, height: 812 })
-
-  await page.tap('[data-testid="attendance-cell-student-1"]')
-
-  // Verify status changed
-  await expect(page.locator('[data-testid="attendance-cell-student-1"]'))
-    .toHaveAttribute('data-status', 'presente')
-})
-```
-
-## Screenshots
-
-**Directory:** `tests/screenshots/` (needs to be created before tests)
-
-**Capture Pattern:**
-```typescript
-test('visual regression - attendance grid', async ({ page }) => {
-  await page.goto('/dashboard/frequencia')
-  await page.waitForLoadState('networkidle')
-
-  await expect(page).toHaveScreenshot('attendance-grid.png')
-})
-```
-
-**Pre-test Setup:**
+**To Add Unit Testing (recommended):**
 ```bash
-mkdir -p tests/screenshots  # Required before running visual tests
+# Install Vitest
+pnpm add -D vitest @testing-library/react @testing-library/jest-dom jsdom
+
+# Create vitest.config.ts
+# Add test script to package.json
+# "test": "vitest",
+# "test:coverage": "vitest run --coverage"
 ```
 
-## Test Gap Analysis
+**Recommended Vitest Config:**
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
-**Currently Tested:**
-- E2E flows (Playwright configured but browsers not installed)
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/setup.ts'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './'),
+    },
+  },
+})
+```
 
-**Missing Coverage:**
-- Unit tests for validation functions (`lib/validation/*.ts`)
-- Unit tests for hooks (`hooks/*.ts`)
-- Unit tests for utility functions (`lib/utils.ts`, `lib/date-utils.ts`)
-- Component tests for UI components
-- Integration tests for API routes
+## Test Coverage Gaps
 
-**Priority Testing Areas:**
-1. Brazilian validation functions (CPF, phone, CEP, INEP)
-2. Attendance locking logic (18:00 rule)
-3. Session state machine (PLANEJADA -> ABERTA -> FECHADA)
-4. Error handling flows
-5. Real-time synchronization
+**Critical areas without tests:**
+1. `lib/validation/brazilian.ts` - CPF, phone, CEP validation
+2. `lib/validation/attendance.ts` - Attendance rules
+3. `lib/services/attendance-immutability.ts` - Locking logic
+4. `lib/stores/attendance-session-store.ts` - State transitions
+5. API routes in `app/api/` - All endpoints
+6. Zod schemas - All validation schemas
+
+**Components needing visual/E2E tests:**
+1. `components/attendance/AttendanceGrid.tsx` - Core workflow
+2. `components/auth/enhanced-login-form.tsx` - Authentication
+3. Dashboard components - Role-based access
 
 ---
 
-*Testing analysis: 2026-01-16*
+*Testing analysis: 2026-01-18*
