@@ -6,6 +6,7 @@
 
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 export interface AulaAbertaData {
   id: string
@@ -79,7 +80,10 @@ export class AulasAbertasListener {
    */
   start(): void {
     if (this.channel) {
-      console.warn('AulasAbertasListener already started')
+      logger.warn('AulasAbertasListener already started', {
+        feature: 'realtime',
+        action: 'start_listener'
+      })
       return
     }
 
@@ -156,10 +160,16 @@ export class AulasAbertasListener {
           this.handleSubscriptionStatus(status)
         })
 
-      console.log(`AulasAbertasListener subscription created: ${this.channelName}`)
+      logger.info(`AulasAbertasListener subscription created: ${this.channelName}`, {
+        feature: 'realtime',
+        action: 'create_subscription'
+      })
 
     } catch (error) {
-      console.error('Failed to create aulas_abertas subscription:', error)
+      logger.error('Failed to create aulas_abertas subscription', error as Error, {
+        feature: 'realtime',
+        action: 'create_subscription'
+      })
       this.handleError(error as Error, 'subscription_creation')
     }
   }
@@ -171,14 +181,20 @@ export class AulasAbertasListener {
         this.reconnectAttempts = 0
         this.reconnectInterval = 1000
         this.callbacks.onConnectionChange?.('connected')
-        console.log(`AulasAbertasListener connected: ${this.channelName}`)
+        logger.info(`AulasAbertasListener connected: ${this.channelName}`, {
+          feature: 'realtime',
+          action: 'subscription_connected'
+        })
         break
 
       case 'CHANNEL_ERROR':
       case 'TIMED_OUT':
         this.connectionStatus = 'error'
         this.callbacks.onConnectionChange?.('error')
-        console.error(`AulasAbertasListener error: ${status}`)
+        logger.error(`AulasAbertasListener error: ${status}`, undefined, {
+          feature: 'realtime',
+          action: 'subscription_error'
+        })
 
         // Attempt reconnection if within limits
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
@@ -189,7 +205,10 @@ export class AulasAbertasListener {
       case 'CLOSED':
         this.connectionStatus = 'disconnected'
         this.callbacks.onConnectionChange?.('disconnected')
-        console.log('AulasAbertasListener closed')
+        logger.info('AulasAbertasListener closed', {
+          feature: 'realtime',
+          action: 'subscription_closed'
+        })
         break
     }
   }
@@ -218,7 +237,10 @@ export class AulasAbertasListener {
           break
       }
     } catch (error) {
-      console.error('Error handling aula change:', error)
+      logger.error('Error handling aula change', error as Error, {
+        feature: 'realtime',
+        action: 'handle_aula_change'
+      })
       this.handleError(error as Error, 'change_processing')
     }
   }
@@ -436,13 +458,20 @@ export class AulasAbertasListener {
     })
 
     supabase.realtime.onError((error) => {
-      console.error('Global realtime error:', error)
+      logger.error('Global realtime error', error as Error, {
+        feature: 'realtime',
+        action: 'global_realtime_error'
+      })
       this.handleError(new Error('Global realtime connection error'), 'global_connection')
     })
   }
 
   private handleError(error: Error, context?: string): void {
-    console.error(`AulasAbertasListener error (${context}):`, error)
+    logger.error(`AulasAbertasListener error (${context})`, error, {
+      feature: 'realtime',
+      action: 'handle_error',
+      metadata: { context }
+    })
     this.callbacks.onError?.(error, context)
 
     this.connectionStatus = 'error'

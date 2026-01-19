@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { AttendanceSession, AttendanceRecord } from '@/lib/api/attendance'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface UseRealtimeAttendanceOptions {
   classId: string
@@ -405,7 +406,10 @@ export function useRealtimeClassMonitoring(classIds: string[]) {
 
         setActiveSessions(sessionMap)
       } catch (error) {
-        console.error('Error loading initial session data:', error)
+        logger.error('Error loading initial session data', error as Error, {
+          feature: 'realtime',
+          action: 'load_initial_session_data'
+        })
       } finally {
         setLoading(false)
       }
