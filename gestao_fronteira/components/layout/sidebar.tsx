@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
 import { useAuth } from '@/hooks/use-auth'
+import { EscolaSelector } from '@/components/layout/escola-selector'
 import {
   GraduationCap,
   Users,
@@ -236,6 +237,11 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         )}
 
+      </div>
+
+      {/* Escola Selector - for admin users */}
+      <div className="px-3 py-2 border-b border-gray-100">
+        <EscolaSelector collapsed={collapsed} />
       </div>
 
       {/* Collapse/Expand button - EDUCA styled (rounded, subtle) */}
