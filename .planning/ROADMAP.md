@@ -23,7 +23,7 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 
 ---
 
-## Phase 6: Build & Quality (COMPLETE)
+## Phase 6: Build & Quality (GAP CLOSURE)
 
 **Goal:** Habilitar TypeScript type checking e ESLint no build para prevenir erros em produção.
 
@@ -33,21 +33,23 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 - BLD-03: Zero erros de TypeScript no `pnpm typecheck`
 - BLD-04: Zero erros de lint no `pnpm lint`
 
-**Plans:** 2 plans
+**Plans:** 4 plans (2 complete + 2 gap closure)
 
 Plans:
 - [x] 06-01-PLAN.md - Migrate ESLint to flat config format (completed 2026-01-19)
 - [x] 06-02-PLAN.md - Enable build enforcement (completed 2026-01-19)
+- [ ] 06-03-PLAN.md - Remove dead code causing build failure (gap closure)
+- [ ] 06-04-PLAN.md - Create CI pipeline (gap closure)
 
 **Success Criteria:**
 - [x] `next.config.js` sem `ignoreBuildErrors: true`
 - [x] `next.config.js` sem `ignoreDuringBuilds: true`
-- [x] `pnpm build` executa sem erros de tipo ou lint
+- [ ] `pnpm build` executa sem erros de tipo ou lint
 - [ ] CI pipeline valida typecheck e lint
 
 **Dependencies:** None (foundational)
 
-**Completed:** 2026-01-19
+**Status:** Gap closure in progress
 
 ---
 
@@ -181,3 +183,4 @@ Linear dependency chain - each phase builds on previous.
 
 *Roadmap created: 2026-01-18*
 *Based on: .planning/REQUIREMENTS.md, .planning/codebase/CONCERNS.md*
+*Gap closure plans added: 2026-01-19*
