@@ -2,7 +2,7 @@
 
 **Created:** 2026-01-18
 **Milestone:** v2.0
-**Phases:** 6-11 (continuing from v1.0)
+**Phases:** 6-12 (continuing from v1.0)
 
 ---
 
@@ -18,8 +18,9 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 | 9 | Feature Flags | FLG-01..04 | Sistema de flags por escola no Supabase |
 | 10 | Security & Compliance | SEC-01..03 | Migrations versionadas e RLS documentado |
 | 11 | Testing | TST-01..03 | Framework de testes com cobertura critica |
+| 12 | Role Access & Assignments | ROL-01..03 | Restrições por perfil e atribuição professor-turma |
 
-**Total:** 6 phases | 21 requirements
+**Total:** 7 phases | 24 requirements
 
 ---
 
@@ -176,6 +177,13 @@ Plans:
 - SEC-02: RLS policies documentadas em .planning/codebase/RLS-POLICIES.md
 - SEC-03: Placeholder de telefone removido da politica de privacidade
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Supabase CLI setup and baseline migration export
+- [ ] 10-02-PLAN.md — Document RLS policies with security matrix and diagrams
+- [ ] 10-03-PLAN.md — Update privacy policy with real contact information
+
 **Success Criteria:**
 - [ ] Supabase CLI configurado no projeto
 - [ ] Schema atual exportado como migration inicial
@@ -205,6 +213,30 @@ Plans:
 
 ---
 
+## Phase 12: Role Access & Assignments
+
+**Goal:** Restrições de ações por perfil (admin visualiza, professor registra) e tela de atribuição professor-turma.
+
+**Requirements:**
+- ROL-01: Seletor de perfil ativo para admins com múltiplos papéis
+- ROL-02: Restrição de registro de frequência para perfil admin (view-only com mensagem explicativa)
+- ROL-03: Tela de gestão para atribuir professor/perfil a turmas
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 12 to break down)
+
+**Success Criteria:**
+- [ ] Admin ao tentar registrar frequência vê mensagem: "Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores"
+- [ ] UI de atribuição professor-turma em /dashboard/atribuicoes
+- [ ] Admin pode atribuir qualquer perfil a turmas
+- [ ] Seletor de perfil ativo quando usuário tem múltiplos papéis
+
+**Dependencies:** Phase 11 (testing framework in place)
+
+---
+
 ## Execution Order
 
 ```
@@ -221,6 +253,8 @@ Phase 9 (Flags)
 Phase 10 (Security)
     |
 Phase 11 (Testing)
+    |
+Phase 12 (Role Access)
 ```
 
 Linear dependency chain - each phase builds on previous.
@@ -245,3 +279,5 @@ Linear dependency chain - each phase builds on previous.
 *Phase 7.1 planned: 2026-01-19*
 *Phase 8 planned: 2026-01-19*
 *Phase 9 planned: 2026-01-19*
+*Phase 10 planned: 2026-01-19*
+*Phase 12 added: 2026-01-19 (Role Access & Assignments)*
