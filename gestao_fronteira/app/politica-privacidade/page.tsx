@@ -29,7 +29,7 @@ export default function PoliticaPrivacidadePage() {
             Política de Privacidade
           </h1>
           <p className="text-gray-500 mb-8">
-            Última atualização: Dezembro de 2025
+            Última atualização: Janeiro de 2026
           </p>
 
           {/* Section 1 */}
@@ -176,10 +176,21 @@ export default function PoliticaPrivacidadePage() {
               Para exercer seus direitos ou esclarecer dúvidas sobre esta política, entre em contato:
             </p>
             <div className="bg-gray-50 rounded-lg p-4 border">
-              <p className="text-gray-700"><strong>Encarregado de Dados (DPO)</strong></p>
+              <p className="text-gray-700 font-semibold">Encarregado de Dados (DPO)</p>
               <p className="text-gray-700">Secretaria Municipal de Educação de Fronteira/MG</p>
-              <p className="text-gray-700">E-mail: educacao@fronteira.mg.gov.br</p>
-              <p className="text-gray-700">Telefone: (34) XXXX-XXXX</p>
+              <p className="text-gray-700 mt-2">
+                <strong>Endereço:</strong> Praça Getúlio Vargas, 28 - Centro<br />
+                Fronteira/MG - CEP 38280-000
+              </p>
+              <p className="text-gray-700 mt-2">
+                <strong>Telefone:</strong> (34) 3266-1350
+              </p>
+              <p className="text-gray-700">
+                <strong>E-mail:</strong> educacao@fronteira.mg.gov.br
+              </p>
+              <p className="text-gray-700 mt-2 text-sm">
+                <strong>Horário de Atendimento:</strong> Segunda a Sexta, 08h às 17h
+              </p>
             </div>
           </section>
 
@@ -199,8 +210,9 @@ export default function PoliticaPrivacidadePage() {
           <div className="border-t pt-6 mt-8">
             <p className="text-sm text-gray-500 text-center">
               Secretaria Municipal de Educação de Fronteira/MG<br />
+              Praça Getúlio Vargas, 28 - Centro, CEP 38280-000<br />
               Sistema EDUCA - Gestão Educacional<br />
-              © 2025 - Todos os direitos reservados
+              © 2025-2026 - Todos os direitos reservados
             </p>
           </div>
         </div>
