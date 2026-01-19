@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useNavigation } from '@/components/layout/navigation-provider'
 import { PageHeader } from '@/components/layout/enhanced-breadcrumbs'
 import { LoadingCenter, CardLoading } from '@/components/ui/loading-states'
+import { supabase } from '@/lib/supabase'
 import {
   Users,
   School,
@@ -65,21 +66,74 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Mock data - replace with real API calls
-    setTimeout(() => {
-      setStats({
-        totalAlunos: 1245,
-        totalEscolas: 8,
-        totalTurmas: 45,
-        totalMatriculas: 1200,
-        frequenciaMedia: 87.5,
-        alunosComBaixaFrequencia: 23,
-        totalProfessores: 85,
-        usuariosAtivos: 156,
-        relatoriosPendentes: 3
-      })
-      setLoading(false)
-    }, 1000)
+    async function loadStats() {
+      try {
+        const [
+          alunosResult,
+          escolasResult,
+          turmasResult,
+          matriculasResult,
+          professoresResult,
+          usuariosResult,
+          frequenciaResult
+        ] = await Promise.all([
+          supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          supabase.from('escolas').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa'),
+          supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario', 'professor'),
+          supabase.from('users').select('id', { count: 'exact', head: true }).eq('ativo', true),
+          // Get attendance for current month to calculate average
+          supabase.from('frequencia')
+            .select('presente, status_presenca')
+            .gte('data_aula', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+        ])
+
+        // Calculate attendance rate
+        const attendanceRecords = frequenciaResult.data || []
+        const totalRecords = attendanceRecords.length
+        const presentCount = attendanceRecords.filter(r =>
+          r.presente || r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
+        ).length
+        const frequenciaMedia = totalRecords > 0
+          ? Math.round((presentCount / totalRecords) * 1000) / 10
+          : 0
+
+        // Count students with low attendance (< 80%)
+        // For now use 0 - full calculation would require per-student aggregation
+        const alunosComBaixaFrequencia = 0 // TODO: Calculate properly in Phase 8
+
+        setStats({
+          totalAlunos: alunosResult.count || 0,
+          totalEscolas: escolasResult.count || 0,
+          totalTurmas: turmasResult.count || 0,
+          totalMatriculas: matriculasResult.count || 0,
+          frequenciaMedia,
+          alunosComBaixaFrequencia,
+          totalProfessores: professoresResult.count || 0,
+          usuariosAtivos: usuariosResult.count || 0,
+          relatoriosPendentes: 0 // No reports table yet
+        })
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error)
+        // Set zeros on error so UI doesn't break
+        setStats({
+          totalAlunos: 0,
+          totalEscolas: 0,
+          totalTurmas: 0,
+          totalMatriculas: 0,
+          frequenciaMedia: 0,
+          alunosComBaixaFrequencia: 0,
+          totalProfessores: 0,
+          usuariosAtivos: 0,
+          relatoriosPendentes: 0
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStats()
   }, [])
 
   const quickActions: QuickAction[] = [
