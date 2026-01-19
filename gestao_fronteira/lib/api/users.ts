@@ -4,6 +4,7 @@ import { BaseApiService } from './base'
 import { supabase, User, Tables } from '@/lib/supabase'
 import { logAuthEvent } from '@/lib/auth'
 import { logUserEvent, logAuditEvent } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 
 export type UserWithSchool = User & {
   escola?: Tables<'escolas'>
@@ -234,6 +235,40 @@ export class UsersApiService extends BaseApiService {
         byRole: {},
         bySchool: {}
       }
+    }
+  }
+
+  /**
+   * Get current authenticated user's role
+   * Used by chamada page for BF visibility
+   */
+  async getCurrentUserRole(): Promise<string | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
+
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (error) {
+        logger.error('Error fetching current user role', error, {
+          feature: 'users',
+          action: 'get_current_user_role',
+          userId: user.id
+        })
+        return null
+      }
+
+      return profile?.role || null
+    } catch (error) {
+      logger.error('Error in getCurrentUserRole', error as Error, {
+        feature: 'users',
+        action: 'get_current_user_role'
+      })
+      return null
     }
   }
 }

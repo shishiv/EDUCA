@@ -526,6 +526,232 @@ export class AttendanceApiService extends BaseApiService {
       }
     }
   }
+
+  // ============================================================================
+  // Chamada Page Methods
+  // ============================================================================
+
+  /**
+   * Get enrolled students for a class (chamada use case)
+   * Returns students with matriculaId and hasNis for BF visibility
+   */
+  async getStudentsForChamada(turmaId: string): Promise<{
+    id: string
+    nome: string
+    matriculaId: string
+    frequencia: number
+    hasNis: boolean
+  }[]> {
+    try {
+      const { data, error } = await supabase
+        .from('matriculas')
+        .select(`
+          id,
+          aluno:alunos(
+            id,
+            nome_completo,
+            nis
+          )
+        `)
+        .eq('turma_id', turmaId)
+        .eq('ativo', true)
+
+      if (error) {
+        logger.error('Error fetching students for chamada', error, {
+          feature: 'attendance',
+          action: 'get_students_for_chamada',
+          metadata: { turmaId }
+        })
+        throw error
+      }
+
+      return (data || [])
+        .map((m: any) => ({
+          id: m.aluno?.id || '',
+          nome: m.aluno?.nome_completo || 'Aluno',
+          matriculaId: m.id,
+          frequencia: 85, // TODO: Calculate from actual attendance data
+          hasNis: !!m.aluno?.nis,
+        }))
+        .filter((s) => s.id)
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+    } catch (error) {
+      logger.error('Error in getStudentsForChamada', error as Error, {
+        feature: 'attendance',
+        action: 'get_students_for_chamada',
+        metadata: { turmaId }
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Get session and attendance records for a specific date (chamada use case)
+   */
+  async getAttendanceForDate(turmaId: string, dateStr: string): Promise<{
+    sessionId: string | null
+    sessionStatus: string | null
+    records: Map<string, { status: string | null; justificativa: string | null }>
+  }> {
+    try {
+      // Check for existing session
+      const { data: session, error: sessionError } = await supabase
+        .from('sessoes_aula')
+        .select('id, status')
+        .eq('turma_id', turmaId)
+        .eq('data_aula', dateStr)
+        .maybeSingle()
+
+      if (sessionError) {
+        logger.error('Error fetching session for date', sessionError, {
+          feature: 'attendance',
+          action: 'get_attendance_for_date_session',
+          metadata: { turmaId, dateStr }
+        })
+        throw sessionError
+      }
+
+      const records = new Map<string, { status: string | null; justificativa: string | null }>()
+
+      if (session) {
+        // Load existing attendance records
+        const { data: frequencias, error: freqError } = await supabase
+          .from('frequencia')
+          .select('matricula_id, status_presenca, justificativa')
+          .eq('sessao_id', session.id)
+
+        if (freqError) {
+          logger.error('Error fetching frequencia records', freqError, {
+            feature: 'attendance',
+            action: 'get_attendance_for_date_records',
+            metadata: { sessionId: session.id }
+          })
+          throw freqError
+        }
+
+        frequencias?.forEach((f: any) => {
+          // Map DB status to component status
+          let status: string | null = null
+          if (f.status_presenca === 'presente' || f.status_presenca === 'P') status = 'P'
+          else if (f.status_presenca === 'falta' || f.status_presenca === 'F') status = 'F'
+          else if (f.status_presenca === 'justificada' || f.status_presenca === 'J') status = 'J'
+
+          records.set(f.matricula_id, {
+            status,
+            justificativa: f.justificativa || null,
+          })
+        })
+
+        return {
+          sessionId: session.id,
+          sessionStatus: session.status,
+          records
+        }
+      }
+
+      return {
+        sessionId: null,
+        sessionStatus: null,
+        records
+      }
+    } catch (error) {
+      logger.error('Error in getAttendanceForDate', error as Error, {
+        feature: 'attendance',
+        action: 'get_attendance_for_date',
+        metadata: { turmaId, dateStr }
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Save chamada (create session if needed and upsert attendance records)
+   */
+  async saveChamada(
+    turmaId: string,
+    dateStr: string,
+    sessionId: string | null,
+    attendanceRecords: Map<string, { status: string | null; justificativa: string | null }>
+  ): Promise<string> {
+    try {
+      let currentSessionId = sessionId
+
+      // Create session if not exists
+      if (!currentSessionId) {
+        const { data: newSession, error: sessionError } = await supabase
+          .from('sessoes_aula')
+          .insert({
+            turma_id: turmaId,
+            data_aula: dateStr,
+            status: 'ABERTA',
+          })
+          .select()
+          .single()
+
+        if (sessionError) {
+          logger.error('Error creating session', sessionError, {
+            feature: 'attendance',
+            action: 'save_chamada_create_session',
+            metadata: { turmaId, dateStr }
+          })
+          throw sessionError
+        }
+        currentSessionId = newSession.id
+      }
+
+      // Prepare attendance records
+      const records: any[] = []
+      attendanceRecords.forEach((record, matriculaId) => {
+        // Map component status to DB status
+        let dbStatus = null
+        if (record.status === 'P') dbStatus = 'presente'
+        else if (record.status === 'F') dbStatus = 'falta'
+        else if (record.status === 'J') dbStatus = 'justificada'
+
+        if (dbStatus) {
+          records.push({
+            sessao_id: currentSessionId,
+            matricula_id: matriculaId,
+            status_presenca: dbStatus,
+            justificativa: record.justificativa,
+            data_aula: dateStr,
+            marcado_em: new Date().toISOString(),
+          })
+        }
+      })
+
+      // Upsert attendance records
+      const { error: upsertError } = await supabase
+        .from('frequencia')
+        .upsert(records, {
+          onConflict: 'sessao_id,matricula_id',
+        })
+
+      if (upsertError) {
+        logger.error('Error upserting attendance', upsertError, {
+          feature: 'attendance',
+          action: 'save_chamada_upsert',
+          metadata: { sessionId: currentSessionId, recordCount: records.length }
+        })
+        throw upsertError
+      }
+
+      logger.info('Chamada saved successfully', {
+        feature: 'attendance',
+        action: 'save_chamada_success',
+        metadata: { sessionId: currentSessionId, turmaId, dateStr, recordCount: records.length }
+      })
+
+      return currentSessionId
+    } catch (error) {
+      logger.error('Error in saveChamada', error as Error, {
+        feature: 'attendance',
+        action: 'save_chamada',
+        metadata: { turmaId, dateStr }
+      })
+      throw error
+    }
+  }
 }
 
 export const attendanceApi = new AttendanceApiService()

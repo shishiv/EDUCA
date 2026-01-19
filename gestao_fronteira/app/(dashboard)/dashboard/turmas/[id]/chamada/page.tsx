@@ -16,12 +16,15 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { format, isSameDay, startOfDay, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { classesApi } from '@/lib/api/classes'
+import { attendanceApi } from '@/lib/api/attendance'
+import { usersApi } from '@/lib/api/users'
+import { logger } from '@/lib/logger'
 
 // Components
 import {
@@ -160,27 +163,20 @@ export default function ChamadaPage() {
     if (!turmaId) return
 
     try {
-      const { data, error: turmaError } = await supabase
-        .from('turmas')
-        .select(`
-          id,
-          nome,
-          serie,
-          escola:escolas(nome)
-        `)
-        .eq('id', turmaId)
-        .single()
+      const turmaData = await classesApi.getClassWithSchool(turmaId)
 
-      if (turmaError) throw turmaError
+      if (!turmaData) {
+        setError('Turma nao encontrada')
+        return
+      }
 
-      setTurma({
-        id: data.id,
-        nome: data.nome,
-        serie: data.serie,
-        escola: { nome: (data.escola as { nome: string })?.nome || 'Escola' }
+      setTurma(turmaData)
+    } catch (err) {
+      logger.error('Error loading turma', err as Error, {
+        feature: 'attendance',
+        action: 'load_turma',
+        metadata: { turmaId }
       })
-    } catch (err: any) {
-      console.error('Error loading turma:', err)
       setError('Erro ao carregar turma')
     }
   }, [turmaId])
@@ -188,49 +184,15 @@ export default function ChamadaPage() {
   const loadStudents = useCallback(async () => {
     if (!turmaId) return
 
-    console.log('Loading students for turma:', turmaId)
-
     try {
-      // Get students enrolled in this turma
-      // Note: .order() on nested relations can be PostgREST version-dependent
-      // So we sort in JavaScript for reliability
-      const { data, error: studentsError } = await supabase
-        .from('matriculas')
-        .select(`
-          id,
-          aluno:alunos(
-            id,
-            nome_completo,
-            nis
-          )
-        `)
-        .eq('turma_id', turmaId)
-        .eq('ativo', true)
-
-      if (studentsError) {
-        console.error('Students query failed:', {
-          message: studentsError.message,
-          code: studentsError.code,
-          details: studentsError.details,
-          hint: studentsError.hint,
-        })
-        throw studentsError
-      }
-
-      const studentsList: Student[] = (data || [])
-        .map((m: any) => ({
-          id: m.aluno?.id || '',
-          nome: m.aluno?.nome_completo || 'Aluno',
-          matriculaId: m.id,
-          frequencia: 85, // TODO: Calculate from actual attendance data
-          hasNis: !!m.aluno?.nis,
-        }))
-        .filter((s: Student) => s.id)
-        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-
+      const studentsList = await attendanceApi.getStudentsForChamada(turmaId)
       setStudents(studentsList)
-    } catch (err: any) {
-      console.error('Error loading students:', err)
+    } catch (err) {
+      logger.error('Error loading students', err as Error, {
+        feature: 'attendance',
+        action: 'load_students',
+        metadata: { turmaId }
+      })
       setError('Erro ao carregar alunos')
     }
   }, [turmaId])
@@ -241,39 +203,22 @@ export default function ChamadaPage() {
     const dateStr = format(date, 'yyyy-MM-dd')
 
     try {
-      // Check for existing session
-      const { data: session } = await supabase
-        .from('sessoes_aula')
-        .select('id, status')
-        .eq('turma_id', turmaId)
-        .eq('data_aula', dateStr)
-        .single()
+      const result = await attendanceApi.getAttendanceForDate(turmaId, dateStr)
 
-      if (session) {
-        setSessionId(session.id)
-        const sessionLocked = session.status === 'fechada'
+      if (result.sessionId) {
+        setSessionId(result.sessionId)
+        const sessionLocked = result.sessionStatus === 'fechada'
         setIsLocked(sessionLocked)
         if (sessionLocked) {
           setLockReason('Chamada finalizada')
         }
 
-        // Load existing attendance records
-        const { data: frequencias } = await supabase
-          .from('frequencia')
-          .select('matricula_id, status_presenca, justificativa')
-          .eq('sessao_id', session.id)
-
+        // Convert Map<string, {status, justificativa}> to Map<string, AttendanceRecord>
         const attendanceMap = new Map<string, AttendanceRecord>()
-        frequencias?.forEach((f: any) => {
-          // Map DB status to component status
-          let status: AttendanceStatus = null
-          if (f.status_presenca === 'presente' || f.status_presenca === 'P') status = 'P'
-          else if (f.status_presenca === 'falta' || f.status_presenca === 'F') status = 'F'
-          else if (f.status_presenca === 'justificada' || f.status_presenca === 'J') status = 'J'
-
-          attendanceMap.set(f.matricula_id, {
-            status,
-            justificativa: f.justificativa || null,
+        result.records.forEach((record, matriculaId) => {
+          attendanceMap.set(matriculaId, {
+            status: record.status as AttendanceStatus,
+            justificativa: record.justificativa,
           })
         })
 
@@ -295,8 +240,12 @@ export default function ChamadaPage() {
           setOriginalAttendance(new Map())
         }
       }
-    } catch (err: any) {
-      console.error('Error loading attendance:', err)
+    } catch (err) {
+      logger.error('Error loading attendance', err as Error, {
+        feature: 'attendance',
+        action: 'load_attendance_for_date',
+        metadata: { turmaId, dateStr }
+      })
       toast.error('Erro ao carregar chamada')
     }
   }, [turmaId, students])
@@ -375,18 +324,10 @@ export default function ChamadaPage() {
   // Check user role for BF visibility
   useEffect(() => {
     const checkUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
-        // Gestores (diretor, supervisor, secretaria, admin) can see BF info
-        const gestorRoles = ['diretor', 'supervisor', 'secretaria', 'admin']
-        setCanSeeBolsaFamilia(gestorRoles.includes(profile?.role || ''))
-      }
+      const role = await usersApi.getCurrentUserRole()
+      // Gestores (diretor, supervisor, secretaria, admin) can see BF info
+      const gestorRoles = ['diretor', 'supervisor', 'secretaria', 'admin']
+      setCanSeeBolsaFamilia(gestorRoles.includes(role || ''))
     }
     checkUserRole()
   }, [])
@@ -441,62 +382,34 @@ export default function ChamadaPage() {
     const dateStr = format(currentDate, 'yyyy-MM-dd')
 
     try {
-      // Get or create session
-      let currentSessionId = sessionId
-
-      if (!currentSessionId) {
-        const { data: newSession, error: sessionError } = await supabase
-          .from('sessoes_aula')
-          .insert({
-            turma_id: turmaId,
-            data_aula: dateStr,
-            status: 'ABERTA',
-          })
-          .select()
-          .single()
-
-        if (sessionError) throw sessionError
-        currentSessionId = newSession.id
-        setSessionId(currentSessionId)
-      }
-
-      // Prepare attendance records
-      const records: any[] = []
+      // Convert Map<string, AttendanceRecord> to Map<string, {status, justificativa}>
+      const attendanceRecords = new Map<string, { status: string | null; justificativa: string | null }>()
       attendance.forEach((record, matriculaId) => {
-        // Map component status to DB status
-        let dbStatus = null
-        if (record.status === 'P') dbStatus = 'presente'
-        else if (record.status === 'F') dbStatus = 'falta'
-        else if (record.status === 'J') dbStatus = 'justificada'
-
-        if (dbStatus) {
-          records.push({
-            sessao_id: currentSessionId,
-            matricula_id: matriculaId,
-            status_presenca: dbStatus,
-            justificativa: record.justificativa,
-            data_aula: dateStr,
-            marcado_em: new Date().toISOString(),
-          })
-        }
+        attendanceRecords.set(matriculaId, {
+          status: record.status,
+          justificativa: record.justificativa,
+        })
       })
 
-      // Upsert attendance records
-      const { error: upsertError } = await supabase
-        .from('frequencia')
-        .upsert(records, {
-          onConflict: 'sessao_id,matricula_id',
-        })
+      const newSessionId = await attendanceApi.saveChamada(
+        turmaId,
+        dateStr,
+        sessionId,
+        attendanceRecords
+      )
 
-      if (upsertError) throw upsertError
-
+      setSessionId(newSessionId)
       // Update original attendance to match current
       setOriginalAttendance(new Map(attendance))
       toast.success('Chamada salva com sucesso!')
 
-    } catch (err: any) {
-      console.error('Error saving attendance:', err)
-      toast.error(`Erro ao salvar: ${err.message}`)
+    } catch (err) {
+      logger.error('Error saving attendance', err as Error, {
+        feature: 'attendance',
+        action: 'save_chamada',
+        metadata: { turmaId, dateStr: format(currentDate, 'yyyy-MM-dd') }
+      })
+      toast.error(`Erro ao salvar: ${(err as Error).message}`)
     } finally {
       setIsSaving(false)
     }
