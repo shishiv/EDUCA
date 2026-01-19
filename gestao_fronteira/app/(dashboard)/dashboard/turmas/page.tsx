@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,9 @@ import { PageHeader } from '@/components/ui/page-header'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
 import { TurmaCard, TurmaCardGrid } from '@/components/turmas'
+import { useEscola } from '@/contexts/escola-context'
+import { useAuth } from '@/hooks/use-auth'
+import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 
 interface Turma {
   id: string
@@ -205,6 +208,8 @@ const mockTurmas: Turma[] = [
 
 export default function TurmasPage() {
   const router = useRouter()
+  const { selectedEscolaId, shouldShowSelector } = useEscola()
+  const { userProfile } = useAuth()
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -213,13 +218,30 @@ export default function TurmasPage() {
   const [turnoFilter, setTurnoFilter] = useState('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
 
+  // Determine which escola_id to use for filtering
+  const escolaIdToUse = useMemo(() => {
+    // Admin users with selector: use selected escola (may be null)
+    if (shouldShowSelector) {
+      return selectedEscolaId
+    }
+    // Non-admin users: use their assigned escola
+    return userProfile?.escola_id || null
+  }, [shouldShowSelector, selectedEscolaId, userProfile?.escola_id])
+
   useEffect(() => {
     loadTurmas()
-  }, [])
+  }, [escolaIdToUse])
 
   const loadTurmas = async () => {
+    // If admin needs escola selected but hasn't selected one, don't fetch
+    if (shouldShowSelector && !escolaIdToUse) {
+      setTurmas([])
+      setLoading(false)
+      return
+    }
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('turmas')
         .select(`
           *,
@@ -227,6 +249,13 @@ export default function TurmasPage() {
           professor:users!professor_id(id, nome, email)
         `)
         .order('created_at', { ascending: false })
+
+      // Filter by escola if we have one
+      if (escolaIdToUse) {
+        query = query.eq('escola_id', escolaIdToUse)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
 
@@ -329,6 +358,36 @@ export default function TurmasPage() {
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Show escola required state for admin users without selection
+  if (shouldShowSelector && !selectedEscolaId) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Turmas"
+          description="Gerencie as turmas e classes da rede municipal"
+          actions={
+            <>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+              </Button>
+              <Button asChild className="gap-2">
+                <Link href="/dashboard/turmas/nova">
+                  <Plus className="h-4 w-4" />
+                  Nova Turma
+                </Link>
+              </Button>
+            </>
+          }
+        />
+        <EscolaRequiredState
+          title="Selecione uma Escola"
+          description="Para visualizar as turmas, selecione uma escola no seletor do menu lateral."
+        />
       </div>
     )
   }
