@@ -16,9 +16,9 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Data Integrity
 
-- [ ] **DAT-01**: Frequencia calculada de dados reais (nao hardcoded 85%)
-- [ ] **DAT-02**: Dashboards usando dados reais (nao mock data)
-- [ ] **DAT-03**: Diario Infantil Vivencias com API funcional (nao MOCK_VIVENCIAS)
+- [x] **DAT-01**: Frequencia calculada de dados reais (nao hardcoded 85%)
+- [x] **DAT-02**: Dashboards usando dados reais (nao mock data)
+- [x] **DAT-03**: Diario Infantil Vivencias com API funcional (nao MOCK_VIVENCIAS)
 
 ### Code Standards
 
@@ -91,9 +91,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BLD-02 | Phase 6 | Complete |
 | BLD-03 | Phase 6 | Complete |
 | BLD-04 | Phase 6 | Complete |
-| DAT-01 | Phase 7 | Pending |
-| DAT-02 | Phase 7 | Pending |
-| DAT-03 | Phase 7 | Pending |
+| DAT-01 | Phase 7 | Complete |
+| DAT-02 | Phase 7 | Complete |
+| DAT-03 | Phase 7 | Complete |
 | STD-01 | Phase 8 | Pending |
 | STD-02 | Phase 8 | Pending |
 | STD-03 | Phase 8 | Pending |
