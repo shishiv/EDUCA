@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -16,9 +16,10 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ArrowLeft, Save, UserCheck, Search, Users, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Save, UserCheck, Search, Users, GraduationCap, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 interface Aluno {
   id: string
@@ -40,76 +41,14 @@ interface Turma {
   turno: string
 }
 
-const mockAlunos: Aluno[] = [
-  {
-    id: '1',
-    nome_completo: 'Pedro Silva Santos',
-    data_nascimento: '2020-03-15',
-    sexo: 'M',
-    responsavel: 'José da Silva'
-  },
-  {
-    id: '2',
-    nome_completo: 'Julia Oliveira Costa',
-    data_nascimento: '2019-07-22',
-    sexo: 'F',
-    responsavel: 'Maria Oliveira'
-  },
-  {
-    id: '3',
-    nome_completo: 'Ana Carolina Ferreira',
-    data_nascimento: '2018-05-12',
-    sexo: 'F',
-    responsavel: 'Lucia Ferreira'
-  },
-  {
-    id: '4',
-    nome_completo: 'Gabriel Souza Lima',
-    data_nascimento: '2016-09-30',
-    cpf: '12345678905',
-    sexo: 'M',
-    responsavel: 'Patricia Souza'
-  }
-]
-
-const mockTurmas: Turma[] = [
-  {
-    id: '1',
-    nome: 'Berçário A',
-    serie: 'Berçário',
-    escola: 'CEMEI Pequenos Passos',
-    professor: 'Lucia Cardoso Oliveira',
-    capacidade: 15,
-    matriculados: 12,
-    turno: 'integral'
-  },
-  {
-    id: '2',
-    nome: 'Pré I A',
-    serie: 'Pré I',
-    escola: 'EMEI Jardim da Infância',
-    professor: 'Fernanda Alves Santos',
-    capacidade: 25,
-    matriculados: 23,
-    turno: 'matutino'
-  },
-  {
-    id: '3',
-    nome: '5º Ano A',
-    serie: '5º Ano',
-    escola: 'EMEF Professor João Silva',
-    professor: 'José Roberto Lima',
-    capacidade: 30,
-    matriculados: 25,
-    turno: 'matutino'
-  }
-]
-
 export default function NovaMatriculaPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [loadingData, setLoadingData] = useState(true)
   const [searchAluno, setSearchAluno] = useState('')
   const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
+  const [alunos, setAlunos] = useState<Aluno[]>([])
+  const [turmas, setTurmas] = useState<Turma[]>([])
   const [formData, setFormData] = useState({
     aluno_id: '',
     turma_id: '',
@@ -118,18 +57,103 @@ export default function NovaMatriculaPage() {
     observacoes: ''
   })
 
+  // Load real data from Supabase
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // Fetch active students
+        const { data: alunosData, error: alunosError } = await supabase
+          .from('alunos')
+          .select('id, nome_completo, data_nascimento, cpf, sexo, nome_mae')
+          .eq('ativo', true)
+          .order('nome_completo')
+          .limit(100)
+
+        if (alunosError) throw alunosError
+
+        // Fetch active turmas with school and professor info
+        const { data: turmasData, error: turmasError } = await supabase
+          .from('turmas')
+          .select(`
+            id,
+            nome,
+            serie,
+            turno,
+            capacidade,
+            escola:escolas(nome),
+            professor:users!turmas_professor_id_fkey(nome)
+          `)
+          .eq('ativo', true)
+          .order('nome')
+
+        if (turmasError) throw turmasError
+
+        // Get enrollment counts per turma
+        const turmaIds = turmasData?.map(t => t.id) || []
+        const { data: matriculasCount } = await supabase
+          .from('matriculas')
+          .select('turma_id')
+          .eq('situacao', 'ativa')
+          .in('turma_id', turmaIds)
+
+        // Build turma objects with count
+        const turmasWithCount = (turmasData || []).map(t => ({
+          id: t.id,
+          nome: t.nome,
+          serie: t.serie,
+          escola: (t.escola as { nome: string } | null)?.nome || 'Nao informada',
+          professor: (t.professor as { nome: string } | null)?.nome || 'Nao informado',
+          capacidade: t.capacidade || 30,
+          matriculados: matriculasCount?.filter(m => m.turma_id === t.id).length || 0,
+          turno: t.turno || 'matutino'
+        }))
+
+        // Build alunos objects
+        const alunosFormatted = (alunosData || []).map(a => ({
+          id: a.id,
+          nome_completo: a.nome_completo,
+          data_nascimento: a.data_nascimento,
+          cpf: a.cpf || undefined,
+          sexo: a.sexo as 'M' | 'F',
+          responsavel: a.nome_mae || 'Nao informado'
+        }))
+
+        setAlunos(alunosFormatted)
+        setTurmas(turmasWithCount)
+      } catch (error) {
+        console.error('Error loading data:', error)
+        toast.error('Erro ao carregar dados')
+      } finally {
+        setLoadingData(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // Simular criação da matrícula
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      toast.success('Matrícula realizada com sucesso!')
+      const { error } = await supabase
+        .from('matriculas')
+        .insert({
+          aluno_id: formData.aluno_id,
+          turma_id: formData.turma_id,
+          ano_letivo: formData.ano_letivo,
+          data_matricula: formData.data_matricula,
+          situacao: 'ativa',
+          observacoes: formData.observacoes || null
+        })
+
+      if (error) throw error
+
+      toast.success('Matricula realizada com sucesso!')
       router.push('/dashboard/matriculas')
     } catch (error) {
-      toast.error('Erro ao realizar matrícula')
+      console.error('Error creating matricula:', error)
+      toast.error('Erro ao realizar matricula')
     } finally {
       setLoading(false)
     }
@@ -167,18 +191,55 @@ export default function NovaMatriculaPage() {
     return age
   }
 
-  const filteredAlunos = mockAlunos.filter(aluno =>
+  const filteredAlunos = alunos.filter(aluno =>
     aluno.nome_completo.toLowerCase().includes(searchAluno.toLowerCase()) ||
     aluno.responsavel.toLowerCase().includes(searchAluno.toLowerCase()) ||
     aluno.cpf?.includes(searchAluno)
   )
 
-  const selectedTurma = mockTurmas.find(t => t.id === formData.turma_id)
+  const selectedTurma = turmas.find(t => t.id === formData.turma_id)
   const vagasDisponiveis = selectedTurma ? selectedTurma.capacidade - selectedTurma.matriculados : 0
+
+  // Loading state
+  if (loadingData) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando dados...</span>
+      </div>
+    )
+  }
+
+  // Empty states
+  if (alunos.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Nenhum aluno cadastrado</h2>
+        <p className="text-muted-foreground mb-4">Cadastre um aluno primeiro para realizar matriculas.</p>
+        <Button asChild>
+          <Link href="/dashboard/alunos/novo">Cadastrar Aluno</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  if (turmas.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Nenhuma turma disponivel</h2>
+        <p className="text-muted-foreground mb-4">Cadastre uma turma primeiro para realizar matriculas.</p>
+        <Button asChild>
+          <Link href="/dashboard/turmas/nova">Cadastrar Turma</Link>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabecalho */}
       <div className="flex items-center space-x-4">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/matriculas">
@@ -187,9 +248,9 @@ export default function NovaMatriculaPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nova Matrícula</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Nova Matricula</h1>
           <p className="text-gray-600 mt-1">
-            Realize uma nova matrícula no sistema
+            Realize uma nova matricula no sistema
           </p>
         </div>
       </div>
@@ -305,7 +366,7 @@ export default function NovaMatriculaPage() {
                         <SelectValue placeholder="Selecione a turma" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mockTurmas.map((turma) => (
+                        {turmas.map((turma) => (
                           <SelectItem key={turma.id} value={turma.id}>
                             <div className="flex items-center justify-between w-full">
                               <span>{turma.nome} - {turma.serie}</span>
