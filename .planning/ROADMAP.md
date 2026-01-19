@@ -36,7 +36,7 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md - Migrate ESLint to flat config format
+- [x] 06-01-PLAN.md - Migrate ESLint to flat config format (completed 2026-01-19)
 - [ ] 06-02-PLAN.md - Enable build enforcement (remove ignore flags)
 
 **Success Criteria:**
