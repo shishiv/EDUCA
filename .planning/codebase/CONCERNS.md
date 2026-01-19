@@ -1,210 +1,212 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-01-16
+**Analysis Date:** 2026-01-18
 
 ## Tech Debt
 
-**Stub implementations with TODO comments:**
-- Issue: Multiple critical features are stub implementations that always return empty data
-- Files:
-  - `gestao_fronteira/hooks/use-compliance-warnings.ts:16` - always returns `[]`
-  - `gestao_fronteira/components/attendance/AbrirAulaWorkflow.tsx:23` - no actual implementation
-  - `gestao_fronteira/app/(dashboard)/diario/page.tsx:375` - edit modal not implemented
-  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:438` - PDF export stub
-  - `gestao_fronteira/lib/api/schools.ts:311` - missing audit logging for status changes
-  - `gestao_fronteira/lib/logger.ts:197` - monitoring service integration not implemented
-- Impact: Compliance warnings not working, teachers cannot properly open class sessions, edit lesson functionality broken
-- Fix approach: Prioritize implementing compliance warnings (critical for Bolsa Familia tracking), then class session opening
+**Build Configuration - TypeScript/ESLint Disabled:**
+- Issue: TypeScript type checking and ESLint are disabled during builds (`ignoreBuildErrors: true`, `ignoreDuringBuilds: true`)
+- Files: `gestao_fronteira/next.config.js:8-14`
+- Impact: Type errors and lint violations can ship to production, causing runtime bugs and code quality degradation
+- Fix approach: Gradually enable build-time checks; run `pnpm typecheck` and `pnpm lint` to identify and fix violations, then re-enable in config
 
-**Excessive use of `any` type:**
-- Issue: 40+ instances of `as any` type casts, bypassing TypeScript safety
-- Files:
-  - `gestao_fronteira/middleware.ts:3` - request parameter typed as `any`
-  - `gestao_fronteira/components/classes/teacher-assignment.tsx:45-47` - state typed as `any[]`
-  - `gestao_fronteira/lib/utils/export.ts:282,319,349,360,446` - jspdf internal API casts
-  - `gestao_fronteira/hooks/use-diary-query.ts:229,345,616` - Supabase client typed as `any`
-  - `gestao_fronteira/lib/services/attendance-locking.ts:396,560,692` - session data untyped
-- Impact: Runtime type errors possible, bugs not caught at compile time, code harder to refactor
-- Fix approach: Define proper types for jspdf extensions, update Supabase table types for `conteudo_aula` table, fix middleware request type
+**Compliance Warnings Hook - Empty Implementation:**
+- Issue: `useComplianceWarnings()` returns empty array with TODO comment, compliance monitoring not functional
+- Files: `gestao_fronteira/hooks/use-compliance-warnings.ts:15-18`
+- Impact: System cannot alert users to LGPD, attendance, or reporting compliance issues as advertised
+- Fix approach: Implement actual compliance logic connecting to `/api/compliance/warnings` endpoint which already exists
 
-**Large component files:**
-- Issue: Several files exceed 600-1000 lines, indicating complex components that should be split
+**Diario Infantil Pages - Mock Data Still in Use:**
+- Issue: Several Ed. Infantil diary pages use hardcoded MOCK_VIVENCIAS arrays instead of real API calls
 - Files:
-  - `gestao_fronteira/components/attendance/AttendanceGrid.tsx` - 1078 lines
-  - `gestao_fronteira/app/(dashboard)/relatorios/conteudo/page.tsx` - 915 lines
-  - `gestao_fronteira/lib/api/advanced-reports.ts` - 806 lines
-  - `gestao_fronteira/components/students/student-form.tsx` - 806 lines
-  - `gestao_fronteira/app/(dashboard)/diario/relatorios/[alunoId]/page.tsx` - 787 lines
-  - `gestao_fronteira/lib/services/attendance-locking.ts` - 774 lines
-- Impact: Hard to test, hard to maintain, cognitive load for developers
-- Fix approach: Extract sub-components, move business logic to custom hooks or services
+  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/diario/page.tsx:45-81` (MOCK_VIVENCIAS)
+  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/diario/relatorio/page.tsx:66-125` (MOCK_VIVENCIAS)
+  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/diario/novo/page.tsx:88` (TODO: Implement API call)
+- Impact: Ed. Infantil diary features non-functional with real data; cannot track child observations (vivencias)
+- Fix approach: Create API endpoints for vivencias CRUD, replace mock data with real Supabase queries
+
+**Multiple TODO Comments Indicating Incomplete Features:**
+- Issue: 15+ TODO comments scattered across codebase indicating unfinished implementations
+- Files:
+  - `gestao_fronteira/app/(dashboard)/diario/page.tsx:375` - Edit modal not implemented
+  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:438` - PDF export not implemented
+  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/page.tsx:327` - Role check hardcoded
+  - `gestao_fronteira/components/attendance/AbrirAulaWorkflow.tsx:23` - Session opening logic incomplete
+  - `gestao_fronteira/lib/logger.ts:197` - No monitoring service integration
+  - `gestao_fronteira/lib/api/schools.ts:311` - Missing audit logging
+- Impact: Features appear complete in UI but have missing backend functionality
+- Fix approach: Triage TODOs by priority, create tasks to complete each
+
+**Role-Specific Dashboards Using Mock Data:**
+- Issue: AdminDashboard and other role dashboards use setTimeout mock data instead of real API calls
+- Files: `gestao_fronteira/components/dashboard/role-specific-dashboards.tsx:68-83`
+- Impact: Dashboard statistics not accurate; shows hardcoded values (1245 students, 8 schools)
+- Fix approach: Connect to real aggregate queries from Supabase
+
+**Help System - Placeholder Only:**
+- Issue: HelpSystem component shows "Sistema de ajuda em desenvolvimento..." with no actual content
+- Files: `gestao_fronteira/components/help/HelpSystem.tsx:1-28`
+- Impact: Users have no in-app help documentation despite help button being visible
+- Fix approach: Implement topic-based help content, FAQs, and contextual tooltips
 
 ## Known Bugs
 
-**Silent error swallowing:**
-- Symptoms: Operations fail silently without user feedback or logging
-- Files:
-  - `gestao_fronteira/lib/auth.ts:61-62` - empty catch block
-  - `gestao_fronteira/app/(dashboard)/diario/page.tsx:386-388` - catch with no error handling
-  - `gestao_fronteira/hooks/use-diary-query.ts:237,352,617` - empty catch blocks
-  - `gestao_fronteira/hooks/use-auth.ts:32` - silent auth error
-  - `gestao_fronteira/app/(dashboard)/dashboard/sessoes/page.tsx:228,242` - empty catch
-- Trigger: Any error in the caught operations
-- Workaround: Check browser console for errors
-- Fix approach: Add proper error logging and user-facing toast notifications
+**Frequency Calculation Hardcoded:**
+- Symptoms: All students show 85% frequency in chamada page regardless of actual attendance
+- Files: `gestao_fronteira/app/(dashboard)/dashboard/turmas/[id]/chamada/page.tsx:225`
+- Trigger: View any student attendance in turma chamada
+- Workaround: None - displays incorrect data
 
-**Missing `conteudo_aula` table in types:**
-- Symptoms: Supabase client must be cast to `any` to access lesson content table
-- Files:
-  - `gestao_fronteira/hooks/use-diary-query.ts:229` - `(supabase as any).from('conteudo_aula')`
-  - `gestao_fronteira/components/diary/NewLessonModal.tsx:207`
-  - `gestao_fronteira/app/(dashboard)/diario/page.tsx:202,328,385`
-  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:348` - `'relatorios_descritivos' as any`
-- Trigger: Any operations with lesson content
-- Workaround: Type casts mask the issue
-- Fix approach: Regenerate Supabase types with `supabase gen types typescript`
+**Privacy Policy Contact Placeholder:**
+- Symptoms: Contact phone shows "Telefone: (34) XXXX-XXXX" placeholder
+- Files: `gestao_fronteira/app/politica-privacidade/page.tsx:182`
+- Trigger: Visit privacy policy page
+- Workaround: None - users cannot contact data controller
 
 ## Security Considerations
 
-**CRITICAL: Production secrets committed to git:**
-- Risk: Supabase service role key exposed, allows bypassing RLS completely
-- Files: `gestao_fronteira/.env.production` - contains `SUPABASE_SERVICE_ROLE_KEY`
-- Current mitigation: None - file is tracked in git history
-- Recommendations:
-  1. Rotate ALL Supabase keys immediately
-  2. Add `.env.production` to `.gitignore`
-  3. Use Vercel environment variables for production secrets
-  4. Run `git filter-branch` or BFG to remove from history
-  5. Consider enabling Supabase's "Confirm email" for auth
+**No Database Migrations Versioning:**
+- Risk: No Supabase migrations directory detected; schema changes not tracked in version control
+- Files: No `gestao_fronteira/supabase/migrations/` directory
+- Current mitigation: Unknown - schema likely managed directly in Supabase dashboard
+- Recommendations: Set up Supabase CLI with migrations for schema version control and RLS policy auditing
 
-**`.env.production` not in .gitignore:**
-- Risk: Production credentials exposed in version control
-- Files: `gestao_fronteira/.gitignore` - only ignores `.env` and `.env*.local`, not `.env.production`
-- Current mitigation: None
-- Recommendations: Add `.env.production` and `.env*` patterns to .gitignore
+**RLS Policies Not In Codebase:**
+- Risk: Row Level Security policies exist only in Supabase, not auditable in code review
+- Files: References to RLS in comments (`gestao_fronteira/lib/supabase/server.ts:59-62`, `gestao_fronteira/app/actions/attendance/open-session.ts:9`)
+- Current mitigation: Manual Supabase dashboard review
+- Recommendations: Export RLS policies to migrations; add RLS policy documentation
 
-**Rate limiting uses in-memory store:**
-- Risk: Rate limiting resets on server restart, doesn't work across multiple instances
-- Files: `gestao_fronteira/lib/api/rate-limiting.ts:17` - `const rateLimitStore = new Map<...>()`
-- Current mitigation: Comment notes "in production, use Redis"
-- Recommendations: Implement Redis-based rate limiting for Vercel deployment
+**Sensitive Data Not Encrypted at Rest:**
+- Risk: CPF, NIS, health data stored as plaintext in database
+- Files: Schema types show plaintext fields (`gestao_fronteira/types/supabase.ts`)
+- Current mitigation: Supabase encryption at infrastructure level
+- Recommendations: Implement application-level encryption for CPF, NIS per LGPD requirements (noted in roadmap as "Criptografia de Dados Sensiveis")
 
-**API routes skip middleware auth:**
-- Risk: API routes at `/api/*` are excluded from auth middleware
-- Files: `gestao_fronteira/lib/middleware/auth-middleware.ts:212` - `pathname.startsWith('/api')`
-- Current mitigation: Each API route manually checks auth via `supabase.auth.getUser()`
-- Recommendations: Ensure consistent auth checks in all API routes, consider centralized API auth middleware
+**Service Role Key Bypass Warning:**
+- Risk: Admin client bypasses ALL RLS policies; improper use could expose data
+- Files: `gestao_fronteira/lib/supabase/server.ts:59-65`
+- Current mitigation: Comments warn about proper use
+- Recommendations: Add audit logging to all service role operations; restrict usage to specific admin functions
 
 ## Performance Bottlenecks
 
-**No database indexes documented:**
-- Problem: No migration files present to verify index strategy
-- Files: `gestao_fronteira/supabase/migrations/` - directory empty or non-existent
-- Cause: Schema managed directly in Supabase dashboard without version control
-- Improvement path: Export schema to migrations, add indexes for common queries (turma_id, aluno_id, data_aula)
-
-**Client-side data fetching in pages:**
-- Problem: Many pages fetch data in useEffect instead of server components
+**Large Page Components:**
+- Problem: Several pages exceed 500+ lines with inline data fetching and complex state
 - Files:
-  - `gestao_fronteira/app/(dashboard)/dashboard/turmas/page.tsx`
-  - `gestao_fronteira/app/(dashboard)/dashboard/matriculas/page.tsx`
-  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/[id]/page.tsx`
-  - 73 files use useState, 62 files use useEffect
-- Cause: Pattern established before Next.js 15 App Router adoption
-- Improvement path: Migrate to Server Components with `async` page functions, use React Query for mutations only
+  - `gestao_fronteira/app/(dashboard)/relatorios/conteudo/page.tsx` (915 lines)
+  - `gestao_fronteira/app/(dashboard)/diario/relatorios/[alunoId]/page.tsx` (787 lines)
+  - `gestao_fronteira/app/(dashboard)/relatorios/bolsa-familia/page.tsx` (691 lines)
+  - `gestao_fronteira/app/(dashboard)/dashboard/notas/page.tsx` (688 lines)
+  - `gestao_fronteira/app/(dashboard)/dashboard/alunos/novo/page.tsx` (672 lines)
+  - `gestao_fronteira/app/(dashboard)/dashboard/turmas/[id]/chamada/page.tsx` (657 lines)
+- Cause: Monolithic components with data fetching, state management, and UI in single file
+- Improvement path: Extract data hooks, split into smaller components, add React.memo for lists
 
-**Large type files loaded at runtime:**
-- Problem: Database types file is 1689 lines, loaded in client bundles
-- Files: `gestao_fronteira/lib/database.types.ts` (1689 lines)
-- Cause: Auto-generated types include all tables
-- Improvement path: Tree-shake types, use dynamic imports for types not needed client-side
+**Console.error Statements in Production Code:**
+- Problem: 30+ console.error calls that could affect performance and leak sensitive info
+- Files: Throughout `gestao_fronteira/app/` and `gestao_fronteira/lib/` directories
+- Cause: Debug logging not removed or gated by environment
+- Improvement path: Replace with structured logger (`lib/logger.ts`) that respects log levels
 
 ## Fragile Areas
 
-**Attendance locking logic:**
-- Files: `gestao_fronteira/lib/services/attendance-locking.ts`
-- Why fragile: Complex time-based logic with Brazilian timezone handling, grace periods, and multiple lock states
-- Safe modification: Always test with Brazil timezone edge cases (18:00 lock time, DST transitions)
-- Test coverage: No test files found in codebase
-
-**Diary/lesson content operations:**
+**Attendance Workflow State Machine:**
 - Files:
-  - `gestao_fronteira/hooks/use-diary-query.ts` (689 lines)
-  - `gestao_fronteira/app/(dashboard)/diario/page.tsx`
-- Why fragile: Heavy reliance on `as any` casts, operations on tables not in TypeScript types
-- Safe modification: Regenerate types first, then refactor
-- Test coverage: None
+  - `gestao_fronteira/lib/services/attendance-workflow.ts`
+  - `gestao_fronteira/lib/services/attendance-locking.ts`
+  - `gestao_fronteira/lib/services/attendance-immutability.ts`
+- Why fragile: Complex multi-phase workflow with time-based locking, session states, and compliance rules ("nao existe o esquecer")
+- Safe modification: Must maintain Brazilian compliance rules; test all state transitions; verify 18:00 auto-lock
+- Test coverage: Limited automated tests detected
 
-**Multi-file auth patterns:**
-- Files:
-  - `gestao_fronteira/lib/auth.ts` - client auth
-  - `gestao_fronteira/lib/supabase.ts` - browser client
-  - `gestao_fronteira/lib/supabase/server.ts` - server client
-  - `gestao_fronteira/lib/middleware/auth-middleware.ts` - middleware auth
-  - `gestao_fronteira/hooks/use-auth.ts` - React hook
-- Why fragile: Auth logic spread across 5+ files, easy to miss security checks
-- Safe modification: Create unified auth service, test all auth flows
-- Test coverage: None
+**Supabase Query Patterns:**
+- Files: All `app/(dashboard)/**/*.tsx` pages with inline Supabase queries
+- Why fragile: Queries scattered across UI components, not centralized in API layer
+- Safe modification: Changes to schema require updating multiple files
+- Test coverage: No apparent integration tests for queries
 
 ## Scaling Limits
 
-**In-memory rate limiting:**
-- Current capacity: Resets on every deploy or server restart
-- Limit: Doesn't work in Vercel serverless (no shared memory)
-- Scaling path: Implement Vercel KV or Upstash Redis for distributed rate limiting
-
-**localStorage for audit logs:**
-- Current capacity: ~5MB browser limit, 100 entries max
-- Limit: Logs lost on browser storage clear, not accessible server-side
-- Scaling path: Implement server-side audit_logs table, already noted in code comments
+**Real-time Subscriptions:**
+- Current capacity: Multiple subscription channels per user session
+- Limit: Supabase free tier limits concurrent connections
+- Scaling path: Implement connection pooling in `lib/realtime/connection-manager.ts`; batch subscription updates
 
 ## Dependencies at Risk
 
-**Next.js 16 (beta):**
-- Risk: Using pre-release version `"next": "^16.0.7"` in production
-- Impact: Potential breaking changes, limited community support for issues
-- Migration plan: Pin to stable Next.js 15 LTS or wait for Next.js 16 stable release
+**Duplicate Database Types Files:**
+- Risk: Three files with overlapping database types that can drift out of sync
+- Impact: Type mismatches causing runtime errors
+- Files:
+  - `gestao_fronteira/types/supabase.ts`
+  - `gestao_fronteira/types/database.ts`
+  - `gestao_fronteira/lib/database.types.ts`
+- Migration plan: Consolidate to single source of truth; use Supabase CLI to auto-generate
 
-**React 19 (cutting edge):**
-- Risk: Using React 19.2.3, which is very new
-- Impact: Third-party library compatibility issues possible
-- Migration plan: Monitor for issues, test thoroughly before updating dependencies
+## Missing Critical Features (vs Roadmap)
 
-## Missing Critical Features
+**Phase 2 - LGPD & Compliance (Roadmap: Critical):**
+- Consentimento checkbox exists but Term of Consent (Termo de Consentimento) with digital signature NOT implemented
+- Automated backup system NOT implemented (roadmap: "Backup Automatico")
+- Data encryption at rest NOT implemented (roadmap: "Criptografia de Dados Sensiveis")
 
-**No unit/integration tests:**
-- Problem: Zero test files found in codebase (`find . -name "*.test.*"` returns 0)
-- Blocks: Cannot safely refactor, cannot verify compliance logic, no regression protection
-- Priority: High - especially for attendance locking (legal compliance)
+**Phase 3 - Auxiliary Modules (Roadmap: Planned):**
+- Transporte Escolar module NOT implemented (no files found)
+- Nutricao/Merenda module NOT implemented (no files found)
+- Educacenso export UI NOT implemented (API exists in `lib/api/inep-integration.ts` but no user-facing UI)
 
-**Compliance warnings not implemented:**
-- Problem: `use-compliance-warnings.ts` returns empty array
-- Blocks: Bolsa Familia attendance tracking (<80% alerts), LGPD compliance alerts, enrollment deadline warnings
-- Priority: Critical - directly affects legal compliance for social program recipients
+**Phase 4 - UX & Communication (Roadmap: Planned):**
+- WhatsApp integration NOT implemented (roadmap mentions Evolution API)
+- Onboarding/Tour NOT implemented (TutorialOverlay component exists but not functional)
+- Central de Ajuda NOT implemented (placeholder only)
 
-**PDF export incomplete:**
-- Problem: Boletim PDF export shows toast "em desenvolvimento"
-- Blocks: Teachers cannot provide official grade reports to parents
-- Priority: Medium
+**Phase 5 - Role-Specific Dashboards (Roadmap: Planned):**
+- Dashboard Diretor - Uses mock data, needs real stats
+- Dashboard Coordenador - Not implemented
+- Dashboard Gestor (Secretaria) - Partial with mock data
+- Dashboard Nutricionista - Not implemented
+- A4 Print Layout - Not verified across all reports
 
 ## Test Coverage Gaps
 
-**Entire codebase:**
-- What's not tested: All business logic, all components, all API routes
-- Files: Every file in `gestao_fronteira/`
-- Risk:
-  - Attendance immutability ("nao existe o esquecer") cannot be verified
-  - 18:00 auto-lock cannot be verified
-  - Role-based access control cannot be verified
-  - Bolsa Familia 80% threshold alerts cannot be verified
-- Priority: High - legal compliance features must be tested
+**No Unit/Integration Tests Detected:**
+- What's not tested: All application code
+- Files: No `*.test.ts`, `*.spec.ts` files found in `gestao_fronteira/` (only in node_modules)
+- Risk: Regressions undetected; compliance rules could break silently
+- Priority: High - Brazilian educational compliance requires verifiable correctness
 
-**Brazilian validation functions:**
-- What's not tested: CPF, CNPJ, NIS, CEP, phone number validation
-- Files: `gestao_fronteira/lib/validation/brazilian.ts`, `gestao_fronteira/lib/validation/schools-validation.ts`
-- Risk: Invalid student/school data could enter system
-- Priority: Medium
+**Missing E2E Test Suite:**
+- What's not tested: User workflows, attendance marking, report generation
+- Files: No Playwright/Cypress config detected
+- Risk: Critical paths (chamada digital, INEP export) not validated
+- Priority: High for compliance-critical features
+
+## Inconsistent Patterns (Multi-Workflow Codebase)
+
+**Data Fetching Approaches:**
+- Pattern 1: Inline Supabase queries in page components (`app/(dashboard)/**/*.tsx`)
+- Pattern 2: Centralized API services in `lib/api/*.ts`
+- Pattern 3: Server Actions in `app/actions/*.ts`
+- Pattern 4: React Query hooks in `hooks/use-*.ts`
+- Impact: Difficult to maintain; no clear guidance on when to use which
+- Recommendation: Standardize on React Query + API layer; document in CONVENTIONS.md
+
+**State Management:**
+- Pattern 1: useState + useEffect for data fetching
+- Pattern 2: React Query with queryKey patterns
+- Pattern 3: Context providers (SearchContext, SessionRealtimeContext)
+- Impact: Inconsistent loading/error states; code duplication
+- Recommendation: Adopt React Query consistently for server state
+
+**Filter State Naming:**
+- Some filters use `'todos'` as default value
+- Some use `''` (empty string)
+- Some use `'all'`
+- Files: Various filter dropdowns across `app/(dashboard)/dashboard/*.tsx`
+- Impact: Inconsistent UX; harder to implement global filter reset
+- Recommendation: Standardize on single approach (suggest `'todos'` for Portuguese UI)
 
 ---
 
-*Concerns audit: 2026-01-16*
+*Concerns audit: 2026-01-18*

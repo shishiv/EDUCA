@@ -1,251 +1,195 @@
 # Architecture
 
-**Analysis Date:** 2026-01-16
+**Analysis Date:** 2026-01-18
 
 ## Pattern Overview
 
-**Overall:** Feature-Based Modular Architecture with Next.js App Router
+**Overall:** Next.js 15 App Router with Server Components and Supabase Backend-as-a-Service
 
 **Key Characteristics:**
-- Next.js 15 App Router with route groups for authentication and dashboard separation
-- Supabase as BaaS (Backend-as-a-Service) for database, auth, and realtime
-- Three-phase attendance workflow with Brazilian legal compliance
-- Role-based access control (RBAC) with 5 user types
-- Real-time session updates via Supabase Realtime subscriptions
+- Full-stack TypeScript with strict typing via Supabase-generated types
+- Role-based access control (RBAC) enforced at multiple layers
+- Real-time capabilities via Supabase subscriptions for attendance tracking
+- Brazilian educational compliance built into core workflows (18:00 lock, immutability)
+- Hybrid rendering: Server Components for data, Client Components for interactivity
 
 ## Layers
 
-**Presentation Layer (UI):**
-- Purpose: Render UI components and handle user interactions
-- Location: `gestao_fronteira/app/` and `gestao_fronteira/components/`
-- Contains: Pages, layouts, React components, form components
-- Depends on: Hooks, Contexts, API services
-- Used by: End users (teachers, admins, secretaries, directors)
+**Presentation Layer (Client):**
+- Purpose: Render UI and handle user interactions
+- Location: `gestao_fronteira/app/**/page.tsx`, `gestao_fronteira/components/`
+- Contains: Page components, UI components, forms, modals
+- Depends on: Hooks, Context providers, Supabase client
+- Used by: End users via browser
 
-**Route Handlers (API):**
-- Purpose: Handle HTTP requests and business logic validation
+**Presentation Layer (Server):**
+- Purpose: Server-rendered pages and data fetching
+- Location: `gestao_fronteira/app/**/page.tsx` (Server Components)
+- Contains: Data fetching, initial page rendering
+- Depends on: `lib/supabase/server.ts`
+- Used by: Client hydration
+
+**API Layer:**
+- Purpose: RESTful endpoints for complex operations
 - Location: `gestao_fronteira/app/api/`
-- Contains: Next.js route handlers (route.ts files)
-- Depends on: Supabase server client, validation schemas, logger
-- Used by: Client-side components via fetch
+- Contains: Route handlers (attendance, sessions, compliance, search)
+- Depends on: `lib/supabase/server.ts`, Zod validation, business logic
+- Used by: Client-side fetches, external integrations
 
-**Service Layer:**
-- Purpose: Encapsulate business logic and data operations
-- Location: `gestao_fronteira/lib/api/` and `gestao_fronteira/lib/services/`
-- Contains: API service classes, workflow managers
+**Server Actions Layer:**
+- Purpose: Type-safe server mutations from client
+- Location: `gestao_fronteira/app/actions/`
+- Contains: `'use server'` functions for attendance workflows
+- Depends on: `lib/supabase/server.ts`, validation schemas
+- Used by: Client components via direct invocation
+
+**Business Logic Layer:**
+- Purpose: Domain-specific services and utilities
+- Location: `gestao_fronteira/lib/services/`, `gestao_fronteira/lib/api/`
+- Contains: Attendance workflows, compliance rules, API clients
 - Depends on: Supabase client, validation schemas
-- Used by: Components, API routes
-
-**State Management:**
-- Purpose: Manage client-side state and server cache
-- Location: `gestao_fronteira/lib/stores/`, `gestao_fronteira/contexts/`, `gestao_fronteira/hooks/`
-- Contains: Zustand stores, React contexts, custom hooks
-- Depends on: React Query, Zustand, Supabase subscriptions
-- Used by: Components
+- Used by: API routes, Server Actions, components
 
 **Data Access Layer:**
-- Purpose: Database operations and type-safe queries
-- Location: `gestao_fronteira/lib/supabase/`
-- Contains: Supabase client factories (browser and server)
+- Purpose: Supabase client wrappers and queries
+- Location: `gestao_fronteira/lib/supabase.ts`, `gestao_fronteira/lib/supabase/server.ts`
+- Contains: Browser client, server client, admin client
 - Depends on: Supabase SDK, database types
-- Used by: All layers needing database access
+- Used by: All layers requiring data access
+
+**Real-time Layer:**
+- Purpose: WebSocket-based live updates for attendance
+- Location: `gestao_fronteira/lib/realtime/`, `gestao_fronteira/contexts/session-realtime-context.tsx`
+- Contains: Subscription managers, connection handlers
+- Depends on: Supabase real-time, React Context
+- Used by: Dashboard components, attendance pages
 
 **Validation Layer:**
-- Purpose: Schema validation and Brazilian compliance
+- Purpose: Input validation and Brazilian data compliance
 - Location: `gestao_fronteira/lib/validation/`
-- Contains: Zod schemas for all entities, Brazilian validators (CPF, CNPJ, NIS)
-- Depends on: Zod library
-- Used by: Forms, API routes, services
+- Contains: Zod schemas, CPF/NIS validators, educational validators
+- Depends on: Zod
+- Used by: Forms, API routes, Server Actions
 
 ## Data Flow
 
-**Attendance Workflow (Three-Phase):**
+**Attendance Marking Flow:**
 
-1. **PLANEJADA (Planned):** Teacher opens session via `POST /api/sessoes/aula/abrir`
-2. **ABERTA (Open):** Session is active, teacher marks student attendance
-3. **FECHADA (Closed):** Session auto-locks at 18:00 SP time, records become immutable
-
-```
-Teacher → AbrirAulaWorkflow.tsx → POST /api/sessoes/aula/abrir
-                                        ↓
-                              createClient() (server)
-                                        ↓
-                              Supabase sessoes_aula INSERT
-                                        ↓
-                              Realtime broadcast
-                                        ↓
-                              SessionRealtimeProvider updates state
-```
+1. Teacher opens turma chamada page (`/dashboard/turmas/[id]/chamada`)
+2. Client loads students via Supabase query (matriculas -> alunos)
+3. Existing attendance loaded from `sessoes_aula` + `frequencia` tables
+4. Teacher marks P/F/J via `ChamadaStatusButtons` component
+5. On save, creates/updates `sessoes_aula` and upserts `frequencia` records
+6. Real-time broadcast notifies other viewers via `SessionRealtimeProvider`
 
 **Authentication Flow:**
 
-1. User submits credentials → `useAuth` hook → `authSignIn()` in `lib/auth.ts`
-2. Supabase Auth validates → Session cookie set
-3. Middleware (`lib/middleware/auth-middleware.ts`) validates on route access
-4. `AuthGuard` component protects dashboard layout
-5. User profile fetched from `users` table
+1. User submits credentials on `/login`
+2. `useAuth` hook calls `supabase.auth.signInWithPassword()`
+3. Session stored in cookies via Supabase SSR
+4. Middleware (`middleware.ts`) validates session on protected routes
+5. `AuthGuard` component enforces role-based access client-side
+6. Server actions/API routes verify user via `createClient()` from cookies
 
 **State Management:**
-- Server cache: React Query (`@tanstack/react-query`) with 1-minute stale time
-- Global UI state: Zustand with localStorage persistence (`lib/stores/app-store.ts`)
-- Real-time data: Supabase subscriptions via `SessionRealtimeProvider`
+- Global auth state: `useAuth` hook with Supabase auth listener
+- Real-time sessions: `SessionRealtimeContext` (React Context + Supabase subscriptions)
+- Local component state: React `useState`/`useReducer`
+- Server state: TanStack Query for caching and sync
 
 ## Key Abstractions
 
+**Supabase Client Variants:**
+- Purpose: Differentiate client vs server vs admin access
+- Examples: `gestao_fronteira/lib/supabase.ts`, `gestao_fronteira/lib/supabase/server.ts`
+- Pattern: Factory functions that return typed clients
+
 **BaseApiService:**
-- Purpose: Abstract CRUD operations for all entities
+- Purpose: Generic CRUD operations for database tables
 - Examples: `gestao_fronteira/lib/api/base.ts`
-- Pattern: Class-based service with generic methods
-
-```typescript
-// Pattern used by all entity services
-export abstract class BaseApiService {
-  protected tableName: string
-  async getAll<T>(): Promise<T[]>
-  async getById<T>(id: string): Promise<T | null>
-  async create<T>(data: Partial<T>): Promise<T>
-  async update<T>(id: string, data: Partial<T>): Promise<T>
-  async delete(id: string): Promise<void>
-  async getPaginated<T>(params): Promise<PaginatedResult<T>>
-}
-```
-
-**AttendanceWorkflowManager:**
-- Purpose: State machine for three-phase attendance workflow
-- Examples: `gestao_fronteira/lib/services/attendance-workflow.ts`
-- Pattern: State machine with transition validation
-
-```typescript
-type WorkflowPhase = 'PREPARATION' | 'OPENING' | 'MARKING' | 'CLOSING' | 'COMPLETED' | 'ERROR'
-
-// Workflow manages transitions and validates business rules
-const workflow = new AttendanceWorkflowManager(classId, teacherId, date)
-await workflow.executeTransition('open_session')
-await workflow.markStudentAttendance(studentId, 'presente')
-await workflow.executeTransition('close_session')
-```
-
-**Supabase Clients:**
-- Purpose: Type-safe database access with RLS context
-- Examples: `gestao_fronteira/lib/supabase.ts` (browser), `gestao_fronteira/lib/supabase/server.ts` (server)
-- Pattern: Factory functions for client creation
-
-```typescript
-// Browser client (for components)
-import { supabase } from '@/lib/supabase'
-
-// Server client (for API routes and Server Actions)
-import { createClient, createAdminClient } from '@/lib/supabase/server'
-```
+- Pattern: Abstract class with table-specific inheritance
 
 **Validation Schemas:**
-- Purpose: Runtime type validation with Zod
-- Examples: `gestao_fronteira/lib/validation/brazilian.ts`, `gestao_fronteira/lib/validation/students-validation.ts`
-- Pattern: Zod schemas with Brazilian-specific validators
+- Purpose: Type-safe runtime validation with Zod
+- Examples: `gestao_fronteira/lib/validation/brazilian.ts`, `gestao_fronteira/lib/validation/attendance.ts`
+- Pattern: Composable schemas with custom refinements
 
-```typescript
-import { studentRegistrationSchema, validateCPF, formatCPF } from '@/lib/validation'
-```
+**Real-time Manager:**
+- Purpose: Manage Supabase subscriptions lifecycle
+- Examples: `gestao_fronteira/lib/realtime/session-realtime.ts`
+- Pattern: Class-based subscription manager with callbacks
 
 ## Entry Points
 
-**Application Root:**
+**Root Layout:**
 - Location: `gestao_fronteira/app/layout.tsx`
-- Triggers: Next.js server render
-- Responsibilities: Global providers, fonts, metadata
+- Triggers: All page loads
+- Responsibilities: HTML structure, fonts, `Providers` wrapper
 
 **Dashboard Layout:**
 - Location: `gestao_fronteira/app/(dashboard)/layout.tsx`
-- Triggers: Any `/dashboard/*` route
-- Responsibilities: AuthGuard, Sidebar, Header, SessionRealtimeProvider, ModalProvider
-
-**Auth Layout:**
-- Location: `gestao_fronteira/app/(auth)/layout.tsx`
-- Triggers: `/login` route
-- Responsibilities: Login page wrapper
+- Triggers: All `/dashboard/*` routes
+- Responsibilities: Auth guard, sidebar, header, real-time provider
 
 **Middleware:**
 - Location: `gestao_fronteira/middleware.ts`
-- Triggers: All routes except static files
-- Responsibilities: Route protection, session validation, role-based redirects
+- Triggers: All non-static requests
+- Responsibilities: Route protection, session validation, redirects
 
-**API Routes:**
+**API Endpoints:**
 - Location: `gestao_fronteira/app/api/*/route.ts`
 - Triggers: HTTP requests to `/api/*`
-- Responsibilities: Request validation, business logic, database operations
-
-Key API endpoints:
-- `POST /api/sessoes/aula/abrir` - Create attendance session
-- `POST /api/frequencia/marcar` - Mark attendance
-- `GET /api/compliance/warnings` - Get compliance alerts
-- `GET /api/attendance/trends` - Get attendance statistics
+- Responsibilities: Handle POST/GET/PUT/DELETE operations
 
 ## Error Handling
 
-**Strategy:** Layered error handling with user-friendly messages
+**Strategy:** Domain-specific error types with user-friendly messages
 
 **Patterns:**
-- API routes: try/catch with Zod error handling, HTTP status codes
-- Services: throw errors with descriptive messages in Portuguese
-- Components: Error boundaries, toast notifications via Sonner
-- Logging: Structured logging via `lib/logger.ts`
+- `EducationalErrorType` enum in `gestao_fronteira/lib/error-handling.ts`
+- Zod validation errors caught and transformed to structured responses
+- Supabase errors mapped to business-friendly messages
+- Toast notifications for user feedback via Sonner
 
+**API Error Pattern:**
 ```typescript
-// API route pattern
-try {
-  const validatedData = schema.parse(body)
-  // ... business logic
-} catch (error) {
-  if (error instanceof z.ZodError) {
-    return NextResponse.json({ error: 'Dados inválidos', details: error.errors }, { status: 400 })
-  }
-  if (error instanceof Error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
-  }
-  return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+// Standard API error response structure
+{
+  error: string,           // User-facing message
+  code: string,            // Machine-readable code (e.g., 'DUPLICATE_SESSION')
+  details?: object[]       // Field-level validation errors
 }
 ```
-
-**Error codes returned by API:**
-- `UNAUTHORIZED` - Not authenticated
-- `NOT_FOUND` - Resource not found
-- `INSUFFICIENT_PERMISSIONS` - Role lacks access
-- `DUPLICATE_SESSION` - Session already exists
-- `VALIDATION_ERROR` - Schema validation failed
-- `BUSINESS_RULE_VIOLATION` - Domain rule violated
 
 ## Cross-Cutting Concerns
 
 **Logging:**
-- Implementation: `gestao_fronteira/lib/logger.ts`
-- Pattern: Structured logging with context (feature, action, IDs)
-- Used for: Errors, audit events, workflow transitions
+- Custom `logger` utility in `gestao_fronteira/lib/logger.ts`
+- Structured logging with context objects
+- Used across API routes, services, and error handlers
 
 **Validation:**
-- Implementation: `gestao_fronteira/lib/validation/`
-- Pattern: Zod schemas for all entities
-- Brazilian-specific: CPF, CNPJ, NIS, INEP codes, phone numbers
+- Zod schemas for all user inputs
+- Brazilian-specific validators (CPF, NIS, phone)
+- Educational domain validators (attendance, lesson content)
 
 **Authentication:**
-- Implementation: Supabase Auth + custom middleware
-- Pattern: Cookie-based sessions, role hierarchy
-- Roles: admin > diretor > secretario > professor > responsavel
+- Supabase Auth with cookie-based sessions
+- Middleware-level route protection
+- Component-level `AuthGuard` for role enforcement
+- Server-side `verifyUserRole()` for Server Actions
 
 **Authorization:**
-- Implementation: `gestao_fronteira/lib/middleware/auth-middleware.ts`
-- Pattern: Role-based route protection with hierarchy
-- Component-level: `AuthGuard` component checks `allowedRoles`
+- Role hierarchy: admin > diretor > secretario > professor > responsavel
+- School-based isolation via `escola_id` checks
+- RLS policies in Supabase for data-level security
 
-**Audit Trail:**
-- Implementation: `gestao_fronteira/lib/audit.ts`
-- Pattern: Log operations to `audit_trail` table
-- Captures: table, record_id, operation, old/new values, user, timestamp
-
-**Real-time:**
-- Implementation: `gestao_fronteira/lib/realtime/`, `gestao_fronteira/contexts/session-realtime-context.tsx`
-- Pattern: Supabase Realtime subscriptions with reconnection handling
-- Used for: Session updates, attendance marking, compliance warnings
+**Brazilian Compliance:**
+- 18:00 Sao Paulo time auto-lock for attendance (`auto_fechamento_agendado`)
+- Immutability principle: "nao existe o esquecer"
+- Bolsa Familia alerts when frequency < 80%
+- INEP/Educacenso field requirements
 
 ---
 
-*Architecture analysis: 2026-01-16*
+*Architecture analysis: 2026-01-18*
