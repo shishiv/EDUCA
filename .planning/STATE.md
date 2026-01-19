@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 9 of 11 (Feature Flags) — READY TO DISCUSS
-Plan: 0 of 0
-Status: Phase 8 verified, ready for Phase 9 discussion
-Last activity: 2026-01-19 - Phase 8 executed and verified
+Phase: 9 of 11 (Feature Flags)
+Plan: 1 of 3 complete
+Status: In progress - 09-01 complete, 09-02 and 09-03 pending
+Last activity: 2026-01-19 - Completed 09-01 (Database Schema and Types)
 
-Progress: ██████████░ 58% (14/24 requirements)
+Progress: ██████████░ 62% (15/24 requirements)
 
 ## Milestone Summary
 
@@ -71,12 +71,15 @@ Progress: ██████████░ 58% (14/24 requirements)
 | 08-03 | API service methods for report filtering | getTurmasForFilters, getSchoolsForFilters, getTurmasBySchool in reportsApi |
 | 08-03 | Chamada-specific methods in attendanceApi | getStudentsForChamada, getAttendanceForDate, saveChamada |
 | 08-03 | Type reuse from API services | ReportTurma, ReportSchool types from lib/api/reports.ts |
+| 09-01 | Two-table design for feature flags | Separates flag definitions from per-escola enablement |
+| 09-01 | Soft delete via is_active flag | Preserves audit history when flags are deactivated |
+| 09-01 | KnownFlagName type for compile-time safety | Type-safe flag names ('nutricao' | 'estoque_escolar') |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Phase 8 verified
-Next step: `/gsd:discuss-phase 9` to gather context for Feature Flags phase
+Stopped at: Completed 09-01-PLAN.md
+Resume file: .planning/phases/09-feature-flags/09-02-PLAN.md
 
 ### Roadmap Evolution
 
@@ -87,8 +90,9 @@ Next step: `/gsd:discuss-phase 9` to gather context for Feature Flags phase
   - 08-02: 48 console.error/warn calls migrated to structured logger in lib/
   - 08-03: Inline queries migrated to API services in report/chamada pages
   - 08-04: 22 console.error/warn/log calls migrated to structured logger in pages/components
-- Ready for Phase 9: Feature Flags
+- Phase 9 in progress: Feature Flags
+  - 09-01: Database schema and TypeScript types created
 
 ---
 
-*State updated: 2026-01-19 after Phase 8 verification passed*
+*State updated: 2026-01-19 after 09-01 plan execution*
