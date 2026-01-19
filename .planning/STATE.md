@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 7 of 11 (Data Integrity) — VERIFIED ✓
-Plan: 4 of 4 complete
-Status: Phase verified, ready for Phase 8
-Last activity: 2026-01-19 - Phase 7 verified (10/10 must-haves passed)
+Phase: 7.1 of 11 (Admin School Selector)
+Plan: 1 of 4 complete
+Status: Plan 01 complete, ready for Plan 02
+Last activity: 2026-01-19 - Completed 07.1-01-PLAN.md (EscolaContext Provider)
 
 Progress: ████████░░ 33% (7/21 requirements)
 
@@ -49,13 +49,20 @@ Progress: ████████░░ 33% (7/21 requirements)
 | 07-03 | Attendance format "XX% (N/M dias)" | Per CONTEXT.md DAT-01 requirement |
 | 07-04 | Fetch active matricula for turma_id | Required for vivencia creation API |
 | 07-04 | Empty states with CTA button | Guides users when no vivencias exist |
+| 07.1-01 | SessionStorage over localStorage | Session-only persistence per CONTEXT.md |
+| 07.1-01 | Hydration-safe sessionStorage pattern | Read in useEffect, not useState initializer |
+| 07.1-01 | Auto-select escola for single-school users | diretor/secretario/professor with escola_id get it auto-selected |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Phase 7 verified complete (all 4 plans, 10/10 must-haves)
-Next step: `/gsd:discuss-phase 8` to plan Phase 8 (Code Standards)
+Stopped at: Completed 07.1-01-PLAN.md (EscolaContext Provider)
+Resume file: .planning/phases/07.1-admin-school-selector/07.1-02-PLAN.md
+
+### Roadmap Evolution
+
+- Phase 7.1 inserted after Phase 7: Admin School Selector (URGENT) - Admin users blocked from accessing escola-scoped pages
 
 ---
 
-*State updated: 2026-01-19 after Phase 7 verification passed*
+*State updated: 2026-01-19 after 07.1-01-PLAN.md complete*
