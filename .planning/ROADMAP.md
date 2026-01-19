@@ -150,6 +150,13 @@ Plans:
 - FLG-03: UI admin para toggle de flags por escola em /admin/flags
 - FLG-04: Flags criados para modulos futuros: nutricao, estoque_escolar
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Create database migration and TypeScript types
+- [ ] 09-02-PLAN.md — Create API service and React Query hook
+- [ ] 09-03-PLAN.md — Create admin UI at /dashboard/flags
+
 **Success Criteria:**
 - [ ] Migration criada para tabela feature_flags
 - [ ] Hook useFeatureFlag com caching (React Query)
@@ -237,3 +244,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 7 planned: 2026-01-19*
 *Phase 7.1 planned: 2026-01-19*
 *Phase 8 planned: 2026-01-19*
+*Phase 9 planned: 2026-01-19*
