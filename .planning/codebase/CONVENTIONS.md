@@ -490,6 +490,63 @@ useEffect(() => {
 const { data, isLoading, error } = useTurmas()
 ```
 
+## Filter Standard
+
+**Default value:** `'todos'` (masculine) or `'todas'` (feminine noun context)
+
+**Never use:** `'all'` (English) - use Portuguese for consistency with the localized UI
+
+### Pattern
+
+```typescript
+// State initialization
+const [statusFilter, setStatusFilter] = useState('todos')
+
+// Filter options
+const filterOptions = [
+  { value: 'todos', label: 'Todos os Status' }, // or 'Todos' for short
+  { value: 'ativo', label: 'Ativos' },
+  { value: 'inativo', label: 'Inativos' },
+]
+
+// Feminine context (escolas, turmas, disciplinas)
+const [escolaFilter, setEscolaFilter] = useState('todas')
+const escolaOptions = [
+  { value: 'todas', label: 'Todas as Escolas' },
+  // ...
+]
+
+// Reset behavior
+const clearFilters = () => {
+  setStatusFilter('todos')
+  setEscolaFilter('todas')
+}
+```
+
+### Filtering Logic
+
+Filter on client-side after fetching full list:
+
+```typescript
+const filteredData = useMemo(() => {
+  if (!data) return []
+  if (filter === 'todos') return data
+  return data.filter(item => item.status === filter)
+}, [data, filter])
+```
+
+### Gender Agreement
+
+Use Portuguese grammatical gender agreement:
+
+| Noun (singular) | Default Value | Label |
+|-----------------|---------------|-------|
+| status | `'todos'` | Todos os Status |
+| aluno | `'todos'` | Todos os Alunos |
+| escola | `'todas'` | Todas as Escolas |
+| turma | `'todas'` | Todas as Turmas |
+| disciplina | `'todas'` | Todas as Disciplinas |
+
 ## Brazilian Localization
 
 **Messages in Portuguese:**
