@@ -11,6 +11,7 @@ import {
   AttendancePattern
 } from '@/lib/services/attendance-history'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface UseAttendanceHistoryOptions {
   sessionId?: string
@@ -286,7 +287,11 @@ export function useAttendanceHistory({
       toast.success(`Relatório baixado: ${fileName}`)
 
       // Simulate file generation
-      console.log('Downloading audit report:', { report, format, fileName })
+      logger.info('Downloading audit report', {
+        feature: 'attendance',
+        action: 'download_audit_report',
+        metadata: { fileName, format }
+      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       toast.error('Erro ao baixar relatório: ' + errorMessage)
@@ -349,11 +354,18 @@ export function useAttendanceHistory({
         }
         return true
       } else {
-        console.warn('Failed to record attendance change:', result.error)
+        logger.warn('Failed to record attendance change', {
+          feature: 'attendance',
+          action: 'record_change',
+          metadata: { error: result.error }
+        })
         return false
       }
     } catch (error) {
-      console.error('Error recording attendance change:', error)
+      logger.error('Error recording attendance change', error as Error, {
+        feature: 'attendance',
+        action: 'record_change'
+      })
       return false
     }
   }, [refresh])

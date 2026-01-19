@@ -12,6 +12,7 @@
 
 import { supabase } from '@/lib/supabase'
 import { AttendanceSession, AttendanceRecord } from '@/lib/api/attendance'
+import { logger } from '@/lib/logger'
 
 interface ImmutabilityError {
   code: 'IMMUTABILITY_VIOLATION' | 'SESSION_LOCKED' | 'TIME_LOCK_ACTIVE' | 'AUDIT_TRAIL_MISSING'
@@ -444,7 +445,10 @@ export class AttendanceImmutabilityService {
         })
     } catch (error) {
       // Log error but don't fail the main operation
-      console.error('Failed to create audit trail entry:', error)
+      logger.error('Failed to create audit trail entry', error as Error, {
+        feature: 'attendance-compliance',
+        action: 'log_audit_trail'
+      })
     }
   }
 
@@ -463,7 +467,10 @@ export class AttendanceImmutabilityService {
 
       return data as AuditTrailEntry[]
     } catch (error) {
-      console.error('Error fetching audit trail:', error)
+      logger.error('Error fetching audit trail', error as Error, {
+        feature: 'attendance-compliance',
+        action: 'get_session_audit_trail'
+      })
       return []
     }
   }
