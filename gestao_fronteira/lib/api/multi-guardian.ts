@@ -13,6 +13,7 @@
 
 import { BaseApiService } from './enhanced-base'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 // ===== INTERFACES =====
 export interface Guardian {
@@ -124,7 +125,10 @@ export class MultiGuardianService extends BaseApiService {
       if (error) throw error
       return data as Guardian
     } catch (error) {
-      console.error('Error creating guardian:', error)
+      logger.error('Error creating guardian', error as Error, {
+        feature: 'multi-guardian',
+        action: 'create_guardian'
+      })
       throw error
     }
   }
@@ -151,7 +155,10 @@ export class MultiGuardianService extends BaseApiService {
       if (error) throw error
       return data as Guardian
     } catch (error) {
-      console.error('Error updating guardian:', error)
+      logger.error('Error updating guardian', error as Error, {
+        feature: 'multi-guardian',
+        action: 'update_guardian'
+      })
       throw error
     }
   }
@@ -187,7 +194,10 @@ export class MultiGuardianService extends BaseApiService {
       if (error && error.code !== 'PGRST116') throw error
       return data as GuardianWithRelationships | null
     } catch (error) {
-      console.error('Error fetching guardian by ID:', error)
+      logger.error('Error fetching guardian by ID', error as Error, {
+        feature: 'multi-guardian',
+        action: 'get_guardian_by_id'
+      })
       throw error
     }
   }
@@ -230,7 +240,10 @@ export class MultiGuardianService extends BaseApiService {
 
       return data as Guardian[]
     } catch (error) {
-      console.error('Error searching guardians:', error)
+      logger.error('Error searching guardians', error as Error, {
+        feature: 'multi-guardian',
+        action: 'search_guardians'
+      })
       throw error
     }
   }
@@ -308,7 +321,10 @@ export class MultiGuardianService extends BaseApiService {
       if (error) throw error
       return data as StudentGuardianRelationship
     } catch (error) {
-      console.error('Error adding guardian to student:', error)
+      logger.error('Error adding guardian to student', error as Error, {
+        feature: 'multi-guardian',
+        action: 'add_guardian_to_student'
+      })
       throw error
     }
   }
@@ -336,7 +352,10 @@ export class MultiGuardianService extends BaseApiService {
       if (error) throw error
       return data as StudentGuardianRelationship
     } catch (error) {
-      console.error('Error updating guardian relationship:', error)
+      logger.error('Error updating guardian relationship', error as Error, {
+        feature: 'multi-guardian',
+        action: 'update_guardian_relationship'
+      })
       throw error
     }
   }
@@ -385,7 +404,10 @@ export class MultiGuardianService extends BaseApiService {
 
       if (error) throw error
     } catch (error) {
-      console.error('Error removing guardian from student:', error)
+      logger.error('Error removing guardian from student', error as Error, {
+        feature: 'multi-guardian',
+        action: 'remove_guardian_from_student'
+      })
       throw error
     }
   }
@@ -445,7 +467,10 @@ export class MultiGuardianService extends BaseApiService {
 
       return studentWithGuardians
     } catch (error) {
-      console.error('Error fetching student with guardians:', error)
+      logger.error('Error fetching student with guardians', error as Error, {
+        feature: 'multi-guardian',
+        action: 'get_student_with_guardians'
+      })
       throw error
     }
   }
@@ -510,7 +535,10 @@ export class MultiGuardianService extends BaseApiService {
         turma: rel.aluno.matricula?.[0]?.turma
       }))
     } catch (error) {
-      console.error('Error fetching students for guardian:', error)
+      logger.error('Error fetching students for guardian', error as Error, {
+        feature: 'multi-guardian',
+        action: 'get_students_for_guardian'
+      })
       throw error
     }
   }
@@ -556,7 +584,10 @@ export class MultiGuardianService extends BaseApiService {
         }
       }))
     } catch (error) {
-      console.error('Error fetching guardians for communication:', error)
+      logger.error('Error fetching guardians for communication', error as Error, {
+        feature: 'multi-guardian',
+        action: 'get_guardians_for_communication'
+      })
       throw error
     }
   }
@@ -600,7 +631,10 @@ export class MultiGuardianService extends BaseApiService {
         }
       }))
     } catch (error) {
-      console.error('Error fetching emergency contacts:', error)
+      logger.error('Error fetching emergency contacts', error as Error, {
+        feature: 'multi-guardian',
+        action: 'get_emergency_contacts'
+      })
       throw error
     }
   }
@@ -643,7 +677,10 @@ export class MultiGuardianService extends BaseApiService {
           return false
       }
     } catch (error) {
-      console.error('Error validating guardian action:', error)
+      logger.error('Error validating guardian action', error as Error, {
+        feature: 'multi-guardian',
+        action: 'validate_guardian_action'
+      })
       return false
     }
   }

@@ -516,7 +516,10 @@ export class EnhancedAttendanceService extends BaseApiService {
         inepCompliant: attendanceRate >= 75 // INEP minimum requirement
       }
     } catch (error) {
-      console.error('Error calculating attendance stats:', error)
+      logger.error('Error calculating attendance stats', error as Error, {
+        feature: 'attendance',
+        action: 'get_class_attendance_stats'
+      })
       throw error
     }
   }
@@ -548,7 +551,10 @@ export class EnhancedAttendanceService extends BaseApiService {
 
       return session.hash_integridade === expectedHash
     } catch (error) {
-      console.error('Error verifying integrity hash:', error)
+      logger.error('Error verifying integrity hash', error as Error, {
+        feature: 'attendance',
+        action: 'verify_integrity_hash'
+      })
       return false
     }
   }
@@ -585,7 +591,10 @@ export class EnhancedAttendanceService extends BaseApiService {
 
       return { canModify: true }
     } catch (error) {
-      console.error('Error checking modification permissions:', error)
+      logger.error('Error checking modification permissions', error as Error, {
+        feature: 'attendance',
+        action: 'can_modify_attendance'
+      })
       return { canModify: false, reason: 'Erro ao verificar permissões' }
     }
   }

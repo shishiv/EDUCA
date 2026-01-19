@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 // Rate limiting configuration
 interface RateLimitConfig {
@@ -156,7 +157,10 @@ export interface APIError extends Error {
 }
 
 export function handleAPIError(error: unknown): NextResponse {
-  console.error('API Error:', error)
+  logger.error('API Error', error as Error, {
+    feature: 'rate-limiting',
+    action: 'handle_api_error'
+  })
 
   // Handle custom API errors
   if (error instanceof Error && 'statusCode' in error) {
