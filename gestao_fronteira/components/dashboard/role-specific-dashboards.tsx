@@ -13,6 +13,7 @@ import { useNavigation } from '@/components/layout/navigation-provider'
 import { PageHeader } from '@/components/layout/enhanced-breadcrumbs'
 import { LoadingCenter, CardLoading } from '@/components/ui/loading-states'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import {
   Users,
   School,
@@ -115,7 +116,10 @@ export function AdminDashboard() {
           relatoriosPendentes: 0 // No reports table yet
         })
       } catch (error) {
-        console.error('Error loading dashboard stats:', error)
+        logger.error('Error loading dashboard stats', error as Error, {
+          feature: 'dashboard',
+          action: 'load_admin_stats'
+        })
         // Set zeros on error so UI doesn't break
         setStats({
           totalAlunos: 0,
@@ -393,7 +397,10 @@ export function DiretorDashboard() {
           totalProfessores: professoresResult.count || 0
         })
       } catch (error) {
-        console.error('Error loading director dashboard stats:', error)
+        logger.error('Error loading director dashboard stats', error as Error, {
+          feature: 'dashboard',
+          action: 'load_diretor_stats'
+        })
         setStats({
           totalAlunos: 0,
           totalEscolas: 1,
@@ -580,7 +587,10 @@ export function SecretarioDashboard() {
           alunosComBaixaFrequencia: 0 // TODO: Calculate properly in Phase 8
         })
       } catch (error) {
-        console.error('Error loading secretary dashboard stats:', error)
+        logger.error('Error loading secretary dashboard stats', error as Error, {
+          feature: 'dashboard',
+          action: 'load_secretario_stats'
+        })
         setStats({
           totalAlunos: 0,
           totalEscolas: 1,
@@ -785,7 +795,10 @@ export function ResponsavelDashboard() {
           }
         }
       } catch (error) {
-        console.error('Error loading student data:', error)
+        logger.error('Error loading student data', error as Error, {
+          feature: 'dashboard',
+          action: 'load_responsavel_students'
+        })
         // Keep empty students array on error
       } finally {
         setLoading(false)
