@@ -84,7 +84,11 @@ export function rateLimit(configKey: string) {
   return async (request: NextRequest): Promise<NextResponse | null> => {
     const config = rateLimitConfigs[configKey]
     if (!config) {
-      console.warn(`Rate limit configuration not found: ${configKey}`)
+      logger.warn(`Rate limit configuration not found: ${configKey}`, {
+        feature: 'rate-limiting',
+        action: 'config_not_found',
+        metadata: { configKey }
+      })
       return null
     }
 
@@ -109,7 +113,11 @@ export function rateLimit(configKey: string) {
       const resetIn = Math.ceil((current.resetTime - now) / 1000)
 
       // Log rate limit violation
-      console.warn(`Rate limit exceeded for key: ${key}`)
+      logger.warn(`Rate limit exceeded for key: ${key}`, {
+        feature: 'rate-limiting',
+        action: 'rate_limit_exceeded',
+        metadata: { key, resetIn }
+      })
 
       return config.onLimitReached ?
         config.onLimitReached(request) :
@@ -283,9 +291,13 @@ export function measurePerformance(endpoint: string) {
       ipAddress: getClientIP(request)
     }
 
-    // Log performance metrics (in production, send to monitoring service)
+    // Log performance metrics using centralized logger
     if (executionTime > 1000) { // Log slow requests
-      console.warn(`Slow API request detected: ${endpoint} took ${executionTime.toFixed(2)}ms`)
+      logger.warn(`Slow API request detected: ${endpoint} took ${executionTime.toFixed(2)}ms`, {
+        feature: 'performance',
+        action: 'slow_request',
+        metadata: { endpoint, executionTime, method }
+      })
     }
 
     return metrics
@@ -304,6 +316,10 @@ export function logEducationalCompliance(action: string, sessionId: string, user
     timezone: 'America/Sao_Paulo'
   }
 
-  // In production, send to compliance logging service
-  console.log('Educational Compliance Log:', JSON.stringify(logEntry))
+  // Log compliance entry using centralized logger
+  logger.logComplianceEvent(action, undefined, {
+    feature: 'compliance',
+    action,
+    metadata: logEntry
+  })
 }
