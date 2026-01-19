@@ -47,6 +47,7 @@ import { supabase } from '@/lib/supabase'
 
 // Types
 import { type Vivencia, type CampoType } from '@/types/diario-infantil'
+import { Plus } from 'lucide-react'
 import { SEMESTER_CONFIG, type SemestreType } from '@/types/descriptive-report'
 
 // ============================================================================
@@ -58,71 +59,6 @@ interface Student {
   nome_completo: string
   data_nascimento: string
 }
-
-// ============================================================================
-// Mock Data (for initial implementation)
-// ============================================================================
-
-const MOCK_VIVENCIAS: Vivencia[] = [
-  {
-    id: '1',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-17',
-    campos_experiencia: ['eu', 'escuta'] as CampoType[],
-    descricao: 'Durante a roda de conversa, demonstrou interesse em ouvir as historias dos colegas e compartilhou uma experiencia de sua familia. Mostrou empatia ao consolar um colega que estava triste.',
-    observacoes: 'Continuar estimulando participacao nas rodas de conversa.',
-    created_at: '2026-01-17T10:30:00Z',
-    updated_at: '2026-01-17T10:30:00Z',
-  },
-  {
-    id: '2',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-17',
-    campos_experiencia: ['corpo', 'tracos'] as CampoType[],
-    descricao: 'Participou ativamente da atividade de pintura com as maos, explorando diferentes movimentos e texturas. Demonstrou coordenacao motora ao fazer tracos com precisao.',
-    created_at: '2026-01-17T14:00:00Z',
-    updated_at: '2026-01-17T14:00:00Z',
-  },
-  {
-    id: '3',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-15',
-    campos_experiencia: ['espacos'] as CampoType[],
-    descricao: 'Durante a exploracao do parque, observou formigas carregando folhas e fez perguntas sobre onde elas estavam levando. Demonstrou curiosidade sobre nocoes de distancia e direcao.',
-    observacoes: 'Planejar mais atividades ao ar livre para estimular exploracao.',
-    created_at: '2026-01-15T09:00:00Z',
-    updated_at: '2026-01-15T09:00:00Z',
-  },
-  {
-    id: '4',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-10',
-    campos_experiencia: ['eu', 'corpo'] as CampoType[],
-    descricao: 'Demonstrou autonomia ao se vestir sozinho apos a educacao fisica. Ajudou um colega mais novo a amarrar o sapato, mostrando cooperacao e cuidado com os outros.',
-    created_at: '2026-01-10T11:00:00Z',
-    updated_at: '2026-01-10T11:00:00Z',
-  },
-  {
-    id: '5',
-    aluno_id: '1',
-    turma_id: 't1',
-    professor_id: 'p1',
-    data_vivencia: '2026-01-08',
-    campos_experiencia: ['tracos', 'escuta'] as CampoType[],
-    descricao: 'Criou uma historia original durante a atividade de contacao, usando personagens imaginarios. Desenhou os personagens com detalhes e cores variadas.',
-    observacoes: 'Incentivar producao artistica e criativa.',
-    created_at: '2026-01-08T15:00:00Z',
-    updated_at: '2026-01-08T15:00:00Z',
-  },
-]
 
 // ============================================================================
 // Helper Functions
@@ -188,14 +124,19 @@ export default function RelatorioPage() {
     if (!alunoId) return
 
     try {
-      // TODO: Replace with actual API call
-      // For now, use mock data
-      setVivencias(
-        MOCK_VIVENCIAS.filter((v) => v.aluno_id === alunoId || v.aluno_id === '1')
-      )
-    } catch (err: any) {
+      const response = await fetch(`/api/vivencias?aluno_id=${alunoId}`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro ao carregar vivencias')
+      }
+
+      const { data } = await response.json()
+      setVivencias(data || [])
+    } catch (err) {
       console.error('Error loading vivencias:', err)
-      toast.error('Erro ao carregar vivencias')
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar vivencias'
+      toast.error(errorMessage)
     }
   }, [alunoId])
 
@@ -373,32 +314,53 @@ export default function RelatorioPage() {
 
       {/* Main Content */}
       <div className="p-4">
-        <div className="grid lg:grid-cols-[1fr,350px] gap-6">
-          {/* Writer (main area) */}
-          <main>
-            <DevelopmentReportWriter
-              studentName={student.nome_completo}
-              semesterLabel={semesterLabel}
-              onSave={handleSaveDraft}
-              onFinalize={handleFinalize}
-              onCampoFocus={handleCampoFocus}
-              vivencias={vivencias}
-            />
-          </main>
+        {/* Empty state */}
+        {vivencias.length === 0 && (
+          <div className="text-center py-12 border rounded-lg bg-muted/30 print:hidden">
+            <p className="text-muted-foreground">
+              Nenhuma vivencia registrada para gerar relatorio.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Registre vivencias no Diario Infantil para construir o relatorio de desenvolvimento.
+            </p>
+            <Button asChild className="mt-4">
+              <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
+                <Plus className="h-4 w-4 mr-2" />
+                Registrar primeira vivencia
+              </Link>
+            </Button>
+          </div>
+        )}
 
-          {/* Sidebar (hidden on mobile) */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-[165px]">
-              <div className="rounded-xl border border-gray-200 overflow-hidden h-[calc(100vh-200px)]">
-                <VivenciasReference
-                  vivencias={vivencias}
-                  selectedCampo={selectedCampo}
-                  onFilterChange={handleFilterChange}
-                />
+        {/* Report content */}
+        {vivencias.length > 0 && (
+          <div className="grid lg:grid-cols-[1fr,350px] gap-6">
+            {/* Writer (main area) */}
+            <main>
+              <DevelopmentReportWriter
+                studentName={student.nome_completo}
+                semesterLabel={semesterLabel}
+                onSave={handleSaveDraft}
+                onFinalize={handleFinalize}
+                onCampoFocus={handleCampoFocus}
+                vivencias={vivencias}
+              />
+            </main>
+
+            {/* Sidebar (hidden on mobile) */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-[165px]">
+                <div className="rounded-xl border border-gray-200 overflow-hidden h-[calc(100vh-200px)]">
+                  <VivenciasReference
+                    vivencias={vivencias}
+                    selectedCampo={selectedCampo}
+                    onFilterChange={handleFilterChange}
+                  />
+                </div>
               </div>
-            </div>
-          </aside>
-        </div>
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   )
