@@ -62,6 +62,14 @@ Plans:
 - DAT-02: Dashboards usando dados reais (nao mock data)
 - DAT-03: Diario Infantil Vivencias com API funcional
 
+**Plans:** 4 plans in 2 waves
+
+Plans:
+- [ ] 07-01-PLAN.md — Create Vivencias API and service layer (Wave 1)
+- [ ] 07-02-PLAN.md — Replace dashboard mock stats with real Supabase data (Wave 1)
+- [ ] 07-03-PLAN.md — Replace mock student data and calculate real attendance (Wave 1)
+- [ ] 07-04-PLAN.md — Connect Diario Infantil pages to vivencias API (Wave 2, depends on 07-01)
+
 **Success Criteria:**
 - [ ] Frequencia reflete attendance records reais por aluno
 - [ ] AdminDashboard mostra stats agregadas do Supabase
@@ -184,3 +192,4 @@ Linear dependency chain - each phase builds on previous.
 *Roadmap created: 2026-01-18*
 *Based on: .planning/REQUIREMENTS.md, .planning/codebase/CONCERNS.md*
 *Gap closure plans added: 2026-01-19*
+*Phase 7 planned: 2026-01-19*
