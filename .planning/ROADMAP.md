@@ -141,7 +141,7 @@ Plans:
 
 ---
 
-## Phase 9: Feature Flags
+## Phase 9: Feature Flags ✓
 
 **Goal:** Sistema de feature flags por escola para rollout gradual de modulos.
 
@@ -151,24 +151,26 @@ Plans:
 - FLG-03: UI admin para toggle de flags por escola em /admin/flags
 - FLG-04: Flags criados para modulos futuros: nutricao, estoque_escolar
 
-**Plans:** 3 plans
+**Plans:** 3 plans completed
 
 Plans:
-- [ ] 09-01-PLAN.md — Create database migration and TypeScript types
-- [ ] 09-02-PLAN.md — Create API service and React Query hook
-- [ ] 09-03-PLAN.md — Create admin UI at /dashboard/flags
+- [x] 09-01-PLAN.md — Create database migration and TypeScript types (completed 2026-01-19)
+- [x] 09-02-PLAN.md — Create API service and React Query hook (completed 2026-01-19)
+- [x] 09-03-PLAN.md — Create admin UI at /dashboard/flags (completed 2026-01-19)
 
 **Success Criteria:**
-- [ ] Migration criada para tabela feature_flags
-- [ ] Hook useFeatureFlag com caching (React Query)
-- [ ] Admin UI lista escolas x flags com toggle
-- [ ] Flags nutricao e estoque_escolar criados (disabled)
+- [x] Migration criada para tabela feature_flags
+- [x] Hook useFeatureFlag com caching (React Query)
+- [x] Admin UI lista escolas x flags com toggle
+- [x] Flags nutricao e estoque_escolar criados (disabled)
 
 **Dependencies:** Phase 8 (patterns established)
 
+**Status:** Complete (2026-01-19)
+
 ---
 
-## Phase 10: Security & Compliance
+## Phase 10: Security & Compliance ✓
 
 **Goal:** Versionar migrations e documentar RLS policies para auditoria.
 
@@ -177,20 +179,22 @@ Plans:
 - SEC-02: RLS policies documentadas em .planning/codebase/RLS-POLICIES.md
 - SEC-03: Placeholder de telefone removido da politica de privacidade
 
-**Plans:** 3 plans
+**Plans:** 3 plans completed
 
 Plans:
-- [ ] 10-01-PLAN.md — Supabase CLI setup and baseline migration export
-- [ ] 10-02-PLAN.md — Document RLS policies with security matrix and diagrams
-- [ ] 10-03-PLAN.md — Update privacy policy with real contact information
+- [x] 10-01-PLAN.md — Supabase CLI setup and baseline migration export (completed 2026-01-19)
+- [x] 10-02-PLAN.md — Document RLS policies with security matrix and diagrams (completed 2026-01-19)
+- [x] 10-03-PLAN.md — Update privacy policy with real contact information (completed 2026-01-19)
 
 **Success Criteria:**
-- [ ] Supabase CLI configurado no projeto
-- [ ] Schema atual exportado como migration inicial
-- [ ] Documento RLS-POLICIES.md com todas as policies
-- [ ] Telefone real na pagina de privacidade
+- [x] Supabase CLI configurado no projeto
+- [x] Schema atual exportado como migration inicial
+- [x] Documento RLS-POLICIES.md com todas as policies
+- [x] Telefone real na pagina de privacidade
 
 **Dependencies:** Phase 9 (feature flags table needs migration)
+
+**Status:** Complete (2026-01-19)
 
 ---
 
