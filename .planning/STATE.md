@@ -38,6 +38,7 @@ Progress: ██░░░░░░░░ 19% (4/21 requirements)
 |-------|----------|-----------|
 | 06-01 | FlatCompat bridge for eslint-config-next | Official Next.js ESLint config is still legacy format |
 | 06-02 | Remove both ignore flags for full enforcement | Both eslint and typescript flags removed together |
+| 06-03 | Delete unused student-form.tsx vs creating missing module | Component never used - actual form in app/(dashboard)/dashboard/alunos/novo/page.tsx |
 | 06-04 | pnpm 9 + Node.js 20 LTS for CI | Current LTS versions for stability and performance |
 
 ## Session Continuity
