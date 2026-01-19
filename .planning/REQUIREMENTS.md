@@ -35,16 +35,16 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Feature Flags
 
-- [ ] **FLG-01**: Tabela `feature_flags` no Supabase com schema (escola_id, flag_name, enabled)
-- [ ] **FLG-02**: Hook `useFeatureFlag(flagName)` para check no frontend
-- [ ] **FLG-03**: UI admin para toggle de flags por escola em /admin/flags
-- [ ] **FLG-04**: Flags criados para modulos futuros: nutricao, estoque_escolar
+- [x] **FLG-01**: Tabela `feature_flags` no Supabase com schema (escola_id, flag_name, enabled)
+- [x] **FLG-02**: Hook `useFeatureFlag(flagName)` para check no frontend
+- [x] **FLG-03**: UI admin para toggle de flags por escola em /admin/flags
+- [x] **FLG-04**: Flags criados para modulos futuros: nutricao, estoque_escolar
 
 ### Security & Compliance
 
-- [ ] **SEC-01**: Supabase migrations versionadas em supabase/migrations/
-- [ ] **SEC-02**: RLS policies documentadas em .planning/codebase/RLS-POLICIES.md
-- [ ] **SEC-03**: Placeholder de telefone removido da politica de privacidade
+- [x] **SEC-01**: Supabase migrations versionadas em supabase/migrations/
+- [x] **SEC-02**: RLS policies documentadas em .planning/codebase/RLS-POLICIES.md
+- [x] **SEC-03**: Placeholder de telefone removido da politica de privacidade
 
 ### Testing
 
@@ -107,13 +107,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STD-02 | Phase 8 | Complete |
 | STD-03 | Phase 8 | Complete |
 | STD-04 | Phase 8 | Complete |
-| FLG-01 | Phase 9 | Pending |
-| FLG-02 | Phase 9 | Pending |
-| FLG-03 | Phase 9 | Pending |
-| FLG-04 | Phase 9 | Pending |
-| SEC-01 | Phase 10 | Pending |
-| SEC-02 | Phase 10 | Pending |
-| SEC-03 | Phase 10 | Pending |
+| FLG-01 | Phase 9 | Complete |
+| FLG-02 | Phase 9 | Complete |
+| FLG-03 | Phase 9 | Complete |
+| FLG-04 | Phase 9 | Complete |
+| SEC-01 | Phase 10 | Complete |
+| SEC-02 | Phase 10 | Complete |
+| SEC-03 | Phase 10 | Complete |
 | TST-01 | Phase 11 | Pending |
 | TST-02 | Phase 11 | Pending |
 | TST-03 | Phase 11 | Pending |
