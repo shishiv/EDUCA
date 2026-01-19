@@ -9,10 +9,10 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Build & Quality
 
-- [ ] **BLD-01**: TypeScript type checking habilitado no build (remover `ignoreBuildErrors: true`)
-- [ ] **BLD-02**: ESLint habilitado no build (remover `ignoreDuringBuilds: true`)
-- [ ] **BLD-03**: Zero erros de TypeScript no `pnpm typecheck`
-- [ ] **BLD-04**: Zero erros de lint no `pnpm lint`
+- [x] **BLD-01**: TypeScript type checking habilitado no build (remover `ignoreBuildErrors: true`)
+- [x] **BLD-02**: ESLint habilitado no build (remover `ignoreDuringBuilds: true`)
+- [x] **BLD-03**: Zero erros de TypeScript no `pnpm typecheck`
+- [x] **BLD-04**: Zero erros de lint no `pnpm lint`
 
 ### Data Integrity
 
@@ -87,10 +87,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BLD-01 | Phase 6 | Pending |
-| BLD-02 | Phase 6 | Pending |
-| BLD-03 | Phase 6 | Pending |
-| BLD-04 | Phase 6 | Pending |
+| BLD-01 | Phase 6 | Complete |
+| BLD-02 | Phase 6 | Complete |
+| BLD-03 | Phase 6 | Complete |
+| BLD-04 | Phase 6 | Complete |
 | DAT-01 | Phase 7 | Pending |
 | DAT-02 | Phase 7 | Pending |
 | DAT-03 | Phase 7 | Pending |
