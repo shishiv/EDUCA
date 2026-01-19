@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 8 of 11 (Code Standards)
-Plan: 1 of 4
-Status: In progress - Plan 08-01 complete
-Last activity: 2026-01-19 - Completed 08-01-PLAN.md (Data fetching + filter standards)
+Plan: 2 of 4
+Status: In progress - Plan 08-02 complete
+Last activity: 2026-01-19 - Completed 08-02-PLAN.md (Logger migration lib/ layer)
 
-Progress: █████████░ 46% (11/24 requirements)
+Progress: █████████░ 50% (12/24 requirements)
 
 ## Milestone Summary
 
@@ -62,19 +62,23 @@ Progress: █████████░ 46% (11/24 requirements)
 | 08-01 | VivenciasApiService as exemplar pattern | Best example of API service with JSDoc, logger, typed returns |
 | 08-01 | staleTime: 5min static, 2min moderate, 1min active | React Query caching strategy by data type |
 | 08-01 | Portuguese 'todas' for feminine noun filters | Filter consistency with localized UI |
+| 08-02 | Feature names match file/domain | Intuitive grouping for log filtering |
+| 08-02 | Action names describe operation | Precise identification of error source |
+| 08-02 | console.warn also migrated to logger.warn | Consistency with structured logging |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 08-01-PLAN.md
-Resume file: .planning/phases/08-code-standards/08-02-PLAN.md
+Stopped at: Completed 08-02-PLAN.md
+Resume file: .planning/phases/08-code-standards/08-03-PLAN.md
 
 ### Roadmap Evolution
 
 - Phase 7.1 inserted after Phase 7: Admin School Selector (URGENT) - Admin users blocked from accessing escola-scoped pages
 - Phase 7.1 complete: Admin school selector functional, all 3 plans executed and verified
 - Phase 8 in progress: Code Standards documentation and migration
+- 08-02 complete: 48 console.error/warn calls migrated to structured logger in lib/
 
 ---
 
-*State updated: 2026-01-19 after 08-01 plan complete*
+*State updated: 2026-01-19 after 08-02 plan complete*
