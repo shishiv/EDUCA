@@ -23,7 +23,7 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 
 ---
 
-## Phase 6: Build & Quality
+## Phase 6: Build & Quality (COMPLETE)
 
 **Goal:** Habilitar TypeScript type checking e ESLint no build para prevenir erros em produção.
 
@@ -37,15 +37,17 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 
 Plans:
 - [x] 06-01-PLAN.md - Migrate ESLint to flat config format (completed 2026-01-19)
-- [ ] 06-02-PLAN.md - Enable build enforcement (remove ignore flags)
+- [x] 06-02-PLAN.md - Enable build enforcement (completed 2026-01-19)
 
 **Success Criteria:**
-- [ ] `next.config.js` sem `ignoreBuildErrors: true`
-- [ ] `next.config.js` sem `ignoreDuringBuilds: true`
-- [ ] `pnpm build` executa sem erros de tipo ou lint
+- [x] `next.config.js` sem `ignoreBuildErrors: true`
+- [x] `next.config.js` sem `ignoreDuringBuilds: true`
+- [x] `pnpm build` executa sem erros de tipo ou lint
 - [ ] CI pipeline valida typecheck e lint
 
 **Dependencies:** None (foundational)
+
+**Completed:** 2026-01-19
 
 ---
 
