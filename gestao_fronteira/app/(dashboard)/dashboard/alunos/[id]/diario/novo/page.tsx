@@ -18,6 +18,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { ArrowLeft } from 'lucide-react'
 
 // Components
@@ -84,13 +85,21 @@ export default function NovaVivenciaPage() {
         .single()
 
       if (matriculaError) {
-        console.warn('No active matricula found:', matriculaError)
+        logger.warn('No active matricula found', {
+          feature: 'diario-infantil',
+          action: 'load_matricula',
+          metadata: { alunoId, error: matriculaError.message }
+        })
         // Not a fatal error - user might need to select turma manually
       } else {
         setMatricula(matriculaData)
       }
     } catch (err) {
-      console.error('Error loading data:', err)
+      logger.error('Error loading data', err as Error, {
+        feature: 'diario-infantil',
+        action: 'load_student_data',
+        metadata: { alunoId }
+      })
       setError('Erro ao carregar dados do aluno')
     } finally {
       setLoading(false)
@@ -142,7 +151,11 @@ export default function NovaVivenciaPage() {
       // Redirect back to diario page
       router.push(`/dashboard/alunos/${alunoId}/diario`)
     } catch (err) {
-      console.error('Error saving vivencia:', err)
+      logger.error('Error saving vivencia', err as Error, {
+        feature: 'diario-infantil',
+        action: 'create_vivencia',
+        metadata: { alunoId, turmaId: matricula?.turma_id }
+      })
       const errorMessage = err instanceof Error ? err.message : 'Tente novamente.'
       toast.error('Erro ao salvar vivencia', {
         description: errorMessage,
