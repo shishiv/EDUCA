@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase, Aluno } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,9 @@ import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
 import { TableEmptyState } from '@/components/ui/table-empty-state'
 import { formatDateBR } from '@/lib/date-utils'
+import { useEscola } from '@/contexts/escola-context'
+import { useAuth } from '@/hooks/use-auth'
+import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -40,41 +43,120 @@ interface AlunoWithDetails extends Aluno {
 }
 
 export default function AlunosPage() {
+  const { selectedEscolaId, shouldShowSelector } = useEscola()
+  const { userProfile } = useAuth()
   const [alunos, setAlunos] = useState<AlunoWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todos')
   const [sexoFilter, setSexoFilter] = useState('todos')
 
+  // Determine which escola_id to use for filtering
+  const escolaIdToUse = useMemo(() => {
+    // Admin users with selector: use selected escola (may be null)
+    if (shouldShowSelector) {
+      return selectedEscolaId
+    }
+    // Non-admin users: use their assigned escola
+    return userProfile?.escola_id || null
+  }, [shouldShowSelector, selectedEscolaId, userProfile?.escola_id])
+
   useEffect(() => {
     loadAlunos()
-  }, [])
+  }, [escolaIdToUse])
 
   const loadAlunos = async () => {
+    // If admin needs escola selected but hasn't selected one, don't fetch
+    if (shouldShowSelector && !escolaIdToUse) {
+      setAlunos([])
+      setLoading(false)
+      return
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('alunos')
-        .select(`
-          *,
-          responsaveis:responsavel_id (nome),
-          matriculas (
-            situacao,
-            turmas (
-              nome,
-              escolas (nome)
+      // If we have an escola filter, get alunos via matriculas -> turmas
+      if (escolaIdToUse) {
+        // First get all turmas for the selected escola
+        const { data: turmasData, error: turmasError } = await supabase
+          .from('turmas')
+          .select('id')
+          .eq('escola_id', escolaIdToUse)
+
+        if (turmasError) throw turmasError
+
+        const turmaIds = turmasData?.map(t => t.id) || []
+
+        if (turmaIds.length === 0) {
+          setAlunos([])
+          setLoading(false)
+          return
+        }
+
+        // Get matriculas for those turmas
+        const { data: matriculasData, error: matriculasError } = await supabase
+          .from('matriculas')
+          .select('aluno_id')
+          .in('turma_id', turmaIds)
+
+        if (matriculasError) throw matriculasError
+
+        const alunoIds = [...new Set(matriculasData?.map(m => m.aluno_id) || [])]
+
+        if (alunoIds.length === 0) {
+          setAlunos([])
+          setLoading(false)
+          return
+        }
+
+        // Get alunos with their data
+        const { data, error } = await supabase
+          .from('alunos')
+          .select(`
+            *,
+            responsaveis:responsavel_id (nome),
+            matriculas (
+              situacao,
+              turmas (
+                nome,
+                escolas (nome)
+              )
             )
-          )
-        `)
-        .order('nome_completo')
+          `)
+          .in('id', alunoIds)
+          .order('nome_completo')
 
-      if (error) throw error
+        if (error) throw error
 
-      // Use real data from Supabase
-      const transformedData = data?.map(aluno => ({
-        ...aluno,
-        responsaveis: aluno.responsaveis || undefined
-      })) || []
-      setAlunos(transformedData)
+        const transformedData = data?.map(aluno => ({
+          ...aluno,
+          responsaveis: aluno.responsaveis || undefined
+        })) || []
+        setAlunos(transformedData)
+      } else {
+        // No escola filter - get all alunos
+        const { data, error } = await supabase
+          .from('alunos')
+          .select(`
+            *,
+            responsaveis:responsavel_id (nome),
+            matriculas (
+              situacao,
+              turmas (
+                nome,
+                escolas (nome)
+              )
+            )
+          `)
+          .order('nome_completo')
+
+        if (error) throw error
+
+        const transformedData = data?.map(aluno => ({
+          ...aluno,
+          responsaveis: aluno.responsaveis || undefined
+        })) || []
+        setAlunos(transformedData)
+      }
     } catch (error: any) {
       logger.error('Erro ao carregar alunos:', error)
       toast.error('Erro ao carregar lista de alunos')
@@ -152,6 +234,36 @@ export default function AlunosPage() {
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Show escola required state for admin users without selection
+  if (shouldShowSelector && !selectedEscolaId) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Alunos"
+          description="Gerencie o cadastro de todos os alunos da rede municipal"
+          actions={
+            <>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+              </Button>
+              <Button asChild className="gap-2">
+                <Link href="/dashboard/alunos/novo">
+                  <Plus className="h-4 w-4" />
+                  Novo Aluno
+                </Link>
+              </Button>
+            </>
+          }
+        />
+        <EscolaRequiredState
+          title="Selecione uma Escola"
+          description="Para visualizar os alunos, selecione uma escola no seletor do menu lateral."
+        />
       </div>
     )
   }

@@ -48,6 +48,8 @@ import { LessonCard, LessonCardSkeleton, type LessonCardData } from '@/component
 import { LessonDetailPanel, type LessonDetailData } from '@/components/diary/LessonDetailPanel'
 import { NewLessonModal } from '@/components/diary/NewLessonModal'
 import { useAuth } from '@/hooks/use-auth'
+import { useEscola } from '@/contexts/escola-context'
+import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
@@ -81,6 +83,17 @@ interface ConteudoAula {
 export default function DiarioPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
+  const { selectedEscolaId, shouldShowSelector } = useEscola()
+
+  // Determine which escola_id to use for filtering
+  const escolaIdToUse = useMemo(() => {
+    // Admin users with selector: use selected escola (may be null)
+    if (shouldShowSelector) {
+      return selectedEscolaId
+    }
+    // Non-admin users: use their assigned escola
+    return userProfile?.escola_id || null
+  }, [shouldShowSelector, selectedEscolaId, userProfile?.escola_id])
 
   // State
   const [turmas, setTurmas] = useState<Turma[]>([])
@@ -109,6 +122,13 @@ export default function DiarioPage() {
     async function loadTurmas() {
       if (!userProfile) return
 
+      // If admin needs escola selected but hasn't selected one, don't fetch
+      if (shouldShowSelector && !escolaIdToUse) {
+        setTurmas([])
+        setLoadingTurmas(false)
+        return
+      }
+
       try {
         setLoadingTurmas(true)
         setError(null)
@@ -119,9 +139,9 @@ export default function DiarioPage() {
           .eq('ativo', true)
           .order('nome')
 
-        // Filter by school for non-admin users
-        if (userProfile.tipo_usuario !== 'admin' && userProfile.escola_id) {
-          query = query.eq('escola_id', userProfile.escola_id)
+        // Filter by escola if we have one
+        if (escolaIdToUse) {
+          query = query.eq('escola_id', escolaIdToUse)
         }
 
         // For professors, filter by their assigned turmas
@@ -159,7 +179,7 @@ export default function DiarioPage() {
     }
 
     loadTurmas()
-  }, [userProfile, selectedTurmaId])
+  }, [userProfile, selectedTurmaId, escolaIdToUse, shouldShowSelector])
 
   // =========================================================================
   // Data Loading: Lessons
@@ -436,6 +456,29 @@ export default function DiarioPage() {
           <div className="h-32 bg-gray-200 rounded"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
         </div>
+      </div>
+    )
+  }
+
+  // Show escola required state for admin without selection
+  if (shouldShowSelector && !selectedEscolaId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+              <BookOpen className="h-7 w-7" />
+              Diario de Classe
+            </h1>
+            <p className="text-muted-foreground text-sm md:text-base">
+              Registre e acompanhe o conteudo das aulas
+            </p>
+          </div>
+        </div>
+        <EscolaRequiredState
+          title="Selecione uma Escola"
+          description="Para acessar o diario de classe, selecione uma escola no seletor do menu lateral."
+        />
       </div>
     )
   }
