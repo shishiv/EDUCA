@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 8 of 11 (Code Standards)
-Plan: 2 of 4
-Status: In progress - Plan 08-02 complete
-Last activity: 2026-01-19 - Completed 08-02-PLAN.md (Logger migration lib/ layer)
+Plan: 4 of 4
+Status: Phase 8 complete
+Last activity: 2026-01-19 - Completed 08-04-PLAN.md (Logger migration pages/components)
 
-Progress: █████████░ 50% (12/24 requirements)
+Progress: ██████████ 60% (14/24 requirements)
 
 ## Milestone Summary
 
@@ -65,20 +65,26 @@ Progress: █████████░ 50% (12/24 requirements)
 | 08-02 | Feature names match file/domain | Intuitive grouping for log filtering |
 | 08-02 | Action names describe operation | Precise identification of error source |
 | 08-02 | console.warn also migrated to logger.warn | Consistency with structured logging |
+| 08-04 | Feature names match domain | diario-infantil, relatorios-descritivos, alunos, matriculas, reports, dashboard |
+| 08-04 | Action names describe operation | load_student, create_vivencia, save_draft, etc. |
+| 08-04 | console.log -> logger.info | Draft/finalize operations benefit from structured logging |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 08-02-PLAN.md
-Resume file: .planning/phases/08-code-standards/08-03-PLAN.md
+Stopped at: Completed 08-04-PLAN.md (Phase 8 complete)
+Resume file: .planning/phases/09-feature-flags/09-01-PLAN.md
 
 ### Roadmap Evolution
 
 - Phase 7.1 inserted after Phase 7: Admin School Selector (URGENT) - Admin users blocked from accessing escola-scoped pages
 - Phase 7.1 complete: Admin school selector functional, all 3 plans executed and verified
-- Phase 8 in progress: Code Standards documentation and migration
-- 08-02 complete: 48 console.error/warn calls migrated to structured logger in lib/
+- Phase 8 complete: Code Standards documentation and migration
+  - 08-01: Standards document created
+  - 08-02: 48 console.error/warn calls migrated to structured logger in lib/
+  - 08-04: 22 console.error/warn/log calls migrated to structured logger in pages/components
+- Ready for Phase 9: Feature Flags
 
 ---
 
-*State updated: 2026-01-19 after 08-02 plan complete*
+*State updated: 2026-01-19 after 08-04 plan complete (Phase 8 finished)*
