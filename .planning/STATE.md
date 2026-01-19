@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 8 of 11 (Code Standards) — READY TO PLAN
-Plan: 0 of 0
-Status: Phase 7.1 complete and verified, ready for Phase 8 planning
-Last activity: 2026-01-19 - Phase 7.1 executed and verified
+Phase: 8 of 11 (Code Standards)
+Plan: 1 of 4
+Status: In progress - Plan 08-01 complete
+Last activity: 2026-01-19 - Completed 08-01-PLAN.md (Data fetching + filter standards)
 
-Progress: █████████░ 42% (10/24 requirements)
+Progress: █████████░ 46% (11/24 requirements)
 
 ## Milestone Summary
 
@@ -59,18 +59,22 @@ Progress: █████████░ 42% (10/24 requirements)
 | 07.1-03 | Empty state shows PageHeader + EscolaRequiredState | Consistent UX for admin without selection |
 | 07.1-03 | Alunos filtered via matriculas->turmas chain | Escola doesn't have direct aluno relation |
 | 07.1-03 | Yellow EscolaRequiredState matches header indicator | Design consistency across empty states |
+| 08-01 | VivenciasApiService as exemplar pattern | Best example of API service with JSDoc, logger, typed returns |
+| 08-01 | staleTime: 5min static, 2min moderate, 1min active | React Query caching strategy by data type |
+| 08-01 | Portuguese 'todas' for feminine noun filters | Filter consistency with localized UI |
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Phase 7.1 complete
-Next step: `/gsd:discuss-phase 8` to gather context for Code Standards phase
+Stopped at: Completed 08-01-PLAN.md
+Resume file: .planning/phases/08-code-standards/08-02-PLAN.md
 
 ### Roadmap Evolution
 
 - Phase 7.1 inserted after Phase 7: Admin School Selector (URGENT) - Admin users blocked from accessing escola-scoped pages
 - Phase 7.1 complete: Admin school selector functional, all 3 plans executed and verified
+- Phase 8 in progress: Code Standards documentation and migration
 
 ---
 
-*State updated: 2026-01-19 after Phase 7.1 verification passed*
+*State updated: 2026-01-19 after 08-01 plan complete*
