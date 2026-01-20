@@ -25,6 +25,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   AlertCircle,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { LessonCard, LessonCardSkeleton, type LessonCardData } from '@/components/diary/LessonCard'
 import { LessonDetailPanel, type LessonDetailData } from '@/components/diary/LessonDetailPanel'
 import { NewLessonModal } from '@/components/diary/NewLessonModal'
@@ -53,6 +65,7 @@ import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { deleteSession, updateSession } from '@/lib/api/class-diary'
 
 // ============================================================================
 // Types
@@ -105,6 +118,11 @@ export default function DiarioPage() {
   const [isNewLessonOpen, setIsNewLessonOpen] = useState(false)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingLesson, setEditingLesson] = useState<LessonDetailData | null>(null)
+  const [editFormData, setEditFormData] = useState({ tema: '', observacoes: '' })
+  const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Loading states
   const [loadingTurmas, setLoadingTurmas] = useState(true)
@@ -391,27 +409,72 @@ export default function DiarioPage() {
   }
 
   const handleEditLesson = (lesson: LessonDetailData) => {
-    toast.info('Funcao de edicao sera implementada em breve')
-    // TODO: Open edit modal with lesson data
+    // Open edit modal with lesson data
+    setEditingLesson(lesson)
+    setEditFormData({
+      tema: lesson.tema || '',
+      observacoes: lesson.observacoes || '',
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const handleEditSubmit = async () => {
+    if (!editingLesson) return
+
+    setIsEditing(true)
+    try {
+      const { error } = await updateSession(supabase, editingLesson.id, {
+        conteudo_programatico: editFormData.tema,
+      })
+
+      if (error) throw error
+
+      // Also update conteudo_aula if it exists
+      if (editingLesson.sessao_id) {
+        try {
+          await (supabase as any)
+            .from('conteudo_aula')
+            .update({
+              tema: editFormData.tema,
+              observacoes: editFormData.observacoes,
+            })
+            .eq('sessao_id', editingLesson.sessao_id)
+        } catch {
+          // Content table might not exist, continue
+        }
+      }
+
+      toast.success('Aula atualizada com sucesso')
+      setIsEditModalOpen(false)
+      setEditingLesson(null)
+      setSelectedLesson(null)
+      loadLessons()
+    } catch (err) {
+      logger.error('Error updating lesson:', err as Error, {
+        feature: 'diario',
+        action: 'update_lesson',
+      })
+      toast.error('Erro ao atualizar aula')
+    } finally {
+      setIsEditing(false)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setIsEditModalOpen(false)
+    setEditingLesson(null)
+    setEditFormData({ tema: '', observacoes: '' })
   }
 
   const handleDeleteLesson = async (lesson: LessonDetailData) => {
     if (!confirm('Tem certeza que deseja excluir esta aula?')) return
 
+    setIsDeleting(true)
     try {
-      // Try to delete associated content first
-      if (lesson.sessao_id) {
-        try {
-          await (supabase as any).from('conteudo_aula').delete().eq('sessao_id', lesson.sessao_id)
-        } catch {
-          // Content table might not exist
-        }
-      }
+      // Use API service for delete
+      const { success, error } = await deleteSession(supabase, lesson.id)
 
-      // Delete the session
-      const { error } = await supabase.from('sessoes_aula').delete().eq('id', lesson.id)
-
-      if (error) throw error
+      if (!success || error) throw error || new Error('Falha ao excluir')
 
       toast.success('Aula excluida com sucesso')
       setSelectedLesson(null)
@@ -422,6 +485,8 @@ export default function DiarioPage() {
         action: 'delete_lesson',
       })
       toast.error('Erro ao excluir aula')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -666,6 +731,64 @@ export default function DiarioPage() {
         turmaName={selectedTurma?.nome}
         onSuccess={handleNewLessonSuccess}
       />
+
+      {/* Edit Lesson Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleEditCancel()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-blue-600" />
+              Editar Aula
+            </DialogTitle>
+            <DialogDescription>
+              Edite as informacoes da aula selecionada
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Tema/Conteudo */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-tema">Tema/Conteudo</Label>
+              <Input
+                id="edit-tema"
+                value={editFormData.tema}
+                onChange={(e) => setEditFormData((prev) => ({ ...prev, tema: e.target.value }))}
+                placeholder="Titulo do conteudo da aula"
+                disabled={isEditing}
+              />
+            </div>
+
+            {/* Observacoes */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-observacoes">Observacoes</Label>
+              <Textarea
+                id="edit-observacoes"
+                value={editFormData.observacoes}
+                onChange={(e) => setEditFormData((prev) => ({ ...prev, observacoes: e.target.value }))}
+                placeholder="Observacoes adicionais sobre a aula..."
+                className="min-h-[100px] resize-y"
+                disabled={isEditing}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleEditCancel} disabled={isEditing}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditSubmit} disabled={isEditing} className="bg-blue-600 hover:bg-blue-700">
+              {isEditing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

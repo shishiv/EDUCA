@@ -547,3 +547,91 @@ export async function getAvailableTurmas(
     return { data: null, error }
   }
 }
+
+/**
+ * Update a class session
+ *
+ * @param supabase - Supabase client instance
+ * @param sessionId - Session UUID
+ * @param updates - Fields to update
+ * @returns Updated session or error
+ */
+export interface UpdateSessionInput {
+  conteudo_programatico?: string
+  observacoes_fechamento?: string
+  status?: 'aberta' | 'fechada' | 'travada'
+}
+
+export async function updateSession(
+  supabase: SupabaseClient<Database>,
+  sessionId: string,
+  updates: UpdateSessionInput
+): Promise<{ data: { id: string } | null; error: any }> {
+  try {
+    const { data, error } = await supabase
+      .from('sessoes_aula')
+      .update(updates)
+      .eq('id', sessionId)
+      .select('id')
+      .single()
+
+    if (error) {
+      logger.error('Error updating session', error as Error, { feature: 'class-diary', action: 'update_session' })
+      return { data: null, error }
+    }
+
+    logger.info('Session updated successfully', {
+      feature: 'class-diary',
+      action: 'update_session',
+      metadata: { sessionId, updatedFields: Object.keys(updates) }
+    })
+
+    return { data, error: null }
+  } catch (error) {
+    logger.error('Exception in updateSession', error as Error, { feature: 'class-diary', action: 'update_session_exception' })
+    return { data: null, error }
+  }
+}
+
+/**
+ * Delete a class session and associated data
+ *
+ * @param supabase - Supabase client instance
+ * @param sessionId - Session UUID
+ * @returns Success or error
+ */
+export async function deleteSession(
+  supabase: SupabaseClient<Database>,
+  sessionId: string
+): Promise<{ success: boolean; error: any }> {
+  try {
+    // First try to delete associated conteudo_aula (if table exists)
+    try {
+      await (supabase as any).from('conteudo_aula').delete().eq('sessao_id', sessionId)
+    } catch {
+      // Content table might not exist, continue
+    }
+
+    // Delete the session
+    const { error } = await supabase
+      .from('sessoes_aula')
+      .delete()
+      .eq('id', sessionId)
+
+    if (error) {
+      logger.error('Error deleting session', error as Error, { feature: 'class-diary', action: 'delete_session' })
+      return { success: false, error }
+    }
+
+    logger.info('Session deleted successfully', {
+      feature: 'class-diary',
+      action: 'delete_session',
+      metadata: { sessionId }
+    })
+
+    return { success: true, error: null }
+  } catch (error) {
+    logger.error('Exception in deleteSession', error as Error, { feature: 'class-diary', action: 'delete_session_exception' })
+    return { success: false, error }
+  }
+}
