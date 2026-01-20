@@ -7,13 +7,14 @@
  * - Single column on mobile with sheet for vivencias
  * - Campo focus syncs with sidebar filter
  * - Semester selection dropdown
+ * - Save draft and finalize report to relatorios_descritivos table
  *
  * @see .planning/phases/05-aluno-diario-infantil/05-03-PLAN.md
  */
 
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -22,7 +23,10 @@ import {
   FileText,
   Printer,
   BookOpen,
+  Loader2,
+  Lock,
 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
 
 // Components
 import { Button } from '@/components/ui/button'
@@ -41,6 +45,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { DevelopmentReportWriter, type ReportFormValues } from '@/components/diary/DevelopmentReportWriter'
 import { VivenciasReference } from '@/components/diary/VivenciasReference'
 import { supabase } from '@/lib/supabase'
@@ -49,7 +64,7 @@ import { logger } from '@/lib/logger'
 // Types
 import { type Vivencia, type CampoType } from '@/types/diario-infantil'
 import { Plus } from 'lucide-react'
-import { SEMESTER_CONFIG, type SemestreType } from '@/types/descriptive-report'
+import { SEMESTER_CONFIG, type SemestreType, type ReportStatus } from '@/types/descriptive-report'
 
 // ============================================================================
 // Types
@@ -59,6 +74,22 @@ interface Student {
   id: string
   nome_completo: string
   data_nascimento: string
+}
+
+interface Matricula {
+  id: string
+  turma_id: string
+}
+
+interface ExistingReport {
+  id: string
+  status: ReportStatus
+  campo_eu_outro_nos: string | null
+  campo_corpo_gestos: string | null
+  campo_tracos_sons: string | null
+  campo_escuta_fala: string | null
+  campo_espacos_tempos: string | null
+  observacoes_gerais: string | null
 }
 
 // ============================================================================
@@ -86,6 +117,7 @@ function formatSemesterLabel(semestre: SemestreType, ano: number): string {
 export default function RelatorioPage() {
   const params = useParams()
   const router = useRouter()
+  const { userProfile } = useAuth()
   const alunoId = params?.id as string
 
   // State
@@ -100,7 +132,15 @@ export default function RelatorioPage() {
   const [selectedCampo, setSelectedCampo] = useState<CampoType | null>(null)
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
 
-  // Load student data
+  // Report state
+  const [matricula, setMatricula] = useState<Matricula | null>(null)
+  const [existingReport, setExistingReport] = useState<ExistingReport | null>(null)
+  const [isReportFinalized, setIsReportFinalized] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState(false)
+  const [pendingFinalizeData, setPendingFinalizeData] = useState<ReportFormValues | null>(null)
+
+  // Load student data and matricula
   const loadStudent = useCallback(async () => {
     if (!alunoId) return
 
@@ -114,6 +154,26 @@ export default function RelatorioPage() {
       if (studentError) throw studentError
 
       setStudent(data)
+
+      // Load active matricula
+      const { data: matriculaData, error: matriculaError } = await supabase
+        .from('matriculas')
+        .select('id, turma_id')
+        .eq('aluno_id', alunoId)
+        .eq('status', 'ativa')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (matriculaError) {
+        logger.warn('Error loading matricula', {
+          feature: 'relatorios-descritivos',
+          action: 'load_matricula',
+          metadata: { alunoId, error: matriculaError.message }
+        })
+      } else if (matriculaData) {
+        setMatricula(matriculaData)
+      }
     } catch (err: any) {
       logger.error('Error loading student', err as Error, {
         feature: 'diario-infantil',
@@ -149,6 +209,40 @@ export default function RelatorioPage() {
     }
   }, [alunoId])
 
+  // Load existing report for selected semester
+  const loadExistingReport = useCallback(async () => {
+    if (!matricula) return
+
+    try {
+      const { data: report, error: reportError } = await supabase
+        .from('relatorios_descritivos')
+        .select('id, status, campo_eu_outro_nos, campo_corpo_gestos, campo_tracos_sons, campo_escuta_fala, campo_espacos_tempos, observacoes_gerais')
+        .eq('matricula_id', matricula.id)
+        .eq('ano_letivo', selectedYear)
+        .eq('semestre', selectedSemester)
+        .maybeSingle()
+
+      if (reportError) {
+        logger.warn('Error loading existing report', {
+          feature: 'relatorios-descritivos',
+          action: 'load_existing_report',
+          metadata: { matriculaId: matricula.id, error: reportError.message }
+        })
+      } else if (report) {
+        setExistingReport(report)
+        setIsReportFinalized(report.status === 'finalizado')
+      } else {
+        setExistingReport(null)
+        setIsReportFinalized(false)
+      }
+    } catch (err) {
+      logger.error('Error in loadExistingReport', err as Error, {
+        feature: 'relatorios-descritivos',
+        action: 'load_existing_report_exception'
+      })
+    }
+  }, [matricula, selectedYear, selectedSemester])
+
   // Initial load
   useEffect(() => {
     const load = async () => {
@@ -159,28 +253,165 @@ export default function RelatorioPage() {
     load()
   }, [loadStudent, loadVivencias])
 
+  // Load existing report when matricula or semester changes
+  useEffect(() => {
+    if (matricula) {
+      loadExistingReport()
+    }
+  }, [matricula, loadExistingReport])
+
+  // Map form values to database columns
+  const mapFormToDb = useCallback((data: ReportFormValues) => ({
+    campo_eu_outro_nos: data.campo_eu || null,
+    campo_corpo_gestos: data.campo_corpo || null,
+    campo_tracos_sons: data.campo_tracos || null,
+    campo_escuta_fala: data.campo_escuta || null,
+    campo_espacos_tempos: data.campo_espacos || null,
+    observacoes_gerais: data.observacoes_gerais || null,
+  }), [])
+
   // Handlers
   const handleSaveDraft = useCallback(async (data: ReportFormValues) => {
-    // TODO: Implement actual save to API
-    logger.info('Saving draft', {
-      feature: 'diario-infantil',
-      action: 'save_draft_relatorio',
-      metadata: { alunoId, camposPreenchidos: Object.values(data).filter(v => v).length }
-    })
-    // Mock delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }, [alunoId])
+    if (!matricula || !userProfile) {
+      toast.error('Erro: dados da matricula nao encontrados')
+      return
+    }
 
-  const handleFinalize = useCallback(async (data: ReportFormValues) => {
-    // TODO: Implement actual finalization to API
-    logger.info('Finalizing report', {
-      feature: 'diario-infantil',
-      action: 'finalize_relatorio',
-      metadata: { alunoId, selectedSemester, selectedYear }
-    })
-    // Mock delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }, [alunoId, selectedSemester, selectedYear])
+    setIsSaving(true)
+    try {
+      const dbData = mapFormToDb(data)
+
+      if (existingReport) {
+        // Update existing report
+        const { error: updateError } = await supabase
+          .from('relatorios_descritivos')
+          .update({
+            ...dbData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingReport.id)
+
+        if (updateError) throw updateError
+      } else {
+        // Create new report
+        const { data: newReport, error: insertError } = await supabase
+          .from('relatorios_descritivos')
+          .insert({
+            matricula_id: matricula.id,
+            turma_id: matricula.turma_id,
+            professor_id: userProfile.id,
+            ano_letivo: selectedYear,
+            semestre: selectedSemester,
+            status: 'rascunho' as ReportStatus,
+            ...dbData,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            created_by: userProfile.id,
+          })
+          .select('id, status, campo_eu_outro_nos, campo_corpo_gestos, campo_tracos_sons, campo_escuta_fala, campo_espacos_tempos, observacoes_gerais')
+          .single()
+
+        if (insertError) throw insertError
+        setExistingReport(newReport)
+      }
+
+      logger.info('Draft saved successfully', {
+        feature: 'relatorios-descritivos',
+        action: 'save_draft',
+        metadata: { alunoId, matriculaId: matricula.id, semestre: selectedSemester }
+      })
+
+      toast.success('Rascunho salvo com sucesso')
+    } catch (err) {
+      logger.error('Error saving draft', err as Error, {
+        feature: 'relatorios-descritivos',
+        action: 'save_draft_error',
+        metadata: { alunoId }
+      })
+      toast.error('Erro ao salvar rascunho')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [alunoId, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb])
+
+  const handleFinalizeRequest = useCallback((data: ReportFormValues) => {
+    // Show confirmation dialog before finalizing
+    setPendingFinalizeData(data)
+    setShowFinalizeDialog(true)
+  }, [])
+
+  const handleFinalizeConfirm = useCallback(async () => {
+    if (!pendingFinalizeData || !matricula || !userProfile) {
+      toast.error('Erro: dados incompletos para finalizacao')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const dbData = mapFormToDb(pendingFinalizeData)
+      const now = new Date().toISOString()
+
+      if (existingReport) {
+        // Update and finalize existing report
+        const { error: updateError } = await supabase
+          .from('relatorios_descritivos')
+          .update({
+            ...dbData,
+            status: 'finalizado' as ReportStatus,
+            finalizado_em: now,
+            finalizado_por: userProfile.id,
+            updated_at: now,
+          })
+          .eq('id', existingReport.id)
+
+        if (updateError) throw updateError
+        setExistingReport({ ...existingReport, ...dbData, status: 'finalizado' })
+      } else {
+        // Create and finalize new report
+        const { data: newReport, error: insertError } = await supabase
+          .from('relatorios_descritivos')
+          .insert({
+            matricula_id: matricula.id,
+            turma_id: matricula.turma_id,
+            professor_id: userProfile.id,
+            ano_letivo: selectedYear,
+            semestre: selectedSemester,
+            status: 'finalizado' as ReportStatus,
+            ...dbData,
+            finalizado_em: now,
+            finalizado_por: userProfile.id,
+            created_at: now,
+            updated_at: now,
+            created_by: userProfile.id,
+          })
+          .select('id, status, campo_eu_outro_nos, campo_corpo_gestos, campo_tracos_sons, campo_escuta_fala, campo_espacos_tempos, observacoes_gerais')
+          .single()
+
+        if (insertError) throw insertError
+        setExistingReport(newReport)
+      }
+
+      setIsReportFinalized(true)
+      logger.info('Report finalized successfully', {
+        feature: 'relatorios-descritivos',
+        action: 'finalize_report',
+        metadata: { alunoId, matriculaId: matricula.id, semestre: selectedSemester }
+      })
+
+      toast.success('Relatorio finalizado com sucesso')
+    } catch (err) {
+      logger.error('Error finalizing report', err as Error, {
+        feature: 'relatorios-descritivos',
+        action: 'finalize_report_error',
+        metadata: { alunoId }
+      })
+      toast.error('Erro ao finalizar relatorio')
+    } finally {
+      setIsSaving(false)
+      setShowFinalizeDialog(false)
+      setPendingFinalizeData(null)
+    }
+  }, [pendingFinalizeData, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, alunoId])
 
   const handleCampoFocus = useCallback((campo: CampoType | null) => {
     setSelectedCampo(campo)
@@ -191,9 +422,22 @@ export default function RelatorioPage() {
   }, [])
 
   const handlePrint = useCallback(() => {
-    // TODO: Implement print/PDF export
+    // PDF export - out of scope for this plan
     toast.info('Exportacao PDF sera implementada em breve')
   }, [])
+
+  // Compute initial values from existing report
+  const initialValues = useMemo(() => {
+    if (!existingReport) return undefined
+    return {
+      campo_eu: existingReport.campo_eu_outro_nos || '',
+      campo_corpo: existingReport.campo_corpo_gestos || '',
+      campo_tracos: existingReport.campo_tracos_sons || '',
+      campo_escuta: existingReport.campo_escuta_fala || '',
+      campo_espacos: existingReport.campo_espacos_tempos || '',
+      observacoes_gerais: existingReport.observacoes_gerais || '',
+    }
+  }, [existingReport])
 
   // Loading state
   if (loading) {
@@ -354,13 +598,26 @@ export default function RelatorioPage() {
           <div className="grid lg:grid-cols-[1fr,350px] gap-6">
             {/* Writer (main area) */}
             <main>
+              {/* Finalized report notice */}
+              {isReportFinalized && (
+                <Alert className="mb-4 border-green-200 bg-green-50">
+                  <Lock className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-800">Relatorio Finalizado</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    Este relatorio foi finalizado e nao pode mais ser editado.
+                  </AlertDescription>
+                </Alert>
+              )}
               <DevelopmentReportWriter
                 studentName={student.nome_completo}
                 semesterLabel={semesterLabel}
+                initialValues={initialValues}
                 onSave={handleSaveDraft}
-                onFinalize={handleFinalize}
+                onFinalize={handleFinalizeRequest}
                 onCampoFocus={handleCampoFocus}
                 vivencias={vivencias}
+                isLoading={isSaving}
+                disabled={isReportFinalized}
               />
             </main>
 
@@ -379,6 +636,35 @@ export default function RelatorioPage() {
           </div>
         )}
       </div>
+
+      {/* Finalize Confirmation Dialog */}
+      <AlertDialog open={showFinalizeDialog} onOpenChange={setShowFinalizeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finalizar Relatorio</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao finalizar, o relatorio nao podera mais ser editado. Tem certeza que deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleFinalizeConfirm}
+              disabled={isSaving}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Finalizando...
+                </>
+              ) : (
+                'Finalizar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
