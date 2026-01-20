@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 12 of 12 (Role Access & Assignments) - COMPLETE
-Plan: 2 of 2 complete
-Status: Complete - Admin view-only restrictions and teacher assignment management page
-Last activity: 2026-01-20 - Completed Phase 12 Plan 02 (teacher assignment page)
+Phase: 13 of 14 (Admin Demo Assignment) - COMPLETE
+Plan: 1 of 1 complete
+Status: Phase 13 complete, Phase 14 ready to plan
+Last activity: 2026-01-20 - Completed 13-01-PLAN.md (Admin Demo Mode)
 
-Progress: ████████████████ 100% (24/24 requirements)
+Progress: █████████████████░ 93% (25/27 requirements)
 
 ## Milestone Summary
 
@@ -94,13 +94,17 @@ Progress: ████████████████ 100% (24/24 requireme
 | 12-02 | Turma cards use green/amber borders for status | Visual distinction between assigned/pending |
 | 12-02 | Stats cards at top of page | Quick overview before grid detail |
 | 12-02 | Reuse TeacherAssignment component in dialog | No code duplication |
+| 13-01 | DemoModeContext follows EscolaContext pattern | Consistent sessionStorage + hydration pattern |
+| 13-01 | Purple theme for demo mode banner | Distinct from blue (view-only) and yellow (escola selector) |
+| 13-01 | Turma-specific demo mode | demoTurmaId stored, only affects matching turma |
+| 13-01 | Actions recorded with admin user_id | Audit trail preserved in demo mode |
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: v2.0 milestone execution complete - ready for audit
+Stopped at: Completed 13-01-PLAN.md (Admin Demo Mode)
 Resume file: None
-Next action: /gsd:audit-milestone
+Next action: /gsd:plan-phase 14
 
 ### Roadmap Evolution
 
@@ -130,6 +134,11 @@ Next action: /gsd:audit-milestone
   - 12-01: Admin view-only mode for attendance (canRecordAttendance helper, ViewOnlyNotice component)
   - 12-02: Teacher assignment management page at /dashboard/atribuicoes
 
+- Phase 13 complete: Admin Demo Mode
+  - 13-01: DemoModeContext + DemoModeBanner + chamada/atribuicoes integration
+
+- Phase 14 ready: Legacy Page Audit (auditar paginas legadas nao integradas)
+
 ---
 
-*State updated: 2026-01-20 after Phase 12 execution complete*
+*State updated: 2026-01-20 after completing Phase 13*
