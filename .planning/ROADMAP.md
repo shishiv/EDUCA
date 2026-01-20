@@ -322,17 +322,18 @@ Plans:
 - CLN-07: Mover queries Supabase diretas para API services (dashboard, diario pages)
 - CLN-08: Integrar Sentry/LogRocket para error tracking
 
-**Plans:** 8 plans in 2 waves
+**Plans:** 9 plans in 2 waves
 
 Plans:
 - [ ] 15-01-PLAN.md — Create DashboardStatsApiService and migrate dashboard page (Wave 1)
 - [ ] 15-02-PLAN.md — Rename 5 kebab-case components to PascalCase (Wave 1)
-- [ ] 15-03-PLAN.md — Integrate Notas page with existing GradesApiService (Wave 2)
+- [ ] 15-03-PLAN.md — Integrate Notas page with existing GradesApiService (Wave 1)
 - [ ] 15-04-PLAN.md — Complete TODOs in pages (diario edit/delete, relatorio save) (Wave 1)
 - [ ] 15-05-PLAN.md — Complete TODOs in components (dashboard calcs, AbrirAulaWorkflow) (Wave 1)
 - [ ] 15-06-PLAN.md — Complete TODOs in lib/ (compliance, frequency, audit) (Wave 1)
 - [ ] 15-07-PLAN.md — Refactor AttendanceGrid into subcomponents (Wave 2)
 - [ ] 15-08-PLAN.md — Integrate Sentry for error tracking (Wave 2)
+- [ ] 15-09-PLAN.md — Refactor FrequenciaWorkflow into subcomponents (Wave 2)
 
 **Success Criteria:**
 - [ ] Zero TODOs/FIXMEs no codebase
@@ -406,3 +407,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 14 complete: 2026-01-20*
 *Phase 15 added: 2026-01-20 (Technical Debt Cleanup - 8 requirements from audits)*
 *Phase 15 planned: 2026-01-20 (Technical Debt Cleanup - 8 plans in 2 waves)*
+*Phase 15 revised: 2026-01-20 (9 plans - added FrequenciaWorkflow refactor)*
