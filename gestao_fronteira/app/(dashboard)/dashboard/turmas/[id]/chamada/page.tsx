@@ -26,6 +26,7 @@ import { attendanceApi } from '@/lib/api/attendance'
 import { usersApi } from '@/lib/api/users'
 import { logger } from '@/lib/logger'
 import { canRecordAttendance } from '@/lib/auth'
+import { useDemoMode } from '@/contexts/demo-mode-context'
 
 // Components
 import {
@@ -34,6 +35,7 @@ import {
   ChamadaStatusButtons,
   JustificationModal,
   ViewOnlyNotice,
+  DemoModeBanner,
   type AttendanceStatus,
 } from '@/components/attendance'
 import { Card, CardContent } from '@/components/ui/card'
@@ -97,6 +99,10 @@ export default function ChamadaPage() {
   const params = useParams()
   const router = useRouter()
   const turmaId = params?.id as string
+
+  // Demo mode for admin demonstration
+  const { isDemoMode, demoTurmaId, exitDemoMode } = useDemoMode()
+  const inDemoForThisTurma = isDemoMode && demoTurmaId === turmaId
 
   // Data state
   const [turma, setTurma] = useState<Turma | null>(null)
@@ -335,10 +341,12 @@ export default function ChamadaPage() {
       setCanSeeBolsaFamilia(gestorRoles.includes(role || ''))
 
       // Check if user can record attendance
-      setIsViewOnly(!canRecordAttendance(role))
+      // Demo mode overrides view-only for admin on this specific turma
+      const baseViewOnly = !canRecordAttendance(role)
+      setIsViewOnly(inDemoForThisTurma ? false : baseViewOnly)
     }
     checkUserRole()
-  }, [])
+  }, [inDemoForThisTurma])
 
   // ============================================================================
   // Handlers
@@ -499,8 +507,13 @@ export default function ChamadaPage() {
         onDateChange={handleDateChange}
       />
 
-      {/* View-only notice for admin users */}
-      {isViewOnly && (
+      {/* Demo mode banner for admin */}
+      {inDemoForThisTurma && (
+        <DemoModeBanner onExit={exitDemoMode} />
+      )}
+
+      {/* View-only notice for admin users (not in demo) */}
+      {isViewOnly && !inDemoForThisTurma && (
         <ViewOnlyNotice />
       )}
 
