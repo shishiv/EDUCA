@@ -19,10 +19,10 @@ export { ChamadaStatusButtons } from './ChamadaStatusButtons'
 export { JustificationModal } from './JustificationModal'
 
 // Role-based access (12-01-PLAN)
-export { ViewOnlyNotice } from './view-only-notice'
+export { ViewOnlyNotice } from './ViewOnlyNotice'
 
 // Demo mode for admin (13-01-PLAN)
-export { DemoModeBanner } from './demo-mode-banner'
+export { DemoModeBanner } from './DemoModeBanner'
 
 // Type exports
 export type { AbrirAulaWorkflowProps } from './AbrirAulaWorkflow'
