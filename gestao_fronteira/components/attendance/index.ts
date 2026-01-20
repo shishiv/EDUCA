@@ -21,6 +21,9 @@ export { JustificationModal } from './JustificationModal'
 // Role-based access (12-01-PLAN)
 export { ViewOnlyNotice } from './view-only-notice'
 
+// Demo mode for admin (13-01-PLAN)
+export { DemoModeBanner } from './demo-mode-banner'
+
 // Type exports
 export type { AbrirAulaWorkflowProps } from './AbrirAulaWorkflow'
 export type { AttendanceGridProps } from './AttendanceGrid'
