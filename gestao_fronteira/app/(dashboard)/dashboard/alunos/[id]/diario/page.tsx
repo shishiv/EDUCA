@@ -7,6 +7,7 @@
  * - VivenciasTimeline with grouped observations
  * - "Nova Vivencia" button
  * - Link to relatario page
+ * - Edit/Delete vivencias with confirmation dialogs
  *
  * @see .planning/phases/05-aluno-diario-infantil/05-02-PLAN.md
  */
@@ -19,15 +20,33 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { ArrowLeft, Plus, FileText } from 'lucide-react'
+import { vivenciasApi, type UpdateVivenciaInput } from '@/lib/api/vivencias'
+import { ArrowLeft, Plus, FileText, Loader2 } from 'lucide-react'
 
 // Components
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { VivenciasTimeline } from '@/components/diary/VivenciasTimeline'
+import { VivenciaForm } from '@/components/diary/VivenciaForm'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 // Types
-import { type Vivencia } from '@/types/diario-infantil'
+import { type Vivencia, type VivenciaFormData } from '@/types/diario-infantil'
 
 // ============================================================================
 // Types
@@ -53,6 +72,14 @@ export default function DiarioInfantilPage() {
   const [vivencias, setVivencias] = useState<Vivencia[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Edit/Delete state
+  const [editingVivencia, setEditingVivencia] = useState<Vivencia | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isEditLoading, setIsEditLoading] = useState(false)
+  const [deletingVivencia, setDeletingVivencia] = useState<Vivencia | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false)
 
   // Load student data
   const loadStudent = useCallback(async () => {
@@ -116,13 +143,77 @@ export default function DiarioInfantilPage() {
 
   // Handlers
   const handleEditVivencia = useCallback((vivencia: Vivencia) => {
-    // TODO: Implement edit flow
-    toast.info('Edicao de vivencia sera implementada em breve')
+    setEditingVivencia(vivencia)
+    setIsEditModalOpen(true)
+  }, [])
+
+  const handleEditSubmit = useCallback(async (data: VivenciaFormData) => {
+    if (!editingVivencia) return
+
+    try {
+      setIsEditLoading(true)
+
+      const updateData: UpdateVivenciaInput = {
+        campos_experiencia: data.campos_experiencia,
+        descricao: data.descricao,
+        observacoes: data.observacoes || undefined,
+      }
+
+      await vivenciasApi.update(editingVivencia.id, updateData)
+
+      toast.success('Vivencia atualizada com sucesso')
+      setIsEditModalOpen(false)
+      setEditingVivencia(null)
+      await loadVivencias()
+    } catch (err) {
+      logger.error('Error updating vivencia', err as Error, {
+        feature: 'diario-infantil',
+        action: 'update_vivencia',
+        metadata: { vivenciaId: editingVivencia.id }
+      })
+      toast.error('Erro ao atualizar vivencia')
+    } finally {
+      setIsEditLoading(false)
+    }
+  }, [editingVivencia, loadVivencias])
+
+  const handleEditCancel = useCallback(() => {
+    setIsEditModalOpen(false)
+    setEditingVivencia(null)
   }, [])
 
   const handleDeleteVivencia = useCallback((vivencia: Vivencia) => {
-    // TODO: Implement delete with confirmation
-    toast.info('Exclusao de vivencia sera implementada em breve')
+    setDeletingVivencia(vivencia)
+    setIsDeleteDialogOpen(true)
+  }, [])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deletingVivencia) return
+
+    try {
+      setIsDeleteLoading(true)
+
+      await vivenciasApi.delete(deletingVivencia.id)
+
+      toast.success('Vivencia excluida com sucesso')
+      setIsDeleteDialogOpen(false)
+      setDeletingVivencia(null)
+      await loadVivencias()
+    } catch (err) {
+      logger.error('Error deleting vivencia', err as Error, {
+        feature: 'diario-infantil',
+        action: 'delete_vivencia',
+        metadata: { vivenciaId: deletingVivencia.id }
+      })
+      toast.error('Erro ao excluir vivencia')
+    } finally {
+      setIsDeleteLoading(false)
+    }
+  }, [deletingVivencia, loadVivencias])
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsDeleteDialogOpen(false)
+    setDeletingVivencia(null)
   }, [])
 
   // Loading state
@@ -234,6 +325,60 @@ export default function DiarioInfantilPage() {
           onDeleteVivencia={handleDeleteVivencia}
         />
       )}
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Vivencia</DialogTitle>
+          </DialogHeader>
+          {editingVivencia && student && (
+            <VivenciaForm
+              onSubmit={handleEditSubmit}
+              studentName={student.nome_completo}
+              initialData={{
+                data_vivencia: editingVivencia.data_vivencia,
+                campos_experiencia: editingVivencia.campos_experiencia,
+                descricao: editingVivencia.descricao,
+                observacoes: editingVivencia.observacoes || '',
+              }}
+              isLoading={isEditLoading}
+              onCancel={handleEditCancel}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Vivencia</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta vivencia? Esta acao nao pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleteLoading}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleteLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleteLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                'Excluir'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
