@@ -33,9 +33,17 @@ import {
   AlertTriangle,
   Baby,
   RefreshCw,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import {
+  createPDFDocument,
+  addPDFHeader,
+  addPDFTable,
+  addPDFFooter,
+  savePDF,
+} from '@/lib/export/pdf-utils'
 
 import {
   StudentReport,
@@ -241,6 +249,7 @@ export default function BoletimPage() {
   const [descriptiveReports, setDescriptiveReports] = useState<ReportSummary[]>([])
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null)
   const [printMode, setPrintMode] = useState(false)
+  const [exportingPDF, setExportingPDF] = useState(false)
 
   // Fetch student data
   const fetchStudentData = useCallback(async () => {
@@ -432,11 +441,130 @@ export default function BoletimPage() {
     }, 100)
   }, [])
 
-  // Handle PDF export (placeholder - would need jspdf integration)
-  const handleExportPDF = useCallback(() => {
-    toast.info('Exportacao PDF em desenvolvimento')
-    // TODO: Implement PDF export with jspdf
-  }, [])
+  // Handle PDF export
+  const handleExportPDF = useCallback(async () => {
+    if (!student) return
+
+    setExportingPDF(true)
+    try {
+      const matricula = student.matricula
+      const turma = matricula?.turma
+
+      // Create PDF document
+      const doc = createPDFDocument('portrait')
+
+      // Add header
+      let currentY = addPDFHeader(doc, {
+        title: 'Boletim Escolar',
+        subtitle: educationLevel === 'infantil'
+          ? 'Relatorio de Desenvolvimento - Educacao Infantil'
+          : 'Desempenho Academico - Ensino Fundamental',
+        schoolName: turma?.escola?.nome || 'Escola Municipal',
+      })
+
+      // Add student info section
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Dados do Aluno', 15, currentY)
+      currentY += 7
+
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Nome: ${student.nome_completo}`, 15, currentY)
+      currentY += 5
+      doc.text(`Turma: ${turma?.nome || '-'} | Serie: ${turma?.serie || '-'}`, 15, currentY)
+      currentY += 5
+      doc.text(`Ano Letivo: ${matricula?.ano_letivo || new Date().getFullYear()}`, 15, currentY)
+      currentY += 10
+
+      if (educationLevel === 'fundamental' && grades.length > 0) {
+        // Add grades table
+        currentY = addPDFTable(
+          doc,
+          {
+            title: 'Notas por Disciplina',
+            columns: [
+              { header: 'Disciplina', dataKey: 'disciplina', halign: 'left' },
+              { header: '1o Bim', dataKey: 'bimestre1', halign: 'center', width: 20 },
+              { header: '2o Bim', dataKey: 'bimestre2', halign: 'center', width: 20 },
+              { header: '3o Bim', dataKey: 'bimestre3', halign: 'center', width: 20 },
+              { header: '4o Bim', dataKey: 'bimestre4', halign: 'center', width: 20 },
+              { header: 'Media', dataKey: 'media', halign: 'center', width: 20 },
+            ],
+            rows: grades.map((g) => ({
+              disciplina: g.disciplina,
+              bimestre1: g.bimestre1 !== null ? g.bimestre1.toFixed(1) : '-',
+              bimestre2: g.bimestre2 !== null ? g.bimestre2.toFixed(1) : '-',
+              bimestre3: g.bimestre3 !== null ? g.bimestre3.toFixed(1) : '-',
+              bimestre4: g.bimestre4 !== null ? g.bimestre4.toFixed(1) : '-',
+              media: g.media !== null ? g.media.toFixed(1) : '-',
+            })),
+          },
+          currentY
+        )
+        currentY += 10
+      } else if (educationLevel === 'infantil' && descriptiveReports.length > 0) {
+        // Add descriptive reports summary
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Relatorios Descritivos', 15, currentY)
+        currentY += 7
+
+        for (const report of descriptiveReports) {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'bold')
+          doc.text(`${report.semestre}o Semestre ${report.anoLetivo}`, 15, currentY)
+          currentY += 5
+
+          doc.setFont('helvetica', 'normal')
+          if (report.observacoesGerais) {
+            const lines = doc.splitTextToSize(report.observacoesGerais, 180)
+            doc.text(lines, 15, currentY)
+            currentY += lines.length * 5 + 5
+          }
+        }
+      }
+
+      // Add attendance summary if available
+      if (attendance) {
+        currentY += 5
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Frequencia', 15, currentY)
+        currentY += 7
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Total de Aulas: ${attendance.totalAulas}`, 15, currentY)
+        currentY += 5
+        doc.text(`Presencas: ${attendance.presencas} | Faltas: ${attendance.faltas}`, 15, currentY)
+        currentY += 5
+        doc.text(`Percentual de Frequencia: ${attendance.percentual}%`, 15, currentY)
+      }
+
+      // Add footer
+      addPDFFooter(doc, { showPageNumbers: true, showGeneratedAt: true })
+
+      // Save PDF
+      const filename = `boletim-${student.nome_completo.replace(/\s+/g, '-').toLowerCase()}`
+      savePDF(doc, filename)
+
+      toast.success('PDF exportado com sucesso!')
+      logger.info('PDF exported successfully', {
+        feature: 'boletim',
+        action: 'export_pdf',
+        metadata: { studentId: student.id },
+      })
+    } catch (error) {
+      logger.error('Error exporting PDF', error as Error, {
+        feature: 'boletim',
+        action: 'export_pdf_failed',
+      })
+      toast.error('Erro ao exportar PDF')
+    } finally {
+      setExportingPDF(false)
+    }
+  }, [student, educationLevel, grades, descriptiveReports, attendance])
 
   // Loading state
   if (loading) {
