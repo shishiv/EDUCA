@@ -9,6 +9,7 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar'
 import { MobileNav } from '@/components/layout/MobileNav'
 import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { EscolaProvider } from '@/contexts/escola-context'
+import { DemoModeProvider } from '@/contexts/demo-mode-context'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { ModalProvider } from '@/components/ui/modal-manager'
@@ -92,15 +93,17 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
 
   return (
     <EscolaProvider>
-      <SessionRealtimeProvider
-        user={{
-          id: userProfile.id,
-          tipo_usuario: userProfile.tipo_usuario,
-          escola_id: userProfile.escola_id || '' // Default to empty string if null
-        }}
-      >
-        {children}
-      </SessionRealtimeProvider>
+      <DemoModeProvider>
+        <SessionRealtimeProvider
+          user={{
+            id: userProfile.id,
+            tipo_usuario: userProfile.tipo_usuario,
+            escola_id: userProfile.escola_id || '' // Default to empty string if null
+          }}
+        >
+          {children}
+        </SessionRealtimeProvider>
+      </DemoModeProvider>
     </EscolaProvider>
   )
 }
