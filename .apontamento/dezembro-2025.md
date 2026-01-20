@@ -279,3 +279,4 @@ _____________________________________
 
 - ❌ "Add E2E tests for onboarding wizard"
 - ✅ "Testes do assistente de configuração inicial"
+
