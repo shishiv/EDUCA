@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
 import { StatCard, AlertItem } from '@/components/ui'
 import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +14,6 @@ import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
 
-type FrequenciaRow = Database['public']['Tables']['frequencia']['Row']
 type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
 type AlunoRow = Database['public']['Tables']['alunos']['Row']
 
@@ -92,65 +92,18 @@ export default function DashboardPage() {
     try {
       logger.info('Loading dashboard data...')
 
-      // Load real data from Supabase in parallel for better performance
-      const [
-        alunosResult,
-        escolasResult,
-        turmasResult,
-        matriculasResult,
-        frequenciaResult,
-        alunosComDocsPendentesResult,
-        frequenciaLowResult
-      ] = await Promise.all([
-        // Total de alunos ativos
-        supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('ativo', true),
+      // Fetch stats via API service (follows three-layer architecture per STD-03)
+      const apiStats = await dashboardStatsApi.getStats()
 
-        // Total de escolas ativas
-        supabase.from('escolas').select('id', { count: 'exact', head: true }).eq('ativo', true),
-
-        // Total de turmas ativas
-        supabase.from('turmas').select('id', { count: 'exact', head: true }).eq('ativo', true),
-
-        // Total de matrículas ativas (using situacao column, not ativo)
-        supabase.from('matriculas').select('id', { count: 'exact', head: true }).eq('situacao', 'ativa'),
-
-        // Sample frequency data for calculation (can be expanded later)
-        supabase.from('frequencia').select('presente').limit(100),
-
-        // Alunos com documentos pendentes (sem CPF ou telefone)
-        supabase.from('alunos').select('id', { count: 'exact', head: true })
-          .or('cpf.is.null,telefone.is.null')
-          .eq('ativo', true),
-
-        // Frequência baixa: registros de ausência (matricula_id instead of aluno_id)
-        supabase.from('frequencia')
-          .select('matricula_id, presente')
-          .eq('presente', false)
-          .limit(1000)
-      ])
-
-      // Calculate frequency average
-      let frequenciaMedia = 87.5 // Default fallback
-      if (frequenciaResult.data && frequenciaResult.data.length > 0) {
-        const totalRegistros = frequenciaResult.data.length
-        const presentes = frequenciaResult.data.filter(f => f.presente).length
-        frequenciaMedia = totalRegistros > 0 ? (presentes / totalRegistros) * 100 : 87.5
-      }
-
-      // Calculate low attendance students - simplified logic for now
-      const alunosComBaixaFrequencia = Math.max(1, Math.floor((frequenciaLowResult.data?.length || 0) / 10))
-
-      // Count students with pending documents
-      const alunosComDocumentosPendentes = alunosComDocsPendentesResult.count || 0
-
-      const newStats = {
-        totalAlunos: alunosResult.count || 0,
-        totalEscolas: escolasResult.count || 0,
-        totalTurmas: turmasResult.count || 0,
-        totalMatriculas: matriculasResult.count || 0,
-        frequenciaMedia: Math.round(frequenciaMedia * 10) / 10,
-        alunosComBaixaFrequencia,
-        alunosComDocumentosPendentes
+      // Map API stats to component state
+      const newStats: DashboardStats = {
+        totalAlunos: apiStats.totalAlunos,
+        totalEscolas: apiStats.totalEscolas,
+        totalTurmas: apiStats.totalTurmas,
+        totalMatriculas: apiStats.totalMatriculas,
+        frequenciaMedia: apiStats.frequenciaGeral,
+        alunosComBaixaFrequencia: apiStats.alunosComBaixaFrequencia,
+        alunosComDocumentosPendentes: apiStats.alunosComDocumentosPendentes
       }
 
       logger.info('Dashboard stats loaded:', { metadata: { newStats } })
