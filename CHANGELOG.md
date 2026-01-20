@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Responsaveis na navegacao lateral:**
+  - Pagina `/dashboard/responsaveis` adicionada ao grupo Cadastros
+  - Visivel para admin, diretor e secretario
+  - Permite gestao de responsaveis/tutores de alunos
+
+### Removed
+- **Paginas de desenvolvimento removidas:**
+  - `/showcase` - pagina de testes de componentes
+  - `/platform-names` - pagina de exploracao de branding
+  - Referencias atualizadas em scripts de dev
+
+### Added
 - **Calendário Escolar (F009):**
   - Tabela `calendario_escolar` com RLS por escola
   - Funções `is_dia_letivo()` e `contar_dias_letivos()` para integração com frequência
