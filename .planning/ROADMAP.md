@@ -21,8 +21,9 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 | 12 | Role Access & Assignments | ROL-01..02 | Restrições por perfil e atribuição professor-turma |
 | 13 | Admin Demo Assignment | DMO-01 | Admin pode se atribuir escola/turma para demo |
 | 14 | Legacy Page Audit | AUD-01..02 | Auditar páginas legadas não integradas |
+| 15 | Technical Debt Cleanup | CLN-01..08 | Zero mocks, zero TODOs, zero queries diretas |
 
-**Total:** 9 phases | 26 requirements
+**Total:** 10 phases | 34 requirements
 
 ---
 
@@ -307,6 +308,36 @@ Plans:
 
 ---
 
+## Phase 15: Technical Debt Cleanup
+
+**Goal:** Resolver todos os achados dos audits - mocks, TODOs, naming, refactors, queries diretas.
+
+**Requirements:**
+- CLN-01: Completar TODOs em pages (diário edit/delete, relatório save, PDF exports)
+- CLN-02: Completar TODOs em components (dashboard calculations, AbrirAulaWorkflow)
+- CLN-03: Completar TODOs em lib/ (compliance warnings, attendance frequency, audit logging)
+- CLN-04: Substituir mock data em Notas por Supabase real
+- CLN-05: Renomear 5 componentes kebab-case para PascalCase
+- CLN-06: Refatorar componentes grandes (AttendanceGrid, FrequenciaWorkflow >600 LOC)
+- CLN-07: Mover queries Supabase diretas para API services (dashboard, diario pages)
+- CLN-08: Integrar Sentry/LogRocket para error tracking
+
+**Plans:** TBD
+
+**Success Criteria:**
+- [ ] Zero TODOs/FIXMEs no codebase
+- [ ] Zero mock data - todas páginas usam Supabase real
+- [ ] 100% componentes seguem naming convention (PascalCase)
+- [ ] Nenhum componente >500 LOC
+- [ ] Zero queries Supabase diretas em pages (tudo via API service)
+- [ ] Error tracking em produção funcionando
+
+**Dependencies:** Phase 14 (audits identify issues)
+
+**Effort Estimate:** ~50-60h total
+
+---
+
 ## Execution Order
 
 ```
@@ -329,6 +360,8 @@ Phase 12 (Role Access)
 Phase 13 (Admin Demo)
     |
 Phase 14 (Legacy Audit)
+    |
+Phase 15 (Tech Debt Cleanup) <-- NEW
 ```
 
 Linear dependency chain - each phase builds on previous.
@@ -360,4 +393,5 @@ Linear dependency chain - each phase builds on previous.
 *Phase 13 added: 2026-01-20 (Admin Demo Assignment)*
 *Phase 13 planned: 2026-01-20 (Admin Demo Mode - 1 plan)*
 *Phase 14 planned: 2026-01-20 (Legacy Page Audit - 2 plans)*
-*Phase 14 complete: 2026-01-20 (v2.0 milestone complete)*
+*Phase 14 complete: 2026-01-20*
+*Phase 15 added: 2026-01-20 (Technical Debt Cleanup - 8 requirements from audits)*
