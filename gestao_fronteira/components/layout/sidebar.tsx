@@ -27,6 +27,7 @@ import {
   CheckSquare,
   BookText,
   FolderOpen,
+  UserCog,
   type LucideIcon
 } from 'lucide-react'
 
@@ -113,6 +114,12 @@ const navigationGroups: NavigationGroup[] = [
         href: '/dashboard/matriculas',
         icon: UserCheck,
         roles: ['admin', 'diretor', 'secretario'],
+      },
+      {
+        name: 'Atribuicoes',
+        href: '/dashboard/atribuicoes',
+        icon: UserCog,
+        roles: ['admin', 'diretor'],
       },
     ],
   },
