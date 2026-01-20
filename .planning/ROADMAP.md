@@ -19,8 +19,10 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 | 10 | Security & Compliance | SEC-01..03 | Migrations versionadas e RLS documentado |
 | 11 | Testing | TST-01..03 | Framework de testes com cobertura critica |
 | 12 | Role Access & Assignments | ROL-01..02 | Restrições por perfil e atribuição professor-turma |
+| 13 | Admin Demo Assignment | DMO-01 | Admin pode se atribuir escola/turma para demo |
+| 14 | Legacy Page Audit | AUD-01..02 | Auditar páginas legadas não integradas |
 
-**Total:** 7 phases | 23 requirements
+**Total:** 9 phases | 26 requirements
 
 ---
 
@@ -254,6 +256,52 @@ Plans:
 
 ---
 
+## Phase 13: Admin Demo Assignment
+
+**Goal:** Permitir que admin entre em modo demonstracao para executar acoes como professor (chamada) durante treinamentos.
+
+**Requirements:**
+- DMO-01: Admin pode se atribuir temporariamente a escola/turma para demonstrar funcionalidades
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 13-01-PLAN.md — Create demo mode context, banner, and page integrations
+
+**Success Criteria:**
+- [ ] Admin pode entrar em "modo demonstracao" a partir da pagina de atribuicoes
+- [ ] Em modo demo, admin pode registrar chamada (botoes habilitados)
+- [ ] Banner roxo distintivo mostra modo demo ativo
+- [ ] Acoes em modo demo registradas com user_id do admin (audit trail)
+- [ ] Admin pode sair do modo demo a qualquer momento
+
+**Dependencies:** Phase 12 (role access in place)
+
+---
+
+## Phase 14: Legacy Page Audit
+
+**Goal:** Auditar todas as páginas para identificar sistemas legados não integrados/costurados.
+
+**Requirements:**
+- AUD-01: Inventário completo de páginas existentes com status de integração
+- AUD-02: Lista de páginas órfãs ou com funcionalidade incompleta
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14 to break down)
+
+**Success Criteria:**
+- [ ] Documento listando todas as rotas/páginas da aplicação
+- [ ] Cada página classificada: funcional, parcial, órfã, legada
+- [ ] Recomendações de ação para cada página problemática
+- [ ] Sidebar/navegação reflete apenas páginas funcionais
+
+**Dependencies:** Phase 13 (demo mode helps testing)
+
+---
+
 ## Execution Order
 
 ```
@@ -272,6 +320,10 @@ Phase 10 (Security)
 Phase 11 (Testing)
     |
 Phase 12 (Role Access)
+    |
+Phase 13 (Admin Demo)
+    |
+Phase 14 (Legacy Audit)
 ```
 
 Linear dependency chain - each phase builds on previous.
@@ -300,3 +352,6 @@ Linear dependency chain - each phase builds on previous.
 *Phase 11 planned: 2026-01-19*
 *Phase 12 planned: 2026-01-20 (Role Access & Assignments - 2 plans)*
 *Phase 12 complete: 2026-01-20*
+*Phase 13 added: 2026-01-20 (Admin Demo Assignment)*
+*Phase 13 planned: 2026-01-20 (Admin Demo Mode - 1 plan)*
+*Phase 14 added: 2026-01-20 (Legacy Page Audit)*
