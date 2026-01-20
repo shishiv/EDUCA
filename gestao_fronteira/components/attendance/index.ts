@@ -18,6 +18,9 @@ export { ChamadaDateNav } from './ChamadaDateNav'
 export { ChamadaStatusButtons } from './ChamadaStatusButtons'
 export { JustificationModal } from './JustificationModal'
 
+// Role-based access (12-01-PLAN)
+export { ViewOnlyNotice } from './view-only-notice'
+
 // Type exports
 export type { AbrirAulaWorkflowProps } from './AbrirAulaWorkflow'
 export type { AttendanceGridProps } from './AttendanceGrid'
