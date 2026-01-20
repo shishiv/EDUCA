@@ -65,8 +65,8 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Legacy Page Audit
 
-- [ ] **AUD-01**: Inventário completo de páginas existentes com status de integração
-- [ ] **AUD-02**: Lista de páginas órfãs ou com funcionalidade incompleta
+- [x] **AUD-01**: Inventário completo de páginas existentes com status de integração
+- [x] **AUD-02**: Lista de páginas órfãs ou com funcionalidade incompleta
 
 ## v2 Requirements
 
@@ -139,9 +139,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TST-03 | Phase 11 | Deferred |
 | ROL-01 | Phase 12 | Complete |
 | ROL-02 | Phase 12 | Complete |
-| DMO-01 | Phase 13 | Pending |
-| AUD-01 | Phase 14 | Pending |
-| AUD-02 | Phase 14 | Pending |
+| DMO-01 | Phase 13 | Complete |
+| AUD-01 | Phase 14 | Complete |
+| AUD-02 | Phase 14 | Complete |
 
 **Coverage:** 28 requirements (21 original + 3 ADM + 2 ROL + 1 DMO + 2 AUD - 1 deferred), all mapped to phases.
 
