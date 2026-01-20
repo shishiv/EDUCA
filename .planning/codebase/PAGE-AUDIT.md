@@ -1,9 +1,11 @@
 # Page Audit: EDUCA Application
 
-**Audited:** 2026-01-20
-**Total Pages:** 46 page.tsx files
+**Audited:** 2026-01-20 (Updated: 2026-01-20)
+**Total Pages:** 43 page.tsx files (after cleanup)
 **Phase:** 14-legacy-page-audit
 **Based on:** 14-RESEARCH.md
+
+**Correction (2026-01-20):** Removed `/dashboard/frequencia` (legacy session-based workflow) - sidebar now points to `/diario/frequencia` (canonical implementation with AttendanceGrid)
 
 ## Summary
 
@@ -12,10 +14,10 @@
 | Functional | 38 | None |
 | Partial | 2 | Monitor |
 | Mock Data | 1 | Future integration |
-| Orphan | 3 | Add to nav or document |
-| Dev-Only | 2 | Remove in Phase 14 |
+| Orphan | 2 | Document (Calendario, Sessoes) |
+| ~~Dev-Only~~ | ~~3~~ | REMOVED (showcase, platform-names, dashboard/frequencia) |
 
-**Total:** 46 pages
+**Total:** 43 pages (after cleanup)
 
 ## Classification Legend
 
@@ -38,7 +40,8 @@ Current sidebar structure from `components/layout/sidebar.tsx`:
 | Cadastros | Turmas | `/dashboard/turmas` | admin, diretor, secretario |
 | Cadastros | Matriculas | `/dashboard/matriculas` | admin, diretor, secretario |
 | Cadastros | Atribuicoes | `/dashboard/atribuicoes` | admin, diretor |
-| Academico | Frequencia | `/dashboard/frequencia` | admin, diretor, secretario, professor |
+| Cadastros | Responsáveis | `/dashboard/responsaveis` | admin, diretor, secretario |
+| Academico | Frequencia | `/diario/frequencia` | admin, diretor, secretario, professor |
 | Academico | Diario de Classe | `/dashboard/diario` | admin, diretor, secretario, professor |
 | Academico | Notas | `/dashboard/notas` | admin, diretor, secretario, professor |
 | Gestao | Relatorios | `/dashboard/relatorios` | admin, diretor, secretario |
@@ -74,7 +77,7 @@ Current sidebar structure from `components/layout/sidebar.tsx`:
 | Turmas | `/dashboard/turmas` | `app/(dashboard)/dashboard/turmas/page.tsx` | **Functional** | Supabase + escola filter |
 | Matriculas | `/dashboard/matriculas` | `app/(dashboard)/dashboard/matriculas/page.tsx` | **Functional** | Supabase + escola filter |
 | Atribuicoes | `/dashboard/atribuicoes` | `app/(dashboard)/dashboard/atribuicoes/page.tsx` | **Functional** | Supabase (Phase 12-02) |
-| Frequencia | `/dashboard/frequencia` | `app/(dashboard)/dashboard/frequencia/page.tsx` | **Functional** | FrequenciaWorkflow |
+| Frequencia | `/diario/frequencia` | `app/(dashboard)/diario/frequencia/page.tsx` | **Functional** | Full frequency with AttendanceGrid |
 | Diario de Classe | `/dashboard/diario` | `app/(dashboard)/dashboard/diario/page.tsx` | **Functional** | ClassDiary API |
 | Notas | `/dashboard/notas` | `app/(dashboard)/dashboard/notas/page.tsx` | **Mock Data** | mockTurmasNotas |
 | Relatorios | `/dashboard/relatorios` | `app/(dashboard)/dashboard/relatorios/page.tsx` | **Functional** | Reports API |
@@ -125,7 +128,7 @@ Current sidebar structure from `components/layout/sidebar.tsx`:
 | Path | File | Status | Notes |
 |------|------|--------|-------|
 | `/diario` | `app/(dashboard)/diario/page.tsx` | **Functional** | Alternate diary entry point |
-| `/diario/frequencia` | `app/(dashboard)/diario/frequencia/page.tsx` | **Functional** | Full frequency implementation |
+| `/diario/frequencia` | `app/(dashboard)/diario/frequencia/page.tsx` | **Functional** | **CANONICAL** frequency page (sidebar points here) |
 | `/diario/relatorios/[alunoId]` | `app/(dashboard)/diario/relatorios/[alunoId]/page.tsx` | **Functional** | Student-specific reports |
 
 #### /relatorios/ Route Group
@@ -144,22 +147,23 @@ Pages that exist but are not in sidebar navigation:
 
 | Page | Path | Current State | Recommendation |
 |------|------|---------------|----------------|
-| Responsaveis | `/dashboard/responsaveis` | **Orphan** | Add to Cadastros (diretor/secretario roles) |
-| Calendario | `/dashboard/calendario` | **Partial** | Add to Gestao OR document as internal |
-| Sessoes | `/dashboard/sessoes` | **Partial** | Add to Gestao OR document as internal |
+| ~~Responsaveis~~ | ~~`/dashboard/responsaveis`~~ | ~~Orphan~~ | ✓ Added to sidebar (Phase 14-02) |
+| Calendario | `/dashboard/calendario` | **Partial** | Keep as internal admin tool |
+| Sessoes | `/dashboard/sessoes` | **Partial** | Keep as internal admin tool |
 | Perfil | `/dashboard/perfil` | Hidden-Intentional | Keep hidden - accessed via header dropdown |
 | Flags | `/dashboard/flags` | Hidden-Intentional | Keep hidden - admin-only feature |
 
 ---
 
-## Development Pages (Priority: REMOVE)
+## Development Pages ~~(Priority: REMOVE)~~ ✓ REMOVED
 
-| Path | Purpose | Files to Delete | Impact |
-|------|---------|-----------------|--------|
-| `/showcase` | Component testing | `app/showcase/page.tsx` + folder | None - not linked anywhere |
-| `/platform-names` | Branding exploration | `app/platform-names/page.tsx` + folder | None - not linked anywhere |
+| Path | Purpose | Status | Removed In |
+|------|---------|--------|------------|
+| `/showcase` | Component testing | ✓ DELETED | Phase 14-02 |
+| `/platform-names` | Branding exploration | ✓ DELETED | Phase 14-02 |
+| `/dashboard/frequencia` | Legacy session-based workflow | ✓ DELETED | Post-audit correction |
 
-**Action:** Delete these folders in future cleanup phase. No user-facing impact.
+**Note:** All development/legacy pages have been removed. Sidebar Frequência now points to `/diario/frequencia`.
 
 ---
 
@@ -241,27 +245,29 @@ Pages that exist but are not in sidebar navigation:
 
 ## Integration Status Summary
 
-### By Status
+### By Status (After Cleanup)
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| Functional | 38 | 82.6% |
-| Partial | 2 | 4.3% |
-| Mock Data | 1 | 2.2% |
-| Orphan | 3 | 6.5% |
-| Dev-Only | 2 | 4.3% |
+| Functional | 38 | 88.4% |
+| Partial | 2 | 4.7% |
+| Mock Data | 1 | 2.3% |
+| Orphan | 2 | 4.7% |
+| ~~Dev-Only~~ | 0 | 0% (removed) |
+
+**Total:** 43 pages
 
 ### By Sidebar Visibility
 
 | Visibility | Count | Percentage |
 |------------|-------|------------|
-| In Sidebar | 12 | 26.1% |
-| Sub-page of Sidebar Item | 18 | 39.1% |
-| Hidden-Intentional | 2 | 4.3% |
-| Alternate Route Group | 6 | 13.0% |
-| Orphan/Missing | 3 | 6.5% |
-| Public | 3 | 6.5% |
-| Dev-Only | 2 | 4.3% |
+| In Sidebar | 13 | 30.2% |
+| Sub-page of Sidebar Item | 18 | 41.9% |
+| Hidden-Intentional | 2 | 4.7% |
+| Alternate Route Group | 5 | 11.6% |
+| Orphan/Missing | 2 | 4.7% |
+| Public | 3 | 7.0% |
+| ~~Dev-Only~~ | 0 | 0% (removed) |
 
 ---
 
