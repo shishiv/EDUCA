@@ -136,7 +136,7 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       {
         name: 'Frequência',
-        href: '/dashboard/frequencia',
+        href: '/diario/frequencia',
         icon: CheckSquare,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
       },
