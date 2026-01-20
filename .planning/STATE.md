@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 15 of 15 (Technical Debt Cleanup) - IN PROGRESS
-Plan: 3 of 9 complete
+Plan: 4 of 9 complete
 Status: Executing Phase 15 plans
-Last activity: 2026-01-20 - Verified 15-03-PLAN.md complete (Notas Mock Data Replacement)
+Last activity: 2026-01-20 - Completed 15-02-PLAN.md (Component Rename to PascalCase)
 
 Progress: ███████████████░░░ 80% (28/34 requirements)
 
@@ -107,13 +107,15 @@ Progress: ███████████████░░░ 80% (28/34 requ
 | 15-03 | Transform TurmaNotasData to component interface | Minimize UI code changes while adopting API data |
 | 15-03 | escolaIdToUse pattern for notas page | Consistent with alunos/turmas pages for escola filtering |
 | 15-03 | Default disciplines fallback list | When disciplinas table is empty, use Portugues, Matematica, Historia, Geografia, Ciencias |
+| 15-02 | git mv for history preservation | Used git mv command to maintain file history through rename |
+| 15-02 | PascalCase naming convention | Component files use MyComponent.tsx format |
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Verified 15-03-PLAN.md complete (already executed)
+Stopped at: Completed 15-02-PLAN.md (Component Rename to PascalCase)
 Resume file: None
-Next action: Execute 15-02-PLAN.md (still pending)
+Next action: Execute 15-04-PLAN.md or continue with next plan
 
 ### Roadmap Evolution
 
@@ -163,9 +165,10 @@ Next action: Execute 15-02-PLAN.md (still pending)
 
 - Phase 15 progress:
   - 15-01: COMPLETE - DashboardStatsApiService created, dashboard page migrated
+  - 15-02: COMPLETE - 5 kebab-case components renamed to PascalCase
   - 15-03: COMPLETE - Notas mock data replaced with real Supabase queries (getTurmasForNotas)
   - 15-06: COMPLETE - (Previously completed)
 
 ---
 
-*State updated: 2026-01-20 after verifying 15-03-PLAN.md complete - Notas Mock Data Replacement*
+*State updated: 2026-01-20 after completing 15-02-PLAN.md - Component Rename to PascalCase*
