@@ -207,11 +207,18 @@ Plans:
 - TST-02: Testes unitarios para attendance workflow
 - TST-03: E2E basico com Playwright para fluxos criticos
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Configure Vitest with jsdom, path aliases, and global mocks
+- [ ] 11-02-PLAN.md — Create unit tests for attendance workflow, locking, and validations
+- [ ] 11-03-PLAN.md — Configure Playwright E2E with smoke tests and CI integration
+
 **Success Criteria:**
 - [ ] Vitest configurado com scripts em package.json
 - [ ] Testes para attendance-workflow.ts, attendance-locking.ts
-- [ ] Playwright E2E: login -> dashboard -> chamada -> salvar
-- [ ] CI executa testes automaticamente
+- [ ] Playwright E2E: smoke tests para paginas criticas
+- [ ] CI executa testes unitarios automaticamente
 
 **Dependencies:** Phase 10 (security patterns in place)
 
@@ -284,4 +291,5 @@ Linear dependency chain - each phase builds on previous.
 *Phase 8 planned: 2026-01-19*
 *Phase 9 planned: 2026-01-19*
 *Phase 10 planned: 2026-01-19*
+*Phase 11 planned: 2026-01-19*
 *Phase 12 added: 2026-01-19 (Role Access & Assignments)*
