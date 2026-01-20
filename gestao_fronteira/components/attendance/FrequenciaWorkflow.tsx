@@ -10,7 +10,6 @@ import {
   BookOpen,
   Users,
   Play,
-  ChevronRight,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -27,6 +26,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { AttendanceGrid } from './AttendanceGrid'
 import { FecharAulaDialog } from './FecharAulaDialog'
+import { WorkflowStepIndicator } from './WorkflowStepIndicator'
 import { logger } from '@/lib/logger'
 
 interface Disciplina {
@@ -351,46 +351,14 @@ export function FrequenciaWorkflow() {
     setSessaoAtiva(null)
   }
 
-  const renderStepIndicator = () => {
-    const steps = [
-      { key: 'disciplina', label: 'Disciplina' },
-      { key: 'turma', label: 'Turma' },
-      { key: 'aula-aberta', label: 'Aula Aberta' },
-      { key: 'presenca', label: 'Presença' },
-      { key: 'fechamento', label: 'Fechamento' }
-    ]
-
-    const getCurrentStepIndex = () => {
-      return steps.findIndex(step => step.key === currentStep)
-    }
-
-    return (
-      <div className="flex items-center justify-center mb-8">
-        {steps.map((step, index) => {
-          const isActive = step.key === currentStep
-          const isCompleted = index < getCurrentStepIndex()
-
-          return (
-            <div key={step.key} className="flex items-center">
-              <div className={`
-                flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium
-                ${isActive ? 'bg-blue-600 text-white' :
-                  isCompleted ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}
-              `}>
-                {isCompleted ? <CheckCircle className="h-4 w-4" /> : index + 1}
-              </div>
-              <span className={`ml-2 text-sm ${isActive ? 'font-medium text-blue-600' : 'text-gray-500'}`}>
-                {step.label}
-              </span>
-              {index < steps.length - 1 && (
-                <ChevronRight className="h-4 w-4 text-gray-400 mx-4" />
-              )}
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
+  // Workflow step definitions
+  const workflowSteps = [
+    { key: 'disciplina', label: 'Disciplina' },
+    { key: 'turma', label: 'Turma' },
+    { key: 'aula-aberta', label: 'Aula Aberta' },
+    { key: 'presenca', label: 'Presença' },
+    { key: 'fechamento', label: 'Fechamento' }
+  ]
 
   if (!userProfile) {
     return (
@@ -404,7 +372,10 @@ export function FrequenciaWorkflow() {
   return (
     <div className="space-y-6">
       {/* Step Indicator */}
-      {renderStepIndicator()}
+      <WorkflowStepIndicator
+        steps={workflowSteps}
+        currentStepKey={currentStep}
+      />
 
       {/* Sessão Ativa Alert */}
       {sessaoAtiva && currentStep !== 'presenca' && (
