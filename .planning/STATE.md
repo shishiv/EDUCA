@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 15 of 15 (Technical Debt Cleanup) - IN PROGRESS
-Plan: 7 of 9 complete
+Plan: 8 of 9 complete
 Status: Executing Phase 15 plans
-Last activity: 2026-01-20 - Completed 15-07-PLAN.md (AttendanceGrid Refactor)
+Last activity: 2026-01-20 - Completed 15-09-PLAN.md (FrequenciaWorkflow Refactor)
 
-Progress: ████████████████░░ 85% (30/34 requirements)
+Progress: █████████████████░ 88% (31/34 requirements)
 
 ## Milestone Summary
 
@@ -118,13 +118,16 @@ Progress: ████████████████░░ 85% (30/34 requ
 | 15-07 | Split into 5 subcomponents + main container | Main component at 465 LOC (57% reduction from 1078) |
 | 15-07 | Lock helpers to AttendanceGridUtils.tsx | Reusable lock logic for Sao Paulo timezone compliance |
 | 15-07 | Shared types in AttendanceGridTypes.tsx | Avoid circular dependencies between subcomponents |
+| 15-09 | Keep data loading logic in FrequenciaWorkflow parent | UI components extracted, data logic stays in container |
+| 15-09 | Export component types for external consumers | WorkflowStep, Disciplina, Turma types available via barrel |
+| 15-09 | Normalize disciplina names for icon lookup | Remove accents for consistent matching |
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 15-07-PLAN.md (AttendanceGrid Refactor)
+Stopped at: Completed 15-09-PLAN.md (FrequenciaWorkflow Refactor)
 Resume file: None
-Next action: Execute remaining Phase 15 plans (15-08, 15-09)
+Next action: Execute remaining Phase 15 plan (15-08)
 
 ### Roadmap Evolution
 
@@ -180,7 +183,8 @@ Next action: Execute remaining Phase 15 plans (15-08, 15-09)
   - 15-05: COMPLETE - Component TODOs resolved (AbrirAulaWorkflow, dashboard calculations, boletim PDF)
   - 15-06: COMPLETE - (Previously completed)
   - 15-07: COMPLETE - AttendanceGrid refactored from 1078 to 465 LOC with 5 subcomponents
+  - 15-09: COMPLETE - FrequenciaWorkflow refactored from 622 to 445 LOC with 3 subcomponents
 
 ---
 
-*State updated: 2026-01-20 after completing 15-07-PLAN.md - AttendanceGrid Refactor*
+*State updated: 2026-01-20 after completing 15-09-PLAN.md - FrequenciaWorkflow Refactor*
