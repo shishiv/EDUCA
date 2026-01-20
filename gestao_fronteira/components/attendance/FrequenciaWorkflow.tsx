@@ -1,49 +1,20 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  BookOpen,
-  Users,
-  Play,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Calculator,
-  Palette,
-  FlaskConical,
-  MapPin,
-  Landmark,
-  Languages,
-  Dumbbell
-} from 'lucide-react'
+import { Users, Play, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { AttendanceGrid } from './AttendanceGrid'
 import { FecharAulaDialog } from './FecharAulaDialog'
 import { WorkflowStepIndicator } from './WorkflowStepIndicator'
+import { DisciplinaSelector, type Disciplina } from './DisciplinaSelector'
+import { TurmaSelector, type Turma } from './TurmaSelector'
 import { logger } from '@/lib/logger'
-
-interface Disciplina {
-  id: string
-  nome: string
-}
-
-interface Turma {
-  id: string
-  nome: string
-  serie: string
-  escola: {
-    id: string
-    nome: string
-  }
-  total_alunos: number
-}
 
 interface SessaoAtiva {
   id: string
@@ -56,22 +27,6 @@ interface SessaoAtiva {
 }
 
 type WorkflowStep = 'disciplina' | 'turma' | 'aula-aberta' | 'presenca' | 'fechamento'
-
-// Mapear disciplinas para ícones e cores
-const getDisciplinaIcon = (nome: string) => {
-  const iconMap: Record<string, { icon: any; color: string; bgColor: string }> = {
-    'Matemática': { icon: Calculator, color: 'text-blue-600', bgColor: 'bg-blue-50 hover:bg-blue-100' },
-    'Língua Portuguesa': { icon: BookOpen, color: 'text-green-600', bgColor: 'bg-green-50 hover:bg-green-100' },
-    'Arte': { icon: Palette, color: 'text-purple-600', bgColor: 'bg-purple-50 hover:bg-purple-100' },
-    'Ciências': { icon: FlaskConical, color: 'text-cyan-600', bgColor: 'bg-cyan-50 hover:bg-cyan-100' },
-    'Geografia': { icon: MapPin, color: 'text-emerald-600', bgColor: 'bg-emerald-50 hover:bg-emerald-100' },
-    'História': { icon: Landmark, color: 'text-amber-600', bgColor: 'bg-amber-50 hover:bg-amber-100' },
-    'Inglês': { icon: Languages, color: 'text-rose-600', bgColor: 'bg-rose-50 hover:bg-rose-100' },
-    'Educação Física': { icon: Dumbbell, color: 'text-orange-600', bgColor: 'bg-orange-50 hover:bg-orange-100' },
-  }
-
-  return iconMap[nome] || { icon: BookOpen, color: 'text-gray-600', bgColor: 'bg-gray-50 hover:bg-gray-100' }
-}
 
 export function FrequenciaWorkflow() {
   const { userProfile } = useAuth()
@@ -391,125 +346,22 @@ export function FrequenciaWorkflow() {
 
       {/* Step Content */}
       {currentStep === 'disciplina' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BookOpen className="h-5 w-5 mr-2" />
-              Selecionar Disciplina
-            </CardTitle>
-            <CardDescription>
-              Escolha a disciplina que será ministrada na aula
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {disciplinas.map((disciplina) => {
-                const { icon: Icon, color, bgColor } = getDisciplinaIcon(disciplina.nome)
-                const isSelected = selectedDisciplina === disciplina.id
-
-                return (
-                  <button
-                    key={disciplina.id}
-                    onClick={() => handleDisciplinaSelect(disciplina.id)}
-                    className={`
-                      relative p-6 rounded-lg border-2 transition-all duration-200
-                      flex flex-col items-center justify-center gap-3
-                      min-h-[140px] group
-                      ${isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
-                        : `border-gray-200 ${bgColor} hover:shadow-md`
-                      }
-                    `}
-                  >
-                    {/* Ícone */}
-                    <div className={`
-                      p-3 rounded-full transition-transform duration-200
-                      ${isSelected ? 'bg-blue-100 scale-110' : 'bg-white group-hover:scale-110'}
-                    `}>
-                      <Icon className={`h-8 w-8 ${isSelected ? 'text-blue-600' : color}`} />
-                    </div>
-
-                    {/* Nome da Disciplina */}
-                    <span className={`
-                      text-sm font-medium text-center
-                      ${isSelected ? 'text-blue-900' : 'text-gray-700'}
-                    `}>
-                      {disciplina.nome}
-                    </span>
-
-                    {/* Indicador de Seleção */}
-                    {isSelected && (
-                      <div className="absolute top-2 right-2">
-                        <CheckCircle className="h-5 w-5 text-blue-600" />
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Mensagem quando não há disciplinas */}
-            {disciplinas.length === 0 && (
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">
-                  Nenhuma disciplina disponível.
-                  {userProfile?.tipo_usuario === 'professor' && (
-                    <span className="block mt-2 text-sm">
-                      Você precisa ministrar pelo menos uma aula antes de ver disciplinas aqui.
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <DisciplinaSelector
+          disciplinas={disciplinas}
+          selectedDisciplina={selectedDisciplina}
+          onSelect={handleDisciplinaSelect}
+          isProfessor={userProfile?.tipo_usuario === 'professor'}
+        />
       )}
 
       {currentStep === 'turma' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="h-5 w-5 mr-2" />
-              Selecionar Turma
-            </CardTitle>
-            <CardDescription>
-              Escolha a turma para a qual será ministrada a aula
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {turmas.map((turma) => (
-              <div
-                key={turma.id}
-                className={`
-                  p-4 border rounded-lg cursor-pointer transition-colors
-                  ${selectedTurma === turma.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
-                `}
-                onClick={() => handleTurmaSelect(turma.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">{turma.nome} - {turma.serie}</h3>
-                    <p className="text-sm text-gray-600">{turma.escola.nome}</p>
-                    <p className="text-sm text-gray-500">{turma.total_alunos} alunos</p>
-                  </div>
-                  {selectedTurma === turma.id && (
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {selectedTurma && (
-              <div className="pt-4 border-t">
-                <Button onClick={handleAbrirAula} disabled={loading} className="w-full">
-                  <Play className="h-4 w-4 mr-2" />
-                  {loading ? 'Abrindo Aula...' : 'Abrir Aula'}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <TurmaSelector
+          turmas={turmas}
+          selectedTurma={selectedTurma}
+          onSelect={handleTurmaSelect}
+          onAbrirAula={handleAbrirAula}
+          loading={loading}
+        />
       )}
 
       {currentStep === 'aula-aberta' && sessaoAtiva && (
