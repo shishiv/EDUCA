@@ -91,12 +91,15 @@ Progress: ████████████████ 100% (24/24 requireme
 | 12-01 | Only professor/diretor can record attendance | Separation of duties - admins audit, professors record |
 | 12-01 | Blue Alert with Shield icon for view-only | Informative not warning - admin viewing is normal |
 | 12-01 | isViewOnly state in chamada page | Consistent with existing canSeeBolsaFamilia pattern |
+| 12-02 | Turma cards use green/amber borders for status | Visual distinction between assigned/pending |
+| 12-02 | Stats cards at top of page | Quick overview before grid detail |
+| 12-02 | Reuse TeacherAssignment component in dialog | No code duplication |
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Phase 11 complete - ready for Phase 12 (Role Access & Assignments)
-Resume file: .planning/phases/12-role-access/ (next phase)
+Stopped at: Phase 12 complete - v2.0 milestone complete
+Resume file: None
 
 ### Roadmap Evolution
 
@@ -128,4 +131,4 @@ Resume file: .planning/phases/12-role-access/ (next phase)
 
 ---
 
-*State updated: 2026-01-20 after Phase 12-01 completion*
+*State updated: 2026-01-20 after Phase 12 Plan 02 completion*
