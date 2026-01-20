@@ -25,6 +25,7 @@ import { classesApi } from '@/lib/api/classes'
 import { attendanceApi } from '@/lib/api/attendance'
 import { usersApi } from '@/lib/api/users'
 import { logger } from '@/lib/logger'
+import { canRecordAttendance } from '@/lib/auth'
 
 // Components
 import {
@@ -32,6 +33,7 @@ import {
   ChamadaDateNav,
   ChamadaStatusButtons,
   JustificationModal,
+  ViewOnlyNotice,
   type AttendanceStatus,
 } from '@/components/attendance'
 import { Card, CardContent } from '@/components/ui/card'
@@ -127,6 +129,9 @@ export default function ChamadaPage() {
 
   // User role (for BF visibility) - simplified check
   const [canSeeBolsaFamilia, setCanSeeBolsaFamilia] = useState(false)
+
+  // View-only state for non-recording roles (admin, secretario)
+  const [isViewOnly, setIsViewOnly] = useState(false)
 
   // ============================================================================
   // Derived State
@@ -321,13 +326,16 @@ export default function ChamadaPage() {
     return () => clearInterval(interval)
   }, [currentDate])
 
-  // Check user role for BF visibility
+  // Check user role for BF visibility and recording permission
   useEffect(() => {
     const checkUserRole = async () => {
       const role = await usersApi.getCurrentUserRole()
       // Gestores (diretor, supervisor, secretaria, admin) can see BF info
       const gestorRoles = ['diretor', 'supervisor', 'secretaria', 'admin']
       setCanSeeBolsaFamilia(gestorRoles.includes(role || ''))
+
+      // Check if user can record attendance
+      setIsViewOnly(!canRecordAttendance(role))
     }
     checkUserRole()
   }, [])
@@ -453,7 +461,7 @@ export default function ChamadaPage() {
     )
   }
 
-  const isDisabled = isLocked || isFutureDate
+  const isDisabled = isLocked || isFutureDate || isViewOnly
 
   return (
     <div className="space-y-4 p-4">
@@ -475,7 +483,12 @@ export default function ChamadaPage() {
         presentCount={presentCount}
         hasUnsavedChanges={hasUnsavedChanges}
         isLocked={isDisabled}
-        lockReason={isLocked ? lockReason : isFutureDate ? 'Data futura - somente visualizacao' : null}
+        lockReason={
+          isLocked ? lockReason :
+          isFutureDate ? 'Data futura - somente visualizacao' :
+          isViewOnly ? 'Modo visualizacao - apenas professores registram' :
+          null
+        }
         onSave={handleSave}
         isSaving={isSaving}
       />
@@ -485,6 +498,11 @@ export default function ChamadaPage() {
         currentDate={currentDate}
         onDateChange={handleDateChange}
       />
+
+      {/* View-only notice for admin users */}
+      {isViewOnly && (
+        <ViewOnlyNotice />
+      )}
 
       {/* Student list */}
       <Card>
