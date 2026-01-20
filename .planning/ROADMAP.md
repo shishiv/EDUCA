@@ -18,9 +18,9 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 | 9 | Feature Flags | FLG-01..04 | Sistema de flags por escola no Supabase |
 | 10 | Security & Compliance | SEC-01..03 | Migrations versionadas e RLS documentado |
 | 11 | Testing | TST-01..03 | Framework de testes com cobertura critica |
-| 12 | Role Access & Assignments | ROL-01..03 | Restrições por perfil e atribuição professor-turma |
+| 12 | Role Access & Assignments | ROL-01..02 | Restrições por perfil e atribuição professor-turma |
 
-**Total:** 7 phases | 24 requirements
+**Total:** 7 phases | 23 requirements
 
 ---
 
@@ -231,20 +231,22 @@ Plans:
 **Goal:** Restrições de ações por perfil (admin visualiza, professor registra) e tela de atribuição professor-turma.
 
 **Requirements:**
-- ROL-01: Seletor de perfil ativo para admins com múltiplos papéis
-- ROL-02: Restrição de registro de frequência para perfil admin (view-only com mensagem explicativa)
-- ROL-03: Tela de gestão para atribuir professor/perfil a turmas
+- ROL-01: Restrição de registro de frequência para perfil admin (view-only com mensagem explicativa)
+- ROL-02: Tela de gestão para atribuir professor/perfil a turmas
 
-**Plans:** 0 plans
+**Note:** ROL-01 (active role selector for multi-role admins) deferred to v2.1 per research recommendation. For MVP, admin is always view-only for attendance.
+
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 12 to break down)
+- [ ] 12-01-PLAN.md — Attendance view-only mode for admin users
+- [ ] 12-02-PLAN.md — Teacher-class assignment management page
 
 **Success Criteria:**
 - [ ] Admin ao tentar registrar frequência vê mensagem: "Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores"
 - [ ] UI de atribuição professor-turma em /dashboard/atribuicoes
 - [ ] Admin pode atribuir qualquer perfil a turmas
-- [ ] Seletor de perfil ativo quando usuário tem múltiplos papéis
+- [ ] Sidebar mostra link Atribuicoes para admin/diretor
 
 **Dependencies:** Phase 11 (testing framework in place)
 
@@ -294,4 +296,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 9 planned: 2026-01-19*
 *Phase 10 planned: 2026-01-19*
 *Phase 11 planned: 2026-01-19*
-*Phase 12 added: 2026-01-19 (Role Access & Assignments)*
+*Phase 12 planned: 2026-01-20 (Role Access & Assignments - 2 plans)*

@@ -48,9 +48,16 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Testing
 
-- [ ] **TST-01**: Framework de testes configurado (Vitest)
-- [ ] **TST-02**: Testes unitarios para attendance workflow (lib/services/attendance-*.ts)
-- [ ] **TST-03**: E2E basico com Playwright para fluxos criticos (login, chamada)
+- [x] **TST-01**: Framework de testes configurado (Vitest)
+- [x] **TST-02**: Testes unitarios para attendance workflow (lib/services/attendance-*.ts)
+- [ ] **TST-03**: E2E basico com Playwright para fluxos criticos (login, chamada) - deferred
+
+### Role Access & Assignments
+
+- [ ] **ROL-01**: Restrição de registro de frequência para perfil admin (view-only com mensagem explicativa)
+- [ ] **ROL-02**: Tela de gestão para atribuir professor/perfil a turmas (/dashboard/atribuicoes)
+
+**Note:** Active role selector for multi-role admins deferred to v2.1 per research recommendation.
 
 ## v2 Requirements
 
@@ -74,6 +81,10 @@ Deferred to future release. Tracked but not in current roadmap.
 - **UX-01**: Integracao WhatsApp (Evolution API)
 - **UX-02**: Onboarding/Tour guiado funcional
 - **UX-03**: Central de Ajuda com conteudo real
+
+### Multi-Role Support (deferred from Phase 12)
+
+- **ROL-03**: Seletor de perfil ativo para admins com multiplos papeis (deferred to v2.1)
 
 ## Out of Scope
 
@@ -114,12 +125,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-01 | Phase 10 | Complete |
 | SEC-02 | Phase 10 | Complete |
 | SEC-03 | Phase 10 | Complete |
-| TST-01 | Phase 11 | Pending |
-| TST-02 | Phase 11 | Pending |
-| TST-03 | Phase 11 | Pending |
+| TST-01 | Phase 11 | Complete |
+| TST-02 | Phase 11 | Complete |
+| TST-03 | Phase 11 | Deferred |
+| ROL-01 | Phase 12 | Pending |
+| ROL-02 | Phase 12 | Pending |
 
-**Coverage:** 24 requirements (21 original + 3 ADM inserted), all mapped to phases.
+**Coverage:** 25 requirements (21 original + 3 ADM + 2 ROL - 1 deferred), all mapped to phases.
 
 ---
 *Requirements defined: 2026-01-18*
 *Based on codebase audit: .planning/codebase/CONCERNS.md*
+*Updated: 2026-01-20 - Added ROL requirements for Phase 12*
