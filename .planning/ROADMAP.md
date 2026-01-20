@@ -256,26 +256,28 @@ Plans:
 
 ---
 
-## Phase 13: Admin Demo Assignment
+## Phase 13: Admin Demo Assignment ✓
 
 **Goal:** Permitir que admin entre em modo demonstracao para executar acoes como professor (chamada) durante treinamentos.
 
 **Requirements:**
 - DMO-01: Admin pode se atribuir temporariamente a escola/turma para demonstrar funcionalidades
 
-**Plans:** 1 plan
+**Plans:** 1 plan completed
 
 Plans:
-- [ ] 13-01-PLAN.md — Create demo mode context, banner, and page integrations
+- [x] 13-01-PLAN.md — Create demo mode context, banner, and page integrations (completed 2026-01-20)
 
 **Success Criteria:**
-- [ ] Admin pode entrar em "modo demonstracao" a partir da pagina de atribuicoes
-- [ ] Em modo demo, admin pode registrar chamada (botoes habilitados)
-- [ ] Banner roxo distintivo mostra modo demo ativo
-- [ ] Acoes em modo demo registradas com user_id do admin (audit trail)
-- [ ] Admin pode sair do modo demo a qualquer momento
+- [x] Admin pode entrar em "modo demonstracao" a partir da pagina de atribuicoes
+- [x] Em modo demo, admin pode registrar chamada (botoes habilitados)
+- [x] Banner roxo distintivo mostra modo demo ativo
+- [x] Acoes em modo demo registradas com user_id do admin (audit trail)
+- [x] Admin pode sair do modo demo a qualquer momento
 
 **Dependencies:** Phase 12 (role access in place)
+
+**Status:** Complete (2026-01-20)
 
 ---
 
