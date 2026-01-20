@@ -13,8 +13,10 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useEscola } from '@/contexts/escola-context'
+import { useDemoMode } from '@/contexts/demo-mode-context'
 import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
 import { TeacherAssignment } from '@/components/classes/teacher-assignment'
@@ -38,7 +40,8 @@ import {
   AlertCircle,
   Clock,
   GraduationCap,
-  UserPlus
+  UserPlus,
+  Presentation
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -58,7 +61,9 @@ interface TurmaWithTeacher {
 
 export default function AtribuicoesPage() {
   const { selectedEscolaId, selectedEscola, shouldShowSelector } = useEscola()
+  const { isDemoMode, demoTurmaId, enterDemoMode, canUseDemoMode } = useDemoMode()
   const { userProfile } = useAuth()
+  const router = useRouter()
 
   // State
   const [turmas, setTurmas] = useState<TurmaWithTeacher[]>([])
@@ -142,6 +147,12 @@ export default function AtribuicoesPage() {
     setSelectedTurma(turma)
     setIsDialogOpen(true)
   }, [])
+
+  // Handle entering demo mode for a turma
+  const handleEnterDemoMode = useCallback((turmaId: string) => {
+    enterDemoMode(turmaId)
+    router.push(`/dashboard/turmas/${turmaId}/chamada`)
+  }, [enterDemoMode, router])
 
   // Show escola required state for admin without selection
   if (shouldShowSelector && !selectedEscolaId) {
@@ -304,23 +315,54 @@ export default function AtribuicoesPage() {
               </CardHeader>
               <CardContent className="pt-2">
                 {turma.professor ? (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">{turma.professor.nome}</span>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">{turma.professor.nome}</span>
+                    </div>
+                    {canUseDemoMode && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-purple-600 hover:bg-purple-50 hover:text-purple-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEnterDemoMode(turma.id)
+                        }}
+                      >
+                        <Presentation className="h-4 w-4 mr-1" />
+                        Demo
+                      </Button>
+                    )}
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-amber-200 text-amber-700 hover:bg-amber-50"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      openAssignmentDialog(turma)
-                    }}
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Atribuir Professor
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 border-amber-200 text-amber-700 hover:bg-amber-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openAssignmentDialog(turma)
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Atribuir
+                    </Button>
+                    {canUseDemoMode && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEnterDemoMode(turma.id)
+                        }}
+                      >
+                        <Presentation className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
