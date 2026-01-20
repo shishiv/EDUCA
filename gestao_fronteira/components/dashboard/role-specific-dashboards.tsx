@@ -39,6 +39,97 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
+/**
+ * Calculate students with low attendance (< 80%)
+ * Returns count of students below threshold for the current month
+ */
+async function calculateLowAttendanceCount(escolaId?: string | null): Promise<number> {
+  try {
+    // Get current month date range
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+
+    // Get attendance records grouped by matricula for current month
+    let query = supabase
+      .from('frequencia')
+      .select(`
+        matricula_id,
+        presente,
+        status_presenca,
+        matriculas!inner (
+          turma_id,
+          turmas!inner (
+            escola_id
+          )
+        )
+      `)
+      .gte('data_aula', startOfMonth)
+
+    if (escolaId) {
+      query = query.eq('matriculas.turmas.escola_id', escolaId)
+    }
+
+    const { data: records, error } = await query
+
+    if (error || !records) return 0
+
+    // Group by matricula_id and calculate attendance percentage
+    const studentAttendance = new Map<string, { present: number; total: number }>()
+
+    records.forEach((r: { matricula_id: string; presente: boolean | null; status_presenca: string | null }) => {
+      const stats = studentAttendance.get(r.matricula_id) || { present: 0, total: 0 }
+      stats.total++
+      if (r.presente || r.status_presenca === 'justificada' || r.status_presenca === 'atestado') {
+        stats.present++
+      }
+      studentAttendance.set(r.matricula_id, stats)
+    })
+
+    // Count students below 80%
+    let lowAttendanceCount = 0
+    studentAttendance.forEach((stats) => {
+      if (stats.total > 0) {
+        const rate = (stats.present / stats.total) * 100
+        if (rate < 80) {
+          lowAttendanceCount++
+        }
+      }
+    })
+
+    return lowAttendanceCount
+  } catch (error) {
+    logger.error('Error calculating low attendance count', error as Error, {
+      feature: 'dashboard',
+      action: 'calculate_low_attendance'
+    })
+    return 0
+  }
+}
+
+/**
+ * Calculate student's grade average from notas table
+ * Returns the overall average across all disciplines
+ */
+async function calculateStudentGradeAverage(matriculaId: string): Promise<number> {
+  try {
+    const { data: grades, error } = await supabase
+      .from('notas')
+      .select('nota')
+      .eq('matricula_id', matriculaId)
+
+    if (error || !grades || grades.length === 0) return 0
+
+    const sum = grades.reduce((acc, g) => acc + (g.nota || 0), 0)
+    return Math.round((sum / grades.length) * 10) / 10
+  } catch (error) {
+    logger.error('Error calculating grade average', error as Error, {
+      feature: 'dashboard',
+      action: 'calculate_grade_average'
+    })
+    return 0
+  }
+}
+
 interface DashboardStats {
   totalAlunos: number
   totalEscolas: number
@@ -100,9 +191,8 @@ export function AdminDashboard() {
           ? Math.round((presentCount / totalRecords) * 1000) / 10
           : 0
 
-        // Count students with low attendance (< 80%)
-        // For now use 0 - full calculation would require per-student aggregation
-        const alunosComBaixaFrequencia = 0 // TODO: Calculate properly in Phase 8
+        // Count students with low attendance (< 80%) from real data
+        const alunosComBaixaFrequencia = await calculateLowAttendanceCount(null)
 
         setStats({
           totalAlunos: alunosResult.count || 0,
@@ -387,13 +477,16 @@ export function DiretorDashboard() {
           ? Math.round((presentCount / totalRecords) * 1000) / 10
           : 0
 
+        // Count students with low attendance (< 80%) for this escola
+        const alunosComBaixaFrequencia = await calculateLowAttendanceCount(escolaId)
+
         setStats({
           totalAlunos: alunosResult.count || 0,
           totalEscolas: 1, // Director sees their own school
           totalTurmas: turmasResult.count || 0,
           totalMatriculas: matriculasResult.count || 0,
           frequenciaMedia,
-          alunosComBaixaFrequencia: 0, // TODO: Calculate properly in Phase 8
+          alunosComBaixaFrequencia,
           totalProfessores: professoresResult.count || 0
         })
       } catch (error) {
@@ -578,13 +671,16 @@ export function SecretarioDashboard() {
           ? Math.round((presentCount / totalRecords) * 1000) / 10
           : 0
 
+        // Count students with low attendance (< 80%) for this escola
+        const alunosComBaixaFrequencia = await calculateLowAttendanceCount(escolaId)
+
         setStats({
           totalAlunos: alunosResult.count || 0,
           totalEscolas: 1, // Secretary sees their own school
           totalTurmas: turmasResult.count || 0,
           totalMatriculas: matriculasResult.count || 0,
           frequenciaMedia,
-          alunosComBaixaFrequencia: 0 // TODO: Calculate properly in Phase 8
+          alunosComBaixaFrequencia
         })
       } catch (error) {
         logger.error('Error loading secretary dashboard stats', error as Error, {
@@ -767,7 +863,10 @@ export function ResponsavelDashboard() {
                 const matriculaId = aluno.matriculas?.[0]?.id
                 let attendance = 0
 
+                let grade = 0
+
                 if (matriculaId) {
+                  // Fetch attendance data
                   const { data: freqData } = await supabase
                     .from('frequencia')
                     .select('presente, status_presenca')
@@ -780,6 +879,9 @@ export function ResponsavelDashboard() {
                     ).length
                     attendance = Math.round((present / freqData.length) * 100)
                   }
+
+                  // Fetch grade average from notas table
+                  grade = await calculateStudentGradeAverage(matriculaId)
                 }
 
                 return {
@@ -787,7 +889,7 @@ export function ResponsavelDashboard() {
                   name: aluno.nome_completo,
                   class: aluno.matriculas?.[0]?.turmas?.nome || 'Sem turma',
                   attendance,
-                  grade: 0 // TODO: Calculate from notas table when available
+                  grade
                 }
               })
             )
