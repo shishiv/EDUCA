@@ -9,7 +9,7 @@ const pages = [
   // Dashboard & Home (3)
   { path: '/', name: '03-home-landing' },
   { path: '/dashboard', name: '04-dashboard-main' },
-  { path: '/platform-names', name: '05-platform-names' },
+  // Removed: /platform-names (dev-only page deleted in Phase 14-02)
 
   // Alunos (3)
   { path: '/dashboard/alunos', name: '06-alunos-list' },
@@ -53,7 +53,7 @@ const pages = [
 
   // Perfil & Showcase (2)
   { path: '/dashboard/perfil', name: '32-perfil' },
-  { path: '/showcase', name: '33-showcase' },
+  // Removed: /showcase (dev-only page deleted in Phase 14-02)
 ];
 
 console.log('Total pages to capture:', pages.length);
