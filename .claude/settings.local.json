@@ -36,7 +36,8 @@
       "Bash(pnpm update:*)",
       "Bash(timeout 180 pnpm build:*)",
       "Bash(pnpm install:*)",
-      "Bash(wget:*)"
+      "Bash(wget:*)",
+      "mcp__chrome-devtools__new_page"
     ],
     "deny": [],
     "ask": []
