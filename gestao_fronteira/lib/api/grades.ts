@@ -779,3 +779,398 @@ export async function getOrCreateGrade(
     }
   }
 }
+
+// ============================================================================
+// NOTAS PAGE DATA FETCHING
+// ============================================================================
+
+/**
+ * Interface for turma with grades data (for Notas page)
+ */
+export interface TurmaNotasData {
+  id: string
+  nome: string
+  serie: string
+  escola: string
+  escola_id: string
+  professor: string
+  professor_id: string | null
+  ano_letivo: number
+  disciplinas: string[]
+  alunos: {
+    id: string
+    aluno_id: string
+    nome_completo: string
+    matricula_id: string
+    disciplinas: {
+      [disciplina: string]: {
+        bimestre1?: number
+        bimestre2?: number
+        bimestre3?: number
+        bimestre4?: number
+        media?: number
+        situacao?: 'aprovado' | 'reprovado' | 'recuperacao' | 'cursando'
+      }
+    }
+  }[]
+}
+
+/**
+ * Get turmas for the Notas page grid
+ *
+ * Lists all active turmas with basic info for selection.
+ * Optionally filtered by escola.
+ *
+ * @param supabase - Supabase client instance
+ * @param escolaId - Optional escola filter
+ * @returns List of turmas with basic info
+ */
+export async function getTurmasForNotas(
+  supabase: SupabaseClient<Database>,
+  escolaId?: string
+): Promise<{ data: TurmaNotasData[] | null; error: string | null }> {
+  try {
+    let query = supabase
+      .from('turmas')
+      .select(`
+        id,
+        nome,
+        serie,
+        ano_letivo,
+        escola_id,
+        professor_id,
+        escola:escolas(id, nome),
+        professor:users!professor_id(id, nome),
+        matriculas(
+          id,
+          situacao,
+          aluno:alunos(id, nome_completo)
+        )
+      `)
+      .eq('ativo', true)
+      .order('nome', { ascending: true })
+
+    if (escolaId) {
+      query = query.eq('escola_id', escolaId)
+    }
+
+    const { data: turmas, error: turmasError } = await query
+
+    if (turmasError) {
+      logger.error('Error fetching turmas for notas', turmasError, {
+        feature: 'grades',
+        action: 'get_turmas_for_notas_failed',
+        metadata: { escolaId },
+      })
+      return {
+        data: null,
+        error: 'Erro ao buscar turmas',
+      }
+    }
+
+    if (!turmas || turmas.length === 0) {
+      return {
+        data: [],
+        error: null,
+      }
+    }
+
+    // Get all disciplinas from the database
+    const { data: disciplinas } = await supabase
+      .from('disciplinas')
+      .select('codigo, nome')
+      .eq('ativa', true)
+
+    // Default disciplines if none in database
+    const defaultDisciplinas = ['Portugues', 'Matematica', 'Historia', 'Geografia', 'Ciencias']
+    const disciplinaList = disciplinas && disciplinas.length > 0
+      ? disciplinas.map(d => d.nome)
+      : defaultDisciplinas
+
+    // Get all grades for active matriculas in these turmas
+    const turmaIds = turmas.map(t => t.id)
+    const { data: allGrades } = await supabase
+      .from('notas')
+      .select(`
+        id,
+        matricula_id,
+        disciplina,
+        bimestre,
+        nota,
+        matriculas!inner(turma_id)
+      `)
+      .in('matriculas.turma_id', turmaIds)
+
+    // Create a map of grades by matricula_id
+    const gradesByMatricula: Record<string, Grade[]> = {}
+    if (allGrades) {
+      for (const grade of allGrades) {
+        const matriculaId = grade.matricula_id
+        if (!gradesByMatricula[matriculaId]) {
+          gradesByMatricula[matriculaId] = []
+        }
+        gradesByMatricula[matriculaId].push(grade as Grade)
+      }
+    }
+
+    // Transform turmas data
+    const transformedTurmas: TurmaNotasData[] = turmas.map((turma: any) => {
+      const activeMatriculas = turma.matriculas?.filter((m: any) => m.situacao === 'ativa') || []
+
+      const alunos = activeMatriculas.map((matricula: any) => {
+        const grades = gradesByMatricula[matricula.id] || []
+
+        // Build disciplinas object
+        const disciplinasObj: TurmaNotasData['alunos'][0]['disciplinas'] = {}
+
+        for (const disciplina of disciplinaList) {
+          const disciplinaGrades = grades.filter(g => g.disciplina === disciplina)
+
+          if (disciplinaGrades.length > 0 || true) {
+            const bimestre1 = disciplinaGrades.find(g => g.bimestre === 1)?.nota
+            const bimestre2 = disciplinaGrades.find(g => g.bimestre === 2)?.nota
+            const bimestre3 = disciplinaGrades.find(g => g.bimestre === 3)?.nota
+            const bimestre4 = disciplinaGrades.find(g => g.bimestre === 4)?.nota
+
+            // Calculate media
+            const gradedBimesters = [bimestre1, bimestre2, bimestre3, bimestre4].filter(
+              (n): n is number => n !== undefined
+            )
+            const media = gradedBimesters.length > 0
+              ? roundGrade(gradedBimesters.reduce((sum, n) => sum + n, 0) / gradedBimesters.length)
+              : undefined
+
+            // Determine situacao
+            let situacao: 'aprovado' | 'reprovado' | 'recuperacao' | 'cursando' = 'cursando'
+            if (gradedBimesters.length === 4 && media !== undefined) {
+              if (media >= 6) situacao = 'aprovado'
+              else if (media >= 4) situacao = 'recuperacao'
+              else situacao = 'reprovado'
+            }
+
+            disciplinasObj[disciplina] = {
+              bimestre1,
+              bimestre2,
+              bimestre3,
+              bimestre4,
+              media,
+              situacao,
+            }
+          }
+        }
+
+        return {
+          id: matricula.aluno?.id || matricula.id,
+          aluno_id: matricula.aluno?.id || '',
+          nome_completo: matricula.aluno?.nome_completo || 'Aluno',
+          matricula_id: matricula.id,
+          disciplinas: disciplinasObj,
+        }
+      })
+
+      return {
+        id: turma.id,
+        nome: turma.nome,
+        serie: turma.serie,
+        escola: (turma.escola as any)?.nome || 'Escola',
+        escola_id: turma.escola_id,
+        professor: (turma.professor as any)?.nome || 'Sem professor',
+        professor_id: turma.professor_id,
+        ano_letivo: turma.ano_letivo,
+        disciplinas: disciplinaList,
+        alunos: alunos.sort((a: any, b: any) => a.nome_completo.localeCompare(b.nome_completo)),
+      }
+    })
+
+    logger.info('Turmas for notas fetched successfully', {
+      feature: 'grades',
+      action: 'get_turmas_for_notas',
+      metadata: { count: transformedTurmas.length, escolaId },
+    })
+
+    return {
+      data: transformedTurmas,
+      error: null,
+    }
+  } catch (error) {
+    logger.error('Exception in getTurmasForNotas', error as Error, {
+      feature: 'grades',
+      action: 'get_turmas_for_notas_exception',
+    })
+    return {
+      data: null,
+      error: 'Erro inesperado ao buscar turmas',
+    }
+  }
+}
+
+/**
+ * Get grades for a specific turma with student details
+ *
+ * Fetches all grades for students in a turma, organized by discipline and bimester.
+ *
+ * @param supabase - Supabase client instance
+ * @param turmaId - UUID of the turma
+ * @returns TurmaNotasData with all student grades
+ */
+export async function getGradesByTurmaWithStudents(
+  supabase: SupabaseClient<Database>,
+  turmaId: string
+): Promise<{ data: TurmaNotasData | null; error: string | null }> {
+  try {
+    // Fetch turma with escola and professor info
+    const { data: turma, error: turmaError } = await supabase
+      .from('turmas')
+      .select(`
+        id,
+        nome,
+        serie,
+        ano_letivo,
+        escola_id,
+        professor_id,
+        escola:escolas(id, nome),
+        professor:users!professor_id(id, nome)
+      `)
+      .eq('id', turmaId)
+      .single()
+
+    if (turmaError) {
+      if (turmaError.code === 'PGRST116') {
+        return { data: null, error: null }
+      }
+      logger.error('Error fetching turma for grades', turmaError, {
+        feature: 'grades',
+        action: 'get_grades_by_turma_failed',
+        metadata: { turmaId },
+      })
+      return { data: null, error: 'Erro ao buscar turma' }
+    }
+
+    // Fetch active matriculas for this turma
+    const { data: matriculas, error: matriculasError } = await supabase
+      .from('matriculas')
+      .select(`
+        id,
+        aluno_id,
+        aluno:alunos(id, nome_completo)
+      `)
+      .eq('turma_id', turmaId)
+      .eq('situacao', 'ativa')
+
+    if (matriculasError) {
+      logger.error('Error fetching matriculas for grades', matriculasError, {
+        feature: 'grades',
+        action: 'get_grades_by_turma_matriculas_failed',
+        metadata: { turmaId },
+      })
+      return { data: null, error: 'Erro ao buscar matriculas' }
+    }
+
+    // Get all disciplinas
+    const { data: disciplinas } = await supabase
+      .from('disciplinas')
+      .select('codigo, nome')
+      .eq('ativa', true)
+
+    const defaultDisciplinas = ['Portugues', 'Matematica', 'Historia', 'Geografia', 'Ciencias']
+    const disciplinaList = disciplinas && disciplinas.length > 0
+      ? disciplinas.map(d => d.nome)
+      : defaultDisciplinas
+
+    // Get grades for all matriculas
+    const matriculaIds = (matriculas || []).map(m => m.id)
+    let grades: Grade[] = []
+
+    if (matriculaIds.length > 0) {
+      const { data: gradesData } = await supabase
+        .from('notas')
+        .select('*')
+        .in('matricula_id', matriculaIds)
+
+      grades = (gradesData || []) as Grade[]
+    }
+
+    // Group grades by matricula
+    const gradesByMatricula: Record<string, Grade[]> = {}
+    for (const grade of grades) {
+      if (!gradesByMatricula[grade.matricula_id]) {
+        gradesByMatricula[grade.matricula_id] = []
+      }
+      gradesByMatricula[grade.matricula_id].push(grade)
+    }
+
+    // Transform matriculas to alunos with grades
+    const alunos = (matriculas || []).map((matricula: any) => {
+      const studentGrades = gradesByMatricula[matricula.id] || []
+
+      const disciplinasObj: TurmaNotasData['alunos'][0]['disciplinas'] = {}
+
+      for (const disciplina of disciplinaList) {
+        const disciplinaGrades = studentGrades.filter(g => g.disciplina === disciplina)
+
+        const bimestre1 = disciplinaGrades.find(g => g.bimestre === 1)?.nota
+        const bimestre2 = disciplinaGrades.find(g => g.bimestre === 2)?.nota
+        const bimestre3 = disciplinaGrades.find(g => g.bimestre === 3)?.nota
+        const bimestre4 = disciplinaGrades.find(g => g.bimestre === 4)?.nota
+
+        const gradedBimesters = [bimestre1, bimestre2, bimestre3, bimestre4].filter(
+          (n): n is number => n !== undefined
+        )
+        const media = gradedBimesters.length > 0
+          ? roundGrade(gradedBimesters.reduce((sum, n) => sum + n, 0) / gradedBimesters.length)
+          : undefined
+
+        let situacao: 'aprovado' | 'reprovado' | 'recuperacao' | 'cursando' = 'cursando'
+        if (gradedBimesters.length === 4 && media !== undefined) {
+          if (media >= 6) situacao = 'aprovado'
+          else if (media >= 4) situacao = 'recuperacao'
+          else situacao = 'reprovado'
+        }
+
+        disciplinasObj[disciplina] = {
+          bimestre1,
+          bimestre2,
+          bimestre3,
+          bimestre4,
+          media,
+          situacao,
+        }
+      }
+
+      return {
+        id: matricula.aluno?.id || matricula.id,
+        aluno_id: matricula.aluno_id,
+        nome_completo: matricula.aluno?.nome_completo || 'Aluno',
+        matricula_id: matricula.id,
+        disciplinas: disciplinasObj,
+      }
+    })
+
+    const result: TurmaNotasData = {
+      id: turma.id,
+      nome: turma.nome,
+      serie: turma.serie,
+      escola: (turma.escola as any)?.nome || 'Escola',
+      escola_id: turma.escola_id,
+      professor: (turma.professor as any)?.nome || 'Sem professor',
+      professor_id: turma.professor_id,
+      ano_letivo: turma.ano_letivo,
+      disciplinas: disciplinaList,
+      alunos: alunos.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo)),
+    }
+
+    logger.info('Grades by turma fetched successfully', {
+      feature: 'grades',
+      action: 'get_grades_by_turma',
+      metadata: { turmaId, studentCount: alunos.length },
+    })
+
+    return { data: result, error: null }
+  } catch (error) {
+    logger.error('Exception in getGradesByTurmaWithStudents', error as Error, {
+      feature: 'grades',
+      action: 'get_grades_by_turma_exception',
+    })
+    return { data: null, error: 'Erro inesperado ao buscar notas da turma' }
+  }
+}
