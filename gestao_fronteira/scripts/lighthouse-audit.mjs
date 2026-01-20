@@ -14,8 +14,8 @@ import path from 'path'
 
 const URLS_TO_AUDIT = [
   {
-    url: 'http://localhost:3000/showcase',
-    name: 'showcase-page'
+    url: 'http://localhost:3000/dashboard',
+    name: 'dashboard-page'
   }
 ]
 
