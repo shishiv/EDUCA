@@ -4,9 +4,9 @@
 
 // Class Diary (Diario de Classe)
 export { BNNCSelector } from './BNNCSelector'
-export { ClassDiaryDetail } from './class-diary-detail'
-export { ClassDiaryFilter } from './class-diary-filter'
-export { ClassDiaryList } from './class-diary-list'
+export { ClassDiaryDetail } from './ClassDiaryDetail'
+export { ClassDiaryFilter } from './ClassDiaryFilter'
+export { ClassDiaryList } from './ClassDiaryList'
 export * from './DiarySkeletons'
 export { FrequencyControls } from './FrequencyControls'
 export { LessonCard } from './LessonCard'
