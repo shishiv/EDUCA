@@ -226,7 +226,7 @@ Plans:
 
 ---
 
-## Phase 12: Role Access & Assignments
+## Phase 12: Role Access & Assignments ✓
 
 **Goal:** Restrições de ações por perfil (admin visualiza, professor registra) e tela de atribuição professor-turma.
 
@@ -236,19 +236,21 @@ Plans:
 
 **Note:** ROL-01 (active role selector for multi-role admins) deferred to v2.1 per research recommendation. For MVP, admin is always view-only for attendance.
 
-**Plans:** 2 plans
+**Plans:** 2 plans completed
 
 Plans:
-- [ ] 12-01-PLAN.md — Attendance view-only mode for admin users
-- [ ] 12-02-PLAN.md — Teacher-class assignment management page
+- [x] 12-01-PLAN.md — Attendance view-only mode for admin users (completed 2026-01-20)
+- [x] 12-02-PLAN.md — Teacher-class assignment management page (completed 2026-01-20)
 
 **Success Criteria:**
-- [ ] Admin ao tentar registrar frequência vê mensagem: "Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores"
-- [ ] UI de atribuição professor-turma em /dashboard/atribuicoes
-- [ ] Admin pode atribuir qualquer perfil a turmas
-- [ ] Sidebar mostra link Atribuicoes para admin/diretor
+- [x] Admin ao tentar registrar frequência vê mensagem: "Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores"
+- [x] UI de atribuição professor-turma em /dashboard/atribuicoes
+- [x] Admin pode atribuir qualquer perfil a turmas
+- [x] Sidebar mostra link Atribuicoes para admin/diretor
 
 **Dependencies:** Phase 11 (testing framework in place)
+
+**Status:** Complete (2026-01-20)
 
 ---
 
@@ -297,3 +299,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 10 planned: 2026-01-19*
 *Phase 11 planned: 2026-01-19*
 *Phase 12 planned: 2026-01-20 (Role Access & Assignments - 2 plans)*
+*Phase 12 complete: 2026-01-20*
