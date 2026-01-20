@@ -54,8 +54,8 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Role Access & Assignments
 
-- [ ] **ROL-01**: Restrição de registro de frequência para perfil admin (view-only com mensagem explicativa)
-- [ ] **ROL-02**: Tela de gestão para atribuir professor/perfil a turmas (/dashboard/atribuicoes)
+- [x] **ROL-01**: Restrição de registro de frequência para perfil admin (view-only com mensagem explicativa)
+- [x] **ROL-02**: Tela de gestão para atribuir professor/perfil a turmas (/dashboard/atribuicoes)
 
 **Note:** Active role selector for multi-role admins deferred to v2.1 per research recommendation.
 
@@ -128,8 +128,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TST-01 | Phase 11 | Complete |
 | TST-02 | Phase 11 | Complete |
 | TST-03 | Phase 11 | Deferred |
-| ROL-01 | Phase 12 | Pending |
-| ROL-02 | Phase 12 | Pending |
+| ROL-01 | Phase 12 | Complete |
+| ROL-02 | Phase 12 | Complete |
 
 **Coverage:** 25 requirements (21 original + 3 ADM + 2 ROL - 1 deferred), all mapped to phases.
 
