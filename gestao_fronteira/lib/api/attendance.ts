@@ -528,12 +528,155 @@ export class AttendanceApiService extends BaseApiService {
   }
 
   // ============================================================================
+  // Frequency Calculation Methods
+  // ============================================================================
+
+  /**
+   * Calculate attendance frequency for a specific enrollment (matricula)
+   * Uses current month as default date range
+   *
+   * @param matriculaId - The enrollment ID to calculate frequency for
+   * @param dateRange - Optional date range { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }
+   * @returns Attendance percentage (0-100), or 0 if no records
+   */
+  async calculateFrequency(
+    matriculaId: string,
+    dateRange?: { start: string; end: string }
+  ): Promise<number> {
+    try {
+      const now = new Date()
+      const firstDayOfMonth = dateRange?.start ||
+        new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+      const today = dateRange?.end || now.toISOString().split('T')[0]
+
+      const { data: records, error } = await supabase
+        .from('frequencia')
+        .select('status_presenca')
+        .eq('matricula_id', matriculaId)
+        .gte('data_aula', firstDayOfMonth)
+        .lte('data_aula', today)
+
+      if (error) {
+        logger.error('Error calculating frequency', error, {
+          feature: 'attendance',
+          action: 'calculate_frequency',
+          metadata: { matriculaId }
+        })
+        return 0
+      }
+
+      if (!records || records.length === 0) {
+        return 0
+      }
+
+      // Count present and justified absences (justified counts as present for frequency)
+      const presentCount = records.filter(
+        (r) =>
+          r.status_presenca === 'presente' ||
+          r.status_presenca === 'P' ||
+          r.status_presenca === 'justificada' ||
+          r.status_presenca === 'J'
+      ).length
+
+      const total = records.length
+      return Math.round((presentCount / total) * 100)
+    } catch (error) {
+      logger.error('Error in calculateFrequency', error as Error, {
+        feature: 'attendance',
+        action: 'calculate_frequency',
+        metadata: { matriculaId }
+      })
+      return 0
+    }
+  }
+
+  /**
+   * Calculate attendance frequencies for multiple enrollments in batch
+   * More efficient than calling calculateFrequency individually
+   *
+   * @param matriculaIds - Array of enrollment IDs
+   * @param dateRange - Optional date range
+   * @returns Map of matriculaId -> frequency percentage
+   */
+  async calculateFrequenciesBatch(
+    matriculaIds: string[],
+    dateRange?: { start: string; end: string }
+  ): Promise<Map<string, number>> {
+    const result = new Map<string, number>()
+
+    if (matriculaIds.length === 0) {
+      return result
+    }
+
+    try {
+      const now = new Date()
+      const firstDayOfMonth = dateRange?.start ||
+        new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+      const today = dateRange?.end || now.toISOString().split('T')[0]
+
+      const { data: records, error } = await supabase
+        .from('frequencia')
+        .select('matricula_id, status_presenca')
+        .in('matricula_id', matriculaIds)
+        .gte('data_aula', firstDayOfMonth)
+        .lte('data_aula', today)
+
+      if (error) {
+        logger.error('Error calculating frequencies batch', error, {
+          feature: 'attendance',
+          action: 'calculate_frequencies_batch',
+          metadata: { count: matriculaIds.length }
+        })
+        // Return 0 for all
+        matriculaIds.forEach((id) => result.set(id, 0))
+        return result
+      }
+
+      // Group records by matricula_id
+      const statsByMatricula = new Map<string, { total: number; present: number }>()
+
+      records?.forEach((r) => {
+        const stats = statsByMatricula.get(r.matricula_id) || { total: 0, present: 0 }
+        stats.total++
+        if (
+          r.status_presenca === 'presente' ||
+          r.status_presenca === 'P' ||
+          r.status_presenca === 'justificada' ||
+          r.status_presenca === 'J'
+        ) {
+          stats.present++
+        }
+        statsByMatricula.set(r.matricula_id, stats)
+      })
+
+      // Calculate percentages
+      matriculaIds.forEach((id) => {
+        const stats = statsByMatricula.get(id)
+        if (stats && stats.total > 0) {
+          result.set(id, Math.round((stats.present / stats.total) * 100))
+        } else {
+          result.set(id, 0)
+        }
+      })
+
+      return result
+    } catch (error) {
+      logger.error('Error in calculateFrequenciesBatch', error as Error, {
+        feature: 'attendance',
+        action: 'calculate_frequencies_batch',
+      })
+      matriculaIds.forEach((id) => result.set(id, 0))
+      return result
+    }
+  }
+
+  // ============================================================================
   // Chamada Page Methods
   // ============================================================================
 
   /**
    * Get enrolled students for a class (chamada use case)
-   * Returns students with matriculaId and hasNis for BF visibility
+   * Returns students with matriculaId, real attendance frequency, and hasNis for BF visibility
    */
   async getStudentsForChamada(turmaId: string): Promise<{
     id: string
@@ -565,12 +708,22 @@ export class AttendanceApiService extends BaseApiService {
         throw error
       }
 
-      return (data || [])
+      if (!data || data.length === 0) {
+        return []
+      }
+
+      // Get all matricula IDs
+      const matriculaIds = data.map((m: any) => m.id)
+
+      // Calculate frequencies in batch for efficiency
+      const frequencies = await this.calculateFrequenciesBatch(matriculaIds)
+
+      return data
         .map((m: any) => ({
           id: m.aluno?.id || '',
           nome: m.aluno?.nome_completo || 'Aluno',
           matriculaId: m.id,
-          frequencia: 85, // TODO: Calculate from actual attendance data
+          frequencia: frequencies.get(m.id) ?? 0,
           hasNis: !!m.aluno?.nis,
         }))
         .filter((s) => s.id)
