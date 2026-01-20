@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 15 of 15 (Technical Debt Cleanup) - IN PROGRESS
-Plan: 5 of 9 complete
+Plan: 6 of 9 complete
 Status: Executing Phase 15 plans
-Last activity: 2026-01-20 - Completed 15-05-PLAN.md (Component TODOs)
+Last activity: 2026-01-20 - Completed 15-04-PLAN.md (Page TODOs - Diario)
 
-Progress: ███████████████░░░ 80% (28/34 requirements)
+Progress: ███████████████░░░ 82% (29/34 requirements)
 
 ## Milestone Summary
 
@@ -112,11 +112,14 @@ Progress: ███████████████░░░ 80% (28/34 requ
 | 15-05 | AbrirAulaWorkflow uses enhancedAttendanceApi.createSession() | Consistent with existing API service pattern |
 | 15-05 | Dashboard calculations use server-side functions | More efficient than client-side React Query for simple counts |
 | 15-05 | PDF export uses existing pdf-utils library | Already in codebase, no need for jspdf |
+| 15-04 | Use API service pattern for class-diary CRUD | updateSession and deleteSession added to lib/api/class-diary.ts |
+| 15-04 | Confirmation dialog for report finalization | Reports cannot be edited after finalization |
+| 15-04 | Pre-populate edit forms from existing data | Initial values computed from existingReport |
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 15-05-PLAN.md (Component TODOs)
+Stopped at: Completed 15-04-PLAN.md (Page TODOs - Diario)
 Resume file: None
 Next action: Execute remaining Phase 15 plans
 
@@ -170,9 +173,10 @@ Next action: Execute remaining Phase 15 plans
   - 15-01: COMPLETE - DashboardStatsApiService created, dashboard page migrated
   - 15-02: COMPLETE - 5 kebab-case components renamed to PascalCase
   - 15-03: COMPLETE - Notas mock data replaced with real Supabase queries (getTurmasForNotas)
+  - 15-04: COMPLETE - Page TODOs for diario (edit modal, save/finalize API, delete migration)
   - 15-05: COMPLETE - Component TODOs resolved (AbrirAulaWorkflow, dashboard calculations, boletim PDF)
   - 15-06: COMPLETE - (Previously completed)
 
 ---
 
-*State updated: 2026-01-20 after completing 15-05-PLAN.md - Component TODOs*
+*State updated: 2026-01-20 after completing 15-04-PLAN.md - Page TODOs Diario*
