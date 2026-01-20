@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 14 of 14 (Legacy Page Audit) - COMPLETE
-Plan: 1 of 1 complete
+Plan: 2 of 2 complete
 Status: v2.0 milestone COMPLETE
-Last activity: 2026-01-20 - Completed 14-01-PLAN.md (Page Audit Document)
+Last activity: 2026-01-20 - Completed 14-02-PLAN.md (Page Cleanup)
 
 Progress: ██████████████████ 100% (27/27 requirements)
 
@@ -100,11 +100,12 @@ Progress: ██████████████████ 100% (27/27 req
 | 13-01 | Actions recorded with admin user_id | Audit trail preserved in demo mode |
 | 14-01 | 5-tier page classification system | Clear actionable categories (functional/partial/mock/orphan/dev-only) |
 | 14-01 | Separate hidden-intentional from orphan | Perfil and Flags are intentionally hidden, not missing |
+| 14-02 | Add Responsaveis to sidebar, keep Calendario/Sessoes hidden | Responsaveis is user-facing; others are admin tools |
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 14-01-PLAN.md (Page Audit Document)
+Stopped at: Completed 14-02-PLAN.md (Page Cleanup)
 Resume file: None
 Next action: v2.0 milestone complete - ready for pilot deployment
 
@@ -141,8 +142,9 @@ Next action: v2.0 milestone complete - ready for pilot deployment
 
 - Phase 14 complete: Legacy Page Audit
   - 14-01: PAGE-AUDIT.md created with 46 pages inventoried and classified
+  - 14-02: Dev pages deleted (showcase, platform-names), Responsaveis added to sidebar
   - AUD-01 and AUD-02 requirements satisfied
 
 ---
 
-*State updated: 2026-01-20 after completing Phase 14 - v2.0 milestone complete*
+*State updated: 2026-01-20 after completing Phase 14-02 - v2.0 milestone complete*
