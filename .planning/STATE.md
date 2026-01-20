@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 11 of 12 (Testing) - COMPLETE
-Plan: 3 of 3 complete (E2E deferred)
-Status: Complete - Vitest configured, unit tests created, Playwright config ready
-Last activity: 2026-01-20 - Completed Phase 11 (unit tests for attendance workflow)
+Phase: 12 of 12 (Role Access & Assignments) - COMPLETE
+Plan: 2 of 2 complete
+Status: Complete - Admin view-only restrictions and teacher assignment management page
+Last activity: 2026-01-20 - Completed Phase 12 Plan 02 (teacher assignment page)
 
-Progress: ██████████████░ 92% (22/24 requirements)
+Progress: ████████████████ 100% (24/24 requirements)
 
 ## Milestone Summary
 
@@ -88,6 +88,9 @@ Progress: ██████████████░ 92% (22/24 requirements)
 | 10-01 | 00000000000000 timestamp for baseline | Ensures baseline sorts before any dated migrations |
 | 10-01 | CREATE TABLE IF NOT EXISTS for idempotency | Safe to run on both new and existing environments |
 | 10-01 | RLS policies in baseline migration | Schema and security are coupled - deploy together |
+| 12-01 | Only professor/diretor can record attendance | Separation of duties - admins audit, professors record |
+| 12-01 | Blue Alert with Shield icon for view-only | Informative not warning - admin viewing is normal |
+| 12-01 | isViewOnly state in chamada page | Consistent with existing canSeeBolsaFamilia pattern |
 
 ## Session Continuity
 
@@ -119,6 +122,10 @@ Resume file: .planning/phases/12-role-access/ (next phase)
   - 11-02: Unit tests for AttendanceWorkflowManager and AttendanceLockingService
   - 11-03: Playwright config created (E2E smoke tests deferred - environment issues)
 
+- Phase 12 complete: Role Access & Assignments
+  - 12-01: Admin view-only mode for attendance (canRecordAttendance helper, ViewOnlyNotice component)
+  - 12-02: Teacher assignment management page at /dashboard/atribuicoes
+
 ---
 
-*State updated: 2026-01-20 after Phase 11 completion*
+*State updated: 2026-01-20 after Phase 12-01 completion*
