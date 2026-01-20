@@ -2,6 +2,7 @@ import { BaseApiService } from './base'
 import { supabase, Tables, Escola } from '@/lib/supabase'
 import { SchoolFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
+import { auditApi } from './audit'
 
 export type SchoolWithDetails = Escola & {
   diretor?: Tables<'users'>
@@ -303,12 +304,39 @@ export class SchoolsApiService extends BaseApiService {
     }
   }
 
-  // Update school status
+  /**
+   * Update school active status with audit logging
+   * Status changes are logged for compliance tracking
+   *
+   * @param id - School ID
+   * @param ativo - New active status
+   * @param reason - Optional reason for the status change
+   * @returns Updated school record
+   */
   async updateSchoolStatus(id: string, ativo: boolean, reason?: string) {
     try {
+      // Get current status before update
+      const { data: currentSchool, error: fetchError } = await supabase
+        .from('escolas')
+        .select('ativo, nome')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        logger.error('Error fetching current school status', fetchError, {
+          feature: 'schools',
+          action: 'update_school_status_fetch',
+          schoolId: id
+        })
+        throw fetchError
+      }
+
+      const previousStatus = currentSchool?.ativo
+
+      // Update the status
       const result = await this.update(id, { ativo })
 
-      // TODO: Add audit logging for status changes
+      // Log to structured logger
       logger.info(`School status updated to ${ativo ? 'active' : 'inactive'}`, {
         feature: 'schools',
         action: 'update_school_status',
@@ -317,9 +345,69 @@ export class SchoolsApiService extends BaseApiService {
         reason
       })
 
+      // Log to audit trail (async, don't block on failure)
+      this.logStatusChangeAudit(id, currentSchool?.nome || '', previousStatus, ativo, reason)
+        .catch((auditError) => {
+          // Audit logging should not fail the main operation
+          logger.warn('Failed to log school status change to audit', {
+            feature: 'schools',
+            action: 'audit_log_failed',
+            schoolId: id,
+            error: auditError instanceof Error ? auditError.message : String(auditError)
+          })
+        })
+
       return result
     } catch (error) {
-      logger.error('Error updating school status', error as Error, { feature: 'schools', action: 'update_school_status', schoolId: id })
+      logger.error('Error updating school status', error as Error, {
+        feature: 'schools',
+        action: 'update_school_status',
+        schoolId: id
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Log school status change to audit trail
+   * Called internally by updateSchoolStatus
+   */
+  private async logStatusChangeAudit(
+    schoolId: string,
+    schoolName: string,
+    previousStatus: boolean | undefined,
+    newStatus: boolean,
+    reason?: string
+  ): Promise<void> {
+    try {
+      // Get current user for audit
+      const { data: { user } } = await supabase.auth.getUser()
+      const userId = user?.id || 'system'
+
+      await auditApi.logAudit({
+        user_id: userId,
+        action: 'status_change',
+        resource_type: 'escolas',
+        resource_id: schoolId,
+        old_values: { ativo: previousStatus },
+        new_values: { ativo: newStatus },
+        timestamp: new Date().toISOString(),
+        metadata: {
+          nome: schoolName,
+          reason: reason || undefined,
+          description: `Escola ${schoolName} ${newStatus ? 'ativada' : 'desativada'}`
+        }
+      })
+
+      logger.info('School status change logged to audit', {
+        feature: 'schools',
+        action: 'audit_log_success',
+        schoolId,
+        previousStatus,
+        newStatus
+      })
+    } catch (error) {
+      // Re-throw so the caller can handle it
       throw error
     }
   }
