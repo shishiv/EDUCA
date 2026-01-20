@@ -208,3 +208,24 @@ export const roleHierarchy = {
 export const hasHigherRole = (userRole: UserProfile['tipo_usuario'], targetRole: UserProfile['tipo_usuario']): boolean => {
   return roleHierarchy[userRole as keyof typeof roleHierarchy] > roleHierarchy[targetRole as keyof typeof roleHierarchy]
 }
+
+/**
+ * Check if user can record attendance
+ * Only professors and diretores can record attendance
+ * Admin, secretario, gestor_sme are view-only (can see but not modify)
+ *
+ * @param tipoUsuario - User's role type from profile
+ * @returns boolean - true if user can record attendance
+ */
+export const canRecordAttendance = (tipoUsuario: UserProfile['tipo_usuario'] | null): boolean => {
+  if (!tipoUsuario) return false
+
+  // Professors can always record for their assigned turmas
+  if (tipoUsuario === 'professor') return true
+
+  // Diretores can record for any turma in their escola (supervisor fallback)
+  if (tipoUsuario === 'diretor') return true
+
+  // All other roles (admin, secretario, gestor_sme, coordenador) are view-only
+  return false
+}
