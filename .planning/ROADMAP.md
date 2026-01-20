@@ -289,10 +289,11 @@ Plans:
 - AUD-01: Inventário completo de páginas existentes com status de integração
 - AUD-02: Lista de páginas órfãs ou com funcionalidade incompleta
 
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 14 to break down)
+- [ ] 14-01-PLAN.md — Create PAGE-AUDIT.md with complete page inventory
+- [ ] 14-02-PLAN.md — Remove dev pages and update sidebar navigation
 
 **Success Criteria:**
 - [ ] Documento listando todas as rotas/páginas da aplicação
@@ -356,4 +357,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 12 complete: 2026-01-20*
 *Phase 13 added: 2026-01-20 (Admin Demo Assignment)*
 *Phase 13 planned: 2026-01-20 (Admin Demo Mode - 1 plan)*
-*Phase 14 added: 2026-01-20 (Legacy Page Audit)*
+*Phase 14 planned: 2026-01-20 (Legacy Page Audit - 2 plans)*
