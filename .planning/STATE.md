@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 14 of 14 (Legacy Page Audit) - COMPLETE
+Phase: 14 of 15 (Legacy Page Audit) - COMPLETE
 Plan: 2 of 2 complete
-Status: v2.0 milestone COMPLETE
-Last activity: 2026-01-20 - Completed 14-02-PLAN.md (Page Cleanup)
+Status: Phase 15 ready to plan
+Last activity: 2026-01-20 - Added Phase 15 (Technical Debt Cleanup)
 
-Progress: ██████████████████ 100% (27/27 requirements)
+Progress: ███████████████░░░ 79% (27/34 requirements)
 
 ## Milestone Summary
 
@@ -105,9 +105,9 @@ Progress: ██████████████████ 100% (27/27 req
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 14-02-PLAN.md (Page Cleanup)
+Stopped at: Added Phase 15 (Technical Debt Cleanup)
 Resume file: None
-Next action: v2.0 milestone complete - ready for pilot deployment
+Next action: /gsd:plan-phase 15
 
 ### Roadmap Evolution
 
@@ -144,7 +144,17 @@ Next action: v2.0 milestone complete - ready for pilot deployment
   - 14-01: PAGE-AUDIT.md created with 46 pages inventoried and classified
   - 14-02: Dev pages deleted (showcase, platform-names), Responsaveis added to sidebar
   - AUD-01 and AUD-02 requirements satisfied
+  - Post-audit corrections: /dashboard/frequencia deleted (legacy), / redirects to /login
+
+- Phase 15 added: Technical Debt Cleanup (8 requirements)
+  - All findings from PAGE-AUDIT.md, CODE-AUDIT.md, INTEGRATION-AUDIT.md
+  - CLN-01..03: Complete all TODOs (12 items)
+  - CLN-04: Replace Notas mock data
+  - CLN-05: Rename 5 kebab-case components
+  - CLN-06: Refactor 3 large components (>600 LOC)
+  - CLN-07: Move direct Supabase queries to API services
+  - CLN-08: Integrate Sentry/LogRocket
 
 ---
 
-*State updated: 2026-01-20 after completing Phase 14-02 - v2.0 milestone complete*
+*State updated: 2026-01-20 after adding Phase 15 - Technical Debt Cleanup*
