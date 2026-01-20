@@ -8,7 +8,10 @@
  * - User action tracking for compliance
  * - Error aggregation and reporting
  * - Development vs Production behavior
+ * - Sentry integration for production error tracking
  */
+
+import * as Sentry from '@sentry/nextjs';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical'
 
@@ -193,26 +196,21 @@ class EducationalLogger {
   }
 
   private async sendToMonitoringService(logs: LogEntry[]): Promise<void> {
-    try {
-      // TODO: Integrate with your monitoring service (Sentry, LogRocket, etc.)
-      const response = await fetch('/api/logs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ logs })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to send logs: ${response.status}`)
-      }
-    } catch (error) {
-      // Store failed logs for retry
-      if (this.isClient) {
-        const failedLogs = localStorage.getItem('failed_logs')
-        const existing = failedLogs ? JSON.parse(failedLogs) : []
-        existing.push(...logs)
-        localStorage.setItem('failed_logs', JSON.stringify(existing.slice(-500)))
+    // Send error and critical logs to Sentry
+    for (const log of logs) {
+      if (log.level === 'error' || log.level === 'critical') {
+        Sentry.captureMessage(log.message, {
+          level: log.level === 'critical' ? 'fatal' : 'error',
+          extra: {
+            feature: log.context?.feature,
+            action: log.context?.action,
+            context: log.context,
+            timestamp: log.timestamp,
+            url: log.url,
+            userAgent: log.userAgent,
+            stack: log.stack,
+          },
+        });
       }
     }
   }
