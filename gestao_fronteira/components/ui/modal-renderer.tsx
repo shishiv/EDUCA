@@ -8,8 +8,6 @@
 
 import React from 'react'
 import { useModal } from './modal-manager'
-import { TutorialOverlay } from '../tutorial/TutorialOverlay'
-import { HelpSystem } from '../help/HelpSystem'
 import { AbrirAulaWorkflow } from '../attendance/AbrirAulaWorkflow'
 import { AttendanceGrid } from '../attendance/AttendanceGrid'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog'
@@ -22,28 +20,6 @@ export function ModalRenderer() {
   }
 
   switch (activeModal.type) {
-    case 'tutorial':
-      return (
-        <TutorialOverlay
-          steps={activeModal.props?.steps || []}
-          onComplete={activeModal.props?.onComplete || (() => {})}
-          onSkip={activeModal.props?.onSkip || (() => {})}
-          title={activeModal.props?.title}
-          description={activeModal.props?.description}
-          canSkip={activeModal.props?.canSkip}
-          showProgress={activeModal.props?.showProgress}
-        />
-      )
-
-    case 'help':
-      return (
-        <HelpSystem
-          onClose={activeModal.props?.onClose}
-          initialSection={activeModal.props?.initialSection}
-          searchQuery={activeModal.props?.searchQuery}
-        />
-      )
-
     case 'abrir-aula':
       return (
         <Dialog open={true} onOpenChange={(open) => { if (!open) closeModal() }}>
