@@ -72,19 +72,8 @@ export {
   OverlayLoading,
 } from './loading-states'
 
-// Brazilian Educational Input Components
-export { CPFInput, BrazilianPhoneInput, CEPInput, BrazilianDateInput, BrazilianInputHelp } from './brazilian-inputs'
-
-// Brazilian Educational Help System
-export {
-  EducationalTooltip,
-  EducationalHelpCard,
-  EducationalHelpIcon,
-  ComplianceAlert,
-  EducationalQuickReference,
-  BRAZILIAN_EDU_TERMS
-} from './brazilian-educational-help'
-export type { TermKey } from './brazilian-educational-help'
+// Brazilian Educational Input Components - removed (file never existed)
+// Brazilian Educational Help System - removed (file never existed)
 
 // Mobile-First Responsive Components
 export {
