@@ -170,8 +170,7 @@ export {
 
 // ===== ACCESSIBILITY VALIDATION =====
 // WCAG 2.1 AA and Brazilian LBI 13.146/2015 compliance
-
-export * from '@/lib/validation/accessibility'
+// Note: Removed - functions were never used. WCAG compliance is inline.
 
 // ===== ATTENDANCE WORKFLOW VALIDATION =====
 // Brazilian educational attendance compliance
