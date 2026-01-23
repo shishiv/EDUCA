@@ -8,7 +8,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react'
 
-type ModalType = 'tutorial' | 'help' | 'close-session' | 'cancel-session' | 'abrir-aula' | 'attendance' | null
+type ModalType = 'close-session' | 'cancel-session' | 'abrir-aula' | 'attendance' | null
 
 interface ModalState {
   type: ModalType
