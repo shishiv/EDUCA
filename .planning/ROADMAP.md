@@ -23,7 +23,9 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 | 14 | Legacy Page Audit | AUD-01..02 | Auditar páginas legadas não integradas |
 | 15 | Technical Debt Cleanup | CLN-01..08 | Zero mocks, zero TODOs, zero queries diretas |
 
-**Total:** 10 phases | 34 requirements
+| 15.1 | Dead Code Audit | DCA-01..03 | Remover código morto via LSP findReferences |
+
+**Total:** 11 phases | 37 requirements
 
 ---
 
@@ -308,7 +310,7 @@ Plans:
 
 ---
 
-## Phase 15: Technical Debt Cleanup
+## Phase 15: Technical Debt Cleanup ✓
 
 **Goal:** Resolver todos os achados dos audits - mocks, TODOs, naming, refactors, queries diretas.
 
@@ -320,32 +322,59 @@ Plans:
 - CLN-05: Renomear 5 componentes kebab-case para PascalCase
 - CLN-06: Refatorar componentes grandes (AttendanceGrid, FrequenciaWorkflow >600 LOC)
 - CLN-07: Mover queries Supabase diretas para API services (dashboard, diario pages)
-- CLN-08: Integrar Sentry/LogRocket para error tracking
+- CLN-08: Integrar PostHog para analytics e error tracking
 
 **Plans:** 9 plans in 2 waves
 
 Plans:
-- [ ] 15-01-PLAN.md — Create DashboardStatsApiService and migrate dashboard page (Wave 1)
-- [ ] 15-02-PLAN.md — Rename 5 kebab-case components to PascalCase (Wave 1)
-- [ ] 15-03-PLAN.md — Integrate Notas page with existing GradesApiService (Wave 1)
-- [ ] 15-04-PLAN.md — Complete TODOs in pages (diario edit/delete, relatorio save) (Wave 1)
-- [ ] 15-05-PLAN.md — Complete TODOs in components (dashboard calcs, AbrirAulaWorkflow) (Wave 1)
-- [ ] 15-06-PLAN.md — Complete TODOs in lib/ (compliance, frequency, audit) (Wave 1)
-- [ ] 15-07-PLAN.md — Refactor AttendanceGrid into subcomponents (Wave 2)
-- [ ] 15-08-PLAN.md — Integrate Sentry for error tracking (Wave 2)
-- [ ] 15-09-PLAN.md — Refactor FrequenciaWorkflow into subcomponents (Wave 2)
+- [x] 15-01-PLAN.md — Create DashboardStatsApiService and migrate dashboard page (Wave 1) (completed 2026-01-20)
+- [x] 15-02-PLAN.md — Rename 5 kebab-case components to PascalCase (Wave 1) (completed 2026-01-20)
+- [x] 15-03-PLAN.md — Integrate Notas page with existing GradesApiService (Wave 1) (completed 2026-01-20)
+- [x] 15-04-PLAN.md — Complete TODOs in pages (diario edit/delete, relatorio save) (Wave 1) (completed 2026-01-20)
+- [x] 15-05-PLAN.md — Complete TODOs in components (dashboard calcs, AbrirAulaWorkflow) (Wave 1) (completed 2026-01-20)
+- [x] 15-06-PLAN.md — Complete TODOs in lib/ (compliance, frequency, audit) (Wave 1) (completed 2026-01-20)
+- [x] 15-07-PLAN.md — Refactor AttendanceGrid into subcomponents (Wave 2) (completed 2026-01-20)
+- [x] 15-08-PLAN.md — Integrate PostHog for analytics and error tracking (Wave 2) (completed 2026-01-21)
+- [x] 15-09-PLAN.md — Refactor FrequenciaWorkflow into subcomponents (Wave 2) (completed 2026-01-20)
 
 **Success Criteria:**
-- [ ] Zero TODOs/FIXMEs no codebase
-- [ ] Zero mock data - todas páginas usam Supabase real
-- [ ] 100% componentes seguem naming convention (PascalCase)
-- [ ] Nenhum componente >500 LOC
-- [ ] Zero queries Supabase diretas em pages (tudo via API service)
-- [ ] Error tracking em produção funcionando
+- [x] Zero TODOs/FIXMEs no codebase
+- [x] Zero mock data - todas páginas usam Supabase real
+- [x] 100% componentes seguem naming convention (PascalCase)
+- [x] Nenhum componente >500 LOC
+- [x] Zero queries Supabase diretas em pages (tudo via API service)
+- [x] Error tracking em produção funcionando
 
 **Dependencies:** Phase 14 (audits identify issues)
 
-**Effort Estimate:** ~50-60h total
+**Status:** Complete (2026-01-21)
+
+---
+
+## Phase 15.1: Dead Code Audit via LSP (INSERTED)
+
+**Goal:** Use LSP findReferences to identify and remove unreachable/unused code across the codebase.
+
+**Requirements:**
+- DCA-01: Audit unused exports (functions, types, constants) via LSP findReferences
+- DCA-02: Remove confirmed dead code with git history preservation
+- DCA-03: Document audit methodology and findings
+
+**Plans:** 3 plans in 2 waves
+
+Plans:
+- [ ] 15.1-01-PLAN.md — Audit lib/ directory (84 files) with knip and LSP (Wave 1)
+- [ ] 15.1-02-PLAN.md — Audit components/ directory (141 files) with LSP (Wave 1)
+- [ ] 15.1-03-PLAN.md — Audit types/ directory (9 files) and create audit report (Wave 2)
+
+**Success Criteria:**
+- [ ] All exported symbols verified for usage via LSP
+- [ ] Dead code removed with atomic commits
+- [ ] Audit report documenting findings and removals
+
+**Dependencies:** Phase 15 (codebase standardized first)
+
+**Status:** Planned (2026-01-23)
 
 ---
 
@@ -372,7 +401,9 @@ Phase 13 (Admin Demo)
     |
 Phase 14 (Legacy Audit)
     |
-Phase 15 (Tech Debt Cleanup) <-- NEW
+Phase 15 (Tech Debt Cleanup)
+    |
+Phase 15.1 (Dead Code Audit) <-- INSERTED
 ```
 
 Linear dependency chain - each phase builds on previous.
@@ -387,6 +418,7 @@ Linear dependency chain - each phase builds on previous.
 | Mock data removal breaks UI | Add loading/empty states before removing mocks |
 | Pattern migration scope creep | Document pattern, migrate only critical paths |
 | Testing slows velocity | Start with critical paths only (chamada) |
+| Dead code removal breaks runtime | Verify with typecheck/lint/build after each removal |
 
 ---
 
@@ -408,3 +440,5 @@ Linear dependency chain - each phase builds on previous.
 *Phase 15 added: 2026-01-20 (Technical Debt Cleanup - 8 requirements from audits)*
 *Phase 15 planned: 2026-01-20 (Technical Debt Cleanup - 8 plans in 2 waves)*
 *Phase 15 revised: 2026-01-20 (9 plans - added FrequenciaWorkflow refactor)*
+*Phase 15 complete: 2026-01-21*
+*Phase 15.1 planned: 2026-01-23 (Dead Code Audit - 3 plans in 2 waves)*
