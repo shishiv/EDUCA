@@ -45,10 +45,17 @@
 
 ### Phase 18: Database Types Regeneration (Planned)
 
-**Goal:** Regenerate Supabase types for relatorios_descritivos table.
+**Goal:** Create missing relatorios_descritivos table and regenerate TypeScript types to match production schema.
 
 **Requirements:**
-- Types current with production schema
+- DBT-01: relatorios_descritivos table exists in production
+- DBT-02: TypeScript types current with all production tables and columns
+
+**Plans:** 2 plans
+- [ ] 18-01-PLAN.md - Create relatorios_descritivos table
+- [ ] 18-02-PLAN.md - Regenerate TypeScript types
+
+**Depends on:** None
 
 ---
 
