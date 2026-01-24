@@ -3,12 +3,29 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 
+// Type for matricula with aluno join
+interface MatriculaWithAluno {
+  aluno_id: string
+  alunos: {
+    id: string
+    nome_completo: string
+  } | null
+}
+
+// Type for frequencia record
+interface FrequenciaRecord {
+  matricula_id: string
+  presente: boolean
+  marcado_em: string | null
+  observacoes: string | null
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ aula_id: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -27,7 +44,7 @@ export async function GET(
     )
     const { aula_id } = await params
 
-    // Verificar autenticação
+    // Verificar autenticacao
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json(
@@ -35,7 +52,7 @@ export async function GET(
           success: false,
           error: {
             code: 'AUTH_REQUIRED',
-            message: 'Autenticação obrigatória'
+            message: 'Autenticacao obrigatoria'
           },
           timestamp: new Date().toISOString()
         },
@@ -43,20 +60,20 @@ export async function GET(
       )
     }
 
-    // Verificar se o usuário é professor
+    // Verificar se o usuario e professor
     const { data: usuario } = await supabase
       .from('users')
-      .select('role, escola_id')
+      .select('tipo_usuario, escola_id')
       .eq('id', user.id)
       .single()
 
-    if (!usuario || usuario.role !== 'professor') {
+    if (!usuario || usuario.tipo_usuario !== 'professor') {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'INSUFFICIENT_PERMISSIONS',
-            message: 'Apenas professores podem consultar frequência'
+            message: 'Apenas professores podem consultar frequencia'
           },
           timestamp: new Date().toISOString()
         },
@@ -72,9 +89,9 @@ export async function GET(
         status,
         professor_id,
         turma_id,
+        escola_id,
         fechada_em,
-        tempo_limite_minutos,
-        turmas!inner(escola_id)
+        tempo_limite_minutos
       `)
       .eq('id', aula_id)
       .single()
@@ -85,7 +102,7 @@ export async function GET(
           success: false,
           error: {
             code: 'SESSION_NOT_FOUND',
-            message: 'Sessão de aula não encontrada'
+            message: 'Sessao de aula nao encontrada'
           },
           timestamp: new Date().toISOString()
         },
@@ -93,14 +110,14 @@ export async function GET(
       )
     }
 
-    // Verificar permissões
-    if (aula.professor_id !== user.id || aula.turmas.escola_id !== usuario.escola_id) {
+    // Verificar permissoes - aula_abertas has escola_id directly
+    if (aula.professor_id !== user.id || aula.escola_id !== usuario.escola_id) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'INSUFFICIENT_PERMISSIONS',
-            message: 'Você não tem permissão para acessar esta sessão'
+            message: 'Voce nao tem permissao para acessar esta sessao'
           },
           timestamp: new Date().toISOString()
         },
@@ -132,16 +149,15 @@ export async function GET(
     const { data: matriculas } = await supabase
       .from('matriculas')
       .select(`
+        id,
         aluno_id,
         alunos!inner(
           id,
-          nome,
-          numero_chamada
+          nome_completo
         )
       `)
       .eq('turma_id', aula.turma_id)
-      .eq('status', 'ativa')
-      .order('alunos.numero_chamada', { ascending: true })
+      .eq('situacao', 'ativa')
 
     if (!matriculas) {
       return NextResponse.json(
@@ -157,48 +173,53 @@ export async function GET(
       )
     }
 
-    // Buscar frequências já marcadas para esta aula
-    const alunoIds = matriculas.map(m => m.aluno_id)
+    // Type-safe matriculas
+    const typedMatriculas = matriculas as unknown as MatriculaWithAluno[]
+    const matriculaIds = typedMatriculas.map(m => m.aluno_id)
+
+    // Buscar frequencias ja marcadas para esta aula - use matricula_id not aluno_id
+    // frequencia table uses matricula_id, not aluno_id
+    const matriculaIdList = matriculas.map(m => m.id)
     const { data: frequencias } = await supabase
       .from('frequencia')
-      .select('aluno_id, presente, marcado_em, observacoes')
+      .select('matricula_id, presente, marcado_em, observacoes')
       .eq('aula_id', aula_id)
-      .in('aluno_id', alunoIds)
+      .in('matricula_id', matriculaIdList)
 
-    const frequenciasPorAluno = new Map(
-      frequencias?.map(f => [f.aluno_id, f]) || []
+    const frequenciasPorMatricula = new Map<string, FrequenciaRecord>(
+      (frequencias || []).map(f => [f.matricula_id, f as FrequenciaRecord])
     )
 
-    // Buscar estatísticas de frequência geral dos alunos (último mês)
+    // Buscar estatisticas de frequencia geral dos alunos (ultimo mes)
     const umMesAtras = new Date()
     umMesAtras.setMonth(umMesAtras.getMonth() - 1)
 
     const { data: estatisticasGerais } = await supabase
       .from('frequencia')
-      .select('aluno_id, presente')
-      .in('aluno_id', alunoIds)
-      .gte('data', umMesAtras.toISOString().split('T')[0])
+      .select('matricula_id, presente')
+      .in('matricula_id', matriculaIdList)
+      .gte('data_aula', umMesAtras.toISOString().split('T')[0])
 
-    // Calcular estatísticas por aluno
-    const estatisticasPorAluno = new Map()
+    // Calcular estatisticas por matricula
+    const estatisticasPorMatricula = new Map<string, { percentual_presenca: number; total_faltas_mes: number; em_risco: boolean }>()
 
     if (estatisticasGerais) {
       const estatisticasAgrupadas = estatisticasGerais.reduce((acc, freq) => {
-        if (!acc[freq.aluno_id]) {
-          acc[freq.aluno_id] = { total: 0, presencas: 0, faltas: 0 }
+        if (!acc[freq.matricula_id]) {
+          acc[freq.matricula_id] = { total: 0, presencas: 0, faltas: 0 }
         }
-        acc[freq.aluno_id].total++
+        acc[freq.matricula_id].total++
         if (freq.presente) {
-          acc[freq.aluno_id].presencas++
+          acc[freq.matricula_id].presencas++
         } else {
-          acc[freq.aluno_id].faltas++
+          acc[freq.matricula_id].faltas++
         }
         return acc
       }, {} as Record<string, { total: number; presencas: number; faltas: number }>)
 
-      Object.entries(estatisticasAgrupadas).forEach(([alunoId, stats]) => {
+      Object.entries(estatisticasAgrupadas).forEach(([matriculaId, stats]) => {
         const percentualPresenca = stats.total > 0 ? Math.round((stats.presencas / stats.total) * 100) : 100
-        estatisticasPorAluno.set(alunoId, {
+        estatisticasPorMatricula.set(matriculaId, {
           percentual_presenca: percentualPresenca,
           total_faltas_mes: stats.faltas,
           em_risco: percentualPresenca < 80
@@ -208,17 +229,20 @@ export async function GET(
 
     // Montar resposta com dados dos alunos
     const alunos = matriculas.map(matricula => {
-      const frequencia = frequenciasPorAluno.get(matricula.aluno_id)
-      const estatisticas = estatisticasPorAluno.get(matricula.aluno_id) || {
+      const frequencia = frequenciasPorMatricula.get(matricula.id)
+      const estatisticas = estatisticasPorMatricula.get(matricula.id) || {
         percentual_presenca: 100,
         total_faltas_mes: 0,
         em_risco: false
       }
 
+      // Type-safe access to alunos join
+      const alunoData = matricula.alunos as unknown as { id: string; nome_completo: string } | null
+
       return {
-        id: matricula.alunos.id,
-        nome: matricula.alunos.nome,
-        numero_chamada: matricula.alunos.numero_chamada,
+        id: alunoData?.id || matricula.aluno_id,
+        nome: alunoData?.nome_completo || 'Nome nao disponivel',
+        numero_chamada: null, // alunos table doesn't have numero_chamada
         frequencia: {
           presente: frequencia?.presente ?? null,
           marcado_em: frequencia?.marcado_em ?? null,
@@ -239,7 +263,7 @@ export async function GET(
     })
 
   } catch (error) {
-    logger.error('Erro inesperado em /api/frequencia/sessao/[aula_id]:', { error: error })
+    logger.error('Erro inesperado em /api/frequencia/sessao/[aula_id]:', error instanceof Error ? error.message : String(error))
     return NextResponse.json(
       {
         success: false,

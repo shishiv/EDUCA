@@ -41,7 +41,7 @@ async function validateAuth(supabase: any) {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, tipo_usuario, escola_id, nome_completo')
+    .select('id, tipo_usuario, escola_id, nome')
     .eq('id', user.id)
     .single()
 
@@ -60,31 +60,31 @@ async function validateSessionAccess(supabase: any, sessionId: string, profile: 
       id,
       turma_id,
       professor_id,
+      escola_id,
       status,
       data_aula,
       hash_legal,
-      turmas:turma_id (
-        escola_id
-      )
+      conteudo_programatico
     `)
     .eq('id', sessionId)
     .single()
 
   if (error || !session) {
-    throw new Error('Sessão não encontrada')
+    throw new Error('Sessao nao encontrada')
   }
 
   // Access control validation
   if (profile.tipo_usuario === 'professor') {
     if (session.professor_id !== profile.id) {
-      throw new Error('Você só pode modificar suas próprias sessões')
+      throw new Error('Voce so pode modificar suas proprias sessoes')
     }
   } else if (['diretor', 'secretario'].includes(profile.tipo_usuario)) {
-    if (session.turmas?.escola_id !== profile.escola_id) {
-      throw new Error('Você só pode modificar sessões da sua escola')
+    // Use escola_id directly from sessoes_aula
+    if (session.escola_id !== profile.escola_id) {
+      throw new Error('Voce so pode modificar sessoes da sua escola')
     }
   } else if (profile.tipo_usuario !== 'admin') {
-    throw new Error('Permissões insuficientes para modificar esta sessão')
+    throw new Error('Permissoes insuficientes para modificar esta sessao')
   }
 
   return session
@@ -108,9 +108,9 @@ function generateLegalHash(sessionData: any): string {
     sessionData.turma_id,
     sessionData.professor_id,
     sessionData.data_aula,
-    sessionData.aberta_em || sessionData.criada_em,
+    sessionData.aberta_em || sessionData.created_at,
     sessionData.fechada_em || new Date().toISOString(),
-    sessionData.conteudo_ministrado || ''
+    sessionData.conteudo_programatico || ''
   ].join('|')
 
   // In production, use crypto.subtle.digest with SHA-256
@@ -174,11 +174,11 @@ export async function PUT(
         disciplina_id,
         data_aula,
         status,
-        criada_em,
+        created_at,
         aberta_em,
         fechada_em,
         cancelada_em,
-        conteudo_ministrado,
+        conteudo_programatico,
         observacoes_fechamento,
         hash_legal,
         tempo_total_aula,
@@ -188,7 +188,7 @@ export async function PUT(
           ano_letivo
         ),
         users:professor_id (
-          nome_completo
+          nome
         ),
         disciplinas:disciplina_id (
           nome,
@@ -198,29 +198,51 @@ export async function PUT(
       .single()
 
     if (updateError) {
-      logger.error('Erro ao atualizar status da sessão:', { error: updateError })
-      throw new Error('Falha ao atualizar status da sessão')
+      logger.error('Erro ao atualizar status da sessao:', updateError?.message || 'Unknown error')
+      throw new Error('Falha ao atualizar status da sessao')
     }
 
     // Log the status change
     logger.info(`Status da sessão ${validatedParams.id} alterado de ${session.status} para ${validatedData.status}`)
+
+    // Type-safe access to updatedSession
+    const sessionData = updatedSession as {
+      id: string
+      turma_id: string
+      professor_id: string
+      disciplina_id: string | null
+      data_aula: string
+      status: string
+      created_at: string | null
+      aberta_em: string | null
+      fechada_em: string | null
+      cancelada_em: string | null
+      conteudo_programatico: string
+      observacoes_fechamento: string | null
+      hash_legal: string | null
+      tempo_total_aula: unknown
+      auto_fechamento_agendado: string | null
+      turmas: { nome: string; ano_letivo: number } | null
+      users: { nome: string } | null
+      disciplinas: { nome: string; codigo: string } | null
+    }
 
     // Return success response with workflow information
     return NextResponse.json({
       success: true,
       message: getStatusChangeMessage(session.status, validatedData.status),
       session: {
-        ...updatedSession,
-        compliance_status: getComplianceStatus(updatedSession),
-        can_modify: canModifySession(updatedSession),
+        ...sessionData,
+        compliance_status: getComplianceStatus(sessionData),
+        can_modify: canModifySession(sessionData),
         workflow_status: {
           previous_phase: session.status,
           current_phase: validatedData.status,
           next_allowed_transitions: getValidTransitions(validatedData.status),
-          legal_compliance: updatedSession.hash_legal ? 'compliant' : 'pending'
+          legal_compliance: sessionData.hash_legal ? 'compliant' : 'pending'
         },
         audit_info: {
-          changed_by: profile.nome_completo,
+          changed_by: profile.nome,
           changed_at: new Date().toISOString(),
           change_type: getChangeType(session.status, validatedData.status)
         }
@@ -228,7 +250,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    logger.error('Erro no endpoint de status da sessão:', { error: error })
+    logger.error('Erro no endpoint de status da sessao:', error instanceof Error ? error.message : String(error))
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -274,9 +296,9 @@ async function prepareUpdateData(session: any, validatedData: any, supabase: any
     case 'FECHADA':
       updateData.fechada_em = new Date().toISOString()
 
-      // Content is required for closing
+      // Content is required for closing - use conteudo_programatico
       if (validatedData.conteudo_ministrado) {
-        updateData.conteudo_ministrado = validatedData.conteudo_ministrado
+        updateData.conteudo_programatico = validatedData.conteudo_ministrado
       }
 
       if (validatedData.observacoes_fechamento) {
@@ -287,7 +309,7 @@ async function prepareUpdateData(session: any, validatedData: any, supabase: any
       const hashData = {
         ...session,
         ...updateData,
-        conteudo_ministrado: validatedData.conteudo_ministrado || session.conteudo_ministrado
+        conteudo_programatico: validatedData.conteudo_ministrado || session.conteudo_programatico
       }
       updateData.hash_legal = generateLegalHash(hashData)
       break

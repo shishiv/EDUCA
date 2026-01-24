@@ -19,7 +19,7 @@ const marcarFrequenciaSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (sqlError) {
-      logger.error('Erro ao marcar frequência:', { error: sqlError, sessao_id, aula_id })
+      logger.error('Erro ao marcar frequência:', sqlError?.message || 'Unknown error', { metadata: { sessao_id, aula_id } })
       return NextResponse.json(
         {
           success: false,
@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Erro inesperado em /api/frequencia/marcar:', { error: error })
+    logger.error('Erro inesperado em /api/frequencia/marcar:', error instanceof Error ? error.message : String(error))
     return NextResponse.json(
       {
         success: false,
