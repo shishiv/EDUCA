@@ -168,7 +168,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
         ...(userPreferences ? JSON.parse(userPreferences) : {})
       }))
     } catch (error) {
-      logger.error('Failed to load saved search data:', { error: error })
+      logger.error('Failed to load saved search data:', error instanceof Error ? error : String(error))
     }
   }
 
@@ -183,7 +183,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
       }
       localStorage.setItem('gestao-fronteira-search-preferences', JSON.stringify(preferences))
     } catch (error) {
-      logger.error('Failed to save user preferences:', { error: error })
+      logger.error('Failed to save user preferences:', error instanceof Error ? error : String(error))
     }
   }
 
@@ -230,7 +230,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
         totalCount: data.totalCount || 0
       }
     } catch (error) {
-      logger.error('Error calling search API', { error })
+      logger.error('Error calling search API', error instanceof Error ? error : String(error))
 
       // Return empty results on error
       return {
@@ -302,7 +302,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
 
       toast.success(`${results.length} resultados encontrados`)
     } catch (error) {
-      logger.error('Search failed:', { error: error })
+      logger.error('Search failed:', error instanceof Error ? error : String(error))
       setState(prev => ({ ...prev, error: 'Erro na busca. Tente novamente.' }))
       toast.error('Erro na busca. Tente novamente.')
     } finally {
@@ -351,7 +351,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
       localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
       toast.success('Busca salva com sucesso!')
     } catch (error) {
-      logger.error('Failed to save search:', { error: error })
+      logger.error('Failed to save search:', error instanceof Error ? error : String(error))
       toast.error('Erro ao salvar busca')
     }
   }
@@ -374,7 +374,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     try {
       localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
     } catch (error) {
-      logger.error('Failed to update saved search:', { error: error })
+      logger.error('Failed to update saved search:', error instanceof Error ? error : String(error))
     }
   }
 
@@ -386,7 +386,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
       localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
       toast.success('Busca removida')
     } catch (error) {
-      logger.error('Failed to delete saved search:', { error: error })
+      logger.error('Failed to delete saved search:', error instanceof Error ? error : String(error))
       toast.error('Erro ao remover busca')
     }
   }
@@ -418,7 +418,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     try {
       localStorage.setItem('gestao-fronteira-recent-searches', JSON.stringify(updatedRecent))
     } catch (error) {
-      logger.error('Failed to save recent search:', { error: error })
+      logger.error('Failed to save recent search:', error instanceof Error ? error : String(error))
     }
   }
 
@@ -497,7 +497,7 @@ export function useSearchSuggestions() {
       const results = await getSearchSuggestions(query)
       setSuggestions(results)
     } catch (error) {
-      logger.error('Failed to load suggestions:', { error: error })
+      logger.error('Failed to load suggestions:', error instanceof Error ? error : String(error))
       setSuggestions([])
     } finally {
       setLoading(false)

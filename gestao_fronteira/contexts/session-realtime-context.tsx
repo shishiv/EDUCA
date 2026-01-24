@@ -182,7 +182,7 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
     },
 
     onError: (error) => {
-      logger.error('Session realtime error:', { error: error })
+      logger.error('Session realtime error:', error instanceof Error ? error : String(error))
 
       createNotification(
         'compliance_warning',
@@ -260,7 +260,7 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
     try {
       await realtimeManager.current?.broadcastSessionUpdate(sessionId, updateType, data)
     } catch (error) {
-      logger.error('Failed to broadcast session update:', { error: error })
+      logger.error('Failed to broadcast session update:', error instanceof Error ? error : String(error))
       setPendingSync(prev => prev + 1)
     }
   }, [])

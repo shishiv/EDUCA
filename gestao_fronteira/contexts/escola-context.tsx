@@ -118,7 +118,7 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
           setEscolas([])
         }
       } catch (error) {
-        logger.error('[EscolaContext] Error fetching escolas', { error })
+        logger.error('[EscolaContext] Error fetching escolas', error instanceof Error ? error : String(error))
         setEscolas([])
       } finally {
         setLoading(false)
