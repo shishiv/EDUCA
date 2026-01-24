@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Turbopack HMR error with sonner Toaster:**
+  - Replaced `next/dynamic` with direct import + client-side mount guard
+  - Fixes "module factory is not available" error during HMR updates
+  - Known Turbopack bug since Next.js 15.5.0 (GitHub #74167, #85883)
+  - Pattern: `{mounted && <Toaster />}` with `useEffect` mount state
+
+### Removed
+- **PostHog analytics (temporario):**
+  - Removido posthog-js da dependencia (Turbopack HMR bug)
+  - Removido PostHogProvider.tsx e posthog-init.ts
+  - AnalyticsProvider.tsx simplificado como passthrough
+  - lib/logger.ts: removido import e integracao PostHog
+  - Usuario configurara analytics posteriormente
+
 ### Added
 - **Responsaveis na navegacao lateral:**
   - Pagina `/dashboard/responsaveis` adicionada ao grupo Cadastros

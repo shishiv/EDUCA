@@ -39,13 +39,15 @@ Seguranca & Compliance (8h)
 * Documentacao de politicas RLS (Row Level Security)
 * Atualizacao da politica de privacidade LGPD
 
-Auditoria & Limpeza (1h)
+Auditoria & Limpeza (2h)
 * Remocao de paginas de desenvolvimento (showcase, platform-names)
 * Adicao de Responsaveis na navegacao lateral
 * Atualizacao de scripts de dev
+* Remocao temporaria do PostHog (bug Turbopack HMR)
+* Correcao do erro HMR jsx-dev-runtime com sonner Toaster (24/01)
 
 Dia 06/01 - Falta para realização de exame (proteínuria 24h) - (-8h)
-**Total: 102h** (datas 26, 29 e 30/12 com horas dobradas)
+**Total: 103h** (datas 26, 29 e 30/12 com horas dobradas)
 
 Resumo em uma frase:
 Refatoracao completa da interface com novo Design System, modulos de Turmas/Chamada/Aluno/Diario Infantil, arquitetura v2.0 com CI/CD, Feature Flags, Security/Compliance, e recebimento de kits escolares durante o recesso.
