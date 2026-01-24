@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18-02 COMPLETE (Types Regeneration) - BUILD BLOCKED (pre-existing issues)
-Last activity: 2026-01-24 - Executed 18-02-PLAN.md (regenerate TypeScript types)
+Status: Phase 18-03 COMPLETE (Fix AttendanceStatus type mismatch) - BUILD BLOCKED (pre-existing issues)
+Last activity: 2026-01-24 - Executed 18-03-PLAN.md (fix AttendanceStatus typo)
 
-Progress: █████░░░░░░░░░░░░░░░ 25% (Phase 16-01, 18-01, 18-02, 20-01 complete)
+Progress: ███████░░░░░░░░░░░░░ 35% (Phase 16-01, 18-01, 18-02, 18-03, 18-05, 20-01 complete)
 
 ## Milestone Summary
 
@@ -161,13 +161,18 @@ Progress: █████░░░░░░░░░░░░░░░ 25% (Phas
 | 18-02 | Types regenerated - reveals pre-existing schema mismatch | Code using wrong columns (aluno_id vs matricula_id) |
 | 18-02 | Partial type fixes committed | 8 files fixed, 400+ errors remain |
 | 18-02 | Cast database enum-like fields | status, tipo need explicit casts to TypeScript unions |
+| 18-05 | Stub routes with 501 Not Implemented | Preserves API contract, allows future implementation |
+| 18-05 | Keep input types for future implementation | CreateVivenciaInput/UpdateVivenciaInput preserved |
+| 18-05 | Log warnings on stub method calls | Helps identify UI code calling these methods |
+| 18-03 | AttendanceStatusUI is canonical UI type | types/attendance.ts already had correct definition |
+| 18-03 | Task 3 files don't exist | diario-classe.ts already has comprehensive session types |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 18-02 (TypeScript types regeneration)
-Resume file: .planning/phases/18-database-types-regeneration/18-02-SUMMARY.md
-Next action: Create Phase 19 for schema alignment fixes (frequencia uses matricula_id not aluno_id)
+Stopped at: Completed Phase 18-03 (Fix AttendanceStatus type mismatch)
+Resume file: .planning/phases/18-database-types-regeneration/18-03-SUMMARY.md
+Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-10)
 
 ### Roadmap Evolution
 
@@ -266,6 +271,15 @@ Next action: Create Phase 19 for schema alignment fixes (frequencia uses matricu
     - DISCOVERY: 400+ pre-existing type errors from schema mismatch
     - Code uses aluno_id, sessao_aula_id - actual columns are matricula_id, sessao_id
     - Summary: .planning/phases/18-database-types-regeneration/18-02-SUMMARY.md
+  - 18-05: COMPLETE - Stubbed vivencias API routes (table doesn't exist)
+    - Routes return 501 Not Implemented
+    - Service class logs warnings when called
+    - Reduced ~700 lines of non-functional code
+    - Summary: .planning/phases/18-database-types-regeneration/18-05-SUMMARY.md
+  - 18-03: COMPLETE - Fixed AttendanceStatus type mismatch
+    - Fixed typo: AttendanceStatusUIUI -> AttendanceStatusUI
+    - Eliminated 6 type errors in AttendanceGrid.tsx
+    - Summary: .planning/phases/18-database-types-regeneration/18-03-SUMMARY.md
 
 ### Known Issues (Blockers for build)
 - **NEW: Schema mismatch in attendance code** - frequencia uses matricula_id, code uses aluno_id (400+ errors)
@@ -274,4 +288,4 @@ Next action: Create Phase 19 for schema alignment fixes (frequencia uses matricu
 
 ---
 
-*State updated: 2026-01-24 - Phase 18-02 types regenerated, 400+ pre-existing errors discovered*
+*State updated: 2026-01-24 - Phase 18-03 complete, fixed AttendanceStatus type import typo*
