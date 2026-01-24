@@ -1,39 +1,34 @@
 # ROADMAP.md - v2.1 Production Pilot
 
 **Started:** 2026-01-24
-**Goal:** Deploy to 1-2 pilot schools, add analytics, complete E2E tests.
+**Goal:** Deploy to 1-2 pilot schools, complete E2E tests.
 
 ---
 
 ## Phases
 
-### Phase 16: Analytics & Monitoring Integration
+### Phase 16: Analytics Placeholder Cleanup ✓
 
-**Goal:** Implement production-grade analytics and error tracking with E2E verification.
+**Goal:** Remove analytics placeholder code. User decided NOT to implement analytics.
 
-**Requirements:**
-- ANL-01: Working PostHog or alternative analytics provider
-- ANL-02: Sentry error tracking integrated
-- ANL-03: Logger connected to monitoring service
-- ANL-04: E2E login flow verified with browser automation
+**Status:** COMPLETE (2026-01-24)
 
-**Gap Closure:**
-- CLN-08 (v2.0 deferred): PostHog integration
-- Plan 15-08 (v2.0 skipped): Sentry integration
-- logger.ts TODO: External monitoring service connection
+**Requirements (CLOSED by removal decision):**
+- ~~ANL-01: Working PostHog or alternative analytics provider~~ - CLOSED (not implementing)
+- ~~ANL-02: Sentry error tracking integrated~~ - CLOSED (not implementing)
+- ~~ANL-03: Logger connected to monitoring service~~ - CLOSED (keeping local-only)
+- ~~ANL-04: E2E login flow verified with browser automation~~ - CLOSED (no analytics to verify)
 
-**Tasks:**
-1. Debug current analytics configuration issues
-2. Research Turbopack-compatible analytics solution
-3. Install and configure analytics/error tracking packages
-4. Connect logger to external monitoring
-5. E2E verification with browser automation (login with seed-superadmin credentials)
+**Cleanup Tasks:**
+1. Delete AnalyticsProvider.tsx (passthrough component)
+2. Remove AnalyticsProvider wrapper from layout.tsx
+3. Remove export from providers/index.ts
+4. Remove TODO comments from logger.ts
+5. Delete or minimize instrumentation.ts
+6. Remove PostHog env vars from .env.example
 
-**Browser Automation Test:**
-- Login with: admin@fronteira.mg.gov.br / Admin@Fronteira2025
-- Verify analytics events fire
-- Verify errors are captured
-- Document working configuration
+**Plans:** 1 plan
+- [x] 16-01-PLAN.md - Remove analytics placeholder code
 
 ---
 
@@ -44,7 +39,7 @@
 **Requirements:**
 - TST-03: E2E Playwright smoke tests for critical flows
 
-**Depends on:** Phase 16 (analytics must work to verify in tests)
+**Depends on:** None (Phase 16 no longer has analytics to verify)
 
 ---
 
@@ -71,7 +66,7 @@
 ## Success Criteria
 
 v2.1 is complete when:
-- [ ] Analytics/error tracking working in production
+- [x] Analytics placeholder code removed (Phase 16 - cleanup only)
 - [ ] E2E tests pass for critical flows
 - [ ] Database types regenerated
 - [ ] Deployed to 1-2 pilot schools
@@ -80,4 +75,5 @@ v2.1 is complete when:
 ---
 
 *Created: 2026-01-24*
+*Updated: 2026-01-24 - Phase 16 COMPLETE, analytics placeholder code removed*
 *From: v2.0 tech debt and PROJECT.md v2.1 scope*
