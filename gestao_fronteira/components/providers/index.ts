@@ -3,4 +3,3 @@
  */
 
 export { ServiceWorkerProvider } from './service-worker-provider'
-export { PHProvider } from './PostHogProvider'
