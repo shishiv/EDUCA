@@ -63,9 +63,7 @@ function getFieldLabel(key: ExperienceFieldKey): string {
  */
 const experienceFieldOptional = z
   .string()
-  .max(MAX_FIELD_LENGTH, (val) => ({
-    message: FORM_ERROR_MESSAGES.fieldTooLong('Este campo'),
-  }))
+  .max(MAX_FIELD_LENGTH, { message: FORM_ERROR_MESSAGES.fieldTooLong('Este campo') })
   .optional()
   .or(z.literal(''))
 
