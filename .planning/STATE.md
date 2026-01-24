@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 15.2 of 15.2 (Audit Project Configuration) - IN PROGRESS
-Plan: 2 of 2 complete
-Status: Plan 15.2-02 complete (Dependency cleanup)
-Last activity: 2026-01-24 - Completed 15.2-02-PLAN.md (Package.json cleanup)
+Phase: 15.2 of 15.2 (Audit Project Configuration) - COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 15.2 complete (Configuration audit)
+Last activity: 2026-01-24 - Completed 15.2-03-PLAN.md (TypeScript/Next.js modernization)
 
-Progress: ████████████████████ 100% (40/41 requirements - 1 remaining in 15.2)
+Progress: ████████████████████ 100% (41/41 requirements complete)
 
 ## Milestone Summary
 
@@ -139,13 +139,16 @@ Progress: ████████████████████ 100% (40/
 | 15.2-02 | Keep @testing-library/* packages | Peer deps of @testing-library/jest-dom |
 | 15.2-02 | Move @types to devDependencies | Type packages only needed at compile time |
 | 15.2-02 | Remove @eslint/eslintrc | No longer needed after ESLint flat config migration |
+| 15.2-03 | tsconfig target es5 -> es2023 | Modern browsers support ES2023; es5 was 10+ years outdated |
+| 15.2-03 | Keep serverActions under experimental | allowedOrigins config still requires experimental flag |
+| 15.2-03 | Remove recharts from optimizePackageImports | Dependency was removed in 15.2-02 |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 15.2-02-PLAN.md (Dependency cleanup)
+Stopped at: Completed 15.2-03-PLAN.md (TypeScript/Next.js modernization)
 Resume file: None
-Next action: Create 15.2-03 plan for tsconfig/next.config audit, or phase complete
+Next action: Phase 15.2 COMPLETE - All v2.0 Architecture & Launch Prep phases done
 
 ### Roadmap Evolution
 
@@ -214,9 +217,10 @@ Next action: Create 15.2-03 plan for tsconfig/next.config audit, or phase comple
   - DEAD-CODE-AUDIT.md created at .planning/codebase/
   - knip.json configured for ongoing maintenance
 
-- Phase 15.2 progress (Audit Project Configuration):
+- Phase 15.2 COMPLETE (Audit Project Configuration):
   - 15.2-01: COMPLETE - ESLint native flat config, no more circular reference error
   - 15.2-02: COMPLETE - 10 unused deps removed, @types moved to devDependencies
+  - 15.2-03: COMPLETE - tsconfig target es2023, next.config updated, CONFIG-AUDIT.md created
   - ESLint now reports 715 real code issues (236 errors, 479 warnings)
 
 ### Known Issues (Blockers for build)
@@ -225,4 +229,4 @@ Next action: Create 15.2-03 plan for tsconfig/next.config audit, or phase comple
 
 ---
 
-*State updated: 2026-01-24 after completing 15.2-02-PLAN.md - Dependency cleanup complete*
+*State updated: 2026-01-24 after completing 15.2-03-PLAN.md - Phase 15.2 complete, v2.0 Architecture & Launch Prep milestone done*
