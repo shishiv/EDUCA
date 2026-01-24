@@ -141,7 +141,7 @@ async function getSystemMetrics() {
       openSessionsToday: openSessionsToday || 0
     }
   } catch (error) {
-    logger.error('Error getting system metrics', { error })
+    logger.error('Error getting system metrics', error instanceof Error ? error : new Error(String(error)))
     return null
   }
 }
@@ -195,7 +195,7 @@ export async function GET() {
     return NextResponse.json(response, { status: httpStatus })
 
   } catch (error) {
-    logger.error('Health check failed', { error })
+    logger.error('Health check failed', error instanceof Error ? error : new Error(String(error)))
 
     recordMetric('system_health', 0)
 
