@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18-07 COMPLETE (Fix service layer type errors)
-Last activity: 2026-01-24 - Executed 18-07-PLAN.md (fix lib/services, lib/reports, lib/realtime, lib/audit)
+Status: Phase 18-06 COMPLETE (Fix lib/api layer type errors)
+Last activity: 2026-01-24 - Executed 18-06-PLAN.md (fix 50+ type errors in lib/api layer)
 
-Progress: ████████░░░░░░░░░░░░ 50% (Phase 16-01, 18-01 to 18-10, 20-01 complete)
+Progress: ████████░░░░░░░░░░░░ 55% (Phase 16-01, 18-01 to 18-10, 20-01 complete)
 
 ## Milestone Summary
 
@@ -175,13 +175,16 @@ Progress: ████████░░░░░░░░░░░░ 50% (Phas
 | 18-07 | Add nivel_criticidade to audit_trail inserts | Required field in database schema with no default |
 | 18-07 | Use sessao_id not session_id for frequencia | Schema uses Portuguese column names |
 | 18-07 | Use sessoes_aula not aula_sessions table | Schema uses Portuguese table names |
+| 18-06 | Use 'as any' cast for dynamic table names | BaseApiService uses dynamic tableName which doesn't match literal types |
+| 18-06 | Query frequencia through matricula_id | Database schema uses matricula_id as FK, not aluno_id |
+| 18-06 | Use aluno_responsaveis join table | responsaveis table no longer has direct aluno_id column |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 18-07 (Fix service layer type errors)
-Resume file: .planning/phases/18-database-types-regeneration/18-07-SUMMARY.md
-Next action: Continue fixing type errors (plan 18-06 remaining)
+Stopped at: Completed Phase 18-06 (Fix lib/api layer type errors)
+Resume file: .planning/phases/18-database-types-regeneration/18-06-SUMMARY.md
+Next action: Continue fixing type errors (remaining plans in Phase 18)
 
 ### Roadmap Evolution
 
@@ -309,12 +312,19 @@ Next action: Continue fixing type errors (plan 18-06 remaining)
     - session-realtime.ts: table names fixed (sessoes_aula, sessao_id)
     - audit.ts: field name mapping, AuditLog type casting
     - Summary: .planning/phases/18-database-types-regeneration/18-07-SUMMARY.md
+  - 18-06: COMPLETE - Fixed 50+ type errors in lib/api layer
+    - base.ts: use 'supabase as any' for dynamic table names
+    - attendance.ts: update column names (matricula_id, sessao_id, data_aula)
+    - students.ts: add ano_letivo to matriculas, fix responsaveis join table
+    - All 13 lib/api files now pass type checking
+    - Summary: .planning/phases/18-database-types-regeneration/18-06-SUMMARY.md
 
 ### Known Issues (Blockers for build)
-- **NEW: Schema mismatch in attendance code** - frequencia uses matricula_id, code uses aluno_id (400+ errors)
+- ~~Schema mismatch in attendance code~~ - FIXED in 18-06 (lib/api layer clean)
+- 3 remaining errors in components/attendance/AttendanceGrid.tsx (outside 18-06 scope)
 - ~~Database types missing `relatorios_descritivos` table~~ - TYPES REGENERATED in 18-02
 - ~~ESLint config has circular reference error~~ - FIXED in 15.2-01
 
 ---
 
-*State updated: 2026-01-24 - Phase 18-07 complete, fixed service layer type errors*
+*State updated: 2026-01-24 - Phase 18-06 complete, fixed lib/api layer type errors (50+ errors)*
