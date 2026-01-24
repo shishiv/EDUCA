@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 15 of 15 (Technical Debt Cleanup) - IN PROGRESS
-Plan: 8 of 9 complete
-Status: Executing Phase 15 plans
-Last activity: 2026-01-20 - Completed 15-09-PLAN.md (FrequenciaWorkflow Refactor)
+Phase: 15.1 of 15.1 (Dead Code Audit via LSP) - IN PROGRESS
+Plan: 1 of 3 complete
+Status: lib/ audit complete, components/ and app/ audits pending
+Last activity: 2026-01-23 - Completed 15.1-01-PLAN.md (lib/ Dead Code Audit)
 
-Progress: █████████████████░ 88% (31/34 requirements)
+Progress: ██████████████████░░ 92% (35/38 requirements)
 
 ## Milestone Summary
 
@@ -121,16 +121,20 @@ Progress: █████████████████░ 88% (31/34 requ
 | 15-09 | Keep data loading logic in FrequenciaWorkflow parent | UI components extracted, data logic stays in container |
 | 15-09 | Export component types for external consumers | WorkflowStep, Disciplina, Turma types available via barrel |
 | 15-09 | Normalize disciplina names for icon lookup | Remove accents for consistent matching |
+| 15.1-01 | Keep API service class exports | Even when only instances are used, class exports enable type inference |
+| 15.1-01 | Remove entire directories when all files unused | Cleaner than individual file removal |
+| 15.1-01 | Preserve services with tests but no production use | attendance-locking.ts and attendance-workflow.ts have test coverage |
 
 ## Session Continuity
 
-Last session: 2026-01-20
-Stopped at: Completed 15-09-PLAN.md (FrequenciaWorkflow Refactor)
+Last session: 2026-01-23
+Stopped at: Completed 15.1-01-PLAN.md (lib/ Dead Code Audit)
 Resume file: None
-Next action: Execute remaining Phase 15 plan (15-08)
+Next action: Execute 15.1-02-PLAN.md (components/ Dead Code Audit)
 
 ### Roadmap Evolution
 
+- Phase 15.1 inserted after Phase 15: Dead Code Audit via LSP (URGENT) - Use LSP findReferences to identify and remove unused code
 - Phase 7.1 inserted after Phase 7: Admin School Selector (URGENT) - Admin users blocked from accessing escola-scoped pages
 - Phase 7.1 complete: Admin school selector functional, all 3 plans executed and verified
 - Phase 8 complete: Code Standards documentation and migration
@@ -185,6 +189,11 @@ Next action: Execute remaining Phase 15 plan (15-08)
   - 15-07: COMPLETE - AttendanceGrid refactored from 1078 to 465 LOC with 5 subcomponents
   - 15-09: COMPLETE - FrequenciaWorkflow refactored from 622 to 445 LOC with 3 subcomponents
 
+- Phase 15.1 progress (Dead Code Audit via LSP):
+  - 15.1-01: COMPLETE - lib/ audit: 17 files deleted, 8,530 lines removed, knip configured
+  - 15.1-02: PENDING - components/ audit
+  - 15.1-03: PENDING - app/ and final verification
+
 ---
 
-*State updated: 2026-01-20 after completing 15-09-PLAN.md - FrequenciaWorkflow Refactor*
+*State updated: 2026-01-23 after completing 15.1-01-PLAN.md - lib/ Dead Code Audit*
