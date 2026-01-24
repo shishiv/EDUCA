@@ -1,7 +1,7 @@
 # ROADMAP.md - v2.1 Production Pilot
 
 **Started:** 2026-01-24
-**Goal:** Deploy to 1-2 pilot schools, complete E2E tests.
+**Goal:** Deploy to 1-2 pilot schools.
 
 ---
 
@@ -32,18 +32,7 @@
 
 ---
 
-### Phase 17: E2E Playwright Smoke Tests (Planned)
-
-**Goal:** Complete deferred TST-03 from v2.0.
-
-**Requirements:**
-- TST-03: E2E Playwright smoke tests for critical flows
-
-**Depends on:** None (Phase 16 no longer has analytics to verify)
-
----
-
-### Phase 18: Database Types Regeneration ✓
+### Phase 17: Database Types Regeneration ✓
 
 **Goal:** Create missing relatorios_descritivos table, regenerate TypeScript types, and fix all type errors.
 
@@ -55,22 +44,22 @@
 - DBT-03: Build passes with regenerated types ✓
 
 **Plans:** 10 plans (all complete)
-- [x] 18-01-PLAN.md - Create relatorios_descritivos table
-- [x] 18-02-PLAN.md - Regenerate TypeScript types
-- [x] 18-03-PLAN.md - Fix AttendanceStatus type mismatch (gap closure)
-- [x] 18-04-PLAN.md - Fix API route column name errors (gap closure)
-- [x] 18-05-PLAN.md - Fix vivencias API routes (gap closure)
-- [x] 18-06-PLAN.md - Fix lib/api layer errors (gap closure)
-- [x] 18-07-PLAN.md - Fix service layer errors (gap closure)
-- [x] 18-08-PLAN.md - Fix diary/attendance component errors (gap closure)
-- [x] 18-09-PLAN.md - Fix layout/UI/context errors (gap closure)
-- [x] 18-10-PLAN.md - Fix hooks and remaining errors (gap closure)
+- [x] 17-01-PLAN.md - Create relatorios_descritivos table
+- [x] 17-02-PLAN.md - Regenerate TypeScript types
+- [x] 17-03-PLAN.md - Fix AttendanceStatus type mismatch (gap closure)
+- [x] 17-04-PLAN.md - Fix API route column name errors (gap closure)
+- [x] 17-05-PLAN.md - Fix vivencias API routes (gap closure)
+- [x] 17-06-PLAN.md - Fix lib/api layer errors (gap closure)
+- [x] 17-07-PLAN.md - Fix service layer errors (gap closure)
+- [x] 17-08-PLAN.md - Fix diary/attendance component errors (gap closure)
+- [x] 17-09-PLAN.md - Fix layout/UI/context errors (gap closure)
+- [x] 17-10-PLAN.md - Fix hooks and remaining errors (gap closure)
 
 **Depends on:** None
 
 ---
 
-### Phase 19: Pilot Deployment (Planned)
+### Phase 18: Pilot Deployment (Planned)
 
 **Goal:** Deploy to 1-2 pilot schools.
 
@@ -81,7 +70,7 @@
 
 ---
 
-### Phase 20: UI/UX Fixes ✓
+### Phase 19: UI/UX Fixes ✓
 
 **Goal:** Fix UI/UX issues: duplicate sonner toasts, components with double close buttons.
 
@@ -94,7 +83,7 @@
 **Depends on:** None
 
 **Plans:** 1 plan
-- [x] 20-01-PLAN.md - Remove duplicate Toaster and DialogClose
+- [x] 19-01-PLAN.md - Remove duplicate Toaster and DialogClose
 
 ---
 
@@ -102,13 +91,12 @@
 
 v2.1 is complete when:
 - [x] Analytics placeholder code removed (Phase 16 - cleanup only)
-- [ ] E2E tests pass for critical flows
-- [x] Database types regenerated (Phase 18 - 400+ type errors fixed)
+- [x] Database types regenerated (Phase 17 - 400+ type errors fixed)
 - [ ] Deployed to 1-2 pilot schools
 - [ ] Initial feedback collected
 
 ---
 
 *Created: 2026-01-24*
-*Updated: 2026-01-24 - Phase 18 COMPLETE, 400+ type errors fixed, pnpm typecheck passes*
+*Updated: 2026-01-24 - Phase 17 removed (E2E Playwright Smoke Tests), phases renumbered*
 *From: v2.0 tech debt and PROJECT.md v2.1 scope*
