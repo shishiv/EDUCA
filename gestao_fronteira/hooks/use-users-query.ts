@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
 import { queryKeys, invalidateQueries } from '@/lib/react-query'
-import { useAppStore } from '@/lib/stores/app-store'
+import { useAppStore, addRecentActivity, clearBulkSelection, addNotification } from '@/lib/stores/app-store'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { logger } from '@/lib/logger'
@@ -58,7 +58,6 @@ export function useUserStats() {
 // Create user mutation
 export function useCreateUser() {
   const queryClient = useQueryClient()
-  const addRecentActivity = useAppStore((state) => state.addRecentActivity)
 
   return useMutation({
     mutationFn: (userData: Parameters<typeof usersApi.createUser>[0]) =>
@@ -138,7 +137,6 @@ export function useUpdateUserStatus() {
 // Bulk update status mutation
 export function useBulkUpdateUserStatus() {
   const queryClient = useQueryClient()
-  const clearBulkSelection = useAppStore((state) => state.clearBulkSelection)
 
   return useMutation({
     mutationFn: ({ userIds, ativo, reason }: { userIds: string[]; ativo: boolean; reason?: string }) =>
@@ -164,7 +162,6 @@ export function useBulkUpdateUserStatus() {
 // Bulk assign school mutation
 export function useBulkAssignSchool() {
   const queryClient = useQueryClient()
-  const clearBulkSelection = useAppStore((state) => state.clearBulkSelection)
 
   return useMutation({
     mutationFn: ({ userIds, escolaId }: { userIds: string[]; escolaId: string }) =>
@@ -187,44 +184,19 @@ export function useBulkAssignSchool() {
 }
 
 // Real-time subscription hook
+// Note: Real-time subscription requires Supabase realtime channel setup
+// This is a placeholder that can be implemented when real-time is needed
 export function useUsersSubscription() {
   const queryClient = useQueryClient()
-  const addNotification = useAppStore((state) => state.addNotification)
 
   useEffect(() => {
-    const subscription = usersApi.subscribe((payload) => {
-      // logger.info('User change received:', { payload })
-
-      // Invalidate user queries on any change
-      invalidateQueries.users()
-      invalidateQueries.userStats()
-
-      // Show notification for changes
-      if (payload.eventType === 'INSERT') {
-        addNotification({
-          type: 'info',
-          title: 'Novo usuário',
-          message: `Um novo usuário foi adicionado ao sistema`,
-        })
-      } else if (payload.eventType === 'UPDATE') {
-        addNotification({
-          type: 'info',
-          title: 'Usuário atualizado',
-          message: `Um usuário foi atualizado`,
-        })
-      } else if (payload.eventType === 'DELETE') {
-        addNotification({
-          type: 'warning',
-          title: 'Usuário removido',
-          message: `Um usuário foi removido do sistema`,
-        })
-      }
-    })
-
+    // Real-time subscriptions would be implemented here using:
+    // supabase.channel('users').on('postgres_changes', ...)
+    // For now, this is a no-op as the usersApi doesn't have a subscribe method
     return () => {
-      subscription.unsubscribe()
+      // Cleanup would go here
     }
-  }, [queryClient, addNotification])
+  }, [queryClient])
 }
 
 // Search users hook with debounce
