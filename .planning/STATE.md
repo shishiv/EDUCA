@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18-04 COMPLETE (Fix API route column name mismatches)
-Last activity: 2026-01-24 - Executed 18-04-PLAN.md (fix API route column names)
+Status: Phase 18-07 COMPLETE (Fix service layer type errors)
+Last activity: 2026-01-24 - Executed 18-07-PLAN.md (fix lib/services, lib/reports, lib/realtime, lib/audit)
 
-Progress: ████████░░░░░░░░░░░░ 46% (Phase 16-01, 18-01 to 18-10, 20-01 complete)
+Progress: ████████░░░░░░░░░░░░ 50% (Phase 16-01, 18-01 to 18-10, 20-01 complete)
 
 ## Milestone Summary
 
@@ -172,13 +172,16 @@ Progress: ████████░░░░░░░░░░░░ 46% (Phas
 | 18-04 | Use matricula_id for attendance records | Database schema uses matricula_id, not aluno_id |
 | 18-04 | Use escola_id directly from sessoes_aula | sessoes_aula has escola_id column, no need to join turmas |
 | 18-04 | await cookies() for Next.js 15 | cookies() is now async in Next.js 15 |
+| 18-07 | Add nivel_criticidade to audit_trail inserts | Required field in database schema with no default |
+| 18-07 | Use sessao_id not session_id for frequencia | Schema uses Portuguese column names |
+| 18-07 | Use sessoes_aula not aula_sessions table | Schema uses Portuguese table names |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 18-04 (Fix API route column name mismatches)
-Resume file: .planning/phases/18-database-types-regeneration/18-04-SUMMARY.md
-Next action: Continue fixing type errors (plans 18-06, 18-07)
+Stopped at: Completed Phase 18-07 (Fix service layer type errors)
+Resume file: .planning/phases/18-database-types-regeneration/18-07-SUMMARY.md
+Next action: Continue fixing type errors (plan 18-06 remaining)
 
 ### Roadmap Evolution
 
@@ -300,6 +303,12 @@ Next action: Continue fixing type errors (plans 18-06, 18-07)
     - sessoes_aula routes use created_at, escola_id directly
     - All API routes pass type checking
     - Summary: .planning/phases/18-database-types-regeneration/18-04-SUMMARY.md
+  - 18-07: COMPLETE - Fixed service layer type errors
+    - attendance-locking.ts: schema columns fixed, audit_trail inserts corrected
+    - attendance-reports.ts: logger signature fixed, nested select type casting
+    - session-realtime.ts: table names fixed (sessoes_aula, sessao_id)
+    - audit.ts: field name mapping, AuditLog type casting
+    - Summary: .planning/phases/18-database-types-regeneration/18-07-SUMMARY.md
 
 ### Known Issues (Blockers for build)
 - **NEW: Schema mismatch in attendance code** - frequencia uses matricula_id, code uses aluno_id (400+ errors)
@@ -308,4 +317,4 @@ Next action: Continue fixing type errors (plans 18-06, 18-07)
 
 ---
 
-*State updated: 2026-01-24 - Phase 18-04 complete, fixed API route column name mismatches*
+*State updated: 2026-01-24 - Phase 18-07 complete, fixed service layer type errors*
