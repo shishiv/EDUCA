@@ -8,11 +8,9 @@
  * - User action tracking for compliance
  * - Error aggregation and reporting
  * - Development vs Production behavior
- * - PostHog integration for analytics and error tracking
+ *
+ * Note: Analytics integration can be added later.
  */
-
-import posthog from 'posthog-js';
-import type { Metadata } from 'next';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical'
 
@@ -198,24 +196,8 @@ class EducationalLogger {
 
   private async sendToMonitoringService(logs: LogEntry[]): Promise<void> {
     if (!this.isClient) return;
-
-    // Send error and critical logs to PostHog
-    for (const log of logs) {
-      if (log.level === 'error' || log.level === 'critical') {
-        posthog.capture('application_error', {
-          message: log.message,
-          level: log.level,
-          feature: log.context?.feature,
-          action: log.context?.action,
-          context: log.context,
-          error: log.error,
-          url: log.url,
-          userAgent: log.userAgent,
-          stack: log.stack,
-          timestamp: log.timestamp,
-        });
-      }
-    }
+    // Logs stored locally - can be retrieved via getLogs() or exportLogs()
+    void logs;
   }
 
   // Public logging methods
