@@ -27,7 +27,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import type { AttendanceStatus } from './AttendanceCell'
+import type { AttendanceStatusUI } from '@/types/attendance'
 import { AttendanceGridHeader } from './AttendanceGridHeader'
 import { AttendanceGridRow } from './AttendanceGridRow'
 import { AttendanceGridSummary } from './AttendanceGridSummary'
@@ -133,7 +133,7 @@ export function AttendanceGrid({
 
       const attendanceMap = new Map<string, AttendanceRecord>()
       attendanceData?.forEach(record => {
-        let status: AttendanceStatus = 'empty'
+        let status: AttendanceStatusUI = 'empty'
         if (record.status_presenca === 'P') status = 'presente'
         else if (record.status_presenca === 'F') status = 'falta'
         else if (record.status_presenca === 'A') status = 'attestado'
@@ -235,13 +235,13 @@ export function AttendanceGrid({
   // Handlers
   // =========================================================================
 
-  const getAttendanceStatus = (studentId: string): AttendanceStatus => {
+  const getAttendanceStatusUI = (studentId: string): AttendanceStatusUI => {
     const record = attendance.get(studentId)
     if (!record) return 'empty'
     return record.status_presenca || 'empty'
   }
 
-  const markAttendanceStatus = async (studentId: string, status: AttendanceStatus) => {
+  const markAttendanceStatusUI = async (studentId: string, status: AttendanceStatusUI) => {
     if (isEffectivelyReadonly) {
       toast.error('Frequencia bloqueada. Nao e possivel fazer alteracoes.')
       return
@@ -250,7 +250,7 @@ export function AttendanceGrid({
     try {
       setSyncStatus('pending')
 
-      const statusMap: Record<AttendanceStatus, { presente: boolean; status_presenca: string }> = {
+      const statusMap: Record<AttendanceStatusUI, { presente: boolean; status_presenca: string }> = {
         'presente': { presente: true, status_presenca: 'P' },
         'falta': { presente: false, status_presenca: 'F' },
         'attestado': { presente: true, status_presenca: 'A' },
@@ -300,7 +300,7 @@ export function AttendanceGrid({
 
       setSyncStatus('synced')
 
-      const statusLabels: Record<AttendanceStatus, string> = {
+      const statusLabels: Record<AttendanceStatusUI, string> = {
         'presente': 'presente',
         'falta': 'ausente',
         'attestado': 'com atestado',
@@ -329,7 +329,7 @@ export function AttendanceGrid({
       setSaving(true)
       setSyncStatus('pending')
 
-      const status: AttendanceStatus = present ? 'presente' : 'falta'
+      const status: AttendanceStatusUI = present ? 'presente' : 'falta'
       const dbStatus = present ? 'P' : 'F'
 
       const attendanceRecords = Array.from(selectedStudents).map(studentId => ({
@@ -382,7 +382,7 @@ export function AttendanceGrid({
   const handleSelectUnmarked = () => {
     const unmarkedStudents = filteredStudents
       .filter(s => {
-        const status = getAttendanceStatus(s.id)
+        const status = getAttendanceStatusUI(s.id)
         return status === 'empty' && !attendance.get(s.id)?.is_locked
       })
       .map(s => s.id)
@@ -423,7 +423,7 @@ export function AttendanceGrid({
       <CardContent>
         <div className="space-y-2">
           {filteredStudents.map((student) => {
-            const attendanceStatus = getAttendanceStatus(student.id)
+            const attendanceStatus = getAttendanceStatusUI(student.id)
             const isSelected = selectedStudents.has(student.id)
             const record = attendance.get(student.id)
             const isRecordLocked = record?.is_locked || lockInfo.isLocked
@@ -440,7 +440,7 @@ export function AttendanceGrid({
                 showPhotos={showPhotos}
                 saving={saving}
                 onSelectionChange={handleSelectionChange}
-                onStatusChange={markAttendanceStatus}
+                onStatusChange={markAttendanceStatusUI}
               />
             )
           })}
