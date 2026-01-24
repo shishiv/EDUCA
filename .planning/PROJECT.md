@@ -2,28 +2,40 @@
 
 ## Project: EDUCA - Sistema de Gestao Escolar
 
-**Status:** v2.0 In Progress
+**Status:** v2.0 SHIPPED (2026-01-24)
 **Started:** 2026-01-16
 **Type:** School Management System (Brownfield)
 
 ---
 
-## Current Milestone: v2.0 Architecture & Launch Prep
+## Next Milestone: v2.1 Production Pilot
 
-**Goal:** Auditar codebase completo, padronizar arquitetura, implementar feature flags, e preparar sistema para piloto em 1-2 escolas.
+**Goal:** Deploy to 1-2 pilot schools, add analytics, complete E2E tests.
 
-**Context:** Sistema construido por multiplos workflows com padroes inconsistentes. Precisa de auditoria profunda antes de adicionar novas features.
-
-**Target outcomes:**
-- Mapeamento completo: codigo existente vs roadmap planejado
-- Identificacao de padroes inconsistentes e tech debt
-- Arquitetura padronizada para suportar features futuras
-- Feature flags via Supabase config (Nutricao, Estoque Escolar)
-- Checklist de launch readiness para piloto
+**Planned scope:**
+- PostHog analytics integration
+- E2E Playwright smoke tests
+- Database types regeneration
+- Pilot deployment and feedback collection
 
 ---
 
 ## Current State
+
+### v2.0 SHIPPED (2026-01-24)
+
+Architecture & Launch Prep milestone complete:
+- Build quality enforcement (TypeScript + ESLint in CI)
+- Data integrity: real Supabase data, Vivencias API CRUD
+- Admin school selector with sessionStorage persistence
+- Code standards: structured logger, API service layer, CONVENTIONS.md
+- Feature flags system with per-escola toggles at /dashboard/flags
+- Security: Supabase migrations versioned, RLS policies documented
+- Testing foundation: Vitest configured with attendance workflow tests
+- Role-based access: admin view-only, teacher-turma assignments, demo mode
+- Legacy page audit: 46 pages classified, dev pages removed
+- Technical debt cleanup: components refactored, dead code removed
+- Config audit: ESLint fixed, 10 unused deps removed, tsconfig modernized
 
 ### v1.0 SHIPPED (2026-01-18)
 
@@ -31,25 +43,19 @@ UI/UX overhaul following EDUCA design system:
 - Design system foundation (CSS variables, Tailwind, typography)
 - Responsive layout (Sidebar, Header, MobileNav)
 - Screens: Login, Dashboard, Turmas, Chamada, Aluno
-- New module: Diario Infantil (BNCC-compliant, mock API)
+- New module: Diario Infantil (BNCC-compliant)
 
 ### Known Issues
 
-**Code Quality:**
-- Multiple coding styles (different workflows/developers)
-- Inconsistent patterns across modules
-- Unknown coverage of original roadmap features
+**Deferred to v2.1:**
+- TST-03: E2E Playwright smoke tests (environment issues)
+- CLN-08: PostHog analytics integration
+- Database types regeneration (relatorios_descritivos table)
 
-**Tech Debt (from v1.0):**
-- 2 orphaned components (AttendanceButton, CampoExperiencia)
-- Frequency percentage hardcoded at 85%
-- Vivencias API not implemented (mock data)
-- PDF export not implemented
-
-**Unknown Status:**
-- Compliance features (LGPD, backups, encryption)
-- Core features from original roadmap (Fase 0-1)
-- Data import/export functionality
+**Tech Debt (minor):**
+- 4 TODOs remaining in lib/ (96% cleanup achieved)
+- 2 orphaned API routes for future modules
+- 715 ESLint code issues (236 errors, 479 warnings)
 
 ---
 
@@ -61,27 +67,27 @@ Sistema de gestao escolar completo para a rede municipal de Fronteira, MG. Geren
 
 ## Goals
 
-### v2.0 Goals
+### v2.1 Goals (Next)
 
-1. **Codebase Audit**
-   - Mapear codigo existente vs roadmap original
-   - Identificar o que funciona, o que esta incompleto, o que falta
-   - Documentar padroes de codigo encontrados
+1. **Production Pilot**
+   - Deploy to 1-2 schools
+   - Collect user feedback
+   - Monitor error rates and performance
 
-2. **Architecture Standardization**
-   - Definir padroes de codigo unificados
-   - Identificar refatoracoes necessarias
-   - Priorizar por impacto no piloto
+2. **Analytics & Monitoring**
+   - PostHog integration (deferred CLN-08)
+   - Error tracking and user behavior analytics
 
-3. **Feature Flags System**
-   - Tabela de configuracao no Supabase
-   - Toggle por escola
-   - Preparar para: Nutricao, Estoque Escolar
+3. **Testing Completion**
+   - E2E Playwright smoke tests (deferred TST-03)
+   - Database types regeneration
 
-4. **Launch Readiness**
-   - Checklist para piloto em 1-2 escolas
-   - Validar fluxos E2E criticos
-   - Compliance basico (LGPD, seguranca)
+### Previous Goals (v2.0 - Complete)
+
+- Codebase Audit: PAGE-AUDIT.md, CODE-AUDIT.md, INTEGRATION-AUDIT.md
+- Architecture Standardization: CONVENTIONS.md, API service layer
+- Feature Flags System: Supabase config, /dashboard/flags UI
+- Launch Readiness: RLS policies documented, privacy policy updated
 
 ### Previous Goals (v1.0 - Complete)
 
@@ -94,6 +100,23 @@ Sistema de gestao escolar completo para a rede municipal de Fronteira, MG. Geren
 
 ## Requirements
 
+### Validated (v2.0)
+
+27 of 28 requirements satisfied (96%):
+- Build & Quality: BLD-01..04 (TypeScript + ESLint enforcement)
+- Data Integrity: DAT-01..03 (real Supabase data)
+- Admin School Selector: ADM-01..03 (escola-scoped admin access)
+- Code Standards: STD-01..04 (patterns, logger, API layer)
+- Feature Flags: FLG-01..04 (Supabase config + admin UI)
+- Security: SEC-01..03 (migrations, RLS, privacy policy)
+- Testing: TST-01..02 (Vitest configured, attendance tests)
+- Role Access: ROL-01..02 (admin view-only, assignments)
+- Demo Mode: DMO-01 (admin demo assignment)
+- Legacy Audit: AUD-01..02 (page inventory)
+- Tech Debt: CLN-01..07 (TODOs, refactors, naming)
+- Dead Code: DCA-01..03 (audit, removal, documentation)
+- Config: CFG-01..03 (package.json, tsconfig, next.config)
+
 ### Validated (v1.0)
 
 48 UI/UX requirements across:
@@ -101,15 +124,14 @@ Sistema de gestao escolar completo para a rede municipal de Fronteira, MG. Geren
 - Login (5), Dashboard (4), Turmas (4), Chamada (5)
 - Aluno (3), Diario Infantil (5), Accessibility (3)
 
-### Active (v2.0)
+### Deferred to v2.1
 
-To be defined after codebase audit. Expected categories:
-- Audit: Codebase mapping, pattern analysis
-- Standardization: Code patterns, refactoring priorities
-- Feature Flags: Infrastructure, admin UI
-- Launch: E2E flows, compliance, documentation
+| Requirement | Reason |
+|-------------|--------|
+| TST-03 | E2E Playwright (environment issues) |
+| CLN-08 | PostHog integration |
 
-### Out of Scope (v2.0)
+### Out of Scope
 
 | Feature | Reason |
 |---------|--------|
@@ -135,8 +157,13 @@ To be defined after codebase audit. Expected categories:
 |----------|-----------|---------|
 | v1.0: CSS variables as tokens | Enables runtime theming | Good |
 | v1.0: Sort in JS not Supabase | Nested relation ordering | Good |
-| v2.0: Supabase feature flags | Per-school toggle, no external deps | Pending |
-| v2.0: Audit before new features | Unknown codebase state | Pending |
+| v2.0: Supabase feature flags | Per-school toggle, no external deps | Good |
+| v2.0: Audit before new features | Unknown codebase state | Good |
+| v2.0: Vitest over Jest | Faster, better ESM support | Good |
+| v2.0: Native ESLint 9 flat config | No FlatCompat wrapper needed | Good |
+| v2.0: knip for dead code detection | Automated, CI-ready | Good |
+| v2.0: EscolaContext for admin escola selection | sessionStorage + hydration-safe | Good |
+| v2.0: Structured logger over console.error | Filterable, actionable logs | Good |
 
 ---
 
@@ -145,7 +172,8 @@ To be defined after codebase audit. Expected categories:
 **Original roadmap:** `/docs/educa-roadmap(1).html`
 **Design mockups:** `/docs/*.html`
 **Codebase:** `gestao_fronteira/`
+**Milestone archives:** `.planning/milestones/`
 
 ---
 
-*Last updated: 2026-01-18 after v2.0 milestone start*
+*Last updated: 2026-01-24 after v2.0 SHIPPED*

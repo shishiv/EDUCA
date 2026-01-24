@@ -2,30 +2,35 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-18)
+See: .planning/PROJECT.md (updated 2026-01-24)
 
-**Core value:** Auditar e padronizar codebase para suportar features futuras e preparar piloto em 1-2 escolas.
-**Current focus:** v2.0 Architecture & Launch Prep
+**Core value:** Deploy to 1-2 pilot schools, add analytics, complete E2E tests.
+**Current focus:** v2.1 Production Pilot (not started)
 
 ## Current Position
 
-Phase: 15.2 of 15.2 (Audit Project Configuration) - COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 15.2 complete (Configuration audit)
-Last activity: 2026-01-24 - Completed 15.2-03-PLAN.md (TypeScript/Next.js modernization)
+Milestone: v2.0 Architecture & Launch Prep - SHIPPED
+Status: Milestone complete, ready for v2.1
+Last activity: 2026-01-24 - v2.0 milestone archived
 
-Progress: ████████████████████ 100% (41/41 requirements complete)
+Progress: ████████████████████ 100% (27/28 requirements shipped)
 
 ## Milestone Summary
 
-### v2.0 Architecture & Launch Prep (CURRENT)
+### v2.1 Production Pilot (NEXT)
 
-- 6 phases planned (6-11)
-- 21 requirements defined
-- Focus: Audit, standardization, feature flags, launch readiness
-- Target: Pilot in 1-2 schools
+- Phases: TBD
+- Focus: Pilot deployment, PostHog, E2E tests
+- Run `/gsd:new-milestone` to begin
 
-### v1.0 UI/UX Refactoring (SHIPPED)
+### v2.0 Architecture & Launch Prep (SHIPPED 2026-01-24)
+
+- 13 phases completed (06-15.2)
+- 27/28 requirements satisfied (96%)
+- 9 days elapsed (2026-01-16 to 2026-01-24)
+- Archive: `.planning/milestones/v2.0-*`
+
+### v1.0 UI/UX Refactoring (SHIPPED 2026-01-18)
 
 - 5 phases completed
 - 48 requirements satisfied
@@ -146,9 +151,9 @@ Progress: ████████████████████ 100% (41/
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 15.2-03-PLAN.md (TypeScript/Next.js modernization)
+Stopped at: v2.0 milestone SHIPPED and archived
 Resume file: None
-Next action: Phase 15.2 COMPLETE - All v2.0 Architecture & Launch Prep phases done
+Next action: Run `/gsd:new-milestone` to start v2.1 Production Pilot
 
 ### Roadmap Evolution
 
@@ -229,4 +234,4 @@ Next action: Phase 15.2 COMPLETE - All v2.0 Architecture & Launch Prep phases do
 
 ---
 
-*State updated: 2026-01-24 after completing 15.2-03-PLAN.md - Phase 15.2 complete, v2.0 Architecture & Launch Prep milestone done*
+*State updated: 2026-01-24 - v2.0 Architecture & Launch Prep SHIPPED and archived*
