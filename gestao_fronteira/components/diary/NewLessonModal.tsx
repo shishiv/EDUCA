@@ -61,6 +61,7 @@ import {
   lessonContentFormSchema,
   type LessonContentFormData,
   EXPERIENCE_FIELD_OPTIONS,
+  parseBNNCCodes,
 } from '@/lib/validation/lesson-content'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase'
@@ -99,7 +100,7 @@ export function NewLessonModal({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   // Form setup
-  const form = useForm<LessonContentFormData>({
+  const form = useForm({
     resolver: zodResolver(lessonContentFormSchema),
     defaultValues: {
       tema: '',
@@ -110,7 +111,7 @@ export function NewLessonModal({
       observacoes: '',
       campos_experiencia: [],
       education_level: educationLevel,
-    },
+    } as LessonContentFormData,
   })
 
   // Reset form when modal opens
@@ -125,7 +126,7 @@ export function NewLessonModal({
         observacoes: '',
         campos_experiencia: [],
         education_level: educationLevel,
-      })
+      } as LessonContentFormData)
       setSelectedDate(new Date())
     }
   }, [open, form, educationLevel])
@@ -134,7 +135,8 @@ export function NewLessonModal({
   // Form Submission
   // =========================================================================
 
-  const onSubmit = async (data: LessonContentFormData) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
+    const formData = data as LessonContentFormData
     if (!turmaId || !userProfile) {
       toast.error('Turma nao selecionada')
       return
@@ -170,6 +172,12 @@ export function NewLessonModal({
           .eq('id', turmaId)
           .single()
 
+        const escolaId = turmaData?.escola_id || userProfile.escola_id
+        if (!escolaId) {
+          toast.error('Escola nao encontrada')
+          return
+        }
+
         const { data: newSession, error: createError } = await supabase
           .from('sessoes_aula')
           .insert({
@@ -177,8 +185,8 @@ export function NewLessonModal({
             data_aula: dateStr,
             status: 'ABERTA',
             professor_id: userProfile.id,
-            escola_id: turmaData?.escola_id || userProfile.escola_id,
-            conteudo_programatico: data.tema,
+            escola_id: escolaId,
+            conteudo_programatico: formData.tema,
           })
           .select('id')
           .single()
@@ -187,21 +195,21 @@ export function NewLessonModal({
         sessionId = newSession.id
       }
 
-      // Parse BNCC codes from input
-      const habilidadesBncc = data.habilidades_bncc_input
-        ? (data.habilidades_bncc_input as unknown as string[])
+      // Parse BNCC codes from input string
+      const habilidadesBncc = formData.habilidades_bncc_input
+        ? parseBNNCCodes(formData.habilidades_bncc_input)
         : []
 
       // Create the lesson content using type-cast supabase client
       // Note: The conteudo_aula table is created by migrations but types aren't regenerated yet
       const contentInput = {
         sessao_id: sessionId,
-        tema: data.tema.trim(),
-        objetivo: data.objetivo.trim(),
-        habilidades_bncc: Array.isArray(habilidadesBncc) ? habilidadesBncc : [],
-        metodologia: data.metodologia?.trim() || null,
-        recursos: data.recursos?.trim() || null,
-        observacoes: data.observacoes?.trim() || null,
+        tema: formData.tema.trim(),
+        objetivo: formData.objetivo.trim(),
+        habilidades_bncc: habilidadesBncc,
+        metodologia: formData.metodologia?.trim() || null,
+        recursos: formData.recursos?.trim() || null,
+        observacoes: formData.observacoes?.trim() || null,
       }
 
       const { error: contentError } = await (supabase as any)
@@ -214,7 +222,7 @@ export function NewLessonModal({
           // Table doesn't exist - just update the session with content instead
           await supabase
             .from('sessoes_aula')
-            .update({ conteudo_programatico: data.tema })
+            .update({ conteudo_programatico: formData.tema })
             .eq('id', sessionId)
 
           logger.info('Lesson content saved to session (table not yet created)', {

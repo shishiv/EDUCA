@@ -64,12 +64,12 @@ export function FrequenciaWorkflow() {
         if (sessaoData && !error) {
           setSessaoAtiva({
             id: sessaoData.id,
-            disciplina_id: sessaoData.disciplina_id,
+            disciplina_id: sessaoData.disciplina_id || '',
             turma_id: sessaoData.turma_id,
             status: 'ABERTA',
-            aberta_em: sessaoData.aberta_em,
-            disciplina_nome: sessaoData.disciplinas?.nome || '',
-            turma_nome: sessaoData.turmas?.nome || ''
+            aberta_em: sessaoData.aberta_em || new Date().toISOString(),
+            disciplina_nome: (sessaoData.disciplinas as { nome?: string })?.nome || '',
+            turma_nome: (sessaoData.turmas as { nome?: string })?.nome || ''
           })
           setCurrentStep('aula-aberta')
         }
@@ -114,7 +114,7 @@ export function FrequenciaWorkflow() {
           setDisciplinas(data || [])
         }
       } catch (error) {
-        logger.error('Erro ao carregar disciplinas:', { error: error })
+        logger.error('Erro ao carregar disciplinas', error as Error, { feature: 'frequencia', action: 'load_disciplinas' })
         toast.error('Erro ao carregar disciplinas')
       }
     }
@@ -160,7 +160,7 @@ export function FrequenciaWorkflow() {
 
       setTurmas(turmasComAlunos)
     } catch (error) {
-      logger.error('Erro ao carregar turmas:', { error: error })
+      logger.error('Erro ao carregar turmas', error as Error, { feature: 'frequencia', action: 'load_turmas' })
       toast.error('Erro ao carregar turmas')
     }
   }
@@ -170,7 +170,7 @@ export function FrequenciaWorkflow() {
     setCurrentStep('turma')
 
     if (userProfile) {
-      await loadTurmas(userProfile.id, userProfile.escola_id)
+      await loadTurmas(userProfile.id, userProfile.escola_id || undefined)
     }
   }
 
@@ -260,18 +260,18 @@ export function FrequenciaWorkflow() {
 
       setSessaoAtiva({
         id: sessaoData.id,
-        disciplina_id: sessaoData.disciplina_id,
+        disciplina_id: sessaoData.disciplina_id || '',
         turma_id: sessaoData.turma_id,
         status: 'ABERTA',
-        aberta_em: sessaoData.aberta_em,
-        disciplina_nome: sessaoData.disciplinas?.nome || '',
-        turma_nome: sessaoData.turmas?.nome || ''
+        aberta_em: sessaoData.aberta_em || new Date().toISOString(),
+        disciplina_nome: (sessaoData.disciplinas as { nome?: string })?.nome || '',
+        turma_nome: (sessaoData.turmas as { nome?: string })?.nome || ''
       })
 
       setCurrentStep('aula-aberta')
       toast.success('Aula aberta com sucesso! Pode iniciar a chamada.')
     } catch (error) {
-      logger.error('Erro ao abrir aula:', { error: error })
+      logger.error('Erro ao abrir aula', error as Error, { feature: 'frequencia', action: 'abrir_aula' })
       toast.error('Erro ao abrir aula')
     } finally {
       setLoading(false)
