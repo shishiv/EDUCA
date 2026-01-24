@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 20-01 COMPLETE (UI/UX Fixes)
-Last activity: 2026-01-24 - Executed 20-01-PLAN.md (duplicate toast/close button fixes)
+Status: Phase 18-01 COMPLETE (Database Types Regeneration)
+Last activity: 2026-01-24 - Executed 18-01-PLAN.md (create relatorios_descritivos table)
 
-Progress: ███░░░░░░░░░░░░░░░░░ 15% (Phase 16-01, 20-01 complete)
+Progress: ████░░░░░░░░░░░░░░░░ 20% (Phase 16-01, 18-01, 20-01 complete)
 
 ## Milestone Summary
 
@@ -155,13 +155,16 @@ Progress: ███░░░░░░░░░░░░░░░░░ 15% (Phas
 | 16-01 | Keep instrumentation.ts as minimal stub | Next.js may require the file to exist |
 | 20-01 | Remove Toaster from providers.tsx, keep in dashboard layout | Dashboard layout has styled Toaster with proper theming |
 | 20-01 | Use DialogContent built-in close button | shadcn/ui DialogContent renders close button at absolute right-4 top-4 |
+| 18-01 | IF NOT EXISTS for idempotent migration | Safe to re-run migrations without errors |
+| 18-01 | Followed sessoes_aula RLS pattern | Consistent access control: owner-manage, escola-view, admin-view |
+| 18-01 | BNCC Campos as nullable text fields | Teacher fills as needed, flexibility for different report styles |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 20-01 (UI/UX Fixes)
-Resume file: .planning/phases/20-ui-ux-fixes/20-01-SUMMARY.md
-Next action: Fix DB types blocker (regenerate supabase types) or proceed to Phase 17
+Stopped at: Completed Phase 18-01 (Create relatorios_descritivos table)
+Resume file: .planning/phases/18-database-types-regeneration/18-01-SUMMARY.md
+Next action: Regenerate TypeScript types to include relatorios_descritivos table
 
 ### Roadmap Evolution
 
@@ -248,10 +251,17 @@ Next action: Fix DB types blocker (regenerate supabase types) or proceed to Phas
   - UIX-02: Single close button now from DialogContent default
   - Summary: .planning/phases/20-ui-ux-fixes/20-01-SUMMARY.md
 
+- Phase 18 progress (Database Types Regeneration):
+  - 18-01: COMPLETE - relatorios_descritivos table created in Supabase production
+    - 18 columns for BNCC Campos de Experiencia
+    - RLS: professors manage, directors view escola, admin view all
+    - Foreign keys to matriculas, turmas, users
+    - Summary: .planning/phases/18-database-types-regeneration/18-01-SUMMARY.md
+
 ### Known Issues (Blockers for build)
-- Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
+- ~~Database types missing `relatorios_descritivos` table~~ - TABLE CREATED in 18-01 (needs types regeneration)
 - ~~ESLint config has circular reference error~~ - FIXED in 15.2-01
 
 ---
 
-*State updated: 2026-01-24 - Phase 20-01 UI/UX Fixes COMPLETE*
+*State updated: 2026-01-24 - Phase 18-01 relatorios_descritivos table CREATED*
