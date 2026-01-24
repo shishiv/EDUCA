@@ -23,7 +23,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -38,7 +37,6 @@ import {
   Lock,
   User,
   Hash,
-  X,
 } from 'lucide-react'
 import { getClassDetail } from '@/lib/api/class-diary'
 import type { DetailedSession } from '@/lib/api/class-diary'
@@ -100,16 +98,9 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Detalhes da Aula
-            </span>
-            <DialogClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
+          <DialogTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Detalhes da Aula
           </DialogTitle>
           <DialogDescription>
             Informações completas sobre a sessão de aula e frequência dos alunos
