@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 16 planning complete
-Last activity: 2026-01-24 - Gap closure phases created
+Status: Phase 16-01 COMPLETE (Analytics Cleanup)
+Last activity: 2026-01-24 - Executed 16-01-PLAN.md (analytics cleanup)
 
-Progress: ░░░░░░░░░░░░░░░░░░░░ 0% (Phase 16 planned, not executed)
+Progress: ██░░░░░░░░░░░░░░░░░░ 10% (Phase 16-01 complete)
 
 ## Milestone Summary
 
 ### v2.1 Production Pilot (STARTED)
 
-- Phase 16: Analytics & Monitoring Integration (PLANNING COMPLETE)
+- Phase 16: Analytics Cleanup (16-01 COMPLETE - removed placeholder code)
 - Phase 17-19: Planned (E2E tests, DB types, pilot deploy)
-- Focus: Fix analytics, add error tracking, E2E verification
+- Focus: Clean codebase, regenerate DB types, E2E verification
 - ROADMAP: .planning/ROADMAP.md
 
 ### v2.0 Architecture & Launch Prep (SHIPPED 2026-01-24)
@@ -150,13 +150,16 @@ Progress: ░░░░░░░░░░░░░░░░░░░░ 0% (Phase
 | 15.2-03 | Remove recharts from optimizePackageImports | Dependency was removed in 15.2-02 |
 | 16-01 | Combine analytics + Sentry + E2E into single phase | User preference for focused delivery |
 | 16-01 | Research Turbopack PostHog issue first | Root cause must be understood before implementing |
+| 16-01 | User decided NOT to implement analytics - cleanup instead | Removed PostHog placeholder code (~51 lines) |
+| 16-01 | Keep logger.sendToMonitoringService stub | Useful for potential future analytics integration |
+| 16-01 | Keep instrumentation.ts as minimal stub | Next.js may require the file to exist |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Phase 16 plan created for analytics/monitoring
-Resume file: .planning/phases/16-analytics-monitoring/16-01-PLAN.md
-Next action: Execute Phase 16 (`/gsd:execute-phase 16` or run plan directly)
+Stopped at: Completed Phase 16-01 (Analytics Cleanup)
+Resume file: .planning/phases/16-analytics-monitoring/16-01-SUMMARY.md
+Next action: Fix DB types blocker (regenerate supabase types) or proceed to Phase 17
 
 ### Roadmap Evolution
 
@@ -231,10 +234,11 @@ Next action: Execute Phase 16 (`/gsd:execute-phase 16` or run plan directly)
   - 15.2-03: COMPLETE - tsconfig target es2023, next.config updated, CONFIG-AUDIT.md created
   - ESLint now reports 715 real code issues (236 errors, 479 warnings)
 
-- Phase 16 added (v2.1): Analytics & Monitoring Integration
-  - Closes: CLN-08 (PostHog), Plan 15-08 (Sentry), logger.ts TODO
-  - Includes: E2E verification with browser automation
-  - Plan: .planning/phases/16-analytics-monitoring/16-01-PLAN.md
+- Phase 16 COMPLETE (v2.1): Analytics Cleanup
+  - 16-01: COMPLETE - Removed PostHog placeholder code (~51 lines deleted)
+  - User decided NOT to implement analytics
+  - Closes: CLN-08 (by removal decision), logger.ts TODO (removed)
+  - Summary: .planning/phases/16-analytics-monitoring/16-01-SUMMARY.md
 
 ### Known Issues (Blockers for build)
 - Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
@@ -242,4 +246,4 @@ Next action: Execute Phase 16 (`/gsd:execute-phase 16` or run plan directly)
 
 ---
 
-*State updated: 2026-01-24 - v2.0 Architecture & Launch Prep SHIPPED and archived*
+*State updated: 2026-01-24 - Phase 16-01 Analytics Cleanup COMPLETE*
