@@ -166,8 +166,8 @@ export class AttendanceLockingService {
       if (session.status === 'fechada') {
         isLocked = true
         lockingReason = 'Sessão oficialmente fechada'
-        lockedAt = session.fim_aula || session.updated_at
-        lockedBy = session.locked_by || session.professor_id
+        lockedAt = session.fim_aula ?? session.updated_at ?? undefined
+        lockedBy = session.professor_id
       }
 
       // Calculate grace period
@@ -250,13 +250,14 @@ export class AttendanceLockingService {
       const now = new Date().toISOString()
       const legalHash = `MANUAL_LOCK_${sessionId}_${userId}_${Date.now()}`
 
+      // Note: sessoes_aula schema uses fechada_em and hash_legal (not locked_by/legal_closure_hash)
       const { error: updateError } = await supabase
         .from('sessoes_aula')
         .update({
           status: 'fechada',
           fim_aula: now,
-          locked_by: userId,
-          legal_closure_hash: legalHash,
+          fechada_em: now,
+          hash_legal: legalHash,
           updated_at: now
         })
         .eq('id', sessionId)
@@ -393,18 +394,17 @@ export class AttendanceLockingService {
         : undefined
 
       // Update session status
-      const updateData: any = {
+      // Note: sessoes_aula schema doesn't have locked_by or temporary_unlock fields
+      // Using available fields: status, fim_aula, fechada_em, hash_legal
+      const updateData: Record<string, unknown> = {
         status: 'aberta',
-        locked_by: null,
         updated_at: now.toISOString()
       }
 
-      if (temporary) {
-        updateData.temporary_unlock_until = temporaryUntil
-        updateData.temporary_unlock_by = userId
-      } else {
+      if (!temporary) {
         updateData.fim_aula = null
-        updateData.legal_closure_hash = null
+        updateData.fechada_em = null
+        updateData.hash_legal = null
       }
 
       const { error } = await supabase
@@ -625,20 +625,20 @@ export class AttendanceLockingService {
    */
   private async canUnlockSession(sessionId: string, userId: string): Promise<boolean> {
     try {
-      // Check user role and permissions
+      // Check user role and permissions (users table uses tipo_usuario not role)
       const { data: user } = await supabase
         .from('users')
-        .select('role')
+        .select('tipo_usuario')
         .eq('id', userId)
         .single()
 
       // Admins and directors can always request unlock
-      if (user?.role === 'admin' || user?.role === 'diretor') {
+      if (user?.tipo_usuario === 'admin' || user?.tipo_usuario === 'diretor') {
         return true
       }
 
       // Teachers can request unlock for their own sessions
-      if (user?.role === 'professor') {
+      if (user?.tipo_usuario === 'professor') {
         const { data: session } = await supabase
           .from('sessoes_aula')
           .select('professor_id')
@@ -721,6 +721,7 @@ export class AttendanceLockingService {
 
   /**
    * Log locking/unlocking events for audit
+   * Note: audit_trail table uses Portuguese column names
    */
   private async logLockingEvent(event: {
     sessionId: string
@@ -729,31 +730,26 @@ export class AttendanceLockingService {
     reason: string
     ruleId?: string
     timestamp: string
-    details?: any
+    details?: Record<string, unknown>
   }): Promise<void> {
     try {
       await supabase
         .from('audit_trail')
         .insert({
-          table_name: 'sessoes_aula',
-          record_id: event.sessionId,
-          operation: event.action,
-          old_values: null,
-          new_values: {
+          tabela: 'sessoes_aula',
+          registro_id: event.sessionId,
+          operacao: event.action,
+          dados_anteriores: null,
+          dados_novos: {
             action: event.action,
             reason: event.reason,
-            ruleId: event.ruleId,
-            details: event.details
+            ruleId: event.ruleId ?? null,
+            details: event.details ? JSON.parse(JSON.stringify(event.details)) : null
           },
-          user_id: event.userId === 'system' ? null : event.userId,
-          user_role: event.userId === 'system' ? 'system' : 'user',
-          timestamp: event.timestamp,
-          session_info: {
-            lockingEvent: true,
-            sessionId: event.sessionId,
-            action: event.action
-          },
-          legal_hash: `LOCK_EVENT_${event.sessionId}_${Date.now()}`
+          usuario_id: event.userId === 'system' ? null : event.userId,
+          timestamp_operacao: event.timestamp,
+          justificativa: `LOCK_EVENT_${event.sessionId}_${Date.now()}`,
+          nivel_criticidade: event.action === 'LOCK' ? 'alto' : 'medio'
         })
     } catch (error) {
       console.warn('Failed to log locking event:', error)
