@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         icon: 'AlertTriangle',
         actionUrl: '/dashboard/relatorios/frequencia',
         actionText: 'Ver Alunos em Risco',
-        count
+        count: count ?? undefined
       })
     }
 
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         icon: 'XCircle',
         actionUrl: '/dashboard/alunos?filter=low-attendance',
         actionText: 'Tomar Ação',
-        count
+        count: count ?? undefined
       })
     }
 
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Error fetching compliance warnings', { error })
+    logger.error('Error fetching compliance warnings', error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       {
         success: false,
