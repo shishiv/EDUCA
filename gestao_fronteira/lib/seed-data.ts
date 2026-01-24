@@ -451,14 +451,16 @@ export async function insertSeedData() {
 export async function clearSeedData() {
 
   try {
-    const tables = ['frequencia', 'notas', 'matriculas', 'turmas', 'alunos', 'responsaveis', 'users', 'escolas']
-
-    for (const table of tables) {
-      const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000')
-      if (error) {
-      } else {
-      }
-    }
+    // Clear tables in reverse order to respect foreign key constraints
+    // Delete from each table individually to work around TypeScript generic constraints
+    await supabase.from('frequencia').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('notas').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('matriculas').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('turmas').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('alunos').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('responsaveis').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('users').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('escolas').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
     return { success: true }
 

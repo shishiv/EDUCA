@@ -5,8 +5,9 @@ import { User } from '@supabase/supabase-js'
 import { logger } from './logger'
 import { getClientIP } from './ip-tracking'
 
-export interface AuthUser extends User {
-  user_metadata?: {
+// AuthUser extends Supabase User with additional typed metadata
+export interface AuthUser extends Omit<User, 'user_metadata'> {
+  user_metadata: {
     nome?: string
     tipo_usuario?: string
     escola_id?: string
@@ -137,7 +138,12 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     }
 
     return data
-  } catch (error) {
+  } catch (error: any) {
+    // Ignore AbortError - this is expected during auth state transitions
+    if (error?.name === 'AbortError' || error?.message?.includes('abort')) {
+      logger.info('[AUTH] Profile fetch aborted (expected during auth transitions)')
+      return null
+    }
     logger.error('[AUTH] Error fetching user profile', error as Error)
     return null
   }
