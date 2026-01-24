@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         .order('data_aula', { ascending: true })
 
       if (error) {
-        logger.error('Error fetching attendance trends', { error, studentId })
+        logger.error('Error fetching attendance trends', error, { metadata: { studentId } })
         return NextResponse.json({ error: 'Erro ao buscar dados de frequência' }, { status: 500 })
       }
 

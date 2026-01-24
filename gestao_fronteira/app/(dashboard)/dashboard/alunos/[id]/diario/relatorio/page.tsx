@@ -229,7 +229,10 @@ export default function RelatorioPage() {
           metadata: { matriculaId: matricula.id, error: reportError.message }
         })
       } else if (report) {
-        setExistingReport(report)
+        setExistingReport({
+          ...report,
+          status: report.status as ReportStatus
+        })
         setIsReportFinalized(report.status === 'finalizado')
       } else {
         setExistingReport(null)
@@ -312,7 +315,10 @@ export default function RelatorioPage() {
           .single()
 
         if (insertError) throw insertError
-        setExistingReport(newReport)
+        setExistingReport({
+          ...newReport,
+          status: newReport.status as ReportStatus
+        })
       }
 
       logger.info('Draft saved successfully', {
@@ -334,7 +340,7 @@ export default function RelatorioPage() {
     }
   }, [alunoId, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb])
 
-  const handleFinalizeRequest = useCallback((data: ReportFormValues) => {
+  const handleFinalizeRequest = useCallback(async (data: ReportFormValues) => {
     // Show confirmation dialog before finalizing
     setPendingFinalizeData(data)
     setShowFinalizeDialog(true)
@@ -388,7 +394,10 @@ export default function RelatorioPage() {
           .single()
 
         if (insertError) throw insertError
-        setExistingReport(newReport)
+        setExistingReport({
+          ...newReport,
+          status: newReport.status as ReportStatus
+        })
       }
 
       setIsReportFinalized(true)

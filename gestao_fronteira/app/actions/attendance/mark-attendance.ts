@@ -16,10 +16,10 @@ import { revalidatePath } from 'next/cache'
 import { logger } from '@/lib/logger'
 
 interface MarkAttendanceParams {
-  sessao_aula_id: string
-  aluno_id: string
+  sessao_id: string
+  matricula_id: string
   presente: boolean
-  data: string // YYYY-MM-DD format
+  data_aula: string // YYYY-MM-DD format
 }
 
 interface MarkAttendanceResult {
@@ -33,24 +33,24 @@ export async function markAttendanceAction(
 ): Promise<MarkAttendanceResult> {
   try {
     // Validate required parameters
-    if (!params.sessao_aula_id) {
+    if (!params.sessao_id) {
       return {
         success: false,
-        error: 'ID da sessão é obrigatório',
+        error: 'ID da sessao e obrigatorio',
       }
     }
 
-    if (!params.aluno_id) {
+    if (!params.matricula_id) {
       return {
         success: false,
-        error: 'ID do aluno é obrigatório',
+        error: 'ID da matricula e obrigatorio',
       }
     }
 
-    if (!params.data) {
+    if (!params.data_aula) {
       return {
         success: false,
-        error: 'Data é obrigatória',
+        error: 'Data e obrigatoria',
       }
     }
 
@@ -60,7 +60,7 @@ export async function markAttendanceAction(
     const { data: isEditable, error: checkError } = await supabase.rpc(
       'is_session_editable',
       {
-        session_id: params.sessao_aula_id,
+        session_id: params.sessao_id,
       }
     )
 
@@ -84,25 +84,24 @@ export async function markAttendanceAction(
       .from('frequencia')
       .upsert(
         {
-          sessao_aula_id: params.sessao_aula_id,
-          aluno_id: params.aluno_id,
+          sessao_id: params.sessao_id,
+          matricula_id: params.matricula_id,
           presente: params.presente,
-          data: params.data,
-          updated_at: new Date().toISOString(),
+          data_aula: params.data_aula,
         },
         {
-          onConflict: 'sessao_aula_id,aluno_id,data', // Unique constraint
+          onConflict: 'matricula_id,data_aula', // Unique constraint
         }
       )
       .select()
       .single()
 
     if (upsertError) {
-      logger.error('Erro ao marcar frequência', upsertError, {
+      logger.error('Erro ao marcar frequencia', upsertError, {
         metadata: {
-          sessaoAulaId: params.sessao_aula_id,
-          alunoId: params.aluno_id,
-          data: params.data
+          sessaoId: params.sessao_id,
+          matriculaId: params.matricula_id,
+          dataAula: params.data_aula
         }
       })
       return {
@@ -119,10 +118,10 @@ export async function markAttendanceAction(
       record: attendanceRecord,
     }
   } catch (error) {
-    logger.error('Erro inesperado ao marcar frequência', error as Error, {
+    logger.error('Erro inesperado ao marcar frequencia', error as Error, {
       metadata: {
-        sessaoAulaId: params.sessao_aula_id,
-        alunoId: params.aluno_id
+        sessaoId: params.sessao_id,
+        matriculaId: params.matricula_id
       }
     })
     return {

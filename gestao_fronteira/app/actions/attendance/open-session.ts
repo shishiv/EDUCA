@@ -18,8 +18,9 @@ import { logger } from '@/lib/logger'
 interface OpenSessionParams {
   turma_id: string
   professor_id: string
+  escola_id: string
   data_aula: string // YYYY-MM-DD format
-  conteudo_programatico?: string
+  conteudo_programatico: string
 }
 
 interface OpenSessionResult {
@@ -50,7 +51,21 @@ export async function openSessionAction(
     if (!params.data_aula) {
       return {
         success: false,
-        error: 'Data da aula é obrigatória',
+        error: 'Data da aula e obrigatoria',
+      }
+    }
+
+    if (!params.escola_id) {
+      return {
+        success: false,
+        error: 'ID da escola e obrigatorio',
+      }
+    }
+
+    if (!params.conteudo_programatico) {
+      return {
+        success: false,
+        error: 'Conteudo programatico e obrigatorio',
       }
     }
 
@@ -95,11 +110,12 @@ export async function openSessionAction(
       .insert({
         turma_id: params.turma_id,
         professor_id: params.professor_id,
+        escola_id: params.escola_id,
         data_aula: params.data_aula,
-        status: 'ABERTA',
+        status: 'aberta',
         aberta_em: new Date().toISOString(),
         auto_fechamento_agendado: cutoffTime.toISOString(),
-        conteudo_programatico: params.conteudo_programatico || null,
+        conteudo_programatico: params.conteudo_programatico,
       })
       .select()
       .single()

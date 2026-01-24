@@ -121,7 +121,7 @@ export default function AlunoDetalhesPage() {
               )
             )
           `)
-          .eq('id', params.id)
+          .eq('id', params.id as string)
           .single()
 
         if (alunoError) throw alunoError
@@ -193,8 +193,8 @@ export default function AlunoDetalhesPage() {
           nome_mae: alunoData.nome_mae || undefined,
           nome_pai: alunoData.nome_pai || undefined,
           necessidades_especiais: alunoData.necessidades_especiais || undefined,
-          ativo: alunoData.ativo,
-          created_at: alunoData.created_at,
+          ativo: alunoData.ativo ?? true,
+          created_at: alunoData.created_at ?? new Date().toISOString(),
           responsavel: {
             nome: alunoData.nome_mae || alunoData.nome_pai || 'Nao informado',
             telefone: alunoData.telefone || 'Nao informado',
