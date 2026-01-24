@@ -156,7 +156,7 @@ export function AttendanceGrid({
       setAttendance(attendanceMap)
 
     } catch (error) {
-      logger.error('Erro ao carregar dados:', { error })
+      logger.error('Erro ao carregar dados:', error instanceof Error ? error : new Error(String(error)))
       toast.error('Erro ao carregar dados dos alunos')
     } finally {
       setLoading(false)
@@ -310,7 +310,7 @@ export function AttendanceGrid({
       toast.success(`${studentName} marcado como ${statusLabels[status]}`, { duration: 2000 })
 
     } catch (error) {
-      logger.error('Erro ao marcar presenca:', { error })
+      logger.error('Erro ao marcar presenca:', error instanceof Error ? error : new Error(String(error)))
       setSyncStatus('error')
       loadData()
       toast.error('Erro ao marcar presenca. Tente novamente.')
@@ -360,7 +360,7 @@ export function AttendanceGrid({
       toast.success(`${selectedStudents.size} aluno(s) marcado(s) como ${present ? 'presente(s)' : 'ausente(s)'}`, { duration: 3000 })
 
     } catch (error) {
-      logger.error('Erro ao marcar presenca em lote:', { error })
+      logger.error('Erro ao marcar presenca em lote:', error instanceof Error ? error : new Error(String(error)))
       setSyncStatus('error')
       loadData()
       toast.error('Erro ao marcar presenca em lote. Tente novamente.')
