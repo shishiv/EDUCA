@@ -5,7 +5,6 @@
  */
 
 // Main dashboard components
-export { RoleSpecificDashboards } from './role-specific-dashboards'
 export { TeacherDashboardEnhanced } from './teacher-dashboard-enhanced'
 
 // Dashboard utility components
