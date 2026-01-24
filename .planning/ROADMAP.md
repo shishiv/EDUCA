@@ -63,18 +63,20 @@
 
 ---
 
-### Phase 20: UI/UX Fixes (Planned)
+### Phase 20: UI/UX Fixes ✓
 
 **Goal:** Fix UI/UX issues: duplicate sonner toasts, components with double close buttons.
 
+**Status:** COMPLETE (2026-01-24)
+
 **Requirements:**
-- UIX-01: Fix sonner toast appearing twice
-- UIX-02: Fix components with duplicate close buttons
+- UIX-01: Fix sonner toast appearing twice ✓
+- UIX-02: Fix components with duplicate close buttons ✓
 
 **Depends on:** None
 
 **Plans:** 1 plan
-- [ ] 20-01-PLAN.md - Remove duplicate Toaster and DialogClose
+- [x] 20-01-PLAN.md - Remove duplicate Toaster and DialogClose
 
 ---
 
@@ -90,5 +92,5 @@ v2.1 is complete when:
 ---
 
 *Created: 2026-01-24*
-*Updated: 2026-01-24 - Phase 16 COMPLETE, analytics placeholder code removed*
+*Updated: 2026-01-24 - Phase 20 COMPLETE, duplicate toast and close button removed*
 *From: v2.0 tech debt and PROJECT.md v2.1 scope*
