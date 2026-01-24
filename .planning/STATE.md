@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 15.2 of 15.2 (Audit Project Configuration) - IN PROGRESS
-Plan: 1 of 1 complete
-Status: Plan 15.2-01 complete (ESLint configuration fix)
-Last activity: 2026-01-24 - Completed 15.2-01-PLAN.md (ESLint native flat config)
+Plan: 2 of 2 complete
+Status: Plan 15.2-02 complete (Dependency cleanup)
+Last activity: 2026-01-24 - Completed 15.2-02-PLAN.md (Package.json cleanup)
 
-Progress: ████████████████████ 100% (39/41 requirements - 2 remaining in 15.2)
+Progress: ████████████████████ 100% (40/41 requirements - 1 remaining in 15.2)
 
 ## Milestone Summary
 
@@ -134,13 +134,18 @@ Progress: ████████████████████ 100% (39/
 | 15.2-01 | Direct eslint-config-next import | eslint-config-next v16+ exports native flat config array |
 | 15.2-01 | typescript-eslint as direct dependency | pnpm hoisting doesn't expose transitive deps at top level |
 | 15.2-01 | Separate config objects for TS rules | TypeScript rules require plugin in same config object |
+| 15.2-02 | Remove 10 unused runtime deps | Verified not imported in codebase via grep/knip |
+| 15.2-02 | Keep @tanstack/react-query-devtools | Dev tool for debugging, intentionally kept |
+| 15.2-02 | Keep @testing-library/* packages | Peer deps of @testing-library/jest-dom |
+| 15.2-02 | Move @types to devDependencies | Type packages only needed at compile time |
+| 15.2-02 | Remove @eslint/eslintrc | No longer needed after ESLint flat config migration |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 15.2-01-PLAN.md (ESLint configuration fix)
+Stopped at: Completed 15.2-02-PLAN.md (Dependency cleanup)
 Resume file: None
-Next action: Phase 15.2 complete - ESLint working, 715 code issues to address
+Next action: Create 15.2-03 plan for tsconfig/next.config audit, or phase complete
 
 ### Roadmap Evolution
 
@@ -211,6 +216,7 @@ Next action: Phase 15.2 complete - ESLint working, 715 code issues to address
 
 - Phase 15.2 progress (Audit Project Configuration):
   - 15.2-01: COMPLETE - ESLint native flat config, no more circular reference error
+  - 15.2-02: COMPLETE - 10 unused deps removed, @types moved to devDependencies
   - ESLint now reports 715 real code issues (236 errors, 479 warnings)
 
 ### Known Issues (Blockers for build)
@@ -219,4 +225,4 @@ Next action: Phase 15.2 complete - ESLint working, 715 code issues to address
 
 ---
 
-*State updated: 2026-01-24 after completing 15.2-01-PLAN.md - ESLint configuration fixed*
+*State updated: 2026-01-24 after completing 15.2-02-PLAN.md - Dependency cleanup complete*
