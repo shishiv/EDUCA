@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18-01 COMPLETE (Database Types Regeneration)
-Last activity: 2026-01-24 - Executed 18-01-PLAN.md (create relatorios_descritivos table)
+Status: Phase 18-02 COMPLETE (Types Regeneration) - BUILD BLOCKED (pre-existing issues)
+Last activity: 2026-01-24 - Executed 18-02-PLAN.md (regenerate TypeScript types)
 
-Progress: ████░░░░░░░░░░░░░░░░ 20% (Phase 16-01, 18-01, 20-01 complete)
+Progress: █████░░░░░░░░░░░░░░░ 25% (Phase 16-01, 18-01, 18-02, 20-01 complete)
 
 ## Milestone Summary
 
@@ -158,13 +158,16 @@ Progress: ████░░░░░░░░░░░░░░░░ 20% (Phas
 | 18-01 | IF NOT EXISTS for idempotent migration | Safe to re-run migrations without errors |
 | 18-01 | Followed sessoes_aula RLS pattern | Consistent access control: owner-manage, escola-view, admin-view |
 | 18-01 | BNCC Campos as nullable text fields | Teacher fills as needed, flexibility for different report styles |
+| 18-02 | Types regenerated - reveals pre-existing schema mismatch | Code using wrong columns (aluno_id vs matricula_id) |
+| 18-02 | Partial type fixes committed | 8 files fixed, 400+ errors remain |
+| 18-02 | Cast database enum-like fields | status, tipo need explicit casts to TypeScript unions |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 18-01 (Create relatorios_descritivos table)
-Resume file: .planning/phases/18-database-types-regeneration/18-01-SUMMARY.md
-Next action: Regenerate TypeScript types to include relatorios_descritivos table
+Stopped at: Completed Phase 18-02 (TypeScript types regeneration)
+Resume file: .planning/phases/18-database-types-regeneration/18-02-SUMMARY.md
+Next action: Create Phase 19 for schema alignment fixes (frequencia uses matricula_id not aluno_id)
 
 ### Roadmap Evolution
 
@@ -257,11 +260,18 @@ Next action: Regenerate TypeScript types to include relatorios_descritivos table
     - RLS: professors manage, directors view escola, admin view all
     - Foreign keys to matriculas, turmas, users
     - Summary: .planning/phases/18-database-types-regeneration/18-01-SUMMARY.md
+  - 18-02: COMPLETE (types regenerated) - BUILD BLOCKED (pre-existing issues)
+    - types/database.ts regenerated (1767 lines, 20 tables, 3 views)
+    - relatorios_descritivos, calendario_escolar, feature_flags types now available
+    - DISCOVERY: 400+ pre-existing type errors from schema mismatch
+    - Code uses aluno_id, sessao_aula_id - actual columns are matricula_id, sessao_id
+    - Summary: .planning/phases/18-database-types-regeneration/18-02-SUMMARY.md
 
 ### Known Issues (Blockers for build)
-- ~~Database types missing `relatorios_descritivos` table~~ - TABLE CREATED in 18-01 (needs types regeneration)
+- **NEW: Schema mismatch in attendance code** - frequencia uses matricula_id, code uses aluno_id (400+ errors)
+- ~~Database types missing `relatorios_descritivos` table~~ - TYPES REGENERATED in 18-02
 - ~~ESLint config has circular reference error~~ - FIXED in 15.2-01
 
 ---
 
-*State updated: 2026-01-24 - Phase 18-01 relatorios_descritivos table CREATED*
+*State updated: 2026-01-24 - Phase 18-02 types regenerated, 400+ pre-existing errors discovered*
