@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 15.1 of 15.1 (Dead Code Audit via LSP) - IN PROGRESS
-Plan: 1 of 3 complete
-Status: lib/ audit complete, components/ and app/ audits pending
-Last activity: 2026-01-23 - Completed 15.1-01-PLAN.md (lib/ Dead Code Audit)
+Plan: 2 of 3 complete
+Status: lib/ and components/ audit complete, app/ audit pending
+Last activity: 2026-01-24 - Completed 15.1-02-PLAN.md (components/ Dead Code Audit)
 
-Progress: ██████████████████░░ 92% (35/38 requirements)
+Progress: ██████████████████░░ 95% (36/38 requirements)
 
 ## Milestone Summary
 
@@ -124,13 +124,18 @@ Progress: ██████████████████░░ 92% (35/3
 | 15.1-01 | Keep API service class exports | Even when only instances are used, class exports enable type inference |
 | 15.1-01 | Remove entire directories when all files unused | Cleaner than individual file removal |
 | 15.1-01 | Preserve services with tests but no production use | attendance-locking.ts and attendance-workflow.ts have test coverage |
+| 15.1-02 | Removed 7 dead component directories/files (~3800 lines) | auth/, grades/, schools/, classes/class-creation-form, identity/educa-logo, providers/providers, layout/enhanced-sidebar |
+| 15.1-02 | DiarySkeletons.tsx unused - actual skeletons co-located | Skeletons in component files, not separate skeleton file |
+| 15.1-02 | role-specific-dashboards.tsx (993 lines) completely dead | Dashboard uses TeacherDashboardEnhanced directly |
+| 15.1-02 | Barrel indexes kept as organizational pattern | Even if unused, barrels provide organization |
+| 15.1-02 | Created minimal stubs for missing dependencies | alert-item.tsx, ip-tracking.ts, enhanced-base.ts to fix Phase 15.1-01 gaps |
 
 ## Session Continuity
 
-Last session: 2026-01-23
-Stopped at: Completed 15.1-01-PLAN.md (lib/ Dead Code Audit)
+Last session: 2026-01-24
+Stopped at: Completed 15.1-02-PLAN.md (components/ Dead Code Audit)
 Resume file: None
-Next action: Execute 15.1-02-PLAN.md (components/ Dead Code Audit)
+Next action: Execute 15.1-03-PLAN.md (app/ Dead Code Audit)
 
 ### Roadmap Evolution
 
@@ -191,9 +196,13 @@ Next action: Execute 15.1-02-PLAN.md (components/ Dead Code Audit)
 
 - Phase 15.1 progress (Dead Code Audit via LSP):
   - 15.1-01: COMPLETE - lib/ audit: 17 files deleted, 8,530 lines removed, knip configured
-  - 15.1-02: PENDING - components/ audit
+  - 15.1-02: COMPLETE - components/ audit: 12 files deleted, ~3,800 lines removed, broken barrel fixed
   - 15.1-03: PENDING - app/ and final verification
+
+### Known Issues (Blockers for build)
+- Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
+- ESLint config has circular reference error - separate fix needed
 
 ---
 
-*State updated: 2026-01-23 after completing 15.1-01-PLAN.md - lib/ Dead Code Audit*
+*State updated: 2026-01-24 after completing 15.1-02-PLAN.md - components/ Dead Code Audit*
