@@ -43,17 +43,28 @@
 
 ---
 
-### Phase 18: Database Types Regeneration (Planned)
+### Phase 18: Database Types Regeneration ✓
 
-**Goal:** Create missing relatorios_descritivos table and regenerate TypeScript types to match production schema.
+**Goal:** Create missing relatorios_descritivos table, regenerate TypeScript types, and fix all type errors.
+
+**Status:** COMPLETE (2026-01-24)
 
 **Requirements:**
-- DBT-01: relatorios_descritivos table exists in production
-- DBT-02: TypeScript types current with all production tables and columns
+- DBT-01: relatorios_descritivos table exists in production ✓
+- DBT-02: TypeScript types current with all production tables and columns ✓
+- DBT-03: Build passes with regenerated types ✓
 
-**Plans:** 2 plans
-- [ ] 18-01-PLAN.md - Create relatorios_descritivos table
-- [ ] 18-02-PLAN.md - Regenerate TypeScript types
+**Plans:** 10 plans (all complete)
+- [x] 18-01-PLAN.md - Create relatorios_descritivos table
+- [x] 18-02-PLAN.md - Regenerate TypeScript types
+- [x] 18-03-PLAN.md - Fix AttendanceStatus type mismatch (gap closure)
+- [x] 18-04-PLAN.md - Fix API route column name errors (gap closure)
+- [x] 18-05-PLAN.md - Fix vivencias API routes (gap closure)
+- [x] 18-06-PLAN.md - Fix lib/api layer errors (gap closure)
+- [x] 18-07-PLAN.md - Fix service layer errors (gap closure)
+- [x] 18-08-PLAN.md - Fix diary/attendance component errors (gap closure)
+- [x] 18-09-PLAN.md - Fix layout/UI/context errors (gap closure)
+- [x] 18-10-PLAN.md - Fix hooks and remaining errors (gap closure)
 
 **Depends on:** None
 
@@ -92,12 +103,12 @@
 v2.1 is complete when:
 - [x] Analytics placeholder code removed (Phase 16 - cleanup only)
 - [ ] E2E tests pass for critical flows
-- [ ] Database types regenerated
+- [x] Database types regenerated (Phase 18 - 400+ type errors fixed)
 - [ ] Deployed to 1-2 pilot schools
 - [ ] Initial feedback collected
 
 ---
 
 *Created: 2026-01-24*
-*Updated: 2026-01-24 - Phase 20 COMPLETE, duplicate toast and close button removed*
+*Updated: 2026-01-24 - Phase 18 COMPLETE, 400+ type errors fixed, pnpm typecheck passes*
 *From: v2.0 tech debt and PROJECT.md v2.1 scope*
