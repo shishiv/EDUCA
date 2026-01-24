@@ -379,7 +379,7 @@ Plans:
 
 ---
 
-## Phase 15.2: Audit Project Configuration (INSERTED)
+## Phase 15.2: Audit Project Configuration (INSERTED) ✓
 
 **Goal:** Auditar e otimizar configurações de projeto (package.json, tsconfig, eslint, next.config) para garantir consistência e best practices.
 
@@ -388,22 +388,22 @@ Plans:
 - CFG-02: Auditar tsconfig.json e eslint.config.mjs (configurações, paths)
 - CFG-03: Auditar next.config.js e variáveis de ambiente
 
-**Plans:** 3 plans in 2 waves
+**Plans:** 3 plans completed
 
 Plans:
-- [ ] 15.2-01-PLAN.md — Fix broken ESLint configuration (Wave 1)
-- [ ] 15.2-02-PLAN.md — Remove unused dependencies and clean package.json (Wave 1)
-- [ ] 15.2-03-PLAN.md — Modernize tsconfig and next.config (Wave 2)
+- [x] 15.2-01-PLAN.md — Fix broken ESLint configuration (Wave 1) (completed 2026-01-24)
+- [x] 15.2-02-PLAN.md — Remove unused dependencies and clean package.json (Wave 1) (completed 2026-01-24)
+- [x] 15.2-03-PLAN.md — Modernize tsconfig and next.config (Wave 2) (completed 2026-01-24)
 
 **Success Criteria:**
-- [ ] ESLint runs without circular reference error
-- [ ] Unused dependencies removed, @types in devDependencies
-- [ ] tsconfig target updated to es2023
-- [ ] CONFIG-AUDIT.md documents findings and future work
+- [x] ESLint runs without circular reference error
+- [x] Unused dependencies removed, @types in devDependencies
+- [x] tsconfig target updated to es2023
+- [x] CONFIG-AUDIT.md documents findings and future work
 
 **Dependencies:** Phase 15.1 (dead code audit complete)
 
-**Status:** Planned (2026-01-23)
+**Status:** Complete (2026-01-24)
 
 ---
 
@@ -474,3 +474,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 15 complete: 2026-01-21*
 *Phase 15.1 planned: 2026-01-23 (Dead Code Audit - 3 plans in 2 waves)*
 *Phase 15.2 inserted: 2026-01-23 (Audit Project Configuration - urgent)*
+*Phase 15.2 complete: 2026-01-24*
