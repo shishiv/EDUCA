@@ -49,21 +49,53 @@ export async function GET(request: NextRequest) {
 
     // Fetch student attendance data
     if (studentId) {
+      // First get the student's matricula_id(s)
+      const { data: matriculas, error: matriculaError } = await supabase
+        .from('matriculas')
+        .select('id, turma_id')
+        .eq('aluno_id', studentId)
+        .eq('situacao', 'ativa')
+
+      if (matriculaError) {
+        logger.error('Error fetching student matriculas', matriculaError.message, { metadata: { studentId } })
+        return NextResponse.json({ error: 'Erro ao buscar matrículas do aluno' }, { status: 500 })
+      }
+
+      if (!matriculas || matriculas.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          statistics: {
+            overallPercentage: 0,
+            totalDays: 0,
+            totalPresent: 0,
+            totalAbsent: 0,
+            complianceStatus: {
+              inep: false,
+              bolsaFamilia: false
+            }
+          }
+        })
+      }
+
+      const matriculaIds = matriculas.map(m => m.id)
+      const studentTurmaId = matriculas[0].turma_id
+
       const { data: attendanceRecords, error } = await supabase
         .from('frequencia')
         .select(`
           data_aula,
           presente,
-          turma_id,
-          turmas(id, nome)
+          matricula_id,
+          sessao_id
         `)
-        .eq('aluno_id', studentId)
+        .in('matricula_id', matriculaIds)
         .gte('data_aula', startDateStr)
         .lte('data_aula', endDateStr)
         .order('data_aula', { ascending: true })
 
       if (error) {
-        logger.error('Error fetching attendance trends', error, { metadata: { studentId } })
+        logger.error('Error fetching attendance trends', error.message, { metadata: { studentId } })
         return NextResponse.json({ error: 'Erro ao buscar dados de frequência' }, { status: 500 })
       }
 
@@ -74,7 +106,7 @@ export async function GET(request: NextRequest) {
         const date = record.data_aula
 
         if (!dailyData[date]) {
-          dailyData[date] = { presente: 0, total: 0, turmaId: record.turma_id }
+          dailyData[date] = { presente: 0, total: 0, turmaId: studentTurmaId }
         }
 
         dailyData[date].total++
@@ -85,29 +117,41 @@ export async function GET(request: NextRequest) {
 
       // Calculate class averages if requested
       let classAverages: Record<string, number> = {}
-      if (includeClassAverage && turmaId) {
-        const { data: classRecords } = await supabase
-          .from('frequencia')
-          .select('data_aula, presente')
-          .eq('turma_id', turmaId)
-          .gte('data_aula', startDateStr)
-          .lte('data_aula', endDateStr)
+      const effectiveTurmaId = turmaId || studentTurmaId
+      if (includeClassAverage && effectiveTurmaId) {
+        // Get all matriculas for the turma
+        const { data: turmaMatriculas } = await supabase
+          .from('matriculas')
+          .select('id')
+          .eq('turma_id', effectiveTurmaId)
+          .eq('situacao', 'ativa')
 
-        const classDaily: Record<string, { presente: number; total: number }> = {}
-        classRecords?.forEach(record => {
-          const date = record.data_aula
-          if (!classDaily[date]) {
-            classDaily[date] = { presente: 0, total: 0 }
-          }
-          classDaily[date].total++
-          if (record.presente) {
-            classDaily[date].presente++
-          }
-        })
+        if (turmaMatriculas && turmaMatriculas.length > 0) {
+          const turmaMatriculaIds = turmaMatriculas.map(m => m.id)
 
-        Object.entries(classDaily).forEach(([date, data]) => {
-          classAverages[date] = Math.round((data.presente / data.total) * 100)
-        })
+          const { data: classRecords } = await supabase
+            .from('frequencia')
+            .select('data_aula, presente')
+            .in('matricula_id', turmaMatriculaIds)
+            .gte('data_aula', startDateStr)
+            .lte('data_aula', endDateStr)
+
+          const classDaily: Record<string, { presente: number; total: number }> = {}
+          classRecords?.forEach(record => {
+            const date = record.data_aula
+            if (!classDaily[date]) {
+              classDaily[date] = { presente: 0, total: 0 }
+            }
+            classDaily[date].total++
+            if (record.presente) {
+              classDaily[date].presente++
+            }
+          })
+
+          Object.entries(classDaily).forEach(([date, data]) => {
+            classAverages[date] = Math.round((data.presente / data.total) * 100)
+          })
+        }
       }
 
       // Format response
@@ -143,16 +187,50 @@ export async function GET(request: NextRequest) {
 
     // Fetch class attendance data (aggregate for all students)
     if (turmaId) {
+      // Get all matriculas for the turma to query frequencia
+      const { data: turmaMatriculas, error: turmaMatriculaError } = await supabase
+        .from('matriculas')
+        .select('id, aluno_id')
+        .eq('turma_id', turmaId)
+        .eq('situacao', 'ativa')
+
+      if (turmaMatriculaError) {
+        logger.error('Error fetching turma matriculas', turmaMatriculaError.message, { metadata: { turmaId } })
+        return NextResponse.json({ error: 'Erro ao buscar matrículas da turma' }, { status: 500 })
+      }
+
+      if (!turmaMatriculas || turmaMatriculas.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          statistics: {
+            overallPercentage: 0,
+            totalDays: 0,
+            totalPresent: 0,
+            totalAbsent: 0,
+            averageStudentsPerDay: 0,
+            complianceStatus: {
+              inep: false,
+              bolsaFamilia: false
+            }
+          }
+        })
+      }
+
+      const turmaMatriculaIds = turmaMatriculas.map(m => m.id)
+      // Create a map from matricula_id to aluno_id for counting unique students
+      const matriculaToAlunoMap = new Map(turmaMatriculas.map(m => [m.id, m.aluno_id]))
+
       const { data: classRecords, error } = await supabase
         .from('frequencia')
-        .select('data_aula, presente, aluno_id')
-        .eq('turma_id', turmaId)
+        .select('data_aula, presente, matricula_id')
+        .in('matricula_id', turmaMatriculaIds)
         .gte('data_aula', startDateStr)
         .lte('data_aula', endDateStr)
         .order('data_aula', { ascending: true })
 
       if (error) {
-        logger.error('Error fetching class attendance trends', { error, turmaId })
+        logger.error('Error fetching class attendance trends', error.message, { metadata: { turmaId } })
         return NextResponse.json({ error: 'Erro ao buscar dados da turma' }, { status: 500 })
       }
 
@@ -167,7 +245,11 @@ export async function GET(request: NextRequest) {
         }
 
         dailyData[date].total++
-        dailyData[date].students.add(record.aluno_id)
+        // Use the aluno_id from the matricula for unique student count
+        const alunoId = matriculaToAlunoMap.get(record.matricula_id)
+        if (alunoId) {
+          dailyData[date].students.add(alunoId)
+        }
         if (record.presente) {
           dailyData[date].presente++
         }
@@ -202,8 +284,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-  } catch (error) {
-    logger.error('Error in attendance trends API', { error })
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    logger.error('Error in attendance trends API', errorMessage)
     return NextResponse.json({
       error: 'Erro ao processar solicitação'
     }, { status: 500 })
