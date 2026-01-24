@@ -115,11 +115,25 @@ export class SchoolsApiService extends BaseApiService {
     diretor_id?: string
   }) {
     try {
-      const result = await this.create({
-        ...schoolData,
+      // Extract only the fields that exist in escolas table
+      const insertData = {
+        nome: schoolData.nome,
+        codigo: schoolData.codigo,
+        codigo_inep: schoolData.codigo_inep,
+        tipo: schoolData.tipo,
+        endereco: schoolData.endereco,
+        telefone: schoolData.telefone,
+        diretor_id: schoolData.diretor_id,
         ativo: true,
-        created_at: new Date().toISOString()
-      })
+      }
+
+      const { data: result, error } = await supabase
+        .from('escolas')
+        .insert(insertData)
+        .select()
+        .single()
+
+      if (error) throw error
 
       // If director assigned, update their escola_id
       if (schoolData.diretor_id && result) {
@@ -239,15 +253,26 @@ export class SchoolsApiService extends BaseApiService {
 
       // Get attendance summary for current month
       const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
+
+      // Get matricula IDs for these turmas
+      const { data: matriculasData } = await supabase
+        .from('matriculas')
+        .select('id')
+        .in('turma_id', turmaIds.length > 0 ? turmaIds : [''])
+        .eq('situacao', 'ativa')
+
+      const matriculaIds = matriculasData?.map((m) => m.id) ?? []
+
       const attendanceData = await supabase
         .from('frequencia')
-        .select('status, data')
-        .in('turma_id', turmaIds.length > 0 ? turmaIds : [''])
-        .gte('data', `${currentMonth}-01`)
-        .lte('data', `${currentMonth}-31`)
+        .select('status_presenca, presente, data_aula')
+        .in('matricula_id', matriculaIds.length > 0 ? matriculaIds : [''])
+        .gte('data_aula', `${currentMonth}-01`)
+        .lte('data_aula', `${currentMonth}-31`)
 
       const attendanceSummary = attendanceData.data?.reduce((acc, record) => {
-        acc[record.status] = (acc[record.status] || 0) + 1
+        const status = record.status_presenca || (record.presente ? 'presente' : 'falta')
+        acc[status] = (acc[status] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {}
 
@@ -341,19 +366,18 @@ export class SchoolsApiService extends BaseApiService {
         feature: 'schools',
         action: 'update_school_status',
         schoolId: id,
-        ativo,
-        reason
+        metadata: { ativo, reason }
       })
 
       // Log to audit trail (async, don't block on failure)
-      this.logStatusChangeAudit(id, currentSchool?.nome || '', previousStatus, ativo, reason)
+      this.logStatusChangeAudit(id, currentSchool?.nome || '', previousStatus ?? undefined, ativo, reason)
         .catch((auditError) => {
           // Audit logging should not fail the main operation
           logger.warn('Failed to log school status change to audit', {
             feature: 'schools',
             action: 'audit_log_failed',
             schoolId: id,
-            error: auditError instanceof Error ? auditError.message : String(auditError)
+            metadata: { error: auditError instanceof Error ? auditError.message : String(auditError) }
           })
         })
 
@@ -392,19 +416,13 @@ export class SchoolsApiService extends BaseApiService {
         old_values: { ativo: previousStatus },
         new_values: { ativo: newStatus },
         timestamp: new Date().toISOString(),
-        metadata: {
-          nome: schoolName,
-          reason: reason || undefined,
-          description: `Escola ${schoolName} ${newStatus ? 'ativada' : 'desativada'}`
-        }
       })
 
       logger.info('School status change logged to audit', {
         feature: 'schools',
         action: 'audit_log_success',
         schoolId,
-        previousStatus,
-        newStatus
+        metadata: { previousStatus, newStatus }
       })
     } catch (error) {
       // Re-throw so the caller can handle it

@@ -1,12 +1,12 @@
 /**
- * Base API Service
- * Provides common functionality for API services
+ * Enhanced Base API Service
+ * Provides common functionality for API services with enhanced logging
  */
 
 import { logger } from '@/lib/logger'
 
 /**
- * Base class for API services
+ * Base class for enhanced API services
  * Provides common error handling and logging
  */
 export class BaseApiService {
@@ -23,7 +23,7 @@ export class BaseApiService {
     logger.info(`${this.tableName}:${action}`, {
       feature: this.tableName,
       action,
-      ...data,
+      metadata: data,
     })
   }
 
@@ -31,10 +31,10 @@ export class BaseApiService {
    * Log an error
    */
   protected logError(action: string, error: unknown): void {
-    logger.error(`${this.tableName}:${action}`, {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    logger.error(`${this.tableName}:${action}`, errorMessage, {
       feature: this.tableName,
       action,
-      error: error instanceof Error ? error.message : String(error),
     })
   }
 }

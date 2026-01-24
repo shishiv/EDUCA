@@ -5,6 +5,10 @@
 
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import type { Database } from '@/types/database'
+
+// Type helper for table names
+type TableName = keyof Database['public']['Tables']
 
 export interface PaginationParams {
   page?: number
@@ -17,6 +21,20 @@ export interface PaginatedResult<T> {
   page: number
   limit: number
   hasMore: boolean
+}
+
+/**
+ * Custom API error class for better error handling
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public details?: unknown
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
 }
 
 export abstract class BaseApiService {
@@ -32,18 +50,19 @@ export abstract class BaseApiService {
   async getAll<T>(): Promise<T[]> {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from(this.tableName as TableName)
         .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {
-        logger.error(`Error fetching all from ${this.tableName}:`, error)
+        logger.error(`Error fetching all from ${this.tableName}:`, error.message, { feature: this.tableName, action: 'getAll' })
         throw error
       }
 
       return (data || []) as T[]
     } catch (error) {
-      logger.error(`Error in getAll for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in getAll for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'getAll' })
       throw error
     }
   }
@@ -54,7 +73,7 @@ export abstract class BaseApiService {
   async getById<T>(id: string): Promise<T | null> {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from(this.tableName as TableName)
         .select('*')
         .eq('id', id)
         .single()
@@ -63,13 +82,14 @@ export abstract class BaseApiService {
         if (error.code === 'PGRST116') {
           return null // Not found
         }
-        logger.error(`Error fetching ${this.tableName} by id ${id}:`, error)
+        logger.error(`Error fetching ${this.tableName} by id ${id}:`, error.message, { feature: this.tableName, action: 'getById' })
         throw error
       }
 
       return data as T
     } catch (error) {
-      logger.error(`Error in getById for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in getById for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'getById' })
       throw error
     }
   }
@@ -79,20 +99,23 @@ export abstract class BaseApiService {
    */
   async create<T>(data: Partial<T>): Promise<T> {
     try {
-      const { data: created, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any
+      const { data: created, error } = await client
         .from(this.tableName)
         .insert(data)
         .select()
         .single()
 
       if (error) {
-        logger.error(`Error creating ${this.tableName}:`, error)
+        logger.error(`Error creating ${this.tableName}:`, error.message, { feature: this.tableName, action: 'create' })
         throw error
       }
 
       return created as T
     } catch (error) {
-      logger.error(`Error in create for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in create for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'create' })
       throw error
     }
   }
@@ -102,7 +125,9 @@ export abstract class BaseApiService {
    */
   async update<T>(id: string, data: Partial<T>): Promise<T> {
     try {
-      const { data: updated, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any
+      const { data: updated, error } = await client
         .from(this.tableName)
         .update(data)
         .eq('id', id)
@@ -110,13 +135,14 @@ export abstract class BaseApiService {
         .single()
 
       if (error) {
-        logger.error(`Error updating ${this.tableName} id ${id}:`, error)
+        logger.error(`Error updating ${this.tableName} id ${id}:`, error.message, { feature: this.tableName, action: 'update' })
         throw error
       }
 
       return updated as T
     } catch (error) {
-      logger.error(`Error in update for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in update for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'update' })
       throw error
     }
   }
@@ -127,16 +153,17 @@ export abstract class BaseApiService {
   async delete(id: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from(this.tableName)
+        .from(this.tableName as TableName)
         .delete()
         .eq('id', id)
 
       if (error) {
-        logger.error(`Error deleting ${this.tableName} id ${id}:`, error)
+        logger.error(`Error deleting ${this.tableName} id ${id}:`, error.message, { feature: this.tableName, action: 'delete' })
         throw error
       }
     } catch (error) {
-      logger.error(`Error in delete for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in delete for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'delete' })
       throw error
     }
   }
@@ -151,13 +178,13 @@ export abstract class BaseApiService {
 
     try {
       const { data, error, count } = await supabase
-        .from(this.tableName)
+        .from(this.tableName as TableName)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(start, end)
 
       if (error) {
-        logger.error(`Error fetching paginated from ${this.tableName}:`, error)
+        logger.error(`Error fetching paginated from ${this.tableName}:`, error.message, { feature: this.tableName, action: 'getPaginated' })
         throw error
       }
 
@@ -169,7 +196,8 @@ export abstract class BaseApiService {
         hasMore: (count || 0) > end + 1
       }
     } catch (error) {
-      logger.error(`Error in getPaginated for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in getPaginated for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'getPaginated' })
       throw error
     }
   }
@@ -177,28 +205,30 @@ export abstract class BaseApiService {
   /**
    * Count records with optional filter
    */
-  async count(filter?: Record<string, any>): Promise<number> {
+  async count(filter?: Record<string, unknown>): Promise<number> {
     try {
       let query = supabase
-        .from(this.tableName)
+        .from(this.tableName as TableName)
         .select('*', { count: 'exact', head: true })
 
       if (filter) {
         Object.entries(filter).forEach(([key, value]) => {
-          query = query.eq(key, value)
+          // Type assertion for filter values
+          query = query.eq(key, value as string | number | boolean)
         })
       }
 
       const { count, error } = await query
 
       if (error) {
-        logger.error(`Error counting ${this.tableName}:`, error)
+        logger.error(`Error counting ${this.tableName}:`, error.message, { feature: this.tableName, action: 'count' })
         throw error
       }
 
       return count || 0
     } catch (error) {
-      logger.error(`Error in count for ${this.tableName}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error(`Error in count for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'count' })
       throw error
     }
   }

@@ -887,19 +887,22 @@ export async function getTurmasForNotas(
       ? disciplinas.map(d => d.nome)
       : defaultDisciplinas
 
-    // Get all grades for active matriculas in these turmas
+    // Get all matriculas for these turmas
     const turmaIds = turmas.map(t => t.id)
-    const { data: allGrades } = await supabase
-      .from('notas')
-      .select(`
-        id,
-        matricula_id,
-        disciplina,
-        bimestre,
-        nota,
-        matriculas!inner(turma_id)
-      `)
-      .in('matriculas.turma_id', turmaIds)
+    const { data: matriculasForGrades } = await supabase
+      .from('matriculas')
+      .select('id')
+      .in('turma_id', turmaIds)
+
+    const matriculaIdsForGrades = matriculasForGrades?.map((m) => m.id) ?? []
+
+    // Get grades for these matriculas
+    const { data: allGrades } = matriculaIdsForGrades.length > 0
+      ? await supabase
+        .from('notas')
+        .select('id, matricula_id, disciplina, bimestre, nota')
+        .in('matricula_id', matriculaIdsForGrades)
+      : { data: [] }
 
     // Create a map of grades by matricula_id
     const gradesByMatricula: Record<string, Grade[]> = {}
@@ -909,7 +912,7 @@ export async function getTurmasForNotas(
         if (!gradesByMatricula[matriculaId]) {
           gradesByMatricula[matriculaId] = []
         }
-        gradesByMatricula[matriculaId].push(grade as Grade)
+        gradesByMatricula[matriculaId].push(grade as unknown as Grade)
       }
     }
 

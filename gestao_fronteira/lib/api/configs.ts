@@ -8,10 +8,14 @@ export interface Config {
   chave: string
   valor: string
   descricao: string
-  categoria: 'geral' | 'academico' | 'notificacoes' | 'seguranca'
-  tipo_valor: 'string' | 'number' | 'boolean' | 'email'
-  valor_padrao?: string
-  ativo?: boolean
+  categoria: string
+  tipo_valor: string
+  valor_padrao: string | null
+  ativo: boolean | null
+  escola_id?: string | null
+  criado_por?: string | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export class ConfigsApiService {

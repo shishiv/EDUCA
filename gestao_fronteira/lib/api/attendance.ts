@@ -25,16 +25,20 @@ export interface AttendanceSession {
 export interface AttendanceRecord {
   id: string
   sessao_id: string
-  aluno_id: string
-  turma_id: string
-  data: string
-  status: 'presente' | 'falta' | 'justificada' | 'atestado'
+  matricula_id: string
+  data_aula: string
+  status_presenca: 'presente' | 'falta' | 'justificada' | 'atestado'
   observacoes?: string
+  presente: boolean
   created_at: string
 }
 
 export interface AttendanceWithDetails extends AttendanceRecord {
-  aluno?: Tables<'alunos'>
+  aluno?: {
+    id: string
+    nome_completo: string
+    data_nascimento?: string
+  }
   sessao?: AttendanceSession
   turma?: Tables<'turmas'>
 }
@@ -47,17 +51,34 @@ export class AttendanceApiService extends BaseApiService {
   // Create new attendance session (Abrir aula)
   async createSession(sessionData: Omit<AttendanceSession, 'id' | 'created_at' | 'updated_at'>): Promise<AttendanceSession> {
     try {
-      const { data, error } = await supabase
+      // Extract only the fields that exist in sessoes_aula table
+      // Filter out undefined values to avoid type issues
+      const insertData: Record<string, unknown> = {}
+      if (sessionData.turma_id) insertData.turma_id = sessionData.turma_id
+      if (sessionData.professor_id) insertData.professor_id = sessionData.professor_id
+      if (sessionData.data_aula) insertData.data_aula = sessionData.data_aula
+      if (sessionData.conteudo_programatico) insertData.conteudo_programatico = sessionData.conteudo_programatico
+      if (sessionData.metodologia) insertData.metodologia = sessionData.metodologia
+      if (sessionData.recursos_utilizados) insertData.recursos_utilizados = sessionData.recursos_utilizados
+      if (sessionData.observacoes) insertData.observacoes = sessionData.observacoes
+      if (sessionData.duracao_minutos) insertData.duracao_minutos = sessionData.duracao_minutos
+      if (sessionData.status) insertData.status = sessionData.status
+      if (sessionData.inicio_aula) insertData.inicio_aula = sessionData.inicio_aula
+      if (sessionData.fim_aula) insertData.fim_aula = sessionData.fim_aula
+
+      const escolaId = (sessionData as { escola_id?: string }).escola_id
+      if (escolaId) insertData.escola_id = escolaId
+
+      // Cast the supabase client to any to bypass type checking for dynamic inserts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from('sessoes_aula')
-        .insert({
-          ...sessionData,
-          created_at: new Date().toISOString()
-        })
+        .insert(insertData)
         .select()
         .single()
 
       if (error) throw error
-      return data as AttendanceSession
+      return data as unknown as AttendanceSession
     } catch (error) {
       throw error
     }
@@ -174,21 +195,38 @@ export class AttendanceApiService extends BaseApiService {
   // Get attendance records by session
   async getAttendanceBySession(sessionId: string): Promise<AttendanceWithDetails[]> {
     try {
-      const { data, error } = await supabase
+      // First get frequencia records
+      const { data: frequenciaData, error: frequenciaError } = await supabase
         .from('frequencia')
         .select(`
           *,
-          aluno:alunos(
-            id,
-            nome_completo,
-            foto_url,
-            data_nascimento
-          ),
           sessao:sessoes_aula(
             id,
             data_aula,
             conteudo_programatico,
             status
+          )
+        `)
+        .eq('sessao_id', sessionId)
+
+      if (frequenciaError) throw frequenciaError
+
+      if (!frequenciaData || frequenciaData.length === 0) {
+        return []
+      }
+
+      // Get matricula IDs to fetch student info
+      const matriculaIds = frequenciaData.map((f) => f.matricula_id)
+
+      // Fetch student info through matriculas
+      const { data: matriculasData, error: matriculasError } = await supabase
+        .from('matriculas')
+        .select(`
+          id,
+          aluno:alunos(
+            id,
+            nome_completo,
+            data_nascimento
           ),
           turma:turmas(
             id,
@@ -196,11 +234,31 @@ export class AttendanceApiService extends BaseApiService {
             serie
           )
         `)
-        .eq('sessao_id', sessionId)
-        .order('aluno.nome_completo', { ascending: true })
+        .in('id', matriculaIds)
 
-      if (error) throw error
-      return data as AttendanceWithDetails[]
+      if (matriculasError) throw matriculasError
+
+      // Create a map for quick lookup
+      const matriculaMap = new Map(matriculasData?.map((m) => [m.id, m]) ?? [])
+
+      // Combine data
+      const result = frequenciaData.map((f) => {
+        const matricula = matriculaMap.get(f.matricula_id)
+        return {
+          ...f,
+          aluno: matricula?.aluno as { id: string; nome_completo: string; data_nascimento?: string } | undefined,
+          turma: matricula?.turma as Tables<'turmas'> | undefined,
+        }
+      })
+
+      // Sort by student name
+      result.sort((a, b) => {
+        const nameA = a.aluno?.nome_completo ?? ''
+        const nameB = b.aluno?.nome_completo ?? ''
+        return nameA.localeCompare(nameB)
+      })
+
+      return result as unknown as AttendanceWithDetails[]
     } catch (error) {
       throw error
     }
@@ -213,6 +271,17 @@ export class AttendanceApiService extends BaseApiService {
     endDate?: string
   ): Promise<AttendanceWithDetails[]> {
     try {
+      // First get matricula IDs for this student
+      const { data: matriculas, error: matriculasError } = await supabase
+        .from('matriculas')
+        .select('id')
+        .eq('aluno_id', studentId)
+
+      if (matriculasError) throw matriculasError
+      if (!matriculas || matriculas.length === 0) return []
+
+      const matriculaIds = matriculas.map((m) => m.id)
+
       let query = supabase
         .from('frequencia')
         .select(`
@@ -222,31 +291,22 @@ export class AttendanceApiService extends BaseApiService {
             data_aula,
             conteudo_programatico,
             status
-          ),
-          turma:turmas(
-            id,
-            nome,
-            serie,
-            escola:escolas(
-              id,
-              nome
-            )
           )
         `)
-        .eq('aluno_id', studentId)
-        .order('data', { ascending: false })
+        .in('matricula_id', matriculaIds)
+        .order('data_aula', { ascending: false })
 
       if (startDate) {
-        query = query.gte('data', startDate)
+        query = query.gte('data_aula', startDate)
       }
       if (endDate) {
-        query = query.lte('data', endDate)
+        query = query.lte('data_aula', endDate)
       }
 
       const { data, error } = await query
 
       if (error) throw error
-      return data as AttendanceWithDetails[]
+      return data as unknown as AttendanceWithDetails[]
     } catch (error) {
       throw error
     }
@@ -274,36 +334,54 @@ export class AttendanceApiService extends BaseApiService {
       // Get sessions for the period
       const sessions = await this.getSessionsByClass(turmaId, startDate, endDate)
 
+      // Get matriculas for this turma
+      const { data: matriculas, error: matriculasError } = await supabase
+        .from('matriculas')
+        .select('id, aluno:alunos(id, nome_completo)')
+        .eq('turma_id', turmaId)
+
+      if (matriculasError) throw matriculasError
+      if (!matriculas || matriculas.length === 0) {
+        return {
+          totalSessions: sessions.length,
+          totalRecords: 0,
+          byStatus: {},
+          attendanceRate: 0,
+          studentsWithLowAttendance: []
+        }
+      }
+
+      const matriculaIds = matriculas.map((m) => m.id)
+      const matriculaMap = new Map(matriculas.map((m) => [m.id, m.aluno as { id: string; nome_completo: string } | null]))
+
       // Get all attendance records for the period
       let query = supabase
         .from('frequencia')
-        .select(`
-          *,
-          aluno:alunos(id, nome_completo)
-        `)
-        .eq('turma_id', turmaId)
+        .select('*')
+        .in('matricula_id', matriculaIds)
 
       if (startDate) {
-        query = query.gte('data', startDate)
+        query = query.gte('data_aula', startDate)
       }
       if (endDate) {
-        query = query.lte('data', endDate)
+        query = query.lte('data_aula', endDate)
       }
 
       const { data: attendanceData, error } = await query
 
       if (error) throw error
 
-      const records = attendanceData as AttendanceWithDetails[]
+      const records = attendanceData ?? []
 
       // Calculate statistics
       const byStatus = records.reduce((acc, record) => {
-        acc[record.status] = (acc[record.status] || 0) + 1
+        const status = record.status_presenca || (record.presente ? 'presente' : 'falta')
+        acc[status] = (acc[status] || 0) + 1
         return acc
       }, {} as Record<string, number>)
 
       const totalRecords = records.length
-      const totalPresences = byStatus['presente'] || 0
+      const totalPresences = (byStatus['presente'] || 0) + records.filter((r) => r.presente).length
       const attendanceRate = totalRecords > 0 ? Math.round((totalPresences / totalRecords) * 100) : 0
 
       // Calculate per-student statistics
@@ -314,19 +392,20 @@ export class AttendanceApiService extends BaseApiService {
       }>()
 
       records.forEach(record => {
-        if (record.aluno) {
-          const existing = studentStats.get(record.aluno.id) || {
-            nome: record.aluno.nome_completo,
+        const aluno = matriculaMap.get(record.matricula_id)
+        if (aluno) {
+          const existing = studentStats.get(aluno.id) || {
+            nome: aluno.nome_completo,
             totalSessions: 0,
             presences: 0
           }
 
           existing.totalSessions++
-          if (record.status === 'presente') {
+          if (record.presente || record.status_presenca === 'presente') {
             existing.presences++
           }
 
-          studentStats.set(record.aluno.id, existing)
+          studentStats.set(aluno.id, existing)
         }
       })
 
@@ -373,14 +452,22 @@ export class AttendanceApiService extends BaseApiService {
     try {
       const records = await this.getAttendanceByStudent(studentId, startDate, endDate)
 
-      const summary = {
+      const summary: {
+        totalSessions: number
+        presences: number
+        absences: number
+        justifiedAbsences: number
+        medicalCertificates: number
+        attendanceRate: number
+        status: 'adequate' | 'warning' | 'critical'
+      } = {
         totalSessions: records.length,
-        presences: records.filter(r => r.status === 'presente').length,
-        absences: records.filter(r => r.status === 'falta').length,
-        justifiedAbsences: records.filter(r => r.status === 'justificada').length,
-        medicalCertificates: records.filter(r => r.status === 'atestado').length,
+        presences: records.filter(r => r.status_presenca === 'presente' || r.presente).length,
+        absences: records.filter(r => r.status_presenca === 'falta' || (!r.presente && !r.status_presenca)).length,
+        justifiedAbsences: records.filter(r => r.status_presenca === 'justificada').length,
+        medicalCertificates: records.filter(r => r.status_presenca === 'atestado').length,
         attendanceRate: 0,
-        status: 'critical' as const
+        status: 'critical'
       }
 
       if (summary.totalSessions > 0) {
@@ -410,50 +497,74 @@ export class AttendanceApiService extends BaseApiService {
     classIds?: string[]
   ): Promise<AttendanceWithDetails[]> {
     try {
+      // Get matriculas for the classes if provided, or all
+      let matriculaQuery = supabase
+        .from('matriculas')
+        .select(`
+          id,
+          turma_id,
+          aluno:alunos(id, nome_completo, data_nascimento),
+          turma:turmas(id, nome, serie, escola_id)
+        `)
+
+      if (classIds && classIds.length > 0) {
+        matriculaQuery = matriculaQuery.in('turma_id', classIds)
+      }
+
+      const { data: matriculas, error: matriculasError } = await matriculaQuery
+
+      if (matriculasError) throw matriculasError
+      if (!matriculas || matriculas.length === 0) return []
+
+      // Filter by school if needed
+      let filteredMatriculas = matriculas
+      if (schoolId) {
+        filteredMatriculas = matriculas.filter((m) => {
+          const turma = m.turma as { escola_id?: string } | null
+          return turma?.escola_id === schoolId
+        })
+      }
+
+      if (filteredMatriculas.length === 0) return []
+
+      const matriculaIds = filteredMatriculas.map((m) => m.id)
+      const matriculaMap = new Map(filteredMatriculas.map((m) => [m.id, m]))
+
       let query = supabase
         .from('frequencia')
         .select(`
           *,
-          aluno:alunos(
-            id,
-            nome_completo,
-            data_nascimento
-          ),
           sessao:sessoes_aula(
             id,
             data_aula,
             conteudo_programatico
-          ),
-          turma:turmas(
-            id,
-            nome,
-            serie,
-            escola:escolas(
-              id,
-              nome,
-              codigo
-            )
           )
         `)
-        .order('data', { ascending: false })
+        .in('matricula_id', matriculaIds)
+        .order('data_aula', { ascending: false })
 
       if (startDate) {
-        query = query.gte('data', startDate)
+        query = query.gte('data_aula', startDate)
       }
       if (endDate) {
-        query = query.lte('data', endDate)
-      }
-      if (classIds && classIds.length > 0) {
-        query = query.in('turma_id', classIds)
-      }
-      if (schoolId) {
-        query = query.eq('turma.escola_id', schoolId)
+        query = query.lte('data_aula', endDate)
       }
 
       const { data, error } = await query
 
       if (error) throw error
-      return data as AttendanceWithDetails[]
+
+      // Combine data
+      const result = (data ?? []).map((f) => {
+        const matricula = matriculaMap.get(f.matricula_id)
+        return {
+          ...f,
+          aluno: matricula?.aluno as { id: string; nome_completo: string; data_nascimento?: string } | undefined,
+          turma: matricula?.turma as Tables<'turmas'> | undefined,
+        }
+      })
+
+      return result as unknown as AttendanceWithDetails[]
     } catch (error) {
       throw error
     }
@@ -697,7 +808,7 @@ export class AttendanceApiService extends BaseApiService {
           )
         `)
         .eq('turma_id', turmaId)
-        .eq('ativo', true)
+        .eq('situacao', 'ativa')
 
       if (error) {
         logger.error('Error fetching students for chamada', error, {
@@ -831,12 +942,26 @@ export class AttendanceApiService extends BaseApiService {
 
       // Create session if not exists
       if (!currentSessionId) {
-        const { data: newSession, error: sessionError } = await supabase
+        // Get current user for professor_id
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Get turma for escola_id
+        const { data: turmaData } = await supabase
+          .from('turmas')
+          .select('escola_id, professor_id')
+          .eq('id', turmaId)
+          .single()
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: newSession, error: sessionError } = await (supabase as any)
           .from('sessoes_aula')
           .insert({
             turma_id: turmaId,
             data_aula: dateStr,
-            status: 'ABERTA',
+            status: 'aberta',
+            professor_id: turmaData?.professor_id ?? user?.id,
+            escola_id: turmaData?.escola_id,
+            conteudo_programatico: 'Chamada',
           })
           .select()
           .single()
@@ -895,7 +1020,8 @@ export class AttendanceApiService extends BaseApiService {
         metadata: { sessionId: currentSessionId, turmaId, dateStr, recordCount: records.length }
       })
 
-      return currentSessionId
+      // currentSessionId is guaranteed to be non-null here since we create it if it's null
+      return currentSessionId!
     } catch (error) {
       logger.error('Error in saveChamada', error as Error, {
         feature: 'attendance',
