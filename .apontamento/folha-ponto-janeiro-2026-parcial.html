@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folha de Ponto - Janeiro 2026 (01-20)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11pt;
+      line-height: 1.3;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+      padding: 15mm;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 20px;
+    }
+
+    .logo {
+      width: 120px;
+      height: auto;
+    }
+
+    .title {
+      font-size: 22pt;
+      font-weight: bold;
+      text-align: center;
+      flex: 1;
+    }
+
+    .subtitle {
+      font-size: 12pt;
+      text-align: center;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .info-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 20px;
+      margin-bottom: 15px;
+      border: 1px solid #000;
+      padding: 8px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .info-row label {
+      font-weight: bold;
+      min-width: 70px;
+    }
+
+    .info-row span {
+      flex: 1;
+      border-bottom: 1px solid #999;
+      padding: 2px 5px;
+    }
+
+    .orgao {
+      font-weight: bold;
+      text-align: right;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      margin-bottom: 15px;
+    }
+
+    th, td {
+      border: 1px solid #000;
+      padding: 4px 6px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+    }
+
+    .weekend {
+      background: #f5f5f5;
+    }
+
+    .feriado {
+      background: #d4edda;
+    }
+
+    .falta {
+      background: #f8d7da;
+    }
+
+    .hora-extra {
+      font-weight: bold;
+      color: #155724;
+    }
+
+    .summary {
+      margin-top: 15px;
+      border: 1px solid #000;
+      padding: 10px;
+    }
+
+    .summary-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 11pt;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-total {
+      font-weight: bold;
+      font-size: 12pt;
+      background: #e9ecef;
+      padding: 8px;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .signatures {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .signature {
+      text-align: center;
+    }
+
+    .signature-line {
+      width: 200px;
+      border-top: 1px solid #000;
+      margin-bottom: 5px;
+    }
+
+    .signature-label {
+      font-size: 10pt;
+    }
+
+    .legenda {
+      margin-top: 15px;
+      font-size: 8pt;
+      color: #666;
+    }
+
+    .legenda-item {
+      display: inline-block;
+      margin-right: 15px;
+    }
+
+    .legenda-color {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 3px;
+      vertical-align: middle;
+      border: 1px solid #999;
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      body {
+        padding: 0;
+        background: white;
+        font-size: 10pt;
+      }
+
+      .container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <img src="../gestao_fronteira/public/logo_pref.png" alt="Prefeitura de Fronteira" class="logo" onerror="this.style.display='none'">
+      <div>
+        <div class="title">FOLHA DE PONTO</div>
+        <div class="subtitle">Período Parcial: 01/01/2026 a 20/01/2026</div>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <div class="info-row">
+        <label>Nome:</label>
+        <span>Myke Matos dos Santos</span>
+      </div>
+      <div class="orgao">Secretaria Municipal de Educação</div>
+
+      <div class="info-row">
+        <label>Cargo:</label>
+        <span>Agente de Almoxarifado</span>
+      </div>
+      <div class="info-row" style="justify-content: flex-end;">
+        <label>Mês/Ano:</label>
+        <span style="width: 150px;">Janeiro/2026</span>
+      </div>
+    </div>
+
+    <!-- Main Table -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 30px;">Dia</th>
+          <th style="width: 40px;">Data</th>
+          <th style="width: 60px;">Entrada</th>
+          <th style="width: 60px;">Int. Saída</th>
+          <th style="width: 60px;">Int. Retorno</th>
+          <th style="width: 60px;">Saída</th>
+          <th style="width: 60px;">Hora Extra</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Quinta 01/01 - FERIADO (Confraternização Universal) -->
+        <tr class="feriado">
+          <td><strong>Q</strong></td>
+          <td>01</td>
+          <td colspan="4">FERIADO</td>
+          <td></td>
+          <td>Confraternização Universal</td>
+        </tr>
+
+        <!-- Sexta 02/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>S</strong></td>
+          <td>02</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Sábado 03/01 - FIM DE SEMANA -->
+        <tr class="weekend">
+          <td><strong>S</strong></td>
+          <td>03</td>
+          <td colspan="4">SÁBADO</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Domingo 04/01 - FIM DE SEMANA -->
+        <tr class="weekend">
+          <td><strong>D</strong></td>
+          <td>04</td>
+          <td colspan="4">DOMINGO</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Segunda 05/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>S</strong></td>
+          <td>05</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Terça 06/01 - FALTA -->
+        <tr class="falta">
+          <td><strong>T</strong></td>
+          <td>06</td>
+          <td colspan="4">FALTA JUSTIFICADA</td>
+          <td></td>
+          <td>Exame médico (proteínuria 24h)</td>
+        </tr>
+
+        <!-- Quarta 07/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>Q</strong></td>
+          <td>07</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Quinta 08/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>Q</strong></td>
+          <td>08</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Sexta 09/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>S</strong></td>
+          <td>09</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Sábado 10/01 - FIM DE SEMANA -->
+        <tr class="weekend">
+          <td><strong>S</strong></td>
+          <td>10</td>
+          <td colspan="4">SÁBADO</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Domingo 11/01 - FIM DE SEMANA -->
+        <tr class="weekend">
+          <td><strong>D</strong></td>
+          <td>11</td>
+          <td colspan="4">DOMINGO</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Segunda 12/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>S</strong></td>
+          <td>12</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Terça 13/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>T</strong></td>
+          <td>13</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Quarta 14/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>Q</strong></td>
+          <td>14</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Quinta 15/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>Q</strong></td>
+          <td>15</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Sexta 16/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>S</strong></td>
+          <td>16</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Sábado 17/01 - FIM DE SEMANA -->
+        <tr class="weekend">
+          <td><strong>S</strong></td>
+          <td>17</td>
+          <td colspan="4">SÁBADO</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Domingo 18/01 - FIM DE SEMANA -->
+        <tr class="weekend">
+          <td><strong>D</strong></td>
+          <td>18</td>
+          <td colspan="4">DOMINGO</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Segunda 19/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>S</strong></td>
+          <td>19</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- Terça 20/01 - DIA ÚTIL -->
+        <tr>
+          <td><strong>T</strong></td>
+          <td>20</td>
+          <td>7:00</td>
+          <td>11:00</td>
+          <td>13:00</td>
+          <td>17:00</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Summary -->
+    <div class="summary">
+      <div class="summary-title">RESUMO DO PERÍODO (01/01 - 20/01/2026)</div>
+      <div class="summary-grid">
+        <div>
+          <div class="summary-item">
+            <span>Dias úteis no período:</span>
+            <span><strong>14 dias</strong></span>
+          </div>
+          <div class="summary-item">
+            <span>Dias trabalhados:</span>
+            <span><strong>13 dias</strong></span>
+          </div>
+          <div class="summary-item">
+            <span>Horas normais (8h/dia × 13):</span>
+            <span><strong>104:00</strong></span>
+          </div>
+        </div>
+        <div>
+          <div class="summary-item">
+            <span>Feriados:</span>
+            <span><strong>1 dia</strong> (01/01)</span>
+          </div>
+          <div class="summary-item">
+            <span>Falta justificada:</span>
+            <span><strong>1 dia</strong> (06/01) = -8h</span>
+          </div>
+          <div class="summary-item">
+            <span>Finais de semana:</span>
+            <span><strong>6 dias</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="summary-total">
+        TOTAL HORAS NO PERÍODO: 104:00
+      </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="legenda">
+      <div class="legenda-item">
+        <span class="legenda-color" style="background: #d4edda;"></span>Feriado
+      </div>
+      <div class="legenda-item">
+        <span class="legenda-color" style="background: #f8d7da;"></span>Falta Justificada
+      </div>
+      <div class="legenda-item">
+        <span class="legenda-color" style="background: #f5f5f5;"></span>Fim de Semana
+      </div>
+      <div class="legenda-item">
+        <span class="legenda-color" style="background: white;"></span>Dia Útil
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="signature-label">Assinatura do Funcionário</div>
+      </div>
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="signature-label">Assinatura da Gestora</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
