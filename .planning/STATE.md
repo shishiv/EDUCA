@@ -9,19 +9,20 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 
 ## Current Position
 
-Milestone: v2.0 Architecture & Launch Prep - SHIPPED
-Status: Milestone complete, ready for v2.1
-Last activity: 2026-01-24 - v2.0 milestone archived
+Milestone: v2.1 Production Pilot - STARTED
+Status: Phase 16 planning complete
+Last activity: 2026-01-24 - Gap closure phases created
 
-Progress: ████████████████████ 100% (27/28 requirements shipped)
+Progress: ░░░░░░░░░░░░░░░░░░░░ 0% (Phase 16 planned, not executed)
 
 ## Milestone Summary
 
-### v2.1 Production Pilot (NEXT)
+### v2.1 Production Pilot (STARTED)
 
-- Phases: TBD
-- Focus: Pilot deployment, PostHog, E2E tests
-- Run `/gsd:new-milestone` to begin
+- Phase 16: Analytics & Monitoring Integration (PLANNING COMPLETE)
+- Phase 17-19: Planned (E2E tests, DB types, pilot deploy)
+- Focus: Fix analytics, add error tracking, E2E verification
+- ROADMAP: .planning/ROADMAP.md
 
 ### v2.0 Architecture & Launch Prep (SHIPPED 2026-01-24)
 
@@ -147,13 +148,15 @@ Progress: ████████████████████ 100% (27/
 | 15.2-03 | tsconfig target es5 -> es2023 | Modern browsers support ES2023; es5 was 10+ years outdated |
 | 15.2-03 | Keep serverActions under experimental | allowedOrigins config still requires experimental flag |
 | 15.2-03 | Remove recharts from optimizePackageImports | Dependency was removed in 15.2-02 |
+| 16-01 | Combine analytics + Sentry + E2E into single phase | User preference for focused delivery |
+| 16-01 | Research Turbopack PostHog issue first | Root cause must be understood before implementing |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: v2.0 milestone SHIPPED and archived
-Resume file: None
-Next action: Run `/gsd:new-milestone` to start v2.1 Production Pilot
+Stopped at: Phase 16 plan created for analytics/monitoring
+Resume file: .planning/phases/16-analytics-monitoring/16-01-PLAN.md
+Next action: Execute Phase 16 (`/gsd:execute-phase 16` or run plan directly)
 
 ### Roadmap Evolution
 
@@ -227,6 +230,11 @@ Next action: Run `/gsd:new-milestone` to start v2.1 Production Pilot
   - 15.2-02: COMPLETE - 10 unused deps removed, @types moved to devDependencies
   - 15.2-03: COMPLETE - tsconfig target es2023, next.config updated, CONFIG-AUDIT.md created
   - ESLint now reports 715 real code issues (236 errors, 479 warnings)
+
+- Phase 16 added (v2.1): Analytics & Monitoring Integration
+  - Closes: CLN-08 (PostHog), Plan 15-08 (Sentry), logger.ts TODO
+  - Includes: E2E verification with browser automation
+  - Plan: .planning/phases/16-analytics-monitoring/16-01-PLAN.md
 
 ### Known Issues (Blockers for build)
 - Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
