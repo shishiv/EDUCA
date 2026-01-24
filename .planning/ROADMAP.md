@@ -388,19 +388,22 @@ Plans:
 - CFG-02: Auditar tsconfig.json e eslint.config.mjs (configurações, paths)
 - CFG-03: Auditar next.config.js e variáveis de ambiente
 
-**Plans:** 0 plans
+**Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 15.2 to break down)
+- [ ] 15.2-01-PLAN.md — Fix broken ESLint configuration (Wave 1)
+- [ ] 15.2-02-PLAN.md — Remove unused dependencies and clean package.json (Wave 1)
+- [ ] 15.2-03-PLAN.md — Modernize tsconfig and next.config (Wave 2)
 
 **Success Criteria:**
-- [ ] Dependências desatualizadas identificadas e documentadas
-- [ ] Configurações inconsistentes corrigidas
-- [ ] Best practices aplicadas às configurações
+- [ ] ESLint runs without circular reference error
+- [ ] Unused dependencies removed, @types in devDependencies
+- [ ] tsconfig target updated to es2023
+- [ ] CONFIG-AUDIT.md documents findings and future work
 
 **Dependencies:** Phase 15.1 (dead code audit complete)
 
-**Status:** Not started
+**Status:** Planned (2026-01-23)
 
 ---
 
