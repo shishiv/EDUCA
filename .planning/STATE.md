@@ -5,23 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-24)
 
 **Core value:** Deploy to 1-2 pilot schools, complete E2E tests.
-**Current focus:** v2.1 Production Pilot (Phase 16, 20 complete)
+**Current focus:** v2.1 Production Pilot (Phase 16, 17, 19 complete)
 
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18 COMPLETE (Database Types Regeneration)
+Status: Phase 17 COMPLETE (Database Types Regeneration)
 Last activity: 2026-01-24 - All 10 plans executed, 400+ type errors fixed, pnpm typecheck passes
 
-Progress: ██████████░░░░░░░░░░ 60% (Phase 16, 18, 20 complete)
+Progress: ███████████████░░░░░ 75% (Phase 16, 17, 19 complete - Phase 18 remaining)
 
 ## Milestone Summary
 
 ### v2.1 Production Pilot (STARTED)
 
 - Phase 16: Analytics Cleanup (16-01 COMPLETE - removed placeholder code)
-- Phase 17-19: Planned (E2E tests, DB types, pilot deploy)
-- Focus: Clean codebase, regenerate DB types, E2E verification
+- Phase 17: Database Types Regeneration (COMPLETE - 400+ type errors fixed)
+- Phase 18: Pilot Deployment (Planned)
+- Phase 19: UI/UX Fixes (COMPLETE)
 - ROADMAP: .planning/ROADMAP.md
 
 ### v2.0 Architecture & Launch Prep (SHIPPED 2026-01-24)
@@ -153,38 +154,38 @@ Progress: ██████████░░░░░░░░░░ 60% (Phas
 | 16-01 | User decided NOT to implement analytics - cleanup instead | Removed PostHog placeholder code (~51 lines) |
 | 16-01 | Keep logger.sendToMonitoringService stub | Useful for potential future analytics integration |
 | 16-01 | Keep instrumentation.ts as minimal stub | Next.js may require the file to exist |
-| 20-01 | Remove Toaster from providers.tsx, keep in dashboard layout | Dashboard layout has styled Toaster with proper theming |
-| 20-01 | Use DialogContent built-in close button | shadcn/ui DialogContent renders close button at absolute right-4 top-4 |
-| 18-01 | IF NOT EXISTS for idempotent migration | Safe to re-run migrations without errors |
-| 18-01 | Followed sessoes_aula RLS pattern | Consistent access control: owner-manage, escola-view, admin-view |
-| 18-01 | BNCC Campos as nullable text fields | Teacher fills as needed, flexibility for different report styles |
-| 18-02 | Types regenerated - reveals pre-existing schema mismatch | Code using wrong columns (aluno_id vs matricula_id) |
-| 18-02 | Partial type fixes committed | 8 files fixed, 400+ errors remain |
-| 18-02 | Cast database enum-like fields | status, tipo need explicit casts to TypeScript unions |
-| 18-05 | Stub routes with 501 Not Implemented | Preserves API contract, allows future implementation |
-| 18-05 | Keep input types for future implementation | CreateVivenciaInput/UpdateVivenciaInput preserved |
-| 18-05 | Log warnings on stub method calls | Helps identify UI code calling these methods |
-| 18-03 | AttendanceStatusUI is canonical UI type | types/attendance.ts already had correct definition |
-| 18-03 | Task 3 files don't exist | diario-classe.ts already has comprehensive session types |
-| 18-08 | Keep habilidades_bncc_input as string in form state | Parse to array only in transformFormDataToInput() before API submission |
-| 18-08 | Export Props from source component files | Maintain barrel pattern by exporting interfaces from source files |
-| 18-09 | Use instanceof Error check for logger.error() | Logger expects Error | string, not object with error property |
-| 18-04 | Use matricula_id for attendance records | Database schema uses matricula_id, not aluno_id |
-| 18-04 | Use escola_id directly from sessoes_aula | sessoes_aula has escola_id column, no need to join turmas |
-| 18-04 | await cookies() for Next.js 15 | cookies() is now async in Next.js 15 |
-| 18-07 | Add nivel_criticidade to audit_trail inserts | Required field in database schema with no default |
-| 18-07 | Use sessao_id not session_id for frequencia | Schema uses Portuguese column names |
-| 18-07 | Use sessoes_aula not aula_sessions table | Schema uses Portuguese table names |
-| 18-06 | Use 'as any' cast for dynamic table names | BaseApiService uses dynamic tableName which doesn't match literal types |
-| 18-06 | Query frequencia through matricula_id | Database schema uses matricula_id as FK, not aluno_id |
-| 18-06 | Use aluno_responsaveis join table | responsaveis table no longer has direct aluno_id column |
+| 19-01 | Remove Toaster from providers.tsx, keep in dashboard layout | Dashboard layout has styled Toaster with proper theming |
+| 19-01 | Use DialogContent built-in close button | shadcn/ui DialogContent renders close button at absolute right-4 top-4 |
+| 17-01 | IF NOT EXISTS for idempotent migration | Safe to re-run migrations without errors |
+| 17-01 | Followed sessoes_aula RLS pattern | Consistent access control: owner-manage, escola-view, admin-view |
+| 17-01 | BNCC Campos as nullable text fields | Teacher fills as needed, flexibility for different report styles |
+| 17-02 | Types regenerated - reveals pre-existing schema mismatch | Code using wrong columns (aluno_id vs matricula_id) |
+| 17-02 | Partial type fixes committed | 8 files fixed, 400+ errors remain |
+| 17-02 | Cast database enum-like fields | status, tipo need explicit casts to TypeScript unions |
+| 17-05 | Stub routes with 501 Not Implemented | Preserves API contract, allows future implementation |
+| 17-05 | Keep input types for future implementation | CreateVivenciaInput/UpdateVivenciaInput preserved |
+| 17-05 | Log warnings on stub method calls | Helps identify UI code calling these methods |
+| 17-03 | AttendanceStatusUI is canonical UI type | types/attendance.ts already had correct definition |
+| 17-03 | Task 3 files don't exist | diario-classe.ts already has comprehensive session types |
+| 17-08 | Keep habilidades_bncc_input as string in form state | Parse to array only in transformFormDataToInput() before API submission |
+| 17-08 | Export Props from source component files | Maintain barrel pattern by exporting interfaces from source files |
+| 17-09 | Use instanceof Error check for logger.error() | Logger expects Error | string, not object with error property |
+| 17-04 | Use matricula_id for attendance records | Database schema uses matricula_id, not aluno_id |
+| 17-04 | Use escola_id directly from sessoes_aula | sessoes_aula has escola_id column, no need to join turmas |
+| 17-04 | await cookies() for Next.js 15 | cookies() is now async in Next.js 15 |
+| 17-07 | Add nivel_criticidade to audit_trail inserts | Required field in database schema with no default |
+| 17-07 | Use sessao_id not session_id for frequencia | Schema uses Portuguese column names |
+| 17-07 | Use sessoes_aula not aula_sessions table | Schema uses Portuguese table names |
+| 17-06 | Use 'as any' cast for dynamic table names | BaseApiService uses dynamic tableName which doesn't match literal types |
+| 17-06 | Query frequencia through matricula_id | Database schema uses matricula_id as FK, not aluno_id |
+| 17-06 | Use aluno_responsaveis join table | responsaveis table no longer has direct aluno_id column |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Phase 18 COMPLETE - Database Types Regeneration verified
-Resume file: .planning/phases/18-database-types-regeneration/18-VERIFICATION.md
-Next action: Plan Phase 17 (E2E Playwright Smoke Tests) or Phase 19 (Pilot Deployment)
+Stopped at: Phase 17 removed (E2E Playwright Smoke Tests), phases renumbered
+Resume file: .planning/phases/17-database-types-regeneration/17-VERIFICATION.md
+Next action: Plan Phase 18 (Pilot Deployment)
 
 ### Roadmap Evolution
 
@@ -265,54 +266,54 @@ Next action: Plan Phase 17 (E2E Playwright Smoke Tests) or Phase 19 (Pilot Deplo
   - Closes: CLN-08 (by removal decision), logger.ts TODO (removed)
   - Summary: .planning/phases/16-analytics-monitoring/16-01-SUMMARY.md
 
-- Phase 20 COMPLETE: UI/UX Fixes
-  - 20-01: COMPLETE - Removed duplicate Toaster from providers.tsx, duplicate close button from ClassDiaryDetail
+- Phase 19 COMPLETE: UI/UX Fixes
+  - 19-01: COMPLETE - Removed duplicate Toaster from providers.tsx, duplicate close button from ClassDiaryDetail
   - UIX-01: Single Toaster now in dashboard layout only
   - UIX-02: Single close button now from DialogContent default
   - Summary: .planning/phases/20-ui-ux-fixes/20-01-SUMMARY.md
 
-- Phase 18 progress (Database Types Regeneration):
-  - 18-01: COMPLETE - relatorios_descritivos table created in Supabase production
+- Phase 17 progress (Database Types Regeneration):
+  - 17-01: COMPLETE - relatorios_descritivos table created in Supabase production
     - 18 columns for BNCC Campos de Experiencia
     - RLS: professors manage, directors view escola, admin view all
     - Foreign keys to matriculas, turmas, users
     - Summary: .planning/phases/18-database-types-regeneration/18-01-SUMMARY.md
-  - 18-02: COMPLETE (types regenerated) - BUILD BLOCKED (pre-existing issues)
+  - 17-02: COMPLETE (types regenerated) - BUILD BLOCKED (pre-existing issues)
     - types/database.ts regenerated (1767 lines, 20 tables, 3 views)
     - relatorios_descritivos, calendario_escolar, feature_flags types now available
     - DISCOVERY: 400+ pre-existing type errors from schema mismatch
     - Code uses aluno_id, sessao_aula_id - actual columns are matricula_id, sessao_id
     - Summary: .planning/phases/18-database-types-regeneration/18-02-SUMMARY.md
-  - 18-05: COMPLETE - Stubbed vivencias API routes (table doesn't exist)
+  - 17-05: COMPLETE - Stubbed vivencias API routes (table doesn't exist)
     - Routes return 501 Not Implemented
     - Service class logs warnings when called
     - Reduced ~700 lines of non-functional code
     - Summary: .planning/phases/18-database-types-regeneration/18-05-SUMMARY.md
-  - 18-03: COMPLETE - Fixed AttendanceStatus type mismatch
+  - 17-03: COMPLETE - Fixed AttendanceStatus type mismatch
     - Fixed typo: AttendanceStatusUIUI -> AttendanceStatusUI
     - Eliminated 6 type errors in AttendanceGrid.tsx
     - Summary: .planning/phases/18-database-types-regeneration/18-03-SUMMARY.md
-  - 18-08: COMPLETE - Fixed diary and attendance component type errors
+  - 17-08: COMPLETE - Fixed diary and attendance component type errors
     - Export Props interfaces from AbrirAulaWorkflow, FecharAulaDialog, StatsCard, TeacherDashboardEnhanced
     - Fix Zod schema habilidades_bncc_input to stay as string, parse in transformFormDataToInput
     - Fix FrequenciaWorkflow and NewLessonModal null/undefined handling
     - Summary: .planning/phases/18-database-types-regeneration/18-08-SUMMARY.md
-  - 18-09: COMPLETE - Fixed logger.error() calls in context files
+  - 17-09: COMPLETE - Fixed logger.error() calls in context files
     - 12 calls fixed across escola-context, search-context, session-realtime-context
     - Error parameter now uses Error | string instead of object
     - Summary: .planning/phases/18-database-types-regeneration/18-09-SUMMARY.md
-  - 18-04: COMPLETE - Fixed API route column name mismatches
+  - 17-04: COMPLETE - Fixed API route column name mismatches
     - frequencia routes now use matricula_id, sessao_id
     - sessoes_aula routes use created_at, escola_id directly
     - All API routes pass type checking
     - Summary: .planning/phases/18-database-types-regeneration/18-04-SUMMARY.md
-  - 18-07: COMPLETE - Fixed service layer type errors
+  - 17-07: COMPLETE - Fixed service layer type errors
     - attendance-locking.ts: schema columns fixed, audit_trail inserts corrected
     - attendance-reports.ts: logger signature fixed, nested select type casting
     - session-realtime.ts: table names fixed (sessoes_aula, sessao_id)
     - audit.ts: field name mapping, AuditLog type casting
     - Summary: .planning/phases/18-database-types-regeneration/18-07-SUMMARY.md
-  - 18-06: COMPLETE - Fixed 50+ type errors in lib/api layer
+  - 17-06: COMPLETE - Fixed 50+ type errors in lib/api layer
     - base.ts: use 'supabase as any' for dynamic table names
     - attendance.ts: update column names (matricula_id, sessao_id, data_aula)
     - students.ts: add ano_letivo to matriculas, fix responsaveis join table
@@ -328,4 +329,4 @@ Next action: Plan Phase 17 (E2E Playwright Smoke Tests) or Phase 19 (Pilot Deplo
 
 ---
 
-*State updated: 2026-01-24 - Phase 18 COMPLETE, all 10 plans executed, 400+ type errors fixed, verified*
+*State updated: 2026-01-24 - Phase 17 removed (E2E), phases renumbered, Phase 18 (Pilot) remaining*
