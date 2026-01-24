@@ -22,8 +22,8 @@ import { logger } from '@/lib/logger'
 import { TeacherAssignment } from '@/components/classes/teacher-assignment'
 
 // Components
-import { PageHeader } from '@/components/layout/page-header'
-import { EscolaRequiredState } from '@/components/layout/escola-required-state'
+import { PageHeader } from '@/components/layout/enhanced-breadcrumbs'
+import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

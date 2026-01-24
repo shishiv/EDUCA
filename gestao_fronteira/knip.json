@@ -1,6 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "_note": "Configuration ready for future use. Knip not currently installed due to pnpm issues.",
   "entry": [
     "app/**/{page,layout,loading,error,not-found,template}.{js,jsx,ts,tsx}",
     "app/**/route.{js,ts}",
