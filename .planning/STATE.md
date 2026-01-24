@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-24)
 
 **Core value:** Deploy to 1-2 pilot schools, complete E2E tests.
-**Current focus:** v2.1 Production Pilot (Phase 16 complete)
+**Current focus:** v2.1 Production Pilot (Phase 16, 20 complete)
 
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 16-01 COMPLETE (Analytics Cleanup)
-Last activity: 2026-01-24 - Executed 16-01-PLAN.md (analytics cleanup)
+Status: Phase 20-01 COMPLETE (UI/UX Fixes)
+Last activity: 2026-01-24 - Executed 20-01-PLAN.md (duplicate toast/close button fixes)
 
-Progress: ██░░░░░░░░░░░░░░░░░░ 10% (Phase 16-01 complete)
+Progress: ███░░░░░░░░░░░░░░░░░ 15% (Phase 16-01, 20-01 complete)
 
 ## Milestone Summary
 
@@ -153,12 +153,14 @@ Progress: ██░░░░░░░░░░░░░░░░░░ 10% (Phas
 | 16-01 | User decided NOT to implement analytics - cleanup instead | Removed PostHog placeholder code (~51 lines) |
 | 16-01 | Keep logger.sendToMonitoringService stub | Useful for potential future analytics integration |
 | 16-01 | Keep instrumentation.ts as minimal stub | Next.js may require the file to exist |
+| 20-01 | Remove Toaster from providers.tsx, keep in dashboard layout | Dashboard layout has styled Toaster with proper theming |
+| 20-01 | Use DialogContent built-in close button | shadcn/ui DialogContent renders close button at absolute right-4 top-4 |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 16-01 (Analytics Cleanup)
-Resume file: .planning/phases/16-analytics-monitoring/16-01-SUMMARY.md
+Stopped at: Completed Phase 20-01 (UI/UX Fixes)
+Resume file: .planning/phases/20-ui-ux-fixes/20-01-SUMMARY.md
 Next action: Fix DB types blocker (regenerate supabase types) or proceed to Phase 17
 
 ### Roadmap Evolution
@@ -240,10 +242,16 @@ Next action: Fix DB types blocker (regenerate supabase types) or proceed to Phas
   - Closes: CLN-08 (by removal decision), logger.ts TODO (removed)
   - Summary: .planning/phases/16-analytics-monitoring/16-01-SUMMARY.md
 
+- Phase 20 COMPLETE: UI/UX Fixes
+  - 20-01: COMPLETE - Removed duplicate Toaster from providers.tsx, duplicate close button from ClassDiaryDetail
+  - UIX-01: Single Toaster now in dashboard layout only
+  - UIX-02: Single close button now from DialogContent default
+  - Summary: .planning/phases/20-ui-ux-fixes/20-01-SUMMARY.md
+
 ### Known Issues (Blockers for build)
 - Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
 - ~~ESLint config has circular reference error~~ - FIXED in 15.2-01
 
 ---
 
-*State updated: 2026-01-24 - Phase 16-01 Analytics Cleanup COMPLETE*
+*State updated: 2026-01-24 - Phase 20-01 UI/UX Fixes COMPLETE*
