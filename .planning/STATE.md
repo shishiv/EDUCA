@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 15.1 of 15.1 (Dead Code Audit via LSP) - IN PROGRESS
-Plan: 2 of 3 complete
-Status: lib/ and components/ audit complete, app/ audit pending
-Last activity: 2026-01-24 - Completed 15.1-02-PLAN.md (components/ Dead Code Audit)
+Phase: 15.1 of 15.1 (Dead Code Audit via LSP) - COMPLETE
+Plan: 3 of 3 complete
+Status: Phase complete - All directories audited
+Last activity: 2026-01-24 - Completed 15.1-03-PLAN.md (types/ Dead Code Audit + Report)
 
-Progress: ██████████████████░░ 95% (36/38 requirements)
+Progress: ████████████████████ 100% (38/38 requirements)
 
 ## Milestone Summary
 
@@ -129,13 +129,15 @@ Progress: ██████████████████░░ 95% (36/3
 | 15.1-02 | role-specific-dashboards.tsx (993 lines) completely dead | Dashboard uses TeacherDashboardEnhanced directly |
 | 15.1-02 | Barrel indexes kept as organizational pattern | Even if unused, barrels provide organization |
 | 15.1-02 | Created minimal stubs for missing dependencies | alert-item.tsx, ip-tracking.ts, enhanced-base.ts to fix Phase 15.1-01 gaps |
+| 15.1-03 | Removed types/bolsa-familia.ts and types/supabase.ts | Duplicates of lib/reports/bolsa-familia-reports.ts types and types/database.ts |
+| 15.1-03 | Created DEAD-CODE-AUDIT.md comprehensive report | Documents methodology, findings, and recommendations for future audits |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 15.1-02-PLAN.md (components/ Dead Code Audit)
+Stopped at: Completed 15.1-03-PLAN.md (types/ Dead Code Audit + Report)
 Resume file: None
-Next action: Execute 15.1-03-PLAN.md (app/ Dead Code Audit)
+Next action: Phase 15.1 complete. Ready for next milestone work.
 
 ### Roadmap Evolution
 
@@ -197,7 +199,12 @@ Next action: Execute 15.1-03-PLAN.md (app/ Dead Code Audit)
 - Phase 15.1 progress (Dead Code Audit via LSP):
   - 15.1-01: COMPLETE - lib/ audit: 17 files deleted, 8,530 lines removed, knip configured
   - 15.1-02: COMPLETE - components/ audit: 12 files deleted, ~3,800 lines removed, broken barrel fixed
-  - 15.1-03: PENDING - app/ and final verification
+  - 15.1-03: COMPLETE - types/ audit: 2 files deleted, ~1,897 lines removed, audit report created
+
+- Phase 15.1 COMPLETE: Dead Code Audit Summary
+  - 31 files removed total (~14,227 lines)
+  - DEAD-CODE-AUDIT.md created at .planning/codebase/
+  - knip.json configured for ongoing maintenance
 
 ### Known Issues (Blockers for build)
 - Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
@@ -205,4 +212,4 @@ Next action: Execute 15.1-03-PLAN.md (app/ Dead Code Audit)
 
 ---
 
-*State updated: 2026-01-24 after completing 15.1-02-PLAN.md - components/ Dead Code Audit*
+*State updated: 2026-01-24 after completing 15.1-03-PLAN.md - Phase 15.1 Dead Code Audit Complete*
