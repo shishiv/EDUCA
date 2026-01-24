@@ -1,17 +1,18 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useState } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, useEffect } from 'react'
+import { Toaster } from 'sonner'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider'
 
-// Fix React 19 setState warning: Load Toaster only on client-side
-const Toaster = dynamic(
-  () => import('sonner').then((mod) => mod.Toaster),
-  { ssr: false }
-)
-
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Track client-side mount to avoid hydration mismatch with Toaster
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -31,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           {children}
         </ServiceWorkerProvider>
       </QueryClientProvider>
-      <Toaster position="top-right" richColors closeButton />
+      {mounted && <Toaster position="top-right" richColors closeButton />}
     </>
   )
 }
