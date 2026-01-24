@@ -63,6 +63,21 @@
 
 ---
 
+### Phase 20: UI/UX Fixes (Planned)
+
+**Goal:** Fix UI/UX issues: duplicate sonner toasts, components with double close buttons.
+
+**Requirements:**
+- UIX-01: Fix sonner toast appearing twice
+- UIX-02: Fix components with duplicate close buttons
+
+**Depends on:** None
+
+**Plans:** 1 plan
+- [ ] 20-01-PLAN.md - Remove duplicate Toaster and DialogClose
+
+---
+
 ## Success Criteria
 
 v2.1 is complete when:
