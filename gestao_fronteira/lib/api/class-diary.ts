@@ -30,12 +30,14 @@ export interface ClassDiaryEntry {
   turma_id: string
   turma_nome: string
   turma_ano: number
+  turma_serie: string // e.g., "1º Ano", "2º Ano"
   escola_id: string
   escola_nome: string
   professor_id: string
   professor_nome: string
   disciplina: string | null
   status: 'aberta' | 'fechada' | 'travada'
+  fase: 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada'
   observacoes_abertura: string | null
   observacoes_fechamento: string | null
   total_alunos: number
@@ -44,6 +46,7 @@ export interface ClassDiaryEntry {
   aberta_em: string
   fechada_em: string | null
   travada_em: string | null
+  bloqueado: boolean
 }
 
 /**
@@ -57,8 +60,9 @@ export interface AttendanceHistoryRecord {
   aluno_id: string
   aluno_nome: string
   presente: boolean
-  observacao: string | null
+  observacoes: string | null
   turma_nome: string
+  is_locked?: boolean
 }
 
 /**
@@ -68,6 +72,9 @@ export interface AttendanceHistoryRecord {
 export interface DetailedSession extends ClassDiaryEntry {
   attendance_records: AttendanceHistoryRecord[]
   attendance_percentage: number
+  observacoes: string | null
+  bloqueado_em: string | null
+  hash_integridade: string | null
 }
 
 /**
@@ -216,18 +223,30 @@ export async function getClassDiary(
       const escola = turma?.escolas as any
       const professor = aula.professor as any
 
+      // Map status to fase
+      const statusToFase = (status: string): 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada' => {
+        switch (status) {
+          case 'aberta': return 'chamada'
+          case 'fechada': return 'finalizada'
+          case 'travada': return 'bloqueada'
+          default: return 'planejamento'
+        }
+      }
+
       return {
         id: aula.id,
         data_aula: aula.data_aula,
         turma_id: aula.turma_id,
         turma_nome: turma?.nome || 'N/A',
         turma_ano: turma?.ano_letivo || new Date().getFullYear(),
+        turma_serie: turma?.serie || 'N/A',
         escola_id: escola?.id || '',
         escola_nome: escola?.nome || 'N/A',
         professor_id: aula.professor_id,
         professor_nome: professor?.nome || 'N/A',
         disciplina: aula.disciplina,
         status: aula.status,
+        fase: statusToFase(aula.status),
         observacoes_abertura: aula.observacoes_abertura,
         observacoes_fechamento: aula.observacoes_fechamento,
         total_alunos: stats.total,
@@ -236,6 +255,7 @@ export async function getClassDiary(
         aberta_em: aula.aberta_em,
         fechada_em: aula.fechada_em,
         travada_em: aula.travada_em,
+        bloqueado: aula.status === 'travada',
       }
     })
 
@@ -323,8 +343,9 @@ export async function getAttendanceHistory(
       aluno_id: record.matriculas?.alunos?.id || '',
       aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
       presente: record.presente,
-      observacao: record.observacoes,
+      observacoes: record.observacoes,
       turma_nome: record.aulas_abertas?.turmas?.nome || 'N/A',
+      is_locked: false, // Can be updated with lock status if available
     }))
 
     return { data: transformedData, error: null }
@@ -439,8 +460,9 @@ export async function getClassDetail(
         aluno_id: record.matriculas?.alunos?.id || '',
         aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
         presente: record.presente,
-        observacao: record.observacoes,
+        observacoes: record.observacoes,
         turma_nome: turma?.nome || 'N/A',
+        is_locked: aula.status === 'travada',
       })
     )
 
@@ -450,6 +472,16 @@ export async function getClassDetail(
         ? Math.round((totalPresentes / totalAlunos) * 100)
         : 0
 
+    // Map status to fase
+    const statusToFase = (status: string): 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada' => {
+      switch (status) {
+        case 'aberta': return 'chamada'
+        case 'fechada': return 'finalizada'
+        case 'travada': return 'bloqueada'
+        default: return 'planejamento'
+      }
+    }
+
     // Build detailed session object
     const detailedSession: DetailedSession = {
       id: aula.id,
@@ -457,20 +489,26 @@ export async function getClassDetail(
       turma_id: aula.turma_id,
       turma_nome: turma?.nome || 'N/A',
       turma_ano: turma?.ano_letivo || new Date().getFullYear(),
+      turma_serie: turma?.serie || 'N/A',
       escola_id: escola?.id || '',
       escola_nome: escola?.nome || 'N/A',
       professor_id: aula.professor_id,
       professor_nome: professor?.nome || 'N/A',
       disciplina: aula.disciplina,
       status: aula.status,
+      fase: statusToFase(aula.status),
       observacoes_abertura: aula.observacoes_abertura,
       observacoes_fechamento: aula.observacoes_fechamento,
+      observacoes: aula.observacoes_abertura || aula.observacoes_fechamento || null,
       total_alunos: totalAlunos,
       total_presentes: totalPresentes,
       total_ausentes: totalAusentes,
       aberta_em: aula.aberta_em,
       fechada_em: aula.fechada_em,
       travada_em: aula.travada_em,
+      bloqueado: aula.status === 'travada',
+      bloqueado_em: aula.travada_em,
+      hash_integridade: null, // Not stored in current schema
       attendance_records: attendanceRecords,
       attendance_percentage,
     }
