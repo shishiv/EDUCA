@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18-03 COMPLETE (Fix AttendanceStatus type mismatch) - BUILD BLOCKED (pre-existing issues)
-Last activity: 2026-01-24 - Executed 18-03-PLAN.md (fix AttendanceStatus typo)
+Status: Phase 18-09 COMPLETE (Fix context type errors) - BUILD BLOCKED (pre-existing issues)
+Last activity: 2026-01-24 - Executed 18-09-PLAN.md (fix logger.error() calls in contexts)
 
-Progress: ███████░░░░░░░░░░░░░ 35% (Phase 16-01, 18-01, 18-02, 18-03, 18-05, 20-01 complete)
+Progress: ████████░░░░░░░░░░░░ 40% (Phase 16-01, 18-01, 18-02, 18-03, 18-05, 18-09, 20-01 complete)
 
 ## Milestone Summary
 
@@ -166,13 +166,14 @@ Progress: ███████░░░░░░░░░░░░░ 35% (Phas
 | 18-05 | Log warnings on stub method calls | Helps identify UI code calling these methods |
 | 18-03 | AttendanceStatusUI is canonical UI type | types/attendance.ts already had correct definition |
 | 18-03 | Task 3 files don't exist | diario-classe.ts already has comprehensive session types |
+| 18-09 | Use instanceof Error check for logger.error() | Logger expects Error | string, not object with error property |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 18-03 (Fix AttendanceStatus type mismatch)
-Resume file: .planning/phases/18-database-types-regeneration/18-03-SUMMARY.md
-Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-10)
+Stopped at: Completed Phase 18-09 (Fix context type errors)
+Resume file: .planning/phases/18-database-types-regeneration/18-09-SUMMARY.md
+Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-08, 18-10)
 
 ### Roadmap Evolution
 
@@ -280,6 +281,10 @@ Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-10)
     - Fixed typo: AttendanceStatusUIUI -> AttendanceStatusUI
     - Eliminated 6 type errors in AttendanceGrid.tsx
     - Summary: .planning/phases/18-database-types-regeneration/18-03-SUMMARY.md
+  - 18-09: COMPLETE - Fixed logger.error() calls in context files
+    - 12 calls fixed across escola-context, search-context, session-realtime-context
+    - Error parameter now uses Error | string instead of object
+    - Summary: .planning/phases/18-database-types-regeneration/18-09-SUMMARY.md
 
 ### Known Issues (Blockers for build)
 - **NEW: Schema mismatch in attendance code** - frequencia uses matricula_id, code uses aluno_id (400+ errors)
@@ -288,4 +293,4 @@ Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-10)
 
 ---
 
-*State updated: 2026-01-24 - Phase 18-03 complete, fixed AttendanceStatus type import typo*
+*State updated: 2026-01-24 - Phase 18-09 complete, fixed logger.error() calls in context files*
