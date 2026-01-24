@@ -24,31 +24,60 @@ export class StudentsApiService extends BaseApiService {
   // Get students enrolled in a specific class
   async getStudentsByClass(classId: string): Promise<StudentWithDetails[]> {
     try {
-      const { data, error } = await supabase
-        .from('alunos')
+      // First get matriculas with aluno info for this class
+      const { data: matriculasData, error: matriculasError } = await supabase
+        .from('matriculas')
         .select(`
-          *,
-          responsavel:responsaveis(
-            id,
-            nome,
-            telefone,
-            email,
-            grau_parentesco
-          ),
-          matriculas!inner(
-            id,
-            situacao,
-            data_matricula,
-            turma_id
-          )
+          id,
+          situacao,
+          data_matricula,
+          turma_id,
+          aluno:alunos(*)
         `)
-        .eq('ativo', true)
-        .eq('matriculas.turma_id', classId)
-        .eq('matriculas.situacao', 'ativa')
-        .order('nome_completo', { ascending: true })
+        .eq('turma_id', classId)
+        .eq('situacao', 'ativa')
 
-      if (error) throw error
-      return data as StudentWithDetails[]
+      if (matriculasError) throw matriculasError
+      if (!matriculasData || matriculasData.length === 0) return []
+
+      // Get aluno IDs for responsaveis lookup
+      const alunoIds = matriculasData
+        .map((m) => (m.aluno as { id: string } | null)?.id)
+        .filter((id): id is string => !!id)
+
+      // Get responsaveis through aluno_responsaveis join table
+      const { data: alunoResponsaveisData } = await supabase
+        .from('aluno_responsaveis')
+        .select(`
+          aluno_id,
+          responsavel:responsaveis(*)
+        `)
+        .in('aluno_id', alunoIds)
+        .eq('ativo', true)
+
+      const responsaveisMap = new Map(
+        (alunoResponsaveisData ?? []).map((ar) => [ar.aluno_id, ar.responsavel])
+      )
+
+      // Transform data
+      const result = matriculasData
+        .filter((m) => m.aluno)
+        .map((m) => {
+          const aluno = m.aluno as Tables<'alunos'>
+          return {
+            ...aluno,
+            responsavel: responsaveisMap.get(aluno.id) as Tables<'responsaveis'> | undefined,
+            matriculas: [{
+              id: m.id,
+              situacao: m.situacao,
+              data_matricula: m.data_matricula,
+              turma_id: m.turma_id
+            }]
+          } as StudentWithDetails
+        })
+        .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
+
+      return result
     } catch (error) {
       throw error
     }
@@ -151,25 +180,57 @@ export class StudentsApiService extends BaseApiService {
     try {
       const { responsavel, ...aluno } = studentData
 
-      // Create student
-      const studentResult = await this.create({
-        ...aluno,
+      // Create student - extract only known fields
+      const insertData = {
+        nome_completo: aluno.nome_completo,
+        data_nascimento: aluno.data_nascimento,
+        sexo: aluno.sexo,
+        cpf: aluno.cpf,
+        rg: aluno.rg,
+        email: aluno.email,
+        telefone: aluno.telefone,
+        endereco: aluno.endereco,
+        nome_mae: aluno.nome_mae,
+        nome_pai: aluno.nome_pai,
+        necessidades_especiais: aluno.necessidades_especiais,
         ativo: true,
-        created_at: new Date().toISOString()
-      })
+      }
+
+      const { data: studentResult, error: studentError } = await supabase
+        .from('alunos')
+        .insert(insertData)
+        .select()
+        .single()
+
+      if (studentError) throw studentError
 
       // Create guardian relationship if provided
       if (responsavel && studentResult) {
-        await supabase
+        // First create the responsavel
+        const { data: responsavelData, error: responsavelError } = await supabase
           .from('responsaveis')
           .insert({
-            aluno_id: studentResult.id,
             nome: responsavel.nome,
-            telefone: responsavel.telefone,
+            telefone: responsavel.telefone ?? '',
             email: responsavel.email,
-            grau_parentesco: responsavel.grau_parentesco,
+            parentesco: responsavel.grau_parentesco,
+            cpf: '', // Required field
             ativo: true
           })
+          .select()
+          .single()
+
+        if (!responsavelError && responsavelData) {
+          // Then create the join table entry
+          await supabase
+            .from('aluno_responsaveis')
+            .insert({
+              aluno_id: studentResult.id,
+              responsavel_id: responsavelData.id,
+              tipo_responsabilidade: responsavel.grau_parentesco,
+              ativo: true
+            })
+        }
       }
 
       return studentResult
@@ -186,8 +247,9 @@ export class StudentsApiService extends BaseApiService {
         .insert({
           aluno_id: studentId,
           turma_id: turmaId,
-          situacao: 'ativa',
-          data_matricula: new Date().toISOString(),
+          ano_letivo: new Date().getFullYear(),
+          situacao: 'ativa' as const,
+          data_matricula: new Date().toISOString().split('T')[0],
           observacoes
         })
         .select()
@@ -220,25 +282,46 @@ export class StudentsApiService extends BaseApiService {
   // Get student attendance summary
   async getStudentAttendanceSummary(studentId: string, period?: { start: string; end: string }) {
     try {
+      // First get matriculas for this student
+      const { data: matriculas, error: matriculasError } = await supabase
+        .from('matriculas')
+        .select('id')
+        .eq('aluno_id', studentId)
+
+      if (matriculasError) throw matriculasError
+      if (!matriculas || matriculas.length === 0) {
+        return {
+          totalDays: 0,
+          presentDays: 0,
+          absentDays: 0,
+          excusedDays: 0,
+          attendanceRate: 0,
+          details: []
+        }
+      }
+
+      const matriculaIds = matriculas.map((m) => m.id)
+
       let query = supabase
         .from('frequencia')
-        .select('data, status')
-        .eq('aluno_id', studentId)
+        .select('data_aula, status_presenca, presente')
+        .in('matricula_id', matriculaIds)
 
       if (period) {
         query = query
-          .gte('data', period.start)
-          .lte('data', period.end)
+          .gte('data_aula', period.start)
+          .lte('data_aula', period.end)
       }
 
       const { data, error } = await query
 
       if (error) throw error
 
-      const totalDays = data.length
-      const presentDays = data.filter(f => f.status === 'presente').length
-      const absentDays = data.filter(f => f.status === 'falta').length
-      const excusedDays = data.filter(f => f.status === 'justificada').length
+      const records = data ?? []
+      const totalDays = records.length
+      const presentDays = records.filter(f => f.presente || f.status_presenca === 'presente').length
+      const absentDays = records.filter(f => !f.presente && (!f.status_presenca || f.status_presenca === 'falta')).length
+      const excusedDays = records.filter(f => f.status_presenca === 'justificada').length
 
       const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0
 
@@ -248,7 +331,7 @@ export class StudentsApiService extends BaseApiService {
         absentDays,
         excusedDays,
         attendanceRate,
-        details: data
+        details: records
       }
     } catch (error) {
       throw error
@@ -286,11 +369,13 @@ export class StudentsApiService extends BaseApiService {
   // Bulk enrollment
   async bulkEnrollStudents(enrollments: { studentId: string; turmaId: string; observacoes?: string }[]) {
     try {
+      const anoLetivo = new Date().getFullYear()
       const matriculas = enrollments.map(enrollment => ({
         aluno_id: enrollment.studentId,
         turma_id: enrollment.turmaId,
+        ano_letivo: anoLetivo,
         situacao: 'ativa' as const,
-        data_matricula: new Date().toISOString(),
+        data_matricula: new Date().toISOString().split('T')[0],
         observacoes: enrollment.observacoes
       }))
 
@@ -314,9 +399,7 @@ export class StudentsApiService extends BaseApiService {
       logger.info(`Student status updated to ${ativo ? 'active' : 'inactive'}`, {
         feature: 'students',
         action: 'update_student_status',
-        studentId: id,
-        ativo,
-        reason
+        metadata: { studentId: id, ativo, reason }
       })
 
       return result
@@ -324,7 +407,7 @@ export class StudentsApiService extends BaseApiService {
       logger.error('Error updating student status', error as Error, {
         feature: 'students',
         action: 'update_student_status',
-        studentId: id
+        metadata: { studentId: id }
       })
       throw error
     }

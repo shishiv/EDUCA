@@ -221,26 +221,35 @@ export class ClassesApiService extends BaseApiService {
 
       if (enrollmentsError) throw enrollmentsError
 
-      // Get attendance summary for current month
-      const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
-      const { data: attendanceData, error: attendanceError } = await supabase
-        .from('frequencia')
-        .select('status, data, aluno_id')
-        .eq('turma_id', classId)
-        .gte('data', `${currentMonth}-01`)
-        .lte('data', `${currentMonth}-31`)
-
-      if (attendanceError) throw attendanceError
-
       const activeEnrollments = enrollments?.filter(e => e.situacao === 'ativa') || []
 
-      const attendanceSummary = attendanceData?.reduce((acc, record) => {
-        acc[record.status] = (acc[record.status] || 0) + 1
-        return acc
-      }, {} as Record<string, number>) || {}
+      // Get attendance summary for current month
+      const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
+      const matriculaIds = activeEnrollments.map(e => e.id)
+
+      let attendanceSummary: Record<string, number> = {}
+      let totalAttendanceRecords = 0
+
+      if (matriculaIds.length > 0) {
+        const { data: attendanceData, error: attendanceError } = await supabase
+          .from('frequencia')
+          .select('status_presenca, presente, data_aula, matricula_id')
+          .in('matricula_id', matriculaIds)
+          .gte('data_aula', `${currentMonth}-01`)
+          .lte('data_aula', `${currentMonth}-31`)
+
+        if (attendanceError) throw attendanceError
+
+        attendanceSummary = attendanceData?.reduce((acc, record) => {
+          const status = record.status_presenca || (record.presente ? 'presente' : 'falta')
+          acc[status] = (acc[status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>) || {}
+
+        totalAttendanceRecords = attendanceData?.length || 0
+      }
 
       // Calculate attendance rate
-      const totalAttendanceRecords = attendanceData?.length || 0
       const presentRecords = attendanceSummary['presente'] || 0
       const attendanceRate = totalAttendanceRecords > 0
         ? Math.round((presentRecords / totalAttendanceRecords) * 100)
@@ -313,9 +322,7 @@ export class ClassesApiService extends BaseApiService {
       logger.info(`Class status updated to ${ativo ? 'active' : 'inactive'}`, {
         feature: 'classes',
         action: 'update_class_status',
-        classId: id,
-        ativo,
-        reason
+        metadata: { classId: id, ativo, reason }
       })
 
       return result
@@ -323,7 +330,7 @@ export class ClassesApiService extends BaseApiService {
       logger.error('Error updating class status', error as Error, {
         feature: 'classes',
         action: 'update_class_status',
-        classId: id
+        metadata: { classId: id }
       })
       throw error
     }

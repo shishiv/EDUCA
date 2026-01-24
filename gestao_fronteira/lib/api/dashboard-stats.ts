@@ -153,7 +153,8 @@ export class DashboardStatsApiService extends BaseApiService {
 
       return stats
     } catch (error) {
-      logger.error('Error fetching dashboard stats:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error fetching dashboard stats:', errorMsg)
       throw error
     }
   }
@@ -168,18 +169,24 @@ export class DashboardStatsApiService extends BaseApiService {
   private async countAlunos(escolaId?: string, includeInactive = false): Promise<number> {
     try {
       if (escolaId) {
+        // First get turma IDs for the escola
+        const { data: turmas, error: turmasError } = await supabase
+          .from('turmas')
+          .select('id')
+          .eq('escola_id', escolaId)
+          .eq('ativo', true)
+
+        if (turmasError) throw turmasError
+        if (!turmas || turmas.length === 0) return 0
+
+        const turmaIds = turmas.map((t) => t.id)
+
         // Alunos filtered via matriculas->turmas chain
         const { count, error } = await supabase
           .from('matriculas')
           .select('aluno_id', { count: 'exact', head: true })
           .eq('situacao', 'ativa')
-          .in('turma_id',
-            supabase
-              .from('turmas')
-              .select('id')
-              .eq('escola_id', escolaId)
-              .eq('ativo', true)
-          )
+          .in('turma_id', turmaIds)
 
         if (error) throw error
         return count || 0
@@ -193,7 +200,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return count || 0
     } catch (error) {
-      logger.error('Error counting alunos:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error counting alunos:', errorMsg)
       return 0
     }
   }
@@ -214,7 +222,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return count || 0
     } catch (error) {
-      logger.error('Error counting escolas:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error counting escolas:', errorMsg)
       return 0
     }
   }
@@ -235,7 +244,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return count || 0
     } catch (error) {
-      logger.error('Error counting turmas:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error counting turmas:', errorMsg)
       return 0
     }
   }
@@ -245,7 +255,8 @@ export class DashboardStatsApiService extends BaseApiService {
    */
   private async countUsuarios(escolaId?: string, includeInactive = false): Promise<number> {
     try {
-      let query = supabase.from('usuarios').select('id', { count: 'exact', head: true })
+      // Table is 'users' not 'usuarios'
+      let query = supabase.from('users').select('id', { count: 'exact', head: true })
       if (escolaId) {
         query = query.eq('escola_id', escolaId)
       }
@@ -256,7 +267,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return count || 0
     } catch (error) {
-      logger.error('Error counting usuarios:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error counting usuarios:', errorMsg)
       return 0
     }
   }
@@ -291,7 +303,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return count || 0
     } catch (error) {
-      logger.error('Error counting matriculas:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error counting matriculas:', errorMsg)
       return 0
     }
   }
@@ -301,7 +314,7 @@ export class DashboardStatsApiService extends BaseApiService {
    */
   private async getFrequenciaSample(escolaId?: string): Promise<{ presente: boolean }[]> {
     try {
-      let query = supabase.from('frequencia').select('presente').limit(100)
+      const query = supabase.from('frequencia').select('presente').limit(100)
 
       // Note: frequencia filtering by escola would require joining through matriculas->turmas
       // For now, we return global sample. Can be enhanced later if needed.
@@ -310,7 +323,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return data || []
     } catch (error) {
-      logger.error('Error fetching frequencia sample:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error fetching frequencia sample:', errorMsg)
       return []
     }
   }
@@ -320,7 +334,7 @@ export class DashboardStatsApiService extends BaseApiService {
    */
   private async countAlunosDocsPendentes(escolaId?: string): Promise<number> {
     try {
-      let query = supabase
+      const query = supabase
         .from('alunos')
         .select('id', { count: 'exact', head: true })
         .or('cpf.is.null,telefone.is.null')
@@ -333,7 +347,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return count || 0
     } catch (error) {
-      logger.error('Error counting alunos with pending docs:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error counting alunos with pending docs:', errorMsg)
       return 0
     }
   }
@@ -352,7 +367,8 @@ export class DashboardStatsApiService extends BaseApiService {
       if (error) throw error
       return data?.length || 0
     } catch (error) {
-      logger.error('Error fetching low attendance data:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error fetching low attendance data:', errorMsg)
       return 0
     }
   }
