@@ -234,14 +234,14 @@ export function Sidebar({ className }: SidebarProps) {
         {collapsed ? (
           /* Collapsed state - show only small icon */
           <div className="flex items-center justify-center w-full">
-            <MunicipalBrasao size="sm" priority />
+            <MunicipalBrasao size="sm" />
           </div>
         ) : (
           /* Expanded state - show full EDUCA identity */
           <div className="flex items-center space-x-3 sidebar-transition">
             {/* Municipal Brasão */}
             <div className="flex-shrink-0">
-              <MunicipalBrasao size="sm" priority />
+              <MunicipalBrasao size="sm" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-green-600 font-display">Sistema Escolar</h2>

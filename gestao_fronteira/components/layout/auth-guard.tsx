@@ -7,7 +7,7 @@ import { hasPermission, canAccessSchool } from '@/lib/auth'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-interface AuthGuardProps {
+export interface AuthGuardProps {
   children: React.ReactNode
   allowedRoles?: ('admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel')[]
   requiredSchoolId?: string

@@ -49,15 +49,15 @@ export function Header() {
   const { selectedEscola, shouldShowSelector } = useEscola()
 
   // Map compliance warnings to notification format
+  // ComplianceWarning has: id, type, severity, title, description, studentId, studentName, etc.
   const complianceNotifications = complianceWarnings.map(warning => ({
     id: warning.id,
     title: warning.title,
-    message: warning.message,
+    message: warning.description, // Map description to message
     type: warning.type,
-    icon: getIconComponent(warning.icon),
-    actionUrl: warning.actionUrl,
-    actionText: warning.actionText,
-    deadline: warning.deadline ? new Date(warning.deadline) : undefined
+    severity: warning.severity,
+    icon: warning.severity === 'critical' ? AlertCircle : warning.severity === 'warning' ? AlertTriangle : FileText,
+    studentName: warning.studentName
   }))
 
   // Combine system notifications with compliance notifications
@@ -181,23 +181,22 @@ export function Header() {
               <DropdownMenuSeparator />
               {allNotifications.length > 0 ? (
                 allNotifications.map((notification, index) => {
-                  const Icon = notification.icon || Bell
-                  const isCompliance = 'deadline' in notification
+                  // Determine if this is a compliance notification (from complianceWarnings)
+                  const isCompliance = 'severity' in notification
+                  // Get the icon - for compliance use the mapped icon, for session use Bell
+                  const Icon = isCompliance ? (notification as typeof complianceNotifications[number]).icon : Bell
+                  // Get severity for coloring
+                  const severity = isCompliance ? (notification as typeof complianceNotifications[number]).severity : null
                   return (
                     <DropdownMenuItem
                       key={notification.id || index}
                       className="p-4 hover:bg-green-50 cursor-pointer"
-                      onClick={() => {
-                        if (notification.actionUrl) {
-                          window.location.href = notification.actionUrl
-                        }
-                      }}
                     >
                       <div className="flex items-start space-x-3 w-full">
                         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                          notification.type === 'critical'
+                          severity === 'critical'
                             ? 'bg-red-100 text-red-600'
-                            : notification.type === 'warning'
+                            : severity === 'warning'
                             ? 'bg-yellow-100 text-yellow-600'
                             : 'bg-blue-100 text-blue-600'
                         }`}>
@@ -212,25 +211,18 @@ export function Header() {
                               <p className="text-xs text-gray-600 leading-relaxed">
                                 {notification.message}
                               </p>
-                              {isCompliance && notification.deadline && (
+                              {isCompliance && severity && (
                                 <div className="flex items-center gap-2 mt-2">
                                   <Badge
                                     variant="outline"
                                     className={`text-xs ${
-                                      notification.type === 'critical'
+                                      severity === 'critical'
                                         ? 'border-red-200 bg-red-50 text-red-800'
                                         : 'border-yellow-200 bg-yellow-50 text-yellow-800'
                                     }`}
                                   >
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    {formatTimeRemaining(notification.deadline)}
+                                    {severity === 'critical' ? 'Urgente' : 'Atenção'}
                                   </Badge>
-                                </div>
-                              )}
-                              {notification.actionText && notification.actionUrl && (
-                                <div className="flex items-center gap-1 mt-2 text-xs text-green-600 hover:text-green-700">
-                                  <span>{notification.actionText}</span>
-                                  <ExternalLink className="h-3 w-3" />
                                 </div>
                               )}
                             </div>

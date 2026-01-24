@@ -193,9 +193,7 @@ export function MobileHeader({
           {/* Center - Municipal Identity - Compact for tablets */}
           <div className="flex-shrink-0 mx-2">
             <MunicipalHeaderIdentity
-              variant="compact"
-              showLogo={false}
-              showBrasao={true}
+              variant="default"
               className="hidden sm:flex"
             />
           </div>
