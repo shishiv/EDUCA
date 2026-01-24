@@ -78,8 +78,8 @@ export const logAuditEvent = async (
     const completeAuditData: AuditLog = {
       ...auditData,
       timestamp,
-      ip_address: clientInfo.ip_address,
-      user_agent: clientInfo.user_agent
+      ip_address: clientInfo.ip,
+      user_agent: clientInfo.userAgent
     }
 
     // In production, save to audit_logs table
@@ -315,7 +315,22 @@ export const getAuditLogs = async (options?: {
       return []
     }
 
-    return data || []
+    // Cast database rows to AuditLog interface
+    // Note: action in database is string, we cast to AuditAction for type safety
+    return (data || []).map(row => ({
+      id: row.id,
+      user_id: row.user_id,
+      action: row.action as AuditAction,
+      table_name: row.table_name,
+      record_id: row.record_id,
+      old_values: row.old_values as Record<string, unknown> | undefined,
+      new_values: row.new_values as Record<string, unknown> | undefined,
+      timestamp: row.timestamp,
+      ip_address: row.ip_address ?? undefined,
+      user_agent: row.user_agent ?? undefined,
+      escola_id: row.escola_id ?? undefined,
+      details: row.details as Record<string, unknown> | undefined
+    }))
   } catch (error) {
     return []
   }

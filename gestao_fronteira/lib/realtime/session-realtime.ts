@@ -269,8 +269,9 @@ export class SessionRealtimeManager {
         }
       })
     } catch (error) {
-      logger.error('Failed to broadcast session update:', error)
-      this.callbacks.onError?.(error as Error)
+      const errorMessage = error instanceof Error ? error : String(error)
+      logger.error('Failed to broadcast session update:', errorMessage)
+      this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)))
     }
   }
 
@@ -332,12 +333,14 @@ export class SessionRealtimeManager {
             this.callbacks.onSessionLocked?.(newRecord.id, newRecord.bloqueado_em || newRecord.updated_at)
           }
         }
-      } else if (eventType === 'DELETE' && oldRecord) {
-        this.callbacks.onSessionUpdate?.(oldRecord, eventType)
+      } else if (eventType === 'DELETE' && oldRecord && oldRecord.id) {
+        // oldRecord is Partial, cast to full type after verifying required fields
+        this.callbacks.onSessionUpdate?.(oldRecord as SessionRealtimeData, eventType)
       }
     } catch (error) {
-      logger.error('Error handling session change:', error)
-      this.callbacks.onError?.(error as Error)
+      const errorMessage = error instanceof Error ? error : String(error)
+      logger.error('Error handling session change:', errorMessage)
+      this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)))
     }
   }
 
@@ -352,13 +355,15 @@ export class SessionRealtimeManager {
           // Trigger stats update for the session
           this.updateAttendanceStats(newRecord.session_id)
         }
-      } else if (eventType === 'DELETE' && oldRecord) {
-        this.callbacks.onAttendanceUpdate?.(oldRecord, eventType)
+      } else if (eventType === 'DELETE' && oldRecord && oldRecord.id && oldRecord.session_id) {
+        // oldRecord is Partial, cast to full type after verifying required fields
+        this.callbacks.onAttendanceUpdate?.(oldRecord as AttendanceRealtimeData, eventType)
         this.updateAttendanceStats(oldRecord.session_id)
       }
     } catch (error) {
-      logger.error('Error handling attendance change:', error)
-      this.callbacks.onError?.(error as Error)
+      const errorMessage = error instanceof Error ? error : String(error)
+      logger.error('Error handling attendance change:', errorMessage)
+      this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)))
     }
   }
 
@@ -370,42 +375,49 @@ export class SessionRealtimeManager {
   private async updateAttendanceStats(sessionId: string): Promise<void> {
     try {
       // Get current attendance statistics
+      // Note: frequencia uses sessao_id (not session_id)
       const { data: attendanceData } = await supabase
         .from('frequencia')
         .select('presente')
-        .eq('session_id', sessionId)
+        .eq('sessao_id', sessionId)
 
-      const { data: expectedStudents } = await supabase
-        .from('aula_sessions')
-        .select(`
-          total_alunos,
-          turmas:turma_id (
-            matriculas!inner (
-              count
-            )
-          )
-        `)
+      // Get session info to find turma_id
+      const { data: sessionData } = await supabase
+        .from('sessoes_aula')
+        .select('turma_id')
         .eq('id', sessionId)
         .single()
 
-      if (attendanceData && expectedStudents) {
+      if (!sessionData) {
+        return
+      }
+
+      // Count enrolled students in the turma
+      const { count: expectedTotal } = await supabase
+        .from('matriculas')
+        .select('*', { count: 'exact', head: true })
+        .eq('turma_id', sessionData.turma_id)
+        .eq('situacao', 'ativa')
+
+      if (attendanceData) {
         const presentCount = attendanceData.filter(a => a.presente).length
         const absentCount = attendanceData.filter(a => !a.presente).length
         const totalMarked = attendanceData.length
-        const expectedTotal = expectedStudents.total_alunos || 0
+        const total = expectedTotal || 0
 
         const stats: AttendanceStats = {
-          total_students: expectedTotal,
+          total_students: total,
           present_count: presentCount,
           absent_count: absentCount,
-          pending_count: expectedTotal - totalMarked,
-          completion_percentage: expectedTotal > 0 ? (totalMarked / expectedTotal) * 100 : 0
+          pending_count: total - totalMarked,
+          completion_percentage: total > 0 ? (totalMarked / total) * 100 : 0
         }
 
         this.callbacks.onAttendanceStats?.(sessionId, stats)
       }
     } catch (error) {
-      logger.error('Error updating attendance stats:', error)
+      const errorMessage = error instanceof Error ? error : String(error)
+      logger.error('Error updating attendance stats:', errorMessage)
     }
   }
 
@@ -440,7 +452,8 @@ export class SessionRealtimeManager {
       this.isConnected = true
       this.callbacks.onConnectionStatus?.('connected')
     } catch (error) {
-      logger.error('Realtime connection error:', error)
+      const errorMessage = error instanceof Error ? error : String(error)
+      logger.error('Realtime connection error:', errorMessage)
       this.callbacks.onConnectionStatus?.('error')
       this.callbacks.onError?.(new Error('Realtime connection error'))
     }
