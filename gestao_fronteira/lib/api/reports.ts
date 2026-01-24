@@ -63,11 +63,11 @@ export class ReportsApiService extends BaseApiService {
           break
 
         case 'escolas':
-          const schools = await schoolsApi.getAll()
+          const schoolsList = await schoolsApi.getAll() as { ativo: boolean; tipo: string }[]
           dados = {
-            total: schools.length,
-            ativas: schools.filter(s => s.ativo).length,
-            tipos: schools.reduce((acc: Record<string, number>, school) => {
+            total: schoolsList.length,
+            ativas: schoolsList.filter((s) => s.ativo).length,
+            tipos: schoolsList.reduce((acc: Record<string, number>, school) => {
               acc[school.tipo] = (acc[school.tipo] || 0) + 1
               return acc
             }, {})
@@ -145,6 +145,7 @@ export class ReportsApiService extends BaseApiService {
   }
 
   // Get all reports (would be stored in database in real implementation)
+  // @ts-expect-error - Override return type from BaseApiService since reports table doesn't exist yet
   async getAll(): Promise<Report[]> {
     // For now, return some sample reports
     // In a real implementation, these would be stored in a reports table

@@ -166,18 +166,31 @@ export class EnhancedAttendanceService extends BaseApiService {
         throw new Error('ERRO_AUTORIZACAO: Professor não está atribuído a esta turma.')
       }
 
-      // Create session with compliance data
-      const sessionWithCompliance = {
-        ...sessionData,
+      // Create session with compliance data - extract only known fields
+      // Build insert data, filtering out undefined values
+      const sessionInsertData: Record<string, unknown> = {
+        turma_id: sessionData.turma_id,
+        professor_id: sessionData.professor_id,
+        data_aula: sessionData.data_aula,
+        conteudo_programatico: sessionData.conteudo_programatico,
+        duracao_minutos: sessionData.duracao_minutos,
         escola_id: teacher.escola_id,
-        documento_oficial: true,
-        status: 'aberta' as const,
+        status: 'aberta',
         inicio_aula: new Date().toISOString()
       }
 
-      const { data, error } = await supabase
+      // Add optional fields only if defined
+      if (sessionData.objetivos_aprendizagem) sessionInsertData.objetivos_aprendizagem = sessionData.objetivos_aprendizagem
+      if (sessionData.metodologia) sessionInsertData.metodologia = sessionData.metodologia
+      if (sessionData.recursos_utilizados) sessionInsertData.recursos_utilizados = sessionData.recursos_utilizados
+      if (sessionData.avaliacao_planejada) sessionInsertData.avaliacao_planejada = sessionData.avaliacao_planejada
+      if (sessionData.observacoes) sessionInsertData.observacoes = sessionData.observacoes
+
+      // Cast supabase to any to bypass strict type checking for dynamic inserts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from('sessoes_aula')
-        .insert(sessionWithCompliance)
+        .insert(sessionInsertData)
         .select()
         .single()
 
@@ -387,7 +400,7 @@ export class EnhancedAttendanceService extends BaseApiService {
       // Auto-close session after saving attendance
       await this.closeSession(sessionId, 'Sessão finalizada automaticamente após marcação de presença')
 
-      return data as EnhancedAttendanceRecord[]
+      return data as unknown as EnhancedAttendanceRecord[]
     } catch (error) {
       logger.error('Error saving attendance records', error as Error)
       throw error
@@ -418,15 +431,38 @@ export class EnhancedAttendanceService extends BaseApiService {
       const { data: sessions, error: sessionError } = await sessionQuery
       if (sessionError) throw sessionError
 
-      // Get attendance records
-      let attendanceQuery = supabase
-        .from('frequencia')
+      // Get matriculas for this class to get student info
+      const { data: matriculasData, error: matriculasError } = await supabase
+        .from('matriculas')
         .select(`
-          *,
-          aluno:alunos(id, nome_completo),
-          matricula:matriculas(id, situacao)
+          id,
+          aluno:alunos(id, nome_completo)
         `)
         .eq('turma_id', turmaId)
+        .eq('situacao', 'ativa')
+
+      if (matriculasError) throw matriculasError
+
+      const matriculaIds = matriculasData?.map((m) => m.id) ?? []
+      const matriculaMap = new Map(matriculasData?.map((m) => [m.id, m.aluno as { id: string; nome_completo: string } | null]) ?? [])
+
+      if (matriculaIds.length === 0) {
+        return {
+          totalSessions: sessions?.length ?? 0,
+          totalRecords: 0,
+          byStatus: {},
+          attendanceRate: 0,
+          studentsWithLowAttendance: [],
+          complianceLevel: 'critical',
+          inepCompliant: false
+        }
+      }
+
+      // Get attendance records through matricula_id
+      let attendanceQuery = supabase
+        .from('frequencia')
+        .select('*')
+        .in('matricula_id', matriculaIds)
 
       if (startDate) attendanceQuery = attendanceQuery.gte('data_aula', startDate)
       if (endDate) attendanceQuery = attendanceQuery.lte('data_aula', endDate)
@@ -435,12 +471,13 @@ export class EnhancedAttendanceService extends BaseApiService {
       if (attendanceError) throw attendanceError
 
       // Calculate statistics
-      const byStatus = attendance.reduce((acc, record) => {
-        acc[record.status_presenca] = (acc[record.status_presenca] || 0) + 1
+      const byStatus = (attendance ?? []).reduce((acc, record) => {
+        const status = record.status_presenca || (record.presente ? 'presente' : 'falta')
+        acc[status] = (acc[status] || 0) + 1
         return acc
       }, {} as Record<string, number>)
 
-      const totalRecords = attendance.length
+      const totalRecords = attendance?.length ?? 0
       const totalPresences = byStatus['presente'] || 0
       const attendanceRate = totalRecords > 0 ? Math.round((totalPresences / totalRecords) * 100) : 0
 
@@ -451,20 +488,21 @@ export class EnhancedAttendanceService extends BaseApiService {
         presences: number
       }>()
 
-      attendance.forEach(record => {
-        if (record.aluno) {
-          const existing = studentStats.get(record.aluno.id) || {
-            nome: record.aluno.nome_completo,
+      attendance?.forEach(record => {
+        const aluno = matriculaMap.get(record.matricula_id)
+        if (aluno) {
+          const existing = studentStats.get(aluno.id) || {
+            nome: aluno.nome_completo,
             totalSessions: 0,
             presences: 0
           }
 
           existing.totalSessions++
-          if (record.status_presenca === 'presente') {
+          if (record.status_presenca === 'presente' || record.presente) {
             existing.presences++
           }
 
-          studentStats.set(record.aluno.id, existing)
+          studentStats.set(aluno.id, existing)
         }
       })
 

@@ -58,10 +58,10 @@ export class FeatureFlagsApiService extends BaseApiService {
         .maybeSingle()
 
       if (error) {
-        logger.error('Error fetching flag for escola', {
+        logger.error('Error fetching flag for escola', error.message, {
           feature: 'feature-flags',
           action: 'get_flag',
-          metadata: { flagName, escolaId, error: error.message },
+          metadata: { flagName, escolaId },
         })
         return false // Safe default on error
       }
@@ -73,10 +73,11 @@ export class FeatureFlagsApiService extends BaseApiService {
 
       return data.enabled === true
     } catch (error) {
-      logger.error('Error in getFlagForEscola', {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error in getFlagForEscola', errorMsg, {
         feature: 'feature-flags',
         action: 'get_flag',
-        metadata: { flagName, escolaId, error },
+        metadata: { flagName, escolaId },
       })
       return false // Safe default on error
     }
@@ -97,10 +98,9 @@ export class FeatureFlagsApiService extends BaseApiService {
         .order('flag_name')
 
       if (error) {
-        logger.error('Error fetching all flags', {
+        logger.error('Error fetching all flags', error.message, {
           feature: 'feature-flags',
           action: 'get_all_flags',
-          metadata: { error: error.message },
         })
         throw error
       }
@@ -113,10 +113,10 @@ export class FeatureFlagsApiService extends BaseApiService {
 
       return (data || []) as FeatureFlag[]
     } catch (error) {
-      logger.error('Error in getAllFlags', {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error in getAllFlags', errorMsg, {
         feature: 'feature-flags',
         action: 'get_all_flags',
-        metadata: { error },
       })
       throw error
     }
@@ -138,10 +138,9 @@ export class FeatureFlagsApiService extends BaseApiService {
         .order('flag_name')
 
       if (flagsError) {
-        logger.error('Error fetching flags for matrix', {
+        logger.error('Error fetching flags for matrix', flagsError.message, {
           feature: 'feature-flags',
           action: 'get_flags_with_status',
-          metadata: { error: flagsError.message },
         })
         throw flagsError
       }
@@ -168,10 +167,9 @@ export class FeatureFlagsApiService extends BaseApiService {
         .in('flag_id', flagIds)
 
       if (escolaFlagsError) {
-        logger.error('Error fetching escola flags for matrix', {
+        logger.error('Error fetching escola flags for matrix', escolaFlagsError.message, {
           feature: 'feature-flags',
           action: 'get_flags_with_status',
-          metadata: { error: escolaFlagsError.message },
         })
         throw escolaFlagsError
       }
@@ -205,10 +203,10 @@ export class FeatureFlagsApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      logger.error('Error in getFlagsWithEscolaStatus', {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error in getFlagsWithEscolaStatus', errorMsg, {
         feature: 'feature-flags',
         action: 'get_flags_with_status',
-        metadata: { error },
       })
       throw error
     }
@@ -252,14 +250,13 @@ export class FeatureFlagsApiService extends BaseApiService {
         })
 
       if (error) {
-        logger.error('Error toggling flags for escolas', {
+        logger.error('Error toggling flags for escolas', error.message, {
           feature: 'feature-flags',
           action: 'toggle_flags',
           metadata: {
             flagId,
             escolaCount: escolaIds.length,
             enabled,
-            error: error.message,
           },
         })
         throw error
@@ -276,10 +273,11 @@ export class FeatureFlagsApiService extends BaseApiService {
         },
       })
     } catch (error) {
-      logger.error('Error in toggleFlagsForEscolas', {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error in toggleFlagsForEscolas', errorMsg, {
         feature: 'feature-flags',
         action: 'toggle_flags',
-        metadata: { flagId, escolaIds, enabled, error },
+        metadata: { flagId, escolaIds, enabled },
       })
       throw error
     }
@@ -320,20 +318,21 @@ export class FeatureFlagsApiService extends BaseApiService {
         .maybeSingle()
 
       if (error) {
-        logger.error('Error fetching flag by name', {
+        logger.error('Error fetching flag by name', error.message, {
           feature: 'feature-flags',
           action: 'get_flag_by_name',
-          metadata: { flagName, error: error.message },
+          metadata: { flagName },
         })
         throw error
       }
 
       return data as FeatureFlag | null
     } catch (error) {
-      logger.error('Error in getFlagByName', {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      logger.error('Error in getFlagByName', errorMsg, {
         feature: 'feature-flags',
         action: 'get_flag_by_name',
-        metadata: { flagName, error },
+        metadata: { flagName },
       })
       throw error
     }

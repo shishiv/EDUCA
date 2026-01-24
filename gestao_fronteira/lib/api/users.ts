@@ -133,12 +133,11 @@ export class UsersApiService extends BaseApiService {
   // Bulk operations
   async bulkUpdateStatus(userIds: string[], ativo: boolean, reason?: string) {
     try {
-      const updates = userIds.map(id => ({
-        id,
-        data: { ativo }
-      }))
-
-      const results = await this.bulkUpdate(updates)
+      const results = []
+      for (const id of userIds) {
+        const result = await this.update(id, { ativo })
+        results.push(result)
+      }
 
       // Log bulk status change
       for (const id of userIds) {
@@ -157,12 +156,11 @@ export class UsersApiService extends BaseApiService {
 
   async bulkAssignSchool(userIds: string[], escolaId: string) {
     try {
-      const updates = userIds.map(id => ({
-        id,
-        data: { escola_id: escolaId }
-      }))
-
-      const results = await this.bulkUpdate(updates)
+      const results = []
+      for (const id of userIds) {
+        const result = await this.update(id, { escola_id: escolaId })
+        results.push(result)
+      }
 
       // Log bulk school assignment
       for (const id of userIds) {
@@ -247,9 +245,10 @@ export class UsersApiService extends BaseApiService {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
 
+      // Use tipo_usuario instead of role (correct column name)
       const { data: profile, error } = await supabase
         .from('users')
-        .select('role')
+        .select('tipo_usuario')
         .eq('id', user.id)
         .single()
 
@@ -262,7 +261,7 @@ export class UsersApiService extends BaseApiService {
         return null
       }
 
-      return profile?.role || null
+      return profile?.tipo_usuario || null
     } catch (error) {
       logger.error('Error in getCurrentUserRole', error as Error, {
         feature: 'users',
