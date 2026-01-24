@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 15.2 of 15.2 (Audit Project Configuration) - NOT STARTED
-Plan: 0 of 0
-Status: Phase inserted - ready for planning
-Last activity: 2026-01-23 - Inserted Phase 15.2 (Audit Project Configuration)
+Phase: 15.2 of 15.2 (Audit Project Configuration) - IN PROGRESS
+Plan: 1 of 1 complete
+Status: Plan 15.2-01 complete (ESLint configuration fix)
+Last activity: 2026-01-24 - Completed 15.2-01-PLAN.md (ESLint native flat config)
 
-Progress: ████████████████████ 100% (38/41 requirements - 3 new in 15.2)
+Progress: ████████████████████ 100% (39/41 requirements - 2 remaining in 15.2)
 
 ## Milestone Summary
 
@@ -131,13 +131,16 @@ Progress: ████████████████████ 100% (38/
 | 15.1-02 | Created minimal stubs for missing dependencies | alert-item.tsx, ip-tracking.ts, enhanced-base.ts to fix Phase 15.1-01 gaps |
 | 15.1-03 | Removed types/bolsa-familia.ts and types/supabase.ts | Duplicates of lib/reports/bolsa-familia-reports.ts types and types/database.ts |
 | 15.1-03 | Created DEAD-CODE-AUDIT.md comprehensive report | Documents methodology, findings, and recommendations for future audits |
+| 15.2-01 | Direct eslint-config-next import | eslint-config-next v16+ exports native flat config array |
+| 15.2-01 | typescript-eslint as direct dependency | pnpm hoisting doesn't expose transitive deps at top level |
+| 15.2-01 | Separate config objects for TS rules | TypeScript rules require plugin in same config object |
 
 ## Session Continuity
 
-Last session: 2026-01-23
-Stopped at: Inserted Phase 15.2 (Audit Project Configuration)
+Last session: 2026-01-24
+Stopped at: Completed 15.2-01-PLAN.md (ESLint configuration fix)
 Resume file: None
-Next action: Run /gsd:plan-phase 15.2 to create execution plan
+Next action: Phase 15.2 complete - ESLint working, 715 code issues to address
 
 ### Roadmap Evolution
 
@@ -206,14 +209,14 @@ Next action: Run /gsd:plan-phase 15.2 to create execution plan
   - DEAD-CODE-AUDIT.md created at .planning/codebase/
   - knip.json configured for ongoing maintenance
 
-- Phase 15.2 inserted after Phase 15.1: Audit Project Configuration (URGENT)
-  - Auditar package.json, tsconfig, eslint, next.config
-  - Identify outdated dependencies and inconsistencies
+- Phase 15.2 progress (Audit Project Configuration):
+  - 15.2-01: COMPLETE - ESLint native flat config, no more circular reference error
+  - ESLint now reports 715 real code issues (236 errors, 479 warnings)
 
 ### Known Issues (Blockers for build)
 - Database types missing `relatorios_descritivos` table - needs `supabase gen types` regeneration
-- ESLint config has circular reference error - separate fix needed
+- ~~ESLint config has circular reference error~~ - FIXED in 15.2-01
 
 ---
 
-*State updated: 2026-01-24 after completing 15.1-03-PLAN.md - Phase 15.1 Dead Code Audit Complete*
+*State updated: 2026-01-24 after completing 15.2-01-PLAN.md - ESLint configuration fixed*
