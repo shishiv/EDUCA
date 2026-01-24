@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Error in search API', { error })
+    logger.error('Error in search API', error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { error: 'Erro ao realizar busca' },
       { status: 500 }
