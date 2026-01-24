@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { enhancedAttendanceApi } from '@/lib/api/enhanced-attendance'
 
-interface AbrirAulaWorkflowProps {
+export interface AbrirAulaWorkflowProps {
   turmaId: string
   professorId: string
   onSuccess?: (sessionId: string) => void

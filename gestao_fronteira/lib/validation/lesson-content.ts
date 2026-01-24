@@ -105,18 +105,24 @@ export const lessonContentFormSchema = z.object({
   habilidades_bncc_input: z
     .string()
     .optional()
-    .transform((val) => (val ? parseBNNCCodes(val) : []))
+    .default('')
     .refine(
-      (codes) => codes.length <= LESSON_CONTENT_VALIDATION.maxHabilidadesBNCC,
+      (val) => {
+        if (!val || val.trim() === '') return true
+        const codes = parseBNNCCodes(val)
+        return codes.length <= LESSON_CONTENT_VALIDATION.maxHabilidadesBNCC
+      },
       LESSON_CONTENT_ERROR_MESSAGES.habilidadesTooMany
     )
     .refine(
-      (codes) => {
-        if (codes.length === 0) return true
+      (val) => {
+        if (!val || val.trim() === '') return true
+        const codes = parseBNNCCodes(val)
         const validation = validateBNNCCodes(codes)
         return validation.valid
       },
-      (codes) => {
+      (val) => {
+        const codes = parseBNNCCodes(val || '')
         const validation = validateBNNCCodes(codes)
         return {
           message: `${LESSON_CONTENT_ERROR_MESSAGES.habilidadesInvalid}: ${validation.invalidCodes.join(', ')}`,
@@ -208,11 +214,16 @@ export function transformFormDataToInput(
   formData: LessonContentFormData,
   sessionId: string
 ) {
+  // Parse BNCC codes from string input to array
+  const habilidadesBncc = formData.habilidades_bncc_input
+    ? parseBNNCCodes(formData.habilidades_bncc_input)
+    : []
+
   return {
     sessao_id: sessionId,
     tema: formData.tema.trim(),
     objetivo: formData.objetivo.trim(),
-    habilidades_bncc: formData.habilidades_bncc_input || [],
+    habilidades_bncc: habilidadesBncc,
     metodologia: formData.metodologia?.trim() || null,
     recursos: formData.recursos?.trim() || null,
     observacoes: formData.observacoes?.trim() || null,

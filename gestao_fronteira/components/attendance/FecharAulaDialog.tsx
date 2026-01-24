@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Loader2, XCircle, CheckCircle } from 'lucide-react'
 import { logger } from '@/lib/logger'
 
-interface FecharAulaDialogProps {
+export interface FecharAulaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: (observacoes?: string) => Promise<void>

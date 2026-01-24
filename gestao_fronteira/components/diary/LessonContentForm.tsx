@@ -82,7 +82,7 @@ export function LessonContentForm({
   className,
 }: LessonContentFormProps) {
   // Form setup with Zod validation
-  const form = useForm<LessonContentFormData>({
+  const form = useForm({
     resolver: zodResolver(lessonContentFormSchema),
     defaultValues: {
       tema: initialValues?.tema || '',
@@ -93,7 +93,7 @@ export function LessonContentForm({
       observacoes: initialValues?.observacoes || '',
       campos_experiencia: initialValues?.campos_experiencia || [],
       education_level: educationLevel,
-    },
+    } as LessonContentFormData,
   })
 
   const {
@@ -119,7 +119,7 @@ export function LessonContentForm({
         observacoes: initialValues.observacoes || '',
         campos_experiencia: initialValues.campos_experiencia || [],
         education_level: educationLevel,
-      })
+      } as LessonContentFormData)
     }
   }, [initialValues, educationLevel, reset])
 
