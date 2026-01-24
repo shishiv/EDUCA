@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-24)
 ## Current Position
 
 Milestone: v2.1 Production Pilot - STARTED
-Status: Phase 18-10 COMPLETE (Fix hooks, lib utilities, API routes) - BUILD BLOCKED (pre-existing issues)
-Last activity: 2026-01-24 - Executed 18-10-PLAN.md (fix hooks, lib utilities, remaining API routes)
+Status: Phase 18-04 COMPLETE (Fix API route column name mismatches)
+Last activity: 2026-01-24 - Executed 18-04-PLAN.md (fix API route column names)
 
-Progress: ████████░░░░░░░░░░░░ 45% (Phase 16-01, 18-01 to 18-10, 20-01 complete)
+Progress: ████████░░░░░░░░░░░░ 46% (Phase 16-01, 18-01 to 18-10, 20-01 complete)
 
 ## Milestone Summary
 
@@ -169,13 +169,16 @@ Progress: ████████░░░░░░░░░░░░ 45% (Phas
 | 18-08 | Keep habilidades_bncc_input as string in form state | Parse to array only in transformFormDataToInput() before API submission |
 | 18-08 | Export Props from source component files | Maintain barrel pattern by exporting interfaces from source files |
 | 18-09 | Use instanceof Error check for logger.error() | Logger expects Error | string, not object with error property |
+| 18-04 | Use matricula_id for attendance records | Database schema uses matricula_id, not aluno_id |
+| 18-04 | Use escola_id directly from sessoes_aula | sessoes_aula has escola_id column, no need to join turmas |
+| 18-04 | await cookies() for Next.js 15 | cookies() is now async in Next.js 15 |
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 18-09 (Fix context type errors)
-Resume file: .planning/phases/18-database-types-regeneration/18-09-SUMMARY.md
-Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-08, 18-10)
+Stopped at: Completed Phase 18-04 (Fix API route column name mismatches)
+Resume file: .planning/phases/18-database-types-regeneration/18-04-SUMMARY.md
+Next action: Continue fixing type errors (plans 18-06, 18-07)
 
 ### Roadmap Evolution
 
@@ -292,6 +295,11 @@ Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-08, 18-1
     - 12 calls fixed across escola-context, search-context, session-realtime-context
     - Error parameter now uses Error | string instead of object
     - Summary: .planning/phases/18-database-types-regeneration/18-09-SUMMARY.md
+  - 18-04: COMPLETE - Fixed API route column name mismatches
+    - frequencia routes now use matricula_id, sessao_id
+    - sessoes_aula routes use created_at, escola_id directly
+    - All API routes pass type checking
+    - Summary: .planning/phases/18-database-types-regeneration/18-04-SUMMARY.md
 
 ### Known Issues (Blockers for build)
 - **NEW: Schema mismatch in attendance code** - frequencia uses matricula_id, code uses aluno_id (400+ errors)
@@ -300,4 +308,4 @@ Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-08, 18-1
 
 ---
 
-*State updated: 2026-01-24 - Phase 18-09 complete, fixed logger.error() calls in context files*
+*State updated: 2026-01-24 - Phase 18-04 complete, fixed API route column name mismatches*
