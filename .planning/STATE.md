@@ -4,8 +4,8 @@
 
 See: .planning/PROJECT.md (updated 2026-01-24)
 
-**Core value:** Deploy to 1-2 pilot schools, add analytics, complete E2E tests.
-**Current focus:** v2.1 Production Pilot (not started)
+**Core value:** Deploy to 1-2 pilot schools, complete E2E tests.
+**Current focus:** v2.1 Production Pilot (Phase 16 complete)
 
 ## Current Position
 
