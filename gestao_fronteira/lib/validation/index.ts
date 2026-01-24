@@ -173,14 +173,10 @@ export {
 // Note: Removed - functions were never used. WCAG compliance is inline.
 
 // ===== ATTENDANCE WORKFLOW VALIDATION =====
-// Brazilian educational attendance compliance
-
-export * from '@/lib/validation/attendance'
+// Note: Removed - attendance validation now done inline in API routes
 
 // ===== PERFORMANCE VALIDATION =====
-// Classroom-optimized application performance
-
-export * from '@/lib/validation/performance'
+// Note: Removed - performance validation not currently used
 
 // ===== PHONE VALIDATION ALIASES =====
 // Short function names for internal use
