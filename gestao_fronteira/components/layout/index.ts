@@ -6,7 +6,6 @@
 
 // Main layout components
 export { Sidebar } from './sidebar'
-export { EnhancedSidebar } from './enhanced-sidebar'
 export { Header } from './header'
 export { MobileHeader } from './mobile-header'
 
