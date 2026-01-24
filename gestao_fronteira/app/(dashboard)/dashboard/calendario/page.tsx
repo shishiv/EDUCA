@@ -85,10 +85,16 @@ export default function CalendarioPage() {
 
       if (error) throw error
 
-      setEventos(data || [])
+      // Cast tipo to expected union type
+      const typedData = (data || []).map(evento => ({
+        ...evento,
+        tipo: evento.tipo as CalendarioEvento['tipo'],
+        afeta_frequencia: evento.afeta_frequencia ?? false,
+      }))
+      setEventos(typedData)
     } catch (error) {
-      logger.error('Erro ao carregar eventos:', error)
-      toast.error('Erro ao carregar eventos do calendário')
+      logger.error('Erro ao carregar eventos:', error as Error)
+      toast.error('Erro ao carregar eventos do calendario')
     } finally {
       setLoading(false)
     }
@@ -132,7 +138,7 @@ export default function CalendarioPage() {
       toast.success('Evento excluído com sucesso')
       fetchEventos()
     } catch (error) {
-      logger.error('Erro ao excluir evento:', error)
+      logger.error('Erro ao excluir evento:', error as Error)
       toast.error('Erro ao excluir evento')
     }
   }

@@ -164,7 +164,7 @@ export default function AtribuicoesPage() {
         />
         <EscolaRequiredState
           title="Selecione uma escola"
-          message="Para gerenciar atribuicoes de professores, primeiro selecione uma escola no menu acima."
+          description="Para gerenciar atribuicoes de professores, primeiro selecione uma escola no menu acima."
         />
       </div>
     )
