@@ -166,6 +166,8 @@ Progress: ████████░░░░░░░░░░░░ 45% (Phas
 | 18-05 | Log warnings on stub method calls | Helps identify UI code calling these methods |
 | 18-03 | AttendanceStatusUI is canonical UI type | types/attendance.ts already had correct definition |
 | 18-03 | Task 3 files don't exist | diario-classe.ts already has comprehensive session types |
+| 18-08 | Keep habilidades_bncc_input as string in form state | Parse to array only in transformFormDataToInput() before API submission |
+| 18-08 | Export Props from source component files | Maintain barrel pattern by exporting interfaces from source files |
 | 18-09 | Use instanceof Error check for logger.error() | Logger expects Error | string, not object with error property |
 
 ## Session Continuity
@@ -281,6 +283,11 @@ Next action: Continue fixing type errors (plans 18-04, 18-06 through 18-08, 18-1
     - Fixed typo: AttendanceStatusUIUI -> AttendanceStatusUI
     - Eliminated 6 type errors in AttendanceGrid.tsx
     - Summary: .planning/phases/18-database-types-regeneration/18-03-SUMMARY.md
+  - 18-08: COMPLETE - Fixed diary and attendance component type errors
+    - Export Props interfaces from AbrirAulaWorkflow, FecharAulaDialog, StatsCard, TeacherDashboardEnhanced
+    - Fix Zod schema habilidades_bncc_input to stay as string, parse in transformFormDataToInput
+    - Fix FrequenciaWorkflow and NewLessonModal null/undefined handling
+    - Summary: .planning/phases/18-database-types-regeneration/18-08-SUMMARY.md
   - 18-09: COMPLETE - Fixed logger.error() calls in context files
     - 12 calls fixed across escola-context, search-context, session-realtime-context
     - Error parameter now uses Error | string instead of object
