@@ -75,7 +75,7 @@ export function useServiceWorker() {
         })
 
       } catch (error) {
-        logger.error('[SW Hook] Service worker registration failed:', { error: error })
+        logger.error('[SW Hook] Service worker registration failed:', error as Error)
       }
     }
 
@@ -97,8 +97,12 @@ export function useServiceWorker() {
 
       // Trigger background sync for offline attendance
       if (state.registration && 'sync' in state.registration) {
-        state.registration.sync.register('attendance-sync').catch(err => {
-          logger.error('[SW Hook] Background sync registration failed:', { error: err })
+        // SyncManager is part of Background Sync API - use unknown cast for compatibility
+        const syncManager = (state.registration as ServiceWorkerRegistration & { sync: unknown }).sync as {
+          register(tag: string): Promise<void>
+        }
+        syncManager.register('attendance-sync').catch((err: unknown) => {
+          logger.error('[SW Hook] Background sync registration failed:', err instanceof Error ? err : new Error(String(err)))
         })
       }
     }
@@ -125,7 +129,7 @@ export function useServiceWorker() {
       await state.registration.update()
       logger.info('[SW Hook] Service worker update triggered')
     } catch (error) {
-      logger.error('[SW Hook] Service worker update failed:', { error: error })
+      logger.error('[SW Hook] Service worker update failed:', error as Error)
     }
   }
 
@@ -155,7 +159,7 @@ export function useServiceWorker() {
         state.registration.active.postMessage({ type: 'CLEAR_CACHE' })
       }
     } catch (error) {
-      logger.error('[SW Hook] Failed to clear caches:', { error: error })
+      logger.error('[SW Hook] Failed to clear caches:', error as Error)
     }
   }
 
@@ -172,7 +176,7 @@ export function useServiceWorker() {
         countRequest.onerror = () => reject(countRequest.error)
       })
     } catch (error) {
-      logger.error('[SW Hook] Failed to get offline count:', { error: error })
+      logger.error('[SW Hook] Failed to get offline count:', error instanceof Error ? error : new Error(String(error)))
       return 0
     }
   }
