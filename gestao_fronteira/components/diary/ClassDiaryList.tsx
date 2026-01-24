@@ -76,6 +76,8 @@ export function ClassDiaryList({
     const bValue = b[sortColumn]
 
     if (aValue === bValue) return 0
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
 
     const comparison = aValue < bValue ? -1 : 1
     return sortDirection === 'asc' ? comparison : -comparison

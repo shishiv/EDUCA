@@ -66,10 +66,10 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await getClassDetail(supabase, session_id)
+      const { data, error: fetchError } = await getClassDetail(supabase, session_id!)
 
       if (fetchError || !data) {
-        logger.error('Error fetching session detail:', { error: fetchError })
+        logger.error('Error fetching session detail', fetchError as Error, { feature: 'diary', action: 'fetch_detail' })
         setError('Erro ao carregar detalhes da aula. Tente novamente.')
         setLoading(false)
         return
