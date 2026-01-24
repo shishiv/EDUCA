@@ -363,18 +363,18 @@ Plans:
 **Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] 15.1-01-PLAN.md — Audit lib/ directory (84 files) with knip and LSP (Wave 1)
-- [ ] 15.1-02-PLAN.md — Audit components/ directory (141 files) with LSP (Wave 1)
-- [ ] 15.1-03-PLAN.md — Audit types/ directory (9 files) and create audit report (Wave 2)
+- [x] 15.1-01-PLAN.md — Audit lib/ directory (84 files) with knip and LSP (Wave 1) (completed 2026-01-23)
+- [x] 15.1-02-PLAN.md — Audit components/ directory (141 files) with LSP (Wave 1) (completed 2026-01-23)
+- [x] 15.1-03-PLAN.md — Audit types/ directory (9 files) and create audit report (Wave 2) (completed 2026-01-23)
 
 **Success Criteria:**
-- [ ] All exported symbols verified for usage via LSP
-- [ ] Dead code removed with atomic commits
-- [ ] Audit report documenting findings and removals
+- [x] All exported symbols verified for usage via LSP
+- [x] Dead code removed with atomic commits
+- [x] Audit report documenting findings and removals
 
 **Dependencies:** Phase 15 (codebase standardized first)
 
-**Status:** Planned (2026-01-23)
+**Status:** Complete (2026-01-23)
 
 ---
 
