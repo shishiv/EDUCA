@@ -24,8 +24,9 @@ Auditar e padronizar codebase para suportar features futuras e preparar piloto e
 | 15 | Technical Debt Cleanup | CLN-01..08 | Zero mocks, zero TODOs, zero queries diretas |
 
 | 15.1 | Dead Code Audit | DCA-01..03 | Remover código morto via LSP findReferences |
+| 15.2 | Audit Project Configuration | CFG-01..03 | Auditar e otimizar configuração do projeto |
 
-**Total:** 11 phases | 37 requirements
+**Total:** 12 phases | 40 requirements
 
 ---
 
@@ -378,6 +379,31 @@ Plans:
 
 ---
 
+## Phase 15.2: Audit Project Configuration (INSERTED)
+
+**Goal:** Auditar e otimizar configurações de projeto (package.json, tsconfig, eslint, next.config) para garantir consistência e best practices.
+
+**Requirements:**
+- CFG-01: Auditar package.json (dependencies, scripts, versões)
+- CFG-02: Auditar tsconfig.json e eslint.config.mjs (configurações, paths)
+- CFG-03: Auditar next.config.js e variáveis de ambiente
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 15.2 to break down)
+
+**Success Criteria:**
+- [ ] Dependências desatualizadas identificadas e documentadas
+- [ ] Configurações inconsistentes corrigidas
+- [ ] Best practices aplicadas às configurações
+
+**Dependencies:** Phase 15.1 (dead code audit complete)
+
+**Status:** Not started
+
+---
+
 ## Execution Order
 
 ```
@@ -404,6 +430,8 @@ Phase 14 (Legacy Audit)
 Phase 15 (Tech Debt Cleanup)
     |
 Phase 15.1 (Dead Code Audit) <-- INSERTED
+    |
+Phase 15.2 (Audit Config) <-- INSERTED
 ```
 
 Linear dependency chain - each phase builds on previous.
@@ -442,3 +470,4 @@ Linear dependency chain - each phase builds on previous.
 *Phase 15 revised: 2026-01-20 (9 plans - added FrequenciaWorkflow refactor)*
 *Phase 15 complete: 2026-01-21*
 *Phase 15.1 planned: 2026-01-23 (Dead Code Audit - 3 plans in 2 waves)*
+*Phase 15.2 inserted: 2026-01-23 (Audit Project Configuration - urgent)*

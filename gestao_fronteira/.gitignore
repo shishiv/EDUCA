@@ -7,6 +7,10 @@
 /node_modules
 /.pnp
 .pnp.js
+.apontamento
+.planning
+.prompts
+.claude
 
 # testing
 /coverage

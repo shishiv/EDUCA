@@ -1,8 +1,4 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    await import('./sentry.server.config');
-  }
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    await import('./sentry.edge.config');
-  }
+  // PostHog initialization is handled in PostHogProvider.tsx for the client side.
+  // Node.js/Edge initialization can be added here if needed for server-side events.
 }

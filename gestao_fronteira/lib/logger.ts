@@ -8,10 +8,11 @@
  * - User action tracking for compliance
  * - Error aggregation and reporting
  * - Development vs Production behavior
- * - Sentry integration for production error tracking
+ * - PostHog integration for analytics and error tracking
  */
 
-import * as Sentry from '@sentry/nextjs';
+import posthog from 'posthog-js';
+import type { Metadata } from 'next';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical'
 
@@ -196,20 +197,22 @@ class EducationalLogger {
   }
 
   private async sendToMonitoringService(logs: LogEntry[]): Promise<void> {
-    // Send error and critical logs to Sentry
+    if (!this.isClient) return;
+
+    // Send error and critical logs to PostHog
     for (const log of logs) {
       if (log.level === 'error' || log.level === 'critical') {
-        Sentry.captureMessage(log.message, {
-          level: log.level === 'critical' ? 'fatal' : 'error',
-          extra: {
-            feature: log.context?.feature,
-            action: log.context?.action,
-            context: log.context,
-            timestamp: log.timestamp,
-            url: log.url,
-            userAgent: log.userAgent,
-            stack: log.stack,
-          },
+        posthog.capture('application_error', {
+          message: log.message,
+          level: log.level,
+          feature: log.context?.feature,
+          action: log.context?.action,
+          context: log.context,
+          error: log.error,
+          url: log.url,
+          userAgent: log.userAgent,
+          stack: log.stack,
+          timestamp: log.timestamp,
         });
       }
     }

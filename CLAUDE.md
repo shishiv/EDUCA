@@ -134,3 +134,5 @@ Descrição: [Descrição simples e não-técnica em português]
 | `.claude/skills/` | Skills disponíveis |
 | `CHANGELOG.md` | Histórico de versões |
 | `.apontamento/*.md` | Time tracking (português) |
+
+

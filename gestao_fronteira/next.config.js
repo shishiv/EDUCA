@@ -1,4 +1,3 @@
-const { withSentryConfig } = require('@sentry/nextjs');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 })
@@ -122,24 +121,4 @@ const nextConfig = {
 
 };
 
-module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-  org: "prefeitura-fronteira",
-  project: "educa",
-
-  // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
-
-  // Upload source maps
-  widenClientFileUpload: true,
-
-  // Route browser requests to Sentry through a Next.js rewrite
-  tunnelRoute: "/monitoring",
-
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
-
-  // Automatically tree-shake Sentry logger in production
-  disableLogger: true,
-});
+module.exports = withBundleAnalyzer(nextConfig);
