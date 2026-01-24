@@ -146,7 +146,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   <div className="flex items-center space-x-3">
                     {/* Municipal Brasão */}
                     <div className="flex-shrink-0">
-                      <MunicipalBrasao size="sm" priority />
+                      <MunicipalBrasao size="sm" />
                     </div>
                     <div>
                       <h2 className="text-sm font-bold text-fronteira-primary">Sistema Escolar</h2>
