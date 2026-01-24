@@ -6,7 +6,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const nextConfig = {
   // Performance optimizations for educational management system
   images: {
-    // Next.js 15 - Updated image configuration for student photos and municipal assets
+    // Next.js 16+ - Image configuration for student photos and municipal assets
     remotePatterns: [
       {
         protocol: 'http',
@@ -43,7 +43,7 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
 
-  // Server Actions are stable in Next.js 15
+  // Server Actions config (stable in Next.js 15+, but allowedOrigins still under experimental)
   experimental: {
     serverActions: {
       allowedOrigins: [
@@ -75,7 +75,6 @@ const nextConfig = {
       '@radix-ui/react-tabs',
       '@radix-ui/react-toast',
       '@radix-ui/react-tooltip',
-      'recharts'
     ],
   },
 
