@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter, Lexend, Caveat } from 'next/font/google'
 import { Providers } from './providers'
+import { PHProvider } from '@/components/providers/PostHogProvider'
 
 // Body text font
 const inter = Inter({
@@ -39,9 +40,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${lexend.variable} ${caveat.variable}`}>
       <body className={inter.className}>
-        <Providers>
-          {children}
-        </Providers>
+        <PHProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </PHProvider>
       </body>
     </html>
   )

@@ -1,6 +1,8 @@
 Apontamento de horas (20/12 - 20/01)
 
-Recebimento de Mercadorias na Secretaria (10h) (26/12) ⚡ DOBRADO
+Recebimento de Mochilas e Kits Escolares (10h) (26/12) ⚡ DOBRADO
+Finalização de empenhos vinculados à pagar (10h) (29/12 e 30/12)  ⚡ DOBRADO
+
 Desenvolvimento do Sistema EDUCA (100h)
 
 Design System & Interface (32h)
@@ -37,12 +39,13 @@ Seguranca & Compliance (8h)
 * Documentacao de politicas RLS (Row Level Security)
 * Atualizacao da politica de privacidade LGPD
 
-Auditoria & Limpeza (0.5h)
+Auditoria & Limpeza (1h)
 * Remocao de paginas de desenvolvimento (showcase, platform-names)
 * Adicao de Responsaveis na navegacao lateral
 * Atualizacao de scripts de dev
 
-**Total: 110.5h** (datas 26, 29 e 30/12 com horas dobradas)
+Dia 06/01 - Falta para realização de exame (proteínuria 24h) - (-8h)
+**Total: 102h** (datas 26, 29 e 30/12 com horas dobradas)
 
 Resumo em uma frase:
-Refatoracao completa da interface com novo Design System, modulos de Turmas/Chamada/Aluno/Diario Infantil, arquitetura v2.0 com CI/CD, Feature Flags, Security/Compliance, e recebimento de mercadorias durante o recesso.
+Refatoracao completa da interface com novo Design System, modulos de Turmas/Chamada/Aluno/Diario Infantil, arquitetura v2.0 com CI/CD, Feature Flags, Security/Compliance, e recebimento de kits escolares durante o recesso.

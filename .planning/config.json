@@ -2,6 +2,7 @@
   "project": "educa-ui-refactor",
   "type": "brownfield",
   "created": "2026-01-16",
+  "model_profile": "quality",
   "preferences": {
     "autonomous_execution": true,
     "checkpoint_frequency": "after_each_phase",
