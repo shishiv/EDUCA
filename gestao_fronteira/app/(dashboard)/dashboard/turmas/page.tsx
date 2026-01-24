@@ -301,7 +301,7 @@ export default function TurmasPage() {
 
       setTurmas(formattedTurmas as Turma[])
     } catch (error: unknown) {
-      logger.error('Error loading turmas', error)
+      logger.error('Error loading turmas', error as Error)
       toast.error('Erro ao carregar lista de turmas')
       setTurmas([])
     } finally {
