@@ -162,9 +162,13 @@ export async function generateStudentAttendanceReport(
 ): Promise<ReportResult<StudentAttendanceReport>> {
   try {
     logger.info('Generating student attendance report', {
-      matriculaId,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
+      feature: 'attendance-reports',
+      action: 'generate_student_report',
+      metadata: {
+        matriculaId,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      }
     });
 
     // Fetch attendance records for the student
@@ -177,7 +181,10 @@ export async function generateStudentAttendanceReport(
       .order('data_aula', { ascending: true });
 
     if (attendanceError) {
-      logger.error('Failed to fetch attendance records', { error: attendanceError });
+      logger.error('Failed to fetch attendance records', attendanceError.message, {
+        feature: 'attendance-reports',
+        action: 'fetch_attendance'
+      });
       return { data: null, error: attendanceError.message };
     }
 
@@ -203,15 +210,22 @@ export async function generateStudentAttendanceReport(
     };
 
     logger.info('Student attendance report generated', {
-      matriculaId,
-      total,
-      percentual,
+      feature: 'attendance-reports',
+      action: 'student_report_complete',
+      metadata: {
+        matriculaId,
+        total,
+        percentual,
+      }
     });
 
     return { data: report, error: null };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error generating student attendance report', { error: errorMessage });
+    logger.error('Error generating student attendance report', errorMessage, {
+      feature: 'attendance-reports',
+      action: 'generate_student_report'
+    });
     return { data: null, error: errorMessage };
   }
 }
@@ -233,10 +247,14 @@ export async function generateClassAttendanceReport(
     const riskThreshold = filters.riskThreshold ?? 80;
 
     logger.info('Generating class attendance report', {
-      turmaId,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      riskThreshold,
+      feature: 'attendance-reports',
+      action: 'generate_class_report',
+      metadata: {
+        turmaId,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        riskThreshold,
+      }
     });
 
     // Fetch class with enrolled students
@@ -259,7 +277,10 @@ export async function generateClassAttendanceReport(
       .single();
 
     if (turmaError) {
-      logger.error('Failed to fetch class data', { error: turmaError });
+      logger.error('Failed to fetch class data', turmaError.message, {
+        feature: 'attendance-reports',
+        action: 'fetch_class'
+      });
       return { data: null, error: turmaError.message };
     }
 
@@ -297,7 +318,10 @@ export async function generateClassAttendanceReport(
       .order('data_aula', { ascending: true });
 
     if (attendanceError) {
-      logger.error('Failed to fetch attendance records', { error: attendanceError });
+      logger.error('Failed to fetch attendance records', attendanceError.message, {
+        feature: 'attendance-reports',
+        action: 'fetch_attendance'
+      });
       return { data: null, error: attendanceError.message };
     }
 
@@ -333,10 +357,13 @@ export async function generateClassAttendanceReport(
         studentsWithData++;
       }
 
+      // Supabase nested select returns array for nested relations
+      const alunosArray = matricula.alunos as unknown as Array<{ id: string; nome_completo: string }> | null;
+      const alunoData = alunosArray?.[0];
       students.push({
         matriculaId: matricula.id,
         alunoId: matricula.aluno_id,
-        nome: matricula.alunos?.nome_completo || 'Nome não disponível',
+        nome: alunoData?.nome_completo || 'Nome não disponível',
         presencas,
         faltas,
         atestados,
@@ -368,16 +395,23 @@ export async function generateClassAttendanceReport(
     };
 
     logger.info('Class attendance report generated', {
-      turmaId,
-      totalAlunos: students.length,
-      mediaFrequencia,
-      alunosEmRisco,
+      feature: 'attendance-reports',
+      action: 'class_report_complete',
+      metadata: {
+        turmaId,
+        totalAlunos: students.length,
+        mediaFrequencia,
+        alunosEmRisco,
+      }
     });
 
     return { data: report, error: null };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error generating class attendance report', { error: errorMessage });
+    logger.error('Error generating class attendance report', errorMessage, {
+      feature: 'attendance-reports',
+      action: 'generate_class_report'
+    });
     return { data: null, error: errorMessage };
   }
 }
@@ -399,10 +433,14 @@ export async function getStudentsAtRisk(
     const riskThreshold = filters.riskThreshold ?? 80;
 
     logger.info('Getting students at risk', {
-      turmaId,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      riskThreshold,
+      feature: 'attendance-reports',
+      action: 'get_students_at_risk',
+      metadata: {
+        turmaId,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        riskThreshold,
+      }
     });
 
     // Fetch class with enrolled students and NIS
@@ -426,7 +464,10 @@ export async function getStudentsAtRisk(
       .single();
 
     if (turmaError) {
-      logger.error('Failed to fetch class data', { error: turmaError });
+      logger.error('Failed to fetch class data', turmaError.message, {
+        feature: 'attendance-reports',
+        action: 'fetch_class'
+      });
       return { data: null, error: turmaError.message };
     }
 
@@ -450,7 +491,10 @@ export async function getStudentsAtRisk(
       .order('data_aula', { ascending: true });
 
     if (attendanceError) {
-      logger.error('Failed to fetch attendance records', { error: attendanceError });
+      logger.error('Failed to fetch attendance records', attendanceError.message, {
+        feature: 'attendance-reports',
+        action: 'fetch_attendance'
+      });
       return { data: null, error: attendanceError.message };
     }
 
@@ -475,11 +519,14 @@ export async function getStudentsAtRisk(
 
       // Only include students below threshold
       if (percentual < riskThreshold) {
+        // Supabase nested select returns array for nested relations
+        const alunosArray = matricula.alunos as unknown as Array<{ id: string; nome_completo: string; nis: string | null }> | null;
+        const alunoData = alunosArray?.[0];
         studentsAtRisk.push({
           matriculaId: matricula.id,
           alunoId: matricula.aluno_id,
-          nome: matricula.alunos?.nome_completo || 'Nome não disponível',
-          nis: matricula.alunos?.nis || null,
+          nome: alunoData?.nome_completo || 'Nome não disponível',
+          nis: alunoData?.nis || null,
           turmaId,
           turmaNome: turmaData.nome,
           presencas,
@@ -495,9 +542,13 @@ export async function getStudentsAtRisk(
     studentsAtRisk.sort((a, b) => a.percentual - b.percentual);
 
     logger.info('Students at risk identified', {
-      turmaId,
-      totalAtRisk: studentsAtRisk.length,
-      riskThreshold,
+      feature: 'attendance-reports',
+      action: 'students_at_risk_complete',
+      metadata: {
+        turmaId,
+        totalAtRisk: studentsAtRisk.length,
+        riskThreshold,
+      }
     });
 
     return {
@@ -509,7 +560,10 @@ export async function getStudentsAtRisk(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error getting students at risk', { error: errorMessage });
+    logger.error('Error getting students at risk', errorMessage, {
+      feature: 'attendance-reports',
+      action: 'get_students_at_risk'
+    });
     return { data: null, error: errorMessage };
   }
 }
