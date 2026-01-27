@@ -327,6 +327,9 @@ Next action: Execute 18-03-PLAN.md (Deploy pilot schools)
 - ~~ESLint config has circular reference error~~ - FIXED in 15.2-01
 - **ALL TYPE ERRORS FIXED** - pnpm typecheck passes (0 errors)
 
+### Roadmap Evolution (v2.1)
+- Phase 20 added: Mock Data Cleanup, First Access Wizard & E2E Tests
+
 ---
 
 *State updated: 2026-01-24 - Phase 17 removed (E2E), phases renumbered, Phase 18 (Pilot) remaining*
