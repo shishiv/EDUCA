@@ -2,11 +2,18 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
-import { queryKeys, invalidateQueries } from '@/lib/react-query'
-import { useAppStore, addRecentActivity, clearBulkSelection, addNotification } from '@/lib/stores/app-store'
+import { queryKeys } from '@/lib/react-query'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { logger } from '@/lib/logger'
+
+// Stub functions until Zustand is properly set up
+const addRecentActivity = (activity: { type: string; title: string; description: string; entityId: string; entityType: string }) => {
+  console.debug('Activity:', activity)
+}
+const clearBulkSelection = () => {
+  console.debug('Bulk selection cleared')
+}
 
 // Get users with school information
 export function useUsersWithSchool(options?: {
@@ -17,19 +24,9 @@ export function useUsersWithSchool(options?: {
   limit?: number
   offset?: number
 }) {
-  const filters = useAppStore((state) => state.filters.users)
-
-  const mergedOptions = {
-    ...options,
-    searchTerm: options?.searchTerm ?? filters.searchTerm,
-    roles: options?.roles ?? (filters.roles.length > 0 ? filters.roles : undefined),
-    schools: options?.schools ?? (filters.schools.length > 0 ? filters.schools : undefined),
-    activeOnly: filters.status === 'active',
-  }
-
   const query = useQuery({
-    queryKey: queryKeys.users.list(mergedOptions),
-    queryFn: () => usersApi.getUsersWithSchool(mergedOptions),
+    queryKey: queryKeys.users.list(options),
+    queryFn: () => usersApi.getUsersWithSchool(options),
     staleTime: 2 * 60 * 1000, // 2 minutes for user list
   })
 
@@ -64,8 +61,8 @@ export function useCreateUser() {
       usersApi.createUser(userData),
     onSuccess: (data) => {
       // Invalidate user queries
-      invalidateQueries.users()
-      invalidateQueries.userStats()
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
 
       // Add to recent activity
       addRecentActivity({
@@ -97,8 +94,8 @@ export function useUpdateUser() {
       queryClient.setQueryData(queryKeys.users.detail(variables.id), data)
 
       // Invalidate related queries
-      invalidateQueries.usersList()
-      invalidateQueries.userStats()
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
 
       toast.success('Usuário atualizado com sucesso!')
     },
@@ -121,8 +118,8 @@ export function useUpdateUserStatus() {
       queryClient.setQueryData(queryKeys.users.detail(variables.id), data)
 
       // Invalidate related queries
-      invalidateQueries.usersList()
-      invalidateQueries.userStats()
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
 
       const action = variables.ativo ? 'ativado' : 'desativado'
       toast.success(`Usuário ${action} com sucesso!`)
@@ -143,8 +140,8 @@ export function useBulkUpdateUserStatus() {
       usersApi.bulkUpdateStatus(userIds, ativo, reason),
     onSuccess: (data, variables) => {
       // Invalidate queries
-      invalidateQueries.users()
-      invalidateQueries.userStats()
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
 
       // Clear bulk selection
       clearBulkSelection()
@@ -168,8 +165,8 @@ export function useBulkAssignSchool() {
       usersApi.bulkAssignSchool(userIds, escolaId),
     onSuccess: (data, variables) => {
       // Invalidate queries
-      invalidateQueries.users()
-      invalidateQueries.userStats()
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
 
       // Clear bulk selection
       clearBulkSelection()
