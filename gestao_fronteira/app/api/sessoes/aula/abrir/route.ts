@@ -136,12 +136,14 @@ export async function POST(request: NextRequest) {
       turma_id: validatedData.turma_id,
       professor_id: validatedData.professor_id,
       disciplina_id: validatedData.disciplina_id || null,
+      escola_id: turma.escola_id, // Required field from turma
       data_aula: validatedData.data_aula,
       hora_inicio: validatedData.hora_inicio || null,
       hora_fim: validatedData.hora_fim || null,
       status: 'PLANEJADA', // Always start in planning phase
       auto_fechamento_agendado: autoClosureTime,
       conteudo_ministrado: validatedData.observacoes || null,
+      conteudo_programatico: null, // Optional field, set when planning
       criada_em: new Date().toISOString()
     }
 
