@@ -15,7 +15,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { queryKeys } from '@/lib/react-query'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import type { AttendanceStatus } from '@/components/attendance/AttendanceCell'
