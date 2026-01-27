@@ -59,14 +59,25 @@
 
 ---
 
-### Phase 18: Pilot Deployment (Planned)
+### Phase 18: Pilot Deployment
 
-**Goal:** Deploy to 1-2 pilot schools.
+**Goal:** Deploy EDUCA to pilot schools (EMEI Maisa, Escola Jose Maria Bastos), onboard users, and establish feedback collection.
+
+**Status:** PLANNED (2026-01-27)
 
 **Requirements:**
-- Production deployment to Vercel
-- Pilot school onboarding
-- Feedback collection mechanism
+- PLT-01: Production deployment accessible on Vercel
+- PLT-02: Deployment and rollback procedures documented
+- PLT-03: Quick-start guide for pilot users
+- PLT-04: User accounts created for pilot schools
+- PLT-05: Feedback collection mechanism ready
+
+**Plans:** 3 plans
+- [ ] 18-01-PLAN.md - Production deployment and documentation
+- [ ] 18-02-PLAN.md - Quick-start guide and feedback template
+- [ ] 18-03-PLAN.md - User onboarding and go-live preparation
+
+**Depends on:** Phase 17 (build must pass)
 
 ---
 
@@ -98,5 +109,5 @@ v2.1 is complete when:
 ---
 
 *Created: 2026-01-24*
-*Updated: 2026-01-24 - Phase 17 removed (E2E Playwright Smoke Tests), phases renumbered*
+*Updated: 2026-01-27 - Phase 18 planned (3 plans)*
 *From: v2.0 tech debt and PROJECT.md v2.1 scope*
