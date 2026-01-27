@@ -251,12 +251,24 @@ export class AttendanceWorkflowManager {
 
     // Create new session if one doesn't exist
     if (!this.state.sessionId) {
+      // Get escola_id from turma
+      const { data: turma } = await supabase
+        .from('turmas')
+        .select('escola_id')
+        .eq('id', this.state.classId)
+        .single()
+
+      if (!turma?.escola_id) {
+        throw new Error('Turma não encontrada ou sem escola associada')
+      }
+
       const sessionData = {
         turma_id: this.state.classId,
         professor_id: this.state.teacherId,
         data_aula: this.state.date,
         status: 'aberta' as const,
         inicio_aula: new Date().toISOString(),
+        escola_id: turma.escola_id,
         ...this.state.openingData
       }
 
@@ -684,19 +696,15 @@ export class AttendanceWorkflowManager {
       await supabase
         .from('audit_trail')
         .insert({
-          table_name: 'workflow',
-          record_id: this.state.sessionId || 'no_session',
-          operation: 'CREATE',
-          old_values: null,
-          new_values: { event, ...data },
-          user_id: this.state.teacherId,
-          user_role: 'professor',
-          timestamp: new Date().toISOString(),
-          session_info: {
-            turma_id: this.state.classId,
-            data_aula: this.state.date,
-            legal_status: this.state.phase === 'COMPLETED' ? 'locked' : 'draft'
-          }
+          tabela: 'workflow',
+          registro_id: this.state.sessionId || 'no_session',
+          operacao: 'CREATE',
+          dados_anteriores: null,
+          dados_novos: { event, ...data },
+          usuario_id: this.state.teacherId,
+          timestamp_operacao: new Date().toISOString(),
+          sessao_id: this.state.sessionId || null,
+          nivel_criticidade: 'baixo'
         })
     } catch (error) {
       console.warn('Failed to log workflow event:', error)
