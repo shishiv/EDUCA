@@ -98,6 +98,36 @@
 
 ---
 
+### Phase 20: Mock Data Cleanup, First Access Wizard & E2E Tests
+
+**Goal:** Remove mock data from codebase, implement first-access wizard for all user profiles, and create E2E tests for critical flows.
+
+**Status:** PLANNED (2026-01-27)
+
+**Requirements:**
+- MWE-01: All mock data removed from production code
+- MWE-02: First-access wizard guides new users through initial setup
+- MWE-03: Wizard supports all user profiles (admin, diretor, secretario, professor)
+- MWE-04: E2E tests cover atribuições flow
+- MWE-05: E2E tests cover turmas management flow
+- MWE-06: E2E tests cover login and authentication flow
+
+**Depends on:** Phase 18 (pilot deployment)
+
+**Plans:** 6 plans in 2 waves
+
+Wave 1 (parallel):
+- [ ] 20-01-PLAN.md — Remove mock data from pages and API (MWE-01)
+- [ ] 20-02-PLAN.md — Create wizard context and step components (MWE-02, MWE-03)
+- [ ] 20-04-PLAN.md — Create E2E auth setup and login tests (MWE-06)
+
+Wave 2 (depends on Wave 1):
+- [ ] 20-03-PLAN.md — Add help button and integrate wizard (MWE-02, MWE-03)
+- [ ] 20-05-PLAN.md — Create turmas E2E tests (MWE-05)
+- [ ] 20-06-PLAN.md — Create atribuicoes E2E tests (MWE-04)
+
+---
+
 ## Success Criteria
 
 v2.1 is complete when:
@@ -105,6 +135,9 @@ v2.1 is complete when:
 - [x] Database types regenerated (Phase 17 - 400+ type errors fixed)
 - [ ] Deployed to 1-2 pilot schools
 - [ ] Initial feedback collected
+- [ ] Mock data removed
+- [ ] First-access wizard implemented
+- [ ] E2E tests for critical flows
 
 ---
 
