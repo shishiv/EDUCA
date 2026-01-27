@@ -50,7 +50,7 @@ export function useAuth() {
 
         setLoading(false)
       } catch (error) {
-        logger.error('Error getting user', { error })
+        logger.error('Error getting user', error instanceof Error ? error : new Error(String(error)))
         // On any auth error, clear state gracefully
         setUser(null)
         setUserProfile(null)

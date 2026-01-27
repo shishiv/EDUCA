@@ -86,15 +86,16 @@ function calculateAge(birthDate: string): number {
 /**
  * Get row styling based on attendance status
  * Colors from spec: green (#dcfce7), red (#fee2e2), yellow (#fef3c7)
+ * AttendanceStatus: 'P' (presente), 'F' (falta), 'A' (atestado), null (empty)
  */
 function getRowClassName(status: AttendanceStatus, isSelected: boolean, isLocked: boolean): string {
   return cn(
     'flex items-center justify-between p-3 rounded-lg border-2 transition-all',
-    // Status-based colors
-    status === 'presente' && 'border-green-200 bg-green-50',
-    status === 'falta' && 'border-red-200 bg-red-50',
-    status === 'attestado' && 'border-yellow-200 bg-yellow-50',
-    status === 'empty' && 'border-gray-200 bg-gray-50',
+    // Status-based colors (using DB status values)
+    status === 'P' && 'border-green-200 bg-green-50',
+    status === 'F' && 'border-red-200 bg-red-50',
+    status === 'A' && 'border-yellow-200 bg-yellow-50',
+    status === null && 'border-gray-200 bg-gray-50',
     // Selection ring
     isSelected && 'ring-2 ring-primary',
     // Locked opacity
@@ -168,18 +169,18 @@ export function AttendanceGridRow({
           </p>
         </div>
 
-        {/* Status indicator dot */}
+        {/* Status indicator dot - using DB status values ('P'|'F'|'A'|null) */}
         <div className="flex items-center">
-          {attendanceStatus === 'presente' && (
+          {attendanceStatus === 'P' && (
             <div className="h-3 w-3 bg-green-600 rounded-full" />
           )}
-          {attendanceStatus === 'falta' && (
+          {attendanceStatus === 'F' && (
             <div className="h-3 w-3 bg-red-600 rounded-full" />
           )}
-          {attendanceStatus === 'attestado' && (
+          {attendanceStatus === 'A' && (
             <div className="h-3 w-3 bg-yellow-500 rounded-full" />
           )}
-          {attendanceStatus === 'empty' && (
+          {attendanceStatus === null && (
             <div className="h-3 w-3 bg-gray-400 rounded-full" />
           )}
         </div>
@@ -189,33 +190,32 @@ export function AttendanceGridRow({
       {!isEffectivelyReadonly && !isRecordLocked && (
         <div className="ml-3">
           <AttendanceCell
-            studentId={student.id}
-            studentName={student.nome_completo}
-            currentStatus={attendanceStatus}
-            onStatusChange={(newStatus) => onStatusChange(student.id, newStatus)}
+            status={attendanceStatus}
+            onChange={(newStatus) => onStatusChange(student.id, newStatus)}
             disabled={saving}
+            studentName={student.nome_completo}
           />
         </div>
       )}
 
-      {/* Readonly badge (when locked or readonly) */}
+      {/* Readonly badge (when locked or readonly) - using DB status ('P'|'F'|'A'|null) */}
       {(isEffectivelyReadonly || isRecordLocked) && (
         <div className="ml-3 flex items-center space-x-2">
           <Badge
             variant={
-              attendanceStatus === 'presente' ? 'default' :
-              attendanceStatus === 'falta' ? 'destructive' :
-              attendanceStatus === 'attestado' ? 'default' : 'secondary'
+              attendanceStatus === 'P' ? 'default' :
+              attendanceStatus === 'F' ? 'destructive' :
+              attendanceStatus === 'A' ? 'default' : 'secondary'
             }
             className={cn(
-              attendanceStatus === 'presente' && 'bg-green-600',
-              attendanceStatus === 'attestado' && 'bg-yellow-500'
+              attendanceStatus === 'P' && 'bg-green-600',
+              attendanceStatus === 'A' && 'bg-yellow-500'
             )}
           >
-            {attendanceStatus === 'presente' && 'Presente'}
-            {attendanceStatus === 'falta' && 'Ausente'}
-            {attendanceStatus === 'attestado' && 'Atestado'}
-            {attendanceStatus === 'empty' && 'Nao marcado'}
+            {attendanceStatus === 'P' && 'Presente'}
+            {attendanceStatus === 'F' && 'Ausente'}
+            {attendanceStatus === 'A' && 'Atestado'}
+            {attendanceStatus === null && 'Nao marcado'}
           </Badge>
           {isRecordLocked && (
             <Lock className="h-4 w-4 text-orange-500" />

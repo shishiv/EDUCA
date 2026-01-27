@@ -28,6 +28,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { AttendanceStatusUI } from '@/types/attendance'
+import { uiStatusToDB, dbStatusToUI } from '@/types/attendance'
 import { AttendanceGridHeader } from './AttendanceGridHeader'
 import { AttendanceGridRow } from './AttendanceGridRow'
 import { AttendanceGridSummary } from './AttendanceGridSummary'
@@ -144,12 +145,12 @@ export function AttendanceGrid({
           id: record.id,
           aluno_id: record.matricula_id,
           presente: record.presente || status === 'presente' || status === 'attestado',
-          status_presenca: status,
-          observacoes: record.observacoes_frequencia,
-          horario_marcacao: record.marcado_em || record.created_at,
+          status_presenca: uiStatusToDB(status),
+          observacoes: record.observacoes_frequencia ?? undefined,
+          horario_marcacao: record.marcado_em || record.created_at || new Date().toISOString(),
           is_locked: record.bloqueado,
-          created_by: record.marcado_por,
-          updated_by: record.marcado_por
+          created_by: record.marcado_por ?? undefined,
+          updated_by: record.marcado_por ?? undefined
         })
       })
 
@@ -200,10 +201,10 @@ export function AttendanceGrid({
     let locked = 0
 
     attendance.forEach(record => {
-      const status = record.status_presenca || 'empty'
-      if (status === 'attestado') attestado++
-      else if (status === 'presente') present++
-      else if (status === 'falta') absent++
+      const status = record.status_presenca
+      if (status === 'A') attestado++
+      else if (status === 'P') present++
+      else if (status === 'F') absent++
       if (record.is_locked) locked++
     })
 
@@ -238,7 +239,13 @@ export function AttendanceGrid({
   const getAttendanceStatusUI = (studentId: string): AttendanceStatusUI => {
     const record = attendance.get(studentId)
     if (!record) return 'empty'
-    return record.status_presenca || 'empty'
+    return dbStatusToUI(record.status_presenca)
+  }
+
+  // Adapter for AttendanceGridRow which uses DB status format ('P'|'F'|'A'|null)
+  const handleStatusChangeDB = (studentId: string, dbStatus: 'P' | 'F' | 'A' | null) => {
+    const uiStatus = dbStatusToUI(dbStatus)
+    markAttendanceStatusUI(studentId, uiStatus)
   }
 
   const markAttendanceStatusUI = async (studentId: string, status: AttendanceStatusUI) => {
@@ -268,7 +275,7 @@ export function AttendanceGrid({
           newMap.set(studentId, {
             aluno_id: studentId,
             presente: statusFields.presente,
-            status_presenca: status,
+            status_presenca: uiStatusToDB(status),
             horario_marcacao: new Date().toISOString()
           })
         }
@@ -342,7 +349,7 @@ export function AttendanceGrid({
       // Optimistic update
       const newAttendance = new Map(attendance)
       attendanceRecords.forEach(record => {
-        newAttendance.set(record.aluno_id, { ...record, status_presenca: status })
+        newAttendance.set(record.aluno_id, { ...record, status_presenca: dbStatus })
       })
       setAttendance(newAttendance)
 
@@ -423,24 +430,25 @@ export function AttendanceGrid({
       <CardContent>
         <div className="space-y-2">
           {filteredStudents.map((student) => {
-            const attendanceStatus = getAttendanceStatusUI(student.id)
             const isSelected = selectedStudents.has(student.id)
             const record = attendance.get(student.id)
             const isRecordLocked = record?.is_locked || lockInfo.isLocked
+            // AttendanceGridRow expects AttendanceStatus ('P'|'F'|'A'|null), not AttendanceStatusUI
+            const attendanceStatusDB = record?.status_presenca ?? null
 
             return (
               <AttendanceGridRow
                 key={student.id}
                 student={student}
                 record={record}
-                attendanceStatus={attendanceStatus}
+                attendanceStatus={attendanceStatusDB}
                 isSelected={isSelected}
                 isEffectivelyReadonly={isEffectivelyReadonly}
                 isRecordLocked={isRecordLocked}
                 showPhotos={showPhotos}
                 saving={saving}
                 onSelectionChange={handleSelectionChange}
-                onStatusChange={markAttendanceStatusUI}
+                onStatusChange={handleStatusChangeDB}
               />
             )
           })}

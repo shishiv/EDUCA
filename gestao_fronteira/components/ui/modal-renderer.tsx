@@ -58,8 +58,7 @@ export function ModalRenderer() {
             </DialogHeader>
             <AttendanceGrid
               turmaId={activeModal.props?.classInfo?.id}
-              sessaoId="mock-session-id"
-              onComplete={closeModal}
+              sessionId="mock-session-id"
             />
           </DialogContent>
         </Dialog>

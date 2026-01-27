@@ -6,6 +6,7 @@
 .claude/commands/
 .claude/settings.local.json
 .agent-os/
+.mcp.json
 
 # Claude Code shared configs (NOT ignored)
 # .claude/hooks.json - commit validation hooks
@@ -38,3 +39,5 @@ node_modules/
 
 # Lock files at root (project uses pnpm in gestao_fronteira/)
 package-lock.json
+.vercel
+.env*.local

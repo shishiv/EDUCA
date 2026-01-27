@@ -142,12 +142,12 @@ export class AttendanceImmutabilityService {
       if (session.professor_id !== userId && operation !== 'CREATE') {
         const { data: userRole } = await supabase
           .from('users')
-          .select('role')
+          .select('tipo_usuario')
           .eq('id', userId)
           .single()
 
         // Allow admin and diretor to view audit trail, but not modify
-        if (!['admin', 'diretor'].includes(userRole?.role || '')) {
+        if (!['admin', 'diretor'].includes(userRole?.tipo_usuario || '')) {
           return {
             allowed: false,
             error: {

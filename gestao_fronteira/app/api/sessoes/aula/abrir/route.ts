@@ -132,19 +132,19 @@ export async function POST(request: NextRequest) {
     const autoClosureTime = calculateAutoClosureTime(validatedData.data_aula)
 
     // Create session with Brazilian compliance features
+    // Column mapping: inicio_aula/fim_aula (not hora_inicio/hora_fim), observacoes (not conteudo_ministrado)
     const sessionData = {
       turma_id: validatedData.turma_id,
       professor_id: validatedData.professor_id,
       disciplina_id: validatedData.disciplina_id || null,
-      escola_id: turma.escola_id, // Required field from turma
+      escola_id: turma.escola_id,
       data_aula: validatedData.data_aula,
-      hora_inicio: validatedData.hora_inicio || null,
-      hora_fim: validatedData.hora_fim || null,
-      status: 'PLANEJADA', // Always start in planning phase
+      inicio_aula: validatedData.hora_inicio || new Date().toISOString(),
+      fim_aula: validatedData.hora_fim || null,
+      status: 'PLANEJADA',
       auto_fechamento_agendado: autoClosureTime,
-      conteudo_ministrado: validatedData.observacoes || null,
-      conteudo_programatico: null, // Optional field, set when planning
-      criada_em: new Date().toISOString()
+      observacoes: validatedData.observacoes || null,
+      conteudo_programatico: ''
     }
 
     const { data: newSession, error: insertError } = await supabase
@@ -156,14 +156,14 @@ export async function POST(request: NextRequest) {
         professor_id,
         disciplina_id,
         data_aula,
-        hora_inicio,
-        hora_fim,
+        inicio_aula,
+        fim_aula,
         status,
         auto_fechamento_agendado,
-        criada_em,
+        created_at,
         aberta_em,
         fechada_em,
-        conteudo_ministrado,
+        observacoes,
         tempo_total_aula,
         turmas:turma_id (
           id,
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
-      logger.error('Erro ao criar sessão', { error: insertError, turma_id: validatedData.turma_id, professor_id: validatedData.professor_id })
+      logger.error(`Erro ao criar sessão: ${insertError.message}`, insertError)
 
       // Handle specific database errors
       if (insertError.code === '23505') { // Unique constraint violation
@@ -205,7 +205,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Log successful session creation
-    logger.info('Sessão criada com sucesso', { session_id: newSession.id, turma: turma.nome, professor_id: profile.id })
+    logger.info('Sessão criada com sucesso', {
+      sessionId: newSession.id,
+      userId: profile.id,
+      schoolId: turma.escola_id,
+      feature: 'sessoes-aula',
+      action: 'criar'
+    })
 
     // Return success response with enhanced session data
     return NextResponse.json({
@@ -229,7 +235,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    logger.error('Erro no endpoint abrir aula', { error })
+    logger.error('Erro no endpoint abrir aula', error instanceof Error ? error : String(error))
 
     // Handle validation errors
     if (error instanceof z.ZodError) {

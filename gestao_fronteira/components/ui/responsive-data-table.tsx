@@ -377,7 +377,7 @@ export function StudentDataTable({
       label: 'Excluir',
       icon: Trash2,
       onClick: onDelete || (() => {}),
-      variant: 'destructive',
+      variant: 'destructive' as const,
       show: () => !!onDelete
     }
   ].filter(action => action.show())
@@ -394,4 +394,4 @@ export function StudentDataTable({
   )
 }
 
-export { ResponsiveDataTable, StudentDataTable }
+// Components are already exported inline above
