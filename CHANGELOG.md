@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Schema alignment com Supabase (WIP):**
+  - Corrigidos nomes de colunas em múltiplos arquivos
+  - sessoes_aula: inicio_aula/fim_aula (não hora_inicio/hora_fim)
+  - users: tipo_usuario (não role)
+  - attendance: conversão UI/DB status ('P'/'F'/'A' vs 'presente'/'falta'/'attestado')
+  - react-day-picker v9 API update (Chevron component)
+  - Criados stubs para lib/react-query.ts e lib/stores/app-store.ts
+  - Restam erros em lib/services/attendance-immutability.ts
+
 - **Turbopack HMR error with sonner Toaster:**
   - Replaced `next/dynamic` with direct import + client-side mount guard
   - Fixes "module factory is not available" error during HMR updates
