@@ -134,23 +134,31 @@ describe('Brazilian Validation Utils', () => {
   })
 
   describe('Validacao de Idade por Nivel Educacional', () => {
+    // Helper to create date for a given age
+    const birthDateForAge = (years: number): string => {
+      const date = new Date()
+      date.setFullYear(date.getFullYear() - years)
+      date.setMonth(date.getMonth() - 1) // Ensure age is reached
+      return date.toISOString().split('T')[0]
+    }
+
     it('deve validar idade para creche (0-3 anos)', () => {
-      expect(validateStudentAge('2022-01-15', 'creche')).toBe(true)
-      expect(validateStudentAge('2020-01-15', 'creche')).toBe(true)
+      expect(validateStudentAge(birthDateForAge(1), 'creche')).toBe(true)
+      expect(validateStudentAge(birthDateForAge(3), 'creche')).toBe(true)
     })
 
     it('deve rejeitar idade invalida para creche', () => {
-      expect(validateStudentAge('2015-01-15', 'creche')).toBe(false)
+      expect(validateStudentAge(birthDateForAge(5), 'creche')).toBe(false)
     })
 
     it('deve validar idade para pre-escola (4-5 anos)', () => {
-      expect(validateStudentAge('2019-01-15', 'pre_escola')).toBe(true)
-      expect(validateStudentAge('2018-01-15', 'pre_escola')).toBe(true)
+      expect(validateStudentAge(birthDateForAge(4), 'pre_escola')).toBe(true)
+      expect(validateStudentAge(birthDateForAge(5), 'pre_escola')).toBe(true)
     })
 
     it('deve validar idade para ensino fundamental (6-14 anos)', () => {
-      expect(validateStudentAge('2017-01-15', 'fundamental')).toBe(true)
-      expect(validateStudentAge('2010-01-15', 'fundamental')).toBe(true)
+      expect(validateStudentAge(birthDateForAge(6), 'fundamental')).toBe(true)
+      expect(validateStudentAge(birthDateForAge(14), 'fundamental')).toBe(true)
     })
   })
 
