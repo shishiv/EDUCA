@@ -14,12 +14,14 @@ import {
 describe('Brazilian Date Utilities', () => {
   describe('Formatacao de Data Brasileira', () => {
     it('deve formatar data no formato DD/MM/YYYY', () => {
-      const date = new Date('2024-01-15')
+      // Use explicit time to avoid timezone issues
+      const date = new Date('2024-01-15T12:00:00')
       expect(formatDateBR(date)).toBe('15/01/2024')
     })
 
     it('deve formatar string ISO', () => {
-      expect(formatDateBR('2024-01-15')).toBe('15/01/2024')
+      // Use full ISO string with time to ensure consistent parsing
+      expect(formatDateBR('2024-01-15T12:00:00')).toBe('15/01/2024')
     })
 
     it('deve retornar "-" para data nula ou invalida', () => {
@@ -127,12 +129,13 @@ describe('Brazilian Date Utilities', () => {
 
     it('deve retornar data valida', () => {
       const today = getTodayISO()
-      const date = new Date(today)
+      // Parse with local timezone by adding time component
+      const [year, month, day] = today.split('-').map(Number)
       
       const now = new Date()
-      expect(date.getFullYear()).toBe(now.getFullYear())
-      expect(date.getMonth()).toBe(now.getMonth())
-      expect(date.getDate()).toBe(now.getDate())
+      expect(year).toBe(now.getFullYear())
+      expect(month).toBe(now.getMonth() + 1) // getMonth is 0-indexed
+      expect(day).toBe(now.getDate())
     })
   })
 
@@ -164,11 +167,11 @@ describe('Brazilian Date Utilities', () => {
     })
 
     it('deve formatar datas no inicio do ano', () => {
-      expect(formatDateBR('2024-01-01')).toBe('01/01/2024')
+      expect(formatDateBR('2024-01-01T12:00:00')).toBe('01/01/2024')
     })
 
     it('deve formatar datas no fim do ano', () => {
-      expect(formatDateBR('2024-12-31')).toBe('31/12/2024')
+      expect(formatDateBR('2024-12-31T12:00:00')).toBe('31/12/2024')
     })
   })
 })

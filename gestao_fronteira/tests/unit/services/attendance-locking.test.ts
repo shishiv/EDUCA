@@ -70,18 +70,25 @@ describe('AttendanceLockingService', () => {
 
   describe('Validacao de desbloqueio emergencial', () => {
     it('deve rejeitar desbloqueio sem justificativa detalhada', async () => {
-      // Mock para simular sessao bloqueada
+      // Mock getSessionLockingStatus to simulate locked session
+      vi.spyOn(service as any, 'getSessionLockingStatus').mockResolvedValue({
+        isLocked: true,
+        lockingReason: 'Sessão fechada automaticamente',
+        activeLockingRules: [{ id: 'daily_auto_lock', complianceLevel: 'optional' }],
+        remainingGracePeriod: 0,
+      })
+
       const request = {
         sessionId: 'sessao-1',
         userId: 'professor-1',
         reason: 'emergencia',
-        justification: 'curto', // Menos de 50 caracteres
+        justification: 'curto', // Menos de 50 caracteres - falha validação
         emergency: true,
       }
 
       const permission = await service.requestUnlock(request)
 
-      // Sem justificativa detalhada, deve exigir aprovacao
+      // Sem justificativa detalhada, deve exigir aprovacao administrativa
       expect(permission.allowed).toBe(false)
       expect(permission.requiresApproval).toBe(true)
     })

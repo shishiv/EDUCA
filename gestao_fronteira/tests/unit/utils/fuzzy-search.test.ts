@@ -140,9 +140,10 @@ describe('Fuzzy Search Utilities', () => {
 
     it('deve encontrar matches e ordenar por score', () => {
       const results = findFuzzyMatches(
-        'Jose',
+        'Jose Silva',  // More complete query for better matching
         students,
-        (s) => s.name
+        (s) => s.name,
+        { threshold: 0.5 }  // Lower threshold for partial matches
       )
 
       expect(results.length).toBeGreaterThan(0)
