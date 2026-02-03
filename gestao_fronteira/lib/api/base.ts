@@ -99,9 +99,10 @@ export abstract class BaseApiService {
    */
   async create<T>(data: Partial<T>): Promise<T> {
     try {
+      // Cast supabase client to any to bypass strict type checking for dynamic table access
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client = supabase as any
-      const { data: created, error } = await client
+      const supabaseClient = supabase as any
+      const { data: created, error } = await supabaseClient
         .from(this.tableName)
         .insert(data)
         .select()
@@ -125,9 +126,10 @@ export abstract class BaseApiService {
    */
   async update<T>(id: string, data: Partial<T>): Promise<T> {
     try {
+      // Cast supabase client to any to bypass strict type checking for dynamic table access
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client = supabase as any
-      const { data: updated, error } = await client
+      const supabaseClient = supabase as any
+      const { data: updated, error } = await supabaseClient
         .from(this.tableName)
         .update(data)
         .eq('id', id)
