@@ -7,7 +7,7 @@
  *
  * Features:
  * - INEP code validation (8 digits)
- * - Brazilian CNPJ validation
+ * - Brazilian CNPJ validation (imported from brazilian-educational.ts)
  * - School type classification (creche, pré-escola, fundamental)
  * - Operating schedules (turno)
  * - Contact information validation
@@ -16,7 +16,8 @@
  */
 
 import { z } from 'zod'
-import { validatePhone, formatPhone } from '@/lib/validation/brazilian'
+import { validatePhone, formatPhone, validateCEP as validateCEPBase, formatCEP as formatCEPBase } from '@/lib/validation/brazilian'
+import { validateCNPJ as validateCNPJBase, formatCNPJ as formatCNPJBase } from '@/lib/validation/brazilian-educational'
 
 // ===== INEP CODE VALIDATION =====
 
@@ -51,88 +52,14 @@ export function formatINEPCode(inepCode: string): string {
 }
 
 // ===== CNPJ VALIDATION =====
-
-/**
- * Validates Brazilian CNPJ (Cadastro Nacional da Pessoa Jurídica)
- *
- * @param cnpj - CNPJ to validate
- * @returns boolean indicating if CNPJ is valid
- */
-export function validateCNPJ(cnpj: string): boolean {
-  if (!cnpj) return false
-
-  const cleanCNPJ = cnpj.replace(/\D/g, '')
-  if (cleanCNPJ.length !== 14) return false
-  if (/^(\d)\1{13}$/.test(cleanCNPJ)) return false
-
-  // First check digit
-  let sum = 0
-  let pos = 5
-  for (let i = 0; i < 12; i++) {
-    sum += parseInt(cleanCNPJ.charAt(i)) * pos--
-    if (pos < 2) pos = 9
-  }
-  let result = sum % 11 < 2 ? 0 : 11 - sum % 11
-  if (result !== parseInt(cleanCNPJ.charAt(12))) return false
-
-  // Second check digit
-  sum = 0
-  pos = 6
-  for (let i = 0; i < 13; i++) {
-    sum += parseInt(cleanCNPJ.charAt(i)) * pos--
-    if (pos < 2) pos = 9
-  }
-  result = sum % 11 < 2 ? 0 : 11 - sum % 11
-  if (result !== parseInt(cleanCNPJ.charAt(13))) return false
-
-  return true
-}
-
-/**
- * Formats CNPJ for display
- *
- * @param cnpj - CNPJ to format
- * @returns Formatted CNPJ
- */
-export function formatCNPJ(cnpj: string): string {
-  const clean = cnpj.replace(/\D/g, '')
-  if (clean.length !== 14) return cnpj
-
-  return clean.replace(
-    /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-    '$1.$2.$3/$4-$5'
-  )
-}
+// Re-export from brazilian-educational.ts to avoid duplication
+export const validateCNPJ = validateCNPJBase
+export const formatCNPJ = formatCNPJBase
 
 // ===== CEP VALIDATION =====
-
-/**
- * Validates Brazilian CEP (Postal Code)
- *
- * @param cep - CEP to validate
- * @returns boolean indicating if CEP is valid
- */
-export function validateCEP(cep: string): boolean {
-  if (!cep) return false
-
-  const cleanCEP = cep.replace(/\D/g, '')
-  return cleanCEP.length === 8
-}
-
-/**
- * Formats CEP for display
- *
- * @param cep - CEP to format
- * @returns Formatted CEP (XXXXX-XXX)
- */
-export function formatCEP(cep: string): string {
-  if (!cep) return ''
-
-  const cleanCEP = cep.replace(/\D/g, '')
-  if (cleanCEP.length !== 8) return cep
-
-  return cleanCEP.replace(/(\d{5})(\d{3})/, '$1-$2')
-}
+// Re-export from brazilian.ts to avoid duplication
+export const validateCEP = validateCEPBase
+export const formatCEP = formatCEPBase
 
 // ===== BASE SCHOOL VALIDATION =====
 

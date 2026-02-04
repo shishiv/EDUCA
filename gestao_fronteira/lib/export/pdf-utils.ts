@@ -11,6 +11,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatDateShortBR } from '@/lib/date-utils';
 
 // ============================================================================
 // TYPES
@@ -75,26 +76,26 @@ const DEFAULT_STYLES: PDFStyles = {
 // ============================================================================
 
 /**
- * Format date for Brazilian locale
+ * Format date for Brazilian locale (extended format with month name)
+ * Note: For short format (DD/MM/YYYY), use formatDateShortBR from lib/date-utils
  */
 export function formatDateBR(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return format(d, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return format(dateObj, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 }
 
 /**
  * Format short date for Brazilian locale
+ * Re-exports from lib/date-utils for backward compatibility
+ * Note: The canonical name is formatDateShortBR in lib/date-utils
  */
-export function formatShortDateBR(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return format(d, 'dd/MM/yyyy', { locale: ptBR });
-}
+export { formatDateShortBR as formatShortDateBR };
 
 /**
  * Format period label
  */
-export function formatPeriodLabel(start: string, end: string): string {
-  return `${formatShortDateBR(start)} - ${formatShortDateBR(end)}`;
+export function formatPeriodLabel(startDate: string, endDate: string): string {
+  return `${formatDateShortBR(startDate)} - ${formatDateShortBR(endDate)}`;
 }
 
 // ============================================================================

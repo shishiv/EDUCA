@@ -11,6 +11,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatDateBR } from '@/lib/date-utils';
 import type { ClassAttendanceReport } from '@/lib/reports/attendance-reports';
 import type { BolsaFamiliaReport } from '@/lib/reports/bolsa-familia-reports';
 
@@ -54,19 +55,11 @@ const BOLSA_FAMILIA_STYLES: ExcelStyles = {
 // ============================================================================
 
 /**
- * Format date for Brazilian locale
- */
-function formatDateBR(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return format(d, 'dd/MM/yyyy', { locale: ptBR });
-}
-
-/**
  * Set column widths for a worksheet
  */
 function setColumnWidths(worksheet: ExcelJS.Worksheet, widths: number[]): void {
-  widths.forEach((width, index) => {
-    const column = worksheet.getColumn(index + 1);
+  widths.forEach((width, columnIndex) => {
+    const column = worksheet.getColumn(columnIndex + 1);
     column.width = width;
   });
 }
