@@ -3,50 +3,20 @@
  *
  * Comprehensive validation for Brazilian educational system compliance
  * including CPF, CNPJ, phone numbers, state registration, and educational IDs
+ *
+ * Note: CPF validation is imported from lib/validation/brazilian.ts to avoid duplication.
  */
 
 import { z } from 'zod'
+import {
+  validateCPF as validateCPFBase,
+  formatCPF as formatCPFBase
+} from '@/lib/validation/brazilian'
 
 // ===== CPF VALIDATION =====
-export function validateCPF(cpf: string): boolean {
-  if (!cpf) return false
-
-  // Remove formatting
-  const cleanCPF = cpf.replace(/[^\d]/g, '')
-
-  // Check length and invalid patterns
-  if (cleanCPF.length !== 11) return false
-  if (/^(\d)\1{10}$/.test(cleanCPF)) return false // All same digits
-
-  // Validate check digits
-  let sum = 0
-  let remainder: number
-
-  // First check digit
-  for (let i = 1; i <= 9; i++) {
-    sum += parseInt(cleanCPF.substring(i - 1, i)) * (11 - i)
-  }
-  remainder = (sum * 10) % 11
-  if (remainder === 10 || remainder === 11) remainder = 0
-  if (remainder !== parseInt(cleanCPF.substring(9, 10))) return false
-
-  // Second check digit
-  sum = 0
-  for (let i = 1; i <= 10; i++) {
-    sum += parseInt(cleanCPF.substring(i - 1, i)) * (12 - i)
-  }
-  remainder = (sum * 10) % 11
-  if (remainder === 10 || remainder === 11) remainder = 0
-  if (remainder !== parseInt(cleanCPF.substring(10, 11))) return false
-
-  return true
-}
-
-export function formatCPF(cpf: string): string {
-  const clean = cpf.replace(/[^\d]/g, '')
-  if (clean.length !== 11) return cpf
-  return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-}
+// Re-export from brazilian.ts to maintain consistent validation logic
+export const validateCPF = validateCPFBase
+export const formatCPF = formatCPFBase
 
 // ===== CNPJ VALIDATION =====
 export function validateCNPJ(cnpj: string): boolean {
@@ -56,25 +26,25 @@ export function validateCNPJ(cnpj: string): boolean {
   if (cleanCNPJ.length !== 14) return false
   if (/^(\d)\1{13}$/.test(cleanCNPJ)) return false
 
-  // First check digit
-  let sum = 0
-  let pos = 5
-  for (let i = 0; i < 12; i++) {
-    sum += parseInt(cleanCNPJ.charAt(i)) * pos--
-    if (pos < 2) pos = 9
+  // First check digit - uses weights 5,4,3,2,9,8,7,6,5,4,3,2
+  let digitSum = 0
+  let weightMultiplier = 5
+  for (let digitIndex = 0; digitIndex < 12; digitIndex++) {
+    digitSum += parseInt(cleanCNPJ.charAt(digitIndex)) * weightMultiplier--
+    if (weightMultiplier < 2) weightMultiplier = 9
   }
-  let result = sum % 11 < 2 ? 0 : 11 - sum % 11
-  if (result !== parseInt(cleanCNPJ.charAt(12))) return false
+  let expectedDigit = digitSum % 11 < 2 ? 0 : 11 - digitSum % 11
+  if (expectedDigit !== parseInt(cleanCNPJ.charAt(12))) return false
 
-  // Second check digit
-  sum = 0
-  pos = 6
-  for (let i = 0; i < 13; i++) {
-    sum += parseInt(cleanCNPJ.charAt(i)) * pos--
-    if (pos < 2) pos = 9
+  // Second check digit - uses weights 6,5,4,3,2,9,8,7,6,5,4,3,2
+  digitSum = 0
+  weightMultiplier = 6
+  for (let digitIndex = 0; digitIndex < 13; digitIndex++) {
+    digitSum += parseInt(cleanCNPJ.charAt(digitIndex)) * weightMultiplier--
+    if (weightMultiplier < 2) weightMultiplier = 9
   }
-  result = sum % 11 < 2 ? 0 : 11 - sum % 11
-  if (result !== parseInt(cleanCNPJ.charAt(13))) return false
+  expectedDigit = digitSum % 11 < 2 ? 0 : 11 - digitSum % 11
+  if (expectedDigit !== parseInt(cleanCNPJ.charAt(13))) return false
 
   return true
 }

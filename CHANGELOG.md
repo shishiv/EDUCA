@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Code quality refactoring:**
+  - Consolidated duplicated validation functions (CPF, CNPJ, CEP) across validation modules
+  - `brazilian-educational.ts` now imports CPF validators from `brazilian.ts`
+  - `schools-validation.ts` now imports CNPJ/CEP validators instead of duplicating
+  - Improved variable naming in CNPJ validation (`pos` → `weightMultiplier`, `i` → `digitIndex`)
+  - Improved variable naming in API base (`client` → `supabaseClient`)
+  - Consolidated date formatting utilities in export modules to use `lib/date-utils.ts`
+  - Reduced ~110 lines of duplicated code
+
 ### Fixed
 - **Schema alignment com Supabase (WIP):**
   - Corrigidos nomes de colunas em múltiplos arquivos
