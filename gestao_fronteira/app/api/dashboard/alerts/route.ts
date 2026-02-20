@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
 
       if (alunosNis && alunosNis.length > 0) {
         // Get attendance stats for these students
-        const alunoIds = alunosNis.map(a => a.id)
+        const alunoIds = alunosNis.map((a: any) => a.id)
 
         // Get attendance records for current month
         const startOfMonth = new Date()
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Find students below 85%
-        const lowAttendance = alunosNis.filter(aluno => {
+        const lowAttendance = alunosNis.filter((aluno: any) => {
           const stats = attendanceByStudent[aluno.id]
           if (!stats || stats.total === 0) return false
           const percentage = (stats.present / stats.total) * 100
