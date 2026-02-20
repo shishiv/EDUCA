@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         alunosQuery = alunosQuery.eq('escola_id', escolaFilter)
       }
 
-      const { data: alunosNis } = await alunosQuery
+      const { data: alunosNis } = await (alunosQuery as any)
 
       if (alunosNis && alunosNis.length > 0) {
         // Get attendance stats for these students
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
         .eq('data', today)
 
       if (frequenciasHoje && frequenciasHoje.length > 0) {
-        const presentes = frequenciasHoje.filter(f => f.presente).length
+        const presentes = frequenciasHoje.filter((f: { presente: boolean }) => f.presente).length
         const total = frequenciasHoje.length
         const percentage = Math.round((presentes / total) * 100)
 
@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Error in dashboard alerts API', error)
+    logger.error('Error in dashboard alerts API', error as Error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

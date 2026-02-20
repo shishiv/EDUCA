@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Error in minhas turmas API', error)
+    logger.error('Error in minhas turmas API', error as Error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
