@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         startOfMonth.setDate(1)
         const startDate = startOfMonth.toISOString().split('T')[0]
 
-        const { data: frequencias } = await supabase
+        const { data: frequencias } = await (supabase as any)
           .from('frequencias')
           .select('aluno_id, presente')
           .in('aluno_id', alunoIds)
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Check overall attendance average
     if (turmaIds.length > 0) {
-      const { data: frequenciasHoje } = await supabase
+      const { data: frequenciasHoje } = await (supabase as any)
         .from('frequencias')
         .select('presente')
         .in('turma_id', turmaIds)
@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Error in dashboard alerts API', { error })
+    logger.error('Error in dashboard alerts API', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

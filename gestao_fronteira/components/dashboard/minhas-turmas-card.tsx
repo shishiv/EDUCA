@@ -81,9 +81,9 @@ export function MinhasTurmasCard() {
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-gray-800">{turma.nome}</p>
                     {turma.chamada_hoje ? (
-                      <CheckCircle className="w-4 h-4 text-jardim-green-500" title="Chamada feita" />
+                      <CheckCircle className="w-4 h-4 text-jardim-green-500" aria-label="Chamada feita" />
                     ) : (
-                      <Clock className="w-4 h-4 text-jardim-yellow-500" title="Chamada pendente" />
+                      <Clock className="w-4 h-4 text-jardim-yellow-500" aria-label="Chamada pendente" />
                     )}
                   </div>
                   <p className="text-sm text-gray-500">

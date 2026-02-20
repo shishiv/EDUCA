@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     const { data: turmas, error: turmasError } = await turmasQuery
 
     if (turmasError) {
-      logger.error('Error fetching turmas', { error: turmasError })
+      logger.error('Error fetching turmas', turmasError)
       return NextResponse.json({ error: 'Erro ao buscar turmas' }, { status: 500 })
     }
 
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.error('Error in minhas turmas API', { error })
+    logger.error('Error in minhas turmas API', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
