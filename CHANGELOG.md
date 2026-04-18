@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Bolsa Familia badge visibility (aluno profile):** Agora respeita o papel do usuário. Apenas gestores (admin, diretor, secretario, gestor_sme) veem o badge de Bolsa Familia na página de detalhes do aluno. Professores e responsáveis não veem mais essa informação.
+
+### Changed
 - **Code quality refactoring:**
   - Consolidated duplicated validation functions (CPF, CNPJ, CEP) across validation modules
   - `brazilian-educational.ts` now imports CPF validators from `brazilian.ts`

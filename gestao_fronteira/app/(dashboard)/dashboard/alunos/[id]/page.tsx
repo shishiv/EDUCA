@@ -33,6 +33,9 @@ import {
 import { isInfantilAge } from '@/lib/utils/faixa-etaria'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/hooks/use-auth'
+
+const GESTOR_ROLES = ['admin', 'diretor', 'secretario', 'gestor_sme']
 
 interface AlunoDetalhado {
   id: string
@@ -91,9 +94,12 @@ interface AlunoDetalhado {
 
 export default function AlunoDetalhesPage() {
   const params = useParams()
+  const { userProfile } = useAuth()
   const [aluno, setAluno] = useState<AlunoDetalhado | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const canSeeBolsaFamilia = GESTOR_ROLES.includes(userProfile?.tipo_usuario ?? '')
 
   useEffect(() => {
     async function loadStudent() {
@@ -323,7 +329,7 @@ export default function AlunoDetalhesPage() {
         turma={currentMatricula?.turma.nome}
         turno={currentMatricula?.turma.turno}
         bolsaFamilia={aluno.bolsa_familia}
-        showBolsaFamilia={true} // TODO: Check user role (gestores only)
+        showBolsaFamilia={canSeeBolsaFamilia}
         ativo={aluno.ativo}
       />
 
