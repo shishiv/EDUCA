@@ -184,6 +184,7 @@ export function EducaLogoWithPrefeitura({
       <div className="w-px h-12 bg-gray-300" aria-hidden="true" />
 
       <div className="flex items-center gap-2">
+        {/* Replace public/logo_pref.png with your municipality's official logo */}
         <Image
           src="/logo_pref.png"
           alt="Brasão municipal"

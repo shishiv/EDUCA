@@ -7,7 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [OSS-prep] - 2026-06-01
+
+### Added
+- `lib/config.ts` — `municipalConfig` driven by `NEXT_PUBLIC_MUNICIPAL_*` env vars
+- `README.md` — project overview, stack, quick start (<30 min), module status
+- `CONTRIBUTING.md` — PR workflow, code standards, Brazilian compliance rules
+- `LICENSE` — MIT, Myke Matos
+- `docker-compose.yml` — PostgreSQL 16 for local dev
+- `docs/MUNICIPALITIES.md` — municipal adoption guide with infra tiers and checklist
+- `docs/PROVIDER-AGNOSTIC-ROADMAP.md` — planned adapter pattern (Supabase/Postgres/SQLite)
+
 ### Changed
+- Genericized all hardcoded `Fronteira/MG` strings (city, emails, addresses, INEP codes, school names)
+- Renamed Tailwind/CSS color tokens: `fronteira-*` → `municipal-*`
+- `docs/gestao-fronteira-architecture.md` → `docs/architecture.md`
+- `docs/DEPLOYMENT.md` genericized (removed project-specific URLs and environment)
+- `.env.local.example` updated with municipal identity variables
+- `public/logo_pref.png` replaced with generic placeholder (replace with official municipal logo)
+
+### Removed
+- `.env.production` from git history (contained `SUPABASE_SERVICE_ROLE_KEY`)
+- `deploy.log`, `VERCEL_ENV_SETUP.md`, `setup-vercel-env.sh` from git history
+- `build_output.txt`, `docs-inventory.json`, `test-results/` from tracked files
+- Real INEP school codes and school names from `scripts/seed-superadmin.ts`
+- Supabase project reference from git history (replaced with `SUPABASE-PROJECT-REF` placeholder)
+
+### Fixed
+- `app/layout.tsx` title (ordering bug had left it as `Cidade/UF` instead of `EDUCA - Sistema...`)
+- Test assertion in `AttendanceReportTable.test.tsx` updated to match new `municipalConfig.nome` output
+
 - **Code quality refactoring:**
   - Consolidated duplicated validation functions (CPF, CNPJ, CEP) across validation modules
   - `brazilian-educational.ts` now imports CPF validators from `brazilian.ts`
