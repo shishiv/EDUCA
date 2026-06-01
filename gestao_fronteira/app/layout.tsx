@@ -27,7 +27,7 @@ const caveat = Caveat({
 })
 
 export const metadata: Metadata = {
-  title: 'Sistema de Gestão Escolar - Cidade/UF',
+  title: 'EDUCA - Sistema de Gestão Escolar Municipal',
   description: 'Sistema aberto de gestão escolar para municípios brasileiros',
 }
 

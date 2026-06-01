@@ -131,4 +131,4 @@
 
 *Template criado em: Janeiro de 2026*
 
-*Prefeitura Municipal de Fronteira - Secretaria de Educacao*
+*Secretaria Municipal de Educação*

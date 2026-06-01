@@ -97,78 +97,80 @@ async function main() {
     console.log('\n📌 PARTE 2: Criando Escolas Municipais...')
     console.log('-'.repeat(70))
 
+    // Seed schools — replace with real school data for your municipality
+    // INEP codes and addresses below are placeholders
     const escolasData: Escola[] = [
       {
-        nome: 'EM Marechal Castelo Branco',
-        codigo: '31158810',
+        nome: 'EMEF Escola A',
+        codigo: '00000001',
         tipo: 'fundamental',
-        endereco: 'Rua Godofredo Antônio da Costa, Nº 238 - Vila Santo Antônio - Cidade/UF',
-        telefone: '(34) 3199-9856',
-        email: 'contato.marechal@municipio.edu.br'
+        endereco: 'Rua das Flores, 100 - Centro - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.a@municipio.edu.br'
       },
       {
-        nome: 'EM Poliana Ziza Ferreira',
-        codigo: '31158828',
+        nome: 'EMEF Escola B',
+        codigo: '00000002',
         tipo: 'fundamental',
-        endereco: 'Avenida Aurélio Luiz Mistieri, Nº 370 - Centro - Cidade/UF',
-        telefone: '(34) 3199-9786',
-        email: 'contato.poliana@municipio.edu.br'
+        endereco: 'Av. da Educação, 200 - Vila Nova - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.b@municipio.edu.br'
       },
       {
-        nome: 'EM José Maria Bastos',
-        codigo: '31342920',
+        nome: 'EMEF Escola C',
+        codigo: '00000003',
         tipo: 'fundamental',
-        endereco: 'Avenida Abdo Jauíde Feres, Nº 370 - Centro - Cidade/UF',
-        telefone: '(34) 3199-9852',
-        email: 'contato.jose@municipio.edu.br'
+        endereco: 'Praça da Escola, 300 - Centro - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.c@municipio.edu.br'
       },
       {
-        nome: 'PEM Turma da Mônica',
-        codigo: '31228621',
+        nome: 'PEM Escola D',
+        codigo: '00000004',
         tipo: 'pre_escola',
-        endereco: 'Rua Hignio Florêncio de Souza, Nº 430 - Vila Residencial de Furnas - Cidade/UF',
-        telefone: '(34) 3199-9785',
-        email: 'contato.monica@municipio.edu.br'
+        endereco: 'Rua A, 400 - Bairro I - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.d@municipio.edu.br'
       },
       {
-        nome: 'EMEI Maísa Ferreira Passuelo Vasconcelos',
-        codigo: '31376027',
+        nome: 'EMEI Escola E',
+        codigo: '00000005',
         tipo: 'pre_escola',
-        endereco: 'Avenida Brasil, Nº 220 - Vila Residencial de Furnas - Cidade/UF',
-        telefone: '(34) 3199-9852',
-        email: 'contato.maisa@municipio.edu.br'
+        endereco: 'Av. Principal, 500 - Bairro II - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.e@municipio.edu.br'
       },
       {
-        nome: 'CMEI Dona Alice',
-        codigo: '31385018',
+        nome: 'CEMEI Escola F',
+        codigo: '00000006',
         tipo: 'creche',
-        endereco: 'Rua Miguel José Miziara, Nº 241 - Cohab - Cidade/UF',
-        telefone: '(34) 3199-9852',
-        email: 'contato.alice@municipio.edu.br'
+        endereco: 'Rua B, 600 - Bairro III - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.f@municipio.edu.br'
       },
       {
-        nome: 'CMEI Dona Belinha',
-        codigo: '31357170',
+        nome: 'CEMEI Escola G',
+        codigo: '00000007',
         tipo: 'creche',
-        endereco: 'Avenida Liberdade, Nº 1480 - Vila Reis - Cidade/UF',
-        telefone: '(34) 34282738',
-        email: 'contato.belinha@municipio.edu.br'    
+        endereco: 'Rua C, 700 - Bairro IV - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.g@municipio.edu.br'
       },
       {
-        nome: 'CMEI Santo Antônio',
-        codigo: '31333051',
+        nome: 'CEMEI Escola H',
+        codigo: '00000008',
         tipo: 'creche',
-        endereco: 'Rua Godofredo Antônio da Costa, Nº 62 - Vila Santo Antônio - Cidade/UF',
-        telefone: '(34) 3199-9855',
-        email: 'contato.santoantonio@municipio.edu.br'
+        endereco: 'Rua D, 800 - Bairro V - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.h@municipio.edu.br'
       },
       {
-        nome: 'CMEI Dona Mençora',
-        codigo: '31290459',
+        nome: 'CEMEI Escola I',
+        codigo: '00000009',
         tipo: 'creche',
-        endereco: 'Rua Godofredo Antônio da Costa, Nº 62 - Vila Santo Antônio - Cidade/UF',
-        telefone: '(34) 3199-9853',
-        email: 'contato.mencora@municipio.edu.br'
+        endereco: 'Rua E, 900 - Bairro VI - Cidade/UF',
+        telefone: '(XX) XXXX-XXXX',
+        email: 'escola.i@municipio.edu.br'
       }
     ]
 
