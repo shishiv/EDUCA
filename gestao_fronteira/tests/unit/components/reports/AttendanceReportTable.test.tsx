@@ -431,7 +431,7 @@ describe('AttendanceReportTable', () => {
       render(<AttendanceReportTable data={mockData} printMode={true} />)
       
       expect(screen.getByText(/documento.*gerado/i)).toBeInTheDocument()
-      expect(screen.getByText(/prefeitura.*municipal.*fronteira/i)).toBeInTheDocument()
+      expect(screen.getByText(/prefeitura.*municipal/i)).toBeInTheDocument()
     })
 
     it('should apply print-specific styling', () => {

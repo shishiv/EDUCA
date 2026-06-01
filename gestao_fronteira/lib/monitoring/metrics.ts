@@ -45,7 +45,7 @@ class MetricsCollector {
       value,
       labels: {
         environment: process.env.NODE_ENV || 'development',
-        app: 'gestao_fronteira',
+        app: 'educa',
         ...labels
       },
       timestamp: Date.now()

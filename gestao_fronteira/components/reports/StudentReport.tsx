@@ -45,7 +45,8 @@ import {
   Calendar,
   User,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils"
+import { municipalConfig } from "@/lib/config"
 import {
   type Bimester,
   formatGrade,
@@ -689,7 +690,7 @@ export function StudentReport({
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
           <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestao Escolar EDUCA</p>
-          <p>Prefeitura Municipal de Fronteira/MG</p>
+          <p>{municipalConfig.nome}</p>
         </div>
       )}
     </div>

@@ -57,31 +57,31 @@ export const seedData: SeedData = {
   // 5 user roles as specified in MVP requirements
   users: [
     {
-      email: 'admin@fronteira.mg.gov.br',
+      email: 'admin@municipio.edu.br',
       nome: 'Administrador do Sistema',
       tipo_usuario: 'admin',
       ativo: true
     },
     {
-      email: 'maria.silva@fronteira.mg.gov.br',
+      email: 'maria.silva@municipio.edu.br',
       nome: 'Maria Silva Santos',
       tipo_usuario: 'diretor',
       ativo: true
     },
     {
-      email: 'coordenador@fronteira.mg.gov.br',
+      email: 'coordenador@municipio.edu.br',
       nome: 'João Carlos Pereira',
       tipo_usuario: 'secretario',
       ativo: true
     },
     {
-      email: 'prof.ana@fronteira.mg.gov.br',
+      email: 'prof.ana@municipio.edu.br',
       nome: 'Ana Cristina Oliveira',
       tipo_usuario: 'professor',
       ativo: true
     },
     {
-      email: 'prof.carlos@fronteira.mg.gov.br',
+      email: 'prof.carlos@municipio.edu.br',
       nome: 'Carlos Eduardo Lima',
       tipo_usuario: 'professor',
       ativo: true
@@ -94,12 +94,12 @@ export const seedData: SeedData = {
     }
   ],
 
-  // Municipal schools of Fronteira/MG
+  // Seed schools — replace with real school names
   escolas: [
     {
       nome: 'CEMEI Pequenos Passos',
       codigo: 'FRT001',
-      endereco: 'Rua das Flores, 123 - Centro, Fronteira/MG',
+      endereco: 'Rua das Flores, 123 - Centro, Cidade/UF',
       telefone: '(34) 3555-0001',
       tipo: 'creche',
       ativo: true
@@ -107,7 +107,7 @@ export const seedData: SeedData = {
     {
       nome: 'EMEI Jardim da Infância',
       codigo: 'FRT002',
-      endereco: 'Av. Educação, 456 - Vila Nova, Fronteira/MG',
+      endereco: 'Av. Educação, 456 - Vila Nova, Cidade/UF',
       telefone: '(34) 3555-0002',
       tipo: 'pre_escola',
       ativo: true
@@ -115,7 +115,7 @@ export const seedData: SeedData = {
     {
       nome: 'EMEF Professor João Silva',
       codigo: 'FRT003',
-      endereco: 'Praça da Escola, 789 - São José, Fronteira/MG',
+      endereco: 'Praça da Escola, 789 - São José, Cidade/UF',
       telefone: '(34) 3555-0003',
       tipo: 'fundamental',
       ativo: true
@@ -123,7 +123,7 @@ export const seedData: SeedData = {
     {
       nome: 'EMEF Maria das Graças',
       codigo: 'FRT004',
-      endereco: 'Rua da Educação, 321 - Centro, Fronteira/MG',
+      endereco: 'Rua da Educação, 321 - Centro, Cidade/UF',
       telefone: '(34) 3555-0004',
       tipo: 'fundamental',
       ativo: true
@@ -138,7 +138,7 @@ export const seedData: SeedData = {
       telefone: '(34) 99999-0001',
       email: 'jose.silva@gmail.com',
       parentesco: 'pai',
-      endereco: 'Rua A, 100 - Centro, Fronteira/MG',
+      endereco: 'Rua A, 100 - Centro, Cidade/UF',
       profissao: 'Agricultor'
     },
     {
@@ -147,7 +147,7 @@ export const seedData: SeedData = {
       telefone: '(34) 99999-0002',
       email: 'maria.oliveira@gmail.com',
       parentesco: 'mãe',
-      endereco: 'Rua B, 200 - Vila Nova, Fronteira/MG',
+      endereco: 'Rua B, 200 - Vila Nova, Cidade/UF',
       profissao: 'Professora'
     },
     {
@@ -156,7 +156,7 @@ export const seedData: SeedData = {
       telefone: '(34) 99999-0003',
       email: 'carlos.pereira@gmail.com',
       parentesco: 'pai',
-      endereco: 'Av. Principal, 300 - São José, Fronteira/MG',
+      endereco: 'Av. Principal, 300 - São José, Cidade/UF',
       profissao: 'Comerciante'
     },
     {
@@ -165,7 +165,7 @@ export const seedData: SeedData = {
       telefone: '(34) 99999-0004',
       email: 'lucia.ferreira@gmail.com',
       parentesco: 'mãe',
-      endereco: 'Rua C, 400 - Centro, Fronteira/MG',
+      endereco: 'Rua C, 400 - Centro, Cidade/UF',
       profissao: 'Enfermeira'
     },
     {
@@ -174,7 +174,7 @@ export const seedData: SeedData = {
       telefone: '(34) 99999-0005',
       email: 'patricia.souza@gmail.com',
       parentesco: 'mãe',
-      endereco: 'Rua D, 500 - Vila Nova, Fronteira/MG',
+      endereco: 'Rua D, 500 - Vila Nova, Cidade/UF',
       profissao: 'Funcionária Pública'
     }
   ],
@@ -185,7 +185,7 @@ export const seedData: SeedData = {
       nome_completo: 'Pedro Silva Santos',
       data_nascimento: '2020-03-15',
       sexo: 'M',
-      endereco: 'Rua A, 100 - Centro, Fronteira/MG',
+      endereco: 'Rua A, 100 - Centro, Cidade/UF',
       telefone: '(34) 99999-0001',
       nome_mae: 'Ana Silva Santos',
       nome_pai: 'José da Silva Santos',
@@ -195,7 +195,7 @@ export const seedData: SeedData = {
       nome_completo: 'Julia Oliveira Costa',
       data_nascimento: '2019-07-22',
       sexo: 'F',
-      endereco: 'Rua B, 200 - Vila Nova, Fronteira/MG',
+      endereco: 'Rua B, 200 - Vila Nova, Cidade/UF',
       telefone: '(34) 99999-0002',
       nome_mae: 'Maria Oliveira Costa',
       nome_pai: 'João Costa Silva',
@@ -207,7 +207,7 @@ export const seedData: SeedData = {
       cpf: '12345678904', // Valid CPF for testing
       rg: 'MG-12345678',
       sexo: 'M',
-      endereco: 'Av. Principal, 300 - São José, Fronteira/MG',
+      endereco: 'Av. Principal, 300 - São José, Cidade/UF',
       telefone: '(34) 99999-0003',
       email: 'lucas.santos@email.com',
       nome_mae: 'Carmen Santos Pereira',
@@ -219,7 +219,7 @@ export const seedData: SeedData = {
       nome_completo: 'Ana Carolina Ferreira',
       data_nascimento: '2018-05-12',
       sexo: 'F',
-      endereco: 'Rua C, 400 - Centro, Fronteira/MG',
+      endereco: 'Rua C, 400 - Centro, Cidade/UF',
       telefone: '(34) 99999-0004',
       nome_mae: 'Lucia Ferreira Lima',
       nome_pai: 'Roberto Ferreira Silva',
@@ -231,7 +231,7 @@ export const seedData: SeedData = {
       cpf: '98765432100', // Valid CPF for testing
       rg: 'MG-87654321',
       sexo: 'M',
-      endereco: 'Rua D, 500 - Vila Nova, Fronteira/MG',
+      endereco: 'Rua D, 500 - Vila Nova, Cidade/UF',
       telefone: '(34) 99999-0005',
       email: 'gabriel.souza@email.com',
       nome_mae: 'Patricia Souza Lima',
@@ -242,7 +242,7 @@ export const seedData: SeedData = {
       nome_completo: 'Isabella Costa Santos',
       data_nascimento: '2017-12-03',
       sexo: 'F',
-      endereco: 'Rua E, 600 - São José, Fronteira/MG',
+      endereco: 'Rua E, 600 - São José, Cidade/UF',
       telefone: '(34) 99999-0006',
       nome_mae: 'Fernanda Costa Santos',
       nome_pai: 'Marcos Santos Costa',

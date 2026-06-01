@@ -143,27 +143,27 @@
   }
 
   /* Brazilian color scheme */
-  .fronteira-primary {
+  .municipal-primary {
     color: #1e40af; /* Blue 700 */
   }
 
-  .fronteira-primary-foreground {
+  .municipal-primary-foreground {
     color: #ffffff;
   }
 
-  .fronteira-gray-50 {
+  .municipal-gray-50 {
     color: #f9fafb;
   }
 
-  .fronteira-gray-100 {
+  .municipal-gray-100 {
     color: #f3f4f6;
   }
 
-  .fronteira-gray-500 {
+  .municipal-gray-500 {
     color: #6b7280;
   }
 
-  .fronteira-red {
+  .municipal-red {
     color: #dc2626;
   }
 }

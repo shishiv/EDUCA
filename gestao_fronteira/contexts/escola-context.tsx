@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
 
 // Storage key for sessionStorage
-const STORAGE_KEY = 'gestao-fronteira-selected-escola'
+const STORAGE_KEY = 'educa-selected-escola'
 
 // Types
 interface Escola {

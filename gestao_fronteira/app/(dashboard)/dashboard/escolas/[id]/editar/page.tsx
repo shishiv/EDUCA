@@ -46,7 +46,7 @@ export default function EditarEscolaPage() {
     endereco: '',
     bairro: '',
     cep: '',
-    cidade: 'Fronteira',
+    cidade: 'Cidade',
     estado: 'MG',
 
     // Contato
@@ -85,7 +85,7 @@ export default function EditarEscolaPage() {
         endereco: logradouro,
         bairro: bairro.trim(),
         cep: cep,
-        cidade: 'Fronteira',
+        cidade: 'Cidade',
         estado: 'MG',
         telefone: formatTelefone(data.telefone || ''),
         email: data.email || '',
@@ -438,7 +438,7 @@ export default function EditarEscolaPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="escola@fronteira.mg.gov.br"
+                    placeholder="escola@municipio.edu.br"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                   />

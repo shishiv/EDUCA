@@ -1,6 +1,6 @@
 # EDUCA - Guia de Deployment
 
-Sistema de Gestão Escolar - Prefeitura de Fronteira, MG
+EDUCA — Sistema de Gestão Escolar Municipal
 
 ---
 
@@ -17,7 +17,7 @@ Sistema de Gestão Escolar - Prefeitura de Fronteira, MG
 ### Acessos Necessários
 
 - **GitHub**: Acesso ao repositório `shishiv/EDUCA`
-- **Vercel**: Conta com acesso ao projeto `gestao-fronteira`
+- **Vercel**: Conta com acesso ao projeto `educa`
 - **Supabase**: Acesso ao dashboard do projeto `SUPABASE-PROJECT-REF`
 
 ---
@@ -58,7 +58,7 @@ Para deploy manual via CLI:
 
 ```bash
 # 1. Navegue até o diretório do projeto
-cd gestao_fronteira
+cd gestao_fronteira  # ou o nome da pasta do projeto
 
 # 2. Verifique se o build local funciona
 pnpm build
@@ -83,7 +83,7 @@ pnpm exec vercel --prod
 
 | Ambiente | URL |
 |----------|-----|
-| Produção | https://gestao-fronteira.vercel.app |
+| Produção | https://seu-projeto.vercel.app |
 | Vercel Dashboard | https://vercel.com/dashboard |
 | Supabase Dashboard | https://supabase.com/dashboard/project/SUPABASE-PROJECT-REF |
 

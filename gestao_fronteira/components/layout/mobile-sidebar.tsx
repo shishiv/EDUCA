@@ -142,15 +142,15 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {/* Mobile sidebar content */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                 {/* Municipal Header */}
-                <div className="flex items-center justify-between py-4 border-b border-fronteira-gray-100">
+                <div className="flex items-center justify-between py-4 border-b border-municipal-gray-100">
                   <div className="flex items-center space-x-3">
                     {/* Municipal Brasão */}
                     <div className="flex-shrink-0">
                       <MunicipalBrasao size="sm" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-fronteira-primary">Sistema Escolar</h2>
-                      <p className="text-xs text-fronteira-gray-500">Prefeitura de Fronteira/MG</p>
+                      <h2 className="text-sm font-bold text-municipal-primary">Sistema Escolar</h2>
+                      <p className="text-xs text-municipal-gray-500">Secretaria de Educação Municipal</p>
                     </div>
                   </div>
                 </div>
@@ -169,8 +169,8 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                                 onClick={onClose} // Close menu when navigation item is clicked
                                 className={cn(
                                   isActive
-                                    ? 'bg-fronteira-primary text-white shadow-sm'
-                                    : 'text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50',
+                                    ? 'bg-municipal-primary text-white shadow-sm'
+                                    : 'text-municipal-gray-500 hover:text-municipal-primary hover:bg-municipal-gray-50',
                                   'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium'
                                 )}
                               >
@@ -178,7 +178,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                                   className={cn(
                                     isActive
                                       ? 'text-white'
-                                      : 'text-fronteira-gray-500 group-hover:text-fronteira-primary',
+                                      : 'text-municipal-gray-500 group-hover:text-municipal-primary',
                                     'h-5 w-5 shrink-0'
                                   )}
                                   aria-hidden="true"

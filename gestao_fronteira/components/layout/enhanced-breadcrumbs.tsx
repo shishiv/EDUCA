@@ -94,12 +94,12 @@ export function EnhancedBreadcrumbs({
               <React.Fragment key={item.href}>
                 <BreadcrumbItem>
                   {isLast ? (
-                    <BreadcrumbPage className="font-medium text-fronteira-primary">
+                    <BreadcrumbPage className="font-medium text-municipal-primary">
                       {item.name}
                     </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink asChild>
-                      <Link href={item.href} className="hover:text-fronteira-primary">
+                      <Link href={item.href} className="hover:text-municipal-primary">
                         {item.name}
                       </Link>
                     </BreadcrumbLink>
@@ -120,7 +120,7 @@ export function EnhancedBreadcrumbs({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-fronteira-gray-500 hover:text-fronteira-primary"
+                className="text-municipal-gray-500 hover:text-municipal-primary"
               >
                 <Clock className="h-4 w-4 mr-2" />
                 Recentes

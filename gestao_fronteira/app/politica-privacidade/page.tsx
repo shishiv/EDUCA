@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { Shield, FileText, Users, Database, Lock, Mail } from 'lucide-react'
+import { municipalConfig } from '@/lib/config'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidade - EDUCA',
@@ -39,7 +40,7 @@ export default function PoliticaPrivacidadePage() {
               <h2 className="text-xl font-semibold text-gray-900">1. Introdução</h2>
             </div>
             <p className="text-gray-700 leading-relaxed">
-              O sistema EDUCA, operado pela <strong>Secretaria Municipal de Educação de Fronteira/MG</strong>,
+              O sistema EDUCA, operado pela <strong>Secretaria Municipal de Educação de {municipalConfig.nome}</strong>,
               coleta e processa dados pessoais de alunos, responsáveis e profissionais da educação
               em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
             </p>
@@ -177,16 +178,16 @@ export default function PoliticaPrivacidadePage() {
             </p>
             <div className="bg-gray-50 rounded-lg p-4 border">
               <p className="text-gray-700 font-semibold">Encarregado de Dados (DPO)</p>
-              <p className="text-gray-700">Secretaria Municipal de Educação de Fronteira/MG</p>
+              <p className="text-gray-700">Secretaria Municipal de Educação de {municipalConfig.nome}</p>
               <p className="text-gray-700 mt-2">
-                <strong>Endereço:</strong> Rua Jandira Batista de Oliveira, 545 - Vila de Furnas<br />
-                Fronteira/MG - CEP 38280-000
+                <strong>Endereço:</strong> {municipalConfig.enderecoDPO || 'A configurar'}<br />
+                {municipalConfig.nome} - {municipalConfig.estado}
               </p>
               <p className="text-gray-700 mt-2">
-                <strong>Telefone:</strong> (34) 3266-1350
+                <strong>Telefone:</strong> {municipalConfig.telefoneContato || 'A configurar'}
               </p>
               <p className="text-gray-700">
-                <strong>E-mail:</strong> educacao@fronteira.mg.gov.br
+                <strong>E-mail:</strong> {municipalConfig.emailDPO || 'A configurar'}
               </p>
               <p className="text-gray-700 mt-2 text-sm">
                 <strong>Horário de Atendimento:</strong> Segunda a Sexta, 08h às 17h
@@ -209,8 +210,7 @@ export default function PoliticaPrivacidadePage() {
           {/* Footer */}
           <div className="border-t pt-6 mt-8">
             <p className="text-sm text-gray-500 text-center">
-              Secretaria Municipal de Educação de Fronteira/MG<br />
-              Rua Jandira Batista de Oliveira, 545 - Vila de Furnas, CEP 38280-000<br />
+              Secretaria Municipal de Educação de {municipalConfig.nome}<br />
               Sistema EDUCA - Gestão Educacional<br />
               © 2025-2026 - Todos os direitos reservados
             </p>

@@ -53,7 +53,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '1',
       nome: 'Lucia Cardoso Oliveira',
-      email: 'lucia.cardoso@fronteira.mg.gov.br'
+      email: 'lucia.cardoso@municipio.edu.br'
     },
     capacidade: 15,
     alunos_matriculados: 12,
@@ -74,7 +74,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '2',
       nome: 'Ana Paula Santos',
-      email: 'ana.paula@fronteira.mg.gov.br'
+      email: 'ana.paula@municipio.edu.br'
     },
     capacidade: 20,
     alunos_matriculados: 18,
@@ -95,7 +95,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '3',
       nome: 'Fernanda Alves Santos',
-      email: 'fernanda.alves@fronteira.mg.gov.br'
+      email: 'fernanda.alves@municipio.edu.br'
     },
     capacidade: 25,
     alunos_matriculados: 23,
@@ -116,7 +116,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '4',
       nome: 'Roberto Silva Lima',
-      email: 'roberto.lima@fronteira.mg.gov.br'
+      email: 'roberto.lima@municipio.edu.br'
     },
     capacidade: 25,
     alunos_matriculados: 20,
@@ -137,7 +137,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '5',
       nome: 'Mariana Costa Pereira',
-      email: 'mariana.costa@fronteira.mg.gov.br'
+      email: 'mariana.costa@municipio.edu.br'
     },
     capacidade: 30,
     alunos_matriculados: 28,
@@ -158,7 +158,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '6',
       nome: 'Jose Roberto Lima',
-      email: 'jose.lima@fronteira.mg.gov.br'
+      email: 'jose.lima@municipio.edu.br'
     },
     capacidade: 30,
     alunos_matriculados: 25,
@@ -196,7 +196,7 @@ const mockTurmas: Turma[] = [
     professor: {
       id: '7',
       nome: 'Patricia Souza Oliveira',
-      email: 'patricia.souza@fronteira.mg.gov.br'
+      email: 'patricia.souza@municipio.edu.br'
     },
     capacidade: 20,
     alunos_matriculados: 15,

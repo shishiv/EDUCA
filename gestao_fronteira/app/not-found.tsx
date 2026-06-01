@@ -95,10 +95,10 @@ export default function NotFound() {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Precisa de ajuda?</h4>
             <p className="text-sm text-blue-700">
-              Entre em contato com o suporte técnico da Secretaria de Educação de Fronteira/MG
+              Entre em contato com o suporte técnico da Secretaria Municipal de Educação
             </p>
             <p className="text-xs text-blue-600 mt-1">
-              Email: suporte@fronteira.mg.gov.br | Telefone: (34) 3555-0000
+              Email: suporte@municipio.edu.br | Telefone: (34) 3555-0000
             </p>
           </div>
         </CardContent>

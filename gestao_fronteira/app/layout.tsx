@@ -27,8 +27,8 @@ const caveat = Caveat({
 })
 
 export const metadata: Metadata = {
-  title: 'Sistema de Gestão Escolar - Fronteira/MG',
-  description: 'Sistema completo para gestão da rede municipal de ensino de Fronteira/MG',
+  title: 'Sistema de Gestão Escolar - Cidade/UF',
+  description: 'Sistema aberto de gestão escolar para municípios brasileiros',
 }
 
 export default function RootLayout({

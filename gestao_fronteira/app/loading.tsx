@@ -11,7 +11,7 @@ export default function Loading() {
           </div>
         </div>
         <p className="text-gray-700 font-medium">Carregando Sistema...</p>
-        <p className="text-sm text-gray-600 mt-2">SME Fronteira/MG</p>
+        <p className="text-sm text-gray-600 mt-2">SME</p>
       </div>
     </div>
   )

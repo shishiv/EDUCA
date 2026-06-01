@@ -125,7 +125,7 @@ export default function NovoUsuarioPage() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="usuario@fronteira.mg.gov.br"
+                      placeholder="usuario@municipio.edu.br"
                       required
                     />
                   </div>
