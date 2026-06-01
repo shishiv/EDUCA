@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: educa_dev
+      POSTGRES_USER: educa
+      POSTGRES_PASSWORD: educa_dev_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U educa -d educa_dev']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+# ============================================================================
+# EDUCA — Local Development Database
+# ============================================================================
+#
+# Usage:
+#   docker compose up -d        # Start PostgreSQL
+#   docker compose down         # Stop
+#   docker compose down -v      # Stop + delete data
+#
+# This starts a bare PostgreSQL instance for local development.
+# The project uses Supabase SDK — for full local Supabase emulation
+# (Auth, Storage, Realtime), use the Supabase CLI instead:
+#
+#   npx supabase start
+#
+# See gestao_fronteira/.env.local.example for environment variables.
+# ============================================================================
