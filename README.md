@@ -26,7 +26,7 @@ EDUCA é uma plataforma de gestão escolar municipal construída para os 5.570 m
 ```bash
 # 1. Clone o repositório
 git clone https://github.com/shishiv/EDUCA.git
-cd EDUCA/gestao_fronteira
+cd EDUCA/web
 
 # 2. Configure as variáveis de ambiente
 cp .env.local.example .env.local

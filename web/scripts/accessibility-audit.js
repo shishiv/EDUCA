@@ -447,7 +447,7 @@ function generateAccessibilityReport() {
 // Main execution
 if (require.main === module) {
   console.log('🚀 Starting WCAG 2.1 AA Accessibility Audit')
-  console.log('Educational Management System - gestao_fronteira')
+  console.log('Educational Management System - web')
   console.log('================================================\n')
 
   try {

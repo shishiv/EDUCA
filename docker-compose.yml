@@ -33,5 +33,5 @@ volumes:
 #
 #   npx supabase start
 #
-# See gestao_fronteira/.env.local.example for environment variables.
+# See web/.env.local.example for environment variables.
 # ============================================================================

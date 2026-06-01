@@ -58,7 +58,7 @@ Para deploy manual via CLI:
 
 ```bash
 # 1. Navegue até o diretório do projeto
-cd gestao_fronteira  # ou o nome da pasta do projeto
+cd web  # ou o nome da pasta do projeto
 
 # 2. Verifique se o build local funciona
 pnpm build
