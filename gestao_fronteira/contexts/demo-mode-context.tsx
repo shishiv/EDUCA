@@ -20,7 +20,7 @@ import * as React from 'react'
 import { useAuth } from '@/hooks/use-auth'
 
 // Storage key for sessionStorage
-const STORAGE_KEY = 'gestao-fronteira-demo-mode'
+const STORAGE_KEY = 'educa-demo-mode'
 
 // Types
 interface DemoModeContextType {

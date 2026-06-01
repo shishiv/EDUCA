@@ -42,6 +42,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StatusPresenca } from '@/types/diario-classe'
+import { municipalConfig } from '@/lib/config'
 
 // ============================================================================
 // TYPES
@@ -556,7 +557,7 @@ export function AttendanceReportTable({
         {printMode && (
           <div className="text-center text-xs text-gray-500 mt-6 pt-4 border-t">
             <p>Documento gerado em {new Date().toLocaleDateString('pt-BR')} - Sistema de Gestao Escolar EDUCA</p>
-            <p>Prefeitura Municipal de Fronteira/MG</p>
+            <p>{municipalConfig.nome}</p>
           </div>
         )}
       </CardContent>

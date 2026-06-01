@@ -28,7 +28,7 @@ export default function PerfilPage() {
     nome: userProfile?.nome || '',
     email: userProfile?.email || '',
     telefone: '(34) 99999-0000',
-    endereco: 'Rua da Educação, 123 - Centro - Fronteira/MG'
+    endereco: 'Rua da Educação, 123 - Centro - Cidade/UF'
   })
   const [passwordData, setPasswordData] = useState({
     senhaAtual: '',

@@ -157,9 +157,9 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
   // Load saved data from localStorage
   const loadSavedData = async () => {
     try {
-      const savedSearches = localStorage.getItem('gestao-fronteira-saved-searches')
-      const recentSearches = localStorage.getItem('gestao-fronteira-recent-searches')
-      const userPreferences = localStorage.getItem('gestao-fronteira-search-preferences')
+      const savedSearches = localStorage.getItem('educa-saved-searches')
+      const recentSearches = localStorage.getItem('educa-recent-searches')
+      const userPreferences = localStorage.getItem('educa-search-preferences')
 
       setState(prev => ({
         ...prev,
@@ -181,7 +181,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
         sortOrder: state.sortOrder,
         pageSize: state.pageSize
       }
-      localStorage.setItem('gestao-fronteira-search-preferences', JSON.stringify(preferences))
+      localStorage.setItem('educa-search-preferences', JSON.stringify(preferences))
     } catch (error) {
       logger.error('Failed to save user preferences:', error instanceof Error ? error : String(error))
     }
@@ -348,7 +348,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     setState(prev => ({ ...prev, savedSearches: updatedSaved }))
 
     try {
-      localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
+      localStorage.setItem('educa-saved-searches', JSON.stringify(updatedSaved))
       toast.success('Busca salva com sucesso!')
     } catch (error) {
       logger.error('Failed to save search:', error instanceof Error ? error : String(error))
@@ -372,7 +372,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     setState(prev => ({ ...prev, savedSearches: updatedSaved }))
 
     try {
-      localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
+      localStorage.setItem('educa-saved-searches', JSON.stringify(updatedSaved))
     } catch (error) {
       logger.error('Failed to update saved search:', error instanceof Error ? error : String(error))
     }
@@ -383,7 +383,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     setState(prev => ({ ...prev, savedSearches: updatedSaved }))
 
     try {
-      localStorage.setItem('gestao-fronteira-saved-searches', JSON.stringify(updatedSaved))
+      localStorage.setItem('educa-saved-searches', JSON.stringify(updatedSaved))
       toast.success('Busca removida')
     } catch (error) {
       logger.error('Failed to delete saved search:', error instanceof Error ? error : String(error))
@@ -416,7 +416,7 @@ export function SearchProvider({ children, defaultSearchType = 'students' }: Sea
     setState(prev => ({ ...prev, recentSearches: updatedRecent }))
 
     try {
-      localStorage.setItem('gestao-fronteira-recent-searches', JSON.stringify(updatedRecent))
+      localStorage.setItem('educa-recent-searches', JSON.stringify(updatedRecent))
     } catch (error) {
       logger.error('Failed to save recent search:', error instanceof Error ? error : String(error))
     }

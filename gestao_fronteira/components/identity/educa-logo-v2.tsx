@@ -3,13 +3,14 @@
 /**
  * EDUCA Logo Component v2.0
  * Brand Guidelines v1.0 - Dezembro 2024
- * Secretaria Municipal de Educação - Fronteira/MG
+ * Secretaria Municipal de Educação - Cidade/UF
  *
  * Logo: Texto "EDUCA" em Lexend Bold com gradiente verde→azul + underline amarelo curvo
  */
 
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { municipalConfig } from '@/lib/config'
 
 // Size configurations matching brand guidelines
 const sizeConfig = {
@@ -164,7 +165,7 @@ export function EducaLogoIcon({
 }
 
 /**
- * EDUCA Logo with Prefeitura de Fronteira - Co-branding
+ * EDUCA Logo with municipal co-branding
  * Used in: official documents, footers, institutional materials
  */
 export function EducaLogoWithPrefeitura({
@@ -185,7 +186,7 @@ export function EducaLogoWithPrefeitura({
       <div className="flex items-center gap-2">
         <Image
           src="/logo_pref.png"
-          alt="Brasão de Fronteira"
+          alt="Brasão municipal"
           width={sealSizes[size]}
           height={sealSizes[size]}
           className="object-contain"
@@ -195,7 +196,7 @@ export function EducaLogoWithPrefeitura({
             Prefeitura de
           </span>
           <span className="text-sm font-bold text-indigo-800">
-            Fronteira
+            {municipalConfig.nome}
           </span>
         </div>
       </div>

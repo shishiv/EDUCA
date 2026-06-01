@@ -121,7 +121,7 @@ export default function LoginPage() {
             Bem-vindo ao EDUCA
           </h1>
           <p className="text-lg text-white/85 mb-12">
-            O sistema que simplifica a gestao escolar da rede municipal de Fronteira, MG.
+            O sistema que simplifica a gestão escolar da rede municipal.
           </p>
 
           {/* Features list */}
@@ -188,7 +188,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@educafronteira.mg"
+                placeholder="seu.email@municipio.edu.br"
                 required
                 className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
               />
@@ -246,7 +246,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-8 text-center text-sm text-gray-400">
-            Secretaria Municipal de Educacao - Fronteira, MG
+            Secretaria Municipal de Educação
           </p>
         </div>
       </div>

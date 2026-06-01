@@ -40,7 +40,7 @@ export default function NovaEscolaPage() {
     endereco: '',
     bairro: '',
     cep: '',
-    cidade: 'Fronteira',
+    cidade: 'Cidade',
     estado: 'MG',
 
     // Contato
@@ -365,7 +365,7 @@ export default function NovaEscolaPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="escola@fronteira.mg.gov.br"
+                    placeholder="escola@municipio.edu.br"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                   />

@@ -157,7 +157,7 @@ export function MobileHeader({
               variant="ghost"
               size="sm"
               onClick={onMenuToggle}
-              className="h-10 w-10 text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50 touch-target-large"
+              className="h-10 w-10 text-municipal-gray-500 hover:text-municipal-primary hover:bg-municipal-gray-50 touch-target-large"
               aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
               data-testid="menu-toggle"
             >
@@ -217,7 +217,7 @@ export function MobileHeader({
             <Button
               variant="ghost"
               size="sm"
-              className="relative text-fronteira-gray-500 hover:text-fronteira-primary hover:bg-fronteira-gray-50 h-10 w-10 touch-target-large"
+              className="relative text-municipal-gray-500 hover:text-municipal-primary hover:bg-municipal-gray-50 h-10 w-10 touch-target-large"
             >
               <Bell className="h-4 w-4" />
               {notifications > 0 && (
@@ -233,9 +233,9 @@ export function MobileHeader({
             {/* Profile Menu - Larger touch target */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-fronteira-gray-50 touch-target-large">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-municipal-gray-50 touch-target-large">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-fronteira-primary text-fronteira-primary-foreground text-xs">
+                    <AvatarFallback className="bg-municipal-primary text-municipal-primary-foreground text-xs">
                       {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
                     </AvatarFallback>
                   </Avatar>
@@ -266,7 +266,7 @@ export function MobileHeader({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-fronteira-red hover:text-fronteira-red hover:bg-red-50">
+                <DropdownMenuItem onClick={handleSignOut} className="text-municipal-red hover:text-municipal-red hover:bg-red-50">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>

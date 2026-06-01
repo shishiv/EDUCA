@@ -43,7 +43,8 @@ import {
   Info,
   Clock,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils"
+import { municipalConfig } from "@/lib/config"
 import {
   EXPERIENCE_FIELDS_CONFIG,
   REPORT_STATUS_CONFIG,
@@ -622,7 +623,7 @@ export function StudentReportInfantil({
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
           <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestao Escolar EDUCA</p>
-          <p>Prefeitura Municipal de Fronteira/MG</p>
+          <p>{municipalConfig.nome}</p>
         </div>
       )}
     </div>

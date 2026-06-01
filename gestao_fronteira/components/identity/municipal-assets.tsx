@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { GraduationCap, School } from 'lucide-react'
+import { municipalConfig } from '@/lib/config'
 
 interface MunicipalLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -22,7 +23,7 @@ export function MunicipalLogo({ size = 'md', priority = false, className = '' }:
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <GraduationCap
-        className="text-fronteira-primary"
+        className="text-municipal-primary"
         style={{ width: dimensions.icon, height: dimensions.icon }}
       />
     </div>
@@ -35,7 +36,7 @@ export function MunicipalBrasao({ size = 'md', className = '' }: Omit<MunicipalL
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <School
-        className="text-fronteira-primary"
+        className="text-municipal-primary"
         style={{ width: dimensions.icon, height: dimensions.icon }}
       />
     </div>
@@ -53,10 +54,10 @@ export function MunicipalHeaderIdentity({
     <div className={`flex items-center space-x-3 ${className}`}>
       <MunicipalBrasao size="md" />
       <div className="flex flex-col">
-        <span className="text-sm font-bold text-fronteira-primary">
-          {variant === 'full' ? 'Prefeitura Municipal de Fronteira/MG' : 'Prefeitura de Fronteira'}
+        <span className="text-sm font-bold text-municipal-primary">
+          {variant === 'full' ? municipalConfig.nome : municipalConfig.secretaria}
         </span>
-        <span className="text-xs text-fronteira-gray-600">Secretaria de Educação</span>
+        <span className="text-xs text-municipal-gray-600">{municipalConfig.secretaria}</span>
       </div>
     </div>
   )

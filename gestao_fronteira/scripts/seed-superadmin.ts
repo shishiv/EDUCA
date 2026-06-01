@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 /**
- * Seed script MINIMALISTA para Sistema Educacional de Fronteira/MG
+ * Seed script MINIMALISTA para Sistema Educacional Municipal
  *
  * Executar: bun run seed:superadmin
  *
  * Este script cria APENAS:
  * - 1 Superadmin com acesso completo ao sistema
- * - 9 Escolas municipais com dados REAIS de Fronteira/MG
+ * - Escolas municipais de exemplo — substitua com dados reais
  *
  * IMPORTANTE:
  * - Após login, superadmin tem acesso completo ao sistema
@@ -29,7 +29,7 @@ const supabase = createClient<Database>(
 )
 
 // Constantes
-const SENHA_SUPERADMIN = 'Admin@Fronteira2025'
+const SENHA_SUPERADMIN = 'Admin@Municipio2025'
 
 interface Escola {
   id?: string
@@ -43,7 +43,7 @@ interface Escola {
 
 async function main() {
   console.log('\n' + '='.repeat(70))
-  console.log('🎓 SEED: Sistema Educacional de Fronteira/MG')
+  console.log('🎓 SEED: Sistema Educacional Municipal')
   console.log('='.repeat(70))
 
   try {
@@ -54,7 +54,7 @@ async function main() {
     console.log('-'.repeat(70))
 
     const { data: authAdmin, error: authAdminError } = await supabase.auth.admin.createUser({
-      email: 'admin@fronteira.mg.gov.br',
+      email: 'admin@municipio.edu.br',
       password: SENHA_SUPERADMIN,
       email_confirm: true,
       user_metadata: {
@@ -73,7 +73,7 @@ async function main() {
       // Criar perfil no database
       const { error: profileAdminError } = await supabase.from('users').insert({
         id: authAdmin.user.id,
-        email: 'admin@fronteira.mg.gov.br',
+        email: 'admin@municipio.edu.br',
         nome: 'Administrador do Sistema',
         tipo_usuario: 'admin',
         escola_id: null,  // Admin não pertence a escola específica
@@ -87,7 +87,7 @@ async function main() {
       }
 
       console.log('✅ Superadmin criado com sucesso!')
-      console.log(`   Email: admin@fronteira.mg.gov.br`)
+      console.log(`   Email: admin@municipio.edu.br`)
       console.log(`   Senha: ${SENHA_SUPERADMIN}`)
     }
 
@@ -102,73 +102,73 @@ async function main() {
         nome: 'EM Marechal Castelo Branco',
         codigo: '31158810',
         tipo: 'fundamental',
-        endereco: 'Rua Godofredo Antônio da Costa, Nº 238 - Vila Santo Antônio - Fronteira/MG',
+        endereco: 'Rua Godofredo Antônio da Costa, Nº 238 - Vila Santo Antônio - Cidade/UF',
         telefone: '(34) 3199-9856',
-        email: 'contato.marechal@fronteira.mg.gov.br'
+        email: 'contato.marechal@municipio.edu.br'
       },
       {
         nome: 'EM Poliana Ziza Ferreira',
         codigo: '31158828',
         tipo: 'fundamental',
-        endereco: 'Avenida Aurélio Luiz Mistieri, Nº 370 - Centro - Fronteira/MG',
+        endereco: 'Avenida Aurélio Luiz Mistieri, Nº 370 - Centro - Cidade/UF',
         telefone: '(34) 3199-9786',
-        email: 'contato.poliana@fronteira.mg.gov.br'
+        email: 'contato.poliana@municipio.edu.br'
       },
       {
         nome: 'EM José Maria Bastos',
         codigo: '31342920',
         tipo: 'fundamental',
-        endereco: 'Avenida Abdo Jauíde Feres, Nº 370 - Centro - Fronteira/MG',
+        endereco: 'Avenida Abdo Jauíde Feres, Nº 370 - Centro - Cidade/UF',
         telefone: '(34) 3199-9852',
-        email: 'contato.jose@fronteira.mg.gov.br'
+        email: 'contato.jose@municipio.edu.br'
       },
       {
         nome: 'PEM Turma da Mônica',
         codigo: '31228621',
         tipo: 'pre_escola',
-        endereco: 'Rua Hignio Florêncio de Souza, Nº 430 - Vila Residencial de Furnas - Fronteira/MG',
+        endereco: 'Rua Hignio Florêncio de Souza, Nº 430 - Vila Residencial de Furnas - Cidade/UF',
         telefone: '(34) 3199-9785',
-        email: 'contato.monica@fronteira.mg.gov.br'
+        email: 'contato.monica@municipio.edu.br'
       },
       {
         nome: 'EMEI Maísa Ferreira Passuelo Vasconcelos',
         codigo: '31376027',
         tipo: 'pre_escola',
-        endereco: 'Avenida Brasil, Nº 220 - Vila Residencial de Furnas - Fronteira/MG',
+        endereco: 'Avenida Brasil, Nº 220 - Vila Residencial de Furnas - Cidade/UF',
         telefone: '(34) 3199-9852',
-        email: 'contato.maisa@fronteira.mg.gov.br'
+        email: 'contato.maisa@municipio.edu.br'
       },
       {
         nome: 'CMEI Dona Alice',
         codigo: '31385018',
         tipo: 'creche',
-        endereco: 'Rua Miguel José Miziara, Nº 241 - Cohab - Fronteira/MG',
+        endereco: 'Rua Miguel José Miziara, Nº 241 - Cohab - Cidade/UF',
         telefone: '(34) 3199-9852',
-        email: 'contato.alice@fronteira.mg.gov.br'
+        email: 'contato.alice@municipio.edu.br'
       },
       {
         nome: 'CMEI Dona Belinha',
         codigo: '31357170',
         tipo: 'creche',
-        endereco: 'Avenida Liberdade, Nº 1480 - Vila Reis - Fronteira/MG',
+        endereco: 'Avenida Liberdade, Nº 1480 - Vila Reis - Cidade/UF',
         telefone: '(34) 34282738',
-        email: 'contato.belinha@fronteira.mg.gov.br'    
+        email: 'contato.belinha@municipio.edu.br'    
       },
       {
         nome: 'CMEI Santo Antônio',
         codigo: '31333051',
         tipo: 'creche',
-        endereco: 'Rua Godofredo Antônio da Costa, Nº 62 - Vila Santo Antônio - Fronteira/MG',
+        endereco: 'Rua Godofredo Antônio da Costa, Nº 62 - Vila Santo Antônio - Cidade/UF',
         telefone: '(34) 3199-9855',
-        email: 'contato.santoantonio@fronteira.mg.gov.br'
+        email: 'contato.santoantonio@municipio.edu.br'
       },
       {
         nome: 'CMEI Dona Mençora',
         codigo: '31290459',
         tipo: 'creche',
-        endereco: 'Rua Godofredo Antônio da Costa, Nº 62 - Vila Santo Antônio - Fronteira/MG',
+        endereco: 'Rua Godofredo Antônio da Costa, Nº 62 - Vila Santo Antônio - Cidade/UF',
         telefone: '(34) 3199-9853',
-        email: 'contato.mencora@fronteira.mg.gov.br'
+        email: 'contato.mencora@municipio.edu.br'
       }
     ]
 
@@ -228,8 +228,8 @@ async function main() {
     console.log('\n📋 Credenciais de Acesso:')
     console.log('┌─────────────────────────────────────────────────────────────────┐')
     console.log('│ SUPERADMIN                                                      │')
-    console.log('│ Email: admin@fronteira.mg.gov.br                                │')
-    console.log('│ Senha: Admin@Fronteira2025                                      │')
+    console.log('│ Email: admin@municipio.edu.br                                │')
+    console.log('│ Senha: Admin@Municipio2025                                      │')
     console.log('│                                                                 │')
     console.log('│ ⚠️  ACESSO COMPLETO AO SISTEMA:                                  │')
     console.log('│ - Gerenciar escolas, usuários e configurações                 │')
@@ -242,7 +242,7 @@ async function main() {
     })
     console.log('\n🚀 Próximos Passos:')
     console.log('   1. Acesse: http://localhost:3000/login')
-    console.log('   2. Login: admin@fronteira.mg.gov.br / Admin@Fronteira2025')
+    console.log('   2. Login: admin@municipio.edu.br / Admin@Municipio2025')
     console.log('   3. Gerencie usuários, escolas e configurações do sistema')
     console.log('\n')
 

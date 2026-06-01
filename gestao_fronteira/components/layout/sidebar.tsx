@@ -245,7 +245,7 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
             <div>
               <h2 className="text-sm font-bold text-green-600 font-display">Sistema Escolar</h2>
-              <p className="text-xs text-gray-500">Prefeitura de Fronteira/MG</p>
+              <p className="text-xs text-gray-500">Secretaria de Educação Municipal</p>
             </div>
           </div>
         )}

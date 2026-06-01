@@ -9,22 +9,22 @@
 
   /* Fronteira Municipal Identity Colors */
   /* Based on official brasão and municipal website */
-  --fronteira-red: 220 76% 50%;        /* #DC2626 - Brasão red */
-  --fronteira-green: 166 77% 40%;      /* #059669 - Brasão green */
-  --fronteira-blue: 221 83% 53%;       /* #1D4ED8 - Brasão blue */
-  --fronteira-yellow: 45 93% 58%;      /* #FBBF24 - Brasão yellow */
+  --municipal-red: 220 76% 50%;        /* #DC2626 - Brasão red */
+  --municipal-green: 166 77% 40%;      /* #059669 - Brasão green */
+  --municipal-blue: 221 83% 53%;       /* #1D4ED8 - Brasão blue */
+  --municipal-yellow: 45 93% 58%;      /* #FBBF24 - Brasão yellow */
 
   /* Municipal Primary Colors */
-  --fronteira-primary: 200 100% 34%;   /* rgb(0, 115, 172) - Official website blue */
-  --fronteira-primary-foreground: 0 0% 100%;
-  --fronteira-secondary: 221 77% 20%;  /* #1E3A8A - Deep institutional blue */
-  --fronteira-secondary-foreground: 0 0% 100%;
+  --municipal-primary: 200 100% 34%;   /* rgb(0, 115, 172) - Official website blue */
+  --municipal-primary-foreground: 0 0% 100%;
+  --municipal-secondary: 221 77% 20%;  /* #1E3A8A - Deep institutional blue */
+  --municipal-secondary-foreground: 0 0% 100%;
 
   /* Municipal Neutral Palette */
-  --fronteira-gray-50: 216 50% 98%;    /* #F8FAFC */
-  --fronteira-gray-100: 216 33% 97%;   /* #F1F5F9 */
-  --fronteira-gray-500: 215 20% 58%;   /* #64748B */
-  --fronteira-gray-900: 222 67% 5%;    /* #0F172A */
+  --municipal-gray-50: 216 50% 98%;    /* #F8FAFC */
+  --municipal-gray-100: 216 33% 97%;   /* #F1F5F9 */
+  --municipal-gray-500: 215 20% 58%;   /* #64748B */
+  --municipal-gray-900: 222 67% 5%;    /* #0F172A */
 
   /* ============================================
      EDUCA Design System Tokens

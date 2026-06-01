@@ -260,7 +260,7 @@ export function Header() {
                   {getRoleLabel(userProfile?.tipo_usuario || '')}
                 </p>
                 <div className="mt-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">Sistema Educacional Fronteira/MG</p>
+                  <p className="text-xs text-gray-500">Sistema Educacional Municipal</p>
                 </div>
               </div>
             </DropdownMenuLabel>

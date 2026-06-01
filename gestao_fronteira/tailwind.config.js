@@ -67,7 +67,7 @@ module.exports = {
         // "A educação não é quadrada"
         // ===========================================
 
-        // EDUCA Primary Colors (derived from Fronteira coat of arms)
+        // EDUCA Primary Colors (EDUCA municipal design system)
         educa: {
           blue: {
             50: '#EEF2FF',
@@ -234,26 +234,26 @@ module.exports = {
           'espacos-light': 'var(--campo-espacos-light)',
         },
 
-        // Fronteira Municipal (legacy support + official use)
-        fronteira: {
-          red: 'hsl(var(--fronteira-red))',
-          green: 'hsl(var(--fronteira-green))',
-          blue: 'hsl(var(--fronteira-blue))',
-          yellow: 'hsl(var(--fronteira-yellow))',
+        // Municipal theme tokens
+        municipal: {
+          red: 'hsl(var(--municipal-red))',
+          green: 'hsl(var(--municipal-green))',
+          blue: 'hsl(var(--municipal-blue))',
+          yellow: 'hsl(var(--municipal-yellow))',
           primary: {
-            DEFAULT: 'hsl(var(--fronteira-primary))',
-            foreground: 'hsl(var(--fronteira-primary-foreground))',
+            DEFAULT: 'hsl(var(--municipal-primary))',
+            foreground: 'hsl(var(--municipal-primary-foreground))',
           },
           secondary: {
-            DEFAULT: 'hsl(var(--fronteira-secondary))',
-            foreground: 'hsl(var(--fronteira-secondary-foreground))',
+            DEFAULT: 'hsl(var(--municipal-secondary))',
+            foreground: 'hsl(var(--municipal-secondary-foreground))',
           },
           gray: {
-            50: 'hsl(var(--fronteira-gray-50))',
-            100: 'hsl(var(--fronteira-gray-100))',
-            500: 'hsl(var(--fronteira-gray-500))',
+            50: 'hsl(var(--municipal-gray-50))',
+            100: 'hsl(var(--municipal-gray-100))',
+            500: 'hsl(var(--municipal-gray-500))',
             600: '#52525B',
-            900: 'hsl(var(--fronteira-gray-900))',
+            900: 'hsl(var(--municipal-gray-900))',
           },
         },
         border: 'hsl(var(--border))',

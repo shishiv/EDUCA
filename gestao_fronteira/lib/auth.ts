@@ -93,7 +93,7 @@ export const signOut = async () => {
 
     // Clear escola selection on logout
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('gestao-fronteira-selected-escola')
+      sessionStorage.removeItem('educa-selected-escola')
     }
 
     const { error } = await supabase.auth.signOut()
