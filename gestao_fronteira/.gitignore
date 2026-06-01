@@ -39,6 +39,11 @@ yarn-error.log*
 # local env files
 .env
 .env*.local
+.env.production
+
+# Build & test artifacts
+build_output.txt
+docs-inventory.json
 
 # vercel
 .vercel
