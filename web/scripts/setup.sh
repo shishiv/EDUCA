@@ -22,7 +22,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # Check if we're in the right directory
 if [[ ! -f "package.json" ]]; then
-    log_error "package.json not found. Please run this script from the gestao_fronteira directory."
+    log_error "package.json not found. Please run this script from the web directory."
     exit 1
 fi
 

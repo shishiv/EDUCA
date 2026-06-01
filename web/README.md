@@ -100,7 +100,7 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
 1. **Clone o repositório**
    ```bash
    git clone <repository-url>
-   cd gestao_fronteira
+   cd web
    ```
 
 2. **Instale as dependências**
@@ -155,7 +155,7 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
 ## 📁 Estrutura do Projeto
 
 ```
-gestao_fronteira/
+web/
 ├── app/                          # Next.js App Router
 │   ├── (auth)/                   # Grupo de rotas de autenticação
 │   ├── (dashboard)/              # Grupo de rotas do dashboard
@@ -258,7 +258,7 @@ logger.info('Operação bem-sucedida', {
 
 ## 🏗️ Arquitetura do Sistema
 
-### Banco de Dados (Schema: gestao_fronteira)
+### Banco de Dados (Schema: web)
 
 #### Tabelas Principais
 - **`users`** - Usuários do sistema (5 roles)

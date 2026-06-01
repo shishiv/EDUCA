@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Apply feature_flags migration to Supabase
- * Run: cd gestao_fronteira && npx tsx scripts/apply-feature-flags-migration.ts
+ * Run: cd web && npx tsx scripts/apply-feature-flags-migration.ts
  */
 
 import { createClient } from '@supabase/supabase-js'
