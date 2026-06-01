@@ -431,7 +431,8 @@ describe('AttendanceReportTable', () => {
       render(<AttendanceReportTable data={mockData} printMode={true} />)
       
       expect(screen.getByText(/documento.*gerado/i)).toBeInTheDocument()
-      expect(screen.getByText(/prefeitura.*municipal/i)).toBeInTheDocument()
+      // Footer shows configured municipality name (defaults to 'Município' when env not set)
+      expect(screen.getByText('Município')).toBeInTheDocument()
     })
 
     it('should apply print-specific styling', () => {

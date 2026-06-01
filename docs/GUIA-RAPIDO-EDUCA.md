@@ -1,6 +1,6 @@
 # EDUCA - Guia Rapido de Uso
 
-**Sistema de Gestao Escolar - Prefeitura de Fronteira**
+**EDUCA - Sistema de Gestão Escolar Municipal**
 
 **Versao:** Piloto v2.1
 
@@ -186,4 +186,4 @@ O sistema exibe alertas automaticos quando:
 
 *Guia criado em: Janeiro de 2026*
 
-*Prefeitura Municipal de Fronteira - Secretaria de Educacao*
+*Secretaria Municipal de Educação*

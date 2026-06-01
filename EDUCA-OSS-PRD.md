@@ -49,7 +49,7 @@ git filter-repo --path gestao_fronteira/deploy.log --invert-paths --force
 git push origin main --force
 ```
 
-Após push: verificar que nenhum commit no histórico contém as strings `SUPABASE_SERVICE_ROLE_KEY` ou `SUPABASE-PROJECT-REF`.
+Após push: verificar que nenhum commit no histórico contém as strings `SUPABASE_SERVICE_ROLE_KEY` ou `[SUPABASE-PROJECT-REF]`.
 
 > After this: `git log --all -p | grep SERVICE_ROLE` retorna vazio. O repo pode ser tornado público sem risco de vazamento de credencial.
 
@@ -290,6 +290,6 @@ The project stalled not because of technical debt but because municipal budget w
 
 ## Open Questions
 
-- Supabase project `SUPABASE-PROJECT-REF` ainda está ativo? Se sim, rotacionar a service role key após S01.
+- Supabase project `[SUPABASE-PROJECT-REF]` ainda está ativo? Se sim, rotacionar a service role key após S01.
 - Há outros arquivos com dados reais de alunos ou professores além do seed-data.ts?
 - O `public/logo_pref.png` é o brasão real da prefeitura? Se sim, substituir por logo genérico EDUCA.
