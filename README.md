@@ -1,6 +1,20 @@
+<div align="center">
+
 # EDUCA
 
 **Sistema aberto de gestão escolar para municípios brasileiros.**
+
+[![CI](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml/badge.svg)](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/shishiv/EDUCA/blob/main/CONTRIBUTING.md)
+[![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://opensource.org/)
+
+</div>
+
+---
 
 EDUCA é uma plataforma de gestão escolar municipal construída para os 5.570 municípios brasileiros — a maioria ainda gerencia suas redes de ensino em papel. O sistema cobre desde matrículas até relatórios de Bolsa Família, com conformidade completa com INEP/Educacenso e LGPD.
 
@@ -103,3 +117,58 @@ Veja [CONTRIBUTING.md](CONTRIBUTING.md) para o guia completo.
 ## Licença
 
 MIT — ver [LICENSE](LICENSE)
+
+---
+
+## English
+
+**EDUCA** is an open-source school management platform built for Brazilian municipalities. It covers everything from enrollment to Bolsa Família (social welfare) attendance reports, with full INEP/Educacenso and LGPD compliance.
+
+### Tech Stack
+
+| Technology | Version |
+|---|---|
+| Next.js | 16+ |
+| React | 19 |
+| TypeScript | strict |
+| Supabase / PostgreSQL | multi-tenant RLS |
+| shadcn/ui + Tailwind CSS | — |
+| Playwright + Vitest | E2E + Unit tests |
+
+### Quick Start
+
+**Prerequisites:** Node.js 20+, pnpm, Supabase account (free tier works)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/shishiv/EDUCA.git
+cd EDUCA/web
+
+# 2. Configure environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your Supabase credentials and municipal data
+
+# 3. Install dependencies
+pnpm install
+
+# 4. Apply database schema
+pnpm supabase db push   # or import supabase/migrations/ manually
+
+# 5. Start the development server
+pnpm dev
+```
+
+The system will be available at `http://localhost:3000`.
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+Priority areas for contribution:
+- **Provider-agnostic layer** — decouple from Supabase SDK (see [docs/PROVIDER-AGNOSTIC-ROADMAP.md](docs/PROVIDER-AGNOSTIC-ROADMAP.md))
+- INEP/Educacenso export
+- Internationalization (i18n) for other Latin American countries
+
+### License
+
+MIT — see [LICENSE](LICENSE)

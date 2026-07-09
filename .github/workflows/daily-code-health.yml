@@ -1,0 +1,212 @@
+name: Daily Code Health Report
+
+on:
+  schedule:
+    # 06:00 BRT = 09:00 UTC (BRT is UTC-3, no DST in most of Brazil)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    # Allow manual trigger for testing
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+  WORKING_DIRECTORY: web
+
+jobs:
+  analyze:
+    name: Analyze codebase health
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need HEAD~1 for diff
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get git diff (last 24h)
+        id: git_diff
+        run: |
+          DIFF=$(git diff HEAD~1 --stat 2>/dev/null || echo "No changes or initial commit")
+          # Escape for JSON
+          DIFF_JSON=$(echo "$DIFF" | jq -Rs .)
+          echo "diff=$DIFF_JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Get recent commits
+        id: recent_commits
+        run: |
+          COMMITS=$(git log --oneline -10 2>/dev/null || echo "No commits")
+          COMMITS_JSON=$(echo "$COMMITS" | jq -Rs .)
+          echo "commits=$COMMITS_JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Run type check
+        id: typecheck
+        continue-on-error: true
+        run: |
+          OUTPUT=$(pnpm typecheck 2>&1 || true)
+          ERROR_COUNT=$(echo "$OUTPUT" | grep -c "error TS" || echo "0")
+          echo "output=$(echo "$OUTPUT" | jq -Rs .)" >> "$GITHUB_OUTPUT"
+          echo "error_count=$ERROR_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Run linter
+        id: lint
+        continue-on-error: true
+        run: |
+          OUTPUT=$(pnpm lint 2>&1 || true)
+          WARN_COUNT=$(echo "$OUTPUT" | grep -c "warning" || echo "0")
+          ERROR_COUNT=$(echo "$OUTPUT" | grep -c "error" || echo "0")
+          echo "output=$(echo "$OUTPUT" | jq -Rs .)" >> "$GITHUB_OUTPUT"
+          echo "warn_count=$WARN_COUNT" >> "$GITHUB_OUTPUT"
+          echo "error_count=$ERROR_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Get file structure overview
+        id: file_structure
+        run: |
+          STRUCTURE=$(find . -name "*.ts" -o -name "*.tsx" | head -50 | sort)
+          echo "structure=$(echo "$STRUCTURE" | jq -Rs .)" >> "$GITHUB_OUTPUT"
+
+      - name: Analyze with AWS Bedrock (Claude Sonnet 4.6)
+        id: bedrock_analysis
+        env:
+          AWS_REGION: us-east-1
+          # Credentials via OIDC or stored secrets
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # Use AWS CLI to invoke Bedrock
+          PROMPT=$(cat <<'ENDOFPROMPT'
+          You are an expert code reviewer for the EDUCA project — an open-source Brazilian school management system.
+
+          Analyze the following codebase snapshot and produce a structured health report.
+
+          ## Recent Changes (git diff --stat)
+          ${{ steps.git_diff.outputs.diff }}
+
+          ## Recent Commits
+          ${{ steps.recent_commits.outputs.commits }}
+
+          ## TypeScript Errors
+          ${{ steps.typecheck.outputs.output }}
+
+          ## Lint Results
+          ${{ steps.lint.outputs.output }}
+
+          ## Instructions
+          Produce a report with these sections:
+          1. **Summary** — 1-2 sentence overview of codebase health
+          2. **Regressions** — Any new errors or warnings introduced
+          3. **Technical Debt** — Patterns that need attention
+          4. **Suggested Next Issue** — A specific, well-scoped task for a contributor
+          5. **Quality Trend** — Improving, stable, or declining
+
+          Be honest. If nothing changed, say so. If there are no errors, celebrate briefly.
+          Format as GitHub Markdown. Keep it under 2000 characters.
+          ENDOFPROMPT
+
+          # Escape for JSON
+          PROMPT_JSON=$(echo "$PROMPT" | jq -Rs .)
+
+          PAYLOAD=$(jq -n \
+            --arg prompt "$PROMPT" \
+            '{
+              "anthropic_version": "bedrock-2023-05-31",
+              "max_tokens": 2000,
+              "messages": [{"role": "user", "content": $prompt}]
+            }')
+
+          # Invoke Bedrock
+          RESPONSE=$(aws bedrock-runtime invoke-model \
+            --model-id "us.anthropic.claude-sonnet-4-6" \
+            --content-type "application/json" \
+            --body "$PAYLOAD" \
+            --output json \
+            /tmp/bedrock-response.json 2>&1)
+
+          # Parse response
+          ANALYSIS=$(cat /tmp/bedrock-response.json | jq -r '.content[0].text // .error // "Parse error"')
+          echo "analysis=$(echo "$ANALYSIS" | jq -Rs .)" >> "$GITHUB_OUTPUT"
+
+      - name: Check for existing open health issue
+        id: check_existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING=$(gh issue list \
+            --label "automated-analysis" \
+            --state open \
+            --json number,title \
+            --jq 'length')
+          echo "count=$EXISTING" >> "$GITHUB_OUTPUT"
+
+      - name: Close previous health issue if new analysis exists
+        if: steps.check_existing.outputs.count > 0 && steps.git_diff.outputs.diff != 'No changes or initial commit'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PREV=$(gh issue list \
+            --label "automated-analysis" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+          if [ -n "$PREV" ]; then
+            gh issue comment "$PREV" \
+              --body "🔄 **Auto-resolved:** A new analysis has been generated for $(date +'%Y-%m-%d'). The previous findings may be outdated. See the latest issue for current status."
+            gh issue close "$PREV" \
+              --comment "Closing in favor of the latest daily analysis."
+          fi
+
+      - name: File GitHub Issue with analysis
+        id: file_issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TODAY=$(date +'%Y-%m-%d')
+          ANALYSIS="${{ steps.bedrock_analysis.outputs.analysis }}"
+
+          # Build issue body
+          BODY=$(cat <<'ENDOFBODY'
+          ## 📊 Daily Code Health Report — ${{ env.TODAY }}
+
+          _Automated analysis by Claude Sonnet 4.6 via AWS Bedrock._
+
+          ### Changes Analyzed
+          ${{ steps.git_diff.outputs.diff }}
+
+          ### TypeScript Errors: ${{ steps.typecheck.outputs.error_count }}
+          ### Lint Warnings: ${{ steps.lint.outputs.warn_count }}
+          ### Lint Errors: ${{ steps.lint.outputs.error_count }}
+
+          ---
+
+          ${{ steps.bedrock_analysis.outputs.analysis }}
+
+          ---
+          _This issue was automatically generated. Findings should be reviewed by a human before acting._
+          ENDOFBODY
+          )
+
+          gh issue create \
+            --title "Daily Code Health: $TODAY" \
+            --label "automated-analysis" \
+            --body "$BODY"
+
+      - name: Log completion
+        run: |
+          echo "✅ Daily code health report generated for $(date +'%Y-%m-%d')"
