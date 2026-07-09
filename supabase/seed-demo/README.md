@@ -52,7 +52,7 @@ export SUPABASE_DEMO_URL="https://seu-projeto-demo.supabase.co"
 export SUPABASE_DEMO_SERVICE_KEY="eyJ..."
 ```
 
-Ou crie um `.env` em `web/`:
+Ou crie um `.env` em `app/`:
 
 ```env
 SUPABASE_DEMO_URL=https://seu-projeto-demo.supabase.co
@@ -61,7 +61,7 @@ SUPABASE_DEMO_SERVICE_KEY=eyJ...
 
 ### 2. Executar o seed
 
-A partir do diretorio `web/`:
+A partir do diretorio `app/`:
 
 ```bash
 pnpm seed:demo
@@ -70,7 +70,7 @@ pnpm seed:demo
 Ou diretamente com tsx:
 
 ```bash
-cd web
+cd app
 pnpm tsx ../supabase/seed-demo/seed-demo.ts
 ```
 
@@ -112,7 +112,7 @@ Para resetar o demo fora do cron:
 gh workflow run demo-reset.yml
 
 # Ou localmente
-cd web
+cd app
 pnpm seed:demo
 ```
 

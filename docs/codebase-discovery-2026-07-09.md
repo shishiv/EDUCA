@@ -35,7 +35,7 @@
 
 ### 2. Dependências Externas Relevantes
 
-**Produção — `web/package.json`:**
+**Produção — `app/package.json`:**
 
 | Pacote | Versão | Relevância |
 |---|---|---|
@@ -133,7 +133,7 @@ supabase/migrations/
   20260119_create_feature_flags.sql    (5.7KB — tabela feature_flags)
   README.md
 
-web/supabase/migrations/
+app/supabase/migrations/
   20260124133337_create_relatorios_descritivos.sql  (3.5KB — relatórios descritivos)
 ```
 

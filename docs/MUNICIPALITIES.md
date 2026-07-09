@@ -53,7 +53,7 @@ O EDUCA é um sistema de informação escolar (SIS) open source desenvolvido par
 ### 3. Deploy
 - [ ] Fork ou clone do repositório
 - [ ] Configurar variáveis de ambiente no serviço de hosting
-- [ ] Deploy do diretório `web/`
+- [ ] Deploy do diretório `app/`
 - [ ] Verificar que o login funciona com usuário superadmin
 
 ### 4. Dados iniciais

@@ -13,8 +13,8 @@ O monorepo `shishiv/EDUCA` **já é** a stack do SaaS — não greenfield:
 | App | Next.js 16+ (App Router), React 19, TypeScript strict |
 | DB/Auth | Supabase (Postgres + SSR + RLS multi-tenant) |
 | UI | shadcn/ui + Tailwind |
-| Deploy app | Vercel |
-| Site marketing | `site/` → **https://educa.vercel.app** |
+| Deploy app | Vercel (rootDirectory `app`) |
+| Site marketing | Repo **separado** (`educa-site`) — ver **ADR-002**; URL ref. `https://educa-gamma.vercel.app` |
 
 ## Não usar (por agora)
 
@@ -23,9 +23,10 @@ O monorepo `shishiv/EDUCA` **já é** a stack do SaaS — não greenfield:
 
 ## Consequências
 
-- T04/T07/T08 implementam em cima de `web/` + Supabase
+- T04/T07/T08 implementam em cima de `app/` + Supabase
 - WhatsApp (T07) encaixa em `responsaveis.telefone` + Edge Functions
 - Custos multi-secretaria ainda a estimar (open item do T03)
+- Marketing **não** vive neste monorepo (ADR-002)
 
 ## Fontes
 

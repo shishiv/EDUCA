@@ -17,7 +17,7 @@ Obrigado pelo interesse! O EDUCA é um projeto open source voltado para gestão 
 ```bash
 # 1. Fork + clone
 git clone https://github.com/SEU_USER/EDUCA.git
-cd EDUCA/web
+cd EDUCA/app
 
 # 2. Branch a partir de main
 git checkout -b feature/minha-feature
@@ -66,7 +66,7 @@ Contribuições que tocam em dados de alunos **devem** preservar:
 ## Rodando os Testes
 
 ```bash
-cd web
+cd app
 
 # Unit tests
 pnpm test

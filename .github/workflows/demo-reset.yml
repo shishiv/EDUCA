@@ -25,15 +25,15 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
+          cache-dependency-path: app/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: web
+        working-directory: app
 
       - name: Run seed demo
         run: pnpm seed:demo
-        working-directory: web
+        working-directory: app
         env:
           SUPABASE_DEMO_URL: ${{ secrets.SUPABASE_DEMO_URL }}
           SUPABASE_DEMO_SERVICE_KEY: ${{ secrets.SUPABASE_DEMO_SERVICE_KEY }}

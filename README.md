@@ -33,6 +33,27 @@ EDUCA é uma plataforma de gestão escolar municipal construída para os 5.570 m
 
 ---
 
+## Estrutura do repositório (produto OSS)
+
+```
+EDUCA/
+├── app/        # Produto (gestão escolar) — SSOT de design tokens / brand
+├── supabase/   # Migrations + seed demo (scripts)
+└── docs/       # Técnico, ADRs, compliance
+```
+
+**Fora deste repo (ADR-002):**
+
+| Peça | Onde |
+|------|------|
+| Site marketing / waitlist | Repo `educa-site` (local: `~/workspace/repos/educa-site`) |
+| Demo online | Deploy do **mesmo** `app/` + seed — não um 3º codebase |
+
+- Site live (ref.): [educa-gamma.vercel.app](https://educa-gamma.vercel.app)
+- Fronteiras: [docs/ADR-002-repo-boundaries.md](docs/ADR-002-repo-boundaries.md)
+
+---
+
 ## Quick Start
 
 **Pré-requisitos:** Node.js 20+, pnpm, conta Supabase (gratuita funciona)
@@ -40,7 +61,7 @@ EDUCA é uma plataforma de gestão escolar municipal construída para os 5.570 m
 ```bash
 # 1. Clone o repositório
 git clone https://github.com/shishiv/EDUCA.git
-cd EDUCA/web
+cd EDUCA/app
 
 # 2. Configure as variáveis de ambiente
 cp .env.local.example .env.local
@@ -124,7 +145,8 @@ Participe da comunidade do EDUCA:
 
 - **Telegram** — Grupo oficial para discussões, dúvidas e novidades: [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar)
 - **GitHub Discussions** — Fórum técnico para Q&A, ideias e showcase de implementações: [github.com/shishiv/EDUCA/discussions](https://github.com/shishiv/EDUCA/discussions)
-- **Site institucional** — [educa-gamma.vercel.app](https://educa-gamma.vercel.app) (path `/demo` para o sandbox; app demo = subdomain ou deploy irmão)
+- **Site institucional** — [educa-gamma.vercel.app](https://educa-gamma.vercel.app) (código em repo marketing `educa-site`, não neste monorepo)
+- **Demo online** — sandbox do **app** + seed (quando T08 estiver live; ver `supabase/seed-demo/`)
 
 ---
 
@@ -156,7 +178,7 @@ MIT — ver [LICENSE](LICENSE)
 ```bash
 # 1. Clone the repository
 git clone https://github.com/shishiv/EDUCA.git
-cd EDUCA/web
+cd EDUCA/app
 
 # 2. Configure environment variables
 cp .env.local.example .env.local

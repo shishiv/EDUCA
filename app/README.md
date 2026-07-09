@@ -100,7 +100,7 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
 1. **Clone o repositório**
    ```bash
    git clone <repository-url>
-   cd web
+   cd app
    ```
 
 2. **Instale as dependências**
@@ -155,7 +155,7 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
 ## 📁 Estrutura do Projeto
 
 ```
-web/
+app/                              # package do produto (monorepo)
 ├── app/                          # Next.js App Router
 │   ├── (auth)/                   # Grupo de rotas de autenticação
 │   ├── (dashboard)/              # Grupo de rotas do dashboard
