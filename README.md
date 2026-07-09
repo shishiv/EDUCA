@@ -46,7 +46,7 @@ EDUCA/
 
 | Peça | Onde |
 |------|------|
-| Site marketing / waitlist | Repo `educa-site` (local: `~/workspace/repos/educa-site`) |
+| Site marketing / waitlist | Repo privado [`shishiv/educa-site`](https://github.com/shishiv/educa-site) |
 | Demo online | Deploy do **mesmo** `app/` + seed — não um 3º codebase |
 
 - Site live (ref.): [educa-gamma.vercel.app](https://educa-gamma.vercel.app)
