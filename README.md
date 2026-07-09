@@ -120,11 +120,11 @@ Participe da comunidade do EDUCA:
 
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?logo=telegram&logoColor=white)](https://t.me/educa_gestao_escolar)
 [![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github&logoColor=white)](https://github.com/shishiv/EDUCA/discussions)
-[![Site](https://img.shields.io/badge/Site-educa.vercel.app-000000?logo=vercel&logoColor=white)](https://educa.vercel.app)
+[![Site](https://img.shields.io/badge/Site-educa-gamma.vercel.app-000000?logo=vercel&logoColor=white)](https://educa-gamma.vercel.app)
 
 - **Telegram** — Grupo oficial para discussões, dúvidas e novidades: [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar)
 - **GitHub Discussions** — Fórum técnico para Q&A, ideias e showcase de implementações: [github.com/shishiv/EDUCA/discussions](https://github.com/shishiv/EDUCA/discussions)
-- **Site institucional** — [educa.vercel.app](https://educa.vercel.app) (path `/demo` para o sandbox; app demo = subdomain ou deploy irmão)
+- **Site institucional** — [educa-gamma.vercel.app](https://educa-gamma.vercel.app) (path `/demo` para o sandbox; app demo = subdomain ou deploy irmão)
 
 ---
 
