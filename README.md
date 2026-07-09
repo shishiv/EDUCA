@@ -51,6 +51,7 @@ EDUCA/
 
 - Site live (ref.): [educa-gamma.vercel.app](https://educa-gamma.vercel.app)
 - Fronteiras: [docs/ADR-002-repo-boundaries.md](docs/ADR-002-repo-boundaries.md)
+- **Design tokens:** [docs/DESIGN-TOKENS.md](docs/DESIGN-TOKENS.md) (SSOT documentada; código em `app/app/globals.css`)
 
 ---
 
