@@ -1,7 +1,5 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "pnpm run build",
-  "installCommand": "pnpm install",
   "regions": ["gru1"]
 }
