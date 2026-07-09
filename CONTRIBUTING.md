@@ -98,4 +98,18 @@ pnpm typecheck
 
 Maintainer: Myke Matos ([@shishiv](https://github.com/shishiv))
 
+---
+
+## Comunidade
+
+Participe dos canais da comunidade EDUCA:
+
+- **Telegram** — [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar) — Discussões gerais, dúvidas rápidas e novidades
+- **GitHub Discussions** — [github.com/shishiv/EDUCA/discussions](https://github.com/shishiv/EDUCA/discussions) — Q&A técnico, propostas de funcionalidades e showcase de implementações
+- **Site institucional** — [educa.app.br](https://educa.app.br) — Documentação, demo e informações do projeto
+
+### Regras da Comunidade
+
+Todos os canais seguem o [Código de Conduta](CODE_OF_CONDUCT.md) do projeto. Seja respeitoso, mantenha o foco em educação municipal e evite spam.
+
 Issues são o canal preferido. Para questões de segurança, use o campo de security advisories no GitHub.
