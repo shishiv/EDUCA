@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'Post — EDUCA',
 }
 
+export function generateStaticParams() {
+  // Placeholder slugs for static export; expand when MDX posts land.
+  return [{ slug: 'bem-vindo' }]
+}
+
 // In a real implementation, this would use next-mdx-remote to render MDX content.
 // For now, it shows a placeholder for posts that don't exist yet.
 

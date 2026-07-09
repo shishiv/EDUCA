@@ -35,7 +35,7 @@ export default function DemoPage() {
               <div>
                 <p className="text-xs text-muted-foreground mb-1">E-mail</p>
                 <code className="text-sm font-mono bg-background px-2 py-1 rounded">
-                  demo@educa.app.br
+                  demo@educa.local
                 </code>
               </div>
               <div>
@@ -46,16 +46,14 @@ export default function DemoPage() {
               </div>
             </div>
 
-            <Button size="lg" className="w-full" asChild>
-              <a
-                href="https://demo.educa.app.br"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Acessar Demo
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
+            <Button size="lg" className="w-full" disabled>
+              App demo em breve
+              <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              URL do app sandbox: subdomain <code>demo.*</code> ou deploy irmão —
+              esta página fica em <code>educa.vercel.app/demo</code>.
+            </p>
           </CardContent>
         </Card>
 
