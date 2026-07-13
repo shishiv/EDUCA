@@ -91,8 +91,9 @@ export function validateINEP(inepCode: string): boolean {
 
   const clean = inepCode.replace(/[^\d]/g, '')
 
-  // INEP codes are 8 digits for schools, 11 digits for students
-  return clean.length === 8 || clean.length === 11
+  // INEP codes: 8 digits for schools, 12 digits for students (cod_aluno_inep)
+  // Source: portabilis/i-educar-educacenso-package Record 90/91 — cod_aluno_inep = exactly 12 digits
+  return clean.length === 8 || clean.length === 12
 }
 
 export function validateNIS(nis: string): boolean {
