@@ -1,0 +1,39 @@
+name: Demo Reset
+
+on:
+  schedule:
+    # Domingo 03:00 BRT (06:00 UTC)
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+jobs:
+  seed-demo:
+    name: Reset demo sandbox
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: app
+
+      - name: Run seed demo
+        run: pnpm seed:demo
+        working-directory: app
+        env:
+          SUPABASE_DEMO_URL: ${{ secrets.SUPABASE_DEMO_URL }}
+          SUPABASE_DEMO_SERVICE_KEY: ${{ secrets.SUPABASE_DEMO_SERVICE_KEY }}

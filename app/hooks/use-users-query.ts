@@ -1,0 +1,262 @@
+'use client'
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { usersApi, UserWithSchool } from '@/lib/api/users'
+import { queryKeys } from '@/lib/react-query'
+import { toast } from 'sonner'
+import { useEffect, useState } from 'react'
+import { logger } from '@/lib/logger'
+
+// Stub functions until Zustand is properly set up
+const addRecentActivity = (activity: { type: string; title: string; description: string; entityId: string; entityType: string }) => {
+  console.debug('Activity:', activity)
+}
+const clearBulkSelection = () => {
+  console.debug('Bulk selection cleared')
+}
+
+// Get users with school information
+export function useUsersWithSchool(options?: {
+  searchTerm?: string
+  roles?: string[]
+  schools?: string[]
+  activeOnly?: boolean
+  limit?: number
+  offset?: number
+}) {
+  const query = useQuery({
+    queryKey: queryKeys.users.list(options),
+    queryFn: () => usersApi.getUsersWithSchool(options),
+    staleTime: 2 * 60 * 1000, // 2 minutes for user list
+  })
+
+  return query
+}
+
+// Get single user
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: queryKeys.users.detail(id),
+    queryFn: () => usersApi.getById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes for user details
+  })
+}
+
+// Get user statistics
+export function useUserStats() {
+  return useQuery({
+    queryKey: queryKeys.users.stats(),
+    queryFn: () => usersApi.getUserStats(),
+    staleTime: 3 * 60 * 1000, // 3 minutes for stats
+  })
+}
+
+// Create user mutation
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (userData: Parameters<typeof usersApi.createUser>[0]) =>
+      usersApi.createUser(userData),
+    onSuccess: (data) => {
+      // Invalidate user queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
+
+      // Add to recent activity
+      addRecentActivity({
+        type: 'user_created',
+        title: 'Usuário criado',
+        description: `${data.nome} foi criado como ${data.tipo_usuario}`,
+        entityId: data.id,
+        entityType: 'user',
+      })
+
+      toast.success('Usuário criado com sucesso!')
+    },
+    onError: (error: any) => {
+      // logger.error('Error creating user:', { error: error })
+      toast.error(error.message || 'Erro ao criar usuário')
+    },
+  })
+}
+
+// Update user mutation
+export function useUpdateUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      usersApi.update(id, data),
+    onSuccess: (data, variables) => {
+      // Update cache optimistically
+      queryClient.setQueryData(queryKeys.users.detail(variables.id), data)
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
+
+      toast.success('Usuário atualizado com sucesso!')
+    },
+    onError: (error: any) => {
+      // logger.error('Error updating user:', { error: error })
+      toast.error(error.message || 'Erro ao atualizar usuário')
+    },
+  })
+}
+
+// Update user status mutation
+export function useUpdateUserStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, ativo, reason }: { id: string; ativo: boolean; reason?: string }) =>
+      usersApi.updateUserStatus(id, ativo, reason),
+    onSuccess: (data, variables) => {
+      // Update cache optimistically
+      queryClient.setQueryData(queryKeys.users.detail(variables.id), data)
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
+
+      const action = variables.ativo ? 'ativado' : 'desativado'
+      toast.success(`Usuário ${action} com sucesso!`)
+    },
+    onError: (error: any) => {
+      // logger.error('Error updating user status:', { error: error })
+      toast.error(error.message || 'Erro ao atualizar status do usuário')
+    },
+  })
+}
+
+// Bulk update status mutation
+export function useBulkUpdateUserStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ userIds, ativo, reason }: { userIds: string[]; ativo: boolean; reason?: string }) =>
+      usersApi.bulkUpdateStatus(userIds, ativo, reason),
+    onSuccess: (data, variables) => {
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
+
+      // Clear bulk selection
+      clearBulkSelection()
+
+      const action = variables.ativo ? 'ativados' : 'desativados'
+      toast.success(`${variables.userIds.length} usuários ${action} com sucesso!`)
+    },
+    onError: (error: any) => {
+      // logger.error('Error bulk updating user status:', { error: error })
+      toast.error(error.message || 'Erro ao atualizar status dos usuários')
+    },
+  })
+}
+
+// Bulk assign school mutation
+export function useBulkAssignSchool() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ userIds, escolaId }: { userIds: string[]; escolaId: string }) =>
+      usersApi.bulkAssignSchool(userIds, escolaId),
+    onSuccess: (data, variables) => {
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
+
+      // Clear bulk selection
+      clearBulkSelection()
+
+      toast.success(`${variables.userIds.length} usuários atribuídos à escola com sucesso!`)
+    },
+    onError: (error: any) => {
+      // logger.error('Error bulk assigning school:', { error: error })
+      toast.error(error.message || 'Erro ao atribuir escola aos usuários')
+    },
+  })
+}
+
+// Real-time subscription hook
+// Note: Real-time subscription requires Supabase realtime channel setup
+// This is a placeholder that can be implemented when real-time is needed
+export function useUsersSubscription() {
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    // Real-time subscriptions would be implemented here using:
+    // supabase.channel('users').on('postgres_changes', ...)
+    // For now, this is a no-op as the usersApi doesn't have a subscribe method
+    return () => {
+      // Cleanup would go here
+    }
+  }, [queryClient])
+}
+
+// Search users hook with debounce
+export function useSearchUsers(searchTerm: string, debounceMs = 300) {
+  const [debouncedTerm, setDebouncedTerm] = useState(searchTerm)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm)
+    }, debounceMs)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm, debounceMs])
+
+  return useUsersWithSchool({
+    searchTerm: debouncedTerm,
+    limit: 10, // Limit search results
+  })
+}
+
+// Helper hook for user role management
+export function useUserRoleHelpers() {
+  const getRoleLabel = (role: string) => {
+    const labels = {
+      admin: 'Administrador',
+      diretor: 'Diretor(a)',
+      secretario: 'Secretário(a)',
+      professor: 'Professor(a)',
+      responsavel: 'Responsável',
+    }
+    return labels[role as keyof typeof labels] || role
+  }
+
+  const getRoleColor = (role: string) => {
+    const colors = {
+      admin: 'bg-red-100 text-red-800 border-red-200',
+      diretor: 'bg-purple-100 text-purple-800 border-purple-200',
+      secretario: 'bg-blue-100 text-blue-800 border-blue-200',
+      professor: 'bg-green-100 text-green-800 border-green-200',
+      responsavel: 'bg-gray-100 text-gray-800 border-gray-200',
+    }
+    return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+
+  const canUserManageRole = (userRole: string, targetRole: string) => {
+    const hierarchy = {
+      responsavel: 1,
+      professor: 2,
+      secretario: 3,
+      diretor: 4,
+      admin: 5,
+    }
+
+    const userLevel = hierarchy[userRole as keyof typeof hierarchy] || 0
+    const targetLevel = hierarchy[targetRole as keyof typeof hierarchy] || 0
+
+    return userLevel > targetLevel
+  }
+
+  return {
+    getRoleLabel,
+    getRoleColor,
+    canUserManageRole,
+  }
+}
+
