@@ -14,7 +14,7 @@ O monorepo `shishiv/EDUCA` **já é** a stack do SaaS — não greenfield:
 | DB/Auth | Supabase (Postgres + SSR + RLS multi-tenant) |
 | UI | shadcn/ui + Tailwind |
 | Deploy app | Vercel (rootDirectory `app`) |
-| Site marketing | Repo **separado** (`educa-site`) — ver **ADR-002**; URL ref. `https://educa-gamma.vercel.app` |
+| Site marketing | Repo **separado** (`educa-site`) — ver **ADR-002**; URL pública `https://geteduca.vercel.app` |
 
 ## Não usar (por agora)
 

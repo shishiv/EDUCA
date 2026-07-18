@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- README: honest **Problem / Today (1 mun · ~900 students) / mission** framing; site → [geteduca.vercel.app](https://geteduca.vercel.app)
+- GitHub repo description + homepage aligned with pilot + geteduca
+
+### Added
+- `docs/ROADMAP.md` — R0–R3 product roadmap with exit criteria
+- `docs/P0-SECURITY-BOARD.md` — ordered P0 security work for pilot
+- `docs/oss-program-application-draft.md` — Claude/Codex application copy (EN)
+
 ## [OSS-prep] - 2026-06-01
 
 ### Added

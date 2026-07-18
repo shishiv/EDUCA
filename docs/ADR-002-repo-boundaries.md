@@ -36,7 +36,7 @@ EDUCA/
 
 ### O que o README público deve linkar (não embutir)
 
-- Site institucional: URL Vercel/domínio (ex. `educa-gamma.vercel.app`)
+- Site institucional: `https://geteduca.vercel.app`
 - Demo online: URL do **app** em modo sandbox (quando T08 estiver live)
 - Como rodar seed demo **local** a partir deste repo
 

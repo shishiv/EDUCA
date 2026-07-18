@@ -106,7 +106,7 @@ Participe dos canais da comunidade EDUCA:
 
 - **Telegram** — [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar) — Discussões gerais, dúvidas rápidas e novidades
 - **GitHub Discussions** — [github.com/shishiv/EDUCA/discussions](https://github.com/shishiv/EDUCA/discussions) — Q&A técnico, propostas de funcionalidades e showcase de implementações
-- **Site institucional** — [educa-gamma.vercel.app](https://educa-gamma.vercel.app) — Documentação, demo e informações do projeto
+- **Site institucional** — [geteduca.vercel.app](https://geteduca.vercel.app) — Site do projeto
 
 ### Regras da Comunidade
 

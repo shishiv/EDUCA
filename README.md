@@ -2,7 +2,7 @@
 
 # EDUCA
 
-**Sistema aberto de gestão escolar para municípios brasileiros.**
+**Open-source school management for Brazilian municipalities.**
 
 [![CI](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml/badge.svg)](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,11 +12,50 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://opensource.org/)
 
+**Site:** [geteduca.vercel.app](https://geteduca.vercel.app) · **Code:** [github.com/shishiv/EDUCA](https://github.com/shishiv/EDUCA)
+
 </div>
 
 ---
 
-EDUCA é uma plataforma de gestão escolar municipal construída para os 5.570 municípios brasileiros — a maioria ainda gerencia suas redes de ensino em papel. O sistema cobre desde matrículas até relatórios de Bolsa Família, com conformidade completa com INEP/Educacenso e LGPD.
+## Problem
+
+Brazilian municipal school networks need modern tools for enrollment, daily attendance, grades, and compliance (INEP/Educacenso, Bolsa Família frequency rules, LGPD). A large share of that work still runs on fragile spreadsheets, paper, or expensive proprietary stacks that fit local rules poorly.
+
+EDUCA exists to make **open, Brazil-native school management** available to municipalities that cannot (or should not) depend only on closed vendors.
+
+## Today (MVP pilot)
+
+| | |
+|---|---|
+| **Status** | MVP in pilot |
+| **Scale** | **1 municipality · ~900 students** |
+| **Maintainer** | Sole primary maintainer ([@shishiv](https://github.com/shishiv)) |
+| **License** | MIT |
+| **Site** | [geteduca.vercel.app](https://geteduca.vercel.app) |
+
+We are validating core flows (enrollment, attendance with immutability, grades, social-program alerts, multi-tenant design) with real school operations—not claiming national production scale.
+
+**Pilot student data is private (LGPD).** Any public sandbox uses synthetic seed data only (`supabase/seed-demo/`).
+
+## Where we’re going
+
+Roadmap (stabilize pilot → compliance → multi-school ops → adoption): see **[docs/ROADMAP.md](docs/ROADMAP.md)**.
+
+Near-term focus: multi-tenant security hardening, Educacenso export, tests/CI, self-host docs—so this pilot can become a path other municipalities can adopt safely.
+
+---
+
+## Português (resumo)
+
+**EDUCA** é gestão escolar municipal **open source (MIT)**.
+
+- **Problema:** redes municipais ainda dependem de processos frágeis para matrícula, frequência e compliance (INEP, Bolsa Família, LGPD).
+- **Hoje:** piloto em **1 município com ~900 alunos** (MVP).
+- **Site:** [geteduca.vercel.app](https://geteduca.vercel.app)
+- **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md)
+
+Dados do piloto não vão para demo pública.
 
 ---
 
@@ -33,54 +72,39 @@ EDUCA é uma plataforma de gestão escolar municipal construída para os 5.570 m
 
 ---
 
-## Estrutura do repositório (produto OSS)
+## Estrutura do repositório
 
 ```
 EDUCA/
-├── app/        # Produto (gestão escolar) — SSOT de design tokens / brand
-├── supabase/   # Migrations + seed demo (scripts)
-└── docs/       # Técnico, ADRs, compliance
+├── app/        # Produto (gestão escolar)
+├── supabase/   # Migrations + seed demo
+└── docs/       # ADRs, compliance, roadmap
 ```
-
-**Fora deste repo (ADR-002):**
 
 | Peça | Onde |
 |------|------|
-| Site marketing / waitlist | Repo privado [`shishiv/educa-site`](https://github.com/shishiv/educa-site) |
-| Demo online | Deploy do **mesmo** `app/` + seed — não um 3º codebase |
-
-- Site live (ref.): [educa-gamma.vercel.app](https://educa-gamma.vercel.app)
-- Fronteiras: [docs/ADR-002-repo-boundaries.md](docs/ADR-002-repo-boundaries.md)
-- **Design tokens:** [docs/DESIGN-TOKENS.md](docs/DESIGN-TOKENS.md) (SSOT documentada; código em `app/app/globals.css`)
+| Produto OSS | este repo (`app/`) |
+| Site institucional | [geteduca.vercel.app](https://geteduca.vercel.app) |
+| Fronteiras de repo | [docs/ADR-002-repo-boundaries.md](docs/ADR-002-repo-boundaries.md) |
+| Design tokens | [docs/DESIGN-TOKENS.md](docs/DESIGN-TOKENS.md) |
 
 ---
 
 ## Quick Start
 
-**Pré-requisitos:** Node.js 20+, pnpm, conta Supabase (gratuita funciona)
+**Pré-requisitos:** Node.js 20+, pnpm, conta Supabase (free tier funciona)
 
 ```bash
-# 1. Clone o repositório
 git clone https://github.com/shishiv/EDUCA.git
 cd EDUCA/app
-
-# 2. Configure as variáveis de ambiente
 cp .env.local.example .env.local
-# Edite .env.local com suas credenciais Supabase e dados municipais
-
-# 3. Instale dependências
+# Edite .env.local com Supabase + dados municipais
 pnpm install
-
-# 4. Aplique o schema do banco
-pnpm supabase db push   # ou importe supabase/migrations/ manualmente
-
-# 5. Inicie o servidor de desenvolvimento
+pnpm supabase db push   # ou importe supabase/migrations/
 pnpm dev
 ```
 
-O sistema estará disponível em `http://localhost:3000`.
-
-> **Tempo estimado:** ~30 minutos do clone até o login funcionando.
+App em `http://localhost:3000`. Tempo estimado: ~30 minutos até o login.
 
 ---
 
@@ -92,27 +116,27 @@ O sistema estará disponível em `http://localhost:3000`.
 | Chamada Digital | ✅ Completo | Frequência com imutabilidade, auto-lock 18h |
 | Boletim Escolar | ✅ Completo | Notas por bimestre, médias, recuperação |
 | Matrículas | ✅ Completo | Fluxo de matrícula com validação INEP |
-| Relatórios Bolsa Família | ✅ Completo | Alertas de frequência < 80% para alunos com NIS |
+| Relatórios Bolsa Família | ✅ Completo | Alertas de frequência &lt; 80% para alunos com NIS |
 | Diário de Classe | ✅ Completo | Registro diário de atividades por turma |
 | Calendário Escolar | 🟡 Parcial | Visualização implementada, edição em progresso |
-| Relatórios INEP/Educacenso | 🟡 Parcial | Campos obrigatórios mapeados, exportação pendente |
+| Relatórios INEP/Educacenso | 🟡 Parcial | Campos obrigatórios mapeados, **exportação pendente** |
 
 ---
 
-## Conformidade Brasileira
+## Conformidade Brasileira (desenho)
 
-- **Imutabilidade de frequência** — Registros não podem ser editados retroativamente ("não existe o esquecer")
-- **Auto-lock 18h** — Chamada travada automaticamente às 18h horário de São Paulo
-- **Bolsa Família** — Alerta automático quando frequência < 80% para alunos com NIS
-- **INEP/Educacenso** — Campos obrigatórios: CPF, NIS, raça, modalidade de transporte
-- **LGPD** — RLS por escola, política de privacidade, registro de DPO
-- **5 tipos de usuário** — superadmin, secretaria, diretor, professor, responsável
+- **Imutabilidade de frequência** — sem edição retroativa (“não existe o esquecer”)
+- **Auto-lock 18h** — chamada travada às 18h (America/Sao_Paulo)
+- **Bolsa Família** — alerta quando frequência &lt; 80% para alunos com NIS
+- **INEP/Educacenso** — campos obrigatórios mapeados; export em progresso
+- **LGPD** — isolamento multi-tenant por escola (RLS), DPO via env
+- **Papéis** — superadmin, secretaria, diretor, professor, responsável
+
+Hardening contínuo: ver issues de security e [docs/ROADMAP.md](docs/ROADMAP.md) fase R0–R1.
 
 ---
 
-## Configuração Municipal
-
-Cada prefeitura configura sua identidade via variáveis de ambiente:
+## Configuração municipal
 
 ```bash
 NEXT_PUBLIC_MUNICIPAL_NAME=Meu Município
@@ -121,91 +145,34 @@ NEXT_PUBLIC_MUNICIPAL_STATE=MG
 NEXT_PUBLIC_DPO_EMAIL=dpo@municipio.gov.br
 ```
 
-Ver `.env.local.example` para a lista completa.
+Lista completa em `app/.env.local.example`.
 
 ---
 
 ## Contribuindo
 
-Veja [CONTRIBUTING.md](CONTRIBUTING.md) para o guia completo.
+Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Áreas prioritárias para contribuição:
-- **Provider-agnostic layer** — desacoplar do Supabase SDK (ver [docs/PROVIDER-AGNOSTIC-ROADMAP.md](docs/PROVIDER-AGNOSTIC-ROADMAP.md))
-- Exportação INEP/Educacenso
-- Internacionalização (i18n) para outros países da América Latina
+Prioridades atuais (piloto + compliance):
+
+1. Security / RLS / auth multi-tenant  
+2. Exportação INEP/Educacenso  
+3. Testes (presença, CI)  
+4. Docs de self-host  
+
+Depois: demo sandbox sintético, multi-escola, i18n, provider-agnostic ([docs/PROVIDER-AGNOSTIC-ROADMAP.md](docs/PROVIDER-AGNOSTIC-ROADMAP.md)).
 
 ---
 
 ## Comunidade
 
-Participe da comunidade do EDUCA:
-
-[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?logo=telegram&logoColor=white)](https://t.me/educa_gestao_escolar)
-[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github&logoColor=white)](https://github.com/shishiv/EDUCA/discussions)
-[![Site](https://img.shields.io/badge/Site-educa-gamma.vercel.app-000000?logo=vercel&logoColor=white)](https://educa-gamma.vercel.app)
-
-- **Telegram** — Grupo oficial para discussões, dúvidas e novidades: [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar)
-- **GitHub Discussions** — Fórum técnico para Q&A, ideias e showcase de implementações: [github.com/shishiv/EDUCA/discussions](https://github.com/shishiv/EDUCA/discussions)
-- **Site institucional** — [educa-gamma.vercel.app](https://educa-gamma.vercel.app) (código em repo marketing `educa-site`, não neste monorepo)
-- **Demo online** — sandbox do **app** + seed (quando T08 estiver live; ver `supabase/seed-demo/`)
+- **Site** — [geteduca.vercel.app](https://geteduca.vercel.app)  
+- **Telegram** — [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar)  
+- **GitHub Discussions** — [Discussions](https://github.com/shishiv/EDUCA/discussions)  
+- **Demo sandbox** — seed sintético em `supabase/seed-demo/` (quando a instância pública estiver live)
 
 ---
 
-## Licença
-
-MIT — ver [LICENSE](LICENSE)
-
----
-
-## English
-
-**EDUCA** is an open-source school management platform built for Brazilian municipalities. It covers everything from enrollment to Bolsa Família (social welfare) attendance reports, with full INEP/Educacenso and LGPD compliance.
-
-### Tech Stack
-
-| Technology | Version |
-|---|---|
-| Next.js | 16+ |
-| React | 19 |
-| TypeScript | strict |
-| Supabase / PostgreSQL | multi-tenant RLS |
-| shadcn/ui + Tailwind CSS | — |
-| Playwright + Vitest | E2E + Unit tests |
-
-### Quick Start
-
-**Prerequisites:** Node.js 20+, pnpm, Supabase account (free tier works)
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/shishiv/EDUCA.git
-cd EDUCA/app
-
-# 2. Configure environment variables
-cp .env.local.example .env.local
-# Edit .env.local with your Supabase credentials and municipal data
-
-# 3. Install dependencies
-pnpm install
-
-# 4. Apply database schema
-pnpm supabase db push   # or import supabase/migrations/ manually
-
-# 5. Start the development server
-pnpm dev
-```
-
-The system will be available at `http://localhost:3000`.
-
-### Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
-
-Priority areas for contribution:
-- **Provider-agnostic layer** — decouple from Supabase SDK (see [docs/PROVIDER-AGNOSTIC-ROADMAP.md](docs/PROVIDER-AGNOSTIC-ROADMAP.md))
-- INEP/Educacenso export
-- Internationalization (i18n) for other Latin American countries
-
-### License
+## License
 
 MIT — see [LICENSE](LICENSE)
