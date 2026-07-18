@@ -38,11 +38,9 @@ We are validating core flows (enrollment, attendance with immutability, grades, 
 
 **Pilot student data is private (LGPD).** Any public sandbox uses synthetic seed data only (`supabase/seed-demo/`).
 
-## Where we’re going
+## Near-term focus
 
-Roadmap (stabilize pilot → compliance → multi-school ops → adoption): see **[docs/ROADMAP.md](docs/ROADMAP.md)**.
-
-Near-term focus: multi-tenant security hardening, Educacenso export, tests/CI, self-host docs—so this pilot can become a path other municipalities can adopt safely.
+Multi-tenant security hardening, Educacenso export, tests/CI, and self-host docs—so this pilot can become a path other municipalities can adopt safely. Track work via [GitHub Issues](https://github.com/shishiv/EDUCA/issues).
 
 ---
 
@@ -53,7 +51,7 @@ Near-term focus: multi-tenant security hardening, Educacenso export, tests/CI, s
 - **Problema:** redes municipais ainda dependem de processos frágeis para matrícula, frequência e compliance (INEP, Bolsa Família, LGPD).
 - **Hoje:** piloto em **1 município com ~900 alunos** (MVP).
 - **Site:** [geteduca.vercel.app](https://geteduca.vercel.app)
-- **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md)
+- **Issues:** [github.com/shishiv/EDUCA/issues](https://github.com/shishiv/EDUCA/issues)
 
 Dados do piloto não vão para demo pública.
 
@@ -132,7 +130,7 @@ App em `http://localhost:3000`. Tempo estimado: ~30 minutos até o login.
 - **LGPD** — isolamento multi-tenant por escola (RLS), DPO via env
 - **Papéis** — superadmin, secretaria, diretor, professor, responsável
 
-Hardening contínuo: ver issues de security e [docs/ROADMAP.md](docs/ROADMAP.md) fase R0–R1.
+Hardening contínuo: ver [issues](https://github.com/shishiv/EDUCA/issues) com label `security`.
 
 ---
 

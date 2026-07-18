@@ -11,10 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README: honest **Problem / Today (1 mun · ~900 students) / mission** framing; site → [geteduca.vercel.app](https://geteduca.vercel.app)
 - GitHub repo description + homepage aligned with pilot + geteduca
 
+### Removed
+- Internal planning from public tree: OSS apply draft, security board, product roadmap, audits, WhatsApp spec, pilot feedback template, brand brief, and `app/plans/*` improve/security plans — kept offline privately
 ### Added
-- `docs/ROADMAP.md` — R0–R3 product roadmap with exit criteria
-- `docs/P0-SECURITY-BOARD.md` — ordered P0 security work for pilot
-- `docs/oss-program-application-draft.md` — Claude/Codex application copy (EN)
+- `docs/README.md` — index of public technical/adoption docs only
 
 ## [OSS-prep] - 2026-06-01
 

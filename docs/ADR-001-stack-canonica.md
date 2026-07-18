@@ -30,5 +30,5 @@ O monorepo `shishiv/EDUCA` **já é** a stack do SaaS — não greenfield:
 
 ## Fontes
 
-- `docs/codebase-discovery-2026-07-09.md`
+- GitHub Issues for active work tracking
 - wayfinder `map/tickets/T03-stack-saas.md`
