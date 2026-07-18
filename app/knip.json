@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/{page,layout,loading,error,not-found,template}.{js,jsx,ts,tsx}",
+    "app/**/route.{js,ts}",
+    "middleware.{js,ts}",
+    "instrumentation.{js,ts}"
+  ],
+  "project": ["**/*.{js,jsx,ts,tsx}"],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/__tests__/**"
+  ],
+  "next": true
+}

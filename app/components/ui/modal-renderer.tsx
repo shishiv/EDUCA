@@ -1,0 +1,70 @@
+/**
+ * Modal Renderer Component
+ * Renders the appropriate modal based on the active modal type
+ * Uses shadcn/ui components and ensures only one modal is open at a time
+ */
+
+'use client'
+
+import React from 'react'
+import { useModal } from './modal-manager'
+import { AbrirAulaWorkflow } from '../attendance/AbrirAulaWorkflow'
+import { AttendanceGrid } from '../attendance/AttendanceGrid'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog'
+
+export function ModalRenderer() {
+  const { activeModal, closeModal } = useModal()
+
+  if (!activeModal) {
+    return null
+  }
+
+  switch (activeModal.type) {
+    case 'abrir-aula':
+      return (
+        <Dialog open={true} onOpenChange={(open) => { if (!open) closeModal() }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Abrir Aula - {activeModal.props?.classInfo?.nome}
+              </DialogTitle>
+              <DialogDescription>
+                Inicie uma nova sessão de aula para registrar a frequência dos alunos.
+                Este processo cria uma sessão oficial para controle de presença.
+              </DialogDescription>
+            </DialogHeader>
+            <AbrirAulaWorkflow
+              turmaId={activeModal.props?.classInfo?.id}
+              professorId={activeModal.props?.professorId || ''}
+              onSuccess={closeModal}
+              onCancel={closeModal}
+            />
+          </DialogContent>
+        </Dialog>
+      )
+
+    case 'attendance':
+      return (
+        <Dialog open={true} onOpenChange={(open) => { if (!open) closeModal() }}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Marcar Frequência - {activeModal.props?.classInfo?.nome}
+              </DialogTitle>
+              <DialogDescription>
+                Registre a presença dos alunos para esta sessão de aula.
+                A frequência marcada não poderá ser alterada após o salvamento.
+              </DialogDescription>
+            </DialogHeader>
+            <AttendanceGrid
+              turmaId={activeModal.props?.classInfo?.id}
+              sessionId="mock-session-id"
+            />
+          </DialogContent>
+        </Dialog>
+      )
+
+    default:
+      return null
+  }
+}
