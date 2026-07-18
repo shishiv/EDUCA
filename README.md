@@ -2,7 +2,7 @@
 
 # EDUCA
 
-**Open-source school management for Brazilian municipalities.**
+**Gestão escolar open source para o interior do Brasil — sair da planilha, enxergar o dia, avisar a família.**
 
 [![CI](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml/badge.svg)](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,99 +10,96 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/shishiv/EDUCA/blob/main/CONTRIBUTING.md)
 [![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://opensource.org/)
 
-**Site:** [geteduca.vercel.app](https://geteduca.vercel.app) · **Code:** [github.com/shishiv/EDUCA](https://github.com/shishiv/EDUCA)
+**Site:** [geteduca.vercel.app](https://geteduca.vercel.app) · **Código:** [github.com/shishiv/EDUCA](https://github.com/shishiv/EDUCA)
 
 </div>
 
 ---
 
-## Problem
+## O problema
 
-Brazilian municipal school networks need modern tools for enrollment, daily attendance, grades, and compliance (INEP/Educacenso, Bolsa Família frequency rules, LGPD). A large share of that work still runs on fragile spreadsheets, paper, or expensive proprietary stacks that fit local rules poorly.
+Na escola do interior (e em muita rede municipal pequena), o dia a dia ainda é:
 
-EDUCA exists to make **open, Brazil-native school management** available to municipalities that cannot (or should not) depend only on closed vendors.
+- chamada em **caderno ou planilha**
+- diretor **sem visibilidade** de quem faltou hoje
+- família só fica sabendo se alguém **lembra de mandar no grupo**
+- Bolsa Família / INEP viram **corrida no fim do prazo**
 
-## Today (MVP pilot)
+Sistemas fechados caros existem — e muitas vezes **ninguém usa**. Planilha “funciona” até não funcionar.
 
-| | |
-|---|---|
-| **Status** | MVP in pilot |
-| **Scale** | **1 municipality · ~900 students** |
-| **Maintainer** | Sole primary maintainer ([@shishiv](https://github.com/shishiv)) |
-| **License** | MIT |
-| **Site** | [geteduca.vercel.app](https://geteduca.vercel.app) |
-
-We are validating core flows (enrollment, attendance with immutability, grades, social-program alerts, multi-tenant design) with real school operations—not claiming national production scale.
-
-**Pilot student data is private (LGPD).** Any public sandbox uses synthetic seed data only (`supabase/seed-demo/`).
-
-## Near-term focus
-
-Multi-tenant security hardening, Educacenso export, tests/CI, and self-host docs—so this pilot can become a path other municipalities can adopt safely. Track work via [GitHub Issues](https://github.com/shishiv/EDUCA/issues).
+**EDUCA** é software de gestão escolar **100% open source (MIT)** pensado para redes brasileiras: matrícula, chamada com regras reais, boletim, sinais de frequência/Bolsa Família, multi-tenant e caminho de conformidade (INEP/Educacenso, LGPD).
 
 ---
 
-## Português (resumo)
+## Modelo: tudo OSS · pago só se quiser hospedagem
 
-**EDUCA** é gestão escolar municipal **open source (MIT)**.
+**Nenhum módulo do produto é paywall.** Chamada, relatórios, WhatsApp no código, multi-escola no código — tudo no repositório MIT.
 
-- **Problema:** redes municipais ainda dependem de processos frágeis para matrícula, frequência e compliance (INEP, Bolsa Família, LGPD).
-- **Hoje:** piloto em **1 município com ~900 alunos** (MVP).
-- **Site:** [geteduca.vercel.app](https://geteduca.vercel.app)
-- **Issues:** [github.com/shishiv/EDUCA/issues](https://github.com/shishiv/EDUCA/issues)
+O que pode ser pago é **só** a operação na infra da equipe (hospedagem + suporte), se a escola ou a secretaria não quiser manter servidor.
 
-Dados do piloto não vão para demo pública.
+| Como usa | Escolas | Alunos | WhatsApp | Custo de software |
+|----------|---------|--------|----------|-------------------|
+| **Self-host** | Ilimitado (você opera) | Ilimitado | **BYO** — você traz Meta/BSP, número e templates | **Grátis (MIT)** |
+| **Cloud Free** | **1 escola** | **Sem limite** (fund. + médio) | **BYO** — mesma feature, credenciais suas | **Grátis** (na nuvem nossa, com limite de 1 escola) |
+| **Cloud Pro** | **N escolas** (rede) | Sem limite | **BYO** + ajuda de setup se precisar | **Hosted + suporte** |
+
+### WhatsApp = BYO (bring your own)
+
+Notificações de presença (ex.: falta no mesmo dia) fazem parte do **produto open source**.
+
+- A **escola ou prefeitura** traz conta Meta / BSP, número e templates aprovados.
+- O EDUCA só usa as credenciais que o tenant configurar.
+- Sem credencial: o sistema segue normal; envio fica desligado (noop) até conectar.
+- **Custo das mensagens** fica na conta de WhatsApp de quem envia — não é licença de software.
+
+Assim o código continua completo para quem self-hosta, e a trilha LGPD/TCE fica no CNPJ certo.
+
+---
+
+## Hoje (piloto)
+
+| | |
+|---|---|
+| **Status** | MVP em piloto |
+| **Escala real** | **1 município · ~900 alunos** |
+| **Maintainer** | Principalmente sole maintainer ([@shishiv](https://github.com/shishiv)) |
+| **Licença** | MIT |
+| **Site** | [geteduca.vercel.app](https://geteduca.vercel.app) |
+
+Validamos fluxos do dia a dia (matrícula, chamada com imutabilidade, notas, multi-tenant, campos de compliance) com operação real — **sem inventar escala nacional**.
+
+**Dados do piloto são privados (LGPD).** Demo pública, quando houver, usa seed sintético (`supabase/seed-demo/`).
+
+---
+
+## Para quem é
+
+- **Uma escola** no interior que quer largar a planilha (Cloud Free ou self-host)
+- **Secretaria municipal** pequena/média que precisa da **rede** (várias escolas) — Cloud Pro ou self-host
+- **TI / dev** que prefere software auditável e sem vendor lock
+
+Papéis no produto (em evolução de UX):
+
+| Papel | Foco |
+|--------|------|
+| **Professor** | Turmas de hoje → chamada (rápido) |
+| **Diretor** | Visibilidade do dia + alertas de frequência / BF |
+| **Secretaria** | CRUD, matrículas, relatórios |
+| **Admin** | Operação do deploy + **mimic** de papéis (suporte / debug / demo) |
 
 ---
 
 ## Stack
 
-| Tecnologia | Versão |
+| Tecnologia | Uso |
 |---|---|
-| Next.js | 16+ |
-| React | 19 |
-| TypeScript | strict |
-| Supabase / PostgreSQL | RLS multi-tenant |
-| shadcn/ui + Tailwind CSS | — |
-| Playwright + Vitest | E2E + Unit tests |
-
----
-
-## Estrutura do repositório
-
-```
-EDUCA/
-├── app/        # Produto (gestão escolar)
-├── supabase/   # Migrations + seed demo
-└── docs/       # ADRs, compliance, roadmap
-```
-
-| Peça | Onde |
-|------|------|
-| Produto OSS | este repo (`app/`) |
-| Site institucional | [geteduca.vercel.app](https://geteduca.vercel.app) |
-| Fronteiras de repo | [docs/ADR-002-repo-boundaries.md](docs/ADR-002-repo-boundaries.md) |
-| Design tokens | [docs/DESIGN-TOKENS.md](docs/DESIGN-TOKENS.md) |
-
----
-
-## Quick Start
-
-**Pré-requisitos:** Node.js 20+, pnpm, conta Supabase (free tier funciona)
-
-```bash
-git clone https://github.com/shishiv/EDUCA.git
-cd EDUCA/app
-cp .env.local.example .env.local
-# Edite .env.local com Supabase + dados municipais
-pnpm install
-pnpm supabase db push   # ou importe supabase/migrations/
-pnpm dev
-```
-
-App em `http://localhost:3000`. Tempo estimado: ~30 minutos até o login.
+| Next.js 16+ | App |
+| React 19 | UI |
+| TypeScript strict | Tipagem |
+| Supabase / PostgreSQL | Auth, dados, RLS multi-tenant |
+| shadcn/ui + Tailwind | Interface |
+| Playwright + Vitest | E2E + unit |
 
 ---
 
@@ -110,31 +107,64 @@ App em `http://localhost:3000`. Tempo estimado: ~30 minutos até o login.
 
 | Módulo | Status | Descrição |
 |---|---|---|
-| Gestão de Alunos | ✅ Completo | Cadastro, matrícula, histórico, perfil INEP |
-| Chamada Digital | ✅ Completo | Frequência com imutabilidade, auto-lock 18h |
-| Boletim Escolar | ✅ Completo | Notas por bimestre, médias, recuperação |
-| Matrículas | ✅ Completo | Fluxo de matrícula com validação INEP |
-| Relatórios Bolsa Família | ✅ Completo | Alertas de frequência &lt; 80% para alunos com NIS |
-| Diário de Classe | ✅ Completo | Registro diário de atividades por turma |
-| Calendário Escolar | 🟡 Parcial | Visualização implementada, edição em progresso |
-| Relatórios INEP/Educacenso | 🟡 Parcial | Campos obrigatórios mapeados, **exportação pendente** |
+| Gestão de alunos | ✅ | Cadastro, matrícula, histórico, perfil INEP |
+| Chamada digital | ✅ | Frequência com imutabilidade, auto-lock 18h |
+| Boletim | ✅ | Notas por bimestre, médias, recuperação |
+| Matrículas | ✅ | Fluxo com validação de campos INEP |
+| Bolsa Família | ✅ | Alertas de frequência &lt; 80% (NIS) |
+| Diário de classe | ✅ | Registro diário por turma |
+| Calendário escolar | 🟡 | Visualização ok; edição em progresso |
+| INEP / Educacenso | 🟡 | Campos mapeados; exportação em progresso |
+| WhatsApp (presença) | 🟡 | Desenho BYO; integração no produto em andamento |
 
 ---
 
-## Conformidade Brasileira (desenho)
+## Conformidade brasileira (desenho)
 
-- **Imutabilidade de frequência** — sem edição retroativa (“não existe o esquecer”)
-- **Auto-lock 18h** — chamada travada às 18h (America/Sao_Paulo)
-- **Bolsa Família** — alerta quando frequência &lt; 80% para alunos com NIS
-- **INEP/Educacenso** — campos obrigatórios mapeados; export em progresso
-- **LGPD** — isolamento multi-tenant por escola (RLS), DPO via env
-- **Papéis** — superadmin, secretaria, diretor, professor, responsável
-
-Hardening contínuo: ver [issues](https://github.com/shishiv/EDUCA/issues) com label `security`.
+- **Imutabilidade de frequência** — sem “esquecer” e reescrever o passado à vontade  
+- **Auto-lock 18h** (America/Sao_Paulo)  
+- **Bolsa Família** — alertas de frequência para alunos com NIS  
+- **INEP / Educacenso** — campos obrigatórios; export em evolução  
+- **LGPD** — isolamento por escola (RLS), DPO via configuração  
+- **Papéis** — superadmin, secretaria, diretor, professor, responsável  
 
 ---
 
-## Configuração municipal
+## Repositório
+
+```
+EDUCA/
+├── app/        # Produto (gestão escolar)
+├── supabase/   # Migrations + seed demo
+└── docs/       # ADRs, deploy, tokens, adoção
+```
+
+| Peça | Onde |
+|------|------|
+| Produto OSS | este repo |
+| Site | [geteduca.vercel.app](https://geteduca.vercel.app) |
+| Docs públicos | [docs/README.md](docs/README.md) |
+| Fronteiras de repo | [docs/ADR-002-repo-boundaries.md](docs/ADR-002-repo-boundaries.md) |
+
+---
+
+## Quick start (self-host)
+
+**Pré-requisitos:** Node.js 20+, pnpm, projeto Supabase (free tier serve para começar)
+
+```bash
+git clone https://github.com/shishiv/EDUCA.git
+cd EDUCA/app
+cp .env.local.example .env.local
+# Preencha Supabase + identidade municipal
+pnpm install
+pnpm supabase db push   # ou aplique supabase/migrations/
+pnpm dev
+```
+
+App em `http://localhost:3000`. Guia municipal: [docs/MUNICIPALITIES.md](docs/MUNICIPALITIES.md). Deploy: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+### Identidade municipal (env)
 
 ```bash
 NEXT_PUBLIC_MUNICIPAL_NAME=Meu Município
@@ -147,18 +177,33 @@ Lista completa em `app/.env.local.example`.
 
 ---
 
+## Cloud Free vs Cloud Pro (resumo)
+
+| | **Cloud Free** | **Cloud Pro** |
+|--|----------------|---------------|
+| Escolas | **1** | **N** |
+| Alunos | Sem limite de software | Sem limite |
+| Features | Todas (incl. WhatsApp BYO) | Todas |
+| Ideal para | Uma escola saindo da planilha | Rede / secretaria |
+| Você paga | R$ 0 de software | Hospedagem + suporte |
+
+Self-host = mesmo código, sem teto de escolas no software.
+
+Interesse em cloud/suporte: site [geteduca.vercel.app](https://geteduca.vercel.app) ou canais abaixo.
+
+---
+
 ## Contribuindo
 
-Veja [CONTRIBUTING.md](CONTRIBUTING.md).
+Ver [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Prioridades atuais (piloto + compliance):
+Prioridades atuais (produto + piloto):
 
-1. Security / RLS / auth multi-tenant  
-2. Exportação INEP/Educacenso  
-3. Testes (presença, CI)  
-4. Docs de self-host  
-
-Depois: demo sandbox sintético, multi-escola, i18n, provider-agnostic ([docs/PROVIDER-AGNOSTIC-ROADMAP.md](docs/PROVIDER-AGNOSTIC-ROADMAP.md)).
+1. Chamada confiável e UX do **professor** (mais fácil que planilha)  
+2. Painel do **diretor** (visibilidade do dia)  
+3. **WhatsApp BYO** (conectar credenciais do tenant)  
+4. Hardening multi-tenant / auth  
+5. Export Educacenso quando a secretaria precisar  
 
 ---
 
@@ -166,11 +211,35 @@ Depois: demo sandbox sintético, multi-escola, i18n, provider-agnostic ([docs/PR
 
 - **Site** — [geteduca.vercel.app](https://geteduca.vercel.app)  
 - **Telegram** — [t.me/educa_gestao_escolar](https://t.me/educa_gestao_escolar)  
-- **GitHub Discussions** — [Discussions](https://github.com/shishiv/EDUCA/discussions)  
-- **Demo sandbox** — seed sintético em `supabase/seed-demo/` (quando a instância pública estiver live)
+- **Discussions** — [GitHub Discussions](https://github.com/shishiv/EDUCA/discussions)  
+- **Issues** — [github.com/shishiv/EDUCA/issues](https://github.com/shishiv/EDUCA/issues)  
 
 ---
 
-## License
+## Licença
 
-MIT — see [LICENSE](LICENSE)
+[MIT](LICENSE) — use, estude, adapte, hospede. Se quiser que a gente hospede e suporte, fale com a gente; o código continua livre.
+
+---
+
+## English
+
+**EDUCA** is **MIT-licensed** school management for Brazilian municipal / small-town networks — built to replace spreadsheets with real attendance rules, day-level visibility, and optional family alerts.
+
+### What you pay for
+
+| | Schools | Students | WhatsApp | Software price |
+|--|---------|----------|----------|----------------|
+| **Self-host** | Unlimited (you operate) | Unlimited | **BYO** Meta/BSP credentials | **Free (MIT)** |
+| **Cloud Free** | **1 school** | **No software cap** (K–12 style) | **BYO** | **Free** (our cloud, 1-school limit) |
+| **Cloud Pro** | **N schools** | Unlimited | **BYO** (+ setup help if needed) | **Hosting + support** |
+
+No product modules are paywalled. Paid offering is **hosted infrastructure and support only**. Message costs stay on the customer’s WhatsApp account.
+
+### Today
+
+MVP pilot: **one municipality · ~900 students**. Honest about scale. Pilot student data is private (LGPD).
+
+### Quick start
+
+See commands above under **Quick start (self-host)**. Site: [geteduca.vercel.app](https://geteduca.vercel.app).
