@@ -14,9 +14,9 @@ ALTER TABLE public.alunos
 
 ALTER TABLE public.alunos
   ADD CONSTRAINT alunos_cor_raca_check
-    CHECK (cor_raca IN ('nao_declarada', 'branca', 'preta', 'parda', 'amarela', 'indigena')),
+    CHECK (cor_raca IN ('nao_declarada', 'branca', 'preta', 'parda', 'amarela', 'indigena')) NOT VALID,
   ADD CONSTRAINT alunos_zona_residencial_check
-    CHECK (zona_residencial IN ('urbana', 'rural'));
+    CHECK (zona_residencial IN ('urbana', 'rural')) NOT VALID;
 
 COMMENT ON COLUMN public.alunos.cor_raca IS 'Cor ou raca declarada para o Censo Escolar (Record 30)';
 COMMENT ON COLUMN public.alunos.zona_residencial IS 'Zona de residencia informada ao Censo Escolar';
@@ -33,9 +33,9 @@ ALTER TABLE public.turmas
 
 ALTER TABLE public.turmas
   ADD CONSTRAINT turmas_etapa_ensino_check
-    CHECK (etapa_ensino IN ('EI', 'AI', 'AF', 'EM', 'EJA', 'EP')),
+    CHECK (etapa_ensino IN ('EI', 'AI', 'AF', 'EM', 'EJA', 'EP')) NOT VALID,
   ADD CONSTRAINT turmas_tipo_mediacao_check
-    CHECK (tipo_mediacao IN ('presencial', 'semi_presencial', 'ead'));
+    CHECK (tipo_mediacao IN ('presencial', 'semi_presencial', 'ead')) NOT VALID;
 
 COMMENT ON COLUMN public.turmas.etapa_ensino IS 'Etapa de ensino INEP da turma';
 COMMENT ON COLUMN public.turmas.tipo_mediacao IS 'Tipo de mediacao didatico-pedagogica da turma';
@@ -55,7 +55,7 @@ ALTER TABLE public.escolas
 
 ALTER TABLE public.escolas
   ADD CONSTRAINT escolas_localizacao_diferenciada_check
-    CHECK (localizacao_diferenciada IN ('indigena', 'quilombola', 'assentamento', 'nenhuma'));
+    CHECK (localizacao_diferenciada IN ('indigena', 'quilombola', 'assentamento', 'nenhuma')) NOT VALID;
 
 COMMENT ON COLUMN public.escolas.in_biblioteca IS 'Indica existencia de biblioteca na escola';
 COMMENT ON COLUMN public.escolas.in_laboratorio_informatica IS 'Indica existencia de laboratorio de informatica na escola';
