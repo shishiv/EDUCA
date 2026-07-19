@@ -88,6 +88,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           bolsa_familia: boolean | null
+          cor_raca: string | null
           cpf: string | null
           created_at: string | null
           data_nascimento: string
@@ -103,10 +104,14 @@ export type Database = {
           rg: string | null
           sexo: string
           telefone: string | null
+          tipo_deficiencia: string[] | null
+          transporte_escolar: boolean | null
+          zona_residencial: string | null
         }
         Insert: {
           ativo?: boolean | null
           bolsa_familia?: boolean | null
+          cor_raca?: string | null
           cpf?: string | null
           created_at?: string | null
           data_nascimento: string
@@ -122,10 +127,14 @@ export type Database = {
           rg?: string | null
           sexo: string
           telefone?: string | null
+          tipo_deficiencia?: string[] | null
+          transporte_escolar?: boolean | null
+          zona_residencial?: string | null
         }
         Update: {
           ativo?: boolean | null
           bolsa_familia?: boolean | null
+          cor_raca?: string | null
           cpf?: string | null
           created_at?: string | null
           data_nascimento?: string
@@ -141,6 +150,9 @@ export type Database = {
           rg?: string | null
           sexo?: string
           telefone?: string | null
+          tipo_deficiencia?: string[] | null
+          transporte_escolar?: boolean | null
+          zona_residencial?: string | null
         }
         Relationships: [
           {
@@ -736,6 +748,13 @@ export type Database = {
           email: string | null
           endereco: string | null
           id: string
+          in_acessibilidade: boolean | null
+          in_biblioteca: boolean | null
+          in_internet: boolean | null
+          in_laboratorio_informatica: boolean | null
+          in_quadra_esportes: boolean | null
+          in_refeitorio: boolean | null
+          localizacao_diferenciada: string | null
           nome: string
           telefone: string | null
           tipo: string
@@ -748,6 +767,13 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          in_acessibilidade?: boolean | null
+          in_biblioteca?: boolean | null
+          in_internet?: boolean | null
+          in_laboratorio_informatica?: boolean | null
+          in_quadra_esportes?: boolean | null
+          in_refeitorio?: boolean | null
+          localizacao_diferenciada?: string | null
           nome: string
           telefone?: string | null
           tipo: string
@@ -760,6 +786,13 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          in_acessibilidade?: boolean | null
+          in_biblioteca?: boolean | null
+          in_internet?: boolean | null
+          in_laboratorio_informatica?: boolean | null
+          in_quadra_esportes?: boolean | null
+          in_refeitorio?: boolean | null
+          localizacao_diferenciada?: string | null
           nome?: string
           telefone?: string | null
           tipo?: string
@@ -1330,10 +1363,13 @@ export type Database = {
           capacidade: number
           created_at: string | null
           escola_id: string
+          etapa_ensino: string | null
           id: string
           nome: string
           professor_id: string | null
           serie: string
+          tempo_integral: boolean | null
+          tipo_mediacao: string | null
           turno: string
         }
         Insert: {
@@ -1342,10 +1378,13 @@ export type Database = {
           capacidade?: number
           created_at?: string | null
           escola_id: string
+          etapa_ensino?: string | null
           id?: string
           nome: string
           professor_id?: string | null
           serie: string
+          tempo_integral?: boolean | null
+          tipo_mediacao?: string | null
           turno: string
         }
         Update: {
@@ -1354,10 +1393,13 @@ export type Database = {
           capacidade?: number
           created_at?: string | null
           escola_id?: string
+          etapa_ensino?: string | null
           id?: string
           nome?: string
           professor_id?: string | null
           serie?: string
+          tempo_integral?: boolean | null
+          tipo_mediacao?: string | null
           turno?: string
         }
         Relationships: [
