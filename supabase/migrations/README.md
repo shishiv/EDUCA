@@ -82,16 +82,23 @@ npx supabase db push
 
 ### Local Validation and Type Generation
 
-Run schema validation only against the disposable local Supabase stack:
+Validate the canonical migration set against a disposable raw PostgreSQL 15 or newer database:
+
+```bash
+supabase/tests/database/run.sh
+```
+
+The command requires `initdb`, `pg_ctl`, and `psql` on `PATH`. It starts an isolated temporary cluster, applies every migration in filename order, runs the database assertions, and removes the cluster. PostgreSQL extensions referenced by migrations, including `pgvector` if introduced, must be installed in that local PostgreSQL distribution. The command does not use Docker, Supabase services, a linked project, or a remote database.
+
+Generate the committed Supabase type surface only from the optional disposable local Supabase stack:
 
 ```bash
 npx supabase start
 npx supabase db reset
-npx supabase test db
 npx supabase gen types typescript --local > app/types/database.ts
 ```
 
-The committed `app/types/database.ts` must be generated from `--local`. Do not use a linked project or `--project-id` to update committed types.
+Do not use a linked project or `--project-id` to update committed types.
 
 ### Creating New Migrations
 
