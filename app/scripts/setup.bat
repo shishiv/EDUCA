@@ -42,8 +42,8 @@ echo [INFO] 🗄️  Checking database types...
 if exist "types\database.ts" (
     echo [SUCCESS] Database types found
 ) else (
-    echo [WARNING] Database types not found - you may need to generate them from Supabase
-    echo [INFO] Run: supabase gen types typescript --project-id YOUR_PROJECT_ID ^> types/database.ts
+    echo [WARNING] Database types not found
+    echo [INFO] Follow ../supabase/migrations/README.md to generate them from the disposable local Supabase stack
 )
 
 REM Step 4: Setup Summary
@@ -52,7 +52,7 @@ echo [SUCCESS] Setup completed! 🎉
 echo.
 echo 📋 Next Steps:
 echo    1. Update .env.local with your Supabase credentials
-echo    2. Generate database types if using remote Supabase
+echo    2. Generate database types locally as documented in ../supabase/migrations/README.md
 echo    3. Run 'npm run seed:dev' to populate development data
 echo    4. Start development server with 'npm run dev'
 echo.
