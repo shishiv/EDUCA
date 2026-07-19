@@ -12,6 +12,8 @@ This directory contains SQL migration files for the Supabase database. Migration
 |------|-------------|------|
 | `00000000000000_baseline.sql` | Initial schema snapshot | 2026-01-19 |
 | `20260119_create_feature_flags.sql` | Feature flags system | 2026-01-19 |
+| `20260124133337_create_relatorios_descritivos.sql` | BNCC descriptive reports | 2026-01-24 |
+| `20260719031000_add_censo_escolar_fields.sql` | Minimum Censo Escolar student, class, and school fields | 2026-07-19 |
 
 ## Schema Contents
 
@@ -54,6 +56,19 @@ This directory contains SQL migration files for the Supabase database. Migration
 - `feature_flags` - Flag definitions
 - `escola_feature_flags` - Per-escola flag enablement
 
+### Descriptive Reports Migration (20260124133337)
+
+- `relatorios_descritivos` - BNCC early-childhood descriptive reports
+
+### Censo Escolar Fields Migration (20260719031000)
+
+- `alunos` - Race, residential zone, school transport, and disability types
+- `turmas` - INEP teaching stage, mediation type, and full-time indicator
+- `escolas` - Censo infrastructure indicators and differentiated location
+
+The new columns remain nullable. Only BM10-documented safe defaults are applied, so existing rows are preserved.
+The five new `CHECK` constraints are installed as `NOT VALID`: new writes are constrained immediately, while validation of existing rows is deferred to a separately scheduled migration.
+
 ## Running Migrations
 
 ### New Environments
@@ -66,15 +81,26 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-### Checking Status
+### Local Validation and Type Generation
+
+Validate the canonical migration set against a disposable raw PostgreSQL 15 or newer database:
 
 ```bash
-# Check migration status
-npx supabase db diff
-
-# Generate types from database
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID > lib/database.types.ts
+supabase/tests/database/run.sh
 ```
+
+The command requires `initdb`, `pg_ctl`, and `psql` on `PATH`. It starts an isolated temporary cluster, applies every migration in filename order, runs the database assertions, and removes the cluster. PostgreSQL extensions referenced by migrations, including `pgvector` if introduced, must be installed in that local PostgreSQL distribution. The command does not use Docker, Supabase services, a linked project, or a remote database.
+
+Generate the committed Supabase type surface only from the optional disposable local Supabase stack:
+
+```bash
+pnpm --dir app exec supabase --workdir .. start
+pnpm --dir app exec supabase --workdir .. db reset
+pnpm --dir app exec supabase --workdir .. gen types typescript --local > app/types/database.ts
+pnpm --dir app exec supabase --workdir .. stop
+```
+
+Do not use a linked project or `--project-id` to update committed types.
 
 ### Creating New Migrations
 
