@@ -103,6 +103,25 @@ SELECT pg_temp.assert_true(
   'escolas.localizacao_diferenciada does not guess a legacy value'
 );
 
+SELECT pg_temp.assert_true(
+  (
+    SELECT count(*) = 5 AND bool_and(NOT constraint_record.convalidated)
+    FROM (
+      VALUES
+        ('alunos', 'alunos_cor_raca_check'),
+        ('alunos', 'alunos_zona_residencial_check'),
+        ('turmas', 'turmas_etapa_ensino_check'),
+        ('turmas', 'turmas_tipo_mediacao_check'),
+        ('escolas', 'escolas_localizacao_diferenciada_check')
+    ) AS expected(table_name, constraint_name)
+    JOIN pg_constraint AS constraint_record
+      ON constraint_record.conrelid = format('public.%I', expected.table_name)::regclass
+      AND constraint_record.conname = expected.constraint_name
+      AND constraint_record.contype = 'c'
+  ),
+  'all five Censo check constraints remain NOT VALID'
+);
+
 SELECT pg_temp.assert_check_violation(
   $$INSERT INTO public.alunos (nome_completo, data_nascimento, sexo, cor_raca)
     VALUES ('Cor invalida', DATE '2015-01-01', 'F', 'azul')$$,
