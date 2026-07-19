@@ -67,6 +67,7 @@ This directory contains SQL migration files for the Supabase database. Migration
 - `escolas` - Censo infrastructure indicators and differentiated location
 
 The new columns remain nullable. Only BM10-documented safe defaults are applied, so existing rows are preserved.
+The five new `CHECK` constraints are installed as `NOT VALID`: new writes are constrained immediately, while validation of existing rows is deferred to a separately scheduled migration.
 
 ## Running Migrations
 
@@ -93,10 +94,10 @@ The command requires `initdb`, `pg_ctl`, and `psql` on `PATH`. It starts an isol
 Generate the committed Supabase type surface only from the optional disposable local Supabase stack:
 
 ```bash
-pnpm --dir app exec supabase start
-pnpm --dir app exec supabase db reset
-pnpm --dir app exec supabase gen types typescript --local > app/types/database.ts
-pnpm --dir app exec supabase stop
+pnpm --dir app exec supabase --workdir .. start
+pnpm --dir app exec supabase --workdir .. db reset
+pnpm --dir app exec supabase --workdir .. gen types typescript --local > app/types/database.ts
+pnpm --dir app exec supabase --workdir .. stop
 ```
 
 Do not use a linked project or `--project-id` to update committed types.

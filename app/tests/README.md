@@ -759,7 +759,6 @@ pnpm typecheck        # TypeScript validation
 # Database
 pnpm seed:dev         # Seed test data
 pnpm seed:clear       # Clear database
-pnpm db:types         # Generate Supabase types
 ```
 
 ---
