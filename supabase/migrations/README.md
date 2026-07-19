@@ -12,6 +12,7 @@ This directory contains SQL migration files for the Supabase database. Migration
 |------|-------------|------|
 | `00000000000000_baseline.sql` | Initial schema snapshot | 2026-01-19 |
 | `20260119_create_feature_flags.sql` | Feature flags system | 2026-01-19 |
+| `20260124133337_create_relatorios_descritivos.sql` | BNCC descriptive reports | 2026-01-24 |
 | `20260719031000_add_censo_escolar_fields.sql` | Minimum Censo Escolar student, class, and school fields | 2026-07-19 |
 
 ## Schema Contents
@@ -54,6 +55,10 @@ This directory contains SQL migration files for the Supabase database. Migration
 
 - `feature_flags` - Flag definitions
 - `escola_feature_flags` - Per-escola flag enablement
+
+### Descriptive Reports Migration (20260124133337)
+
+- `relatorios_descritivos` - BNCC early-childhood descriptive reports
 
 ### Censo Escolar Fields Migration (20260719031000)
 
