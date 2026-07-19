@@ -2,6 +2,9 @@
 -- Minimum Censo Escolar fields identified by BM10.
 -- All columns remain nullable so existing rows are preserved. Defaults are
 -- limited to values documented as safe by the domain research.
+-- CHECK constraints are NOT VALID to avoid scanning populated tables during
+-- deployment. PostgreSQL still enforces them for new writes; validate existing
+-- rows in a separately scheduled migration.
 
 -- =============================================================================
 -- 1. Student Censo Escolar fields (Record 30)

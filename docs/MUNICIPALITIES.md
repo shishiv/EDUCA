@@ -41,7 +41,7 @@ O EDUCA é um sistema de informação escolar (SIS) open source desenvolvido par
 
 ### 1. Banco de dados
 - [ ] Criar projeto no Supabase (ou provisionar PostgreSQL próprio)
-- [ ] Aplicar migrations: `pnpm supabase db push` ou importar `supabase/migrations/`
+- [ ] Aplicar as migrations conforme [`../supabase/migrations/README.md`](../supabase/migrations/README.md)
 - [ ] Configurar Row Level Security (já incluído nas migrations)
 
 ### 2. Configuração municipal
