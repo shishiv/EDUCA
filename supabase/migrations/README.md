@@ -12,6 +12,7 @@ This directory contains SQL migration files for the Supabase database. Migration
 |------|-------------|------|
 | `00000000000000_baseline.sql` | Initial schema snapshot | 2026-01-19 |
 | `20260119_create_feature_flags.sql` | Feature flags system | 2026-01-19 |
+| `20260719031000_add_censo_escolar_fields.sql` | Minimum Censo Escolar student, class, and school fields | 2026-07-19 |
 
 ## Schema Contents
 
@@ -54,6 +55,14 @@ This directory contains SQL migration files for the Supabase database. Migration
 - `feature_flags` - Flag definitions
 - `escola_feature_flags` - Per-escola flag enablement
 
+### Censo Escolar Fields Migration (20260719031000)
+
+- `alunos` - Race, residential zone, school transport, and disability types
+- `turmas` - INEP teaching stage, mediation type, and full-time indicator
+- `escolas` - Censo infrastructure indicators and differentiated location
+
+The new columns remain nullable. Only BM10-documented safe defaults are applied, so existing rows are preserved.
+
 ## Running Migrations
 
 ### New Environments
@@ -66,15 +75,18 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-### Checking Status
+### Local Validation and Type Generation
+
+Run schema validation only against the disposable local Supabase stack:
 
 ```bash
-# Check migration status
-npx supabase db diff
-
-# Generate types from database
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID > lib/database.types.ts
+npx supabase start
+npx supabase db reset
+npx supabase test db
+npx supabase gen types typescript --local > app/types/database.ts
 ```
+
+The committed `app/types/database.ts` must be generated from `--local`. Do not use a linked project or `--project-id` to update committed types.
 
 ### Creating New Migrations
 
