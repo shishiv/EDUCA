@@ -150,7 +150,7 @@ Digitalizar e otimizar todos os processos da rede municipal de ensino, proporcio
 
    Acesse http://localhost:3000 no seu navegador.
 
-   **Nota**: As migrações do banco são aplicadas automaticamente através do Supabase MCP. Para desenvolvimento local, use a CLI do Supabase: `supabase start` e `supabase db push`.
+   **Nota**: As migrações canônicas e o fluxo local estão documentados em [`../supabase/migrations/README.md`](../supabase/migrations/README.md).
 
 ## 📁 Estrutura do Projeto
 
@@ -186,10 +186,9 @@ app/                              # package do produto (monorepo)
 │   └── auth.ts                 # Tipos de autenticação
 ├── hooks/                       # Custom React Hooks
 ├── stores/                      # Stores Zustand
-└── supabase/                    # Configurações Supabase
-    ├── migrations/             # Migrações SQL
-    └── config.toml             # Configuração local
 ```
+
+As migrações e a configuração local do Supabase ficam em [`../supabase/`](../supabase/).
 
 ## 📝 Scripts Disponíveis
 
@@ -232,8 +231,9 @@ pnpm typecheck    # Verifica tipos TypeScript
 ```bash
 pnpm seed:dev     # Popula banco com dados de desenvolvimento
 pnpm seed:clear   # Limpa dados de desenvolvimento
-pnpm db:types     # Gera tipos TypeScript do Supabase
 ```
+
+Para gerar os tipos TypeScript do Supabase, siga o fluxo local em [`../supabase/migrations/README.md`](../supabase/migrations/README.md).
 
 ### Logging Centralizado
 O projeto usa um sistema centralizado de logging para substituir `console.log/error`:
@@ -302,20 +302,7 @@ logger.info('Operação bem-sucedida', {
 
 ### Supabase Local
 
-1. **Instale a CLI do Supabase**
-   ```bash
-   npm install -g supabase
-   ```
-
-2. **Inicie o ambiente local**
-   ```bash
-   supabase start
-   ```
-
-3. **Aplique as migrações**
-   ```bash
-   supabase db push
-   ```
+Use a CLI fixada pelo projeto e siga o fluxo descrito em [`../supabase/migrations/README.md`](../supabase/migrations/README.md).
 
 ### Variáveis de Ambiente
 

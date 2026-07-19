@@ -158,11 +158,10 @@ cd EDUCA/app
 cp .env.local.example .env.local
 # Preencha Supabase + identidade municipal
 pnpm install
-pnpm supabase db push   # ou aplique supabase/migrations/
 pnpm dev
 ```
 
-App em `http://localhost:3000`. Guia municipal: [docs/MUNICIPALITIES.md](docs/MUNICIPALITIES.md). Deploy: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Antes de iniciar o app, aplique o banco conforme [supabase/migrations/README.md](supabase/migrations/README.md). App em `http://localhost:3000`. Guia municipal: [docs/MUNICIPALITIES.md](docs/MUNICIPALITIES.md). Deploy: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### Identidade municipal (env)
 

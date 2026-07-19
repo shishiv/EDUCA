@@ -14,6 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
+      Permission: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      Role: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      RolePermission: {
+        Row: {
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "RolePermission_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "Permission"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "RolePermission_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "Role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      School: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      User: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "User_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "School"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      UserRole: {
+        Row: {
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "UserRole_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "Role"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "UserRole_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aluno_responsaveis: {
         Row: {
           aluno_id: string
@@ -88,6 +234,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           bolsa_familia: boolean | null
+          cor_raca: string | null
           cpf: string | null
           created_at: string | null
           data_nascimento: string
@@ -103,10 +250,14 @@ export type Database = {
           rg: string | null
           sexo: string
           telefone: string | null
+          tipo_deficiencia: string[] | null
+          transporte_escolar: boolean | null
+          zona_residencial: string | null
         }
         Insert: {
           ativo?: boolean | null
           bolsa_familia?: boolean | null
+          cor_raca?: string | null
           cpf?: string | null
           created_at?: string | null
           data_nascimento: string
@@ -122,10 +273,14 @@ export type Database = {
           rg?: string | null
           sexo: string
           telefone?: string | null
+          tipo_deficiencia?: string[] | null
+          transporte_escolar?: boolean | null
+          zona_residencial?: string | null
         }
         Update: {
           ativo?: boolean | null
           bolsa_familia?: boolean | null
+          cor_raca?: string | null
           cpf?: string | null
           created_at?: string | null
           data_nascimento?: string
@@ -141,6 +296,9 @@ export type Database = {
           rg?: string | null
           sexo?: string
           telefone?: string | null
+          tipo_deficiencia?: string[] | null
+          transporte_escolar?: boolean | null
+          zona_residencial?: string | null
         }
         Relationships: [
           {
@@ -736,6 +894,13 @@ export type Database = {
           email: string | null
           endereco: string | null
           id: string
+          in_acessibilidade: boolean | null
+          in_biblioteca: boolean | null
+          in_internet: boolean | null
+          in_laboratorio_informatica: boolean | null
+          in_quadra_esportes: boolean | null
+          in_refeitorio: boolean | null
+          localizacao_diferenciada: string | null
           nome: string
           telefone: string | null
           tipo: string
@@ -748,6 +913,13 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          in_acessibilidade?: boolean | null
+          in_biblioteca?: boolean | null
+          in_internet?: boolean | null
+          in_laboratorio_informatica?: boolean | null
+          in_quadra_esportes?: boolean | null
+          in_refeitorio?: boolean | null
+          localizacao_diferenciada?: string | null
           nome: string
           telefone?: string | null
           tipo: string
@@ -760,6 +932,13 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          in_acessibilidade?: boolean | null
+          in_biblioteca?: boolean | null
+          in_internet?: boolean | null
+          in_laboratorio_informatica?: boolean | null
+          in_quadra_esportes?: boolean | null
+          in_refeitorio?: boolean | null
+          localizacao_diferenciada?: string | null
           nome?: string
           telefone?: string | null
           tipo?: string
@@ -1330,10 +1509,13 @@ export type Database = {
           capacidade: number
           created_at: string | null
           escola_id: string
+          etapa_ensino: string | null
           id: string
           nome: string
           professor_id: string | null
           serie: string
+          tempo_integral: boolean | null
+          tipo_mediacao: string | null
           turno: string
         }
         Insert: {
@@ -1342,10 +1524,13 @@ export type Database = {
           capacidade?: number
           created_at?: string | null
           escola_id: string
+          etapa_ensino?: string | null
           id?: string
           nome: string
           professor_id?: string | null
           serie: string
+          tempo_integral?: boolean | null
+          tipo_mediacao?: string | null
           turno: string
         }
         Update: {
@@ -1354,10 +1539,13 @@ export type Database = {
           capacidade?: number
           created_at?: string | null
           escola_id?: string
+          etapa_ensino?: string | null
           id?: string
           nome?: string
           professor_id?: string | null
           serie?: string
+          tempo_integral?: boolean | null
+          tipo_mediacao?: string | null
           turno?: string
         }
         Relationships: [

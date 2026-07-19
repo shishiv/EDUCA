@@ -41,44 +41,80 @@ ALTER TABLE public.relatorios_descritivos ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies (follow sessoes_aula pattern)
 -- Professors can manage reports for their turmas
-CREATE POLICY "Professors can manage reports for their turmas"
-  ON public.relatorios_descritivos
-  FOR ALL
-  USING (
-    professor_id = auth.uid()
-    OR EXISTS (
-      SELECT 1 FROM public.turmas t
-      WHERE t.id = relatorios_descritivos.turma_id
-      AND t.professor_id = auth.uid()
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'relatorios_descritivos'
+      AND policyname = 'Professors can manage reports for their turmas'
+  ) THEN
+    CREATE POLICY "Professors can manage reports for their turmas"
+      ON public.relatorios_descritivos
+      FOR ALL
+      USING (
+        professor_id = auth.uid()
+        OR EXISTS (
+          SELECT 1 FROM public.turmas t
+          WHERE t.id = relatorios_descritivos.turma_id
+          AND t.professor_id = auth.uid()
+        )
+      );
+  END IF;
+END
+$$;
 
 -- Directors/Secretarios can view reports from their escola
-CREATE POLICY "Directors can view reports from their escola"
-  ON public.relatorios_descritivos
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.turmas t
-      JOIN public.escolas e ON t.escola_id = e.id
-      JOIN public.users u ON u.escola_id = e.id
-      WHERE t.id = relatorios_descritivos.turma_id
-      AND u.id = auth.uid()
-      AND u.tipo_usuario IN ('diretor', 'secretario', 'coordenador_pedagogico')
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'relatorios_descritivos'
+      AND policyname = 'Directors can view reports from their escola'
+  ) THEN
+    CREATE POLICY "Directors can view reports from their escola"
+      ON public.relatorios_descritivos
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.turmas t
+          JOIN public.escolas e ON t.escola_id = e.id
+          JOIN public.users u ON u.escola_id = e.id
+          WHERE t.id = relatorios_descritivos.turma_id
+          AND u.id = auth.uid()
+          AND u.tipo_usuario IN ('diretor', 'secretario', 'coordenador_pedagogico')
+        )
+      );
+  END IF;
+END
+$$;
 
 -- Admin can view all reports
-CREATE POLICY "Admin can view all reports"
-  ON public.relatorios_descritivos
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid()
-      AND u.tipo_usuario IN ('admin', 'secretaria_educacao')
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'relatorios_descritivos'
+      AND policyname = 'Admin can view all reports'
+  ) THEN
+    CREATE POLICY "Admin can view all reports"
+      ON public.relatorios_descritivos
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.users u
+          WHERE u.id = auth.uid()
+          AND u.tipo_usuario IN ('admin', 'secretaria_educacao')
+        )
+      );
+  END IF;
+END
+$$;
 
 -- Comment on table
 COMMENT ON TABLE public.relatorios_descritivos IS 'Relatorios descritivos de desenvolvimento (BNCC Campos de Experiencia) para Educacao Infantil';
