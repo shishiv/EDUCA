@@ -93,10 +93,10 @@ The command requires `initdb`, `pg_ctl`, and `psql` on `PATH`. It starts an isol
 Generate the committed Supabase type surface only from the optional disposable local Supabase stack:
 
 ```bash
-npx supabase start
-npx supabase db reset
-npx supabase gen types typescript --local > app/types/database.ts
-npx supabase stop
+pnpm --dir app exec supabase start
+pnpm --dir app exec supabase db reset
+pnpm --dir app exec supabase gen types typescript --local > app/types/database.ts
+pnpm --dir app exec supabase stop
 ```
 
 Do not use a linked project or `--project-id` to update committed types.
