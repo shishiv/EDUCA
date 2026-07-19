@@ -96,6 +96,7 @@ Generate the committed Supabase type surface only from the optional disposable l
 npx supabase start
 npx supabase db reset
 npx supabase gen types typescript --local > app/types/database.ts
+npx supabase stop
 ```
 
 Do not use a linked project or `--project-id` to update committed types.
