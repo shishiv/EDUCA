@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -42,17 +42,23 @@ export function JustificationModal({
   studentName,
 }: JustificationModalProps) {
   const [motivo, setMotivo] = useState('')
+  const [previousOpen, setPreviousOpen] = useState(isOpen)
 
-  // Reset motivo when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setMotivo('')
-    }
-  }, [isOpen])
+  // Reset when a controlled parent reopens the same mounted dialog instance.
+  if (isOpen !== previousOpen) {
+    setPreviousOpen(isOpen)
+    if (isOpen && motivo) setMotivo('')
+  }
+
+  const handleClose = () => {
+    setMotivo('')
+    onClose()
+  }
 
   const handleConfirm = () => {
     if (motivo.trim()) {
       onConfirm(motivo.trim())
+      setMotivo('')
     }
   }
 
@@ -67,7 +73,7 @@ export function JustificationModal({
   const isValidMotivo = motivo.trim().length > 0
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Justificar Falta</DialogTitle>
@@ -101,7 +107,7 @@ export function JustificationModal({
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancelar
           </Button>

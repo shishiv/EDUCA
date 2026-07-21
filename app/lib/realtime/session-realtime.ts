@@ -110,7 +110,7 @@ export class SessionRealtimeManager {
         {
           event: '*',
           schema: 'public',
-          table: 'aula_sessions',
+          table: 'sessoes_aula',
           filter: this.buildSessionFilter(filter)
         },
         (payload: RealtimePostgresChangesPayload<SessionRealtimeData>) => {
@@ -183,9 +183,7 @@ export class SessionRealtimeManager {
       return channelName
     }
 
-    const filter = escolaId
-      ? `turma_id=in.(select id from turmas where escola_id=eq.${escolaId})`
-      : undefined
+    const filter = escolaId ? `escola_id=eq.${escolaId}` : undefined
 
     const channel = supabase
       .channel(channelName)
@@ -194,7 +192,7 @@ export class SessionRealtimeManager {
         {
           event: '*',
           schema: 'public',
-          table: 'aula_sessions',
+          table: 'sessoes_aula',
           filter
         },
         (payload: RealtimePostgresChangesPayload<SessionRealtimeData>) => {
@@ -207,9 +205,9 @@ export class SessionRealtimeManager {
           event: '*',
           schema: 'public',
           table: 'frequencia',
-          filter: escolaId
-            ? `session_id=in.(select id from aula_sessions where turma_id=in.(select id from turmas where escola_id=eq.${escolaId}))`
-            : undefined
+          // Frequencia does not carry escola_id. Realtime applies the signed-in
+          // user's RLS policies, so subscribe without an unsupported subquery.
+          filter: undefined
         },
         (payload: RealtimePostgresChangesPayload<AttendanceRealtimeData>) => {
           this.handleAttendanceChange(payload)
@@ -478,7 +476,7 @@ export class SessionRealtimeManager {
     const conditions = []
 
     if (filter.escola_id) {
-      conditions.push(`turma_id=in.(select id from turmas where escola_id=eq.${filter.escola_id})`)
+      conditions.push(`escola_id=eq.${filter.escola_id}`)
     }
 
     if (filter.professor_id) {
@@ -494,7 +492,7 @@ export class SessionRealtimeManager {
     }
 
     if (filter.fase && filter.fase.length > 0) {
-      conditions.push(`fase=in.(${filter.fase.join(',')})`)
+      conditions.push(`status=in.(${filter.fase.join(',')})`)
     }
 
     return conditions.join(' and ') || ''

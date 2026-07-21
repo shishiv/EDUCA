@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
           message: `${openSessions.length} sessão(ões) aberta(s) será(ão) bloqueada(s) automaticamente em ${hoursRemaining}h. Confirme toda a frequência antes deste horário.`,
           type: hoursRemaining <= 2 ? 'critical' : 'warning',
           icon: 'Clock',
-          actionUrl: '/dashboard/frequencia',
+          actionUrl: '/diario/frequencia',
           actionText: 'Verificar Frequência',
           deadline: lockTime,
           count: openSessions.length
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
         message: `${count} aluno(s) com frequência abaixo de 80%. Ação imediata necessária para conformidade com Bolsa Família.`,
         type: 'critical',
         icon: 'AlertTriangle',
-        actionUrl: '/dashboard/relatorios/frequencia',
+        actionUrl: '/relatorios/frequencia',
         actionText: 'Ver Alunos em Risco',
         count: count ?? undefined
       })
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
         message: `Primeira etapa de coleta termina em ${daysUntilDeadline} dias. Verifique se todos os dados de matrícula estão atualizados.`,
         type: daysUntilDeadline <= 7 ? 'critical' : 'warning',
         icon: 'FileText',
-        actionUrl: '/dashboard/relatorios/educacenso',
+        actionUrl: '/dashboard/relatorios',
         actionText: 'Revisar Dados',
         deadline: educacensoDeadline
       })

@@ -9,7 +9,7 @@ const CACHE_PATTERNS = [
   // Core app shell
   '/',
   '/dashboard',
-  '/dashboard/frequencia',
+  '/diario/frequencia',
   '/offline',
 
   // Static assets
@@ -34,7 +34,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll([
           '/',
           '/dashboard',
-          '/dashboard/frequencia',
+          '/diario/frequencia',
           '/offline'
         ])
       })

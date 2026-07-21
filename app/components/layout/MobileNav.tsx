@@ -21,6 +21,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
 import {
   Home,
   CheckSquare,
@@ -38,6 +39,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>
   /** Match pattern for active state (supports partial path matching) */
   matchPath?: string
+  roles: string[]
 }
 
 // ============================================================================
@@ -50,24 +52,28 @@ const navigationItems: NavItem[] = [
     href: '/dashboard',
     icon: Home,
     matchPath: '/dashboard',
+    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
     name: 'Frequencia',
     href: '/diario/frequencia',
     icon: CheckSquare,
     matchPath: '/diario/frequencia',
+    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
     name: 'Diario',
     href: '/diario',
     icon: BookText,
     matchPath: '/diario',
+    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
     name: 'Relatorios',
-    href: '/relatorios',
+    href: '/dashboard/relatorios',
     icon: FileText,
-    matchPath: '/relatorios',
+    matchPath: '/dashboard/relatorios',
+    roles: ['admin', 'diretor', 'secretario'],
   },
 ]
 
@@ -77,6 +83,10 @@ const navigationItems: NavItem[] = [
 
 export function MobileNav() {
   const pathname = usePathname()
+  const { userProfile } = useAuth()
+  const visibleItems = navigationItems.filter(item =>
+    userProfile ? item.roles.includes(userProfile.tipo_usuario) : false
+  )
 
   /**
    * Check if a nav item is active
@@ -112,7 +122,7 @@ export function MobileNav() {
       aria-label="Navegacao principal mobile"
     >
       <div className="flex items-center justify-around h-16 px-2">
-        {navigationItems.map((item) => {
+        {visibleItems.map((item) => {
           const active = isActive(item)
           const Icon = item.icon
 

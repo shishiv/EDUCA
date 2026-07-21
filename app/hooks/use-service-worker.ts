@@ -30,9 +30,19 @@ export function useServiceWorker() {
     registration: null
   })
 
-  // Register service worker
+  // Register service worker. Development/HMR repeatedly replaces controllers,
+  // which can reload pages mid-request and corrupt auth/E2E flows. Keep offline
+  // support production-only unless explicitly enabled for an offline test.
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    const serviceWorkerEnabled =
+      process.env.NODE_ENV === 'production' ||
+      process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === 'true'
+
+    if (
+      !serviceWorkerEnabled ||
+      typeof window === 'undefined' ||
+      !('serviceWorker' in navigator)
+    ) {
       return
     }
 

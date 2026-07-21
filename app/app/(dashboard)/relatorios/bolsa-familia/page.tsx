@@ -299,6 +299,7 @@ export default function BolsaFamiliaReportPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
+            aria-label="Atualizar relatório"
             onClick={fetchReport}
             disabled={loading}
             className="min-h-[44px] flex-1 sm:flex-none"
@@ -308,6 +309,7 @@ export default function BolsaFamiliaReportPage() {
           </Button>
           <Button
             variant="outline"
+            aria-label="Exportar Excel"
             onClick={handleExportExcel}
             className="min-h-[44px] flex-1 sm:flex-none"
           >
@@ -316,6 +318,7 @@ export default function BolsaFamiliaReportPage() {
           </Button>
           <Button
             variant="outline"
+            aria-label="Exportar PDF"
             onClick={handleExportPDF}
             className="min-h-[44px] flex-1 sm:flex-none"
           >
@@ -339,7 +342,7 @@ export default function BolsaFamiliaReportPage() {
             <div className="space-y-1.5 sm:space-y-2">
               <label className="text-xs sm:text-sm font-medium text-gray-700">Escola</label>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-                <SelectTrigger className="min-h-[44px]">
+                <SelectTrigger aria-label="Escola" className="min-h-[44px]">
                   <SelectValue placeholder="Todas as escolas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,7 +364,7 @@ export default function BolsaFamiliaReportPage() {
                 onValueChange={setSelectedTurma}
                 disabled={selectedSchool === 'all'}
               >
-                <SelectTrigger className="min-h-[44px]">
+                <SelectTrigger aria-label="Turma" className="min-h-[44px]">
                   <SelectValue placeholder="Todas as turmas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -379,7 +382,7 @@ export default function BolsaFamiliaReportPage() {
             <div className="space-y-1.5 sm:space-y-2">
               <label className="text-xs sm:text-sm font-medium text-gray-700">Periodo</label>
               <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as PeriodOption)}>
-                <SelectTrigger className="min-h-[44px]">
+                <SelectTrigger aria-label="Periodo" className="min-h-[44px]">
                   <SelectValue placeholder="Selecione o periodo" />
                 </SelectTrigger>
                 <SelectContent>

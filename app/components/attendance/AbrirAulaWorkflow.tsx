@@ -44,8 +44,8 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
       if (onSuccess) {
         onSuccess(session.id)
       } else {
-        // Navigate to chamada page for this turma and date
-        router.push(`/dashboard/chamada?turmaId=${turmaId}&data=${today}`)
+        // Navigate to the class attendance page.
+        router.push(`/dashboard/turmas/${turmaId}/chamada?data=${today}`)
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'

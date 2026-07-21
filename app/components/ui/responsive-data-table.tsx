@@ -76,7 +76,7 @@ export function ResponsiveDataTable<T extends { id: string }>({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Abrir ações">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -212,6 +212,7 @@ export function ResponsiveDataTable<T extends { id: string }>({
                             variant="ghost"
                             size="sm"
                             onClick={() => action.onClick(item)}
+                            aria-label={action.label}
                             className={cn(
                               action.variant === 'destructive' && "text-red-600 hover:text-red-700"
                             )}

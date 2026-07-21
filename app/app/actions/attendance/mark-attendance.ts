@@ -111,7 +111,7 @@ export async function markAttendanceAction(
     }
 
     // Revalidate relevant pages
-    revalidatePath('/dashboard/frequencia')
+    revalidatePath('/diario/frequencia')
 
     return {
       success: true,

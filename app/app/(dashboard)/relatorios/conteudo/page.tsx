@@ -184,7 +184,7 @@ function formatDateApi(date: Date): string {
  */
 function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
   return (
-    <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+    <Card className="border-blue-200 bg-blue-50/30 hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
@@ -668,6 +668,7 @@ export default function ContentReportsPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        aria-label="Data Inicio"
                         className={cn(
                           'w-full justify-start text-left font-normal',
                           !dateRange.from && 'text-muted-foreground'
@@ -696,6 +697,7 @@ export default function ContentReportsPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        aria-label="Data Fim"
                         className={cn(
                           'w-full justify-start text-left font-normal',
                           !dateRange.to && 'text-muted-foreground'

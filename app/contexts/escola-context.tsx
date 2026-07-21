@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
 
-// Storage key for sessionStorage
+// Persist the admin's school choice across tabs and browser restarts.
 const STORAGE_KEY = 'educa-selected-escola'
 
 // Types
@@ -53,10 +53,10 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
   const [loading, setLoading] = React.useState(true)
   const [hydrated, setHydrated] = React.useState(false)
 
-  // Hydrate from sessionStorage after mount (avoid SSR mismatch)
+  // Hydrate from localStorage after mount (avoid SSR mismatch)
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem(STORAGE_KEY)
+      const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         setSelectedEscolaId(stored)
       }
@@ -128,15 +128,15 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
     fetchEscolas()
   }, [userProfile, authLoading, hydrated])
 
-  // Persist selection to sessionStorage
+  // Persist selection to localStorage so new tabs keep the same context.
   const selectEscola = React.useCallback((id: string | null) => {
     setSelectedEscolaId(id)
 
     if (typeof window !== 'undefined') {
       if (id) {
-        sessionStorage.setItem(STORAGE_KEY, id)
+        localStorage.setItem(STORAGE_KEY, id)
       } else {
-        sessionStorage.removeItem(STORAGE_KEY)
+        localStorage.removeItem(STORAGE_KEY)
       }
     }
   }, [])
@@ -146,7 +146,7 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
     setSelectedEscolaId(null)
 
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(STORAGE_KEY)
     }
   }, [])
 

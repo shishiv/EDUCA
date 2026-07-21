@@ -312,7 +312,7 @@ export default function UsuariosPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Tem certeza que deseja excluir o usuário "{usuario.nome}"? 
+                                Tem certeza que deseja excluir o usuário &quot;{usuario.nome}&quot;? 
                                 Esta ação não pode ser desfeita.
                               </AlertDialogDescription>
                             </AlertDialogHeader>

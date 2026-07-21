@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useModal } from '@/components/ui/modal-manager'
 
 interface Turma {
   id: string
@@ -66,6 +67,7 @@ interface SessaoAula {
 
 export default function TurmaDetalhesPage() {
   const router = useRouter()
+  const { openModal } = useModal()
   const params = useParams()
   const id = params?.id as string
 
@@ -290,9 +292,21 @@ export default function TurmaDetalhesPage() {
             </p>
           </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
+          {turma.professor_id && (
+            <Button
+              variant="outline"
+              onClick={() => openModal('abrir-aula', {
+                classInfo: { id: turma.id, nome: turma.nome },
+                professorId: turma.professor_id,
+              })}
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Abrir Aula
+            </Button>
+          )}
           <Button variant="outline" asChild>
-            <Link href={`/dashboard/frequencia?turma=${id}`}>
+            <Link href={`/diario/frequencia?turma=${id}`}>
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Marcar Frequência
             </Link>
@@ -477,7 +491,7 @@ export default function TurmaDetalhesPage() {
               <CardTitle>Sessões de Aula Recentes</CardTitle>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/frequencia?turma=${id}`}>
+              <Link href={`/diario/frequencia?turma=${id}`}>
                 Ver Todas
               </Link>
             </Button>
@@ -516,7 +530,7 @@ export default function TurmaDetalhesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/frequencia?turma=${id}&sessao=${sessao.id}`}>
+                        <Link href={`/diario/frequencia?turma=${id}&sessao=${sessao.id}`}>
                           Ver Detalhes
                         </Link>
                       </Button>

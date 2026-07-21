@@ -499,7 +499,7 @@ export default function TurmasPage() {
                   key={turma.id}
                   turma={turma}
                   onChamada={(id) => router.push(`/dashboard/turmas/${id}/chamada`)}
-                  onDiario={(id) => router.push(`/dashboard/turmas/${id}/diario`)}
+                  onDiario={(id) => router.push(`/dashboard/diario?turma=${id}`)}
                 />
               ))}
             </TurmaCardGrid>

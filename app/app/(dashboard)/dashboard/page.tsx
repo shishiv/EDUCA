@@ -62,7 +62,7 @@ interface QuickAccessItem {
 const quickAccessItems: QuickAccessItem[] = [
   { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600', borderColor: 'hover:border-blue-300', roles: ['admin', 'diretor', 'secretario'] },
   { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600', borderColor: 'hover:border-emerald-300', roles: ['admin', 'diretor', 'secretario'] },
-  { name: 'Frequência', href: '/dashboard/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Frequência', href: '/diario/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
   { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, color: 'bg-violet-50 hover:bg-violet-100', iconColor: 'text-violet-600', borderColor: 'hover:border-violet-300', roles: ['admin', 'diretor', 'secretario'] },
   { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, color: 'bg-rose-50 hover:bg-rose-100', iconColor: 'text-rose-600', borderColor: 'hover:border-rose-300', roles: ['admin', 'diretor', 'secretario'] },
   { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, color: 'bg-slate-50 hover:bg-slate-100', iconColor: 'text-slate-600', borderColor: 'hover:border-slate-300', roles: ['admin', 'diretor'] },
@@ -409,7 +409,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                  <Link href="/dashboard/frequencia">
+                  <Link href="/diario/frequencia">
                     <CheckSquare className="h-5 w-5 text-amber-600" />
                     <span className="text-sm">Nova Chamada</span>
                   </Link>

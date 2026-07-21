@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dialog, Transition } from '@headlessui/react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
@@ -63,7 +64,7 @@ const navigation = [
   },
   {
     name: 'Frequência',
-    href: '/dashboard/frequencia',
+    href: '/diario/frequencia',
     icon: CheckSquare,
   },
   {
@@ -88,8 +89,26 @@ const navigation = [
   },
 ]
 
+const navigationRoles: Record<string, string[]> = {
+  Dashboard: ['admin', 'diretor', 'secretario', 'professor'],
+  Alunos: ['admin', 'diretor', 'secretario'],
+  Usuários: ['admin'],
+  Escolas: ['admin'],
+  Turmas: ['admin', 'diretor', 'secretario', 'professor'],
+  Matrículas: ['admin', 'diretor', 'secretario'],
+  Frequência: ['admin', 'diretor', 'secretario', 'professor'],
+  Notas: ['admin', 'diretor', 'secretario', 'professor'],
+  Calendário: ['admin', 'diretor', 'secretario', 'professor'],
+  Relatórios: ['admin', 'diretor', 'secretario'],
+  Configurações: ['admin', 'diretor'],
+}
+
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const pathname = usePathname()
+  const { userProfile } = useAuth()
+  const visibleNavigation = navigation.filter(item =>
+    userProfile ? navigationRoles[item.name]?.includes(userProfile.tipo_usuario) : false
+  )
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -160,7 +179,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
-                        {navigation.map((item) => {
+                        {visibleNavigation.map((item) => {
                           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                           return (
                             <li key={item.name}>

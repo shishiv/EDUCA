@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
@@ -770,4 +770,13 @@ test.describe('Boletim - Accessibility', () => {
       }
     }
   })
+})
+
+test('class report-card action opens the class roster', async ({ page }) => {
+  await page.goto('/dashboard/notas')
+  const classReport = page.getByRole('link', { name: 'Boletim', exact: true }).first()
+  await expect(classReport).toBeVisible({ timeout: 15000 })
+  await classReport.click()
+  await expect(page.getByRole('heading', { name: /boletins da turma/i })).toBeVisible({ timeout: 15000 })
+  await expect(page.getByRole('link', { name: /abrir boletim de/i }).first()).toBeVisible()
 })

@@ -535,7 +535,7 @@ export default function NotasPage() {
               </div>
             </div>
             <Select value={turmaFilter} onValueChange={setTurmaFilter}>
-              <SelectTrigger className="w-full lg:w-48">
+              <SelectTrigger aria-label="Turma" className="w-full lg:w-48">
                 <SelectValue placeholder="Turma" />
               </SelectTrigger>
               <SelectContent>
@@ -548,7 +548,7 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={disciplinaFilter} onValueChange={setDisciplinaFilter}>
-              <SelectTrigger className="w-full lg:w-40">
+              <SelectTrigger aria-label="Disciplina" className="w-full lg:w-40">
                 <SelectValue placeholder="Disciplina" />
               </SelectTrigger>
               <SelectContent>
@@ -561,7 +561,7 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={bimestreFilter} onValueChange={setBimestreFilter}>
-              <SelectTrigger className="w-full lg:w-32">
+              <SelectTrigger aria-label="Bimestre" className="w-full lg:w-32">
                 <SelectValue placeholder="Bimestre" />
               </SelectTrigger>
               <SelectContent>

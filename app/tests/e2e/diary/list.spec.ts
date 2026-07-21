@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
@@ -19,8 +19,8 @@ test.describe('Diário - Page Access', () => {
   })
 
   test('should display legal compliance notice', async ({ page }) => {
-    await expect(page.getByText(/documento legal|documento oficial/i)).toBeVisible()
-    await expect(page.getByText(/auditável|imutável/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Documento Legal', exact: true })).toBeVisible()
+    await expect(page.getByText(/auditáveis|imutáveis/i)).toBeVisible()
   })
 
   test('should display page description', async ({ page }) => {
@@ -40,11 +40,8 @@ test.describe('Diário - Filters', () => {
   })
 
   test('should display date range filters', async ({ page }) => {
-    // Look for date inputs (data início and data fim)
-    const dateInputs = page.locator('input[type="date"]')
-    const dateCount = await dateInputs.count()
-    
-    expect(dateCount).toBeGreaterThanOrEqual(1)
+    await expect(page.getByLabel('Data Inicial', { exact: true })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByLabel('Data Final', { exact: true })).toBeVisible()
   })
 
   test('should filter by turma when selected', async ({ page }) => {

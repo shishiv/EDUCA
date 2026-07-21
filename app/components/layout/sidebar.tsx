@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -194,17 +194,6 @@ export function Sidebar({ className }: SidebarProps) {
   // Get navigation groups based on user role
   const navigationGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
 
-  // Initialize expanded groups from defaults
-  useEffect(() => {
-    const defaults: Record<string, boolean> = {}
-    navigationGroups.forEach(group => {
-      if (defaults[group.name] === undefined) {
-        defaults[group.name] = group.defaultOpen ?? true
-      }
-    })
-    setExpandedGroups(prev => ({ ...defaults, ...prev }))
-  }, [userProfile])
-
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => ({
       ...prev,
@@ -263,6 +252,7 @@ export function Sidebar({ className }: SidebarProps) {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
           className="h-6 w-6 p-0 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-green-600 hover:bg-green-50 hover:border-green-200 shadow-sm transition-all duration-200"
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}

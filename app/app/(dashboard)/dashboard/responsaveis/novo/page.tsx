@@ -91,11 +91,19 @@ export default function NovoResponsavelPage() {
         return
       }
 
+      // Validate optional Brazilian phone (DDD + 8 or 9 digits).
+      const cleanedPhone = formData.telefone.replace(/\D/g, '')
+      if (cleanedPhone && !/^\d{10,11}$/.test(cleanedPhone)) {
+        toast.error('Telefone inválido. Informe DDD e número completos.')
+        setLoading(false)
+        return
+      }
+
       // Prepare data
       const responsavelData = {
         nome: formData.nome,
         cpf: cleanedCPF,
-        telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
+        telefone: cleanedPhone || null,
         email: formData.email || null,
         parentesco: formData.parentesco,
         endereco: formData.endereco || null,

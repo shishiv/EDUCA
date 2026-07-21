@@ -275,8 +275,8 @@ export async function generateContentReport(
         sessoes_aula!inner (
           id,
           data_aula,
-          hora_inicio,
-          hora_fim,
+          inicio_aula,
+          fim_aula,
           turma_id,
           professor_id,
           turmas!inner (
@@ -289,9 +289,9 @@ export async function generateContentReport(
               nome
             )
           ),
-          users (
+          users:professor_id (
             id,
-            nome_completo
+            nome
           )
         )
       `)
@@ -376,7 +376,7 @@ export async function generateContentReport(
       if (!professorInfo && professor) {
         professorInfo = {
           id: professor.id,
-          nome: professor.nome_completo,
+          nome: professor.nome,
         };
       }
 

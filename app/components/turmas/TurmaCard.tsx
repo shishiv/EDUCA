@@ -112,7 +112,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
     if (onDiario) {
       onDiario(turma.id)
     } else {
-      router.push(`/dashboard/turmas/${turma.id}/diario`)
+      router.push(`/dashboard/diario?turma=${turma.id}`)
     }
   }
 

@@ -135,7 +135,7 @@ export async function openSessionAction(
     }
 
     // Revalidate attendance pages
-    revalidatePath('/dashboard/frequencia')
+    revalidatePath('/diario/frequencia')
     revalidatePath(`/dashboard/turmas/${params.turma_id}`)
 
     return {
