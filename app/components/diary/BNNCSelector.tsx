@@ -64,7 +64,7 @@ export interface BNNCSelectorProps {
 }
 
 export function BNNCSelector({
-  value = '',
+  value,
   onChange,
   label = 'Habilidades BNCC',
   placeholder = 'Ex: EF01MA06, EF01MA08',
@@ -76,11 +76,12 @@ export function BNNCSelector({
   className,
   id = 'bncc-selector',
 }: BNNCSelectorProps) {
-  const [inputValue, setInputValue] = useState(value)
+  const [inputValue, setInputValue] = useState(value ?? '')
   const [isFocused, setIsFocused] = useState(false)
+  const currentValue = value ?? inputValue
 
   // Parse and validate codes
-  const parsedCodes = useMemo(() => parseBNNCCodes(inputValue), [inputValue])
+  const parsedCodes = useMemo(() => parseBNNCCodes(currentValue), [currentValue])
   const validation = useMemo(() => validateBNNCCodes(parsedCodes), [parsedCodes])
 
   // Count valid codes
@@ -94,10 +95,10 @@ export function BNNCSelector({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value.toUpperCase()
-      setInputValue(newValue)
+      if (value === undefined) setInputValue(newValue)
       onChange?.(newValue)
     },
-    [onChange]
+    [onChange, value]
   )
 
   // Remove a specific code
@@ -105,10 +106,10 @@ export function BNNCSelector({
     (codeToRemove: string) => {
       const newCodes = parsedCodes.filter((code) => code !== codeToRemove)
       const newValue = newCodes.join(', ')
-      setInputValue(newValue)
+      if (value === undefined) setInputValue(newValue)
       onChange?.(newValue)
     },
-    [parsedCodes, onChange]
+    [parsedCodes, onChange, value]
   )
 
   // Get example codes based on education level
@@ -120,7 +121,7 @@ export function BNNCSelector({
   }, [educationLevel])
 
   // Determine validation state
-  const showValidation = inputValue.trim().length > 0 && !isFocused
+  const showValidation = currentValue.trim().length > 0 && !isFocused
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -175,7 +176,7 @@ export function BNNCSelector({
         <Input
           id={id}
           type="text"
-          value={inputValue}
+          value={currentValue}
           onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -209,7 +210,7 @@ export function BNNCSelector({
       </div>
 
       {/* Helper text / Examples */}
-      {helperText && (
+      {helperText && !error && (
         <p
           id={`${id}-description`}
           className="text-sm text-muted-foreground"

@@ -227,7 +227,7 @@ export default function NovoUsuarioPage() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">Senha Padrão</h4>
                 <p className="text-sm text-gray-600">
-                  A senha padrão será "123456". O usuário deverá alterá-la no primeiro acesso.
+                  A senha padrão será <code>123456</code>. O usuário deverá alterá-la no primeiro acesso.
                 </p>
               </div>
             </CardContent>

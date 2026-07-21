@@ -5,22 +5,25 @@ Testes End-to-End para o sistema EDUCA usando Playwright.
 ## Quick Start
 
 ```bash
-# 1. Instalar dependências
+# Na raiz do repositório: iniciar Supabase local
+pnpm --dir app exec supabase start
+
+# Em app/: configurar as chaves locais exibidas por `supabase status -o env`
+# NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=<PUBLISHABLE_KEY, começa com sb_publishable_>
+# SUPABASE_SERVICE_ROLE_KEY=<SECRET_KEY, começa com sb_secret_>
+
+cd app
 pnpm install
+pnpm seed:e2e
+pnpm test:e2e
 
-# 2. Instalar browsers do Playwright
-npx playwright install
-
-# 3. Seed database com dados de teste
-pnpm seed:dev
-pnpm seed:superadmin
-
-# 4. Rodar testes
-npx playwright test
-
-# 5. Ver relatório
-npx playwright show-report
+# Relatório HTML
+pnpm exec playwright show-report
 ```
+
+`global-setup.ts` executa `seed:e2e` novamente antes da suíte. O seed recusa
+hosts não locais e remove apenas registros descartáveis com prefixo E2E.
 
 ## Estrutura
 
@@ -224,7 +227,9 @@ Após rodar `pnpm seed:dev`:
 |---------|-------|-------|
 | Admin | admin@test.com | test123456 |
 | Diretor | diretor@test.com | test123456 |
+| Secretário | secretario@test.com | test123456 |
 | Professor | professor@test.com | test123456 |
+| Responsável | responsavel@test.com | test123456 |
 
 ## Brazilian Compliance
 
@@ -244,11 +249,12 @@ npx playwright install
 
 ### Erro de autenticação
 ```bash
-# Limpar e re-seedar
-pnpm seed:clear
-pnpm seed:dev
-pnpm seed:superadmin
+# Reaplicar fixtures determinísticas locais
+pnpm seed:e2e
 ```
+
+Se o Realtime responder 403, confirme que `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+usa a chave `sb_publishable_...`, não a chave JWT legada `ANON_KEY`.
 
 ### Testes flaky
 ```bash
@@ -265,15 +271,9 @@ npx playwright test --headed --slowmo=1000
 
 ## Resumo de Cobertura
 
-**Total de arquivos de teste**: 12
-- 1 teste de autenticação (login)
-- 7 testes de formulários CRUD
-- 4 testes de fluxos completos
+A cobertura autoritativa, incluindo rota, papel, viewport, interação, resultado
+e spec, está em [`COVERAGE_MATRIX.md`](COVERAGE_MATRIX.md). Use
+`pnpm exec playwright test --list` para a contagem atual, evitando números
+manuais que ficam desatualizados.
 
-**Total de casos de teste**: 150+
-- Autenticação: 7 casos
-- Formulários: 60+ casos
-- Fluxos: 80+ casos (chamada, dashboard, relatórios, permissões, notas)
-
-*Última atualização: 2026-02-02*
-*Novos testes adicionados: dashboard-metrics, relatorios, permissions, notas-boletim*
+*Última atualização: 2026-07-21*

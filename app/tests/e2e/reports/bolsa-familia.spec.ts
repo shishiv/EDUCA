@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 
 /**
  * E2E Tests: Bolsa Familia Report (Relatorio Bolsa Familia)
@@ -17,13 +17,13 @@ test.describe('Bolsa Familia Report - Page Access', () => {
   test('should access bolsa familia report page', async ({ page }) => {
     await page.goto('/relatorios/bolsa-familia')
     
-    await expect(page.getByRole('heading', { name: /bolsa.*família|bolsa.*familia/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Bolsa Familia', exact: true })).toBeVisible()
   })
 
   test('should display page description', async ({ page }) => {
     await page.goto('/relatorios/bolsa-familia')
     
-    await expect(page.getByText(/monitoramento|frequência|frequencia/i)).toBeVisible()
+    await expect(page.getByText(/monitoramento de frequencia/i).first()).toBeVisible()
   })
 
   test('should show filter section', async ({ page }) => {
@@ -434,7 +434,7 @@ test.describe('Bolsa Familia Report - Mobile Responsiveness', () => {
   test('should display mobile layout', async ({ page }) => {
     await page.goto('/relatorios/bolsa-familia')
     
-    await expect(page.getByRole('heading', { name: /bolsa.*família|bolsa.*familia/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Bolsa Familia', exact: true })).toBeVisible()
   })
 
   test('should stack summary cards in grid', async ({ page }) => {

@@ -94,7 +94,7 @@ export async function closeSessionAction(
     // 3. Sets tempo_total_aula computed field
 
     // Revalidate all attendance pages
-    revalidatePath('/dashboard/frequencia')
+    revalidatePath('/diario/frequencia')
 
     return {
       success: true,

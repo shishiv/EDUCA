@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad, 
   generateValidCPF,
@@ -7,6 +7,12 @@ import {
   expectFormSuccess,
   expectFormError
 } from '../utils/test-helpers'
+
+async function completeRelationshipAndConsent(page: import('@playwright/test').Page) {
+  await page.locator('#parentesco').click()
+  await page.getByRole('option', { name: /mãe|pai|responsável/i }).first().click()
+  await page.getByRole('checkbox', { name: /consentimento lgpd/i }).click()
+}
 
 /**
  * E2E Tests: Responsáveis - Complete CRUD
@@ -34,7 +40,7 @@ test.describe('Responsáveis - List View', () => {
     await expect(table).toBeVisible()
     
     // Check for expected columns
-    await expect(page.getByRole('columnheader', { name: /nome/i })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Responsável', exact: true })).toBeVisible()
   })
 
   test('should have search functionality', async ({ page }) => {
@@ -131,6 +137,7 @@ test.describe('Responsáveis - Create Form', () => {
     await cpfField.blur()
     
     await page.getByLabel(/nome/i).fill('Test Validation')
+    await completeRelationshipAndConsent(page)
     
     const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
     await saveButton.click()
@@ -145,8 +152,9 @@ test.describe('Responsáveis - Create Form', () => {
     await phoneField.blur()
     await page.waitForTimeout(300)
     
-    // Some validation should occur
     await page.getByLabel(/nome/i).fill('Test Phone')
+    await page.getByLabel(/cpf/i).fill(generateValidCPF())
+    await completeRelationshipAndConsent(page)
     
     const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
     await saveButton.click()
@@ -191,6 +199,8 @@ test.describe('Responsáveis - Create Form', () => {
       await page.getByRole('option', { name: /mãe|pai|responsável/i }).first().click()
     }
     
+    await page.getByRole('checkbox', { name: /consentimento lgpd/i }).click()
+
     // Optional email
     const emailField = page.getByLabel(/email/i)
     if (await emailField.isVisible()) {
@@ -228,11 +238,10 @@ test.describe('Responsáveis - Create Form', () => {
       await profissaoField.fill('Engenheiro')
     }
     
-    const parentescoSelect = page.locator('select, [role="combobox"]').filter({ hasText: /selecione|parentesco/i }).first()
-    if (await parentescoSelect.isVisible()) {
-      await parentescoSelect.click()
-      await page.getByRole('option').first().click()
-    }
+    const parentescoSelect = page.locator('#parentesco')
+    await parentescoSelect.click()
+    await page.getByRole('option').first().click()
+    await page.getByRole('checkbox', { name: /consentimento lgpd/i }).click()
     
     const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
     await saveButton.click()

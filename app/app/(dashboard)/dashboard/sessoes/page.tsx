@@ -257,7 +257,7 @@ export default function SessoesPage() {
       toast.info('Funcionalidade "Abrir Aula" em desenvolvimento')
     } else if (sessao.status === 'ABERTA') {
       // Mark attendance or close
-      router.push(`/dashboard/frequencia?sessao=${sessao.id}`)
+      router.push(`/diario/frequencia?sessao=${sessao.id}`)
     } else {
       // View only
       handleViewDetails(sessao.id)

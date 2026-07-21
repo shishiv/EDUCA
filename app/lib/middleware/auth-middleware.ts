@@ -71,25 +71,24 @@ export async function getServerUser(request: NextRequest) {
   const { supabase } = await createSupabaseServerClient(request)
 
   try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+    // Validate the asymmetric JWT locally (JWKS is cached) instead of making
+    // an Auth server round trip on every route transition.
+    const { data, error } = await supabase.auth.getClaims()
+    const userId = data?.claims?.sub
 
-    if (error || !user) {
+    if (error || !userId) {
       return null
     }
 
-    // Try to get user profile
     const { data: userProfile } = await supabase
       .from('users')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', userId)
       .eq('ativo', true)
       .single()
 
     return {
-      user,
+      user: { id: userId },
       userProfile: userProfile || null,
     }
   } catch (error) {
@@ -98,108 +97,73 @@ export async function getServerUser(request: NextRequest) {
   }
 }
 
-// Route protection configuration
-export const routeProtection = {
-  // Public routes (no authentication required)
-  public: ['/login', '/'],
+type UserRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
 
-  // Role-based protected routes
-  protected: {
-    // Admin only routes
-    admin: [
-      '/admin',
-      '/admin/users',
-      '/admin/schools',
-      '/admin/system',
-    ],
-
-    // Director and admin routes
-    director: [
-      '/dashboard/school-management',
-      '/dashboard/teachers',
-      '/dashboard/reports/school',
-    ],
-
-    // Secretary, director and admin routes
-    secretary: [
-      '/dashboard/students',
-      '/dashboard/enrollment',
-      '/dashboard/reports/student',
-    ],
-
-    // Teacher routes (includes professor access)
-    teacher: [
-      '/dashboard/classes',
-      '/dashboard/attendance',
-      '/dashboard/grades',
-      '/dashboard/diary',
-    ],
-
-    // Parent/Guardian routes
-    parent: [
-      '/dashboard/children',
-      '/dashboard/attendance/view',
-      '/dashboard/grades/view',
-    ],
-  },
-
-  // General authenticated routes (any logged in user)
-  authenticated: [
-    '/dashboard',
-    '/profile',
-    '/settings',
-  ],
+interface ProtectedRoute {
+  prefix: string
+  roles: UserRole[]
 }
+
+// Route protection configuration uses the real Portuguese application routes.
+export const routeProtection = {
+  public: ['/login', '/reset-password', '/politica-privacidade', '/offline', '/'],
+  protected: [
+    // Admin-only system management
+    { prefix: '/dashboard/usuarios', roles: ['admin'] },
+    { prefix: '/dashboard/escolas', roles: ['admin'] },
+    { prefix: '/dashboard/flags', roles: ['admin'] },
+
+    // Municipal and school management
+    { prefix: '/dashboard/atribuicoes', roles: ['admin', 'diretor'] },
+    { prefix: '/dashboard/configuracoes', roles: ['admin', 'diretor'] },
+    { prefix: '/dashboard/alunos', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/turmas/nova', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/turmas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/dashboard/matriculas', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/responsaveis', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/relatorios', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/relatorios', roles: ['admin', 'diretor', 'secretario'] },
+
+    // Academic operations
+    { prefix: '/dashboard/notas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/dashboard/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  ] satisfies ProtectedRoute[],
+  authenticated: ['/dashboard'],
+}
+
+const matchesRoute = (pathname: string, route: string) =>
+  route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`)
 
 export function checkRouteAccess(
   pathname: string,
   userRole?: string
 ): { hasAccess: boolean; redirectTo?: string } {
-  // Public routes are always accessible
-  if (routeProtection.public.some(route => pathname.startsWith(route))) {
+  if (routeProtection.public.some(route => matchesRoute(pathname, route))) {
     return { hasAccess: true }
   }
 
-  // If no user role, redirect to login
   if (!userRole) {
     return { hasAccess: false, redirectTo: '/login' }
   }
 
-  // Check role-based access
-  for (const [role, routes] of Object.entries(routeProtection.protected)) {
-    if (routes.some(route => pathname.startsWith(route))) {
-      // Check if user has required role or higher privilege
-      const hasRequiredRole = checkRoleHierarchy(userRole, role)
-
-      if (!hasRequiredRole) {
-        return { hasAccess: false, redirectTo: '/unauthorized' }
-      }
-    }
+  const classEditRoute: ProtectedRoute | undefined =
+    /^\/dashboard\/turmas\/[^/]+\/editar$/.test(pathname)
+      ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario'] }
+      : undefined
+  const protectedRoute = classEditRoute || routeProtection.protected.find(route =>
+    matchesRoute(pathname, route.prefix)
+  )
+  if (protectedRoute && !(protectedRoute.roles as UserRole[]).includes(userRole as UserRole)) {
+    return { hasAccess: false, redirectTo: '/unauthorized' }
   }
 
-  // Check general authenticated routes
-  if (routeProtection.authenticated.some(route => pathname.startsWith(route))) {
+  if (routeProtection.authenticated.some(route => matchesRoute(pathname, route))) {
     return { hasAccess: true }
   }
 
-  // Default: allow access for logged in users
+  // Authenticated users may access public-adjacent routes unless explicitly restricted.
   return { hasAccess: true }
-}
-
-// Role hierarchy check - higher roles can access lower role routes
-function checkRoleHierarchy(userRole: string, requiredRole: string): boolean {
-  const roleHierarchy = {
-    responsavel: 1,
-    professor: 2,
-    secretario: 3,
-    diretor: 4,
-    admin: 5,
-  }
-
-  const userLevel = roleHierarchy[userRole as keyof typeof roleHierarchy] || 0
-  const requiredLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0
-
-  return userLevel >= requiredLevel
 }
 
 export async function authMiddleware(request: NextRequest) {

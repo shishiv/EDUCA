@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad, 
   generateValidCPF, 
@@ -79,12 +79,10 @@ test.describe('Alunos - Required Fields', () => {
   })
 
   test('should show required field indicators', async ({ page }) => {
-    // Look for asterisks or "obrigatório" text
-    const requiredIndicators = page.locator('label:has-text("*"), label:has-text("obrigatório")')
-    const count = await requiredIndicators.count()
-    
-    // Should have at least some required fields marked
-    expect(count).toBeGreaterThan(0)
+    await expect(page.getByText('Nome Completo *', { exact: true })).toBeVisible()
+    await expect(page.getByText('Data de Nascimento *', { exact: true })).toBeVisible()
+    await expect(page.getByText('Endereço Completo *', { exact: true })).toBeVisible()
+    await expect(page.getByLabel(/nome.*completo/i)).toHaveAttribute('required', '')
   })
 
   test('should not allow submission with empty required fields', async ({ page }) => {
@@ -490,8 +488,9 @@ test.describe('Alunos - Successful Creation', () => {
     const validCPF = generateValidCPF()
     await page.getByLabel(/cpf/i).fill(validCPF)
     
-    // Nome da mãe
+    // Required family and address data
     await page.getByLabel(/nome.*mãe/i).fill('Maria Teste E2E')
+    await page.getByLabel(/endereço.*completo/i).fill('Rua Teste E2E, 123, Centro')
     
     // Submit
     const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
@@ -515,8 +514,9 @@ test.describe('Alunos - Successful Creation', () => {
     await sexoSelect.click()
     await page.getByRole('option', { name: /feminino/i }).first().click()
     
-    // Skip CPF
+    // Skip optional CPF
     await page.getByLabel(/nome.*mãe/i).fill('Ana Teste E2E')
+    await page.getByLabel(/endereço.*completo/i).fill('Rua Sem CPF, 456, Centro')
     
     const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
     await saveButton.click()
@@ -533,6 +533,12 @@ test.describe('Alunos - Successful Creation', () => {
 
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
+
+    // Hold the insert response long enough to observe the loading state.
+    await page.route('**/rest/v1/alunos*', async route => {
+      await new Promise(resolve => setTimeout(resolve, 750))
+      await route.continue()
+    })
     
     await page.getByLabel(/nome.*completo/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/data.*nascimento/i).fill('2015-05-10')
@@ -544,12 +550,18 @@ test.describe('Alunos - Successful Creation', () => {
     }
     
     await page.getByLabel(/nome.*mãe/i).fill('Test Mãe')
+    await page.getByLabel(/endereço.*completo/i).fill('Rua Loading, 789, Centro')
     
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    // Button should show loading state
+    const saveButton = page.locator('button[type="submit"]')
+    const submission = saveButton.click()
+
+    // Use a stable selector because the accessible name changes to "Cadastrando".
     await expect(saveButton).toBeDisabled()
+    await expect(saveButton).toContainText(/cadastrando/i)
+    await submission
+    await expect(page).toHaveURL(/\/dashboard\/alunos$/, { timeout: 10000 })
+    // Let the destination layout finish its Realtime handshake before teardown.
+    await page.waitForTimeout(500)
   })
 })
 
@@ -593,8 +605,8 @@ test.describe('Alunos - Form Navigation', () => {
   test('should cancel and return to list', async ({ page }) => {
     await page.getByLabel(/nome.*completo/i).fill('Will be cancelled')
     
-    const backButton = page.getByRole('link', { name: /voltar|cancelar/i })
-    await backButton.click()
+    const cancelLink = page.getByRole('link', { name: 'Cancelar', exact: true })
+    await cancelLink.click()
     
     // Should go back to list
     await expect(page).toHaveURL(/\/alunos$/)

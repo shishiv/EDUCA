@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { studentFormSchema } from '@/lib/validation'
 import { 
   Select,
   SelectContent,
@@ -25,6 +27,7 @@ import { logger } from '@/lib/logger'
 export default function NovoAlunoPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
     // Dados pessoais
     nome_completo: '',
@@ -69,21 +72,43 @@ export default function NovoAlunoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setFieldErrors({})
+
+    const validationResult = studentFormSchema.safeParse({
+      nome_completo: formData.nome_completo.trim(),
+      data_nascimento: formData.data_nascimento,
+      cpf: formData.cpf || undefined,
+      rg: formData.rg || undefined,
+      sexo: formData.sexo,
+      telefone: formData.telefone || undefined,
+      email: formData.email || undefined,
+      endereco: formData.endereco.trim(),
+      nome_mae: formData.nome_mae.trim(),
+      nome_pai: formData.nome_pai.trim() || undefined,
+      necessidades_especiais: formData.necessidades_especiais || undefined,
+    })
+
+    if (!validationResult.success) {
+      const nextErrors: Record<string, string> = {}
+      for (const issue of validationResult.error.issues) {
+        const field = String(issue.path[0] || 'form')
+        if (!nextErrors[field]) nextErrors[field] = issue.message
+      }
+      setFieldErrors(nextErrors)
+      toast.error('Corrija os campos obrigatórios antes de continuar')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Prepare student data in API format
+      // Prepare normalized student data in API format
       const studentData = {
-        nome_completo: formData.nome_completo,
+        ...validationResult.data,
+        cpf: validationResult.data.cpf?.replace(/\D/g, ''),
+        telefone: validationResult.data.telefone?.replace(/\D/g, ''),
         data_nascimento: formData.data_nascimento,
-        cpf: formData.cpf?.replace(/\D/g, '') || undefined, // Clean CPF
-        sexo: formData.sexo as 'M' | 'F',
-        telefone: formData.telefone?.replace(/\D/g, '') || undefined, // Clean phone
-        email: formData.email || undefined,
-        endereco: formData.endereco,
-        nome_mae: formData.nome_mae,
-        nome_pai: formData.nome_pai || undefined,
-        necessidades_especiais: formData.necessidades_especiais || undefined,
+        sexo: validationResult.data.sexo as 'M' | 'F',
       }
 
       // Prepare guardian data if provided
@@ -132,6 +157,12 @@ export default function NovoAlunoPage() {
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    setFieldErrors(prev => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
   }
 
   const handleResponsavelChange = (field: string, value: any) => {
@@ -173,7 +204,14 @@ export default function NovoAlunoPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
+        {Object.keys(fieldErrors).length > 0 && (
+          <Alert variant="destructive" className="mb-6" role="alert">
+            <AlertDescription>
+              Corrija os campos obrigatórios destacados antes de continuar.
+            </AlertDescription>
+          </Alert>
+        )}
         <Tabs defaultValue="pessoais" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 h-auto p-1">
             <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
@@ -213,8 +251,15 @@ export default function NovoAlunoPage() {
                           value={formData.nome_completo}
                           onChange={(e) => handleInputChange('nome_completo', e.target.value)}
                           placeholder="Digite o nome completo do aluno"
+                          aria-invalid={Boolean(fieldErrors.nome_completo)}
+                          aria-describedby={fieldErrors.nome_completo ? 'nome_completo-error' : undefined}
                           required
                         />
+                        {fieldErrors.nome_completo && (
+                          <p id="nome_completo-error" className="text-sm text-red-600" role="alert">
+                            {fieldErrors.nome_completo}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="space-y-2">
@@ -224,14 +269,25 @@ export default function NovoAlunoPage() {
                           type="date"
                           value={formData.data_nascimento}
                           onChange={(e) => handleInputChange('data_nascimento', e.target.value)}
+                          aria-invalid={Boolean(fieldErrors.data_nascimento)}
+                          aria-describedby={fieldErrors.data_nascimento ? 'data_nascimento-error' : undefined}
                           required
                         />
+                        {fieldErrors.data_nascimento && (
+                          <p id="data_nascimento-error" className="text-sm text-red-600" role="alert">
+                            {fieldErrors.data_nascimento}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="sexo">Sexo *</Label>
                         <Select value={formData.sexo} onValueChange={(value) => handleInputChange('sexo', value)}>
-                          <SelectTrigger id="sexo">
+                          <SelectTrigger
+                            id="sexo"
+                            aria-invalid={Boolean(fieldErrors.sexo)}
+                            aria-describedby={fieldErrors.sexo ? 'sexo-error' : undefined}
+                          >
                             <SelectValue placeholder="Selecione o sexo" />
                           </SelectTrigger>
                           <SelectContent>
@@ -239,6 +295,11 @@ export default function NovoAlunoPage() {
                             <SelectItem value="F">Feminino</SelectItem>
                           </SelectContent>
                         </Select>
+                        {fieldErrors.sexo && (
+                          <p id="sexo-error" className="text-sm text-red-600" role="alert">
+                            {fieldErrors.sexo}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -251,7 +312,14 @@ export default function NovoAlunoPage() {
                           onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
                           placeholder="000.000.000-00"
                           maxLength={14}
+                          aria-invalid={Boolean(fieldErrors.cpf)}
+                          aria-describedby={fieldErrors.cpf ? 'cpf-error' : undefined}
                         />
+                        {fieldErrors.cpf && (
+                          <p id="cpf-error" className="text-sm text-red-600" role="alert">
+                            {fieldErrors.cpf}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="space-y-2">
@@ -266,13 +334,21 @@ export default function NovoAlunoPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="endereco">Endereço Completo</Label>
+                      <Label htmlFor="endereco">Endereço Completo *</Label>
                       <Input
                         id="endereco"
                         value={formData.endereco}
                         onChange={(e) => handleInputChange('endereco', e.target.value)}
                         placeholder="Rua, número, bairro, cidade"
+                        aria-invalid={Boolean(fieldErrors.endereco)}
+                        aria-describedby={fieldErrors.endereco ? 'endereco-error' : undefined}
+                        required
                       />
+                      {fieldErrors.endereco && (
+                        <p id="endereco-error" className="text-sm text-red-600" role="alert">
+                          {fieldErrors.endereco}
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,13 +377,21 @@ export default function NovoAlunoPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nome_mae">Nome da Mãe</Label>
+                        <Label htmlFor="nome_mae">Nome da Mãe *</Label>
                         <Input
                           id="nome_mae"
                           value={formData.nome_mae}
                           onChange={(e) => handleInputChange('nome_mae', e.target.value)}
                           placeholder="Nome completo da mãe"
+                          aria-invalid={Boolean(fieldErrors.nome_mae)}
+                          aria-describedby={fieldErrors.nome_mae ? 'nome_mae-error' : undefined}
+                          required
                         />
+                        {fieldErrors.nome_mae && (
+                          <p id="nome_mae-error" className="text-sm text-red-600" role="alert">
+                            {fieldErrors.nome_mae}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="space-y-2">

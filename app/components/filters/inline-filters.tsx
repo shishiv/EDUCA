@@ -84,6 +84,8 @@ export function InlineFilters({
       {filters.map((filter) => (
         <Select key={filter.id} value={filter.value} onValueChange={filter.onChange}>
           <SelectTrigger
+            id={filter.id}
+            aria-label={filter.placeholder}
             className={cn('h-9 text-sm', filter.width || 'w-full sm:w-40')}
           >
             <SelectValue placeholder={filter.placeholder} />

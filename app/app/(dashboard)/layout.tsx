@@ -14,6 +14,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { ModalProvider } from '@/components/ui/modal-manager'
 import { ModalRenderer } from '@/components/ui/modal-renderer'
+import { NavigationProvider } from '@/components/layout/navigation-provider'
 
 export default function DashboardLayout({
   children,
@@ -22,15 +23,17 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard allowedRoles={['admin', 'diretor', 'secretario', 'professor']}>
-      <ModalProvider>
-        <DashboardWithRealtime>
-          <DashboardLayoutInner>
-            {children}
-          </DashboardLayoutInner>
-          <Toaster />
-        </DashboardWithRealtime>
-        <ModalRenderer />
-      </ModalProvider>
+      <NavigationProvider>
+        <ModalProvider>
+          <DashboardWithRealtime>
+            <DashboardLayoutInner>
+              {children}
+            </DashboardLayoutInner>
+            <Toaster />
+          </DashboardWithRealtime>
+          <ModalRenderer />
+        </ModalProvider>
+      </NavigationProvider>
     </AuthGuard>
   )
 }
