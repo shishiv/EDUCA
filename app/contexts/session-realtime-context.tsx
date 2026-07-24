@@ -192,25 +192,6 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
     }
   }
 
-  // Initialize real-time manager
-  useEffect(() => {
-    realtimeManager.current = new SessionRealtimeManager(realtimeCallbacks)
-
-    // Auto-subscribe based on user role
-    if (user.tipo_usuario === 'professor') {
-      subscribeToTeacherSessions(user.id)
-    } else if (['admin', 'diretor', 'secretario'].includes(user.tipo_usuario)) {
-      subscribeToSchoolSessions(user.escola_id)
-    }
-
-    return () => {
-      realtimeManager.current?.unsubscribeAll()
-      if (reconnectTimer.current) {
-        clearTimeout(reconnectTimer.current)
-      }
-    }
-  }, [user.id, user.tipo_usuario, user.escola_id])
-
   // Monitor online/offline status
   useEffect(() => {
     const handleOnline = () => {
@@ -255,6 +236,22 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
   const subscribeToSchoolSessions = useCallback((escolaId: string) => {
     realtimeManager.current?.subscribeToDashboard(escolaId)
   }, [])
+
+  // Initialize after subscription callbacks have been declared.
+  useEffect(() => {
+    realtimeManager.current = new SessionRealtimeManager(realtimeCallbacks)
+
+    if (user.tipo_usuario === 'professor') {
+      subscribeToTeacherSessions(user.id)
+    } else if (['admin', 'diretor', 'secretario'].includes(user.tipo_usuario)) {
+      subscribeToSchoolSessions(user.escola_id)
+    }
+
+    return () => {
+      realtimeManager.current?.unsubscribeAll()
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
+    }
+  }, [user.id, user.tipo_usuario, user.escola_id, subscribeToTeacherSessions, subscribeToSchoolSessions])
 
   const broadcastSessionUpdate = useCallback(async (sessionId: string, updateType: string, data?: any) => {
     try {

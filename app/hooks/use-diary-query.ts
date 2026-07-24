@@ -648,41 +648,24 @@ export function useDeleteLesson() {
 // Cache Invalidation Helpers
 // ============================================================================
 
-export const invalidateDiaryQueries = {
-  turmas: () => {
-    const queryClient = useQueryClient()
-    return queryClient.invalidateQueries({ queryKey: diaryQueryKeys.turmas.all() })
-  },
+export function useInvalidateDiaryQueries() {
+  const queryClient = useQueryClient()
 
-  lessons: (turmaId?: string) => {
-    const queryClient = useQueryClient()
-    if (turmaId) {
-      return queryClient.invalidateQueries({
-        queryKey: diaryQueryKeys.lessons.list(turmaId),
-      })
-    }
-    return queryClient.invalidateQueries({ queryKey: diaryQueryKeys.lessons.all() })
-  },
-
-  session: (turmaId: string, date: string) => {
-    const queryClient = useQueryClient()
-    return queryClient.invalidateQueries({
+  return {
+    turmas: () => queryClient.invalidateQueries({ queryKey: diaryQueryKeys.turmas.all() }),
+    lessons: (turmaId?: string) => queryClient.invalidateQueries({
+      queryKey: turmaId
+        ? diaryQueryKeys.lessons.list(turmaId)
+        : diaryQueryKeys.lessons.all(),
+    }),
+    session: (turmaId: string, date: string) => queryClient.invalidateQueries({
       queryKey: diaryQueryKeys.sessions.byTurmaDate(turmaId, date),
-    })
-  },
-
-  risk: (turmaId?: string) => {
-    const queryClient = useQueryClient()
-    if (turmaId) {
-      return queryClient.invalidateQueries({
-        queryKey: diaryQueryKeys.risk.byTurma(turmaId),
-      })
-    }
-    return queryClient.invalidateQueries({ queryKey: diaryQueryKeys.risk.all() })
-  },
-
-  all: () => {
-    const queryClient = useQueryClient()
-    return queryClient.invalidateQueries({ queryKey: ['diary'] })
-  },
+    }),
+    risk: (turmaId?: string) => queryClient.invalidateQueries({
+      queryKey: turmaId
+        ? diaryQueryKeys.risk.byTurma(turmaId)
+        : diaryQueryKeys.risk.all(),
+    }),
+    all: () => queryClient.invalidateQueries({ queryKey: ['diary'] }),
+  }
 }

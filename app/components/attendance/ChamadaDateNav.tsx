@@ -106,6 +106,7 @@ export function ChamadaDateNav({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            aria-label="Selecionar data"
             className={cn(
               "min-w-[200px] justify-start text-left font-normal",
               !currentDate && "text-muted-foreground"

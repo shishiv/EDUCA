@@ -56,11 +56,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
 
   // Fetch session details when dialog opens
   useEffect(() => {
-    if (!open || !session_id) {
-      setSession(null)
-      setError(null)
-      return
-    }
+    if (!open || !session_id) return
 
     async function fetchSessionDetail() {
       setLoading(true)
@@ -70,6 +66,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
 
       if (fetchError || !data) {
         logger.error('Error fetching session detail', fetchError as Error, { feature: 'diary', action: 'fetch_detail' })
+        setSession(null)
         setError('Erro ao carregar detalhes da aula. Tente novamente.')
         setLoading(false)
         return

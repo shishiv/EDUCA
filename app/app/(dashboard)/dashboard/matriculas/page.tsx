@@ -594,13 +594,11 @@ export default function MatriculasPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/matriculas/${matricula.id}`}>
+                          <Link
+                            href={`/dashboard/matriculas/${matricula.id}`}
+                            aria-label={`Gerenciar matrícula de ${matricula.aluno?.nome_completo || 'aluno'}`}
+                          >
                             <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/matriculas/${matricula.id}/editar`}>
-                            <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button
@@ -608,6 +606,7 @@ export default function MatriculasPage() {
                           size="sm"
                           className="text-red-600 hover:text-red-700"
                           onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno?.nome_completo || 'Aluno')}
+                          aria-label={`Excluir matrícula de ${matricula.aluno?.nome_completo || 'aluno'}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

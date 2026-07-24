@@ -14,6 +14,8 @@ This directory contains SQL migration files for the Supabase database. Migration
 | `20260119_create_feature_flags.sql` | Feature flags system | 2026-01-19 |
 | `20260124133337_create_relatorios_descritivos.sql` | BNCC descriptive reports | 2026-01-24 |
 | `20260719031000_add_censo_escolar_fields.sql` | Minimum Censo Escolar student, class, and school fields | 2026-07-19 |
+| `20260721010000_fix_rls_role_policies.sql` | Non-recursive RBAC policies, DML grants, attendance upsert index | 2026-07-21 |
+| `20260721011000_create_conteudo_aula.sql` | Lesson content and BNCC report data with school-scoped RLS | 2026-07-21 |
 
 ## Schema Contents
 

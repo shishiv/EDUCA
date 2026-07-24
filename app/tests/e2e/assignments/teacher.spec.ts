@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { waitForPageLoad, expectFormSuccess, expectFormError } from '../utils/test-helpers'
 
 /**
@@ -13,7 +13,7 @@ test.describe('Teacher Assignments - Page Layout', () => {
   })
 
   test('should display page header and title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /atribuições|atribuir|vínculos/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /atribuicao de professores/i })).toBeVisible()
   })
 
   test('should display assignments table or grid', async ({ page }) => {

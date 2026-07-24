@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 
 /**
  * E2E Tests: Turma Create Form
@@ -193,7 +193,7 @@ test.describe('Turma - Create Form', () => {
   })
 
   test('should display capacidade panel', async ({ page }) => {
-    await expect(page.getByText(/capacidade máxima|capacidade maxima/i)).toBeVisible()
+    await expect(page.getByText('Capacidade Máxima *', { exact: true })).toBeVisible()
     await expect(page.getByText(/recomendações|recomendacoes/i)).toBeVisible()
   })
 
@@ -225,8 +225,8 @@ test.describe('Turma - Create Form', () => {
     // Submit form
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    // Should show success message or redirect
-    await expect(page.getByText(/sucesso|criada/i).or(page)).toBeVisible({ timeout: 10000 })
+    // Successful creation redirects back to the list.
+    await expect(page).toHaveURL(/\/dashboard\/turmas$/, { timeout: 10000 })
   })
 
   test('should create turma with professor assigned', async ({ page }) => {
@@ -260,7 +260,7 @@ test.describe('Turma - Create Form', () => {
     // Submit
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    await expect(page.getByText(/sucesso|criada/i).or(page)).toBeVisible({ timeout: 10000 })
+    await expect(page).toHaveURL(/\/dashboard\/turmas$/, { timeout: 10000 })
   })
 
   test('should create turma with observacoes', async ({ page }) => {
@@ -289,7 +289,7 @@ test.describe('Turma - Create Form', () => {
     // Submit
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    await expect(page.getByText(/sucesso|criada/i).or(page)).toBeVisible({ timeout: 10000 })
+    await expect(page).toHaveURL(/\/dashboard\/turmas$/, { timeout: 10000 })
   })
 
   test('should toggle ativo status', async ({ page }) => {

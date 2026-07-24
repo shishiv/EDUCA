@@ -26,6 +26,17 @@ import { formatDateBR } from '@/lib/date-utils'
 import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaRequiredState } from '@/components/ui/escola-required-state'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -50,6 +61,18 @@ export default function AlunosPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todos')
   const [sexoFilter, setSexoFilter] = useState('todos')
+
+  const handleDeactivateStudent = async (id: string) => {
+    const { error } = await supabase.from('alunos').update({ ativo: false }).eq('id', id)
+    if (error) {
+      toast.error('Erro ao desativar aluno')
+      return
+    }
+    setAlunos(previous => previous.map(student =>
+      student.id === id ? { ...student, ativo: false } : student
+    ))
+    toast.success('Aluno desativado com sucesso')
+  }
 
   // Determine which escola_id to use for filtering
   const escolaIdToUse = useMemo(() => {
@@ -412,18 +435,49 @@ export default function AlunosPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/alunos/${aluno.id}`}>
+                          <Link
+                            href={`/dashboard/alunos/${aluno.id}`}
+                            aria-label={`Ver ${aluno.nome_completo}`}
+                          >
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/alunos/${aluno.id}/editar`}>
+                          <Link
+                            href={`/dashboard/alunos/${aluno.id}/editar`}
+                            aria-label={`Editar ${aluno.nome_completo}`}
+                          >
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {aluno.ativo && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-orange-600 hover:text-orange-700"
+                                aria-label={`Desativar ${aluno.nome_completo}`}
+                              >
+                                <UserX className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Desativar aluno?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {aluno.nome_completo} deixará de aparecer nas listas ativas. O histórico escolar será preservado.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeactivateStudent(aluno.id)}>
+                                  Desativar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

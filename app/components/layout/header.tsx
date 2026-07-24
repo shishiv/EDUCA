@@ -166,6 +166,7 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                aria-label="Abrir notificações"
                 className="relative h-10 w-10 rounded-[10px] bg-gray-50 hover:bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
               >
                 <Bell className="h-5 w-5" />
@@ -246,7 +247,7 @@ export function Header() {
         {/* Profile Menu - EDUCA styled avatar with gradient */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="relative h-10 w-10 rounded-[10px] bg-gradient-to-br from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 flex items-center justify-center text-white font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md">
+            <button type="button" aria-label="Abrir menu do usuário" className="relative h-10 w-10 rounded-[10px] bg-gradient-to-br from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 flex items-center justify-center text-white font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md">
               {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
             </button>
           </DropdownMenuTrigger>

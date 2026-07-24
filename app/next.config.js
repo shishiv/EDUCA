@@ -40,6 +40,9 @@ const nextConfig = {
   // React 19 compatibility
   reactStrictMode: true,
 
+  // Keep the development overlay from covering interactive controls during E2E.
+  devIndicators: false,
+
   // Performance optimizations
   compress: true,
 

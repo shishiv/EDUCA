@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 
 /**
  * E2E Tests: Frequency Report (Relatorio de Frequencia)
@@ -22,7 +22,7 @@ test.describe('Frequency Report - Page Access', () => {
   test('should display filters section', async ({ page }) => {
     await page.goto('/relatorios/frequencia')
     
-    await expect(page.getByText(/filtros/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Filtros', exact: true })).toBeVisible()
   })
 
   test('should display turma filter', async ({ page }) => {

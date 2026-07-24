@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { waitForPageLoad, expectFormSuccess } from '../utils/test-helpers'
 
 /**
@@ -13,7 +13,7 @@ test.describe('Roles - Assignment Interface', () => {
   })
 
   test('should display role column in users table', async ({ page }) => {
-    const roleColumn = page.getByRole('columnheader', { name: /papel|função|perfil/i })
+    const roleColumn = page.getByRole('columnheader', { name: /tipo|papel|função|perfil/i })
     
     if (await roleColumn.isVisible()) {
       await expect(roleColumn).toBeVisible()
@@ -54,13 +54,13 @@ test.describe('Roles - Assigning on User Creation', () => {
   })
 
   test('should display papel/role field', async ({ page }) => {
-    const papelLabel = page.locator('label').filter({ hasText: /papel|função|perfil/i })
+    const papelLabel = page.locator('label').filter({ hasText: /tipo|papel|função|perfil/i })
     await expect(papelLabel).toBeVisible()
   })
 
   test('should list all available roles', async ({ page }) => {
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função|perfil/i 
+      hasText: /tipo|papel|função|perfil/i 
     }).first()
     
     if (await papelSelect.isVisible()) {
@@ -101,7 +101,7 @@ test.describe('Roles - Assigning on User Creation', () => {
     await page.getByLabel(/email/i).fill(`admin${timestamp}@teste.com`)
     
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
+      hasText: /tipo|papel|função/i 
     }).first()
     
     if (await papelSelect.isVisible()) {
@@ -137,7 +137,7 @@ test.describe('Roles - Assigning on User Creation', () => {
     await page.getByLabel(/email/i).fill(`prof${timestamp}@teste.com`)
     
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
+      hasText: /tipo|papel|função/i 
     }).first()
     
     if (await papelSelect.isVisible()) {
@@ -172,7 +172,7 @@ test.describe('Roles - Assigning on User Creation', () => {
     await page.getByLabel(/email/i).fill(`dir${timestamp}@teste.com`)
     
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
+      hasText: /tipo|papel|função/i 
     }).first()
     
     if (await papelSelect.isVisible()) {
@@ -202,7 +202,7 @@ test.describe('Roles - Assigning on User Creation', () => {
 
   test('should show role description/help text', async ({ page }) => {
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
+      hasText: /tipo|papel|função/i 
     }).first()
     
     if (await papelSelect.isVisible()) {
@@ -231,7 +231,7 @@ test.describe('Roles - Changing User Role', () => {
       await waitForPageLoad(page)
       
       const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-        hasText: /papel|função/i 
+        hasText: /tipo|papel|função/i 
       }).first()
       
       if (await papelSelect.isVisible()) {
@@ -263,7 +263,7 @@ test.describe('Roles - Changing User Role', () => {
       await waitForPageLoad(page)
       
       const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-        hasText: /papel|função/i 
+        hasText: /tipo|papel|função/i 
       }).first()
       
       if (await papelSelect.isVisible()) {
@@ -297,7 +297,7 @@ test.describe('Roles - Changing User Role', () => {
       await waitForPageLoad(page)
       
       const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-        hasText: /papel|função/i 
+        hasText: /tipo|papel|função/i 
       }).first()
       
       if (await papelSelect.isVisible()) {
@@ -371,7 +371,7 @@ test.describe('Roles - Filtering and Sorting', () => {
   })
 
   test('should filter users by Admin role', async ({ page }) => {
-    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /papel|função|todos/i }).first()
+    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /tipo|papel|função|todos/i }).first()
     
     if (await roleFilter.isVisible()) {
       await roleFilter.click()
@@ -391,7 +391,7 @@ test.describe('Roles - Filtering and Sorting', () => {
   })
 
   test('should filter users by Professor role', async ({ page }) => {
-    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /papel|função|todos/i }).first()
+    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /tipo|papel|função|todos/i }).first()
     
     if (await roleFilter.isVisible()) {
       await roleFilter.click()
@@ -410,7 +410,7 @@ test.describe('Roles - Filtering and Sorting', () => {
   })
 
   test('should filter users by Diretor role', async ({ page }) => {
-    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /papel|função|todos/i }).first()
+    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /tipo|papel|função|todos/i }).first()
     
     if (await roleFilter.isVisible()) {
       await roleFilter.click()
@@ -427,7 +427,7 @@ test.describe('Roles - Filtering and Sorting', () => {
   })
 
   test('should sort users by role', async ({ page }) => {
-    const roleHeader = page.getByRole('columnheader', { name: /papel|função/i })
+    const roleHeader = page.getByRole('columnheader', { name: /tipo|papel|função/i })
     
     if (await roleHeader.isVisible()) {
       await roleHeader.click()
@@ -471,7 +471,7 @@ test.describe('Roles - Permission Preview', () => {
 
   test('should show permission preview when role selected', async ({ page }) => {
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
+      hasText: /tipo|papel|função/i 
     }).first()
     
     if (await papelSelect.isVisible()) {
@@ -493,7 +493,7 @@ test.describe('Roles - Permission Preview', () => {
 
   test('should show different permissions for Professor', async ({ page }) => {
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
+      hasText: /tipo|papel|função/i 
     }).first()
     
     if (await papelSelect.isVisible()) {

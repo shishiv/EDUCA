@@ -168,6 +168,7 @@ export class EnhancedAttendanceService extends BaseApiService {
 
       // Create session with compliance data - extract only known fields
       // Build insert data, filtering out undefined values
+      const openedAt = new Date()
       const sessionInsertData: Record<string, unknown> = {
         turma_id: sessionData.turma_id,
         professor_id: sessionData.professor_id,
@@ -176,7 +177,9 @@ export class EnhancedAttendanceService extends BaseApiService {
         duracao_minutos: sessionData.duracao_minutos,
         escola_id: teacher.escola_id,
         status: 'aberta',
-        inicio_aula: new Date().toISOString()
+        // inicio_aula is SQL TIME; aberta_em stores the full instant.
+        inicio_aula: openedAt.toTimeString().slice(0, 8),
+        aberta_em: openedAt.toISOString()
       }
 
       // Add optional fields only if defined
@@ -294,9 +297,9 @@ export class EnhancedAttendanceService extends BaseApiService {
         .select('*')
         .eq('turma_id', turmaId)
         .eq('data_aula', date)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) throw error
       return data as EnhancedAttendanceSession | null
     } catch (error) {
       logger.error('Error fetching session by date', error as Error)
