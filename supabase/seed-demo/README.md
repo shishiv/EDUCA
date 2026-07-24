@@ -74,22 +74,6 @@ cd app
 pnpm tsx ../supabase/seed-demo/seed-demo.ts
 ```
 
-## Automacao (GitHub Actions)
-
-O workflow `.github/workflows/demo-reset.yml` executa o seed automaticamente:
-
-- **Cron**: todo domingo as 03:00 BRT (06:00 UTC)
-- **Manual**: via `workflow_dispatch` na aba Actions do GitHub
-
-### Secrets necessarios no GitHub
-
-Configure em **Settings > Secrets and variables > Actions**:
-
-| Secret                      | Valor                                  |
-|-----------------------------|----------------------------------------|
-| `SUPABASE_DEMO_URL`         | URL do projeto Supabase de demo        |
-| `SUPABASE_DEMO_SERVICE_KEY` | Service role key do projeto de demo    |
-
 ## Como Funciona
 
 O script `seed-demo.ts`:
@@ -105,13 +89,9 @@ O script `seed-demo.ts`:
 
 ## Reset Manual do Demo
 
-Para resetar o demo fora do cron:
+Para resetar o ambiente de demonstracao:
 
 ```bash
-# Via GitHub Actions (recomendado)
-gh workflow run demo-reset.yml
-
-# Ou localmente
 cd app
 pnpm seed:demo
 ```
