@@ -112,7 +112,8 @@ class EducationalLogger {
   }
 
   private logToConsole(entry: LogEntry): void {
-    if (!this.isDevelopment) return
+    const isServerFailure = !this.isClient && (entry.level === 'error' || entry.level === 'critical')
+    if (!this.isDevelopment && !isServerFailure) return
 
     const prefix = `🎓 [${entry.level.toUpperCase()}]`
     const timestamp = new Date(entry.timestamp).toLocaleTimeString('pt-BR')
