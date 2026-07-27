@@ -1,9 +1,25 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /**
  * E2E Tests: Turma Create Form
  * Tests form criação (série, turno, ano letivo)
  */
+
+const FORM_PATH = '/dashboard/turmas/nova'
+
+async function expectTurmaCreated(page: Page) {
+  await expect
+    .poll(
+      async () =>
+        (await page.getByText(/sucesso|criada/i).first().isVisible()) ||
+        !new URL(page.url()).pathname.startsWith(FORM_PATH),
+      {
+        message: `expected a success message or a redirect away from ${FORM_PATH}`,
+        timeout: 10000,
+      }
+    )
+    .toBe(true)
+}
 
 test.describe('Turma - Create Form', () => {
   test.beforeEach(async ({ page }) => {
@@ -226,7 +242,7 @@ test.describe('Turma - Create Form', () => {
     await page.getByRole('button', { name: /criar turma/i }).click()
     
     // Should show success message or redirect
-    await expect(page.getByText(/sucesso|criada/i).or(page.locator('body'))).toBeVisible({ timeout: 10000 })
+    await expectTurmaCreated(page)
   })
 
   test('should create turma with professor assigned', async ({ page }) => {
@@ -260,7 +276,7 @@ test.describe('Turma - Create Form', () => {
     // Submit
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    await expect(page.getByText(/sucesso|criada/i).or(page.locator('body'))).toBeVisible({ timeout: 10000 })
+    await expectTurmaCreated(page)
   })
 
   test('should create turma with observacoes', async ({ page }) => {
@@ -289,7 +305,7 @@ test.describe('Turma - Create Form', () => {
     // Submit
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    await expect(page.getByText(/sucesso|criada/i).or(page.locator('body'))).toBeVisible({ timeout: 10000 })
+    await expectTurmaCreated(page)
   })
 
   test('should toggle ativo status', async ({ page }) => {

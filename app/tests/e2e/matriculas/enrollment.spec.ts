@@ -1,9 +1,25 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /**
  * E2E Tests: Matrícula Enrollment Flow
  * Tests fluxo de matrícula completo
  */
+
+const FORM_PATH = '/dashboard/matriculas/nova'
+
+async function expectEnrollmentCreated(page: Page) {
+  await expect
+    .poll(
+      async () =>
+        (await page.getByText(/sucesso|matriculad/i).first().isVisible()) ||
+        !new URL(page.url()).pathname.startsWith(FORM_PATH),
+      {
+        message: `expected a success message or a redirect away from ${FORM_PATH}`,
+        timeout: 10000,
+      }
+    )
+    .toBe(true)
+}
 
 test.describe('Matrícula - Enrollment Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -219,9 +235,7 @@ test.describe('Matrícula - Enrollment Flow', () => {
     await page.getByRole('button', { name: /matricular|salvar|criar/i }).click()
     
     // Should show success or redirect
-    await expect(
-      page.getByText(/sucesso|matriculad/i).or(page.locator('body'))
-    ).toBeVisible({ timeout: 10000 })
+    await expectEnrollmentCreated(page)
   })
 
   test('should add observacoes to enrollment', async ({ page }) => {
