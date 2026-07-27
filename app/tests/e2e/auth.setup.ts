@@ -1,7 +1,8 @@
 import { test as setup, expect } from '@playwright/test'
+import { mkdirSync } from 'node:fs'
 import path from 'path'
 
-const authFile = path.join(__dirname, '../playwright/.auth/user.json')
+const authFile = process.env.PILOT_AUTH_STATE_PATH || path.join(process.cwd(), 'playwright/.auth/user.json')
 
 /**
  * Authentication Setup for E2E Tests
@@ -13,8 +14,10 @@ setup('authenticate', async ({ page }) => {
 
   // Fill login form with test admin credentials
   // These should match seed data from pnpm seed:dev
-  await page.getByLabel(/email/i).fill('admin@test.com')
-  await page.getByLabel(/senha/i).fill('test123456')
+  const emailInput = page.getByLabel('E-mail', { exact: true })
+  await expect(emailInput).toBeVisible({ timeout: 15_000 })
+  await emailInput.fill('secretaria@synthetic.invalid')
+  await page.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
 
   // Submit login
   await page.getByRole('button', { name: /entrar/i }).click()
@@ -23,9 +26,10 @@ setup('authenticate', async ({ page }) => {
   await expect(page).toHaveURL(/dashboard/, { timeout: 30000 })
 
   // Verify we're logged in
-  await expect(page.getByRole('heading', { name: /dashboard|painel/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /bom dia|boa tarde|boa noite/i })).toBeVisible()
 
   // Save authentication state
+  mkdirSync(path.dirname(authFile), { recursive: true })
   await page.context().storageState({ path: authFile })
 })
 

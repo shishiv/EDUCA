@@ -78,10 +78,15 @@ pnpm test:coverage
 pnpm dev &
 pnpm test:e2e
 
+# E2E do piloto sintético (harness próprio: reset do Supabase local + build)
+pnpm test:e2e:pilot
+
 # Lint
 pnpm lint
 pnpm typecheck
 ```
+
+Mudanças no escopo do piloto municipal seguem [`docs/PILOT-TECHNICAL-GATE.md`](docs/PILOT-TECHNICAL-GATE.md).
 
 ---
 

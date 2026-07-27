@@ -19,6 +19,7 @@
 playwright/.auth/
 playwright-report/
 test-results/
+.pilot-e2e/
 
 # next.js
 /.next/

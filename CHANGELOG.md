@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Synthetic-only municipal pilot foundation: `PILOT_MODE` scope gate (core modules only), encrypted synthetic CSV import with maker-checker approval, append-only redacted audit, aggregate pilot metrics, first-access invitations, and the `pnpm pilot:safety` deploy gate — no real student data, municipal deployment, or compliance claim is authorized. See [docs/PILOT-TECHNICAL-GATE.md](docs/PILOT-TECHNICAL-GATE.md)
+- Pilot docs: technical gate, quick guide, train-the-trainer, operations/metrics, governance template, backup/restore contract, and the isolated synthetic restore evidence
+- `pnpm test:e2e:pilot` and `pnpm pilot:restore-test` synthetic rehearsals
+
 ### Changed
+- `pnpm typecheck` runs `tsconfig.typecheck.json` (app + libs + scripts + tests, minus the disabled diary/reports unit suites)
+- `pnpm deploy` / `pnpm deploy:preview` run the pilot safety gate before Vercel
 - README: honest **Problem / Today (1 mun · ~900 students) / mission** framing; site → [geteduca.vercel.app](https://geteduca.vercel.app)
 - GitHub repo description + homepage aligned with pilot + geteduca
 

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
 interface NavigationItem {
@@ -25,7 +25,7 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const [breadcrumbs, setBreadcrumbs] = useState<NavigationItem[]>([])
+  const [customBreadcrumbs, setCustomBreadcrumbs] = useState<{ pathname: string; items: NavigationItem[] } | null>(null)
   const [pageTitle, setPageTitle] = useState('')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -52,78 +52,36 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     localStorage.setItem('recently-visited-pages', JSON.stringify(lastVisitedPages))
   }, [lastVisitedPages])
 
-  // Auto-generate breadcrumbs based on pathname
-  useEffect(() => {
+  const generatedBreadcrumbs = useMemo<NavigationItem[]>(() => {
     const pathSegments = pathname.split('/').filter(Boolean)
-    const generatedBreadcrumbs: NavigationItem[] = []
-
-    // Always start with dashboard home
+    const items: NavigationItem[] = []
     if (pathSegments.includes('dashboard')) {
-      generatedBreadcrumbs.push({
-        name: 'Dashboard',
-        href: '/dashboard'
-      })
-
-      // Map path segments to readable names
+      items.push({ name: 'Dashboard', href: '/dashboard' })
       const pathMap: Record<string, string> = {
-        'alunos': 'Alunos',
-        'usuarios': 'Usuários',
-        'escolas': 'Escolas',
-        'turmas': 'Turmas',
-        'matriculas': 'Matrículas',
-        'frequencia': 'Frequência',
-        'notas': 'Notas',
-        'relatorios': 'Relatórios',
-        'configuracoes': 'Configurações',
-        'perfil': 'Meu Perfil',
-        'novo': 'Novo',
-        'nova': 'Nova',
-        'editar': 'Editar'
+        alunos: 'Alunos', usuarios: 'Usuários', escolas: 'Escolas', turmas: 'Turmas',
+        matriculas: 'Matrículas', frequencia: 'Frequência', notas: 'Notas',
+        relatorios: 'Relatórios', configuracoes: 'Configurações', perfil: 'Meu Perfil',
+        novo: 'Novo', nova: 'Nova', editar: 'Editar',
       }
-
       let currentPath = ''
-      for (let i = 0; i < pathSegments.length; i++) {
-        const segment = pathSegments[i]
+      for (const segment of pathSegments) {
         currentPath += `/${segment}`
-
-        if (segment === 'dashboard') continue
-
-        // Skip ID segments (assuming they are UUIDs or numbers)
-        if (segment.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) ||
-            segment.match(/^\d+$/)) {
-          continue
-        }
-
-        const displayName = pathMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)
-
-        generatedBreadcrumbs.push({
-          name: displayName,
-          href: currentPath
-        })
+        if (segment === 'dashboard' || /^[0-9a-f-]{36}$/i.test(segment) || /^\d+$/.test(segment)) continue
+        items.push({ name: pathMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1), href: currentPath })
       }
     }
-
-    setBreadcrumbs(generatedBreadcrumbs)
+    return items
   }, [pathname])
 
-  const addToRecentlyVisited = (item: NavigationItem) => {
-    setLastVisitedPages(prev => {
-      // Remove if already exists
-      const filtered = prev.filter(page => page.href !== item.href)
-      // Add to beginning and limit to 5 items
-      return [item, ...filtered].slice(0, 5)
-    })
-  }
-
-  // Add current page to recently visited when breadcrumbs change
-  useEffect(() => {
-    if (breadcrumbs.length > 0) {
-      const currentPage = breadcrumbs[breadcrumbs.length - 1]
-      if (currentPage && currentPage.href !== '/dashboard') {
-        addToRecentlyVisited(currentPage)
-      }
-    }
-  }, [breadcrumbs])
+  const breadcrumbs = customBreadcrumbs?.pathname === pathname ? customBreadcrumbs.items : generatedBreadcrumbs
+  const addToRecentlyVisited = useCallback((item: NavigationItem) => {
+    setLastVisitedPages(previous => [item, ...previous.filter(page => page.href !== item.href)].slice(0, 5))
+  }, [])
+  const setBreadcrumbs = useCallback((items: NavigationItem[]) => {
+    setCustomBreadcrumbs({ pathname, items })
+    const currentPage = items[items.length - 1]
+    if (currentPage && currentPage.href !== '/dashboard') addToRecentlyVisited(currentPage)
+  }, [addToRecentlyVisited, pathname])
 
   const value: NavigationContextType = {
     currentPath: pathname,

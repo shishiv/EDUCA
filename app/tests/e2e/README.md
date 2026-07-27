@@ -2,6 +2,8 @@
 
 Testes End-to-End para o sistema EDUCA usando Playwright.
 
+A suíte do piloto sintético (`tests/e2e/pilot/`) roda pelo harness próprio: `pnpm test:e2e:pilot`, que reseta o Supabase local, aplica o provisionamento exclusivo do piloto, gera o seed sintético e executa build/start. Contrato em [docs/PILOT-TECHNICAL-GATE.md](../../../docs/PILOT-TECHNICAL-GATE.md).
+
 ## Quick Start
 
 ```bash

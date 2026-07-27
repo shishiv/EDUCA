@@ -14,6 +14,7 @@ This directory contains SQL migration files for the Supabase database. Migration
 | `20260119_create_feature_flags.sql` | Feature flags system | 2026-01-19 |
 | `20260124133337_create_relatorios_descritivos.sql` | BNCC descriptive reports | 2026-01-24 |
 | `20260719031000_add_censo_escolar_fields.sql` | Minimum Censo Escolar student, class, and school fields | 2026-07-19 |
+| `20260727050000_pilot_foundation_gate.sql` | Synthetic-only pilot isolation, import, audit, metrics, and safety gate | 2026-07-27 |
 
 ## Schema Contents
 
@@ -68,6 +69,26 @@ This directory contains SQL migration files for the Supabase database. Migration
 
 The new columns remain nullable. Only BM10-documented safe defaults are applied, so existing rows are preserved.
 The five new `CHECK` constraints are installed as `NOT VALID`: new writes are constrained immediately, while validation of existing rows is deferred to a separately scheduled migration.
+
+### Municipal Pilot Foundation (20260727050000)
+
+- one dedicated Supabase project per municipality;
+- school-scoped RLS/grants for the core pilot roles;
+- encrypted synthetic CSV staging with maker-checker approval;
+- server-side append-only redacted audit and aggregate pilot metrics;
+- private school-prefixed Storage policies;
+- governance fields remain `pending` / `not_approved`.
+
+This migration does not authorize a municipal deployment or real data. Use `app/scripts/run-pilot-e2e.sh` and `supabase/tests/pilot/run-backup-restore.sh` only against the local synthetic stack.
+
+### Pilot-only provisioning (not a migration)
+
+Disabling previously shipped modules is pilot containment, not canonical schema, so it is **not** part of the migration above. `supabase/pilot/provision-pilot-module-gate.sql` holds it:
+
+- `REVOKE` on `notas`, `relatorios_descritivos`, `educacenso_exports`, `codigos_inep`, and `vw_alunos_risco_bolsa_familia`;
+- the `pilot_high_risk_student_guard` trigger on `alunos` that blocks NIS/PBF/health/disability/race writes.
+
+It is idempotent and is applied explicitly by `app/scripts/run-pilot-e2e.sh`, `supabase/tests/database/run.sh`, and `supabase/tests/pilot/run-backup-restore.sh`. A plain `supabase db push` therefore leaves the Censo Escolar fields and the grade/report/Educacenso modules exactly as they were outside a synthetic municipal pilot.
 
 ## Running Migrations
 

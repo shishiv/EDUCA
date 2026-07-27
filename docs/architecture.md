@@ -549,18 +549,7 @@ For complete manual test results, see archived documentation.
 
 ### Quick Deploy
 
-```bash
-# 1. Install Vercel CLI
-npm install -g vercel
-
-# 2. Deploy to production
-vercel --prod
-
-# 3. Configure environment variables in Vercel dashboard
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
+Deploy commands and environment variables live in [DEPLOYMENT.md](./DEPLOYMENT.md). Deploys also pass the synthetic pilot safety gate described in [PILOT-TECHNICAL-GATE.md](./PILOT-TECHNICAL-GATE.md).
 
 ### Performance Targets
 

@@ -4,6 +4,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isInvalidRefreshTokenError, isSupabaseAuthCookieName } from '@/lib/auth-session-recovery'
 
 export async function createSupabaseServerClient(request: NextRequest) {
   let response = NextResponse.next({
@@ -77,7 +79,7 @@ export async function getServerUser(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (error || !user) {
-      return null
+      return { user: null, userProfile: null, invalidSession: isInvalidRefreshTokenError(error) }
     }
 
     // Try to get user profile
@@ -91,17 +93,25 @@ export async function getServerUser(request: NextRequest) {
     return {
       user,
       userProfile: userProfile || null,
+      invalidSession: false,
     }
   } catch (error) {
-    // logger.error('Error getting server user:', { error: error })
-    return null
+    return { user: null, userProfile: null, invalidSession: isInvalidRefreshTokenError(error) }
+  }
+}
+
+function clearInvalidSupabaseCookies(request: NextRequest, response: NextResponse) {
+  for (const cookie of request.cookies.getAll()) {
+    if (isSupabaseAuthCookieName(cookie.name)) {
+      response.cookies.set(cookie.name, '', { path: '/', maxAge: 0, expires: new Date(0) })
+    }
   }
 }
 
 // Route protection configuration
 export const routeProtection = {
   // Public routes (no authentication required)
-  public: ['/login', '/'],
+  public: ['/login', '/primeiro-acesso', '/'],
 
   // Role-based protected routes
   protected: {
@@ -156,7 +166,7 @@ export function checkRouteAccess(
   userRole?: string
 ): { hasAccess: boolean; redirectTo?: string } {
   // Public routes are always accessible
-  if (routeProtection.public.some(route => pathname.startsWith(route))) {
+  if (routeProtection.public.some(route => route === '/' ? pathname === '/' : pathname.startsWith(route))) {
     return { hasAccess: true }
   }
 
@@ -206,6 +216,16 @@ export async function authMiddleware(request: NextRequest) {
   const { supabase, response } = await createSupabaseServerClient(request)
   const pathname = request.nextUrl.pathname
 
+  if (isPilotModeEnabled() && isPilotDisabledPath(pathname)) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
+    }
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/dashboard'
+    redirectUrl.searchParams.set('pilotScope', 'disabled')
+    return NextResponse.redirect(redirectUrl)
+  }
+
   // Skip middleware for static files and API routes
   if (
     pathname.startsWith('/_next') ||
@@ -221,6 +241,19 @@ export async function authMiddleware(request: NextRequest) {
     // The client-side code (hooks/use-auth.ts) handles token refresh
     // Middleware only validates existing session from cookies
     const serverUser = await getServerUser(request)
+    if (serverUser.invalidSession) {
+      if (pathname === '/login') {
+        clearInvalidSupabaseCookies(request, response)
+        return response
+      }
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.searchParams.set('reason', 'session_expired')
+      loginUrl.searchParams.set('returnUrl', pathname)
+      const invalidSessionRedirect = NextResponse.redirect(loginUrl)
+      clearInvalidSupabaseCookies(request, invalidSessionRedirect)
+      return invalidSessionRedirect
+    }
     const userRole = serverUser?.userProfile?.tipo_usuario
 
     const { hasAccess, redirectTo } = checkRouteAccess(pathname, userRole)
