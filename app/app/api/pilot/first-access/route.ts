@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 
 const firstAccessSchema = z.object({
@@ -20,13 +21,19 @@ export async function POST(request: Request) {
     if (!invitation) return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_INVITATION_REQUIRED' }, { status: 403 })
     if (invitation.accepted_at) return NextResponse.json({ completed: true, idempotentReplay: true })
 
-    const { error: passwordError } = await supabase.auth.updateUser({ password: input.password })
-    if (passwordError) throw passwordError
+    const { data: priorProfile } = await service.from('users').select('primeiro_login,senha_padrao,data_ultimo_acesso').eq('id', user.id).maybeSingle()
     const now = new Date().toISOString()
     const { error: profileError } = await service.from('users').update({ primeiro_login: false, senha_padrao: false, data_ultimo_acesso: now }).eq('id', user.id)
     if (profileError) throw profileError
     const { error: inviteError } = await service.from('pilot_user_invitations').update({ accepted_at: now }).eq('id', invitation.id)
     if (inviteError) throw inviteError
+
+    const { error: passwordError } = await supabase.auth.updateUser({ password: input.password })
+    if (passwordError) {
+      await service.from('pilot_user_invitations').update({ accepted_at: null }).eq('id', invitation.id)
+      if (priorProfile) await service.from('users').update(priorProfile).eq('id', user.id)
+      throw passwordError
+    }
     await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
       p_event_type: 'first_access_completed', p_entity_type: 'user', p_entity_id: user.id,
       p_metadata: {},
@@ -34,6 +41,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ completed: true })
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_PASSWORD_INVALID' }, { status: 400 })
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'PILOT_FIRST_ACCESS_FAILED' }, { status: 500 })
+    return pilotErrorResponse(error, { feature: 'pilot-first-access', fallbackCode: 'PILOT_FIRST_ACCESS_FAILED' })
   }
 }

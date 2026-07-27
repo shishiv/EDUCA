@@ -42,7 +42,9 @@ export function useServiceWorker() {
         'serviceWorker' in navigator
           ? navigator.serviceWorker.getRegistrations().then(registrations => Promise.all(registrations.map(item => item.unregister())))
           : Promise.resolve([]),
-        caches.keys().then(names => Promise.all(names.map(name => caches.delete(name)))),
+        'caches' in window
+          ? caches.keys().then(names => Promise.all(names.map(name => caches.delete(name))))
+          : Promise.resolve([]),
         new Promise<void>(resolve => {
           if (!('indexedDB' in window)) return resolve()
           const deletion = indexedDB.deleteDatabase('GestaoEducacional')

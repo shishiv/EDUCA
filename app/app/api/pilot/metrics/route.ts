@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 
 const metricSchema = z.object({
@@ -22,7 +23,8 @@ export async function POST(request: Request) {
     if (error) throw error
     return NextResponse.json({ metricId: data }, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'PILOT_METRIC_FAILED' }, { status: 400 })
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_METRIC_INVALID' }, { status: 400 })
+    return pilotErrorResponse(error, { feature: 'pilot-metrics', fallbackCode: 'PILOT_METRIC_FAILED', fallbackStatus: 400 })
   }
 }
 
@@ -35,6 +37,6 @@ export async function GET(request: Request) {
     if (error) throw error
     return NextResponse.json({ metrics: data })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'PILOT_METRIC_FAILED' }, { status: 400 })
+    return pilotErrorResponse(error, { feature: 'pilot-metrics', fallbackCode: 'PILOT_METRIC_FAILED', fallbackStatus: 400 })
   }
 }

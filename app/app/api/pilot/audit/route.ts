@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 
 const auditEventSchema = z.object({
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     if (error) throw error
     return NextResponse.json({ auditId: data }, { status: 201 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PILOT_AUDIT_FAILED'
-    return NextResponse.json({ error: message }, { status: message.includes('AUTH_REQUIRED') ? 401 : 400 })
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_AUDIT_INVALID' }, { status: 400 })
+    return pilotErrorResponse(error, { feature: 'pilot-audit', fallbackCode: 'PILOT_AUDIT_FAILED', fallbackStatus: 400 })
   }
 }

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 import {
   createDryRunValidationToken,
@@ -54,13 +55,20 @@ export async function POST(request: Request) {
     if (schoolError || !school) return NextResponse.json({ error: 'PILOT_IMPORT_SCHOOL_NOT_FOUND', report }, { status: 422 })
 
     const service = createServiceRoleClient()
-    const { data: existing } = await service
+    const { data: existingBatches, error: existingError } = await service
       .from('pilot_import_batches')
-      .select('id,status,validation_report')
+      .select('id,status,validation_report,idempotency_key,content_sha256')
       .eq('escola_id', school.id)
       .or(`idempotency_key.eq.${body.idempotencyKey},content_sha256.eq.${report.contentSha256}`)
-      .maybeSingle()
-    if (existing) return NextResponse.json({ batch: existing, idempotentReplay: true })
+      .order('created_at', { ascending: true })
+    if (existingError) throw existingError
+    const matched = existingBatches?.find(batch => batch.idempotency_key === body.idempotencyKey) ?? existingBatches?.[0]
+    if (matched) {
+      return NextResponse.json({
+        batch: { id: matched.id, status: matched.status, validation_report: matched.validation_report },
+        idempotentReplay: true,
+      })
+    }
 
     const encrypted = encryptSyntheticCsvForStaging(body.csv, key, keyId)
     const { data: batch, error: insertError } = await service
@@ -87,8 +95,6 @@ export async function POST(request: Request) {
     })
     return NextResponse.json({ batch }, { status: 201 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PILOT_IMPORT_FAILED'
-    const status = message.includes('AUTH_REQUIRED') ? 401 : message.includes('ROLE_DENIED') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return pilotErrorResponse(error, { feature: 'pilot-imports', fallbackCode: 'PILOT_IMPORT_FAILED' })
   }
 }

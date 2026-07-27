@@ -34,12 +34,16 @@ export const logAuthEvent = async (
   _headers?: Headers
 ) => {
   if (!userId || typeof window === 'undefined') return
-  const response = await fetch('/api/pilot/audit', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ eventType: action, entityType: 'auth_session', entityId: userId, schoolId: null, metadata: {} }),
-  })
-  if (!response.ok) logger.error('PILOT_AUDIT_WRITE_FAILED', new Error(`status ${response.status}`), { feature: 'auth', action })
+  try {
+    const response = await fetch('/api/pilot/audit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ eventType: action, entityType: 'auth_session', entityId: userId, schoolId: null, metadata: {} }),
+    })
+    if (!response.ok) logger.error('PILOT_AUDIT_WRITE_FAILED', new Error(`status ${response.status}`), { feature: 'auth', action })
+  } catch (error) {
+    logger.error('PILOT_AUDIT_WRITE_FAILED', error as Error, { feature: 'auth', action })
+  }
 }
 
 export const signIn = async (email: string, password: string) => {
@@ -75,13 +79,13 @@ export const signOut = async () => {
       sessionStorage.removeItem('educa-selected-escola')
     }
 
-    const { error } = await supabase.auth.signOut()
-
-    if (error) throw error
-
     if (userId) {
       await logAuthEvent('logout', userId)
     }
+
+    const { error } = await supabase.auth.signOut()
+
+    if (error) throw error
   } catch (error) {
     throw error
   }

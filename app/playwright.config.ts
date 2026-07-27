@@ -45,7 +45,7 @@ export default defineConfig({
   webServer: {
     command: process.env.PLAYWRIGHT_SERVER_COMMAND || 'pnpm dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && process.env.PILOT_MODE !== 'true',
     timeout: 180 * 1000, // Own bounded cold-start/prewarm readiness here, not in auth assertions
   },
 

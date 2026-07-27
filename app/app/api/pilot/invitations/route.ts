@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 
 const invitationSchema = z.object({
@@ -28,12 +29,31 @@ export async function POST(request: Request) {
       if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
     }
 
+    const { data: priorInvitations, error: priorInvitationError } = await service
+      .from('pilot_user_invitations')
+      .select('id,email,invited_role,escola_id,created_at,accepted_at')
+      .eq('email', input.email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    if (priorInvitationError) throw priorInvitationError
+    const priorInvitation = priorInvitations?.[0]
+    if (priorInvitation?.accepted_at) return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_ACCEPTED' }, { status: 409 })
+    if (priorInvitation) {
+      const { accepted_at: _acceptedAt, ...invitation } = priorInvitation
+      return NextResponse.json({ invitation, idempotentReplay: true })
+    }
+
     const redirectBase = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'
     const { data: invited, error: inviteError } = await service.auth.admin.inviteUserByEmail(input.email, {
       redirectTo: `${redirectBase}/primeiro-acesso`,
       data: { synthetic: true, pilot_role: input.role, pilot_school_id: input.schoolId },
     })
-    if (inviteError || !invited.user) throw inviteError || new Error('PILOT_INVITE_AUTH_USER_MISSING')
+    if (inviteError) {
+      const alreadyRegistered = /already (been )?registered|already exists|email_exists/i.test(inviteError.message)
+      if (alreadyRegistered) return NextResponse.json({ error: 'PILOT_INVITE_EMAIL_ALREADY_REGISTERED' }, { status: 409 })
+      throw inviteError
+    }
+    if (!invited.user) throw new Error('PILOT_INVITE_AUTH_USER_MISSING')
 
     const { error: profileError } = await service.from('users').upsert({
       id: invited.user.id,
@@ -63,8 +83,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ invitation }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_INVITE_INVALID', issues: error.issues.map(issue => ({ path: issue.path, code: issue.code })) }, { status: 400 })
-    const message = error instanceof Error ? error.message : 'PILOT_INVITE_FAILED'
-    const status = message.includes('AUTH_REQUIRED') ? 401 : message.includes('ROLE_DENIED') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return pilotErrorResponse(error, { feature: 'pilot-invitations', fallbackCode: 'PILOT_INVITE_FAILED' })
   }
 }

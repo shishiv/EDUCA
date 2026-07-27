@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 import { decryptSyntheticCsvFromStaging, validateSyntheticStudentCsv } from '@/lib/pilot/synthetic-csv-import'
 
@@ -100,8 +101,6 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
     })
     return NextResponse.json({ batch: published })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PILOT_APPROVAL_FAILED'
-    const status = message.includes('AUTH_REQUIRED') ? 401 : message.includes('ROLE_DENIED') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return pilotErrorResponse(error, { feature: 'pilot-import-approval', fallbackCode: 'PILOT_APPROVAL_FAILED' })
   }
 }

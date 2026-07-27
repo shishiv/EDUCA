@@ -31,7 +31,7 @@ SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000002',true);
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM alunos), 'director A sees only school A students');
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM escolas), 'director A sees only school A');
-SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM vw_frequencia_completa) = false, 'redacted view remains RLS scoped and queryable');
+SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM vw_frequencia_completa), 'redacted view remains RLS scoped and queryable');
 SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM alunos WHERE escola_id = '10000000-0000-0000-0000-000000000002'), 'school A cannot read school B');
 
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000003',true);

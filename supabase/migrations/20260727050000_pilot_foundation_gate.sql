@@ -297,17 +297,17 @@ CREATE POLICY pilot_frequencia_insert ON frequencia FOR INSERT TO authenticated
 WITH CHECK (EXISTS (
   SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
   WHERE m.id = matricula_id
-    AND (pilot_can_manage_school(t.escola_id) OR (professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
+    AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
 ));
 CREATE POLICY pilot_frequencia_update ON frequencia FOR UPDATE TO authenticated
 USING (EXISTS (
   SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
   WHERE m.id = matricula_id
-    AND (pilot_can_manage_school(t.escola_id) OR (professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
+    AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
 )) WITH CHECK (EXISTS (
   SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
   WHERE m.id = matricula_id
-    AND (pilot_can_manage_school(t.escola_id) OR (professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
+    AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
 ));
 
 -- Unsupported pilot modules are inaccessible even when their legacy tables exist.
