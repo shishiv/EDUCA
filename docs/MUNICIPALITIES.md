@@ -2,6 +2,8 @@
 
 Este guia é para **gestores de TI municipais** que querem implantar o EDUCA na sua rede escolar.
 
+> **Antes de começar:** a fundação de piloto municipal deste repositório é **sintética**. Com `PILOT_MODE=true` (valor do `app/.env.local.example`) o escopo fica restrito ao core do piloto e o deploy externo é bloqueado pelo safety gate — nenhum passo abaixo autoriza dados reais de aluno ou implantação em produção. Ver [PILOT-TECHNICAL-GATE.md](./PILOT-TECHNICAL-GATE.md).
+
 ---
 
 ## O que é o EDUCA

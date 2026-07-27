@@ -1,7 +1,7 @@
 'use client'
 
 import { BaseApiService } from './base'
-import { supabase, Tables, Aluno } from '@/lib/supabase'
+import { supabase, Tables, Inserts, Aluno } from '@/lib/supabase'
 import { StudentFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 
@@ -179,6 +179,12 @@ export class StudentsApiService extends BaseApiService {
   }) {
     try {
       const { responsavel, ...aluno } = studentData
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('PILOT_STUDENT_AUTH_REQUIRED')
+      const { data: actorProfile } = await supabase.from('users').select('escola_id').eq('id', user.id).single()
+      if (!actorProfile?.escola_id) {
+        throw new Error('PILOT_STUDENT_SCHOOL_REQUIRED: municipal secretariat must use the approved school CSV flow')
+      }
 
       // Create student - extract only known fields
       const insertData = {
@@ -193,8 +199,9 @@ export class StudentsApiService extends BaseApiService {
         nome_mae: aluno.nome_mae,
         nome_pai: aluno.nome_pai,
         necessidades_especiais: aluno.necessidades_especiais,
+        escola_id: actorProfile.escola_id,
         ativo: true,
-      }
+      } as Inserts<'alunos'> & { escola_id: string }
 
       const { data: studentResult, error: studentError } = await supabase
         .from('alunos')
@@ -214,9 +221,10 @@ export class StudentsApiService extends BaseApiService {
             telefone: responsavel.telefone ?? '',
             email: responsavel.email,
             parentesco: responsavel.grau_parentesco,
+            escola_id: actorProfile.escola_id,
             cpf: '', // Required field
             ativo: true
-          })
+          } as Inserts<'responsaveis'> & { escola_id: string })
           .select()
           .single()
 

@@ -21,6 +21,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import {
   Home,
   CheckSquare,
@@ -77,6 +78,9 @@ const navigationItems: NavItem[] = [
 
 export function MobileNav() {
   const pathname = usePathname()
+  const visibleNavigationItems = navigationItems.filter(item =>
+    !isPilotModeEnabled() || !isPilotDisabledPath(item.href)
+  )
 
   /**
    * Check if a nav item is active
@@ -112,7 +116,7 @@ export function MobileNav() {
       aria-label="Navegacao principal mobile"
     >
       <div className="flex items-center justify-around h-16 px-2">
-        {navigationItems.map((item) => {
+        {visibleNavigationItems.map((item) => {
           const active = isActive(item)
           const Icon = item.icon
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
@@ -74,7 +74,7 @@ test.describe('Boletim - Access', () => {
 })
 
 test.describe('Boletim - Student Information', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -166,7 +166,7 @@ test.describe('Boletim - Student Information', () => {
 })
 
 test.describe('Boletim - School Information', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -221,7 +221,7 @@ test.describe('Boletim - School Information', () => {
 })
 
 test.describe('Boletim - Grades Display', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -341,7 +341,7 @@ test.describe('Boletim - Grades Display', () => {
 })
 
 test.describe('Boletim - Attendance Information', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -412,7 +412,7 @@ test.describe('Boletim - Attendance Information', () => {
 })
 
 test.describe('Boletim - Approval Status', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -481,7 +481,7 @@ test.describe('Boletim - Approval Status', () => {
 })
 
 test.describe('Boletim - Export Functionality', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -567,7 +567,7 @@ test.describe('Boletim - Export Functionality', () => {
 })
 
 test.describe('Boletim - Period Selector', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -711,7 +711,7 @@ test.describe('Boletim - Responsiveness', () => {
 })
 
 test.describe('Boletim - Accessibility', () => {
-  async function navigateToBoletim(page) {
+  async function navigateToBoletim(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
@@ -129,7 +129,7 @@ test.describe('Grades Entry - Filters', () => {
 })
 
 test.describe('Grades Entry - Student List Display', () => {
-  async function selectTurma(page) {
+  async function selectTurma(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     
@@ -207,7 +207,7 @@ test.describe('Grades Entry - Student List Display', () => {
 })
 
 test.describe('Grades Entry - Grade Input', () => {
-  async function selectTurma(page) {
+  async function selectTurma(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     
@@ -328,7 +328,7 @@ test.describe('Grades Entry - Grade Input', () => {
 })
 
 test.describe('Grades Entry - Validation', () => {
-  async function selectTurma(page) {
+  async function selectTurma(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     
@@ -428,7 +428,7 @@ test.describe('Grades Entry - Validation', () => {
 })
 
 test.describe('Grades Entry - Save Functionality', () => {
-  async function enterGrade(page) {
+  async function enterGrade(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     
@@ -549,7 +549,7 @@ test.describe('Grades Entry - Save Functionality', () => {
 })
 
 test.describe('Grades Entry - Average Calculation', () => {
-  async function selectTurma(page) {
+  async function selectTurma(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     
@@ -621,7 +621,7 @@ test.describe('Grades Entry - Average Calculation', () => {
 })
 
 test.describe('Grades Entry - Visual Indicators', () => {
-  async function selectTurma(page) {
+  async function selectTurma(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     
@@ -753,7 +753,7 @@ test.describe('Grades Entry - Locked Periods', () => {
 })
 
 test.describe('Grades Entry - Bulk Operations', () => {
-  async function selectTurma(page) {
+  async function selectTurma(page: Page) {
     await page.goto('/dashboard/notas')
     await waitForPageLoad(page)
     

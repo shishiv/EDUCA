@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dialog, Transition } from '@headlessui/react'
 import { cn } from '@/lib/utils'
+import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
@@ -63,7 +64,7 @@ const navigation = [
   },
   {
     name: 'Frequência',
-    href: '/dashboard/frequencia',
+    href: '/diario/frequencia',
     icon: CheckSquare,
   },
   {
@@ -90,6 +91,9 @@ const navigation = [
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const pathname = usePathname()
+  const visibleNavigation = navigation.filter(item =>
+    !isPilotModeEnabled() || !isPilotDisabledPath(item.href)
+  )
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -160,7 +164,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
-                        {navigation.map((item) => {
+                    {visibleNavigation.map((item) => {
                           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                           return (
                             <li key={item.name}>

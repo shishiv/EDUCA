@@ -2,6 +2,8 @@
 
 EDUCA — Sistema de Gestão Escolar Municipal
 
+> **Gate do piloto sintético.** Com `PILOT_MODE=true` (valor do `app/.env.local.example`), `pnpm deploy` e `pnpm deploy:preview` executam `pnpm pilot:safety` antes do Vercel e falham: implantação externa não está autorizada nesta fundação. Escopo, flags e liberação em [PILOT-TECHNICAL-GATE.md](./PILOT-TECHNICAL-GATE.md).
+
 ---
 
 ## Pré-requisitos
@@ -63,8 +65,8 @@ cd app  # ou o nome da pasta do projeto
 # 2. Verifique se o build local funciona
 pnpm build
 
-# 3. Deploy para produção
-pnpm exec vercel --prod
+# 3. Deploy para produção (roda o safety gate do piloto antes do Vercel)
+pnpm deploy
 ```
 
 ---
@@ -127,7 +129,7 @@ pnpm exec vercel --prod
 
 1. Verifique se todas as variáveis estão configuradas no Vercel
 2. Confirme que não há espaços extras nos valores
-3. Redeploy após alterar variáveis: `pnpm exec vercel --prod`
+3. Redeploy após alterar variáveis: `pnpm deploy`
 
 ### Erro de RLS (Row Level Security)
 

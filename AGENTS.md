@@ -11,6 +11,8 @@ Product code lives in `app/`. Run package commands from `app/`.
 | `pnpm typecheck` | TypeScript |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest unit tests |
+| `pnpm test:e2e:pilot` | Rebuild and test the local synthetic pilot stack |
+| `pnpm pilot:restore-test` | Run the isolated synthetic backup/restore rehearsal |
 
 ## Before push
 `pnpm typecheck && pnpm test`

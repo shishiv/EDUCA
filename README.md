@@ -61,15 +61,17 @@ Assim o código continua completo para quem self-hosta, e a trilha LGPD/TCE fica
 
 | | |
 |---|---|
-| **Status** | MVP em piloto |
-| **Escala real** | **1 município · ~900 alunos** |
+| **Status** | MVP · fundação de piloto **sintética** (sem operação municipal real) |
+| **Escala alvo do piloto** | **1 município · ~900 alunos** (dimensionamento, não operação em curso) |
 | **Maintainer** | Principalmente sole maintainer ([@shishiv](https://github.com/shishiv)) |
 | **Licença** | MIT |
 | **Site** | [geteduca.vercel.app](https://geteduca.vercel.app) |
 
-Validamos fluxos do dia a dia (matrícula, chamada com imutabilidade, notas, multi-tenant, campos de compliance) com operação real — **sem inventar escala nacional**.
+Os fluxos do dia a dia (matrícula, chamada com imutabilidade, notas, multi-tenant, campos de compliance) são validados por testes automatizados sobre dados sintéticos — **sem inventar escala nacional** e sem afirmar operação municipal em produção.
 
-**Dados do piloto são privados (LGPD).** Demo pública, quando houver, usa seed sintético (`supabase/seed-demo/`).
+**Se e quando houver dados reais de piloto, eles são privados (LGPD)** — e isso depende de aprovações que ainda não existem. Demo pública, quando houver, usa seed sintético (`supabase/seed-demo/`).
+
+A **fundação de piloto municipal** que vive neste repositório é **sintética**: ela não autoriza dados reais de aluno, implantação municipal nem parecer de conformidade. Escopo, flags e o que faltaria para dados reais: [docs/PILOT-TECHNICAL-GATE.md](docs/PILOT-TECHNICAL-GATE.md).
 
 ---
 
@@ -163,6 +165,8 @@ pnpm dev
 
 Antes de iniciar o app, aplique o banco conforme [supabase/migrations/README.md](supabase/migrations/README.md). App em `http://localhost:3000`. Guia municipal: [docs/MUNICIPALITIES.md](docs/MUNICIPALITIES.md). Deploy: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+> `.env.local.example` já vem com `PILOT_MODE=true` (fundação sintética do piloto). Nesse modo o app fica no escopo core — autenticação, escolas, usuários, alunos, turmas, matrículas, responsáveis, atribuições, frequência e dashboard — e notas/boletim, diário completo, relatórios (incl. Bolsa Família), calendário e configurações ficam desabilitados, além de o deploy externo ser bloqueado. Detalhes e flags: [docs/PILOT-TECHNICAL-GATE.md](docs/PILOT-TECHNICAL-GATE.md).
+
 ### Identidade municipal (env)
 
 ```bash
@@ -237,7 +241,7 @@ No product modules are paywalled. Paid offering is **hosted infrastructure and s
 
 ### Today
 
-MVP pilot: **one municipality · ~900 students**. Honest about scale. Pilot student data is private (LGPD).
+MVP with a **synthetic-only** municipal pilot foundation, sized for **one municipality · ~900 students**. Honest about scale: no real municipal operation, no real student data, no compliance claim. Any real pilot data would be private (LGPD). Scope and flags: [docs/PILOT-TECHNICAL-GATE.md](docs/PILOT-TECHNICAL-GATE.md).
 
 ### Quick start
 

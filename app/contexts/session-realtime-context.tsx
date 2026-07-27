@@ -192,6 +192,16 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
     }
   }
 
+  const subscribeToTeacherSessions = useCallback((professorId: string) => {
+    realtimeManager.current?.subscribeToSessions({
+      professor_id: professorId
+    })
+  }, [])
+
+  const subscribeToSchoolSessions = useCallback((escolaId: string) => {
+    realtimeManager.current?.subscribeToDashboard(escolaId)
+  }, [])
+
   // Initialize real-time manager
   useEffect(() => {
     realtimeManager.current = new SessionRealtimeManager(realtimeCallbacks)
@@ -244,16 +254,6 @@ export function SessionRealtimeProvider({ children, user }: SessionRealtimeProvi
       realtimeManager.current?.unsubscribe(`attendance-updates-${sessionId}`)
       subscribedSessions.current.delete(sessionId)
     }
-  }, [])
-
-  const subscribeToTeacherSessions = useCallback((professorId: string) => {
-    realtimeManager.current?.subscribeToSessions({
-      professor_id: professorId
-    })
-  }, [])
-
-  const subscribeToSchoolSessions = useCallback((escolaId: string) => {
-    realtimeManager.current?.subscribeToDashboard(escolaId)
   }, [])
 
   const broadcastSessionUpdate = useCallback(async (sessionId: string, updateType: string, data?: any) => {

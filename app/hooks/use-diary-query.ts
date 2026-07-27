@@ -31,7 +31,6 @@ export interface Turma {
   escola_id: string
   professor_id?: string
 }
-
 export interface LessonSummary {
   id: string
   data_aula: string
@@ -642,47 +641,4 @@ export function useDeleteLesson() {
       toast.error(error.message || 'Erro ao excluir aula')
     },
   })
-}
-
-// ============================================================================
-// Cache Invalidation Helpers
-// ============================================================================
-
-export const invalidateDiaryQueries = {
-  turmas: () => {
-    const queryClient = useQueryClient()
-    return queryClient.invalidateQueries({ queryKey: diaryQueryKeys.turmas.all() })
-  },
-
-  lessons: (turmaId?: string) => {
-    const queryClient = useQueryClient()
-    if (turmaId) {
-      return queryClient.invalidateQueries({
-        queryKey: diaryQueryKeys.lessons.list(turmaId),
-      })
-    }
-    return queryClient.invalidateQueries({ queryKey: diaryQueryKeys.lessons.all() })
-  },
-
-  session: (turmaId: string, date: string) => {
-    const queryClient = useQueryClient()
-    return queryClient.invalidateQueries({
-      queryKey: diaryQueryKeys.sessions.byTurmaDate(turmaId, date),
-    })
-  },
-
-  risk: (turmaId?: string) => {
-    const queryClient = useQueryClient()
-    if (turmaId) {
-      return queryClient.invalidateQueries({
-        queryKey: diaryQueryKeys.risk.byTurma(turmaId),
-      })
-    }
-    return queryClient.invalidateQueries({ queryKey: diaryQueryKeys.risk.all() })
-  },
-
-  all: () => {
-    const queryClient = useQueryClient()
-    return queryClient.invalidateQueries({ queryKey: ['diary'] })
-  },
 }

@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "contexts/**/*.ts",
+    "contexts/**/*.tsx",
+    "hooks/**/*.ts",
+    "hooks/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "scripts/**/*.ts",
+    "types/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "playwright/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "tests/unit/components/diary/**",
+    "tests/unit/components/reports/**"
+  ]
+}
