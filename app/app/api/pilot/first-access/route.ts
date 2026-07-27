@@ -21,19 +21,17 @@ export async function POST(request: Request) {
     if (!invitation) return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_INVITATION_REQUIRED' }, { status: 403 })
     if (invitation.accepted_at) return NextResponse.json({ completed: true, idempotentReplay: true })
 
-    const { data: priorProfile } = await service.from('users').select('primeiro_login,senha_padrao,data_ultimo_acesso').eq('id', user.id).maybeSingle()
+    const { error: passwordError } = await supabase.auth.updateUser({ password: input.password })
+    if (passwordError) {
+      if (passwordError.code === 'same_password') return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_PASSWORD_REUSED' }, { status: 400 })
+      throw passwordError
+    }
+
     const now = new Date().toISOString()
     const { error: profileError } = await service.from('users').update({ primeiro_login: false, senha_padrao: false, data_ultimo_acesso: now }).eq('id', user.id)
     if (profileError) throw profileError
     const { error: inviteError } = await service.from('pilot_user_invitations').update({ accepted_at: now }).eq('id', invitation.id)
     if (inviteError) throw inviteError
-
-    const { error: passwordError } = await supabase.auth.updateUser({ password: input.password })
-    if (passwordError) {
-      await service.from('pilot_user_invitations').update({ accepted_at: null }).eq('id', invitation.id)
-      if (priorProfile) await service.from('users').update(priorProfile).eq('id', user.id)
-      throw passwordError
-    }
     await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
       p_event_type: 'first_access_completed', p_entity_type: 'user', p_entity_id: user.id,
       p_metadata: {},
