@@ -1,0 +1,190 @@
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+
+export const SYNTHETIC_CSV_MARKER = 'SYNTHETIC-EDUCA-PILOT'
+export const SYNTHETIC_STUDENT_CSV_HEADERS = [
+  'synthetic_marker',
+  'source_id',
+  'school_code',
+  'class_code',
+  'student_name',
+  'birth_date',
+  'sex',
+  'guardian_name',
+  'guardian_phone',
+  'guardian_relationship',
+] as const
+
+export interface SyntheticStudentImportRow {
+  synthetic_marker: typeof SYNTHETIC_CSV_MARKER
+  source_id: string
+  school_code: string
+  class_code: string
+  student_name: string
+  birth_date: string
+  sex: 'M' | 'F'
+  guardian_name: string
+  guardian_phone: string
+  guardian_relationship: string
+}
+
+export interface CsvValidationIssue {
+  row: number
+  field: string
+  code: string
+}
+
+export interface SyntheticCsvValidationReport {
+  valid: boolean
+  totalRows: number
+  validRows: number
+  contentSha256: string
+  schoolCodes: string[]
+  issues: CsvValidationIssue[]
+}
+
+export interface EncryptedStagingPayload {
+  encryptionKeyId: string
+  ciphertext: string
+  iv: string
+  authTag: string
+}
+
+function parseCsvRecords(csv: string): string[][] {
+  const records: string[][] = []
+  let record: string[] = []
+  let field = ''
+  let quoted = false
+
+  for (let index = 0; index < csv.length; index += 1) {
+    const character = csv[index]
+    const nextCharacter = csv[index + 1]
+    if (character === '"' && quoted && nextCharacter === '"') {
+      field += '"'
+      index += 1
+    } else if (character === '"') {
+      quoted = !quoted
+    } else if (character === ',' && !quoted) {
+      record.push(field.trim())
+      field = ''
+    } else if ((character === '\n' || character === '\r') && !quoted) {
+      if (character === '\r' && nextCharacter === '\n') index += 1
+      record.push(field.trim())
+      field = ''
+      if (record.some(value => value !== '')) records.push(record)
+      record = []
+    } else {
+      field += character
+    }
+  }
+
+  if (quoted) throw new Error('CSV_INVALID_QUOTING: unclosed quoted field')
+  record.push(field.trim())
+  if (record.some(value => value !== '')) records.push(record)
+  return records
+}
+
+function isValidDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+}
+
+/** Parses only the synthetic, low-risk student import allowlist. */
+export function validateSyntheticStudentCsv(csv: string): {
+  rows: SyntheticStudentImportRow[]
+  report: SyntheticCsvValidationReport
+} {
+  const contentSha256 = createHash('sha256').update(csv, 'utf8').digest('hex')
+  let records: string[][]
+  try {
+    records = parseCsvRecords(csv)
+  } catch {
+    return {
+      rows: [],
+      report: { valid: false, totalRows: 0, validRows: 0, contentSha256, schoolCodes: [], issues: [{ row: 1, field: 'csv', code: 'invalid_quoting' }] },
+    }
+  }
+
+  const issues: CsvValidationIssue[] = []
+  const headers = records[0] ?? []
+  if (headers.length !== SYNTHETIC_STUDENT_CSV_HEADERS.length || headers.some((header, index) => header !== SYNTHETIC_STUDENT_CSV_HEADERS[index])) {
+    issues.push({ row: 1, field: 'headers', code: 'allowlist_mismatch' })
+    return { rows: [], report: { valid: false, totalRows: Math.max(0, records.length - 1), validRows: 0, contentSha256, schoolCodes: [], issues } }
+  }
+
+  const rows: SyntheticStudentImportRow[] = []
+  const seenSourceIds = new Set<string>()
+  for (let index = 1; index < records.length; index += 1) {
+    const values = records[index]
+    const rowNumber = index + 1
+    if (values.length !== headers.length) {
+      issues.push({ row: rowNumber, field: 'row', code: 'column_count_mismatch' })
+      continue
+    }
+    const candidate = Object.fromEntries(headers.map((header, valueIndex) => [header, values[valueIndex]])) as unknown as SyntheticStudentImportRow
+    const rowIssues: CsvValidationIssue[] = []
+    const formulaField = headers.find((header, valueIndex) =>
+      header !== 'guardian_phone' && /^[=+\-@]/.test(values[valueIndex])
+    )
+    if (formulaField) rowIssues.push({ row: rowNumber, field: formulaField, code: 'spreadsheet_formula_rejected' })
+    if (candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER) rowIssues.push({ row: rowNumber, field: 'synthetic_marker', code: 'real_data_rejected' })
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)) rowIssues.push({ row: rowNumber, field: 'source_id', code: 'invalid' })
+    if (seenSourceIds.has(candidate.source_id)) rowIssues.push({ row: rowNumber, field: 'source_id', code: 'duplicate' })
+    if (!candidate.school_code || !candidate.class_code) rowIssues.push({ row: rowNumber, field: 'school_or_class_code', code: 'required' })
+    if (candidate.student_name.length < 2 || candidate.student_name.length > 160) rowIssues.push({ row: rowNumber, field: 'student_name', code: 'invalid_length' })
+    if (!isValidDate(candidate.birth_date)) rowIssues.push({ row: rowNumber, field: 'birth_date', code: 'invalid' })
+    if (!['M', 'F'].includes(candidate.sex)) rowIssues.push({ row: rowNumber, field: 'sex', code: 'invalid' })
+    if (candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160) rowIssues.push({ row: rowNumber, field: 'guardian_name', code: 'invalid_length' })
+    if (!/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)) rowIssues.push({ row: rowNumber, field: 'guardian_phone', code: 'invalid' })
+    if (candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40) rowIssues.push({ row: rowNumber, field: 'guardian_relationship', code: 'invalid_length' })
+    issues.push(...rowIssues)
+    if (rowIssues.length === 0) {
+      rows.push(candidate)
+      seenSourceIds.add(candidate.source_id)
+    }
+  }
+
+  const schoolCodes = [...new Set(rows.map(row => row.school_code))].sort()
+  if (schoolCodes.length > 1) issues.push({ row: 1, field: 'school_code', code: 'one_school_per_batch_required' })
+  return {
+    rows,
+    report: {
+      valid: issues.length === 0 && rows.length > 0,
+      totalRows: Math.max(0, records.length - 1),
+      validRows: rows.length,
+      contentSha256,
+      schoolCodes,
+      issues,
+    },
+  }
+}
+
+function readEncryptionKey(base64Key: string): Buffer {
+  const key = Buffer.from(base64Key, 'base64')
+  if (key.length !== 32) throw new Error('PILOT_IMPORT_KEY_INVALID: expected a base64 AES-256 key')
+  return key
+}
+
+/** Encrypts CSV before database staging using AES-256-GCM. */
+export function encryptSyntheticCsvForStaging(csv: string, base64Key: string, encryptionKeyId: string): EncryptedStagingPayload {
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', readEncryptionKey(base64Key), iv)
+  const ciphertext = Buffer.concat([cipher.update(csv, 'utf8'), cipher.final()])
+  return { encryptionKeyId, ciphertext: ciphertext.toString('base64'), iv: iv.toString('base64'), authTag: cipher.getAuthTag().toString('base64') }
+}
+
+/** Decrypts an authenticated staging payload only on the server. */
+export function decryptSyntheticCsvFromStaging(payload: EncryptedStagingPayload, base64Key: string): string {
+  const decipher = createDecipheriv('aes-256-gcm', readEncryptionKey(base64Key), Buffer.from(payload.iv, 'base64'))
+  decipher.setAuthTag(Buffer.from(payload.authTag, 'base64'))
+  return Buffer.concat([decipher.update(Buffer.from(payload.ciphertext, 'base64')), decipher.final()]).toString('utf8')
+}
+
+/** Binds staging to a prior successful dry run without storing raw values. */
+export function createDryRunValidationToken(contentSha256: string, base64Key: string): string {
+  return createHmac('sha256', readEncryptionKey(base64Key)).update(`educa-pilot-dry-run:${contentSha256}`).digest('hex')
+}
+
+export function verifyDryRunValidationToken(contentSha256: string, token: string, base64Key: string): boolean {
+  const expected = Buffer.from(createDryRunValidationToken(contentSha256, base64Key), 'hex')
+  const actual = Buffer.from(token, 'hex')
+  return expected.length === actual.length && timingSafeEqual(expected, actual)
+}

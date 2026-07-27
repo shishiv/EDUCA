@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -35,7 +35,12 @@ export interface JustificationModalProps {
 // Component
 // ============================================================================
 
-export function JustificationModal({
+export function JustificationModal(props: JustificationModalProps) {
+  if (!props.isOpen) return null
+  return <OpenJustificationModal {...props} />
+}
+
+function OpenJustificationModal({
   isOpen,
   onClose,
   onConfirm,
@@ -43,17 +48,16 @@ export function JustificationModal({
 }: JustificationModalProps) {
   const [motivo, setMotivo] = useState('')
 
-  // Reset motivo when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setMotivo('')
-    }
-  }, [isOpen])
-
   const handleConfirm = () => {
     if (motivo.trim()) {
       onConfirm(motivo.trim())
+      setMotivo('')
     }
+  }
+
+  const handleClose = () => {
+    setMotivo('')
+    onClose()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -67,7 +71,7 @@ export function JustificationModal({
   const isValidMotivo = motivo.trim().length > 0
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Justificar Falta</DialogTitle>
@@ -101,7 +105,7 @@ export function JustificationModal({
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancelar
           </Button>

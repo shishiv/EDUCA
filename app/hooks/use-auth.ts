@@ -5,6 +5,7 @@ import { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { getUserProfile, signIn as authSignIn, signOut as authSignOut, logAuthEvent, UserProfile } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { isInvalidRefreshTokenError } from '@/lib/auth-session-recovery'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -21,20 +22,19 @@ export function useAuth() {
         // Handle invalid refresh token error by clearing session gracefully
         if (error) {
           // Check if it's a refresh token or session error
-          if (error.message?.includes('Refresh Token') ||
-              error.message?.includes('refresh_token') ||
-              error.message?.includes('session') ||
-              error.name === 'AuthApiError') {
+          if (isInvalidRefreshTokenError(error)) {
             logger.info('Invalid session detected, clearing tokens')
-            // Sign out to clear invalid tokens from localStorage
             try {
-              await supabase.auth.signOut()
+              await supabase.auth.signOut({ scope: 'local' })
             } catch {
-              // Ignore signOut errors when clearing invalid session
+              // Local cleanup is best-effort; middleware also expires auth cookies.
             }
             setUser(null)
             setUserProfile(null)
             setLoading(false)
+            if (window.location.pathname !== '/login') {
+              window.location.replace('/login?reason=session_expired')
+            }
             return
           }
           throw error

@@ -14,6 +14,7 @@ This directory contains SQL migration files for the Supabase database. Migration
 | `20260119_create_feature_flags.sql` | Feature flags system | 2026-01-19 |
 | `20260124133337_create_relatorios_descritivos.sql` | BNCC descriptive reports | 2026-01-24 |
 | `20260719031000_add_censo_escolar_fields.sql` | Minimum Censo Escolar student, class, and school fields | 2026-07-19 |
+| `20260727050000_pilot_foundation_gate.sql` | Synthetic-only pilot isolation, import, audit, metrics, and safety gate | 2026-07-27 |
 
 ## Schema Contents
 
@@ -68,6 +69,18 @@ This directory contains SQL migration files for the Supabase database. Migration
 
 The new columns remain nullable. Only BM10-documented safe defaults are applied, so existing rows are preserved.
 The five new `CHECK` constraints are installed as `NOT VALID`: new writes are constrained immediately, while validation of existing rows is deferred to a separately scheduled migration.
+
+### Municipal Pilot Foundation (20260727050000)
+
+- one dedicated Supabase project per municipality;
+- school-scoped RLS/grants for the core pilot roles;
+- high-risk modules and fields disabled;
+- encrypted synthetic CSV staging with maker-checker approval;
+- server-side append-only redacted audit and aggregate pilot metrics;
+- private school-prefixed Storage policies;
+- governance fields remain `pending` / `not_approved`.
+
+This migration does not authorize a municipal deployment or real data. Use `app/scripts/run-pilot-e2e.sh` and `supabase/tests/pilot/run-backup-restore.sh` only against the local synthetic stack.
 
 ## Running Migrations
 

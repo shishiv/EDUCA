@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { usersApi } from '@/lib/api/users'
 import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save, User } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -28,8 +26,7 @@ export default function NovoUsuarioPage() {
     nome: '',
     email: '',
     tipo_usuario: '',
-    escola_id: '',
-    ativo: true
+    escola_id: ''
   })
 
   const [escolas, setEscolas] = useState<any[]>([])
@@ -52,15 +49,19 @@ export default function NovoUsuarioPage() {
     setLoading(true)
 
     try {
-      await usersApi.createUser({
-        id: crypto.randomUUID(),
-        nome: formData.nome,
-        email: formData.email,
-        tipo_usuario: formData.tipo_usuario as "admin" | "diretor" | "secretario" | "professor" | "responsavel",
-        escola_id: formData.escola_id || undefined
+      const response = await fetch('/api/pilot/invitations', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.nome,
+          email: formData.email,
+          role: formData.tipo_usuario,
+          schoolId: formData.tipo_usuario === 'secretario' ? null : formData.escola_id || null,
+        }),
       })
+      if (!response.ok) throw new Error('PILOT_INVITE_FAILED')
       
-      toast.success('Usuário criado com sucesso!')
+      toast.success('Convite enviado com sucesso!')
       router.push('/dashboard/usuarios')
     } catch (error) {
       toast.error('Erro ao criar usuário')
@@ -139,7 +140,6 @@ export default function NovoUsuarioPage() {
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">Administrador</SelectItem>
                         <SelectItem value="diretor">Diretor</SelectItem>
                         <SelectItem value="secretario">Secretário</SelectItem>
                         <SelectItem value="professor">Professor</SelectItem>
@@ -152,7 +152,7 @@ export default function NovoUsuarioPage() {
                     <Select
                       value={formData.escola_id}
                       onValueChange={(value) => handleInputChange('escola_id', value)}
-                      disabled={formData.tipo_usuario === 'admin' || formData.tipo_usuario === 'secretario'}
+                      disabled={formData.tipo_usuario === 'secretario'}
                     >
                       <SelectTrigger id="escola">
                         <SelectValue placeholder="Selecione a escola" />
@@ -165,21 +165,12 @@ export default function NovoUsuarioPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {(formData.tipo_usuario === 'admin' || formData.tipo_usuario === 'secretario') && (
+                    {formData.tipo_usuario === 'secretario' && (
                       <p className="text-sm text-gray-500">
                         Este tipo de usuário tem acesso a todas as escolas
                       </p>
                     )}
                   </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="ativo"
-                    checked={formData.ativo}
-                    onCheckedChange={(checked) => handleInputChange('ativo', checked)}
-                  />
-                  <Label htmlFor="ativo">Usuário ativo</Label>
                 </div>
 
                 <div className="flex justify-end space-x-4">
@@ -197,7 +188,7 @@ export default function NovoUsuarioPage() {
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        Salvar Usuário
+                        Enviar Convite
                       </>
                     )}
                   </Button>
@@ -217,7 +208,6 @@ export default function NovoUsuarioPage() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">Tipos de Usuário</h4>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <div><strong>Administrador:</strong> Acesso total ao sistema</div>
                   <div><strong>Diretor:</strong> Gestão da escola específica</div>
                   <div><strong>Secretário:</strong> Operações administrativas</div>
                   <div><strong>Professor:</strong> Gestão de turmas e alunos</div>
@@ -225,9 +215,9 @@ export default function NovoUsuarioPage() {
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Senha Padrão</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Primeiro acesso</h4>
                 <p className="text-sm text-gray-600">
-                  A senha padrão será "123456". O usuário deverá alterá-la no primeiro acesso.
+                  O usuário receberá um convite individual e definirá a senha no primeiro acesso.
                 </p>
               </div>
             </CardContent>

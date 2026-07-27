@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from 'react'
 import { logger } from '@/lib/logger'
+import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 
 interface ServiceWorkerState {
   isInstalled: boolean
@@ -32,9 +33,28 @@ export function useServiceWorker() {
 
   // Register service worker
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    if (typeof window === 'undefined') {
       return
     }
+
+    if (isPilotModeEnabled()) {
+      Promise.all([
+        'serviceWorker' in navigator
+          ? navigator.serviceWorker.getRegistrations().then(registrations => Promise.all(registrations.map(item => item.unregister())))
+          : Promise.resolve([]),
+        caches.keys().then(names => Promise.all(names.map(name => caches.delete(name)))),
+        new Promise<void>(resolve => {
+          if (!('indexedDB' in window)) return resolve()
+          const deletion = indexedDB.deleteDatabase('GestaoEducacional')
+          deletion.onsuccess = () => resolve()
+          deletion.onerror = () => resolve()
+          deletion.onblocked = () => resolve()
+        }),
+      ]).then(() => setState(previous => ({ ...previous, isInstalled: false, registration: null })))
+      return
+    }
+
+    if (!('serviceWorker' in navigator)) return
 
     let registration: ServiceWorkerRegistration | null = null
 
@@ -165,6 +185,7 @@ export function useServiceWorker() {
 
   // Get offline attendance count from IndexedDB
   const getOfflineCount = async (): Promise<number> => {
+    if (isPilotModeEnabled()) return 0
     try {
       const db = await openIndexedDB()
       const transaction = db.transaction(['offline-attendance'], 'readonly')

@@ -3,7 +3,6 @@
 import { supabase, Tables } from './supabase'
 import { User } from '@supabase/supabase-js'
 import { logger } from './logger'
-import { getClientIP } from './ip-tracking'
 
 // AuthUser extends Supabase User with additional typed metadata
 export interface AuthUser extends Omit<User, 'user_metadata'> {
@@ -31,36 +30,16 @@ export interface AuditLog {
 export const logAuthEvent = async (
   action: AuditLog['action'],
   userId?: string,
-  details?: Record<string, any>,
-  headers?: Headers
+  _details?: Record<string, any>,
+  _headers?: Headers
 ) => {
-  try {
-    // Get real IP address using improved IP tracking
-    const ipAddress = await getClientIP(headers)
-    const userAgent = headers?.get('user-agent') || (typeof window !== 'undefined' ? navigator.userAgent : 'server')
-
-    const auditData: AuditLog = {
-      user_id: userId || 'anonymous',
-      action,
-      details,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-    }
-
-    // In a real implementation, this would save to an audit_logs table
-    // For now, we'll log to console and local storage for development
-
-    if (typeof window !== 'undefined') {
-      const existingLogs = JSON.parse(localStorage.getItem('auth_audit_logs') || '[]')
-      existingLogs.push({ ...auditData, created_at: new Date().toISOString() })
-      // Keep only last 100 logs
-      if (existingLogs.length > 100) {
-        existingLogs.splice(0, existingLogs.length - 100)
-      }
-      localStorage.setItem('auth_audit_logs', JSON.stringify(existingLogs))
-    }
-  } catch (error) {
-  }
+  if (!userId || typeof window === 'undefined') return
+  const response = await fetch('/api/pilot/audit', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ eventType: action, entityType: 'auth_session', entityId: userId, schoolId: null, metadata: {} }),
+  })
+  if (!response.ok) logger.error('PILOT_AUDIT_WRITE_FAILED', new Error(`status ${response.status}`), { feature: 'auth', action })
 }
 
 export const signIn = async (email: string, password: string) => {

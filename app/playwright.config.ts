@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 import path from 'path'
 
+const syntheticAuthStateFile = process.env.PILOT_AUTH_STATE_PATH || path.join(__dirname, 'playwright/.auth/user.json')
+
 /**
  * Playwright configuration for EDUCA E2E tests
  * MVP: Chromium only, sequential execution, dev server
@@ -33,7 +35,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: path.join(__dirname, 'playwright/.auth/user.json'),
+        storageState: syntheticAuthStateFile,
       },
       dependencies: ['setup'],
     },
@@ -41,10 +43,10 @@ export default defineConfig({
 
   // Dev server configuration
   webServer: {
-    command: 'pnpm dev',
+    command: process.env.PLAYWRIGHT_SERVER_COMMAND || 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for Next.js to start
+    timeout: 180 * 1000, // Own bounded cold-start/prewarm readiness here, not in auth assertions
   },
 
   // Output directories

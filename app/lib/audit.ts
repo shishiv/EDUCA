@@ -5,7 +5,6 @@
  */
 
 import { supabase } from './supabase'
-import { getClientIP, getClientInfo } from './ip-tracking'
 
 export interface AuditLog {
   id?: string
@@ -68,82 +67,30 @@ export type AuditAction =
  */
 export const logAuditEvent = async (
   auditData: Omit<AuditLog, 'id' | 'timestamp'>,
-  headers?: Headers
+  _headers?: Headers
 ): Promise<void> => {
-  try {
-    // Get additional context with improved IP tracking
-    const timestamp = new Date().toISOString()
-    const clientInfo = await getClientInfo(headers)
-
-    const completeAuditData: AuditLog = {
-      ...auditData,
-      timestamp,
-      ip_address: clientInfo.ip,
-      user_agent: clientInfo.userAgent
-    }
-
-    // In production, save to audit_logs table
-    // For now, we'll use dual logging: database + local storage for development
-
-    // 1. Attempt to save to database
-    try {
-      const { error } = await supabase
-        .from('audit_logs')
-        .insert(completeAuditData)
-
-      if (error) {
-        // Fall back to local storage for development
-        await saveAuditLogLocally(completeAuditData)
-      }
-    } catch (dbError) {
-      await saveAuditLogLocally(completeAuditData)
-    }
-
-    // 2. Also log to console for development (remove in production)
-    if (process.env.NODE_ENV === 'development') {
-    //         action: completeAuditData.action,
-    //         user: completeAuditData.user_id,
-    //         table: completeAuditData.table_name,
-    //         record: completeAuditData.record_id,
-    //         timestamp: completeAuditData.timestamp
-    //       })
-    }
-
-  } catch (error) {
-    // Critical: Audit logging must never fail silently
-
-    // Send to error monitoring service in production
-    if (typeof window !== 'undefined' && (window as any).Sentry) {
-      ;(window as any).Sentry.captureException(error, {
-        tags: { component: 'audit-logging' },
-        extra: auditData
-      })
-    }
+  if (typeof window === 'undefined') {
+    throw new Error('PILOT_AUDIT_SERVER_ENDPOINT_REQUIRED: server callers must write through the database audit RPC')
+  }
+  const response = await fetch('/api/pilot/audit', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      eventType: auditData.action,
+      entityType: auditData.table_name,
+      entityId: auditData.record_id,
+      schoolId: auditData.escola_id ?? null,
+      metadata: {
+        changedFields: Object.keys(auditData.new_values || {}),
+        hadPreviousValues: Boolean(auditData.old_values),
+        detailFields: Object.keys(auditData.details || {}),
+      },
+    }),
+  })
+  if (!response.ok) {
+    throw new Error(`PILOT_AUDIT_WRITE_FAILED: server returned ${response.status}`)
   }
 }
-
-/**
- * Save audit log to local storage as fallback
- * Useful for development and when database is unavailable
- */
-const saveAuditLogLocally = async (auditData: AuditLog): Promise<void> => {
-  if (typeof window === 'undefined') return
-
-  try {
-    const existingLogs = JSON.parse(localStorage.getItem('audit_logs') || '[]')
-    existingLogs.push(auditData)
-
-    // Keep only last 500 logs for performance
-    if (existingLogs.length > 500) {
-      existingLogs.splice(0, existingLogs.length - 500)
-    }
-
-    localStorage.setItem('audit_logs', JSON.stringify(existingLogs))
-  } catch (error) {
-  }
-}
-
-// Note: getClientIP is now imported from './ip-tracking' for improved accuracy
 
 /**
  * Brazilian Educational Compliance Helpers

@@ -10,6 +10,12 @@ Technical and adoption docs for **EDUCA** as an open-source product.
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Deploy notes |
 | [MUNICIPALITIES.md](./MUNICIPALITIES.md) | Municipal adoption guide |
 | [GUIA-RAPIDO-EDUCA.md](./GUIA-RAPIDO-EDUCA.md) | End-user quick start |
+| [PILOT-TECHNICAL-GATE.md](./PILOT-TECHNICAL-GATE.md) | Synthetic-only municipal pilot gate |
+| [PILOT-QUICK-GUIDE.md](./PILOT-QUICK-GUIDE.md) | Pilot quick guide |
+| [PILOT-TRAIN-THE-TRAINER.md](./PILOT-TRAIN-THE-TRAINER.md) | Train-the-trainer session |
+| [PILOT-OPERATIONS.md](./PILOT-OPERATIONS.md) | Support and success metrics |
+| [PILOT-GOVERNANCE-TEMPLATE.md](./PILOT-GOVERNANCE-TEMPLATE.md) | Pending privacy/processor/TTD configuration |
+| [PILOT-BACKUP-RESTORE.md](./PILOT-BACKUP-RESTORE.md) | Daily backup and synthetic restore contract |
 | [DESIGN-TOKENS.md](./DESIGN-TOKENS.md) | Design tokens (SSOT) |
 | [PROVIDER-AGNOSTIC-ROADMAP.md](./PROVIDER-AGNOSTIC-ROADMAP.md) | Future storage adapter direction |
 | [bncc.md](./bncc.md) | BNCC notes |
