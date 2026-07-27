@@ -359,13 +359,7 @@ senha: prof123
 ### Plataformas Recomendadas
 
 #### Vercel (Recomendado)
-```bash
-# Instale a CLI da Vercel
-npm install -g vercel
-
-# Deploy direto
-vercel --prod
-```
+Comandos e variáveis de deploy estão em [`../docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md). Use `pnpm deploy`, que passa pelo safety gate do piloto sintético ([`../docs/PILOT-TECHNICAL-GATE.md`](../docs/PILOT-TECHNICAL-GATE.md)).
 
 #### Configuração de Domínio
 - **Produção**: `sme.fronteira.mg.gov.br`

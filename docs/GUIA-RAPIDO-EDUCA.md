@@ -2,7 +2,7 @@
 
 **EDUCA - Sistema de Gestão Escolar Municipal**
 
-**Versao:** Piloto v2.1
+Guia do produto completo. No piloto municipal sintético (`PILOT_MODE=true`) o escopo é menor — diário de classe, relatórios e alertas Bolsa Família ficam desabilitados. O guia de uso do piloto é o [PILOT-QUICK-GUIDE.md](./PILOT-QUICK-GUIDE.md).
 
 ---
 

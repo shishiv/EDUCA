@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createHash } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'

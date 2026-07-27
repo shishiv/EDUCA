@@ -71,6 +71,8 @@ Validamos fluxos do dia a dia (matrícula, chamada com imutabilidade, notas, mul
 
 **Dados do piloto são privados (LGPD).** Demo pública, quando houver, usa seed sintético (`supabase/seed-demo/`).
 
+A **fundação de piloto municipal** que vive neste repositório é **sintética**: ela não autoriza dados reais de aluno, implantação municipal nem parecer de conformidade. Escopo, flags e o que faltaria para dados reais: [docs/PILOT-TECHNICAL-GATE.md](docs/PILOT-TECHNICAL-GATE.md).
+
 ---
 
 ## Para quem é
@@ -162,6 +164,8 @@ pnpm dev
 ```
 
 Antes de iniciar o app, aplique o banco conforme [supabase/migrations/README.md](supabase/migrations/README.md). App em `http://localhost:3000`. Guia municipal: [docs/MUNICIPALITIES.md](docs/MUNICIPALITIES.md). Deploy: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+> `.env.local.example` já vem com `PILOT_MODE=true` (fundação sintética do piloto). Nesse modo o app fica no escopo core — autenticação, escolas, usuários, alunos, turmas, matrículas, responsáveis, atribuições, frequência e dashboard — e notas/boletim, diário completo, relatórios (incl. Bolsa Família), calendário e configurações ficam desabilitados, além de o deploy externo ser bloqueado. Detalhes e flags: [docs/PILOT-TECHNICAL-GATE.md](docs/PILOT-TECHNICAL-GATE.md).
 
 ### Identidade municipal (env)
 

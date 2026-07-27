@@ -19,6 +19,8 @@ pnpm pilot:restore-test
 
 O ensaio recusa Supabase externo, cria dump criptografado, restaura em banco isolado, compara Auth/Storage/policies/grants/view/RPC, valida tombstone, mede RPO/RTO e remove banco/arquivos temporários. Nunca sobrescreve o banco de origem.
 
+Evidência do último ensaio: [evidence/synthetic-restore-evidence.md](./evidence/synthetic-restore-evidence.md).
+
 ## Evidência exigida antes de dados reais
 
 ID/data do backup, executor/aprovador, início/fim, RPO/RTO observado, checksums, amostra de vínculos, login por papel, frequência, auditoria, falhas e limpeza. O Município deve aprovar rotação, TTD, legal hold e procedimento de tombstone.
