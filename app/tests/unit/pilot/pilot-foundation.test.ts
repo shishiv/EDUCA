@@ -10,7 +10,7 @@ import {
   verifyDryRunValidationToken,
 } from '@/lib/pilot/synthetic-csv-import'
 import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
-import { isPilotDisabledPath } from '@/lib/pilot/pilot-scope'
+import { canManagePilotSchool, isPilotDisabledPath } from '@/lib/pilot/pilot-scope'
 
 const csv = [
   SYNTHETIC_STUDENT_CSV_HEADERS.join(','),
@@ -61,5 +61,20 @@ describe('synthetic pilot foundation', () => {
     expect(isPilotDisabledPath('/api/educacenso/export')).toBe(true)
     expect(isPilotDisabledPath('/relatorios/bolsa-familia')).toBe(true)
     expect(isPilotDisabledPath('/diario/frequencia')).toBe(false)
+  })
+
+  it('mirrors the pilot_can_manage_school RLS predicate without widening it', () => {
+    expect(canManagePilotSchool({ tipo_usuario: 'admin', escola_id: null })).toBe(true)
+    expect(canManagePilotSchool({ tipo_usuario: 'secretario', escola_id: null })).toBe(true)
+    expect(canManagePilotSchool({ tipo_usuario: 'diretor', escola_id: '10000000-0000-0000-0000-000000000001' })).toBe(true)
+
+    expect(canManagePilotSchool({ tipo_usuario: 'secretario', escola_id: '10000000-0000-0000-0000-000000000001' })).toBe(false)
+    expect(canManagePilotSchool({ tipo_usuario: 'admin', escola_id: '10000000-0000-0000-0000-000000000001' })).toBe(false)
+    expect(canManagePilotSchool({ tipo_usuario: 'diretor', escola_id: null })).toBe(false)
+    expect(canManagePilotSchool({ tipo_usuario: 'professor', escola_id: null })).toBe(false)
+    expect(canManagePilotSchool({ tipo_usuario: 'responsavel', escola_id: null })).toBe(false)
+    expect(canManagePilotSchool({ tipo_usuario: null, escola_id: null })).toBe(false)
+    expect(canManagePilotSchool(null)).toBe(false)
+    expect(canManagePilotSchool(undefined)).toBe(false)
   })
 })

@@ -8,6 +8,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+function firstAccessErrorMessage(code: unknown): string {
+  switch (code) {
+    case 'PILOT_FIRST_ACCESS_PASSWORD_INVALID':
+      return 'Use 12+ caracteres com maiúscula, minúscula, número e símbolo.'
+    case 'PILOT_FIRST_ACCESS_PASSWORD_UNCHANGED':
+      return 'A nova senha precisa ser diferente da senha temporária. O primeiro acesso continua pendente.'
+    default:
+      return 'Não foi possível concluir o primeiro acesso.'
+  }
+}
+
 export default function PrimeiroAcessoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -29,7 +40,7 @@ export default function PrimeiroAcessoPage() {
     })
     const result = await response.json()
     if (!response.ok) {
-      setError(result.error === 'PILOT_FIRST_ACCESS_PASSWORD_INVALID' ? 'Use 12+ caracteres com maiúscula, minúscula, número e símbolo.' : 'Não foi possível concluir o primeiro acesso.')
+      setError(firstAccessErrorMessage(result.error))
       setSubmitting(false)
       return
     }

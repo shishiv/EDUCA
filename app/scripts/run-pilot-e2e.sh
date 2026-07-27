@@ -5,6 +5,8 @@ APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 cd "$APP_DIR"
 
+command -v psql >/dev/null || { echo "missing command: psql (required to apply the pilot-only provisioning)" >&2; exit 1; }
+
 pnpm exec supabase --workdir "$ROOT_DIR" status >/dev/null
 eval "$(pnpm exec supabase --workdir "$ROOT_DIR" status -o env 2>/dev/null | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY|DB_URL)=')"
 
@@ -27,5 +29,6 @@ export PILOT_AUTH_STATE_PATH="$APP_DIR/.pilot-e2e/auth/user.json"
 node -e "require('node:fs').rmSync(process.env.PILOT_AUTH_STATE_PATH, { force: true })"
 
 pnpm exec supabase --workdir "$ROOT_DIR" db reset
+psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql" >/dev/null
 pnpm exec tsx scripts/seed-pilot-synthetic.ts
 pnpm exec playwright test tests/e2e/pilot --project=chromium

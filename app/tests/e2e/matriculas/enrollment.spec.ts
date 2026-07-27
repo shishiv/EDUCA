@@ -220,7 +220,7 @@ test.describe('Matrícula - Enrollment Flow', () => {
     
     // Should show success or redirect
     await expect(
-      page.getByText(/sucesso|matriculad/i).or(page)
+      page.getByText(/sucesso|matriculad/i).or(page.locator('body'))
     ).toBeVisible({ timeout: 10000 })
   })
 

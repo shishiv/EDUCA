@@ -15,16 +15,16 @@
     "hooks/**/*.tsx",
     "lib/**/*.ts",
     "lib/**/*.tsx",
-    "types/**/*.ts"
+    "scripts/**/*.ts",
+    "types/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "playwright/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     ".next",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "tests/e2e/**",
-    "playwright/**"
+    "tests/unit/components/diary/**",
+    "tests/unit/components/reports/**"
   ]
 }

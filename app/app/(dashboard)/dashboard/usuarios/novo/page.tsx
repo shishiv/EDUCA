@@ -59,8 +59,18 @@ export default function NovoUsuarioPage() {
           schoolId: formData.tipo_usuario === 'secretario' ? null : formData.escola_id || null,
         }),
       })
-      if (!response.ok) throw new Error('PILOT_INVITE_FAILED')
-      
+      const result = await response.json().catch(() => ({}))
+
+      if (response.status === 409 && result.error === 'PILOT_INVITE_ALREADY_PENDING') {
+        toast.warning('Este e-mail já tem um convite pendente. Nenhum novo e-mail foi enviado e o cadastro atual permanece inalterado.')
+        return
+      }
+      if (response.status === 409 && result.error === 'PILOT_INVITE_ALREADY_ACCEPTED') {
+        toast.warning('Este e-mail já concluiu o primeiro acesso. Nenhum convite foi enviado.')
+        return
+      }
+      if (!response.ok) throw new Error(result.error || 'PILOT_INVITE_FAILED')
+
       toast.success('Convite enviado com sucesso!')
       router.push('/dashboard/usuarios')
     } catch (error) {

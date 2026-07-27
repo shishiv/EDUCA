@@ -22,7 +22,10 @@ export async function POST(request: Request) {
     if (invitation.accepted_at) return NextResponse.json({ completed: true, idempotentReplay: true })
 
     const { error: passwordError } = await supabase.auth.updateUser({ password: input.password })
-    if (passwordError && passwordError.code !== 'same_password') throw passwordError
+    if (passwordError?.code === 'same_password') {
+      return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_PASSWORD_UNCHANGED', completed: false }, { status: 400 })
+    }
+    if (passwordError) throw passwordError
 
     const now = new Date().toISOString()
     const { error: profileError } = await service.from('users').update({ primeiro_login: false, senha_padrao: false, data_ultimo_acesso: now }).eq('id', user.id)

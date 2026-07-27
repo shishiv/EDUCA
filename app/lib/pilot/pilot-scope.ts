@@ -48,3 +48,19 @@ export function isPilotDisabledPath(pathname: string): boolean {
 export function isPilotModeEnabled(): boolean {
   return process.env.NEXT_PUBLIC_PILOT_MODE === 'true' || process.env.PILOT_MODE === 'true'
 }
+
+export interface PilotScopedProfile {
+  tipo_usuario: string | null
+  escola_id: string | null
+}
+
+/**
+ * Mirrors the `pilot_can_manage_school` RLS predicate for the caller's own
+ * school so the UI never offers a write the database will reject: municipal
+ * secretariat (`escola_id IS NULL`) or the director of that school.
+ */
+export function canManagePilotSchool(profile: PilotScopedProfile | null | undefined): boolean {
+  if (!profile) return false
+  if (profile.tipo_usuario === 'diretor') return profile.escola_id !== null
+  return (profile.tipo_usuario === 'admin' || profile.tipo_usuario === 'secretario') && profile.escola_id === null
+}

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     if (priorInvitation?.accepted_at) return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_ACCEPTED' }, { status: 409 })
     if (priorInvitation) {
       const { accepted_at: _acceptedAt, ...invitation } = priorInvitation
-      return NextResponse.json({ invitation, idempotentReplay: true })
+      return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_PENDING', invitation, emailResent: false }, { status: 409 })
     }
 
     const redirectBase = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'

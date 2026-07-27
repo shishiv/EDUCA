@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
 TESTS_DIR="$ROOT_DIR/supabase/tests/database"
+PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 CENSO_MIGRATION="20260719031000_add_censo_escolar_fields.sql"
 RELATORIOS_MIGRATION="20260124133337_create_relatorios_descritivos.sql"
 
@@ -61,6 +62,9 @@ done
 
 echo "Replaying $RELATORIOS_MIGRATION"
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$RELATORIOS_MIGRATION" >/dev/null
+
+echo "Applying pilot-only provisioning $(basename "$PILOT_PROVISIONING")"
+"${PSQL[@]}" -f "$PILOT_PROVISIONING" >/dev/null
 
 mapfile -t tests < <(find "$TESTS_DIR" -maxdepth 1 -type f -name '*.test.sql' -print | sort)
 for test_file in "${tests[@]}"; do

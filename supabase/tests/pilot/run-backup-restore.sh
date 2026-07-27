@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
+PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 EVIDENCE_FILE="$ROOT_DIR/docs/evidence/synthetic-restore-evidence.md"
 
 : "${DB_URL:?DB_URL is required}"
@@ -149,6 +150,7 @@ mapfile -t migrations < <(find "$MIGRATIONS_DIR" -maxdepth 1 -type f -name '*.sq
 for migration in "${migrations[@]}"; do
   psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -f "$migration" >/dev/null
  done
+psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -f "$PILOT_PROVISIONING" >/dev/null
 
 restore_table() {
   local table=$1

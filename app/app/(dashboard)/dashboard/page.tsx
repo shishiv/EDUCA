@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
-import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { canManagePilotSchool, isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 
 type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
 type AlunoRow = Database['public']['Tables']['alunos']['Row']
@@ -50,6 +50,8 @@ interface DashboardAlert {
   timestamp: string
 }
 
+type QuickAccessRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+
 interface QuickAccessItem {
   name: string
   href: string
@@ -57,16 +59,41 @@ interface QuickAccessItem {
   color: string
   iconColor: string
   borderColor: string
-  roles: Array<'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'>
+  roles: QuickAccessRole[]
+  pilotHref?: string
+  pilotRoles?: QuickAccessRole[]
+  schoolWrite?: boolean
+}
+
+interface QuickActionCard {
+  name: string
+  href: string
+  icon: LucideIcon
+  iconColor: string
+  schoolWrite?: boolean
 }
 
 const quickAccessItems: QuickAccessItem[] = [
- { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600', borderColor: 'hover:border-blue-300', roles: ['diretor'] },
-  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600', borderColor: 'hover:border-emerald-300', roles: ['admin', 'diretor', 'secretario'] },
-  { name: 'Frequência', href: '/diario/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, color: 'bg-violet-50 hover:bg-violet-100', iconColor: 'text-violet-600', borderColor: 'hover:border-violet-300', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600', borderColor: 'hover:border-blue-300', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
+  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600', borderColor: 'hover:border-emerald-300', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
+  { name: 'Frequência', href: '/dashboard/frequencia', pilotHref: '/diario/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, color: 'bg-violet-50 hover:bg-violet-100', iconColor: 'text-violet-600', borderColor: 'hover:border-violet-300', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
   { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, color: 'bg-rose-50 hover:bg-rose-100', iconColor: 'text-rose-600', borderColor: 'hover:border-rose-300', roles: ['admin', 'diretor', 'secretario'] },
   { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, color: 'bg-slate-50 hover:bg-slate-100', iconColor: 'text-slate-600', borderColor: 'hover:border-slate-300', roles: ['admin', 'diretor'] },
+]
+
+const defaultQuickActionCards: QuickActionCard[] = [
+  { name: 'Nova Chamada', href: '/dashboard/frequencia', icon: CheckSquare, iconColor: 'text-amber-600' },
+  { name: 'Lancar Notas', href: '/dashboard/notas', icon: GraduationCap, iconColor: 'text-violet-600' },
+  { name: 'Ver Relatorios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600' },
+  { name: 'Cadastrar Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', schoolWrite: true },
+]
+
+const pilotQuickActionCards: QuickActionCard[] = [
+  { name: 'Nova Chamada', href: '/diario/frequencia', icon: CheckSquare, iconColor: 'text-amber-600' },
+  { name: 'Ver Turmas', href: '/dashboard/turmas', icon: GraduationCap, iconColor: 'text-violet-600' },
+  { name: 'Ver Matriculas', href: '/dashboard/matriculas', icon: BarChart3, iconColor: 'text-rose-600' },
+  { name: 'Cadastrar Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', schoolWrite: true },
 ]
 
 export default function DashboardPage() {
@@ -252,6 +279,22 @@ export default function DashboardPage() {
     )
   }
 
+  const pilotMode = isPilotModeEnabled()
+  const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
+
+  const visibleQuickAccess = quickAccessItems
+    .map((item) => ({ ...item, href: pilotMode && item.pilotHref ? item.pilotHref : item.href }))
+    .filter((item) => {
+      if (!userProfile) return false
+      const roles = pilotMode && item.pilotRoles ? item.pilotRoles : item.roles
+      if (!roles.includes(userProfile.tipo_usuario as QuickAccessRole)) return false
+      if (pilotMode && isPilotDisabledPath(item.href)) return false
+      return !item.schoolWrite || canManageSchool
+    })
+
+  const visibleQuickActionCards = (pilotMode ? pilotQuickActionCards : defaultQuickActionCards)
+    .filter((card) => !card.schoolWrite || canManageSchool)
+
   // Show teacher-specific dashboard for professors
   if (userProfile?.tipo_usuario === 'professor') {
     return (
@@ -275,11 +318,7 @@ export default function DashboardPage() {
 
       {/* Quick Access - Moved to Top */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
- {(quickAccessItems satisfies QuickAccessItem[]).filter((item) =>
- userProfile
- && item.roles.includes(userProfile.tipo_usuario as QuickAccessItem['roles'][number])
- && (!isPilotModeEnabled() || !isPilotDisabledPath(item.href))
-        ).map((item) => {
+        {visibleQuickAccess.map((item) => {
           const IconComponent = item.icon
           return (
             <Link key={item.name} href={item.href}>
@@ -411,30 +450,17 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                  <Link href="/diario/frequencia">
-                    <CheckSquare className="h-5 w-5 text-amber-600" />
-                    <span className="text-sm">Nova Chamada</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                  <Link href="/dashboard/turmas">
-                    <GraduationCap className="h-5 w-5 text-violet-600" />
-                    <span className="text-sm">Ver Turmas</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                  <Link href="/dashboard/matriculas">
-                    <BarChart3 className="h-5 w-5 text-rose-600" />
-                    <span className="text-sm">Ver Matriculas</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                  <Link href="/dashboard/alunos/novo">
-                    <UserPlus className="h-5 w-5 text-blue-600" />
-                    <span className="text-sm">Cadastrar Aluno</span>
-                  </Link>
-                </Button>
+                {visibleQuickActionCards.map((card) => {
+                  const CardIcon = card.icon
+                  return (
+                    <Button key={card.name} variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
+                      <Link href={card.href}>
+                        <CardIcon className={`h-5 w-5 ${card.iconColor}`} />
+                        <span className="text-sm">{card.name}</span>
+                      </Link>
+                    </Button>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>

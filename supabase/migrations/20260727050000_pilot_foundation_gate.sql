@@ -310,36 +310,10 @@ USING (EXISTS (
     AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
 ));
 
--- Unsupported pilot modules are inaccessible even when their legacy tables exist.
-REVOKE ALL ON notas, relatorios_descritivos, educacenso_exports, codigos_inep FROM anon, authenticated;
-REVOKE ALL ON vw_alunos_risco_bolsa_familia FROM anon, authenticated;
-
--- -----------------------------------------------------------------------------
--- High-risk fields are blocked at the database seam while the synthetic pilot
--- foundation is active.
--- -----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION pilot_reject_high_risk_student_fields()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF NEW.nis IS NOT NULL
-     OR coalesce(NEW.bolsa_familia, false)
-     OR NEW.necessidades_especiais IS NOT NULL
-     OR NEW.cor_raca IN ('nao_declarada', 'branca', 'preta', 'parda', 'amarela', 'indigena')
-     OR NEW.tipo_deficiencia IS NOT NULL THEN
-    RAISE EXCEPTION USING
-      ERRCODE = '23514',
-      MESSAGE = 'PILOT_SAFETY_GATE: NIS/PBF/health/disability/race fields are disabled';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS pilot_high_risk_student_guard ON alunos;
-CREATE TRIGGER pilot_high_risk_student_guard
-BEFORE INSERT OR UPDATE ON alunos
-FOR EACH ROW EXECUTE FUNCTION pilot_reject_high_risk_student_fields();
+-- The module revokes and the high-risk field guard are pilot-only containment.
+-- They live in supabase/pilot/provision-pilot-module-gate.sql so a canonical
+-- migration run never disables Censo Escolar fields or previously shipped
+-- modules outside a synthetic municipal pilot.
 
 -- -----------------------------------------------------------------------------
 -- Security-invoker, redacted attendance view. The legacy PBF view remains

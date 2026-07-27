@@ -226,7 +226,7 @@ test.describe('Turma - Create Form', () => {
     await page.getByRole('button', { name: /criar turma/i }).click()
     
     // Should show success message or redirect
-    await expect(page.getByText(/sucesso|criada/i).or(page)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/sucesso|criada/i).or(page.locator('body'))).toBeVisible({ timeout: 10000 })
   })
 
   test('should create turma with professor assigned', async ({ page }) => {
@@ -260,7 +260,7 @@ test.describe('Turma - Create Form', () => {
     // Submit
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    await expect(page.getByText(/sucesso|criada/i).or(page)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/sucesso|criada/i).or(page.locator('body'))).toBeVisible({ timeout: 10000 })
   })
 
   test('should create turma with observacoes', async ({ page }) => {
@@ -289,7 +289,7 @@ test.describe('Turma - Create Form', () => {
     // Submit
     await page.getByRole('button', { name: /criar turma/i }).click()
     
-    await expect(page.getByText(/sucesso|criada/i).or(page)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/sucesso|criada/i).or(page.locator('body'))).toBeVisible({ timeout: 10000 })
   })
 
   test('should toggle ativo status', async ({ page }) => {

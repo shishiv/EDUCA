@@ -74,13 +74,21 @@ The five new `CHECK` constraints are installed as `NOT VALID`: new writes are co
 
 - one dedicated Supabase project per municipality;
 - school-scoped RLS/grants for the core pilot roles;
-- high-risk modules and fields disabled;
 - encrypted synthetic CSV staging with maker-checker approval;
 - server-side append-only redacted audit and aggregate pilot metrics;
 - private school-prefixed Storage policies;
 - governance fields remain `pending` / `not_approved`.
 
 This migration does not authorize a municipal deployment or real data. Use `app/scripts/run-pilot-e2e.sh` and `supabase/tests/pilot/run-backup-restore.sh` only against the local synthetic stack.
+
+### Pilot-only provisioning (not a migration)
+
+Disabling previously shipped modules is pilot containment, not canonical schema, so it is **not** part of the migration above. `supabase/pilot/provision-pilot-module-gate.sql` holds it:
+
+- `REVOKE` on `notas`, `relatorios_descritivos`, `educacenso_exports`, `codigos_inep`, and `vw_alunos_risco_bolsa_familia`;
+- the `pilot_high_risk_student_guard` trigger on `alunos` that blocks NIS/PBF/health/disability/race writes.
+
+It is idempotent and is applied explicitly by `app/scripts/run-pilot-e2e.sh`, `supabase/tests/database/run.sh`, and `supabase/tests/pilot/run-backup-restore.sh`. A plain `supabase db push` therefore leaves the Censo Escolar fields and the grade/report/Educacenso modules exactly as they were outside a synthetic municipal pilot.
 
 ## Running Migrations
 
