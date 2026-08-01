@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
 
@@ -35,31 +34,8 @@ const BatchAttendanceSchema = z.object({
   bulk_observations: z.string().max(300, 'Observacoes gerais muito longas').optional()
 })
 
-// Create Supabase client with proper cookie handling for Next.js 15
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set() {
-          // In API routes, we can't set cookies but we can read them
-        },
-        remove() {
-          // In API routes, we can't remove cookies but we can read them
-        },
-      },
-    }
-  )
-}
-
 // Validate authentication
-async function validateAuth(supabase: ReturnType<typeof createServerClient>) {
+async function validateAuth(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user }, error } = await supabase.auth.getUser()
 
   if (error || !user) {
@@ -80,7 +56,7 @@ async function validateAuth(supabase: ReturnType<typeof createServerClient>) {
 }
 
 // Validate session and attendance marking eligibility
-async function validateAttendanceEligibility(supabase: ReturnType<typeof createServerClient>, sessionId: string, profile: { id: string; tipo_usuario: string; escola_id: string | null }) {
+async function validateAttendanceEligibility(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: string, profile: { id: string; tipo_usuario: string; escola_id: string | null }) {
   const { data: session, error } = await supabase
     .from('sessoes_aula')
     .select(`
@@ -134,7 +110,7 @@ async function validateAttendanceEligibility(supabase: ReturnType<typeof createS
 }
 
 // Validate student enrollments for the class - now using matricula_id
-async function validateStudentEnrollments(supabase: ReturnType<typeof createServerClient>, turmaId: string, matriculaIds: string[]) {
+async function validateStudentEnrollments(supabase: Awaited<ReturnType<typeof createClient>>, turmaId: string, matriculaIds: string[]) {
   const { data: enrollments, error } = await supabase
     .from('matriculas')
     .select('id, situacao')
@@ -156,7 +132,7 @@ async function validateStudentEnrollments(supabase: ReturnType<typeof createServ
 }
 
 // Check for existing attendance records - using matricula_id and sessao_id
-async function checkExistingAttendance(supabase: ReturnType<typeof createServerClient>, sessionId: string, matriculaIds: string[]) {
+async function checkExistingAttendance(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: string, matriculaIds: string[]) {
   const { data: existing, error } = await supabase
     .from('frequencia')
     .select('matricula_id, presente, bloqueado, travado, created_at')
@@ -173,7 +149,7 @@ async function checkExistingAttendance(supabase: ReturnType<typeof createServerC
 
 // Perform optimized batch insert/update
 async function performBatchAttendanceUpdate(
-  supabase: ReturnType<typeof createServerClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   sessionId: string,
   sessionDataAula: string,
   attendanceData: Array<{ matricula_id: string; presente: boolean; observacoes?: string }>,
@@ -312,7 +288,7 @@ export async function POST(
   const startTime = performance.now()
 
   try {
-    const supabase = await createSupabaseClient()
+    const supabase = await createClient()
     const { profile } = await validateAuth(supabase)
     const { id } = await params
 
@@ -347,17 +323,11 @@ export async function POST(
 
     // Update session statistics (optional - can be done asynchronously)
     const totalRecords = results.inserted + results.updated
-    if (totalRecords > 0) {
-      // This could be done asynchronously for better performance
-      // Note: update_session_attendance_stats RPC may not exist - fire and forget
-      void supabase
-        .rpc('update_session_attendance_stats', {
-          session_id: validatedParams.id
-        })
-        .then(() => {
-          // Successfully updated stats (fire and forget)
-        })
-    }
+    // Note: update_session_attendance_stats RPC was previously called here,
+    // but it does not exist in the committed schema, so the call always
+    // failed at runtime (unhandled rejection). Removed with the client
+    // consolidation; add the function to supabase/migrations before
+    // reintroducing session statistics.
 
     const endTime = performance.now()
     const executionTime = endTime - startTime
