@@ -464,7 +464,7 @@ export async function getGradesByClass(
     }
 
     // Transform data to include student info at top level
-    const transformedData = (data || []).map((record: any) => ({
+    const transformedData = (data || []).map((record) => ({
       ...record,
       aluno_id: record.matriculas?.alunos?.id,
       aluno_nome: record.matriculas?.alunos?.nome_completo,
@@ -917,10 +917,10 @@ export async function getTurmasForNotas(
     }
 
     // Transform turmas data
-    const transformedTurmas: TurmaNotasData[] = turmas.map((turma: any) => {
-      const activeMatriculas = turma.matriculas?.filter((m: any) => m.situacao === 'ativa') || []
+    const transformedTurmas: TurmaNotasData[] = turmas.map((turma) => {
+      const activeMatriculas = turma.matriculas?.filter((m) => m.situacao === 'ativa') || []
 
-      const alunos = activeMatriculas.map((matricula: any) => {
+      const alunos = activeMatriculas.map((matricula) => {
         const grades = gradesByMatricula[matricula.id] || []
 
         // Build disciplinas object
@@ -975,13 +975,13 @@ export async function getTurmasForNotas(
         id: turma.id,
         nome: turma.nome,
         serie: turma.serie,
-        escola: (turma.escola as any)?.nome || 'Escola',
+        escola: turma.escola?.nome || 'Escola',
         escola_id: turma.escola_id,
-        professor: (turma.professor as any)?.nome || 'Sem professor',
+        professor: turma.professor?.nome || 'Sem professor',
         professor_id: turma.professor_id,
         ano_letivo: turma.ano_letivo,
         disciplinas: disciplinaList,
-        alunos: alunos.sort((a: any, b: any) => a.nome_completo.localeCompare(b.nome_completo)),
+        alunos: alunos.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo)),
       }
     })
 
@@ -1103,7 +1103,7 @@ export async function getGradesByTurmaWithStudents(
     }
 
     // Transform matriculas to alunos with grades
-    const alunos = (matriculas || []).map((matricula: any) => {
+    const alunos = (matriculas || []).map((matricula) => {
       const studentGrades = gradesByMatricula[matricula.id] || []
 
       const disciplinasObj: TurmaNotasData['alunos'][0]['disciplinas'] = {}
@@ -1153,9 +1153,9 @@ export async function getGradesByTurmaWithStudents(
       id: turma.id,
       nome: turma.nome,
       serie: turma.serie,
-      escola: (turma.escola as any)?.nome || 'Escola',
+      escola: turma.escola?.nome || 'Escola',
       escola_id: turma.escola_id,
-      professor: (turma.professor as any)?.nome || 'Sem professor',
+      professor: turma.professor?.nome || 'Sem professor',
       professor_id: turma.professor_id,
       ano_letivo: turma.ano_letivo,
       disciplinas: disciplinaList,
