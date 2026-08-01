@@ -183,8 +183,9 @@ export async function markAttendanceAction(
       }
     }
 
-    // Revalidate relevant pages
-    revalidatePath('/dashboard/frequencia')
+    // Revalidate the turma page so the attendance grid reflects the new mark.
+    // The historical '/dashboard/frequencia' target was a no-op (no such route).
+    revalidatePath(`/dashboard/turmas/${session.turma_id}`)
 
     return {
       success: true,
