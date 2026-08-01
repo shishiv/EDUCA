@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { canRecordAttendance } from '@/lib/auth'
 
 const marcarFrequenciaSchema = z.object({
   // Support both legacy aula_id and enhanced sessao_id
@@ -75,20 +76,20 @@ export async function POST(request: NextRequest) {
     const { aula_id, sessao_id, frequencias } = validation.data
     const sessionId = sessao_id || aula_id // Prefer sessao_id, fallback to aula_id
 
-    // Verificar se o usuário é professor
+    // Verificar se o usuário pode marcar frequência (professor ou diretor)
     const { data: usuario } = await supabase
       .from('users')
-      .select('role, escola_id')
+      .select('tipo_usuario, escola_id')
       .eq('id', user.id)
       .single()
 
-    if (!usuario || usuario.role !== 'professor') {
+    if (!usuario || !canRecordAttendance(usuario.tipo_usuario)) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'INSUFFICIENT_PERMISSIONS',
-            message: 'Apenas professores podem marcar frequência'
+            message: 'Apenas professores e diretores podem marcar frequência'
           },
           timestamp: new Date().toISOString()
         },
