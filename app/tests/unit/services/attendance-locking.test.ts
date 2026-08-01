@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AttendanceLockingService, LockingRule } from '@/lib/services/attendance-locking'
+import { createMockSupabaseClient } from './mock-supabase-client'
 
 describe('AttendanceLockingService', () => {
   let service: AttendanceLockingService
 
   beforeEach(() => {
     vi.clearAllMocks()
-    service = new AttendanceLockingService()
+    service = new AttendanceLockingService(createMockSupabaseClient())
   })
 
   describe('Regras de bloqueio padrao', () => {

@@ -2,8 +2,14 @@
 
 import { BaseApiService } from './base'
 import { supabase, Tables, Inserts } from '@/lib/supabase'
-import { attendanceImmutability } from '@/lib/services/attendance-immutability'
+import { AttendanceImmutabilityService } from '@/lib/services/attendance-immutability'
 import { logger } from '@/lib/logger'
+
+// Browser-side adapter for the attendance immutability service: this module
+// is 'use client', so it binds the browser client (authenticated via cookies
+// in the user's browser). Server-side attendance paths use createAttendanceModule
+// from '@/lib/services/attendance-module' with createClient() from '@/lib/supabase/server'.
+const attendanceImmutability = new AttendanceImmutabilityService(supabase)
 
 export interface AttendanceSession {
   id: string
