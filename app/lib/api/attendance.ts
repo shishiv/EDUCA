@@ -1,7 +1,7 @@
 'use client'
 
 import { BaseApiService } from './base'
-import { supabase, Tables } from '@/lib/supabase'
+import { supabase, Tables, Inserts } from '@/lib/supabase'
 import { attendanceImmutability } from '@/lib/services/attendance-immutability'
 import { logger } from '@/lib/logger'
 
@@ -43,17 +43,40 @@ export interface AttendanceWithDetails extends AttendanceRecord {
   turma?: Tables<'turmas'>
 }
 
+/**
+ * Build the sessoes_aula insert payload for a chamada session.
+ *
+ * escola_id and professor_id are NOT NULL columns; callers must resolve them
+ * before calling (an as-any escape previously hid undefined values that
+ * PostgREST would reject at runtime).
+ */
+export function buildChamadaSessionInsert(params: {
+  turmaId: string
+  dateStr: string
+  professorId: string
+  escolaId: string
+}): Inserts<'sessoes_aula'> {
+  return {
+    turma_id: params.turmaId,
+    data_aula: params.dateStr,
+    status: 'aberta',
+    professor_id: params.professorId,
+    escola_id: params.escolaId,
+    conteudo_programatico: 'Chamada',
+  }
+}
+
 export class AttendanceApiService extends BaseApiService {
   constructor() {
     super('sessoes_aula') // Using sessions table as primary
   }
 
   // Create new attendance session (Abrir aula)
-  async createSession(sessionData: Omit<AttendanceSession, 'id' | 'created_at' | 'updated_at'>): Promise<AttendanceSession> {
+  async createSession(sessionData: Omit<AttendanceSession, 'id' | 'created_at' | 'updated_at'> & { escola_id?: string }): Promise<AttendanceSession> {
     try {
-      // Extract only the fields that exist in sessoes_aula table
-      // Filter out undefined values to avoid type issues
-      const insertData: Record<string, unknown> = {}
+      // Build the insert payload, keeping the original truthiness filtering so
+      // falsy optional fields are omitted exactly as before.
+      const insertData: Partial<Inserts<'sessoes_aula'>> = {}
       if (sessionData.turma_id) insertData.turma_id = sessionData.turma_id
       if (sessionData.professor_id) insertData.professor_id = sessionData.professor_id
       if (sessionData.data_aula) insertData.data_aula = sessionData.data_aula
@@ -66,14 +89,14 @@ export class AttendanceApiService extends BaseApiService {
       if (sessionData.inicio_aula) insertData.inicio_aula = sessionData.inicio_aula
       if (sessionData.fim_aula) insertData.fim_aula = sessionData.fim_aula
 
-      const escolaId = (sessionData as { escola_id?: string }).escola_id
-      if (escolaId) insertData.escola_id = escolaId
+      if (sessionData.escola_id) insertData.escola_id = sessionData.escola_id
 
-      // Cast the supabase client to any to bypass type checking for dynamic inserts
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      // Every assignment above is checked against the real sessoes_aula Insert
+      // type. This single cast reconciles the truthiness-filtered partial
+      // payload with the complete Insert type at the query boundary.
+      const { data, error } = await supabase
         .from('sessoes_aula')
-        .insert(insertData)
+        .insert(insertData as Inserts<'sessoes_aula'>)
         .select()
         .single()
 
@@ -824,13 +847,13 @@ export class AttendanceApiService extends BaseApiService {
       }
 
       // Get all matricula IDs
-      const matriculaIds = data.map((m: any) => m.id)
+      const matriculaIds = data.map((m) => m.id)
 
       // Calculate frequencies in batch for efficiency
       const frequencies = await this.calculateFrequenciesBatch(matriculaIds)
 
       return data
-        .map((m: any) => ({
+        .map((m) => ({
           id: m.aluno?.id || '',
           nome: m.aluno?.nome_completo || 'Aluno',
           matriculaId: m.id,
@@ -893,7 +916,7 @@ export class AttendanceApiService extends BaseApiService {
           throw freqError
         }
 
-        frequencias?.forEach((f: any) => {
+        frequencias?.forEach((f) => {
           // Map DB status to component status
           let status: string | null = null
           if (f.status_presenca === 'presente' || f.status_presenca === 'P') status = 'P'
@@ -952,17 +975,19 @@ export class AttendanceApiService extends BaseApiService {
           .eq('id', turmaId)
           .single()
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: newSession, error: sessionError } = await (supabase as any)
+        const professorId = turmaData?.professor_id ?? user?.id
+        const escolaId = turmaData?.escola_id
+
+        // sessoes_aula.escola_id and professor_id are NOT NULL. Fail fast with a
+        // clear error instead of a raw PostgREST rejection (previously hidden by
+        // an as-any escape on the insert).
+        if (!professorId || !escolaId) {
+          throw new Error('Não foi possível identificar a turma ou o professor para registrar a chamada.')
+        }
+
+        const { data: newSession, error: sessionError } = await supabase
           .from('sessoes_aula')
-          .insert({
-            turma_id: turmaId,
-            data_aula: dateStr,
-            status: 'aberta',
-            professor_id: turmaData?.professor_id ?? user?.id,
-            escola_id: turmaData?.escola_id,
-            conteudo_programatico: 'Chamada',
-          })
+          .insert(buildChamadaSessionInsert({ turmaId, dateStr, professorId, escolaId }))
           .select()
           .single()
 
@@ -978,7 +1003,7 @@ export class AttendanceApiService extends BaseApiService {
       }
 
       // Prepare attendance records
-      const records: any[] = []
+      const records: Inserts<'frequencia'>[] = []
       attendanceRecords.forEach((record, matriculaId) => {
         // Map component status to DB status
         let dbStatus = null
