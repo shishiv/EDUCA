@@ -26,6 +26,7 @@ import { Plus, Search, Eye, Edit, Trash2, UserCheck, Calendar, School, Download 
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 interface Matricula {
   id: string
@@ -278,6 +279,11 @@ export default function MatriculasPage() {
   }
 
   const handleDeleteMatricula = async (matriculaId: string, alunoNome: string) => {
+  if (isDemoSandboxEnabled()) {
+    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    return
+  }
+
     if (!confirm(`Tem certeza que deseja cancelar a matrícula de "${alunoNome}"? Esta ação não pode ser desfeita.`)) {
       return
     }

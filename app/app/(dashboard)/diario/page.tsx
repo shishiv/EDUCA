@@ -64,6 +64,7 @@ import { useEscola } from '@/contexts/escola-context'
 import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { cn } from '@/lib/utils'
 import { deleteSession, updateSession } from '@/lib/api/class-diary'
 
@@ -467,6 +468,10 @@ export default function DiarioPage() {
   }
 
   const handleDeleteLesson = async (lesson: LessonDetailData) => {
+    if (isDemoSandboxEnabled()) {
+      toast.error('Acao bloqueada no sandbox publico de demonstracao')
+      return
+    }
     if (!confirm('Tem certeza que deseja excluir esta aula?')) return
 
     setIsDeleting(true)

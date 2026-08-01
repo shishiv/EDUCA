@@ -1,0 +1,67 @@
+name: Demo Sandbox Weekly Reset
+
+# Reseta e valida o sandbox publico de demonstracao (issue #23) a cada semana.
+#
+# Escopo deliberadamente estreito: roda apenas o seed determinístico
+# (pnpm seed:demo) e a validacao (pnpm demo:validate) contra o projeto
+# Supabase do demo, usando os secrets SUPABASE_DEMO_*. Nao toca em nenhum
+# outro fluxo de trabalho nem em recursos fora do projeto demo.
+#
+# Diferente do antigo workflow "Demo Reset" removido em #46 (desativado e com
+# docs obsoletas), este e o fluxo exigido pelos criterios de aceite do issue
+# #23 ("Auto-reset semanal via GitHub Actions") e esta pareado com o script
+# de seed que funciona de verdade (via conexao Postgres direta) e com a
+# validacao que falha o job se o dataset nao conferir com o contrato.
+#
+# Schedule (receipt issue #23 - "auto-reset semanal"):
+#   domingo 03:00 BRT = 06:00 UTC (mesma janela do fluxo retirado em #46).
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: false
+
+jobs:
+  reset-and-validate:
+    name: Reset and validate demo sandbox
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Reset demo dataset (deterministic seed)
+        run: pnpm seed:demo
+        env:
+          SUPABASE_DEMO_URL: ${{ secrets.SUPABASE_DEMO_URL }}
+          SUPABASE_DEMO_SERVICE_KEY: ${{ secrets.SUPABASE_DEMO_SERVICE_KEY }}
+          SUPABASE_DEMO_DB_URL: ${{ secrets.SUPABASE_DEMO_DB_URL }}
+
+      - name: Validate counts, relationships, markers, alert and reset behavior
+        run: pnpm demo:validate
+        env:
+          SUPABASE_DEMO_URL: ${{ secrets.SUPABASE_DEMO_URL }}
+          SUPABASE_DEMO_SERVICE_KEY: ${{ secrets.SUPABASE_DEMO_SERVICE_KEY }}
+          SUPABASE_DEMO_DB_URL: ${{ secrets.SUPABASE_DEMO_DB_URL }}
