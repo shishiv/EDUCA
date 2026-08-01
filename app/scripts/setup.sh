@@ -71,7 +71,7 @@ if [[ -f "types/database.ts" ]]; then
     log_success "Database types found"
 else
     log_warning "Database types not found"
-    log_info "Follow ../supabase/migrations/README.md to generate them from the disposable local Supabase stack"
+    log_info "Follow ../CONTEXT.md to generate them from the disposable local Supabase stack"
 fi
 
 # Step 5: Test Build (optional)
@@ -88,7 +88,7 @@ log_success "Setup completed! 🎉"
 echo ""
 echo "📋 Next Steps:"
 echo "   1. Update .env.local with your Supabase credentials"
-echo "   2. Generate database types locally as documented in ../supabase/migrations/README.md"
+echo "   2. Generate database types locally as documented in ../CONTEXT.md"
 echo "   3. Run 'npm run seed:dev' to populate development data"
 echo "   4. Start development server with 'npm run dev'"
 echo ""
@@ -100,9 +100,7 @@ echo "   npm run typecheck    # Check TypeScript"
 echo "   npm run seed:dev     # Seed development data"
 echo ""
 echo "📚 Documentation:"
-echo "   • README.md - Project overview"
-echo "   • CLAUDE.md - Development guidelines"
-echo "   • specs/ - Feature specifications"
+echo "   • ../CONTEXT.md - Project context, commands, and operations"
 echo ""
 
 log_success "SRE Educational Management System is ready for development! 🚀"

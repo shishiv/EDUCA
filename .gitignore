@@ -21,6 +21,9 @@ scripts/venv/
 screenshots/
 **/screenshots/
 
+# Generated synthetic pilot backup/restore evidence
+.pilot-evidence/
+
 # Large binaries - keep local, don't version
 *.pdf
 
