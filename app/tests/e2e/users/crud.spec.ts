@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
   generateTestEmail,
@@ -18,7 +18,7 @@ test.describe('Usuários - List View', () => {
   })
 
   test('should display page header and title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /usuários/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
   })
 
   test('should display "Novo Usuário" button', async ({ page }) => {
@@ -32,8 +32,8 @@ test.describe('Usuários - List View', () => {
     await expect(table).toBeVisible()
     
     // Check for expected columns
-    await expect(page.getByRole('columnheader', { name: /nome/i })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: /email/i })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Usuário', exact: true })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Tipo', exact: true })).toBeVisible()
   })
 
   test('should have search functionality', async ({ page }) => {
@@ -121,16 +121,15 @@ test.describe('Usuários - Create Form', () => {
   })
 
   test('should have papel/role field', async ({ page }) => {
-    const papelLabel = page.locator('label').filter({ hasText: /papel|função|perfil/i })
-    await expect(papelLabel).toBeVisible()
+    await expect(page.getByText('Tipo de Usuário *', { exact: true })).toBeVisible()
+    await expect(page.locator('#tipo_usuario')).toBeVisible()
   })
 
   test('should validate required nome field', async ({ page }) => {
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    // Should show validation error
-    await expectFormError(page, /nome.*obrigatório|campo.*obrigatório/i)
+    const nome = page.getByLabel(/nome/i)
+    await expect(nome).toHaveAttribute('required', '')
+    await page.getByRole('button', { name: /salvar|criar|cadastrar/i }).click()
+    expect(await nome.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
   })
 
   test('should validate email format', async ({ page }) => {
@@ -141,10 +140,8 @@ test.describe('Usuários - Create Form', () => {
     
     await page.getByLabel(/nome/i).fill('Test Email Validation')
     
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    await expect(page.getByText(/email.*inválido/i)).toBeVisible()
+    await page.getByRole('button', { name: /salvar|criar|cadastrar/i }).click()
+    expect(await emailField.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
   })
 
   test('should validate password strength', async ({ page }) => {
@@ -270,15 +267,21 @@ test.describe('Usuários - Create Form', () => {
 
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
+    await page.route('**/rest/v1/users*', async route => {
+      await new Promise(resolve => setTimeout(resolve, 750))
+      await route.continue()
+    })
     
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/email/i).fill(generateTestEmail('loading'))
+    await page.locator('#tipo_usuario').click()
+    await page.getByRole('option', { name: /administrador/i }).click()
     
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    // Button should show loading state
+    const saveButton = page.locator('button[type="submit"]')
+    const submission = saveButton.click()
     await expect(saveButton).toBeDisabled()
+    await expect(saveButton).toContainText(/salvando/i)
+    await submission
   })
 
   test('should not allow duplicate email', async ({ page }) => {

@@ -1,18 +1,23 @@
 import { defineConfig, devices } from '@playwright/test'
 import path from 'path'
 
-const syntheticAuthStateFile = process.env.PILOT_AUTH_STATE_PATH || path.join(__dirname, 'playwright/.auth/user.json')
+const AUTH_DIR = path.join(__dirname, 'playwright/.auth')
+// Pilot mode redirects the authenticated chromium storageState to the
+// deterministic synthetic identity produced by run-pilot-e2e.sh.
+const syntheticAuthStateFile =
+  process.env.PILOT_AUTH_STATE_PATH || path.join(AUTH_DIR, 'user.json')
 
 /**
  * Playwright configuration for EDUCA E2E tests
- * MVP: Chromium only, sequential execution, dev server
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false, // Sequential for MVP simplicity
+  globalSetup: './tests/e2e/global-setup.ts',
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1, // Single worker for MVP
+  workers: 1,
+  timeout: 30_000,   // Keep failures bounded; slow flows use explicit timeouts
   reporter: [
     ['html', { open: 'never' }],
     ['list'],
@@ -21,34 +26,74 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'off', // No video per CONTEXT.md
+    video: 'off',
   },
 
   projects: [
-    // Setup project - runs authentication once
+    // ─── Setup ───────────────────────────────────────────────────────────────
     {
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
     },
-    // Main tests - depend on setup
+
+    // ─── Unauthenticated tests (login page, route-protection checks) ─────────
+    {
+      name: 'chromium-unauth',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: { cookies: [], origins: [] },
+      },
+      testMatch: /.*\/(auth)\/.*/,
+      dependencies: ['setup'],
+    },
+
+    // ─── Admin (default authenticated role) ─────────────────────────────────
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         storageState: syntheticAuthStateFile,
       },
+      testIgnore: /.*\/(auth)\/.*/,
+      dependencies: ['setup'],
+    },
+
+    // ─── Role-specific projects (opt-in via grep or explicit run) ────────────
+    {
+      name: 'diretor',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: path.join(AUTH_DIR, 'diretor.json'),
+      },
+      testMatch: /.*roles\.spec\.ts/,
+      dependencies: ['setup'],
+    },
+    {
+      name: 'professor',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: path.join(AUTH_DIR, 'professor.json'),
+      },
+      testMatch: /.*roles\.spec\.ts/,
       dependencies: ['setup'],
     },
   ],
 
-  // Dev server configuration
   webServer: {
     command: process.env.PLAYWRIGHT_SERVER_COMMAND || 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI && process.env.PILOT_MODE !== 'true',
     timeout: 180 * 1000, // Own bounded cold-start/prewarm readiness here, not in auth assertions
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY:
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      // Disable the Next.js dev overlay so it does not intercept pointer events
+      NEXT_DISABLE_DEV_TOOLS: '1',
+    },
   },
 
-  // Output directories
   outputDir: 'test-results',
 })
