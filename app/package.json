@@ -28,7 +28,8 @@
     "demo:validate": "tsx ../supabase/seed-demo/validate-demo.ts",
     "demo:reset": "pnpm seed:demo && pnpm demo:validate",
     "demo:reset-check": "pnpm seed:demo --date 2026-07-01 && pnpm demo:validate && pnpm seed:demo --date 2026-07-01 && pnpm demo:validate",
-    "demo:verify-sql": "bash ../supabase/seed-demo/verify-sql.sh"
+    "demo:verify-sql": "bash ../supabase/seed-demo/verify-sql.sh",
+    "seed:e2e": "tsx scripts/seed-e2e.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -81,6 +82,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.0.3",
     "@types/pg": "^8.20.0",

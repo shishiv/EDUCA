@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 
 /**
  * E2E Tests: Chamada (Attendance) Flow
@@ -22,14 +22,14 @@ test.describe('Chamada - Access', () => {
   test('should have date selection', async ({ page }) => {
     await page.goto('/dashboard/diario')
     
-    const dateField = page.getByLabel(/data/i)
-    await expect(dateField).toBeVisible()
+    await expect(page.getByLabel('Data Inicial', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('Data Final', { exact: true })).toBeVisible()
   })
 })
 
 test.describe('Chamada - Attendance Marking', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/diario/frequencia')
+    await page.goto('/diario/frequencia')
   })
 
   test('should display student list for selected turma', async ({ page }) => {
@@ -101,7 +101,7 @@ test.describe('Chamada - Attendance Marking', () => {
 
 test.describe('Chamada - Locking Rules (Brazilian Compliance)', () => {
   test('should show warning for past dates', async ({ page }) => {
-    await page.goto('/dashboard/diario/frequencia')
+    await page.goto('/diario/frequencia')
     
     // Select a past date
     const dateField = page.getByLabel(/data/i)
@@ -120,7 +120,7 @@ test.describe('Chamada - Locking Rules (Brazilian Compliance)', () => {
   })
 
   test('should highlight Bolsa Família students', async ({ page }) => {
-    await page.goto('/dashboard/diario/frequencia')
+    await page.goto('/diario/frequencia')
     
     const turmaSelect = page.getByLabel(/turma/i)
     if (await turmaSelect.isVisible()) {
@@ -148,7 +148,7 @@ test.describe('Chamada - Sessões', () => {
   test('should list sessões/aulas', async ({ page }) => {
     await page.goto('/dashboard/sessoes')
     
-    await expect(page.getByRole('heading', { name: /sessões|aulas/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Gestão de Sessões de Aula', exact: true })).toBeVisible()
   })
 
   test('should create new sessão', async ({ page }) => {
