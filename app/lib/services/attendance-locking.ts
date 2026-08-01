@@ -4,9 +4,8 @@
  * Enforces "não existe o esquecer" principle after daily closure
  */
 
-import { supabase } from '@/lib/supabase'
-import { attendanceImmutability } from './attendance-immutability'
-import { AttendanceSession } from '@/lib/api/attendance'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 export interface LockingRule {
   id: string
@@ -71,6 +70,8 @@ export class AttendanceLockingService {
   private readonly DEFAULT_LOCK_TIME = '18:00' // 6 PM Brazilian time
   private readonly GRACE_PERIOD_MINUTES = 30 // Grace period after lock time
 
+  constructor(private readonly supabase: SupabaseClient<Database>) {}
+
   private defaultRules: LockingRule[] = [
     {
       id: 'daily_auto_lock',
@@ -122,7 +123,7 @@ export class AttendanceLockingService {
   async getSessionLockingStatus(sessionId: string): Promise<LockingStatus> {
     try {
       // Get session information
-      const { data: session, error } = await supabase
+      const { data: session, error } = await this.supabase
         .from('sessoes_aula')
         .select(`
           *,
@@ -226,7 +227,7 @@ export class AttendanceLockingService {
       }
 
       // Get session
-      const { data: session, error } = await supabase
+      const { data: session, error } = await this.supabase
         .from('sessoes_aula')
         .select('*')
         .eq('id', sessionId)
@@ -251,7 +252,7 @@ export class AttendanceLockingService {
       const legalHash = `MANUAL_LOCK_${sessionId}_${userId}_${Date.now()}`
 
       // Note: sessoes_aula schema uses fechada_em and hash_legal (not locked_by/legal_closure_hash)
-      const { error: updateError } = await supabase
+      const { error: updateError } = await this.supabase
         .from('sessoes_aula')
         .update({
           status: 'fechada',
@@ -407,7 +408,7 @@ export class AttendanceLockingService {
         updateData.hash_legal = null
       }
 
-      const { error } = await supabase
+      const { error } = await this.supabase
         .from('sessoes_aula')
         .update(updateData)
         .eq('id', sessionId)
@@ -503,7 +504,7 @@ export class AttendanceLockingService {
       const currentDate = currentTime.toISOString().split('T')[0]
       const lockHour = parseInt(this.DEFAULT_LOCK_TIME.split(':')[0])
 
-      const { data: sessions, error } = await supabase
+      const { data: sessions, error } = await this.supabase
         .from('sessoes_aula')
         .select('*')
         .eq('status', 'aberta')
@@ -626,7 +627,7 @@ export class AttendanceLockingService {
   private async canUnlockSession(sessionId: string, userId: string): Promise<boolean> {
     try {
       // Check user role and permissions (users table uses tipo_usuario not role)
-      const { data: user } = await supabase
+      const { data: user } = await this.supabase
         .from('users')
         .select('tipo_usuario')
         .eq('id', userId)
@@ -639,7 +640,7 @@ export class AttendanceLockingService {
 
       // Teachers can request unlock for their own sessions
       if (user?.tipo_usuario === 'professor') {
-        const { data: session } = await supabase
+        const { data: session } = await this.supabase
           .from('sessoes_aula')
           .select('professor_id')
           .eq('id', sessionId)
@@ -733,7 +734,7 @@ export class AttendanceLockingService {
     details?: Record<string, unknown>
   }): Promise<void> {
     try {
-      await supabase
+      await this.supabase
         .from('audit_trail')
         .insert({
           tabela: 'sessoes_aula',
@@ -767,5 +768,3 @@ export class AttendanceLockingService {
     return new Date(utc + (brazilOffset * 3600000))
   }
 }
-
-export const attendanceLocking = new AttendanceLockingService()
