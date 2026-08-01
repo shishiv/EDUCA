@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { waitForPageLoad, navigateTo, selectOption } from '../utils/test-helpers'
 
 /**
@@ -11,7 +11,7 @@ test.describe('Relatórios - Page Access', () => {
     await page.goto('/dashboard/relatorios')
     await waitForPageLoad(page)
     
-    await expect(page.getByRole('heading', { name: /relatórios|reports/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Relatórios', exact: true })).toBeVisible()
   })
 
   test('should display list of available reports', async ({ page }) => {

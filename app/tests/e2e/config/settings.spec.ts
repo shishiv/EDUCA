@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { waitForPageLoad, expectFormSuccess } from '../utils/test-helpers'
 
 /**
@@ -13,7 +13,7 @@ test.describe('Settings - Page Layout', () => {
   })
 
   test('should display page header and title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /configurações/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Configurações', exact: true })).toBeVisible()
   })
 
   test('should display settings sections', async ({ page }) => {
@@ -500,7 +500,7 @@ test.describe('Settings - Permissions', () => {
 
   test('should display settings page for admin users', async ({ page }) => {
     // Admin users should see full settings
-    await expect(page.getByRole('heading', { name: /configurações/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Configurações', exact: true })).toBeVisible()
   })
 
   test('should restrict certain settings for non-admin users', async ({ page }) => {

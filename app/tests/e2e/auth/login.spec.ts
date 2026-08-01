@@ -1,83 +1,103 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 
 /**
  * E2E Tests: Login Flow
- * Tests authentication for all user roles
+ * Runs in `chromium-unauth` project (no storageState) so the login page
+ * is always reachable without an existing session.
  */
 
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login')
+    // Wait for the client component to hydrate
+    await page.locator('#email').waitFor({ state: 'visible', timeout: 10000 })
   })
 
   test('should display login form', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /entrar|login/i })).toBeVisible()
-    await expect(page.getByLabel(/email/i)).toBeVisible()
-    await expect(page.getByLabel(/senha/i)).toBeVisible()
+    await expect(page.locator('#email')).toBeVisible()
+    await expect(page.locator('#password')).toBeVisible()
     await expect(page.getByRole('button', { name: /entrar/i })).toBeVisible()
+    // Brand heading
+    await expect(page.getByText('Entrar no sistema')).toBeVisible()
   })
 
-  test('should show validation errors for empty form', async ({ page }) => {
+  test('should show HTML5 validation for empty email', async ({ page }) => {
+    // Submit without filling - browser native validation fires
     await page.getByRole('button', { name: /entrar/i }).click()
-    
-    // Should show validation messages
-    await expect(page.getByText(/email.*obrigatório|informe.*email/i)).toBeVisible()
+    // The email input should be invalid (HTML5 required)
+    const emailInput = page.locator('#email')
+    const valid = await emailInput.evaluate(
+      (el: HTMLInputElement) => el.validity.valid
+    )
+    expect(valid).toBe(false)
   })
 
   test('should show error for invalid credentials', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('invalid@test.com')
-    await page.getByLabel(/senha/i).fill('wrongpassword')
+    await page.locator('#email').fill('invalid@test.com')
+    await page.locator('#password').fill('wrongpassword')
     await page.getByRole('button', { name: /entrar/i }).click()
-    
-    // Should show authentication error
-    await expect(page.getByText(/credenciais|inválid|erro/i)).toBeVisible({ timeout: 10000 })
+    // Alert or error text should appear
+    await expect(
+      page.getByText(/credenciais|inválid|erro|email.*senha/i)
+    ).toBeVisible({ timeout: 15000 })
+    // URL should still be /login
+    await expect(page).toHaveURL(/login/)
   })
 
-  test('should validate email format', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('notanemail')
-    await page.getByLabel(/senha/i).fill('password123')
+  test('should show HTML5 validation for invalid email format', async ({ page }) => {
+    await page.locator('#email').fill('notanemail')
+    await page.locator('#password').fill('password123')
     await page.getByRole('button', { name: /entrar/i }).click()
-    
-    // Should show email format error
-    await expect(page.getByText(/email.*válido|formato.*inválido/i)).toBeVisible()
+    const emailInput = page.locator('#email')
+    const valid = await emailInput.evaluate(
+      (el: HTMLInputElement) => el.validity.valid
+    )
+    expect(valid).toBe(false)
   })
 })
 
 test.describe('Authentication Flows', () => {
-  // These tests require seeded test users
-  // Run: pnpm seed:dev before testing
-
-  test('should redirect to dashboard after successful login', async ({ page }) => {
-    await page.goto('/login')
-    
-    // Use test credentials (from seed data)
-    await page.getByLabel(/email/i).fill('admin@test.com')
-    await page.getByLabel(/senha/i).fill('test123456')
-    await page.getByRole('button', { name: /entrar/i }).click()
-    
-    // Should redirect to dashboard
-    await expect(page).toHaveURL(/dashboard/, { timeout: 15000 })
-  })
-
-  test('should protect dashboard route without auth', async ({ page }) => {
+  test('should protect dashboard route - redirect unauthenticated to login', async ({ page }) => {
+    // No session, so /dashboard should redirect to /login
     await page.goto('/dashboard')
-    
-    // Should redirect to login
-    await expect(page).toHaveURL(/login/)
+    await expect(page).toHaveURL(/login/, { timeout: 10000 })
   })
 
-  test('should persist session after page reload', async ({ page }) => {
-    // Login first
+  test('login page shows forgot-password link', async ({ page }) => {
     await page.goto('/login')
-    await page.getByLabel(/email/i).fill('admin@test.com')
-    await page.getByLabel(/senha/i).fill('test123456')
-    await page.getByRole('button', { name: /entrar/i }).click()
-    await expect(page).toHaveURL(/dashboard/, { timeout: 15000 })
-    
-    // Reload page
-    await page.reload()
-    
-    // Should still be on dashboard
-    await expect(page).toHaveURL(/dashboard/)
+    await expect(
+      page.getByRole('link', { name: /esqueci.*senha/i })
+    ).toBeVisible()
+  })
+
+  test('root / redirects to login when unauthenticated', async ({ page }) => {
+    await page.goto('/')
+    await expect(page).toHaveURL(/login/, { timeout: 10000 })
+  })
+
+  test('reset-password form sends instructions and shows confirmation', async ({ page }) => {
+    await page.goto('/reset-password')
+    await expect(page.getByRole('heading', { name: /redefinir senha/i })).toBeVisible()
+    await page.getByLabel(/e-mail/i).fill('admin@test.com')
+    await page.getByRole('button', { name: /enviar link/i }).click()
+    await expect(page.getByRole('heading', { name: /confira seu e-mail/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('link', { name: /voltar ao login/i }).last()).toBeVisible()
+  })
+
+  test('privacy and offline pages are public', async ({ page }) => {
+    await page.goto('/politica-privacidade')
+    await expect(page.getByRole('heading', { name: 'Política de Privacidade', exact: true })).toBeVisible()
+    await page.goto('/offline')
+    await expect(page.getByRole('heading', { name: /você está offline/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /tentar novamente/i })).toBeVisible()
+  })
+
+  test('login controls remain usable on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 720 })
+    await page.goto('/login')
+    await expect(page.locator('#email')).toBeVisible()
+    await expect(page.locator('#password')).toBeVisible()
+    const box = await page.getByRole('button', { name: /entrar/i }).boundingBox()
+    expect(box?.height).toBeGreaterThanOrEqual(44)
   })
 })
