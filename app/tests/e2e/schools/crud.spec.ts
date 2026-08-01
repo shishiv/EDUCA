@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
   expectFormSuccess,
@@ -18,7 +18,7 @@ test.describe('Escolas - List View', () => {
   })
 
   test('should display page header and title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /escolas/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Escolas', exact: true })).toBeVisible()
   })
 
   test('should display "Nova Escola" button', async ({ page }) => {
@@ -104,11 +104,10 @@ test.describe('Escolas - Create Form', () => {
   })
 
   test('should validate required nome field', async ({ page }) => {
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    // Should show validation error
-    await expectFormError(page, /nome.*obrigatório|campo.*obrigatório/i)
+    const nome = page.getByLabel(/nome/i)
+    await expect(nome).toHaveAttribute('required', '')
+    await page.getByRole('button', { name: /salvar|criar|cadastrar/i }).click()
+    expect(await nome.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
   })
 
   test('should validate INEP code format', async ({ page }) => {
@@ -208,14 +207,21 @@ test.describe('Escolas - Create Form', () => {
 
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
+    await page.route('**/rest/v1/escolas*', async route => {
+      await new Promise(resolve => setTimeout(resolve, 750))
+      await route.continue()
+    })
     
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
+    await page.getByLabel(/inep|código/i).fill(timestamp.toString().slice(-8))
+    await page.locator('#tipo').click()
+    await page.getByRole('option').first().click()
     
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    // Button should show loading state
+    const saveButton = page.locator('button[type="submit"]')
+    const submission = saveButton.click()
     await expect(saveButton).toBeDisabled()
+    await expect(saveButton).toContainText(/salvando|cadastrando/i)
+    await submission
   })
 })
 

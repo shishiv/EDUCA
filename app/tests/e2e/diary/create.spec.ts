@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '../support/diagnostics'
+import type { Page } from '@playwright/test'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
