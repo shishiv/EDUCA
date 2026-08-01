@@ -97,6 +97,8 @@ The backup/restore rehearsal writes generated evidence under ignored `.pilot-evi
 
 ## Key decisions and constraints
 
+- **Dependency pins (security/typecheck contract):** `app/package.json` carries a `pnpm.overrides` block that pins `@supabase/supabase-js` to `2.90.1` and `tar`, `uuid`, `postcss@8.4.31`, `sharp`, and `ws@8.19.0` to security-patched versions. Do not remove these pins casually: supabase-js 2.111.0 breaks `pnpm typecheck` with ~12 `RejectExcessProperties` errors in `lib/api/*` and attendance/diary modules, and the other pins close confirmed advisories that upstream manifests still declare as vulnerable. Regenerate the lockfile only with `pnpm 9` (CI version) and, for transitive-only refreshes, use `pnpm update <pkg> --save=false` (plain `pnpm update` rewrites unrelated package.json ranges). Local Node 26 requires `npm_config_engine_strict=false` on installs because `@vercel/python-analysis` (via `vercel`) only supports Node `<=24`.
+
 - Product application and marketing site remain separate repositories. This repository owns the product, database assets, and operational code.
 - School isolation depends on Supabase RLS. Keep role checks, school scoping, and audit behavior intact when changing data access.
 - Attendance is designed to be immutable and time-locked. Treat changes to `app/lib/services/attendance-*` and related migrations as compliance-sensitive.
