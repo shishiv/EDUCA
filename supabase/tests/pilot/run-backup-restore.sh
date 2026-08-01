@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
 PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
-EVIDENCE_FILE="$ROOT_DIR/docs/evidence/synthetic-restore-evidence.md"
+EVIDENCE_FILE="$ROOT_DIR/.pilot-evidence/synthetic-restore-evidence.md"
 
 : "${DB_URL:?DB_URL is required}"
 : "${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL is required}"
@@ -213,6 +213,8 @@ RESTORE_FINISHED=$(date +%s)
 RTO_SECONDS=$((RESTORE_FINISHED - RESTORE_STARTED))
 RPO_SECONDS=$((RESTORE_STARTED - BACKUP_EPOCH))
 [[ "$RTO_SECONDS" -le 14400 && "$RPO_SECONDS" -le 86400 ]] || { echo "RPO/RTO target missed" >&2; exit 1; }
+
+mkdir -p "$(dirname "$EVIDENCE_FILE")"
 
 cat > "$EVIDENCE_FILE" <<EOF
 # Synthetic restore evidence
