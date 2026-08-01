@@ -24,7 +24,11 @@
     "deploy": "tsx scripts/pilot-safety-gate.ts deploy && vercel --prod",
     "deploy:preview": "tsx scripts/pilot-safety-gate.ts deploy && vercel",
     "vercel:login": "vercel login",
-    "vercel:env": "vercel env pull"
+    "vercel:env": "vercel env pull",
+    "demo:validate": "tsx ../supabase/seed-demo/validate-demo.ts",
+    "demo:reset": "pnpm seed:demo && pnpm demo:validate",
+    "demo:reset-check": "pnpm seed:demo --date 2026-07-01 && pnpm demo:validate && pnpm seed:demo --date 2026-07-01 && pnpm demo:validate",
+    "demo:verify-sql": "bash ../supabase/seed-demo/verify-sql.sh"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -79,6 +83,7 @@
     "@testing-library/react": "^16.3.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.0.3",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
@@ -88,6 +93,7 @@
     "eslint-config-next": "^16.2.12",
     "jsdom": "^26.1.0",
     "knip": "^5.82.1",
+    "pg": "^8.22.0",
     "postcss": "^8.5.25",
     "supabase": "^2.109.1",
     "tsx": "^4.21.0",

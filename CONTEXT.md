@@ -12,7 +12,7 @@ The repository currently supports a **synthetic-only municipal pilot foundation*
 - `app/app/` holds routes and route handlers. `app/components/`, `app/lib/`, `app/hooks/`, `app/contexts/`, and `app/types/` contain shared UI, business logic, state, and committed database types.
 - `supabase/migrations/` is the canonical ordered schema history. `supabase/config.toml` defines the local Supabase topology.
 - `supabase/pilot/provision-pilot-module-gate.sql` is deliberately outside canonical migrations. Synthetic pilot tests apply it explicitly, so ordinary `supabase db push` does not disable modules.
-- `supabase/seed-demo/` holds synthetic demo data. `supabase/tests/database/` validates migrations against a temporary raw PostgreSQL cluster. `supabase/tests/pilot/` verifies encrypted portable backup and restore against a local Supabase stack.
+- `supabase/seed-demo/` holds the deterministic demo dataset (issue #23): static seed SQL, `attendance-generator.ts`, reset runner and validation. `.github/workflows/demo-reset.yml` resets the public sandbox weekly; `DEMO.md` is the runbook. `supabase/tests/database/` validates migrations against a temporary raw PostgreSQL cluster. `supabase/tests/pilot/` verifies encrypted portable backup and restore against a local Supabase stack.
 - `.github/workflows/ci.yml` is the current CI contract: install from `app/pnpm-lock.yaml`, then typecheck and lint from `app/`.
 - `app/vercel.json` and `app/nixpacks.toml` are deployment inputs. Vercel builds from `app/`; `app/package.json` owns the executable application, test, seed, safety, and deployment commands.
 
@@ -56,7 +56,10 @@ pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
 pnpm test:e2e:pilot      # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
 pnpm pilot:restore-test  # local synthetic encrypted backup/restore rehearsal
-pnpm seed:demo           # synthetic demo seed
+pnpm seed:demo           # synthetic demo seed / reset (public sandbox, issue #23)
+pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case
+pnpm demo:reset-check    # prove a same-anchor reset is idempotent on a live database
+pnpm demo:verify-sql     # offline raw-PG validation of the demo seed (no Docker, no secrets)
 pnpm deploy              # safety-gated Vercel production deploy
 pnpm deploy:preview      # safety-gated Vercel preview deploy
 ```
@@ -96,8 +99,18 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/config.toml`, `supabase/migrations/` | Local Supabase configuration and canonical schema evolution. |
 | `supabase/pilot/provision-pilot-module-gate.sql` | Explicit synthetic-pilot containment. |
 | `supabase/tests/` | Database and backup/restore validation. |
-| `supabase/seed-demo/` | Synthetic demo seed consumed by `pnpm seed:demo`. |
+| `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
+| `.github/workflows/demo-reset.yml` | Weekly public demo sandbox reset (issue #23). |
+| `DEMO.md` | Demo sandbox runbook: local verification and later provisioning. |
+| `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |
 | `docker-compose.yml` | Optional bare local PostgreSQL development service. |
+
+## Demo sandbox (issue #23)
+
+- The public demo sandbox ships code and reproducible configuration only; provisioning (Supabase/Vercel/DNS projects) is external and documented in `DEMO.md`.
+- The demo seed is deterministic: static entities use a fixed anchor timestamp and attendance is generated for a 20-school-day window ending at the reset date (seeded PRNG, fixed 70% alert case). `pnpm demo:reset-check` and `supabase/seed-demo/verify-sql.sh` prove repeatable resets.
+- Demo sandbox mode (`NEXT_PUBLIC_DEMO_SANDBOX=true`) blocks signup (no UI, no INSERT grant/policy on `users` for authenticated, project setting in `DEMO.md`) and destructive actions (schema `REVOKE DELETE`, middleware + route guards, hidden UI deletes).
+- The demo database runs canonical migrations only - it never applies `supabase/pilot/provision-pilot-module-gate.sql`, so NIS/Bolsa Familia seed fields remain allowed.
 
 ## Key decisions and constraints
 

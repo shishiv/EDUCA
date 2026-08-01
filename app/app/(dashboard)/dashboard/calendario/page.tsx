@@ -21,6 +21,7 @@ import { toast } from 'sonner'
 import { CalendarioEventForm } from '@/components/calendario/evento-form'
 import { CalendarioEventList } from '@/components/calendario/evento-list'
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 export interface CalendarioEvento {
   id: string
@@ -125,6 +126,11 @@ export default function CalendarioPage() {
   }
 
   const handleDeleteEvento = async (eventoId: string) => {
+  if (isDemoSandboxEnabled()) {
+    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    return
+  }
+
     if (!confirm('Tem certeza que deseja excluir este evento?')) return
 
     try {
@@ -309,7 +315,7 @@ export default function CalendarioPage() {
             <CalendarioEventList
               eventos={eventos}
               onEdit={isAdmin ? handleEditEvento : undefined}
-              onDelete={isAdmin ? handleDeleteEvento : undefined}
+              onDelete={isAdmin && !isDemoSandboxEnabled() ? handleDeleteEvento : undefined}
               tipoLabels={TIPO_LABELS}
               tipoCores={TIPO_CORES}
             />

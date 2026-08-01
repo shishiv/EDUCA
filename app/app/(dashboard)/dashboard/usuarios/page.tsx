@@ -34,6 +34,7 @@ import { TableEmptyState } from '@/components/ui/table-empty-state'
 import { formatDateTimeBR } from '@/lib/date-utils'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<UserWithSchool[]>([])
@@ -72,6 +73,11 @@ export default function UsuariosPage() {
   }
 
   const handleDeleteUser = async (id: string) => {
+  if (isDemoSandboxEnabled()) {
+    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    return
+  }
+
     try {
       await usersApi.delete(id)
       setUsuarios(usuarios.filter(u => u.id !== id))

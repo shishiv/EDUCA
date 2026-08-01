@@ -7,6 +7,7 @@ import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 import { decryptSyntheticCsvFromStaging, validateSyntheticStudentCsv } from '@/lib/pilot/synthetic-csv-import'
+import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
 
 async function findOrCreateByImportSource(
   service: ReturnType<typeof createServiceRoleClient>,
@@ -27,6 +28,8 @@ async function findOrCreateByImportSource(
 }
 
 export async function POST(request: Request, context: { params: Promise<{ batchId: string }> }) {
+  const demoSandboxBlock = demoSandboxGuardResponse()
+  if (demoSandboxBlock) return demoSandboxBlock
   try {
     assertSyntheticPilotSafety('import')
     const actor = await requirePilotActor(['diretor'])
