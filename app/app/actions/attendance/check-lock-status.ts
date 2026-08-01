@@ -5,6 +5,12 @@
  * Used for real-time polling to detect 18:00 auto-lock.
  * Can query by session_id OR by turma_id + date.
  *
+ * Authorization (issue #30):
+ * - resolves the authenticated actor from the server session
+ * - professor: only own sessions / own turmas
+ * - diretor/secretario/admin: only sessions/turmas of the actor's escola
+ *   (secretariat admin/gestor_sme can read every escola)
+ *
  * Returns:
  * - isLocked: boolean
  * - session: full session data
@@ -17,6 +23,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import {
+  assertSessionReadAccess,
+  assertTurmaReadAccess,
+  AttendanceAuthError,
+  requireAttendanceActor,
+} from '@/lib/services/attendance-auth'
 
 interface CheckLockStatusResult {
   success: boolean
@@ -24,6 +36,7 @@ interface CheckLockStatusResult {
   isLocked: boolean
   lockReason?: 'manual_close' | 'auto_lock' | null
   error?: string
+  code?: string
 }
 
 /**
@@ -47,17 +60,37 @@ export async function checkLockStatusAction(
 
     const supabase = await createClient()
 
+    // Resolve the authenticated actor from the server session (issue #30).
+    const actor = await requireAttendanceActor(supabase)
+
     // Build query based on parameters
     let query = supabase.from('sessoes_aula').select('*')
 
     if (date) {
-      // Query by turma_id + date
+      // Query by turma_id + date: assert the actor may read this turma first.
+      const { data: turma } = await supabase
+        .from('turmas')
+        .select('id, escola_id, professor_id, ativo')
+        .eq('id', sessionIdOrTurmaId)
+        .single()
+
+      if (!turma) {
+        return {
+          success: true,
+          session: null,
+          isLocked: false,
+          lockReason: null,
+        }
+      }
+
+      assertTurmaReadAccess(actor, turma)
+
       query = query
         .eq('turma_id', sessionIdOrTurmaId)
         .eq('data_aula', date)
         .in('status', ['PLANEJADA', 'ABERTA', 'aberta', 'FECHADA', 'fechada', 'travada'])
     } else {
-      // Query by session_id
+      // Query by session_id: load the row once and assert read access on it.
       query = query.eq('id', sessionIdOrTurmaId)
     }
 
@@ -88,6 +121,14 @@ export async function checkLockStatusAction(
         isLocked: false,
         lockReason: null,
       }
+    }
+
+    if (!date) {
+      assertSessionReadAccess(actor, {
+        id: session.id,
+        professor_id: session.professor_id,
+        escola_id: session.escola_id,
+      })
     }
 
     // Determine lock status and reason
@@ -141,6 +182,16 @@ export async function checkLockStatusAction(
       lockReason,
     }
   } catch (error) {
+    // Expected authorization failures are returned to the caller as-is.
+    if (error instanceof AttendanceAuthError) {
+      return {
+        success: false,
+        isLocked: false,
+        code: error.code,
+        error: error.message,
+      }
+    }
+
     logger.error('Erro inesperado ao verificar status de bloqueio', error as Error, {
       metadata: {
         sessionIdOrTurmaId,
