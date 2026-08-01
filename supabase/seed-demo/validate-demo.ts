@@ -32,8 +32,18 @@
  *   pnpm demo:validate
  */
 
-import { Client } from 'pg'
-import { createClient } from '@supabase/supabase-js'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import type { Client as PgClient } from 'pg'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const requireFromApp = createRequire(join(__dirname, '..', '..', 'app', 'package.json'))
+const { Client } = requireFromApp('pg') as { Client: new (opts: { connectionString: string }) => PgClient }
+const { createClient } = requireFromApp('@supabase/supabase-js') as {
+  createClient: (url: string, key: string, opts?: unknown) => { auth: { admin: { listUsers: (opts: unknown) => Promise<{ data: { users?: Array<{ email?: string | null }> } | null; error: { message: string } | null }> } } }
+}
 import {
   MATRICULAS,
   TURMAS,
@@ -59,7 +69,7 @@ const STATIC_COUNTS: Record<string, number> = {
   matriculas: 50,
   notas: 300,
   calendario_escolar: 15,
-  configs: 11, // 8 configs + 3 marcadores (960/961/962); 963 e gravado no reset
+  configs: 12, // 8 configs + 3 marcadores (960/961/962) + demo_seed_anchor_date (963) gravado pelo reset
 }
 
 const EXPECTED_SYNTHETIC_MARKER = 'SYNTHETIC-EDUCA-DEMO'

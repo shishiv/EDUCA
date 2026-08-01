@@ -39,12 +39,24 @@
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Client } from 'pg'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createRequire } from 'node:module'
+// Type-only imports keep editor/typecheck context; runtime bindings come from
+// requireFromApp below because the seed scripts live outside app/'s module tree.
+import type { Client as PgClient } from 'pg'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { attendanceSql, STATIC_CREATED_AT } from './attendance-generator'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+
+// The seed scripts live outside app/, so bare package imports cannot resolve
+// from this file. Anchor the require at app/ (where pg and supabase-js are
+// dependencies).
+const requireFromApp = createRequire(join(__dirname, '..', '..', 'app', 'package.json'))
+const { Client } = requireFromApp('pg') as { Client: new (opts: { connectionString: string }) => PgClient }
+const { createClient } = requireFromApp('@supabase/supabase-js') as {
+  createClient: (url: string, key: string, opts?: unknown) => SupabaseClient
+}
 
 // =============================================================================
 // Config (receipts: issue #23)
@@ -144,7 +156,6 @@ END $$;`
 
   return [
     'BEGIN;',
-    `SET LOCAL TIME ZONE 'America/Sao_Paulo';`,
     `TRUNCATE ${DEMO_TABLES.join(', ')} CASCADE;`,
     storageTruncate,
     staticSql,
@@ -241,9 +252,15 @@ async function main(): Promise<void> {
     await syncDemoAuthUser(
       supabase,
       authUserId => [
+        'BEGIN;',
+        // The users.id move is circular with calendario_escolar.criado_por
+        // (both reference each other through the FK). replica mode bypasses FK
+        // checks for these three moves inside the transaction only.
+        `SET LOCAL session_replication_role = 'replica';`,
         `UPDATE calendario_escolar SET criado_por = '${authUserId}' WHERE criado_por = '${DEMO_USER_ID}';`,
         `UPDATE configs SET criado_por = '${authUserId}' WHERE criado_por = '${DEMO_USER_ID}';`,
         `UPDATE users SET id = '${authUserId}' WHERE id = '${DEMO_USER_ID}';`,
+        'COMMIT;',
       ].join('\n'),
       runSql
     )
