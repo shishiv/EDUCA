@@ -10,6 +10,8 @@ import { MobileNav } from '@/components/layout/MobileNav'
 import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { EscolaProvider } from '@/contexts/escola-context'
 import { DemoModeProvider } from '@/contexts/demo-mode-context'
+import { DemoSandboxBanner } from '@/components/demo-sandbox/DemoSandboxBanner'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { ModalProvider } from '@/components/ui/modal-manager'
@@ -73,6 +75,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Main content with bottom padding for mobile nav */}
         <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 md:pb-6">
+          {isDemoSandboxEnabled() && <DemoSandboxBanner />}
           {children}
         </main>
       </div>
