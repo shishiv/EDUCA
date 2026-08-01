@@ -92,7 +92,7 @@ describe('Faixa Etaria (BNCC)', () => {
       
       expect(info).toBeDefined()
       expect(info?.key).toBe('bebes')
-      expect(info?.label).toBe('Bebes')
+      expect(info?.label).toBe('Bebês')
       expect(info?.stage).toBe('Creche')
       expect(info?.minMonths).toBe(0)
       expect(info?.maxMonths).toBe(18)

@@ -25,7 +25,7 @@ export interface FaixaEtariaInfo {
 export const FAIXA_ETARIA_CONFIG: Record<FaixaEtaria, FaixaEtariaInfo> = {
   bebes: {
     key: 'bebes',
-    label: 'Bebes',
+    label: 'Bebês',
     description: '0 a 1 ano e 6 meses',
     minMonths: 0,
     maxMonths: 18,
@@ -35,7 +35,7 @@ export const FAIXA_ETARIA_CONFIG: Record<FaixaEtaria, FaixaEtariaInfo> = {
   },
   'criancas-bem-pequenas': {
     key: 'criancas-bem-pequenas',
-    label: 'Criancas bem pequenas',
+    label: 'Crianças Bem Pequenas',
     description: '1 ano e 7 meses a 3 anos e 11 meses',
     minMonths: 19,
     maxMonths: 47,
@@ -45,7 +45,7 @@ export const FAIXA_ETARIA_CONFIG: Record<FaixaEtaria, FaixaEtariaInfo> = {
   },
   'criancas-pequenas': {
     key: 'criancas-pequenas',
-    label: 'Criancas pequenas',
+    label: 'Crianças Pequenas',
     description: '4 anos a 5 anos e 11 meses',
     minMonths: 48,
     maxMonths: 71,

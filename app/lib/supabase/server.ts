@@ -11,6 +11,7 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '@/types/database'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
 /**
  * Create Supabase client for Server Components and Server Actions
@@ -65,33 +66,7 @@ export async function createClient() {
  * @returns Supabase client with admin privileges
  */
 export async function createAdminClient() {
-  const cookieStore = await cookies()
-
-  return createSupabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-        detectSessionInUrl: false,
-      },
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch (error) {
-            // Ignore cookie errors in edge runtime
-          }
-        },
-      },
-    }
-  )
+  return createServiceRoleClient()
 }
 
 /**

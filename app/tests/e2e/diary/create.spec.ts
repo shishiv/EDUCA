@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
@@ -90,7 +90,7 @@ test.describe('Diário - Create Access', () => {
 
 test.describe('Diário - Creation Form', () => {
   // Helper to navigate to form
-  async function navigateToForm(page) {
+  async function navigateToForm(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -208,7 +208,7 @@ test.describe('Diário - Creation Form', () => {
 })
 
 test.describe('Diário - Form Validation', () => {
-  async function navigateToForm(page) {
+  async function navigateToForm(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -342,7 +342,7 @@ test.describe('Diário - Form Validation', () => {
 })
 
 test.describe('Diário - Form Interaction', () => {
-  async function navigateToForm(page) {
+  async function navigateToForm(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -476,7 +476,7 @@ test.describe('Diário - Form Interaction', () => {
 })
 
 test.describe('Diário - Successful Creation', () => {
-  async function fillAndSubmitForm(page) {
+  async function fillAndSubmitForm(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)
@@ -567,7 +567,7 @@ test.describe('Diário - Successful Creation', () => {
 })
 
 test.describe('Diário - Form Accessibility', () => {
-  async function navigateToForm(page) {
+  async function navigateToForm(page: Page) {
     await page.goto('/dashboard/alunos')
     await waitForPageLoad(page)
     await page.waitForTimeout(1000)

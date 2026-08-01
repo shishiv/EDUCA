@@ -36,7 +36,7 @@ export interface ClassDiaryEntry {
   professor_id: string
   professor_nome: string
   disciplina: string | null
-  status: 'aberta' | 'fechada' | 'travada'
+  status: string // raw TEXT column; known values map via `fase`
   fase: 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada'
   observacoes_abertura: string | null
   observacoes_fechamento: string | null
@@ -217,11 +217,11 @@ export async function getClassDiary(
     })
 
     // Transform data to match ClassDiaryEntry interface
-    const transformedData: ClassDiaryEntry[] = (aulas as any[]).map((aula) => {
+    const transformedData: ClassDiaryEntry[] = aulas.map((aula) => {
       const stats = frequenciaMap.get(aula.id) || { presentes: 0, ausentes: 0, total: 0 }
-      const turma = aula.turmas as any
-      const escola = turma?.escolas as any
-      const professor = aula.professor as any
+      const turma = aula.turmas
+      const escola = turma?.escolas
+      const professor = aula.professor
 
       // Map status to fase
       const statusToFase = (status: string): 'planejamento' | 'chamada' | 'finalizada' | 'bloqueada' => {
@@ -336,9 +336,10 @@ export async function getAttendanceHistory(
     }
 
     // Transform data
-    const transformedData: AttendanceHistoryRecord[] = (data || []).map((record: any) => ({
+    const transformedData: AttendanceHistoryRecord[] = (data || []).map((record) => ({
       id: record.id,
-      aula_id: record.aula_id,
+      // The aulas_abertas!inner join guarantees this record has an aula
+      aula_id: record.aula_id as string,
       data: record.data_aula,
       aluno_id: record.matriculas?.alunos?.id || '',
       aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
@@ -445,17 +446,18 @@ export async function getClassDetail(
     const totalPresentes = attendanceData?.filter(r => r.presente).length || 0
     const totalAusentes = totalAlunos - totalPresentes
 
-    // Type assertions for relationships
-    const aula = aulaData as any
-    const turma = aula.turmas as any
-    const escola = turma?.escolas as any
-    const professor = aula.professor as any
+    // Relationship rows are typed by the supabase-js join inference
+    const aula = aulaData
+    const turma = aula.turmas
+    const escola = turma?.escolas
+    const professor = aula.professor
 
     // Transform attendance records
     const attendanceRecords: AttendanceHistoryRecord[] = (attendanceData || []).map(
-      (record: any) => ({
+      (record) => ({
         id: record.id,
-        aula_id: record.aula_id,
+        // The query filters by aula_id, so the nullable column is never null here
+        aula_id: record.aula_id as string,
         data: record.data_aula,
         aluno_id: record.matriculas?.alunos?.id || '',
         aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
@@ -566,7 +568,7 @@ export async function getAvailableTurmas(
 
     // Extract unique turmas
     const turmasMap = new Map()
-    data?.forEach((aula: any) => {
+    data?.forEach((aula) => {
       if (aula.turmas) {
         turmasMap.set(aula.turmas.id, {
           id: aula.turmas.id,
@@ -632,6 +634,21 @@ export async function updateSession(
 }
 
 /**
+ * Minimal client shape for the optional conteudo_aula cleanup.
+ *
+ * The table is not part of the generated schema (it belongs to a future
+ * migration), so the typed client cannot reach it. This narrow interface keeps
+ * the delete scoped to exactly one table and one column instead of an any cast.
+ */
+interface ConteudoAulaCleanupClient {
+  from(table: 'conteudo_aula'): {
+    delete(): {
+      eq(column: 'sessao_id', value: string): Promise<unknown>
+    }
+  }
+}
+
+/**
  * Delete a class session and associated data
  *
  * @param supabase - Supabase client instance
@@ -645,7 +662,10 @@ export async function deleteSession(
   try {
     // First try to delete associated conteudo_aula (if table exists)
     try {
-      await (supabase as any).from('conteudo_aula').delete().eq('sessao_id', sessionId)
+      await (supabase as unknown as ConteudoAulaCleanupClient)
+        .from('conteudo_aula')
+        .delete()
+        .eq('sessao_id', sessionId)
     } catch {
       // Content table might not exist, continue
     }

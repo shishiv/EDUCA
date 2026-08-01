@@ -1,6 +1,7 @@
 'use client'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useState } from 'react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { FaixaEtariaIndicator } from './FaixaEtariaIndicator'
 import { BookOpen, Percent } from 'lucide-react'
 
@@ -31,18 +32,21 @@ export function StudentProfileHeader({
   stats,
   className,
 }: StudentProfileHeaderProps) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
+
   const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
+    const parts = name.trim().split(/\s+/)
+    return (parts.length === 1 ? parts[0].slice(0, 2) : `${parts[0][0]}${parts[1][0]}`).toUpperCase()
+  }
+
+  const parseLocalDate = (date: string) => {
+    const [year, month, day] = date.slice(0, 10).split('-').map(Number)
+    return new Date(year, month - 1, day)
   }
 
   const calculateAge = (birthDate: string) => {
     const today = new Date()
-    const birth = new Date(birthDate)
+    const birth = parseLocalDate(birthDate)
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
 
@@ -57,17 +61,27 @@ export function StudentProfileHeader({
   }
 
   const age = calculateAge(student.data_nascimento)
+  const birthDateLabel = parseLocalDate(student.data_nascimento).toLocaleDateString('pt-BR')
+  const showStudentPhoto = Boolean(student.foto_url && failedImageUrl !== student.foto_url)
 
   return (
     <div className={`flex items-start gap-6 ${className || ''}`}>
       {/* Large Avatar (~120px) */}
       <Avatar className="h-24 w-24 lg:h-[120px] lg:w-[120px] shrink-0">
-        {student.foto_url && (
-          <AvatarImage src={student.foto_url} alt={student.nome_completo} />
+        {showStudentPhoto && (
+          // eslint-disable-next-line @next/next/no-img-element -- avatar URLs may be Supabase objects configured per municipality
+          <img
+            src={student.foto_url!}
+            alt={student.nome_completo}
+            className="aspect-square h-full w-full object-cover"
+            onError={() => setFailedImageUrl(student.foto_url || null)}
+          />
         )}
-        <AvatarFallback className="text-2xl lg:text-3xl">
-          {getInitials(student.nome_completo)}
-        </AvatarFallback>
+        {!showStudentPhoto && (
+          <AvatarFallback className="text-2xl lg:text-3xl">
+            {getInitials(student.nome_completo)}
+          </AvatarFallback>
+        )}
       </Avatar>
 
       {/* Name + Info Column */}
@@ -84,7 +98,7 @@ export function StudentProfileHeader({
           </span>
           <span className="text-gray-400">|</span>
           <span className="text-sm">
-            {new Date(student.data_nascimento).toLocaleDateString('pt-BR')}
+            {birthDateLabel}
           </span>
         </div>
 

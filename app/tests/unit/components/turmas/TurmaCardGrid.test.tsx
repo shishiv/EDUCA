@@ -95,7 +95,7 @@ describe('TurmaCardGrid', () => {
   })
 
   it('should render empty when no children', () => {
-    const { container } = render(<TurmaCardGrid />)
+    const { container } = render(<TurmaCardGrid>{null}</TurmaCardGrid>)
     
     const grid = container.querySelector('.grid')
     expect(grid).toBeInTheDocument()

@@ -57,8 +57,6 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
   // Fetch session details when dialog opens
   useEffect(() => {
     if (!open || !session_id) {
-      setSession(null)
-      setError(null)
       return
     }
 

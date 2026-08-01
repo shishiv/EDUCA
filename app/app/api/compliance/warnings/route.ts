@@ -1,5 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 
@@ -17,23 +16,7 @@ export interface ComplianceWarning {
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          }
-        }
-      }
-    )
+    const supabase = await createClient()
 
     // Verify authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -85,61 +68,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // WARNING 2: Check for students below 80% attendance (Bolsa Família threshold)
-    const { data: lowAttendanceStudents } = await supabase
-      .rpc('get_students_below_attendance_threshold', {
-        threshold_percentage: 80,
-        escola_id: userProfile.escola_id
-      })
-      .limit(1) // Just check if any exist
-
-    if (lowAttendanceStudents && lowAttendanceStudents.length > 0) {
-      const { count } = await supabase
-        .rpc('get_students_below_attendance_threshold', {
-          threshold_percentage: 80,
-          escola_id: userProfile.escola_id
-        })
-        .single()
-
-      warnings.push({
-        id: 'bolsa-familia-risk',
-        title: 'Alunos em Risco - Bolsa Família',
-        message: `${count} aluno(s) com frequência abaixo de 80%. Ação imediata necessária para conformidade com Bolsa Família.`,
-        type: 'critical',
-        icon: 'AlertTriangle',
-        actionUrl: '/dashboard/relatorios/frequencia',
-        actionText: 'Ver Alunos em Risco',
-        count: count ?? undefined
-      })
-    }
-
-    // WARNING 3: Check for students below 75% attendance (INEP minimum)
-    const { data: criticalAttendance } = await supabase
-      .rpc('get_students_below_attendance_threshold', {
-        threshold_percentage: 75,
-        escola_id: userProfile.escola_id
-      })
-      .limit(1)
-
-    if (criticalAttendance && criticalAttendance.length > 0) {
-      const { count } = await supabase
-        .rpc('get_students_below_attendance_threshold', {
-          threshold_percentage: 75,
-          escola_id: userProfile.escola_id
-        })
-        .single()
-
-      warnings.push({
-        id: 'inep-attendance-critical',
-        title: 'Frequência Abaixo do Mínimo INEP',
-        message: `${count} aluno(s) com frequência abaixo de 75%. Risco de reprovação por falta.`,
-        type: 'critical',
-        icon: 'XCircle',
-        actionUrl: '/dashboard/alunos?filter=low-attendance',
-        actionText: 'Tomar Ação',
-        count: count ?? undefined
-      })
-    }
+    // WARNING 2 and 3 (Bolsa Família and INEP attendance thresholds) were
+    // previously backed by rpc('get_students_below_attendance_threshold'), a
+    // function absent from the committed schema. At runtime PostgREST rejected
+    // it, so these warnings never rendered; the calls are removed until a real
+    // threshold function or query exists in supabase/migrations.
 
     // WARNING 4: Educacenso deadline approaching (if within 30 days)
     const educacensoDeadline = new Date('2025-07-31')

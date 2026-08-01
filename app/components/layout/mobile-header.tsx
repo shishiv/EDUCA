@@ -35,6 +35,29 @@ interface MobileHeaderProps {
   notifications?: number
 }
 
+function ConnectionIndicator({
+  connectionStatus,
+  pendingSync,
+}: Pick<MobileHeaderProps, 'connectionStatus' | 'pendingSync'>) {
+  return (
+    <div className="flex items-center gap-1" data-testid="connection-status">
+      {connectionStatus === 'connected' ? (
+        <Wifi className="h-4 w-4 text-green-500" />
+      ) : (
+        <WifiOff className="h-4 w-4 text-red-500" />
+      )}
+      <span className="text-xs text-muted-foreground hidden sm:inline">
+        {connectionStatus === 'connected' ? 'Online' : 'Offline'}
+      </span>
+      {(pendingSync ?? 0) > 0 && (
+        <Badge variant="secondary" className="ml-1 text-xs">
+          {pendingSync}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
 export function MobileHeader({
   onMenuToggle,
   isMenuOpen = false,
@@ -45,7 +68,7 @@ export function MobileHeader({
 }: MobileHeaderProps) {
   const { userProfile, signOut } = useAuth()
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [showOfflineAlert, setShowOfflineAlert] = useState(false)
+  const showOfflineAlert = connectionStatus === 'disconnected' || connectionStatus === 'error'
 
   // Update current time every minute
   useEffect(() => {
@@ -55,15 +78,6 @@ export function MobileHeader({
 
     return () => clearInterval(timer)
   }, [])
-
-  // Monitor connection status and show offline alerts
-  useEffect(() => {
-    if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-      setShowOfflineAlert(true)
-    } else {
-      setShowOfflineAlert(false)
-    }
-  }, [connectionStatus])
 
   const handleSignOut = async () => {
     try {
@@ -120,25 +134,6 @@ export function MobileHeader({
       default: return 'Indefinido'
     }
   }
-
-  // Connection status indicator for tablets
-  const ConnectionIndicator = () => (
-    <div className="flex items-center gap-1" data-testid="connection-status">
-      {connectionStatus === 'connected' ? (
-        <Wifi className="h-4 w-4 text-green-500" />
-      ) : (
-        <WifiOff className="h-4 w-4 text-red-500" />
-      )}
-      <span className="text-xs text-muted-foreground hidden sm:inline">
-        {connectionStatus === 'connected' ? 'Online' : 'Offline'}
-      </span>
-      {pendingSync > 0 && (
-        <Badge variant="secondary" className="ml-1 text-xs">
-          {pendingSync}
-        </Badge>
-      )}
-    </div>
-  )
 
   return (
     <>
@@ -211,7 +206,7 @@ export function MobileHeader({
             </div>
 
             {/* Connection Status */}
-            <ConnectionIndicator />
+            <ConnectionIndicator connectionStatus={connectionStatus} pendingSync={pendingSync} />
 
             {/* Notificações with count */}
             <Button

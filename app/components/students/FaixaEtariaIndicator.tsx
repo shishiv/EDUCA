@@ -56,7 +56,12 @@ export function FaixaEtariaIndicator({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge className={`${faixaColorClasses[faixa]} ${className || ''}`}>
+          <Badge
+            role="button"
+            tabIndex={0}
+            aria-label={`${config.label}: ${config.description}`}
+            className={`${faixaColorClasses[faixa]} ${className || ''}`}
+          >
             {showIcon && <Baby className="h-3 w-3 mr-1" />}
             {config.label}
           </Badge>

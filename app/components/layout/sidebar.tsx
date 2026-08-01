@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaSelector } from '@/components/layout/escola-selector'
+import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import {
   GraduationCap,
   Users,
@@ -95,13 +96,13 @@ const navigationGroups: NavigationGroup[] = [
         name: 'Usuários',
         href: '/dashboard/usuarios',
         icon: User,
-        roles: ['admin'],
+        roles: ['admin', 'secretario'],
       },
       {
         name: 'Escolas',
         href: '/dashboard/escolas',
         icon: School,
-        roles: ['admin'],
+        roles: ['admin', 'secretario'],
       },
       {
         name: 'Turmas',
@@ -119,7 +120,7 @@ const navigationGroups: NavigationGroup[] = [
         name: 'Atribuicoes',
         href: '/dashboard/atribuicoes',
         icon: UserCog,
-        roles: ['admin', 'diretor'],
+        roles: ['admin', 'diretor', 'secretario'],
       },
       {
         name: 'Responsáveis',
@@ -180,7 +181,9 @@ function getNavigationForRole(userRole: string): NavigationGroup[] {
   return navigationGroups
     .map(group => ({
       ...group,
-      items: group.items.filter(item => item.roles.includes(userRole)),
+      items: group.items.filter(item =>
+        item.roles.includes(userRole) && (!isPilotModeEnabled() || !isPilotDisabledPath(item.href))
+      ),
     }))
     .filter(group => group.items.length > 0)
 }
@@ -193,17 +196,6 @@ export function Sidebar({ className }: SidebarProps) {
 
   // Get navigation groups based on user role
   const navigationGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
-
-  // Initialize expanded groups from defaults
-  useEffect(() => {
-    const defaults: Record<string, boolean> = {}
-    navigationGroups.forEach(group => {
-      if (defaults[group.name] === undefined) {
-        defaults[group.name] = group.defaultOpen ?? true
-      }
-    })
-    setExpandedGroups(prev => ({ ...defaults, ...prev }))
-  }, [userProfile])
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => ({
