@@ -1,8 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { canRecordAttendance } from '@/lib/auth'
 
 const marcarFrequenciaSchema = z.object({
   // Support both legacy aula_id and enhanced sessao_id
@@ -19,23 +19,7 @@ const marcarFrequenciaSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          }
-        }
-      }
-    )
+    const supabase = await createClient()
 
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -75,20 +59,21 @@ export async function POST(request: NextRequest) {
     const { aula_id, sessao_id, frequencias } = validation.data
     const sessionId = sessao_id || aula_id // Prefer sessao_id, fallback to aula_id
 
-    // Verificar se o usuário é professor
+    // Verificar se o usuário pode marcar frequência (professor ou diretor)
+    // (users schema column is tipo_usuario, not role - see issue #32/#33)
     const { data: usuario } = await supabase
       .from('users')
-      .select('role, escola_id')
+      .select('tipo_usuario, escola_id')
       .eq('id', user.id)
       .single()
 
-    if (!usuario || usuario.role !== 'professor') {
+    if (!usuario || !canRecordAttendance(usuario.tipo_usuario)) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'INSUFFICIENT_PERMISSIONS',
-            message: 'Apenas professores podem marcar frequência'
+            message: 'Apenas professores e diretores podem marcar frequência'
           },
           timestamp: new Date().toISOString()
         },
@@ -262,8 +247,7 @@ export async function POST(request: NextRequest) {
     const { data: resultado, error: sqlError } = await supabase
       .rpc('marcar_frequencia_lote', {
         p_aula_id: sessionId!, // Works for both systems (migration handles FK update)
-        p_professor_id: user.id,
-        p_frequencias: frequencias.map(f => ({
+        p_registros: frequencias.map(f => ({
           aluno_id: f.aluno_id,
           presente: f.presente,
           observacoes: f.observacoes || null

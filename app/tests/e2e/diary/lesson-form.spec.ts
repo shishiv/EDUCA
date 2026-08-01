@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { waitForPageLoad } from '../utils/test-helpers'
 
 /**
@@ -45,7 +45,7 @@ test.describe('Lesson Form - Access', () => {
 })
 
 test.describe('Lesson Form - Basic Fields', () => {
-  async function openLessonForm(page) {
+  async function openLessonForm(page: Page) {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     await page.waitForTimeout(2000)
@@ -139,7 +139,7 @@ test.describe('Lesson Form - Basic Fields', () => {
 })
 
 test.describe('Lesson Form - BNCC Selector', () => {
-  async function openLessonForm(page) {
+  async function openLessonForm(page: Page) {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     await page.waitForTimeout(2000)
@@ -342,7 +342,7 @@ test.describe('Lesson Form - BNCC Selector', () => {
 })
 
 test.describe('Lesson Form - Validation', () => {
-  async function openLessonForm(page) {
+  async function openLessonForm(page: Page) {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     await page.waitForTimeout(2000)
@@ -460,7 +460,7 @@ test.describe('Lesson Form - Validation', () => {
 })
 
 test.describe('Lesson Form - Submission', () => {
-  async function fillCompleteForm(page) {
+  async function fillCompleteForm(page: Page) {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     await page.waitForTimeout(2000)
@@ -586,7 +586,7 @@ test.describe('Lesson Form - Submission', () => {
 })
 
 test.describe('Lesson Form - Cancel Action', () => {
-  async function openLessonForm(page) {
+  async function openLessonForm(page: Page) {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     await page.waitForTimeout(2000)
@@ -650,7 +650,7 @@ test.describe('Lesson Form - Cancel Action', () => {
 })
 
 test.describe('Lesson Form - Accessibility', () => {
-  async function openLessonForm(page) {
+  async function openLessonForm(page: Page) {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     await page.waitForTimeout(2000)

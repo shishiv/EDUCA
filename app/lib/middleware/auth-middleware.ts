@@ -4,6 +4,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isInvalidRefreshTokenError, isSupabaseAuthCookieName } from '@/lib/auth-session-recovery'
 
 export async function createSupabaseServerClient(request: NextRequest) {
   let response = NextResponse.next({
@@ -71,140 +73,127 @@ export async function getServerUser(request: NextRequest) {
   const { supabase } = await createSupabaseServerClient(request)
 
   try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+    // Validate the asymmetric JWT locally (JWKS is cached) instead of making
+    // an Auth server round trip on every route transition.
+    const { data, error } = await supabase.auth.getClaims()
+    const userId = data?.claims?.sub
 
-    if (error || !user) {
-      return null
+    if (error || !userId) {
+      return { user: null, userProfile: null, invalidSession: isInvalidRefreshTokenError(error) }
     }
 
-    // Try to get user profile
     const { data: userProfile } = await supabase
       .from('users')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', userId)
       .eq('ativo', true)
       .single()
 
     return {
-      user,
+      user: { id: userId },
       userProfile: userProfile || null,
+      invalidSession: false,
     }
   } catch (error) {
-    // logger.error('Error getting server user:', { error: error })
-    return null
+    return { user: null, userProfile: null, invalidSession: isInvalidRefreshTokenError(error) }
   }
 }
 
-// Route protection configuration
-export const routeProtection = {
-  // Public routes (no authentication required)
-  public: ['/login', '/'],
-
-  // Role-based protected routes
-  protected: {
-    // Admin only routes
-    admin: [
-      '/admin',
-      '/admin/users',
-      '/admin/schools',
-      '/admin/system',
-    ],
-
-    // Director and admin routes
-    director: [
-      '/dashboard/school-management',
-      '/dashboard/teachers',
-      '/dashboard/reports/school',
-    ],
-
-    // Secretary, director and admin routes
-    secretary: [
-      '/dashboard/students',
-      '/dashboard/enrollment',
-      '/dashboard/reports/student',
-    ],
-
-    // Teacher routes (includes professor access)
-    teacher: [
-      '/dashboard/classes',
-      '/dashboard/attendance',
-      '/dashboard/grades',
-      '/dashboard/diary',
-    ],
-
-    // Parent/Guardian routes
-    parent: [
-      '/dashboard/children',
-      '/dashboard/attendance/view',
-      '/dashboard/grades/view',
-    ],
-  },
-
-  // General authenticated routes (any logged in user)
-  authenticated: [
-    '/dashboard',
-    '/profile',
-    '/settings',
-  ],
+function clearInvalidSupabaseCookies(request: NextRequest, response: NextResponse) {
+  for (const cookie of request.cookies.getAll()) {
+    if (isSupabaseAuthCookieName(cookie.name)) {
+      response.cookies.set(cookie.name, '', { path: '/', maxAge: 0, expires: new Date(0) })
+    }
+  }
 }
+
+// gestor_sme: deferred per pilot decision E1=B; add here when the pilot expands.
+// The database keeps gestor_sme as a valid role, but this interface must not
+// name a role it does not enforce, and must not map English names onto
+// Portuguese tipo_usuario values. gestor_sme users are denied on protected
+// routes until the deferral is lifted.
+type UserRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+
+interface ProtectedRoute {
+  prefix: string
+  roles: UserRole[]
+}
+
+// Route protection configuration uses the real Portuguese application routes.
+export const routeProtection = {
+  public: ['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/offline', '/'],
+  protected: [
+    // Admin-only system management
+    { prefix: '/dashboard/usuarios', roles: ['admin'] },
+    { prefix: '/dashboard/escolas', roles: ['admin'] },
+    { prefix: '/dashboard/flags', roles: ['admin'] },
+
+    // Municipal and school management
+    { prefix: '/dashboard/atribuicoes', roles: ['admin', 'diretor'] },
+    { prefix: '/dashboard/configuracoes', roles: ['admin', 'diretor'] },
+    { prefix: '/dashboard/alunos', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/turmas/nova', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/turmas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/dashboard/matriculas', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/responsaveis', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/dashboard/relatorios', roles: ['admin', 'diretor', 'secretario'] },
+    { prefix: '/relatorios', roles: ['admin', 'diretor', 'secretario'] },
+
+    // Academic operations
+    { prefix: '/dashboard/notas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/dashboard/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  ] satisfies ProtectedRoute[],
+  authenticated: ['/dashboard'],
+}
+
+const matchesRoute = (pathname: string, route: string) =>
+  route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`)
 
 export function checkRouteAccess(
   pathname: string,
   userRole?: string
 ): { hasAccess: boolean; redirectTo?: string } {
-  // Public routes are always accessible
-  if (routeProtection.public.some(route => pathname.startsWith(route))) {
+  if (routeProtection.public.some(route => matchesRoute(pathname, route))) {
     return { hasAccess: true }
   }
 
-  // If no user role, redirect to login
   if (!userRole) {
     return { hasAccess: false, redirectTo: '/login' }
   }
 
-  // Check role-based access
-  for (const [role, routes] of Object.entries(routeProtection.protected)) {
-    if (routes.some(route => pathname.startsWith(route))) {
-      // Check if user has required role or higher privilege
-      const hasRequiredRole = checkRoleHierarchy(userRole, role)
-
-      if (!hasRequiredRole) {
-        return { hasAccess: false, redirectTo: '/unauthorized' }
-      }
-    }
+  const classEditRoute: ProtectedRoute | undefined =
+    /^\/dashboard\/turmas\/[^/]+\/editar$/.test(pathname)
+      ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario'] }
+      : undefined
+  const protectedRoute = classEditRoute || routeProtection.protected.find(route =>
+    matchesRoute(pathname, route.prefix)
+  )
+  if (protectedRoute && !(protectedRoute.roles as UserRole[]).includes(userRole as UserRole)) {
+    return { hasAccess: false, redirectTo: '/unauthorized' }
   }
 
-  // Check general authenticated routes
-  if (routeProtection.authenticated.some(route => pathname.startsWith(route))) {
+  if (routeProtection.authenticated.some(route => matchesRoute(pathname, route))) {
     return { hasAccess: true }
   }
 
-  // Default: allow access for logged in users
+  // Authenticated users may access public-adjacent routes unless explicitly restricted.
   return { hasAccess: true }
-}
-
-// Role hierarchy check - higher roles can access lower role routes
-function checkRoleHierarchy(userRole: string, requiredRole: string): boolean {
-  const roleHierarchy = {
-    responsavel: 1,
-    professor: 2,
-    secretario: 3,
-    diretor: 4,
-    admin: 5,
-  }
-
-  const userLevel = roleHierarchy[userRole as keyof typeof roleHierarchy] || 0
-  const requiredLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0
-
-  return userLevel >= requiredLevel
 }
 
 export async function authMiddleware(request: NextRequest) {
   const { supabase, response } = await createSupabaseServerClient(request)
   const pathname = request.nextUrl.pathname
+
+  if (isPilotModeEnabled() && isPilotDisabledPath(pathname)) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
+    }
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/dashboard'
+    redirectUrl.searchParams.set('pilotScope', 'disabled')
+    return NextResponse.redirect(redirectUrl)
+  }
 
   // Skip middleware for static files and API routes
   if (
@@ -221,6 +210,19 @@ export async function authMiddleware(request: NextRequest) {
     // The client-side code (hooks/use-auth.ts) handles token refresh
     // Middleware only validates existing session from cookies
     const serverUser = await getServerUser(request)
+    if (serverUser.invalidSession) {
+      if (pathname === '/login') {
+        clearInvalidSupabaseCookies(request, response)
+        return response
+      }
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.searchParams.set('reason', 'session_expired')
+      loginUrl.searchParams.set('returnUrl', pathname)
+      const invalidSessionRedirect = NextResponse.redirect(loginUrl)
+      clearInvalidSupabaseCookies(request, invalidSessionRedirect)
+      return invalidSessionRedirect
+    }
     const userRole = serverUser?.userProfile?.tipo_usuario
 
     const { hasAccess, redirectTo } = checkRouteAccess(pathname, userRole)

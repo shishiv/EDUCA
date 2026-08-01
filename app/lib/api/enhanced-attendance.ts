@@ -12,7 +12,7 @@
 'use client'
 
 import { BaseApiService } from './enhanced-base'
-import { supabase } from '@/lib/supabase'
+import { supabase, Inserts } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
 // ===== ENHANCED INTERFACES =====
@@ -110,6 +110,40 @@ export interface AttendanceStatistics {
   inepCompliant: boolean
 }
 
+// ===== ENHANCED API SERVICE =====
+
+/**
+ * Build the sessoes_aula insert payload for an "Abrir aula" session.
+ *
+ * All required NOT NULL columns are resolved before the insert; the optional
+ * planning fields are included only when truthy, exactly as the previous
+ * inline code did. teacherEscolaId must already be validated as present.
+ */
+export function buildSessionInsert(
+  sessionData: Omit<EnhancedAttendanceSession, 'id' | 'created_at' | 'updated_at' | 'hash_integridade' | 'documento_oficial'>,
+  teacherEscolaId: string
+): Inserts<'sessoes_aula'> {
+  const insertData: Inserts<'sessoes_aula'> = {
+    turma_id: sessionData.turma_id,
+    professor_id: sessionData.professor_id,
+    data_aula: sessionData.data_aula,
+    conteudo_programatico: sessionData.conteudo_programatico,
+    duracao_minutos: sessionData.duracao_minutos,
+    escola_id: teacherEscolaId,
+    status: 'aberta',
+    inicio_aula: new Date().toISOString(),
+  }
+
+  // Add optional fields only if defined
+  if (sessionData.objetivos_aprendizagem) insertData.objetivos_aprendizagem = sessionData.objetivos_aprendizagem
+  if (sessionData.metodologia) insertData.metodologia = sessionData.metodologia
+  if (sessionData.recursos_utilizados) insertData.recursos_utilizados = sessionData.recursos_utilizados
+  if (sessionData.avaliacao_planejada) insertData.avaliacao_planejada = sessionData.avaliacao_planejada
+  if (sessionData.observacoes) insertData.observacoes = sessionData.observacoes
+
+  return insertData
+}
+
 // ===== ENHANCED ATTENDANCE API SERVICE =====
 export class EnhancedAttendanceService extends BaseApiService {
   constructor() {
@@ -166,31 +200,17 @@ export class EnhancedAttendanceService extends BaseApiService {
         throw new Error('ERRO_AUTORIZACAO: Professor não está atribuído a esta turma.')
       }
 
-      // Create session with compliance data - extract only known fields
-      // Build insert data, filtering out undefined values
-      const sessionInsertData: Record<string, unknown> = {
-        turma_id: sessionData.turma_id,
-        professor_id: sessionData.professor_id,
-        data_aula: sessionData.data_aula,
-        conteudo_programatico: sessionData.conteudo_programatico,
-        duracao_minutos: sessionData.duracao_minutos,
-        escola_id: teacher.escola_id,
-        status: 'aberta',
-        inicio_aula: new Date().toISOString()
+      // Create session with compliance data
+      // sessoes_aula.escola_id is NOT NULL: fail fast when the teacher has no
+      // linked school instead of a raw PostgREST rejection (previously hidden
+      // by an as-any escape on the insert).
+      if (!teacher.escola_id) {
+        throw new Error('ERRO_AUTORIZACAO: Professor sem escola vinculada não pode abrir sessões de aula.')
       }
 
-      // Add optional fields only if defined
-      if (sessionData.objetivos_aprendizagem) sessionInsertData.objetivos_aprendizagem = sessionData.objetivos_aprendizagem
-      if (sessionData.metodologia) sessionInsertData.metodologia = sessionData.metodologia
-      if (sessionData.recursos_utilizados) sessionInsertData.recursos_utilizados = sessionData.recursos_utilizados
-      if (sessionData.avaliacao_planejada) sessionInsertData.avaliacao_planejada = sessionData.avaliacao_planejada
-      if (sessionData.observacoes) sessionInsertData.observacoes = sessionData.observacoes
-
-      // Cast supabase to any to bypass strict type checking for dynamic inserts
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('sessoes_aula')
-        .insert(sessionInsertData)
+        .insert(buildSessionInsert(sessionData, teacher.escola_id))
         .select()
         .single()
 

@@ -1,37 +1,31 @@
 # Security Policy
 
-## Supported Versions
+## Reporting a vulnerability
 
-| Version | Supported          |
-| ------- | ------------------ |
-| latest  | :white_check_mark: |
+Report security issues **privately** through GitHub's private vulnerability reporting. Do not open a public issue for a security problem.
 
-## Reporting a Vulnerability
+1. Open the repository's **Security** tab and click **Report a vulnerability**, or go directly to:
+   <https://github.com/shishiv/EDUCA/security/advisories/new>
+2. Include what you found, how to reproduce it, and the impact you observed.
 
-We take the security of EDUCA seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+The report is visible only to repository maintainers until it is triaged. If you cannot use the form, email the maintainers at the address shown in commit history instead.
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+## What to expect
 
-Instead, please send an email to **myke.matos@gmail.com**.
+EDUCA is a small, pilot-stage project maintained on a best-effort basis. Response expectations, not guarantees:
 
-You should receive an acknowledgment within 48 hours. If you do not receive a response within 48 hours, please follow up to ensure we received your original message.
+- **Acknowledgment:** you will get an acknowledgment within a few business days of a complete report.
+- **Triage:** the maintainer will assess severity and impact and reply with a plan or follow-up questions.
+- **Fix:** fixes land on `main` as fast as the project's capacity allows. There is no committed SLA for a fix release.
+- **Disclosure:** we practice coordinated disclosure. We will not publish a report publicly before a fix is available, and we ask reporters to give us a reasonable window (90 days by default) before public disclosure.
 
-### What to include
+If a report is found to be out of scope or a false positive, we will close it with an explanation.
 
-- Description of the vulnerability
-- Steps to reproduce
-- Affected versions
-- Any potential impact
-- Suggested fix (if known)
+## Scope
 
-### Our commitment
+This policy covers the code in this repository. Dependencies are covered through their own upstream security policies; report dependency vulnerabilities upstream first.
 
-- **48 hours**: Initial acknowledgment of your report
-- **7 days**: We will work on a fix and keep you informed of progress
-- **Public disclosure**: We will coordinate with you before making any public disclosure
+## Out of scope
 
-### PGP Key (optional)
-
-If you wish to encrypt your report, please request our PGP key via email. We will provide it upon request.
-
-Thank you for helping keep EDUCA and its users safe.
+- Data that belongs to a live municipality deployment - this project currently runs a synthetic-only pilot foundation and does not hold real student data.
+- General configuration or usage questions - open a GitHub Discussion instead.

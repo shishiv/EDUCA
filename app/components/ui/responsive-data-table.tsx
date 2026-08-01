@@ -104,6 +104,14 @@ export function ResponsiveDataTable<T extends { id: string }>({
     const primaryColumn = columns.find(col => !col.hideOnMobile) || columns[0]
     const secondaryColumns = columns.filter(col => !col.hideOnMobile && col !== primaryColumn).slice(0, 2)
 
+    if (!primaryColumn) {
+      return (
+        <Card className={cn("mb-3", cardClassName)}>
+          <CardContent className="p-4 text-sm text-gray-500">Sem colunas configuradas.</CardContent>
+        </Card>
+      )
+    }
+
     return (
       <Card className={cn("mb-3 hover:shadow-md transition-shadow", cardClassName)}>
         <CardContent className="p-4">

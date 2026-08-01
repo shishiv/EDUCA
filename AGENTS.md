@@ -1,18 +1,9 @@
-# AGENTS.md — EDUCA
+# EDUCA
 
-## Layout
-Product code lives in `app/`. Run package commands from `app/`.
+Read [`CONTEXT.md`](CONTEXT.md) before working. Run application commands from `app/`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, and applicable build or pilot commands listed there.
 
-## Commands (inside `app/`)
-| Command | Use |
-|---------|-----|
-| `pnpm dev` | dev server |
-| `pnpm build` | production build |
-| `pnpm typecheck` | TypeScript |
-| `pnpm lint` | ESLint |
-| `pnpm test` | Vitest unit tests |
+Supabase typing: `app/types/database.ts` is generated; joined selects (to-one relationships, aliases) are inferred natively by supabase-js - do not add `as any` or `: any` to query results. For dynamic table access, follow the typed-union pattern in `app/lib/api/base.ts` (payloads checked against `Inserts<...>` at the call site).
 
-## Before push
-`pnpm typecheck && pnpm test`
+## Maintaining this file
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/README.md](docs/README.md).
+Keep this file thin. Put durable project context and authoritative commands in `CONTEXT.md`.

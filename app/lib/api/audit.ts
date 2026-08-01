@@ -3,8 +3,6 @@
  * Handles user activity logs and audit trail functionality
  */
 
-import { supabase } from '@/lib/supabase'
-
 export interface UserActivity {
   id: string
   user_id: string
@@ -81,18 +79,24 @@ class AuditApi {
    * Log an audit event
    */
   async logAudit(audit: Omit<AuditLog, 'id' | 'created_at'>): Promise<AuditLog> {
-    try {
-      // For now, return mock data until the audit_logs table is created
-      const mockAudit: AuditLog = {
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        ...audit
-      }
-
-      return mockAudit
-    } catch (error) {
-      throw error
-    }
+    const response = await fetch('/api/pilot/audit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        eventType: audit.action,
+        entityType: audit.resource_type,
+        entityId: audit.resource_id,
+        schoolId: null,
+        metadata: {
+          changedFields: Object.keys(audit.new_values || {}),
+          hadPreviousValues: Boolean(audit.old_values),
+        },
+      }),
+    })
+    if (!response.ok) throw new Error(`PILOT_AUDIT_WRITE_FAILED: status ${response.status}`)
+    const result = await response.json() as { auditId: string }
+    const timestamp = new Date().toISOString()
+    return { ...audit, id: result.auditId, timestamp, created_at: timestamp, old_values: undefined, new_values: undefined }
   }
 
   /**

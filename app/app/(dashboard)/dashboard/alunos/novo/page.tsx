@@ -21,9 +21,11 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { studentsApi } from '@/lib/api/students'
 import { logger } from '@/lib/logger'
+import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
+  const pilotMode = isPilotModeEnabled()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     // Dados pessoais
@@ -83,7 +85,7 @@ export default function NovoAlunoPage() {
         endereco: formData.endereco,
         nome_mae: formData.nome_mae,
         nome_pai: formData.nome_pai || undefined,
-        necessidades_especiais: formData.necessidades_especiais || undefined,
+        necessidades_especiais: pilotMode ? undefined : formData.necessidades_especiais || undefined,
       }
 
       // Prepare guardian data if provided
@@ -175,7 +177,7 @@ export default function NovoAlunoPage() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="pessoais" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 h-auto p-1">
+ <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
             <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <User className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs md:text-sm font-medium">Dados Pessoais</span>
@@ -184,11 +186,11 @@ export default function NovoAlunoPage() {
               <Users className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs md:text-sm font-medium">Responsável</span>
             </TabsTrigger>
-            <TabsTrigger value="medicos" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+ <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
               <FileText className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs md:text-sm font-medium">Dados Médicos</span>
             </TabsTrigger>
-            <TabsTrigger value="documentos" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+ <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
               <Upload className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs md:text-sm font-medium">Documentos</span>
             </TabsTrigger>
@@ -212,8 +214,8 @@ export default function NovoAlunoPage() {
                           id="nome_completo"
                           value={formData.nome_completo}
                           onChange={(e) => handleInputChange('nome_completo', e.target.value)}
-                          placeholder="Digite o nome completo do aluno"
-                          required
+ placeholder="Digite o nome completo do aluno"
+ required
                         />
                       </div>
                       
@@ -432,15 +434,15 @@ export default function NovoAlunoPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className={pilotMode ? 'hidden' : 'space-y-2'}>
                     <Label htmlFor="resp_cpf">CPF *</Label>
                     <Input
                       id="resp_cpf"
                       value={responsavelData.cpf}
                       onChange={(e) => handleResponsavelChange('cpf', formatCPF(e.target.value))}
-                      placeholder="000.000.000-00"
-                      maxLength={14}
-                      required
+ placeholder="000.000.000-00"
+ maxLength={14}
+ required={!pilotMode}
                     />
                   </div>
                   
@@ -469,7 +471,7 @@ export default function NovoAlunoPage() {
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className={pilotMode ? 'hidden' : 'space-y-2'}>
                     <Label htmlFor="resp_profissao">Profissão</Label>
                     <Input
                       id="resp_profissao"
@@ -480,7 +482,7 @@ export default function NovoAlunoPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className={pilotMode ? 'hidden' : 'space-y-2'}>
                   <Label htmlFor="resp_endereco">Endereço</Label>
                   <Input
                     id="resp_endereco"
@@ -490,7 +492,7 @@ export default function NovoAlunoPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className={pilotMode ? 'hidden' : 'space-y-2'}>
                   <Label htmlFor="resp_renda">Renda Familiar</Label>
                   <Select value={responsavelData.renda_familiar} onValueChange={(value) => handleResponsavelChange('renda_familiar', value)}>
                     <SelectTrigger id="resp_renda">
