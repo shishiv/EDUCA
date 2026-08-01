@@ -8,7 +8,7 @@
  * @see lib/api/base.ts for BaseApiService pattern
  */
 
-import { BaseApiService } from './base'
+import { BaseApiService, type TableName } from './base'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
@@ -56,7 +56,9 @@ export interface DashboardStatsOptions {
 
 export class DashboardStatsApiService extends BaseApiService {
   constructor() {
-    super('dashboard-stats')
+    // dashboard-stats is a service namespace, not a generated table; the class
+    // only uses the base as a pattern anchor and never calls base data methods.
+    super('dashboard-stats' as TableName)
   }
 
   /**
