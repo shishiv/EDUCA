@@ -1,19 +1,10 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { usersApi, UserWithSchool } from '@/lib/api/users'
+import { usersApi } from '@/lib/api/users'
 import { queryKeys } from '@/lib/react-query'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
-import { logger } from '@/lib/logger'
-
-// Stub functions until Zustand is properly set up
-const addRecentActivity = (activity: { type: string; title: string; description: string; entityId: string; entityType: string }) => {
-  console.debug('Activity:', activity)
-}
-const clearBulkSelection = () => {
-  console.debug('Bulk selection cleared')
-}
 
 // Get users with school information
 export function useUsersWithSchool(options?: {
@@ -59,19 +50,10 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: (userData: Parameters<typeof usersApi.createUser>[0]) =>
       usersApi.createUser(userData),
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate user queries
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
-
-      // Add to recent activity
-      addRecentActivity({
-        type: 'user_created',
-        title: 'Usuário criado',
-        description: `${data.nome} foi criado como ${data.tipo_usuario}`,
-        entityId: data.id,
-        entityType: 'user',
-      })
 
       toast.success('Usuário criado com sucesso!')
     },
@@ -143,9 +125,6 @@ export function useBulkUpdateUserStatus() {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
 
-      // Clear bulk selection
-      clearBulkSelection()
-
       const action = variables.ativo ? 'ativados' : 'desativados'
       toast.success(`${variables.userIds.length} usuários ${action} com sucesso!`)
     },
@@ -167,9 +146,6 @@ export function useBulkAssignSchool() {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.stats() })
-
-      // Clear bulk selection
-      clearBulkSelection()
 
       toast.success(`${variables.userIds.length} usuários atribuídos à escola com sucesso!`)
     },
