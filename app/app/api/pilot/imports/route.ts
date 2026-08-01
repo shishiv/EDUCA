@@ -11,6 +11,7 @@ import {
   validateSyntheticStudentCsv,
   verifyDryRunValidationToken,
 } from '@/lib/pilot/synthetic-csv-import'
+import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024
 
@@ -22,6 +23,9 @@ function getImportKey(): { key: string; keyId: string } {
 }
 
 export async function POST(request: Request) {
+  const demoSandboxBlock = demoSandboxGuardResponse()
+  if (demoSandboxBlock) return demoSandboxBlock
+
   try {
     assertSyntheticPilotSafety('import')
     const actor = await requirePilotActor(['admin', 'secretario'])

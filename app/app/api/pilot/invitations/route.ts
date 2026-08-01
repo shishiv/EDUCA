@@ -6,6 +6,7 @@ import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
+import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
 
 const invitationSchema = z.object({
   email: z.string().email().refine(email => email.endsWith('.invalid'), 'Synthetic invitation email required'),
@@ -15,6 +16,9 @@ const invitationSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  const demoSandboxBlock = demoSandboxGuardResponse()
+  if (demoSandboxBlock) return demoSandboxBlock
+
   try {
     assertSyntheticPilotSafety('seed')
     const actor = await requirePilotActor(['admin', 'secretario'])
