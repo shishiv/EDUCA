@@ -1,0 +1,77 @@
+<div align="center">
+
+# EDUCA
+
+**Gestão escolar open source para redes municipais brasileiras · Open-source school management for Brazilian municipal school networks**
+
+[![CI](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml/badge.svg)](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+
+</div>
+
+---
+
+## O que é · What it is
+
+**PT:** O EDUCA é um software de gestão escolar **open source (MIT)** para redes municipais e cidades pequenas do Brasil: escolas, usuários, alunos, responsáveis, turmas, matrículas, atribuições de professores, chamada, painéis e relatórios.
+
+**EN:** EDUCA is an **open-source (MIT)** school-management application for Brazilian municipal and small-town school networks: schools, users, students, guardians, classes, enrolments, teacher assignments, attendance, dashboards, and reporting.
+
+## Modelo · Model
+
+**PT:** Todo o produto é OSS, sem módulos paywall. O que pode ser pago é apenas a operação na infraestrutura da equipe, se a escola ou secretaria não quiser manter servidor.
+
+| Como usa | Escolas | Custo de software |
+| --- | --- | --- |
+| **Self-host** | Ilimitadas (você opera) | Grátis (MIT) |
+| **Cloud Free** | **1 escola** | Grátis (hospedagem nossa) |
+| **Cloud Pro** | Rede (N escolas) | Hospedagem + suporte |
+
+**EN:** The entire product is OSS, with no paywalled modules. The only paid option is operation on the team's infrastructure, when a school or board does not want to run its own server.
+
+| How you use it | Schools | Software cost |
+| --- | --- | --- |
+| **Self-host** | Unlimited (you operate) | Free (MIT) |
+| **Cloud Free** | **1 school** | Free (our hosting) |
+| **Cloud Pro** | Network (N schools) | Hosting + support |
+
+WhatsApp é **BYO (bring your own)**: a escola ou prefeitura traz conta Meta/BSP, número e templates; sem credencial, o envio fica desligado. · WhatsApp is **BYO**: the school or municipality brings the Meta/BSP account, number, and templates; without credentials, sending stays off.
+
+## Status atual · Current status
+
+**PT:** O repositório sustenta hoje uma **fundação de piloto municipal sintética**. Ele não autoriza dados reais de alunos, implantação municipal, aprovação legal ou alegação de conformidade de produção.
+
+**EN:** The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim.
+
+## Começando · Getting started
+
+**PT:** Pré-requisitos: Node.js 20+, pnpm 9+ e Docker (para Supabase local). Comandos executados a partir de `app/`.
+
+**EN:** Prerequisites: Node.js 20+, pnpm 9+, and Docker (for local Supabase). Commands run from `app/`.
+
+```bash
+git clone https://github.com/shishiv/EDUCA.git
+cd EDUCA/app
+cp .env.local.example .env.local
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Setup completo, comandos exatos e limites do piloto: [`CONTEXT.md`](CONTEXT.md). · Full setup, exact commands, and pilot boundaries: [`CONTEXT.md`](CONTEXT.md).
+
+## Segurança · Security
+
+**PT:** Para reportar vulnerabilidades em privado, veja [`SECURITY.md`](SECURITY.md).
+
+**EN:** To report vulnerabilities privately, see [`SECURITY.md`](SECURITY.md).
+
+## Licença · License
+
+MIT · [`LICENSE`](LICENSE) · Copyright (c) 2025 Myke Matos
+
+## Contexto do repositório · Repository context
+
+Arquitetura, decisões e limites: [`CONTEXT.md`](CONTEXT.md). · Architecture, decisions, and boundaries: [`CONTEXT.md`](CONTEXT.md).

@@ -5,6 +5,12 @@
  * Validates session is editable before marking (not locked).
  * Supports toggle: can update existing record if already marked.
  *
+ * Authorization (issue #30):
+ * - resolves the authenticated actor from the server session
+ * - only professor (own sessions) and diretor (own escola) can mark
+ * - `professor_id` and `marcado_por` come from the actor/session, never from
+ *   the client
+ *
  * Performance Target: <1s per student (including database round trip)
  * Brazilian Compliance: "não existe o esquecer" - prevents locked modifications
  */
@@ -14,6 +20,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logger } from '@/lib/logger'
+import {
+  assertCanRecordAttendance,
+  assertMatriculaInTurma,
+  assertSessionWriteAccess,
+  AttendanceAuthError,
+  requireAttendanceActor,
+} from '@/lib/services/attendance-auth'
 
 interface MarkAttendanceParams {
   sessao_id: string
@@ -26,6 +39,7 @@ interface MarkAttendanceResult {
   success: boolean
   record?: any
   error?: string
+  code?: string
 }
 
 export async function markAttendanceAction(
@@ -56,6 +70,60 @@ export async function markAttendanceAction(
 
     const supabase = await createClient()
 
+    // Resolve the authenticated actor from the server session (issue #30).
+    const actor = await requireAttendanceActor(supabase)
+    assertCanRecordAttendance(actor)
+
+    // Load the session and assert ownership: the client-supplied sessao_id
+    // must belong to the actor (professor) or to the actor's escola (diretor).
+    const { data: session, error: sessionError } = await supabase
+      .from('sessoes_aula')
+      .select('id, turma_id, professor_id, escola_id, status, data_aula')
+      .eq('id', params.sessao_id)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        code: 'SESSION_NOT_FOUND',
+        error: 'Sessão de aula não encontrada',
+      }
+    }
+
+    assertSessionWriteAccess(actor, {
+      id: session.id,
+      professor_id: session.professor_id,
+      escola_id: session.escola_id,
+    })
+
+    // Assert the student's matricula belongs to the session's turma.
+    // Prevents marking students from other classes into this session.
+    const { data: matricula } = await supabase
+      .from('matriculas')
+      .select('id, turma_id')
+      .eq('id', params.matricula_id)
+      .single()
+
+    if (!matricula) {
+      return {
+        success: false,
+        code: 'MATRICULA_NOT_FOUND',
+        error: 'Matrícula não encontrada',
+      }
+    }
+
+    assertMatriculaInTurma(matricula, session.turma_id)
+
+    // The attendance date must be the session's own class date: a client
+    // cannot attach attendance rows with a forged date to this session.
+    if (params.data_aula !== session.data_aula) {
+      return {
+        success: false,
+        code: 'DATA_MISMATCH',
+        error: 'Data da frequência não corresponde à data da sessão de aula',
+      }
+    }
+
     // Check if session is editable (calls database function)
     const { data: isEditable, error: checkError } = await supabase.rpc(
       'is_session_editable',
@@ -79,7 +147,9 @@ export async function markAttendanceAction(
       }
     }
 
-    // Upsert attendance record (insert or update if exists)
+    // Upsert attendance record (insert or update if exists).
+    // professor_id is the session owner (never client-supplied); marcado_por
+    // records who performed the action.
     const { data: attendanceRecord, error: upsertError } = await supabase
       .from('frequencia')
       .upsert(
@@ -88,6 +158,9 @@ export async function markAttendanceAction(
           matricula_id: params.matricula_id,
           presente: params.presente,
           data_aula: params.data_aula,
+          professor_id: session.professor_id,
+          marcado_por: actor.userId,
+          marcado_em: new Date().toISOString(),
         },
         {
           onConflict: 'matricula_id,data_aula', // Unique constraint
@@ -118,6 +191,15 @@ export async function markAttendanceAction(
       record: attendanceRecord,
     }
   } catch (error) {
+    // Expected authorization failures are returned to the caller as-is.
+    if (error instanceof AttendanceAuthError) {
+      return {
+        success: false,
+        code: error.code,
+        error: error.message,
+      }
+    }
+
     logger.error('Erro inesperado ao marcar frequencia', error as Error, {
       metadata: {
         sessaoId: params.sessao_id,
