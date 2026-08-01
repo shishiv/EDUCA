@@ -1,6 +1,6 @@
 'use client'
 
-import { BaseApiService } from './base'
+import { BaseApiService, type TableName } from './base'
 import { supabase } from '@/lib/supabase'
 import { usersApi } from './users'
 import { schoolsApi } from './schools'
@@ -41,7 +41,9 @@ export interface ReportSchool {
 
 export class ReportsApiService extends BaseApiService {
   constructor() {
-    super('reports') // This would be a future reports table
+    // The reports table is not part of the generated schema yet; the service
+    // only uses it as a pattern anchor and never calls base data methods.
+    super('reports' as TableName)
   }
 
   // Generate reports based on existing data
