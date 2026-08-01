@@ -1,5 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
@@ -20,23 +19,7 @@ const marcarFrequenciaSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          }
-        }
-      }
-    )
+    const supabase = await createClient()
 
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -77,6 +60,7 @@ export async function POST(request: NextRequest) {
     const sessionId = sessao_id || aula_id // Prefer sessao_id, fallback to aula_id
 
     // Verificar se o usuário pode marcar frequência (professor ou diretor)
+    // (users schema column is tipo_usuario, not role - see issue #32/#33)
     const { data: usuario } = await supabase
       .from('users')
       .select('tipo_usuario, escola_id')
@@ -263,8 +247,7 @@ export async function POST(request: NextRequest) {
     const { data: resultado, error: sqlError } = await supabase
       .rpc('marcar_frequencia_lote', {
         p_aula_id: sessionId!, // Works for both systems (migration handles FK update)
-        p_professor_id: user.id,
-        p_frequencias: frequencias.map(f => ({
+        p_registros: frequencias.map(f => ({
           aluno_id: f.aluno_id,
           presente: f.presente,
           observacoes: f.observacoes || null

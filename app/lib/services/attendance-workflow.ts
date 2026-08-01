@@ -8,10 +8,10 @@
  * 3. CLOSING: Session is closed and records become immutable
  */
 
-import { supabase } from '@/lib/supabase'
-import { attendanceImmutability } from './attendance-immutability'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+import { AttendanceImmutabilityService } from './attendance-immutability'
 import { attendanceBulkOperations } from './attendance-bulk-operations'
-import { AttendanceSession, AttendanceRecord } from '@/lib/api/attendance'
 
 export type WorkflowPhase = 'PREPARATION' | 'OPENING' | 'MARKING' | 'CLOSING' | 'COMPLETED' | 'ERROR'
 
@@ -75,8 +75,15 @@ export interface WorkflowTransition {
 export class AttendanceWorkflowManager {
   private state: WorkflowState
   private transitions: Map<string, WorkflowTransition[]> = new Map()
+  private readonly immutability: AttendanceImmutabilityService
 
-  constructor(classId: string, teacherId: string, date: string) {
+  constructor(
+    private readonly supabase: SupabaseClient<Database>,
+    classId: string,
+    teacherId: string,
+    date: string
+  ) {
+    this.immutability = new AttendanceImmutabilityService(this.supabase)
     this.state = {
       phase: 'PREPARATION',
       classId,
@@ -198,7 +205,7 @@ export class AttendanceWorkflowManager {
   private async validateOpeningPrerequisites(): Promise<boolean> {
     try {
       // Check if session already exists for today
-      const { data: existingSession } = await supabase
+      const { data: existingSession } = await this.supabase
         .from('sessoes_aula')
         .select('id, status')
         .eq('turma_id', this.state.classId)
@@ -220,7 +227,7 @@ export class AttendanceWorkflowManager {
       }
 
       // Check if teacher has permission for this class
-      const { data: classPermission } = await supabase
+      const { data: classPermission } = await this.supabase
         .from('turmas')
         .select('professor_id')
         .eq('id', this.state.classId)
@@ -252,7 +259,7 @@ export class AttendanceWorkflowManager {
     // Create new session if one doesn't exist
     if (!this.state.sessionId) {
       // Get escola_id from turma
-      const { data: turma } = await supabase
+      const { data: turma } = await this.supabase
         .from('turmas')
         .select('escola_id')
         .eq('id', this.state.classId)
@@ -272,7 +279,7 @@ export class AttendanceWorkflowManager {
         ...this.state.openingData
       }
 
-      const { data: session, error } = await supabase
+      const { data: session, error } = await this.supabase
         .from('sessoes_aula')
         .insert(sessionData)
         .select()
@@ -301,7 +308,7 @@ export class AttendanceWorkflowManager {
       }
 
       // Load students for this class
-      const { data: students, error } = await supabase
+      const { data: students, error } = await this.supabase
         .from('alunos')
         .select(`
           id,
@@ -540,7 +547,7 @@ export class AttendanceWorkflowManager {
       }
 
       // Check immutability permissions
-      const permission = await attendanceImmutability.validateModificationPermission(
+      const permission = await this.immutability.validateModificationPermission(
         this.state.sessionId,
         this.state.teacherId,
         'CREATE'
@@ -571,7 +578,7 @@ export class AttendanceWorkflowManager {
     }))
 
     // Save attendance records using immutability service
-    const result = await attendanceImmutability.createImmutableAttendanceRecords(
+    const result = await this.immutability.createImmutableAttendanceRecords(
       this.state.sessionId,
       attendanceRecords,
       this.state.teacherId
@@ -612,7 +619,7 @@ export class AttendanceWorkflowManager {
       }
 
       // Verify session was properly closed
-      const { data: session } = await supabase
+      const { data: session } = await this.supabase
         .from('sessoes_aula')
         .select('status, fim_aula')
         .eq('id', this.state.sessionId)
@@ -693,7 +700,7 @@ export class AttendanceWorkflowManager {
    */
   private async logWorkflowEvent(event: string, data: any): Promise<void> {
     try {
-      await supabase
+      await this.supabase
         .from('audit_trail')
         .insert({
           tabela: 'workflow',
@@ -747,9 +754,10 @@ export class AttendanceWorkflowManager {
  * Factory function to create workflow manager
  */
 export function createAttendanceWorkflow(
+  supabase: SupabaseClient<Database>,
   classId: string,
   teacherId: string,
   date: string
 ): AttendanceWorkflowManager {
-  return new AttendanceWorkflowManager(classId, teacherId, date)
+  return new AttendanceWorkflowManager(supabase, classId, teacherId, date)
 }

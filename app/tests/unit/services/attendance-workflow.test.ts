@@ -4,12 +4,13 @@ import {
   createAttendanceWorkflow,
   WorkflowPhase
 } from '@/lib/services/attendance-workflow'
+import { createMockSupabaseClient } from './mock-supabase-client'
 
 // Additional mocks for dependencies
 vi.mock('@/lib/services/attendance-immutability', () => ({
-  attendanceImmutability: {
-    validateModificationPermission: vi.fn().mockResolvedValue({ allowed: true }),
-    createImmutableAttendanceRecords: vi.fn().mockResolvedValue({ success: true }),
+  AttendanceImmutabilityService: class {
+    validateModificationPermission = vi.fn().mockResolvedValue({ allowed: true })
+    createImmutableAttendanceRecords = vi.fn().mockResolvedValue({ success: true })
   },
 }))
 
@@ -28,7 +29,7 @@ describe('AttendanceWorkflowManager', () => {
 
   describe('Inicializacao', () => {
     it('deve criar workflow no estado PREPARATION', () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
       const state = workflow.getState()
 
       expect(state.phase).toBe('PREPARATION')
@@ -40,7 +41,7 @@ describe('AttendanceWorkflowManager', () => {
     })
 
     it('deve registrar timestamps de inicio', () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
       const state = workflow.getState()
 
       expect(state.started_at).toBeDefined()
@@ -51,7 +52,7 @@ describe('AttendanceWorkflowManager', () => {
 
   describe('Transicoes de fase', () => {
     it('deve retornar erro para transicao invalida de PREPARATION', async () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
 
       // Tentar fechar sessao sem abrir primeiro
       const result = await workflow.executeTransition('close_session')
@@ -61,7 +62,7 @@ describe('AttendanceWorkflowManager', () => {
     })
 
     it('deve listar acoes disponiveis para fase PREPARATION', () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
       const actions = workflow.getAvailableActions()
 
       expect(actions).toContain('open_session')
@@ -72,14 +73,14 @@ describe('AttendanceWorkflowManager', () => {
 
   describe('Progresso do workflow', () => {
     it('deve calcular progresso inicial como 0%', () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
       expect(workflow.getOverallProgress()).toBe(0)
     })
   })
 
   describe('Dados de abertura', () => {
     it('deve aceitar dados de abertura da sessao', () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
 
       workflow.setOpeningData({
         conteudo_programatico: 'Matematica basica',
@@ -96,7 +97,7 @@ describe('AttendanceWorkflowManager', () => {
 
   describe('Marcacao de frequencia', () => {
     it('deve rejeitar marcacao quando nao esta na fase MARKING', async () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
 
       // Workflow esta em PREPARATION, nao MARKING
       const result = await workflow.markStudentAttendance('aluno-1', 'presente')
@@ -108,7 +109,7 @@ describe('AttendanceWorkflowManager', () => {
 
   describe('Estado do workflow', () => {
     it('deve retornar copia do estado (imutabilidade)', () => {
-      const workflow = createAttendanceWorkflow('turma-1', 'professor-1', '2026-01-19')
+      const workflow = createAttendanceWorkflow(createMockSupabaseClient(), 'turma-1', 'professor-1', '2026-01-19')
       const state1 = workflow.getState()
       const state2 = workflow.getState()
 
