@@ -100,6 +100,8 @@ The backup/restore rehearsal writes generated evidence under ignored `.pilot-evi
 - Product application and marketing site remain separate repositories. This repository owns the product, database assets, and operational code.
 - School isolation depends on Supabase RLS. Keep role checks, school scoping, and audit behavior intact when changing data access.
 - Attendance is designed to be immutable and time-locked. Treat changes to `app/lib/services/attendance-*` and related migrations as compliance-sensitive.
+- Attendance server actions enforce actor/role/school/session ownership through the single interface in `app/lib/services/attendance-auth.ts` (issue #30). Never trust client-supplied `professor_id`/`escola_id`; resolve the actor from the server session. Live regression harness: `app/tests/live/attendance-auth.live.test.ts` (needs `EDUCA_LIVE_SUPABASE=1` and a provisioned local stack).
+- `frequencia` has a unique index on `(matricula_id, data_aula)` (migration `20260801000000`): one attendance row per student per class-day. The mark toggle upsert depends on it.
 - CI currently runs typecheck and lint only. Run unit tests, build, database validation, and applicable local Supabase pilot checks before proposing operational or database changes.
 - `tsconfig.typecheck.json` and `vitest.config.mts` exclude diary and descriptive-report test directories because those modules are outside the confirmed synthetic pilot. Those files remain for a future reactivation gate and do not prove pilot-core readiness.
 - Historical and extended documentation is archived outside the repository at `/home/shiv/docs/EDUCA/`, preserving original repository-relative paths. `MOVED_FROM_REPO.md` there records the archive manifest and source commit.
