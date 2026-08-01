@@ -10,8 +10,9 @@
  * - Legal document generation capability
  */
 
-import { supabase } from '@/lib/supabase'
-import { AttendanceSession, AttendanceRecord } from '@/lib/api/attendance'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+import type { AttendanceSession, AttendanceRecord } from '@/lib/api/attendance'
 import { logger } from '@/lib/logger'
 
 interface ImmutabilityError {
@@ -52,17 +53,11 @@ interface LegalDocumentSignature {
 }
 
 export class AttendanceImmutabilityService {
-  private static instance: AttendanceImmutabilityService
   private readonly BRAZILIAN_TIMEZONE = 'America/Sao_Paulo'
   private readonly DAILY_LOCK_HOUR = 18 // 6 PM
   private readonly GRACE_PERIOD_MINUTES = 15 // 15 minutes after session creation
 
-  static getInstance(): AttendanceImmutabilityService {
-    if (!AttendanceImmutabilityService.instance) {
-      AttendanceImmutabilityService.instance = new AttendanceImmutabilityService()
-    }
-    return AttendanceImmutabilityService.instance
-  }
+  constructor(private readonly supabase: SupabaseClient<Database>) {}
 
   /**
    * Validate if attendance modification is allowed
@@ -74,7 +69,7 @@ export class AttendanceImmutabilityService {
   ): Promise<{ allowed: boolean; error?: ImmutabilityError }> {
     try {
       // Get session data
-      const { data: session, error: sessionError } = await supabase
+      const { data: session, error: sessionError } = await this.supabase
         .from('sessoes_aula')
         .select(`
           *,
@@ -140,7 +135,7 @@ export class AttendanceImmutabilityService {
 
       // Check if user has permission for this session
       if (session.professor_id !== userId && operation !== 'CREATE') {
-        const { data: userRole } = await supabase
+        const { data: userRole } = await this.supabase
           .from('users')
           .select('tipo_usuario')
           .eq('id', userId)
@@ -163,7 +158,7 @@ export class AttendanceImmutabilityService {
 
       // Check if attendance already exists for this session (prevent duplicates)
       if (operation === 'CREATE') {
-        const { data: existingRecords } = await supabase
+        const { data: existingRecords } = await this.supabase
           .from('frequencia')
           .select('id')
           .eq('sessao_id', sessionId)
@@ -285,20 +280,20 @@ export class AttendanceImmutabilityService {
       }
 
       // Get session and user data for audit
-      const { data: session } = await supabase
+      const { data: session } = await this.supabase
         .from('sessoes_aula')
         .select('turma_id, data_aula, professor_id')
         .eq('id', sessionId)
         .single()
 
-      const { data: user } = await supabase
+      const { data: user } = await this.supabase
         .from('users')
         .select('tipo_usuario')
         .eq('id', userId)
         .single()
 
       // Get matriculas for the students in this turma
-      const { data: matriculas } = await supabase
+      const { data: matriculas } = await this.supabase
         .from('matriculas')
         .select('id, aluno_id')
         .eq('turma_id', session!.turma_id)
@@ -335,7 +330,7 @@ export class AttendanceImmutabilityService {
         }))
 
       // Insert records in transaction
-      const { data: createdRecords, error } = await supabase
+      const { data: createdRecords, error } = await this.supabase
         .from('frequencia')
         .insert(attendanceData)
         .select()
@@ -399,7 +394,7 @@ export class AttendanceImmutabilityService {
     })
 
     // Update session to closed status
-    const { data: closedSession } = await supabase
+    const { data: closedSession } = await this.supabase
       .from('sessoes_aula')
       .update({
         status: 'fechada',
@@ -457,7 +452,7 @@ export class AttendanceImmutabilityService {
    */
   async logAuditTrail(entry: Omit<AuditTrailEntry, 'id'>): Promise<void> {
     try {
-      await supabase
+      await this.supabase
         .from('audit_trail')
         .insert({
           tabela: entry.table_name,
@@ -483,7 +478,7 @@ export class AttendanceImmutabilityService {
    */
   async getSessionAuditTrail(sessionId: string): Promise<AuditTrailEntry[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await this.supabase
         .from('audit_trail')
         .select('*')
         .or(`registro_id.eq.${sessionId},sessao_id.eq.${sessionId}`)
@@ -530,7 +525,7 @@ export class AttendanceImmutabilityService {
   }> {
     try {
       // Get session data
-      const { data: session } = await supabase
+      const { data: session } = await this.supabase
         .from('sessoes_aula')
         .select(`
           *,
@@ -541,7 +536,7 @@ export class AttendanceImmutabilityService {
         .single()
 
       // Get attendance records
-      const { data: attendance } = await supabase
+      const { data: attendance } = await this.supabase
         .from('frequencia')
         .select(`
           *,
@@ -611,7 +606,7 @@ export class AttendanceImmutabilityService {
       let valid = true
 
       if (recordType === 'attendance') {
-        const { data: record } = await supabase
+        const { data: record } = await this.supabase
           .from('frequencia')
           .select('*')
           .eq('id', recordId)
@@ -644,6 +639,3 @@ export class AttendanceImmutabilityService {
     }
   }
 }
-
-// Export singleton instance
-export const attendanceImmutability = AttendanceImmutabilityService.getInstance()
