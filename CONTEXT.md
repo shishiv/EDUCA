@@ -71,13 +71,17 @@ It needs `initdb`, `pg_ctl`, and `psql` from PostgreSQL 15 or newer. It creates 
 
 ## Supabase and data boundaries
 
-`app/types/database.ts` is generated from the local Supabase schema and is required by the application build. Preserve it and regenerate it only through the command above.
+`app/types/database.ts` is generated from the local Supabase schema and is required by the application build. Preserve it and regenerate it only through the command above. It intentionally lags the live schema: pilot code casts at the seam (`asPilotRpcClient`, `asWhatsAppClient`).
 
 The canonical migrations retain the full product schema. The pilot-only provisioner revokes high-risk modules and blocks high-risk student fields only during synthetic pilot rehearsal. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness.
 
 `app/scripts/pilot-safety-gate.ts` blocks external deploys while `PILOT_MODE=true`. To authorize real data or external pilot deployment, make a separate reviewed change with named legal and governance approvals. Do not weaken the gate as part of routine feature work.
 
 The backup/restore rehearsal writes generated evidence under ignored `.pilot-evidence/`. It verifies portable CSV data, Auth and Storage representations, policies, grants, views, RPCs, tombstones, and RPO/RTO without modifying its source database.
+
+## WhatsApp attendance notifications (bounded MVP)
+
+The bounded WhatsApp notification module lives in `app/lib/notifications/whatsapp-*` with routes under `app/app/api/whatsapp/`. The gateway seam (`whatsapp-gateway.ts`) hides Meta request details behind a small interface with two adapters: a production-shaped Meta adapter and a deterministic local fake. External delivery is a later explicit approval: the safety gate (`whatsapp-safety-gate.ts`) forces the local fake while `PILOT_MODE=true` or Meta credentials are missing, and masked receipts land in `.pilot-evidence/whatsapp-receipts.jsonl`. Schema and delivery-state machine live in `supabase/migrations/20260801000000_whatsapp_notifications.sql`; webhook status updates go only through the monotonic `apply_whatsapp_delivery_status` RPC. Never log or persist message bodies, tokens, or phone numbers. Local rehearsal: `WHATSAPP_LOCAL_FAKE_MODE=deliver|fail|reject` plus unit tests in `app/tests/unit/notifications/` and DB tests in `supabase/tests/database/whatsapp_notifications.test.sql`.
 
 ## Load-bearing files
 
