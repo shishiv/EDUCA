@@ -65,7 +65,10 @@ the multi-school view is the demoable differentiator.
 | Open / close session via API | `/api/sessoes/aula/abrir` | Admin role allowed |
 | Mark attendance via API | `/api/sessoes/aula/[id]/frequencia` | Admin role allowed |
 | Compliance warnings | Dashboard | Fixed: was 400 on matriculas.ativo |
-| Grading, Educacenso, Bolsa Familia, health | Various | Out of pilot scope - see CONTEXT.md |
+| Notas (lançamento e visualização) | `/dashboard/notas` | Dados sintéticos no seed |
+| Relatórios de frequência | `/dashboard/relatorios`, `/relatorios/frequencia` | |
+| Bolsa Família (relatório de frequência) | `/relatorios/bolsa-familia` | NIS sintético no seed |
+| Diário de classe | `/dashboard/diario`, `/diario` | |
 
 > **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations` which
 > is blocked in demo-sandbox mode by design (it would invite real auth users).

@@ -25,10 +25,11 @@ import { studentsApi } from '@/lib/api/students'
 import { logger } from '@/lib/logger'
 import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { useEscola } from '@/contexts/escola-context'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
-  const pilotMode = isPilotModeEnabled()
+  const pilotMode = isPilotModeEnabled() && !isDemoSandboxEnabled()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
