@@ -84,10 +84,14 @@ test.describe('Authentication Flows', () => {
     await expect(page.getByRole('link', { name: /voltar ao login/i }).last()).toBeVisible()
   })
 
-  test('privacy and offline pages are public', async ({ page }) => {
+  test('privacy page is public', async ({ page }) => {
     await page.goto('/politica-privacidade')
     await expect(page.getByRole('heading', { name: 'Política de Privacidade', exact: true })).toBeVisible()
+  })
+
+  test('offline page is public to unauthenticated pilot users', async ({ page }) => {
     await page.goto('/offline')
+    await expect(page).toHaveURL(/\/offline$/)
     await expect(page.getByRole('heading', { name: /você está offline/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /tentar novamente/i })).toBeVisible()
   })

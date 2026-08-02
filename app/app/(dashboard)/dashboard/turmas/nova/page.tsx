@@ -161,7 +161,6 @@ export default function NovaTurmaPage() {
         professor_id: formData.professor_id || null,
         capacidade: formData.capacidade,
         turno: formData.turno,
-        observacoes: formData.observacoes.trim() || null,
         ativo: formData.ativo,
       })
 

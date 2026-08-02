@@ -61,6 +61,7 @@ describe('synthetic pilot foundation', () => {
     expect(isPilotDisabledPath('/api/educacenso/export')).toBe(true)
     expect(isPilotDisabledPath('/relatorios/bolsa-familia')).toBe(true)
     expect(isPilotDisabledPath('/diario/frequencia')).toBe(false)
+    expect(isPilotDisabledPath('/offline')).toBe(false)
   })
 
   it('mirrors the pilot_can_manage_school RLS predicate without widening it', () => {
