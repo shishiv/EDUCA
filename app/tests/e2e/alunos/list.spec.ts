@@ -46,9 +46,21 @@ test.describe('Students list', () => {
     expect(await rows(page).count()).toBeGreaterThan(0)
   })
 
-  test('provides accessible status and sex filters', async ({ page }) => {
-    await expect(page.getByRole('combobox', { name: 'Status' })).toBeVisible()
-    await expect(page.getByRole('combobox', { name: 'Sexo' })).toBeVisible()
+  test('provides accessible and operable status and sex filters', async ({ page }) => {
+    const statusFilter = page.getByRole('combobox', { name: 'Status' })
+    const sexFilter = page.getByRole('combobox', { name: 'Sexo' })
+
+    await expect(statusFilter).toBeVisible()
+    await expect(sexFilter).toBeVisible()
+
+    await statusFilter.click()
+    await page.getByRole('option', { name: 'Ativos', exact: true }).click()
+    await expect(statusFilter).toContainText('Ativos')
+
+    await sexFilter.click()
+    await page.getByRole('option', { name: 'Feminino', exact: true }).click()
+    await expect(sexFilter).toContainText('Feminino')
+    await expect(page.getByText('Feminino').first()).toBeVisible()
   })
 
   test('filters by female students', async ({ page }) => {
