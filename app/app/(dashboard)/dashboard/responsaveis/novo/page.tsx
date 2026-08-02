@@ -14,15 +14,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Save, User, Phone, Mail, Briefcase, Shield } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { ConsentCheckbox } from '@/components/lgpd'
+import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoResponsavelPage() {
   const router = useRouter()
+  const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
@@ -102,6 +105,10 @@ export default function NovoResponsavelPage() {
         profissao: formData.profissao || null,
         lgpd_consentimento: formData.lgpd_consentimento,
         lgpd_data_consentimento: new Date().toISOString(),
+        // escola_id scopes the record to the school the admin selected;
+        // school-scoped users (diretor, secretario) have their own escola_id
+        // which RLS enforces at the database seam.
+        escola_id: selectedEscolaId ?? null,
       }
 
       // Insert into database
@@ -178,6 +185,15 @@ export default function NovoResponsavelPage() {
           </p>
         </div>
       </div>
+
+      {/* Admin must select a school before creating a responsavel */}
+      {shouldShowSelector && !selectedEscolaId && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Selecione uma escola no menu lateral antes de cadastrar um responsável.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Personal Data */}
