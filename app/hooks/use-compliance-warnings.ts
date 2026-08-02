@@ -100,7 +100,7 @@ export function useComplianceWarnings(escolaId?: string) {
           `
           )
           .in('turma_id', turmaIds)
-          .eq('ativo', true)
+          .eq('situacao', 'ativa')
 
         if (matriculasError) {
           logger.error('Error fetching matriculas for compliance', matriculasError, {

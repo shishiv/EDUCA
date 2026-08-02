@@ -24,10 +24,12 @@ import { studentFormSchema } from '@/lib/validation'
 import { studentsApi } from '@/lib/api/students'
 import { logger } from '@/lib/logger'
 import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
   const pilotMode = isPilotModeEnabled()
+  const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
@@ -125,10 +127,14 @@ export default function NovoAlunoPage() {
         }
       }
 
-      // Create student via API
+      // Create student via API.
+      // escola_id_override is needed when the actor is a secretariat-level admin
+      // (escola_id IS NULL on their profile). The selected escola from the UI
+      // context is passed through so the student is scoped to the right school.
       const createdStudent = await studentsApi.createStudent({
         ...studentData,
         responsavel: guardianData,
+        escola_id_override: selectedEscolaId ?? undefined,
       })
 
       toast.success('Aluno cadastrado com sucesso!')
@@ -206,6 +212,15 @@ export default function NovoAlunoPage() {
           </p>
         </div>
       </div>
+
+      {/* Admin must select a school before creating a student */}
+      {shouldShowSelector && !selectedEscolaId && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Selecione uma escola no menu lateral antes de cadastrar um aluno.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} noValidate>
         {Object.keys(fieldErrors).length > 0 && (
@@ -663,7 +678,7 @@ export default function NovoAlunoPage() {
               <CardContent className="space-y-8">
                 {/* Documentos Obrigatórios */}
                 <div className="space-y-6">
-                  <div className="border-l-4 border-blue-500 pl-4">
+                  <div className="pb-2">
                     <h4 className="font-semibold text-lg text-gray-900">Documentos Obrigatórios</h4>
                     <p className="text-sm text-gray-600 mt-1">Necessários para completar a matrícula</p>
                   </div>
@@ -697,7 +712,7 @@ export default function NovoAlunoPage() {
 
                 {/* Documentos Opcionais */}
                 <div className="space-y-6">
-                  <div className="border-l-4 border-gray-400 pl-4">
+                  <div className="pb-2">
                     <h4 className="font-semibold text-lg text-gray-900">Documentos Opcionais</h4>
                     <p className="text-sm text-gray-600 mt-1">Podem ser anexados posteriormente</p>
                   </div>
