@@ -56,9 +56,7 @@ interface QuickAccessItem {
   name: string
   href: string
   icon: LucideIcon
-  color: string
   iconColor: string
-  borderColor: string
   roles: QuickAccessRole[]
   pilotHref?: string
   pilotRoles?: QuickAccessRole[]
@@ -74,16 +72,16 @@ interface QuickActionCard {
 }
 
 const quickAccessItems: QuickAccessItem[] = [
-  { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600', borderColor: 'hover:border-blue-300', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
-  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600', borderColor: 'hover:border-emerald-300', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
-  { name: 'Frequência', href: '/dashboard/frequencia', pilotHref: '/diario/frequencia', icon: CheckSquare, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600', borderColor: 'hover:border-amber-300', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, color: 'bg-violet-50 hover:bg-violet-100', iconColor: 'text-violet-600', borderColor: 'hover:border-violet-300', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
-  { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, color: 'bg-rose-50 hover:bg-rose-100', iconColor: 'text-rose-600', borderColor: 'hover:border-rose-300', roles: ['admin', 'diretor', 'secretario'] },
-  { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, color: 'bg-slate-50 hover:bg-slate-100', iconColor: 'text-slate-600', borderColor: 'hover:border-slate-300', roles: ['admin', 'diretor'] },
+  { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
+  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, iconColor: 'text-emerald-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
+  { name: 'Frequência', href: '/dashboard/frequencia', pilotHref: '/diario/frequencia', icon: CheckSquare, iconColor: 'text-amber-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, iconColor: 'text-violet-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
+  { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, iconColor: 'text-slate-600', roles: ['admin', 'diretor'] },
 ]
 
 const defaultQuickActionCards: QuickActionCard[] = [
-  { name: 'Nova Chamada', href: '/dashboard/frequencia', icon: CheckSquare, iconColor: 'text-amber-600' },
+  { name: 'Nova Chamada', href: '/diario/frequencia', icon: CheckSquare, iconColor: 'text-amber-600' },
   { name: 'Lancar Notas', href: '/dashboard/notas', icon: GraduationCap, iconColor: 'text-violet-600' },
   { name: 'Ver Relatorios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600' },
   { name: 'Cadastrar Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', schoolWrite: true },
@@ -306,32 +304,39 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Simplified Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
+      {/* Page heading and one compact action row */}
+      <div className="mb-8 flex flex-col gap-2 border-b border-gray-200 pb-6">
+        <h1 className="font-display text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">
           {getGreeting()}, {userProfile?.nome?.split(' ')[0] || 'Usuário'}!
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-sm text-gray-600 sm:text-base">
           Sistema de Gestão Educacional - Ano Letivo 2024
         </p>
       </div>
 
-      {/* Quick Access - Moved to Top */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-        {visibleQuickAccess.map((item) => {
-          const IconComponent = item.icon
-          return (
-            <Link key={item.name} href={item.href}>
-              <div className={`flex flex-col items-center p-4 rounded-lg ${item.color} border border-transparent ${item.borderColor} transition-all duration-200 hover:scale-105 cursor-pointer shadow-sm hover:shadow-md`}>
-                <IconComponent className={`h-6 w-6 mb-2 ${item.iconColor}`} />
-                <span className="text-xs font-medium text-center text-gray-700">
-                  {item.name}
-                </span>
-              </div>
-            </Link>
-          )
-        })}
-      </div>
+      {visibleQuickAccess.length > 0 && (
+        <nav aria-label="Acessos rápidos" className="mb-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
+            {visibleQuickAccess.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <Button
+                  key={item.name}
+                  variant="outline"
+                  size="touch"
+                  asChild
+                  className="w-full justify-start gap-2 border-gray-200 bg-white px-3 text-sm text-green-900 shadow-none hover:border-green-300 hover:bg-green-50 hover:text-green-700 lg:w-auto"
+                >
+                  <Link href={item.href}>
+                    <IconComponent className={`h-4 w-4 ${item.iconColor}`} aria-hidden="true" />
+                    <span>{item.name}</span>
+                  </Link>
+                </Button>
+              )
+            })}
+          </div>
+        </nav>
+      )}
 
       {/* Statistics Cards - Responsive grid: 1 col mobile, 2 cols tablet, 4 cols desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

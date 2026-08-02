@@ -150,9 +150,9 @@ export function MobileHeader({
             {/* Mobile Menu Toggle - Larger touch target */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={onMenuToggle}
-              className="h-10 w-10 text-municipal-gray-500 hover:text-municipal-primary hover:bg-municipal-gray-50 touch-target-large"
+              className="h-11 w-11 text-municipal-gray-500 hover:bg-municipal-gray-50 hover:text-municipal-primary touch-target-large"
               aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
               data-testid="menu-toggle"
             >
@@ -211,8 +211,9 @@ export function MobileHeader({
             {/* Notificações with count */}
             <Button
               variant="ghost"
-              size="sm"
-              className="relative text-municipal-gray-500 hover:text-municipal-primary hover:bg-municipal-gray-50 h-10 w-10 touch-target-large"
+              size="icon"
+              aria-label="Abrir notificações"
+              className="relative h-11 w-11 text-municipal-gray-500 hover:bg-municipal-gray-50 hover:text-municipal-primary touch-target-large"
             >
               <Bell className="h-4 w-4" />
               {notifications > 0 && (
