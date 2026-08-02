@@ -31,12 +31,12 @@ export function StatCard({
 
   return (
     <div className={cn(
-      "bg-white rounded-[16px] p-6 border border-gray-200 transition-all hover:border-green-200 hover:shadow-lg hover:shadow-green-500/[0.08]",
+      "bg-white rounded-educa-md p-6 border border-gray-200 shadow-educa transition-shadow hover:border-green-200 hover:shadow-educa-md",
       className
     )}>
       <div className="flex justify-between items-start mb-4">
         <div className={cn(
-          "w-12 h-12 rounded-[12px] flex items-center justify-center",
+          "w-10 h-10 rounded-educa flex items-center justify-center",
           iconColorClasses[iconColor]
         )}>
           <Icon className="w-6 h-6" />
@@ -52,7 +52,7 @@ export function StatCard({
           </span>
         )}
       </div>
-      <p className="font-display text-[2rem] font-bold text-gray-800 mb-1">
+      <p className="font-display text-3xl font-bold text-gray-800 mb-1">
         {value}
       </p>
       <p className="text-[0.85rem] text-gray-500">{label}</p>

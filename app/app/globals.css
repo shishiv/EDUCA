@@ -35,6 +35,9 @@
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-cursive: var(--font-caveat), cursive;
 
+  /* Canonical EDUCA surface token */
+  --educa-paper: #f4faf7;
+
   /* Type Scale */
   --text-display: 3rem;      /* 48px - Hero, Logo */
   --text-h1: 2rem;           /* 32px - Page titles */
@@ -224,7 +227,7 @@
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
+    @apply transition-shadow duration-200 hover:shadow-lg;
   }
 
   /* Safe area support for modern mobile devices */
@@ -258,23 +261,7 @@
   }
   
   .stat-card {
-    @apply bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-6 shadow-sm card-hover;
-  }
-  
-  .stat-card-primary {
-    @apply bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200;
-  }
-  
-  .stat-card-secondary {
-    @apply bg-gradient-to-br from-green-50 to-green-100 border-green-200;
-  }
-  
-  .stat-card-accent {
-    @apply bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200;
-  }
-  
-  .stat-card-warning {
-    @apply bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200;
+    @apply bg-white border border-gray-200 rounded-educa-md p-6 shadow-educa card-hover;
   }
 
   /* High Contrast Mode Styles for Accessibility */
