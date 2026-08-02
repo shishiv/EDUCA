@@ -148,4 +148,18 @@ test.describe('Enrollment list and detail', () => {
     await expect(page.getByText(/aluno/i).first()).toBeVisible()
     await expect(page.getByText(/turma/i).first()).toBeVisible()
   })
+
+  test('edit action opens the existing enrollment detail workflow', async ({ page }) => {
+    await page.goto('/dashboard/matriculas')
+    const firstDataRow = page.getByRole('row').nth(1)
+    const actionLinks = firstDataRow.locator('a')
+
+    await expect(actionLinks).toHaveCount(2)
+    const editAction = actionLinks.nth(1)
+    await expect(editAction).toHaveAttribute('href', /^\/dashboard\/matriculas\/[^/]+$/)
+
+    await editAction.click()
+    await expect(page).toHaveURL(/\/dashboard\/matriculas\/[a-f0-9-]+$/)
+    await expect(page.getByRole('button', { name: 'Editar', exact: true })).toBeVisible()
+  })
 })

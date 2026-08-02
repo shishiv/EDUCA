@@ -605,7 +605,7 @@ export default function MatriculasPage() {
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/matriculas/${matricula.id}/editar`}>
+                          <Link href={`/dashboard/matriculas/${matricula.id}`}>
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>

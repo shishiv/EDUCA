@@ -100,7 +100,51 @@ describe('nova turma page series map', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 4. Atribuicoes page: no NavigationProvider dependency
+// 4. Nova turma INSERT must match the canonical turmas table
+// ---------------------------------------------------------------------------
+describe('nova turma insert schema contract', () => {
+  it('sends only columns defined by the canonical turmas schema', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const pageSource = readFileSync(
+      join(process.cwd(), 'app/(dashboard)/dashboard/turmas/nova/page.tsx'),
+      'utf8',
+    )
+    const canonicalSchema = readFileSync(
+      join(process.cwd(), '../supabase/migrations/00000000000000_baseline.sql'),
+      'utf8',
+    )
+    const tableMatch = canonicalSchema.match(
+      /CREATE TABLE IF NOT EXISTS turmas \(([\s\S]*?)\n\);/,
+    )
+    const insertMatch = pageSource.match(
+      /\.from\('turmas'\)\.insert\(\{([\s\S]*?)\n\s*\}\)/,
+    )
+
+    expect(tableMatch).not.toBeNull()
+    expect(insertMatch).not.toBeNull()
+    if (!tableMatch || !insertMatch) throw new Error('Canonical schema or INSERT not found')
+
+    const canonicalColumns = new Set(
+      tableMatch[1]
+        .split('\n')
+        .map(line => line.trim().match(/^([a-z_][a-z0-9_]*)\s+/i)?.[1])
+        .filter((column): column is string => Boolean(column)),
+    )
+    const payloadColumns = [...insertMatch[1].matchAll(/^\s*([a-z_][a-z0-9_]*):/gim)]
+      .map(match => match[1])
+
+    expect(payloadColumns).toEqual(expect.arrayContaining([
+      'nome', 'serie', 'ano_letivo', 'escola_id', 'capacidade', 'turno', 'ativo',
+    ]))
+    for (const column of payloadColumns) {
+      expect(canonicalColumns.has(column)).toBe(true)
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 5. Atribuicoes page: no NavigationProvider dependency
 // ---------------------------------------------------------------------------
 describe('atribuicoes page PageHeader import', () => {
   it('imports PageHeader from ui/page-header, not enhanced-breadcrumbs', async () => {

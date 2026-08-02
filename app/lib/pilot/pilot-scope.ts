@@ -23,7 +23,6 @@ export const PILOT_DISABLED_ROUTE_PREFIXES = [
   '/relatorios/bolsa-familia',
   '/relatorios/conteudo',
   '/dashboard/flags',
-  '/offline',
   '/api/grades',
   '/api/reports/bolsa-familia',
   '/api/reports',
