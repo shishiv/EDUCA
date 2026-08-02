@@ -187,13 +187,19 @@ export async function authMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   if (isPilotModeEnabled() && isPilotDisabledPath(pathname)) {
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
+    // Demo sandbox always runs canonical migrations without the pilot module
+    // gate (provision-pilot-module-gate.sql is never applied to the demo DB)
+    // and all data is synthetic. Allow all routes through in demo mode.
+    const inDemoSandbox = process.env.NEXT_PUBLIC_DEMO_SANDBOX === 'true'
+    if (!inDemoSandbox) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
+      }
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      redirectUrl.searchParams.set('pilotScope', 'disabled')
+      return NextResponse.redirect(redirectUrl)
     }
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    redirectUrl.searchParams.set('pilotScope', 'disabled')
-    return NextResponse.redirect(redirectUrl)
   }
 
   // Public demo sandbox: block admin data-management APIs wholesale so no

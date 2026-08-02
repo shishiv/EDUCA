@@ -10,6 +10,7 @@ import { MunicipalBrasao } from '@/components/identity/municipal-assets'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaSelector } from '@/components/layout/escola-selector'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import {
   GraduationCap,
   Users,
@@ -182,7 +183,11 @@ function getNavigationForRole(userRole: string): NavigationGroup[] {
     .map(group => ({
       ...group,
       items: group.items.filter(item =>
-        item.roles.includes(userRole) && (!isPilotModeEnabled() || !isPilotDisabledPath(item.href))
+        item.roles.includes(userRole) &&
+        // In demo sandbox all modules are accessible: the demo DB never applies
+        // provision-pilot-module-gate.sql, all data is synthetic, and the
+        // pilot gate is only relevant for real municipal deployments.
+        (!isPilotModeEnabled() || isDemoSandboxEnabled() || !isPilotDisabledPath(item.href))
       ),
     }))
     .filter(group => group.items.length > 0)

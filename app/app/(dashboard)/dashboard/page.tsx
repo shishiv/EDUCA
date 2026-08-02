@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
 import { canManagePilotSchool, isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
 type AlunoRow = Database['public']['Tables']['alunos']['Row']
@@ -279,7 +280,10 @@ export default function DashboardPage() {
     )
   }
 
-  const pilotMode = isPilotModeEnabled()
+  // In demo sandbox the pilot route gate does not apply: the demo DB never
+  // runs provision-pilot-module-gate.sql and all data is synthetic. Treat the
+  // demo as a full-feature instance even when NEXT_PUBLIC_PILOT_MODE=true.
+  const pilotMode = isPilotModeEnabled() && !isDemoSandboxEnabled()
   const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
 
   const visibleQuickAccess = quickAccessItems
