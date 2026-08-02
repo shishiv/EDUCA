@@ -166,9 +166,10 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="relative h-10 w-10 rounded-[10px] bg-gray-50 hover:bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
+                aria-label="Abrir notificações"
+                className="relative flex h-10 w-10 items-center justify-center rounded-[10px] border border-gray-200 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-5 w-5" aria-hidden="true" />
                 {allNotifications.length > 0 && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-pink-400 rounded-full border-2 border-white" />
                 )}
@@ -246,7 +247,7 @@ export function Header() {
         {/* Profile Menu - EDUCA styled avatar with gradient */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="relative h-10 w-10 rounded-[10px] bg-gradient-to-br from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 flex items-center justify-center text-white font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md">
+            <button type="button" aria-label="Abrir menu do usuário" className="relative flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-green-600 to-sky-600 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2">
               {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
             </button>
           </DropdownMenuTrigger>

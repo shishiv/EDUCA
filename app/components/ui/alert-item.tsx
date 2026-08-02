@@ -50,7 +50,7 @@ export function AlertItem({ severity, children, className }: AlertItemProps) {
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-3 rounded-lg border',
+        'flex items-start gap-3 rounded-lg border p-3',
         config.bg,
         config.border,
         config.text,

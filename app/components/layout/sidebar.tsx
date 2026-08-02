@@ -255,7 +255,8 @@ export function Sidebar({ className }: SidebarProps) {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="h-6 w-6 p-0 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-green-600 hover:bg-green-50 hover:border-green-200 shadow-sm transition-all duration-200"
+          aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+          className="h-10 w-10 p-0 rounded-full border border-gray-200 bg-white text-green-900 shadow-sm transition-colors duration-200 hover:border-green-200 hover:bg-green-50 hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
         </Button>
@@ -275,7 +276,7 @@ export function Sidebar({ className }: SidebarProps) {
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
                     return (
-                      <Link key={item.name} href={item.href}>
+                      <Link key={item.name} href={item.href} aria-current={isActive ? 'page' : undefined}>
                         <Button
                           variant="ghost"
                           className={cn(
@@ -332,11 +333,13 @@ export function Sidebar({ className }: SidebarProps) {
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
                     return (
-                      <Link key={item.name} href={item.href}>
-                        {/* Nav item - EDUCA mockup: padding 12px, border-radius 10px, font-size 0.9rem, font-weight 500 */}
+                      <Link key={item.name} href={item.href} aria-current={isActive ? 'page' : undefined}>
+                        {/* A single active marker keeps route orientation without another badge or panel. */}
                         <div
                           className={cn(
-                            "flex items-center gap-3 px-3 py-3 rounded-[10px] text-[0.9rem] font-medium cursor-pointer transition-all duration-200",
+                            "group relative flex items-center gap-3 rounded-[10px] px-3 py-3 pl-5 text-[0.9rem] font-medium cursor-pointer transition-colors duration-200",
+                            "before:absolute before:left-2 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-full before:transition-colors",
+                            isActive ? "before:bg-green-600" : "before:bg-transparent group-hover:before:bg-green-200",
                             isActive
                               ? "bg-green-50 text-green-600"
                               : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"

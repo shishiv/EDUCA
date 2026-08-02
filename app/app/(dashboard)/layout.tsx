@@ -50,7 +50,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-[var(--educa-paper)]">
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar />
@@ -74,7 +74,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Main content with bottom padding for mobile nav */}
-        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20 md:pb-6">
+        <main id="main-content" className="flex-1 overflow-auto p-4 pb-20 sm:p-6 md:pb-6">
           {isDemoSandboxEnabled() && <DemoSandboxBanner />}
           {children}
         </main>

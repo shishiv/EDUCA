@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { getUserProfile } from '@/lib/auth'
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, LogIn, CheckCircle, FileText, Users } from 'lucide-react'
+import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -21,15 +21,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [mounted, setMounted] = useState(true)
-
   const { signIn } = useAuth()
   const router = useRouter()
-
-  // Set mounted state
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,40 +104,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid md:grid-cols-2">
       {/* Left Panel - Hero with gradient */}
-      <div className="hidden md:flex flex-col justify-center items-center p-12 bg-gradient-to-br from-green-600 to-blue-500 relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-white/10 rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full" />
-
-        <div className="relative z-10 max-w-md text-center">
-          <h1 className="font-display text-4xl font-bold text-white mb-4">
+      <div className="relative hidden flex-col justify-center overflow-hidden bg-gradient-to-br from-green-600 to-blue-500 p-12 md:flex lg:p-16">
+        <div
+          className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-white/10"
+          aria-hidden="true"
+        />
+        <div className="relative z-10 max-w-md pl-6 before:absolute before:left-0 before:top-1 before:h-9 before:w-1 before:rounded-full before:bg-yellow-300">
+          <h1 className="font-display text-4xl font-bold leading-tight text-white lg:text-5xl">
             Bem-vindo ao EDUCA
           </h1>
-          <p className="text-lg text-white/85 mb-12">
+          <p className="mt-5 max-w-sm text-lg leading-relaxed text-white/85">
             O sistema que simplifica a gestão escolar da rede municipal.
           </p>
-
-          {/* Features list */}
-          <div className="flex flex-col gap-4 text-left">
-            <div className="flex items-center gap-3 text-white/90">
-              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5" />
-              </div>
-              <span>Chamada digital sem papel</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90">
-              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5" />
-              </div>
-              <span>Relatorios automaticos</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90">
-              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <span>Gestao de 9 escolas integradas</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -189,6 +160,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu.email@municipio.edu.br"
+                autoComplete="email"
                 required
                 className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
               />
@@ -204,6 +176,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
+                autoComplete="current-password"
                 required
                 className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
               />
@@ -229,7 +202,8 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+              aria-busy={loading}
+              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-shadow"
             >
               {loading ? (
                 <>
