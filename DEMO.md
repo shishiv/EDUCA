@@ -30,6 +30,47 @@ Acceptance criteria from issue #23:
 | `.github/workflows/demo-reset.yml` | Narrow weekly reset: `pnpm seed:demo` + `pnpm demo:validate` against the demo project. |
 | `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Demo-sandbox mode guards: blocks admin data-management APIs, hides destructive UI actions, shows the demo banner. |
 
+## Demo persona
+
+The demo user is a secretariat-level **admin** with `escola_id = NULL` in the `users` table.
+This is the intended persona: an admin who can see and manage all three seeded schools.
+
+| Aspect | Detail |
+| --- | --- |
+| Email / password | `demo@educa.app.br` / `Demo@2026` |
+| Role | `admin` |
+| `escola_id` | `NULL` (multi-school secretariat) |
+| School context | Admin must select a school from the sidebar selector before school-scoped actions |
+| Read access | All schools, turmas, alunos, responsaveis, attendance - no selector needed |
+| Write access (create flows) | Selector must be set first: escola_id is resolved from the UI context |
+
+The `escola_id = NULL` pattern is correct. Do **not** assign the demo admin to a school;
+the multi-school view is the demoable differentiator.
+
+## Demoable flows (as of this change)
+
+| Flow | Path | Notes |
+| --- | --- | --- |
+| View dashboard, alerts, frequency stats | `/dashboard` | Works without school selector |
+| Browse all schools | `/dashboard/escolas` | Multi-school read |
+| Browse turmas in a school | `/dashboard/turmas` | Select school first |
+| View turma detail + student list | `/dashboard/turmas/[id]` | |
+| View chamada (read-only for admin) | `/dashboard/turmas/[id]/chamada` | Editing is teacher-only by design |
+| Atribuicoes (assign teacher to class) | `/dashboard/atribuicoes` | Fixed: was crashing |
+| **Nova turma** | `/dashboard/turmas/nova` | Fixed: was a stub; now writes to DB |
+| **Novo aluno** | `/dashboard/alunos/novo` | Fixed: now passes escola_id from context |
+| **Novo responsavel** | `/dashboard/responsaveis/novo` | Fixed: now passes escola_id from context |
+| Nova matricula | `/dashboard/matriculas/nova` | Reads real DB; insert works |
+| Sessoes de aula (view) | `/dashboard/sessoes` | |
+| Open / close session via API | `/api/sessoes/aula/abrir` | Admin role allowed |
+| Mark attendance via API | `/api/sessoes/aula/[id]/frequencia` | Admin role allowed |
+| Compliance warnings | Dashboard | Fixed: was 400 on matriculas.ativo |
+| Grading, Educacenso, Bolsa Familia, health | Various | Out of pilot scope - see CONTEXT.md |
+
+> **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations` which
+> is blocked in demo-sandbox mode by design (it would invite real auth users).
+> This is correct behaviour, not a bug.
+
 ## Environment (demo runner)
 
 `pnpm seed:demo` and `pnpm demo:validate` require, explicitly (no silent

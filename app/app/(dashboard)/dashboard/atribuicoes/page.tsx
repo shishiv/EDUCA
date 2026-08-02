@@ -22,7 +22,7 @@ import { logger } from '@/lib/logger'
 import { TeacherAssignment } from '@/components/classes/teacher-assignment'
 
 // Components
-import { PageHeader } from '@/components/layout/enhanced-breadcrumbs'
+import { PageHeader } from '@/components/ui/page-header'
 import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'

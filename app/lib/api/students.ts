@@ -168,7 +168,11 @@ export class StudentsApiService extends BaseApiService {
     }
   }
 
-  // Create student with guardian relationship
+  // Create student with guardian relationship.
+  // escola_id_override: required when the caller is a secretariat-level admin
+  // (escola_id IS NULL on their users row) and must supply the target school from
+  // the UI's school-context selector. School-scoped users (diretor, secretario)
+  // always use their own escola_id.
   async createStudent(studentData: StudentFormData & {
     responsavel?: {
       nome: string
@@ -176,14 +180,18 @@ export class StudentsApiService extends BaseApiService {
       email?: string
       grau_parentesco: string
     }
+    escola_id_override?: string
   }) {
     try {
-      const { responsavel, ...aluno } = studentData
+      const { responsavel, escola_id_override, ...aluno } = studentData
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('PILOT_STUDENT_AUTH_REQUIRED')
-      const { data: actorProfile } = await supabase.from('users').select('escola_id').eq('id', user.id).single()
-      if (!actorProfile?.escola_id) {
-        throw new Error('PILOT_STUDENT_SCHOOL_REQUIRED: municipal secretariat must use the approved school CSV flow')
+      const { data: actorProfile } = await supabase.from('users').select('escola_id, tipo_usuario').eq('id', user.id).single()
+      // Secretariat admins (escola_id IS NULL) must supply the target school from the
+      // school-context selector via escola_id_override.
+      const resolvedEscolaId = actorProfile?.escola_id ?? escola_id_override ?? null
+      if (!resolvedEscolaId) {
+        throw new Error('PILOT_STUDENT_SCHOOL_REQUIRED: selecione uma escola antes de cadastrar um aluno')
       }
 
       // Create student - extract only known fields
@@ -199,7 +207,7 @@ export class StudentsApiService extends BaseApiService {
         nome_mae: aluno.nome_mae,
         nome_pai: aluno.nome_pai,
         necessidades_especiais: aluno.necessidades_especiais,
-        escola_id: actorProfile.escola_id,
+        escola_id: resolvedEscolaId,
         ativo: true,
       } as Inserts<'alunos'> & { escola_id: string }
 
@@ -221,7 +229,7 @@ export class StudentsApiService extends BaseApiService {
             telefone: responsavel.telefone ?? '',
             email: responsavel.email,
             parentesco: responsavel.grau_parentesco,
-            escola_id: actorProfile.escola_id,
+            escola_id: resolvedEscolaId,
             cpf: '', // Required field
             ativo: true
           } as Inserts<'responsaveis'> & { escola_id: string })
