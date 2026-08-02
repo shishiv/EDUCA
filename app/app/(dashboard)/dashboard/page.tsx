@@ -8,12 +8,13 @@ import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboa
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Users, UserCheck, GraduationCap, Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, CalendarCheck, LucideIcon } from 'lucide-react'
+import { Users, UserCheck, GraduationCap, CalendarCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
-import { canManagePilotSchool, isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { quickAccessItems, resolveVisibleQuickAccess, resolveVisibleQuickActionCards, type QuickAccessRole } from '@/lib/dashboard/quick-access'
 
 type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
 type AlunoRow = Database['public']['Tables']['alunos']['Row']
@@ -49,50 +50,6 @@ interface DashboardAlert {
   message: string
   timestamp: string
 }
-
-type QuickAccessRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
-
-interface QuickAccessItem {
-  name: string
-  href: string
-  icon: LucideIcon
-  iconColor: string
-  roles: QuickAccessRole[]
-  pilotHref?: string
-  pilotRoles?: QuickAccessRole[]
-  schoolWrite?: boolean
-}
-
-interface QuickActionCard {
-  name: string
-  href: string
-  icon: LucideIcon
-  iconColor: string
-  schoolWrite?: boolean
-}
-
-const quickAccessItems: QuickAccessItem[] = [
-  { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
-  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, iconColor: 'text-emerald-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
-  { name: 'Frequência', href: '/dashboard/frequencia', pilotHref: '/diario/frequencia', icon: CheckSquare, iconColor: 'text-amber-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, iconColor: 'text-violet-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
-  { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600', roles: ['admin', 'diretor', 'secretario'] },
-  { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, iconColor: 'text-slate-600', roles: ['admin', 'diretor'] },
-]
-
-const defaultQuickActionCards: QuickActionCard[] = [
-  { name: 'Nova Chamada', href: '/diario/frequencia', icon: CheckSquare, iconColor: 'text-amber-600' },
-  { name: 'Lancar Notas', href: '/dashboard/notas', icon: GraduationCap, iconColor: 'text-violet-600' },
-  { name: 'Ver Relatorios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600' },
-  { name: 'Cadastrar Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', schoolWrite: true },
-]
-
-const pilotQuickActionCards: QuickActionCard[] = [
-  { name: 'Nova Chamada', href: '/diario/frequencia', icon: CheckSquare, iconColor: 'text-amber-600' },
-  { name: 'Ver Turmas', href: '/dashboard/turmas', icon: GraduationCap, iconColor: 'text-violet-600' },
-  { name: 'Ver Matriculas', href: '/dashboard/matriculas', icon: BarChart3, iconColor: 'text-rose-600' },
-  { name: 'Cadastrar Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', schoolWrite: true },
-]
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
@@ -280,18 +237,13 @@ export default function DashboardPage() {
   const pilotMode = isPilotModeEnabled()
   const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
 
-  const visibleQuickAccess = quickAccessItems
-    .map((item) => ({ ...item, href: pilotMode && item.pilotHref ? item.pilotHref : item.href }))
-    .filter((item) => {
-      if (!userProfile) return false
-      const roles = pilotMode && item.pilotRoles ? item.pilotRoles : item.roles
-      if (!roles.includes(userProfile.tipo_usuario as QuickAccessRole)) return false
-      if (pilotMode && isPilotDisabledPath(item.href)) return false
-      return !item.schoolWrite || canManageSchool
-    })
+  const visibleQuickAccess = resolveVisibleQuickAccess(quickAccessItems, {
+    role: (userProfile?.tipo_usuario as QuickAccessRole) ?? null,
+    pilotMode,
+    canManageSchool,
+  })
 
-  const visibleQuickActionCards = (pilotMode ? pilotQuickActionCards : defaultQuickActionCards)
-    .filter((card) => !card.schoolWrite || canManageSchool)
+  const visibleQuickActionCards = resolveVisibleQuickActionCards(pilotMode, canManageSchool)
 
   // Show teacher-specific dashboard for professors
   if (userProfile?.tipo_usuario === 'professor') {
