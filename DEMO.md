@@ -66,7 +66,6 @@ The public demo uses an explicit capability allowlist in
 modules the pilot route guard exposes. It does not change authentication, role
 checks, school selection, RLS or audit.
 
-
 | Capability | UI routes | API routes | Result |
 | --- | --- | --- | --- |
 | Dashboard and search | `/dashboard`, `/dashboard/perfil` | `/api/dashboard/alerts`, `/api/attendance/trends`, `/api/chamada/pendentes`, `/api/compliance/warnings`, `/api/search`, `/api/turmas/minhas` | Read synthetic metrics and alerts |
