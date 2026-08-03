@@ -213,6 +213,23 @@ jobs:
       - name: Seed canonical E2E fixtures
         run: pnpm seed:e2e
 
+      - name: Verify seeded Auth recovery fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          response_file="${RUNNER_TEMP}/auth-recovery-response.json"
+          status="$(curl -sS -o "$response_file" -w '%{http_code}' \
+            -X POST "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/recover" \
+            -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            --data "{\"email\":\"admin@test.com\",\"redirect_to\":\"$PLAYWRIGHT_BASE_URL/login\"}")"
+          if [[ "$status" != '200' ]]; then
+            echo "Auth recovery preflight failed: HTTP $status" >&2
+            cat "$response_file" >&2
+            exit 1
+          fi
+          echo 'Auth recovery preflight passed for the seeded admin fixture'
+
       - name: Run full E2E suite
         run: pnpm exec playwright test --project=setup --project=chromium-unauth --project=chromium --max-failures=1
 
