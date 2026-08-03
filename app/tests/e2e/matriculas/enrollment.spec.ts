@@ -70,12 +70,15 @@ test.describe('Enrollment form', () => {
 
   test('creates and persists an enrollment for a disposable student', async ({ page, request }) => {
     const unique = `E2E Enrollment ${Date.now()}`
+    const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
+    expect(selectedSchoolId).toMatch(/^[0-9a-f-]{36}$/)
     const create = await request.post(`${SUPABASE_URL}/rest/v1/alunos?select=*`, {
       headers: { ...serviceHeaders, Prefer: 'return=representation' },
       data: {
         nome_completo: unique,
         data_nascimento: '2017-04-10',
         sexo: 'F',
+        escola_id: selectedSchoolId,
         endereco: 'Rua Matrícula E2E, 100',
         nome_mae: 'Mãe Matrícula E2E',
         ativo: true,
