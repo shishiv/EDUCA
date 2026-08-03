@@ -15,7 +15,7 @@ test.describe('Students list', () => {
 
   test('shows actions and summary metrics', async ({ page }) => {
     const main = page.getByRole('main')
-    await expect(main.getByRole('link', { name: /novo aluno/i })).toBeVisible()
+    await expect(main.getByRole('link', { name: /novo aluno/i }).first()).toBeVisible()
     await expect(main.getByRole('button', { name: /exportar/i })).toBeVisible()
     for (const label of ['Total', 'Matriculados', 'Não Matriculados', 'NEE']) {
       await expect(main.getByText(label, { exact: true })).toBeVisible()
@@ -94,7 +94,7 @@ test.describe('Students list', () => {
   })
 
   test('navigates to student creation', async ({ page }) => {
-    await page.getByRole('link', { name: /novo aluno/i }).click()
+    await page.getByRole('link', { name: /novo aluno/i }).first().click()
     await expect(page).toHaveURL(/\/dashboard\/alunos\/novo$/)
   })
 })
