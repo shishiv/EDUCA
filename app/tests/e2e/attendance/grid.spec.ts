@@ -96,6 +96,15 @@ test.describe('Attendance grid', () => {
   })
 
   test('saves and persists attendance after reload', async ({ page }) => {
+    const sessionId = await page.locator('#attendance-session').inputValue()
+    const attendanceRead = page.waitForResponse(response =>
+      response.request().method() === 'GET' &&
+      response.url().includes('/rest/v1/frequencia') &&
+      response.ok()
+    )
+    await page.goto(`${attendancePath}?sessao=${sessionId}`)
+    await attendanceRead
+
     const saveButton = page.getByRole('button', { name: 'Salvar', exact: true })
     await expect(saveButton).toBeDisabled()
     const present = page.getByRole('button', { name: 'Presente' }).first()
@@ -103,8 +112,13 @@ test.describe('Attendance grid', () => {
     await expect(saveButton).toBeEnabled()
     await saveButton.click()
     await expect(page.getByText('Chamada salva com sucesso!')).toBeVisible({ timeout: 10000 })
-    const sessionId = await page.locator('#attendance-session').inputValue()
+    const savedAttendanceRead = page.waitForResponse(response =>
+      response.request().method() === 'GET' &&
+      response.url().includes('/rest/v1/frequencia') &&
+      response.ok()
+    )
     await page.goto(`${attendancePath}?sessao=${sessionId}`)
+    await savedAttendanceRead
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
   })
 
