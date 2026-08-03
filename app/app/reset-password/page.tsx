@@ -1,24 +1,21 @@
 'use client'
 
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Loader2, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function ResetPasswordPage() {
+  const { loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
-  const formRef = useRef<HTMLFormElement>(null)
-
-  useEffect(() => {
-    formRef.current?.setAttribute('data-hydrated', 'true')
-  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -69,7 +66,11 @@ export default function ResetPasswordPage() {
             <Link href="/login">Voltar ao login</Link>
           </Button>
         ) : (
-          <form ref={formRef} onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            data-auth-ready={!authLoading ? 'true' : undefined}
+            className="mt-8 space-y-5"
+          >
             {error && (
               <Alert variant="destructive" role="alert">
                 <AlertDescription>{error}</AlertDescription>
@@ -88,7 +89,7 @@ export default function ResetPasswordPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || authLoading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
