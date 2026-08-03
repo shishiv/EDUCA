@@ -110,6 +110,7 @@ export function ChamadaDateNav({
               "min-w-[200px] justify-start text-left font-normal",
               !currentDate && "text-muted-foreground"
             )}
+            aria-label="Selecionar data"
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
