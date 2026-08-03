@@ -18,10 +18,6 @@ export type { } from './use-auth'
 export { useToast, toast } from './use-toast'
 export type { } from './use-toast'
 
-// Real-time Updates
-export { useAulaRealtime } from './use-aula-realtime'
-export type { AulaStatus } from './use-aula-realtime'
-
 // Service Worker & Offline Support
 export { useServiceWorker } from './use-service-worker'
 export type { } from './use-service-worker'

@@ -79,8 +79,10 @@ export function getSessionLockInfo(
 ): SessionLockInfo {
   const today = getTodaySaoPaulo()
 
-  // Session already closed
-  if (sessionStatus === 'FECHADA') {
+  const normalizedSessionStatus = sessionStatus?.toUpperCase()
+
+  // Session already closed or not open
+  if (normalizedSessionStatus === 'FECHADA' || normalizedSessionStatus === 'CANCELADA' || normalizedSessionStatus === 'PLANEJADA') {
     return {
       isLocked: true,
       lockReason: 'session_closed',

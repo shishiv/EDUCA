@@ -23,12 +23,24 @@ Acceptance criteria from issue #23:
 | Asset | Role |
 | --- | --- |
 | `supabase/seed-demo/seed-demo.sql` | Static deterministic core: escolas, users, turmas, disciplinas, responsaveis, alunos, vinculos, matriculas, notas, calendario, configs, synthetic markers. No `now()`; all `created_at` anchored at `2026-02-03 08:00:00-03`. |
-| `supabase/seed-demo/attendance-generator.ts` | Pure deterministic generator of `aulas_abertas` + `frequencia` for a moving 20-school-day window ending at the reset date. Seeded PRNG per (matricula, date); fixed 70% alert case; FK-safe IDs. |
+| `supabase/seed-demo/attendance-generator.ts` | Pure deterministic generator of `sessoes_aula` + `frequencia` for a moving 20-school-day window ending at the reset date. Seeded PRNG per (matricula, date); fixed 70% alert case; FK-safe IDs. |
 | `supabase/seed-demo/seed-demo.ts` | Reset + seed runner (`pnpm seed:demo`): one transaction (TRUNCATE ... CASCADE + static seed + generated attendance + marker configs) via direct Postgres (`SUPABASE_DEMO_DB_URL`), then syncs the demo auth user via Admin API. |
 | `supabase/seed-demo/validate-demo.ts` | `pnpm demo:validate`: proves counts, relationships, synthetic-only markers, the < 80% alert case, generator-exact per-student attendance, and prints md5 fingerprints. |
 | `supabase/seed-demo/verify-sql.sh` | Offline validation on a disposable raw PostgreSQL cluster (no Docker/Supabase): applies canonical migrations (demo shape, no pilot module gate), the seed, generated attendance, structural asserts, and a same-anchor repeatability fingerprint check. |
 | `.github/workflows/demo-reset.yml` | Narrow weekly reset: `pnpm seed:demo` + `pnpm demo:validate` against the demo project. |
 | `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Demo-sandbox mode guards: blocks admin data-management APIs, hides destructive UI actions, shows the demo banner. |
+
+## Failure receipts
+
+The three failed scheduled runs separate configuration, seed, and validation evidence:
+
+| Run | Receipt | Classification and correction |
+| --- | --- | --- |
+| `29185065623` (#1) | The old `Demo Reset` workflow passed only `SUPABASE_DEMO_URL` and `SUPABASE_DEMO_SERVICE_KEY`. The run log is no longer retained. | Workflow configuration gap: it did not provide the direct database connection required by the canonical seed. The current workflow passes all three `SUPABASE_DEMO_*` secrets. |
+| `29678982042` (#2) | `Cannot find module '@supabase/supabase-js'` from `supabase/seed-demo/seed-demo.ts`. | Seed failure before database access: the script resolved packages from outside `app/`. The seed now anchors runtime package resolution at `app/package.json`. |
+| `30739795664` (#3) | The three demo environment variables were empty in the runner, and the seed stopped with its required-variable error. | Environment failure before database access: the workflow now checks secret presence without printing values. |
+
+No run reached `demo:validate`: the seed step failed first. Local Supabase and disposable PostgreSQL checks now cover the validation phase.
 
 ## Demo persona
 
@@ -49,26 +61,50 @@ the multi-school view is the demoable differentiator.
 
 ## Demoable flows (as of this change)
 
-| Flow | Path | Notes |
-| --- | --- | --- |
-| View dashboard, alerts, frequency stats | `/dashboard` | Works without school selector |
-| Browse all schools | `/dashboard/escolas` | Multi-school read |
-| Browse turmas in a school | `/dashboard/turmas` | Select school first |
-| View turma detail + student list | `/dashboard/turmas/[id]` | |
-| View chamada (read-only for admin) | `/dashboard/turmas/[id]/chamada` | Editing is teacher-only by design |
-| Atribuicoes (assign teacher to class) | `/dashboard/atribuicoes` | Fixed: was crashing |
-| **Nova turma** | `/dashboard/turmas/nova` | Fixed: was a stub; now writes to DB |
-| **Novo aluno** | `/dashboard/alunos/novo` | Fixed: now passes escola_id from context |
-| **Novo responsavel** | `/dashboard/responsaveis/novo` | Fixed: now passes escola_id from context |
-| Nova matricula | `/dashboard/matriculas/nova` | Reads real DB; insert works |
-| Sessoes de aula (view) | `/dashboard/sessoes` | |
-| Open / close session via API | `/api/sessoes/aula/abrir` | Admin role allowed |
-| Mark attendance via API | `/api/sessoes/aula/[id]/frequencia` | Admin role allowed |
-| Compliance warnings | Dashboard | Fixed: was 400 on matriculas.ativo |
-| Grading, Educacenso, Bolsa Familia, health | Various | Out of pilot scope - see CONTEXT.md |
+The public demo uses an explicit capability allowlist in
+`app/lib/demo-sandbox/demo-sandbox.ts`. The allowlist only changes which product
+modules the pilot route guard exposes. It does not change authentication, role
+checks, school selection, RLS or audit.
 
-> **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations` which
-> is blocked in demo-sandbox mode by design (it would invite real auth users).
+| Capability | UI routes | API routes | Result |
+| --- | --- | --- | --- |
+| Dashboard and search | `/dashboard`, `/dashboard/perfil` | `/api/dashboard/alerts`, `/api/attendance/trends`, `/api/chamada/pendentes`, `/api/compliance/warnings`, `/api/search`, `/api/turmas/minhas` | Read synthetic metrics and alerts |
+| Schools | `/dashboard/escolas`, `/dashboard/escolas/nova`, `/dashboard/escolas/[id]` | Supabase client queries with RLS | Multi-school admin view; school context remains required for school-scoped writes |
+| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries | Read and manage existing synthetic profiles; invitation remains blocked |
+| Students | `/dashboard/alunos`, `/dashboard/alunos/novo`, `/dashboard/alunos/[id]` | Existing typed Supabase queries | Synthetic CRUD with the selected school context |
+| Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
+| Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
+| Attendance | `/dashboard/turmas`, `/dashboard/turmas/[id]/chamada` | `/api/sessoes/aula/abrir`, `/api/sessoes/aula/[id]/frequencia/batch` | Professor and diretor write; admin and secretaria view only; server-side role and school checks remain active |
+| Diary | `/dashboard/diario`, `/diario`, `/dashboard/alunos/[id]/diario` | `/api/vivencias` | Class diary is available; the legacy `vivencias` endpoint remains a documented 501 stub |
+| Grades and report cards | `/dashboard/notas`, `/dashboard/alunos/[id]/boletim` | `/api/grades/*` and typed Supabase queries | Synthetic grades and averages only |
+| Reports | `/dashboard/relatorios`, `/relatorios/frequencia`, `/relatorios/bolsa-familia`, `/relatorios/conteudo` | `/api/reports/*` and typed Supabase queries | Browser reports use synthetic rows; no government export is enabled |
+| Calendar and internal settings | `/dashboard/calendario`, `/dashboard/configuracoes`, `/dashboard/flags` | `/api/configs/*` | Internal synthetic configuration only |
+| Audit and metrics | No standalone page | `/api/pilot/audit`, `/api/pilot/metrics` | Internal audit and pilot metrics remain available |
+| Local WhatsApp simulation | No standalone page | `/api/whatsapp/notify`, `/api/whatsapp/opt-in` | Local fake only; no Meta request is possible in demo mode |
+
+The route inventory is intentionally explicit. A new route is not demoable until
+its capability is named and its external effects are reviewed.
+
+## Blocked effects
+
+| Effect | Blocked paths or boundary | Expected result |
+| --- | --- | --- |
+| Synthetic dataset import | `/api/pilot/imports*` | `403` and no staging or publish |
+| Auth user mutation | `/api/pilot/invitations*`, `/api/pilot/first-access` | `403` and no invite or password change |
+| Educacenso and government integration | `/api/educacenso*`, `/api/government*`, `/api/integracoes*`, `/api/censo*`, `/api/inep*` | `403`; no external request |
+| Real PII export | `/api/export*`, `/api/exports*`, `/api/reports/educacenso*`, `/api/reports/export*` | `403`; browser reports remain synthetic-only |
+| Real WhatsApp integration | `/api/whatsapp/webhook*` and the gateway factory | `403` for webhook; local fake for notification simulation |
+| External telemetry | Grafana collector | Buffer is discarded in demo mode |
+
+## Decision traceability
+
+The preserved work file `educa-demoable-unlanded-2026-08-02.patch` was read and
+not applied wholesale. Its useful principle is implemented here: the demo may
+bypass a product-scope restriction only for a named synthetic capability. Auth,
+role checks, school isolation, RLS, audit and external-effect guards stay active.
+
+> **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations`.
+> The endpoint returns `403` in demo mode because it would mutate Auth users.
 > This is correct behaviour, not a bug.
 
 ## Environment (demo runner)
@@ -140,17 +176,25 @@ pnpm --dir app demo:reset-check
    (framework Next.js; `app/vercel.json` already sets the build). Add the
    environment variables from `app/.env.demo.example`, including
    `NEXT_PUBLIC_DEMO_SANDBOX=true` and the pilot flags.
-5. **First seed** - run the workflow manually (Actions > Demo Sandbox Weekly
-   Reset > Run workflow), or run `pnpm seed:demo` locally with the demo env.
+5. **First scheduled seed** - after merge, wait for the next Sunday schedule.
+   Do not use `workflow_dispatch` or run a reset against the shared demo locally.
 6. **DNS** - point `demo.educa.app.br` at the Vercel project (external).
 
 ## Demo mode guards (explicit code, not prose)
 
 - `NEXT_PUBLIC_DEMO_SANDBOX=true` enables `app/lib/demo-sandbox/demo-sandbox.ts`.
-- Middleware returns 403 for `/api/pilot/imports*` and `/api/pilot/invitations*`.
-- The same guard is duplicated at the top of those route handlers (defense in depth).
-- The canonical schema already `REVOKE DELETE ... FROM authenticated` and grants
-  no INSERT on `users` - destructive actions are refused at the database seam.
+- Middleware uses the named capability allowlist. It does not skip auth or
+  route protection for the demo.
+- Middleware and route handlers return `403` for synthetic imports, Auth user
+  invitations and first-access password mutation.
+- Educacenso, government integrations, real PII export paths and the WhatsApp
+  webhook are blocked as external effects.
+- The WhatsApp factory forces the local fake in demo mode, even with complete
+  Meta credentials. No request can reach the Meta adapter from this instance.
+- Grafana Cloud telemetry is discarded in demo mode. Synthetic activity does
+  not leave the sandbox through the monitoring collector.
+- The import validator accepts only `SYNTHETIC-EDUCA-PILOT`; the seed validator
+  accepts only `SYNTHETIC-EDUCA-DEMO` in `configs.demo_synthetic_marker`.
 - UI: delete actions return early with a message and the calendar delete
   affordance is hidden; a banner identifies the sandbox in the dashboard.
 
@@ -165,7 +209,7 @@ pnpm --dir app demo:reset-check
   allowed; RLS still only exposes the pilot-core tables to the demo account.
 - Receipts: the 3/5/10/50 seed spec, the weekly schedule, and the < 80% alert
   threshold all come from issue #23; the 20-school-day window and the volume
-  (100 aulas + 1000 frequencia) are the measured seed size documented in
+  (100 sessoes + 1000 frequencia) are the measured seed size documented in
   `attendance-generator.ts`.
 
 ## Troubleshooting

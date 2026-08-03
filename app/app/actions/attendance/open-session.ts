@@ -1,25 +1,17 @@
 /**
- * Open Attendance Session - Server Action
+ * Opens the canonical attendance session for a class and date.
  *
- * Creates a new attendance session for a class (turma) on a specific date.
- * Validates that no duplicate session exists for the same day.
- * Sets auto_fechamento_agendado to 18:00 São Paulo time.
- *
- * Authorization (issue #30):
- * - resolves the authenticated actor from the server session
- * - professor: opens only own turmas; the session's professor_id is the actor
- * - diretor: opens only turmas of the own escola; the session's professor_id
- *   is the turma's assigned professor
- * - client-supplied `professor_id` and `escola_id` are NEVER trusted
- *
- * Brazilian Compliance: Implements three-phase workflow (planning → attendance)
+ * The authenticated actor, school, and titular teacher come from server-side
+ * rows. Client-supplied identity fields stay accepted only for old callers and
+ * are ignored.
  */
 
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import type { Tables } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { createClient } from '@/lib/supabase/server'
 import {
   assertCanRecordAttendance,
   assertTurmaWriteAccess,
@@ -29,57 +21,53 @@ import {
 
 interface OpenSessionParams {
   turma_id: string
-  // Deprecated: kept for call-site compatibility, ignored for authorization.
-  // professor_id and escola_id are derived from the authenticated actor and
-  // the turma row, never from the client.
+  data_aula: string
+  conteudo_programatico?: string
+  /** @deprecated The server derives the professor from the actor and turma. */
   professor_id?: string
+  /** @deprecated The server derives the school from the turma. */
   escola_id?: string
-  data_aula: string // YYYY-MM-DD format
-  conteudo_programatico: string
 }
 
 interface OpenSessionResult {
   success: boolean
-  session?: any
+  session?: Tables<'sessoes_aula'>
   error?: string
   code?: string
+}
+
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+function calculateSaoPauloCutoff(dataAula: string): string {
+  const [year, month, day] = dataAula.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day, 21, 0, 0)).toISOString()
 }
 
 export async function openSessionAction(
   params: OpenSessionParams
 ): Promise<OpenSessionResult> {
   try {
-    // Validate required parameters
-    if (!params.turma_id) {
-      return {
-        success: false,
-        error: 'ID da turma é obrigatório',
-      }
+    if (!params || !params.turma_id) {
+      return { success: false, code: 'TURMA_REQUIRED', error: 'ID da turma é obrigatório' }
     }
 
-    if (!params.data_aula) {
-      return {
-        success: false,
-        error: 'Data da aula e obrigatoria',
-      }
+    if (!isIsoDate(params.data_aula)) {
+      return { success: false, code: 'DATE_INVALID', error: 'Data da aula inválida' }
     }
 
-    if (!params.conteudo_programatico) {
-      return {
-        success: false,
-        error: 'Conteudo programatico e obrigatorio',
-      }
+    const content = params.conteudo_programatico?.trim() || 'Chamada'
+    if (content.length > 500) {
+      return { success: false, code: 'CONTENT_TOO_LONG', error: 'Conteúdo da aula muito longo' }
     }
 
     const supabase = await createClient()
-
-    // Resolve the authenticated actor from the server session (issue #30).
     const actor = await requireAttendanceActor(supabase)
     assertCanRecordAttendance(actor)
 
-    // Load the turma and assert access. Identity fields are derived from the
-    // turma row and the actor; the client-supplied professor_id/escola_id are
-    // ignored.
     const { data: turma, error: turmaError } = await supabase
       .from('turmas')
       .select('id, escola_id, professor_id, ativo')
@@ -87,120 +75,96 @@ export async function openSessionAction(
       .single()
 
     if (turmaError || !turma) {
-      return {
-        success: false,
-        code: 'TURMA_NOT_FOUND',
-        error: 'Turma não encontrada',
-      }
+      return { success: false, code: 'TURMA_NOT_FOUND', error: 'Turma não encontrada' }
     }
 
     assertTurmaWriteAccess(actor, turma)
 
-    // The session always belongs to the turma's assigned professor.
-    // A diretor may open a session on behalf of the class teacher, but the
-    // teacher's identity still comes from the turma row, never from the client.
-    const professorId =
-      actor.tipo_usuario === 'professor' ? actor.userId : turma.professor_id
-
+    const professorId = turma.professor_id
     if (!professorId) {
       return {
         success: false,
         code: 'TURMA_WITHOUT_PROFESSOR',
-        error: 'A turma não possui professor designado para abrir a sessão',
+        error: 'A turma não possui professor titular para abrir a chamada',
       }
     }
 
-    const escolaId = turma.escola_id
-
-    // Check if session already exists for this turma on this date
-    const { data: existingSession, error: checkError } = await supabase
+    const { data: existingSession, error: existingError } = await supabase
       .from('sessoes_aula')
       .select('id, status, data_aula')
-      .eq('turma_id', params.turma_id)
+      .eq('turma_id', turma.id)
       .eq('data_aula', params.data_aula)
-      .in('status', ['PLANEJADA', 'ABERTA', 'aberta'])
-      .single()
+      .in('status', ['PLANEJADA', 'ABERTA', 'planejada', 'aberta'])
+      .limit(1)
+      .maybeSingle()
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned (expected for new session)
+    if (existingError && existingError.code !== 'PGRST116') {
       return {
         success: false,
-        error: `Erro ao verificar sessão existente: ${checkError.message}`,
+        code: 'SESSION_LOOKUP_FAILED',
+        error: `Erro ao verificar chamada existente: ${existingError.message}`,
       }
     }
 
     if (existingSession) {
       return {
         success: false,
-        error: `Já existe uma aula aberta para esta turma hoje (${new Date(
-          existingSession.data_aula
-        ).toLocaleDateString('pt-BR')})`,
+        code: 'SESSION_ALREADY_OPEN',
+        error: 'Já existe uma chamada aberta para esta turma nesta data',
       }
     }
 
-    // Calculate auto-closure time: 18:00 São Paulo time on session date
-    const sessionDate = new Date(params.data_aula + 'T00:00:00')
-    const cutoffTime = new Date(
-      sessionDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
-    )
-    cutoffTime.setHours(18, 0, 0, 0)
-
-    // Create new session with identities derived from auth + turma
-    const { data: newSession, error: insertError } = await supabase
+    const { data: session, error: insertError } = await supabase
       .from('sessoes_aula')
       .insert({
-        turma_id: params.turma_id,
+        turma_id: turma.id,
+        escola_id: turma.escola_id,
         professor_id: professorId,
-        escola_id: escolaId,
         data_aula: params.data_aula,
-        status: 'aberta',
+        status: 'ABERTA',
         aberta_em: new Date().toISOString(),
-        auto_fechamento_agendado: cutoffTime.toISOString(),
-        conteudo_programatico: params.conteudo_programatico,
+        auto_fechamento_agendado: calculateSaoPauloCutoff(params.data_aula),
+        conteudo_programatico: content,
       })
       .select()
       .single()
 
-    if (insertError) {
-      logger.error('Erro ao criar sessão', insertError, {
-        metadata: {
-          turmaId: params.turma_id,
-          professorId,
-          dataAula: params.data_aula
-        }
+    if (insertError || !session) {
+      logger.error('ATTENDANCE_SESSION_OPEN_FAILED', insertError ?? new Error('Sessão não retornada'), {
+        metadata: { turmaId: turma.id, date: params.data_aula },
       })
+
+      if (insertError?.code === '23505') {
+        return {
+          success: false,
+          code: 'SESSION_ALREADY_OPEN',
+          error: 'Já existe uma chamada aberta para esta turma nesta data',
+        }
+      }
+
       return {
         success: false,
-        error: `Erro ao abrir aula: ${insertError.message}`,
+        code: 'SESSION_OPEN_FAILED',
+        error: insertError?.message || 'Não foi possível abrir a chamada',
       }
     }
 
-    // Revalidate attendance pages
-    revalidatePath('/dashboard/frequencia')
-    revalidatePath(`/dashboard/turmas/${params.turma_id}`)
+    revalidatePath(`/dashboard/turmas/${turma.id}/chamada`)
+    revalidatePath(`/dashboard/turmas/${turma.id}`)
 
-    return {
-      success: true,
-      session: newSession,
-    }
+    return { success: true, session }
   } catch (error) {
-    // Expected authorization failures are returned to the caller as-is.
     if (error instanceof AttendanceAuthError) {
-      return {
-        success: false,
-        code: error.code,
-        error: error.message,
-      }
+      return { success: false, code: error.code, error: error.message }
     }
 
-    logger.error('Erro inesperado ao abrir sessão', error as Error, {
-      metadata: {
-        turmaId: params.turma_id,
-        professorId: params.professor_id
-      }
+    logger.error('ATTENDANCE_SESSION_OPEN_UNEXPECTED', error as Error, {
+      metadata: { turmaId: params?.turma_id, date: params?.data_aula },
     })
+
     return {
       success: false,
+      code: 'SESSION_OPEN_FAILED',
       error: error instanceof Error ? error.message : 'Erro desconhecido',
     }
   }

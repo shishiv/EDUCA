@@ -30,6 +30,12 @@ export interface ChamadaHeaderProps {
   lockReason?: string | null
   onSave: () => void
   isSaving: boolean
+  /** Close the open session and make its records immutable. */
+  onClose?: () => void
+  /** Prevent closing until the current draft is saved. */
+  closeDisabled?: boolean
+  /** Hide write controls for view-only actors. */
+  canEdit?: boolean
 }
 
 // ============================================================================
@@ -46,6 +52,9 @@ export function ChamadaHeader({
   lockReason,
   onSave,
   isSaving,
+  onClose,
+  closeDisabled = false,
+  canEdit = true,
 }: ChamadaHeaderProps) {
   const attendanceRate = studentCount > 0
     ? Math.round((presentCount / studentCount) * 100)
@@ -99,12 +108,23 @@ export function ChamadaHeader({
             </p>
           </div>
 
-          {/* Save button */}
-          <Button
-            onClick={onSave}
-            disabled={!hasUnsavedChanges || isLocked || isSaving}
-            className="min-w-[120px]"
-          >
+          {/* Save and close actions */}
+          {canEdit && (
+            <div className="flex items-center gap-2">
+              {onClose && (
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={closeDisabled || isSaving}
+                >
+                  Fechar chamada
+                </Button>
+              )}
+              <Button
+                onClick={onSave}
+                disabled={!hasUnsavedChanges || isLocked || isSaving}
+                className="min-w-[120px]"
+              >
             {isSaving ? (
               <>
                 <span className="animate-spin mr-2">
@@ -133,7 +153,9 @@ export function ChamadaHeader({
                 Salvar
               </>
             )}
-          </Button>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

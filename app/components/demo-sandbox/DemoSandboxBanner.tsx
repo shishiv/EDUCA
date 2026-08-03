@@ -8,10 +8,6 @@
  *  - os dados sao sinteticos e reiniciados semanalmente;
  *  - nao ha criacao de conta (conta unica demo@educa.app.br);
  *  - acoes destrutivas estao bloqueadas.
- *
- * Distinto de DemoModeBanner (components/attendance/DemoModeBanner.tsx), que
- * indica a elevacao temporaria de um admin para demonstrar o fluxo de
- * professor em uma chamada - conceito de sessao, nao de instancia.
  */
 
 'use client'

@@ -10,6 +10,7 @@ import { MunicipalBrasao } from '@/components/identity/municipal-assets'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaSelector } from '@/components/layout/escola-selector'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import {
   GraduationCap,
   Users,
@@ -120,7 +121,7 @@ const navigationGroups: NavigationGroup[] = [
         name: 'Atribuicoes',
         href: '/dashboard/atribuicoes',
         icon: UserCog,
-        roles: ['admin', 'diretor', 'secretario'],
+        roles: ['admin', 'diretor'],
       },
       {
         name: 'Responsáveis',
@@ -137,7 +138,7 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       {
         name: 'Frequência',
-        href: '/diario/frequencia',
+        href: '/dashboard/turmas',
         icon: CheckSquare,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
       },
@@ -182,7 +183,10 @@ function getNavigationForRole(userRole: string): NavigationGroup[] {
     .map(group => ({
       ...group,
       items: group.items.filter(item =>
-        item.roles.includes(userRole) && (!isPilotModeEnabled() || !isPilotDisabledPath(item.href))
+        item.roles.includes(userRole) &&
+        (!isPilotModeEnabled() ||
+          !isPilotDisabledPath(item.href) ||
+          isDemoSandboxPilotPathAllowed(item.href))
       ),
     }))
     .filter(group => group.items.length > 0)

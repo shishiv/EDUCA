@@ -118,6 +118,12 @@ export function createFakeSupabase(initial: FakeAttendanceDbState) {
         updateRow = row
         return q
       },
+      then<TResult1 = { data: FakeRow | null; error: FakeRow | null }, TResult2 = never>(
+        onfulfilled?: ((value: { data: FakeRow | null; error: FakeRow | null }) => TResult1 | PromiseLike<TResult1>) | null,
+        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+      ) {
+        return Promise.resolve({ data: null, error: null }).then(onfulfilled, onrejected)
+      },
     }
 
     return q

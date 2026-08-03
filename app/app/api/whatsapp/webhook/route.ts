@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { asWhatsAppClient } from '@/lib/notifications/whatsapp-database'
 import { createWhatsAppNotificationGateway } from '@/lib/notifications/whatsapp-gateway-factory'
+import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
 import { applyWhatsAppDeliveryStatus } from '@/lib/notifications/whatsapp-delivery-service'
 import {
   countWhatsAppInboundMessages,
@@ -26,6 +27,9 @@ import {
 export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
+  const demoSandboxBlock = demoSandboxGuardResponse('external_effect')
+  if (demoSandboxBlock) return demoSandboxBlock
+
   const params = request.nextUrl.searchParams
   const gateway = createWhatsAppNotificationGateway()
 
@@ -44,6 +48,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const demoSandboxBlock = demoSandboxGuardResponse('external_effect')
+  if (demoSandboxBlock) return demoSandboxBlock
+
   const gateway = createWhatsAppNotificationGateway()
   const rawBody = await request.text()
   const signature = request.headers.get('x-hub-signature-256')

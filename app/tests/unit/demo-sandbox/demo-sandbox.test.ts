@@ -2,8 +2,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEMO_SANDBOX_BLOCKED_API_PREFIXES,
+  DEMO_SANDBOX_BLOCKED_EFFECTS,
+  DEMO_SANDBOX_CAPABILITIES,
+  demoSandboxGuardResponse,
+  getDemoSandboxBlockedReason,
   isDemoSandboxBlockedApiPath,
+  isDemoSandboxCapabilityAllowed,
   isDemoSandboxEnabled,
+  isDemoSandboxPilotPathAllowed,
+  resolveDemoSandboxCapability,
 } from '@/lib/demo-sandbox/demo-sandbox'
 
 describe('demo sandbox guard', () => {
@@ -14,16 +21,54 @@ describe('demo sandbox guard', () => {
     expect(isDemoSandboxEnabled({ DEMO_SANDBOX: 'true' })).toBe(true)
   })
 
-  it('bloqueia exatamente os prefixos de gestao de dados do admin', () => {
+  it('bloqueia exatamente os prefixos de gestao de dados e efeitos externos', () => {
     expect(DEMO_SANDBOX_BLOCKED_API_PREFIXES).toContain('/api/pilot/imports')
     expect(DEMO_SANDBOX_BLOCKED_API_PREFIXES).toContain('/api/pilot/invitations')
+    expect(DEMO_SANDBOX_BLOCKED_API_PREFIXES).toContain('/api/educacenso')
+    expect(DEMO_SANDBOX_BLOCKED_API_PREFIXES).toContain('/api/whatsapp/webhook')
+    expect(DEMO_SANDBOX_BLOCKED_EFFECTS).toContain('real_whatsapp_delivery')
+    expect(DEMO_SANDBOX_BLOCKED_EFFECTS).toContain('real_pii_export')
     expect(isDemoSandboxBlockedApiPath('/api/pilot/imports')).toBe(true)
     expect(isDemoSandboxBlockedApiPath('/api/pilot/imports/abc123/approval')).toBe(true)
     expect(isDemoSandboxBlockedApiPath('/api/pilot/invitations')).toBe(true)
+    expect(isDemoSandboxBlockedApiPath('/api/educacenso/export')).toBe(true)
+    expect(isDemoSandboxBlockedApiPath('/api/reports/educacenso')).toBe(true)
+    expect(isDemoSandboxBlockedApiPath('/api/export/pii')).toBe(true)
+    expect(isDemoSandboxBlockedApiPath('/api/whatsapp/webhook')).toBe(true)
     // fluxos centrais do demo permanecem liberados
     expect(isDemoSandboxBlockedApiPath('/api/frequencia/marcar')).toBe(false)
     expect(isDemoSandboxBlockedApiPath('/api/sessoes/aula/abrir')).toBe(false)
     expect(isDemoSandboxBlockedApiPath('/api/dashboard/alerts')).toBe(false)
     expect(isDemoSandboxBlockedApiPath('/api/pilot/metrics')).toBe(false)
+  })
+
+  it('libera cada capacidade nomeada somente no flag demo', () => {
+    const demoEnv = { NEXT_PUBLIC_DEMO_SANDBOX: 'true' }
+    for (const capability of DEMO_SANDBOX_CAPABILITIES) {
+      const samplePath = capability.routePrefixes[0] ?? capability.apiPrefixes[0]
+      if (!samplePath) continue
+      expect(resolveDemoSandboxCapability(samplePath)).toBe(capability.id)
+      expect(isDemoSandboxCapabilityAllowed(samplePath, demoEnv)).toBe(true)
+    }
+
+    expect(isDemoSandboxCapabilityAllowed('/dashboard/notas', {})).toBe(false)
+    expect(isDemoSandboxPilotPathAllowed('/dashboard/notas', demoEnv)).toBe(true)
+    expect(isDemoSandboxPilotPathAllowed('/dashboard/notas', {})).toBe(false)
+  })
+
+  it('mantem bloqueados Educacenso, webhook e rotas nao inventariadas', async () => {
+    const demoEnv = { NEXT_PUBLIC_DEMO_SANDBOX: 'true' }
+    expect(getDemoSandboxBlockedReason('/api/educacenso/export')).toBe('external_effect')
+    expect(getDemoSandboxBlockedReason('/dashboard/relatorios/educacenso')).toBe('external_effect')
+    expect(getDemoSandboxBlockedReason('/api/pilot/imports')).toBe('dataset_ingest')
+    expect(getDemoSandboxBlockedReason('/api/pilot/invitations')).toBe('auth_mutation')
+    expect(resolveDemoSandboxCapability('/api/educacenso/export')).toBeNull()
+    expect(resolveDemoSandboxCapability('/api/reports/educacenso')).toBeNull()
+    expect(resolveDemoSandboxCapability('/api/unknown-future-effect')).toBeNull()
+    expect(isDemoSandboxCapabilityAllowed('/api/educacenso/export', demoEnv)).toBe(false)
+
+    const externalResponse = demoSandboxGuardResponse('external_effect', demoEnv)
+    expect(externalResponse?.status).toBe(403)
+    await expect(externalResponse?.json()).resolves.toMatchObject({ error: 'DEMO_EXTERNAL_EFFECT_BLOCKED' })
   })
 })

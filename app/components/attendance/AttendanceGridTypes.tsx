@@ -32,7 +32,7 @@ export interface Student {
 
 export interface AttendanceRecord {
   id?: string
-  aluno_id: string
+  student_id: string
   presente: boolean
   status_presenca?: AttendanceStatus
   observacoes?: string
