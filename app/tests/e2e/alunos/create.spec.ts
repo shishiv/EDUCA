@@ -559,7 +559,9 @@ test.describe('Alunos - Successful Creation', () => {
     await page.getByLabel(/endereço.*completo/i).fill('Rua Loading, 789, Centro')
     
     const saveButton = page.locator('button[type="submit"]')
-    const submission = saveButton.click({ noWaitAfter: true })
+    // Native DOM dispatch returns before the async submit handler navigates,
+    // so the test can observe the real disabled/loading state deterministically.
+    await saveButton.evaluate(button => (button as HTMLButtonElement).click())
 
     // Use a stable selector because the accessible name changes to "Cadastrando".
     try {
@@ -568,7 +570,6 @@ test.describe('Alunos - Successful Creation', () => {
     } finally {
       releaseInsert()
     }
-    await submission
     await expect(page).toHaveURL(/\/dashboard\/alunos$/, { timeout: 10000 })
     // Let the destination layout finish its Realtime handshake before teardown.
     await page.waitForTimeout(500)
