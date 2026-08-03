@@ -1,19 +1,12 @@
 -- =============================================================================
--- frequencia: unique attendance row per student per class-day
+-- Historical day-level frequency index
 --
--- The attendance server action (mark-attendance.ts) upserts with
--- onConflict 'matricula_id,data_aula' to support its documented toggle
--- behavior (mark once, toggle later). Without this constraint the upsert
--- always fails with "no unique or exclusion constraint matching the ON
--- CONFLICT specification", so no attendance could ever be recorded through
--- the action.
+-- This migration records the older day-level invariant. The canonical
+-- attendance flow is session-scoped and supersedes this index in
+-- 20260803095753_educa_attendance_canonical_flow.sql.
 --
--- Domain invariant: one attendance row per student per class-day. The
--- open-session flow already prevents a second open session for the same
--- turma/date, so (matricula_id, data_aula) uniquely identifies the row.
---
--- Attendance is compliance-sensitive: keep this invariant intact together
--- with time-lock and immutability behavior when changing attendance schema.
+-- Keep this migration in order for existing migration histories. The later
+-- migration drops this index only after checking and preserving all rows.
 -- =============================================================================
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_frequencia_matricula_data
