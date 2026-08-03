@@ -100,7 +100,8 @@ test.describe('Attendance grid', () => {
     await setPressed(present, true)
     await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('Chamada salva com sucesso!')).toBeVisible({ timeout: 10000 })
-    await openAttendance(page)
+    const sessionId = await page.locator('#attendance-session').inputValue()
+    await page.goto(`${attendancePath}?sessao=${sessionId}`)
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
   })
 
