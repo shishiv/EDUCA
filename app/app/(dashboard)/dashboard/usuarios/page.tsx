@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Eye, Edit, Trash2, UserCheck, UserX, Download, Users, CheckCircle, GraduationCap, Crown, UserPlus, Search as SearchIcon } from 'lucide-react'
+import { Plus, Eye, Trash2, UserCheck, UserX, Download, Users, CheckCircle, GraduationCap, Crown, UserPlus, Search as SearchIcon } from 'lucide-react'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
 import { TableEmptyState } from '@/components/ui/table-empty-state'
@@ -293,11 +293,6 @@ export default function UsuariosPage() {
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/dashboard/usuarios/${usuario.id}`}>
                             <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/usuarios/${usuario.id}/editar`}>
-                            <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button 
