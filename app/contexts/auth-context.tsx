@@ -42,36 +42,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const hydrate = async () => {
       try {
-        let result = await supabase.auth.getUser()
-        // Local Supabase auth can briefly reject concurrent browser hydrations;
-        // keep the bounded retry visible instead of turning a transient network
-        // blip into a failed E2E page.
-        for (let attempt = 1; result.error && attempt < 5; attempt += 1) {
-          if (!/failed to fetch|network/i.test(result.error.message || '')) break
-          await new Promise(resolve => setTimeout(resolve, attempt * 250))
-          result = await supabase.auth.getUser()
-        }
-        if (result.error) {
-          // A dead refresh token must be cleared locally, not left to poison
-          // every later request (pilot session-recovery contract).
-          if (isInvalidRefreshTokenError(result.error)) {
-            logger.info('Invalid session detected, clearing tokens')
-            try {
-              await supabase.auth.signOut({ scope: 'local' })
-            } catch {
-              // Local cleanup is best-effort; middleware also expires auth cookies.
-            }
-            if (!active) return
-            setUser(null)
-            setUserProfile(null)
-            if (window.location.pathname !== '/login') {
-              window.location.replace('/login?reason=session_expired')
-            }
-            return
-          }
-          throw result.error
-        }
-        const nextUser = result.data.user
+        // Hydration is a client display concern, not an authorization check.
+        // Read the locally stored session to avoid a network getUser() race on
+        // every page; middleware and server actions still verify the user.
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
+
+        const nextUser = sessionData.session?.user ?? null
         const profile = nextUser ? await loadProfile(nextUser.id) : null
         if (!active) return
         setUser(nextUser)
@@ -81,6 +58,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // provider unmounts. Do not report that expected teardown as an app
         // error or update state after the page is gone.
         if (!active) return
+        if (isInvalidRefreshTokenError(error)) {
+          logger.info('Invalid session detected, clearing tokens')
+          try {
+            await supabase.auth.signOut({ scope: 'local' })
+          } catch {
+            // Local cleanup is best-effort; middleware also expires auth cookies.
+          }
+          setUser(null)
+          setUserProfile(null)
+          if (window.location.pathname !== '/login') {
+            window.location.replace('/login?reason=session_expired')
+          }
+          return
+        }
         logger.error('Error hydrating auth session', error instanceof Error ? error : new Error(String(error)))
         setUser(null)
         setUserProfile(null)
