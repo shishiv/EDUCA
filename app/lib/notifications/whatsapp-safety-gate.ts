@@ -2,14 +2,15 @@
  * WhatsApp delivery-mode safety gate.
  *
  * External delivery is a later explicit approval. This gate makes that
- * approval structural: PILOT_MODE=true always forces the deterministic local
- * fake, and any missing Meta credential downgrades to the local fake with a
- * named reason. The visible local receipt path is preserved in every
- * downgrade (see whatsapp-gateway-factory.ts).
+ * approval structural: the public demo and PILOT_MODE=true always force the
+ * deterministic local fake, and missing Meta credentials also downgrade to
+ * the local fake with a named reason. The visible local receipt path is
+ * preserved in every downgrade (see whatsapp-gateway-factory.ts).
  */
 
 export interface WhatsAppSafetyEnvironment {
   pilotMode?: string
+  demoSandbox?: string
   metaEnabled?: string
   metaPhoneNumberId?: string
   metaAccessToken?: string
@@ -18,7 +19,7 @@ export interface WhatsAppSafetyEnvironment {
 }
 
 export type WhatsAppDeliveryMode =
-  | { kind: 'local-fake'; reason: 'pilot_mode' | 'missing_credentials' | 'not_enabled' }
+  | { kind: 'local-fake'; reason: 'demo_sandbox' | 'pilot_mode' | 'missing_credentials' | 'not_enabled' }
   | { kind: 'meta' }
 
 function isNonEmpty(value: string | undefined): boolean {
@@ -26,12 +27,13 @@ function isNonEmpty(value: string | undefined): boolean {
 }
 
 /**
- * Resolves which adapter may run. Order matters: pilot mode wins over
- * everything, then explicit enablement, then credential completeness.
+ * Resolves which adapter may run. The public demo wins first, then pilot
+ * mode, explicit enablement and credential completeness.
  */
 export function resolveWhatsAppDeliveryMode(
   environment: WhatsAppSafetyEnvironment = {
     pilotMode: process.env.PILOT_MODE,
+    demoSandbox: process.env.NEXT_PUBLIC_DEMO_SANDBOX ?? process.env.DEMO_SANDBOX,
     metaEnabled: process.env.WHATSAPP_META_ENABLED,
     metaPhoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID,
     metaAccessToken: process.env.WHATSAPP_META_TOKEN,
@@ -39,6 +41,11 @@ export function resolveWhatsAppDeliveryMode(
     metaVerifyToken: process.env.WHATSAPP_META_VERIFY_TOKEN,
   }
 ): WhatsAppDeliveryMode {
+  // A public demo can never send to Meta, even if someone accidentally sets
+  // PILOT_MODE=false or supplies complete Meta credentials.
+  if (environment.demoSandbox === 'true') {
+    return { kind: 'local-fake', reason: 'demo_sandbox' }
+  }
   if (environment.pilotMode === 'true') {
     return { kind: 'local-fake', reason: 'pilot_mode' }
   }
@@ -60,6 +67,7 @@ export function resolveWhatsAppDeliveryMode(
 export function whatsAppExternalDeliveryAllowed(
   environment: WhatsAppSafetyEnvironment = {
     pilotMode: process.env.PILOT_MODE,
+    demoSandbox: process.env.NEXT_PUBLIC_DEMO_SANDBOX ?? process.env.DEMO_SANDBOX,
     metaEnabled: process.env.WHATSAPP_META_ENABLED,
     metaPhoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID,
     metaAccessToken: process.env.WHATSAPP_META_TOKEN,

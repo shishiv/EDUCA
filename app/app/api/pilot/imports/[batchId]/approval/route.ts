@@ -28,7 +28,7 @@ async function findOrCreateByImportSource(
 }
 
 export async function POST(request: Request, context: { params: Promise<{ batchId: string }> }) {
-  const demoSandboxBlock = demoSandboxGuardResponse()
+  const demoSandboxBlock = demoSandboxGuardResponse('dataset_ingest')
   if (demoSandboxBlock) return demoSandboxBlock
   try {
     assertSyntheticPilotSafety('import')

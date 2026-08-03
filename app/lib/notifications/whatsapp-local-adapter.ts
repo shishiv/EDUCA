@@ -9,7 +9,8 @@
  *
  * Failure rehearsal: WHATSAPP_LOCAL_FAKE_MODE=fail makes every send throw a
  * transient error (retry path); =reject returns a permanent failure. The
- * webhook signature and verify-token algorithms mirror the Meta adapter so
+ * public demo never constructs the Meta adapter, even when credentials exist.
+ * The webhook signature and verify-token algorithms mirror the Meta adapter so
  * the local end-to-end path signs payloads with the same code.
  */
 

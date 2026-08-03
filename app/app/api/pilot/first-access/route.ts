@@ -4,12 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
+import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
 
 const firstAccessSchema = z.object({
   password: z.string().min(12).max(128).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/).regex(/[^A-Za-z0-9]/),
 })
 
 export async function POST(request: Request) {
+  const demoSandboxBlock = demoSandboxGuardResponse('auth_mutation')
+  if (demoSandboxBlock) return demoSandboxBlock
+
   try {
     const input = firstAccessSchema.parse(await request.json())
     const supabase = await createClient()

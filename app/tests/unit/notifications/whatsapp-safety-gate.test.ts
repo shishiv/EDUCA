@@ -21,6 +21,13 @@ describe('whatsapp delivery mode safety gate', () => {
     expect(whatsAppExternalDeliveryAllowed({ ...FULL_CREDENTIALS, pilotMode: 'true' })).toBe(false)
   })
 
+  it('blocks real Meta delivery in demo sandbox even when pilot mode is off', () => {
+    const environment = { ...FULL_CREDENTIALS, pilotMode: 'false', demoSandbox: 'true' }
+    expect(resolveWhatsAppDeliveryMode(environment)).toEqual({ kind: 'local-fake', reason: 'demo_sandbox' })
+    expect(whatsAppExternalDeliveryAllowed(environment)).toBe(false)
+    expect(createWhatsAppNotificationGateway(environment).identity().adapterName).toBe('local-fake')
+  })
+
   it('stays local when Meta is not explicitly enabled', () => {
     const mode = resolveWhatsAppDeliveryMode({ ...FULL_CREDENTIALS, metaEnabled: 'false' })
     expect(mode).toEqual({ kind: 'local-fake', reason: 'not_enabled' })
