@@ -211,7 +211,7 @@ jobs:
         run: pnpm seed:e2e
 
       - name: Run full E2E suite
-        run: pnpm test:e2e -- --project=setup --project=chromium-unauth --project=chromium --max-failures=1
+        run: pnpm exec playwright test --project=setup --project=chromium-unauth --project=chromium --max-failures=1
 
       # Do not upload playwright/.auth or trace archives: they can contain session material.
       - name: Upload E2E diagnostics
