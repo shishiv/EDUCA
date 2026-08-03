@@ -59,6 +59,26 @@ describe('dashboard quick access routes', () => {
     expect(diretorPilot.map((item) => item.name)).toContain('Novo Aluno')
   })
 
+  it('exposes safe synthetic capabilities in demo without widening role checks', () => {
+    const secretarioDemo = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'secretario',
+      pilotMode: true,
+      demoSandbox: true,
+      canManageSchool: true,
+    })
+    expect(secretarioDemo.map((item) => item.name)).toContain('Novo Aluno')
+    expect(secretarioDemo.map((item) => item.name)).toContain('Relatórios')
+
+    const professorDemo = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'professor',
+      pilotMode: true,
+      demoSandbox: true,
+      canManageSchool: false,
+    })
+    expect(professorDemo.some((item) => item.schoolWrite)).toBe(false)
+    expect(resolveVisibleQuickActionCards(true, true, true).map((card) => card.name)).toContain('Lancar Notas')
+  })
+
   it('filters school-write action cards when the caller cannot manage the school', () => {
     const restricted = resolveVisibleQuickActionCards(true, false)
     expect(restricted.some((card) => card.schoolWrite)).toBe(false)

@@ -2,10 +2,10 @@
  * WhatsApp gateway factory - the only place that decides which adapter runs.
  *
  * The safety gate (whatsapp-safety-gate.ts) is applied here, not at call
- * sites: PILOT_MODE=true and missing credentials always produce the local
- * fake, so no caller can accidentally reach Meta. The local fake writes its
- * masked receipts to the pilot evidence file, preserving the visible local
- * receipt in every downgrade.
+ * sites: demo sandbox mode, PILOT_MODE=true and missing credentials always
+ * produce the local fake, so no caller can accidentally reach Meta. The local
+ * fake writes masked receipts to pilot evidence, preserving a visible local
+ * result in every downgrade.
  */
 
 import type { WhatsAppNotificationGateway } from './whatsapp-gateway'
@@ -24,6 +24,7 @@ export interface WhatsAppGatewayFactoryEnvironment extends WhatsAppSafetyEnviron
 export function createWhatsAppNotificationGateway(
   environment: WhatsAppGatewayFactoryEnvironment = {
     pilotMode: process.env.PILOT_MODE,
+    demoSandbox: process.env.NEXT_PUBLIC_DEMO_SANDBOX ?? process.env.DEMO_SANDBOX,
     metaEnabled: process.env.WHATSAPP_META_ENABLED,
     metaPhoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID,
     metaAccessToken: process.env.WHATSAPP_META_TOKEN,

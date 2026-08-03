@@ -49,26 +49,50 @@ the multi-school view is the demoable differentiator.
 
 ## Demoable flows (as of this change)
 
-| Flow | Path | Notes |
-| --- | --- | --- |
-| View dashboard, alerts, frequency stats | `/dashboard` | Works without school selector |
-| Browse all schools | `/dashboard/escolas` | Multi-school read |
-| Browse turmas in a school | `/dashboard/turmas` | Select school first |
-| View turma detail + student list | `/dashboard/turmas/[id]` | |
-| View chamada (read-only for admin) | `/dashboard/turmas/[id]/chamada` | Editing is teacher-only by design |
-| Atribuicoes (assign teacher to class) | `/dashboard/atribuicoes` | Fixed: was crashing |
-| **Nova turma** | `/dashboard/turmas/nova` | Fixed: was a stub; now writes to DB |
-| **Novo aluno** | `/dashboard/alunos/novo` | Fixed: now passes escola_id from context |
-| **Novo responsavel** | `/dashboard/responsaveis/novo` | Fixed: now passes escola_id from context |
-| Nova matricula | `/dashboard/matriculas/nova` | Reads real DB; insert works |
-| Sessoes de aula (view) | `/dashboard/sessoes` | |
-| Open / close session via API | `/api/sessoes/aula/abrir` | Admin role allowed |
-| Mark attendance via API | `/api/sessoes/aula/[id]/frequencia` | Admin role allowed |
-| Compliance warnings | Dashboard | Fixed: was 400 on matriculas.ativo |
-| Grading, Educacenso, Bolsa Familia, health | Various | Out of pilot scope - see CONTEXT.md |
+The public demo uses an explicit capability allowlist in
+`app/lib/demo-sandbox/demo-sandbox.ts`. The allowlist only changes which product
+modules the pilot route guard exposes. It does not change authentication, role
+checks, school selection, RLS or audit.
 
-> **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations` which
-> is blocked in demo-sandbox mode by design (it would invite real auth users).
+| Capability | UI routes | API routes | Result |
+| --- | --- | --- | --- |
+| Dashboard and search | `/dashboard`, `/dashboard/perfil` | `/api/dashboard/alerts`, `/api/attendance/trends`, `/api/chamada/pendentes`, `/api/compliance/warnings`, `/api/search`, `/api/turmas/minhas` | Read synthetic metrics and alerts |
+| Schools | `/dashboard/escolas`, `/dashboard/escolas/nova`, `/dashboard/escolas/[id]` | Supabase client queries with RLS | Multi-school admin view; school context remains required for school-scoped writes |
+| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries | Read and manage existing synthetic profiles; invitation remains blocked |
+| Students | `/dashboard/alunos`, `/dashboard/alunos/novo`, `/dashboard/alunos/[id]` | Existing typed Supabase queries | Synthetic CRUD with the selected school context |
+| Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
+| Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
+| Attendance | `/diario/frequencia`, `/dashboard/turmas/[id]/chamada`, `/dashboard/sessoes` | `/api/frequencia/*`, `/api/sessoes/aula/*` | Open sessions and mark synthetic attendance with server-side role and school checks |
+| Diary | `/dashboard/diario`, `/diario`, `/dashboard/alunos/[id]/diario` | `/api/vivencias` | Class diary is available; the legacy `vivencias` endpoint remains a documented 501 stub |
+| Grades and report cards | `/dashboard/notas`, `/dashboard/alunos/[id]/boletim` | `/api/grades/*` and typed Supabase queries | Synthetic grades and averages only |
+| Reports | `/dashboard/relatorios`, `/relatorios/frequencia`, `/relatorios/bolsa-familia`, `/relatorios/conteudo` | `/api/reports/*` and typed Supabase queries | Browser reports use synthetic rows; no government export is enabled |
+| Calendar and internal settings | `/dashboard/calendario`, `/dashboard/configuracoes`, `/dashboard/flags` | `/api/configs/*` | Internal synthetic configuration only |
+| Audit and metrics | No standalone page | `/api/pilot/audit`, `/api/pilot/metrics` | Internal audit and pilot metrics remain available |
+| Local WhatsApp simulation | No standalone page | `/api/whatsapp/notify`, `/api/whatsapp/opt-in` | Local fake only; no Meta request is possible in demo mode |
+
+The route inventory is intentionally explicit. A new route is not demoable until
+its capability is named and its external effects are reviewed.
+
+## Blocked effects
+
+| Effect | Blocked paths or boundary | Expected result |
+| --- | --- | --- |
+| Synthetic dataset import | `/api/pilot/imports*` | `403` and no staging or publish |
+| Auth user mutation | `/api/pilot/invitations*`, `/api/pilot/first-access` | `403` and no invite or password change |
+| Educacenso and government integration | `/api/educacenso*`, `/api/government*`, `/api/integracoes*`, `/api/censo*`, `/api/inep*` | `403`; no external request |
+| Real PII export | `/api/export*`, `/api/exports*`, `/api/reports/educacenso*`, `/api/reports/export*` | `403`; browser reports remain synthetic-only |
+| Real WhatsApp integration | `/api/whatsapp/webhook*` and the gateway factory | `403` for webhook; local fake for notification simulation |
+| External telemetry | Grafana collector | Buffer is discarded in demo mode |
+
+## Decision traceability
+
+The preserved work file `educa-demoable-unlanded-2026-08-02.patch` was read and
+not applied wholesale. Its useful principle is implemented here: the demo may
+bypass a product-scope restriction only for a named synthetic capability. Auth,
+role checks, school isolation, RLS, audit and external-effect guards stay active.
+
+> **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations`.
+> The endpoint returns `403` in demo mode because it would mutate Auth users.
 > This is correct behaviour, not a bug.
 
 ## Environment (demo runner)
@@ -147,10 +171,18 @@ pnpm --dir app demo:reset-check
 ## Demo mode guards (explicit code, not prose)
 
 - `NEXT_PUBLIC_DEMO_SANDBOX=true` enables `app/lib/demo-sandbox/demo-sandbox.ts`.
-- Middleware returns 403 for `/api/pilot/imports*` and `/api/pilot/invitations*`.
-- The same guard is duplicated at the top of those route handlers (defense in depth).
-- The canonical schema already `REVOKE DELETE ... FROM authenticated` and grants
-  no INSERT on `users` - destructive actions are refused at the database seam.
+- Middleware uses the named capability allowlist. It does not skip auth or
+  route protection for the demo.
+- Middleware and route handlers return `403` for synthetic imports, Auth user
+  invitations and first-access password mutation.
+- Educacenso, government integrations, real PII export paths and the WhatsApp
+  webhook are blocked as external effects.
+- The WhatsApp factory forces the local fake in demo mode, even with complete
+  Meta credentials. No request can reach the Meta adapter from this instance.
+- Grafana Cloud telemetry is discarded in demo mode. Synthetic activity does
+  not leave the sandbox through the monitoring collector.
+- The import validator accepts only `SYNTHETIC-EDUCA-PILOT`; the seed validator
+  accepts only `SYNTHETIC-EDUCA-DEMO` in `configs.demo_synthetic_marker`.
 - UI: delete actions return early with a message and the calendar delete
   affordance is hidden; a banner identifies the sandbox in the dashboard.
 

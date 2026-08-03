@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,7 @@ function firstAccessErrorMessage(code: unknown): string {
 export default function PrimeiroAcessoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const demoSandbox = isDemoSandboxEnabled()
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -33,6 +35,10 @@ export default function PrimeiroAcessoPage() {
 
   async function completeFirstAccess(event: FormEvent) {
     event.preventDefault()
+    if (demoSandbox) {
+      setError('O primeiro acesso fica bloqueado no sandbox publico. Use a conta demo fornecida.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     const response = await fetch('/api/pilot/first-access', {
@@ -61,7 +67,7 @@ export default function PrimeiroAcessoPage() {
               <Input id="password" type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="new-password" required minLength={12} />
             </div>
             {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" disabled={submitting} className="w-full">{submitting ? 'Salvando...' : 'Concluir acesso'}</Button>
+            <Button type="submit" disabled={submitting || demoSandbox} className="w-full">{submitting ? 'Salvando...' : 'Concluir acesso'}</Button>
           </form>
         </CardContent>
       </Card>

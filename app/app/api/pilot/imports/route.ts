@@ -23,7 +23,7 @@ function getImportKey(): { key: string; keyId: string } {
 }
 
 export async function POST(request: Request) {
-  const demoSandboxBlock = demoSandboxGuardResponse()
+  const demoSandboxBlock = demoSandboxGuardResponse('dataset_ingest')
   if (demoSandboxBlock) return demoSandboxBlock
 
   try {
