@@ -74,8 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(nextUser)
         setUserProfile(profile)
       } catch (error) {
-        logger.error('Error hydrating auth session', error instanceof Error ? error : new Error(String(error)))
+        // A navigation can abort the in-flight auth request after this
+        // provider unmounts. Do not report that expected teardown as an app
+        // error or update state after the page is gone.
         if (!active) return
+        logger.error('Error hydrating auth session', error instanceof Error ? error : new Error(String(error)))
         setUser(null)
         setUserProfile(null)
       } finally {
