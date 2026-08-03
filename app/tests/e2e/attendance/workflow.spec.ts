@@ -82,7 +82,7 @@ test.describe('Canonical attendance session workflow', () => {
     expect(sessions[0].status).toBe('ABERTA')
   })
 
-  test('renders P/F/J controls only after a canonical session exists', async ({ page, request }) => {
+  test('renders P/F/J controls only after a canonical session exists', async ({ page, request, browser }) => {
     await page.getByRole('button', { name: /abrir chamada/i }).click()
     await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 10000 })
 
@@ -97,9 +97,17 @@ test.describe('Canonical attendance session workflow', () => {
     expect(sessions).toHaveLength(1)
     expect(sessions[0].status).toBe('ABERTA')
 
-    await page.goto(`${attendancePath}?sessao=${sessions[0].id}`)
-    await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 10000 })
-    await expect(page.getByRole('button', { name: 'Falta' }).first()).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Justificada' }).first()).toBeVisible()
+    const reloadContext = await browser.newContext({
+      storageState: 'playwright/.auth/professor.json',
+    })
+    const reloadPage = await reloadContext.newPage()
+    try {
+      await reloadPage.goto(`${attendancePath}?sessao=${sessions[0].id}`)
+      await expect(reloadPage.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 10000 })
+      await expect(reloadPage.getByRole('button', { name: 'Falta' }).first()).toBeVisible()
+      await expect(reloadPage.getByRole('button', { name: 'Justificada' }).first()).toBeVisible()
+    } finally {
+      await reloadContext.close()
+    }
   })
 })
