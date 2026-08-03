@@ -213,6 +213,22 @@ jobs:
       - name: Seed canonical E2E fixtures
         run: pnpm seed:e2e
 
+      - name: Export seeded E2E school selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          response_file="${RUNNER_TEMP}/e2e-schools.json"
+          curl -fsS -o "$response_file" \
+            "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/escolas?select=id&ativo=eq.true&order=nome.asc&limit=1" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+          school_id="$(node -e 'const fs = require("node:fs"); const rows = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (!rows[0]?.id) process.exit(1); process.stdout.write(rows[0].id)' "$response_file")"
+          if [[ ! "$school_id" =~ ^[0-9a-f-]{36}$ ]]; then
+            echo 'E2E school selection fixture did not return a UUID' >&2
+            exit 1
+          fi
+          printf 'E2E_SELECTED_SCHOOL_ID=%s\n' "$school_id" >> "$GITHUB_ENV"
+
       - name: Run full E2E suite
         run: pnpm exec playwright test --project=setup --project=chromium-unauth --project=chromium --max-failures=1
 
