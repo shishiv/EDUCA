@@ -85,8 +85,6 @@ export default function ResetPasswordPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="seu.email@municipio.edu.br"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
                 required
               />
             </div>
