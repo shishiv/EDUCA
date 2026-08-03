@@ -43,7 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const hydrate = async () => {
       try {
         let result = await supabase.auth.getUser()
-        for (let attempt = 1; result.error && attempt < 3; attempt += 1) {
+        // Local Supabase auth can briefly reject concurrent browser hydrations;
+        // keep the bounded retry visible instead of turning a transient network
+        // blip into a failed E2E page.
+        for (let attempt = 1; result.error && attempt < 5; attempt += 1) {
           if (!/failed to fetch|network/i.test(result.error.message || '')) break
           await new Promise(resolve => setTimeout(resolve, attempt * 250))
           result = await supabase.auth.getUser()
