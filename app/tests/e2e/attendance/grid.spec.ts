@@ -122,7 +122,7 @@ test.describe('Attendance grid', () => {
     await page.goto(`${attendancePath}?sessao=${sessionId}`)
     const savedAttendanceResponse = await savedAttendanceRead
     const savedRows = await savedAttendanceResponse.json() as Array<{ status_presenca?: string }>
-    expect(savedRows.some(row => row.status_presenca === 'P')).toBe(true)
+    expect(savedRows.map(row => row.status_presenca)).toContain('P')
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
   })
 
