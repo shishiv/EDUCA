@@ -13,7 +13,7 @@ The repository currently supports a **synthetic-only municipal pilot foundation*
 - `supabase/migrations/` is the canonical ordered schema history. `supabase/config.toml` defines the local Supabase topology.
 - `supabase/pilot/provision-pilot-module-gate.sql` is deliberately outside canonical migrations. Synthetic pilot tests apply it explicitly, so ordinary `supabase db push` does not disable modules.
 - `supabase/seed-demo/` holds the deterministic demo dataset (issue #23): static seed SQL, `attendance-generator.ts`, reset runner and validation. `.github/workflows/demo-reset.yml` resets the public sandbox weekly; `DEMO.md` is the runbook. `supabase/tests/database/` validates migrations against a temporary raw PostgreSQL cluster. `supabase/tests/pilot/` verifies encrypted portable backup and restore against a local Supabase stack.
-- `.github/workflows/ci.yml` is the current CI contract: install from `app/pnpm-lock.yaml`, then typecheck and lint from `app/`.
+- `.github/workflows/ci.yml` is the current CI contract: install from `app/pnpm-lock.yaml`, then run typecheck, lint, unit tests, and an independent full E2E job from `app/`. The E2E job uses a disposable local Supabase stack, canonical migrations, and `seed:e2e`; it rejects remote and demo configuration.
 - `app/vercel.json` and `app/nixpacks.toml` are deployment inputs. Vercel builds from `app/`; `app/package.json` owns the executable application, test, seed, safety, and deployment commands.
 
 ## Setup
@@ -123,6 +123,6 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 - `frequencia` has a unique index on `(matricula_id, data_aula)` (migration `20260801000000`): one attendance row per student per class-day. The mark toggle upsert depends on it.
 - The demo sandbox persona is a secretariat-level admin (`tipo_usuario = 'admin'`, `escola_id = NULL`). Create flows (alunos, turmas, responsaveis) resolve the target school from the UI escola-context selector; the admin must select a school first. Do not assign the demo admin to a school - the multi-school view is the intended demo differentiator. See `DEMO.md` for the demoable flow list.
 - `use-compliance-warnings.ts` filters active enrolments with `.eq('situacao', 'ativa')` (`matriculas` has no `ativo` column; the column name is `situacao`).
-- CI currently runs typecheck and lint only. Run unit tests, build, database validation, and applicable local Supabase pilot checks before proposing operational or database changes.
+- CI runs typecheck, lint, unit tests, and a full E2E suite against disposable local Supabase. Run build, database validation, and applicable local Supabase pilot checks before proposing operational or database changes.
 - `tsconfig.typecheck.json` and `vitest.config.mts` exclude diary and descriptive-report test directories because those modules are outside the confirmed synthetic pilot. Those files remain for a future reactivation gate and do not prove pilot-core readiness.
 - Historical and extended documentation is archived outside the repository at `/home/shiv/docs/EDUCA/`, preserving original repository-relative paths. `MOVED_FROM_REPO.md` there records the archive manifest and source commit.
