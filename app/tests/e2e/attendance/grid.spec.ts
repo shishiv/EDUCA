@@ -95,7 +95,7 @@ test.describe('Attendance grid', () => {
     await expect(page.getByText(/alteracoes nao salvas/i)).toBeVisible()
   })
 
-  test('saves and persists attendance after reload', async ({ page }) => {
+  test('saves and persists attendance after reload', async ({ page, browser }) => {
     const sessionId = await page.locator('#attendance-session').inputValue()
     expect(sessionId).toMatch(/^[0-9a-f-]{36}$/)
     await test.info().attach('attendance-session.txt', {
@@ -119,24 +119,25 @@ test.describe('Attendance grid', () => {
     await expect(saveButton).toBeEnabled()
     await saveButton.click()
     await expect(page.getByText('Chamada salva com sucesso!')).toBeVisible({ timeout: 10000 })
-    // The save callback clears draftSessionId and starts a background attendance
-    // read; let that refresh settle before listening for the navigation read.
-    await page.waitForTimeout(500)
-    await expect.poll(async () => {
-      const savedNavigation = page.goto(`${attendancePath}?sessao=${sessionId}`)
-      const savedAttendanceRead = page.waitForRequest(request =>
-        request.method() === 'GET' &&
-        request.url().includes('/rest/v1/frequencia') &&
-        request.url().includes(sessionId)
+    const reloadContext = await browser.newContext({
+      storageState: 'playwright/.auth/professor.json',
+    })
+    const reloadPage = await reloadContext.newPage()
+    try {
+      const savedAttendanceRead = reloadPage.waitForResponse(response =>
+        response.request().method() === 'GET' &&
+        response.url().includes('/rest/v1/frequencia') &&
+        response.url().includes(sessionId) &&
+        response.ok()
       )
-      const savedAttendanceRequest = await savedAttendanceRead
-      await savedNavigation
-      const savedAttendanceResponse = await savedAttendanceRequest.response()
-      if (!savedAttendanceResponse || !savedAttendanceResponse.ok()) return false
+      await reloadPage.goto(`${attendancePath}?sessao=${sessionId}`)
+      const savedAttendanceResponse = await savedAttendanceRead
       const savedRows = await savedAttendanceResponse.json() as Array<{ status_presenca?: string }>
-      return savedRows.some(row => row.status_presenca === 'P')
-    }, { timeout: 15000, intervals: [250, 500, 1000] }).toBe(true)
-    await expect(page.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
+      expect(savedRows.map(row => row.status_presenca)).toContain('P')
+      await expect(reloadPage.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
+    } finally {
+      await reloadContext.close()
+    }
   })
 
   test('navigates to the previous day', async ({ page }) => {
