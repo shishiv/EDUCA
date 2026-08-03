@@ -17,10 +17,12 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const submittedEmail = String(new FormData(event.currentTarget).get('email') || '').trim()
+    setEmail(submittedEmail)
     setLoading(true)
     setError('')
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(submittedEmail, {
       redirectTo: `${window.location.origin}/login`,
     })
 
@@ -73,6 +75,7 @@ export default function ResetPasswordPage() {
               <Label htmlFor="reset-email">E-mail</Label>
               <Input
                 id="reset-email"
+                name="email"
                 type="email"
                 autoComplete="email"
                 placeholder="seu.email@municipio.edu.br"
