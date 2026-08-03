@@ -53,9 +53,9 @@ test.describe('Attendance grid', () => {
   test('shows aggregate attendance statistics and save state', async ({ page }) => {
     await expect(page.locator('p').filter({ hasText: /presentes/i }).first()).toBeVisible()
     await expect(page.getByText(/\d+% frequencia/i)).toBeVisible()
-    // A new attendance date defaults all students to present and requires save.
-    await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toBeEnabled()
-    await expect(page.getByText(/alteracoes nao salvas/i)).toBeVisible()
+    // Canonical attendance opens with no saved marks; saving becomes available after an edit.
+    await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toBeDisabled()
+    await expect(page.getByText(/alteracoes nao salvas/i)).toHaveCount(0)
   })
 
   test('marks a student present and exposes unsaved changes', async ({ page }) => {
