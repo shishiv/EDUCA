@@ -90,6 +90,8 @@ export default defineConfig({
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
         'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      EDUCA_E2E_MODE: process.env.EDUCA_E2E_MODE || 'false',
+      NEXT_PUBLIC_EDUCA_E2E_MODE: process.env.NEXT_PUBLIC_EDUCA_E2E_MODE || 'false',
       // Disable the Next.js dev overlay so it does not intercept pointer events
       NEXT_DISABLE_DEV_TOOLS: '1',
     },
