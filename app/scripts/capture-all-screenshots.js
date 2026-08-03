@@ -43,7 +43,7 @@ const pages = [
   // { path: '/dashboard/usuarios/[id]', name: '24-usuarios-details', needsId: 'users' },
 
   // Módulos Principais (7)
-  { path: '/dashboard/frequencia', name: '25-frequencia' },
+  { path: '/dashboard/turmas', name: '25-turmas-attendance-entry' },
   { path: '/dashboard/diario', name: '26-diario' },
   { path: '/dashboard/notas', name: '27-notas' },
   { path: '/dashboard/relatorios', name: '28-relatorios' },

@@ -53,7 +53,7 @@ describe('attendance-generator determinismo', () => {
 })
 
 describe('atendimento (volume medido)', () => {
-  it('gera 5 turmas x 20 dias = 100 aulas e 50 matriculas x 20 dias = 1000 frequencias', () => {
+  it('gera 5 turmas x 20 dias = 100 sessoes e 50 matriculas x 20 dias = 1000 frequencias', () => {
     const { aulas, frequencia } = generateAttendance({ anchorDate: ANCHOR })
     expect(aulas).toHaveLength(TURMAS.length * DEMO_SCHOOL_DAYS) // 100
     expect(frequencia).toHaveLength(MATRICULAS.length * DEMO_SCHOOL_DAYS) // 1000

@@ -332,7 +332,7 @@ describe('openSessionAction - authz and identity derivation', () => {
     fake().state.sessions[fake().state.sessions.length - 1].data_aula = openParams.data_aula
     const result = await openSessionAction(openParams)
     expect(result.success).toBe(false)
-    expect(result.error).toContain('Já existe uma aula aberta')
+    expect(result.error).toContain('Já existe uma chamada aberta')
     expect(fake().writes.inserts).toHaveLength(0)
   })
 })

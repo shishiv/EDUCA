@@ -13,11 +13,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useEscola } from '@/contexts/escola-context'
-import { useDemoMode } from '@/contexts/demo-mode-context'
-import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
 import { TeacherAssignment } from '@/components/classes/teacher-assignment'
 
@@ -41,7 +38,6 @@ import {
   Clock,
   GraduationCap,
   UserPlus,
-  Presentation
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -61,9 +57,6 @@ interface TurmaWithTeacher {
 
 export default function AtribuicoesPage() {
   const { selectedEscolaId, selectedEscola, shouldShowSelector } = useEscola()
-  const { isDemoMode, demoTurmaId, enterDemoMode, canUseDemoMode } = useDemoMode()
-  const { userProfile } = useAuth()
-  const router = useRouter()
 
   // State
   const [turmas, setTurmas] = useState<TurmaWithTeacher[]>([])
@@ -148,23 +141,17 @@ export default function AtribuicoesPage() {
     setIsDialogOpen(true)
   }, [])
 
-  // Handle entering demo mode for a turma
-  const handleEnterDemoMode = useCallback((turmaId: string) => {
-    enterDemoMode(turmaId)
-    router.push(`/dashboard/turmas/${turmaId}/chamada`)
-  }, [enterDemoMode, router])
-
   // Show escola required state for admin without selection
   if (shouldShowSelector && !selectedEscolaId) {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Atribuicao de Professores"
-          description="Gerencie as atribuicoes de professores as turmas"
+          title="Professores titulares"
+          description="Defina um professor titular para cada turma"
         />
         <EscolaRequiredState
           title="Selecione uma escola"
-          description="Para gerenciar atribuicoes de professores, primeiro selecione uma escola no menu acima."
+          description="Para definir professores titulares, primeiro selecione uma escola no menu acima."
         />
       </div>
     )
@@ -175,8 +162,8 @@ export default function AtribuicoesPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Atribuicao de Professores"
-          description="Gerencie as atribuicoes de professores as turmas"
+          title="Professores titulares"
+          description="Defina um professor titular para cada turma"
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
@@ -192,8 +179,8 @@ export default function AtribuicoesPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Atribuicao de Professores"
-          description="Gerencie as atribuicoes de professores as turmas"
+          title="Professores titulares"
+          description="Defina um professor titular para cada turma"
         />
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-6 text-center text-red-800">
@@ -217,11 +204,11 @@ export default function AtribuicoesPage() {
     <div className="space-y-6">
       {/* Header */}
       <PageHeader
-        title="Atribuicao de Professores"
+        title="Professores titulares"
         description={
           selectedEscola
-            ? `Gerencie as atribuicoes de professores - ${selectedEscola.nome}`
-            : "Gerencie as atribuicoes de professores as turmas"
+            ? `Defina os professores titulares - ${selectedEscola.nome}`
+            : 'Defina um professor titular para cada turma'
         }
       />
 
@@ -234,7 +221,7 @@ export default function AtribuicoesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{assignedCount}</p>
-              <p className="text-sm text-muted-foreground">Com professor</p>
+              <p className="text-sm text-muted-foreground">Com titular</p>
             </div>
           </CardContent>
         </Card>
@@ -245,7 +232,7 @@ export default function AtribuicoesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{unassignedCount}</p>
-              <p className="text-sm text-muted-foreground">Sem professor</p>
+              <p className="text-sm text-muted-foreground">Sem titular</p>
             </div>
           </CardContent>
         </Card>
@@ -320,20 +307,7 @@ export default function AtribuicoesPage() {
                       <Users className="h-4 w-4 text-green-600" />
                       <span className="font-medium">{turma.professor.nome}</span>
                     </div>
-                    {canUseDemoMode && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-purple-600 hover:bg-purple-50 hover:text-purple-700"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEnterDemoMode(turma.id)
-                        }}
-                      >
-                        <Presentation className="h-4 w-4 mr-1" />
-                        Demo
-                      </Button>
-                    )}
+
                   </div>
                 ) : (
                   <div className="flex gap-2">
@@ -349,19 +323,7 @@ export default function AtribuicoesPage() {
                       <UserPlus className="h-4 w-4 mr-2" />
                       Atribuir
                     </Button>
-                    {canUseDemoMode && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-purple-200 text-purple-600 hover:bg-purple-50"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEnterDemoMode(turma.id)
-                        }}
-                      >
-                        <Presentation className="h-4 w-4" />
-                      </Button>
-                    )}
+
                   </div>
                 )}
               </CardContent>
@@ -375,7 +337,7 @@ export default function AtribuicoesPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedTurma?.professor ? 'Alterar Professor' : 'Atribuir Professor'}
+              {selectedTurma?.professor ? 'Alterar professor titular' : 'Definir professor titular'}
             </DialogTitle>
           </DialogHeader>
           {selectedTurma && selectedEscolaId && (

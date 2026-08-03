@@ -9,13 +9,13 @@ import {
 const attendanceItem = quickAccessItems.find((item) => item.name === 'Frequência')!
 
 describe('dashboard quick access routes', () => {
-  it('points attendance at the canonical /diario/frequencia route', () => {
-    expect(ATTENDANCE_ROUTE).toBe('/diario/frequencia')
+  it('points attendance at the canonical turma entry route', () => {
+    expect(ATTENDANCE_ROUTE).toBe('/dashboard/turmas')
     expect(attendanceItem.href).toBe(ATTENDANCE_ROUTE)
     expect(attendanceItem.pilotHref).toBeUndefined()
   })
 
-  it('resolves the attendance route to /diario/frequencia in every supported mode', () => {
+  it('resolves attendance to the canonical turma entry in every supported mode', () => {
     for (const pilotMode of [false, true]) {
       const visible = resolveVisibleQuickAccess(quickAccessItems, {
         role: 'diretor',
@@ -23,7 +23,7 @@ describe('dashboard quick access routes', () => {
         canManageSchool: true,
       })
       const attendance = visible.find((item) => item.name === 'Frequência')
-      expect(attendance?.href).toBe('/diario/frequencia')
+      expect(attendance?.href).toBe('/dashboard/turmas')
     }
   })
 
@@ -82,6 +82,6 @@ describe('dashboard quick access routes', () => {
   it('filters school-write action cards when the caller cannot manage the school', () => {
     const restricted = resolveVisibleQuickActionCards(true, false)
     expect(restricted.some((card) => card.schoolWrite)).toBe(false)
-    expect(restricted.find((card) => card.name === 'Nova Chamada')?.href).toBe('/diario/frequencia')
+    expect(restricted.find((card) => card.name === 'Nova Chamada')?.href).toBe('/dashboard/turmas')
   })
 })

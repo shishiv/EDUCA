@@ -11,7 +11,7 @@
  *          auditoria append-only, que TRUNCATE limpa sem disparar triggers);
  *       b. seed estatico (seed-demo.sql) - entidades fixas com created_at
  *          ancorado (deterministico);
- *       c. frequencia + aulas geradas por attendance-generator.ts para uma
+ *       c. sessoes_aula + frequencia geradas por attendance-generator.ts para uma
  *          janela de 20 dias letivos terminando na data do reset;
  *       d. configs de marcador (demo_synthetic_marker, demo_seed_anchor_date).
  *  2. Cria/recria o usuario de auth demo@educa.app.br via Admin API e
@@ -307,7 +307,7 @@ async function main(): Promise<void> {
         (SELECT count(*) FROM alunos) AS alunos,
         (SELECT count(*) FROM aluno_responsaveis) AS aluno_responsaveis,
         (SELECT count(*) FROM matriculas) AS matriculas,
-        (SELECT count(*) FROM aulas_abertas) AS aulas_abertas,
+        (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
         (SELECT count(*) FROM frequencia) AS frequencia,
         (SELECT count(*) FROM notas) AS notas,
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,

@@ -6,8 +6,14 @@
  * rules. Authentication, role checks, school context, RLS and audit remain
  * owned by the normal application and database boundaries.
  *
- * This is separate from the session-scoped attendance demo mode in
- * `contexts/demo-mode-context.tsx`: that flag never changes authorization.
+ * When NEXT_PUBLIC_DEMO_SANDBOX=true the instance is a shared public demo:
+ *  - signup is disabled (Supabase project setting documented in DEMO.md; the
+ *    app has no signup UI, and the canonical schema grants no INSERT on
+ *    `users` to authenticated, so no visitor can create an app profile);
+ *  - destructive product actions are blocked here (API prefix guard) AND at
+ *    the database seam (canonical migration REVOKEs DELETE from
+ *    authenticated), so the demo dataset can only be replaced by the weekly
+ *    reset workflow.
  */
 
 import { NextResponse } from 'next/server'

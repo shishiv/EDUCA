@@ -1,24 +1,15 @@
 /**
- * Mark Attendance - Server Action
+ * Marks one canonical attendance row for one enrollment and session.
  *
- * Marks or updates attendance for a single student in a session.
- * Validates session is editable before marking (not locked).
- * Supports toggle: can update existing record if already marked.
- *
- * Authorization (issue #30):
- * - resolves the authenticated actor from the server session
- * - only professor (own sessions) and diretor (own escola) can mark
- * - `professor_id` and `marcado_por` come from the actor/session, never from
- *   the client
- *
- * Performance Target: <1s per student (including database round trip)
- * Brazilian Compliance: "não existe o esquecer" - prevents locked modifications
+ * The session supplies the date and titular teacher. The actor supplies the
+ * audit user. The client never supplies a school, teacher, or trusted date.
  */
 
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import type { Tables } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import {
   assertCanRecordAttendance,
@@ -28,187 +19,172 @@ import {
   requireAttendanceActor,
 } from '@/lib/services/attendance-auth'
 
+export type AttendanceStatusCode = 'P' | 'F' | 'J' | null
+
 interface MarkAttendanceParams {
   sessao_id: string
   matricula_id: string
-  presente: boolean
-  data_aula: string // YYYY-MM-DD format
+  /** Preferred canonical status. */
+  status?: AttendanceStatusCode
+  /** @deprecated Use status. Kept for old callers and normalized server-side. */
+  presente?: boolean
+  justificativa?: string | null
+  /** Optional compatibility check. The write always uses the session date. */
+  data_aula?: string
 }
 
 interface MarkAttendanceResult {
   success: boolean
-  record?: any
+  record?: Tables<'frequencia'>
   error?: string
   code?: string
+}
+
+function statusFromParams(params: MarkAttendanceParams): AttendanceStatusCode | 'INVALID' {
+  if (params.status !== undefined) return params.status
+  if (params.presente === undefined) return 'INVALID'
+  return params.presente ? 'P' : 'F'
+}
+
+function presenceFromStatus(status: Exclude<AttendanceStatusCode, null>): boolean {
+  return status === 'P' || status === 'J'
 }
 
 export async function markAttendanceAction(
   params: MarkAttendanceParams
 ): Promise<MarkAttendanceResult> {
   try {
-    // Validate required parameters
-    if (!params.sessao_id) {
-      return {
-        success: false,
-        error: 'ID da sessao e obrigatorio',
-      }
+    if (!params || !params.sessao_id || !params.matricula_id) {
+      return { success: false, code: 'INPUT_REQUIRED', error: 'Sessão e matrícula são obrigatórias' }
     }
 
-    if (!params.matricula_id) {
-      return {
-        success: false,
-        error: 'ID da matricula e obrigatorio',
-      }
+    const status = statusFromParams(params)
+    if (status === 'INVALID' || !['P', 'F', 'J', null].includes(status)) {
+      return { success: false, code: 'STATUS_REQUIRED', error: 'Status da presença é obrigatório' }
     }
 
-    if (!params.data_aula) {
+    if (status === 'J' && !params.justificativa?.trim()) {
       return {
         success: false,
-        error: 'Data e obrigatoria',
+        code: 'JUSTIFICATION_REQUIRED',
+        error: 'A presença justificada exige um motivo',
       }
     }
 
     const supabase = await createClient()
-
-    // Resolve the authenticated actor from the server session (issue #30).
     const actor = await requireAttendanceActor(supabase)
     assertCanRecordAttendance(actor)
 
-    // Load the session and assert ownership: the client-supplied sessao_id
-    // must belong to the actor (professor) or to the actor's escola (diretor).
     const { data: session, error: sessionError } = await supabase
       .from('sessoes_aula')
-      .select('id, turma_id, professor_id, escola_id, status, data_aula')
+      .select('id, turma_id, professor_id, escola_id, status, data_aula, travada_em, fechada_em')
       .eq('id', params.sessao_id)
       .single()
 
     if (sessionError || !session) {
-      return {
-        success: false,
-        code: 'SESSION_NOT_FOUND',
-        error: 'Sessão de aula não encontrada',
-      }
+      return { success: false, code: 'SESSION_NOT_FOUND', error: 'Sessão de aula não encontrada' }
     }
 
-    assertSessionWriteAccess(actor, {
-      id: session.id,
-      professor_id: session.professor_id,
-      escola_id: session.escola_id,
-    })
+    const { data: turma } = await supabase
+      .from('turmas')
+      .select('id, professor_id, escola_id, ativo')
+      .eq('id', session.turma_id)
+      .single()
 
-    // Assert the student's matricula belongs to the session's turma.
-    // Prevents marking students from other classes into this session.
+    if (!turma) {
+      return { success: false, code: 'TURMA_NOT_FOUND', error: 'Turma da sessão não encontrada' }
+    }
+
+    assertSessionWriteAccess(actor, session, turma)
+
     const { data: matricula } = await supabase
       .from('matriculas')
-      .select('id, turma_id')
+      .select('id, turma_id, situacao')
       .eq('id', params.matricula_id)
       .single()
 
     if (!matricula) {
-      return {
-        success: false,
-        code: 'MATRICULA_NOT_FOUND',
-        error: 'Matrícula não encontrada',
-      }
+      return { success: false, code: 'MATRICULA_NOT_FOUND', error: 'Matrícula não encontrada' }
     }
 
     assertMatriculaInTurma(matricula, session.turma_id)
 
-    // The attendance date must be the session's own class date: a client
-    // cannot attach attendance rows with a forged date to this session.
-    if (params.data_aula !== session.data_aula) {
+    if (params.data_aula && params.data_aula !== session.data_aula) {
       return {
         success: false,
         code: 'DATA_MISMATCH',
-        error: 'Data da frequência não corresponde à data da sessão de aula',
+        error: 'A data da frequência deve ser a data da sessão de aula',
       }
     }
 
-    // Check if session is editable (calls database function)
-    const { data: isEditable, error: checkError } = await supabase.rpc(
+    const { data: isEditable, error: editableError } = await supabase.rpc(
       'is_session_editable',
-      {
-        session_id: params.sessao_id,
-      }
+      { session_id: params.sessao_id }
     )
 
-    if (checkError) {
+    if (editableError) {
       return {
         success: false,
-        error: `Erro ao verificar sessão: ${checkError.message}`,
+        code: 'SESSION_LOCK_CHECK_FAILED',
+        error: `Erro ao verificar o fechamento da sessão: ${editableError.message}`,
       }
     }
 
     if (!isEditable) {
       return {
         success: false,
-        error:
-          'Frequência já finalizada. Não existe o esquecer. (Sessão bloqueada)',
+        code: 'SESSION_CLOSED',
+        error: 'A sessão está fechada ou bloqueada e não aceita alterações',
       }
     }
 
-    // Upsert attendance record (insert or update if exists).
-    // professor_id is the session owner (never client-supplied); marcado_por
-    // records who performed the action.
+    const dbStatus = status ?? 'NAO_MARCADO'
     const { data: attendanceRecord, error: upsertError } = await supabase
       .from('frequencia')
       .upsert(
         {
-          sessao_id: params.sessao_id,
-          matricula_id: params.matricula_id,
-          presente: params.presente,
-          data_aula: params.data_aula,
+          sessao_id: session.id,
+          matricula_id: matricula.id,
+          data_aula: session.data_aula,
+          status_presenca: dbStatus,
+          presente: status ? presenceFromStatus(status) : false,
+          justificativa: status === 'J' ? params.justificativa!.trim() : null,
           professor_id: session.professor_id,
           marcado_por: actor.userId,
           marcado_em: new Date().toISOString(),
         },
-        {
-          onConflict: 'matricula_id,data_aula', // Unique constraint
-        }
+        { onConflict: 'sessao_id,matricula_id' }
       )
       .select()
       .single()
 
-    if (upsertError) {
-      logger.error('Erro ao marcar frequencia', upsertError, {
-        metadata: {
-          sessaoId: params.sessao_id,
-          matriculaId: params.matricula_id,
-          dataAula: params.data_aula
-        }
+    if (upsertError || !attendanceRecord) {
+      logger.error('ATTENDANCE_RECORD_WRITE_FAILED', upsertError ?? new Error('Registro não retornado'), {
+        metadata: { sessionId: session.id, matriculaId: matricula.id },
       })
       return {
         success: false,
-        error: `Erro ao salvar frequência: ${upsertError.message}`,
+        code: 'ATTENDANCE_WRITE_FAILED',
+        error: upsertError?.message || 'Não foi possível salvar a frequência',
       }
     }
 
-    // Revalidate the turma page so the attendance grid reflects the new mark.
-    // The historical '/dashboard/frequencia' target was a no-op (no such route).
+    revalidatePath(`/dashboard/turmas/${session.turma_id}/chamada`)
     revalidatePath(`/dashboard/turmas/${session.turma_id}`)
 
-    return {
-      success: true,
-      record: attendanceRecord,
-    }
+    return { success: true, record: attendanceRecord }
   } catch (error) {
-    // Expected authorization failures are returned to the caller as-is.
     if (error instanceof AttendanceAuthError) {
-      return {
-        success: false,
-        code: error.code,
-        error: error.message,
-      }
+      return { success: false, code: error.code, error: error.message }
     }
 
-    logger.error('Erro inesperado ao marcar frequencia', error as Error, {
-      metadata: {
-        sessaoId: params.sessao_id,
-        matriculaId: params.matricula_id
-      }
+    logger.error('ATTENDANCE_RECORD_WRITE_UNEXPECTED', error as Error, {
+      metadata: { sessionId: params?.sessao_id, matriculaId: params?.matricula_id },
     })
+
     return {
       success: false,
+      code: 'ATTENDANCE_WRITE_FAILED',
       error: error instanceof Error ? error.message : 'Erro desconhecido',
     }
   }

@@ -62,18 +62,18 @@ implemented. Tests assert the denial boundary until a parent portal is defined.
 | `/dashboard/turmas/nova` | admin, diretor, secretario | desktop | required validation, school/teacher selection, save/cancel | `turmas/create.spec.ts` | covered |
 | `/dashboard/turmas/[id]` | admin, diretor, secretario, professor | desktop | tabs, students, edit/status, attendance and diary links | `turmas/detail.spec.ts` | covered |
 | `/dashboard/turmas/[id]/editar` | admin, diretor, secretario | desktop + mobile | update class, teacher, capacity, shift and active state; save/cancel | `turmas/detail.spec.ts` | covered |
-| `/dashboard/turmas/[id]/chamada` | admin, diretor, professor | desktop + mobile | date/session selection, present/absent toggles, keyboard controls, bulk actions, save persistence | `attendance/grid.spec.ts`, `attendance/workflow.spec.ts`, `flows/chamada.spec.ts` | covered |
+| `/dashboard/turmas/[id]/chamada` | admin, diretor, secretario, professor | desktop + mobile | date/session selection, P/F/J toggles, save, review, close, immutable state | `attendance/grid.spec.ts`, `attendance/workflow.spec.ts` | covered |
 | `/dashboard/matriculas` | admin, diretor, secretario | desktop + mobile | search/filter/sort/pagination, detail, create | `matriculas/enrollment.spec.ts` | covered |
 | `/dashboard/matriculas/nova` | admin, diretor, secretario | desktop | student/class selection, capacity validation, create/cancel | `matriculas/enrollment.spec.ts` | covered |
 | `/dashboard/matriculas/[id]` | admin, diretor, secretario | desktop | transfer, cancel/reactivate confirmation, linked student/class | `matriculas/enrollment.spec.ts` | covered |
 | `/dashboard/responsaveis` | admin, diretor, secretario | desktop + mobile | search/filter/pagination, detail, create | `responsaveis/crud.spec.ts` | covered |
 | `/dashboard/responsaveis/novo` | admin, diretor, secretario | desktop | required validation, CPF/phone, child linking, save/cancel | `responsaveis/crud.spec.ts` | covered |
 | `/dashboard/responsaveis/[id]` | admin, diretor, secretario | desktop | contact edit, linked students, unlink confirmation | `responsaveis/crud.spec.ts` | covered |
-| `/dashboard/atribuicoes` | admin, diretor | desktop + mobile | school/class/teacher filters, assignment action, attendance navigation | `assignments/teacher.spec.ts` | covered |
+| `/dashboard/atribuicoes` | admin, diretor | desktop + mobile | school/class/teacher filters, single titular assignment action | `assignments/teacher.spec.ts` | covered |
 | `/dashboard/calendario` | admin, secretario | desktop + mobile | month navigation, add/edit event, day selection | `config/settings.spec.ts` | covered |
 | `/dashboard/diario` | admin, diretor, secretario, professor | desktop + mobile | class filters, student diary navigation, role-scoped results | `diary/list.spec.ts` | covered |
 | `/diario` | admin, diretor, secretario, professor | desktop + mobile | class/date selection, session cards and navigation | `diary/list.spec.ts` | covered |
-| `/diario/frequencia` | admin, diretor, secretario, professor | desktop + mobile | session/date filters, attendance toggles, lock/justification, save/offline state | `attendance/grid.spec.ts`, `attendance/justification.spec.ts`, `attendance/workflow.spec.ts` | covered |
+| `/diario/frequencia` | authenticated users | desktop + mobile | deprecated redirect to `/dashboard/turmas` | no new writes | compatibility redirect |
 | `/diario/relatorios/[alunoId]` | admin, diretor, secretario, professor | desktop | range, attendance summary, export | `reports/frequency.spec.ts` | covered |
 | `/dashboard/notas` | admin, diretor, secretario, professor | desktop + mobile | class/period/subject filters, grade entry, validation, calculated averages, save | `grades/entry.spec.ts`, `flows/notas-boletim.spec.ts` | covered |
 | `/dashboard/notas/[turmaId]/boletim` | admin, diretor, secretario, professor | desktop + mobile | class roster and navigation to each student's report card | `grades/report-card.spec.ts` | covered |
@@ -93,10 +93,10 @@ defects, not test exclusions:
 
 | Previously reachable URL | Evidence | Resolution |
 |---|---|---|
-| `/dashboard/frequencia` | dashboard quick action and mobile drawer | corrected to `/diario/frequencia` |
+| `/dashboard/frequencia` | dashboard quick action and mobile drawer | corrected to `/dashboard/turmas` |
 | `/relatorios` | mobile bottom navigation | corrected to `/dashboard/relatorios` |
 | `/dashboard/turmas/[id]/diario` | class-list action | corrected to `/dashboard/diario?turma=[id]` |
-| `/dashboard/frequencia?sessao=[id]` | session page action | corrected to `/diario/frequencia?sessao=[id]` |
+| `/dashboard/frequencia?sessao=[id]` | session page action | corrected to `/dashboard/turmas/[id]/chamada?sessao=[id]` |
 | `/reset-password` | login link | page implemented and covered |
 | `/offline` | service worker fallback | page implemented and covered |
 | `/unauthorized` | permission middleware | page implemented and covered |

@@ -9,7 +9,6 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar'
 import { MobileNav } from '@/components/layout/MobileNav'
 import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { EscolaProvider } from '@/contexts/escola-context'
-import { DemoModeProvider } from '@/contexts/demo-mode-context'
 import { DemoSandboxBanner } from '@/components/demo-sandbox/DemoSandboxBanner'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { Toaster } from '@/components/ui/sonner'
@@ -96,17 +95,15 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
 
   return (
     <EscolaProvider>
-      <DemoModeProvider>
-        <SessionRealtimeProvider
-          user={{
-            id: userProfile.id,
-            tipo_usuario: userProfile.tipo_usuario,
-            escola_id: userProfile.escola_id || '' // Default to empty string if null
-          }}
-        >
-          {children}
-        </SessionRealtimeProvider>
-      </DemoModeProvider>
+      <SessionRealtimeProvider
+        user={{
+          id: userProfile.id,
+          tipo_usuario: userProfile.tipo_usuario,
+          escola_id: userProfile.escola_id || '' // Default to empty string if null
+        }}
+      >
+        {children}
+      </SessionRealtimeProvider>
     </EscolaProvider>
   )
 }

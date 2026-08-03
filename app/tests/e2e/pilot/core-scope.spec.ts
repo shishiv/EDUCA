@@ -24,8 +24,8 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByRole('heading', { name: /alunos/i }).first()).toBeVisible()
     await page.goto('/dashboard/turmas')
     await expect(page.getByRole('heading', { name: /turmas/i }).first()).toBeVisible()
-    await page.goto('/diario/frequencia')
-    await expect(page.getByRole('heading', { name: /frequ[eê]ncia|chamada/i }).first()).toBeVisible()
+    await page.goto('/dashboard/turmas')
+    await expect(page.getByRole('heading', { name: /turmas/i }).first()).toBeVisible()
   })
 
   test('redirects disabled pilot modules', async ({ page }) => {
