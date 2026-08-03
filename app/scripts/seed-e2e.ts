@@ -94,6 +94,9 @@ async function cleanupGeneratedRecords() {
     .select('id')
     .or([
       'nome.like.Turma E2E %',
+      'nome.eq.1º Ano A E2E',
+      'nome.eq.2º Ano B E2E',
+      'nome.eq.Berçário A E2E',
       'nome.eq.Turma com Professor',
       'nome.eq.Turma com Observações',
       'nome.like.Loading Test %',
