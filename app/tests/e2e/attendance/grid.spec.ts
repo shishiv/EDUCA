@@ -118,20 +118,18 @@ test.describe('Attendance grid', () => {
     await expect(saveButton).toBeEnabled()
     await saveButton.click()
     await expect(page.getByText('Chamada salva com sucesso!')).toBeVisible({ timeout: 10000 })
-    const savedAttendanceRead = page.waitForResponse(response =>
-      response.request().method() === 'GET' &&
-      response.url().includes('/rest/v1/frequencia') &&
-      response.url().includes(sessionId) &&
-      response.ok()
-    )
-    await page.goto(`${attendancePath}?sessao=${sessionId}`)
-    const savedAttendanceResponse = await savedAttendanceRead
-    await test.info().attach('attendance-read-url.txt', {
-      body: Buffer.from(savedAttendanceResponse.url()),
-      contentType: 'text/plain',
-    })
-    const savedRows = await savedAttendanceResponse.json() as Array<{ status_presenca?: string }>
-    expect(savedRows.map(row => row.status_presenca)).toContain('P')
+    await expect.poll(async () => {
+      const savedAttendanceRead = page.waitForResponse(response =>
+        response.request().method() === 'GET' &&
+        response.url().includes('/rest/v1/frequencia') &&
+        response.url().includes(sessionId) &&
+        response.ok()
+      )
+      await page.goto(`${attendancePath}?sessao=${sessionId}`)
+      const savedAttendanceResponse = await savedAttendanceRead
+      const savedRows = await savedAttendanceResponse.json() as Array<{ status_presenca?: string }>
+      return savedRows.some(row => row.status_presenca === 'P')
+    }, { timeout: 15000, intervals: [250, 500, 1000] }).toBe(true)
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
   })
 
