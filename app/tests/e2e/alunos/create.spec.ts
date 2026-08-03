@@ -535,7 +535,7 @@ test.describe('Alunos - Successful Creation', () => {
     const timestamp = Date.now()
 
     // Hold the insert response long enough to observe the loading state.
-    await page.route('**/rest/v1/alunos*', async route => {
+    await page.route('**/rest/v1/alunos**', async route => {
       await new Promise(resolve => setTimeout(resolve, 750))
       await route.continue()
     })
