@@ -534,13 +534,17 @@ test.describe('Alunos - Successful Creation', () => {
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
 
-    // Hold the insert response long enough to observe the loading state.
+    // Hold the insert response until the loading state has been observed.
+    let releaseInsert = () => {}
+    const insertPaused = new Promise<void>(resolve => {
+      releaseInsert = resolve
+    })
     await page.route('**/rest/v1/alunos**', async route => {
       if (route.request().method() !== 'POST') {
         await route.continue()
         return
       }
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      await insertPaused
       await route.continue()
     })
     
@@ -558,8 +562,12 @@ test.describe('Alunos - Successful Creation', () => {
     const submission = saveButton.click({ noWaitAfter: true })
 
     // Use a stable selector because the accessible name changes to "Cadastrando".
-    await expect(saveButton).toBeDisabled()
-    await expect(saveButton).toContainText(/cadastrando/i)
+    try {
+      await expect(saveButton).toBeDisabled()
+      await expect(saveButton).toContainText(/cadastrando/i)
+    } finally {
+      releaseInsert()
+    }
     await submission
     await expect(page).toHaveURL(/\/dashboard\/alunos$/, { timeout: 10000 })
     // Let the destination layout finish its Realtime handshake before teardown.
