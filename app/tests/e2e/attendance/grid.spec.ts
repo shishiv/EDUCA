@@ -96,9 +96,12 @@ test.describe('Attendance grid', () => {
   })
 
   test('saves and persists attendance after reload', async ({ page }) => {
+    const saveButton = page.getByRole('button', { name: 'Salvar', exact: true })
+    await expect(saveButton).toBeDisabled()
     const present = page.getByRole('button', { name: 'Presente' }).first()
     await setPressed(present, true)
-    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(saveButton).toBeEnabled()
+    await saveButton.click()
     await expect(page.getByText('Chamada salva com sucesso!')).toBeVisible({ timeout: 10000 })
     const sessionId = await page.locator('#attendance-session').inputValue()
     await page.goto(`${attendancePath}?sessao=${sessionId}`)
