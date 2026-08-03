@@ -82,9 +82,21 @@ test.describe('Canonical attendance session workflow', () => {
     expect(sessions[0].status).toBe('ABERTA')
   })
 
-  test('renders P/F/J controls only after a canonical session exists', async ({ page }) => {
+  test('renders P/F/J controls only after a canonical session exists', async ({ page, request }) => {
     await page.getByRole('button', { name: /abrir chamada/i }).click()
     await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 10000 })
+
+    const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+    const today = new Date().toISOString().slice(0, 10)
+    const response = await request.get(
+      `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id,status&turma_id=eq.${classId}&data_aula=eq.${today}`,
+      { headers }
+    )
+    expect(response.ok()).toBe(true)
+    const sessions: Array<{ id: string; status: string }> = await response.json()
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0].status).toBe('ABERTA')
+
     await page.reload()
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 10000 })
     await expect(page.getByRole('button', { name: 'Falta' }).first()).toBeVisible()
