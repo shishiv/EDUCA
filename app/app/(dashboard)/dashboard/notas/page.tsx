@@ -591,12 +591,22 @@ export default function NotasPage() {
                     {turma.escola} - Prof. {turma.professor} - {turma.ano_letivo}
                   </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/dashboard/notas/${turma.id}/boletim`}>
+                {turma.alunos[0] ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href={`/dashboard/alunos/${turma.alunos[0].aluno.id}/boletim`}
+                      aria-label={`Boletim de ${turma.alunos[0].aluno.nome_completo}`}
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Boletim
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" disabled>
                     <BookOpen className="h-4 w-4 mr-2" />
                     Boletim
-                  </Link>
-                </Button>
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
