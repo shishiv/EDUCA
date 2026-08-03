@@ -89,7 +89,13 @@ test.describe('Enrollment form', () => {
 
     try {
       // Reload so the client-side student list includes the disposable fixture.
+      const studentsRead = page.waitForResponse(response =>
+        response.request().method() === 'GET' &&
+        response.url().includes('/rest/v1/alunos') &&
+        response.ok()
+      )
       await page.reload()
+      await studentsRead
       await expect(page.getByPlaceholder(/buscar por nome/i)).toBeVisible({ timeout: 15000 })
       await selectStudent(page, unique)
       await selectFirstClass(page)
