@@ -100,6 +100,7 @@ test.describe('Attendance grid', () => {
     const attendanceRead = page.waitForResponse(response =>
       response.request().method() === 'GET' &&
       response.url().includes('/rest/v1/frequencia') &&
+      response.url().includes(sessionId) &&
       response.ok()
     )
     await page.goto(`${attendancePath}?sessao=${sessionId}`)
@@ -115,6 +116,7 @@ test.describe('Attendance grid', () => {
     const savedAttendanceRead = page.waitForResponse(response =>
       response.request().method() === 'GET' &&
       response.url().includes('/rest/v1/frequencia') &&
+      response.url().includes(sessionId) &&
       response.ok()
     )
     await page.goto(`${attendancePath}?sessao=${sessionId}`)
