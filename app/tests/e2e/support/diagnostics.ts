@@ -8,6 +8,8 @@ interface BrowserIssue {
 const ignoredUrl = (url: string) =>
   url.includes('/_next/webpack-hmr') || url.endsWith('/favicon.ico')
 
+const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
+
 const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
   // Invalid-credential coverage intentionally exercises Supabase's 400 response.
   if (
@@ -30,6 +32,14 @@ const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
  * Keep exceptions small and evidence-backed; add new benign noise only here.
  */
 export const test = base.extend<{ browserDiagnostics: void }>({
+  page: async ({ page }, applyPage) => {
+    if (selectedSchoolId) {
+      await page.addInitScript((schoolId: string) => {
+        window.sessionStorage.setItem('educa-selected-escola', schoolId)
+      }, selectedSchoolId)
+    }
+    await applyPage(page)
+  },
   browserDiagnostics: [
     async ({ page }, use, testInfo) => {
       const issues: BrowserIssue[] = []
