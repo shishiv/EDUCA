@@ -137,13 +137,13 @@ export function AttendanceGrid({
         let status: AttendanceStatusUI = 'empty'
         if (record.status_presenca === 'P') status = 'presente'
         else if (record.status_presenca === 'F') status = 'falta'
-        else if (record.status_presenca === 'A') status = 'attestado'
+        else if (record.status_presenca === 'A' || record.status_presenca === 'J') status = 'attestado'
         else if (record.presente) status = 'presente'
         else if (record.presente === false) status = 'falta'
 
         attendanceMap.set(record.matricula_id, {
           id: record.id,
-          aluno_id: record.matricula_id,
+          student_id: record.matricula_id,
           presente: record.presente || status === 'presente' || status === 'attestado',
           status_presenca: uiStatusToDB(status),
           observacoes: record.observacoes_frequencia ?? undefined,
@@ -273,7 +273,7 @@ export function AttendanceGrid({
           newMap.delete(studentId)
         } else {
           newMap.set(studentId, {
-            aluno_id: studentId,
+            student_id: studentId,
             presente: statusFields.presente,
             status_presenca: uiStatusToDB(status),
             horario_marcacao: new Date().toISOString()
@@ -282,15 +282,28 @@ export function AttendanceGrid({
         return newMap
       })
 
+      const student = students.find(currentStudent => currentStudent.id === studentId)
+      const matriculaId = student?.matriculas[0]?.id
+      if (!matriculaId) {
+        throw new Error('Matrícula ativa não encontrada para o aluno')
+      }
+
+      const canonicalStatus = status === 'presente'
+        ? 'P'
+        : status === 'falta'
+          ? 'F'
+          : status === 'attestado'
+            ? 'J'
+            : null
+
       const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          attendance: status === 'empty' ? [] : [{
-            aluno_id: studentId,
-            presente: statusFields.presente,
-            status_presenca: statusFields.status_presenca,
-            horario_marcacao: new Date().toISOString()
+          attendance: [{
+            matricula_id: matriculaId,
+            status: canonicalStatus,
+            justificativa: status === 'attestado' ? 'Atestado apresentado' : null,
           }]
         })
       })
@@ -336,31 +349,46 @@ export function AttendanceGrid({
       setSaving(true)
       setSyncStatus('pending')
 
-      const status: AttendanceStatusUI = present ? 'presente' : 'falta'
-      const dbStatus = present ? 'P' : 'F'
+      const attendanceRecords = Array.from(selectedStudents).map(studentId => {
+        const student = students.find(currentStudent => currentStudent.id === studentId)
+        const matriculaId = student?.matriculas[0]?.id
+        if (!matriculaId) {
+          throw new Error('Matrícula ativa não encontrada para o aluno')
+        }
 
-      const attendanceRecords = Array.from(selectedStudents).map(studentId => ({
-        aluno_id: studentId,
-        presente: present,
-        status_presenca: dbStatus,
-        horario_marcacao: new Date().toISOString()
+        return {
+          studentId,
+          matricula_id: matriculaId,
+          status: present ? 'P' as const : 'F' as const,
+          justificativa: null,
+        }
+      })
+      const payloadRecords = attendanceRecords.map(record => ({
+        matricula_id: record.matricula_id,
+        status: record.status,
+        justificativa: record.justificativa,
       }))
 
       // Optimistic update
       const newAttendance = new Map(attendance)
       attendanceRecords.forEach(record => {
-        newAttendance.set(record.aluno_id, { ...record, status_presenca: dbStatus })
+        newAttendance.set(record.studentId, {
+          student_id: record.studentId,
+          presente: present,
+          status_presenca: record.status,
+          horario_marcacao: new Date().toISOString(),
+        })
       })
       setAttendance(newAttendance)
 
       const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attendance: attendanceRecords })
+        body: JSON.stringify({ attendance: payloadRecords })
       })
 
       const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Erro ao marcar presenca em lote')
+      if (!response.ok) throw new Error(result.error || 'Erro ao marcar presença em lote')
 
       setSyncStatus('synced')
       setSelectedStudents(new Set())

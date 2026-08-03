@@ -145,7 +145,7 @@ async function run(): Promise<void> {
         (SELECT count(*) FROM notas) AS notas,
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,
         (SELECT count(*) FROM configs) AS configs,
-        (SELECT count(*) FROM aulas_abertas) AS aulas_abertas,
+        (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
         (SELECT count(*) FROM frequencia) AS frequencia
     `
     const counts = (await client.query(countQuery)).rows[0] as Record<string, number>
@@ -153,7 +153,7 @@ async function run(): Promise<void> {
       const actual = Number(counts[table])
       record(`count_${table}`, actual === expected, `${actual} == ${expected}`)
     }
-    record('count_aulas_abertas', Number(counts.aulas_abertas) === expectedAulas, `${counts.aulas_abertas} == ${expectedAulas} (${TURMAS.length} turmas x ${schoolDays.length} dias)`)
+    record('count_sessoes_aula', Number(counts.sessoes_aula) === expectedAulas, `${counts.sessoes_aula} == ${expectedAulas} (${TURMAS.length} turmas x ${schoolDays.length} dias)`)
     record('count_frequencia', Number(counts.frequencia) === expectedFrequencia, `${counts.frequencia} == ${expectedFrequencia} (${MATRICULAS.length} matriculas x ${schoolDays.length} dias)`)
 
     // ---------------------------------------------------------------------
@@ -183,19 +183,19 @@ async function run(): Promise<void> {
     const frequenciaOrphan = await client.query(`
       SELECT count(*) AS n FROM frequencia f
       LEFT JOIN matriculas m ON m.id = f.matricula_id
-      LEFT JOIN aulas_abertas a ON a.id = f.aula_id
-      WHERE m.id IS NULL OR a.id IS NULL
+      LEFT JOIN sessoes_aula s ON s.id = f.sessao_id
+      WHERE m.id IS NULL OR s.id IS NULL
     `)
-    record('rel_frequencia_vinculos', Number(frequenciaOrphan.rows[0].n) === 0, `${frequenciaOrphan.rows[0].n} frequencias sem matricula/aula`)
+    record('rel_frequencia_vinculos', Number(frequenciaOrphan.rows[0].n) === 0, `${frequenciaOrphan.rows[0].n} frequencias sem matricula/sessao`)
 
     const frequenciaAulaTurmaMismatch = await client.query(`
       SELECT count(*) AS n
       FROM frequencia f
       JOIN matriculas m ON m.id = f.matricula_id
-      JOIN aulas_abertas a ON a.id = f.aula_id
-      WHERE a.turma_id <> m.turma_id OR a.data_aula <> f.data_aula
+      JOIN sessoes_aula s ON s.id = f.sessao_id
+      WHERE s.turma_id <> m.turma_id OR s.data_aula <> f.data_aula
     `)
-    record('rel_frequencia_aula_da_turma', Number(frequenciaAulaTurmaMismatch.rows[0].n) === 0, `${frequenciaAulaTurmaMismatch.rows[0].n} frequencias em aula de outra turma/data`)
+    record('rel_frequencia_sessao_da_turma', Number(frequenciaAulaTurmaMismatch.rows[0].n) === 0, `${frequenciaAulaTurmaMismatch.rows[0].n} frequencias em sessão de outra turma/data`)
 
     const perMatriculaCoverage = await client.query(`
       SELECT count(*) AS n FROM (
@@ -279,7 +279,7 @@ async function run(): Promise<void> {
     // Fingerprints (order-independent md5 over the business columns). Two
     // resets with the same anchor produce identical fingerprints. Auth creates
     // a new external id for the demo user, so that non-business id is excluded.
-    const fingerprintTables = ['escolas', 'users', 'turmas', 'matriculas', 'aulas_abertas', 'frequencia']
+    const fingerprintTables = ['escolas', 'users', 'turmas', 'matriculas', 'sessoes_aula', 'frequencia']
     const fingerprints: Record<string, string> = {}
     for (const table of fingerprintTables) {
       const fingerprintValue = table === 'users' ? "(to_jsonb(t) - 'id')::text" : 't::text'
@@ -315,7 +315,7 @@ async function run(): Promise<void> {
     console.log('  EDUCA - Validacao do sandbox publico (issue #23)')
     console.log('='.repeat(64))
     console.log(`  Anchor date:  ${anchorDate} (${schoolDays.length} dias letivos)`)
-    console.log(`  Frequencia:   ${counts.frequencia} registros | Aulas: ${counts.aulas_abertas}`)
+    console.log(`  Frequencia:   ${counts.frequencia} registros | Sessoes: ${counts.sessoes_aula}`)
     console.log('')
     for (const c of checks) {
       console.log(`  [${c.ok ? 'PASS' : 'FAIL'}] ${c.name}: ${c.detail}`)

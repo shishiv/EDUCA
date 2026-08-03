@@ -121,7 +121,7 @@ const navigationGroups: NavigationGroup[] = [
         name: 'Atribuicoes',
         href: '/dashboard/atribuicoes',
         icon: UserCog,
-        roles: ['admin', 'diretor', 'secretario'],
+        roles: ['admin', 'diretor'],
       },
       {
         name: 'Responsáveis',
@@ -138,7 +138,7 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       {
         name: 'Frequência',
-        href: '/diario/frequencia',
+        href: '/dashboard/turmas',
         icon: CheckSquare,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
       },

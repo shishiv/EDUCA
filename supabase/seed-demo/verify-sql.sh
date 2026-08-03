@@ -14,7 +14,7 @@
 #
 # Prova:
 #   1. seed-demo.sql (entidades estaticas) aplica sem erros;
-#   2. a frequencia/aulas geradas por attendance-generator.ts aplicam sem
+#   2. as sessoes/frequencias geradas por attendance-generator.ts aplicam sem
 #      erros e reproduzem exatamente o padrao esperado por matricula;
 #   3. seed_demo_validation.sql passa (contagens, relacionamentos, marcadores
 #      synthetic-only e caso de alerta < 80%);
@@ -84,7 +84,7 @@ done
 echo "    (replay relatorios_descritivos, como run.sh)"
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/20260124133337_create_relatorios_descritivos.sql" >/dev/null
 
-echo "==> Gerando frequencia/aulas para a ancora $ANCHOR_DATE..."
+echo "==> Gerando sessoes/frequencias para a ancora $ANCHOR_DATE..."
 (cd "$APP_DIR" && pnpm exec tsx "$SEED_DIR/emit-verify.ts" --date "$ANCHOR_DATE") > "$WORK_DIR/attendance.sql"
 
 echo "==> Aplicando seed estatico + frequencia gerada..."
@@ -95,18 +95,18 @@ echo "==> Validacao estrutural (contagens, relacionamentos, marcadores, alerta).
 "${PSQL[@]}" -v anchor_date="$ANCHOR_DATE" -f "$SEED_DIR/seed_demo_validation.sql" >/dev/null
 
 echo "==> Prova de repetibilidade: segundo reset com a mesma ancora..."
-"${PSQL[@]}" -c "TRUNCATE frequencia, aulas_abertas, notas, matriculas, aluno_responsaveis, alunos, responsaveis, disciplinas, turmas, calendario_escolar, configs, audit_logs, audit_trail, audit_sessoes_aula, codigos_inep, educacenso_exports, users, escolas CASCADE;" >/dev/null
+"${PSQL[@]}" -c "TRUNCATE frequencia, sessoes_aula, aulas_abertas, notas, matriculas, aluno_responsaveis, alunos, responsaveis, disciplinas, turmas, calendario_escolar, configs, audit_logs, audit_trail, audit_sessoes_aula, codigos_inep, educacenso_exports, users, escolas CASCADE;" >/dev/null
 "${PSQL[@]}" -f "$SEED_DIR/seed-demo.sql" >/dev/null
 "${PSQL[@]}" -f "$WORK_DIR/attendance.sql" >/dev/null
 
 fingerprint() {
   "${PSQL[@]}" -tA -c "SELECT md5(string_agg(md5(t::text), '|' ORDER BY md5(t::text))) FROM $1 t"
 }
-FP1=$(for t in escolas users turmas matriculas aulas_abertas frequencia; do echo "$t $(fingerprint "$t")"; done)
-"${PSQL[@]}" -c "TRUNCATE frequencia, aulas_abertas, notas, matriculas, aluno_responsaveis, alunos, responsaveis, disciplinas, turmas, calendario_escolar, configs, audit_logs, audit_trail, audit_sessoes_aula, codigos_inep, educacenso_exports, users, escolas CASCADE;" >/dev/null
+FP1=$(for t in escolas users turmas matriculas sessoes_aula frequencia; do echo "$t $(fingerprint "$t")"; done)
+"${PSQL[@]}" -c "TRUNCATE frequencia, sessoes_aula, aulas_abertas, notas, matriculas, aluno_responsaveis, alunos, responsaveis, disciplinas, turmas, calendario_escolar, configs, audit_logs, audit_trail, audit_sessoes_aula, codigos_inep, educacenso_exports, users, escolas CASCADE;" >/dev/null
 "${PSQL[@]}" -f "$SEED_DIR/seed-demo.sql" >/dev/null
 "${PSQL[@]}" -f "$WORK_DIR/attendance.sql" >/dev/null
-FP2=$(for t in escolas users turmas matriculas aulas_abertas frequencia; do echo "$t $(fingerprint "$t")"; done)
+FP2=$(for t in escolas users turmas matriculas sessoes_aula frequencia; do echo "$t $(fingerprint "$t")"; done)
 
 if [[ "$FP1" != "$FP2" ]]; then
   echo "FALHOU: fingerprints diferem entre resets com a mesma ancora"

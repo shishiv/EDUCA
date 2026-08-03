@@ -2,7 +2,8 @@ import { Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, Gradua
 import { isPilotDisabledPath } from '@/lib/pilot/pilot-scope'
 import { resolveDemoSandboxCapability } from '@/lib/demo-sandbox/demo-sandbox'
 
-export const ATTENDANCE_ROUTE = '/diario/frequencia'
+// Generic attendance entry. A class-specific call lives at /dashboard/turmas/[id]/chamada.
+export const ATTENDANCE_ROUTE = '/dashboard/turmas'
 
 export type QuickAccessRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
 

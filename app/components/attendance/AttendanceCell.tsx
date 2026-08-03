@@ -145,7 +145,7 @@ export function AttendanceCell({
     >
       {getIcon()}
       {!getIcon() && size !== 'sm' && (
-        <span className="opacity-50">—</span>
+        <span className="opacity-50">-</span>
       )}
     </button>
   )

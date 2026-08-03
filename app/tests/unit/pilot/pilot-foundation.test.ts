@@ -60,7 +60,7 @@ describe('synthetic pilot foundation', () => {
     expect(isPilotDisabledPath('/dashboard/alunos/student-id/diario')).toBe(true)
     expect(isPilotDisabledPath('/api/educacenso/export')).toBe(true)
     expect(isPilotDisabledPath('/relatorios/bolsa-familia')).toBe(true)
-    expect(isPilotDisabledPath('/diario/frequencia')).toBe(false)
+    expect(isPilotDisabledPath('/dashboard/turmas/example/chamada')).toBe(false)
     expect(isPilotDisabledPath('/offline')).toBe(false)
   })
 

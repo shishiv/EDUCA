@@ -64,7 +64,7 @@ test.describe('Permissions - Secretario', () => {
     { label: 'guardians', route: '/dashboard/responsaveis' },
     { label: 'reports', route: '/dashboard/relatorios' },
     { label: 'grades', route: '/dashboard/notas' },
-    { label: 'attendance', route: '/diario/frequencia' },
+    { label: 'attendance', route: '/dashboard/turmas' }
   ]) {
     test(`can open ${entry.label}`, async ({ page }) => {
       await expectAllowed(page, entry.route)
@@ -94,7 +94,7 @@ test.describe('Permissions - Professor', () => {
   for (const entry of [
     { label: 'classes', route: '/dashboard/turmas' },
     { label: 'diary', route: '/dashboard/diario' },
-    { label: 'attendance', route: '/diario/frequencia' },
+    { label: 'attendance', route: '/dashboard/turmas' },
     { label: 'grades', route: '/dashboard/notas' },
   ]) {
     test(`can open ${entry.label}`, async ({ page }) => {

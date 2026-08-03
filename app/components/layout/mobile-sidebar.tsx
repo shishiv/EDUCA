@@ -65,7 +65,7 @@ const navigation = [
   },
   {
     name: 'Frequência',
-    href: '/diario/frequencia',
+    href: '/dashboard/turmas',
     icon: CheckSquare,
   },
   {
