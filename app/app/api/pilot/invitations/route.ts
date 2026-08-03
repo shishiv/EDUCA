@@ -16,7 +16,7 @@ const invitationSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  const demoSandboxBlock = demoSandboxGuardResponse()
+  const demoSandboxBlock = demoSandboxGuardResponse('auth_mutation')
   if (demoSandboxBlock) return demoSandboxBlock
 
   try {
