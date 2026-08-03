@@ -123,12 +123,12 @@ if (isPilotMode) {
       },
     ])
 
-    // Visit a public same-origin page only to create the localStorage origin.
+    // Visit a public same-origin page only to create the sessionStorage origin.
     // Do not depend on dashboard hydration during setup.
     const page = await context.newPage()
     await page.goto(`${BASE_URL}/login`)
     const schoolId = await getFirstSchoolId(accessToken)
-    await page.evaluate(id => localStorage.setItem('educa-selected-escola', id), schoolId)
+    await page.evaluate(id => sessionStorage.setItem('educa-selected-escola', id), schoolId)
 
     await context.storageState({ path: authFile })
     await context.close()
