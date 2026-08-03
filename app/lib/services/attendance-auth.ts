@@ -44,7 +44,9 @@ export class AttendanceAuthError extends Error {
     | 'SCHOOL_MISMATCH'
     | 'TURMA_NOT_FOUND'
     | 'TURMA_NOT_OWNED'
+    | 'TURMA_INACTIVE'
     | 'MATRICULA_NOT_IN_TURMA'
+    | 'MATRICULA_INACTIVE'
 
   constructor(
     code: AttendanceAuthError['code'],
@@ -181,8 +183,30 @@ export function assertCanReadSchool(actor: AttendanceActor, escolaId: string): v
  */
 export function assertSessionWriteAccess(
   actor: AttendanceActor,
-  session: { id: string; professor_id: string; escola_id: string }
+  session: { id: string; professor_id: string; escola_id: string },
+  turma?: { id: string; professor_id: string | null; escola_id: string; ativo?: boolean | null }
 ): void {
+  if (turma?.ativo === false) {
+    throw new AttendanceAuthError(
+      'TURMA_INACTIVE',
+      'A turma está inativa e não aceita alterações de frequência'
+    )
+  }
+
+  if (turma && turma.escola_id !== session.escola_id) {
+    throw new AttendanceAuthError(
+      'SCHOOL_MISMATCH',
+      'Sessão e turma pertencem a escolas diferentes'
+    )
+  }
+
+  if (turma && turma.professor_id !== session.professor_id) {
+    throw new AttendanceAuthError(
+      'SESSION_NOT_OWNED',
+      'A sessão não pertence ao professor titular atual da turma'
+    )
+  }
+
   if (actor.tipo_usuario === 'professor') {
     if (session.professor_id !== actor.userId) {
       throw new AttendanceAuthError(
@@ -247,8 +271,15 @@ export function assertSessionReadAccess(
  */
 export function assertTurmaWriteAccess(
   actor: AttendanceActor,
-  turma: { id: string; professor_id: string | null; escola_id: string }
+  turma: { id: string; professor_id: string | null; escola_id: string; ativo?: boolean | null }
 ): void {
+  if (turma.ativo === false) {
+    throw new AttendanceAuthError(
+      'TURMA_INACTIVE',
+      'A turma está inativa e não aceita novas sessões de aula'
+    )
+  }
+
   if (actor.tipo_usuario === 'professor') {
     if (turma.professor_id !== actor.userId) {
       throw new AttendanceAuthError(
@@ -310,13 +341,20 @@ export function assertTurmaReadAccess(
  * @throws AttendanceAuthError MATRICULA_NOT_IN_TURMA
  */
 export function assertMatriculaInTurma(
-  matricula: { id: string; turma_id: string },
+  matricula: { id: string; turma_id: string; situacao?: string | null },
   sessionTurmaId: string
 ): void {
   if (matricula.turma_id !== sessionTurmaId) {
     throw new AttendanceAuthError(
       'MATRICULA_NOT_IN_TURMA',
       'Matrícula não pertence à turma desta sessão de aula'
+    )
+  }
+
+  if (matricula.situacao !== undefined && matricula.situacao !== null && matricula.situacao !== 'ativa') {
+    throw new AttendanceAuthError(
+      'MATRICULA_INACTIVE',
+      'A matrícula não está ativa nesta turma'
     )
   }
 }

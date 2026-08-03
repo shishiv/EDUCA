@@ -11,7 +11,7 @@
  *          auditoria append-only, que TRUNCATE limpa sem disparar triggers);
  *       b. seed estatico (seed-demo.sql) - entidades fixas com created_at
  *          ancorado (deterministico);
- *       c. frequencia + aulas geradas por attendance-generator.ts para uma
+ *       c. sessoes_aula + frequencia geradas por attendance-generator.ts para uma
  *          janela de 20 dias letivos terminando na data do reset;
  *       d. configs de marcador (demo_synthetic_marker, demo_seed_anchor_date).
  *  2. Cria/recria o usuario de auth demo@educa.app.br via Admin API e
@@ -105,12 +105,25 @@ const DEMO_TABLES = [
 function parseArgs(argv: string[]): { anchorDate: string | null } {
   let anchorDate: string | null = null
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === '--date' && argv[i + 1]) {
-      anchorDate = argv[i + 1]
-      i += 1
-    }
+    if (argv[i] !== '--date') continue
+    const value = argv[i + 1]
+    if (!value) throw new Error('DEMO_SEED_ARGUMENT_INVALID')
+    anchorDate = value
+    i += 1
   }
   return { anchorDate }
+}
+
+function isValidIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+function assertDemoAnchorDate(anchorDate: string): void {
+  if (!isValidIsoDate(anchorDate)) {
+    throw new Error('DEMO_SEED_ANCHOR_DATE_INVALID')
+  }
 }
 
 /** Today in America/Sao_Paulo, as YYYY-MM-DD. */
@@ -125,17 +138,26 @@ function todayInSaoPaulo(): string {
   return br.format(now)
 }
 
-function assertEnv(): void {
+function assertDemoSeedEnvironment(): void {
   const missing: string[] = []
   if (!SUPABASE_URL) missing.push('SUPABASE_DEMO_URL')
   if (!SUPABASE_SERVICE_KEY) missing.push('SUPABASE_DEMO_SERVICE_KEY')
   if (!SUPABASE_DB_URL) missing.push('SUPABASE_DEMO_DB_URL')
   if (missing.length > 0) {
-    console.error(`ERRO: faltam variaveis obrigatorias: ${missing.join(', ')}`)
-    console.error('Defina SUPABASE_DEMO_URL, SUPABASE_DEMO_SERVICE_KEY e SUPABASE_DEMO_DB_URL')
-    console.error('no ambiente do runner (sem fallback para outras variaveis por seguranca).')
+    console.error(`DEMO_SEED_ENV_MISSING: variaveis ausentes: ${missing.join(', ')}`)
+    console.error('DEMO_SEED_ENV_REQUIRED: use somente as tres variaveis SUPABASE_DEMO_*; valores omitidos.')
     process.exit(1)
   }
+}
+
+function safeSeedErrorCode(error: unknown): string {
+  if (error instanceof Error && /^DEMO_[A-Z0-9_]+$/.test(error.message)) return error.message
+  if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED'
+  if ('code' in error && typeof error.code === 'string') return error.code
+  if ('status' in error && (typeof error.status === 'number' || typeof error.status === 'string')) {
+    return `HTTP_${error.status}`
+  }
+  return 'UNCLASSIFIED'
 }
 
 // =============================================================================
@@ -183,11 +205,11 @@ async function syncDemoAuthUser(
   // Idempotent: remove any pre-existing demo account so the password is the
   // fixed issue #23 credential after every reset.
   const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
-  if (listError) throw new Error(`falha ao listar usuarios: ${listError.message}`)
+  if (listError) throw new Error('DEMO_SEED_AUTH_LIST_FAILED')
   for (const u of existingUsers?.users ?? []) {
     if (u.email?.toLowerCase() === DEMO_EMAIL.toLowerCase()) {
       const { error: delError } = await supabase.auth.admin.deleteUser(u.id)
-      if (delError) throw new Error(`falha ao remover usuario demo antigo: ${delError.message}`)
+      if (delError) throw new Error('DEMO_SEED_AUTH_DELETE_FAILED')
     }
   }
 
@@ -197,9 +219,9 @@ async function syncDemoAuthUser(
     email_confirm: true,
     user_metadata: { nome: 'Administrador Demo', tipo_usuario: 'admin' },
   })
-  if (error) throw new Error(`falha ao criar usuario demo: ${error.message}`)
+  if (error) throw new Error('DEMO_SEED_AUTH_CREATE_FAILED')
   const authUserId = data.user?.id
-  if (!authUserId) throw new Error('usuario demo criado sem id')
+  if (!authUserId) throw new Error('DEMO_SEED_AUTH_ID_MISSING')
 
   // The app binds auth user -> profile by id (getServerUser). The static seed
   // fixes users.id = DEMO_USER_ID; migrate that row (and its seeded FKs) to
@@ -213,26 +235,31 @@ async function syncDemoAuthUser(
 // =============================================================================
 
 async function main(): Promise<void> {
-  assertEnv()
+  assertDemoSeedEnvironment()
 
-  const { anchorDate } = parseArgs(process.argv.slice(2))
-  const effectiveAnchor = anchorDate || process.env.SEED_ANCHOR_DATE || todayInSaoPaulo()
+  let effectiveAnchor: string
+  try {
+    const { anchorDate } = parseArgs(process.argv.slice(2))
+    effectiveAnchor = anchorDate || process.env.SEED_ANCHOR_DATE || todayInSaoPaulo()
+    assertDemoAnchorDate(effectiveAnchor)
+  } catch (error) {
+    console.error(`DEMO_SEED_FAILED: phase=arguments code=${safeSeedErrorCode(error)}`)
+    process.exit(1)
+  }
 
   console.log('')
   console.log('='.repeat(64))
   console.log('  EDUCA - Reset + Seed do sandbox publico (issue #23)')
   console.log('='.repeat(64))
-  console.log(`  Supabase URL : ${SUPABASE_URL}`)
-  console.log(`  Anchor date  : ${effectiveAnchor}`)
-  console.log(`  Demo email   : ${DEMO_EMAIL}`)
+  console.log('  Target: Supabase demo (endereco omitido)')
+  console.log(`  Anchor date: ${effectiveAnchor}`)
   console.log('')
 
   const client = new Client({ connectionString: SUPABASE_DB_URL })
   try {
     await client.connect()
-  } catch (err) {
-    console.error('ERRO: nao foi possivel conectar ao Postgres do demo.')
-    console.error(String(err instanceof Error ? err.message : err))
+  } catch (error) {
+    console.error(`DEMO_SEED_FAILED: phase=database_connect code=${safeSeedErrorCode(error)}`)
     process.exit(1)
   }
 
@@ -240,11 +267,13 @@ async function main(): Promise<void> {
     await client.query(sql)
   }
 
+  let phase = 'database_reset'
   try {
     console.log('1/4  Reset + seed (transacao unica)...')
     await runSql(resetSql(effectiveAnchor))
     console.log('   OK  dados sinteticos recriados')
 
+    phase = 'auth_sync'
     console.log('2/4  Usuario de auth demo...')
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -264,8 +293,9 @@ async function main(): Promise<void> {
       ].join('\n'),
       runSql
     )
-    console.log('   OK  login demo@educa.app.br ativo')
+    console.log('   OK  usuario demo de auth sincronizado')
 
+    phase = 'count_check'
     console.log('3/4  Verificacao rapida de contagens...')
     const counts = await client.query(`
       SELECT
@@ -277,26 +307,21 @@ async function main(): Promise<void> {
         (SELECT count(*) FROM alunos) AS alunos,
         (SELECT count(*) FROM aluno_responsaveis) AS aluno_responsaveis,
         (SELECT count(*) FROM matriculas) AS matriculas,
-        (SELECT count(*) FROM aulas_abertas) AS aulas_abertas,
+        (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
         (SELECT count(*) FROM frequencia) AS frequencia,
         (SELECT count(*) FROM notas) AS notas,
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,
         (SELECT count(*) FROM configs) AS configs
     `)
-    console.log('   ' + JSON.stringify(counts.rows[0], null, 0))
+    console.log('   contagens agregadas: ' + JSON.stringify(counts.rows[0], null, 0))
     console.log('   OK  contagens conferem com o contrato do seed')
 
     console.log('4/4  Concluido.')
+    console.log('  Usuario demo sincronizado; credenciais omitidas dos logs.')
+    console.log('  Valide com: pnpm demo:validate')
     console.log('')
-    console.log('  Credenciais (issue #23):')
-    console.log(`    Email:  ${DEMO_EMAIL}`)
-    console.log(`    Senha:  ${DEMO_PASSWORD}`)
-    console.log('  Valide com:  pnpm demo:validate')
-    console.log('')
-  } catch (err) {
-    console.error('')
-    console.error('ERRO no seed demo:')
-    console.error(err)
+  } catch (error) {
+    console.error(`DEMO_SEED_FAILED: phase=${phase} code=${safeSeedErrorCode(error)}`)
     try {
       await client.query('ROLLBACK;')
     } catch {

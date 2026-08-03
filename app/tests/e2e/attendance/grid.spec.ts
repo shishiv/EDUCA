@@ -19,11 +19,13 @@ async function openAttendance(page: import('@playwright/test').Page) {
 
   await page.goto(attendancePath)
   try {
-    await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: /presente/i }).first()).toBeVisible({ timeout: 5000 })
   } catch {
     await navigateToDashboard(page, 'professor@test.com')
     await page.goto(attendancePath)
-    await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('button', { name: /abrir chamada/i })).toBeVisible({ timeout: 15000 })
+    await page.getByRole('button', { name: /abrir chamada/i }).click()
+    await expect(page.getByRole('button', { name: /presente/i }).first()).toBeVisible({ timeout: 15000 })
   }
 }
 
@@ -145,10 +147,10 @@ test.describe('Attendance grid', () => {
     await expect(dateButton).not.toHaveText(before || '')
   })
 
-  test('disables editing for a future date', async ({ page }) => {
+  test('does not offer an open session for a future date', async ({ page }) => {
     await page.getByRole('button', { name: /proximo dia/i }).click()
-    await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeDisabled()
-    await expect(page.getByText('Travada', { exact: true })).toBeVisible()
+    await expect(page.getByText(/nenhuma chamada nesta data/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /abrir chamada/i })).toHaveCount(0)
   })
 
   test('keeps touch targets at least 44px on mobile', async ({ page }) => {

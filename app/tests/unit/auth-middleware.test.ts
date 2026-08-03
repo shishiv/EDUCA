@@ -32,7 +32,7 @@ describe('checkRouteAccess', () => {
   })
 
   it('allows professor academic routes but denies cadastro management', () => {
-    expect(checkRouteAccess('/diario/frequencia', 'professor').hasAccess).toBe(true)
+    expect(checkRouteAccess('/dashboard/turmas/example/chamada', 'professor').hasAccess).toBe(true)
     expect(checkRouteAccess('/dashboard/alunos/novo', 'professor')).toEqual({
       hasAccess: false,
       redirectTo: '/unauthorized',

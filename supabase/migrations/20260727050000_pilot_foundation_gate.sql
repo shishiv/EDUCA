@@ -207,6 +207,16 @@ DROP POLICY IF EXISTS alunos_select_via_matricula ON alunos;
 DROP POLICY IF EXISTS matriculas_select_escola ON matriculas;
 DROP POLICY IF EXISTS frequencia_select_escola ON frequencia;
 DROP POLICY IF EXISTS sessoes_aula_select_escola ON sessoes_aula;
+DROP POLICY IF EXISTS attendance_sessoes_select ON sessoes_aula;
+DROP POLICY IF EXISTS attendance_sessoes_insert ON sessoes_aula;
+DROP POLICY IF EXISTS attendance_sessoes_update ON sessoes_aula;
+DROP POLICY IF EXISTS attendance_frequencia_select ON frequencia;
+DROP POLICY IF EXISTS attendance_frequencia_insert ON frequencia;
+DROP POLICY IF EXISTS attendance_frequencia_update ON frequencia;
+DROP POLICY IF EXISTS academic_manage_sessoes ON sessoes_aula;
+DROP POLICY IF EXISTS academic_manage_frequencia ON frequencia;
+DROP POLICY IF EXISTS admin_full_access ON sessoes_aula;
+DROP POLICY IF EXISTS admin_full_access ON frequencia;
 DROP POLICY IF EXISTS audit_logs_admin_only ON audit_logs;
 
 CREATE POLICY pilot_escolas_select ON escolas FOR SELECT TO authenticated
@@ -220,7 +230,10 @@ CREATE POLICY pilot_users_select ON users FOR SELECT TO authenticated
 USING (id = auth.uid() OR pilot_is_secretariat() OR pilot_can_access_school(escola_id));
 
 CREATE POLICY pilot_turmas_select ON turmas FOR SELECT TO authenticated
-USING (pilot_can_access_school(escola_id));
+USING (
+  pilot_can_access_school(escola_id)
+  AND (pilot_current_role() <> 'professor' OR professor_id = auth.uid())
+);
 CREATE POLICY pilot_turmas_insert ON turmas FOR INSERT TO authenticated
 WITH CHECK (pilot_can_manage_school(escola_id));
 CREATE POLICY pilot_turmas_update ON turmas FOR UPDATE TO authenticated
@@ -257,7 +270,10 @@ USING (EXISTS (
 
 CREATE POLICY pilot_matriculas_select ON matriculas FOR SELECT TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM turmas t WHERE t.id = turma_id AND pilot_can_access_school(t.escola_id)
+  SELECT 1 FROM turmas t
+  WHERE t.id = turma_id
+    AND pilot_can_access_school(t.escola_id)
+    AND (pilot_current_role() <> 'professor' OR t.professor_id = auth.uid())
 ));
 CREATE POLICY pilot_matriculas_insert ON matriculas FOR INSERT TO authenticated
 WITH CHECK (EXISTS (
@@ -281,33 +297,108 @@ USING (pilot_can_manage_school(escola_id) OR professor_id = auth.uid())
 WITH CHECK (pilot_can_manage_school(escola_id) OR professor_id = auth.uid());
 
 CREATE POLICY pilot_sessoes_select ON sessoes_aula FOR SELECT TO authenticated
-USING (pilot_can_access_school(escola_id));
+USING (
+  pilot_can_access_school(escola_id)
+  AND (
+    pilot_current_role() <> 'professor'
+    OR EXISTS (
+      SELECT 1 FROM turmas t
+      WHERE t.id = sessoes_aula.turma_id
+        AND t.professor_id = auth.uid()
+    )
+  )
+);
 CREATE POLICY pilot_sessoes_insert ON sessoes_aula FOR INSERT TO authenticated
-WITH CHECK (pilot_can_manage_school(escola_id) OR (professor_id = auth.uid() AND pilot_teacher_owns_class(turma_id)));
+WITH CHECK (
+  status IN ('PLANEJADA', 'ABERTA')
+  AND EXISTS (
+    SELECT 1 FROM turmas t
+    WHERE t.id = turma_id
+      AND t.escola_id = sessoes_aula.escola_id
+      AND t.professor_id = sessoes_aula.professor_id
+      AND (
+        (pilot_current_role() = 'professor' AND t.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id))
+        OR (pilot_current_role() = 'diretor' AND pilot_can_manage_school(t.escola_id))
+      )
+  )
+);
 CREATE POLICY pilot_sessoes_update ON sessoes_aula FOR UPDATE TO authenticated
-USING (pilot_can_manage_school(escola_id) OR professor_id = auth.uid())
-WITH CHECK (pilot_can_manage_school(escola_id) OR professor_id = auth.uid());
+USING (
+  (
+    pilot_current_role() = 'professor'
+    AND professor_id = auth.uid()
+    AND pilot_teacher_owns_class(turma_id)
+  )
+  OR (
+    pilot_current_role() = 'diretor'
+    AND pilot_can_manage_school(escola_id)
+  )
+)
+WITH CHECK (
+  status IN ('PLANEJADA', 'ABERTA', 'FECHADA', 'CANCELADA')
+  AND EXISTS (
+    SELECT 1 FROM turmas t
+    WHERE t.id = turma_id
+      AND t.escola_id = sessoes_aula.escola_id
+      AND t.professor_id = sessoes_aula.professor_id
+      AND (
+        (pilot_current_role() = 'professor' AND t.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id))
+        OR (pilot_current_role() = 'diretor' AND pilot_can_manage_school(t.escola_id))
+      )
+  )
+);
 
 CREATE POLICY pilot_frequencia_select ON frequencia FOR SELECT TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
-  WHERE m.id = matricula_id AND pilot_can_access_school(t.escola_id)
+  SELECT 1
+  FROM matriculas m
+  JOIN turmas t ON t.id = m.turma_id
+  WHERE m.id = matricula_id
+    AND pilot_can_access_school(t.escola_id)
+    AND (pilot_current_role() <> 'professor' OR t.professor_id = auth.uid())
 ));
 CREATE POLICY pilot_frequencia_insert ON frequencia FOR INSERT TO authenticated
 WITH CHECK (EXISTS (
-  SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
+  SELECT 1
+  FROM matriculas m
+  JOIN turmas t ON t.id = m.turma_id
+  JOIN sessoes_aula s ON s.id = frequencia.sessao_id
   WHERE m.id = matricula_id
-    AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
+    AND s.turma_id = t.id
+    AND s.status = 'ABERTA'
+    AND s.professor_id = frequencia.professor_id
+    AND frequencia.marcado_por = auth.uid()
+    AND (
+      (pilot_current_role() = 'professor' AND s.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id))
+      OR (pilot_current_role() = 'diretor' AND pilot_can_manage_school(t.escola_id))
+    )
 ));
 CREATE POLICY pilot_frequencia_update ON frequencia FOR UPDATE TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
+  SELECT 1
+  FROM matriculas m
+  JOIN turmas t ON t.id = m.turma_id
+  JOIN sessoes_aula s ON s.id = frequencia.sessao_id
   WHERE m.id = matricula_id
-    AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
+    AND s.turma_id = t.id
+    AND (
+      (pilot_current_role() = 'professor' AND s.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id))
+      OR (pilot_current_role() = 'diretor' AND pilot_can_manage_school(t.escola_id))
+    )
 )) WITH CHECK (EXISTS (
-  SELECT 1 FROM matriculas m JOIN turmas t ON t.id = m.turma_id
+  SELECT 1
+  FROM matriculas m
+  JOIN turmas t ON t.id = m.turma_id
+  JOIN sessoes_aula s ON s.id = frequencia.sessao_id
   WHERE m.id = matricula_id
-    AND (pilot_can_manage_school(t.escola_id) OR (frequencia.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id)))
+    AND s.turma_id = t.id
+    AND s.status = 'ABERTA'
+    AND s.professor_id = frequencia.professor_id
+    AND frequencia.marcado_por = auth.uid()
+    AND (
+      (pilot_current_role() = 'professor' AND s.professor_id = auth.uid() AND pilot_teacher_owns_class(t.id))
+      OR (pilot_current_role() = 'diretor' AND pilot_can_manage_school(t.escola_id))
+    )
 ));
 
 -- The module revokes and the high-risk field guard are pilot-only containment.
@@ -459,7 +550,7 @@ $$;
 DO $$
 DECLARE table_name text;
 BEGIN
-  FOREACH table_name IN ARRAY ARRAY['escolas','users','alunos','responsaveis','aluno_responsaveis','turmas','matriculas','frequencia','aulas_abertas']
+  FOREACH table_name IN ARRAY ARRAY['escolas','users','alunos','responsaveis','aluno_responsaveis','turmas','matriculas','frequencia','sessoes_aula','aulas_abertas']
   LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS pilot_audit_core_change ON %I', table_name);
     EXECUTE format('CREATE TRIGGER pilot_audit_core_change AFTER INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION pilot_audit_core_change()', table_name);

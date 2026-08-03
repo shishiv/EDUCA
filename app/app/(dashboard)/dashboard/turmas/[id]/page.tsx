@@ -292,9 +292,9 @@ export default function TurmaDetalhesPage() {
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={`/dashboard/frequencia?turma=${id}`}>
+            <Link href={`/dashboard/turmas/${id}/chamada`}>
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              Marcar Frequência
+              Abrir chamada
             </Link>
           </Button>
           <Button asChild>
@@ -477,8 +477,8 @@ export default function TurmaDetalhesPage() {
               <CardTitle>Sessões de Aula Recentes</CardTitle>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/frequencia?turma=${id}`}>
-                Ver Todas
+              <Link href={`/dashboard/turmas/${id}/chamada`}>
+                Ver chamadas
               </Link>
             </Button>
           </div>
@@ -516,8 +516,8 @@ export default function TurmaDetalhesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/frequencia?turma=${id}&sessao=${sessao.id}`}>
-                          Ver Detalhes
+                        <Link href={`/dashboard/turmas/${id}/chamada?sessao=${sessao.id}`}>
+                          Ver chamada
                         </Link>
                       </Button>
                     </TableCell>

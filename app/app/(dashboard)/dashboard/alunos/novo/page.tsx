@@ -24,11 +24,15 @@ import { studentFormSchema } from '@/lib/validation'
 import { studentsApi } from '@/lib/api/students'
 import { logger } from '@/lib/logger'
 import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
-  const pilotMode = isPilotModeEnabled()
+  // The demo database uses the canonical schema and synthetic seed. Keep the
+  // pilot-only field restrictions for municipal pilots, but expose this CRUD
+  // capability in the demo without changing auth, role or school checks.
+  const pilotMode = isPilotModeEnabled() && !isDemoSandboxEnabled()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})

@@ -9,13 +9,13 @@ import {
 const attendanceItem = quickAccessItems.find((item) => item.name === 'Frequência')!
 
 describe('dashboard quick access routes', () => {
-  it('points attendance at the canonical /diario/frequencia route', () => {
-    expect(ATTENDANCE_ROUTE).toBe('/diario/frequencia')
+  it('points attendance at the canonical turma entry route', () => {
+    expect(ATTENDANCE_ROUTE).toBe('/dashboard/turmas')
     expect(attendanceItem.href).toBe(ATTENDANCE_ROUTE)
     expect(attendanceItem.pilotHref).toBeUndefined()
   })
 
-  it('resolves the attendance route to /diario/frequencia in every supported mode', () => {
+  it('resolves attendance to the canonical turma entry in every supported mode', () => {
     for (const pilotMode of [false, true]) {
       const visible = resolveVisibleQuickAccess(quickAccessItems, {
         role: 'diretor',
@@ -23,7 +23,7 @@ describe('dashboard quick access routes', () => {
         canManageSchool: true,
       })
       const attendance = visible.find((item) => item.name === 'Frequência')
-      expect(attendance?.href).toBe('/diario/frequencia')
+      expect(attendance?.href).toBe('/dashboard/turmas')
     }
   })
 
@@ -59,9 +59,29 @@ describe('dashboard quick access routes', () => {
     expect(diretorPilot.map((item) => item.name)).toContain('Novo Aluno')
   })
 
+  it('exposes safe synthetic capabilities in demo without widening role checks', () => {
+    const secretarioDemo = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'secretario',
+      pilotMode: true,
+      demoSandbox: true,
+      canManageSchool: true,
+    })
+    expect(secretarioDemo.map((item) => item.name)).toContain('Novo Aluno')
+    expect(secretarioDemo.map((item) => item.name)).toContain('Relatórios')
+
+    const professorDemo = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'professor',
+      pilotMode: true,
+      demoSandbox: true,
+      canManageSchool: false,
+    })
+    expect(professorDemo.some((item) => item.schoolWrite)).toBe(false)
+    expect(resolveVisibleQuickActionCards(true, true, true).map((card) => card.name)).toContain('Lancar Notas')
+  })
+
   it('filters school-write action cards when the caller cannot manage the school', () => {
     const restricted = resolveVisibleQuickActionCards(true, false)
     expect(restricted.some((card) => card.schoolWrite)).toBe(false)
-    expect(restricted.find((card) => card.name === 'Nova Chamada')?.href).toBe('/diario/frequencia')
+    expect(restricted.find((card) => card.name === 'Nova Chamada')?.href).toBe('/dashboard/turmas')
   })
 })

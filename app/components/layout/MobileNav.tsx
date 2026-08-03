@@ -22,6 +22,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import {
   Home,
   CheckSquare,
@@ -54,9 +55,9 @@ const navigationItems: NavItem[] = [
   },
   {
     name: 'Frequencia',
-    href: '/diario/frequencia',
+    href: '/dashboard/turmas',
     icon: CheckSquare,
-    matchPath: '/diario/frequencia',
+    matchPath: '/dashboard/turmas',
   },
   {
     name: 'Diario',
@@ -66,9 +67,9 @@ const navigationItems: NavItem[] = [
   },
   {
     name: 'Relatorios',
-    href: '/relatorios',
+    href: '/dashboard/relatorios',
     icon: FileText,
-    matchPath: '/relatorios',
+    matchPath: '/dashboard/relatorios',
   },
 ]
 
@@ -79,7 +80,9 @@ const navigationItems: NavItem[] = [
 export function MobileNav() {
   const pathname = usePathname()
   const visibleNavigationItems = navigationItems.filter(item =>
-    !isPilotModeEnabled() || !isPilotDisabledPath(item.href)
+    !isPilotModeEnabled() ||
+    !isPilotDisabledPath(item.href) ||
+    isDemoSandboxPilotPathAllowed(item.href)
   )
 
   /**
