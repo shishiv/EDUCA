@@ -14,6 +14,11 @@ import type { SessionLockInfo } from './AttendanceGridTypes'
  * Check if current time is before 18:00 in Sao Paulo timezone
  */
 export function isBefore18hSaoPaulo(): boolean {
+  // CI's local E2E stack must be deterministic across the clock boundary;
+  // server-side session expiry remains disabled only by the matching local
+  // EDUCA_E2E_MODE flag.
+  if (process.env.NEXT_PUBLIC_EDUCA_E2E_MODE === 'true') return true
+
   const now = new Date()
   const saoPauloTime = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Sao_Paulo',
