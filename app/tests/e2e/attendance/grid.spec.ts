@@ -102,14 +102,14 @@ test.describe('Attendance grid', () => {
       body: Buffer.from(sessionId),
       contentType: 'text/plain',
     })
-    const attendanceRead = page.waitForResponse(response =>
-      response.request().method() === 'GET' &&
-      response.url().includes('/rest/v1/frequencia') &&
-      response.url().includes(sessionId) &&
-      response.ok()
+    const attendanceNavigation = page.goto(`${attendancePath}?sessao=${sessionId}`)
+    const attendanceRead = page.waitForRequest(request =>
+      request.method() === 'GET' &&
+      request.url().includes('/rest/v1/frequencia') &&
+      request.url().includes(sessionId)
     )
-    await page.goto(`${attendancePath}?sessao=${sessionId}`)
     await attendanceRead
+    await attendanceNavigation
 
     const saveButton = page.getByRole('button', { name: 'Salvar', exact: true })
     await expect(saveButton).toBeDisabled()
@@ -123,14 +123,16 @@ test.describe('Attendance grid', () => {
     // read; let that refresh settle before listening for the navigation read.
     await page.waitForTimeout(500)
     await expect.poll(async () => {
-      const savedAttendanceRead = page.waitForResponse(response =>
-        response.request().method() === 'GET' &&
-        response.url().includes('/rest/v1/frequencia') &&
-        response.url().includes(sessionId) &&
-        response.ok()
+      const savedNavigation = page.goto(`${attendancePath}?sessao=${sessionId}`)
+      const savedAttendanceRead = page.waitForRequest(request =>
+        request.method() === 'GET' &&
+        request.url().includes('/rest/v1/frequencia') &&
+        request.url().includes(sessionId)
       )
-      await page.goto(`${attendancePath}?sessao=${sessionId}`)
-      const savedAttendanceResponse = await savedAttendanceRead
+      const savedAttendanceRequest = await savedAttendanceRead
+      await savedNavigation
+      const savedAttendanceResponse = await savedAttendanceRequest.response()
+      if (!savedAttendanceResponse || !savedAttendanceResponse.ok()) return false
       const savedRows = await savedAttendanceResponse.json() as Array<{ status_presenca?: string }>
       return savedRows.some(row => row.status_presenca === 'P')
     }, { timeout: 15000, intervals: [250, 500, 1000] }).toBe(true)
