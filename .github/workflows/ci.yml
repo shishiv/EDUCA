@@ -45,6 +45,10 @@ jobs:
   e2e:
     name: Full E2E with local Supabase
     runs-on: ubuntu-latest
+    # Receipt from run 30788770244: 851 tests on one worker consumed 126 minutes before cancellation.
+    # The selected CI projects below remove 46 repeated non-admin role cases; the expected receipt is 805 tests.
+    # Successful cases averaged about 1.5s, so 30 minutes leaves headroom above the projected 21-minute suite.
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: app
@@ -110,6 +114,9 @@ jobs:
           test -n "$anon_key"
           test -n "$service_key"
 
+          echo "::add-mask::$anon_key"
+          echo "::add-mask::$service_key"
+
           {
             printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$api_url"
             printf 'NEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$anon_key"
@@ -174,11 +181,37 @@ jobs:
               ;;
           esac
 
+      - name: Record E2E selection receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! receipt="$(pnpm exec playwright test --list --project=setup --project=chromium-unauth --project=chromium 2>&1)"; then
+            printf '%s\n' "$receipt" | tail -n 40
+            echo 'E2E selection receipt failed' >&2
+            exit 1
+          fi
+
+          test_count="$(printf '%s\n' "$receipt" | grep -Eo 'Total: [0-9]+ tests?' | awk '{print $2}' | tail -n 1 || true)"
+          if [[ ! "$test_count" =~ ^[0-9]+$ ]]; then
+            printf '%s\n' "$receipt" | tail -n 40
+            echo 'E2E selection receipt did not contain a test count' >&2
+            exit 1
+          fi
+
+          # Current receipt is 805 tests; 15 cases of maintenance headroom remain before failing visibly.
+          max_tests=820
+          echo "E2E selection receipt: projects=setup,chromium-unauth,chromium tests=$test_count max=$max_tests"
+          if (( test_count > max_tests )); then
+            echo "E2E selection tripwire exceeded: $test_count tests selected, maximum is $max_tests" >&2
+            exit 1
+          fi
+
       - name: Seed canonical E2E fixtures
         run: pnpm seed:e2e
 
       - name: Run full E2E suite
-        run: pnpm test:e2e
+        run: pnpm test:e2e -- --project=setup --project=chromium-unauth --project=chromium --max-failures=1
 
       # Do not upload playwright/.auth or trace archives: they can contain session material.
       - name: Upload E2E diagnostics
