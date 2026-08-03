@@ -114,6 +114,7 @@ test.describe('Attendance grid', () => {
     const saveButton = page.getByRole('button', { name: 'Salvar', exact: true })
     await expect(saveButton).toBeDisabled()
     const present = page.getByRole('button', { name: 'Presente' }).first()
+    await setPressed(present, false)
     await setPressed(present, true)
     await expect(saveButton).toBeEnabled()
     await saveButton.click()
