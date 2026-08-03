@@ -55,6 +55,8 @@ jobs:
     env:
       # The pilot E2E runner already uses production mode, which avoids the Next.js dev overlay.
       PLAYWRIGHT_SERVER_COMMAND: pnpm build && pnpm start
+      EDUCA_E2E_MODE: 'true'
+      NEXT_PUBLIC_EDUCA_E2E_MODE: 'true'
 
     steps:
       - name: Checkout
@@ -132,6 +134,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          if [[ "${EDUCA_E2E_MODE:-}" != 'true' || "${NEXT_PUBLIC_EDUCA_E2E_MODE:-}" != 'true' ]]; then
+            echo 'E2E safety gate requires the local deterministic clock mode' >&2
+            exit 1
+          fi
 
           for variable in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_REF SUPABASE_DEMO_URL SUPABASE_DEMO_SERVICE_KEY SUPABASE_DEMO_DB_URL; do
             if [[ -n "${!variable:-}" ]]; then

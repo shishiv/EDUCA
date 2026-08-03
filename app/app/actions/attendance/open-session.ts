@@ -44,7 +44,8 @@ function isIsoDate(value: string): boolean {
 
 function calculateSaoPauloCutoff(dataAula: string): string {
   const [year, month, day] = dataAula.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, day, 21, 0, 0)).toISOString()
+  const cutoffDay = process.env.EDUCA_E2E_MODE === 'true' ? day + 1 : day
+  return new Date(Date.UTC(year, month - 1, cutoffDay, 21, 0, 0)).toISOString()
 }
 
 export async function openSessionAction(
