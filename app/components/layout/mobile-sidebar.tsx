@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Dialog, Transition } from '@headlessui/react'
 import { cn } from '@/lib/utils'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
@@ -92,7 +93,9 @@ const navigation = [
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const pathname = usePathname()
   const visibleNavigation = navigation.filter(item =>
-    !isPilotModeEnabled() || !isPilotDisabledPath(item.href)
+    !isPilotModeEnabled() ||
+    !isPilotDisabledPath(item.href) ||
+    isDemoSandboxPilotPathAllowed(item.href)
   )
 
   return (

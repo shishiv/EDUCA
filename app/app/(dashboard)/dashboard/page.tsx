@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { quickAccessItems, resolveVisibleQuickAccess, resolveVisibleQuickActionCards, type QuickAccessRole } from '@/lib/dashboard/quick-access'
 
 type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
@@ -235,15 +236,17 @@ export default function DashboardPage() {
   }
 
   const pilotMode = isPilotModeEnabled()
+  const demoSandbox = isDemoSandboxEnabled()
   const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
 
   const visibleQuickAccess = resolveVisibleQuickAccess(quickAccessItems, {
     role: (userProfile?.tipo_usuario as QuickAccessRole) ?? null,
     pilotMode,
     canManageSchool,
+    demoSandbox,
   })
 
-  const visibleQuickActionCards = resolveVisibleQuickActionCards(pilotMode, canManageSchool)
+  const visibleQuickActionCards = resolveVisibleQuickActionCards(pilotMode, canManageSchool, demoSandbox)
 
   // Show teacher-specific dashboard for professors
   if (userProfile?.tipo_usuario === 'professor') {

@@ -5,7 +5,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
 import { logger } from '@/lib/logger'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
-import { isDemoSandboxBlockedApiPath, demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
+import {
+  demoSandboxGuardResponse,
+  getDemoSandboxBlockedReason,
+  isDemoSandboxEnabled,
+  isDemoSandboxPilotPathAllowed,
+} from '@/lib/demo-sandbox/demo-sandbox'
 import { isInvalidRefreshTokenError, isSupabaseAuthCookieName } from '@/lib/auth-session-recovery'
 
 export async function createSupabaseServerClient(request: NextRequest) {
@@ -186,7 +191,19 @@ export async function authMiddleware(request: NextRequest) {
   const { supabase, response } = await createSupabaseServerClient(request)
   const pathname = request.nextUrl.pathname
 
-  if (isPilotModeEnabled() && isPilotDisabledPath(pathname)) {
+  const demoSandboxBlockReason = getDemoSandboxBlockedReason(pathname)
+  if (isDemoSandboxEnabled() && demoSandboxBlockReason) {
+    return demoSandboxGuardResponse(demoSandboxBlockReason) ?? response
+  }
+
+  // The synthetic demo may expose a named product capability that the
+  // narrower pilot hides. The allowlist is path-scoped: it never skips auth,
+  // role checks, school isolation, RLS or audit in the route itself.
+  if (
+    isPilotModeEnabled() &&
+    isPilotDisabledPath(pathname) &&
+    !isDemoSandboxPilotPathAllowed(pathname)
+  ) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
     }
@@ -194,13 +211,6 @@ export async function authMiddleware(request: NextRequest) {
     redirectUrl.pathname = '/dashboard'
     redirectUrl.searchParams.set('pilotScope', 'disabled')
     return NextResponse.redirect(redirectUrl)
-  }
-
-  // Public demo sandbox: block admin data-management APIs wholesale so no
-  // visitor can import data, invite users, or approve imports (issue #23).
-  // Core demo flows remain available; the weekly reset restores the dataset.
-  if (pathname.startsWith('/api') && isDemoSandboxBlockedApiPath(pathname)) {
-    return demoSandboxGuardResponse() ?? response
   }
 
   // Skip middleware for static files and API routes

@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 interface Metric {
   name: string
@@ -20,7 +21,7 @@ class MetricsCollector {
 
   constructor() {
     // Only auto-flush on server-side
-    if (typeof window === 'undefined' && process.env.GRAFANA_CLOUD_URL) {
+    if (typeof window === 'undefined' && process.env.GRAFANA_CLOUD_URL && !isDemoSandboxEnabled()) {
       this.startAutoFlush()
     }
   }
@@ -117,8 +118,9 @@ class MetricsCollector {
   async flush(): Promise<void> {
     if (this.metrics.length === 0) return
 
-    // Don't send metrics if Grafana is not configured
-    if (!process.env.GRAFANA_CLOUD_URL || !process.env.GRAFANA_CLOUD_API_KEY) {
+    // The public demo has no external telemetry effect. Discard its local
+    // buffer instead of sending synthetic activity to a Grafana project.
+    if (isDemoSandboxEnabled() || !process.env.GRAFANA_CLOUD_URL || !process.env.GRAFANA_CLOUD_API_KEY) {
       // Clear buffer anyway to prevent memory leaks
       this.metrics = []
       return

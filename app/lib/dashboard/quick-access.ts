@@ -1,5 +1,6 @@
 import { Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, GraduationCap, LucideIcon } from 'lucide-react'
 import { isPilotDisabledPath } from '@/lib/pilot/pilot-scope'
+import { resolveDemoSandboxCapability } from '@/lib/demo-sandbox/demo-sandbox'
 
 export const ATTENDANCE_ROUTE = '/diario/frequencia'
 
@@ -51,27 +52,39 @@ export interface QuickAccessContext {
   role: QuickAccessRole | null
   pilotMode: boolean
   canManageSchool: boolean
+  /** Exposes safe synthetic capabilities without widening role or school checks. */
+  demoSandbox?: boolean
 }
 
 export function resolveVisibleQuickAccess(
   items: QuickAccessItem[],
-  { role, pilotMode, canManageSchool }: QuickAccessContext
+  { role, pilotMode, canManageSchool, demoSandbox = false }: QuickAccessContext
 ): QuickAccessItem[] {
   return items
-    .map((item) => ({ ...item, href: pilotMode && item.pilotHref ? item.pilotHref : item.href }))
+    .map((item) => ({
+      ...item,
+      href: pilotMode && !demoSandbox && item.pilotHref ? item.pilotHref : item.href,
+    }))
     .filter((item) => {
       if (!role) return false
-      const roles = pilotMode && item.pilotRoles ? item.pilotRoles : item.roles
+      const roles = pilotMode && !demoSandbox && item.pilotRoles ? item.pilotRoles : item.roles
       if (!roles.includes(role)) return false
-      if (pilotMode && isPilotDisabledPath(item.href)) return false
+
+      const pilotPathIsAllowed = demoSandbox && resolveDemoSandboxCapability(item.href) !== null
+      if (pilotMode && isPilotDisabledPath(item.href) && !pilotPathIsAllowed) return false
       return !item.schoolWrite || canManageSchool
     })
 }
 
 export function resolveVisibleQuickActionCards(
   pilotMode: boolean,
-  canManageSchool: boolean
+  canManageSchool: boolean,
+  demoSandbox = false
 ): QuickActionCard[] {
-  return (pilotMode ? pilotQuickActionCards : defaultQuickActionCards)
+  return (pilotMode && !demoSandbox ? pilotQuickActionCards : defaultQuickActionCards)
+    .filter((card) => {
+      if (!pilotMode || !isPilotDisabledPath(card.href)) return true
+      return demoSandbox && resolveDemoSandboxCapability(card.href) !== null
+    })
     .filter((card) => !card.schoolWrite || canManageSchool)
 }
