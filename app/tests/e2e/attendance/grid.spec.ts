@@ -97,6 +97,11 @@ test.describe('Attendance grid', () => {
 
   test('saves and persists attendance after reload', async ({ page }) => {
     const sessionId = await page.locator('#attendance-session').inputValue()
+    expect(sessionId).toMatch(/^[0-9a-f-]{36}$/)
+    await test.info().attach('attendance-session.txt', {
+      body: Buffer.from(sessionId),
+      contentType: 'text/plain',
+    })
     const attendanceRead = page.waitForResponse(response =>
       response.request().method() === 'GET' &&
       response.url().includes('/rest/v1/frequencia') &&
@@ -121,6 +126,10 @@ test.describe('Attendance grid', () => {
     )
     await page.goto(`${attendancePath}?sessao=${sessionId}`)
     const savedAttendanceResponse = await savedAttendanceRead
+    await test.info().attach('attendance-read-url.txt', {
+      body: Buffer.from(savedAttendanceResponse.url()),
+      contentType: 'text/plain',
+    })
     const savedRows = await savedAttendanceResponse.json() as Array<{ status_presenca?: string }>
     expect(savedRows.map(row => row.status_presenca)).toContain('P')
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
