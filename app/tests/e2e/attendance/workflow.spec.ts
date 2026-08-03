@@ -97,7 +97,7 @@ test.describe('Canonical attendance session workflow', () => {
     expect(sessions).toHaveLength(1)
     expect(sessions[0].status).toBe('ABERTA')
 
-    await page.reload()
+    await page.goto(`${attendancePath}?sessao=${sessions[0].id}`)
     await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 10000 })
     await expect(page.getByRole('button', { name: 'Falta' }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Justificada' }).first()).toBeVisible()
