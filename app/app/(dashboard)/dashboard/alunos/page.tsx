@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase, Aluno } from '@/lib/supabase'
+import { studentsApi } from '@/lib/api/students'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +27,16 @@ import { formatDateBR } from '@/lib/date-utils'
 import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaRequiredState } from '@/components/ui/escola-required-state'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface AlunoWithDetails extends Aluno {
   responsaveis?: {
@@ -50,6 +61,7 @@ export default function AlunosPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todos')
   const [sexoFilter, setSexoFilter] = useState('todos')
+  const [studentToDeactivate, setStudentToDeactivate] = useState<AlunoWithDetails | null>(null)
 
   // Determine which escola_id to use for filtering
   const escolaIdToUse = useMemo(() => {
@@ -163,6 +175,20 @@ export default function AlunosPage() {
       setAlunos([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeactivate = async () => {
+    if (!studentToDeactivate) return
+
+    try {
+      await studentsApi.updateStudentStatus(studentToDeactivate.id, false)
+      setStudentToDeactivate(null)
+      toast.success('Aluno desativado com sucesso!')
+      await loadAlunos()
+    } catch (error) {
+      logger.error('Erro ao desativar aluno:', error instanceof Error ? error : String(error))
+      toast.error('Não foi possível desativar o aluno')
     }
   }
 
@@ -432,6 +458,7 @@ export default function AlunosPage() {
                           size="sm"
                           className="text-red-600 hover:text-red-700"
                           aria-label={`Desativar ${aluno.nome_completo}`}
+                          onClick={() => setStudentToDeactivate(aluno)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -481,6 +508,26 @@ export default function AlunosPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={Boolean(studentToDeactivate)}
+        onOpenChange={(open) => {
+          if (!open) setStudentToDeactivate(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar aluno</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desativar {studentToDeactivate?.nome_completo}? O registro permanece disponível para consulta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivate}>Desativar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
