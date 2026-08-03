@@ -551,7 +551,7 @@ test.describe('Alunos - Successful Creation', () => {
     await page.getByLabel(/endereço.*completo/i).fill('Rua Loading, 789, Centro')
     
     const saveButton = page.locator('button[type="submit"]')
-    const submission = saveButton.click()
+    const submission = saveButton.click({ noWaitAfter: true })
 
     // Use a stable selector because the accessible name changes to "Cadastrando".
     await expect(saveButton).toBeDisabled()
