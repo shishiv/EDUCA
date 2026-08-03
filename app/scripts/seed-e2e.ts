@@ -295,7 +295,7 @@ export async function seedE2E() {
     data_aula: lessonDate, inicio_aula: '08:00:00', fim_aula: '08:50:00',
     conteudo_programatico: 'Números e operações', objetivos_aprendizagem: 'Resolver situações de adição',
     metodologia: 'Aprendizagem baseada em problemas', recursos_utilizados: 'Material dourado',
-    status: 'fechada',
+    status: 'FECHADA',
   })
   if (await conteudoAulaAvailable) {
     await ensureRow('conteudo_aula', { sessao_id: session.id }, {
