@@ -595,7 +595,6 @@ export default function NotasPage() {
                   <Button variant="outline" size="sm" asChild>
                     <Link
                       href={`/dashboard/alunos/${turma.alunos[0].aluno.id}/boletim`}
-                      aria-label={`Boletim de ${turma.alunos[0].aluno.nome_completo}`}
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
                       Boletim
