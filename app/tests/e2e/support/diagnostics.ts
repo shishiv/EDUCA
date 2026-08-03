@@ -32,8 +32,11 @@ const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
  * Keep exceptions small and evidence-backed; add new benign noise only here.
  */
 export const test = base.extend<{ browserDiagnostics: void }>({
-  page: async ({ page }, applyPage) => {
-    if (selectedSchoolId) {
+  page: async ({ page }, applyPage, testInfo) => {
+    // The assignment-page contract includes the no-school-selection state;
+    // leave that journey unscoped while other admin flows use the seeded school.
+    const isAssignmentPageTest = testInfo.file.includes('/assignments/teacher.spec.ts')
+    if (selectedSchoolId && !isAssignmentPageTest) {
       await page.addInitScript((schoolId: string) => {
         window.sessionStorage.setItem('educa-selected-escola', schoolId)
       }, selectedSchoolId)
