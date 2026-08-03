@@ -78,7 +78,10 @@ test.describe('Authentication Flows', () => {
   test('reset-password form sends instructions and shows confirmation', async ({ page }) => {
     await page.goto('/reset-password')
     await expect(page.getByRole('heading', { name: /redefinir senha/i })).toBeVisible()
-    await page.getByLabel(/e-mail/i).fill('admin@test.com')
+    const emailInput = page.locator('#reset-email')
+    await expect(emailInput).toBeVisible()
+    await emailInput.fill('admin@test.com')
+    await expect(emailInput).toHaveValue('admin@test.com')
     await page.getByRole('button', { name: /enviar link/i }).click()
     await expect(page.getByRole('heading', { name: /confira seu e-mail/i })).toBeVisible({ timeout: 10000 })
     await expect(page.getByRole('link', { name: /voltar ao login/i }).last()).toBeVisible()
