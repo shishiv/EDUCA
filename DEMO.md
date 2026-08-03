@@ -23,7 +23,7 @@ Acceptance criteria from issue #23:
 | Asset | Role |
 | --- | --- |
 | `supabase/seed-demo/seed-demo.sql` | Static deterministic core: escolas, users, turmas, disciplinas, responsaveis, alunos, vinculos, matriculas, notas, calendario, configs, synthetic markers. No `now()`; all `created_at` anchored at `2026-02-03 08:00:00-03`. |
-| `supabase/seed-demo/attendance-generator.ts` | Pure deterministic generator of `aulas_abertas` + `frequencia` for a moving 20-school-day window ending at the reset date. Seeded PRNG per (matricula, date); fixed 70% alert case; FK-safe IDs. |
+| `supabase/seed-demo/attendance-generator.ts` | Pure deterministic generator of `sessoes_aula` + `frequencia` for a moving 20-school-day window ending at the reset date. Seeded PRNG per (matricula, date); fixed 70% alert case; FK-safe IDs. |
 | `supabase/seed-demo/seed-demo.ts` | Reset + seed runner (`pnpm seed:demo`): one transaction (TRUNCATE ... CASCADE + static seed + generated attendance + marker configs) via direct Postgres (`SUPABASE_DEMO_DB_URL`), then syncs the demo auth user via Admin API. |
 | `supabase/seed-demo/validate-demo.ts` | `pnpm demo:validate`: proves counts, relationships, synthetic-only markers, the < 80% alert case, generator-exact per-student attendance, and prints md5 fingerprints. |
 | `supabase/seed-demo/verify-sql.sh` | Offline validation on a disposable raw PostgreSQL cluster (no Docker/Supabase): applies canonical migrations (demo shape, no pilot module gate), the seed, generated attendance, structural asserts, and a same-anchor repeatability fingerprint check. |
@@ -74,7 +74,7 @@ checks, school selection, RLS or audit.
 | Students | `/dashboard/alunos`, `/dashboard/alunos/novo`, `/dashboard/alunos/[id]` | Existing typed Supabase queries | Synthetic CRUD with the selected school context |
 | Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
 | Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
-| Attendance | `/diario/frequencia`, `/dashboard/turmas/[id]/chamada`, `/dashboard/sessoes` | `/api/frequencia/*`, `/api/sessoes/aula/*` | Open sessions and mark synthetic attendance with server-side role and school checks |
+| Attendance | `/dashboard/turmas`, `/dashboard/turmas/[id]/chamada` | `/api/sessoes/aula/abrir`, `/api/sessoes/aula/[id]/frequencia/batch` | Professor and diretor write; admin and secretaria view only; server-side role and school checks remain active |
 | Diary | `/dashboard/diario`, `/diario`, `/dashboard/alunos/[id]/diario` | `/api/vivencias` | Class diary is available; the legacy `vivencias` endpoint remains a documented 501 stub |
 | Grades and report cards | `/dashboard/notas`, `/dashboard/alunos/[id]/boletim` | `/api/grades/*` and typed Supabase queries | Synthetic grades and averages only |
 | Reports | `/dashboard/relatorios`, `/relatorios/frequencia`, `/relatorios/bolsa-familia`, `/relatorios/conteudo` | `/api/reports/*` and typed Supabase queries | Browser reports use synthetic rows; no government export is enabled |
@@ -209,7 +209,7 @@ pnpm --dir app demo:reset-check
   allowed; RLS still only exposes the pilot-core tables to the demo account.
 - Receipts: the 3/5/10/50 seed spec, the weekly schedule, and the < 80% alert
   threshold all come from issue #23; the 20-school-day window and the volume
-  (100 aulas + 1000 frequencia) are the measured seed size documented in
+  (100 sessoes + 1000 frequencia) are the measured seed size documented in
   `attendance-generator.ts`.
 
 ## Troubleshooting

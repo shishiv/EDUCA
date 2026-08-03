@@ -8,10 +8,7 @@
 export { FrequenciaWorkflow } from './FrequenciaWorkflow'
 export { AbrirAulaWorkflow } from './AbrirAulaWorkflow'
 
-// Workflow subcomponents (15-09-PLAN refactor)
-export { WorkflowStepIndicator } from './WorkflowStepIndicator'
-export { DisciplinaSelector } from './DisciplinaSelector'
-export { TurmaSelector } from './TurmaSelector'
+// The canonical pilot flow starts at a turma and does not select a discipline.
 
 // Attendance marking and session management
 export { AttendanceGrid } from './AttendanceGrid'
@@ -29,14 +26,8 @@ export { JustificationModal } from './JustificationModal'
 // Role-based access (12-01-PLAN)
 export { ViewOnlyNotice } from './ViewOnlyNotice'
 
-// Demo mode for admin (13-01-PLAN)
-export { DemoModeBanner } from './DemoModeBanner'
-
 // Type exports
 export type { AbrirAulaWorkflowProps } from './AbrirAulaWorkflow'
-export type { WorkflowStep, WorkflowStepIndicatorProps } from './WorkflowStepIndicator'
-export type { Disciplina, DisciplinaSelectorProps } from './DisciplinaSelector'
-export type { Turma, TurmaSelectorProps } from './TurmaSelector'
 export type { AttendanceGridProps, AttendanceStats, SessionLockInfo } from './AttendanceGridTypes'
 export type { AttendanceGridHeaderProps } from './AttendanceGridHeader'
 export type { AttendanceGridRowProps } from './AttendanceGridRow'

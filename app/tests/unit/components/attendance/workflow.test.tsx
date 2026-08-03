@@ -70,7 +70,7 @@ describe('AbrirAulaWorkflow Component', () => {
     it('should display description text', () => {
       render(<AbrirAulaWorkflow {...defaultProps} />)
       
-      expect(screen.getByText(/inicie.*nova.*sessão|marcar.*frequência/i)).toBeInTheDocument()
+      expect(screen.getByText(/inicie.*nova.*sess[aã]o|marcar.*frequência/i)).toBeInTheDocument()
     })
 
     it('should have "Abrir Aula" button', () => {
@@ -159,7 +159,7 @@ describe('AbrirAulaWorkflow Component', () => {
           expect.objectContaining({
             turma_id: 'turma-123',
             professor_id: 'prof-456',
-            status: 'aberta',
+            status: 'ABERTA',
           })
         )
       })
@@ -249,7 +249,7 @@ describe('AbrirAulaWorkflow Component', () => {
       
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('sessao')
+          expect.stringMatching(/sess[aã]o/i)
         )
       })
     })
@@ -268,7 +268,7 @@ describe('AbrirAulaWorkflow Component', () => {
       
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('permissao')
+          expect.stringMatching(/permiss[aã]o/i)
         )
       })
     })

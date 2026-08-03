@@ -108,7 +108,7 @@ test.describe('Dashboard - Mobile Navigation', () => {
   test('bottom navigation exposes only implemented routes', async ({ page }) => {
     const nav = page.getByLabel(/navegacao principal mobile/i)
     await expect(nav).toBeVisible()
-    await expect(nav.getByRole('link', { name: /frequencia/i })).toHaveAttribute('href', '/diario/frequencia')
+    await expect(nav.getByRole('link', { name: /frequencia/i })).toHaveAttribute('href', '/dashboard/turmas')
     await expect(nav.getByRole('link', { name: /relatorios/i })).toHaveAttribute('href', '/dashboard/relatorios')
   })
 
