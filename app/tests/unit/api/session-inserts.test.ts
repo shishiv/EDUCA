@@ -14,7 +14,7 @@ describe('buildChamadaSessionInsert', () => {
     expect(payload).toEqual({
       turma_id: 'turma-1',
       data_aula: '2026-02-01',
-      status: 'aberta',
+      status: 'ABERTA',
       professor_id: 'prof-1',
       escola_id: 'escola-1',
       conteudo_programatico: 'Chamada',
@@ -28,7 +28,7 @@ describe('buildChamadaSessionInsert', () => {
       professorId: 'p',
       escolaId: 'e',
     })
-    expect(payload.status).toBe('aberta')
+    expect(payload.status).toBe('ABERTA')
     expect(payload.conteudo_programatico).toBe('Chamada')
   })
 })
@@ -72,7 +72,7 @@ describe('buildSessionInsert', () => {
 
   it('always stamps the session as open with a fresh inicio_aula', () => {
     const payload = buildSessionInsert(baseSession, 'escola-1')
-    expect(payload.status).toBe('aberta')
+    expect(payload.status).toBe('ABERTA')
     expect(payload.inicio_aula?.length).toBeGreaterThan(0)
   })
 })

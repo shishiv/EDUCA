@@ -9,7 +9,7 @@ const CACHE_PATTERNS = [
   // Core app shell
   '/',
   '/dashboard',
-  '/dashboard/frequencia',
+  '/dashboard/turmas',
   '/offline',
 
   // Static assets
@@ -34,7 +34,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll([
           '/',
           '/dashboard',
-          '/dashboard/frequencia',
+          '/dashboard/turmas',
           '/offline'
         ])
       })
@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
 
   // Handle attendance API requests with offline capability
-  if (url.pathname.includes('/api/frequencia') && request.method === 'POST') {
+  if (url.pathname.includes('/api/sessoes/aula/') && url.pathname.endsWith('/frequencia/batch') && request.method === 'POST') {
     event.respondWith(handleAttendanceRequest(request))
     return
   }
@@ -123,11 +123,13 @@ async function handleAttendanceRequest(request) {
 async function storeAttendanceOffline(request) {
   try {
     const attendanceData = await request.json()
+    const endpoint = new URL(request.url).pathname
     const timestamp = new Date().toISOString()
 
     // Add metadata for offline tracking
     const offlineEntry = {
       ...attendanceData,
+      _endpoint: endpoint,
       _offline: true,
       _timestamp: timestamp,
       _id: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -326,9 +328,9 @@ async function syncOfflineAttendance() {
     for (const attendanceRecord of offlineData) {
       try {
         // Remove offline metadata before sending
-        const { _offline, _timestamp, _id, ...cleanData } = attendanceRecord
+        const { _endpoint, _offline, _timestamp, _id, ...cleanData } = attendanceRecord
 
-        const response = await fetch('/api/frequencia', {
+        const response = await fetch(_endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(cleanData)

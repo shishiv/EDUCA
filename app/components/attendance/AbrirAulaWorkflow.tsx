@@ -11,11 +11,13 @@ import { enhancedAttendanceApi } from '@/lib/api/enhanced-attendance'
 
 export interface AbrirAulaWorkflowProps {
   turmaId: string
+  /** @deprecated The server resolves the titular teacher from the turma. */
   professorId: string
   onSuccess?: (sessionId: string) => void
   onCancel?: () => void
 }
 
+/** Opens the canonical turma session through the server-backed API adapter. */
 export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }: AbrirAulaWorkflowProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -23,48 +25,40 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
   const handleAbrirAula = async () => {
     setLoading(true)
     try {
-      // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0]
-
-      // Create session via API
       const session = await enhancedAttendanceApi.createSession({
         turma_id: turmaId,
         professor_id: professorId,
         data_aula: today,
-        conteudo_programatico: '', // Can be filled later
-        duracao_minutos: 50, // Default class duration
-        status: 'aberta',
+        conteudo_programatico: 'Chamada',
+        duracao_minutos: 50,
+        status: 'ABERTA',
         inicio_aula: new Date().toISOString(),
-        escola_id: '' // Will be set by the API from teacher's escola
+        escola_id: '',
       })
 
-      toast.success('Aula aberta com sucesso!')
-
-      // Call success callback with session ID
+      toast.success('Chamada aberta com sucesso!')
       if (onSuccess) {
         onSuccess(session.id)
       } else {
-        // Navigate to chamada page for this turma and date
-        router.push(`/dashboard/chamada?turmaId=${turmaId}&data=${today}`)
+        router.push(`/dashboard/turmas/${turmaId}/chamada?sessao=${session.id}`)
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-
-      logger.error('Erro ao abrir aula', error as Error, {
+      const errorMessage = error instanceof Error ? error.message : 'SESSION_OPEN_FAILED'
+      logger.error('ATTENDANCE_SESSION_OPEN_UI_FAILED', error as Error, {
         feature: 'attendance',
         action: 'open_session',
-        metadata: { turmaId, professorId }
+        metadata: { turmaId },
       })
 
-      // Show user-friendly error message
       if (errorMessage.includes('ERRO_TEMPORAL')) {
-        toast.error('Nao e possivel abrir aula com mais de 1 dia de atraso')
-      } else if (errorMessage.includes('ERRO_DUPLICACAO')) {
-        toast.error('Ja existe uma sessao aberta para esta turma hoje')
-      } else if (errorMessage.includes('ERRO_AUTORIZACAO')) {
-        toast.error('Voce nao tem permissao para abrir esta aula')
+        toast.error('Não é possível abrir uma chamada com esta data')
+      } else if (errorMessage.includes('ERRO_DUPLICACAO') || errorMessage.includes('SESSION_ALREADY_OPEN')) {
+        toast.error('Já existe uma sessão de chamada aberta para esta turma nesta data')
+      } else if (errorMessage.includes('ERRO_AUTORIZACAO') || errorMessage.includes('FORBIDDEN') || errorMessage.includes('NOT_OWNED')) {
+        toast.error('Você não tem permissão para abrir esta chamada')
       } else {
-        toast.error('Erro ao abrir aula. Tente novamente.')
+        toast.error('Erro ao abrir a chamada. Tente novamente.')
       }
     } finally {
       setLoading(false)
@@ -79,16 +73,12 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
           Abrir Aula
         </CardTitle>
         <CardDescription>
-          Inicie uma nova sessão de aula para marcar frequência
+          Inicie uma nova sessão para registrar a presença dos alunos desta turma.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
-          <Button
-            onClick={handleAbrirAula}
-            disabled={loading}
-            className="flex-1"
-          >
+          <Button onClick={handleAbrirAula} disabled={loading} className="flex-1">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -99,11 +89,7 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
             )}
           </Button>
           {onCancel && (
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={onCancel} disabled={loading}>
               Cancelar
             </Button>
           )}

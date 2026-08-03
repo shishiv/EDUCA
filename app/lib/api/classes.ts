@@ -196,8 +196,8 @@ export class ClassesApiService extends BaseApiService {
     }
   }
 
-  // Assign teacher to class
-  async assignTeacher(classId: string, teacherId: string) {
+  // Set the single titular teacher for a class. Null removes the current titular.
+  async assignTeacher(classId: string, teacherId: string | null) {
     try {
       const result = await this.update(classId, { professor_id: teacherId })
 
@@ -240,17 +240,19 @@ export class ClassesApiService extends BaseApiService {
 
         if (attendanceError) throw attendanceError
 
-        attendanceSummary = attendanceData?.reduce((acc, record) => {
-          const status = record.status_presenca || (record.presente ? 'presente' : 'falta')
+        const markedRecords = (attendanceData ?? []).filter(record => record.status_presenca !== 'NAO_MARCADO')
+        attendanceSummary = markedRecords.reduce((acc, record) => {
+          const status = record.status_presenca || (record.presente ? 'P' : 'F')
           acc[status] = (acc[status] || 0) + 1
           return acc
-        }, {} as Record<string, number>) || {}
+        }, {} as Record<string, number>)
 
-        totalAttendanceRecords = attendanceData?.length || 0
+        totalAttendanceRecords = markedRecords.length
       }
 
       // Calculate attendance rate
-      const presentRecords = attendanceSummary['presente'] || 0
+      const presentRecords = ['P', 'J', 'A', 'presente', 'justificada', 'atestado']
+        .reduce((count, status) => count + (attendanceSummary[status] || 0), 0)
       const attendanceRate = totalAttendanceRecords > 0
         ? Math.round((presentRecords / totalAttendanceRecords) * 100)
         : 0

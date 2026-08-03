@@ -1,41 +1,29 @@
-/**
- * Chamada Page
- * Attendance marking page for a specific turma
- *
- * Features:
- * - P/F/J toggle interface with visual feedback
- * - Date navigation with calendar picker
- * - Batch save with unsaved changes indicator
- * - Compliance integration (18:00 lock, immutability)
- * - Role-based visibility (teachers vs gestores)
- *
- * @see .planning/phases/04-turmas-chamada/04-02-PLAN.md
- */
-
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { format, isSameDay, startOfDay, isAfter } from 'date-fns'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { format, isAfter, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { toast } from 'sonner'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { classesApi } from '@/lib/api/classes'
 import { attendanceApi } from '@/lib/api/attendance'
-import { usersApi } from '@/lib/api/users'
-import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/use-auth'
 import { canRecordAttendance } from '@/lib/auth'
-import { useDemoMode } from '@/contexts/demo-mode-context'
-
-// Components
+import { logger } from '@/lib/logger'
+import { getSessionLockInfo } from '@/components/attendance/AttendanceGridUtils'
+import { openSessionAction } from '@/app/actions/attendance/open-session'
+import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
+import { closeSessionAction } from '@/app/actions/attendance/close-session'
 import {
   ChamadaHeader,
   ChamadaDateNav,
   ChamadaStatusButtons,
   JustificationModal,
   ViewOnlyNotice,
-  DemoModeBanner,
+  FecharAulaDialog,
   type AttendanceStatus,
 } from '@/components/attendance'
 import { Card, CardContent } from '@/components/ui/card'
@@ -45,16 +33,11 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
-// ============================================================================
-// Types
-// ============================================================================
-
 interface Student {
   id: string
   nome: string
   matriculaId: string
-  frequencia: number // Overall frequency percentage
-  hasNis: boolean
+  frequencia: number
 }
 
 interface Turma {
@@ -69,14 +52,22 @@ interface AttendanceRecord {
   justificativa: string | null
 }
 
-// ============================================================================
-// Utility Functions
-// ============================================================================
+interface AttendanceSession {
+  id: string
+  turma_id: string
+  data_aula: string
+  status: string
+  professor_id: string
+  escola_id: string
+  aberta_em: string | null
+  fechada_em: string | null
+  created_at: string | null
+}
 
 function getInitials(nome: string): string {
-  const parts = nome.split(' ')
+  const parts = nome.trim().split(/\s+/)
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+  return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase()
 }
 
 function getFrequencyColor(percentage: number): string {
@@ -91,349 +82,400 @@ function getFrequencyBgColor(percentage: number): string {
   return 'bg-red-50'
 }
 
-// ============================================================================
-// Component
-// ============================================================================
+function mapDatabaseStatus(status: string | null, presente: boolean): AttendanceStatus {
+  switch (status?.toUpperCase()) {
+    case 'P':
+    case 'PRESENTE':
+      return 'P'
+    case 'F':
+    case 'FALTA':
+    case 'AUSENTE':
+      return 'F'
+    case 'J':
+    case 'JUSTIFICADA':
+    case 'A':
+    case 'ATESTADO':
+    case 'ATESTADO_MEDICO':
+      return 'J'
+    default:
+      return presente ? 'P' : null
+  }
+}
+
+function statusLabel(status: string): string {
+  switch (status.toUpperCase()) {
+    case 'ABERTA':
+      return 'Aberta'
+    case 'FECHADA':
+      return 'Fechada'
+    case 'CANCELADA':
+      return 'Cancelada'
+    case 'PLANEJADA':
+      return 'Planejada'
+    default:
+      return status
+  }
+}
 
 export default function ChamadaPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { userProfile } = useAuth()
   const turmaId = params?.id as string
+  const requestedSessionId = searchParams.get('sessao')
 
-  // Demo mode for admin demonstration
-  const { isDemoMode, demoTurmaId, exitDemoMode } = useDemoMode()
-  const inDemoForThisTurma = isDemoMode && demoTurmaId === turmaId
-
-  // Data state
   const [turma, setTurma] = useState<Turma | null>(null)
   const [students, setStudents] = useState<Student[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Date navigation
-  const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()))
-
-  // Attendance tracking
+  const [sessions, setSessions] = useState<AttendanceSession[]>([])
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(requestedSessionId)
+  const [draftSessionId, setDraftSessionId] = useState<string | null>(null)
   const [attendance, setAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
   const [originalAttendance, setOriginalAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
-  const [sessionId, setSessionId] = useState<string | null>(null)
-
-  // Lock state
-  const [isLocked, setIsLocked] = useState(false)
-  const [lockReason, setLockReason] = useState<string | null>(null)
-  const [isFutureDate, setIsFutureDate] = useState(false)
-
-  // Justification modal state
+  const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()))
+  const [loading, setLoading] = useState(true)
+  const [loadingSessions, setLoadingSessions] = useState(false)
+  const [loadingAttendance, setLoadingAttendance] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [justificationModal, setJustificationModal] = useState<{
-    isOpen: boolean
-    studentId: string
+    matriculaId: string
     studentName: string
   } | null>(null)
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false)
 
-  // Save state
-  const [isSaving, setIsSaving] = useState(false)
+  const selectedSession = useMemo(
+    () => sessions.find(session => session.id === selectedSessionId) ?? null,
+    [selectedSessionId, sessions]
+  )
 
-  // User role (for BF visibility) - simplified check
-  const [canSeeBolsaFamilia, setCanSeeBolsaFamilia] = useState(false)
-
-  // View-only state for non-recording roles (admin, secretario)
-  const [isViewOnly, setIsViewOnly] = useState(false)
-
-  // ============================================================================
-  // Derived State
-  // ============================================================================
-
+  const dateString = format(currentDate, 'yyyy-MM-dd')
+  const today = startOfDay(new Date())
+  const isFutureDate = isAfter(startOfDay(currentDate), today)
+  const canRecord = canRecordAttendance(userProfile?.tipo_usuario ?? null)
+  const isViewOnly = !canRecord
+  const lockInfo = useMemo(
+    () => getSessionLockInfo(selectedSession?.data_aula ?? dateString, selectedSession?.status),
+    [dateString, selectedSession]
+  )
+  const sessionStateLocked = Boolean(selectedSession && selectedSession.status !== 'ABERTA')
+  const isLocked = lockInfo.isLocked || sessionStateLocked
   const hasUnsavedChanges = useMemo(() => {
     if (attendance.size !== originalAttendance.size) return true
 
-    for (const [studentId, record] of attendance) {
-      const original = originalAttendance.get(studentId)
+    for (const [matriculaId, record] of attendance) {
+      const original = originalAttendance.get(matriculaId)
       if (!original) return true
-      if (original.status !== record.status) return true
-      if (original.justificativa !== record.justificativa) return true
+      if (original.status !== record.status || original.justificativa !== record.justificativa) return true
     }
+
     return false
   }, [attendance, originalAttendance])
-
-  const presentCount = useMemo(() => {
-    let count = 0
-    attendance.forEach((record) => {
-      // P and J count as present
-      if (record.status === 'P' || record.status === 'J') {
-        count++
-      }
-    })
-    return count
-  }, [attendance])
-
-  // ============================================================================
-  // Data Loading
-  // ============================================================================
+  const presentCount = useMemo(
+    () => Array.from(attendance.values()).filter(record => record.status === 'P' || record.status === 'J').length,
+    [attendance]
+  )
+  const canOpenSession = Boolean(
+    canRecord && !selectedSession && !isFutureDate && !lockInfo.isLocked && students.length > 0
+  )
+  const canEditSelectedSession = Boolean(
+    selectedSession && canRecord && !isLocked && !isFutureDate
+  )
 
   const loadTurma = useCallback(async () => {
-    if (!turmaId) return
-
-    try {
-      const turmaData = await classesApi.getClassWithSchool(turmaId)
-
-      if (!turmaData) {
-        setError('Turma nao encontrada')
-        return
-      }
-
-      setTurma(turmaData)
-    } catch (err) {
-      logger.error('Error loading turma', err as Error, {
-        feature: 'attendance',
-        action: 'load_turma',
-        metadata: { turmaId }
-      })
-      setError('Erro ao carregar turma')
-    }
+    const data = await classesApi.getClassWithSchool(turmaId)
+    if (!data) throw new Error('Turma não encontrada')
+    setTurma(data)
   }, [turmaId])
 
   const loadStudents = useCallback(async () => {
-    if (!turmaId) return
-
-    try {
-      const studentsList = await attendanceApi.getStudentsForChamada(turmaId)
-      setStudents(studentsList)
-    } catch (err) {
-      logger.error('Error loading students', err as Error, {
-        feature: 'attendance',
-        action: 'load_students',
-        metadata: { turmaId }
-      })
-      setError('Erro ao carregar alunos')
-    }
+    const data = await attendanceApi.getStudentsForChamada(turmaId)
+    setStudents(data.map(student => ({
+      id: student.id,
+      nome: student.nome,
+      matriculaId: student.matriculaId,
+      frequencia: student.frequencia,
+    })))
   }, [turmaId])
 
-  const loadAttendanceForDate = useCallback(async (date: Date) => {
-    if (!turmaId || students.length === 0) return
-
-    const dateStr = format(date, 'yyyy-MM-dd')
-
+  const loadSessions = useCallback(async () => {
+    setLoadingSessions(true)
     try {
-      const result = await attendanceApi.getAttendanceForDate(turmaId, dateStr)
+      const { data, error: queryError } = await supabase
+        .from('sessoes_aula')
+        .select('id, turma_id, data_aula, status, professor_id, escola_id, aberta_em, fechada_em, created_at')
+        .eq('turma_id', turmaId)
+        .eq('data_aula', dateString)
+        .order('created_at', { ascending: true })
 
-      if (result.sessionId) {
-        setSessionId(result.sessionId)
-        const sessionLocked = result.sessionStatus === 'fechada'
-        setIsLocked(sessionLocked)
-        if (sessionLocked) {
-          setLockReason('Chamada finalizada')
-        }
+      if (queryError) throw queryError
 
-        // Convert Map<string, {status, justificativa}> to Map<string, AttendanceRecord>
-        const attendanceMap = new Map<string, AttendanceRecord>()
-        result.records.forEach((record, matriculaId) => {
-          attendanceMap.set(matriculaId, {
-            status: record.status as AttendanceStatus,
-            justificativa: record.justificativa,
-          })
-        })
+      const loadedSessions = data ?? []
+      setSessions(loadedSessions)
 
-        setAttendance(attendanceMap)
-        setOriginalAttendance(new Map(attendanceMap))
-      } else {
-        setSessionId(null)
-        setIsLocked(false)
-        setLockReason(null)
-
-        // No session for this date
-        const today = startOfDay(new Date())
-        if (isSameDay(date, today)) {
-          // Initialize all as Present for today
-          initializeAllPresent()
-        } else {
-          // Past/future dates without session: empty
-          setAttendance(new Map())
-          setOriginalAttendance(new Map())
-        }
-      }
-    } catch (err) {
-      logger.error('Error loading attendance', err as Error, {
-        feature: 'attendance',
-        action: 'load_attendance_for_date',
-        metadata: { turmaId, dateStr }
+      const requested = loadedSessions.find(session => session.id === requestedSessionId)
+      const openSession = loadedSessions.find(session => session.status === 'ABERTA')
+      const nextSession = requested ?? openSession ?? loadedSessions[loadedSessions.length - 1] ?? null
+      setSelectedSessionId(nextSession?.id ?? null)
+    } catch (loadError) {
+      logger.error('ATTENDANCE_SESSION_READ_FAILED', loadError as Error, {
+        metadata: { turmaId, date: dateString },
       })
-      toast.error('Erro ao carregar chamada')
+      setError('Erro ao carregar as sessões da chamada')
+      setSessions([])
+      setSelectedSessionId(null)
+    } finally {
+      setLoadingSessions(false)
     }
-  }, [turmaId, students])
+  }, [dateString, requestedSessionId, turmaId])
+
+  const loadAttendance = useCallback(async (sessionId: string | null) => {
+    if (!sessionId) {
+      setAttendance(new Map())
+      setOriginalAttendance(new Map())
+      return
+    }
+
+    if (sessionId === draftSessionId) {
+      setLoadingAttendance(false)
+      return
+    }
+
+    setLoadingAttendance(true)
+    try {
+      const { data, error: queryError } = await supabase
+        .from('frequencia')
+        .select('matricula_id, status_presenca, presente, justificativa')
+        .eq('sessao_id', sessionId)
+
+      if (queryError) throw queryError
+
+      const loadedAttendance = new Map<string, AttendanceRecord>()
+      for (const record of data ?? []) {
+        const status = mapDatabaseStatus(record.status_presenca, record.presente)
+        if (record.status_presenca === 'NAO_MARCADO' || status === null) continue
+        loadedAttendance.set(record.matricula_id, {
+          status,
+          justificativa: record.justificativa,
+        })
+      }
+
+      setAttendance(loadedAttendance)
+      setOriginalAttendance(new Map(loadedAttendance))
+    } catch (loadError) {
+      logger.error('ATTENDANCE_RECORD_READ_FAILED', loadError as Error, {
+        metadata: { sessionId },
+      })
+      toast.error('Erro ao carregar a frequência da sessão')
+      setAttendance(new Map())
+      setOriginalAttendance(new Map())
+    } finally {
+      setLoadingAttendance(false)
+    }
+  }, [draftSessionId])
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError(null)
+
+    Promise.all([loadTurma(), loadStudents()])
+      .catch(loadError => {
+        if (!active) return
+        logger.error('ATTENDANCE_CLASS_READ_FAILED', loadError as Error, {
+          metadata: { turmaId },
+        })
+        setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar a turma')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [loadStudents, loadTurma, turmaId])
+
+  useEffect(() => {
+    if (!requestedSessionId) return
+
+    let active = true
+    void supabase
+      .from('sessoes_aula')
+      .select('data_aula')
+      .eq('id', requestedSessionId)
+      .eq('turma_id', turmaId)
+      .single()
+      .then(({ data }) => {
+        if (!active || !data || data.data_aula === dateString) return
+        setCurrentDate(startOfDay(new Date(`${data.data_aula}T00:00:00`)))
+      })
+
+    return () => {
+      active = false
+    }
+  }, [dateString, requestedSessionId, turmaId])
+
+  useEffect(() => {
+    void loadSessions()
+  }, [loadSessions])
+
+  useEffect(() => {
+    void loadAttendance(selectedSessionId)
+  }, [loadAttendance, selectedSessionId])
 
   const initializeAllPresent = useCallback(() => {
     const initial = new Map<string, AttendanceRecord>()
-    students.forEach((student) => {
+    students.forEach(student => {
       initial.set(student.matriculaId, { status: 'P', justificativa: null })
     })
     setAttendance(initial)
-    // Keep original empty so hasUnsavedChanges is true
     setOriginalAttendance(new Map())
   }, [students])
 
-  // ============================================================================
-  // Effects
-  // ============================================================================
-
-  // Load turma data
-  useEffect(() => {
-    loadTurma()
-    loadStudents()
-  }, [loadTurma, loadStudents])
-
-  // Update loading state
-  useEffect(() => {
-    if (turma && students.length >= 0) {
-      setLoading(false)
-    }
-  }, [turma, students])
-
-  // Load attendance when date changes
-  useEffect(() => {
-    if (students.length > 0) {
-      loadAttendanceForDate(currentDate)
-    }
-  }, [currentDate, students, loadAttendanceForDate])
-
-  // Check if future date
-  useEffect(() => {
-    const today = startOfDay(new Date())
-    const current = startOfDay(currentDate)
-    setIsFutureDate(isAfter(current, today))
-  }, [currentDate])
-
-  // Check time-based lock (after 18:00 Sao Paulo time)
-  useEffect(() => {
-    const checkTimeLock = () => {
-      const now = new Date()
-      const nowBrazilian = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-      const today = startOfDay(new Date())
-
-      // Past dates are always locked (can't modify historical records)
-      const currentDateStart = startOfDay(currentDate)
-      if (currentDateStart < today && !isSameDay(currentDate, today)) {
-        setIsLocked(true)
-        setLockReason('Data passada - nao e permitido modificar registros historicos')
-        return
-      }
-
-      // Today: check 18:00 cutoff
-      if (isSameDay(currentDate, today)) {
-        const hour = nowBrazilian.getHours()
-        if (hour >= 18) {
-          setIsLocked(true)
-          setLockReason('Apos 18:00 - chamada travada automaticamente')
-        }
-      }
-    }
-
-    checkTimeLock()
-    const interval = setInterval(checkTimeLock, 60000) // Check every minute
-    return () => clearInterval(interval)
-  }, [currentDate])
-
-  // Check user role for BF visibility and recording permission
-  useEffect(() => {
-    const checkUserRole = async () => {
-      const role = await usersApi.getCurrentUserRole()
-      // Gestores (diretor, supervisor, secretaria, admin) can see BF info
-      const gestorRoles = ['diretor', 'supervisor', 'secretaria', 'admin']
-      setCanSeeBolsaFamilia(gestorRoles.includes(role || ''))
-
-      // Check if user can record attendance
-      // Demo mode overrides view-only for admin on this specific turma
-      const baseViewOnly = !canRecordAttendance(role)
-      setIsViewOnly(inDemoForThisTurma ? false : baseViewOnly)
-    }
-    checkUserRole()
-  }, [inDemoForThisTurma])
-
-  // ============================================================================
-  // Handlers
-  // ============================================================================
-
   const handleDateChange = useCallback((date: Date) => {
-    if (hasUnsavedChanges) {
-      if (!window.confirm('Voce tem alteracoes nao salvas. Deseja descarta-las?')) {
-        return
-      }
-    }
+    if (hasUnsavedChanges && !window.confirm('Existem alterações não salvas. Deseja descartá-las?')) return
     setCurrentDate(startOfDay(date))
+    setSelectedSessionId(null)
+    setDraftSessionId(null)
+    setAttendance(new Map())
+    setOriginalAttendance(new Map())
   }, [hasUnsavedChanges])
 
-  const handleStatusChange = useCallback((
-    matriculaId: string,
-    status: AttendanceStatus,
-    justificativa?: string
-  ) => {
-    setAttendance((prev) => {
-      const next = new Map(prev)
-      next.set(matriculaId, {
-        status,
-        justificativa: justificativa || null,
-      })
+  const handleSessionChange = useCallback((sessionId: string) => {
+    if (hasUnsavedChanges && !window.confirm('Existem alterações não salvas. Deseja descartá-las?')) return
+    setSelectedSessionId(sessionId)
+    setDraftSessionId(null)
+    router.replace(`/dashboard/turmas/${turmaId}/chamada?sessao=${sessionId}`)
+  }, [hasUnsavedChanges, router, turmaId])
+
+  const handleStatusChange = useCallback((matriculaId: string, status: AttendanceStatus, justificativa?: string) => {
+    setAttendance(previous => {
+      const next = new Map(previous)
+      if (status === null) {
+        next.delete(matriculaId)
+      } else {
+        next.set(matriculaId, { status, justificativa: justificativa ?? null })
+      }
       return next
     })
   }, [])
 
-  const handleJustificationNeeded = useCallback((student: Student) => {
-    setJustificationModal({
-      isOpen: true,
-      studentId: student.matriculaId,
-      studentName: student.nome,
-    })
-  }, [])
-
-  const handleJustificationConfirm = useCallback((motivo: string) => {
-    if (justificationModal) {
-      handleStatusChange(justificationModal.studentId, 'J', motivo)
-      setJustificationModal(null)
-    }
-  }, [justificationModal, handleStatusChange])
-
-  const handleSave = useCallback(async () => {
-    if (!turmaId || isLocked || isFutureDate) return
+  const handleOpenSession = useCallback(async () => {
+    if (!canOpenSession) return
 
     setIsSaving(true)
-    const dateStr = format(currentDate, 'yyyy-MM-dd')
-
     try {
-      // Convert Map<string, AttendanceRecord> to Map<string, {status, justificativa}>
-      const attendanceRecords = new Map<string, { status: string | null; justificativa: string | null }>()
-      attendance.forEach((record, matriculaId) => {
-        attendanceRecords.set(matriculaId, {
-          status: record.status,
-          justificativa: record.justificativa,
-        })
+      const result = await openSessionAction({
+        turma_id: turmaId,
+        data_aula: dateString,
+        conteudo_programatico: 'Chamada',
       })
 
-      const newSessionId = await attendanceApi.saveChamada(
-        turmaId,
-        dateStr,
-        sessionId,
-        attendanceRecords
-      )
+      if (!result.success || !result.session) {
+        toast.error(result.error || 'Não foi possível abrir a chamada')
+        return
+      }
 
-      setSessionId(newSessionId)
-      // Update original attendance to match current
-      setOriginalAttendance(new Map(attendance))
-      toast.success('Chamada salva com sucesso!')
-
-    } catch (err) {
-      logger.error('Error saving attendance', err as Error, {
-        feature: 'attendance',
-        action: 'save_chamada',
-        metadata: { turmaId, dateStr: format(currentDate, 'yyyy-MM-dd') }
-      })
-      toast.error(`Erro ao salvar: ${(err as Error).message}`)
+      const openedSession: AttendanceSession = {
+        id: result.session.id,
+        turma_id: result.session.turma_id,
+        data_aula: result.session.data_aula,
+        status: result.session.status,
+        professor_id: result.session.professor_id,
+        escola_id: result.session.escola_id,
+        aberta_em: result.session.aberta_em,
+        fechada_em: result.session.fechada_em,
+        created_at: result.session.created_at,
+      }
+      setSessions(previous => [...previous, openedSession])
+      setSelectedSessionId(openedSession.id)
+      setDraftSessionId(openedSession.id)
+      initializeAllPresent()
+      window.history.replaceState(null, '', `/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
+      toast.success('Chamada aberta. Marque a presença e salve os registros.')
+    } catch (openError) {
+      logger.error('ATTENDANCE_SESSION_OPEN_UI_FAILED', openError as Error, { metadata: { turmaId } })
+      toast.error('Erro ao abrir a chamada. Tente novamente.')
     } finally {
       setIsSaving(false)
     }
-  }, [turmaId, sessionId, currentDate, attendance, isLocked, isFutureDate])
+  }, [canOpenSession, dateString, initializeAllPresent, turmaId])
 
-  // ============================================================================
-  // Render
-  // ============================================================================
+  const handleSave = useCallback(async () => {
+    if (!selectedSession || !canEditSelectedSession) return
+
+    setIsSaving(true)
+    try {
+      const result = await markAttendanceBatchAction({
+        sessao_id: selectedSession.id,
+        records: students.map(student => {
+          const record = attendance.get(student.matriculaId)
+          return {
+            matricula_id: student.matriculaId,
+            status: record?.status ?? null,
+            justificativa: record?.justificativa ?? null,
+          }
+        }),
+      })
+
+      if (!result.success) {
+        toast.error(result.error || 'Não foi possível salvar a chamada')
+        return
+      }
+
+      setOriginalAttendance(new Map(attendance))
+      setDraftSessionId(null)
+      toast.success('Chamada salva com sucesso!')
+    } catch (saveError) {
+      logger.error('ATTENDANCE_BATCH_UI_FAILED', saveError as Error, { metadata: { sessionId: selectedSession.id } })
+      toast.error('Erro ao salvar a chamada. Tente novamente.')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [attendance, canEditSelectedSession, selectedSession, students])
+
+  const handleClose = useCallback(async (observacoes?: string) => {
+    if (!selectedSession || !canEditSelectedSession || hasUnsavedChanges) return
+
+    setIsClosing(true)
+    try {
+      const result = await closeSessionAction({
+        session_id: selectedSession.id,
+        observacoes,
+      })
+
+      if (!result.success) {
+        throw new Error(result.error || 'Não foi possível fechar a chamada')
+      }
+
+      setSessions(previous => previous.map(session =>
+        session.id === selectedSession.id
+          ? { ...session, status: 'FECHADA', fechada_em: result.session?.fechada_em ?? new Date().toISOString() }
+          : session
+      ))
+      setCloseDialogOpen(false)
+      setDraftSessionId(null)
+      toast.success('Chamada fechada. Os registros agora são imutáveis.')
+    } catch (closeError) {
+      logger.error('ATTENDANCE_SESSION_CLOSE_UI_FAILED', closeError as Error, { metadata: { sessionId: selectedSession.id } })
+      toast.error(closeError instanceof Error ? closeError.message : 'Erro ao fechar a chamada. Tente novamente.')
+      throw closeError
+    } finally {
+      setIsClosing(false)
+    }
+  }, [canEditSelectedSession, hasUnsavedChanges, selectedSession])
+
+  const handleJustificationNeeded = useCallback((student: Student) => {
+    setJustificationModal({ matriculaId: student.matriculaId, studentName: student.nome })
+  }, [])
+
+  const handleJustificationConfirm = useCallback((motivo: string) => {
+    if (!justificationModal) return
+    handleStatusChange(justificationModal.matriculaId, 'J', motivo)
+    setJustificationModal(null)
+  }, [handleStatusChange, justificationModal])
 
   if (loading) {
     return (
@@ -441,9 +483,7 @@ export default function ChamadaPage() {
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-10 w-full" />
         <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
+          {[1, 2, 3, 4, 5].map(index => <Skeleton key={index} className="h-16 w-full" />)}
         </div>
       </div>
     )
@@ -451,17 +491,12 @@ export default function ChamadaPage() {
 
   if (error || !turma) {
     return (
-      <div className="p-4">
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
-          <p className="font-medium">Erro ao carregar chamada</p>
-          <p className="text-sm mt-1">{error || 'Turma nao encontrada'}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+      <div className="space-y-4 p-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+          <p className="font-medium">Erro ao carregar a chamada</p>
+          <p className="mt-1 text-sm">{error || 'Turma não encontrada'}</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
         </div>
@@ -469,129 +504,172 @@ export default function ChamadaPage() {
     )
   }
 
-  const isDisabled = isLocked || isFutureDate || isViewOnly
+  const disabledReason = isViewOnly
+    ? 'Modo de visualização: secretaria e administração não registram frequência.'
+    : isFutureDate
+      ? 'Data futura: a chamada só pode ser registrada na data da aula.'
+      : lockInfo.isLocked
+        ? lockInfo.message
+        : sessionStateLocked
+          ? 'Esta sessão não está aberta.'
+          : null
 
   return (
     <div className="space-y-4 p-4">
-      {/* Back button */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/turmas">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Turmas
+          <Link href={`/dashboard/turmas/${turmaId}`}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Turma
           </Link>
         </Button>
       </div>
 
-      {/* Header */}
-      <ChamadaHeader
-        turma={turma}
-        date={currentDate}
-        studentCount={students.length}
-        presentCount={presentCount}
-        hasUnsavedChanges={hasUnsavedChanges}
-        isLocked={isDisabled}
-        lockReason={
-          isLocked ? lockReason :
-          isFutureDate ? 'Data futura - somente visualizacao' :
-          isViewOnly ? 'Modo visualizacao - apenas professores registram' :
-          null
-        }
-        onSave={handleSave}
-        isSaving={isSaving}
-      />
-
-      {/* Date navigation */}
-      <ChamadaDateNav
-        currentDate={currentDate}
-        onDateChange={handleDateChange}
-      />
-
-      {/* Demo mode banner for admin */}
-      {inDemoForThisTurma && (
-        <DemoModeBanner onExit={exitDemoMode} />
+      {selectedSession && (
+        <ChamadaHeader
+          turma={turma}
+          date={currentDate}
+          studentCount={students.length}
+          presentCount={presentCount}
+          hasUnsavedChanges={hasUnsavedChanges}
+          isLocked={isLocked}
+          lockReason={disabledReason}
+          onSave={handleSave}
+          isSaving={isSaving}
+          onClose={() => setCloseDialogOpen(true)}
+          closeDisabled={Boolean(disabledReason) || hasUnsavedChanges || isClosing}
+          canEdit={canEditSelectedSession}
+        />
       )}
 
-      {/* View-only notice for admin users (not in demo) */}
-      {isViewOnly && !inDemoForThisTurma && (
-        <ViewOnlyNotice />
+      <ChamadaDateNav currentDate={currentDate} onDateChange={handleDateChange} />
+
+      {sessions.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <label htmlFor="attendance-session" className="text-sm font-medium">
+                Sessão da data
+              </label>
+              {sessions.length > 1 && (
+                <p className="text-xs text-muted-foreground">
+                  Há mais de uma sessão nesta data. Cada sessão mantém seus próprios registros.
+                </p>
+              )}
+            </div>
+            <select
+              id="attendance-session"
+              value={selectedSessionId ?? ''}
+              onChange={event => handleSessionChange(event.target.value)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              {sessions.map(session => (
+                <option key={session.id} value={session.id}>
+                  {statusLabel(session.status)} - {session.created_at ? format(new Date(session.created_at), 'HH:mm') : 'sem horário'}
+                </option>
+              ))}
+            </select>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Student list */}
-      <Card>
-        <CardContent className="p-4">
-          {students.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhum aluno matriculado nesta turma
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {students.map((student) => {
-                const record = attendance.get(student.matriculaId)
-                const isAtRisk = student.frequencia < 75
-                const isCritical = student.frequencia < 60
-
-                return (
-                  <div
-                    key={student.id}
-                    className={cn(
-                      'flex items-center justify-between p-3 rounded-lg',
-                      'hover:bg-muted/50 transition-colors',
-                      getFrequencyBgColor(student.frequencia)
-                    )}
-                  >
-                    {/* Left: Photo + Name */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-white text-sm">
-                          {getInitials(student.nome)}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-foreground truncate">
-                            {student.nome}
-                          </p>
-                          {canSeeBolsaFamilia && student.hasNis && isAtRisk && (
-                            <Badge variant="destructive" className="text-xs flex-shrink-0">
-                              BF
-                            </Badge>
-                          )}
-                        </div>
-
-                        {/* Frequency percentage - visible for gestores */}
-                        {canSeeBolsaFamilia && (
-                          <p className={cn(
-                            'text-sm tabular-nums',
-                            getFrequencyColor(student.frequencia)
-                          )}>
-                            {student.frequencia.toFixed(1)}% frequencia
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: P/F/J buttons */}
-                    <ChamadaStatusButtons
-                      status={record?.status ?? null}
-                      onChange={(status, justificativa) =>
-                        handleStatusChange(student.matriculaId, status, justificativa)
-                      }
-                      onJustificationNeeded={() => handleJustificationNeeded(student)}
-                      disabled={isDisabled}
-                    />
-                  </div>
-                )
-              })}
+      {loadingSessions || loadingAttendance ? (
+        <Card>
+          <CardContent className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+            <CalendarClock className="h-5 w-5 animate-pulse" />
+            Carregando sessão e registros...
+          </CardContent>
+        </Card>
+      ) : !selectedSession ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+            <CalendarClock className="h-12 w-12 text-muted-foreground" />
+            <div>
+              <h2 className="text-lg font-semibold">Nenhuma chamada nesta data</h2>
+              <p className="mt-1 max-w-md text-sm text-muted-foreground">
+                Abra uma sessão para registrar a presença dos alunos matriculados nesta turma.
+              </p>
+            </div>
+            {canOpenSession ? (
+              <Button onClick={handleOpenSession} disabled={isSaving}>
+                {isSaving ? 'Abrindo...' : 'Abrir chamada'}
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {isViewOnly ? 'Este perfil pode visualizar chamadas existentes.' : disabledReason || 'Não é possível abrir uma chamada nesta data.'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {isViewOnly && <ViewOnlyNotice message="Secretaria e administração podem revisar a chamada, mas somente professores e diretores registram ou fecham a sessão." />}
+          {sessionStateLocked && (
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              <Lock className="h-4 w-4" />
+              Sessão {statusLabel(selectedSession.status).toLowerCase()}. Os registros não podem ser alterados.
             </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Justification modal */}
+          <Card>
+            <CardContent className="p-4">
+              {students.length === 0 ? (
+                <p className="py-8 text-center text-muted-foreground">Nenhum aluno matriculado nesta turma.</p>
+              ) : (
+                <div className="space-y-2">
+                  {students.map(student => {
+                    const record = attendance.get(student.matriculaId)
+                    const isAtRisk = student.frequencia < 75
+
+                    return (
+                      <div
+                        key={student.matriculaId}
+                        className={cn(
+                          'flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-muted/50',
+                          getFrequencyBgColor(student.frequencia)
+                        )}
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-sm text-white">
+                              {getInitials(student.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate font-medium text-foreground">{student.nome}</p>
+                              {isAtRisk && <Badge variant="outline" className="text-xs">Atenção</Badge>}
+                            </div>
+                            <p className={cn('text-sm tabular-nums', getFrequencyColor(student.frequencia))}>
+                              {student.frequencia.toFixed(1)}% de frequência
+                            </p>
+                          </div>
+                        </div>
+                        <ChamadaStatusButtons
+                          status={record?.status ?? null}
+                          onChange={(status, justificativa) => handleStatusChange(student.matriculaId, status, justificativa)}
+                          onJustificationNeeded={() => handleJustificationNeeded(student)}
+                          disabled={!canEditSelectedSession}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      <FecharAulaDialog
+        open={closeDialogOpen}
+        onOpenChange={setCloseDialogOpen}
+        onConfirm={handleClose}
+        sessaoId={selectedSession?.id ?? ''}
+      />
+
       <JustificationModal
-        isOpen={justificationModal?.isOpen ?? false}
+        isOpen={justificationModal !== null}
         onClose={() => setJustificationModal(null)}
         onConfirm={handleJustificationConfirm}
         studentName={justificationModal?.studentName ?? ''}

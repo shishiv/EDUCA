@@ -311,23 +311,33 @@ export class AttendanceImmutabilityService {
       const timestamp = new Date().toISOString()
       const attendanceData = records
         .filter(record => alunoToMatricula.has(record.student_id))
-        .map((record) => ({
-          sessao_id: sessionId,
-          matricula_id: alunoToMatricula.get(record.student_id)!,
-          data_aula: session!.data_aula,
-          status_presenca: record.status,
-          presente: record.status === 'presente',
-          observacoes_frequencia: record.observacoes || null,
-          marcado_por: userId,
-          marcado_em: timestamp,
-          hash_registro: this.generateLegalHash({
-            sessionId,
-            studentId: record.student_id,
-            status: record.status,
-            timestamp,
-            userId
-          })
-        }))
+        .map((record) => {
+          const statusPresenca = record.status === 'presente'
+            ? 'P'
+            : record.status === 'falta'
+              ? 'F'
+              : record.status === 'justificada'
+                ? 'J'
+                : 'A'
+
+          return {
+            sessao_id: sessionId,
+            matricula_id: alunoToMatricula.get(record.student_id)!,
+            data_aula: session!.data_aula,
+            status_presenca: statusPresenca,
+            presente: statusPresenca === 'P' || statusPresenca === 'J' || statusPresenca === 'A',
+            observacoes_frequencia: record.observacoes || null,
+            marcado_por: userId,
+            marcado_em: timestamp,
+            hash_registro: this.generateLegalHash({
+              sessionId,
+              studentId: record.student_id,
+              status: record.status,
+              timestamp,
+              userId
+            })
+          }
+        })
 
       // Insert records in transaction
       const { data: createdRecords, error } = await this.supabase
@@ -359,9 +369,8 @@ export class AttendanceImmutabilityService {
         })
       }
 
-      // Automatically close session after attendance creation (immutability enforcement)
-      await this.closeSessionWithImmutability(sessionId, userId)
-
+      // Session closure is a separate explicit server action. Recording a
+      // status must not close the session or erase the review step.
       return {
         success: true,
         data: createdRecords as AttendanceRecord[]
@@ -379,54 +388,6 @@ export class AttendanceImmutabilityService {
         }
       }
     }
-  }
-
-  /**
-   * Close session with immutability enforcement
-   */
-  private async closeSessionWithImmutability(sessionId: string, userId: string): Promise<void> {
-    const timestamp = new Date().toISOString()
-    const hashLegal = this.generateLegalHash({
-      sessionId,
-      timestamp,
-      userId,
-      action: 'CLOSE_SESSION'
-    })
-
-    // Update session to closed status
-    const { data: closedSession } = await this.supabase
-      .from('sessoes_aula')
-      .update({
-        status: 'fechada',
-        fim_aula: timestamp,
-        fechada_em: timestamp,
-        hash_legal: hashLegal
-      })
-      .eq('id', sessionId)
-      .select()
-      .single()
-
-    if (!closedSession) {
-      throw new Error('Falha ao fechar sessão')
-    }
-
-    // Create audit entry for session closure
-    await this.logAuditTrail({
-      table_name: 'sessoes_aula',
-      record_id: sessionId,
-      operation: 'LOCK',
-      old_values: { status: 'aberta' },
-      new_values: { status: 'fechada', fim_aula: timestamp },
-      user_id: userId,
-      user_role: 'professor',
-      timestamp: timestamp,
-      session_info: {
-        turma_id: closedSession.turma_id,
-        data_aula: closedSession.data_aula,
-        legal_status: 'locked'
-      },
-      legal_hash: hashLegal
-    })
   }
 
   /**

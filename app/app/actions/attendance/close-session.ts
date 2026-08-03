@@ -1,22 +1,15 @@
 /**
- * Close Attendance Session - Server Action
+ * Closes a canonical attendance session.
  *
- * Manually closes an open session (manual completion by teacher).
- * Sets status to FECHADA, records fechada_em timestamp.
- * Database trigger generates legal compliance hash (hash_legal).
- *
- * Authorization (issue #30):
- * - resolves the authenticated actor from the server session
- * - professor: closes only own sessions
- * - diretor: closes only sessions of the own escola
- *
- * Brazilian Compliance: Makes session immutable - "não existe o esquecer"
+ * Closing is a one-way server-side transition. Database triggers create the
+ * legal hash and reject later changes to the session or its attendance rows.
  */
 
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import type { Tables } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import {
   assertCanRecordAttendance,
@@ -32,7 +25,7 @@ interface CloseSessionParams {
 
 interface CloseSessionResult {
   success: boolean
-  session?: any
+  session?: Tables<'sessoes_aula'>
   error?: string
   code?: string
 }
@@ -41,118 +34,96 @@ export async function closeSessionAction(
   params: CloseSessionParams
 ): Promise<CloseSessionResult> {
   try {
-    // Validate required parameters
-    if (!params.session_id) {
-      return {
-        success: false,
-        error: 'ID da sessão é obrigatório',
-      }
+    if (!params || !params.session_id) {
+      return { success: false, code: 'SESSION_REQUIRED', error: 'ID da sessão é obrigatório' }
     }
 
     const supabase = await createClient()
-
-    // Resolve the authenticated actor from the server session (issue #30).
     const actor = await requireAttendanceActor(supabase)
     assertCanRecordAttendance(actor)
 
-    // Load the session and assert ownership before closing.
     const { data: session, error: sessionError } = await supabase
       .from('sessoes_aula')
-      .select('id, professor_id, escola_id, status')
+      .select('id, turma_id, professor_id, escola_id, status, data_aula, travada_em, fechada_em')
       .eq('id', params.session_id)
       .single()
 
     if (sessionError || !session) {
-      return {
-        success: false,
-        code: 'SESSION_NOT_FOUND',
-        error: 'Sessão de aula não encontrada',
-      }
+      return { success: false, code: 'SESSION_NOT_FOUND', error: 'Sessão de aula não encontrada' }
     }
 
-    assertSessionWriteAccess(actor, {
-      id: session.id,
-      professor_id: session.professor_id,
-      escola_id: session.escola_id,
-    })
+    const { data: turma } = await supabase
+      .from('turmas')
+      .select('id, professor_id, escola_id, ativo')
+      .eq('id', session.turma_id)
+      .single()
 
-    // Check if session is editable (not already closed/locked)
-    const { data: isEditable, error: checkError } = await supabase.rpc(
+    if (!turma) {
+      return { success: false, code: 'TURMA_NOT_FOUND', error: 'Turma da sessão não encontrada' }
+    }
+
+    assertSessionWriteAccess(actor, session, turma)
+
+    const { data: isEditable, error: editableError } = await supabase.rpc(
       'is_session_editable',
-      {
-        session_id: params.session_id,
-      }
+      { session_id: session.id }
     )
 
-    if (checkError) {
+    if (editableError) {
       return {
         success: false,
-        error: `Erro ao verificar sessão: ${checkError.message}`,
+        code: 'SESSION_LOCK_CHECK_FAILED',
+        error: `Erro ao verificar o fechamento da sessão: ${editableError.message}`,
       }
     }
 
     if (!isEditable) {
       return {
         success: false,
-        error:
-          'Aula já encerrada. Documento oficial não pode ser alterado (não existe o esquecer)',
+        code: 'SESSION_CLOSED',
+        error: 'A sessão já está fechada ou bloqueada e não pode ser alterada',
       }
     }
 
-    // Update session to FECHADA status
     const { data: closedSession, error: updateError } = await supabase
       .from('sessoes_aula')
       .update({
         status: 'FECHADA',
         fechada_em: new Date().toISOString(),
-        observacoes_fechamento: params.observacoes || null,
+        observacoes_fechamento: params.observacoes?.trim() || null,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.session_id)
+      .eq('id', session.id)
       .select()
       .single()
 
-    if (updateError) {
-      logger.error('Erro ao fechar sessão', updateError, {
-        metadata: {
-          sessionId: params.session_id
-        }
+    if (updateError || !closedSession) {
+      logger.error('ATTENDANCE_SESSION_CLOSE_FAILED', updateError ?? new Error('Sessão não retornada'), {
+        metadata: { sessionId: session.id },
       })
       return {
         success: false,
-        error: `Erro ao encerrar aula: ${updateError.message}`,
+        code: 'SESSION_CLOSE_FAILED',
+        error: updateError?.message || 'Não foi possível fechar a chamada',
       }
     }
 
-    // Database trigger (fn_enhanced_audit_sessao_aula) automatically:
-    // 1. Generates hash_legal (SHA-256 compliance hash)
-    // 2. Creates audit trail record
-    // 3. Sets tempo_total_aula computed field
+    revalidatePath(`/dashboard/turmas/${session.turma_id}/chamada`)
+    revalidatePath(`/dashboard/turmas/${session.turma_id}`)
 
-    // Revalidate all attendance pages
-    revalidatePath('/dashboard/frequencia')
-
-    return {
-      success: true,
-      session: closedSession,
-    }
+    return { success: true, session: closedSession }
   } catch (error) {
-    // Expected authorization failures are returned to the caller as-is.
     if (error instanceof AttendanceAuthError) {
-      return {
-        success: false,
-        code: error.code,
-        error: error.message,
-      }
+      return { success: false, code: error.code, error: error.message }
     }
 
-    logger.error('Erro inesperado ao fechar sessão', error as Error, {
-      metadata: {
-        sessionId: params.session_id
-      }
+    logger.error('ATTENDANCE_SESSION_CLOSE_UNEXPECTED', error as Error, {
+      metadata: { sessionId: params?.session_id },
     })
+
     return {
       success: false,
+      code: 'SESSION_CLOSE_FAILED',
       error: error instanceof Error ? error.message : 'Erro desconhecido',
     }
   }

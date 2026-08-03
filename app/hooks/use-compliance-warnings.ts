@@ -137,8 +137,9 @@ export function useComplianceWarnings(escolaId?: string) {
             present: 0,
             lastDate: null,
           }
+          if (f.status_presenca === 'NAO_MARCADO') return
           stats.total++
-          if (f.status_presenca === 'presente' || f.status_presenca === 'P') {
+          if (f.status_presenca === 'presente' || f.status_presenca === 'P' || f.status_presenca === 'J' || f.status_presenca === 'A') {
             stats.present++
           }
           if (!stats.lastDate || f.data_aula > stats.lastDate) {

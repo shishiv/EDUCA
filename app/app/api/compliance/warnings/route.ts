@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           message: `${openSessions.length} sessão(ões) aberta(s) será(ão) bloqueada(s) automaticamente em ${hoursRemaining}h. Confirme toda a frequência antes deste horário.`,
           type: hoursRemaining <= 2 ? 'critical' : 'warning',
           icon: 'Clock',
-          actionUrl: '/dashboard/frequencia',
+          actionUrl: '/dashboard/turmas',
           actionText: 'Verificar Frequência',
           deadline: lockTime,
           count: openSessions.length

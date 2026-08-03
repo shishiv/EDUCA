@@ -25,6 +25,20 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+interface TeacherOption {
+  id: string
+  nome: string
+  email: string | null
+}
+
+interface TeacherClassData {
+  id: string
+  nome: string
+  serie: string
+  turno: string
+  ano_letivo: number
+}
+
 interface TeacherAssignmentProps {
   classId: string
   currentTeacherId?: string
@@ -42,9 +56,9 @@ export function TeacherAssignment({
 }: TeacherAssignmentProps) {
   const [loading, setLoading] = useState(false)
   const [selectedTeacherId, setSelectedTeacherId] = useState(currentTeacherId || '')
-  const [availableTeachers, setAvailableTeachers] = useState<any[]>([])
-  const [classData, setClassData] = useState<any>(null)
-  const [currentTeacher, setCurrentTeacher] = useState<any>(null)
+  const [availableTeachers, setAvailableTeachers] = useState<TeacherOption[]>([])
+  const [classData, setClassData] = useState<TeacherClassData | null>(null)
+  const [currentTeacher, setCurrentTeacher] = useState<TeacherOption | null>(null)
   const queryClient = useQueryClient()
 
   // Load data on mount
@@ -53,7 +67,7 @@ export function TeacherAssignment({
       try {
         const [teachers, classInfo] = await Promise.all([
           schoolsApi.getAvailableTeachers(schoolId),
-          classesApi.getById(classId)
+          classesApi.getById<TeacherClassData>(classId)
         ])
 
         setAvailableTeachers(teachers)
@@ -62,7 +76,7 @@ export function TeacherAssignment({
         // Find current teacher details
         if (currentTeacherId) {
           const teacher = teachers.find(t => t.id === currentTeacherId)
-          setCurrentTeacher(teacher)
+          setCurrentTeacher(teacher ?? null)
         }
       } catch (error) {
         toast.error('Erro ao carregar dados')
@@ -80,9 +94,9 @@ export function TeacherAssignment({
       await classesApi.assignTeacher(classId, selectedTeacherId)
 
       const assignedTeacher = availableTeachers.find(t => t.id === selectedTeacherId)
-      setCurrentTeacher(assignedTeacher)
+      setCurrentTeacher(assignedTeacher ?? null)
 
-      toast.success(`Professor ${assignedTeacher?.nome} atribuído com sucesso!`)
+      toast.success(`Professor titular ${assignedTeacher?.nome} definido com sucesso!`)
 
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['classes'] })
@@ -99,12 +113,12 @@ export function TeacherAssignment({
   const handleRemoveTeacher = async () => {
     setLoading(true)
     try {
-      await classesApi.assignTeacher(classId, '')
+      await classesApi.assignTeacher(classId, null)
 
       setCurrentTeacher(null)
       setSelectedTeacherId('')
 
-      toast.success('Professor removido da turma com sucesso!')
+      toast.success('Professor titular removido da turma com sucesso!')
 
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['classes'] })
@@ -142,10 +156,10 @@ export function TeacherAssignment({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          Atribuição de Professor
+          Professor titular da turma
         </CardTitle>
         <CardDescription>
-          Gerencie a atribuição de professor para a turma {classData?.nome}
+          Defina o professor titular da turma {classData?.nome}
         </CardDescription>
       </CardHeader>
 
@@ -200,7 +214,7 @@ export function TeacherAssignment({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-800">Professor Atribuído</span>
+                    <span className="font-medium text-green-800">Professor titular definido</span>
                   </div>
                   <div className="text-sm text-green-700">
                     <p className="font-medium">{currentTeacher.nome}</p>
@@ -223,10 +237,10 @@ export function TeacherAssignment({
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span className="font-medium text-amber-800">Nenhum professor atribuído</span>
+                <span className="font-medium text-amber-800">Nenhum professor titular definido</span>
               </div>
               <p className="text-sm text-amber-700 mt-1">
-                Esta turma precisa de um professor para começar as atividades educacionais.
+                Defina um professor titular para abrir e registrar a chamada desta turma.
               </p>
             </div>
           )}
@@ -238,7 +252,7 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <Users className="h-4 w-4" />
-            {currentTeacher ? 'Alterar Professor' : 'Atribuir Professor'}
+            {currentTeacher ? 'Alterar professor titular' : 'Definir professor titular'}
           </h4>
 
           {availableTeachers.length > 0 ? (
@@ -281,7 +295,7 @@ export function TeacherAssignment({
                   className="flex-1"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  {currentTeacher ? 'Alterar Professor' : 'Atribuir Professor'}
+                  {currentTeacher ? 'Alterar professor titular' : 'Definir professor titular'}
                 </LoadingButton>
               </div>
             </div>
@@ -300,10 +314,10 @@ export function TeacherAssignment({
         <div className="space-y-2">
           <h4 className="font-medium text-sm text-gray-700">Orientações</h4>
           <div className="text-xs text-gray-600 space-y-1">
-            <p>• Apenas professores cadastrados na mesma escola podem ser atribuídos</p>
-            <p>• Um professor pode ser responsável por múltiplas turmas</p>
-            <p>• A atribuição é necessária para marcar presença e lançar notas</p>
-            <p>• Alterações de professor são registradas no histórico da turma</p>
+            <p>• Apenas professores cadastrados na mesma escola podem ser titulares</p>
+            <p>• Um professor pode ser titular de mais de uma turma</p>
+            <p>• O professor titular pode abrir e registrar a chamada da turma</p>
+            <p>• A turma tem um único professor titular no piloto</p>
           </div>
         </div>
       </CardContent>

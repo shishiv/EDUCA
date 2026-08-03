@@ -55,9 +55,9 @@ const navigationItems: NavItem[] = [
   },
   {
     name: 'Frequencia',
-    href: '/diario/frequencia',
+    href: '/dashboard/turmas',
     icon: CheckSquare,
-    matchPath: '/diario/frequencia',
+    matchPath: '/dashboard/turmas',
   },
   {
     name: 'Diario',

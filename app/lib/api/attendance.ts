@@ -4,6 +4,9 @@ import { BaseApiService } from './base'
 import { supabase, Tables, Inserts } from '@/lib/supabase'
 import { AttendanceImmutabilityService } from '@/lib/services/attendance-immutability'
 import { logger } from '@/lib/logger'
+import { openSessionAction } from '@/app/actions/attendance/open-session'
+import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
+import { closeSessionAction } from '@/app/actions/attendance/close-session'
 
 // Browser-side adapter for the attendance immutability service: this module
 // is 'use client', so it binds the browser client (authenticated via cookies
@@ -21,7 +24,7 @@ export interface AttendanceSession {
   recursos_utilizados?: string
   observacoes?: string
   duracao_minutos: number
-  status: 'aberta' | 'fechada'
+  status: 'ABERTA' | 'FECHADA' | 'aberta' | 'fechada'
   inicio_aula: string
   fim_aula?: string
   created_at: string
@@ -33,7 +36,7 @@ export interface AttendanceRecord {
   sessao_id: string
   matricula_id: string
   data_aula: string
-  status_presenca: 'presente' | 'falta' | 'justificada' | 'atestado'
+  status_presenca: 'P' | 'F' | 'J' | 'A' | 'NAO_MARCADO' | 'presente' | 'falta' | 'justificada' | 'atestado'
   observacoes?: string
   presente: boolean
   created_at: string
@@ -50,11 +53,8 @@ export interface AttendanceWithDetails extends AttendanceRecord {
 }
 
 /**
- * Build the sessoes_aula insert payload for a chamada session.
- *
- * escola_id and professor_id are NOT NULL columns; callers must resolve them
- * before calling (an as-any escape previously hid undefined values that
- * PostgREST would reject at runtime).
+ * @deprecated Use openSessionAction. This helper does not authorize a write.
+ * It remains only for the compile-time payload regression test.
  */
 export function buildChamadaSessionInsert(params: {
   turmaId: string
@@ -65,7 +65,7 @@ export function buildChamadaSessionInsert(params: {
   return {
     turma_id: params.turmaId,
     data_aula: params.dateStr,
-    status: 'aberta',
+    status: 'ABERTA',
     professor_id: params.professorId,
     escola_id: params.escolaId,
     conteudo_programatico: 'Chamada',
@@ -77,61 +77,26 @@ export class AttendanceApiService extends BaseApiService {
     super('sessoes_aula') // Using sessions table as primary
   }
 
-  // Create new attendance session (Abrir aula)
+  // Create a session through the canonical server action.
   async createSession(sessionData: Omit<AttendanceSession, 'id' | 'created_at' | 'updated_at'> & { escola_id?: string }): Promise<AttendanceSession> {
-    try {
-      // Build the insert payload, keeping the original truthiness filtering so
-      // falsy optional fields are omitted exactly as before.
-      const insertData: Partial<Inserts<'sessoes_aula'>> = {}
-      if (sessionData.turma_id) insertData.turma_id = sessionData.turma_id
-      if (sessionData.professor_id) insertData.professor_id = sessionData.professor_id
-      if (sessionData.data_aula) insertData.data_aula = sessionData.data_aula
-      if (sessionData.conteudo_programatico) insertData.conteudo_programatico = sessionData.conteudo_programatico
-      if (sessionData.metodologia) insertData.metodologia = sessionData.metodologia
-      if (sessionData.recursos_utilizados) insertData.recursos_utilizados = sessionData.recursos_utilizados
-      if (sessionData.observacoes) insertData.observacoes = sessionData.observacoes
-      if (sessionData.duracao_minutos) insertData.duracao_minutos = sessionData.duracao_minutos
-      if (sessionData.status) insertData.status = sessionData.status
-      if (sessionData.inicio_aula) insertData.inicio_aula = sessionData.inicio_aula
-      if (sessionData.fim_aula) insertData.fim_aula = sessionData.fim_aula
-
-      if (sessionData.escola_id) insertData.escola_id = sessionData.escola_id
-
-      // Every assignment above is checked against the real sessoes_aula Insert
-      // type. This single cast reconciles the truthiness-filtered partial
-      // payload with the complete Insert type at the query boundary.
-      const { data, error } = await supabase
-        .from('sessoes_aula')
-        .insert(insertData as Inserts<'sessoes_aula'>)
-        .select()
-        .single()
-
-      if (error) throw error
-      return data as unknown as AttendanceSession
-    } catch (error) {
-      throw error
+    const result = await openSessionAction({
+      turma_id: sessionData.turma_id,
+      data_aula: sessionData.data_aula,
+      conteudo_programatico: sessionData.conteudo_programatico,
+    })
+    if (!result.success || !result.session) {
+      throw new Error(result.error || 'Não foi possível abrir a chamada')
     }
+    return result.session as unknown as AttendanceSession
   }
 
-  // Close attendance session
+  // Close a session through the canonical server action.
   async closeSession(sessionId: string): Promise<AttendanceSession> {
-    try {
-      const { data, error } = await supabase
-        .from('sessoes_aula')
-        .update({
-          status: 'fechada',
-          fim_aula: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', sessionId)
-        .select()
-        .single()
-
-      if (error) throw error
-      return data as AttendanceSession
-    } catch (error) {
-      throw error
+    const result = await closeSessionAction({ session_id: sessionId })
+    if (!result.success || !result.session) {
+      throw new Error(result.error || 'Não foi possível fechar a chamada')
     }
+    return result.session as unknown as AttendanceSession
   }
 
   // Get session by date and class
@@ -142,7 +107,9 @@ export class AttendanceApiService extends BaseApiService {
         .select('*')
         .eq('turma_id', turmaId)
         .eq('data_aula', date)
-        .single()
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
       if (error && error.code !== 'PGRST116') throw error // PGRST116 = not found
       return data as AttendanceSession | null
@@ -180,7 +147,7 @@ export class AttendanceApiService extends BaseApiService {
     }
   }
 
-  // Save attendance records for a session with enhanced immutability
+  // Save attendance through the canonical server-side batch action.
   async saveAttendanceRecords(
     sessionId: string,
     turmaId: string,
@@ -188,35 +155,38 @@ export class AttendanceApiService extends BaseApiService {
     records: { student_id: string; status: 'presente' | 'falta' | 'justificada' | 'atestado'; observacoes?: string }[]
   ): Promise<AttendanceRecord[]> {
     try {
-      // Get current user for audit trail (in a real app, this would come from auth context)
-      const { data: { user } } = await supabase.auth.getUser()
-      const userId = user?.id || 'unknown'
+      const { data: matriculas, error: matriculaError } = await supabase
+        .from('matriculas')
+        .select('id, aluno_id')
+        .eq('turma_id', turmaId)
+        .eq('situacao', 'ativa')
+        .in('aluno_id', records.map(record => record.student_id))
 
-      // Use enhanced immutability service
-      const result = await attendanceImmutability.createImmutableAttendanceRecords(
-        sessionId,
-        records,
-        userId
-      )
+      if (matriculaError) throw matriculaError
 
-      if (!result.success) {
-        // Transform immutability error into standard error format
-        const error = result.error!
-        throw new Error(`${error.code}: ${error.message}`)
-      }
-
-      return result.data!
-    } catch (error) {
-      // Enhanced error logging for legal compliance
-      logger.error('Attendance save error', error as Error, {
-        metadata: {
-          sessionId,
-          turmaId,
-          date,
-          recordCount: records.length
-        }
+      const matriculaByAluno = new Map((matriculas ?? []).map(matricula => [matricula.aluno_id, matricula.id]))
+      const batchRecords = records.flatMap(record => {
+        const matriculaId = matriculaByAluno.get(record.student_id)
+        if (!matriculaId) return []
+        const status = record.status === 'presente'
+          ? 'P' as const
+          : record.status === 'falta'
+            ? 'F' as const
+            : 'J' as const
+        return [{
+          matricula_id: matriculaId,
+          status,
+          justificativa: status === 'J' ? record.observacoes || 'Justificativa registrada' : null,
+        }]
       })
 
+      const result = await markAttendanceBatchAction({ sessao_id: sessionId, records: batchRecords })
+      if (!result.success) throw new Error(result.error || 'Não foi possível salvar a frequência')
+      return this.getAttendanceBySession(sessionId)
+    } catch (error) {
+      logger.error('ATTENDANCE_SAVE_ACTION_FAILED', error as Error, {
+        metadata: { sessionId, turmaId, date, recordCount: records.length },
+      })
       throw error
     }
   }
@@ -400,7 +370,7 @@ export class AttendanceApiService extends BaseApiService {
 
       if (error) throw error
 
-      const records = attendanceData ?? []
+      const records = (attendanceData ?? []).filter(record => record.status_presenca !== 'NAO_MARCADO')
 
       // Calculate statistics
       const byStatus = records.reduce((acc, record) => {
@@ -410,7 +380,9 @@ export class AttendanceApiService extends BaseApiService {
       }, {} as Record<string, number>)
 
       const totalRecords = records.length
-      const totalPresences = (byStatus['presente'] || 0) + records.filter((r) => r.presente).length
+      const totalPresences = records.filter(record =>
+        record.presente || ['presente', 'P', 'justificada', 'J', 'atestado', 'A'].includes(record.status_presenca)
+      ).length
       const attendanceRate = totalRecords > 0 ? Math.round((totalPresences / totalRecords) * 100) : 0
 
       // Calculate per-student statistics
@@ -430,7 +402,7 @@ export class AttendanceApiService extends BaseApiService {
           }
 
           existing.totalSessions++
-          if (record.presente || record.status_presenca === 'presente') {
+          if (record.presente || ['presente', 'P', 'justificada', 'J', 'atestado', 'A'].includes(record.status_presenca)) {
             existing.presences++
           }
 
@@ -479,7 +451,8 @@ export class AttendanceApiService extends BaseApiService {
     status: 'adequate' | 'warning' | 'critical'
   }> {
     try {
-      const records = await this.getAttendanceByStudent(studentId, startDate, endDate)
+      const records = (await this.getAttendanceByStudent(studentId, startDate, endDate))
+        .filter(record => record.status_presenca !== 'NAO_MARCADO')
 
       const summary: {
         totalSessions: number
@@ -491,10 +464,10 @@ export class AttendanceApiService extends BaseApiService {
         status: 'adequate' | 'warning' | 'critical'
       } = {
         totalSessions: records.length,
-        presences: records.filter(r => r.status_presenca === 'presente' || r.presente).length,
-        absences: records.filter(r => r.status_presenca === 'falta' || (!r.presente && !r.status_presenca)).length,
-        justifiedAbsences: records.filter(r => r.status_presenca === 'justificada').length,
-        medicalCertificates: records.filter(r => r.status_presenca === 'atestado').length,
+        presences: records.filter(r => r.presente || ['presente', 'P', 'justificada', 'J', 'atestado', 'A'].includes(r.status_presenca)).length,
+        absences: records.filter(r => !r.presente && ['falta', 'F'].includes(r.status_presenca)).length,
+        justifiedAbsences: records.filter(r => ['justificada', 'J'].includes(r.status_presenca)).length,
+        medicalCertificates: records.filter(r => ['atestado', 'atestado_medico', 'A'].includes(r.status_presenca)).length,
         attendanceRate: 0,
         status: 'critical'
       }
@@ -705,20 +678,23 @@ export class AttendanceApiService extends BaseApiService {
         return 0
       }
 
-      if (!records || records.length === 0) {
+      const markedRecords = (records ?? []).filter(record => record.status_presenca !== 'NAO_MARCADO')
+      if (markedRecords.length === 0) {
         return 0
       }
 
-      // Count present and justified absences (justified counts as present for frequency)
-      const presentCount = records.filter(
+      // Count present and justified absences as attended for frequency.
+      const presentCount = markedRecords.filter(
         (r) =>
           r.status_presenca === 'presente' ||
           r.status_presenca === 'P' ||
           r.status_presenca === 'justificada' ||
-          r.status_presenca === 'J'
+          r.status_presenca === 'J' ||
+          r.status_presenca === 'atestado' ||
+          r.status_presenca === 'A'
       ).length
 
-      const total = records.length
+      const total = markedRecords.length
       return Math.round((presentCount / total) * 100)
     } catch (error) {
       logger.error('Error in calculateFrequency', error as Error, {
@@ -775,14 +751,16 @@ export class AttendanceApiService extends BaseApiService {
       // Group records by matricula_id
       const statsByMatricula = new Map<string, { total: number; present: number }>()
 
-      records?.forEach((r) => {
+      records?.filter(record => record.status_presenca !== 'NAO_MARCADO').forEach((r) => {
         const stats = statsByMatricula.get(r.matricula_id) || { total: 0, present: 0 }
         stats.total++
         if (
           r.status_presenca === 'presente' ||
           r.status_presenca === 'P' ||
           r.status_presenca === 'justificada' ||
-          r.status_presenca === 'J'
+          r.status_presenca === 'J' ||
+          r.status_presenca === 'atestado' ||
+          r.status_presenca === 'A'
         ) {
           stats.present++
         }
@@ -816,14 +794,13 @@ export class AttendanceApiService extends BaseApiService {
 
   /**
    * Get enrolled students for a class (chamada use case)
-   * Returns students with matriculaId, real attendance frequency, and hasNis for BF visibility
+   * Returns active enrollments with their student name and calculated frequency.
    */
   async getStudentsForChamada(turmaId: string): Promise<{
     id: string
     nome: string
     matriculaId: string
     frequencia: number
-    hasNis: boolean
   }[]> {
     try {
       const { data, error } = await supabase
@@ -832,8 +809,7 @@ export class AttendanceApiService extends BaseApiService {
           id,
           aluno:alunos(
             id,
-            nome_completo,
-            nis
+            nome_completo
           )
         `)
         .eq('turma_id', turmaId)
@@ -864,7 +840,6 @@ export class AttendanceApiService extends BaseApiService {
           nome: m.aluno?.nome_completo || 'Aluno',
           matriculaId: m.id,
           frequencia: frequencies.get(m.id) ?? 0,
-          hasNis: !!m.aluno?.nis,
         }))
         .filter((s) => s.id)
         .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
@@ -893,6 +868,8 @@ export class AttendanceApiService extends BaseApiService {
         .select('id, status')
         .eq('turma_id', turmaId)
         .eq('data_aula', dateStr)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
       if (sessionError) {
@@ -958,7 +935,8 @@ export class AttendanceApiService extends BaseApiService {
   }
 
   /**
-   * Save chamada (create session if needed and upsert attendance records)
+   * Save a chamada through the canonical open and batch server actions.
+   * The server derives identity and date from sessoes_aula.
    */
   async saveChamada(
     turmaId: string,
@@ -966,101 +944,39 @@ export class AttendanceApiService extends BaseApiService {
     sessionId: string | null,
     attendanceRecords: Map<string, { status: string | null; justificativa: string | null }>
   ): Promise<string> {
-    try {
-      let currentSessionId = sessionId
+    let currentSessionId = sessionId
 
-      // Create session if not exists
-      if (!currentSessionId) {
-        // Get current user for professor_id
-        const { data: { user } } = await supabase.auth.getUser()
-
-        // Get turma for escola_id
-        const { data: turmaData } = await supabase
-          .from('turmas')
-          .select('escola_id, professor_id')
-          .eq('id', turmaId)
-          .single()
-
-        const professorId = turmaData?.professor_id ?? user?.id
-        const escolaId = turmaData?.escola_id
-
-        // sessoes_aula.escola_id and professor_id are NOT NULL. Fail fast with a
-        // clear error instead of a raw PostgREST rejection (previously hidden by
-        // an as-any escape on the insert).
-        if (!professorId || !escolaId) {
-          throw new Error('Não foi possível identificar a turma ou o professor para registrar a chamada.')
-        }
-
-        const { data: newSession, error: sessionError } = await supabase
-          .from('sessoes_aula')
-          .insert(buildChamadaSessionInsert({ turmaId, dateStr, professorId, escolaId }))
-          .select()
-          .single()
-
-        if (sessionError) {
-          logger.error('Error creating session', sessionError, {
-            feature: 'attendance',
-            action: 'save_chamada_create_session',
-            metadata: { turmaId, dateStr }
-          })
-          throw sessionError
-        }
-        currentSessionId = newSession.id
+    if (!currentSessionId) {
+      const opened = await openSessionAction({
+        turma_id: turmaId,
+        data_aula: dateStr,
+        conteudo_programatico: 'Chamada',
+      })
+      if (!opened.success || !opened.session) {
+        throw new Error(opened.error || 'Não foi possível abrir a chamada')
       }
-
-      // Prepare attendance records
-      const records: Inserts<'frequencia'>[] = []
-      attendanceRecords.forEach((record, matriculaId) => {
-        // Map component status to DB status
-        let dbStatus = null
-        if (record.status === 'P') dbStatus = 'presente'
-        else if (record.status === 'F') dbStatus = 'falta'
-        else if (record.status === 'J') dbStatus = 'justificada'
-
-        if (dbStatus) {
-          records.push({
-            sessao_id: currentSessionId,
-            matricula_id: matriculaId,
-            status_presenca: dbStatus,
-            justificativa: record.justificativa,
-            data_aula: dateStr,
-            marcado_em: new Date().toISOString(),
-          })
-        }
-      })
-
-      // Upsert attendance records
-      const { error: upsertError } = await supabase
-        .from('frequencia')
-        .upsert(records, {
-          onConflict: 'sessao_id,matricula_id',
-        })
-
-      if (upsertError) {
-        logger.error('Error upserting attendance', upsertError, {
-          feature: 'attendance',
-          action: 'save_chamada_upsert',
-          metadata: { sessionId: currentSessionId, recordCount: records.length }
-        })
-        throw upsertError
-      }
-
-      logger.info('Chamada saved successfully', {
-        feature: 'attendance',
-        action: 'save_chamada_success',
-        metadata: { sessionId: currentSessionId, turmaId, dateStr, recordCount: records.length }
-      })
-
-      // currentSessionId is guaranteed to be non-null here since we create it if it's null
-      return currentSessionId!
-    } catch (error) {
-      logger.error('Error in saveChamada', error as Error, {
-        feature: 'attendance',
-        action: 'save_chamada',
-        metadata: { turmaId, dateStr }
-      })
-      throw error
+      currentSessionId = opened.session.id
     }
+
+    const records = Array.from(attendanceRecords.entries()).map(([matriculaId, record]) => ({
+      matricula_id: matriculaId,
+      status: record.status === 'P'
+        ? 'P' as const
+        : record.status === 'F'
+          ? 'F' as const
+          : record.status === 'J'
+            ? 'J' as const
+            : null,
+      justificativa: record.justificativa,
+    }))
+
+    const saved = await markAttendanceBatchAction({
+      sessao_id: currentSessionId,
+      records,
+    })
+    if (!saved.success) throw new Error(saved.error || 'Não foi possível salvar a chamada')
+
+    return currentSessionId
   }
 }
 

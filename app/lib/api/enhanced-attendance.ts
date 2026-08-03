@@ -14,6 +14,9 @@
 import { BaseApiService } from './enhanced-base'
 import { supabase, Inserts } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { openSessionAction } from '@/app/actions/attendance/open-session'
+import { closeSessionAction } from '@/app/actions/attendance/close-session'
+import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
 
 // ===== ENHANCED INTERFACES =====
 export interface EnhancedAttendanceSession {
@@ -32,7 +35,7 @@ export interface EnhancedAttendanceSession {
   duracao_minutos: number
 
   // Session control
-  status: 'aberta' | 'fechada' | 'travada'
+  status: 'ABERTA' | 'FECHADA' | 'CANCELADA' | 'aberta' | 'fechada' | 'travada'
   inicio_aula: string
   fim_aula?: string
   travada_em?: string
@@ -54,7 +57,7 @@ export interface EnhancedAttendanceRecord {
   data_aula: string
 
   // Attendance details
-  status_presenca: 'presente' | 'falta' | 'justificada' | 'atestado_medico'
+  status_presenca: 'P' | 'F' | 'J' | 'A' | 'presente' | 'falta' | 'justificada' | 'atestado_medico'
   observacoes_frequencia?: string
 
   // Tracking and immutability
@@ -113,11 +116,8 @@ export interface AttendanceStatistics {
 // ===== ENHANCED API SERVICE =====
 
 /**
- * Build the sessoes_aula insert payload for an "Abrir aula" session.
- *
- * All required NOT NULL columns are resolved before the insert; the optional
- * planning fields are included only when truthy, exactly as the previous
- * inline code did. teacherEscolaId must already be validated as present.
+ * @deprecated Use openSessionAction. This helper is retained for type
+ * regression coverage and does not authorize or execute a write.
  */
 export function buildSessionInsert(
   sessionData: Omit<EnhancedAttendanceSession, 'id' | 'created_at' | 'updated_at' | 'hash_integridade' | 'documento_oficial'>,
@@ -130,7 +130,7 @@ export function buildSessionInsert(
     conteudo_programatico: sessionData.conteudo_programatico,
     duracao_minutos: sessionData.duracao_minutos,
     escola_id: teacherEscolaId,
-    status: 'aberta',
+    status: 'ABERTA',
     inicio_aula: new Date().toISOString(),
   }
 
@@ -157,151 +157,31 @@ export class EnhancedAttendanceService extends BaseApiService {
    * Implements Brazilian educational compliance
    */
   async createSession(sessionData: Omit<EnhancedAttendanceSession, 'id' | 'created_at' | 'updated_at' | 'hash_integridade' | 'documento_oficial'>): Promise<EnhancedAttendanceSession> {
-    try {
-      // Validate time constraints (cannot open past sessions)
-      const sessionDate = new Date(sessionData.data_aula)
-      const today = new Date()
-      const diffDays = Math.ceil((today.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24))
-
-      if (diffDays > 1) {
-        throw new Error('ERRO_TEMPORAL: Não é possível abrir aula com mais de 1 dia de atraso conforme regulamentação educacional brasileira.')
-      }
-
-      // Check if session already exists for this class/date
-      const existingSession = await this.getSessionByDate(sessionData.turma_id, sessionData.data_aula)
-      if (existingSession) {
-        throw new Error('ERRO_DUPLICACAO: Já existe uma sessão aberta para esta turma nesta data.')
-      }
-
-      // Validate teacher authorization
-      const { data: teacher, error: teacherError } = await supabase
-        .from('users')
-        .select('id, tipo_usuario, escola_id')
-        .eq('id', sessionData.professor_id)
-        .single()
-
-      if (teacherError || !teacher) {
-        throw new Error('ERRO_AUTORIZACAO: Professor não encontrado.')
-      }
-
-      if (teacher.tipo_usuario !== 'professor') {
-        throw new Error('ERRO_AUTORIZACAO: Apenas professores podem abrir sessões de aula.')
-      }
-
-      // Validate class assignment
-      const { data: classAssignment, error: classError } = await supabase
-        .from('turmas')
-        .select('id, professor_id, escola_id')
-        .eq('id', sessionData.turma_id)
-        .eq('professor_id', sessionData.professor_id)
-        .single()
-
-      if (classError || !classAssignment) {
-        throw new Error('ERRO_AUTORIZACAO: Professor não está atribuído a esta turma.')
-      }
-
-      // Create session with compliance data
-      // sessoes_aula.escola_id is NOT NULL: fail fast when the teacher has no
-      // linked school instead of a raw PostgREST rejection (previously hidden
-      // by an as-any escape on the insert).
-      if (!teacher.escola_id) {
-        throw new Error('ERRO_AUTORIZACAO: Professor sem escola vinculada não pode abrir sessões de aula.')
-      }
-
-      const { data, error } = await supabase
-        .from('sessoes_aula')
-        .insert(buildSessionInsert(sessionData, teacher.escola_id))
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Generate integrity hash
-      const hashInput = `${data.id}-${data.turma_id}-${data.data_aula}-${data.professor_id}`
-      const hash = await this.generateIntegrityHash(hashInput)
-
-      // Update with hash
-      const { data: updatedSession, error: updateError } = await supabase
-        .from('sessoes_aula')
-        .update({ hash_integridade: hash })
-        .eq('id', data.id)
-        .select()
-        .single()
-
-      if (updateError) throw updateError
-
-      return updatedSession as EnhancedAttendanceSession
-    } catch (error) {
-      logger.error('Error creating attendance session', error as Error)
-      throw error
+    const result = await openSessionAction({
+      turma_id: sessionData.turma_id,
+      data_aula: sessionData.data_aula,
+      conteudo_programatico: sessionData.conteudo_programatico || 'Chamada',
+      professor_id: sessionData.professor_id,
+      escola_id: sessionData.escola_id,
+    })
+    if (!result.success || !result.session) {
+      throw new Error(result.error || result.code || 'SESSION_OPEN_FAILED')
     }
+    return result.session as unknown as EnhancedAttendanceSession
   }
 
   /**
    * Close attendance session with immutability enforcement
    */
   async closeSession(sessionId: string, observacoesFechamento?: string): Promise<EnhancedAttendanceSession> {
-    try {
-      // Verify session exists and is open
-      const session = await this.getSessionById(sessionId)
-      if (!session) {
-        throw new Error('ERRO_SESSAO: Sessão não encontrada.')
-      }
-
-      if (session.status !== 'aberta') {
-        throw new Error('ERRO_STATUS: Sessão já foi finalizada ou travada.')
-      }
-
-      // Check if all students have attendance marked
-      const { data: attendance, error: attendanceError } = await supabase
-        .from('frequencia')
-        .select('id')
-        .eq('sessao_id', sessionId)
-
-      if (attendanceError) throw attendanceError
-
-      const { data: enrollments, error: enrollmentError } = await supabase
-        .from('matriculas')
-        .select('id')
-        .eq('turma_id', session.turma_id)
-        .eq('situacao', 'ativa')
-
-      if (enrollmentError) throw enrollmentError
-
-      if (attendance.length !== enrollments.length) {
-        throw new Error('ERRO_INCOMPLETUDE: Todos os alunos devem ter a presença marcada antes de finalizar a aula.')
-      }
-
-      // Close session
-      const { data, error } = await supabase
-        .from('sessoes_aula')
-        .update({
-          status: 'fechada',
-          fim_aula: new Date().toISOString(),
-          observacoes_fechamento: observacoesFechamento,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', sessionId)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Block all attendance records for immutability
-      await supabase
-        .from('frequencia')
-        .update({
-          bloqueado: true,
-          bloqueado_em: new Date().toISOString(),
-          bloqueado_por: session.professor_id
-        })
-        .eq('sessao_id', sessionId)
-
-      return data as EnhancedAttendanceSession
-    } catch (error) {
-      logger.error('Error closing attendance session', error as Error)
-      throw error
+    const result = await closeSessionAction({
+      session_id: sessionId,
+      observacoes: observacoesFechamento,
+    })
+    if (!result.success || !result.session) {
+      throw new Error(result.error || result.code || 'SESSION_CLOSE_FAILED')
     }
+    return result.session as unknown as EnhancedAttendanceSession
   }
 
   /**
@@ -362,69 +242,35 @@ export class EnhancedAttendanceService extends BaseApiService {
     records: Array<{
       matricula_id: string
       aluno_id: string
-      status_presenca: 'presente' | 'falta' | 'justificada' | 'atestado_medico'
+      status_presenca: 'P' | 'F' | 'J' | 'A' | 'presente' | 'falta' | 'justificada' | 'atestado_medico'
       observacoes_frequencia?: string
     }>
   ): Promise<EnhancedAttendanceRecord[]> {
-    try {
-      // Verify session is open
-      const session = await this.getSessionById(sessionId)
-      if (!session) {
-        throw new Error('ERRO_SESSAO: Sessão não encontrada.')
-      }
+    const batchRecords = records.map(record => ({
+      matricula_id: record.matricula_id,
+      status: record.status_presenca === 'P' || record.status_presenca === 'presente'
+        ? 'P' as const
+        : record.status_presenca === 'F' || record.status_presenca === 'falta'
+          ? 'F' as const
+          : record.status_presenca === 'A' || record.status_presenca === 'atestado_medico'
+            ? 'J' as const
+            : 'J' as const,
+      justificativa: record.status_presenca === 'P' || record.status_presenca === 'presente'
+        ? null
+        : record.observacoes_frequencia || 'Justificativa registrada',
+    }))
 
-      if (session.status !== 'aberta') {
-        throw new Error('ERRO_IMUTABILIDADE: Esta sessão já foi finalizada. Registros de frequência são documentos oficiais imutáveis conforme legislação brasileira.')
-      }
-
-      // Check for existing records (immutability)
-      const { data: existingRecords, error: existingError } = await supabase
-        .from('frequencia')
-        .select('id')
-        .eq('sessao_id', sessionId)
-
-      if (existingError) throw existingError
-
-      if (existingRecords.length > 0) {
-        throw new Error('ERRO_IMUTABILIDADE: Registros de frequência já existem para esta sessão e não podem ser alterados.')
-      }
-
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) {
-        throw new Error('ERRO_AUTENTICACAO: Usuário não autenticado.')
-      }
-
-      // Prepare attendance data with compliance
-      const attendanceData = records.map(record => ({
-        sessao_id: sessionId,
-        matricula_id: record.matricula_id,
-        aluno_id: record.aluno_id,
-        data_aula: session.data_aula,
-        status_presenca: record.status_presenca,
-        observacoes_frequencia: record.observacoes_frequencia,
-        marcado_por: user.id,
-        marcado_em: new Date().toISOString(),
-        bloqueado: false,
-        documento_oficial: true
-      }))
-
-      // Insert records
-      const { data, error } = await supabase
-        .from('frequencia')
-        .insert(attendanceData)
-        .select()
-
-      if (error) throw error
-
-      // Auto-close session after saving attendance
-      await this.closeSession(sessionId, 'Sessão finalizada automaticamente após marcação de presença')
-
-      return data as unknown as EnhancedAttendanceRecord[]
-    } catch (error) {
-      logger.error('Error saving attendance records', error as Error)
-      throw error
+    const result = await markAttendanceBatchAction({ sessao_id: sessionId, records: batchRecords })
+    if (!result.success) {
+      throw new Error(result.error || result.code || 'ATTENDANCE_WRITE_FAILED')
     }
+
+    const { data, error } = await supabase
+      .from('frequencia')
+      .select('*')
+      .eq('sessao_id', sessionId)
+    if (error) throw error
+    return data as unknown as EnhancedAttendanceRecord[]
   }
 
   // ===== STATISTICS AND REPORTS =====

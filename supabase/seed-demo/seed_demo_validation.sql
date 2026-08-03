@@ -56,17 +56,17 @@ SELECT pg_temp.assert_true(
   (SELECT count(*) = 0
    FROM frequencia f
    LEFT JOIN matriculas m ON m.id = f.matricula_id
-   LEFT JOIN aulas_abertas a ON a.id = f.aula_id
-   WHERE m.id IS NULL OR a.id IS NULL),
-  'toda frequencia tem matricula e aula'
+   LEFT JOIN sessoes_aula s ON s.id = f.sessao_id
+   WHERE m.id IS NULL OR s.id IS NULL),
+  'toda frequencia tem matricula e sessao'
 );
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0
    FROM frequencia f
    JOIN matriculas m ON m.id = f.matricula_id
-   JOIN aulas_abertas a ON a.id = f.aula_id
-   WHERE a.turma_id <> m.turma_id OR a.data_aula <> f.data_aula),
-  'frequencia aponta para aula da mesma turma na mesma data'
+   JOIN sessoes_aula s ON s.id = f.sessao_id
+   WHERE s.turma_id <> m.turma_id OR s.data_aula <> f.data_aula),
+  'frequencia aponta para sessao da mesma turma na mesma data'
 );
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0 FROM aluno_responsaveis ar
