@@ -412,16 +412,27 @@ export default function AlunosPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/alunos/${aluno.id}`}>
+                          <Link
+                            href={`/dashboard/alunos/${aluno.id}`}
+                            aria-label={`Ver ${aluno.nome_completo}`}
+                          >
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/alunos/${aluno.id}/editar`}>
+                          <Link
+                            href={`/dashboard/alunos/${aluno.id}/editar`}
+                            aria-label={`Editar ${aluno.nome_completo}`}
+                          >
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          aria-label={`Desativar ${aluno.nome_completo}`}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
