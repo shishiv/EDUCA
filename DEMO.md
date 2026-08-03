@@ -30,6 +30,18 @@ Acceptance criteria from issue #23:
 | `.github/workflows/demo-reset.yml` | Narrow weekly reset: `pnpm seed:demo` + `pnpm demo:validate` against the demo project. |
 | `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Demo-sandbox mode guards: blocks admin data-management APIs, hides destructive UI actions, shows the demo banner. |
 
+## Failure receipts
+
+The three failed scheduled runs separate configuration, seed, and validation evidence:
+
+| Run | Receipt | Classification and correction |
+| --- | --- | --- |
+| `29185065623` (#1) | The old `Demo Reset` workflow passed only `SUPABASE_DEMO_URL` and `SUPABASE_DEMO_SERVICE_KEY`. The run log is no longer retained. | Workflow configuration gap: it did not provide the direct database connection required by the canonical seed. The current workflow passes all three `SUPABASE_DEMO_*` secrets. |
+| `29678982042` (#2) | `Cannot find module '@supabase/supabase-js'` from `supabase/seed-demo/seed-demo.ts`. | Seed failure before database access: the script resolved packages from outside `app/`. The seed now anchors runtime package resolution at `app/package.json`. |
+| `30739795664` (#3) | The three demo environment variables were empty in the runner, and the seed stopped with its required-variable error. | Environment failure before database access: the workflow now checks secret presence without printing values. |
+
+No run reached `demo:validate`: the seed step failed first. Local Supabase and disposable PostgreSQL checks now cover the validation phase.
+
 ## Demo persona
 
 The demo user is a secretariat-level **admin** with `escola_id = NULL` in the `users` table.
@@ -140,8 +152,8 @@ pnpm --dir app demo:reset-check
    (framework Next.js; `app/vercel.json` already sets the build). Add the
    environment variables from `app/.env.demo.example`, including
    `NEXT_PUBLIC_DEMO_SANDBOX=true` and the pilot flags.
-5. **First seed** - run the workflow manually (Actions > Demo Sandbox Weekly
-   Reset > Run workflow), or run `pnpm seed:demo` locally with the demo env.
+5. **First scheduled seed** - after merge, wait for the next Sunday schedule.
+   Do not use `workflow_dispatch` or run a reset against the shared demo locally.
 6. **DNS** - point `demo.educa.app.br` at the Vercel project (external).
 
 ## Demo mode guards (explicit code, not prose)

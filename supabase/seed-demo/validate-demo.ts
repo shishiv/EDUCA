@@ -94,8 +94,14 @@ async function run(): Promise<void> {
   }
 
   const client = new Client({ connectionString: DB_URL })
-  await client.connect()
+  try {
+    await client.connect()
+  } catch {
+    console.error('DEMO_VALIDATE_FAILED: phase=database_connect')
+    process.exit(1)
+  }
 
+  let phase = 'database_checks'
   try {
     // ---------------------------------------------------------------------
     // 0. Marcador e ancora
@@ -111,7 +117,7 @@ async function run(): Promise<void> {
     record(
       'marker_synthetic',
       markerValue === EXPECTED_SYNTHETIC_MARKER,
-      `configs.demo_synthetic_marker = ${markerValue ?? '(ausente)'}`
+      markerValue === EXPECTED_SYNTHETIC_MARKER ? 'marcador synthetic esperado presente' : 'marcador synthetic ausente ou divergente'
     )
     record('marker_anchor', typeof anchorDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(anchorDate), `demo_seed_anchor_date = ${anchorDate ?? '(ausente)'}`)
     if (!anchorDate) {
@@ -228,15 +234,13 @@ async function run(): Promise<void> {
     // 4. Caso de alerta Bolsa Familia (< 80%)
     // ---------------------------------------------------------------------
     const alertCase = await client.query(`
-      SELECT m.id AS matricula_id, a.nome_completo, a.bolsa_familia,
-             count(*) FILTER (WHERE f.presente) AS presencas,
-             count(*) AS total,
+      SELECT m.id AS matricula_id,
              round(100.0 * count(*) FILTER (WHERE f.presente) / count(*), 2) AS percentual
       FROM matriculas m
       JOIN alunos a ON a.id = m.aluno_id
       JOIN frequencia f ON f.matricula_id = m.id
       WHERE a.bolsa_familia = true
-      GROUP BY m.id, a.nome_completo, a.bolsa_familia
+      GROUP BY m.id
       HAVING 100.0 * count(*) FILTER (WHERE f.presente) / count(*) < $1
       ORDER BY percentual
       LIMIT 5
@@ -245,11 +249,11 @@ async function run(): Promise<void> {
       'alerta_bolsa_familia',
       alertCase.rows.length >= 1,
       alertCase.rows.length >= 1
-        ? `aluno(s) com frequencia < 80%: ${alertCase.rows.map(r => `${r.nome_completo} (${r.percentual}%)`).join(', ')}`
-        : 'nenhum aluno com bolsa_familia abaixo de 80%'
+        ? `${alertCase.rows.length} caso(s) synthetic de frequencia abaixo de ${ALERT_THRESHOLD}%`
+        : `nenhum caso synthetic abaixo de ${ALERT_THRESHOLD}%`
     )
     const alertIsDesignated = alertCase.rows.some(r => r.matricula_id === LOW_ATTENDANCE_MATRICULA_ID)
-    record('alerta_caso_designado', alertIsDesignated, `matricula ${LOW_ATTENDANCE_MATRICULA_ID} presente na lista de alerta`)
+    record('alerta_caso_designado', alertIsDesignated, alertIsDesignated ? 'caso de alerta designado presente' : 'caso de alerta designado ausente')
 
     // ---------------------------------------------------------------------
     // 5. Determinismo: presenca por aluno == gerador para a ancora registrada
@@ -273,13 +277,15 @@ async function run(): Promise<void> {
     record('determinismo_presenca_por_aluno', attendanceMismatches === 0, `${attendanceMismatches} matriculas com presenca divergente do gerador`)
 
     // Fingerprints (order-independent md5 over the business columns). Two
-    // resets with the same anchor produce identical fingerprints.
+    // resets with the same anchor produce identical fingerprints. Auth creates
+    // a new external id for the demo user, so that non-business id is excluded.
     const fingerprintTables = ['escolas', 'users', 'turmas', 'matriculas', 'aulas_abertas', 'frequencia']
     const fingerprints: Record<string, string> = {}
     for (const table of fingerprintTables) {
+      const fingerprintValue = table === 'users' ? "(to_jsonb(t) - 'id')::text" : 't::text'
       const fp = await client.query(
         `SELECT md5(string_agg(t.line, '|' ORDER BY t.line)) AS fp FROM (
-           SELECT md5(t::text) AS line FROM ${table} t
+           SELECT md5(${fingerprintValue}) AS line FROM ${table} t
          ) t`
       )
       fingerprints[table] = (fp.rows[0]?.fp as string) ?? '(vazio)'
@@ -288,14 +294,15 @@ async function run(): Promise<void> {
     // ---------------------------------------------------------------------
     // 6. Usuario de auth (opcional - requer API URL + key)
     // ---------------------------------------------------------------------
+    phase = 'auth_check'
     let authOk: boolean | null = null
-    let authDetail = 'pulado (SUPABASE_DEMO_URL/SUPABASE_DEMO_SERVICE_KEY ausentes)'
+    let authDetail = 'pulado: credenciais de Auth nao configuradas'
     if (API_URL && API_KEY) {
       const supabase = createClient(API_URL, API_KEY, { auth: { autoRefreshToken: false, persistSession: false } })
       const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
       const demo = (data?.users ?? []).find(u => u.email?.toLowerCase() === 'demo@educa.app.br')
       authOk = !error && !!demo
-      authDetail = authOk ? 'usuario demo@educa.app.br presente no auth' : `usuario demo ausente (${error?.message ?? 'nao encontrado'})`
+      authDetail = authOk ? 'usuario demo de Auth presente' : 'usuario demo ausente ou Auth indisponivel'
     }
     if (authOk !== null) record('auth_demo_user', authOk, authDetail)
 
@@ -324,9 +331,8 @@ async function run(): Promise<void> {
       process.exit(1)
     }
     console.log('VALIDACAO OK - dataset determinístico e synthetic-only conforme o contrato.')
-  } catch (err) {
-    console.error('ERRO na validacao:')
-    console.error(err)
+  } catch {
+    console.error(`DEMO_VALIDATE_FAILED: phase=${phase}`)
     process.exit(1)
   } finally {
     await client.end().catch(() => undefined)
