@@ -15,9 +15,10 @@
  * All data is auditable and immutable after locking
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { BookOpen, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
 import { ClassDiaryFilter, ClassDiaryList, ClassDiaryDetail } from '@/components/diary'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -28,86 +29,60 @@ import { logger } from '@/lib/logger'
 
 export default function DiarioPage() {
   const router = useRouter()
+  const { userProfile, loading: authLoading } = useAuth()
 
   // State
   const [entries, setEntries] = useState<ClassDiaryEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentFilters, setCurrentFilters] = useState<ClassDiaryFilters>({})
+  const [currentFilters, setCurrentFilters] = useState<ClassDiaryFilters | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
-
-  // User info for filtering
-  const [userInfo, setUserInfo] = useState<{
-    id: string
-    tipo_usuario: string
-    escola_id: string | null
-  } | null>(null)
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
 
-  // Fetch user info on mount
-  useEffect(() => {
-    async function fetchUserInfo() {
-      const supabase = createClient
-
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser()
-
-      if (authError || !user) {
-        logger.error('Auth error:', authError || 'No user')
-        router.push('/login')
-        return
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('id, tipo_usuario, escola_id')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError || !profile) {
-        logger.error('Profile error:', profileError || 'No profile')
-        setError('Erro ao carregar informações do usuário.')
-        return
-      }
-
-      setUserInfo(profile)
-
-      // Set initial filters based on user type
-      const initialFilters: ClassDiaryFilters = {}
-
-      if (profile.tipo_usuario === 'professor') {
-        initialFilters.professor_id = profile.id
-      } else if (
-        profile.tipo_usuario === 'diretor' ||
-        profile.tipo_usuario === 'secretario'
-      ) {
-        if (profile.escola_id) {
-          initialFilters.escola_id = profile.escola_id
-        }
-      }
-
-      setCurrentFilters(initialFilters)
+  const userInfo = useMemo(() => {
+    if (!userProfile) return null
+    return {
+      id: userProfile.id,
+      tipo_usuario: userProfile.tipo_usuario,
+      escola_id: userProfile.escola_id,
     }
+  }, [userProfile])
 
-    fetchUserInfo()
-  }, [router])
+  const defaultFilters = useMemo<ClassDiaryFilters>(() => {
+    if (!userInfo) return {}
+    if (userInfo.tipo_usuario === 'professor') {
+      return { professor_id: userInfo.id }
+    }
+    if (
+      (userInfo.tipo_usuario === 'diretor' || userInfo.tipo_usuario === 'secretario') &&
+      userInfo.escola_id
+    ) {
+      return { escola_id: userInfo.escola_id }
+    }
+    return {}
+  }, [userInfo])
+
+  const activeFilters = currentFilters ?? defaultFilters
+
+  // Route protection and server actions remain the authorization boundary.
+  useEffect(() => {
+    if (!authLoading && !userProfile) router.push('/login')
+  }, [authLoading, router, userProfile])
 
   // Fetch diary entries when filters change
   useEffect(() => {
-    if (!userInfo) return
+    if (authLoading || !userInfo) return
 
     async function fetchEntries() {
       setLoading(true)
       setError(null)
 
       const { data, error: fetchError } = await getClassDiary(createClient, {
-        ...currentFilters,
+        ...activeFilters,
         limit: itemsPerPage,
         offset: (currentPage - 1) * itemsPerPage,
       })
@@ -124,7 +99,7 @@ export default function DiarioPage() {
     }
 
     fetchEntries()
-  }, [currentFilters, currentPage, userInfo])
+  }, [activeFilters, authLoading, currentPage, userInfo])
 
   // Handle filter change
   const handleFilterChange = (filters: ClassDiaryFilters) => {
@@ -182,7 +157,7 @@ export default function DiarioPage() {
       {userInfo && (
         <ClassDiaryFilter
           onFilterChange={handleFilterChange}
-          initialFilters={currentFilters}
+          initialFilters={activeFilters}
           profesor_id={
             userInfo.tipo_usuario === 'professor' ? userInfo.id : undefined
           }
