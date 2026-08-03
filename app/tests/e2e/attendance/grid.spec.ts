@@ -118,6 +118,9 @@ test.describe('Attendance grid', () => {
     await expect(saveButton).toBeEnabled()
     await saveButton.click()
     await expect(page.getByText('Chamada salva com sucesso!')).toBeVisible({ timeout: 10000 })
+    // The save callback clears draftSessionId and starts a background attendance
+    // read; let that refresh settle before listening for the navigation read.
+    await page.waitForTimeout(500)
     await expect.poll(async () => {
       const savedAttendanceRead = page.waitForResponse(response =>
         response.request().method() === 'GET' &&
