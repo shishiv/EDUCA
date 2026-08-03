@@ -543,11 +543,9 @@ test.describe('Alunos - Successful Creation', () => {
     await page.getByLabel(/nome.*completo/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/data.*nascimento/i).fill('2015-05-10')
     
-    const sexoSelect = page.locator('select, [role="combobox"]').first()
-    if (await sexoSelect.isVisible()) {
-      await sexoSelect.click()
-      await page.getByRole('option').first().click()
-    }
+    const sexoSelect = page.locator('#sexo')
+    await sexoSelect.click()
+    await page.getByRole('option', { name: /masculino/i }).click()
     
     await page.getByLabel(/nome.*mãe/i).fill('Test Mãe')
     await page.getByLabel(/endereço.*completo/i).fill('Rua Loading, 789, Centro')
