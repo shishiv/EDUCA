@@ -392,7 +392,7 @@ test.describe('Diário - Responsiveness', () => {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     
-    await expect(page.getByRole('heading', { name: /diário/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Diário de Classe', exact: true })).toBeVisible()
     
     // Filters should be visible
     const turmaFilter = page.getByLabel(/turma/i)
@@ -404,7 +404,7 @@ test.describe('Diário - Responsiveness', () => {
     await page.goto('/dashboard/diario')
     await waitForPageLoad(page)
     
-    await expect(page.getByRole('heading', { name: /diário/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Diário de Classe', exact: true })).toBeVisible()
   })
 
   test('should adapt lesson cards for mobile', async ({ page }) => {
