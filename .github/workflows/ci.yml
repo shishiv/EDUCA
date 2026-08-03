@@ -52,6 +52,9 @@ jobs:
     defaults:
       run:
         working-directory: app
+    env:
+      # The pilot E2E runner already uses production mode, which avoids the Next.js dev overlay.
+      PLAYWRIGHT_SERVER_COMMAND: pnpm build && pnpm start
 
     steps:
       - name: Checkout
