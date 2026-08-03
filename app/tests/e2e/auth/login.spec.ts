@@ -78,8 +78,10 @@ test.describe('Authentication Flows', () => {
   test('reset-password form sends instructions and shows confirmation', async ({ page }) => {
     await page.goto('/reset-password')
     await expect(page.getByRole('heading', { name: /redefinir senha/i })).toBeVisible()
+    const hydratedForm = page.locator('form[data-hydrated="true"]')
     const emailInput = page.locator('#reset-email')
     const submitButton = page.getByRole('button', { name: /enviar link/i })
+    await expect(hydratedForm).toBeVisible()
     await expect(emailInput).toBeVisible()
     await expect(submitButton).toBeEnabled()
     await emailInput.fill('admin@test.com')

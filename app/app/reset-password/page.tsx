@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Loader2, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -14,11 +14,10 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
-  const [hydrated, setHydrated] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setHydrated(true))
-    return () => cancelAnimationFrame(frame)
+    formRef.current?.setAttribute('data-hydrated', 'true')
   }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -70,7 +69,7 @@ export default function ResetPasswordPage() {
             <Link href="/login">Voltar ao login</Link>
           </Button>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form ref={formRef} onSubmit={handleSubmit} className="mt-8 space-y-5">
             {error && (
               <Alert variant="destructive" role="alert">
                 <AlertDescription>{error}</AlertDescription>
@@ -89,7 +88,7 @@ export default function ResetPasswordPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading || !hydrated}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
