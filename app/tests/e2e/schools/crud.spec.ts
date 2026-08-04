@@ -1,9 +1,7 @@
 import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
-  expectFormSuccess,
-  expectFormError,
-  getTableRowCount
+  expectFormSuccess
 } from '../utils/test-helpers'
 
 /**
@@ -193,7 +191,7 @@ test.describe('Escolas - Create Form', () => {
       await emailField.fill(`escola${timestamp}@teste.com`)
     }
     
-    const tipoSelect = page.locator('select, [role="combobox"]').first()
+    const tipoSelect = page.getByRole('combobox', { name: 'Tipo de Ensino *' })
     if (await tipoSelect.isVisible()) {
       await tipoSelect.click()
       await page.getByRole('option').first().click()
