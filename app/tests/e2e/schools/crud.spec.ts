@@ -214,8 +214,9 @@ test.describe('Escolas - Create Form', () => {
     
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/inep|código/i).fill(timestamp.toString().slice(-8))
-    await page.locator('#tipo').click()
-    await page.getByRole('option').first().click()
+    const tipoSelect = page.getByRole('combobox', { name: 'Tipo de Ensino *' })
+    await tipoSelect.click()
+    await page.getByRole('option', { name: /creche/i }).click()
     
     const saveButton = page.locator('button[type="submit"]')
     const insertionResponse = page.waitForResponse(response =>
