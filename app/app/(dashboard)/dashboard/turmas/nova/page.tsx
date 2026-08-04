@@ -434,6 +434,7 @@ export default function NovaTurmaPage() {
             <CardContent className="space-y-3">
               <p className="text-2xl font-bold text-blue-600">{formData.capacidade} alunos</p>
               <p className="text-sm text-gray-600">Capacidade máxima da turma</p>
+              <p className="text-sm font-medium text-gray-700">Recomendações</p>
               <ul className="text-xs text-gray-500 space-y-1">
                 <li>• Berçário/Maternal: 15–20 alunos</li>
                 <li>• Pré-escola: 20–25 alunos</li>
