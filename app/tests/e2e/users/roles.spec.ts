@@ -98,7 +98,7 @@ test.describe('Roles - Assigning on User Creation', () => {
     const timestamp = Date.now()
     
     await page.getByLabel(/nome/i).fill(`Admin Test ${timestamp}`)
-    await page.getByLabel(/email/i).fill(`admin${timestamp}@teste.com`)
+    await page.getByLabel(/email/i).fill(`admin${timestamp}@synthetic.invalid`)
     
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
       hasText: /tipo|papel|função/i 
@@ -134,7 +134,7 @@ test.describe('Roles - Assigning on User Creation', () => {
     const timestamp = Date.now()
     
     await page.getByLabel(/nome/i).fill(`Professor Test ${timestamp}`)
-    await page.getByLabel(/email/i).fill(`prof${timestamp}@teste.com`)
+    await page.getByLabel(/email/i).fill(`prof${timestamp}@synthetic.invalid`)
     
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
       hasText: /tipo|papel|função/i 
@@ -146,6 +146,9 @@ test.describe('Roles - Assigning on User Creation', () => {
       const profOption = page.getByRole('option', { name: /professor/i })
       if (await profOption.isVisible()) {
         await profOption.click()
+        const escolaSelect = page.locator('#escola')
+        await escolaSelect.click()
+        await page.getByRole('option').first().click()
         
         const senhaField = page.getByLabel(/^senha$/i).first()
         if (await senhaField.isVisible()) {
@@ -169,7 +172,7 @@ test.describe('Roles - Assigning on User Creation', () => {
     const timestamp = Date.now()
     
     await page.getByLabel(/nome/i).fill(`Diretor Test ${timestamp}`)
-    await page.getByLabel(/email/i).fill(`dir${timestamp}@teste.com`)
+    await page.getByLabel(/email/i).fill(`dir${timestamp}@synthetic.invalid`)
     
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
       hasText: /tipo|papel|função/i 
@@ -181,6 +184,9 @@ test.describe('Roles - Assigning on User Creation', () => {
       const dirOption = page.getByRole('option', { name: /diretor/i })
       if (await dirOption.isVisible()) {
         await dirOption.click()
+        const escolaSelect = page.locator('#escola')
+        await escolaSelect.click()
+        await page.getByRole('option').first().click()
         
         const senhaField = page.getByLabel(/^senha$/i).first()
         if (await senhaField.isVisible()) {
