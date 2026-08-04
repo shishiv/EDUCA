@@ -67,6 +67,11 @@ export default function NovoResponsavelPage() {
     return true
   }
 
+  const validatePhone = (phone: string): boolean => {
+    const cleaned = phone.replace(/\D/g, '')
+    return cleaned.length === 10 || cleaned.length === 11
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -90,6 +95,12 @@ export default function NovoResponsavelPage() {
       const cleanedCPF = formData.cpf.replace(/\D/g, '')
       if (!validateCPF(cleanedCPF)) {
         toast.error('CPF inválido. Verifique os dados inseridos.')
+        setLoading(false)
+        return
+      }
+
+      if (formData.telefone && !validatePhone(formData.telefone)) {
+        toast.error('Telefone inválido. Informe um telefone com 10 ou 11 dígitos.')
         setLoading(false)
         return
       }

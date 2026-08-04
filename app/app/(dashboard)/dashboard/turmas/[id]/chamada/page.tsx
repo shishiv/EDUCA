@@ -121,7 +121,7 @@ export default function ChamadaPage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { userProfile } = useAuth()
+  const { userProfile, loading: authLoading } = useAuth()
   const turmaId = params?.id as string
   const requestedSessionId = searchParams.get('sessao')
 
@@ -282,6 +282,8 @@ export default function ChamadaPage() {
   }, [draftSessionId])
 
   useEffect(() => {
+    if (authLoading || !userProfile?.id) return
+
     let active = true
     setLoading(true)
     setError(null)
@@ -301,10 +303,10 @@ export default function ChamadaPage() {
     return () => {
       active = false
     }
-  }, [loadStudents, loadTurma, turmaId])
+  }, [authLoading, loadStudents, loadTurma, turmaId, userProfile?.id])
 
   useEffect(() => {
-    if (!requestedSessionId) return
+    if (!requestedSessionId || authLoading || !userProfile?.id) return
 
     let active = true
     void supabase
@@ -321,15 +323,17 @@ export default function ChamadaPage() {
     return () => {
       active = false
     }
-  }, [dateString, requestedSessionId, turmaId])
+  }, [authLoading, dateString, requestedSessionId, turmaId, userProfile?.id])
 
   useEffect(() => {
+    if (authLoading || !userProfile?.id) return
     void loadSessions()
-  }, [loadSessions])
+  }, [authLoading, loadSessions, userProfile?.id])
 
   useEffect(() => {
+    if (authLoading || !userProfile?.id) return
     void loadAttendance(selectedSessionId)
-  }, [loadAttendance, selectedSessionId])
+  }, [authLoading, loadAttendance, selectedSessionId, userProfile?.id])
 
   const initializeAllPresent = useCallback(() => {
     const initial = new Map<string, AttendanceRecord>()
