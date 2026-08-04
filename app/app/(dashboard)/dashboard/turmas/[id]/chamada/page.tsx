@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, startOfDay } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { ArrowLeft, CalendarClock, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -390,10 +389,15 @@ export default function ChamadaPage() {
         fechada_em: result.session.fechada_em,
         created_at: result.session.created_at,
       }
+      // Mark the draft before selecting the session so the initial attendance
+      // read cannot clear the all-present UI state while the action settles.
+      setDraftSessionId(openedSession.id)
       setSessions(previous => [...previous, openedSession])
       setSelectedSessionId(openedSession.id)
-      setDraftSessionId(openedSession.id)
       initializeAllPresent()
+      // The page can still have an initial no-session read in flight. Re-read
+      // after the server action so that stale fixture state cannot win.
+      await loadSessions()
       window.history.replaceState(null, '', `/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
       toast.success('Chamada aberta. Marque a presença e salve os registros.')
     } catch (openError) {
@@ -402,7 +406,7 @@ export default function ChamadaPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [canOpenSession, dateString, initializeAllPresent, turmaId])
+  }, [canOpenSession, dateString, initializeAllPresent, loadSessions, turmaId])
 
   const handleSave = useCallback(async () => {
     if (!selectedSession || !canEditSelectedSession) return

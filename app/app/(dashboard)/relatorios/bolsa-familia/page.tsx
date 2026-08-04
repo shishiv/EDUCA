@@ -12,13 +12,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   AlertTriangle,
   Download,
   FileSpreadsheet,
   Filter,
-  Building2,
   Users,
   CheckCircle,
   AlertCircle,
@@ -43,8 +41,6 @@ import { logger } from '@/lib/logger';
 import { BolsaFamiliaAlert } from '@/components/reports/BolsaFamiliaAlert';
 import {
   getBolsaFamiliaStudents,
-  getBolsaFamiliaSummary,
-  type BolsaFamiliaStudent,
   type BolsaFamiliaReport,
   BOLSA_FAMILIA_THRESHOLD,
   BOLSA_FAMILIA_WARNING_THRESHOLD,
@@ -106,34 +102,11 @@ function getPeriodDates(period: PeriodOption, customStart?: Date, customEnd?: Da
   }
 }
 
-function getPeriodLabel(period: PeriodOption): string {
-  switch (period) {
-    case 'current_month':
-      return 'Mes Atual';
-    case 'last_month':
-      return 'Mes Anterior';
-    case 'bimester_1':
-      return '1o Bimestre';
-    case 'bimester_2':
-      return '2o Bimestre';
-    case 'bimester_3':
-      return '3o Bimestre';
-    case 'bimester_4':
-      return '4o Bimestre';
-    case 'custom':
-      return 'Personalizado';
-    default:
-      return 'Periodo';
-  }
-}
-
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export default function BolsaFamiliaReportPage() {
-  const router = useRouter();
-
   // Filters state
   const [selectedSchool, setSelectedSchool] = useState<string>('all');
   const [selectedTurma, setSelectedTurma] = useState<string>('all');
@@ -146,7 +119,6 @@ export default function BolsaFamiliaReportPage() {
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [report, setReport] = useState<BolsaFamiliaReport | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingSchools, setLoadingSchools] = useState(true);
 
   // Fetch schools on mount
   useEffect(() => {
@@ -160,8 +132,6 @@ export default function BolsaFamiliaReportPage() {
           action: 'load_bolsa_familia_schools'
         });
         toast.error('Erro ao carregar escolas');
-      } finally {
-        setLoadingSchools(false);
       }
     }
 
@@ -337,9 +307,9 @@ export default function BolsaFamiliaReportPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* School Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-medium text-gray-700">Escola</label>
+              <label htmlFor="bolsa-familia-escola" className="text-xs sm:text-sm font-medium text-gray-700">Escola</label>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-                <SelectTrigger className="min-h-[44px]">
+                <SelectTrigger id="bolsa-familia-escola" className="min-h-[44px]">
                   <SelectValue placeholder="Todas as escolas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -355,13 +325,13 @@ export default function BolsaFamiliaReportPage() {
 
             {/* Turma Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-medium text-gray-700">Turma</label>
+              <label htmlFor="bolsa-familia-turma" className="text-xs sm:text-sm font-medium text-gray-700">Turma</label>
               <Select
                 value={selectedTurma}
                 onValueChange={setSelectedTurma}
                 disabled={selectedSchool === 'all'}
               >
-                <SelectTrigger className="min-h-[44px]">
+                <SelectTrigger id="bolsa-familia-turma" className="min-h-[44px]">
                   <SelectValue placeholder="Todas as turmas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -377,9 +347,9 @@ export default function BolsaFamiliaReportPage() {
 
             {/* Period Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-medium text-gray-700">Periodo</label>
+              <label htmlFor="bolsa-familia-periodo" className="text-xs sm:text-sm font-medium text-gray-700">Periodo</label>
               <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as PeriodOption)}>
-                <SelectTrigger className="min-h-[44px]">
+                <SelectTrigger id="bolsa-familia-periodo" className="min-h-[44px]">
                   <SelectValue placeholder="Selecione o periodo" />
                 </SelectTrigger>
                 <SelectContent>

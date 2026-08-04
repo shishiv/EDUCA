@@ -239,19 +239,47 @@ jobs:
       - name: Run full E2E suite
         run: pnpm exec playwright test --project=setup --project=chromium-unauth --project=chromium --max-failures=1
 
-      - name: Capture local attendance diagnostics on E2E failure
+      - name: Capture local E2E diagnostics on failure
         if: ${{ failure() }}
         shell: bash
         run: |
           set -euo pipefail
-          diagnostics_file="test-results/e2e-attendance-diagnostics.json"
-          if ! curl -fsS -o "$diagnostics_file" \
-            "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/frequencia?select=sessao_id,matricula_id,status_presenca,presente,data_aula&order=created_at.desc&limit=50" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"; then
-            printf '{"error":"attendance diagnostics query failed"}\n' > "$diagnostics_file"
-          fi
-          node -e 'const fs = require("node:fs"); const rows = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); console.log(JSON.stringify({ count: Array.isArray(rows) ? rows.length : 0, rows }, null, 2))' "$diagnostics_file"
+          mkdir -p test-results
+
+          capture_json() {
+            local output_file="$1"
+            local endpoint="$2"
+            if ! curl -fsS -o "$output_file" \
+              "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/$endpoint" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"; then
+              printf '{"error":"diagnostics query failed"}\n' > "$output_file"
+            fi
+          }
+
+          capture_json test-results/e2e-attendance-diagnostics.json \
+            'frequencia?select=sessao_id,matricula_id,status_presenca,presente,data_aula&order=created_at.desc&limit=50'
+          capture_json test-results/e2e-session-diagnostics.json \
+            'sessoes_aula?select=id,turma_id,data_aula,status,professor_id,escola_id,created_at&order=created_at.desc&limit=50'
+          capture_json test-results/e2e-class-diagnostics.json \
+            'turmas?select=id,nome,escola_id,professor_id,ativo&nome=like.*E2E*&order=created_at.desc&limit=50'
+          capture_json test-results/e2e-enrollment-diagnostics.json \
+            'matriculas?select=id,turma_id,aluno_id,situacao&order=created_at.desc&limit=100'
+
+          node <<'NODE'
+          const fs = require('node:fs')
+          const paths = [
+            'test-results/e2e-attendance-diagnostics.json',
+            'test-results/e2e-session-diagnostics.json',
+            'test-results/e2e-class-diagnostics.json',
+            'test-results/e2e-enrollment-diagnostics.json',
+          ]
+          const diagnostics = Object.fromEntries(paths.map(path => {
+            const rows = JSON.parse(fs.readFileSync(path, 'utf8'))
+            return [path, { count: Array.isArray(rows) ? rows.length : 0, error: rows?.error ?? null }]
+          }))
+          console.log(JSON.stringify(diagnostics, null, 2))
+          NODE
 
       # Do not upload playwright/.auth or trace archives: they can contain session material.
       - name: Upload E2E diagnostics
@@ -264,7 +292,7 @@ jobs:
             app/playwright-report/**
             !app/playwright-report/**/*.zip
             app/test-results/**/*.png
-            app/test-results/e2e-attendance-diagnostics.json
+            app/test-results/e2e-*-diagnostics.json
             !app/test-results/**/*.zip
 
       - name: Stop local Supabase and delete volumes
