@@ -230,25 +230,14 @@ test.describe('Usuários - Create Form', () => {
     await page.getByLabel(/nome/i).fill(`User With Escola ${timestamp}`)
     await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('escola'))
     
-    // Select papel
-    const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
-    }).first()
-    
-    if (await papelSelect.isVisible()) {
-      await papelSelect.click()
-      await page.getByRole('option').first().click()
-    }
-    
-    // Select escola
-    const escolaSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /escola/i 
-    }).first()
-    
-    if (await escolaSelect.isVisible()) {
-      await escolaSelect.click()
-      await page.getByRole('option').first().click()
-    }
+    // Select papel and escola through the form controls, not the global school selector.
+    const papelSelect = page.locator('#tipo_usuario')
+    await papelSelect.click()
+    await page.getByRole('option', { name: /professor/i }).click()
+
+    const escolaSelect = page.locator('#escola')
+    await escolaSelect.click()
+    await page.getByRole('option').first().click()
     
     // Password
     const senhaField = page.getByLabel(/^senha$/i).first()
