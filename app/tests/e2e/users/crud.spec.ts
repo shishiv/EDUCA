@@ -258,21 +258,34 @@ test.describe('Usuários - Create Form', () => {
 
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
-    await page.route('**/rest/v1/users*', async route => {
-      await new Promise(resolve => setTimeout(resolve, 750))
+    let releaseInvitation = () => {}
+    const invitationPaused = new Promise<void>(resolve => { releaseInvitation = resolve })
+    await page.route(/\/api\/pilot\/invitations(?:\?|$)/, async route => {
+      await invitationPaused
       await route.continue()
     })
-    
+
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('loading'))
     await page.locator('#tipo_usuario').click()
-    await page.getByRole('option', { name: /administrador/i }).click()
-    
+    await page.getByRole('option', { name: /secretário/i }).click()
+
     const saveButton = page.locator('button[type="submit"]')
+    const invitationResponse = page.waitForResponse(response =>
+      response.request().method() === 'POST' && response.url().includes('/api/pilot/invitations')
+    )
     const submission = saveButton.click()
-    await expect(saveButton).toBeDisabled()
-    await expect(saveButton).toContainText(/salvando/i)
-    await submission
+    try {
+      await expect(saveButton).toBeDisabled()
+      await expect(saveButton).toContainText(/salvando/i)
+      releaseInvitation()
+      const response = await invitationResponse
+      expect(response.ok()).toBe(true)
+      await submission
+    } finally {
+      releaseInvitation()
+      await invitationResponse.catch(() => undefined)
+    }
   })
 
   test('should not allow duplicate email', async ({ page }) => {
