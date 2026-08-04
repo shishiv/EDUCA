@@ -3,7 +3,6 @@ import {
   waitForPageLoad, 
   generateValidCPF,
   generateTestEmail,
-  formatBrazilianPhone,
   expectFormSuccess,
   expectFormError
 } from '../utils/test-helpers'
@@ -44,13 +43,13 @@ test.describe('Responsáveis - List View', () => {
   })
 
   test('should have search functionality', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome, CPF, telefone ou email...')
     await expect(searchInput).toBeVisible()
     await expect(searchInput).toBeEditable()
   })
 
   test('should filter responsaveis by search term', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome, CPF, telefone ou email...')
     
     await searchInput.fill('Silva')
     await page.waitForTimeout(500)
@@ -94,10 +93,6 @@ test.describe('Responsáveis - List View', () => {
 
   test('should display contact information', async ({ page }) => {
     // Phone and email should be visible in the table
-    const phoneIcon = page.locator('[class*="lucide"]').filter({ hasText: '' }).first()
-    const emailIcon = page.locator('[class*="lucide"]').filter({ hasText: '' }).first()
-    
-    // At least some contact info should be present
     const table = page.getByRole('table')
     await expect(table).toBeVisible()
   })
