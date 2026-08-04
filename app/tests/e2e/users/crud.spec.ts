@@ -2,8 +2,7 @@ import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
   generateTestEmail,
-  expectFormSuccess,
-  expectFormError
+  expectFormSuccess
 } from '../utils/test-helpers'
 
 /**
@@ -37,13 +36,13 @@ test.describe('Usuários - List View', () => {
   })
 
   test('should have search functionality', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome ou email...')
     await expect(searchInput).toBeVisible()
     await expect(searchInput).toBeEditable()
   })
 
   test('should filter users by search term', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome ou email...')
     
     await searchInput.fill('admin')
     await page.waitForTimeout(500)
