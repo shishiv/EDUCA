@@ -1,3 +1,4 @@
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import { test, expect } from '../support/diagnostics'
 
 test.use({ storageState: 'playwright/.auth/professor.json' })
@@ -27,7 +28,7 @@ async function discoverClass(page: import('@playwright/test').Page) {
 
 async function clearTodaySessions(request: import('@playwright/test').APIRequestContext) {
   if (!classId) return
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getTodaySaoPaulo()
   const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
   const sessionsResponse = await request.get(
     `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id&turma_id=eq.${classId}&data_aula=eq.${today}`,
@@ -71,7 +72,7 @@ test.describe('Canonical attendance session workflow', () => {
     await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 10000 })
 
     const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-    const today = new Date().toISOString().slice(0, 10)
+    const today = getTodaySaoPaulo()
     const response = await request.get(
       `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id,status&turma_id=eq.${classId}&data_aula=eq.${today}`,
       { headers }
@@ -87,7 +88,7 @@ test.describe('Canonical attendance session workflow', () => {
     await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 10000 })
 
     const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-    const today = new Date().toISOString().slice(0, 10)
+    const today = getTodaySaoPaulo()
     const response = await request.get(
       `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id,status&turma_id=eq.${classId}&data_aula=eq.${today}`,
       { headers }

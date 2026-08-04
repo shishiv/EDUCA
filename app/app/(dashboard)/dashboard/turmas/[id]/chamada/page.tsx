@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { canRecordAttendance } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { getSessionLockInfo } from '@/components/attendance/AttendanceGridUtils'
+import { getTodaySaoPauloDate } from '@/lib/date-utils'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
@@ -132,7 +133,7 @@ export default function ChamadaPage() {
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null)
   const [attendance, setAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
   const [originalAttendance, setOriginalAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
-  const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()))
+  const [currentDate, setCurrentDate] = useState(() => startOfDay(getTodaySaoPauloDate()))
   const [loading, setLoading] = useState(true)
   const [loadingSessions, setLoadingSessions] = useState(false)
   const [loadingAttendance, setLoadingAttendance] = useState(false)
@@ -151,7 +152,7 @@ export default function ChamadaPage() {
   )
 
   const dateString = format(currentDate, 'yyyy-MM-dd')
-  const today = startOfDay(new Date())
+  const today = startOfDay(getTodaySaoPauloDate())
   const isFutureDate = isAfter(startOfDay(currentDate), today)
   const canRecord = canRecordAttendance(userProfile?.tipo_usuario ?? null)
   const isViewOnly = !canRecord

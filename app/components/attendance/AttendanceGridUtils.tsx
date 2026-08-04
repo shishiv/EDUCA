@@ -8,6 +8,7 @@
  * - Past date immutability
  */
 
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import type { SessionLockInfo } from './AttendanceGridTypes'
 
 /**
@@ -58,20 +59,6 @@ export function formatTimeUntilLock(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   return `${hours}h ${mins}min`
-}
-
-/**
- * Get the current date in Sao Paulo timezone (YYYY-MM-DD format)
- */
-export function getTodaySaoPaulo(): string {
-  const now = new Date()
-  const saoPauloFormatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-  return saoPauloFormatter.format(now)
 }
 
 /**

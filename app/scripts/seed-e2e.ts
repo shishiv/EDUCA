@@ -6,6 +6,7 @@
  * E2E-specific names and today's E2E attendance sessions.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getTodaySaoPaulo } from '../lib/date-utils'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -246,7 +247,7 @@ export async function seedE2E() {
 
   // Each run starts with no attendance session for today. This makes the grid's
   // default-all-present state and Abrir Aula workflow deterministic.
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getTodaySaoPaulo()
   const { data: todaySessions } = await supabase
     .from('sessoes_aula')
     .select('id')

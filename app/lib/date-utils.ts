@@ -100,6 +100,28 @@ export function getTodayISO(): string {
 }
 
 /**
+ * Get today's date in the São Paulo timezone (YYYY-MM-DD).
+ */
+export function getTodaySaoPaulo(): string {
+  const now = new Date()
+  const saoPauloFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  return saoPauloFormatter.format(now)
+}
+
+/**
+ * Return today's São Paulo calendar date without inheriting the host timezone.
+ */
+export function getTodaySaoPauloDate(): Date {
+  const [year, month, day] = getTodaySaoPaulo().split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+/**
  * Get current São Paulo time (Brazil/East timezone)
  */
 export function getSaoPauloTime(): Date {
