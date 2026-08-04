@@ -404,7 +404,7 @@ export default function ChamadaPage() {
       // The page can still have an initial no-session read in flight. Re-read
       // after the server action so that stale fixture state cannot win.
       await loadSessions()
-      window.history.replaceState(null, '', `/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
+      router.replace(`/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
       toast.success('Chamada aberta. Marque a presença e salve os registros.')
     } catch (openError) {
       logger.error('ATTENDANCE_SESSION_OPEN_UI_FAILED', openError as Error, { metadata: { turmaId } })
@@ -412,7 +412,7 @@ export default function ChamadaPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [canOpenSession, dateString, initializeAllPresent, loadSessions, turmaId])
+  }, [canOpenSession, dateString, initializeAllPresent, loadSessions, router, turmaId])
 
   const handleSave = useCallback(async () => {
     if (!selectedSession || !canEditSelectedSession) return
