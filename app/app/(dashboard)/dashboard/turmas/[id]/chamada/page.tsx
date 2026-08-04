@@ -204,12 +204,18 @@ export default function ChamadaPage() {
     const requestId = ++sessionLoadRequestId.current
     setLoadingSessions(true)
     try {
-      const { data, error: queryError } = await supabase
+      let sessionQuery = supabase
         .from('sessoes_aula')
         .select('id, turma_id, data_aula, status, professor_id, escola_id, aberta_em, fechada_em, created_at')
         .eq('turma_id', turmaId)
-        .eq('data_aula', dateString)
-        .order('created_at', { ascending: true })
+
+      if (requestedSessionId) {
+        sessionQuery = sessionQuery.eq('id', requestedSessionId)
+      } else {
+        sessionQuery = sessionQuery.eq('data_aula', dateString)
+      }
+
+      const { data, error: queryError } = await sessionQuery.order('created_at', { ascending: true })
 
       if (queryError) throw queryError
       // An initial no-session query can finish after a newly opened session.
