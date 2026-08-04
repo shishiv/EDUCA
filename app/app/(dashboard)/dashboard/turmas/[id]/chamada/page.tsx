@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, startOfDay } from 'date-fns'
 import { ArrowLeft, CalendarClock, Lock } from 'lucide-react'
@@ -144,6 +144,7 @@ export default function ChamadaPage() {
     studentName: string
   } | null>(null)
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+  const sessionLoadRequestId = useRef(0)
 
   const selectedSession = useMemo(
     () => sessions.find(session => session.id === selectedSessionId) ?? null,
@@ -200,6 +201,7 @@ export default function ChamadaPage() {
   }, [turmaId])
 
   const loadSessions = useCallback(async () => {
+    const requestId = ++sessionLoadRequestId.current
     setLoadingSessions(true)
     try {
       const { data, error: queryError } = await supabase
@@ -210,6 +212,9 @@ export default function ChamadaPage() {
         .order('created_at', { ascending: true })
 
       if (queryError) throw queryError
+      // An initial no-session query can finish after a newly opened session.
+      // Only the latest request may replace the current session selection.
+      if (requestId !== sessionLoadRequestId.current) return
 
       const loadedSessions = data ?? []
       setSessions(loadedSessions)
@@ -219,6 +224,7 @@ export default function ChamadaPage() {
       const nextSession = requested ?? openSession ?? loadedSessions[loadedSessions.length - 1] ?? null
       setSelectedSessionId(nextSession?.id ?? null)
     } catch (loadError) {
+      if (requestId !== sessionLoadRequestId.current) return
       logger.error('ATTENDANCE_SESSION_READ_FAILED', loadError as Error, {
         metadata: { turmaId, date: dateString },
       })
@@ -226,7 +232,7 @@ export default function ChamadaPage() {
       setSessions([])
       setSelectedSessionId(null)
     } finally {
-      setLoadingSessions(false)
+      if (requestId === sessionLoadRequestId.current) setLoadingSessions(false)
     }
   }, [dateString, requestedSessionId, turmaId])
 
