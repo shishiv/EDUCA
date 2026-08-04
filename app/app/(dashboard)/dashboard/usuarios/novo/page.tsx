@@ -192,7 +192,7 @@ export default function NovoUsuarioPage() {
                       Cancelar
                     </Link>
                   </Button>
-                  <Button type="submit" disabled={loading} aria-label="Cadastrar usuário">
+                  <Button type="submit" disabled={loading} aria-label="Criar usuário">
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
