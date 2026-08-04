@@ -1,9 +1,12 @@
 import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
-  generateTestEmail,
   expectFormSuccess
 } from '../utils/test-helpers'
+
+function generateSyntheticTestEmail(prefix: string): string {
+  return `${prefix}${Date.now()}@synthetic.invalid`
+}
 
 /**
  * E2E Tests: Usuários - Complete CRUD
@@ -151,7 +154,7 @@ test.describe('Usuários - Create Form', () => {
       await senhaField.blur()
       
       await page.getByLabel(/nome/i).fill('Test Password')
-      await page.getByLabel(/email/i).fill(generateTestEmail('pass'))
+      await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('pass'))
       
       const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
       await saveButton.click()
@@ -173,7 +176,7 @@ test.describe('Usuários - Create Form', () => {
       await confirmField.fill('TestPass456!') // Different
       
       await page.getByLabel(/nome/i).fill('Test Password Match')
-      await page.getByLabel(/email/i).fill(generateTestEmail('match'))
+      await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('match'))
       
       const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
       await saveButton.click()
@@ -188,7 +191,7 @@ test.describe('Usuários - Create Form', () => {
     
     // Fill required fields
     await page.getByLabel(/nome/i).fill(userName)
-    await page.getByLabel(/email/i).fill(generateTestEmail('user'))
+    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('user'))
     
     // Select papel/role
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
@@ -225,7 +228,7 @@ test.describe('Usuários - Create Form', () => {
     const timestamp = Date.now()
     
     await page.getByLabel(/nome/i).fill(`User With Escola ${timestamp}`)
-    await page.getByLabel(/email/i).fill(generateTestEmail('escola'))
+    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('escola'))
     
     // Select papel
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
@@ -272,7 +275,7 @@ test.describe('Usuários - Create Form', () => {
     })
     
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
-    await page.getByLabel(/email/i).fill(generateTestEmail('loading'))
+    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('loading'))
     await page.locator('#tipo_usuario').click()
     await page.getByRole('option', { name: /administrador/i }).click()
     
