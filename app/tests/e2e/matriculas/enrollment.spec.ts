@@ -26,26 +26,6 @@ async function selectFirstClass(page: import('@playwright/test').Page) {
   await option.click()
 }
 
-async function reloadForStudent(page: import('@playwright/test').Page, name: string) {
-  const studentsRead = page.waitForResponse(async response => {
-    if (
-      response.request().method() !== 'GET' ||
-      !response.url().includes('/rest/v1/alunos') ||
-      !response.ok()
-    ) return false
-
-    try {
-      const rows = await response.json() as Array<{ nome_completo?: string }>
-      return rows.some(row => row.nome_completo === name)
-    } catch {
-      return false
-    }
-  })
-  await page.reload()
-  await studentsRead
-  await expect(page.getByPlaceholder(/buscar por nome/i)).toBeVisible({ timeout: 15000 })
-}
-
 test.describe('Enrollment form', () => {
   test.beforeEach(async ({ page }) => {
     await openForm(page)
@@ -112,10 +92,7 @@ test.describe('Enrollment form', () => {
     })
     const enrollmentPage = await freshContext.newPage()
     try {
-      await enrollmentPage.goto('/dashboard/matriculas/nova')
-      await expect(enrollmentPage.getByRole('heading', { name: /nova matricula/i })).toBeVisible({ timeout: 15000 })
-      // Reload so the client-side student list includes the disposable fixture.
-      await reloadForStudent(enrollmentPage, unique)
+      await openForm(enrollmentPage)
       await selectStudent(enrollmentPage, unique)
       await selectFirstClass(enrollmentPage)
       await enrollmentPage.getByLabel(/observações/i).fill('Matrícula criada pelo E2E')
@@ -159,7 +136,7 @@ test.describe('Enrollment form', () => {
     const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
     let insertionResponse: Promise<import('@playwright/test').Response> | undefined
     try {
-      await reloadForStudent(page, unique)
+      await openForm(page)
 
       await page.route('**/rest/v1/matriculas*', async route => {
         if (route.request().method() === 'POST') await insertPaused
