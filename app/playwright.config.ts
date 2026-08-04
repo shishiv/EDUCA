@@ -24,6 +24,9 @@ export default defineConfig({
   ],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    // Service workers bypass Playwright request routing; block them so E2E
+    // loading assertions can hold the real Supabase request deterministically.
+    serviceWorkers: 'block',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
