@@ -1,17 +1,13 @@
 import { test, expect } from '../support/diagnostics'
+import { discoverE2EAttendancePaths } from '../attendance/attendance-fixtures'
 import { navigateToDashboard } from '../utils/test-helpers'
 
 let firstClassPath: string | null = null
 
 async function openFirstClass(page: import('@playwright/test').Page) {
   if (!firstClassPath) {
-    await page.goto('/dashboard/turmas')
-    const link = page
-      .locator('a[href^="/dashboard/turmas/"]:not([href="/dashboard/turmas/nova"])')
-      .first()
-    await expect(link).toBeVisible({ timeout: 15000 })
-    firstClassPath = await link.getAttribute('href')
-    expect(firstClassPath).toBeTruthy()
+    const fixture = await discoverE2EAttendancePaths(page)
+    firstClassPath = fixture.classPath
   }
 
   await page.goto(firstClassPath!)
