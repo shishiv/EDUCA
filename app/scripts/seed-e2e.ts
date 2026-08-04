@@ -293,7 +293,7 @@ export async function seedE2E() {
   }
 
   // Stable current-month lesson for content-report coverage.
-  const lessonDate = '2026-07-15'
+  const lessonDate = `${today.slice(0, 7)}-15`
   const session = await ensureRow('sessoes_aula', { turma_id: class1.id, data_aula: lessonDate }, {
     turma_id: class1.id, escola_id: school1.id, professor_id: profiles.get('professor').id,
     data_aula: lessonDate, inicio_aula: '08:00:00', fim_aula: '08:50:00',

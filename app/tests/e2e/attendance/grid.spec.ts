@@ -21,6 +21,9 @@ async function openAttendance(page: import('@playwright/test').Page) {
     await expect(page.getByRole('button', { name: /abrir chamada/i })).toBeVisible({ timeout: 15000 })
     await page.getByRole('button', { name: /abrir chamada/i }).click()
     await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 15000 })
+    // The session is server-owned. Reload once after the action so this helper
+    // cannot observe a stale no-session render from the previous query.
+    await page.reload()
     await expect(page.getByRole('button', { name: /presente/i }).first()).toBeVisible({ timeout: 15000 })
   }
 }
