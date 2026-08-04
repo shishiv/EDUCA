@@ -61,7 +61,8 @@ export const test = base.extend<{ browserDiagnostics: void }>({
         ) return
         if (
           /invalid credentials/i.test(testInfo.title) &&
-          /invalid login credentials/i.test(text)
+          (/invalid login credentials/i.test(text) ||
+            /failed to load resource: the server responded with a status of 400/i.test(text))
         ) return
         if (
           /invalid student id/i.test(testInfo.title) &&
