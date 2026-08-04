@@ -271,6 +271,7 @@ export default function BolsaFamiliaReportPage() {
             variant="outline"
             onClick={fetchReport}
             disabled={loading}
+            aria-label="Atualizar relatório"
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <RefreshCw className={cn('h-4 w-4 sm:mr-2', loading && 'animate-spin')} />
@@ -279,6 +280,7 @@ export default function BolsaFamiliaReportPage() {
           <Button
             variant="outline"
             onClick={handleExportExcel}
+            aria-label="Exportar para Excel"
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
@@ -287,6 +289,7 @@ export default function BolsaFamiliaReportPage() {
           <Button
             variant="outline"
             onClick={handleExportPDF}
+            aria-label="Exportar para PDF"
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <Download className="h-4 w-4 sm:mr-2" />
