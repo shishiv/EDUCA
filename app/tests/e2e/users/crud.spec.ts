@@ -200,7 +200,7 @@ test.describe('Usuários - Create Form', () => {
     
     if (await papelSelect.isVisible()) {
       await papelSelect.click()
-      await page.getByRole('option', { name: /professor|coordenador/i }).first().click()
+      await page.getByRole('option', { name: /secretário/i }).click()
     }
     
     // Password (if required)
