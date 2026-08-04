@@ -207,8 +207,8 @@ test.describe('Escolas - Create Form', () => {
     const timestamp = Date.now()
     let releaseInsert = () => {}
     const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
-    await page.route('**/rest/v1/escolas**', async route => {
-      if (route.request().method() === 'POST') await insertPaused
+    await page.route(/\/rest\/v1\/escolas(?:\?|$)/, async route => {
+      await insertPaused
       await route.continue()
     })
     
