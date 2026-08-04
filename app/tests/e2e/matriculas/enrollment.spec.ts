@@ -113,7 +113,7 @@ test.describe('Enrollment form', () => {
     }
   })
 
-  test('shows loading state during insertion', async ({ page, request }) => {
+  test('shows loading state during insertion', async ({ request, browser }) => {
     const unique = `E2E Loading Enrollment ${Date.now()}`
     const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
     expect(selectedSchoolId).toMatch(/^[0-9a-f-]{36}$/)
@@ -132,20 +132,24 @@ test.describe('Enrollment form', () => {
     expect(create.ok()).toBe(true)
     const [student] = await create.json()
 
+    const freshContext = await browser.newContext({
+      storageState: 'playwright/.auth/user.json',
+    })
+    const enrollmentPage = await freshContext.newPage()
     let releaseInsert = () => {}
     const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
     let insertionResponse: Promise<import('@playwright/test').Response> | undefined
     try {
-      await openForm(page)
+      await openForm(enrollmentPage)
 
-      await page.route('**/rest/v1/matriculas*', async route => {
+      await enrollmentPage.route('**/rest/v1/matriculas*', async route => {
         if (route.request().method() === 'POST') await insertPaused
         await route.continue()
       })
-      await selectStudent(page, unique)
-      await selectFirstClass(page)
-      const submit = page.locator('button[type="submit"]')
-      insertionResponse = page.waitForResponse(response =>
+      await selectStudent(enrollmentPage, unique)
+      await selectFirstClass(enrollmentPage)
+      const submit = enrollmentPage.locator('button[type="submit"]')
+      insertionResponse = enrollmentPage.waitForResponse(response =>
         response.request().method() === 'POST' &&
         response.url().includes('/rest/v1/matriculas')
       )
@@ -158,6 +162,7 @@ test.describe('Enrollment form', () => {
     } finally {
       releaseInsert()
       await insertionResponse?.catch(() => undefined)
+      await freshContext.close()
       await request.delete(`${SUPABASE_URL}/rest/v1/matriculas?aluno_id=eq.${student.id}`, { headers: serviceHeaders })
       await request.delete(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${student.id}`, { headers: serviceHeaders })
     }
