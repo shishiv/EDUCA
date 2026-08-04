@@ -8,6 +8,8 @@ interface BrowserIssue {
 const ignoredUrl = (url: string) =>
   url.includes('/_next/webpack-hmr') || url.endsWith('/favicon.ico')
 
+const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
+
 const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
   // Invalid-credential coverage intentionally exercises Supabase's 400 response.
   if (
@@ -30,6 +32,17 @@ const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
  * Keep exceptions small and evidence-backed; add new benign noise only here.
  */
 export const test = base.extend<{ browserDiagnostics: void }>({
+  page: async ({ page }, applyPage, testInfo) => {
+    // The assignment-page contract includes the no-school-selection state;
+    // leave that journey unscoped while other admin flows use the seeded school.
+    const isAssignmentPageTest = testInfo.file.includes('/assignments/teacher.spec.ts')
+    if (selectedSchoolId && !isAssignmentPageTest) {
+      await page.addInitScript((schoolId: string) => {
+        window.sessionStorage.setItem('educa-selected-escola', schoolId)
+      }, selectedSchoolId)
+    }
+    await applyPage(page)
+  },
   browserDiagnostics: [
     async ({ page }, use, testInfo) => {
       const issues: BrowserIssue[] = []
@@ -48,7 +61,8 @@ export const test = base.extend<{ browserDiagnostics: void }>({
         ) return
         if (
           /invalid credentials/i.test(testInfo.title) &&
-          /invalid login credentials/i.test(text)
+          (/invalid login credentials/i.test(text) ||
+            /failed to load resource: the server responded with a status of 400/i.test(text))
         ) return
         if (
           /invalid student id/i.test(testInfo.title) &&

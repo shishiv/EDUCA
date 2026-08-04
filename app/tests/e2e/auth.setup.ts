@@ -89,16 +89,6 @@ if (isPilotMode) {
     }
   }
 
-  async function getFirstSchoolId(accessToken: string) {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/escolas?select=id&ativo=eq.true&order=nome.asc&limit=1`, {
-      headers: { apikey: ANON_KEY, Authorization: `Bearer ${accessToken}` },
-    })
-    if (!response.ok) throw new Error(`School fixture lookup failed: ${response.status}`)
-    const schools = await response.json() as Array<{ id: string }>
-    if (!schools[0]) throw new Error('No active seeded school found')
-    return schools[0].id
-  }
-
   /** Cookie name: sb-<host>-auth-token  where host = '127' for 127.0.0.1:54321 */
   function cookieName() {
     const url = new URL(SUPABASE_URL)
@@ -108,7 +98,7 @@ if (isPilotMode) {
   const authFile = path.join(AUTH_DIR, 'user.json')
 
   setup('authenticate as admin', async ({ browser }) => {
-    const { cookieValue, accessToken } = await getSupabaseSessionCookie('admin@test.com', 'test123456')
+    const { cookieValue } = await getSupabaseSessionCookie('admin@test.com', 'test123456')
     const name = cookieName()
 
     const context = await browser.newContext()
@@ -122,13 +112,6 @@ if (isPilotMode) {
         sameSite: 'Lax',
       },
     ])
-
-    // Visit a public same-origin page only to create the localStorage origin.
-    // Do not depend on dashboard hydration during setup.
-    const page = await context.newPage()
-    await page.goto(`${BASE_URL}/login`)
-    const schoolId = await getFirstSchoolId(accessToken)
-    await page.evaluate(id => localStorage.setItem('educa-selected-escola', id), schoolId)
 
     await context.storageState({ path: authFile })
     await context.close()

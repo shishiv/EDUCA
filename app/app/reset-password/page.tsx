@@ -1,26 +1,37 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Loader2, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function ResetPasswordPage() {
+  const { loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
+  const [formReady, setFormReady] = useState(false)
+
+  useEffect(() => {
+    if (authLoading) return
+    const frame = requestAnimationFrame(() => setFormReady(true))
+    return () => cancelAnimationFrame(frame)
+  }, [authLoading])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const submittedEmail = String(new FormData(event.currentTarget).get('email') || '').trim()
+    setEmail(submittedEmail)
     setLoading(true)
     setError('')
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(submittedEmail, {
       redirectTo: `${window.location.origin}/login`,
     })
 
@@ -62,7 +73,11 @@ export default function ResetPasswordPage() {
             <Link href="/login">Voltar ao login</Link>
           </Button>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            data-auth-ready={formReady ? 'true' : undefined}
+            className="mt-8 space-y-5"
+          >
             {error && (
               <Alert variant="destructive" role="alert">
                 <AlertDescription>{error}</AlertDescription>
@@ -73,16 +88,15 @@ export default function ResetPasswordPage() {
               <Label htmlFor="reset-email">E-mail</Label>
               <Input
                 id="reset-email"
+                name="email"
                 type="email"
                 autoComplete="email"
                 placeholder="seu.email@municipio.edu.br"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
                 required
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !formReady}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

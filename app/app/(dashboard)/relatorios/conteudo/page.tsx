@@ -66,7 +66,6 @@ import {
   GraduationCap,
   Target,
   Lightbulb,
-  ChevronRight,
 } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -440,7 +439,6 @@ export default function ContentReportsPage() {
   const [isLoadingTurmas, setIsLoadingTurmas] = useState(true)
   const [isLoadingReport, setIsLoadingReport] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
 
   const currentYear = new Date().getFullYear()
 
@@ -668,6 +666,7 @@ export default function ContentReportsPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        aria-label="Data Inicio"
                         className={cn(
                           'w-full justify-start text-left font-normal',
                           !dateRange.from && 'text-muted-foreground'
@@ -696,6 +695,7 @@ export default function ContentReportsPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        aria-label="Data Fim"
                         className={cn(
                           'w-full justify-start text-left font-normal',
                           !dateRange.to && 'text-muted-foreground'

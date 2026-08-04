@@ -43,6 +43,19 @@ SELECT pg_temp.assert_true((SELECT count(*) >= 2 FROM alunos), 'secretariat sees
 SELECT pg_temp.assert_true((SELECT count(*) >= 2 FROM escolas), 'secretariat sees all schools in dedicated project');
 SELECT pg_temp.assert_true((SELECT count(*) = 3 FROM pilot_dashboard_metrics(NULL)), 'dashboard RPC is deployed');
 
+INSERT INTO matriculas(id, aluno_id, turma_id, ano_letivo, situacao)
+VALUES (
+  '50000000-0000-0000-0000-000000000003',
+  '40000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
+  2027,
+  'ativa'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 1 FROM matriculas WHERE id = '50000000-0000-0000-0000-000000000003'),
+  'secretariat can insert an enrollment without recursive RLS'
+);
+
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000005',true);
 SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM alunos), 'inactive user has no school access');
 

@@ -68,14 +68,17 @@ test.describe('Enrollment form', () => {
     await expect(page.getByText(/\d+\/\d+/).first()).toBeVisible()
   })
 
-  test('creates and persists an enrollment for a disposable student', async ({ page, request }) => {
+  test('creates and persists an enrollment for a disposable student', async ({ request, browser }) => {
     const unique = `E2E Enrollment ${Date.now()}`
+    const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
+    expect(selectedSchoolId).toMatch(/^[0-9a-f-]{36}$/)
     const create = await request.post(`${SUPABASE_URL}/rest/v1/alunos?select=*`, {
       headers: { ...serviceHeaders, Prefer: 'return=representation' },
       data: {
         nome_completo: unique,
         data_nascimento: '2017-04-10',
         sexo: 'F',
+        escola_id: selectedSchoolId,
         endereco: 'Rua Matrícula E2E, 100',
         nome_mae: 'Mãe Matrícula E2E',
         ativo: true,
@@ -84,16 +87,18 @@ test.describe('Enrollment form', () => {
     expect(create.ok()).toBe(true)
     const [student] = await create.json()
 
+    const freshContext = await browser.newContext({
+      storageState: 'playwright/.auth/user.json',
+    })
+    const enrollmentPage = await freshContext.newPage()
     try {
-      // Reload so the client-side student list includes the disposable fixture.
-      await page.reload()
-      await expect(page.getByPlaceholder(/buscar por nome/i)).toBeVisible({ timeout: 15000 })
-      await selectStudent(page, unique)
-      await selectFirstClass(page)
-      await page.getByLabel(/observações/i).fill('Matrícula criada pelo E2E')
-      await page.getByRole('button', { name: /realizar matr[ií]cula/i }).click()
-      await expect(page.getByText('Matricula realizada com sucesso!')).toBeVisible({ timeout: 10000 })
-      await expect(page).toHaveURL(/\/dashboard\/matriculas$/)
+      await openForm(enrollmentPage)
+      await selectStudent(enrollmentPage, unique)
+      await selectFirstClass(enrollmentPage)
+      await enrollmentPage.getByLabel(/observações/i).fill('Matrícula criada pelo E2E')
+      await enrollmentPage.getByRole('button', { name: /realizar matr[ií]cula/i }).click()
+      await expect(enrollmentPage.getByText('Matricula realizada com sucesso!')).toBeVisible({ timeout: 10000 })
+      await expect(enrollmentPage).toHaveURL(/\/dashboard\/matriculas$/)
 
       const persisted = await request.get(
         `${SUPABASE_URL}/rest/v1/matriculas?select=id&aluno_id=eq.${student.id}`,
@@ -102,23 +107,65 @@ test.describe('Enrollment form', () => {
       expect(persisted.ok()).toBe(true)
       expect((await persisted.json()).length).toBe(1)
     } finally {
+      await freshContext.close()
       await request.delete(`${SUPABASE_URL}/rest/v1/matriculas?aluno_id=eq.${student.id}`, { headers: serviceHeaders })
       await request.delete(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${student.id}`, { headers: serviceHeaders })
     }
   })
 
-  test('shows loading state during insertion', async ({ page }) => {
-    await page.route('**/rest/v1/matriculas*', async route => {
-      if (route.request().method() === 'POST') await new Promise(resolve => setTimeout(resolve, 650))
-      await route.continue()
+  test('shows loading state during insertion', async ({ request, browser }) => {
+    const unique = `E2E Loading Enrollment ${Date.now()}`
+    const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
+    expect(selectedSchoolId).toMatch(/^[0-9a-f-]{36}$/)
+    const create = await request.post(`${SUPABASE_URL}/rest/v1/alunos?select=*`, {
+      headers: { ...serviceHeaders, Prefer: 'return=representation' },
+      data: {
+        nome_completo: unique,
+        data_nascimento: '2017-04-10',
+        sexo: 'F',
+        escola_id: selectedSchoolId,
+        endereco: 'Rua Matrícula E2E, 100',
+        nome_mae: 'Mãe Matrícula E2E',
+        ativo: true,
+      },
     })
-    await selectStudent(page, 'Ana Carolina E2E')
-    await selectFirstClass(page)
-    const submit = page.locator('button[type="submit"]')
-    const submission = submit.click()
-    await expect(submit).toBeDisabled()
-    await expect(submit).toContainText(/processando/i)
-    await submission
+    expect(create.ok()).toBe(true)
+    const [student] = await create.json()
+
+    const freshContext = await browser.newContext({
+      storageState: 'playwright/.auth/user.json',
+    })
+    const enrollmentPage = await freshContext.newPage()
+    let releaseInsert = () => {}
+    const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
+    let insertionResponse: Promise<import('@playwright/test').Response> | undefined
+    try {
+      await openForm(enrollmentPage)
+
+      await enrollmentPage.route('**/rest/v1/matriculas*', async route => {
+        if (route.request().method() === 'POST') await insertPaused
+        await route.continue()
+      })
+      await selectStudent(enrollmentPage, unique)
+      await selectFirstClass(enrollmentPage)
+      const submit = enrollmentPage.locator('button[type="submit"]')
+      insertionResponse = enrollmentPage.waitForResponse(response =>
+        response.request().method() === 'POST' &&
+        response.url().includes('/rest/v1/matriculas')
+      )
+      await submit.evaluate(button => (button as HTMLButtonElement).click())
+      await expect(submit).toBeDisabled()
+      await expect(submit).toContainText(/processando/i)
+      releaseInsert()
+      const response = await insertionResponse
+      expect(response.ok()).toBe(true)
+    } finally {
+      releaseInsert()
+      await insertionResponse?.catch(() => undefined)
+      await freshContext.close()
+      await request.delete(`${SUPABASE_URL}/rest/v1/matriculas?aluno_id=eq.${student.id}`, { headers: serviceHeaders })
+      await request.delete(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${student.id}`, { headers: serviceHeaders })
+    }
   })
 
   test('cancel and back return to the list', async ({ page }) => {

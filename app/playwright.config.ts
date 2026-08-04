@@ -24,6 +24,9 @@ export default defineConfig({
   ],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    // Service workers bypass Playwright request routing; block them so E2E
+    // loading assertions can hold the real Supabase request deterministically.
+    serviceWorkers: 'block',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
@@ -54,7 +57,11 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: syntheticAuthStateFile,
       },
-      testIgnore: /.*\/(auth)\/.*/,
+      // Pilot-only specs require the explicit pilot provisioner and are run by
+      // scripts/run-pilot-e2e.sh with PILOT_MODE=true.
+      testIgnore: process.env.PILOT_MODE === 'true'
+        ? /.*\/(auth)\/.*/
+        : /.*\/(auth|pilot)\/.*/,
       dependencies: ['setup'],
     },
 
@@ -90,6 +97,8 @@ export default defineConfig({
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
         'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      EDUCA_E2E_MODE: process.env.EDUCA_E2E_MODE || 'false',
+      NEXT_PUBLIC_EDUCA_E2E_MODE: process.env.NEXT_PUBLIC_EDUCA_E2E_MODE || 'false',
       // Disable the Next.js dev overlay so it does not intercept pointer events
       NEXT_DISABLE_DEV_TOOLS: '1',
     },

@@ -8,12 +8,18 @@
  * - Past date immutability
  */
 
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import type { SessionLockInfo } from './AttendanceGridTypes'
 
 /**
  * Check if current time is before 18:00 in Sao Paulo timezone
  */
 export function isBefore18hSaoPaulo(): boolean {
+  // CI's local E2E stack must be deterministic across the clock boundary;
+  // server-side session expiry remains disabled only by the matching local
+  // EDUCA_E2E_MODE flag.
+  if (process.env.NEXT_PUBLIC_EDUCA_E2E_MODE === 'true') return true
+
   const now = new Date()
   const saoPauloTime = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Sao_Paulo',
@@ -53,20 +59,6 @@ export function formatTimeUntilLock(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   return `${hours}h ${mins}min`
-}
-
-/**
- * Get the current date in Sao Paulo timezone (YYYY-MM-DD format)
- */
-export function getTodaySaoPaulo(): string {
-  const now = new Date()
-  const saoPauloFormatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-  return saoPauloFormatter.format(now)
 }
 
 /**

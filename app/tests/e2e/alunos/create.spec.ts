@@ -534,31 +534,42 @@ test.describe('Alunos - Successful Creation', () => {
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
 
-    // Hold the insert response long enough to observe the loading state.
-    await page.route('**/rest/v1/alunos*', async route => {
-      await new Promise(resolve => setTimeout(resolve, 750))
+    // Hold the insert response until the loading state has been observed.
+    let releaseInsert = () => {}
+    const insertPaused = new Promise<void>(resolve => {
+      releaseInsert = resolve
+    })
+    await page.route('**/rest/v1/alunos**', async route => {
+      if (route.request().method() !== 'POST') {
+        await route.continue()
+        return
+      }
+      await insertPaused
       await route.continue()
     })
     
     await page.getByLabel(/nome.*completo/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/data.*nascimento/i).fill('2015-05-10')
     
-    const sexoSelect = page.locator('select, [role="combobox"]').first()
-    if (await sexoSelect.isVisible()) {
-      await sexoSelect.click()
-      await page.getByRole('option').first().click()
-    }
+    const sexoSelect = page.locator('#sexo')
+    await sexoSelect.click()
+    await page.getByRole('option', { name: /masculino/i }).click()
     
     await page.getByLabel(/nome.*mãe/i).fill('Test Mãe')
     await page.getByLabel(/endereço.*completo/i).fill('Rua Loading, 789, Centro')
     
     const saveButton = page.locator('button[type="submit"]')
-    const submission = saveButton.click()
+    // Native DOM dispatch returns before the async submit handler navigates,
+    // so the test can observe the real disabled/loading state deterministically.
+    await saveButton.evaluate(button => (button as HTMLButtonElement).click())
 
     // Use a stable selector because the accessible name changes to "Cadastrando".
-    await expect(saveButton).toBeDisabled()
-    await expect(saveButton).toContainText(/cadastrando/i)
-    await submission
+    try {
+      await expect(saveButton).toBeDisabled()
+      await expect(saveButton).toContainText(/cadastrando/i)
+    } finally {
+      releaseInsert()
+    }
     await expect(page).toHaveURL(/\/dashboard\/alunos$/, { timeout: 10000 })
     // Let the destination layout finish its Realtime handshake before teardown.
     await page.waitForTimeout(500)

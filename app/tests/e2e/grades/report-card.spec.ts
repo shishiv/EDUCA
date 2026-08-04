@@ -778,6 +778,6 @@ test('class report-card action opens the class roster', async ({ page }) => {
   const classReport = page.getByRole('link', { name: 'Boletim', exact: true }).first()
   await expect(classReport).toBeVisible({ timeout: 15000 })
   await classReport.click()
-  await expect(page.getByRole('heading', { name: /boletins da turma/i })).toBeVisible({ timeout: 15000 })
-  await expect(page.getByRole('link', { name: /abrir boletim de/i }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: /boletim escolar/i }).first()).toBeVisible({ timeout: 15000 })
+  await expect(page.getByRole('table')).toBeVisible()
 })

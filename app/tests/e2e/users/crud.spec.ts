@@ -1,10 +1,12 @@
 import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
-  generateTestEmail,
-  expectFormSuccess,
-  expectFormError
+  expectFormSuccess
 } from '../utils/test-helpers'
+
+function generateSyntheticTestEmail(prefix: string): string {
+  return `${prefix}${Date.now()}@synthetic.invalid`
+}
 
 /**
  * E2E Tests: Usuários - Complete CRUD
@@ -37,13 +39,13 @@ test.describe('Usuários - List View', () => {
   })
 
   test('should have search functionality', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome ou email...')
     await expect(searchInput).toBeVisible()
     await expect(searchInput).toBeEditable()
   })
 
   test('should filter users by search term', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome ou email...')
     
     await searchInput.fill('admin')
     await page.waitForTimeout(500)
@@ -152,7 +154,7 @@ test.describe('Usuários - Create Form', () => {
       await senhaField.blur()
       
       await page.getByLabel(/nome/i).fill('Test Password')
-      await page.getByLabel(/email/i).fill(generateTestEmail('pass'))
+      await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('pass'))
       
       const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
       await saveButton.click()
@@ -174,7 +176,7 @@ test.describe('Usuários - Create Form', () => {
       await confirmField.fill('TestPass456!') // Different
       
       await page.getByLabel(/nome/i).fill('Test Password Match')
-      await page.getByLabel(/email/i).fill(generateTestEmail('match'))
+      await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('match'))
       
       const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
       await saveButton.click()
@@ -189,7 +191,7 @@ test.describe('Usuários - Create Form', () => {
     
     // Fill required fields
     await page.getByLabel(/nome/i).fill(userName)
-    await page.getByLabel(/email/i).fill(generateTestEmail('user'))
+    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('user'))
     
     // Select papel/role
     const papelSelect = page.locator('select, [role="combobox"]').filter({ 
@@ -198,7 +200,7 @@ test.describe('Usuários - Create Form', () => {
     
     if (await papelSelect.isVisible()) {
       await papelSelect.click()
-      await page.getByRole('option', { name: /professor|coordenador/i }).first().click()
+      await page.getByRole('option', { name: /secretário/i }).click()
     }
     
     // Password (if required)
@@ -226,27 +228,16 @@ test.describe('Usuários - Create Form', () => {
     const timestamp = Date.now()
     
     await page.getByLabel(/nome/i).fill(`User With Escola ${timestamp}`)
-    await page.getByLabel(/email/i).fill(generateTestEmail('escola'))
+    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('escola'))
     
-    // Select papel
-    const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /papel|função/i 
-    }).first()
-    
-    if (await papelSelect.isVisible()) {
-      await papelSelect.click()
-      await page.getByRole('option').first().click()
-    }
-    
-    // Select escola
-    const escolaSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /escola/i 
-    }).first()
-    
-    if (await escolaSelect.isVisible()) {
-      await escolaSelect.click()
-      await page.getByRole('option').first().click()
-    }
+    // Select papel and escola through the form controls, not the global school selector.
+    const papelSelect = page.locator('#tipo_usuario')
+    await papelSelect.click()
+    await page.getByRole('option', { name: /professor/i }).click()
+
+    const escolaSelect = page.locator('#escola')
+    await escolaSelect.click()
+    await page.getByRole('option').first().click()
     
     // Password
     const senhaField = page.getByLabel(/^senha$/i).first()
@@ -267,21 +258,34 @@ test.describe('Usuários - Create Form', () => {
 
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
-    await page.route('**/rest/v1/users*', async route => {
-      await new Promise(resolve => setTimeout(resolve, 750))
+    let releaseInvitation = () => {}
+    const invitationPaused = new Promise<void>(resolve => { releaseInvitation = resolve })
+    await page.route(/\/api\/pilot\/invitations(?:\?|$)/, async route => {
+      await invitationPaused
       await route.continue()
     })
-    
+
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
-    await page.getByLabel(/email/i).fill(generateTestEmail('loading'))
+    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('loading'))
     await page.locator('#tipo_usuario').click()
-    await page.getByRole('option', { name: /administrador/i }).click()
-    
+    await page.getByRole('option', { name: /secretário/i }).click()
+
     const saveButton = page.locator('button[type="submit"]')
+    const invitationResponse = page.waitForResponse(response =>
+      response.request().method() === 'POST' && response.url().includes('/api/pilot/invitations')
+    )
     const submission = saveButton.click()
-    await expect(saveButton).toBeDisabled()
-    await expect(saveButton).toContainText(/salvando/i)
-    await submission
+    try {
+      await expect(saveButton).toBeDisabled()
+      await expect(saveButton).toContainText(/salvando/i)
+      releaseInvitation()
+      const response = await invitationResponse
+      expect(response.ok()).toBe(true)
+      await submission
+    } finally {
+      releaseInvitation()
+      await invitationResponse.catch(() => undefined)
+    }
   })
 
   test('should not allow duplicate email', async ({ page }) => {
