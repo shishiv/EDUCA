@@ -1,4 +1,6 @@
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import { test, expect } from '../support/diagnostics'
+import { discoverE2EAttendancePaths } from './attendance-fixtures'
 
 test.use({ storageState: 'playwright/.auth/professor.json' })
 
@@ -12,22 +14,15 @@ let attendancePath: string | null = null
 async function discoverClass(page: import('@playwright/test').Page) {
   if (classPath && attendancePath) return
 
-  await page.goto('/dashboard/turmas')
-  const link = page
-    .locator('a[href^="/dashboard/turmas/"]:not([href="/dashboard/turmas/nova"])')
-    .first()
-  await expect(link).toBeVisible({ timeout: 15000 })
-
-  classPath = await link.getAttribute('href')
-  classId = classPath?.split('/').pop() || null
-  expect(classPath).toBeTruthy()
-  expect(classId).toBeTruthy()
-  attendancePath = `${classPath}/chamada`
+  const fixture = await discoverE2EAttendancePaths(page)
+  classPath = fixture.classPath
+  classId = fixture.classId
+  attendancePath = fixture.attendancePath
 }
 
 async function clearTodaySessions(request: import('@playwright/test').APIRequestContext) {
   if (!classId) return
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getTodaySaoPaulo()
   const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
   const sessionsResponse = await request.get(
     `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id&turma_id=eq.${classId}&data_aula=eq.${today}`,
@@ -71,7 +66,7 @@ test.describe('Canonical attendance session workflow', () => {
     await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 10000 })
 
     const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-    const today = new Date().toISOString().slice(0, 10)
+    const today = getTodaySaoPaulo()
     const response = await request.get(
       `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id,status&turma_id=eq.${classId}&data_aula=eq.${today}`,
       { headers }
@@ -82,10 +77,32 @@ test.describe('Canonical attendance session workflow', () => {
     expect(sessions[0].status).toBe('ABERTA')
   })
 
-  test('renders P/F/J controls only after a canonical session exists', async ({ page }) => {
+  test('renders P/F/J controls only after a canonical session exists', async ({ page, request, browser }) => {
     await page.getByRole('button', { name: /abrir chamada/i }).click()
-    await expect(page.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 10000 })
-    await expect(page.getByRole('button', { name: 'Falta' }).first()).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Justificada' }).first()).toBeVisible()
+    await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 10000 })
+
+    const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+    const today = getTodaySaoPaulo()
+    const response = await request.get(
+      `${SUPABASE_URL}/rest/v1/sessoes_aula?select=id,status&turma_id=eq.${classId}&data_aula=eq.${today}`,
+      { headers }
+    )
+    expect(response.ok()).toBe(true)
+    const sessions: Array<{ id: string; status: string }> = await response.json()
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0].status).toBe('ABERTA')
+
+    const reloadContext = await browser.newContext({
+      storageState: 'playwright/.auth/professor.json',
+    })
+    const reloadPage = await reloadContext.newPage()
+    try {
+      await reloadPage.goto(`${attendancePath}?sessao=${sessions[0].id}`)
+      await expect(reloadPage.getByRole('button', { name: 'Presente' }).first()).toBeVisible({ timeout: 10000 })
+      await expect(reloadPage.getByRole('button', { name: 'Falta' }).first()).toBeVisible()
+      await expect(reloadPage.getByRole('button', { name: 'Justificada' }).first()).toBeVisible()
+    } finally {
+      await reloadContext.close()
+    }
   })
 })

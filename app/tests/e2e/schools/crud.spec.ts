@@ -1,9 +1,7 @@
 import { test, expect } from '../support/diagnostics'
 import { 
   waitForPageLoad,
-  expectFormSuccess,
-  expectFormError,
-  getTableRowCount
+  expectFormSuccess
 } from '../utils/test-helpers'
 
 /**
@@ -36,13 +34,13 @@ test.describe('Escolas - List View', () => {
   })
 
   test('should have search functionality', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome, código ou diretor...')
     await expect(searchInput).toBeVisible()
     await expect(searchInput).toBeEditable()
   })
 
   test('should filter schools by search term', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/buscar|pesquisar|filtrar/i)
+    const searchInput = page.getByPlaceholder('Buscar por nome, código ou diretor...')
     
     await searchInput.fill('Escola')
     await page.waitForTimeout(500)
@@ -193,7 +191,7 @@ test.describe('Escolas - Create Form', () => {
       await emailField.fill(`escola${timestamp}@teste.com`)
     }
     
-    const tipoSelect = page.locator('select, [role="combobox"]').first()
+    const tipoSelect = page.getByRole('combobox', { name: 'Tipo de Ensino *' })
     if (await tipoSelect.isVisible()) {
       await tipoSelect.click()
       await page.getByRole('option').first().click()
@@ -207,21 +205,35 @@ test.describe('Escolas - Create Form', () => {
 
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
-    await page.route('**/rest/v1/escolas*', async route => {
-      await new Promise(resolve => setTimeout(resolve, 750))
+    let releaseInsert = () => {}
+    const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
+    await page.route(/\/rest\/v1\/escolas(?:\?|$)/, async route => {
+      await insertPaused
       await route.continue()
     })
     
     await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
     await page.getByLabel(/inep|código/i).fill(timestamp.toString().slice(-8))
-    await page.locator('#tipo').click()
-    await page.getByRole('option').first().click()
+    const tipoSelect = page.getByRole('combobox', { name: 'Tipo de Ensino *' })
+    await tipoSelect.click()
+    await page.getByRole('option', { name: /creche/i }).click()
     
     const saveButton = page.locator('button[type="submit"]')
+    const insertionResponse = page.waitForResponse(response =>
+      response.request().method() === 'POST' && response.url().includes('/rest/v1/escolas')
+    )
     const submission = saveButton.click()
-    await expect(saveButton).toBeDisabled()
-    await expect(saveButton).toContainText(/salvando|cadastrando/i)
-    await submission
+    try {
+      await expect(saveButton).toBeDisabled()
+      await expect(saveButton).toContainText(/salvando|cadastrando/i)
+      releaseInsert()
+      const response = await insertionResponse
+      expect(response.ok()).toBe(true)
+      await submission
+    } finally {
+      releaseInsert()
+      await insertionResponse.catch(() => undefined)
+    }
   })
 })
 

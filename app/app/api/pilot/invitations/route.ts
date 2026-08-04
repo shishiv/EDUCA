@@ -20,7 +20,19 @@ export async function POST(request: Request) {
   if (demoSandboxBlock) return demoSandboxBlock
 
   try {
-    assertSyntheticPilotSafety('seed')
+    const localE2ESafety = process.env.EDUCA_E2E_MODE === 'true'
+      ? {
+          pilotMode: 'true',
+          syntheticOnly: 'true',
+          externalDeployApproved: 'false',
+          legalApprovalStatus: 'not_approved',
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        }
+      : undefined
+    // Standard E2E uses the canonical synthetic seed without switching the
+    // Playwright harness into pilot auth mode. The safety gate still rejects
+    // any non-local Supabase URL before this route can mutate Auth.
+    assertSyntheticPilotSafety('seed', localE2ESafety)
     const actor = await requirePilotActor(['admin', 'secretario'])
     if (actor.schoolId !== null) return NextResponse.json({ error: 'PILOT_INVITE_SECRETARIAT_REQUIRED' }, { status: 403 })
     const input = invitationSchema.parse(await request.json())

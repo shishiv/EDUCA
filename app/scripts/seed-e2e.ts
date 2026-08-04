@@ -6,6 +6,7 @@
  * E2E-specific names and today's E2E attendance sessions.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getTodaySaoPaulo } from '../lib/date-utils'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -94,6 +95,9 @@ async function cleanupGeneratedRecords() {
     .select('id')
     .or([
       'nome.like.Turma E2E %',
+      'nome.eq.1º Ano A E2E',
+      'nome.eq.2º Ano B E2E',
+      'nome.eq.Berçário A E2E',
       'nome.eq.Turma com Professor',
       'nome.eq.Turma com Observações',
       'nome.like.Loading Test %',
@@ -243,7 +247,7 @@ export async function seedE2E() {
 
   // Each run starts with no attendance session for today. This makes the grid's
   // default-all-present state and Abrir Aula workflow deterministic.
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getTodaySaoPaulo()
   const { data: todaySessions } = await supabase
     .from('sessoes_aula')
     .select('id')
@@ -289,13 +293,13 @@ export async function seedE2E() {
   }
 
   // Stable current-month lesson for content-report coverage.
-  const lessonDate = '2026-07-15'
+  const lessonDate = `${today.slice(0, 7)}-15`
   const session = await ensureRow('sessoes_aula', { turma_id: class1.id, data_aula: lessonDate }, {
     turma_id: class1.id, escola_id: school1.id, professor_id: profiles.get('professor').id,
     data_aula: lessonDate, inicio_aula: '08:00:00', fim_aula: '08:50:00',
     conteudo_programatico: 'Números e operações', objetivos_aprendizagem: 'Resolver situações de adição',
     metodologia: 'Aprendizagem baseada em problemas', recursos_utilizados: 'Material dourado',
-    status: 'fechada',
+    status: 'FECHADA',
   })
   if (await conteudoAulaAvailable) {
     await ensureRow('conteudo_aula', { sessao_id: session.id }, {

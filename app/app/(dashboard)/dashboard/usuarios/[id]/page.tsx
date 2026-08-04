@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/table'
 import { 
   ArrowLeft, 
-  Edit, 
   User, 
   Mail, 
   Phone, 
@@ -216,12 +215,6 @@ export default function UsuarioDetalhesPage() {
             Informações completas e histórico de atividades
           </p>
         </div>
-        <Button asChild>
-          <Link href={`/dashboard/usuarios/${usuario.id}/editar`}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
-          </Link>
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

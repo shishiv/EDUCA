@@ -1,9 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, startOfDay } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { ArrowLeft, CalendarClock, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -14,6 +13,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { canRecordAttendance } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { getSessionLockInfo } from '@/components/attendance/AttendanceGridUtils'
+import { getTodaySaoPauloDate } from '@/lib/date-utils'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
@@ -121,7 +121,7 @@ export default function ChamadaPage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { userProfile } = useAuth()
+  const { userProfile, loading: authLoading } = useAuth()
   const turmaId = params?.id as string
   const requestedSessionId = searchParams.get('sessao')
 
@@ -132,7 +132,7 @@ export default function ChamadaPage() {
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null)
   const [attendance, setAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
   const [originalAttendance, setOriginalAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
-  const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()))
+  const [currentDate, setCurrentDate] = useState(() => startOfDay(getTodaySaoPauloDate()))
   const [loading, setLoading] = useState(true)
   const [loadingSessions, setLoadingSessions] = useState(false)
   const [loadingAttendance, setLoadingAttendance] = useState(false)
@@ -144,6 +144,7 @@ export default function ChamadaPage() {
     studentName: string
   } | null>(null)
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+  const sessionLoadRequestId = useRef(0)
 
   const selectedSession = useMemo(
     () => sessions.find(session => session.id === selectedSessionId) ?? null,
@@ -151,7 +152,7 @@ export default function ChamadaPage() {
   )
 
   const dateString = format(currentDate, 'yyyy-MM-dd')
-  const today = startOfDay(new Date())
+  const today = startOfDay(getTodaySaoPauloDate())
   const isFutureDate = isAfter(startOfDay(currentDate), today)
   const canRecord = canRecordAttendance(userProfile?.tipo_usuario ?? null)
   const isViewOnly = !canRecord
@@ -200,16 +201,26 @@ export default function ChamadaPage() {
   }, [turmaId])
 
   const loadSessions = useCallback(async () => {
+    const requestId = ++sessionLoadRequestId.current
     setLoadingSessions(true)
     try {
-      const { data, error: queryError } = await supabase
+      let sessionQuery = supabase
         .from('sessoes_aula')
         .select('id, turma_id, data_aula, status, professor_id, escola_id, aberta_em, fechada_em, created_at')
         .eq('turma_id', turmaId)
-        .eq('data_aula', dateString)
-        .order('created_at', { ascending: true })
+
+      if (requestedSessionId) {
+        sessionQuery = sessionQuery.eq('id', requestedSessionId)
+      } else {
+        sessionQuery = sessionQuery.eq('data_aula', dateString)
+      }
+
+      const { data, error: queryError } = await sessionQuery.order('created_at', { ascending: true })
 
       if (queryError) throw queryError
+      // An initial no-session query can finish after a newly opened session.
+      // Only the latest request may replace the current session selection.
+      if (requestId !== sessionLoadRequestId.current) return
 
       const loadedSessions = data ?? []
       setSessions(loadedSessions)
@@ -219,6 +230,7 @@ export default function ChamadaPage() {
       const nextSession = requested ?? openSession ?? loadedSessions[loadedSessions.length - 1] ?? null
       setSelectedSessionId(nextSession?.id ?? null)
     } catch (loadError) {
+      if (requestId !== sessionLoadRequestId.current) return
       logger.error('ATTENDANCE_SESSION_READ_FAILED', loadError as Error, {
         metadata: { turmaId, date: dateString },
       })
@@ -226,7 +238,7 @@ export default function ChamadaPage() {
       setSessions([])
       setSelectedSessionId(null)
     } finally {
-      setLoadingSessions(false)
+      if (requestId === sessionLoadRequestId.current) setLoadingSessions(false)
     }
   }, [dateString, requestedSessionId, turmaId])
 
@@ -276,6 +288,8 @@ export default function ChamadaPage() {
   }, [draftSessionId])
 
   useEffect(() => {
+    if (authLoading || !userProfile?.id) return
+
     let active = true
     setLoading(true)
     setError(null)
@@ -295,10 +309,10 @@ export default function ChamadaPage() {
     return () => {
       active = false
     }
-  }, [loadStudents, loadTurma, turmaId])
+  }, [authLoading, loadStudents, loadTurma, turmaId, userProfile?.id])
 
   useEffect(() => {
-    if (!requestedSessionId) return
+    if (!requestedSessionId || authLoading || !userProfile?.id) return
 
     let active = true
     void supabase
@@ -315,15 +329,17 @@ export default function ChamadaPage() {
     return () => {
       active = false
     }
-  }, [dateString, requestedSessionId, turmaId])
+  }, [authLoading, dateString, requestedSessionId, turmaId, userProfile?.id])
 
   useEffect(() => {
+    if (authLoading || !userProfile?.id) return
     void loadSessions()
-  }, [loadSessions])
+  }, [authLoading, loadSessions, userProfile?.id])
 
   useEffect(() => {
+    if (authLoading || !userProfile?.id) return
     void loadAttendance(selectedSessionId)
-  }, [loadAttendance, selectedSessionId])
+  }, [authLoading, loadAttendance, selectedSessionId, userProfile?.id])
 
   const initializeAllPresent = useCallback(() => {
     const initial = new Map<string, AttendanceRecord>()
@@ -389,11 +405,16 @@ export default function ChamadaPage() {
         fechada_em: result.session.fechada_em,
         created_at: result.session.created_at,
       }
+      // Mark the draft before selecting the session so the initial attendance
+      // read cannot clear the all-present UI state while the action settles.
+      setDraftSessionId(openedSession.id)
       setSessions(previous => [...previous, openedSession])
       setSelectedSessionId(openedSession.id)
-      setDraftSessionId(openedSession.id)
       initializeAllPresent()
-      window.history.replaceState(null, '', `/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
+      // The page can still have an initial no-session read in flight. Re-read
+      // after the server action so that stale fixture state cannot win.
+      await loadSessions()
+      router.replace(`/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
       toast.success('Chamada aberta. Marque a presença e salve os registros.')
     } catch (openError) {
       logger.error('ATTENDANCE_SESSION_OPEN_UI_FAILED', openError as Error, { metadata: { turmaId } })
@@ -401,7 +422,7 @@ export default function ChamadaPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [canOpenSession, dateString, initializeAllPresent, turmaId])
+  }, [canOpenSession, dateString, initializeAllPresent, loadSessions, router, turmaId])
 
   const handleSave = useCallback(async () => {
     if (!selectedSession || !canEditSelectedSession) return

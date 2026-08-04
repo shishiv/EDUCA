@@ -17,7 +17,11 @@ import {
 import { ArrowLeft, Save, User } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { logger } from '@/lib/logger'
+
+interface SchoolOption {
+  id: string
+  nome: string
+}
 
 export default function NovoUsuarioPage() {
   const router = useRouter()
@@ -29,17 +33,16 @@ export default function NovoUsuarioPage() {
     escola_id: ''
   })
 
-  const [escolas, setEscolas] = useState<any[]>([])
+  const [escolas, setEscolas] = useState<SchoolOption[]>([])
   useEffect(() => {
     loadEscolas()
   }, [])
 
   const loadEscolas = async () => {
     try {
-      const data = await schoolsApi.getAll()
+      const data = await schoolsApi.getAll<SchoolOption>()
       setEscolas(data)
-    } catch (error) {
-      // logger.error("Erro ao carregar escolas:", error)
+    } catch {
       toast.error("Erro ao carregar lista de escolas")
     }
   }
@@ -73,14 +76,14 @@ export default function NovoUsuarioPage() {
 
       toast.success('Convite enviado com sucesso!')
       router.push('/dashboard/usuarios')
-    } catch (error) {
+    } catch {
       toast.error('Erro ao criar usuário')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -189,7 +192,7 @@ export default function NovoUsuarioPage() {
                       Cancelar
                     </Link>
                   </Button>
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} aria-label="Criar usuário">
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

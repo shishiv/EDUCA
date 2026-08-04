@@ -535,7 +535,7 @@ export default function NotasPage() {
               </div>
             </div>
             <Select value={turmaFilter} onValueChange={setTurmaFilter}>
-              <SelectTrigger className="w-full lg:w-48">
+              <SelectTrigger className="w-full lg:w-48" aria-label="Turma">
                 <SelectValue placeholder="Turma" />
               </SelectTrigger>
               <SelectContent>
@@ -548,7 +548,7 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={disciplinaFilter} onValueChange={setDisciplinaFilter}>
-              <SelectTrigger className="w-full lg:w-40">
+              <SelectTrigger className="w-full lg:w-40" aria-label="Disciplina">
                 <SelectValue placeholder="Disciplina" />
               </SelectTrigger>
               <SelectContent>
@@ -561,7 +561,7 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={bimestreFilter} onValueChange={setBimestreFilter}>
-              <SelectTrigger className="w-full lg:w-32">
+              <SelectTrigger className="w-full lg:w-32" aria-label="Bimestre">
                 <SelectValue placeholder="Bimestre" />
               </SelectTrigger>
               <SelectContent>
@@ -591,12 +591,21 @@ export default function NotasPage() {
                     {turma.escola} - Prof. {turma.professor} - {turma.ano_letivo}
                   </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/dashboard/notas/${turma.id}/boletim`}>
+                {turma.alunos[0] ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href={`/dashboard/alunos/${turma.alunos[0].aluno.id}/boletim`}
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Boletim
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" disabled>
                     <BookOpen className="h-4 w-4 mr-2" />
                     Boletim
-                  </Link>
-                </Button>
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
