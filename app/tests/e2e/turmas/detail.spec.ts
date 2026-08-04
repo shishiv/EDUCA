@@ -34,7 +34,7 @@ test.describe('Class detail', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Voltar', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Editar', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: /abrir aula/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /abrir chamada/i })).toBeVisible()
   })
 
   test('shows capacity, attendance and session statistics', async ({ page }) => {
@@ -69,8 +69,9 @@ test.describe('Class detail', () => {
   })
 
   test('attendance action points to the implemented route', async ({ page }) => {
-    const link = page.getByRole('link', { name: /marcar frequência/i })
-    await expect(link).toHaveAttribute('href', /\/diario\/frequencia\?turma=/)
+    const classId = firstClassPath!.split('/').pop()
+    const link = page.getByRole('link', { name: /abrir chamada/i })
+    await expect(link).toHaveAttribute('href', `/dashboard/turmas/${classId}/chamada`)
   })
 
   test('back returns to the class list', async ({ page }) => {
