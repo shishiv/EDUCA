@@ -123,18 +123,61 @@ test.describe('Enrollment form', () => {
     }
   })
 
-  test('shows loading state during insertion', async ({ page }) => {
-    await page.route('**/rest/v1/matriculas*', async route => {
-      if (route.request().method() === 'POST') await new Promise(resolve => setTimeout(resolve, 650))
-      await route.continue()
+  test('shows loading state during insertion', async ({ page, request }) => {
+    const unique = `E2E Loading Enrollment ${Date.now()}`
+    const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
+    expect(selectedSchoolId).toMatch(/^[0-9a-f-]{36}$/)
+    const create = await request.post(`${SUPABASE_URL}/rest/v1/alunos?select=*`, {
+      headers: { ...serviceHeaders, Prefer: 'return=representation' },
+      data: {
+        nome_completo: unique,
+        data_nascimento: '2017-04-10',
+        sexo: 'F',
+        escola_id: selectedSchoolId,
+        endereco: 'Rua Matrícula E2E, 100',
+        nome_mae: 'Mãe Matrícula E2E',
+        ativo: true,
+      },
     })
-    await selectStudent(page, 'Ana Carolina E2E')
-    await selectFirstClass(page)
-    const submit = page.locator('button[type="submit"]')
-    const submission = submit.click()
-    await expect(submit).toBeDisabled()
-    await expect(submit).toContainText(/processando/i)
-    await submission
+    expect(create.ok()).toBe(true)
+    const [student] = await create.json()
+
+    let releaseInsert = () => {}
+    const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
+    let insertionResponse: Promise<import('@playwright/test').Response> | undefined
+    try {
+      const studentsRead = page.waitForResponse(response =>
+        response.request().method() === 'GET' &&
+        response.url().includes('/rest/v1/alunos') &&
+        response.ok()
+      )
+      await page.reload()
+      await studentsRead
+      await expect(page.getByPlaceholder(/buscar por nome/i)).toBeVisible({ timeout: 15000 })
+
+      await page.route('**/rest/v1/matriculas*', async route => {
+        if (route.request().method() === 'POST') await insertPaused
+        await route.continue()
+      })
+      await selectStudent(page, unique)
+      await selectFirstClass(page)
+      const submit = page.locator('button[type="submit"]')
+      insertionResponse = page.waitForResponse(response =>
+        response.request().method() === 'POST' &&
+        response.url().includes('/rest/v1/matriculas')
+      )
+      await submit.evaluate(button => (button as HTMLButtonElement).click())
+      await expect(submit).toBeDisabled()
+      await expect(submit).toContainText(/processando/i)
+      releaseInsert()
+      const response = await insertionResponse
+      expect(response.ok()).toBe(true)
+    } finally {
+      releaseInsert()
+      await insertionResponse?.catch(() => undefined)
+      await request.delete(`${SUPABASE_URL}/rest/v1/matriculas?aluno_id=eq.${student.id}`, { headers: serviceHeaders })
+      await request.delete(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${student.id}`, { headers: serviceHeaders })
+    }
   })
 
   test('cancel and back return to the list', async ({ page }) => {
