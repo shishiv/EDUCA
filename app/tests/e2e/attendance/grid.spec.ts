@@ -1,4 +1,5 @@
 import { test, expect } from '../support/diagnostics'
+import { discoverE2EAttendancePaths } from './attendance-fixtures'
 import { navigateToDashboard } from '../utils/test-helpers'
 
 test.use({ storageState: 'playwright/.auth/professor.json' })
@@ -7,14 +8,8 @@ let attendancePath: string | null = null
 
 async function openAttendance(page: import('@playwright/test').Page) {
   if (!attendancePath) {
-    await page.goto('/dashboard/turmas')
-    const classLink = page
-      .locator('a[href^="/dashboard/turmas/"]:not([href="/dashboard/turmas/nova"])')
-      .first()
-    await expect(classLink).toBeVisible({ timeout: 15000 })
-    const detailPath = await classLink.getAttribute('href')
-    expect(detailPath).toBeTruthy()
-    attendancePath = `${detailPath}/chamada`
+    const fixture = await discoverE2EAttendancePaths(page)
+    attendancePath = fixture.attendancePath
   }
 
   await page.goto(attendancePath)
@@ -25,6 +20,7 @@ async function openAttendance(page: import('@playwright/test').Page) {
     await page.goto(attendancePath)
     await expect(page.getByRole('button', { name: /abrir chamada/i })).toBeVisible({ timeout: 15000 })
     await page.getByRole('button', { name: /abrir chamada/i }).click()
+    await expect(page.getByText(/chamada aberta/i)).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole('button', { name: /presente/i }).first()).toBeVisible({ timeout: 15000 })
   }
 }

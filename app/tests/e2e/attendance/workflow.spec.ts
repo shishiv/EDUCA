@@ -1,5 +1,6 @@
 import { getTodaySaoPaulo } from '@/lib/date-utils'
 import { test, expect } from '../support/diagnostics'
+import { discoverE2EAttendancePaths } from './attendance-fixtures'
 
 test.use({ storageState: 'playwright/.auth/professor.json' })
 
@@ -13,17 +14,10 @@ let attendancePath: string | null = null
 async function discoverClass(page: import('@playwright/test').Page) {
   if (classPath && attendancePath) return
 
-  await page.goto('/dashboard/turmas')
-  const link = page
-    .locator('a[href^="/dashboard/turmas/"]:not([href="/dashboard/turmas/nova"])')
-    .first()
-  await expect(link).toBeVisible({ timeout: 15000 })
-
-  classPath = await link.getAttribute('href')
-  classId = classPath?.split('/').pop() || null
-  expect(classPath).toBeTruthy()
-  expect(classId).toBeTruthy()
-  attendancePath = `${classPath}/chamada`
+  const fixture = await discoverE2EAttendancePaths(page)
+  classPath = fixture.classPath
+  classId = fixture.classId
+  attendancePath = fixture.attendancePath
 }
 
 async function clearTodaySessions(request: import('@playwright/test').APIRequestContext) {
