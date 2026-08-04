@@ -54,7 +54,11 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: syntheticAuthStateFile,
       },
-      testIgnore: /.*\/(auth)\/.*/,
+      // Pilot-only specs require the explicit pilot provisioner and are run by
+      // scripts/run-pilot-e2e.sh with PILOT_MODE=true.
+      testIgnore: process.env.PILOT_MODE === 'true'
+        ? /.*\/(auth)\/.*/
+        : /.*\/(auth|pilot)\/.*/,
       dependencies: ['setup'],
     },
 
