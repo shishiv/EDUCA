@@ -587,15 +587,13 @@ export function createAttendanceModule(
         }
       }
 
-      const timestamp = now().toISOString()
       const sessionInsert: AttendanceSessionInsert = {
         turma_id: turma.id,
         escola_id: turma.escola_id,
         professor_id: turma.professor_id,
         data_aula: params.data_aula,
         status: 'ABERTA',
-        aberta_em: timestamp,
-        inicio_aula: timestamp,
+        aberta_em: now().toISOString(),
         auto_fechamento_agendado: calculateSaoPauloCutoff(params.data_aula),
         conteudo_programatico: content,
       }
