@@ -69,18 +69,20 @@ export class FeatureFlagsApiService extends BaseApiService {
         return false // Safe default on error
       }
 
-      let flagId = data?.feature_flags?.id
-      if (!flagId) {
-        const { data: flag } = await supabase
-          .from('feature_flags')
-          .select('id')
-          .eq('flag_name', flagName)
-          .eq('is_active', true)
-          .maybeSingle()
-        flagId = flag?.id
+      if (isDemoSandboxEnabled()) {
+        let flagId = data?.feature_flags?.id
+        if (!flagId) {
+          const { data: flag } = await supabase
+            .from('feature_flags')
+            .select('id')
+            .eq('flag_name', flagName)
+            .eq('is_active', true)
+            .maybeSingle()
+          flagId = flag?.id
+        }
+        const override = flagId ? demoFlagOverrides.get(demoFlagOverrideKey(escolaId, flagId)) : undefined
+        if (override !== undefined) return override
       }
-      const override = flagId ? demoFlagOverrides.get(demoFlagOverrideKey(escolaId, flagId)) : undefined
-      if (override !== undefined) return override
 
       // If no record found, flag is not enabled
       if (!data) {
