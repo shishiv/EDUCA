@@ -390,15 +390,22 @@ function normalizedSessionRow(row: AttendanceSessionRow): AttendanceSessionRow {
   return { ...row, status }
 }
 
+function normalizeWriteStatus(
+  status: AttendanceStatusInput | undefined,
+  presente?: boolean | null
+): CanonicalAttendanceStatus | 'INVALID' {
+  if (status === null) return 'NAO_MARCADO'
+  if (status === undefined) {
+    if (presente === undefined || presente === null) return 'INVALID'
+    return presente ? 'P' : 'F'
+  }
+  return normalizeAttendanceStatus(status) ?? 'INVALID'
+}
+
 function statusFromMarkParams(
   params: MarkAttendanceParams
 ): CanonicalAttendanceStatus | 'INVALID' {
-  if (params.status !== undefined) {
-    const status = normalizeAttendanceStatus(params.status)
-    return status ?? 'INVALID'
-  }
-  if (params.presente === undefined) return 'INVALID'
-  return params.presente ? 'P' : 'F'
+  return normalizeWriteStatus(params.status, params.presente)
 }
 
 function isCurrentSaoPauloDate(dateAula: string, now: Date): boolean {
@@ -694,7 +701,7 @@ export function createAttendanceModule(
         return { success: false, code: editable.code, error: editable.error }
       }
 
-      const canonicalStatus = status === null ? 'NAO_MARCADO' : status
+      const canonicalStatus = status
       const timestamp = now().toISOString()
       const attendanceInsert: AttendanceRecordInsert = {
         sessao_id: session.id,
@@ -778,8 +785,8 @@ export function createAttendanceModule(
           }
         }
 
-        const status = normalizeAttendanceStatus(record.status)
-        if (!status) {
+        const status = normalizeWriteStatus(record.status)
+        if (status === 'INVALID') {
           return {
             success: false,
             processed_count: 0,
