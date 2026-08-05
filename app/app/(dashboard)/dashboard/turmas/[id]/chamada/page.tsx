@@ -8,7 +8,6 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { classesApi } from '@/lib/api/classes'
 import { attendanceApi } from '@/lib/api/attendance'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { canRecordAttendance } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -204,31 +203,28 @@ export default function ChamadaPage() {
     const requestId = ++sessionLoadRequestId.current
     setLoadingSessions(true)
     try {
-      let sessionQuery = supabase
-        .from('sessoes_aula')
-        .select('id, turma_id, data_aula, status, professor_id, escola_id, aberta_em, fechada_em, created_at')
-        .eq('turma_id', turmaId)
+      const loadedSessions = await attendanceApi.getSessionsForChamada(
+        turmaId,
+        dateString,
+        requestedSessionId
+      )
 
-      if (requestedSessionId) {
-        sessionQuery = sessionQuery.eq('id', requestedSessionId)
-      } else {
-        sessionQuery = sessionQuery.eq('data_aula', dateString)
-      }
-
-      const { data, error: queryError } = await sessionQuery.order('created_at', { ascending: true })
-
-      if (queryError) throw queryError
       // An initial no-session query can finish after a newly opened session.
       // Only the latest request may replace the current session selection.
       if (requestId !== sessionLoadRequestId.current) return
 
-      const loadedSessions = data ?? []
       setSessions(loadedSessions)
 
       const requested = loadedSessions.find(session => session.id === requestedSessionId)
       const openSession = loadedSessions.find(session => session.status === 'ABERTA')
       const nextSession = requested ?? openSession ?? loadedSessions[loadedSessions.length - 1] ?? null
       setSelectedSessionId(nextSession?.id ?? null)
+
+      // A deep link may point to a session on another date. The canonical
+      // read adapter returns the session's own date, so the UI follows it.
+      if (requested && requested.data_aula !== dateString) {
+        setCurrentDate(startOfDay(new Date(`${requested.data_aula}T00:00:00`)))
+      }
     } catch (loadError) {
       if (requestId !== sessionLoadRequestId.current) return
       logger.error('ATTENDANCE_SESSION_READ_FAILED', loadError as Error, {
@@ -256,18 +252,12 @@ export default function ChamadaPage() {
 
     setLoadingAttendance(true)
     try {
-      const { data, error: queryError } = await supabase
-        .from('frequencia')
-        .select('matricula_id, status_presenca, presente, justificativa')
-        .eq('sessao_id', sessionId)
-
-      if (queryError) throw queryError
-
+      const canonicalRecords = await attendanceApi.getAttendanceForSession(sessionId)
       const loadedAttendance = new Map<string, AttendanceRecord>()
-      for (const record of data ?? []) {
-        const status = mapDatabaseStatus(record.status_presenca, record.presente)
-        if (record.status_presenca === 'NAO_MARCADO' || status === null) continue
-        loadedAttendance.set(record.matricula_id, {
+      for (const [matriculaId, record] of canonicalRecords) {
+        const status = mapDatabaseStatus(record.status, record.status === 'P' || record.status === 'J')
+        if (status === null) continue
+        loadedAttendance.set(matriculaId, {
           status,
           justificativa: record.justificativa,
         })
@@ -310,26 +300,6 @@ export default function ChamadaPage() {
       active = false
     }
   }, [authLoading, loadStudents, loadTurma, turmaId, userProfile?.id])
-
-  useEffect(() => {
-    if (!requestedSessionId || authLoading || !userProfile?.id) return
-
-    let active = true
-    void supabase
-      .from('sessoes_aula')
-      .select('data_aula')
-      .eq('id', requestedSessionId)
-      .eq('turma_id', turmaId)
-      .single()
-      .then(({ data }) => {
-        if (!active || !data || data.data_aula === dateString) return
-        setCurrentDate(startOfDay(new Date(`${data.data_aula}T00:00:00`)))
-      })
-
-    return () => {
-      active = false
-    }
-  }, [authLoading, dateString, requestedSessionId, turmaId, userProfile?.id])
 
   useEffect(() => {
     if (authLoading || !userProfile?.id) return

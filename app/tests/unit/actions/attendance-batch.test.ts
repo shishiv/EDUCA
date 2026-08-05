@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
+import { getSaoPauloDate } from '@/lib/services/attendance-module'
 import { createFakeSupabase, type FakeAttendanceDbState } from './fake-supabase'
 
 const SCHOOL_A = '10000000-0000-0000-0000-000000000001'
@@ -14,6 +15,7 @@ const SESSION_A = '31000000-0000-0000-0000-000000000001'
 const SESSION_B = '31000000-0000-0000-0000-000000000002'
 const MATRICULA_A = '50000000-0000-0000-0000-000000000001'
 const MATRICULA_B = '50000000-0000-0000-0000-000000000002'
+const TEST_DATE = getSaoPauloDate()
 
 const { fakeState, setFakeSupabase } = vi.hoisted(() => {
   let current: ReturnType<typeof createFakeSupabase> | null = null
@@ -47,8 +49,8 @@ function baseState(): FakeAttendanceDbState {
       { id: ADMIN, tipo_usuario: 'admin', escola_id: null, ativo: true },
     ],
     sessions: [
-      { id: SESSION_A, turma_id: TURMA_A, professor_id: PROF_A, escola_id: SCHOOL_A, status: 'ABERTA', data_aula: '2026-08-01' },
-      { id: SESSION_B, turma_id: TURMA_B, professor_id: PROF_A, escola_id: SCHOOL_B, status: 'ABERTA', data_aula: '2026-08-01' },
+      { id: SESSION_A, turma_id: TURMA_A, professor_id: PROF_A, escola_id: SCHOOL_A, status: 'ABERTA', data_aula: TEST_DATE },
+      { id: SESSION_B, turma_id: TURMA_B, professor_id: PROF_A, escola_id: SCHOOL_B, status: 'ABERTA', data_aula: TEST_DATE },
     ],
     turmas: [
       { id: TURMA_A, escola_id: SCHOOL_A, professor_id: PROF_A, ativo: true },
@@ -82,7 +84,7 @@ describe('markAttendanceBatchAction', () => {
       expect.objectContaining({
         sessao_id: SESSION_A,
         matricula_id: MATRICULA_A,
-        data_aula: '2026-08-01',
+        data_aula: TEST_DATE,
         status_presenca: 'P',
         professor_id: PROF_A,
         marcado_por: PROF_A,

@@ -73,7 +73,7 @@ export interface AttendanceStats {
  */
 export interface SessionLockInfo {
   isLocked: boolean
-  lockReason: 'time_18h' | 'session_closed' | 'past_date' | null
+  lockReason: 'time_18h' | 'session_closed' | 'past_date' | 'date_not_current' | null
   canEdit: boolean
   message: string
   timeUntilLockMinutes: number | null

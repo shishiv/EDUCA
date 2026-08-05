@@ -29,6 +29,7 @@ import { markAttendanceAction } from '@/app/actions/attendance/mark-attendance'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
 import { checkLockStatusAction } from '@/app/actions/attendance/check-lock-status'
+import { getSaoPauloDate } from '@/lib/services/attendance-module'
 
 const LIVE = process.env.EDUCA_LIVE_SUPABASE === '1'
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -42,6 +43,7 @@ const SCHOOL_B = '10000000-0000-0000-0000-000000000002'
 const TURMA_A = '30000000-0000-0000-0000-000000000001'
 const TURMA_B = '30000000-0000-0000-0000-000000000002'
 const MATRICULA_A = '50000000-0000-0000-0000-000000000001'
+const TEST_DATE = getSaoPauloDate()
 
 /** Secretaria user id: resolved lazily because it exists only after seeding. */
 let SECRETARIA_ID = '00000000-0000-0000-0000-000000000000'
@@ -190,10 +192,10 @@ run('attendance server actions - live authz (issue #30)', () => {
 
   describe('markAttendanceAction', () => {
     it('valid teacher opens own class session and marks attendance (happy path)', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
-      const marked = await markAs('professora.a@synthetic.invalid', opened.session!.id, MATRICULA_A, '2026-08-03')
+      const marked = await markAs('professora.a@synthetic.invalid', opened.session!.id, MATRICULA_A, TEST_DATE)
       report('mark: valid teacher happy path', marked)
       expect(marked.success).toBe(true)
       expect(marked.record?.professor_id).toBeTruthy()
@@ -201,17 +203,17 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('secretario (view-only role) cannot mark attendance', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
-      const marked = await markAs('secretaria@synthetic.invalid', opened.session!.id, MATRICULA_A, '2026-08-03')
+      const marked = await markAs('secretaria@synthetic.invalid', opened.session!.id, MATRICULA_A, TEST_DATE)
       report('mark: secretario role violation', marked)
       expect(marked.success).toBe(false)
       expect(marked.code).toBe('FORBIDDEN_ROLE')
     })
 
     it('professor cannot mark into another professor session (session ownership)', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       // A second professor owns a different turma: create the user synthetically.
@@ -224,21 +226,21 @@ run('attendance server actions - live authz (issue #30)', () => {
       }).select('id').single()
       expect(turmaC).toBeTruthy()
 
-      const openedB = await openSessionAs('professor.b@synthetic.invalid', turmaC!.id, '2026-08-03')
+      const openedB = await openSessionAs('professor.b@synthetic.invalid', turmaC!.id, TEST_DATE)
       expect(openedB.success).toBe(true)
 
       // professora.a tries to mark into professor B's session using her own
       // class matricula: must be rejected at the application layer.
-      const marked = await markAs('professora.a@synthetic.invalid', openedB.session!.id, MATRICULA_A, '2026-08-03')
+      const marked = await markAs('professora.a@synthetic.invalid', openedB.session!.id, MATRICULA_A, TEST_DATE)
       expect(marked.success).toBe(false)
       expect(marked.code).toBe('SESSION_NOT_OWNED')
     })
 
     it('diretor cannot mark into a session of another escola (school ownership)', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
-      const marked = await markAs('diretora.b@synthetic.invalid', opened.session!.id, MATRICULA_A, '2026-08-03')
+      const marked = await markAs('diretora.b@synthetic.invalid', opened.session!.id, MATRICULA_A, TEST_DATE)
       report('mark: cross-school (diretor B into escola A session)', marked)
       expect(marked.success).toBe(false)
       // RLS hides the foreign session first (SESSION_NOT_FOUND) or the app
@@ -247,7 +249,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('diretor cannot mark a matricula outside the session turma (class ownership)', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       // A second turma in the SAME escola with its own matricula: marking that
@@ -263,7 +265,7 @@ run('attendance server actions - live authz (issue #30)', () => {
         aluno_id: '40000000-0000-0000-0000-000000000001', turma_id: turmaC!.id, ano_letivo: 2026, situacao: 'ativa',
       }).select('id').single()
 
-      const marked = await markAs('diretora.a@synthetic.invalid', opened.session!.id, matriculaC!.id, '2026-08-03')
+      const marked = await markAs('diretora.a@synthetic.invalid', opened.session!.id, matriculaC!.id, TEST_DATE)
       report('mark: matricula outside session turma', marked)
       expect(marked.success).toBe(false)
       expect(marked.code).toBe('MATRICULA_NOT_IN_TURMA')
@@ -277,7 +279,7 @@ run('attendance server actions - live authz (issue #30)', () => {
         sessao_id: '31000000-0000-0000-0000-000000000099',
         matricula_id: MATRICULA_A,
         presente: true,
-        data_aula: '2026-08-03',
+        data_aula: TEST_DATE,
       })
       expect(marked.success).toBe(false)
       expect(marked.code).toBe('UNAUTHENTICATED')
@@ -289,7 +291,7 @@ run('attendance server actions - live authz (issue #30)', () => {
       const { data: other } = await admin!.from('users')
         .select('id').eq('email', 'diretora.a@synthetic.invalid').single()
 
-      const result = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-04', {
+      const result = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE, {
         professor_id: other!.id,
         escola_id: SCHOOL_B,
       })
@@ -303,7 +305,7 @@ run('attendance server actions - live authz (issue #30)', () => {
       const { data: secretaria } = await admin!.from('users')
         .select('id').eq('email', 'secretaria@synthetic.invalid').single()
 
-      const result = await openSessionAs('diretora.a@synthetic.invalid', TURMA_A, '2026-08-04', {
+      const result = await openSessionAs('diretora.a@synthetic.invalid', TURMA_A, TEST_DATE, {
         professor_id: secretaria!.id,
         escola_id: SCHOOL_A,
       })
@@ -317,7 +319,7 @@ run('attendance server actions - live authz (issue #30)', () => {
 
     it('diretor cannot open a session for a turma of another escola', async () => {
       // Client also tries to forge identities: they must be ignored/denied.
-      const result = await openSessionAs('diretora.b@synthetic.invalid', TURMA_A, '2026-08-04', {
+      const result = await openSessionAs('diretora.b@synthetic.invalid', TURMA_A, TEST_DATE, {
         professor_id: SECRETARIA_ID,
         escola_id: SCHOOL_A,
       })
@@ -329,7 +331,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('secretario (view-only role) cannot open a session', async () => {
-      const result = await openSessionAs('secretaria@synthetic.invalid', TURMA_A, '2026-08-04', {
+      const result = await openSessionAs('secretaria@synthetic.invalid', TURMA_A, TEST_DATE, {
         professor_id: SECRETARIA_ID,
         escola_id: SCHOOL_A,
       })
@@ -340,7 +342,7 @@ run('attendance server actions - live authz (issue #30)', () => {
 
     it('professor cannot open a session for a turma they do not own', async () => {
       // TURMA_B has no assigned professor and lives in escola B.
-      const result = await openSessionAs('professora.a@synthetic.invalid', TURMA_B, '2026-08-04', {
+      const result = await openSessionAs('professora.a@synthetic.invalid', TURMA_B, TEST_DATE, {
         professor_id: SECRETARIA_ID,
         escola_id: SCHOOL_B,
       })
@@ -354,7 +356,7 @@ run('attendance server actions - live authz (issue #30)', () => {
 
   describe('closeSessionAction', () => {
     it('valid teacher closes own session', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       setActorClient(await actorClient('professora.a@synthetic.invalid'))
@@ -365,7 +367,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('diretor cannot close a session of another escola', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       setActorClient(await actorClient('diretora.b@synthetic.invalid'))
@@ -386,7 +388,7 @@ run('attendance server actions - live authz (issue #30)', () => {
         escola_id: SCHOOL_A, professor_id: profBId, ativo: true,
       }).select('id').single()
 
-      const openedB = await openSessionAs('professor.b@synthetic.invalid', turmaC!.id, '2026-08-03')
+      const openedB = await openSessionAs('professor.b@synthetic.invalid', turmaC!.id, TEST_DATE)
       expect(openedB.success).toBe(true)
 
       setActorClient(await actorClient('professora.a@synthetic.invalid'))
@@ -399,7 +401,7 @@ run('attendance server actions - live authz (issue #30)', () => {
 
   describe('checkLockStatusAction', () => {
     it('valid teacher checks own session', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       setActorClient(await actorClient('professora.a@synthetic.invalid'))
@@ -409,7 +411,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('professor cannot check another professor session', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       const profBId = await createSyntheticUser(
@@ -420,7 +422,7 @@ run('attendance server actions - live authz (issue #30)', () => {
         escola_id: SCHOOL_A, professor_id: profBId, ativo: true,
       }).select('id').single()
 
-      const openedB = await openSessionAs('professor.b@synthetic.invalid', turmaC!.id, '2026-08-03')
+      const openedB = await openSessionAs('professor.b@synthetic.invalid', turmaC!.id, TEST_DATE)
       expect(openedB.success).toBe(true)
 
       setActorClient(await actorClient('professora.a@synthetic.invalid'))
@@ -430,7 +432,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('secretario (view-only) can read lock status', async () => {
-      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, '2026-08-03')
+      const opened = await openSessionAs('professora.a@synthetic.invalid', TURMA_A, TEST_DATE)
       expect(opened.success).toBe(true)
 
       setActorClient(await actorClient('secretaria@synthetic.invalid'))
