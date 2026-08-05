@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 
 export interface Config {
   id: string
@@ -17,6 +18,8 @@ export interface Config {
   created_at?: string | null
   updated_at?: string | null
 }
+
+const demoConfigOverrides = new Map<string, string>()
 
 export class ConfigsApiService {
   // Get all system configurations
@@ -34,7 +37,12 @@ export class ConfigsApiService {
         throw error
       }
 
-      return data || []
+      return (data || []).map(config => ({
+        ...config,
+        ...(demoConfigOverrides.has(config.id)
+          ? { valor: demoConfigOverrides.get(config.id)! }
+          : {}),
+      }))
     } catch (error) {
       logger.error('Erro na API getAll', error as Error)
       throw new Error('Erro ao carregar configurações do sistema')
@@ -44,6 +52,25 @@ export class ConfigsApiService {
   // Update a configuration value
   async update(id: string, data: Partial<Config>): Promise<Config> {
     try {
+      if (isDemoSandboxEnabled()) {
+        const existing = (await this.getAll()).find(config => config.id === id)
+        if (!existing) throw new Error('Configuração não encontrada')
+        const value = data.valor ?? existing.valor
+        if (!this.validateConfigValue(existing.chave, value)) {
+          throw new Error(`Valor inválido para configuração '${existing.chave}'`)
+        }
+
+        const response = await fetch('/api/configs', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ operation: 'demo.config.update', configId: id, value }),
+        })
+        const result = await response.json().catch(() => ({})) as { error?: string; config?: Config }
+        if (!response.ok || !result.config) throw new Error(result.error ?? 'DEMO_CONFIG_FAILED')
+        demoConfigOverrides.set(id, value)
+        return result.config
+      }
+
       // Validate the new value if provided
       if (data.valor && data.chave) {
         if (!this.validateConfigValue(data.chave, data.valor)) {
@@ -96,7 +123,12 @@ export class ConfigsApiService {
         throw error
       }
 
-      return data
+      return data ? {
+        ...data,
+        ...(demoConfigOverrides.has(data.id)
+          ? { valor: demoConfigOverrides.get(data.id)! }
+          : {}),
+      } : data
     } catch (error) {
       logger.error('Erro na API getByKey', error as Error)
       return null
@@ -106,6 +138,21 @@ export class ConfigsApiService {
   // Reset configuration to default value
   async resetToDefault(id: string): Promise<Config> {
     try {
+      if (isDemoSandboxEnabled()) {
+        const existing = (await this.getAll()).find(config => config.id === id)
+        if (!existing) throw new Error('Configuração não encontrada')
+        const value = existing.valor_padrao || existing.valor
+        const response = await fetch('/api/configs', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ operation: 'demo.config.reset', configId: id }),
+        })
+        const result = await response.json().catch(() => ({})) as { error?: string; config?: Config }
+        if (!response.ok || !result.config) throw new Error(result.error ?? 'DEMO_CONFIG_FAILED')
+        demoConfigOverrides.set(id, value)
+        return result.config
+      }
+
       // First get the config to get its default value
       const { data: configData, error: fetchError } = await supabase
         .from('configs')
@@ -216,3 +263,8 @@ export class ConfigsApiService {
 }
 
 export const configsApi = new ConfigsApiService()
+
+/** Clears client-only configuration overlays between isolated tests. */
+export function resetDemoConfigOverrides(): void {
+  demoConfigOverrides.clear()
+}

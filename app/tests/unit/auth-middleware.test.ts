@@ -31,6 +31,19 @@ describe('checkRouteAccess', () => {
     })
   })
 
+  it('allows the sessions page for every canonical attendance reader', () => {
+    for (const role of ['admin', 'diretor', 'secretario', 'professor']) {
+      expect(checkRouteAccess('/dashboard/sessoes', role).hasAccess).toBe(true)
+    }
+  })
+
+  it.each(['responsavel', 'gestor_sme'])('denies %s on the sessions page', role => {
+    expect(checkRouteAccess('/dashboard/sessoes', role)).toEqual({
+      hasAccess: false,
+      redirectTo: '/unauthorized',
+    })
+  })
+
   it('allows professor academic routes but denies cadastro management', () => {
     expect(checkRouteAccess('/dashboard/turmas/example/chamada', 'professor').hasAccess).toBe(true)
     expect(checkRouteAccess('/dashboard/alunos/novo', 'professor')).toEqual({

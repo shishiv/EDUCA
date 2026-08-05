@@ -15,6 +15,8 @@
 import { BaseApiService } from './base'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
+import { recordDemoClientAction } from '@/lib/demo-sandbox/demo-audit-client'
 import type {
   FeatureFlag,
   EscolaFeatureFlag,
@@ -47,6 +49,7 @@ export class FeatureFlagsApiService extends BaseApiService {
           `
           enabled,
           feature_flags!inner (
+            id,
             flag_name,
             is_active
           )
@@ -65,6 +68,19 @@ export class FeatureFlagsApiService extends BaseApiService {
         })
         return false // Safe default on error
       }
+
+      let flagId = data?.feature_flags?.id
+      if (!flagId) {
+        const { data: flag } = await supabase
+          .from('feature_flags')
+          .select('id')
+          .eq('flag_name', flagName)
+          .eq('is_active', true)
+          .maybeSingle()
+        flagId = flag?.id
+      }
+      const override = flagId ? demoFlagOverrides.get(demoFlagOverrideKey(escolaId, flagId)) : undefined
+      if (override !== undefined) return override
 
       // If no record found, flag is not enabled
       if (!data) {
@@ -201,7 +217,26 @@ export class FeatureFlagsApiService extends BaseApiService {
         },
       })
 
-      return result
+      return result.map(flag => {
+        const escolaFlags = flag.escola_flags.map(escolaFlag => ({
+          ...escolaFlag,
+          enabled: demoFlagOverrides.get(demoFlagOverrideKey(escolaFlag.escola_id, flag.id)) ?? escolaFlag.enabled,
+        }))
+        const knownSchools = new Set(escolaFlags.map(escolaFlag => escolaFlag.escola_id))
+        for (const [key, enabled] of demoFlagOverrides) {
+          const [escolaId, flagId] = key.split(':')
+          if (flagId === flag.id && !knownSchools.has(escolaId)) {
+            escolaFlags.push({
+              escola_id: escolaId,
+              escola_nome: 'Escola',
+              enabled,
+              updated_at: new Date().toISOString(),
+            })
+          }
+        }
+
+        return { ...flag, escola_flags: escolaFlags }
+      })
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
       logger.error('Error in getFlagsWithEscolaStatus', errorMsg, {
@@ -230,6 +265,18 @@ export class FeatureFlagsApiService extends BaseApiService {
     try {
       if (escolaIds.length === 0) {
         return // Nothing to do
+      }
+
+      if (isDemoSandboxEnabled()) {
+        await recordDemoClientAction({
+          operation: 'demo.feature_flag.toggle',
+          entityId: flagId,
+          schoolId: escolaIds.length === 1 ? escolaIds[0] : null,
+        })
+        for (const escolaId of escolaIds) {
+          demoFlagOverrides.set(demoFlagOverrideKey(escolaId, flagId), enabled)
+        }
+        return
       }
 
       const now = new Date().toISOString()
@@ -341,3 +388,14 @@ export class FeatureFlagsApiService extends BaseApiService {
 
 // Export singleton instance
 export const featureFlagsApi = new FeatureFlagsApiService()
+
+const demoFlagOverrides = new Map<string, boolean>()
+
+function demoFlagOverrideKey(escolaId: string, flagId: string): string {
+  return `${escolaId}:${flagId}`
+}
+
+/** Clears client-only feature-flag overlays between isolated tests. */
+export function resetDemoFeatureFlagOverrides(): void {
+  demoFlagOverrides.clear()
+}

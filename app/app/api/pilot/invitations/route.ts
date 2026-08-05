@@ -6,7 +6,11 @@ import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
-import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
+import {
+  demoSandboxSimulatedSuccessResponse,
+  isDemoSandboxEnabled,
+} from '@/lib/demo-sandbox/demo-sandbox'
+import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 
 const invitationSchema = z.object({
   email: z.string().email().refine(email => email.endsWith('.invalid'), 'Synthetic invitation email required'),
@@ -16,8 +20,7 @@ const invitationSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  const demoSandboxBlock = demoSandboxGuardResponse('auth_mutation')
-  if (demoSandboxBlock) return demoSandboxBlock
+  const demoSandbox = isDemoSandboxEnabled()
 
   try {
     const localE2ESafety = process.env.EDUCA_E2E_MODE === 'true'
@@ -32,12 +35,50 @@ export async function POST(request: Request) {
     // Standard E2E uses the canonical synthetic seed without switching the
     // Playwright harness into pilot auth mode. The safety gate still rejects
     // any non-local Supabase URL before this route can mutate Auth.
-    assertSyntheticPilotSafety('seed', localE2ESafety)
+    if (!demoSandbox) assertSyntheticPilotSafety('seed', localE2ESafety)
     const actor = await requirePilotActor(['admin', 'secretario'])
     if (actor.schoolId !== null) return NextResponse.json({ error: 'PILOT_INVITE_SECRETARIAT_REQUIRED' }, { status: 403 })
     const input = invitationSchema.parse(await request.json())
     if (input.role !== 'secretario' && !input.schoolId) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_REQUIRED' }, { status: 400 })
     if (input.role === 'secretario' && input.schoolId) return NextResponse.json({ error: 'PILOT_INVITE_SECRETARIAT_MUST_BE_MUNICIPAL' }, { status: 400 })
+
+    if (demoSandbox) {
+      const supabase = await createClient()
+      if (input.schoolId) {
+        const { data: school, error: schoolError } = await supabase
+          .from('escolas')
+          .select('id')
+          .eq('id', input.schoolId)
+          .eq('ativo', true)
+          .maybeSingle()
+        if (schoolError) throw schoolError
+        if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
+      }
+
+      const receipt = await writeDemoActionInterceptedAudit(
+        asPilotRpcClient(supabase),
+        {
+          operation: 'demo.auth.invitation',
+          entityId: receiptEntityId(input.email),
+          schoolId: input.schoolId,
+        }
+      )
+      const response = demoSandboxSimulatedSuccessResponse(
+        'demo.auth.invitation',
+        {
+          invitation: {
+            id: receipt.correlationId,
+            email: input.email,
+            invited_role: input.role,
+            escola_id: input.schoolId,
+            simulated: true,
+          },
+        },
+        { status: 201, auditId: receipt.auditId, correlationId: receipt.correlationId },
+      )
+
+      return response ?? NextResponse.json({ error: 'DEMO_INVITATION_NOT_AVAILABLE' }, { status: 404 })
+    }
 
     const service = createServiceRoleClient()
     if (input.schoolId) {
@@ -101,4 +142,10 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_INVITE_INVALID', issues: error.issues.map(issue => ({ path: issue.path, code: issue.code })) }, { status: 400 })
     return pilotErrorResponse(error, { feature: 'pilot-invitations', fallbackCode: 'PILOT_INVITE_FAILED' })
   }
+}
+
+function receiptEntityId(email: string): string {
+  let hash = 0
+  for (const character of email) hash = (hash * 31 + character.charCodeAt(0)) >>> 0
+  return `invite-${hash.toString(16)}`
 }

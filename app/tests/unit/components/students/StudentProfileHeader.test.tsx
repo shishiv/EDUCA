@@ -2,6 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { StudentProfileHeader } from '@/components/students/StudentProfileHeader'
 
+function formatLocalDateInput(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
 /**
  * Unit Tests: StudentProfileHeader Component
  * Tests for large avatar header with student info and stats
@@ -35,7 +41,7 @@ describe('StudentProfileHeader', () => {
       
       const student = {
         ...mockStudent,
-        data_nascimento: birthDate.toISOString().split('T')[0],
+        data_nascimento: formatLocalDateInput(birthDate),
       }
       
       render(<StudentProfileHeader student={student} />)
@@ -49,7 +55,7 @@ describe('StudentProfileHeader', () => {
       
       const student = {
         ...mockStudent,
-        data_nascimento: birthDate.toISOString().split('T')[0],
+        data_nascimento: formatLocalDateInput(birthDate),
       }
       
       render(<StudentProfileHeader student={student} />)
@@ -138,7 +144,7 @@ describe('StudentProfileHeader', () => {
       
       const student = {
         ...mockStudent,
-        data_nascimento: birthDate.toISOString().split('T')[0],
+        data_nascimento: formatLocalDateInput(birthDate),
       }
       
       render(<StudentProfileHeader student={student} />)
@@ -155,7 +161,7 @@ describe('StudentProfileHeader', () => {
       
       const student = {
         ...mockStudent,
-        data_nascimento: birthDate.toISOString().split('T')[0],
+        data_nascimento: formatLocalDateInput(birthDate),
       }
       
       render(<StudentProfileHeader student={student} />)
@@ -171,7 +177,7 @@ describe('StudentProfileHeader', () => {
       
       const student = {
         ...mockStudent,
-        data_nascimento: birthDate.toISOString().split('T')[0],
+        data_nascimento: formatLocalDateInput(birthDate),
       }
       
       render(<StudentProfileHeader student={student} />)
@@ -186,7 +192,7 @@ describe('StudentProfileHeader', () => {
       
       const student = {
         ...mockStudent,
-        data_nascimento: birthDate.toISOString().split('T')[0],
+        data_nascimento: formatLocalDateInput(birthDate),
       }
       
       render(<StudentProfileHeader student={student} />)
