@@ -5,6 +5,20 @@ import { test, expect } from '../support/diagnostics'
  * Tests form criação (série, turno, ano letivo)
  */
 
+/**
+ * The support fixture injects a preselected school into sessionStorage for every
+ * test. This registers a later init script that clears it - init scripts run in
+ * registration order, so the removal wins - then reloads so the form starts from
+ * the no-school state that the "enable after selection" assertions depend on.
+ */
+async function clearSelectedEscola(page: import('@playwright/test').Page) {
+  await page.addInitScript(() => {
+    window.sessionStorage.removeItem('educa-selected-escola')
+  })
+  await page.reload()
+  await expect(page.locator('#escola_id')).toBeVisible()
+}
+
 test.describe('Turma - Create Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/dashboard/turmas/nova')
@@ -81,16 +95,21 @@ test.describe('Turma - Create Form', () => {
   })
 
   test('should enable serie after escola selection', async ({ page }) => {
+    // The E2E harness preselects a school for every test; the disabled -> enabled
+    // transition is only observable from the no-school state, so clear the
+    // injected selection and reload before asserting.
+    await clearSelectedEscola(page)
+
     const serieSelect = page.locator('#serie')
-    
+
     // Serie should be disabled initially
     await expect(serieSelect).toBeDisabled()
-    
+
     // Select escola
     const escolaSelect = page.locator('#escola_id')
     await escolaSelect.click()
     await page.getByRole('option').first().click()
-    
+
     // Serie should now be enabled
     await expect(serieSelect).toBeEnabled()
   })
@@ -121,19 +140,21 @@ test.describe('Turma - Create Form', () => {
   })
 
   test('should enable professor after escola selection', async ({ page }) => {
+    // The E2E harness preselects a school for every test; the disabled -> enabled
+    // transition is only observable from the no-school state, so clear the
+    // injected selection and reload before asserting.
+    await clearSelectedEscola(page)
+
     const professorSelect = page.locator('#professor_id')
-    
+
     // Professor should be disabled initially
     await expect(professorSelect).toBeDisabled()
-    
+
     // Select escola
     const escolaSelect = page.locator('#escola_id')
     await escolaSelect.click()
     await page.getByRole('option').first().click()
-    
-    // Wait a bit for state update
-    await page.waitForTimeout(500)
-    
+
     // Professor should now be enabled
     await expect(professorSelect).toBeEnabled()
   })
