@@ -17,20 +17,18 @@ test.describe('Professor titular por turma', () => {
   })
 
   test('opens the titular teacher dialog from a class card', async ({ page }) => {
-    const classCard = page.locator('[class*="cursor-pointer"]').filter({ hasText: /turma/i }).first()
-    if (await classCard.isVisible()) {
-      await classCard.click()
-      await expect(page.getByRole('dialog')).toBeVisible()
-      await expect(page.getByRole('heading', { name: /professor titular da turma/i })).toBeVisible()
-    }
+    const classCard = page.getByTestId('assignment-class-card').first()
+    await expect(classCard).toBeVisible()
+    await classCard.click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByRole('heading', { name: /professor titular da turma/i })).toBeVisible()
   })
 
   test('offers only teachers from the selected school', async ({ page }) => {
-    const classCard = page.locator('[class*="cursor-pointer"]').filter({ hasText: /turma/i }).first()
-    if (await classCard.isVisible()) {
-      await classCard.click()
-      const teacherSelect = page.getByRole('combobox', { name: /professor/i })
-      await expect(teacherSelect).toBeVisible()
-    }
+    const classCard = page.getByTestId('assignment-class-card').first()
+    await expect(classCard).toBeVisible()
+    await classCard.click()
+    const teacherSelect = page.getByRole('combobox', { name: /professor/i })
+    await expect(teacherSelect).toBeVisible()
   })
 })
