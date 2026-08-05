@@ -8,6 +8,7 @@ import { Loader2, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { enhancedAttendanceApi } from '@/lib/api/enhanced-attendance'
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 
 export interface AbrirAulaWorkflowProps {
   turmaId: string
@@ -25,7 +26,7 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
   const handleAbrirAula = async () => {
     setLoading(true)
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getTodaySaoPaulo()
       const session = await enhancedAttendanceApi.createSession({
         turma_id: turmaId,
         professor_id: professorId,
