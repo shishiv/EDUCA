@@ -1,132 +1,17 @@
 /**
- * AttendanceGrid Utility Functions
- * Extracted from AttendanceGrid.tsx (Phase 15-07)
+ * UI adapter for the canonical Attendance session lock projection.
  *
- * Contains lock status helper functions for Brazilian educational compliance:
- * - 18:00 Sao Paulo timezone lock
- * - Session status-based locking
- * - Past date immutability
+ * Status normalization, São Paulo date handling, and the 18:00 rule belong to
+ * the canonical Attendance session module. This adapter keeps the component's
+ * existing display type at the UI seam.
  */
 
-import { getTodaySaoPaulo } from '@/lib/date-utils'
+import { getCanonicalSessionLockInfo } from '@/lib/services/attendance-module'
 import type { SessionLockInfo } from './AttendanceGridTypes'
 
-/**
- * Check if current time is before 18:00 in Sao Paulo timezone
- */
-export function isBefore18hSaoPaulo(): boolean {
-  // CI's local E2E stack must be deterministic across the clock boundary;
-  // server-side session expiry remains disabled only by the matching local
-  // EDUCA_E2E_MODE flag.
-  if (process.env.NEXT_PUBLIC_EDUCA_E2E_MODE === 'true') return true
-
-  const now = new Date()
-  const saoPauloTime = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Sao_Paulo',
-    hour: 'numeric',
-    hour12: false
-  }).format(now)
-  const currentHour = parseInt(saoPauloTime, 10)
-  return currentHour < 18
-}
-
-/**
- * Calculate time until 18:00 lock in minutes
- */
-export function getTimeUntilLock(): number {
-  const now = new Date()
-  const saoPauloFormatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Sao_Paulo',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: false
-  })
-  const parts = saoPauloFormatter.formatToParts(now)
-  const currentHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10)
-  const currentMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10)
-
-  const lockHour = 18
-  const minutesUntilLock = (lockHour - currentHour) * 60 - currentMinute
-  return Math.max(0, minutesUntilLock)
-}
-
-/**
- * Format time until lock in human-readable format
- */
-export function formatTimeUntilLock(minutes: number): string {
-  if (minutes <= 0) return 'Bloqueado'
-  if (minutes < 60) return `${minutes} min`
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours}h ${mins}min`
-}
-
-/**
- * Determine session lock status based on time and session state
- * Implements Brazilian educational compliance: "nao existe o esquecer"
- */
 export function getSessionLockInfo(
   sessionDate?: string,
   sessionStatus?: string
 ): SessionLockInfo {
-  const today = getTodaySaoPaulo()
-
-  const normalizedSessionStatus = sessionStatus?.toUpperCase()
-
-  // Session already closed or not open
-  if (normalizedSessionStatus === 'FECHADA' || normalizedSessionStatus === 'CANCELADA' || normalizedSessionStatus === 'PLANEJADA') {
-    return {
-      isLocked: true,
-      lockReason: 'session_closed',
-      canEdit: false,
-      message: 'Sessao finalizada. Frequencia nao pode ser modificada.',
-      timeUntilLockMinutes: null
-    }
-  }
-
-  // Past date - immutable
-  if (sessionDate && sessionDate < today) {
-    return {
-      isLocked: true,
-      lockReason: 'past_date',
-      canEdit: false,
-      message: 'Data passada. Frequencia bloqueada para garantir integridade dos registros.',
-      timeUntilLockMinutes: null
-    }
-  }
-
-  // Today - check 18:00 lock
-  if (sessionDate === today || !sessionDate) {
-    const isBefore18h = isBefore18hSaoPaulo()
-    const timeUntilLock = getTimeUntilLock()
-
-    if (!isBefore18h) {
-      return {
-        isLocked: true,
-        lockReason: 'time_18h',
-        canEdit: false,
-        message: 'Frequencia bloqueada apos 18:00. Principio "nao existe o esquecer" da legislacao educacional brasileira.',
-        timeUntilLockMinutes: 0
-      }
-    }
-
-    return {
-      isLocked: false,
-      lockReason: null,
-      canEdit: true,
-      message: timeUntilLock <= 60
-        ? `Atencao: Bloqueio automatico em ${formatTimeUntilLock(timeUntilLock)}`
-        : '',
-      timeUntilLockMinutes: timeUntilLock
-    }
-  }
-
-  // Future date - editable
-  return {
-    isLocked: false,
-    lockReason: null,
-    canEdit: true,
-    message: '',
-    timeUntilLockMinutes: null
-  }
+  return getCanonicalSessionLockInfo(sessionDate, sessionStatus)
 }

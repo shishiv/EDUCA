@@ -1,5 +1,14 @@
 BEGIN;
 
+-- Anchor the fixture once to the database's current São Paulo calendar date.
+-- The attendance trigger uses the same expression, so the test is stable
+-- across wall-clock days without weakening the current-date contract.
+SELECT set_config(
+  'educa.attendance_test_date',
+  ((now() AT TIME ZONE 'America/Sao_Paulo')::date)::text,
+  true
+);
+
 CREATE FUNCTION pg_temp.assert_true(condition boolean, message text)
 RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
@@ -46,7 +55,7 @@ INSERT INTO sessoes_aula(
   '31000000-0000-0000-0000-000000000001',
   '11000000-0000-0000-0000-000000000001',
   '21000000-0000-0000-0000-000000000001',
-  '2026-08-03', 'ABERTA', now(), 'Chamada'
+  current_setting('educa.attendance_test_date')::date, 'ABERTA', now(), 'Chamada'
 );
 
 SELECT pg_temp.assert_true(
@@ -75,7 +84,7 @@ INSERT INTO frequencia(
 );
 
 SELECT pg_temp.assert_true(
-  (SELECT data_aula = '2026-08-03' AND presente = true
+  (SELECT data_aula = current_setting('educa.attendance_test_date')::date AND presente = true
      AND professor_id = '21000000-0000-0000-0000-000000000001'
      AND marcado_por = '21000000-0000-0000-0000-000000000001'
    FROM frequencia WHERE id = '71000000-0000-0000-0000-000000000001'),
@@ -86,7 +95,7 @@ DO $$
 BEGIN
   BEGIN
     INSERT INTO frequencia(matricula_id, sessao_id, data_aula, status_presenca)
-    VALUES ('51000000-0000-0000-0000-000000000001','61000000-0000-0000-0000-000000000001','2026-08-03','P');
+    VALUES ('51000000-0000-0000-0000-000000000001','61000000-0000-0000-0000-000000000001',current_setting('educa.attendance_test_date')::date,'P');
     RAISE EXCEPTION 'duplicate frequency row unexpectedly succeeded';
   EXCEPTION WHEN unique_violation THEN
     NULL;
@@ -125,7 +134,7 @@ INSERT INTO sessoes_aula(
   '31000000-0000-0000-0000-000000000001',
   '11000000-0000-0000-0000-000000000001',
   '21000000-0000-0000-0000-000000000001',
-  '2026-08-03', 'ABERTA', now(), 'Chamada'
+  current_setting('educa.attendance_test_date')::date, 'ABERTA', now(), 'Chamada'
 );
 
 INSERT INTO frequencia(
@@ -135,7 +144,7 @@ INSERT INTO frequencia(
   '71000000-0000-0000-0000-000000000002',
   '51000000-0000-0000-0000-000000000001',
   '61000000-0000-0000-0000-000000000002',
-  '2026-08-03', 'F', true,
+  current_setting('educa.attendance_test_date')::date, 'F', true,
   '21000000-0000-0000-0000-000000000001',
   '21000000-0000-0000-0000-000000000001'
 );
@@ -190,7 +199,7 @@ BEGIN
       '31000000-0000-0000-0000-000000000001',
       '11000000-0000-0000-0000-000000000001',
       '21000000-0000-0000-0000-000000000001',
-      '2026-08-04', 'ABERTA', 'Chamada'
+      current_setting('educa.attendance_test_date')::date, 'ABERTA', 'Chamada'
     );
     RAISE EXCEPTION 'admin session insert unexpectedly succeeded';
   EXCEPTION WHEN OTHERS THEN

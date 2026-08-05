@@ -14,7 +14,7 @@ import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attenda
 const BatchAttendanceSchema = z.object({
   attendance: z.array(z.object({
     matricula_id: z.string().uuid('ID da matrícula inválido'),
-    status: z.enum(['P', 'F', 'J']).nullable(),
+    status: z.enum(['P', 'F', 'J', 'A']).nullable(),
     justificativa: z.string().max(500, 'Justificativa muito longa').nullable().optional(),
   })).min(1, 'Pelo menos um registro de frequência é necessário'),
 })
@@ -23,7 +23,7 @@ function statusForCode(code?: string): number {
   if (code === 'UNAUTHENTICATED') return 401
   if (code === 'SESSION_NOT_FOUND' || code === 'TURMA_NOT_FOUND' || code === 'MATRICULA_NOT_FOUND') return 404
   if (code === 'FORBIDDEN_ROLE' || code === 'SESSION_NOT_OWNED' || code === 'SCHOOL_MISMATCH' || code === 'TURMA_NOT_OWNED') return 403
-  if (code === 'SESSION_CLOSED' || code === 'ATTENDANCE_WRITE_FAILED') return 409
+  if (code === 'SESSION_CLOSED' || code === 'SESSION_DATE_NOT_CURRENT' || code === 'ATTENDANCE_WRITE_FAILED') return 409
   return 400
 }
 
