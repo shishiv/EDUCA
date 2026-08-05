@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
             ? 404
             : result.code === 'SESSION_ALREADY_OPEN'
               ? 409
-              : 400
+              : result.code === 'DATE_NOT_CURRENT'
+                ? 409
+                : 400
       return NextResponse.json(result, { status })
     }
 

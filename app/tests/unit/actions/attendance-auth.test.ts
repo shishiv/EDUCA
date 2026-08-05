@@ -14,6 +14,7 @@ import {
   type FakeAttendanceDbState,
 } from './fake-supabase'
 import { markAttendanceAction } from '@/app/actions/attendance/mark-attendance'
+import { getSaoPauloDate } from '@/lib/services/attendance-module'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
 import { checkLockStatusAction } from '@/app/actions/attendance/check-lock-status'
@@ -41,6 +42,7 @@ const SESSION_B = '31000000-0000-0000-0000-000000000002'
 
 const MATRICULA_A1 = '50000000-0000-0000-0000-000000000001'
 const MATRICULA_A2 = '50000000-0000-0000-0000-000000000002'
+const TEST_DATE = getSaoPauloDate()
 
 const userRow = (id: string, tipo_usuario: string, escola_id: string | null) => ({
   id,
@@ -61,8 +63,8 @@ const sessionRow = (
   professor_id,
   escola_id,
   status,
-  data_aula: '2026-08-01',
-  auto_fechamento_agendado: '2026-08-01T21:00:00.000Z',
+  data_aula: TEST_DATE,
+  auto_fechamento_agendado: null,
   fechada_em: null,
   travada_em: null,
 })
@@ -124,12 +126,12 @@ const markParams = {
   sessao_id: SESSION_A,
   matricula_id: MATRICULA_A1,
   presente: true,
-  data_aula: '2026-08-01',
+  data_aula: TEST_DATE,
 }
 
 const openParams = {
   turma_id: TURMA_A,
-  data_aula: '2026-08-05',
+  data_aula: TEST_DATE,
   conteudo_programatico: 'Aula de teste',
 }
 
@@ -258,6 +260,7 @@ describe('markAttendanceAction - authz', () => {
 describe('openSessionAction - authz and identity derivation', () => {
   it('ignores a forged client professor_id for a professor actor', async () => {
     // Client tries to attribute the session to PROF_B.
+    fake().state.sessions = []
     const result = await openSessionAction({
       ...openParams,
       professor_id: PROF_B,
@@ -279,6 +282,7 @@ describe('openSessionAction - authz and identity derivation', () => {
 
   it('ignores a forged client professor_id for a diretor actor', async () => {
     fake().state.user = { id: DIR_A }
+    fake().state.sessions = []
     const result = await openSessionAction({
       ...openParams,
       professor_id: SECRETARIO,
@@ -411,14 +415,14 @@ describe('checkLockStatusAction - authz', () => {
   })
 
   it('allows a professor to check their own turma by turma_id + date', async () => {
-    const result = await checkLockStatusAction(TURMA_A, '2026-08-01')
+    const result = await checkLockStatusAction(TURMA_A, TEST_DATE)
     expect(result.success).toBe(true)
     expect(result.isLocked).toBe(false)
   })
 
   it('rejects a professor checking another turma by turma_id + date', async () => {
     fake().state.user = { id: PROF_B }
-    const result = await checkLockStatusAction(TURMA_A, '2026-08-01')
+    const result = await checkLockStatusAction(TURMA_A, TEST_DATE)
     expect(result.success).toBe(false)
     expect(result.code).toBe('TURMA_NOT_OWNED')
   })
