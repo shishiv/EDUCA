@@ -324,7 +324,7 @@ test.describe('Alunos - Sexo/Gender Field', () => {
   })
 
   test('should have Masculino and Feminino options', async ({ page }) => {
-    const sexoSelect = page.locator('select, [role="combobox"]').filter({ hasText: /selecione|escolha|sexo/i }).first()
+    const sexoSelect = page.locator('#sexo')
     
     if (await sexoSelect.isVisible()) {
       await sexoSelect.click()
@@ -336,7 +336,7 @@ test.describe('Alunos - Sexo/Gender Field', () => {
   })
 
   test('should allow selecting Masculino', async ({ page }) => {
-    const sexoSelect = page.locator('select, [role="combobox"]').filter({ hasText: /selecione|escolha|sexo/i }).first()
+    const sexoSelect = page.locator('#sexo')
     
     if (await sexoSelect.isVisible()) {
       await sexoSelect.click()
@@ -348,7 +348,7 @@ test.describe('Alunos - Sexo/Gender Field', () => {
   })
 
   test('should allow selecting Feminino', async ({ page }) => {
-    const sexoSelect = page.locator('select, [role="combobox"]').filter({ hasText: /selecione|escolha|sexo/i }).first()
+    const sexoSelect = page.locator('#sexo')
     
     if (await sexoSelect.isVisible()) {
       await sexoSelect.click()
@@ -480,7 +480,7 @@ test.describe('Alunos - Successful Creation', () => {
     await page.getByLabel(/data.*nascimento/i).fill('2015-03-15')
     
     // Select sexo
-    const sexoSelect = page.locator('select, [role="combobox"]').filter({ hasText: /selecione|escolha|sexo/i }).first()
+    const sexoSelect = page.locator('#sexo')
     await sexoSelect.click()
     await page.getByRole('option', { name: /masculino/i }).first().click()
     
@@ -510,7 +510,7 @@ test.describe('Alunos - Successful Creation', () => {
     await page.getByLabel(/nome.*completo/i).fill(studentName)
     await page.getByLabel(/data.*nascimento/i).fill('2016-08-20')
     
-    const sexoSelect = page.locator('select, [role="combobox"]').filter({ hasText: /selecione|escolha|sexo/i }).first()
+    const sexoSelect = page.locator('#sexo')
     await sexoSelect.click()
     await page.getByRole('option', { name: /feminino/i }).first().click()
     
