@@ -262,7 +262,7 @@ export function TeacherAssignment({
                 onValueChange={setSelectedTeacherId}
                 disabled={loading}
               >
-                <SelectTrigger id="professor">
+                <SelectTrigger id="professor" aria-label="Professor titular">
                   <SelectValue placeholder="Selecione um professor" />
                 </SelectTrigger>
                 <SelectContent>
