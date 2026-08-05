@@ -17,6 +17,7 @@
  */
 
 import { NextResponse } from 'next/server'
+import type { DemoActionOperation } from '@/lib/demo-sandbox/demo-audit'
 
 /** Env flag that switches the instance into public demo sandbox mode. */
 export const DEMO_SANDBOX_ENV_KEY = 'NEXT_PUBLIC_DEMO_SANDBOX'
@@ -142,7 +143,7 @@ export const DEMO_SANDBOX_CAPABILITIES = [
     id: 'audit-and-metrics',
     label: 'Auditoria e métricas internas',
     routePrefixes: [],
-    apiPrefixes: ['/api/pilot/audit', '/api/pilot/metrics'],
+    apiPrefixes: ['/api/pilot/audit', '/api/pilot/metrics', '/api/demo/audit'],
   },
   {
     id: 'whatsapp-local',
@@ -186,6 +187,13 @@ export const DEMO_SANDBOX_BLOCKED_API_PREFIXES = [
   '/api/whatsapp/webhook',
 ] as const
 
+/** API paths whose real contract is validated before a demo no-op succeeds. */
+export const DEMO_SANDBOX_SIMULATED_API_PREFIXES = [
+  '/api/pilot/imports',
+  '/api/pilot/invitations',
+  '/api/pilot/first-access',
+] as const
+
 /** Page prefixes for government exports and other external integrations. */
 export const DEMO_SANDBOX_BLOCKED_ROUTE_PREFIXES = [
   '/dashboard/educacenso',
@@ -199,6 +207,11 @@ export const DEMO_SANDBOX_BLOCKED_ROUTE_PREFIXES = [
 
 function matchesPathPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)
+}
+
+/** Returns true when a path is handled by an authenticated demo no-op. */
+export function isDemoSandboxSimulatedApiPath(pathname: string): boolean {
+  return DEMO_SANDBOX_SIMULATED_API_PREFIXES.some(prefix => matchesPathPrefix(pathname, prefix))
 }
 
 /** Returns the block reason for a path, or null when the path is not blocked. */
@@ -223,6 +236,19 @@ export function getDemoSandboxBlockedReason(
 /** Returns true when the path is one of the explicitly blocked demo APIs. */
 export function isDemoSandboxBlockedApiPath(pathname: string): boolean {
   return DEMO_SANDBOX_BLOCKED_API_PREFIXES.some(prefix => matchesPathPrefix(pathname, prefix))
+}
+
+/** Returns true only for an API effect that must remain hard-blocked in demo mode. */
+export function isDemoSandboxHardBlockedPath(
+  pathname: string,
+  env: Record<string, string | undefined> = process.env
+): boolean {
+  return Boolean(
+    isDemoSandboxEnabled(env) &&
+    pathname.startsWith('/api/') &&
+    getDemoSandboxBlockedReason(pathname) &&
+    !isDemoSandboxSimulatedApiPath(pathname)
+  )
 }
 
 /**
@@ -287,4 +313,42 @@ export function demoSandboxGuardResponse(
     },
     { status: 403 }
   )
+}
+
+export interface DemoSandboxSimulatedSuccessOptions {
+  status?: number
+  auditId?: string
+  correlationId?: string
+}
+
+/** Returns a truthful 2xx response whose business effect was suppressed. */
+export function demoSandboxSimulatedSuccessResponse(
+  operation: DemoActionOperation,
+  data: Record<string, unknown> = {},
+  options: DemoSandboxSimulatedSuccessOptions = {},
+  env: Record<string, string | undefined> = process.env
+): NextResponse | null {
+  if (!isDemoSandboxEnabled(env)) return null
+
+  const correlationId = options.correlationId ?? crypto.randomUUID()
+  const response = {
+    ...data,
+    success: true,
+    demo: {
+      operation,
+      outcome: 'simulated_success' as const,
+      effect_suppressed: true as const,
+      synthetic_only: true as const,
+      correlation_id: correlationId,
+      ...(options.auditId ? { audit_id: options.auditId } : {}),
+    },
+  }
+
+  return NextResponse.json(response, {
+    status: options.status ?? 200,
+    headers: {
+      'cache-control': 'no-store',
+      'x-educa-demo-outcome': 'simulated_success',
+    },
+  })
 }

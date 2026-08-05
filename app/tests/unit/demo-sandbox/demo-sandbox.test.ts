@@ -4,12 +4,16 @@ import {
   DEMO_SANDBOX_BLOCKED_API_PREFIXES,
   DEMO_SANDBOX_BLOCKED_EFFECTS,
   DEMO_SANDBOX_CAPABILITIES,
+  DEMO_SANDBOX_SIMULATED_API_PREFIXES,
   demoSandboxGuardResponse,
+  demoSandboxSimulatedSuccessResponse,
   getDemoSandboxBlockedReason,
   isDemoSandboxBlockedApiPath,
   isDemoSandboxCapabilityAllowed,
   isDemoSandboxEnabled,
   isDemoSandboxPilotPathAllowed,
+  isDemoSandboxSimulatedApiPath,
+  isDemoSandboxHardBlockedPath,
   resolveDemoSandboxCapability,
 } from '@/lib/demo-sandbox/demo-sandbox'
 
@@ -54,6 +58,45 @@ describe('demo sandbox guard', () => {
     expect(isDemoSandboxCapabilityAllowed('/dashboard/notas', {})).toBe(false)
     expect(isDemoSandboxPilotPathAllowed('/dashboard/notas', demoEnv)).toBe(true)
     expect(isDemoSandboxPilotPathAllowed('/dashboard/notas', {})).toBe(false)
+  })
+
+  it('lets authenticated route handlers own the simulated API response', () => {
+    const demoEnv = { NEXT_PUBLIC_DEMO_SANDBOX: 'true' }
+    expect(DEMO_SANDBOX_SIMULATED_API_PREFIXES).toContain('/api/pilot/imports')
+    expect(isDemoSandboxSimulatedApiPath('/api/pilot/imports/abc123')).toBe(true)
+    expect(isDemoSandboxSimulatedApiPath('/api/educacenso/export')).toBe(false)
+    expect(isDemoSandboxHardBlockedPath('/api/educacenso/export', demoEnv)).toBe(true)
+    expect(isDemoSandboxHardBlockedPath('/api/whatsapp/webhook', demoEnv)).toBe(true)
+    expect(isDemoSandboxHardBlockedPath('/api/pilot/imports', demoEnv)).toBe(false)
+    expect(isDemoSandboxHardBlockedPath('/dashboard/educacenso', demoEnv)).toBe(false)
+
+    const response = demoSandboxSimulatedSuccessResponse(
+      'demo.config.update',
+      { config: { id: 'config-1', valor: 'demo' } },
+      { auditId: 'audit-1', correlationId: 'correlation-1' },
+      demoEnv,
+    )
+
+    expect(response?.status).toBe(200)
+    expect(response?.headers.get('x-educa-demo-outcome')).toBe('simulated_success')
+    return response?.json().then(body => {
+      expect(body).toMatchObject({
+        success: true,
+        config: { id: 'config-1', valor: 'demo' },
+        demo: {
+          operation: 'demo.config.update',
+          outcome: 'simulated_success',
+          effect_suppressed: true,
+          synthetic_only: true,
+          audit_id: 'audit-1',
+          correlation_id: 'correlation-1',
+        },
+      })
+    })
+  })
+
+  it('does not build a simulated success response outside the demo', () => {
+    expect(demoSandboxSimulatedSuccessResponse('demo.config.update', {}, {}, {})).toBeNull()
   })
 
   it('mantem bloqueados Educacenso, webhook e rotas nao inventariadas', async () => {
