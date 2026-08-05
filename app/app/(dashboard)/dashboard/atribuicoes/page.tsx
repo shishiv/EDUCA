@@ -268,6 +268,7 @@ export default function AtribuicoesPage() {
           {turmas.map(turma => (
             <Card
               key={turma.id}
+              data-testid="assignment-class-card"
               className={cn(
                 "transition-all hover:shadow-md cursor-pointer",
                 turma.professor
