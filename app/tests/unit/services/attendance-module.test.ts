@@ -207,6 +207,33 @@ describe('canonical Attendance session module', () => {
     ])
   })
 
+  it('persists an unmarked (null) status as NAO_MARCADO with the same payload as an individual write', async () => {
+    const individual = createSubject()
+    await individual.subject.markAttendance({ sessao_id: SESSION_A, matricula_id: MATRICULA_A, status: null })
+
+    const batch = createSubject()
+    const result = await batch.subject.markAttendanceBatch({
+      sessao_id: SESSION_A,
+      records: [{ matricula_id: MATRICULA_A, status: null, justificativa: null }],
+    })
+
+    expect(result).toEqual(expect.objectContaining({ success: true, processed_count: 1 }))
+    expect(batch.fake.writes.upserts[0]).toEqual([
+      expect.objectContaining({
+        sessao_id: SESSION_A,
+        matricula_id: MATRICULA_A,
+        data_aula: TEST_DATE,
+        status_presenca: 'NAO_MARCADO',
+        presente: false,
+        professor_id: PROF_A,
+        marcado_por: PROF_A,
+      }),
+    ])
+    expect(batch.fake.writes.upserts[0]).toEqual([
+      expect.objectContaining(individual.fake.writes.upserts[0] as Record<string, unknown>),
+    ])
+  })
+
   it('rejects an enrollment mismatch before a batch write', async () => {
     const { fake, subject } = createSubject()
 
