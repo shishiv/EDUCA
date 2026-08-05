@@ -70,7 +70,7 @@ checks, school selection, RLS or audit.
 | --- | --- | --- | --- |
 | Dashboard and search | `/dashboard`, `/dashboard/perfil` | `/api/dashboard/alerts`, `/api/attendance/trends`, `/api/chamada/pendentes`, `/api/compliance/warnings`, `/api/search`, `/api/turmas/minhas` | Read synthetic metrics and alerts |
 | Schools | `/dashboard/escolas`, `/dashboard/escolas/nova`, `/dashboard/escolas/[id]` | Supabase client queries with RLS | Multi-school admin view; school context remains required for school-scoped writes |
-| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries | Read and manage existing synthetic profiles; invitation remains blocked |
+| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries, `/api/demo/audit` | Read and manage existing synthetic profiles; status toggle and invitation return a simulated-success no-op |
 | Students | `/dashboard/alunos`, `/dashboard/alunos/novo`, `/dashboard/alunos/[id]` | Existing typed Supabase queries | Synthetic CRUD with the selected school context |
 | Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
 | Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
@@ -87,10 +87,13 @@ its capability is named and its external effects are reviewed.
 
 ## Blocked effects
 
+Synthetic imports, Auth user invitations and first-access password mutation are
+no longer hard-blocked: they return a simulated-success `2xx` no-op (see
+[Demo mode guards](#demo-mode-guards-explicit-code-not-prose)). The effects below
+stay fully blocked.
+
 | Effect | Blocked paths or boundary | Expected result |
 | --- | --- | --- |
-| Synthetic dataset import | `/api/pilot/imports*` | `403` and no staging or publish |
-| Auth user mutation | `/api/pilot/invitations*`, `/api/pilot/first-access` | `403` and no invite or password change |
 | Educacenso and government integration | `/api/educacenso*`, `/api/government*`, `/api/integracoes*`, `/api/censo*`, `/api/inep*` | `403`; no external request |
 | Real PII export | `/api/export*`, `/api/exports*`, `/api/reports/educacenso*`, `/api/reports/export*` | `403`; browser reports remain synthetic-only |
 | Real WhatsApp integration | `/api/whatsapp/webhook*` and the gateway factory | `403` for webhook; local fake for notification simulation |
@@ -104,8 +107,9 @@ bypass a product-scope restriction only for a named synthetic capability. Auth,
 role checks, school isolation, RLS, audit and external-effect guards stay active.
 
 > **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations`.
-> The endpoint returns `403` in demo mode because it would mutate Auth users.
-> This is correct behaviour, not a bug.
+> In demo mode the endpoint returns a simulated-success `2xx` no-op: it mutates no
+> Auth user and writes only the redacted `demo_action_intercepted` audit. This is
+> correct behaviour, not a bug.
 
 ## Environment (demo runner)
 
