@@ -4,21 +4,50 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
-import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
+import {
+  demoSandboxSimulatedSuccessResponse,
+  isDemoSandboxEnabled,
+} from '@/lib/demo-sandbox/demo-sandbox'
+import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 
 const firstAccessSchema = z.object({
   password: z.string().min(12).max(128).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/).regex(/[^A-Za-z0-9]/),
 })
 
 export async function POST(request: Request) {
-  const demoSandboxBlock = demoSandboxGuardResponse('auth_mutation')
-  if (demoSandboxBlock) return demoSandboxBlock
+  const demoSandbox = isDemoSandboxEnabled()
 
   try {
     const input = firstAccessSchema.parse(await request.json())
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_AUTH_REQUIRED' }, { status: 401 })
+
+    if (demoSandbox) {
+      const service = createServiceRoleClient()
+      const { data: invitation, error: invitationError } = await service
+        .from('pilot_user_invitations')
+        .select('id,accepted_at')
+        .eq('auth_user_id', user.id)
+        .maybeSingle()
+      if (invitationError) throw invitationError
+      if (!invitation) return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_INVITATION_REQUIRED' }, { status: 403 })
+
+      const receipt = await writeDemoActionInterceptedAudit(
+        asPilotRpcClient(supabase),
+        {
+          operation: 'demo.auth.first_access',
+          entityId: user.id,
+        }
+      )
+      const response = demoSandboxSimulatedSuccessResponse(
+        'demo.auth.first_access',
+        { completed: true, simulated: true },
+        { auditId: receipt.auditId, correlationId: receipt.correlationId },
+      )
+
+      return response ?? NextResponse.json({ error: 'DEMO_FIRST_ACCESS_NOT_AVAILABLE' }, { status: 404 })
+    }
 
     const service = createServiceRoleClient()
     const { data: invitation } = await service.from('pilot_user_invitations').select('id,accepted_at').eq('auth_user_id', user.id).maybeSingle()

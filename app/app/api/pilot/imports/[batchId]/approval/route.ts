@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createHash } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
@@ -7,7 +8,11 @@ import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 import { decryptSyntheticCsvFromStaging, validateSyntheticStudentCsv } from '@/lib/pilot/synthetic-csv-import'
-import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
+import {
+  demoSandboxSimulatedSuccessResponse,
+  isDemoSandboxEnabled,
+} from '@/lib/demo-sandbox/demo-sandbox'
+import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 
 async function findOrCreateByImportSource(
   service: ReturnType<typeof createServiceRoleClient>,
@@ -28,15 +33,43 @@ async function findOrCreateByImportSource(
 }
 
 export async function POST(request: Request, context: { params: Promise<{ batchId: string }> }) {
-  const demoSandboxBlock = demoSandboxGuardResponse('dataset_ingest')
-  if (demoSandboxBlock) return demoSandboxBlock
+  const demoSandbox = isDemoSandboxEnabled()
   try {
-    assertSyntheticPilotSafety('import')
     const actor = await requirePilotActor(['diretor'])
     if (!actor.schoolId) return NextResponse.json({ error: 'PILOT_APPROVAL_SCHOOL_REQUIRED' }, { status: 403 })
     const { batchId } = await context.params
+    if (!z.string().uuid().safeParse(batchId).success) {
+      return NextResponse.json({ error: 'PILOT_APPROVAL_INVALID_BATCH' }, { status: 400 })
+    }
     const body = await request.json() as { decision?: 'approved' | 'rejected' }
     if (!['approved', 'rejected'].includes(body.decision || '')) return NextResponse.json({ error: 'PILOT_APPROVAL_INVALID_DECISION' }, { status: 400 })
+
+    if (demoSandbox) {
+      const supabase = await createClient()
+      const receipt = await writeDemoActionInterceptedAudit(
+        asPilotRpcClient(supabase),
+        {
+          operation: 'demo.pilot.import_approval',
+          entityId: batchId,
+          schoolId: actor.schoolId,
+        }
+      )
+      const response = demoSandboxSimulatedSuccessResponse(
+        'demo.pilot.import_approval',
+        {
+          batch: {
+            id: batchId,
+            status: body.decision === 'approved' ? 'simulated_approved' : 'simulated_rejected',
+            decision: body.decision,
+          },
+        },
+        { auditId: receipt.auditId, correlationId: receipt.correlationId },
+      )
+
+      return response ?? NextResponse.json({ error: 'DEMO_IMPORT_APPROVAL_NOT_AVAILABLE' }, { status: 404 })
+    }
+
+    assertSyntheticPilotSafety('import')
 
     const service = createServiceRoleClient()
     const { data: batch, error: batchError } = await service.from('pilot_import_batches').select('*').eq('id', batchId).single()

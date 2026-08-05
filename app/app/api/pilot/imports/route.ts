@@ -6,12 +6,16 @@ import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 import {
+  demoSandboxSimulatedSuccessResponse,
+  isDemoSandboxEnabled,
+} from '@/lib/demo-sandbox/demo-sandbox'
+import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
+import {
   createDryRunValidationToken,
   encryptSyntheticCsvForStaging,
   validateSyntheticStudentCsv,
   verifyDryRunValidationToken,
 } from '@/lib/pilot/synthetic-csv-import'
-import { demoSandboxGuardResponse } from '@/lib/demo-sandbox/demo-sandbox'
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024
 
@@ -23,11 +27,10 @@ function getImportKey(): { key: string; keyId: string } {
 }
 
 export async function POST(request: Request) {
-  const demoSandboxBlock = demoSandboxGuardResponse('dataset_ingest')
-  if (demoSandboxBlock) return demoSandboxBlock
+  const demoSandbox = isDemoSandboxEnabled()
 
   try {
-    assertSyntheticPilotSafety('import')
+    if (!demoSandbox) assertSyntheticPilotSafety('import')
     const actor = await requirePilotActor(['admin', 'secretario'])
     if (actor.schoolId !== null) return NextResponse.json({ error: 'PILOT_IMPORT_SECRETARIAT_REQUIRED' }, { status: 403 })
 
@@ -37,6 +40,46 @@ export async function POST(request: Request) {
     }
 
     const { rows, report } = validateSyntheticStudentCsv(body.csv)
+    if (demoSandbox) {
+      if (!report.valid) return NextResponse.json({ report }, { status: 422 })
+
+      const supabase = await createClient()
+      const { data: school, error: schoolError } = await supabase
+        .from('escolas')
+        .select('id,codigo')
+        .eq('codigo', report.schoolCodes[0])
+        .single()
+
+      if (schoolError || !school) {
+        return NextResponse.json({ error: 'PILOT_IMPORT_SCHOOL_NOT_FOUND', report }, { status: 422 })
+      }
+
+      const receipt = await writeDemoActionInterceptedAudit(
+        asPilotRpcClient(supabase),
+        {
+          operation: 'demo.pilot.import',
+          entityId: report.contentSha256,
+          schoolId: school.id,
+        }
+      )
+      const response = demoSandboxSimulatedSuccessResponse(
+        'demo.pilot.import',
+        {
+          batch: {
+            id: receipt.correlationId,
+            status: 'simulated',
+            validation_report: report,
+          },
+          report,
+          validationToken: 'demo-simulated',
+          simulatedRowCount: rows.length,
+        },
+        { status: 201, auditId: receipt.auditId, correlationId: receipt.correlationId },
+      )
+
+      return response ?? NextResponse.json({ error: 'DEMO_IMPORT_NOT_AVAILABLE' }, { status: 404 })
+    }
+
     const { key, keyId } = getImportKey()
     if (!report.valid) return NextResponse.json({ report }, { status: 422 })
     if (body.dryRun) {

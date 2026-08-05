@@ -92,7 +92,33 @@ jobs:
           exit 1
 
       - name: Reset local database with canonical migrations only
-        run: pnpm exec supabase --workdir .. db reset --local --no-seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `supabase db reset` occasionally fails at the "Initialising schema..."
+          # container-init phase with a transient `error running container: exit 1`
+          # before any migration is applied. That step is Docker infrastructure
+          # flakiness, not a migration defect: a real migration error names the file
+          # and aborts every attempt, so it still fails the step below. Retry the
+          # reset a few times, tearing down leftover containers between attempts so
+          # each retry starts from a clean local stack.
+          reset_log="${RUNNER_TEMP}/supabase-reset.log"
+          for attempt in 1 2 3; do
+            if pnpm exec supabase --workdir .. db reset --local --no-seed >"$reset_log" 2>&1; then
+              cat "$reset_log"
+              exit 0
+            fi
+            cat "$reset_log"
+            if ! grep -q 'error running container' "$reset_log"; then
+              echo "db reset failed for a non-transient reason; not retrying" >&2
+              exit 1
+            fi
+            echo "Transient container-init failure on attempt ${attempt}; restarting local Supabase before retrying" >&2
+            pnpm exec supabase --workdir .. stop --no-backup || true
+            pnpm exec supabase --workdir .. start >"${RUNNER_TEMP}/supabase-restart.log" 2>&1 || true
+          done
+          echo "db reset still failing after retries" >&2
+          exit 1
 
       - name: Export local Supabase environment
         shell: bash
@@ -245,6 +271,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p test-results
+
+          # When an earlier step (e.g. the database reset) fails, the Supabase
+          # environment export is skipped and these variables are never set.
+          # Degrade gracefully instead of aborting with an `unbound variable`
+          # error that would mask the real failure.
+          if [[ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" || -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+            echo 'Supabase environment not available; skipping REST diagnostics capture' >&2
+            exit 0
+          fi
 
           capture_json() {
             local output_file="$1"

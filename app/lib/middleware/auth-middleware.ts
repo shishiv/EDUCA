@@ -8,6 +8,7 @@ import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope
 import {
   demoSandboxGuardResponse,
   getDemoSandboxBlockedReason,
+  isDemoSandboxHardBlockedPath,
   isDemoSandboxEnabled,
   isDemoSandboxPilotPathAllowed,
 } from '@/lib/demo-sandbox/demo-sandbox'
@@ -149,6 +150,7 @@ export const routeProtection = {
     { prefix: '/dashboard/notas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
     { prefix: '/dashboard/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
     { prefix: '/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+    { prefix: '/dashboard/sessoes', roles: ['admin', 'diretor', 'secretario', 'professor'] },
   ] satisfies ProtectedRoute[],
   authenticated: ['/dashboard'],
 }
@@ -192,8 +194,8 @@ export async function authMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   const demoSandboxBlockReason = getDemoSandboxBlockedReason(pathname)
-  if (isDemoSandboxEnabled() && demoSandboxBlockReason) {
-    return demoSandboxGuardResponse(demoSandboxBlockReason) ?? response
+  if (isDemoSandboxHardBlockedPath(pathname)) {
+    return demoSandboxGuardResponse(demoSandboxBlockReason ?? 'external_effect') ?? response
   }
 
   // The synthetic demo may expose a named product capability that the
@@ -202,7 +204,8 @@ export async function authMiddleware(request: NextRequest) {
   if (
     isPilotModeEnabled() &&
     isPilotDisabledPath(pathname) &&
-    !isDemoSandboxPilotPathAllowed(pathname)
+    !isDemoSandboxPilotPathAllowed(pathname) &&
+    !(isDemoSandboxEnabled() && demoSandboxBlockReason && !pathname.startsWith('/api/'))
   ) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })

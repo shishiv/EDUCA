@@ -35,6 +35,7 @@ import { formatDateTimeBR } from '@/lib/date-utils'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
+import { recordDemoClientAction } from '@/lib/demo-sandbox/demo-audit-client'
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<UserWithSchool[]>([])
@@ -91,6 +92,16 @@ export default function UsuariosPage() {
     try {
       const user = usuarios.find(u => u.id === id)
       if (user) {
+        if (isDemoSandboxEnabled()) {
+          await recordDemoClientAction({
+            operation: 'demo.user.status_update',
+            entityId: id,
+          })
+          setUsuarios(usuarios.map(u => u.id === id ? { ...u, ativo: !u.ativo } : u))
+          toast.success(`Usuário ${!user.ativo ? 'ativado' : 'desativado'} no demo (simulado)`)
+          return
+        }
+
         // No need to create updatedUser, API handles the update
         await usersApi.updateUserStatus(id, !user.ativo)
         setUsuarios(usuarios.map(u => u.id === id ? { ...u, ativo: !u.ativo } : u))

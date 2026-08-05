@@ -70,7 +70,7 @@ checks, school selection, RLS or audit.
 | --- | --- | --- | --- |
 | Dashboard and search | `/dashboard`, `/dashboard/perfil` | `/api/dashboard/alerts`, `/api/attendance/trends`, `/api/chamada/pendentes`, `/api/compliance/warnings`, `/api/search`, `/api/turmas/minhas` | Read synthetic metrics and alerts |
 | Schools | `/dashboard/escolas`, `/dashboard/escolas/nova`, `/dashboard/escolas/[id]` | Supabase client queries with RLS | Multi-school admin view; school context remains required for school-scoped writes |
-| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries | Read and manage existing synthetic profiles; invitation remains blocked |
+| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries, `/api/demo/audit` | Read and manage existing synthetic profiles; status toggle and invitation return a simulated-success no-op |
 | Students | `/dashboard/alunos`, `/dashboard/alunos/novo`, `/dashboard/alunos/[id]` | Existing typed Supabase queries | Synthetic CRUD with the selected school context |
 | Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
 | Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
@@ -87,10 +87,13 @@ its capability is named and its external effects are reviewed.
 
 ## Blocked effects
 
+Synthetic imports, Auth user invitations and first-access password mutation are
+no longer hard-blocked: they return a simulated-success `2xx` no-op (see
+[Demo mode guards](#demo-mode-guards-explicit-code-not-prose)). The effects below
+stay fully blocked.
+
 | Effect | Blocked paths or boundary | Expected result |
 | --- | --- | --- |
-| Synthetic dataset import | `/api/pilot/imports*` | `403` and no staging or publish |
-| Auth user mutation | `/api/pilot/invitations*`, `/api/pilot/first-access` | `403` and no invite or password change |
 | Educacenso and government integration | `/api/educacenso*`, `/api/government*`, `/api/integracoes*`, `/api/censo*`, `/api/inep*` | `403`; no external request |
 | Real PII export | `/api/export*`, `/api/exports*`, `/api/reports/educacenso*`, `/api/reports/export*` | `403`; browser reports remain synthetic-only |
 | Real WhatsApp integration | `/api/whatsapp/webhook*` and the gateway factory | `403` for webhook; local fake for notification simulation |
@@ -104,8 +107,9 @@ bypass a product-scope restriction only for a named synthetic capability. Auth,
 role checks, school isolation, RLS, audit and external-effect guards stay active.
 
 > **Nota:** Creating users (`/dashboard/usuarios/novo`) calls `/api/pilot/invitations`.
-> The endpoint returns `403` in demo mode because it would mutate Auth users.
-> This is correct behaviour, not a bug.
+> In demo mode the endpoint returns a simulated-success `2xx` no-op: it mutates no
+> Auth user and writes only the redacted `demo_action_intercepted` audit. This is
+> correct behaviour, not a bug.
 
 ## Environment (demo runner)
 
@@ -166,9 +170,12 @@ pnpm --dir app demo:reset-check
    then `pnpm --dir app exec supabase --workdir . db push`.
 2. **Disable signup (hard requirement)** - in the Supabase dashboard:
    `Authentication > Sign In / Providers > Email > "Allow new users to sign up" = OFF`.
-   The app has no signup UI, the schema grants no INSERT on `users` to
-   authenticated, and the middleware blocks admin data-management APIs - but
-   the project-level switch is the authoritative control for the Auth API.
+   The app has no signup UI. Migration
+   `20260805093305_demo_users_browser_write_boundary.sql` explicitly revokes
+   INSERT, UPDATE and DELETE on `public.users` from `authenticated` and removes
+   the browser `admin_full_access` policy; Auth/profile maintenance stays on
+   existing server-side paths. The project-level switch remains the
+   authoritative control for the Auth API.
 3. **Secrets** - configure GitHub Actions secrets (Settings > Secrets and
    variables > Actions): `SUPABASE_DEMO_URL`, `SUPABASE_DEMO_SERVICE_KEY`,
    `SUPABASE_DEMO_DB_URL` (values from `.env.demo.example`).
@@ -185,8 +192,9 @@ pnpm --dir app demo:reset-check
 - `NEXT_PUBLIC_DEMO_SANDBOX=true` enables `app/lib/demo-sandbox/demo-sandbox.ts`.
 - Middleware uses the named capability allowlist. It does not skip auth or
   route protection for the demo.
-- Middleware and route handlers return `403` for synthetic imports, Auth user
-  invitations and first-access password mutation.
+- Synthetic imports, Auth user invitations and first-access password mutation
+  return a simulated-success `2xx` no-op that writes only the redacted
+  `demo_action_intercepted` audit and mutates no external or business tables.
 - Educacenso, government integrations, real PII export paths and the WhatsApp
   webhook are blocked as external effects.
 - The WhatsApp factory forces the local fake in demo mode, even with complete
