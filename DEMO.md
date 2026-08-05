@@ -166,9 +166,12 @@ pnpm --dir app demo:reset-check
    then `pnpm --dir app exec supabase --workdir . db push`.
 2. **Disable signup (hard requirement)** - in the Supabase dashboard:
    `Authentication > Sign In / Providers > Email > "Allow new users to sign up" = OFF`.
-   The app has no signup UI, the schema grants no INSERT on `users` to
-   authenticated, and the middleware blocks admin data-management APIs - but
-   the project-level switch is the authoritative control for the Auth API.
+   The app has no signup UI. Migration
+   `20260805093305_demo_users_browser_write_boundary.sql` explicitly revokes
+   INSERT, UPDATE and DELETE on `public.users` from `authenticated` and removes
+   the browser `admin_full_access` policy; Auth/profile maintenance stays on
+   existing server-side paths. The project-level switch remains the
+   authoritative control for the Auth API.
 3. **Secrets** - configure GitHub Actions secrets (Settings > Secrets and
    variables > Actions): `SUPABASE_DEMO_URL`, `SUPABASE_DEMO_SERVICE_KEY`,
    `SUPABASE_DEMO_DB_URL` (values from `.env.demo.example`).
