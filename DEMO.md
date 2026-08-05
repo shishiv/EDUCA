@@ -188,8 +188,9 @@ pnpm --dir app demo:reset-check
 - `NEXT_PUBLIC_DEMO_SANDBOX=true` enables `app/lib/demo-sandbox/demo-sandbox.ts`.
 - Middleware uses the named capability allowlist. It does not skip auth or
   route protection for the demo.
-- Middleware and route handlers return `403` for synthetic imports, Auth user
-  invitations and first-access password mutation.
+- Synthetic imports, Auth user invitations and first-access password mutation
+  return a simulated-success `2xx` no-op that writes only the redacted
+  `demo_action_intercepted` audit and mutates no external or business tables.
 - Educacenso, government integrations, real PII export paths and the WhatsApp
   webhook are blocked as external effects.
 - The WhatsApp factory forces the local fake in demo mode, even with complete
