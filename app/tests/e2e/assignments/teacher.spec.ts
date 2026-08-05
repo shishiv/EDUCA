@@ -9,7 +9,11 @@ test.describe('Professor titular por turma', () => {
 
   test('shows the single-titular assignment page', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /professores titulares/i })).toBeVisible()
-    await expect(page.getByText(/um professor titular para cada turma/i)).toBeVisible()
+    // Subtitle text is stable across the loading and loaded states: "Defina um
+    // professor titular para cada turma" before turmas load, then "Defina os
+    // professores titulares - <escola>" after. Match the shared invariant so the
+    // assertion does not race the async escola/turmas load.
+    await expect(page.getByText(/defina .*professores? titular/i)).toBeVisible()
   })
 
   test('does not expose discipline or multi-teacher controls', async ({ page }) => {
