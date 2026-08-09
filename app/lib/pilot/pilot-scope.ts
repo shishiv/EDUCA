@@ -14,7 +14,6 @@ export const PILOT_CORE_FEATURES = [
 
 export const PILOT_DISABLED_ROUTE_PREFIXES = [
   '/dashboard/notas',
-  '/dashboard/diario',
   '/dashboard/relatorios',
   '/dashboard/calendario',
   '/dashboard/configuracoes',
@@ -30,14 +29,13 @@ export const PILOT_DISABLED_ROUTE_PREFIXES = [
   '/api/educacenso',
 ] as const
 
-const PILOT_DISABLED_ROUTE_FRAGMENTS = ['/diario', '/boletim'] as const
+// The class diary is a real pilot feature (captain decision 2026-08-09), so
+// its routes and the '/diario' fragment are not blocked. '/boletim' (report
+// cards) stays blocked until grades are reactivated.
+const PILOT_DISABLED_ROUTE_FRAGMENTS = ['/boletim'] as const
 
 /** Returns true when the path is in a disabled pilot module. */
 export function isPilotDisabledPath(pathname: string): boolean {
-  if (pathname === '/diario/frequencia' || pathname.startsWith('/api/frequencia')) {
-    return false
-  }
-
   return PILOT_DISABLED_ROUTE_PREFIXES.some(prefix =>
     pathname === prefix || pathname.startsWith(`${prefix}/`)
   ) || PILOT_DISABLED_ROUTE_FRAGMENTS.some(fragment => pathname.includes(fragment))

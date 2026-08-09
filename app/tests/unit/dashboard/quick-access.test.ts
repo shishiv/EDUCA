@@ -4,6 +4,7 @@ import {
   quickAccessItems,
   resolveVisibleQuickAccess,
   resolveVisibleQuickActionCards,
+  type QuickAccessRole,
 } from '@/lib/dashboard/quick-access'
 
 const attendanceItem = quickAccessItems.find((item) => item.name === 'Frequência')!
@@ -57,6 +58,44 @@ describe('dashboard quick access routes', () => {
       canManageSchool: true,
     })
     expect(diretorPilot.map((item) => item.name)).toContain('Novo Aluno')
+  })
+
+  it('shows the class diary in pilot mode while keeping other modules blocked', () => {
+    for (const role of ['admin', 'diretor', 'secretario', 'professor']) {
+      const visible = resolveVisibleQuickAccess(quickAccessItems, {
+        role: role as QuickAccessRole,
+        pilotMode: true,
+        canManageSchool: role !== 'professor',
+      })
+      expect(visible.map((item) => item.name)).toContain('Diário de Classe')
+    }
+
+    const diretorPilot = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'diretor',
+      pilotMode: true,
+      canManageSchool: true,
+    })
+    expect(diretorPilot.map((item) => item.name)).not.toContain('Relatórios')
+    expect(diretorPilot.map((item) => item.name)).not.toContain('Config')
+    expect(diretorPilot.find((item) => item.name === 'Diário de Classe')?.href).toBe('/dashboard/diario')
+
+    const professorPilot = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'professor',
+      pilotMode: true,
+      canManageSchool: false,
+    })
+    expect(professorPilot.some((item) => item.schoolWrite)).toBe(false)
+  })
+
+  it('keeps the diary quick action reachable in demo mode through the explicit diary capability', () => {
+    const diretorDemo = resolveVisibleQuickAccess(quickAccessItems, {
+      role: 'diretor',
+      pilotMode: true,
+      demoSandbox: true,
+      canManageSchool: true,
+    })
+    expect(diretorDemo.map((item) => item.name)).toContain('Diário de Classe')
+    expect(diretorDemo.map((item) => item.name)).toContain('Relatórios')
   })
 
   it('exposes safe synthetic capabilities in demo without widening role checks', () => {

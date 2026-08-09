@@ -24,6 +24,7 @@ import {
   User,
   BookOpen,
   CheckSquare,
+  BookText,
   X
 } from 'lucide-react'
 
@@ -67,6 +68,11 @@ const navigation = [
     name: 'Frequência',
     href: '/dashboard/turmas',
     icon: CheckSquare,
+  },
+  {
+    name: 'Diário de Classe',
+    href: '/dashboard/diario',
+    icon: BookText,
   },
   {
     name: 'Notas',

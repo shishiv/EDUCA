@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('synthetic municipal pilot core scope', () => {
-  test('shows only confirmed pilot modules', async ({ page }) => {
+  test('shows only confirmed pilot modules plus the class diary', async ({ page }) => {
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/\/dashboard/)
     await expect(page.getByText('Escolas', { exact: true }).first()).toBeVisible()
@@ -12,8 +12,8 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByText('Responsáveis', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Atribuicoes', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Frequência', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Diário de Classe', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Notas', { exact: true })).toHaveCount(0)
-    await expect(page.getByText('Diário de Classe', { exact: true })).toHaveCount(0)
     await expect(page.getByText('Relatórios', { exact: true })).toHaveCount(0)
   })
 
@@ -28,15 +28,18 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByRole('heading', { name: /turmas/i }).first()).toBeVisible()
   })
 
-  test('redirects disabled pilot modules', async ({ page }) => {
+  test('redirects disabled pilot modules but serves the class diary', async ({ page }) => {
     await page.goto('/dashboard/notas')
-    await expect(page).toHaveURL(/\/dashboard\?pilotScope=disabled/)
-    await page.goto('/dashboard/diario')
     await expect(page).toHaveURL(/\/dashboard\?pilotScope=disabled/)
     await page.goto('/dashboard/calendario')
     await expect(page).toHaveURL(/\/dashboard\?pilotScope=disabled/)
     await page.goto('/dashboard/configuracoes')
     await expect(page).toHaveURL(/\/dashboard\?pilotScope=disabled/)
+    await page.goto('/dashboard/sessoes')
+    await expect(page).toHaveURL(/\/dashboard\?pilotScope=disabled/)
+
+    await page.goto('/dashboard/diario')
+    await expect(page).toHaveURL(/\/dashboard\/diario/)
   })
 
   test('keeps offline service worker and IndexedDB disabled', async ({ page }) => {

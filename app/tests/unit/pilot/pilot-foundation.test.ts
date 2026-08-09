@@ -53,13 +53,25 @@ describe('synthetic pilot foundation', () => {
     expect(() => assertSyntheticPilotSafety('seed', { ...safe, legalApprovalStatus: 'approved' })).toThrow(/legal approval/)
   })
 
-  it('blocks notes, diary, Educacenso, and high-risk report routes', () => {
+  it('keeps notes, Educacenso, high-risk reports, and boletim blocked while diary is open', () => {
+    // Diary is a real pilot feature (captain decision 2026-08-09): every diary route is reachable.
+    expect(isPilotDisabledPath('/dashboard/diario')).toBe(false)
+    expect(isPilotDisabledPath('/diario')).toBe(false)
+    expect(isPilotDisabledPath('/diario/frequencia')).toBe(false)
+    expect(isPilotDisabledPath('/dashboard/alunos/student-id/diario')).toBe(false)
+
+    // The remaining disabled pilot modules stay blocked.
     expect(isPilotDisabledPath('/dashboard/notas')).toBe(true)
-    expect(isPilotDisabledPath('/dashboard/diario')).toBe(true)
-    expect(isPilotDisabledPath('/diario')).toBe(true)
-    expect(isPilotDisabledPath('/dashboard/alunos/student-id/diario')).toBe(true)
+    expect(isPilotDisabledPath('/dashboard/relatorios')).toBe(true)
+    expect(isPilotDisabledPath('/dashboard/calendario')).toBe(true)
+    expect(isPilotDisabledPath('/dashboard/configuracoes')).toBe(true)
+    expect(isPilotDisabledPath('/dashboard/sessoes')).toBe(true)
+    expect(isPilotDisabledPath('/boletim')).toBe(true)
     expect(isPilotDisabledPath('/api/educacenso/export')).toBe(true)
     expect(isPilotDisabledPath('/relatorios/bolsa-familia')).toBe(true)
+    expect(isPilotDisabledPath('/relatorios/conteudo')).toBe(true)
+
+    // Attendance and non-module routes remain allowed.
     expect(isPilotDisabledPath('/dashboard/turmas/example/chamada')).toBe(false)
     expect(isPilotDisabledPath('/offline')).toBe(false)
   })
