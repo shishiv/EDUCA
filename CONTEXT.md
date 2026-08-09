@@ -4,7 +4,7 @@
 
 EDUCA is an MIT-licensed school-management application for Brazilian municipal and small-town school networks. The product covers schools, users, students, guardians, classes, enrolments, teacher assignments, attendance, dashboard views, and reporting surfaces.
 
-The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, and dashboard. Grades, full diary, Educacenso, Bolsa Família/NIS, health, disability, and race data are disabled by the pilot provisioner.
+The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, Bolsa Família/NIS, health, disability, and race data are disabled by the pilot provisioner.
 
 ## Architecture
 
@@ -124,5 +124,5 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 - The demo sandbox persona is a secretariat-level admin (`tipo_usuario = 'admin'`, `escola_id = NULL`). Create flows (alunos, turmas, responsaveis) resolve the target school from the UI escola-context selector; the admin must select a school first. Do not assign the demo admin to a school - the multi-school view is the intended demo differentiator. See `DEMO.md` for the demoable flow list.
 - `use-compliance-warnings.ts` filters active enrolments with `.eq('situacao', 'ativa')` (`matriculas` has no `ativo` column; the column name is `situacao`).
 - CI runs typecheck, lint, unit tests, and a full E2E suite against disposable local Supabase. Run build, database validation, and applicable local Supabase pilot checks before proposing operational or database changes.
-- `tsconfig.typecheck.json` and `vitest.config.mts` exclude diary and descriptive-report test directories because those modules are outside the confirmed synthetic pilot. Those files remain for a future reactivation gate and do not prove pilot-core readiness.
+- `tsconfig.typecheck.json` and `vitest.config.mts` exclude diary-component and descriptive-report test directories because those suites were written before the diary entered the confirmed pilot. Those files remain for a future reactivation gate and do not prove pilot-core readiness.
 - Historical and extended documentation is archived outside the repository at `/home/shiv/docs/EDUCA/`, preserving original repository-relative paths. `MOVED_FROM_REPO.md` there records the archive manifest and source commit.
