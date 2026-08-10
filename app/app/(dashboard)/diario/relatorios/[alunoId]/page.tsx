@@ -51,6 +51,7 @@ import {
   Eye,
   Edit,
   AlertTriangle,
+  Download,
   GraduationCap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -85,6 +86,16 @@ interface StudentInfo {
 // ============================================================================
 // LOADING SKELETON
 // ============================================================================
+
+function getDescriptiveReportEmissionMessage(code: string | null): string {
+  if (code === 'DESCRIPTIVE_REPORT_CONTENT_EMPTY') {
+    return 'Não há conteúdo ministrado registrado no período deste relatório. Registre o conteúdo da aula antes de emitir o PDF.'
+  }
+  if (code === 'DESCRIPTIVE_REPORT_NOT_FINALIZED') {
+    return 'Finalize o relatório antes de emitir o PDF.'
+  }
+  return 'Não foi possível emitir o PDF agora. Tente novamente.'
+}
 
 function ReportCardSkeleton() {
   return (
@@ -122,7 +133,10 @@ export default function StudentReportsPage() {
   const [newReportSemester, setNewReportSemester] = useState<SemestreType>(getCurrentSemester())
   const [newReportYear, setNewReportYear] = useState<number>(getCurrentAcademicYear())
   const [isSaving, setIsSaving] = useState(false)
+  const [emittingReportId, setEmittingReportId] = useState<string | null>(null)
+  const [emissionError, setEmissionError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const descriptiveReportEmissionEnabled = process.env.NEXT_PUBLIC_PILOT_DESCRIPTIVE_REPORT_DEMO === 'true'
 
   // Fetch student info and reports
   const fetchData = useCallback(async () => {
@@ -387,6 +401,7 @@ export default function StudentReportsPage() {
       newReportYear,
       newReportSemester,
       fetchData,
+      alunoId,
     ]
   )
 
@@ -471,8 +486,52 @@ export default function StudentReportsPage() {
       newReportYear,
       newReportSemester,
       fetchData,
+      alunoId,
     ]
   )
+
+  const handleEmitPdf = useCallback(async (reportId: string) => {
+    setEmittingReportId(reportId)
+    setEmissionError(null)
+
+    try {
+      const response = await fetch(`/api/pilot/descriptive-reports/${reportId}/pdf`)
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: string } | null
+        const message = getDescriptiveReportEmissionMessage(body?.error ?? null)
+        setEmissionError(message)
+        toast.error(message)
+        return
+      }
+
+      const pdf = await response.blob()
+      if (pdf.size === 0) {
+        throw new Error('DESCRIPTIVE_REPORT_PDF_EMPTY: generated PDF was empty')
+      }
+
+      const filename = response.headers
+        .get('content-disposition')
+        ?.match(/filename="([^"]+)"/)?.[1] ?? 'relatorio-descritivo.pdf'
+      const objectUrl = URL.createObjectURL(pdf)
+      const download = document.createElement('a')
+      download.href = objectUrl
+      download.download = filename
+      download.click()
+      requestAnimationFrame(() => URL.revokeObjectURL(objectUrl))
+      toast.success('PDF emitido com sucesso')
+    } catch (err) {
+      logger.error('Error emitting descriptive report PDF', err as Error, {
+        feature: 'relatorios-descritivos',
+        action: 'emit_pdf',
+        metadata: { reportId },
+      })
+      const message = 'Não foi possível emitir o PDF agora. Tente novamente.'
+      setEmissionError(message)
+      toast.error(message)
+    } finally {
+      setEmittingReportId(null)
+    }
+  }, [])
 
   // Calculate age
   const calculateAge = (birthDate: string): string => {
@@ -567,8 +626,8 @@ export default function StudentReportsPage() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6 max-w-4xl">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -578,7 +637,7 @@ export default function StudentReportsPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="flex items-center gap-2 text-2xl font-bold">
               <User className="h-6 w-6 text-purple-600" />
               {studentInfo.nome_completo}
             </h1>
@@ -600,7 +659,7 @@ export default function StudentReportsPage() {
         </div>
         <Button
           onClick={handleCreateNew}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="self-start bg-purple-600 hover:bg-purple-700"
         >
           <Plus className="h-4 w-4 mr-2" />
           Novo Relatorio
@@ -613,6 +672,14 @@ export default function StudentReportsPage() {
           <FileText className="h-5 w-5 text-muted-foreground" />
           Relatorios Descritivos
         </h2>
+
+        {emissionError && (
+          <Alert variant="destructive" data-testid="descriptive-report-emission-error">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>PDF não emitido</AlertTitle>
+            <AlertDescription>{emissionError}</AlertDescription>
+          </Alert>
+        )}
 
         {reports.length === 0 ? (
           <Card className="bg-muted/30">
@@ -639,7 +706,7 @@ export default function StudentReportsPage() {
                 onClick={() => handleOpenReport(report)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -656,27 +723,44 @@ export default function StudentReportsPage() {
                         </span>
                       </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'flex items-center gap-1',
-                        report.status === 'finalizado'
-                          ? 'border-green-300 bg-green-50 text-green-700'
-                          : 'border-yellow-300 bg-yellow-50 text-yellow-700'
+                    <div className="flex flex-wrap items-center gap-2 self-start sm:justify-end">
+                      {descriptiveReportEmissionEnabled && report.status === 'finalizado' && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={emittingReportId === report.id}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            void handleEmitPdf(report.id)
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-2" aria-hidden="true" />
+                          {emittingReportId === report.id ? 'Emitindo PDF...' : 'Emitir PDF'}
+                        </Button>
                       )}
-                    >
-                      {report.status === 'finalizado' ? (
-                        <>
-                          <CheckCircle className="h-3 w-3" />
-                          Finalizado
-                        </>
-                      ) : (
-                        <>
-                          <PenLine className="h-3 w-3" />
-                          Rascunho
-                        </>
-                      )}
-                    </Badge>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'flex items-center gap-1',
+                          report.status === 'finalizado'
+                            ? 'border-green-300 bg-green-50 text-green-700'
+                            : 'border-yellow-300 bg-yellow-50 text-yellow-700'
+                        )}
+                      >
+                        {report.status === 'finalizado' ? (
+                          <>
+                            <CheckCircle className="h-3 w-3" />
+                            Finalizado
+                          </>
+                        ) : (
+                          <>
+                            <PenLine className="h-3 w-3" />
+                            Rascunho
+                          </>
+                        )}
+                      </Badge>
+                    </div>
                   </div>
 
                   {/* Progress bar */}

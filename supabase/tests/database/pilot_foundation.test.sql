@@ -65,8 +65,9 @@ SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM alunos), 'guardian role is 
 RESET ROLE;
 SELECT pg_temp.assert_true(
   NOT has_table_privilege('authenticated','notas','SELECT')
+  AND NOT has_table_privilege('authenticated','relatorios_descritivos','SELECT')
   AND NOT has_table_privilege('authenticated','educacenso_exports','SELECT'),
-  'notes and Educacenso grants are disabled'
+  'notes, descriptive reports, and Educacenso grants are disabled by the base pilot gate'
 );
 SELECT pg_temp.assert_true(
   (SELECT reloptions @> ARRAY['security_invoker=true'] FROM pg_class WHERE oid='vw_frequencia_completa'::regclass),
