@@ -4,18 +4,17 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
 TESTS_DIR="$ROOT_DIR/supabase/tests/database"
-PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 CENSO_MIGRATION="20260719031000_add_censo_escolar_fields.sql"
 RELATORIOS_MIGRATION="20260124133337_create_relatorios_descritivos.sql"
 
 for command in initdb pg_ctl psql; do
   if ! command -v "$command" >/dev/null 2>&1; then
-    echo "error: $command is required to run database migration tests" >&2
+    echo "error: $command is required to run the isolated attendance conditionality contract" >&2
     exit 1
   fi
 done
 
-WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-postgres-test.XXXXXX")
+WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-attendance-conditionality.XXXXXX")
 DATA_DIR="$WORK_DIR/data"
 SOCKET_DIR="$WORK_DIR/socket"
 PORT=${POSTGRES_TEST_PORT:-$((50000 + $$ % 10000))}
@@ -49,32 +48,20 @@ PSQL=(
 )
 
 "${PSQL[@]}" -f "$TESTS_DIR/bootstrap.sql" >/dev/null
-
 mapfile -t migrations < <(find "$MIGRATIONS_DIR" -maxdepth 1 -type f -name '*.sql' -print | sort)
 for migration in "${migrations[@]}"; do
   if [[ $(basename "$migration") == "$CENSO_MIGRATION" ]]; then
     "${PSQL[@]}" -f "$TESTS_DIR/censo_escolar_schema.before.sql" >/dev/null
   fi
-
   echo "Applying $(basename "$migration")"
   "${PSQL[@]}" -f "$migration" >/dev/null
 done
 
-echo "Replaying $RELATORIOS_MIGRATION"
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$RELATORIOS_MIGRATION" >/dev/null
 
-echo "Applying pilot-only provisioning $(basename "$PILOT_PROVISIONING")"
-"${PSQL[@]}" -f "$PILOT_PROVISIONING" >/dev/null
+# The pilot provisioning file is intentionally not applied here. The contract
+# needs synthetic NIS/PBF rows to exercise the real legal read model.
+echo "Running attendance_conditionality.contract.sql"
+"${PSQL[@]}" -f "$TESTS_DIR/attendance_conditionality.contract.sql"
 
-mapfile -t tests < <(find "$TESTS_DIR" -maxdepth 1 -type f -name '*.test.sql' -print | sort)
-for test_file in "${tests[@]}"; do
-  echo "Running $(basename "$test_file")"
-  "${PSQL[@]}" -f "$test_file" >/dev/null
-done
-
-# The pilot provisioning above intentionally blocks NIS/PBF fixtures. Run the
-# conditionality contract in its own isolated database without that pilot-only
-# high-risk field guard.
-"$TESTS_DIR/run-attendance-conditionality-contract.sh"
-
-echo "Database migration tests passed"
+echo "ATTENDANCE_CONDITIONALITY_DATABASE_CONTRACT_OK: isolated PostgreSQL legal floors, municipality margins, fallback, precedence, completion derivation, and audit passed"

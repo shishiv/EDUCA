@@ -107,7 +107,7 @@ export function generateAttendanceReportPDF(
     {
       columns,
       rows,
-      summary: 'P = Presença, F = Falta, A = Atestado. Risco = frequência abaixo de 80%.',
+      summary: 'P = Presença, F = Falta, A = Atestado. Risco = limiar resolvido no relatório.',
     },
     currentY,
     ATTENDANCE_STYLES
@@ -152,16 +152,27 @@ export function generateBolsaFamiliaReportPDF(
     'Resumo de Conformidade',
     [
       { label: 'Total Bolsa Família', value: report.resumo.totalAlunosBolsaFamilia, color: [219, 234, 254] },
-      { label: 'Conformes (>85%)', value: report.resumo.conformes, color: [220, 252, 231] },
-      { label: 'Em Alerta (80-85%)', value: report.resumo.emAlerta, color: [254, 243, 199] },
-      { label: 'Críticos (<80%)', value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
-      { label: '% Conformidade', value: `${report.resumo.percentualConformidade}%`, color: [219, 234, 254] },
+      { label: 'Conformes na margem municipal', value: report.resumo.conformes, color: [220, 252, 231] },
+      { label: 'Em alerta municipal', value: report.resumo.emAlerta, color: [254, 243, 199] },
+      { label: 'Críticos na margem municipal', value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
+      { label: 'Condicionalidades legais críticas', value: report.resumo.condicionalidadesLegaisCriticas, color: [254, 226, 226] },
+      { label: '% Conformidade municipal', value: `${report.resumo.percentualConformidade}%`, color: [219, 234, 254] },
     ],
     currentY,
     BOLSA_FAMILIA_STYLES
   );
 
   currentY += 5;
+  const resolutionSummary = report.resolucoesMargemMunicipal.map((resolution) =>
+    `${resolution.municipalityId}: crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}, precedência ${resolution.precedence ?? 'n/a'}, origem ${resolution.source ?? 'não informada'}, fallback ${resolution.fallback ? 'sim' : 'não'}, definido por ${resolution.definedBy ?? 'sistema'} em ${resolution.definedAt ?? 'n/a'}`,
+  ).join(' | ')
+  currentY = addPDFText(
+    doc,
+    `Resolução das margens municipais: ${resolutionSummary || 'não configurada'}`,
+    currentY,
+    { fontSize: 7, fontStyle: 'italic', color: [100, 100, 100] },
+  )
+  currentY += 3
 
   // Filter students based on showAllStudents flag
   const studentsToShow = showAllStudents
@@ -186,6 +197,9 @@ export function generateBolsaFamiliaReportPDF(
       { header: 'F', dataKey: 'faltas', halign: 'center', width: 10 },
       { header: 'A', dataKey: 'atestados', halign: 'center', width: 10 },
       { header: '%', dataKey: 'percentual', halign: 'center', width: 12 },
+      { header: 'Piso legal', dataKey: 'pisoLegal', halign: 'center', width: 16 },
+      { header: 'Status legal', dataKey: 'statusLegal', halign: 'center', width: 24 },
+      { header: 'Margem municipal', dataKey: 'margemMunicipal', halign: 'center', width: 25 },
       { header: 'Status', dataKey: 'status', halign: 'center', width: 18 },
     ];
 
@@ -198,6 +212,11 @@ export function generateBolsaFamiliaReportPDF(
       faltas: student.faltas,
       atestados: student.atestados,
       percentual: `${student.percentual}%`,
+      pisoLegal: student.pisoLegalPercent === null ? '-' : `${student.pisoLegalPercent}%`,
+      statusLegal: student.statusLegal,
+      margemMunicipal: student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null
+        ? `${student.margemMunicipalCriticaPercent}%/${student.margemMunicipalAlertaPercent}%`
+        : 'não configurada',
       status: student.status === 'CRITICO' ? 'CRÍTICO' : student.status === 'ALERTA' ? 'ALERTA' : 'OK',
     }));
 
@@ -207,7 +226,7 @@ export function generateBolsaFamiliaReportPDF(
         columns,
         rows,
         title: showAllStudents ? 'Todos os Alunos' : 'Alunos em Risco',
-        summary: 'P = Presença, F = Falta, A = Atestado (conta como presença). Crítico = <80%, Alerta = 80-85%.',
+        summary: 'P = Presença, F = Falta, A = Atestado (conta como presença). Piso legal e margem municipal aparecem em colunas separadas.',
       },
       currentY,
       BOLSA_FAMILIA_STYLES
@@ -219,7 +238,7 @@ export function generateBolsaFamiliaReportPDF(
   addPDFText(
     doc,
     'NOTA: Para fins de conformidade com o Programa Bolsa Família, atestados médicos (A) são contabilizados como presença. ' +
-    'O limite mínimo de frequência para manutenção do benefício é de 80%.',
+    'O piso legal por faixa etária e a margem municipal de alerta precoce são resolvidos separadamente.',
     currentY,
     { fontSize: 8, fontStyle: 'italic', color: [100, 100, 100] }
   );
@@ -256,6 +275,9 @@ export interface StudentReportData {
   }>;
   isBolsaFamilia?: boolean;
   nis?: string;
+  municipalCriticalPercent?: number | null;
+  municipalWarningPercent?: number | null;
+  legalMinimumPercent?: number | null;
 }
 
 /**
@@ -291,12 +313,19 @@ export function generateStudentReportPDF(data: StudentReportData): void {
 
   currentY += 5;
 
-  // Summary
-  const riskStatus = data.attendance.percentual < 80 ? 'EM RISCO' :
-                     data.attendance.percentual < 85 ? 'ALERTA' : 'OK';
+  // Summary. Thresholds come from the canonical read model when available.
+  const riskStatus = data.municipalCriticalPercent !== null && data.municipalCriticalPercent !== undefined
+    && data.municipalWarningPercent !== null && data.municipalWarningPercent !== undefined
+    ? data.attendance.percentual < data.municipalCriticalPercent
+      ? 'EM RISCO'
+      : data.attendance.percentual < data.municipalWarningPercent ? 'ALERTA' : 'OK'
+    : data.legalMinimumPercent !== null && data.legalMinimumPercent !== undefined
+      ? data.attendance.percentual < data.legalMinimumPercent ? 'EM RISCO' : 'OK'
+      : 'SEM LIMIAR';
   const riskColor: [number, number, number] =
     riskStatus === 'EM RISCO' ? [254, 226, 226] :
-    riskStatus === 'ALERTA' ? [254, 243, 199] : [220, 252, 231];
+    riskStatus === 'ALERTA' ? [254, 243, 199] :
+    riskStatus === 'SEM LIMIAR' ? [241, 245, 249] : [220, 252, 231];
 
   currentY = addPDFSummary(
     doc,

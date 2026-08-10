@@ -55,6 +55,7 @@ pnpm lint                # ESLint
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
 pnpm test:e2e:pilot      # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
+pnpm test:database:attendance:conditionality  # isolated raw PostgreSQL legal floors, municipal margins, fallback, and RLS
 pnpm pilot:restore-test  # local synthetic encrypted backup/restore rehearsal
 pnpm seed:demo           # synthetic demo seed / reset (public sandbox, issue #23)
 pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case

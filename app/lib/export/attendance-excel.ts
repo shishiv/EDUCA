@@ -95,15 +95,6 @@ async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string): Promi
   saveAs(blob, name);
 }
 
-/**
- * Get status text based on percentage
- */
-function getStatusText(percentual: number): string {
-  if (percentual < 80) return 'RISCO';
-  if (percentual < 85) return 'ALERTA';
-  return 'OK';
-}
-
 // ============================================================================
 // ATTENDANCE REPORT EXCEL
 // ============================================================================
@@ -178,7 +169,7 @@ export async function generateAttendanceReportExcel(
   });
 
   worksheet.addRow([]); // Empty row
-  worksheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado. Risco = frequência < 80%']);
+  worksheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado. Risco = limiar resolvido no relatório.']);
   worksheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 
   // Set column widths
@@ -226,12 +217,20 @@ export async function generateBolsaFamiliaReportExcel(
   styleHeaderRow(summaryHeaderRow, 'D97706');
 
   summarySheet.addRow(['Total Bolsa Família', report.resumo.totalAlunosBolsaFamilia]);
-  summarySheet.addRow(['Conformes (>85%)', report.resumo.conformes]);
-  summarySheet.addRow(['Em Alerta (80-85%)', report.resumo.emAlerta]);
-  summarySheet.addRow(['Críticos (<80%)', report.resumo.emRiscoCritico]);
-  summarySheet.addRow(['% Conformidade', `${report.resumo.percentualConformidade}%`]);
+  summarySheet.addRow(['Conformes na margem municipal', report.resumo.conformes]);
+  summarySheet.addRow(['Em alerta municipal', report.resumo.emAlerta]);
+  summarySheet.addRow(['Críticos na margem municipal', report.resumo.emRiscoCritico]);
+  summarySheet.addRow(['Condicionalidades legais críticas', report.resumo.condicionalidadesLegaisCriticas]);
+  summarySheet.addRow(['Sem condicionalidade legal aplicável', report.resumo.semCondicionalidadeLegal]);
+  summarySheet.addRow(['% Conformidade municipal', `${report.resumo.percentualConformidade}%`]);
+  for (const resolution of report.resolucoesMargemMunicipal) {
+    summarySheet.addRow([
+      `Resolução municipal ${resolution.municipalityId}`,
+      `crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}%, precedência ${resolution.precedence ?? 'n/a'}, origem ${resolution.source ?? 'não informada'}, fallback ${resolution.fallback ? 'sim' : 'não'}, definido por ${resolution.definedBy ?? 'sistema'} em ${resolution.definedAt ?? 'n/a'}`,
+    ]);
+  }
 
-  setColumnWidths(summarySheet, [25, 15]);
+  setColumnWidths(summarySheet, [32, 80]);
 
   // ========================
   // Sheet 2: Alunos
@@ -245,7 +244,10 @@ export async function generateBolsaFamiliaReportExcel(
   studentsSheet.addRow([]); // Empty row
 
   // Header
-  const studentsHeaderRow = studentsSheet.addRow(['Nome', 'NIS', 'Turma', 'Escola', 'P', 'F', 'A', 'Total', '%', 'Status']);
+  const studentsHeaderRow = studentsSheet.addRow([
+    'Nome', 'NIS', 'Turma', 'Escola', 'P', 'F', 'A', 'Total', '%',
+    'Piso legal', 'Status legal', 'Margem crítica', 'Margem alerta', 'Status municipal',
+  ]);
   styleHeaderRow(studentsHeaderRow, 'D97706');
 
   // Filter students
@@ -268,7 +270,11 @@ export async function generateBolsaFamiliaReportExcel(
       student.atestados,
       student.totalAulas,
       student.percentual,
-      statusLabel,
+      student.pisoLegalPercent ?? '-',
+      student.statusLegal,
+      student.margemMunicipalCriticaPercent ?? '-',
+      student.margemMunicipalAlertaPercent ?? '-',
+      `${statusLabel} (${student.margemMunicipalOrigem ?? 'sem origem'})`,
     ]);
 
     // Color coding based on status
@@ -300,10 +306,14 @@ export async function generateBolsaFamiliaReportExcel(
   });
 
   studentsSheet.addRow([]); // Empty row
-  studentsSheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado (conta como presença). Crítico = <80%, Alerta = 80-85%.']);
+  const marginSummary = report.resolucoesMargemMunicipal.map((resolution) =>
+    `${resolution.municipalityId}: crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}%, origem ${resolution.source ?? 'não informada'}`,
+  ).join(' | ')
+  studentsSheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado (conta como presença).']);
+  studentsSheet.addRow([`Margens municipais resolvidas: ${marginSummary || 'não configuradas'}`]);
   studentsSheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 
-  setColumnWidths(studentsSheet, [35, 15, 20, 30, 8, 8, 8, 10, 10, 12]);
+  setColumnWidths(studentsSheet, [35, 15, 20, 30, 8, 8, 8, 10, 10, 12, 28, 16, 16, 24]);
 
   // Save
   const filename = `bolsa_familia_${report.periodo.inicio}_${report.periodo.fim}`;

@@ -33,7 +33,8 @@
     "demo:reset-check": "pnpm seed:demo --date 2026-07-01 && pnpm demo:validate && pnpm seed:demo --date 2026-07-01 && pnpm demo:validate",
     "demo:verify-sql": "bash ../supabase/seed-demo/verify-sql.sh",
     "seed:e2e": "tsx scripts/seed-e2e.ts",
-    "test:database:pilot:capacity": "bash ../supabase/tests/database/run-pilot-capacity-contract.sh"
+    "test:database:pilot:capacity": "bash ../supabase/tests/database/run-pilot-capacity-contract.sh",
+    "test:database:attendance:conditionality": "bash ../supabase/tests/database/run-attendance-conditionality-contract.sh"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

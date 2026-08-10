@@ -8,7 +8,7 @@
  *
  * Page for viewing and exporting Bolsa Familia compliance reports.
  * Shows students with NIS who are at risk of losing benefits due to
- * low attendance (< 80% threshold).
+ * low attendance against the resolved municipal margin.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -42,8 +42,6 @@ import { BolsaFamiliaAlert } from '@/components/reports/BolsaFamiliaAlert';
 import {
   getBolsaFamiliaStudents,
   type BolsaFamiliaReport,
-  BOLSA_FAMILIA_THRESHOLD,
-  BOLSA_FAMILIA_WARNING_THRESHOLD,
 } from '@/lib/reports/bolsa-familia-reports';
 import {
   generateBolsaFamiliaReportPDF,
@@ -454,7 +452,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.conformes}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Conformes (&gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</span>
+                    <span className="hidden sm:inline">Conformes na margem municipal</span>
                     <span className="sm:hidden">OK</span>
                   </p>
                 </div>
@@ -472,7 +470,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.emAlerta}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Em Alerta ({BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</span>
+                    <span className="hidden sm:inline">Em alerta municipal</span>
                     <span className="sm:hidden">Alerta</span>
                   </p>
                 </div>
@@ -490,7 +488,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.emRiscoCritico}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Criticos (&lt;{BOLSA_FAMILIA_THRESHOLD}%)</span>
+                    <span className="hidden sm:inline">Críticos na margem municipal</span>
                     <span className="sm:hidden">Critico</span>
                   </p>
                 </div>
@@ -569,6 +567,8 @@ export default function BolsaFamiliaReportPage() {
                         <TableHead className="text-center w-10 hidden xs:table-cell">A</TableHead>
                         <TableHead className="text-center w-12 hidden sm:table-cell">Total</TableHead>
                         <TableHead className="text-center w-14">%</TableHead>
+                        <TableHead className="text-center hidden md:table-cell">Legal</TableHead>
+                        <TableHead className="text-center hidden lg:table-cell">Margem</TableHead>
                         <TableHead className="text-center w-16 sm:w-20">Status</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -604,6 +604,16 @@ export default function BolsaFamiliaReportPage() {
                             >
                               {aluno.percentual}%
                             </span>
+                          </TableCell>
+                          <TableCell className="text-center text-xs hidden md:table-cell">
+                            {aluno.statusLegal}
+                            {aluno.pisoLegalPercent !== null ? ` (${aluno.pisoLegalPercent}%)` : ''}
+                          </TableCell>
+                          <TableCell className="text-center text-xs hidden lg:table-cell">
+                            {aluno.margemMunicipalStatus}
+                            {aluno.margemMunicipalCriticaPercent !== null && aluno.margemMunicipalAlertaPercent !== null
+                              ? ` (${aluno.margemMunicipalCriticaPercent}/${aluno.margemMunicipalAlertaPercent}%)`
+                              : ''}
                           </TableCell>
                           <TableCell className="text-center">
                             {aluno.status === 'CRITICO' && (
@@ -648,7 +658,12 @@ export default function BolsaFamiliaReportPage() {
               para o cálculo de conformidade do Bolsa Família.
             </p>
             <p>
-              <strong>Thresholds:</strong> Critico &lt;{BOLSA_FAMILIA_THRESHOLD}% | Alerta {BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}% | Conforme &gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%
+              <strong>Margens municipais:</strong>{' '}
+              {report && report.resolucoesMargemMunicipal.length > 0
+                ? report.resolucoesMargemMunicipal.map((resolution) => (
+                  `${resolution.criticalPercent ?? 'não configurada'}/${resolution.warningPercent ?? 'não configurada'}% (${resolution.source ?? 'origem não informada'}, precedência ${resolution.precedence ?? 'n/a'}, fallback ${resolution.fallback ? 'sim' : 'não'})`
+                )).join(', ')
+                : 'não configuradas'}
             </p>
             {report && (
               <p className="text-gray-400">

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import {
+  getAttendanceConditionality,
+  filterBolsaFamiliaConditionality,
+  isLegalAttendanceRisk,
+  isMunicipalAttendanceRisk,
+} from '@/lib/reports/attendance-conditionality'
 
 export interface DashboardAlert {
   id: string
@@ -59,6 +65,7 @@ export async function GET(request: NextRequest) {
 
     const { data: turmas } = await turmasQuery
     const turmaIds = turmas?.map(t => t.id) || []
+    const visibleTurmaIds = new Set(turmaIds)
 
     if (turmaIds.length > 0) {
       // Get sessions done today
@@ -90,115 +97,73 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. Check for students with low attendance (Bolsa Família - NIS required)
-    // Only show for admin, diretor, secretario
-    if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
-      let alunosQuery = supabase
-        .from('alunos')
-        .select(`
-          id,
-          nome,
-          nis,
-          escola_id
-        `)
-        .eq('ativo', true)
-        .not('nis', 'is', null)
+    // 2. Resolve all Bolsa Família legal and municipality statuses from the
+    // canonical read model. No threshold is reconstructed in this route.
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    const monthConditionality = await getAttendanceConditionality(supabase, {
+      startDate: startOfMonth.toISOString().split('T')[0],
+      endDate: today,
+      escolaId: escolaFilter ?? undefined,
+    })
 
-      if (escolaFilter) {
-        alunosQuery = alunosQuery.eq('escola_id', escolaFilter)
-      }
+    if (monthConditionality.error) {
+      logger.error('Error resolving dashboard attendance conditionality', new Error(monthConditionality.error), {
+        feature: 'dashboard-alerts',
+        action: 'resolve_attendance_conditionality',
+      })
+    } else if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
+      const bolsaFamiliaRows = filterBolsaFamiliaConditionality(monthConditionality.data)
+      const atRiskRows = bolsaFamiliaRows.filter((row) => (
+        isMunicipalAttendanceRisk(row) || isLegalAttendanceRisk(row)
+      ))
 
-      const { data: alunosNis } = await (alunosQuery as any)
-
-      if (alunosNis && alunosNis.length > 0) {
-        // Get attendance stats for these students
-        const alunoIds = alunosNis.map((a: any) => a.id)
-
-        // Get attendance records for current month
-        const startOfMonth = new Date()
-        startOfMonth.setDate(1)
-        const startDate = startOfMonth.toISOString().split('T')[0]
-
-        const { data: frequencias } = await (supabase as any)
-          .from('frequencias')
-          .select('aluno_id, presente')
-          .in('aluno_id', alunoIds)
-          .gte('data', startDate)
-
-        // Calculate attendance per student
-        const attendanceByStudent: Record<string, { total: number; present: number }> = {}
-
-        for (const freq of frequencias || []) {
-          if (!attendanceByStudent[freq.aluno_id]) {
-            attendanceByStudent[freq.aluno_id] = { total: 0, present: 0 }
-          }
-          attendanceByStudent[freq.aluno_id].total++
-          if (freq.presente) {
-            attendanceByStudent[freq.aluno_id].present++
-          }
-        }
-
-        // Find students below 85%
-        const lowAttendance = alunosNis.filter((aluno: any) => {
-          const stats = attendanceByStudent[aluno.id]
-          if (!stats || stats.total === 0) return false
-          const percentage = (stats.present / stats.total) * 100
-          return percentage < 85
+      if (atRiskRows.length > 0) {
+        const legalRiskCount = atRiskRows.filter(isLegalAttendanceRisk).length
+        const municipalRiskCount = atRiskRows.filter(isMunicipalAttendanceRisk).length
+        alerts.push({
+          id: 'baixa-frequencia-bf',
+          type: 'error',
+          title: 'Alerta Bolsa Família',
+          description: `${atRiskRows.length} aluno(s) com risco resolvido pelo modelo canônico` +
+            ` (${legalRiskCount} condicionalidade legal, ${municipalRiskCount} margem municipal)`,
+          action: {
+            label: 'Ver relatório',
+            href: '/relatorios/bolsa-familia',
+          },
+          priority: 1,
+          createdAt: new Date().toISOString(),
         })
-
-        if (lowAttendance.length > 0) {
-          alerts.push({
-            id: 'baixa-frequencia-bf',
-            type: 'error',
-            title: 'Alerta Bolsa Família',
-            description: `${lowAttendance.length} aluno(s) com NIS abaixo de 85% de frequência`,
-            action: {
-              label: 'Ver relatório',
-              href: '/relatorios/frequencia'
-            },
-            priority: 1,
-            createdAt: new Date().toISOString()
-          })
-        }
       }
     }
 
-    // 3. Check overall attendance average
+    // 3. Check today's attendance against the resolved municipality margin.
     if (turmaIds.length > 0) {
-      const { data: frequenciasHoje } = await (supabase as any)
-        .from('frequencias')
-        .select('presente')
-        .in('turma_id', turmaIds)
-        .eq('data', today)
+      const todayConditionality = await getAttendanceConditionality(supabase, {
+        startDate: today,
+        endDate: today,
+        escolaId: escolaFilter ?? undefined,
+      })
+      const rowsBelowMargin = todayConditionality.data.filter((row) => (
+        row.tem_dados_frequencia
+        && visibleTurmaIds.has(row.turma_id)
+        && row.is_bolsa_familia
+        && isMunicipalAttendanceRisk(row)
+      ))
 
-      if (frequenciasHoje && frequenciasHoje.length > 0) {
-        const presentes = frequenciasHoje.filter((f: { presente: boolean }) => f.presente).length
-        const total = frequenciasHoje.length
-        const percentage = Math.round((presentes / total) * 100)
-
-        if (percentage >= 95) {
-          alerts.push({
-            id: 'frequencia-excelente',
-            type: 'success',
-            title: 'Frequência excelente',
-            description: `${percentage}% de presença hoje. Parabéns!`,
-            priority: 3,
-            createdAt: new Date().toISOString()
-          })
-        } else if (percentage < 80) {
-          alerts.push({
-            id: 'frequencia-baixa',
-            type: 'warning',
-            title: 'Frequência abaixo do esperado',
-            description: `${percentage}% de presença hoje. Verificar motivos.`,
-            action: {
-              label: 'Ver detalhes',
-              href: '/relatorios/frequencia'
-            },
-            priority: 2,
-            createdAt: new Date().toISOString()
-          })
-        }
+      if (rowsBelowMargin.length > 0) {
+        alerts.push({
+          id: 'frequencia-baixa',
+          type: 'warning',
+          title: 'Frequência abaixo da margem municipal',
+          description: `${rowsBelowMargin.length} aluno(s) abaixo da margem municipal resolvida hoje.`,
+          action: {
+            label: 'Ver detalhes',
+            href: '/relatorios/bolsa-familia',
+          },
+          priority: 2,
+          createdAt: new Date().toISOString(),
+        })
       }
     }
 

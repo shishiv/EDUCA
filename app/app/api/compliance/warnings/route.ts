@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
+import {
+  filterBolsaFamiliaConditionality,
+  getAttendanceConditionality,
+  isLegalAttendanceRisk,
+  isMunicipalAttendanceRisk,
+} from '@/lib/reports/attendance-conditionality'
 
 export interface ComplianceWarning {
   id: string
@@ -68,11 +74,53 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // WARNING 2 and 3 (Bolsa Família and INEP attendance thresholds) were
-    // previously backed by rpc('get_students_below_attendance_threshold'), a
-    // function absent from the committed schema. At runtime PostgREST rejected
-    // it, so these warnings never rendered; the calls are removed until a real
-    // threshold function or query exists in supabase/migrations.
+    // WARNING 2 and 3: legal conditionality and municipality margin come from
+    // the canonical PostgreSQL read model. The response keeps them separate.
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      .toISOString()
+      .split('T')[0]
+    const conditionality = await getAttendanceConditionality(supabase, {
+      startDate: monthStart,
+      endDate: today,
+      escolaId: userProfile.escola_id ?? undefined,
+    })
+
+    if (!conditionality.error) {
+      const rows = filterBolsaFamiliaConditionality(conditionality.data)
+      const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
+      const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
+
+      if (legalRiskCount > 0) {
+        warnings.push({
+          id: 'bolsa-familia-legal-conditionality',
+          title: 'Condicionalidade legal Bolsa Família',
+          message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
+          type: 'critical',
+          icon: 'AlertTriangle',
+          actionUrl: '/relatorios/bolsa-familia',
+          actionText: 'Ver relatório',
+          count: legalRiskCount,
+        })
+      }
+
+      if (municipalRiskCount > 0) {
+        warnings.push({
+          id: 'bolsa-familia-municipal-margin',
+          title: 'Margem municipal de alerta precoce',
+          message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
+          type: 'warning',
+          icon: 'AlertCircle',
+          actionUrl: '/relatorios/bolsa-familia',
+          actionText: 'Ver relatório',
+          count: municipalRiskCount,
+        })
+      }
+    } else {
+      logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
+        feature: 'compliance-warnings',
+        action: 'resolve_attendance_conditionality',
+      })
+    }
 
     // WARNING 4: Educacenso deadline approaching (if within 30 days)
     const educacensoDeadline = new Date('2025-07-31')
