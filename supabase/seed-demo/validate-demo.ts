@@ -7,8 +7,8 @@
  *
  *  1. Contagens do contrato: 3 escolas, 5 turmas, 10 professores + 1 admin,
  *     50 alunos, 50 responsaveis, 50 vinculos, 50 matriculas, 300 notas,
- *     15 eventos de calendario, 11 configs, e a frequencia/aulas geradas
- *     para a janela ancorada (20 dias letivos).
+ *     15 eventos de calendario, 11 configs, e a frequencia/aulas/conteudos
+ *     gerados para a janela ancorada (20 dias letivos).
  *  2. Relacionamentos: integridade referencial e consistencia escola -> turma
  *     -> matricula -> frequencia; cada aluno em exatamente uma turma da sua
  *     escola; frequencia sempre vinculada a uma aula da turma certa.
@@ -146,6 +146,7 @@ async function run(): Promise<void> {
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,
         (SELECT count(*) FROM configs) AS configs,
         (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
+        (SELECT count(*) FROM conteudo_aula) AS conteudo_aula,
         (SELECT count(*) FROM frequencia) AS frequencia
     `
     const counts = (await client.query(countQuery)).rows[0] as Record<string, number>
@@ -154,6 +155,7 @@ async function run(): Promise<void> {
       record(`count_${table}`, actual === expected, `${actual} == ${expected}`)
     }
     record('count_sessoes_aula', Number(counts.sessoes_aula) === expectedAulas, `${counts.sessoes_aula} == ${expectedAulas} (${TURMAS.length} turmas x ${schoolDays.length} dias)`)
+    record('count_conteudo_aula', Number(counts.conteudo_aula) === expectedAulas, `${counts.conteudo_aula} == ${expectedAulas} (uma fonte canonica por sessao)`)
     record('count_frequencia', Number(counts.frequencia) === expectedFrequencia, `${counts.frequencia} == ${expectedFrequencia} (${MATRICULAS.length} matriculas x ${schoolDays.length} dias)`)
 
     // ---------------------------------------------------------------------
@@ -196,6 +198,18 @@ async function run(): Promise<void> {
       WHERE s.turma_id <> m.turma_id OR s.data_aula <> f.data_aula
     `)
     record('rel_frequencia_sessao_da_turma', Number(frequenciaAulaTurmaMismatch.rows[0].n) === 0, `${frequenciaAulaTurmaMismatch.rows[0].n} frequencias em sessão de outra turma/data`)
+
+    const contentOrphan = await client.query(`
+      SELECT count(*) AS n
+      FROM conteudo_aula c
+      LEFT JOIN sessoes_aula s ON s.id = c.sessao_id
+      LEFT JOIN turmas t ON t.id = s.turma_id
+      LEFT JOIN escolas e ON e.id = t.escola_id
+      LEFT JOIN users u ON u.id = s.professor_id
+      LEFT JOIN disciplinas d ON d.id = s.disciplina_id
+      WHERE s.id IS NULL OR t.id IS NULL OR e.id IS NULL OR u.id IS NULL OR d.id IS NULL
+    `)
+    record('rel_conteudo_fonte_canonica', Number(contentOrphan.rows[0].n) === 0, `${contentOrphan.rows[0].n} conteudos sem sessao/turma/escola/professor/disciplina`)
 
     const perMatriculaCoverage = await client.query(`
       SELECT count(*) AS n FROM (
@@ -279,7 +293,7 @@ async function run(): Promise<void> {
     // Fingerprints (order-independent md5 over the business columns). Two
     // resets with the same anchor produce identical fingerprints. Auth creates
     // a new external id for the demo user, so that non-business id is excluded.
-    const fingerprintTables = ['escolas', 'users', 'turmas', 'matriculas', 'sessoes_aula', 'frequencia']
+    const fingerprintTables = ['escolas', 'users', 'turmas', 'matriculas', 'sessoes_aula', 'conteudo_aula', 'frequencia']
     const fingerprints: Record<string, string> = {}
     for (const table of fingerprintTables) {
       const fingerprintValue = table === 'users' ? "(to_jsonb(t) - 'id')::text" : 't::text'

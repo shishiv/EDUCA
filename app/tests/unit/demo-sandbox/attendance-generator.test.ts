@@ -22,6 +22,13 @@ describe('attendance-generator determinismo', () => {
     expect(b).toBe(a)
   })
 
+  it('emite conteudo canonico ligado a cada sessao gerada', () => {
+    const { aulas, conteudos } = generateAttendance({ anchorDate: ANCHOR })
+    expect(conteudos).toHaveLength(aulas.length)
+    expect(new Set(conteudos.map(content => content.sessaoId)).size).toBe(aulas.length)
+    expect(attendanceSql({ anchorDate: ANCHOR })).toContain('INSERT INTO conteudo_aula')
+  })
+
   it('produca datasets diferentes para ancoras diferentes', () => {
     const a = attendanceSql({ anchorDate: '2026-07-01' })
     const b = attendanceSql({ anchorDate: '2026-07-08' })

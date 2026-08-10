@@ -10,7 +10,7 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByText('Turmas', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Matrículas', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Responsáveis', { exact: true }).first()).toBeVisible()
-    await expect(page.getByText('Atribuicoes', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Atribuições', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Frequência', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Diário de Classe', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Notas', { exact: true })).toHaveCount(0)

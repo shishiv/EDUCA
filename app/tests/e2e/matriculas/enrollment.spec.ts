@@ -97,7 +97,7 @@ test.describe('Enrollment form', () => {
       await selectFirstClass(enrollmentPage)
       await enrollmentPage.getByLabel(/observações/i).fill('Matrícula criada pelo E2E')
       await enrollmentPage.getByRole('button', { name: /realizar matr[ií]cula/i }).click()
-      await expect(enrollmentPage.getByText('Matricula realizada com sucesso!')).toBeVisible({ timeout: 10000 })
+      await expect(enrollmentPage.getByText('Matrícula realizada com sucesso!')).toBeVisible({ timeout: 10000 })
       await expect(enrollmentPage).toHaveURL(/\/dashboard\/matriculas$/)
 
       const persisted = await request.get(

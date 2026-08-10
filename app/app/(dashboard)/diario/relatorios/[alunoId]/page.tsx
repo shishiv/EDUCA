@@ -155,7 +155,7 @@ export default function StudentReportsPage() {
         .single()
 
       if (matriculaError) {
-        throw new Error('Aluno nao encontrado ou sem matricula ativa')
+        throw new Error('Aluno não encontrado ou sem matrícula ativa')
       }
 
       // Type assertion for nested data
@@ -291,7 +291,7 @@ export default function StudentReportsPage() {
 
     // Check if report already exists
     if (reportExistsForPeriod(year, semester)) {
-      toast.error(`Ja existe um relatorio para ${formatSemester(semester, year)}`)
+      toast.error(`Já existe um relatório para ${formatSemester(semester, year)}`)
       return
     }
 
@@ -489,7 +489,7 @@ export default function StudentReportsPage() {
     if (years === 0) {
       return `${months} meses`
     }
-    return `${years} ano${years > 1 ? 's' : ''} e ${months} mes${months !== 1 ? 'es' : ''}`
+    return `${years} ano${years > 1 ? 's' : ''} e ${months} mês${months !== 1 ? 'es' : ''}`
   }
 
   // Format date
@@ -547,7 +547,7 @@ export default function StudentReportsPage() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Aluno nao encontrado</AlertTitle>
+          <AlertTitle>Aluno não encontrado</AlertTitle>
           <AlertDescription>
             Nao foi possivel encontrar o aluno ou o aluno nao possui matricula ativa.
           </AlertDescription>

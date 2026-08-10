@@ -538,16 +538,16 @@ export default function DiarioPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
               <BookOpen className="h-7 w-7" />
-              Diario de Classe
+              Diário de Classe
             </h1>
             <p className="text-muted-foreground text-sm md:text-base">
-              Registre e acompanhe o conteudo das aulas
+              Registre e acompanhe o conteúdo das aulas
             </p>
           </div>
         </div>
         <EscolaRequiredState
           title="Selecione uma Escola"
-          description="Para acessar o diario de classe, selecione uma escola no seletor do menu lateral."
+          description="Para acessar o diário de classe, selecione uma escola no seletor do menu lateral."
         />
       </div>
     )
@@ -564,10 +564,10 @@ export default function DiarioPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
             <BookOpen className="h-7 w-7" />
-            Diario de Classe
+            Diário de Classe
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Registre e acompanhe o conteudo das aulas
+            Registre e acompanhe o conteúdo das aulas
           </p>
         </div>
 
@@ -669,8 +669,8 @@ export default function DiarioPage() {
                   <Calendar className="h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">Nenhuma aula registrada</h3>
                   <p className="text-sm text-muted-foreground text-center max-w-md">
-                    Ainda nao ha aulas registradas para esta turma.
-                    {canCreateLesson && ' Clique em "Nova Aula" para comecar.'}
+                    Ainda não há aulas registradas para esta turma.
+                    {canCreateLesson && ' Clique em "Nova Aula" para começar.'}
                   </p>
                 </div>
               </CardContent>
@@ -753,7 +753,7 @@ export default function DiarioPage() {
           <div className="space-y-4 py-4">
             {/* Tema/Conteudo */}
             <div className="space-y-2">
-              <Label htmlFor="edit-tema">Tema/Conteudo</Label>
+              <Label htmlFor="edit-tema">Tema/Conteúdo</Label>
               <Input
                 id="edit-tema"
                 value={editFormData.tema}
@@ -765,12 +765,12 @@ export default function DiarioPage() {
 
             {/* Observacoes */}
             <div className="space-y-2">
-              <Label htmlFor="edit-observacoes">Observacoes</Label>
+              <Label htmlFor="edit-observacoes">Observações</Label>
               <Textarea
                 id="edit-observacoes"
                 value={editFormData.observacoes}
                 onChange={(e) => setEditFormData((prev) => ({ ...prev, observacoes: e.target.value }))}
-                placeholder="Observacoes adicionais sobre a aula..."
+                placeholder="Observações adicionais sobre a aula..."
                 className="min-h-[100px] resize-y"
                 disabled={isEditing}
               />

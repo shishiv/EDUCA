@@ -66,7 +66,7 @@ export function ChamadaHeader({
       {hasUnsavedChanges && !isLocked && (
         <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          <span className="text-sm font-medium">Alteracoes nao salvas</span>
+          <span className="text-sm font-medium">Alterações não salvas</span>
         </div>
       )}
 

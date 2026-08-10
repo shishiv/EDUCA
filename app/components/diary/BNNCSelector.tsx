@@ -153,7 +153,7 @@ export function BNNCSelector({
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <div className="space-y-2 text-sm">
-                <p className="font-medium">Formato do Codigo BNCC:</p>
+                <p className="font-medium">Formato do Código BNCC:</p>
                 <p>
                   <code className="bg-muted px-1 rounded">EF01MA06</code> - Ensino
                   Fundamental

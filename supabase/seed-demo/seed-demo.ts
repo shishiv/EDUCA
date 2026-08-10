@@ -73,6 +73,7 @@ const SUPABASE_DB_URL = process.env.SUPABASE_DEMO_DB_URL || ''
 /** Tables owned by the demo reset, cleared every run (TRUNCATE ... CASCADE). */
 const DEMO_TABLES = [
   'frequencia',
+  'conteudo_aula',
   'aulas_abertas',
   'sessoes_aula',
   'notas',
@@ -308,13 +309,14 @@ async function main(): Promise<void> {
         (SELECT count(*) FROM aluno_responsaveis) AS aluno_responsaveis,
         (SELECT count(*) FROM matriculas) AS matriculas,
         (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
+        (SELECT count(*) FROM conteudo_aula) AS conteudo_aula,
         (SELECT count(*) FROM frequencia) AS frequencia,
         (SELECT count(*) FROM notas) AS notas,
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,
         (SELECT count(*) FROM configs) AS configs
     `)
     console.log('   contagens agregadas: ' + JSON.stringify(counts.rows[0], null, 0))
-    console.log('   OK  contagens conferem com o contrato do seed')
+    console.log('   OK  contagens conferem com o contrato do seed (inclui conteudo canonico)')
 
     console.log('4/4  Concluido.')
     console.log('  Usuario demo sincronizado; credenciais omitidas dos logs.')

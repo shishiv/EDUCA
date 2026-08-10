@@ -232,7 +232,7 @@ export default function DashboardPage() {
           icon={CalendarCheck}
           iconColor="yellow"
           value={`${stats.frequenciaMedia}%`}
-          label="Frequencia Media"
+          label="Frequência Média"
           trend={stats.frequenciaMedia >= 75 ? { value: "Acima da meta", direction: "up" } : undefined}
         />
         <StatCard
@@ -284,7 +284,7 @@ export default function DashboardPage() {
               )}
               <Button variant="outline" className="w-full mt-2" asChild>
                 <Link href="/dashboard/turmas">
-                  Ver Todas as Turmas
+                  Ver todas as turmas
                 </Link>
               </Button>
             </div>
@@ -299,7 +299,7 @@ export default function DashboardPage() {
           <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="font-display text-lg text-gray-800">
-                Acoes Rapidas
+                Ações Rápidas
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
                 Atalhos para tarefas frequentes

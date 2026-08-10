@@ -153,7 +153,7 @@ export default function NovaMatriculaPage() {
 
       if (error) throw error
 
-      toast.success('Matricula realizada com sucesso!')
+      toast.success('Matrícula realizada com sucesso!')
       router.push('/dashboard/matriculas')
     } catch (error) {
       logger.error('Error creating matricula', error as Error, {
@@ -256,7 +256,7 @@ export default function NovaMatriculaPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nova Matricula</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Nova Matrícula</h1>
           <p className="text-gray-600 mt-1">
             Realize uma nova matricula no sistema
           </p>

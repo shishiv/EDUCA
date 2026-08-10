@@ -112,7 +112,7 @@ function getRiskIcon(riskLevel: 'critical' | 'warning' | 'safe') {
 export function RiskAlert({
   studentsAtRisk,
   showDetails = true,
-  title = 'Alunos em Risco (Frequencia < 80%)',
+  title = 'Alunos em Risco (Frequência < 80%)',
   onStudentClick,
   loading = false,
   riskThreshold = 80,

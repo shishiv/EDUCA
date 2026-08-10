@@ -482,7 +482,7 @@ export default function EditarEscolaPage() {
                   <p className="text-xs text-gray-500">
                     {diretoresDisponiveis.length === 0 && !escola?.diretor
                       ? 'Nenhum diretor disponível para atribuição'
-                      : `Diretor atual ou ${diretoresDisponiveis.length} disponível(is)`}
+                      : `Diretor atual ou ${diretoresDisponiveis.length} disponíveis`}
                   </p>
                 </div>
 

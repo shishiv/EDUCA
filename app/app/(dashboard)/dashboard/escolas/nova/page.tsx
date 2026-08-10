@@ -405,7 +405,7 @@ export default function NovaEscolaPage() {
                   <p className="text-xs text-gray-500">
                     {diretoresDisponiveis.length === 0
                       ? 'Nenhum diretor disponível para atribuição'
-                      : `${diretoresDisponiveis.length} diretor(es) disponível(is)`}
+                      : `${diretoresDisponiveis.length} disponíveis`}
                   </p>
                 </div>
 

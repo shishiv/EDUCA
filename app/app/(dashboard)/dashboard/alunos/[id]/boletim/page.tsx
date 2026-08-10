@@ -284,7 +284,7 @@ export default function BoletimPage() {
 
       if (studentError) {
         if (studentError.code === 'PGRST116') {
-          setError('Aluno nao encontrado ou sem matricula ativa')
+          setError('Aluno não encontrado ou sem matrícula ativa')
         } else {
           throw studentError
         }
@@ -457,8 +457,8 @@ export default function BoletimPage() {
       let currentY = addPDFHeader(doc, {
         title: 'Boletim Escolar',
         subtitle: educationLevel === 'infantil'
-          ? 'Relatorio de Desenvolvimento - Educacao Infantil'
-          : 'Desempenho Academico - Ensino Fundamental',
+          ? 'Relatório de Desenvolvimento - Educação Infantil'
+          : 'Desempenho Acadêmico - Ensino Fundamental',
         schoolName: turma?.escola?.nome || 'Escola Municipal',
       })
 
@@ -472,7 +472,7 @@ export default function BoletimPage() {
       doc.setFont('helvetica', 'normal')
       doc.text(`Nome: ${student.nome_completo}`, 15, currentY)
       currentY += 5
-      doc.text(`Turma: ${turma?.nome || '-'} | Serie: ${turma?.serie || '-'}`, 15, currentY)
+      doc.text(`Turma: ${turma?.nome || '-'} | Série: ${turma?.serie || '-'}`, 15, currentY)
       currentY += 5
       doc.text(`Ano Letivo: ${matricula?.ano_letivo || new Date().getFullYear()}`, 15, currentY)
       currentY += 10
@@ -530,16 +530,16 @@ export default function BoletimPage() {
         currentY += 5
         doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
-        doc.text('Frequencia', 15, currentY)
+        doc.text('Frequência', 15, currentY)
         currentY += 7
 
         doc.setFontSize(10)
         doc.setFont('helvetica', 'normal')
         doc.text(`Total de Aulas: ${attendance.totalAulas}`, 15, currentY)
         currentY += 5
-        doc.text(`Presencas: ${attendance.presencas} | Faltas: ${attendance.faltas}`, 15, currentY)
+        doc.text(`Presenças: ${attendance.presencas} | Faltas: ${attendance.faltas}`, 15, currentY)
         currentY += 5
-        doc.text(`Percentual de Frequencia: ${attendance.percentual}%`, 15, currentY)
+        doc.text(`Percentual de Frequência: ${attendance.percentual}%`, 15, currentY)
       }
 
       // Add footer
@@ -605,7 +605,7 @@ export default function BoletimPage() {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
           <AlertDescription>
-            {error || 'Nao foi possivel carregar os dados do aluno.'}
+            {error || 'Não foi possível carregar os dados do aluno.'}
           </AlertDescription>
         </Alert>
 
@@ -642,8 +642,8 @@ export default function BoletimPage() {
           </h1>
           <p className="text-gray-600">
             {educationLevel === 'infantil'
-              ? 'Relatorio de Desenvolvimento - Educacao Infantil'
-              : 'Desempenho Academico - Ensino Fundamental'}
+              ? 'Relatório de Desenvolvimento - Educação Infantil'
+              : 'Desempenho Acadêmico - Ensino Fundamental'}
           </p>
         </div>
       </div>

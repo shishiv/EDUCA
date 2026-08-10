@@ -191,7 +191,7 @@ export function FrequencyControls({
                 onClick={handleNextDay}
                 disabled={loading || disabled}
                 className="bg-gray-300 hover:bg-gray-400 border-gray-300"
-                aria-label="Proximo dia"
+                aria-label="Próximo dia"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -201,7 +201,7 @@ export function FrequencyControls({
           {/* Period Toggle */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-900">
-              Periodo
+              Período
             </Label>
             <div className="flex gap-2">
               <Button
@@ -228,7 +228,7 @@ export function FrequencyControls({
                 onClick={() => onPeriodViewChange('month')}
                 disabled={loading || disabled}
               >
-                Mes
+                Mês
               </Button>
             </div>
             <p className="text-xs text-muted-foreground text-center">
@@ -241,7 +241,7 @@ export function FrequencyControls({
             {summary ? (
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-900">Frequencia:</span>
+                  <span className="text-sm font-semibold text-gray-900">Frequência:</span>
                   <span className={cn('font-bold text-lg', getAttendanceRateColor(summary.percentualPresenca))}>
                     {summary.percentualPresenca}%
                   </span>

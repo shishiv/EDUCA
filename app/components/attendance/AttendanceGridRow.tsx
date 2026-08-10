@@ -215,7 +215,7 @@ export function AttendanceGridRow({
             {attendanceStatus === 'P' && 'Presente'}
             {attendanceStatus === 'F' && 'Ausente'}
             {attendanceStatus === 'A' && 'Atestado'}
-            {attendanceStatus === null && 'Nao marcado'}
+            {attendanceStatus === null && 'Não marcado'}
           </Badge>
           {isRecordLocked && (
             <Lock className="h-4 w-4 text-orange-500" />

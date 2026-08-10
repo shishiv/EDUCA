@@ -372,16 +372,16 @@ export function NewLessonModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <BookMarked className="h-4 w-4 text-blue-500" />
-                      Tema/Conteudo *
+                      Tema/Conteúdo *
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Ex: Fracoes, Interpretacao de Texto, Sistema Solar..."
+                        placeholder="Ex: Frações, Interpretação de Texto, Sistema Solar..."
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Titulo principal do conteudo ministrado na aula
+                      Título principal do conteúdo ministrado na aula
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -544,11 +544,11 @@ export function NewLessonModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <MessageSquare className="h-4 w-4 text-blue-500" />
-                      Observacoes
+                      Observações
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Observacoes adicionais sobre a aula, dificuldades identificadas, etc..."
+                        placeholder="Observações adicionais sobre a aula, dificuldades identificadas, etc..."
                         className="min-h-[60px] resize-y"
                         {...field}
                       />

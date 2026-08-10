@@ -226,7 +226,7 @@ function SummaryBar({
 					<CheckCircle2 className="h-4 w-4 text-green-600" />
 				</div>
 				<div className="text-xl font-bold text-green-700">{stats.healthy}</div>
-				<div className="text-xs text-green-600">Frequencia OK</div>
+				<div className="text-xs text-green-600">Frequência OK</div>
 			</div>
 
 			<div className="p-3 bg-yellow-50 rounded-lg text-center">
@@ -244,7 +244,7 @@ function SummaryBar({
 					<UserX className="h-4 w-4 text-red-600" />
 				</div>
 				<div className="text-xl font-bold text-red-700">{stats.critical}</div>
-				<div className="text-xs text-red-600">Critico (&lt;75%)</div>
+				<div className="text-xs text-red-600">Crítico (&lt;75%)</div>
 			</div>
 
 			<div
@@ -260,7 +260,7 @@ function SummaryBar({
 				<div className="text-xl font-bold">
 					{formatPercentage(stats.avgAttendance)}
 				</div>
-				<div className="text-xs">Media da Turma</div>
+				<div className="text-xs">Média da Turma</div>
 			</div>
 		</div>
 	);
@@ -294,7 +294,7 @@ function EmptyState() {
 	return (
 		<div className="text-center py-12 text-gray-500">
 			<Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-			<p className="text-lg font-medium">Nenhum dado de frequencia</p>
+			<p className="text-lg font-medium">Nenhum dado de frequência</p>
 			<p className="text-sm mt-1">
 				Nao ha registros de frequencia para o periodo selecionado.
 			</p>
@@ -545,7 +545,7 @@ export function AttendanceReportTable({
 											<TableCell className="text-center">
 												{isCritical ? (
 													<Badge className="bg-red-500 text-white">
-														Critico
+														Crítico
 													</Badge>
 												) : isAtRisk ? (
 													<Badge className="bg-yellow-500 text-white">
@@ -568,7 +568,7 @@ export function AttendanceReportTable({
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-green-500" />
 						<span>
-							Frequencia OK ({">="} {riskThreshold}%)
+							Frequência OK ({">="} {riskThreshold}%)
 						</span>
 					</div>
 					<div className="flex items-center gap-1">
@@ -580,7 +580,7 @@ export function AttendanceReportTable({
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-red-500" />
 						<span>
-							Critico ({"<"} {CRITICAL_THRESHOLD}%)
+							Crítico ({"<"} {CRITICAL_THRESHOLD}%)
 						</span>
 					</div>
 				</div>

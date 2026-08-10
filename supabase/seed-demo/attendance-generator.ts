@@ -3,10 +3,10 @@
  *
  * Deterministic synthetic attendance generator for the EDUCA public demo
  * sandbox (issue #23). The static demo dataset (escolas, turmas, alunos,
- * matriculas, ...) lives in seed-demo.sql; the time-varying attendance
- * history is generated here relative to the reset date so the demo always
- * shows recent "chamadas" (issue #23 acceptance: "chamadas recentes com
- * frequência variada").
+ * matriculas, ...) lives in seed-demo.sql; the time-varying attendance history
+ * and canonical lesson content are generated here relative to the reset date.
+ * The demo therefore shows recent "chamadas" and report rows from real
+ * sessoes_aula sessions.
  *
  * Determinism contract: the same anchorDate always produces the exact same
  * SQL. Weekends are skipped; the window covers DEMO_SCHOOL_DAYS school days
@@ -72,6 +72,62 @@ export const TURMAS: TurmaRef[] = [
   { id: '00000000-0000-0000-0000-000000000105', escolaId: '00000000-0000-0000-0000-000000000003', professorId: '00000000-0000-0000-0000-000000000018', turno: 'integral' },
 ]
 
+interface DemoContentTemplate {
+  disciplinaId: string
+  tema: string
+  objetivo: string
+  habilidadesBncc: string[]
+  metodologia: string
+  recursos: string
+}
+
+/**
+ * Every generated session receives one content row through its real session
+ * id. The discipline ids point to the static canonical discipline rows above.
+ */
+const CONTENT_TEMPLATE_BY_TURMA: Record<string, DemoContentTemplate> = {
+  '00000000-0000-0000-0000-000000000101': {
+    disciplinaId: '00000000-0000-0000-0000-000000000600',
+    tema: 'Operacoes e resolucao de problemas',
+    objetivo: 'Resolver problemas de adicao e subtracao em situacoes do cotidiano',
+    habilidadesBncc: ['EF03MA06'],
+    metodologia: 'Resolucao colaborativa de problemas',
+    recursos: 'Material dourado e quadro',
+  },
+  '00000000-0000-0000-0000-000000000102': {
+    disciplinaId: '00000000-0000-0000-0000-000000000601',
+    tema: 'Leitura e producao de textos',
+    objetivo: 'Localizar informacoes explicitas e produzir pequenos textos',
+    habilidadesBncc: ['EF03LP08'],
+    metodologia: 'Leitura compartilhada e escrita orientada',
+    recursos: 'Livro didatico e caderno',
+  },
+  '00000000-0000-0000-0000-000000000103': {
+    disciplinaId: '00000000-0000-0000-0000-000000000602',
+    tema: 'Ciencia e observacao do ambiente',
+    objetivo: 'Observar fenomenos do ambiente e registrar descobertas',
+    habilidadesBncc: ['EF03CI01'],
+    metodologia: 'Investigacao guiada',
+    recursos: 'Lupa, folhas e cartaz',
+  },
+  '00000000-0000-0000-0000-000000000104': {
+    disciplinaId: '00000000-0000-0000-0000-000000000608',
+    tema: 'Identidade e convivencia',
+    objetivo: 'Reconhecer sentimentos e respeitar combinados de convivencia',
+    habilidadesBncc: ['EI03EO01'],
+    metodologia: 'Roda de conversa e brincadeira dirigida',
+    recursos: 'Historias ilustradas e brinquedos',
+  },
+  '00000000-0000-0000-0000-000000000105': {
+    disciplinaId: '00000000-0000-0000-0000-000000000612',
+    tema: 'Movimento e expressao corporal',
+    objetivo: 'Explorar movimentos do corpo em diferentes brincadeiras',
+    habilidadesBncc: ['EI02CG02'],
+    metodologia: 'Exploracao livre com intervencao do professor',
+    recursos: 'Colchonetes e tecidos',
+  },
+}
+
 /** Matriculas 401-410 -> turma 101, 411-420 -> 102, 421-430 -> 103, 431-440 -> 104, 441-450 -> 105. */
 export const MATRICULAS: MatriculaRef[] = (() => {
   const refs: MatriculaRef[] = []
@@ -90,10 +146,24 @@ export interface AulaRow {
   turmaId: string
   escolaId: string
   professorId: string
+  disciplinaId: string
   dataAula: string
   status: string
   abertaEm: string
   fechadaEm: string
+  createdAt: string
+}
+
+export interface LessonContentRow {
+  id: string
+  sessaoId: string
+  tema: string
+  objetivo: string
+  habilidadesBncc: string[]
+  metodologia: string
+  recursos: string
+  observacoes: string
+  createdBy: string
   createdAt: string
 }
 
@@ -114,6 +184,7 @@ export interface FrequenciaRow {
 export interface GeneratedAttendance {
   aulas: AulaRow[]
   frequencia: FrequenciaRow[]
+  conteudos: LessonContentRow[]
 }
 
 export interface AttendanceGenerationOptions {
@@ -211,6 +282,11 @@ function frequenciaIdFor(matriculaIndex: number, schoolDayIndex: number): string
   return `00000000-0000-0000-0000-${suffix}`
 }
 
+function contentIdFor(turmaIndex: number, schoolDayIndex: number): string {
+  const suffix = (1600 + turmaIndex * 100 + schoolDayIndex + 1).toString().padStart(12, '0')
+  return `00000000-0000-0000-0000-${suffix}`
+}
+
 function abertaEmFor(turno: TurmaRef['turno'], dataAula: string): string {
   const start = turno === 'tarde' ? '13:30' : '07:30'
   return `${dataAula} ${start}:00-03`
@@ -225,20 +301,36 @@ export function generateAttendance(options: AttendanceGenerationOptions): Genera
 
   const aulas: AulaRow[] = []
   const frequencia: FrequenciaRow[] = []
+  const conteudos: LessonContentRow[] = []
 
   TURMAS.forEach((turma, turmaIndex) => {
     days.forEach((dataAula, dayIndex) => {
       const abertaEm = abertaEmFor(turma.turno, dataAula)
       const id = aulaIdFor(turmaIndex, dayIndex)
+      const contentTemplate = CONTENT_TEMPLATE_BY_TURMA[turma.id]
       aulas.push({
         id,
         turmaId: turma.id,
         escolaId: turma.escolaId,
         professorId: turma.professorId,
+        disciplinaId: contentTemplate.disciplinaId,
         dataAula,
         status: 'FECHADA',
         abertaEm,
         fechadaEm: abertaEm.replace('07:30', '08:50').replace('13:30', '14:50'),
+        createdAt: abertaEm,
+      })
+
+      conteudos.push({
+        id: contentIdFor(turmaIndex, dayIndex),
+        sessaoId: id,
+        tema: contentTemplate.tema,
+        objetivo: contentTemplate.objetivo,
+        habilidadesBncc: contentTemplate.habilidadesBncc,
+        metodologia: contentTemplate.metodologia,
+        recursos: contentTemplate.recursos,
+        observacoes: `Registro canonico da aula de ${dataAula}`,
+        createdBy: turma.professorId,
         createdAt: abertaEm,
       })
 
@@ -265,7 +357,7 @@ export function generateAttendance(options: AttendanceGenerationOptions): Genera
     })
   })
 
-  return { aulas, frequencia }
+  return { aulas, frequencia, conteudos }
 }
 
 // -----------------------------------------------------------------------------
@@ -297,13 +389,14 @@ function sqlBoolOrLiteral(value: string | number | boolean): string {
 }
 
 export function attendanceSql(options: AttendanceGenerationOptions): string {
-  const { aulas, frequencia } = generateAttendance(options)
+  const { aulas, frequencia, conteudos } = generateAttendance(options)
 
   const sessionRows: Array<Array<string | number | boolean | null>> = aulas.map(aula => [
     aula.id,
     aula.turmaId,
     aula.escolaId,
     aula.professorId,
+    aula.disciplinaId,
     aula.dataAula,
     aula.abertaEm.slice(11, 16),
     aula.fechadaEm.slice(11, 16),
@@ -331,14 +424,29 @@ export function attendanceSql(options: AttendanceGenerationOptions): string {
     f.createdAt,
   ])
 
+  const contentRows = conteudos.map(content => `(${[
+    content.id,
+    content.sessaoId,
+    content.tema,
+    content.objetivo,
+    `ARRAY[${content.habilidadesBncc.map(sqlLiteral).join(',')}]::text[]`,
+    content.metodologia,
+    content.recursos,
+    content.observacoes,
+    content.createdBy,
+    content.createdAt,
+    content.createdAt,
+  ].map((value) => value.startsWith('ARRAY[') ? value : sqlLiteral(value)).join(',')})`).join(',\n')
+
   return [
     '-- Generated by attendance-generator.ts (deterministic synthetic attendance)',
     `-- anchorDate: ${options.anchorDate} | schoolDays: ${options.schoolDays ?? DEMO_SCHOOL_DAYS}`,
     emitMultiRowInsert(
       'sessoes_aula',
-      ['id', 'turma_id', 'escola_id', 'professor_id', 'data_aula', 'inicio_aula', 'fim_aula', 'status', 'aberta_em', 'fechada_em', 'travada_em', 'conteudo_programatico', 'documento_oficial', 'created_at', 'updated_at'],
+      ['id', 'turma_id', 'escola_id', 'professor_id', 'disciplina_id', 'data_aula', 'inicio_aula', 'fim_aula', 'status', 'aberta_em', 'fechada_em', 'travada_em', 'conteudo_programatico', 'documento_oficial', 'created_at', 'updated_at'],
       sessionRows
     ),
+    `INSERT INTO conteudo_aula (id,sessao_id,tema,objetivo,habilidades_bncc,metodologia,recursos,observacoes,created_by,created_at,updated_at) VALUES\n${contentRows};`,
     emitMultiRowInsert(
       'frequencia',
       ['id', 'matricula_id', 'sessao_id', 'data_aula', 'presente', 'status_presenca', 'justificativa', 'professor_id', 'marcado_por', 'marcado_em', 'created_at'],

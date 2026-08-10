@@ -4,9 +4,10 @@
 -- escolas, users, turmas, disciplinas, responsaveis, alunos, vinculos,
 -- matriculas, notas, calendario e configs.
 --
--- A frequencia e as aulas (janela movel de 20 dias letivos terminando na
--- data do reset) sao geradas por attendance-generator.ts, que tambem
--- escreve o marcador sintetico demo_seed_anchor_date.
+-- A frequencia, as sessoes e o conteudo canonico (janela movel de 20 dias
+-- letivos terminando na data do reset) sao gerados por
+-- attendance-generator.ts, que tambem escreve o marcador sintetico
+-- demo_seed_anchor_date.
 --
 -- Contrato de determinismo: nenhum now(); todas as colunas created_at usam
 -- o ancoradouro fixo '2026-02-03 08:00:00-03' (inicio do ano letivo). A
@@ -620,4 +621,3 @@ INSERT INTO configs (id,chave,valor,categoria,descricao,tipo_valor,valor_padrao,
 ('00000000-0000-0000-0000-000000000960','demo_synthetic_marker','SYNTHETIC-EDUCA-DEMO','demo','Marcador que prova que o sandbox publico contem apenas dados sinteticos','string','SYNTHETIC-EDUCA-DEMO',true,'2026-02-03 08:00:00-03'),
 ('00000000-0000-0000-0000-000000000961','demo_alert_matricula_id','00000000-0000-0000-0000-000000000401','demo','Matricula do aluno demonstrativo de alerta de frequencia < 80% (Bolsa Familia)','string','00000000-0000-0000-0000-000000000401',true,'2026-02-03 08:00:00-03'),
 ('00000000-0000-0000-0000-000000000962','demo_alert_threshold','80','demo','Limite minimo de frequencia que dispara o alerta (receipt: issue #23 e app BOLSA_FAMILIA_THRESHOLD)','string','80',true,'2026-02-03 08:00:00-03');
-

@@ -116,7 +116,7 @@ export default function NovaVivenciaPage() {
     if (!alunoId || !student) return
 
     if (!matricula?.turma_id) {
-      toast.error('Aluno nao possui matricula ativa', {
+      toast.error('Aluno não possui matrícula ativa', {
         description: 'O aluno precisa estar matriculado em uma turma para registrar vivencias.',
       })
       return
@@ -144,7 +144,7 @@ export default function NovaVivenciaPage() {
         throw new Error(errorData.error || 'Erro ao salvar vivencia')
       }
 
-      toast.success('Vivencia registrada com sucesso!', {
+      toast.success('Vivência registrada com sucesso!', {
         description: `Vivencia de ${student.nome_completo} salva.`,
       })
 
@@ -198,7 +198,7 @@ export default function NovaVivenciaPage() {
       <div className="p-4 max-w-2xl mx-auto">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
           <p className="font-medium">Erro ao carregar pagina</p>
-          <p className="text-sm mt-1">{error || 'Aluno nao encontrado'}</p>
+          <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
           <Button
             variant="outline"
             size="sm"

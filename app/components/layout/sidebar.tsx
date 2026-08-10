@@ -118,7 +118,7 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['admin', 'diretor', 'secretario'],
       },
       {
-        name: 'Atribuicoes',
+        name: 'Atribuições',
         href: '/dashboard/atribuicoes',
         icon: UserCog,
         roles: ['admin', 'diretor'],

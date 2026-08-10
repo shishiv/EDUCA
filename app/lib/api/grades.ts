@@ -197,14 +197,14 @@ export async function createGrade(
       if (error.code === '23505') {
         return {
           data: null,
-          error: 'Ja existe uma nota para este aluno, disciplina e bimestre',
+          error: 'Já existe uma nota para este aluno, disciplina e bimestre',
         }
       }
 
       if (error.code === '23503') {
         return {
           data: null,
-          error: 'Matricula nao encontrada',
+          error: 'Matrícula não encontrada',
         }
       }
 
@@ -313,7 +313,7 @@ export async function updateGrade(
       if (error.code === 'PGRST116') {
         return {
           data: null,
-          error: 'Nota nao encontrada',
+          error: 'Nota não encontrada',
         }
       }
 
@@ -526,7 +526,7 @@ export async function calculateAverage(
       })
       return {
         data: null,
-        error: 'Erro ao buscar notas para calculo de media',
+        error: 'Erro ao buscar notas para cálculo de média',
       }
     }
 
@@ -585,7 +585,7 @@ export async function calculateAverage(
     })
     return {
       data: null,
-      error: 'Erro inesperado ao calcular media',
+      error: 'Erro inesperado ao calcular média',
     }
   }
 }
@@ -622,7 +622,7 @@ export async function deleteGrade(
       if (error.code === 'PGRST116') {
         return {
           success: false,
-          error: 'Nota nao encontrada',
+          error: 'Nota não encontrada',
         }
       }
 

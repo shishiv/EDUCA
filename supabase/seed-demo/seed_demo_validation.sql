@@ -35,6 +35,11 @@ SELECT pg_temp.assert_true((SELECT count(*) = 50 FROM aluno_responsaveis), '50 v
 SELECT pg_temp.assert_true((SELECT count(*) = 50 FROM matriculas), '50 matriculas');
 SELECT pg_temp.assert_true((SELECT count(*) = 300 FROM notas), '300 notas');
 SELECT pg_temp.assert_true((SELECT count(*) = 15 FROM calendario_escolar), '15 eventos de calendario');
+SELECT pg_temp.assert_true(
+  (SELECT count(*) FROM conteudo_aula) = (SELECT count(*) FROM sessoes_aula)
+    AND (SELECT count(*) FROM conteudo_aula) = 100,
+  '100 conteudos canonicos para 100 sessoes geradas'
+);
 
 -- -----------------------------------------------------------------------------
 -- 2. Relacionamentos
@@ -67,6 +72,22 @@ SELECT pg_temp.assert_true(
    JOIN sessoes_aula s ON s.id = f.sessao_id
    WHERE s.turma_id <> m.turma_id OR s.data_aula <> f.data_aula),
   'frequencia aponta para sessao da mesma turma na mesma data'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 0
+   FROM conteudo_aula c
+   LEFT JOIN sessoes_aula s ON s.id = c.sessao_id
+   LEFT JOIN turmas t ON t.id = s.turma_id
+   LEFT JOIN escolas e ON e.id = t.escola_id
+   LEFT JOIN users u ON u.id = s.professor_id
+   LEFT JOIN disciplinas d ON d.id = s.disciplina_id
+   WHERE s.id IS NULL OR t.id IS NULL OR e.id IS NULL OR u.id IS NULL OR d.id IS NULL),
+  'cada conteudo usa a sessao, turma, escola, professor e disciplina canonicos'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) FROM sessoes_aula s JOIN conteudo_aula c ON c.sessao_id = s.id) =
+    (SELECT count(*) FROM sessoes_aula),
+  'cada sessao gerada tem conteudo canonico'
 );
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0 FROM aluno_responsaveis ar

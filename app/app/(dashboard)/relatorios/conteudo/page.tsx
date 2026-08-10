@@ -366,7 +366,7 @@ function ContentTable({ lessons }: { lessons: LessonContentReportItem[] }) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Data</TableHead>
-            <TableHead>Tema/Conteudo</TableHead>
+            <TableHead>Tema/Conteúdo</TableHead>
             <TableHead className="hidden md:table-cell">Objetivo</TableHead>
             <TableHead className="w-[120px] text-center">Habilidades</TableHead>
             <TableHead className="hidden lg:table-cell">Turma</TableHead>
@@ -526,8 +526,8 @@ export default function ContentReportsPage() {
 
   // Handle export PDF
   const handleExportPDF = () => {
-    if (!reportData) {
-      toast.error('Gere um relatorio primeiro')
+    if (!reportData || reportData.aulas.length === 0) {
+      toast.error('Não há conteúdo real no período selecionado para exportar')
       return
     }
     try {
@@ -584,7 +584,12 @@ export default function ContentReportsPage() {
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={!reportData}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportPDF}
+          disabled={!reportData || reportData.aulas.length === 0}
+        >
           <FileText className="h-4 w-4 mr-2" />
           Exportar PDF
         </Button>
@@ -642,7 +647,7 @@ export default function ContentReportsPage() {
 
             {/* Period Selector */}
             <div className="space-y-2">
-              <Label htmlFor="periodo">Periodo</Label>
+              <Label htmlFor="periodo">Período</Label>
               <Select value={periodOption} onValueChange={setPeriodOption}>
                 <SelectTrigger id="periodo">
                   <SelectValue />
@@ -750,6 +755,19 @@ export default function ContentReportsPage() {
 
       {/* Report Content */}
       {reportData && (
+        reportData.aulas.length === 0 ? (
+          <Card data-testid="content-report-empty-state" role="status">
+            <CardContent className="text-center py-12">
+              <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg font-medium text-gray-600">
+                Nenhum conteúdo real registrado no período selecionado
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                O PDF está indisponível porque não existe conteúdo canônico para este período.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -789,7 +807,7 @@ export default function ContentReportsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{reportData.resumo.mediaHabilidadesPorAula.toFixed(1)}</p>
-                    <p className="text-sm text-gray-500">Media/Aula</p>
+                    <p className="text-sm text-gray-500">Média/Aula</p>
                   </div>
                 </div>
               </CardContent>
@@ -837,7 +855,7 @@ export default function ContentReportsPage() {
                       Nenhuma aula registrada no periodo
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
-                      Periodo: {periodoLabel}
+                      Período: {periodoLabel}
                     </p>
                   </CardContent>
                 </Card>
@@ -875,6 +893,7 @@ export default function ContentReportsPage() {
             </TabsContent>
           </Tabs>
         </>
+        )
       )}
 
       {/* Empty State */}

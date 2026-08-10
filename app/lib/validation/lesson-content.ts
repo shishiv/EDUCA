@@ -181,7 +181,7 @@ export const lessonContentInfantilSchema = lessonContentFormSchema.extend({
   education_level: z.literal('infantil'),
   campos_experiencia: z
     .array(z.enum(['EO', 'CG', 'TS', 'EF', 'ET']))
-    .min(1, 'Selecione pelo menos um Campo de Experiencia'),
+    .min(1, 'Selecione pelo menos um Campo de Experiência'),
 })
 
 // ============================================================================
@@ -321,28 +321,28 @@ export const EXPERIENCE_FIELD_OPTIONS: {
 }[] = [
   {
     code: 'EO',
-    label: 'O eu, o outro e o nos',
+    label: 'O eu, o outro e o nós',
     description: 'Identidade, autonomia e coletividade',
   },
   {
     code: 'CG',
     label: 'Corpo, gestos e movimentos',
-    description: 'Coordenacao motora e expressao corporal',
+    description: 'Coordenação motora e expressão corporal',
   },
   {
     code: 'TS',
-    label: 'Tracos, sons, cores e formas',
-    description: 'Exploracao artistica e cultural',
+    label: 'Traços, sons, cores e formas',
+    description: 'Exploração artística e cultural',
   },
   {
     code: 'EF',
-    label: 'Escuta, fala, pensamento e imaginacao',
-    description: 'Linguagem oral e pensamento critico',
+    label: 'Escuta, fala, pensamento e imaginação',
+    description: 'Linguagem oral e pensamento crítico',
   },
   {
     code: 'ET',
-    label: 'Espacos, tempos, quantidades',
-    description: 'Nocoes espaciais, temporais e quantitativas',
+    label: 'Espaços, tempos, quantidades',
+    description: 'Noções espaciais, temporais e quantitativas',
   },
 ]
 

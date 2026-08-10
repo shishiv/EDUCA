@@ -227,7 +227,7 @@ export function DescriptiveReportForm({
     const { canFinalize: canFinal, missingFields } = canFinalize(data)
 
     if (!canFinal) {
-      toast.error(`Preencha todos os campos obrigatorios: ${missingFields.join(', ')}`)
+      toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(', ')}`)
       return
     }
 
@@ -235,9 +235,9 @@ export function DescriptiveReportForm({
     try {
       const transformedData = transformFormDataToInput(data)
       await onFinalize?.(transformedData)
-      toast.success('Relatorio finalizado com sucesso!')
+      toast.success('Relatório finalizado com sucesso!')
     } catch (error) {
-      toast.error('Erro ao finalizar relatorio')
+      toast.error('Erro ao finalizar relatório')
       throw error
     } finally {
       setIsFinalizing(false)
@@ -328,19 +328,19 @@ export function DescriptiveReportForm({
                   {hasUnsavedChanges ? (
                     <>
                       <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
-                      <span>Alteracoes nao salvas</span>
+                      <span>Alterações não salvas</span>
                     </>
                   ) : (
                     <>
                       <div className="h-2 w-2 rounded-full bg-green-500" />
-                      <span>Todas alteracoes salvas</span>
+                      <span>Todas as alterações salvas</span>
                     </>
                   )}
                 </div>
                 {lastSaved && (
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>Ultimo salvamento: {formatLastSaved(lastSaved)}</span>
+                    <span>Último salvamento: {formatLastSaved(lastSaved)}</span>
                   </div>
                 )}
               </div>
@@ -352,10 +352,10 @@ export function DescriptiveReportForm({
         {isFinalized && (
           <Alert className="border-green-200 bg-green-50">
             <Lock className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Relatorio Finalizado</AlertTitle>
+            <AlertTitle className="text-green-800">Relatório Finalizado</AlertTitle>
             <AlertDescription className="text-green-700">
               Este relatorio foi finalizado e nao pode mais ser alterado.
-              Apenas a visualizacao esta disponivel.
+              Apenas a visualização está disponível.
             </AlertDescription>
           </Alert>
         )}
@@ -446,7 +446,7 @@ export function DescriptiveReportForm({
                     <Textarea
                       {...field}
                       id="observacoes_gerais"
-                      placeholder="Informacoes complementares sobre o desenvolvimento geral, recomendacoes ou pontos de atencao..."
+                      placeholder="Informações complementares sobre o desenvolvimento geral, recomendações ou pontos de atenção..."
                       disabled={isFormDisabled}
                       className={cn(
                         'min-h-[100px] resize-y',

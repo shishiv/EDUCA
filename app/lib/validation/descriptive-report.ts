@@ -37,9 +37,9 @@ export const FORM_ERROR_MESSAGES = {
   fieldTooShort: (fieldName: string) =>
     `${fieldName} deve ter pelo menos ${MIN_FIELD_LENGTH} caracteres`,
   fieldTooLong: (fieldName: string) =>
-    `${fieldName} deve ter no maximo ${MAX_FIELD_LENGTH} caracteres`,
-  observacoesTooLong: `Observacoes devem ter no maximo ${MAX_OBSERVACOES_LENGTH} caracteres`,
-  allFieldsRequired: 'Todos os 5 Campos de Experiencia devem ser preenchidos para finalizar',
+    `${fieldName} deve ter no máximo ${MAX_FIELD_LENGTH} caracteres`,
+  observacoesTooLong: `Observações devem ter no máximo ${MAX_OBSERVACOES_LENGTH} caracteres`,
+  allFieldsRequired: 'Todos os 5 Campos de Experiência devem ser preenchidos para finalizar',
 } as const
 
 // ============================================================================
@@ -98,9 +98,9 @@ export const descriptiveReportDraftSchema = z.object({
 export const descriptiveReportFinalSchema = z.object({
   campo_eu_outro_nos: createExperienceFieldRequired('O eu, o outro e o nos'),
   campo_corpo_gestos: createExperienceFieldRequired('Corpo, gestos e movimentos'),
-  campo_tracos_sons: createExperienceFieldRequired('Tracos, sons, cores e formas'),
-  campo_escuta_fala: createExperienceFieldRequired('Escuta, fala, pensamento e imaginacao'),
-  campo_espacos_tempos: createExperienceFieldRequired('Espacos, tempos, quantidades'),
+  campo_tracos_sons: createExperienceFieldRequired('Traços, sons, cores e formas'),
+  campo_escuta_fala: createExperienceFieldRequired('Escuta, fala, pensamento e imaginação'),
+  campo_espacos_tempos: createExperienceFieldRequired('Espaços, tempos, quantidades'),
   observacoes_gerais: z
     .string()
     .max(MAX_OBSERVACOES_LENGTH, { message: FORM_ERROR_MESSAGES.observacoesTooLong })
@@ -221,7 +221,7 @@ export function canFinalize(formData: DescriptiveReportDraftFormData): {
     const label = getFieldLabel(key)
     if (!value || value.trim() === '') {
       missingFields.push(label)
-      fieldErrors.push({ field: key, message: `${label} e obrigatorio para finalizar` })
+      fieldErrors.push({ field: key, message: `${label} é obrigatório para finalizar` })
     } else if (value.trim().length < MIN_FIELD_LENGTH) {
       fieldErrors.push({
         field: key,
