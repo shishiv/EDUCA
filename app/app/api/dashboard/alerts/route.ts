@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
-import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
-import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
+import {
+  getAttendanceConditionality,
+  filterBolsaFamiliaConditionality,
+  isLegalAttendanceRisk,
+  isMunicipalAttendanceRisk,
+} from '@/lib/reports/attendance-conditionality'
 
 export interface DashboardAlert {
   id: string
@@ -62,6 +66,7 @@ export async function GET(_request: NextRequest) {
 
     const { data: turmas } = await turmasQuery
     const turmaIds = turmas?.map(t => t.id) || []
+    const visibleTurmaIds = new Set(turmaIds)
 
     if (turmaIds.length > 0) {
       // Get sessions done today
@@ -93,89 +98,75 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // Bolsa Família and preventive attendance alerts use the same canonical
-    // session-backed read as the reports and compliance endpoint.
-    if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
-      let bolsaMatriculasQuery = supabase
-        .from('matriculas')
-        .select(`
-          id,
-          alunos!inner(
-            bolsa_familia
-          ),
-          turmas!inner(
-            escola_id
-          )
-        `)
-        .eq('situacao', 'ativa')
+    // 2. Resolve all Bolsa Família legal and municipality statuses from the
+    // canonical read model. No threshold is reconstructed in this route.
+    const monthConditionality = await getAttendanceConditionality(supabase, {
+      startDate: `${today.slice(0, 7)}-01`,
+      endDate: today,
+      escolaId: escolaFilter ?? undefined,
+    })
 
-      if (userProfile.tipo_usuario !== 'admin' && userProfile.escola_id) {
-        bolsaMatriculasQuery = bolsaMatriculasQuery.eq('turmas.escola_id', userProfile.escola_id)
-      }
+    if (monthConditionality.error) {
+      logger.error('Error resolving dashboard attendance conditionality', new Error(monthConditionality.error), {
+        feature: 'dashboard-alerts',
+        action: 'resolve_attendance_conditionality',
+      })
+    } else if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
+      const bolsaFamiliaRows = filterBolsaFamiliaConditionality(monthConditionality.data)
+      const atRiskRows = bolsaFamiliaRows.filter((row) => (
+        isMunicipalAttendanceRisk(row) || isLegalAttendanceRisk(row)
+      ))
 
-      const { data: matriculasBolsa, error: matriculasBolsaError } = await bolsaMatriculasQuery
-      if (matriculasBolsaError) {
-        logger.error('Error fetching Bolsa Familia enrollments for dashboard alerts', matriculasBolsaError)
-      } else {
-        const bolsaMatriculaIds = (matriculasBolsa ?? [])
-          .filter((matricula) => matricula.alunos?.bolsa_familia === true)
-          .map((matricula) => matricula.id)
-
-        if (bolsaMatriculaIds.length > 0) {
-          const monthStart = `${today.slice(0, 7)}-01`
-          const canonicalFacts = await loadCanonicalAttendanceFacts(supabase, bolsaMatriculaIds, {
-            startDate: monthStart,
-            endDate: today,
-          })
-          const summaries = summarizeCanonicalAttendanceFacts(canonicalFacts, bolsaMatriculaIds)
-          const criticalCount = bolsaMatriculaIds.filter((matriculaId) => {
-            const summary = summaries.get(matriculaId)
-            return Boolean(summary && summary.total > 0 && summary.percentual < CONFORMIDADE)
-          }).length
-          const attentionCount = bolsaMatriculaIds.filter((matriculaId) => {
-            const summary = summaries.get(matriculaId)
-            return Boolean(
-              summary &&
-              summary.total > 0 &&
-              summary.percentual >= CONFORMIDADE &&
-              summary.percentual < ATENCAO
-            )
-          }).length
-
-          if (criticalCount > 0) {
-            alerts.push({
-              id: 'dashboard-bolsa-familia-nao-conforme',
-              type: 'error',
-              title: 'Não conformidade Bolsa Família',
-              description: `${criticalCount} aluno(s) abaixo de ${CONFORMIDADE}% de frequência. A condicionalidade do benefício não foi atendida.`,
-              action: {
-                label: 'Ver conformidade Bolsa Família',
-                href: '/relatorios/bolsa-familia',
-              },
-              priority: 1,
-              createdAt: new Date().toISOString(),
-            })
-          }
-
-          if (attentionCount > 0) {
-            alerts.push({
-              id: 'dashboard-frequencia-atencao-preventiva',
-              type: 'warning',
-              title: 'Atenção preventiva de frequência',
-              description: `${attentionCount} aluno(s) entre ${CONFORMIDADE}% e menos de ${ATENCAO}%. A condicionalidade permanece atendida, mas a margem municipal pede acompanhamento.`,
-              action: {
-                label: 'Ver atenção preventiva',
-                href: '/relatorios/bolsa-familia',
-              },
-              priority: 2,
-              createdAt: new Date().toISOString(),
-            })
-          }
-        }
+      if (atRiskRows.length > 0) {
+        const legalRiskCount = atRiskRows.filter(isLegalAttendanceRisk).length
+        const municipalRiskCount = atRiskRows.filter(isMunicipalAttendanceRisk).length
+        alerts.push({
+          id: 'baixa-frequencia-bf',
+          type: 'error',
+          title: 'Alerta Bolsa Família',
+          description: `${atRiskRows.length} aluno(s) com risco resolvido pelo modelo canônico` +
+            ` (${legalRiskCount} condicionalidade legal, ${municipalRiskCount} margem municipal)`,
+          action: {
+            label: 'Ver relatório',
+            href: '/relatorios/bolsa-familia',
+          },
+          priority: 1,
+          createdAt: new Date().toISOString(),
+        })
       }
     }
 
-    // 2. Info alert if no classes assigned (for professors)
+    // 3. Check today's attendance against the resolved municipality margin.
+    if (turmaIds.length > 0) {
+      const todayConditionality = await getAttendanceConditionality(supabase, {
+        startDate: today,
+        endDate: today,
+        escolaId: escolaFilter ?? undefined,
+      })
+      const rowsBelowMargin = todayConditionality.data.filter((row) => (
+        row.tem_dados_frequencia
+        && visibleTurmaIds.has(row.turma_id)
+        && row.is_bolsa_familia
+        && isMunicipalAttendanceRisk(row)
+      ))
+
+      if (rowsBelowMargin.length > 0) {
+        alerts.push({
+          id: 'frequencia-baixa',
+          type: 'warning',
+          title: 'Frequência abaixo da margem municipal',
+          description: `${rowsBelowMargin.length} aluno(s) abaixo da margem municipal resolvida hoje.`,
+          action: {
+            label: 'Ver detalhes',
+            href: '/relatorios/bolsa-familia',
+          },
+          priority: 2,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    }
+
+    // 4. Info alert if no classes assigned (for professors)
     if (userProfile.tipo_usuario === 'professor' && turmaIds.length === 0) {
       alerts.push({
         id: 'sem-turmas',

@@ -2,8 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
-import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
-import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
+import {
+  filterBolsaFamiliaConditionality,
+  getAttendanceConditionality,
+  isLegalAttendanceRisk,
+  isMunicipalAttendanceRisk,
+} from '@/lib/reports/attendance-conditionality'
 
 export interface ComplianceWarning {
   id: string
@@ -71,86 +75,50 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // WARNING 2: Bolsa Família attendance below the legal threshold.
-    // NIS alone is not a benefit enrollment, so this starts from the explicit
-    // bolsa_familia flag on active enrollments and canonical session records.
-    if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
-      let bolsaMatriculasQuery = supabase
-        .from('matriculas')
-        .select(`
-          id,
-          alunos!inner(
-            bolsa_familia
-          ),
-          turmas!inner(
-            escola_id
-          )
-        `)
-        .eq('situacao', 'ativa')
+    // WARNING 2 and 3: legal conditionality and municipality margin come from
+    // the canonical PostgreSQL read model. The response keeps them separate.
+    const monthStart = `${today.slice(0, 7)}-01`
+    const conditionality = await getAttendanceConditionality(supabase, {
+      startDate: monthStart,
+      endDate: today,
+      escolaId: userProfile.escola_id ?? undefined,
+    })
 
-      if (userProfile.tipo_usuario !== 'admin' && userProfile.escola_id) {
-        bolsaMatriculasQuery = bolsaMatriculasQuery.eq('turmas.escola_id', userProfile.escola_id)
+    if (!conditionality.error) {
+      const rows = filterBolsaFamiliaConditionality(conditionality.data)
+      const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
+      const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
+
+      if (legalRiskCount > 0) {
+        warnings.push({
+          id: 'bolsa-familia-legal-conditionality',
+          title: 'Condicionalidade legal Bolsa Família',
+          message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
+          type: 'critical',
+          icon: 'AlertTriangle',
+          actionUrl: '/relatorios/bolsa-familia',
+          actionText: 'Ver relatório',
+          count: legalRiskCount,
+        })
       }
 
-      const { data: matriculasBolsa, error: matriculasBolsaError } = await bolsaMatriculasQuery
-
-      if (matriculasBolsaError) {
-        logger.error('Error fetching Bolsa Familia enrollments for compliance warnings', matriculasBolsaError)
-      } else {
-        const bolsaMatriculaIds = (matriculasBolsa ?? [])
-          .filter(matricula => matricula.alunos?.bolsa_familia === true)
-          .map(matricula => matricula.id)
-
-        if (bolsaMatriculaIds.length > 0) {
-          const startOfMonth = `${today.slice(0, 7)}-01`
-          const canonicalFacts = await loadCanonicalAttendanceFacts(supabase, bolsaMatriculaIds, {
-            startDate: startOfMonth,
-            endDate: today,
-          })
-          const attendanceByMatricula = summarizeCanonicalAttendanceFacts(
-            canonicalFacts,
-            bolsaMatriculaIds
-          )
-          const criticalCount = bolsaMatriculaIds.filter((matriculaId) => {
-            const attendance = attendanceByMatricula.get(matriculaId)
-            return Boolean(attendance && attendance.total > 0 && attendance.percentual < CONFORMIDADE)
-          }).length
-          const attentionCount = bolsaMatriculaIds.filter((matriculaId) => {
-            const attendance = attendanceByMatricula.get(matriculaId)
-            return Boolean(
-              attendance &&
-              attendance.total > 0 &&
-              attendance.percentual >= CONFORMIDADE &&
-              attendance.percentual < ATENCAO
-            )
-          }).length
-
-            if (criticalCount > 0) {
-              warnings.push({
-                id: 'bolsa-familia-baixa-frequencia',
-                title: 'Não conformidade Bolsa Família',
-                message: `${criticalCount} aluno(s) do Bolsa Família estão abaixo de ${CONFORMIDADE}% neste mês. A condicionalidade do benefício não foi atendida.`,
-                type: 'critical',
-                icon: 'AlertTriangle',
-                actionUrl: '/relatorios/bolsa-familia',
-                actionText: 'Ver relatório Bolsa Família',
-                count: criticalCount,
-              })
-            }
-            if (attentionCount > 0) {
-              warnings.push({
-                id: 'bolsa-familia-atencao-preventiva',
-                title: 'Atenção preventiva de frequência',
-                message: `${attentionCount} aluno(s) do Bolsa Família estão entre ${CONFORMIDADE}% e menos de ${ATENCAO}%. A condicionalidade permanece atendida, mas requer margem preventiva municipal.`,
-                type: 'warning',
-                icon: 'AlertCircle',
-                actionUrl: '/relatorios/bolsa-familia',
-                actionText: 'Ver relatório Bolsa Família',
-                count: attentionCount,
-              })
-            }
-        }
+      if (municipalRiskCount > 0) {
+        warnings.push({
+          id: 'bolsa-familia-municipal-margin',
+          title: 'Margem municipal de alerta precoce',
+          message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
+          type: 'warning',
+          icon: 'AlertCircle',
+          actionUrl: '/relatorios/bolsa-familia',
+          actionText: 'Ver relatório',
+          count: municipalRiskCount,
+        })
       }
+    } else {
+      logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
+        feature: 'compliance-warnings',
+        action: 'resolve_attendance_conditionality',
+      })
     }
 
     // WARNING 4: Educacenso deadline approaching (if within 30 days)

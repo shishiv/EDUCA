@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import type { BolsaFamiliaStudent, BolsaFamiliaStatus } from '@/lib/reports/bolsa-familia-reports';
-import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy';
 
 // ============================================================================
 // TYPES
@@ -35,20 +34,24 @@ export interface BolsaFamiliaAlertProps {
 // HELPER COMPONENTS
 // ============================================================================
 
+function getOverallStatus(student: BolsaFamiliaStudent): BolsaFamiliaStatus {
+  return student.statusLegal === 'CRITICO' ? 'CRITICO' : student.status;
+}
+
 function StatusBadge({ status }: { status: BolsaFamiliaStatus }) {
   switch (status) {
     case 'CRITICO':
       return (
         <Badge variant="destructive" className="gap-1">
           <AlertTriangle className="h-3 w-3" />
-          Não conforme
+          Crítico
         </Badge>
       );
-    case 'ATENCAO':
+    case 'ALERTA':
       return (
         <Badge variant="outline" className="gap-1 border-amber-500 text-amber-700 bg-amber-50">
           <AlertCircle className="h-3 w-3" />
-          Atenção preventiva
+          Alerta
         </Badge>
       );
     case 'CONFORME':
@@ -61,10 +64,19 @@ function StatusBadge({ status }: { status: BolsaFamiliaStatus }) {
   }
 }
 
-function AttendanceBar({ percentual }: { percentual: number }) {
+function AttendanceBar({
+  percentual,
+  criticalPercent,
+  warningPercent,
+}: {
+  percentual: number;
+  criticalPercent: number | null;
+  warningPercent: number | null;
+}) {
   const getColor = () => {
-    if (percentual < CONFORMIDADE) return 'bg-red-500';
-    if (percentual < ATENCAO) return 'bg-amber-500';
+    if (criticalPercent !== null && percentual < criticalPercent) return 'bg-red-500';
+    if (warningPercent !== null && percentual < warningPercent) return 'bg-amber-500';
+    if (criticalPercent === null || warningPercent === null) return 'bg-slate-400';
     return 'bg-green-500';
   };
 
@@ -127,8 +139,8 @@ function BolsaFamiliaAlertCompact({
   maxItems = 3,
   onViewAll,
 }: BolsaFamiliaAlertProps) {
-  const atRisk = students.filter((s) => s.status !== 'CONFORME');
-  const criticos = atRisk.filter((s) => s.status === 'CRITICO');
+  const atRisk = students.filter((student) => getOverallStatus(student) !== 'CONFORME');
+  const criticos = atRisk.filter((student) => getOverallStatus(student) === 'CRITICO');
   const displayStudents = atRisk.slice(0, maxItems);
 
   if (atRisk.length === 0) {
@@ -136,7 +148,7 @@ function BolsaFamiliaAlertCompact({
       <div className="p-3 border border-green-200 bg-green-50 rounded-lg">
         <div className="flex items-center gap-2 text-green-700">
           <CheckCircle className="h-4 w-4" />
-          <span className="text-sm font-medium">Bolsa Família: Condicionalidade atendida</span>
+          <span className="text-sm font-medium">Bolsa Família: Todos conformes</span>
         </div>
       </div>
     );
@@ -148,12 +160,12 @@ function BolsaFamiliaAlertCompact({
         <div className="flex items-center gap-2 text-amber-700">
           <AlertTriangle className="h-4 w-4" />
           <span className="text-sm font-medium">
-            Frequência: {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} em acompanhamento
+            Bolsa Família: {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} em risco
           </span>
         </div>
         {criticos.length > 0 && (
           <Badge variant="destructive" className="text-xs">
-            {criticos.length} não conforme{criticos.length > 1 ? 's' : ''}
+            {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
           </Badge>
         )}
       </div>
@@ -167,7 +179,7 @@ function BolsaFamiliaAlertCompact({
             <span className="text-gray-700 truncate max-w-[150px]">{student.nome}</span>
             <span
               className={`font-medium ${
-                student.status === 'CRITICO' ? 'text-red-600' : 'text-amber-600'
+                getOverallStatus(student) === 'CRITICO' ? 'text-red-600' : 'text-amber-600'
               }`}
             >
               {student.percentual}%
@@ -216,10 +228,21 @@ export function BolsaFamiliaAlert({
     );
   }
 
-  const atRisk = students.filter((s) => s.status !== 'CONFORME');
-  const criticos = atRisk.filter((s) => s.status === 'CRITICO');
-  const emAtencao = atRisk.filter((s) => s.status === 'ATENCAO');
+  const atRisk = students.filter((student) => getOverallStatus(student) !== 'CONFORME');
+  const criticos = atRisk.filter((student) => getOverallStatus(student) === 'CRITICO');
+  const emAlerta = atRisk.filter((student) => getOverallStatus(student) === 'ALERTA');
   const displayStudents = atRisk.slice(0, maxItems);
+  const resolvedMargins = Array.from(new Set(
+    students
+      .filter((student) => student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null)
+      .map((student) => `${student.margemMunicipalCriticaPercent}:${student.margemMunicipalAlertaPercent}`),
+  ));
+  const marginLabel = resolvedMargins.length === 1
+    ? (() => {
+      const [critical, warning] = resolvedMargins[0].split(':');
+      return `Crítico (<${critical}%) | Alerta (${critical}-${warning}%) | Conforme (>=${warning}%)`;
+    })()
+    : 'Margens municipais resolvidas por município';
 
   if (atRisk.length === 0) {
     return (
@@ -227,10 +250,10 @@ export function BolsaFamiliaAlert({
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            <CardTitle className="text-green-800">Bolsa Família: Condicionalidade atendida</CardTitle>
+            <CardTitle className="text-green-800">Bolsa Família: Sem Alertas</CardTitle>
           </div>
           <CardDescription className="text-green-700">
-            Todos os alunos do Bolsa Família atendem à condicionalidade de {CONFORMIDADE}%.
+            Todos os alunos do Bolsa Família estão acima da margem municipal resolvida.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -246,29 +269,25 @@ export function BolsaFamiliaAlert({
               className={`h-5 w-5 ${criticos.length > 0 ? 'text-red-600' : 'text-amber-600'}`}
             />
             <CardTitle className={criticos.length > 0 ? 'text-red-800' : 'text-amber-800'}>
-              Bolsa Família: conformidade e atenção preventiva
+              Alerta Bolsa Família
             </CardTitle>
           </div>
           <div className="flex gap-2">
             {criticos.length > 0 && (
               <Badge variant="destructive">
-                {criticos.length} não conforme{criticos.length > 1 ? 's' : ''}
+                {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
               </Badge>
             )}
-            {emAtencao.length > 0 && (
+            {emAlerta.length > 0 && (
               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                {emAtencao.length} em atenção preventiva
+                {emAlerta.length} em alerta
               </Badge>
             )}
           </div>
         </div>
         <CardDescription className={criticos.length > 0 ? 'text-red-700' : 'text-amber-700'}>
-          {criticos.length > 0 && (
-            <span>{criticos.length} aluno{criticos.length > 1 ? 's' : ''} abaixo de {CONFORMIDADE}% não atende{criticos.length > 1 ? 'm' : ''} à condicionalidade Bolsa Família. </span>
-          )}
-          {emAtencao.length > 0 && (
-            <span>{emAtencao.length} aluno{emAtencao.length > 1 ? 's' : ''} em atenção preventiva abaixo de {ATENCAO}%, com condicionalidade atendida a partir de {CONFORMIDADE}%.</span>
-          )}
+          {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} com alerta legal ou municipal.
+          As duas resoluções aparecem separadas em cada registro.
         </CardDescription>
       </CardHeader>
 
@@ -278,7 +297,7 @@ export function BolsaFamiliaAlert({
             <div
               key={student.matriculaId}
               className={`p-3 border rounded-lg ${
-                student.status === 'CRITICO'
+                getOverallStatus(student) === 'CRITICO'
                   ? 'border-red-200 bg-red-50'
                   : 'border-amber-200 bg-amber-50'
               }`}
@@ -294,10 +313,20 @@ export function BolsaFamiliaAlert({
                       <div>NIS: {student.nis || 'Não informado'}</div>
                       <div>Turma: {student.turmaNome} ({student.turmaSerie})</div>
                       {student.escolaNome && <div>Escola: {student.escolaNome}</div>}
+                      <div>
+                        Condicionalidade legal: {student.statusLegal}
+                        {student.pisoLegalPercent !== null ? ` (${student.pisoLegalPercent}%)` : ''}
+                      </div>
+                      <div>
+                        Margem municipal: {student.margemMunicipalStatus}
+                        {student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null
+                          ? ` (${student.margemMunicipalCriticaPercent}/${student.margemMunicipalAlertaPercent}%)`
+                          : ''}
+                      </div>
                     </div>
                   )}
                 </div>
-                <StatusBadge status={student.status} />
+                <StatusBadge status={getOverallStatus(student)} />
               </div>
 
               {/* Attendance details */}
@@ -306,23 +335,27 @@ export function BolsaFamiliaAlert({
                   <span className="text-gray-600">Frequência</span>
                   <span
                     className={`font-bold ${
-                      student.status === 'CRITICO' ? 'text-red-600' : 'text-amber-600'
+                      getOverallStatus(student) === 'CRITICO' ? 'text-red-600' : 'text-amber-600'
                     }`}
                   >
                     {student.percentual}%
                   </span>
                 </div>
-                <AttendanceBar percentual={student.percentual} />
+                <AttendanceBar
+                  percentual={student.percentual}
+                  criticalPercent={student.margemMunicipalCriticaPercent}
+                  warningPercent={student.margemMunicipalAlertaPercent}
+                />
 
                 {showDetails && (
                   <div className="flex justify-between text-xs text-gray-500 pt-1">
                     <span>
                       P: {student.presencas} | F: {student.faltas} | A: {student.atestados}
                     </span>
-                    {student.status !== 'CRITICO' && student.faltasParaCritico > 0 && (
+                    {getOverallStatus(student) !== 'CRITICO' && student.faltasParaCritico > 0 && (
                       <span className="text-amber-600">
                         {student.faltasParaCritico} falta{student.faltasParaCritico > 1 ? 's' : ''}{' '}
-                        para não conformidade
+                        para crítico
                       </span>
                     )}
                   </div>
@@ -348,27 +381,31 @@ export function BolsaFamiliaAlert({
             className="w-full mt-4"
             onClick={onViewAll}
           >
-            Ver todos os {atRisk.length} alunos em acompanhamento
+            Ver todos os {atRisk.length} alunos em risco
           </Button>
         )}
 
         {/* Legend */}
         <div className="mt-4 pt-4 border-t">
           <div className="text-xs text-gray-500 space-y-1">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span>Não conformidade (&lt;{CONFORMIDADE}%)</span>
+            {resolvedMargins.length === 1 ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span>{marginLabel.split(' | ')[0]}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <span>{marginLabel.split(' | ')[1]}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span>{marginLabel.split(' | ')[2]}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <span>Atenção preventiva ({CONFORMIDADE}% - &lt;{ATENCAO}%)</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span>Conformidade Bolsa Família (&gt;={CONFORMIDADE}%)</span>
-              </div>
-            </div>
+            ) : (
+              <p>{marginLabel}</p>
+            )}
             <p className="text-gray-400">
               * Atestados médicos (A) contam como presença para o Bolsa Família
             </p>

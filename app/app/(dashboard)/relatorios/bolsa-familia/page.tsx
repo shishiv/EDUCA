@@ -8,7 +8,7 @@
  *
  * Page for viewing and exporting Bolsa Familia compliance reports.
  * Shows students with NIS who are at risk of losing benefits due to
- * low attendance (< 80% threshold).
+ * low attendance against the resolved municipal margin.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -43,7 +43,6 @@ import {
   getBolsaFamiliaStudents,
   type BolsaFamiliaReport,
 } from '@/lib/reports/bolsa-familia-reports';
-import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy';
 import {
   generateBolsaFamiliaReportPDF,
   generateBolsaFamiliaReportExcel,
@@ -453,8 +452,8 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.conformes}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Conformidade (&gt;={CONFORMIDADE}%)</span>
-                    <span className="sm:hidden">Conforme</span>
+                    <span className="hidden sm:inline">Conformes na margem municipal</span>
+                    <span className="sm:hidden">OK</span>
                   </p>
                 </div>
                 <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 hidden xs:block" />
@@ -468,11 +467,11 @@ export default function BolsaFamiliaReportPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xl sm:text-2xl font-bold text-amber-600">
-                    {report.resumo.emAtencaoPreventiva}
+                    {report.resumo.emAlerta}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Atenção preventiva ({CONFORMIDADE}% - &lt;{ATENCAO}%)</span>
-                    <span className="sm:hidden">Atenção</span>
+                    <span className="hidden sm:inline">Em alerta municipal</span>
+                    <span className="sm:hidden">Alerta</span>
                   </p>
                 </div>
                 <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 hidden xs:block" />
@@ -489,8 +488,8 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.emRiscoCritico}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Não conformes (&lt;{CONFORMIDADE}%)</span>
-                    <span className="sm:hidden">Não conforme</span>
+                    <span className="hidden sm:inline">Críticos na margem municipal</span>
+                    <span className="sm:hidden">Critico</span>
                   </p>
                 </div>
                 <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 hidden xs:block" />
@@ -568,6 +567,8 @@ export default function BolsaFamiliaReportPage() {
                         <TableHead className="text-center w-10 hidden xs:table-cell">A</TableHead>
                         <TableHead className="text-center w-12 hidden sm:table-cell">Total</TableHead>
                         <TableHead className="text-center w-14">%</TableHead>
+                        <TableHead className="text-center hidden md:table-cell">Legal</TableHead>
+                        <TableHead className="text-center hidden lg:table-cell">Margem</TableHead>
                         <TableHead className="text-center w-16 sm:w-20">Status</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -578,7 +579,7 @@ export default function BolsaFamiliaReportPage() {
                           className={cn(
                             'min-h-[44px]',
                             aluno.status === 'CRITICO' && 'bg-red-50',
-                            aluno.status === 'ATENCAO' && 'bg-amber-50'
+                            aluno.status === 'ALERTA' && 'bg-amber-50'
                           )}
                         >
                           <TableCell className="font-medium text-xs sm:text-sm py-3">
@@ -597,23 +598,33 @@ export default function BolsaFamiliaReportPage() {
                             <span
                               className={cn(
                                 aluno.status === 'CRITICO' && 'text-red-600',
-                                aluno.status === 'ATENCAO' && 'text-amber-600',
+                                aluno.status === 'ALERTA' && 'text-amber-600',
                                 aluno.status === 'CONFORME' && 'text-green-600'
                               )}
                             >
                               {aluno.percentual}%
                             </span>
                           </TableCell>
+                          <TableCell className="text-center text-xs hidden md:table-cell">
+                            {aluno.statusLegal}
+                            {aluno.pisoLegalPercent !== null ? ` (${aluno.pisoLegalPercent}%)` : ''}
+                          </TableCell>
+                          <TableCell className="text-center text-xs hidden lg:table-cell">
+                            {aluno.margemMunicipalStatus}
+                            {aluno.margemMunicipalCriticaPercent !== null && aluno.margemMunicipalAlertaPercent !== null
+                              ? ` (${aluno.margemMunicipalCriticaPercent}/${aluno.margemMunicipalAlertaPercent}%)`
+                              : ''}
+                          </TableCell>
                           <TableCell className="text-center">
                             {aluno.status === 'CRITICO' && (
                               <Badge variant="destructive" className="text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">Não conforme</span>
+                                <span className="hidden sm:inline">Critico</span>
                                 <AlertTriangle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}
-                            {aluno.status === 'ATENCAO' && (
+                            {aluno.status === 'ALERTA' && (
                               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">Atenção preventiva</span>
+                                <span className="hidden sm:inline">Alerta</span>
                                 <AlertCircle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}
@@ -647,7 +658,12 @@ export default function BolsaFamiliaReportPage() {
               para o cálculo de conformidade do Bolsa Família.
             </p>
             <p>
-              <strong>Política:</strong> Não conformidade Bolsa Família &lt;{CONFORMIDADE}% | Atenção preventiva {CONFORMIDADE}% - &lt;{ATENCAO}% | Conformidade a partir de {CONFORMIDADE}%
+              <strong>Margens municipais:</strong>{' '}
+              {report && report.resolucoesMargemMunicipal.length > 0
+                ? report.resolucoesMargemMunicipal.map((resolution) => (
+                  `${resolution.criticalPercent ?? 'não configurada'}/${resolution.warningPercent ?? 'não configurada'}% (${resolution.source ?? 'origem não informada'}, precedência ${resolution.precedence ?? 'n/a'}, fallback ${resolution.fallback ? 'sim' : 'não'})`
+                )).join(', ')
+                : 'não configuradas'}
             </p>
             {report && (
               <p className="text-gray-400">

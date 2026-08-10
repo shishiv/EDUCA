@@ -1,281 +1,266 @@
 /**
- * Bolsa Família Attendance Reports API
- * OpenSpec Change: 2025-12-04-diario-de-classe
- * Task Group 4.2: Alerta Bolsa Família
+ * Bolsa Família attendance report adapter.
  *
- * Functions for generating Bolsa Família compliance reports:
- * - getBolsaFamiliaStudentsAtRisk: Students with NIS below 80% threshold
- * - generateBolsaFamiliaReport: Full report for government compliance
- * - calculateBolsaFamiliaStatus: Compliance status calculation
- *
- * IMPORTANT: For Bolsa Família compliance, attestados (A) count as present.
- * This is consistent with Brazilian educational compliance regulations.
+ * Attendance and threshold resolution come from the canonical PostgreSQL read
+ * model. This module only formats those rows for the report and its exports.
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
-import { logger } from '@/lib/logger';
-import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts';
-import { CONFORMIDADE, getFrequencyPolicyStatus, type FrequencyPolicyStatus } from '@/lib/attendance/attendance-policy';
-
-// ============================================================================
-// POLICY RECEIPTS
-// ============================================================================
+import { logger } from '@/lib/logger'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import {
+  filterBolsaFamiliaConditionality,
+  getAttendanceConditionality,
+  isLegalAttendanceRisk,
+  isMunicipalAttendanceRisk,
+  type AttendanceConditionalityFilters,
+  type AttendanceConditionalityRow,
+} from './attendance-conditionality'
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface BolsaFamiliaFilters {
-  startDate: string;
-  endDate: string;
-  escolaId?: string;
-  turmaId?: string;
-  onlyAtRisk?: boolean;
+export interface BolsaFamiliaFilters extends AttendanceConditionalityFilters {
+  onlyAtRisk?: boolean
 }
 
-export type BolsaFamiliaStatus = FrequencyPolicyStatus;
+export type BolsaFamiliaStatus = 'CONFORME' | 'ALERTA' | 'CRITICO'
 
 export interface BolsaFamiliaStudent {
-  matriculaId: string;
-  alunoId: string;
-  nome: string;
-  nis: string;
-  bolsaFamilia: boolean;
-  turmaId: string;
-  turmaNome: string;
-  turmaSerie: string;
-  escolaId: string;
-  escolaNome: string;
-  presencas: number;
-  faltas: number;
-  atestados: number;
-  totalAulas: number;
-  percentual: number;
-  status: BolsaFamiliaStatus;
-  faltasParaCritico: number; // How many more absences until below CONFORMIDADE
+  matriculaId: string
+  alunoId: string
+  nome: string
+  nis: string
+  bolsaFamilia: boolean
+  idadeAnos: number
+  educacaoBasicaConcluida: boolean
+  condicionalidadeLegal: string | null
+  pisoLegalPercent: number | null
+  statusLegal: string
+  margemMunicipalId: string | null
+  margemMunicipalCriticaPercent: number | null
+  margemMunicipalAlertaPercent: number | null
+  margemMunicipalStatus: string
+  margemMunicipalPrecedencia: number | null
+  margemMunicipalOrigem: string | null
+  margemMunicipalDefinidaPor: string | null
+  margemMunicipalDefinidaEm: string | null
+  margemMunicipalFallback: boolean
+  margemMunicipalFallbackMotivo: string | null
+  margemMunicipalVigenciaInicio: string | null
+  margemMunicipalVigenciaFim: string | null
+  turmaId: string
+  turmaNome: string
+  turmaSerie: string
+  escolaId: string
+  escolaNome: string
+  presencas: number
+  faltas: number
+  atestados: number
+  totalAulas: number
+  percentual: number
+  /** Display status for the municipality early-warning margin. */
+  status: BolsaFamiliaStatus
+  faltasParaCritico: number
+}
+
+export interface MunicipalMarginResolution {
+  id: string | null
+  municipalityId: string
+  criticalPercent: number | null
+  warningPercent: number | null
+  precedence: number | null
+  source: string | null
+  definedBy: string | null
+  definedAt: string | null
+  fallback: boolean
+  fallbackReason: string | null
+  validFrom: string | null
+  validUntil: string | null
 }
 
 export interface BolsaFamiliaReport {
   periodo: {
-    inicio: string;
-    fim: string;
-  };
+    inicio: string
+    fim: string
+  }
   resumo: {
-    totalAlunosBolsaFamilia: number;
-    conformes: number;
-    emAtencaoPreventiva: number;
-    emRiscoCritico: number;
-    percentualConformidade: number;
-  };
-  alunos: BolsaFamiliaStudent[];
-  geradoEm: string;
+    totalAlunosBolsaFamilia: number
+    conformes: number
+    emAlerta: number
+    emRiscoCritico: number
+    percentualConformidade: number
+    condicionalidadesLegaisCriticas: number
+    semCondicionalidadeLegal: number
+  }
+  resolucoesMargemMunicipal: MunicipalMarginResolution[]
+  alunos: BolsaFamiliaStudent[]
+  geradoEm: string
 }
 
 export interface BolsaFamiliaReportResult {
-  data: BolsaFamiliaReport | null;
-  error: string | null;
+  data: BolsaFamiliaReport | null
+  error: string | null
 }
 
 // ============================================================================
-// HELPER FUNCTIONS
+// PURE STATUS HELPERS
 // ============================================================================
+
+/** Resolves a display status from a municipality margin supplied by PostgreSQL. */
+export function calculateBolsaFamiliaStatus(
+  percentual: number,
+  criticalPercent: number,
+  warningPercent: number,
+): BolsaFamiliaStatus {
+  if (percentual < criticalPercent) return 'CRITICO'
+  if (percentual < warningPercent) return 'ALERTA'
+  return 'CONFORME'
+}
 
 /**
- * Calculate Bolsa Família compliance status
+ * Calculates absences needed to cross a resolved municipal critical margin.
+ * The threshold is a database value, never a universal application constant.
  */
-export function calculateBolsaFamiliaStatus(percentual: number): BolsaFamiliaStatus {
-  return getFrequencyPolicyStatus(percentual);
-}
-
-/** Calculate how many more absences until the student falls below CONFORMIDADE. */
 export function calculateFaltasParaCritico(
   presencas: number,
   faltas: number,
-  atestados: number
+  atestados: number,
+  criticalPercent: number = CONFORMIDADE,
 ): number {
-  // Current: (presencas + atestados) / total >= CONFORMIDADE
-  // We need to find how many more absences (n) would make:
-  // (presencas + atestados) / (total + n) < CONFORMIDADE
+  const presentDays = presencas + atestados
+  const total = presencas + faltas + atestados
 
-  const presentDays = presencas + atestados;
-  const total = presencas + faltas + atestados;
+  if (total === 0 || criticalPercent <= 0 || criticalPercent >= 100) return 0
+  if ((presentDays / total) * 100 < criticalPercent) return 0
 
-  if (total === 0) return 0;
+  return Math.max(
+    0,
+    Math.floor((presentDays * 100) / criticalPercent - total) + 1,
+  )
+}
 
-  // Solve for the first whole absence that makes the ratio strictly lower.
-  const complianceRate = CONFORMIDADE / 100;
-  const n = Math.floor(presentDays / complianceRate - total) + 1;
+function resolveDisplayStatus(row: AttendanceConditionalityRow): BolsaFamiliaStatus {
+  if (row.margem_municipal_status === 'CRITICO') return 'CRITICO'
+  if (row.margem_municipal_status === 'CONFORME') return 'CONFORME'
+  return 'ALERTA'
+}
 
-  // If already below the compliance threshold, return 0
-  if (n < 0) return 0;
+function toMunicipalMarginResolution(
+  row: AttendanceConditionalityRow,
+): MunicipalMarginResolution {
+  return {
+    id: row.margem_municipal_id ?? null,
+    municipalityId: row.municipio_id,
+    criticalPercent: row.margem_municipal_critica_percent ?? null,
+    warningPercent: row.margem_municipal_alerta_percent ?? null,
+    precedence: row.margem_municipal_precedencia ?? null,
+    source: row.margem_municipal_origem ?? null,
+    definedBy: row.margem_municipal_definida_por ?? null,
+    definedAt: row.margem_municipal_definida_em ?? null,
+    fallback: row.margem_municipal_fallback ?? false,
+    fallbackReason: row.margem_municipal_fallback_motivo ?? null,
+    validFrom: row.margem_municipal_vigencia_inicio ?? null,
+    validUntil: row.margem_municipal_vigencia_fim ?? null,
+  }
+}
 
-  return n;
+function toBolsaFamiliaStudent(row: AttendanceConditionalityRow): BolsaFamiliaStudent {
+  const percentual = Math.round(Number(row.percentual_frequencia))
+  const criticalPercent = row.margem_municipal_critica_percent ?? null
+  const status = resolveDisplayStatus(row)
+
+  return {
+    matriculaId: row.matricula_id,
+    alunoId: row.aluno_id,
+    nome: row.aluno_nome,
+    nis: row.nis ?? '',
+    bolsaFamilia: row.is_bolsa_familia,
+    idadeAnos: row.idade_anos,
+    educacaoBasicaConcluida: row.educacao_basica_concluida,
+    condicionalidadeLegal: row.condicionalidade_legal ?? null,
+    pisoLegalPercent: row.piso_legal_percent ?? null,
+    statusLegal: row.condicionalidade_legal_status,
+    margemMunicipalId: row.margem_municipal_id ?? null,
+    margemMunicipalCriticaPercent: criticalPercent,
+    margemMunicipalAlertaPercent: row.margem_municipal_alerta_percent ?? null,
+    margemMunicipalStatus: row.margem_municipal_status,
+    margemMunicipalPrecedencia: row.margem_municipal_precedencia ?? null,
+    margemMunicipalOrigem: row.margem_municipal_origem ?? null,
+    margemMunicipalDefinidaPor: row.margem_municipal_definida_por ?? null,
+    margemMunicipalDefinidaEm: row.margem_municipal_definida_em ?? null,
+    margemMunicipalFallback: row.margem_municipal_fallback ?? false,
+    margemMunicipalFallbackMotivo: row.margem_municipal_fallback_motivo ?? null,
+    margemMunicipalVigenciaInicio: row.margem_municipal_vigencia_inicio ?? null,
+    margemMunicipalVigenciaFim: row.margem_municipal_vigencia_fim ?? null,
+    turmaId: row.turma_id,
+    turmaNome: row.turma_nome,
+    turmaSerie: row.turma_serie,
+    escolaId: row.escola_id,
+    escolaNome: row.escola_nome,
+    presencas: row.presencas,
+    faltas: row.faltas,
+    atestados: row.atestados,
+    totalAulas: row.total_aulas,
+    percentual,
+    status,
+    faltasParaCritico: criticalPercent
+      ? calculateFaltasParaCritico(row.presencas, row.faltas, row.atestados, criticalPercent)
+      : 0,
+  }
 }
 
 // ============================================================================
-// MAIN FUNCTIONS
+// REPORT GENERATION
 // ============================================================================
 
 /**
- * Get all Bolsa Família students with attendance data.
- *
- * A NIS alone is not proof that a student receives Bolsa Família. The report
- * uses the explicit bolsa_familia enrollment flag so its total matches the
- * benefit population.
- *
- * @param supabase - Supabase client
- * @param filters - Period and optional school/class filters
- * @returns List of Bolsa Família students with attendance status
+ * Reads the canonical conditionality model and builds a Bolsa Família report.
+ * Legal status and municipality early-warning status remain separate fields.
  */
 export async function getBolsaFamiliaStudents(
-  supabase: SupabaseClient<Database>,
-  filters: BolsaFamiliaFilters
+  supabase: unknown,
+  filters: BolsaFamiliaFilters,
 ): Promise<BolsaFamiliaReportResult> {
   try {
-    logger.info('Getting Bolsa Família students', {
-      feature: 'bolsa-familia-reports',
-      action: 'get_students',
-      metadata: {
-        startDate: filters.startDate,
-        endDate: filters.endDate,
-        escolaId: filters.escolaId,
-        turmaId: filters.turmaId,
-      },
-    });
-
-    // Build query for students - filter Bolsa Família in code since Supabase
-    // doesn't support .or() on related table columns in PostgREST syntax
-    let query = supabase
-      .from('matriculas')
-      .select(`
-        id,
-        aluno_id,
-        turma_id,
-        situacao,
-        alunos!inner (
-          id,
-          nome_completo,
-          nis,
-          bolsa_familia
-        ),
-        turmas!inner (
-          id,
-          nome,
-          serie,
-          escola_id,
-          escolas (
-            id,
-            nome
-          )
-        )
-      `)
-      .eq('situacao', 'ativa');
-
-    // Apply optional filters
-    if (filters.turmaId) {
-      query = query.eq('turma_id', filters.turmaId);
-    }
-
-    if (filters.escolaId) {
-      query = query.eq('turmas.escola_id', filters.escolaId);
-    }
-
-    const { data: matriculasData, error: matriculasError } = await query;
-
-    if (matriculasError) {
-      logger.error('Failed to fetch Bolsa Família students', matriculasError.message);
-      return { data: null, error: matriculasError.message };
-    }
-
-    const matriculas = (matriculasData || []).filter((matricula) => {
-      return matricula.alunos?.bolsa_familia === true;
-    });
-
-    if (matriculas.length === 0) {
-      const emptyReport: BolsaFamiliaReport = {
-        periodo: {
-          inicio: filters.startDate,
-          fim: filters.endDate,
-        },
-        resumo: {
-          totalAlunosBolsaFamilia: 0,
-          conformes: 0,
-          emAtencaoPreventiva: 0,
-          emRiscoCritico: 0,
-          percentualConformidade: 100,
-        },
-        alunos: [],
-        geradoEm: new Date().toISOString(),
-      };
-      return { data: emptyReport, error: null };
-    }
-
-    const matriculaIds = matriculas.map((matricula) => matricula.id);
-
-    const attendanceByStudent = await loadCanonicalAttendanceSummaries(
+    const result = await getAttendanceConditionality(
       supabase,
-      matriculaIds,
-      { startDate: filters.startDate, endDate: filters.endDate }
-    );
+      filters,
+    )
 
-    // Build student list with attendance data
-    const alunos: BolsaFamiliaStudent[] = [];
-    let conformes = 0;
-    let emAtencaoPreventiva = 0;
-    let emRiscoCritico = 0;
-
-    for (const matricula of matriculas) {
-      const summary = attendanceByStudent.get(matricula.id);
-      if (!summary) continue;
-      const status = calculateBolsaFamiliaStatus(summary.percentual);
-      const faltasParaCritico = calculateFaltasParaCritico(
-        summary.presencas,
-        summary.faltas,
-        summary.atestados
-      );
-
-      // Compliance includes the preventive band. The band is a separate
-      // municipal signal and must not lower the Bolsa Família compliance rate.
-      if (summary.conforme) conformes++;
-      if (status === 'ATENCAO') emAtencaoPreventiva++;
-      if (status === 'CRITICO') emRiscoCritico++;
-
-      // The risk view includes preventive attention and critical cases.
-      if (filters.onlyAtRisk && status === 'CONFORME') {
-        continue;
-      }
-
-      const turma = matricula.turmas;
-      const aluno = matricula.alunos;
-      const escola = turma?.escolas;
-
-      alunos.push({
-        matriculaId: matricula.id,
-        alunoId: matricula.aluno_id,
-        nome: aluno?.nome_completo || 'Nome não disponível',
-        nis: aluno?.nis || '',
-        bolsaFamilia: aluno?.bolsa_familia || false,
-        turmaId: turma?.id || '',
-        turmaNome: turma?.nome || '',
-        turmaSerie: turma?.serie || '',
-        escolaId: escola?.id || '',
-        escolaNome: escola?.nome || '',
-        presencas: summary.presencas,
-        faltas: summary.faltas,
-        atestados: summary.atestados,
-        totalAulas: summary.total,
-        percentual: summary.percentual,
-        status,
-        faltasParaCritico,
-      });
+    if (result.error) {
+      return { data: null, error: result.error }
     }
 
-    // Sort by percentage (worst first)
-    alunos.sort((a, b) => a.percentual - b.percentual);
+    const rows = filterBolsaFamiliaConditionality(result.data)
+    const students = rows.map(toBolsaFamiliaStudent)
+    const rowByMatricula = new Map(rows.map((row) => [row.matricula_id, row]))
+    const studentsToShow = filters.onlyAtRisk
+      ? students.filter((student) => {
+        const row = rowByMatricula.get(student.matriculaId)
+        return row !== undefined
+          && (isMunicipalAttendanceRisk(row) || isLegalAttendanceRisk(row))
+      })
+      : students
 
-    const totalBF = matriculas.length;
-    const percentualConformidade = totalBF > 0 ? Math.round((conformes / totalBF) * 100) : 100;
+    const resolutions = Array.from(
+      new Map(
+        rows.map((row) => {
+          const resolution = toMunicipalMarginResolution(row)
+          return [`${resolution.municipalityId}:${resolution.id ?? 'none'}`, resolution]
+        }),
+      ).values(),
+    )
+
+    const conformes = students.filter((student) => student.status === 'CONFORME').length
+    const emAlerta = students.filter((student) => student.status === 'ALERTA').length
+    const emRiscoCritico = students.filter((student) => student.status === 'CRITICO').length
+    const condicionalidadesLegaisCriticas = students.filter(
+      (student) => student.statusLegal === 'CRITICO',
+    ).length
+    const semCondicionalidadeLegal = students.filter(
+      (student) => student.statusLegal === 'NAO_APLICAVEL',
+    ).length
 
     const report: BolsaFamiliaReport = {
       periodo: {
@@ -283,131 +268,114 @@ export async function getBolsaFamiliaStudents(
         fim: filters.endDate,
       },
       resumo: {
-        totalAlunosBolsaFamilia: totalBF,
+        totalAlunosBolsaFamilia: students.length,
         conformes,
-        emAtencaoPreventiva,
+        emAlerta,
         emRiscoCritico,
-        percentualConformidade,
+        percentualConformidade: students.length > 0
+          ? Math.round((conformes / students.length) * 100)
+          : 100,
+        condicionalidadesLegaisCriticas,
+        semCondicionalidadeLegal,
       },
-      alunos,
+      resolucoesMargemMunicipal: resolutions,
+      alunos: studentsToShow.sort((a, b) => a.percentual - b.percentual),
       geradoEm: new Date().toISOString(),
-    };
+    }
 
-    logger.info('Bolsa Família report generated', {
+    logger.info('Bolsa Família report generated from canonical attendance model', {
       feature: 'bolsa-familia-reports',
       action: 'report_generated',
       metadata: {
-        total: totalBF,
+        total: students.length,
         conformes,
-        emAtencaoPreventiva,
+        emAlerta,
         emRiscoCritico,
+        condicionalidadesLegaisCriticas,
       },
-    });
+    })
 
-    return { data: report, error: null };
+    return { data: report, error: null }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error generating Bolsa Família report', error instanceof Error ? error : errorMessage);
-    return { data: null, error: errorMessage };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    logger.error('Error generating Bolsa Família report', error instanceof Error ? error : errorMessage)
+    return { data: null, error: errorMessage }
   }
 }
 
-/**
- * Get Bolsa Família students at risk (< 80% or in alert zone)
- * Convenience wrapper around getBolsaFamiliaStudents with onlyAtRisk=true
- */
+/** Gets only students with a legal or municipal conditionality risk. */
 export async function getBolsaFamiliaStudentsAtRisk(
-  supabase: SupabaseClient<Database>,
-  filters: Omit<BolsaFamiliaFilters, 'onlyAtRisk'>
+  supabase: unknown,
+  filters: Omit<BolsaFamiliaFilters, 'onlyAtRisk'>,
 ): Promise<BolsaFamiliaReportResult> {
-  return getBolsaFamiliaStudents(supabase, { ...filters, onlyAtRisk: true });
+  return getBolsaFamiliaStudents(supabase, { ...filters, onlyAtRisk: true })
 }
 
-/**
- * Generate summary statistics for Bolsa Família compliance
- * by school or across all schools
- */
+/** Generates school and overall summaries from the canonical report rows. */
 export async function getBolsaFamiliaSummary(
-  supabase: SupabaseClient<Database>,
-  filters: BolsaFamiliaFilters
+  supabase: unknown,
+  filters: BolsaFamiliaFilters,
 ): Promise<{
   data: {
     bySchool: Array<{
-      escolaId: string;
-      escolaNome: string;
-      total: number;
-      conformes: number;
-      emAtencaoPreventiva: number;
-      emRiscoCritico: number;
-      percentualConformidade: number;
-    }>;
-    overall: {
-      total: number;
-      conformes: number;
-      emAtencaoPreventiva: number;
-      emRiscoCritico: number;
-      percentualConformidade: number;
-    };
-  } | null;
-  error: string | null;
+      escolaId: string
+      escolaNome: string
+      total: number
+      conformes: number
+      emAlerta: number
+      emRiscoCritico: number
+      percentualConformidade: number
+    }>
+    overall: BolsaFamiliaReport['resumo']
+  } | null
+  error: string | null
 }> {
-  const result = await getBolsaFamiliaStudents(supabase, filters);
+  const result = await getBolsaFamiliaStudents(supabase, filters)
 
   if (result.error || !result.data) {
-    return { data: null, error: result.error };
+    return { data: null, error: result.error }
   }
 
-  const report = result.data;
+  const schoolMap = new Map<string, {
+    escolaId: string
+    escolaNome: string
+    total: number
+    conformes: number
+    emAlerta: number
+    emRiscoCritico: number
+  }>()
 
-  // Group by school
-  const schoolMap: Record<string, {
-    escolaId: string;
-    escolaNome: string;
-    total: number;
-    conformes: number;
-    emAtencaoPreventiva: number;
-    emRiscoCritico: number;
-  }> = {};
-
-  for (const aluno of report.alunos) {
-    if (!schoolMap[aluno.escolaId]) {
-      schoolMap[aluno.escolaId] = {
-        escolaId: aluno.escolaId,
-        escolaNome: aluno.escolaNome,
-        total: 0,
-        conformes: 0,
-        emAtencaoPreventiva: 0,
-        emRiscoCritico: 0,
-      };
+  for (const student of result.data.alunos) {
+    const school = schoolMap.get(student.escolaId) ?? {
+      escolaId: student.escolaId,
+      escolaNome: student.escolaNome,
+      total: 0,
+      conformes: 0,
+      emAlerta: 0,
+      emRiscoCritico: 0,
     }
 
-    schoolMap[aluno.escolaId].total++;
-    if (aluno.percentual >= CONFORMIDADE) schoolMap[aluno.escolaId].conformes++;
-    if (aluno.status === 'ATENCAO') schoolMap[aluno.escolaId].emAtencaoPreventiva++;
-    if (aluno.status === 'CRITICO') schoolMap[aluno.escolaId].emRiscoCritico++;
+    school.total++
+    if (student.status === 'CONFORME') school.conformes++
+    else if (student.status === 'ALERTA') school.emAlerta++
+    else school.emRiscoCritico++
+    schoolMap.set(student.escolaId, school)
   }
 
-  const bySchool = Object.values(schoolMap).map((school) => ({
-    ...school,
-    percentualConformidade: school.total > 0
-      ? Math.round((school.conformes / school.total) * 100)
-      : 100,
-  }));
-
-  // Sort by risk (worst first)
-  bySchool.sort((a, b) => a.percentualConformidade - b.percentualConformidade);
+  const bySchool = Array.from(schoolMap.values())
+    .map((school) => ({
+      ...school,
+      percentualConformidade: school.total > 0
+        ? Math.round((school.conformes / school.total) * 100)
+        : 100,
+    }))
+    .sort((a, b) => a.percentualConformidade - b.percentualConformidade)
 
   return {
     data: {
       bySchool,
-      overall: {
-        total: report.resumo.totalAlunosBolsaFamilia,
-        conformes: report.resumo.conformes,
-        emAtencaoPreventiva: report.resumo.emAtencaoPreventiva,
-        emRiscoCritico: report.resumo.emRiscoCritico,
-        percentualConformidade: report.resumo.percentualConformidade,
-      },
+      overall: result.data.resumo,
     },
     error: null,
-  };
+  }
 }

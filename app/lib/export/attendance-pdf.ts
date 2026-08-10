@@ -158,16 +158,27 @@ export function generateBolsaFamiliaReportPDF(
     'Resumo de Conformidade',
     [
       { label: 'Total Bolsa Família', value: report.resumo.totalAlunosBolsaFamilia, color: [219, 234, 254] },
-      { label: `Conformidade Bolsa Família (>=${CONFORMIDADE}%)`, value: report.resumo.conformes, color: [220, 252, 231] },
-      { label: `Atenção preventiva (${CONFORMIDADE}% a <${ATENCAO}%)`, value: report.resumo.emAtencaoPreventiva, color: [254, 243, 199] },
-      { label: `Não conformes (<${CONFORMIDADE}%)`, value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
-      { label: '% Conformidade', value: `${report.resumo.percentualConformidade}%`, color: [219, 234, 254] },
+      { label: 'Conformes na margem municipal', value: report.resumo.conformes, color: [220, 252, 231] },
+      { label: 'Em alerta municipal', value: report.resumo.emAlerta, color: [254, 243, 199] },
+      { label: 'Críticos na margem municipal', value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
+      { label: 'Condicionalidades legais críticas', value: report.resumo.condicionalidadesLegaisCriticas, color: [254, 226, 226] },
+      { label: '% Conformidade municipal', value: `${report.resumo.percentualConformidade}%`, color: [219, 234, 254] },
     ],
     currentY,
     BOLSA_FAMILIA_STYLES
   );
 
   currentY += 5;
+  const resolutionSummary = report.resolucoesMargemMunicipal.map((resolution) =>
+    `${resolution.municipalityId}: crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}, precedência ${resolution.precedence ?? 'n/a'}, origem ${resolution.source ?? 'não informada'}, fallback ${resolution.fallback ? 'sim' : 'não'}, definido por ${resolution.definedBy ?? 'sistema'} em ${resolution.definedAt ?? 'n/a'}`,
+  ).join(' | ')
+  currentY = addPDFText(
+    doc,
+    `Resolução das margens municipais: ${resolutionSummary || 'não configurada'}`,
+    currentY,
+    { fontSize: 7, fontStyle: 'italic', color: [100, 100, 100] },
+  )
+  currentY += 3
 
   // Filter students based on showAllStudents flag
   const studentsToShow = showAllStudents
@@ -192,6 +203,9 @@ export function generateBolsaFamiliaReportPDF(
       { header: 'F', dataKey: 'faltas', halign: 'center', width: 10 },
       { header: 'A', dataKey: 'atestados', halign: 'center', width: 10 },
       { header: '%', dataKey: 'percentual', halign: 'center', width: 12 },
+      { header: 'Piso legal', dataKey: 'pisoLegal', halign: 'center', width: 16 },
+      { header: 'Status legal', dataKey: 'statusLegal', halign: 'center', width: 24 },
+      { header: 'Margem municipal', dataKey: 'margemMunicipal', halign: 'center', width: 25 },
       { header: 'Status', dataKey: 'status', halign: 'center', width: 18 },
     ];
 
@@ -204,7 +218,12 @@ export function generateBolsaFamiliaReportPDF(
       faltas: student.faltas,
       atestados: student.atestados,
       percentual: `${student.percentual}%`,
-      status: student.status === 'CRITICO' ? 'NÃO CONFORME' : student.status === 'ATENCAO' ? 'ATENÇÃO PREVENTIVA' : 'CONFORME',
+      pisoLegal: student.pisoLegalPercent === null ? '-' : `${student.pisoLegalPercent}%`,
+      statusLegal: student.statusLegal,
+      margemMunicipal: student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null
+        ? `${student.margemMunicipalCriticaPercent}%/${student.margemMunicipalAlertaPercent}%`
+        : 'não configurada',
+      status: student.status === 'CRITICO' ? 'CRÍTICO' : student.status === 'ALERTA' ? 'ALERTA' : 'OK',
     }));
 
     currentY = addPDFTable(
@@ -213,7 +232,7 @@ export function generateBolsaFamiliaReportPDF(
         columns,
         rows,
         title: showAllStudents ? 'Todos os Alunos' : 'Alunos em Risco',
-        summary: `P = Presença, F = Falta, A = Atestado (conta como presença). Não conformidade = <${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a <${ATENCAO}%.`,
+        summary: 'P = Presença, F = Falta, A = Atestado (conta como presença). Piso legal e margem municipal aparecem em colunas separadas.',
       },
       currentY,
       BOLSA_FAMILIA_STYLES
@@ -225,7 +244,7 @@ export function generateBolsaFamiliaReportPDF(
   addPDFText(
     doc,
     'NOTA: Para fins de conformidade com o Programa Bolsa Família, atestados médicos (A) são contabilizados como presença. ' +
-    `A condicionalidade Bolsa Família exige ${CONFORMIDADE}% de frequência. A faixa abaixo de ${ATENCAO}% sinaliza atenção preventiva municipal.`,
+    'O piso legal por faixa etária e a margem municipal de alerta precoce são resolvidos separadamente.',
     currentY,
     { fontSize: 8, fontStyle: 'italic', color: [100, 100, 100] }
   );
@@ -262,6 +281,9 @@ export interface StudentReportData {
   }>;
   isBolsaFamilia?: boolean;
   nis?: string;
+  municipalCriticalPercent?: number | null;
+  municipalWarningPercent?: number | null;
+  legalMinimumPercent?: number | null;
 }
 
 /**
@@ -297,11 +319,29 @@ export function generateStudentReportPDF(data: StudentReportData): void {
 
   currentY += 5;
 
-  // Summary
-  const riskStatus = getFrequencyPolicyStatus(data.attendance.percentual);
+  // Thresholds come from the canonical read model when available. The
+  // application policy remains the fallback for legacy callers without them.
+  const hasMunicipalResolution = data.municipalCriticalPercent !== null
+    && data.municipalCriticalPercent !== undefined
+    && data.municipalWarningPercent !== null
+    && data.municipalWarningPercent !== undefined;
+  const hasLegalFloor = data.legalMinimumPercent !== null
+    && data.legalMinimumPercent !== undefined;
+  const riskStatus: 'CONFORME' | 'ATENCAO' | 'CRITICO' = hasMunicipalResolution
+    ? data.attendance.percentual < data.municipalCriticalPercent!
+      ? 'CRITICO'
+      : data.attendance.percentual < data.municipalWarningPercent! ? 'ATENCAO' : 'CONFORME'
+    : hasLegalFloor
+      ? data.attendance.percentual < data.legalMinimumPercent! ? 'CRITICO' : 'CONFORME'
+      : getFrequencyPolicyStatus(data.attendance.percentual);
   const riskColor: [number, number, number] =
     riskStatus === 'CRITICO' ? [254, 226, 226] :
     riskStatus === 'ATENCAO' ? [254, 243, 199] : [220, 252, 231];
+  const riskLabel = hasMunicipalResolution
+    ? 'Margem municipal'
+    : hasLegalFloor
+      ? 'Piso legal'
+      : getFrequencyPolicyLabel(riskStatus);
 
   currentY = addPDFSummary(
     doc,
@@ -311,7 +351,7 @@ export function generateStudentReportPDF(data: StudentReportData): void {
       { label: 'Faltas', value: data.attendance.faltas, color: [254, 226, 226] },
       { label: 'Atestados', value: data.attendance.atestados, color: [254, 243, 199] },
       { label: 'Total', value: data.attendance.totalAulas, color: [219, 234, 254] },
-      { label: getFrequencyPolicyLabel(riskStatus), value: `${data.attendance.percentual}%`, color: riskColor },
+      { label: riskLabel, value: `${data.attendance.percentual}%`, color: riskColor },
     ],
     currentY,
     ATTENDANCE_STYLES

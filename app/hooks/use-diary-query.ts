@@ -18,8 +18,13 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import type { AttendanceStatus } from '@/components/attendance/AttendanceCell'
-import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import {
+  filterBolsaFamiliaConditionality,
+  getAttendanceConditionality,
+  isLegalAttendanceRisk,
+  isMunicipalAttendanceRisk,
+} from '@/lib/reports/attendance-conditionality'
+import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 // ============================================================================
@@ -445,66 +450,55 @@ export function useStudentsAtRisk(turmaId: string | null) {
     queryFn: async (): Promise<StudentAtRisk[]> => {
       if (!turmaId) return []
 
-      // Get all matriculas in the turma with their student info
-      const { data: matriculas, error: matriculasError } = await supabase
+      const { data: activeMatriculas, error: matriculasError } = await supabase
         .from('matriculas')
-        .select(`
-          id,
-          aluno_id,
-          turma_id,
-          situacao,
-          alunos (
-            id,
-            nome_completo
-          )
-        `)
+        .select('id')
         .eq('turma_id', turmaId)
         .eq('situacao', 'ativa')
 
       if (matriculasError) {
-        logger.error('Error loading matriculas for risk:', matriculasError, {
+        logger.error('Error loading active matriculas for diary risk', matriculasError, {
           feature: 'diary-query',
-          action: 'load_risk',
+          action: 'load_active_matriculas_for_risk',
         })
         throw matriculasError
       }
+      if (!activeMatriculas || activeMatriculas.length === 0) return []
 
-      if (!matriculas || matriculas.length === 0) {
-        return []
+      const today = new Date().toISOString().split('T')[0]
+      const startDate = `${new Date().getFullYear()}-01-01`
+      const result = await getAttendanceConditionality(supabase, {
+        startDate,
+        endDate: today,
+        turmaId,
+      })
+
+      if (result.error) {
+        logger.error('Error resolving diary attendance risk', new Error(result.error), {
+          feature: 'diary-query',
+          action: 'resolve_risk_read_model',
+        })
+        throw new Error(result.error)
       }
 
-      const matriculaIds = matriculas.map((m) => m.id)
-      const attendance = await loadCanonicalAttendanceFacts(supabase, matriculaIds)
-      const attendanceByMatricula = summarizeCanonicalAttendanceFacts(attendance, matriculaIds)
-
-      // Calculate attendance percentage for each student
-      const studentsAtRisk: StudentAtRisk[] = []
-
-      for (const matricula of matriculas) {
-        const summary = attendanceByMatricula.get(matricula.id)
-
-        if (!summary || summary.total === 0) continue // Skip students with no attendance records
-
-        // Only include students below the Bolsa Família compliance threshold.
-        if (summary.percentual < CONFORMIDADE) {
-          const aluno = matricula.alunos as { id: string; nome_completo: string } | null
-          studentsAtRisk.push({
-            id: aluno?.id || matricula.aluno_id,
-            nome: aluno?.nome_completo || 'Aluno',
-            nis: undefined,
-            frequenciaPercentual: summary.percentual,
-            totalFaltas: summary.faltas,
-            totalAtestados: summary.atestados,
-            matriculaId: matricula.id,
-          })
-        }
-      }
-
-      // Sort by percentage (lowest first)
-      return studentsAtRisk.sort((a, b) => a.frequenciaPercentual - b.frequenciaPercentual)
+      return filterBolsaFamiliaConditionality(result.data)
+        .filter((row) => (
+          row.tem_dados_frequencia
+          && (isLegalAttendanceRisk(row) || isMunicipalAttendanceRisk(row))
+        ))
+        .map((row) => ({
+          id: row.aluno_id,
+          nome: row.aluno_nome,
+          nis: row.nis ?? undefined,
+          frequenciaPercentual: Math.round(Number(row.percentual_frequencia)),
+          totalFaltas: row.faltas,
+          totalAtestados: row.atestados,
+          matriculaId: row.matricula_id,
+        }))
+        .sort((a, b) => a.frequenciaPercentual - b.frequenciaPercentual)
     },
-    staleTime: 3 * 60 * 1000, // 3 minutes - risk doesn't change often
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     enabled: !!turmaId,
   })
 }

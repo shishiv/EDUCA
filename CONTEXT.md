@@ -54,10 +54,11 @@ pnpm typecheck           # TypeScript, including E2E specs and enabled unit test
 pnpm lint                # ESLint
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
-pnpm test:e2e:pilot              # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
-pnpm test:e2e:pilot:descriptive  # isolated synthetic seed, bounded descriptive-report PDF E2E
-pnpm pilot:restore-test           # local synthetic encrypted backup/restore rehearsal
-pnpm seed:demo                    # synthetic demo seed / reset primitive (issue #23)
+pnpm test:e2e:pilot                     # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
+pnpm test:e2e:pilot:descriptive         # isolated synthetic seed, bounded descriptive-report PDF E2E
+pnpm test:database:attendance:conditionality  # isolated raw PostgreSQL legal floors, municipal margins, fallback, and RLS
+pnpm pilot:restore-test                 # local synthetic encrypted backup/restore rehearsal
+pnpm seed:demo                          # synthetic demo seed / reset primitive (issue #23)
 pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case
 pnpm demo:reset          # local wrapper: preflight demo env, seed, then validate
 pnpm demo:reset-check    # prove a same-anchor reset is idempotent on a live database
