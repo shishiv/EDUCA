@@ -13,29 +13,16 @@ import { Users, UserCheck, GraduationCap, CalendarCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { logger } from '@/lib/logger'
-import type { Database } from '@/types/database'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { quickAccessItems, resolveVisibleQuickAccess, resolveVisibleQuickActionCards, type QuickAccessRole } from '@/lib/dashboard/quick-access'
-
-type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
-type AlunoRow = Database['public']['Tables']['alunos']['Row']
 
 interface DashboardStats {
   totalAlunos: number
   totalEscolas: number
   totalTurmas: number
-  totalMatriculas: number
+  totalProfessores: number
   frequenciaMedia: number
-  alunosComBaixaFrequencia: number
-  alunosComDocumentosPendentes: number
-}
-
-interface RecentActivity {
-  id: string
-  type: 'matricula' | 'frequencia' | 'nota'
-  description: string
-  timestamp: string
 }
 
 interface Turma {
@@ -48,115 +35,89 @@ interface Turma {
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
+  const userRole = userProfile?.tipo_usuario
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
     totalTurmas: 0,
-    totalMatriculas: 0,
+    totalProfessores: 0,
     frequenciaMedia: 0,
-    alunosComBaixaFrequencia: 0,
-    alunosComDocumentosPendentes: 0
   })
   const [loading, setLoading] = useState(true)
-  const [activities, setActivities] = useState<RecentActivity[]>([])
   const [turmas, setTurmas] = useState<Turma[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadDashboardData()
-  }, [])
+    if (!userRole) return
+    if (userRole === 'professor') {
+      setLoading(false)
+      return
+    }
+
+    void loadDashboardData()
+  }, [userRole])
 
   const loadDashboardData = async () => {
     try {
-      logger.info('Loading dashboard data...')
+      setLoadError(null)
 
-      // Fetch stats via API service (follows three-layer architecture per STD-03)
       const apiStats = await dashboardStatsApi.getStats()
 
-      // Map API stats to component state
       const newStats: DashboardStats = {
         totalAlunos: apiStats.totalAlunos,
         totalEscolas: apiStats.totalEscolas,
         totalTurmas: apiStats.totalTurmas,
-        totalMatriculas: apiStats.totalMatriculas,
+        totalProfessores: apiStats.totalProfessores,
         frequenciaMedia: apiStats.frequenciaGeral,
-        alunosComBaixaFrequencia: apiStats.alunosComBaixaFrequencia,
-        alunosComDocumentosPendentes: apiStats.alunosComDocumentosPendentes
       }
 
-      logger.info('Dashboard stats loaded:', { metadata: { newStats } })
       setStats(newStats)
 
-      // Load recent activities from recent data
-      const { data: recentMatriculas } = await supabase
-        .from('matriculas')
-        .select(`
-          id,
-          created_at,
-          alunos (nome_completo)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(3)
-
-      type MatriculaWithAluno = MatriculaRow & {
-        alunos: Pick<AlunoRow, 'nome_completo'> | null
-      }
-
-      const recentActivities: RecentActivity[] = ((recentMatriculas || []) as MatriculaWithAluno[]).map((matricula) => ({
-        id: matricula.id,
-        type: 'matricula' as const,
-        description: `Nova matrícula: ${matricula.alunos?.nome_completo || 'Aluno'}`,
-        timestamp: matricula.created_at || new Date().toISOString()
-      }))
-
-      // Add some sample activities if we don't have enough real data
-      if (recentActivities.length < 3) {
-        recentActivities.push(
-          {
-            id: 'freq-1',
-            type: 'frequencia',
-            description: 'Frequência lançada para turma ativa',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
-          },
-          {
-            id: 'nota-1',
-            type: 'nota',
-            description: 'Sistema atualizado com novas funcionalidades',
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 1 day ago
-          }
-        )
-      }
-
-      logger.info('Recent activities loaded', { metadata: { count: recentActivities.length } })
-      setActivities(recentActivities.slice(0, 3))
-
-      // Load turmas for "Minhas Turmas" section
-      const { data: turmasData } = await supabase
+      const { data: turmasData, error: turmasError } = await supabase
         .from('turmas')
         .select('id, nome, serie, turno')
         .eq('ativo', true)
+        .order('nome')
         .limit(5)
+
+      if (turmasError) throw turmasError
+
+      const turmaIds = (turmasData ?? []).map(turma => turma.id)
+      let matriculasData: Array<{ turma_id: string }> = []
+      if (turmaIds.length > 0) {
+        const { data, error: matriculasError } = await supabase
+          .from('matriculas')
+          .select('turma_id')
+          .in('turma_id', turmaIds)
+          .eq('situacao', 'ativa')
+
+        if (matriculasError) throw matriculasError
+        matriculasData = data ?? []
+      }
+
+      const matriculasPorTurma = new Map<string, number>()
+      for (const matricula of matriculasData) {
+        matriculasPorTurma.set(
+          matricula.turma_id,
+          (matriculasPorTurma.get(matricula.turma_id) ?? 0) + 1
+        )
+      }
 
       const turmasWithCount: Turma[] = (turmasData || []).map((t) => ({
         id: t.id,
         nome: t.nome,
-        serie: t.serie || 'Fundamental I',
-        turno: t.turno || 'Matutino',
-        alunosCount: Math.floor(Math.random() * 20) + 15 // Placeholder - would need join query
+        serie: t.serie,
+        turno: t.turno,
+        alunosCount: matriculasPorTurma.get(t.id) ?? 0,
       }))
       setTurmas(turmasWithCount)
 
     } catch (error) {
-      logger.error('Erro ao carregar dados do dashboard:', error as any)
-      // Fallback to basic stats if there's an error
-      setStats({
-        totalAlunos: 0,
-        totalEscolas: 0,
-        totalTurmas: 0,
-        totalMatriculas: 0,
-        frequenciaMedia: 0,
-        alunosComBaixaFrequencia: 0,
-        alunosComDocumentosPendentes: 0
+      logger.error('DASHBOARD_DATA_LOAD_FAILED', error as Error, {
+        feature: 'dashboard',
+        action: 'load_dashboard_data',
       })
+      setLoadError('Não foi possível carregar os indicadores do dashboard.')
     } finally {
       setLoading(false)
     }
@@ -192,6 +153,18 @@ export default function DashboardPage() {
     )
   }
 
+  if (userProfile?.tipo_usuario === 'professor') {
+    return <TeacherDashboardEnhanced professorId={userProfile.id} />
+  }
+
+  if (loadError) {
+    return (
+      <Card className="border-destructive">
+        <CardContent className="py-6 text-sm text-destructive">{loadError}</CardContent>
+      </Card>
+    )
+  }
+
   const pilotMode = isPilotModeEnabled()
   const demoSandbox = isDemoSandboxEnabled()
   const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
@@ -204,15 +177,6 @@ export default function DashboardPage() {
   })
 
   const visibleQuickActionCards = resolveVisibleQuickActionCards(pilotMode, canManageSchool, demoSandbox)
-
-  // Show teacher-specific dashboard for professors
-  if (userProfile?.tipo_usuario === 'professor') {
-    return (
-      <TeacherDashboardEnhanced
-        professorId={userProfile.id}
-      />
-    )
-  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -274,7 +238,7 @@ export default function DashboardPage() {
         <StatCard
           icon={UserCheck}
           iconColor="pink"
-          value={stats.totalMatriculas}
+          value={stats.totalProfessores}
           label="Professores Ativos"
         />
       </div>
