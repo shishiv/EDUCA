@@ -38,6 +38,17 @@ const CSV = [
   'SYNTHETIC-EDUCA-PILOT,student-1,SCHOOL-1,CLASS-1,Aluno Sintetico,2018-04-12,M,Responsavel Sintetico,+5511999990000,mae',
 ].join('\n')
 
+const GOVERNANCE = {
+  owner: { name: 'Owner Sintetico', email: 'owner@synthetic.invalid' },
+  processingAgreement: { reference: 'DPA-DEMO-001', version: 'v1' },
+  retention: {
+    policy: 'synthetic-proof-30d',
+    rawPayloadExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    canonicalDataExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    rollbackUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+}
+
 function queryChain<T>(result: T) {
   const chain = {
     select: vi.fn(() => chain),
@@ -87,7 +98,7 @@ describe('demo simulated-success route handlers', () => {
     createClientMock.mockReset()
     serviceRoleMock.mockReset()
     safetyMock.mockReset()
-    actorMock.mockResolvedValue({ id: 'actor-1', role: 'admin', schoolId: null, email: 'demo@educa.app.br' })
+    actorMock.mockResolvedValue({ id: 'actor-1', name: 'Admin Demo', role: 'admin', schoolId: null, email: 'demo@educa.app.br' })
     createClientMock.mockResolvedValue(demoSupabase())
     serviceRoleMock.mockReturnValue({
       auth: { admin: { inviteUserByEmail: vi.fn(), updateUserById: vi.fn() } },
@@ -101,7 +112,7 @@ describe('demo simulated-success route handlers', () => {
   })
 
   it('returns a simulated import receipt without invoking safety or service-role writes', async () => {
-    const response = await importPOST(request('http://test/api/pilot/imports', { csv: CSV, dryRun: true }))
+    const response = await importPOST(request('http://test/api/pilot/imports', { csv: CSV, dryRun: true, governance: GOVERNANCE }))
     const body = await response.json()
 
     expect(response.status).toBe(201)
@@ -118,7 +129,7 @@ describe('demo simulated-success route handlers', () => {
   })
 
   it('returns a simulated import approval without reading or publishing a batch', async () => {
-    actorMock.mockResolvedValue({ id: 'director-1', role: 'diretor', schoolId: SCHOOL_ID, email: 'director@example.com' })
+    actorMock.mockResolvedValue({ id: 'director-1', name: 'Diretor Demo', role: 'diretor', schoolId: SCHOOL_ID, email: 'director@example.com' })
     const supabase = demoSupabase()
     createClientMock.mockResolvedValue(supabase)
 

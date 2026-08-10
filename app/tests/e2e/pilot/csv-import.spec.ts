@@ -6,26 +6,38 @@ const csv = [
   'SYNTHETIC-EDUCA-PILOT,csv-e2e-student,SYN-A,CLASS-A,Aluno CSV Sintetico,2018-05-20,M,Responsavel CSV Sintetico,(11) 98888-0000,mae',
 ].join('\n')
 
+const governance = {
+  owner: { name: 'Owner do Piloto Sintetico', email: 'owner@synthetic.invalid' },
+  processingAgreement: { reference: 'DPA-SYN-E2E-001', version: 'v1' },
+  retention: {
+    policy: 'synthetic-proof-30d',
+    rawPayloadExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    canonicalDataExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    rollbackUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+}
+
 test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({ page, browser }) => {
   await page.goto('/dashboard')
-  const dryRun = await page.evaluate(async csvPayload => {
+  const dryRun = await page.evaluate(async ({ csvPayload, governancePayload }) => {
     const response = await fetch('/api/pilot/imports', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ csv: csvPayload, dryRun: true }),
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ csv: csvPayload, dryRun: true, governance: governancePayload }),
     })
     return { status: response.status, body: await response.json() }
-  }, csv)
+  }, { csvPayload: csv, governancePayload: governance })
   expect(dryRun).toEqual(expect.objectContaining({
     status: 200,
     body: expect.objectContaining({ report: expect.objectContaining({ valid: true, validRows: 1 }), validationToken: expect.any(String) }),
   }))
 
-  const staged = await page.evaluate(async ({ csvPayload, validationToken }) => {
+  const staged = await page.evaluate(async ({ csvPayload, validationToken, governancePayload }) => {
     const response = await fetch('/api/pilot/imports', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ csv: csvPayload, validationToken, idempotencyKey: 'csv-e2e-batch-001' }),
+      body: JSON.stringify({ csv: csvPayload, validationToken, idempotencyKey: 'csv-e2e-batch-001', governance: governancePayload }),
     })
     return { status: response.status, body: await response.json() }
-  }, { csvPayload: csv, validationToken: dryRun.body.validationToken })
+  }, { csvPayload: csv, validationToken: dryRun.body.validationToken, governancePayload: governance })
   expect(staged.status).toBe(201)
   const batchId = staged.body.batch.id as string
 

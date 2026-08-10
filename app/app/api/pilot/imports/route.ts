@@ -11,11 +11,17 @@ import {
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 import {
-  createDryRunValidationToken,
-  encryptSyntheticCsvForStaging,
-  validateSyntheticStudentCsv,
-  verifyDryRunValidationToken,
-} from '@/lib/pilot/synthetic-csv-import'
+  countCanonicalPilotRows,
+  fingerprintCanonicalPilotRows,
+  transformGovernedPilotCsvToCanonicalRows,
+  validatePilotImportGovernanceInput,
+  validateGovernedPilotStudentCsv,
+} from '@/lib/pilot/governed-csv-import'
+import {
+  createPilotDryRunValidationToken,
+  encryptPilotImportPayload,
+  verifyPilotDryRunValidationToken,
+} from '@/lib/pilot/pilot-import-crypto'
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024
 
@@ -34,12 +40,22 @@ export async function POST(request: Request) {
     const actor = await requirePilotActor(['admin', 'secretario'])
     if (actor.schoolId !== null) return NextResponse.json({ error: 'PILOT_IMPORT_SECRETARIAT_REQUIRED' }, { status: 403 })
 
-    const body = await request.json() as { csv?: string; dryRun?: boolean; validationToken?: string; idempotencyKey?: string }
+    const body = await request.json() as {
+      csv?: string
+      dryRun?: boolean
+      validationToken?: string
+      idempotencyKey?: string
+      governance?: unknown
+    }
     if (!body.csv || Buffer.byteLength(body.csv, 'utf8') > MAX_CSV_BYTES) {
       return NextResponse.json({ error: 'PILOT_IMPORT_INVALID_SIZE' }, { status: 400 })
     }
 
-    const { rows, report } = validateSyntheticStudentCsv(body.csv)
+    const governance = validatePilotImportGovernanceInput(body.governance)
+    const { rows, report } = validateGovernedPilotStudentCsv(body.csv, 'synthetic')
+    const canonicalRows = transformGovernedPilotCsvToCanonicalRows(rows)
+    const canonicalCounts = countCanonicalPilotRows(canonicalRows)
+    const canonicalFingerprint = fingerprintCanonicalPilotRows(canonicalRows)
     if (demoSandbox) {
       if (!report.valid) return NextResponse.json({ report }, { status: 422 })
 
@@ -81,11 +97,12 @@ export async function POST(request: Request) {
     }
 
     const { key, keyId } = getImportKey()
+    if (!actor.email) throw new Error('PILOT_IMPORT_ACTOR_EMAIL_REQUIRED')
     if (!report.valid) return NextResponse.json({ report }, { status: 422 })
     if (body.dryRun) {
-      return NextResponse.json({ report, validationToken: createDryRunValidationToken(report.contentSha256, key) })
+      return NextResponse.json({ report, validationToken: createPilotDryRunValidationToken(report.contentSha256, key) })
     }
-    if (!body.validationToken || !verifyDryRunValidationToken(report.contentSha256, body.validationToken, key)) {
+    if (!body.validationToken || !verifyPilotDryRunValidationToken(report.contentSha256, body.validationToken, key)) {
       return NextResponse.json({ error: 'PILOT_IMPORT_DRY_RUN_REQUIRED' }, { status: 409 })
     }
     if (!body.idempotencyKey || !/^[A-Za-z0-9_-]{8,128}$/.test(body.idempotencyKey)) {
@@ -116,7 +133,17 @@ export async function POST(request: Request) {
       })
     }
 
-    const encrypted = encryptSyntheticCsvForStaging(body.csv, key, keyId)
+    const recordedAt = new Date().toISOString()
+    const governanceMetadata = {
+      owner: governance.owner,
+      processingAgreement: {
+        ...governance.processingAgreement,
+        recordedAt,
+        recordedBy: { name: actor.name, email: actor.email },
+      },
+      retention: governance.retention,
+    }
+    const encrypted = encryptPilotImportPayload(body.csv, key, keyId)
     const { data: batch, error: insertError } = await service
       .from('pilot_import_batches')
       .insert({
@@ -130,14 +157,42 @@ export async function POST(request: Request) {
         auth_tag: encrypted.authTag,
         validation_report: report,
         submitted_by: actor.id,
+        import_target: 'synthetic_local',
+        source_mode: 'synthetic',
+        encryption_algorithm: 'aes-256-gcm',
+        governance_owner_name: governance.owner.name,
+        governance_owner_email: governance.owner.email,
+        submitted_by_name: actor.name,
+        submitted_by_email: actor.email,
+        processing_agreement_reference: governance.processingAgreement.reference,
+        processing_agreement_version: governance.processingAgreement.version,
+        processing_agreement_recorded_at: recordedAt,
+        processing_agreement_recorded_by: actor.id,
+        processing_agreement_recorded_by_name: actor.name,
+        processing_agreement_recorded_by_email: actor.email,
+        retention_policy: governance.retention.policy,
+        raw_expires_at: governance.retention.rawPayloadExpiresAt,
+        canonical_expires_at: governance.retention.canonicalDataExpiresAt,
+        rollback_until: governance.retention.rollbackUntil,
+        source_row_count: report.totalRows,
+        canonical_counts: canonicalCounts,
+        canonical_fingerprint_sha256: canonicalFingerprint,
+        governance_metadata: governanceMetadata,
       })
-      .select('id,status,validation_report,raw_expires_at')
+      .select('id,status,validation_report,raw_expires_at,canonical_counts,canonical_fingerprint_sha256')
       .single()
     if (insertError) throw insertError
 
     await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
       p_event_type: 'import_staged', p_entity_type: 'pilot_import_batch', p_entity_id: batch.id,
-      p_escola_id: school.id, p_metadata: { dataset: 'students', row_count: rows.length },
+      p_escola_id: school.id,
+      p_metadata: {
+        dataset: 'students',
+        row_count: rows.length,
+        source_fingerprint_sha256: report.contentSha256,
+        governance_recorded: true,
+        plaintext_stored: false,
+      },
     })
     return NextResponse.json({ batch }, { status: 201 })
   } catch (error) {
