@@ -1,11 +1,21 @@
 # EDUCA Public Demo Sandbox - Runbook (issue #23)
 
 The public demo sandbox is a shared, synthetic-only instance of EDUCA
-(`demo.educa.app.br`) with a fixed login, deterministic seed data and a weekly
-automatic reset. This document is the runbook for local verification and for
+(`demo.educa.app.br`) with a fixed login and deterministic seed data. A weekly
+reset is the intended operating model, but it is currently inactive. This
+document is the runbook for local verification and for
 provisioning the instance later. **This repository only ships code and
 reproducible configuration - it never creates Vercel/Supabase/DNS resources
 and never publishes anything.**
+
+## Operational status: 2026-08-10
+
+The public URL `educa-demo.vercel.app` responds healthy, but this audit found
+an old deployment and database drift: the dashboard showed 51 students and 9
+classes, and the Bolsa Família report showed zero students. The repository has
+no `.github/workflows/` files, so weekly reset and hosted CI are not active.
+The `sandbox-ar` and `automacao-sandbox` decisions remain held. This runbook
+describes the intended target state, not proof that the public demo is ready.
 
 Acceptance criteria from issue #23:
 
@@ -15,7 +25,7 @@ Acceptance criteria from issue #23:
 | 3 escolas, 5 turmas, 10 professores, 50 alunos | `supabase/seed-demo/seed-demo.sql` (static) + generated attendance |
 | Chamadas recentes com frequência variada | `attendance-generator.ts`: 20 school days ending at the reset date |
 | Incluindo < 80% para demonstrar alerta Bolsa Família | matricula `...0401` (aluno "Miguel") fixed at 70% |
-| Auto-reset semanal via GitHub Actions | `.github/workflows/demo-reset.yml` (Sunday 03:00 BRT) |
+| Auto-reset semanal via GitHub Actions | Target only; workflow currently absent pending `automacao-sandbox` |
 | Signup desabilitado | Supabase project setting (provisioning) + code guards + schema grants |
 
 ## Architecture
@@ -27,16 +37,16 @@ Acceptance criteria from issue #23:
 | `supabase/seed-demo/seed-demo.ts` | Reset + seed runner (`pnpm seed:demo`): one transaction (TRUNCATE ... CASCADE + static seed + generated attendance + marker configs) via direct Postgres (`SUPABASE_DEMO_DB_URL`), then syncs the demo auth user via Admin API. |
 | `supabase/seed-demo/validate-demo.ts` | `pnpm demo:validate`: proves counts, relationships, synthetic-only markers, the < 80% alert case, generator-exact per-student attendance, and prints md5 fingerprints. |
 | `supabase/seed-demo/verify-sql.sh` | Offline validation on a disposable raw PostgreSQL cluster (no Docker/Supabase): applies canonical migrations (demo shape, no pilot module gate), the seed, generated attendance, structural asserts, and a same-anchor repeatability fingerprint check. |
-| `.github/workflows/demo-reset.yml` | Narrow weekly reset: `pnpm seed:demo` + `pnpm demo:validate` against the demo project. |
+| `.github/workflows/demo-reset.yml` | Planned narrow weekly reset; file is currently absent pending `automacao-sandbox`. |
 | `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Demo-sandbox mode guards: blocks admin data-management APIs, hides destructive UI actions, shows the demo banner. |
 
 ## Failure receipts
 
-The three failed scheduled runs separate configuration, seed, and validation evidence:
+The three historical scheduled runs separate configuration, seed, and validation evidence. The workflow described by those receipts is no longer tracked:
 
 | Run | Receipt | Classification and correction |
 | --- | --- | --- |
-| `29185065623` (#1) | The old `Demo Reset` workflow passed only `SUPABASE_DEMO_URL` and `SUPABASE_DEMO_SERVICE_KEY`. The run log is no longer retained. | Workflow configuration gap: it did not provide the direct database connection required by the canonical seed. The current workflow passes all three `SUPABASE_DEMO_*` secrets. |
+| `29185065623` (#1) | The old `Demo Reset` workflow passed only `SUPABASE_DEMO_URL` and `SUPABASE_DEMO_SERVICE_KEY`. The run log is no longer retained. | Workflow configuration gap: it did not provide the direct database connection required by the canonical seed. The last workflow version passed all three `SUPABASE_DEMO_*` secrets. |
 | `29678982042` (#2) | `Cannot find module '@supabase/supabase-js'` from `supabase/seed-demo/seed-demo.ts`. | Seed failure before database access: the script resolved packages from outside `app/`. The seed now anchors runtime package resolution at `app/package.json`. |
 | `30739795664` (#3) | The three demo environment variables were empty in the runner, and the seed stopped with its required-variable error. | Environment failure before database access: the workflow now checks secret presence without printing values. |
 
@@ -176,15 +186,16 @@ pnpm --dir app demo:reset-check
    the browser `admin_full_access` policy; Auth/profile maintenance stays on
    existing server-side paths. The project-level switch remains the
    authoritative control for the Auth API.
-3. **Secrets** - configure GitHub Actions secrets (Settings > Secrets and
-   variables > Actions): `SUPABASE_DEMO_URL`, `SUPABASE_DEMO_SERVICE_KEY`,
-   `SUPABASE_DEMO_DB_URL` (values from `.env.demo.example`).
+3. **Secrets, after the automation decision** - if GitHub Actions is restored,
+   configure these secrets in Settings > Secrets and variables > Actions:
+   `SUPABASE_DEMO_URL`, `SUPABASE_DEMO_SERVICE_KEY`, `SUPABASE_DEMO_DB_URL`.
 4. **Vercel** - create the demo project from the repository `app/` directory
    (framework Next.js; `app/vercel.json` already sets the build). Add the
    environment variables from `app/.env.demo.example`, including
    `NEXT_PUBLIC_DEMO_SANDBOX=true` and the pilot flags.
-5. **First scheduled seed** - after merge, wait for the next Sunday schedule.
-   Do not use `workflow_dispatch` or run a reset against the shared demo locally.
+5. **First scheduled seed, after approval** - restore the workflow, approve the
+   first shared-database reset, and capture before/after validation receipts.
+   Do not run a reset against the shared demo locally.
 6. **DNS** - point `demo.educa.app.br` at the Vercel project (external).
 
 ## Demo mode guards (explicit code, not prose)
