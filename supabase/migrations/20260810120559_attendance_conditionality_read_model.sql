@@ -489,7 +489,8 @@ AS $$
       params.start_date,
       params.end_date
     FROM params
-    JOIN public.matriculas AS enrollment ON enrollment.situacao = 'ativa'
+    JOIN public.matriculas AS enrollment
+      ON lower(coalesce(enrollment.situacao, '')) = 'ativa'
     JOIN public.alunos AS student ON student.id = enrollment.aluno_id
     JOIN public.turmas AS class ON class.id = enrollment.turma_id
     JOIN public.escolas AS school ON school.id = class.escola_id
