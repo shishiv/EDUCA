@@ -16,6 +16,7 @@ import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { quickAccessItems, resolveVisibleQuickAccess, resolveVisibleQuickActionCards, type QuickAccessRole } from '@/lib/dashboard/quick-access'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 interface DashboardStats {
   totalAlunos: number
@@ -233,7 +234,7 @@ export default function DashboardPage() {
           iconColor="yellow"
           value={`${stats.frequenciaMedia}%`}
           label="Frequência Média"
-          trend={stats.frequenciaMedia >= 75 ? { value: "Acima da meta", direction: "up" } : undefined}
+          trend={stats.frequenciaMedia >= CONFORMIDADE ? { value: "Acima da conformidade", direction: "up" } : undefined}
         />
         <StatCard
           icon={UserCheck}

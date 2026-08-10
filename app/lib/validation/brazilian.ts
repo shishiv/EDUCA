@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+import { ATENCAO, CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 /**
  * Validates Brazilian CPF (Cadastro de Pessoas Físicas)
@@ -230,21 +231,21 @@ export function calculateAttendanceRate(presentDays: number, totalDays: number):
 /**
  * Determines attendance status based on Brazilian educational requirements
  * @param attendanceRate Attendance percentage
- * @returns Attendance status
+ * @returns Attendance status using the canonical frequency policy
  */
 export function getAttendanceStatus(attendanceRate: number): 'adequate' | 'warning' | 'critical' {
-  if (attendanceRate >= 80) return 'adequate'
-  if (attendanceRate >= 75) return 'warning'
+  if (attendanceRate >= ATENCAO) return 'adequate'
+  if (attendanceRate >= CONFORMIDADE) return 'warning'
   return 'critical'
 }
 
 /**
- * Validates minimum attendance requirement (75% in Brazil)
+ * Validates the Bolsa Família conditionality threshold.
  * @param attendanceRate Attendance percentage
  * @returns boolean indicating if minimum requirement is met
  */
 export function validateMinimumAttendance(attendanceRate: number): boolean {
-  return attendanceRate >= 75
+  return attendanceRate >= CONFORMIDADE
 }
 
 // Zod schemas for Brazilian educational data validation

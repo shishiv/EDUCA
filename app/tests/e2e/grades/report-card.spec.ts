@@ -396,7 +396,7 @@ test.describe('Boletim - Attendance Information', () => {
     }
   })
 
-  test('should highlight low attendance (<75%)', async ({ page }) => {
+  test('should highlight non-compliant attendance (<80%)', async ({ page }) => {
     const success = await navigateToBoletim(page)
     
     if (success) {
@@ -404,7 +404,7 @@ test.describe('Boletim - Attendance Information', () => {
       const lowAttendance = page.locator('[class*="red"], [class*="warning"]').filter({ hasText: /\d{1,2}%/ })
       if (await lowAttendance.first().isVisible()) {
         const text = await lowAttendance.first().textContent()
-        if (text && parseInt(text) < 75) {
+        if (text && parseInt(text) < 80) {
           await expect(lowAttendance.first()).toBeVisible()
         }
       }

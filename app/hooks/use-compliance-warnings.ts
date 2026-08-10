@@ -7,6 +7,7 @@ import {
   isLegalAttendanceRisk,
   isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
+import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 /** Compliance warning types for Brazilian educational requirements. */
 export interface ComplianceWarning {
@@ -131,6 +132,32 @@ export function useComplianceWarnings(escolaId?: string) {
             municipalCriticalPercent: row.margem_municipal_critica_percent,
             municipalWarningPercent: row.margem_municipal_alerta_percent,
             municipalResolutionId: row.margem_municipal_id,
+            created_at: now.toISOString(),
+          })
+        }
+
+        // Keep the PR96 80/85 policy for general frequency warnings. Bolsa
+        // Família rows above use the municipal resolution from the read model.
+        for (const row of conditionality.data) {
+          if (row.is_bolsa_familia || !row.tem_dados_frequencia) continue
+
+          const attendanceRate = Math.round(Number(row.percentual_frequencia))
+          const policyStatus = getFrequencyPolicyStatus(attendanceRate)
+          if (policyStatus === 'CONFORME') continue
+
+          warnings.push({
+            id: `freq-${row.aluno_id}-${row.matricula_id}`,
+            type: 'frequencia',
+            severity: policyStatus === 'CRITICO' ? 'critical' : 'warning',
+            title: policyStatus === 'CRITICO'
+              ? `Não conformidade de frequência (abaixo de ${CONFORMIDADE}%)`
+              : `Atenção preventiva de frequência (abaixo de ${ATENCAO}%)`,
+            description: `${row.aluno_nome} (${row.turma_nome}) - frequência atual: ${attendanceRate}%.`,
+            studentId: row.aluno_id,
+            studentName: row.aluno_nome,
+            turmaId: row.turma_id,
+            turmaName: row.turma_nome,
+            attendanceRate,
             created_at: now.toISOString(),
           })
         }

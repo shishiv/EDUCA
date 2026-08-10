@@ -42,6 +42,7 @@ import { getClassDetail } from '@/lib/api/class-diary'
 import type { DetailedSession } from '@/lib/api/class-diary'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 interface ClassDiaryDetailProps {
   session_id: string | null
@@ -202,9 +203,11 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                     <span className="text-sm font-medium">Frequência Geral</span>
                     <span
                       className={`text-2xl font-bold ${
-                        session.attendance_percentage >= 75
+                        getFrequencyPolicyStatus(session.attendance_percentage) === 'CONFORME'
                           ? 'text-green-600'
-                          : 'text-red-600'
+                          : getFrequencyPolicyStatus(session.attendance_percentage) === 'ATENCAO'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                       }`}
                     >
                       {session.attendance_percentage}%
@@ -213,14 +216,20 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                   <div className="w-full bg-secondary rounded-full h-2.5">
                     <div
                       className={`h-2.5 rounded-full ${
-                        session.attendance_percentage >= 75 ? 'bg-green-600' : 'bg-red-600'
+                        getFrequencyPolicyStatus(session.attendance_percentage) === 'CONFORME'
+                          ? 'bg-green-600'
+                          : getFrequencyPolicyStatus(session.attendance_percentage) === 'ATENCAO'
+                            ? 'bg-yellow-600'
+                            : 'bg-red-600'
                       }`}
                       style={{ width: `${session.attendance_percentage}%` }}
                     ></div>
                   </div>
-                  {session.attendance_percentage < 75 && (
+                  {getFrequencyPolicyStatus(session.attendance_percentage) !== 'CONFORME' && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      Atenção: Frequência abaixo do mínimo legal de 75%
+                      {getFrequencyPolicyStatus(session.attendance_percentage) === 'CRITICO'
+                        ? `Não conformidade Bolsa Família: abaixo de ${CONFORMIDADE}%.`
+                        : `Atenção preventiva municipal: abaixo de ${ATENCAO}%; condicionalidade atendida a partir de ${CONFORMIDADE}%.`}
                     </p>
                   )}
                 </div>

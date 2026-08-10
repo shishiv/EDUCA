@@ -6,6 +6,7 @@
  */
 
 import { logger } from '@/lib/logger'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
   filterBolsaFamiliaConditionality,
   getAttendanceConditionality,
@@ -125,7 +126,7 @@ export function calculateFaltasParaCritico(
   presencas: number,
   faltas: number,
   atestados: number,
-  criticalPercent: number,
+  criticalPercent: number = CONFORMIDADE,
 ): number {
   const presentDays = presencas + atestados
   const total = presencas + faltas + atestados

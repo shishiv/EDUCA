@@ -24,6 +24,8 @@ import {
   isLegalAttendanceRisk,
   isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
+import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 // ============================================================================
 // Types
@@ -242,11 +244,10 @@ export function useLessons(options: UseLessonsOptions) {
         // Content table might not exist yet
       }
 
-      // Load attendance stats for all sessions in one query
-      const { data: attendance } = await supabase
-        .from('frequencia')
-        .select('sessao_id, presente, status_presenca')
-        .in('sessao_id', sessionIds)
+      // Load attendance stats for all sessions through the canonical query.
+      const attendance = await loadCanonicalAttendanceFacts(supabase, [], {
+        sessaoIds: sessionIds,
+      })
 
       // Aggregate attendance by session
       const attendanceStats = new Map<
@@ -254,27 +255,23 @@ export function useLessons(options: UseLessonsOptions) {
         { total: number; presentes: number; ausentes: number; atestados: number }
       >()
 
-      if (attendance) {
-        attendance.forEach((a: any) => {
-          const stats = attendanceStats.get(a.sessao_id) || {
-            total: 0,
-            presentes: 0,
-            ausentes: 0,
-            atestados: 0,
-          }
-
-          stats.total++
-          if (a.status_presenca === 'P' || (a.presente && !a.status_presenca)) {
-            stats.presentes++
-          } else if (a.status_presenca === 'F' || (!a.presente && !a.status_presenca)) {
-            stats.ausentes++
-          } else if (a.status_presenca === 'A') {
-            stats.atestados++
-          }
-
-          attendanceStats.set(a.sessao_id, stats)
-        })
-      }
+      attendance.forEach((fact) => {
+        const stats = attendanceStats.get(fact.sessaoId) || {
+          total: 0,
+          presentes: 0,
+          ausentes: 0,
+          atestados: 0,
+        }
+        const counts = countAttendanceRecords([{
+          presente: fact.presente,
+          status_presenca: fact.statusPresenca,
+        }])
+        stats.total += counts.total
+        stats.presentes += counts.presencas
+        stats.ausentes += counts.faltas
+        stats.atestados += counts.atestados
+        attendanceStats.set(fact.sessaoId, stats)
+      })
 
       // Build lesson summaries
       return sessions.map((session: any): LessonSummary => {
@@ -357,28 +354,25 @@ export function useLessonDetail(lessonId: string | null) {
         // Content table might not exist
       }
 
-      // Get attendance stats
-      const { data: attendance } = await supabase
-        .from('frequencia')
-        .select('presente, status_presenca')
-        .eq('sessao_id', lessonId)
+      // Get attendance stats from the canonical session-backed read.
+      const attendance = await loadCanonicalAttendanceFacts(supabase, [], {
+        sessaoIds: [lessonId],
+      })
 
       let total = 0,
         presentes = 0,
         ausentes = 0,
         atestados = 0
-      if (attendance) {
-        attendance.forEach((a: any) => {
-          total++
-          if (a.status_presenca === 'P' || (a.presente && !a.status_presenca)) {
-            presentes++
-          } else if (a.status_presenca === 'F' || (!a.presente && !a.status_presenca)) {
-            ausentes++
-          } else if (a.status_presenca === 'A') {
-            atestados++
-          }
-        })
-      }
+      attendance.forEach((fact) => {
+        const counts = countAttendanceRecords([{
+          presente: fact.presente,
+          status_presenca: fact.statusPresenca,
+        }])
+        total += counts.total
+        presentes += counts.presencas
+        ausentes += counts.faltas
+        atestados += counts.atestados
+      })
 
       const turma = session.turmas as { id: string; nome: string; serie: string } | null
 

@@ -9,6 +9,12 @@
 import type { ClassAttendanceReport } from '@/lib/reports/attendance-reports';
 import type { BolsaFamiliaReport } from '@/lib/reports/bolsa-familia-reports';
 import {
+  ATENCAO,
+  CONFORMIDADE,
+  getFrequencyPolicyLabel,
+  getFrequencyPolicyStatus,
+} from '@/lib/attendance/attendance-policy';
+import {
   createPDFDocument,
   addPDFHeader,
   addPDFFooter,
@@ -99,7 +105,7 @@ export function generateAttendanceReportPDF(
     atestados: student.atestados,
     total: student.totalAulas,
     percentual: `${student.percentual}%`,
-    status: student.emRisco ? 'RISCO' : 'OK',
+    status: getFrequencyPolicyLabel(getFrequencyPolicyStatus(student.percentual)),
   }));
 
   currentY = addPDFTable(
@@ -107,7 +113,7 @@ export function generateAttendanceReportPDF(
     {
       columns,
       rows,
-      summary: 'P = Presença, F = Falta, A = Atestado. Risco = limiar resolvido no relatório.',
+      summary: `P = Presença, F = Falta, A = Atestado. Não conformidade = frequência abaixo de ${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a menos de ${ATENCAO}%.`,
     },
     currentY,
     ATTENDANCE_STYLES
@@ -313,19 +319,29 @@ export function generateStudentReportPDF(data: StudentReportData): void {
 
   currentY += 5;
 
-  // Summary. Thresholds come from the canonical read model when available.
-  const riskStatus = data.municipalCriticalPercent !== null && data.municipalCriticalPercent !== undefined
-    && data.municipalWarningPercent !== null && data.municipalWarningPercent !== undefined
-    ? data.attendance.percentual < data.municipalCriticalPercent
-      ? 'EM RISCO'
-      : data.attendance.percentual < data.municipalWarningPercent ? 'ALERTA' : 'OK'
-    : data.legalMinimumPercent !== null && data.legalMinimumPercent !== undefined
-      ? data.attendance.percentual < data.legalMinimumPercent ? 'EM RISCO' : 'OK'
-      : 'SEM LIMIAR';
+  // Thresholds come from the canonical read model when available. The
+  // application policy remains the fallback for legacy callers without them.
+  const hasMunicipalResolution = data.municipalCriticalPercent !== null
+    && data.municipalCriticalPercent !== undefined
+    && data.municipalWarningPercent !== null
+    && data.municipalWarningPercent !== undefined;
+  const hasLegalFloor = data.legalMinimumPercent !== null
+    && data.legalMinimumPercent !== undefined;
+  const riskStatus: 'CONFORME' | 'ATENCAO' | 'CRITICO' = hasMunicipalResolution
+    ? data.attendance.percentual < data.municipalCriticalPercent!
+      ? 'CRITICO'
+      : data.attendance.percentual < data.municipalWarningPercent! ? 'ATENCAO' : 'CONFORME'
+    : hasLegalFloor
+      ? data.attendance.percentual < data.legalMinimumPercent! ? 'CRITICO' : 'CONFORME'
+      : getFrequencyPolicyStatus(data.attendance.percentual);
   const riskColor: [number, number, number] =
-    riskStatus === 'EM RISCO' ? [254, 226, 226] :
-    riskStatus === 'ALERTA' ? [254, 243, 199] :
-    riskStatus === 'SEM LIMIAR' ? [241, 245, 249] : [220, 252, 231];
+    riskStatus === 'CRITICO' ? [254, 226, 226] :
+    riskStatus === 'ATENCAO' ? [254, 243, 199] : [220, 252, 231];
+  const riskLabel = hasMunicipalResolution
+    ? 'Margem municipal'
+    : hasLegalFloor
+      ? 'Piso legal'
+      : getFrequencyPolicyLabel(riskStatus);
 
   currentY = addPDFSummary(
     doc,
@@ -335,7 +351,7 @@ export function generateStudentReportPDF(data: StudentReportData): void {
       { label: 'Faltas', value: data.attendance.faltas, color: [254, 226, 226] },
       { label: 'Atestados', value: data.attendance.atestados, color: [254, 243, 199] },
       { label: 'Total', value: data.attendance.totalAulas, color: [219, 234, 254] },
-      { label: 'Frequência', value: `${data.attendance.percentual}%`, color: riskColor },
+      { label: riskLabel, value: `${data.attendance.percentual}%`, color: riskColor },
     ],
     currentY,
     ATTENDANCE_STYLES

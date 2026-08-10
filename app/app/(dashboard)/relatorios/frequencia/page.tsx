@@ -70,6 +70,7 @@ import {
   generateAttendanceReportPDF,
   generateAttendanceReportExcel,
 } from '@/lib/export'
+import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // TYPES
@@ -86,9 +87,6 @@ interface DateRange {
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
-const RISK_THRESHOLD = 80
-const CRITICAL_THRESHOLD = 75
 
 // Quick period options
 const PERIOD_OPTIONS = [
@@ -258,7 +256,7 @@ export default function AttendanceReportsPage() {
       const filters: AttendanceReportFilters = {
         startDate: formatDateApi(dateRange.from),
         endDate: formatDateApi(dateRange.to),
-        riskThreshold: RISK_THRESHOLD,
+        riskThreshold: CONFORMIDADE,
       }
 
       const result = await generateClassAttendanceReport(supabase, selectedTurma, filters)
@@ -348,6 +346,9 @@ export default function AttendanceReportsPage() {
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
             <span className="hidden sm:inline">Visualize e exporte relatórios de frequência por turma e período</span>
             <span className="sm:hidden">Relatórios por turma e período</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Conformidade Bolsa Família a partir de {CONFORMIDADE}%; atenção preventiva municipal abaixo de {ATENCAO}%.
           </p>
         </div>
 
@@ -542,7 +543,7 @@ export default function AttendanceReportsPage() {
                     : undefined
                 }
                 periodoLabel={periodoLabel}
-                riskThreshold={RISK_THRESHOLD}
+                riskThreshold={CONFORMIDADE}
                 isLoading={isLoadingReport}
                 onRowClick={handleRowClick}
                 onPrint={() => window.print()}

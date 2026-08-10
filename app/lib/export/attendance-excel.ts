@@ -14,6 +14,12 @@ import { ptBR } from 'date-fns/locale';
 import { formatDateBR } from '@/lib/date-utils';
 import type { ClassAttendanceReport } from '@/lib/reports/attendance-reports';
 import type { BolsaFamiliaReport } from '@/lib/reports/bolsa-familia-reports';
+import {
+  ATENCAO,
+  CONFORMIDADE,
+  getFrequencyPolicyLabel,
+  getFrequencyPolicyStatus,
+} from '@/lib/attendance/attendance-policy';
 
 // ============================================================================
 // TYPES
@@ -95,6 +101,12 @@ async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string): Promi
   saveAs(blob, name);
 }
 
+/**
+ * Get status text based on percentage
+ */
+function getStatusText(percentual: number): string {
+  return getFrequencyPolicyLabel(getFrequencyPolicyStatus(percentual));
+}
 // ============================================================================
 // ATTENDANCE REPORT EXCEL
 // ============================================================================
@@ -142,7 +154,7 @@ export async function generateAttendanceReportExcel(
       student.atestados,
       student.totalAulas,
       student.percentual,
-      student.emRisco ? 'RISCO' : 'OK',
+      getStatusText(student.percentual),
     ]);
 
     // Alternate row colors
@@ -156,8 +168,8 @@ export async function generateAttendanceReportExcel(
       });
     }
 
-    // Highlight risk students
-    if (student.emRisco) {
+    // Highlight policy bands
+    if (student.percentual < CONFORMIDADE) {
       row.eachCell((cell) => {
         cell.fill = {
           type: 'pattern',
@@ -165,11 +177,19 @@ export async function generateAttendanceReportExcel(
           fgColor: { argb: 'FFFEE2E2' },
         };
       });
+    } else if (student.percentual < ATENCAO) {
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFEF3C7' },
+        };
+      });
     }
   });
 
   worksheet.addRow([]); // Empty row
-  worksheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado. Risco = limiar resolvido no relatório.']);
+  worksheet.addRow([`Legenda: P = Presença, F = Falta, A = Atestado. Não conformidade = frequência < ${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a < ${ATENCAO}%.`]);
   worksheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 
   // Set column widths
@@ -257,8 +277,8 @@ export async function generateBolsaFamiliaReportExcel(
 
   // Data rows
   studentsToShow.forEach((student, index) => {
-    const statusLabel = student.status === 'CRITICO' ? 'CRÍTICO' :
-                        student.status === 'ALERTA' ? 'ALERTA' : 'OK';
+    const statusLabel = student.status === 'CRITICO' ? 'NÃO CONFORME' :
+                        student.status === 'ALERTA' ? 'ALERTA MUNICIPAL' : 'CONFORME';
 
     const row = studentsSheet.addRow([
       student.nome,
