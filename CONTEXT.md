@@ -54,9 +54,10 @@ pnpm typecheck           # TypeScript, including E2E specs and enabled unit test
 pnpm lint                # ESLint
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
-pnpm test:e2e:pilot      # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
-pnpm pilot:restore-test  # local synthetic encrypted backup/restore rehearsal
-pnpm seed:demo           # synthetic demo seed / reset primitive (issue #23)
+pnpm test:e2e:pilot              # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
+pnpm test:e2e:pilot:descriptive  # isolated synthetic seed, bounded descriptive-report PDF E2E
+pnpm pilot:restore-test           # local synthetic encrypted backup/restore rehearsal
+pnpm seed:demo                    # synthetic demo seed / reset primitive (issue #23)
 pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case
 pnpm demo:reset          # local wrapper: preflight demo env, seed, then validate
 pnpm demo:reset-check    # prove a same-anchor reset is idempotent on a live database
@@ -78,6 +79,8 @@ It needs `initdb`, `pg_ctl`, and `psql` from PostgreSQL 15 or newer. It creates 
 `app/types/database.ts` is generated from the local Supabase schema and is required by the application build. Preserve it and regenerate it only through the command above. It intentionally lags the live schema: pilot code casts at the seam (`asPilotRpcClient`, `asWhatsAppClient`).
 
 The canonical migrations retain the full product schema. The pilot-only provisioner revokes high-risk modules and blocks high-risk student fields only during synthetic pilot rehearsal. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness.
+
+`supabase/pilot/provision-pilot-descriptive-report-demo.sql` is a companion grant for `pnpm test:e2e:pilot:descriptive` only. It follows the base revoke, requires the local synthetic marker and environment gate at the route, and never applies to the public demo sandbox.
 
 `app/scripts/pilot-safety-gate.ts` blocks external deploys while `PILOT_MODE=true`. To authorize real data or external pilot deployment, make a separate reviewed change with named legal and governance approvals. Do not weaken the gate as part of routine feature work.
 

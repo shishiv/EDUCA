@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:e2e:pilot": "bash scripts/run-pilot-e2e.sh",
     "test:e2e:pilot:capacity": "bash scripts/run-pilot-capacity-e2e.sh",
+    "test:e2e:pilot:descriptive": "bash scripts/run-pilot-descriptive-e2e.sh",
     "test:e2e:ui": "playwright test --ui",
     "seed:dev": "tsx scripts/seed-dev.ts",
     "seed:clear": "tsx scripts/seed-dev.ts clear",
