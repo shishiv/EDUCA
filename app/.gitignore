@@ -17,6 +17,7 @@
 
 # Playwright
 playwright/.auth/
+playwright/.pilot-capacity/
 playwright-report/
 test-results/
 .pilot-e2e/
