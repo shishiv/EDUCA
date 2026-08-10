@@ -44,7 +44,7 @@ const pages = [
 
   // Módulos Principais (7)
   { path: '/dashboard/turmas', name: '25-turmas-attendance-entry' },
-  { path: '/dashboard/diario', name: '26-diario' },
+  { path: '/diario', name: '26-diario' },
   { path: '/dashboard/notas', name: '27-notas' },
   { path: '/dashboard/relatorios', name: '28-relatorios' },
   { path: '/dashboard/configuracoes', name: '29-configuracoes' },
