@@ -32,7 +32,13 @@ export const DEMO_SYNTHETIC_MARKER_CONFIG_KEY = 'demo_synthetic_marker'
 export function isDemoSandboxEnabled(
   env: Record<string, string | undefined> = process.env
 ): boolean {
-  return env[DEMO_SANDBOX_ENV_KEY] === 'true' || env.DEMO_SANDBOX === 'true'
+  if (env !== process.env) {
+    return env.NEXT_PUBLIC_DEMO_SANDBOX === 'true' || env.DEMO_SANDBOX === 'true'
+  }
+
+  // Keep this access literal so Next.js replaces it in Client Components.
+  // Read it at call time so tests and server processes observe current env state.
+  return process.env.NEXT_PUBLIC_DEMO_SANDBOX === 'true' || process.env.DEMO_SANDBOX === 'true'
 }
 
 /**

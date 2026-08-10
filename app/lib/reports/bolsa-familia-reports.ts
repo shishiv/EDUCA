@@ -13,7 +13,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { StatusPresenca } from '@/types/diario-classe';
+import type { Database } from '@/types/database';
 import { logger } from '@/lib/logger';
 import { calculateAttendancePercentage } from './attendance-reports';
 
@@ -139,7 +139,7 @@ export function calculateFaltasParaCritico(
 /**
  * Count attendance status from records
  */
-function countAttendanceStatus(records: Array<{ status_presenca: StatusPresenca | null }>) {
+function countAttendanceStatus(records: Array<{ status_presenca: string | null }>) {
   let presencas = 0;
   let faltas = 0;
   let atestados = 0;
@@ -170,15 +170,18 @@ function countAttendanceStatus(records: Array<{ status_presenca: StatusPresenca 
 // ============================================================================
 
 /**
- * Get all Bolsa Família students with attendance data
- * Filters for students with NIS or bolsa_familia flag
+ * Get all Bolsa Família students with attendance data.
+ *
+ * A NIS alone is not proof that a student receives Bolsa Família. The report
+ * uses the explicit bolsa_familia enrollment flag so its total matches the
+ * benefit population.
  *
  * @param supabase - Supabase client
  * @param filters - Period and optional school/class filters
  * @returns List of Bolsa Família students with attendance status
  */
 export async function getBolsaFamiliaStudents(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   filters: BolsaFamiliaFilters
 ): Promise<BolsaFamiliaReportResult> {
   try {
@@ -219,7 +222,7 @@ export async function getBolsaFamiliaStudents(
           )
         )
       `)
-      .eq('situacao', 'Ativa');
+      .eq('situacao', 'ativa');
 
     // Apply optional filters
     if (filters.turmaId) {
@@ -237,12 +240,8 @@ export async function getBolsaFamiliaStudents(
       return { data: null, error: matriculasError.message };
     }
 
-    // Filter for Bolsa Família students (has NIS or bolsa_familia flag)
-    // This filtering is done in code because Supabase PostgREST doesn't support
-    // .or() filters on columns from related tables
-    const matriculas = (matriculasData || []).filter((m: any) => {
-      const aluno = m.alunos;
-      return aluno && (aluno.nis || aluno.bolsa_familia);
+    const matriculas = (matriculasData || []).filter((matricula) => {
+      return matricula.alunos?.bolsa_familia === true;
     });
 
     if (matriculas.length === 0) {
@@ -264,7 +263,7 @@ export async function getBolsaFamiliaStudents(
       return { data: emptyReport, error: null };
     }
 
-    const matriculaIds = matriculas.map((m: any) => m.id);
+    const matriculaIds = matriculas.map((matricula) => matricula.id);
 
     // Fetch attendance for all Bolsa Família students
     const { data: attendanceData, error: attendanceError } = await supabase
@@ -280,7 +279,7 @@ export async function getBolsaFamiliaStudents(
     }
 
     // Group attendance by student
-    const attendanceByStudent: Record<string, Array<{ status_presenca: StatusPresenca | null }>> = {};
+    const attendanceByStudent: Record<string, Array<{ status_presenca: string | null }>> = {};
     for (const record of attendanceData || []) {
       if (!attendanceByStudent[record.matricula_id]) {
         attendanceByStudent[record.matricula_id] = [];
@@ -313,9 +312,9 @@ export async function getBolsaFamiliaStudents(
         continue;
       }
 
-      const turma = matricula.turmas as any;
-      const aluno = matricula.alunos as any;
-      const escola = turma?.escolas as any;
+      const turma = matricula.turmas;
+      const aluno = matricula.alunos;
+      const escola = turma?.escolas;
 
       alunos.push({
         matriculaId: matricula.id,
@@ -384,7 +383,7 @@ export async function getBolsaFamiliaStudents(
  * Convenience wrapper around getBolsaFamiliaStudents with onlyAtRisk=true
  */
 export async function getBolsaFamiliaStudentsAtRisk(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   filters: Omit<BolsaFamiliaFilters, 'onlyAtRisk'>
 ): Promise<BolsaFamiliaReportResult> {
   return getBolsaFamiliaStudents(supabase, { ...filters, onlyAtRisk: true });
@@ -395,7 +394,7 @@ export async function getBolsaFamiliaStudentsAtRisk(
  * by school or across all schools
  */
 export async function getBolsaFamiliaSummary(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   filters: BolsaFamiliaFilters
 ): Promise<{
   data: {

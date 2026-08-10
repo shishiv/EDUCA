@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { AbrirAulaWorkflow } from '@/components/attendance/AbrirAulaWorkflow'
 import { FecharAulaDialog } from '@/components/attendance/FecharAulaDialog'
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 
 /**
  * Unit Tests: Attendance Workflow Components
@@ -45,6 +46,10 @@ vi.mock('sonner', () => ({
   },
 }))
 
+vi.mock('@/lib/date-utils', () => ({
+  getTodaySaoPaulo: vi.fn(),
+}))
+
 describe('AbrirAulaWorkflow Component', () => {
   const mockOnSuccess = vi.fn()
   const mockOnCancel = vi.fn()
@@ -58,6 +63,7 @@ describe('AbrirAulaWorkflow Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getTodaySaoPaulo).mockReturnValue('2026-08-09')
   })
 
   describe('Rendering', () => {
@@ -194,21 +200,19 @@ describe('AbrirAulaWorkflow Component', () => {
       })
     })
 
-    it('should use current date for data_aula', async () => {
+    it('should use the São Paulo calendar date for data_aula', async () => {
       const { enhancedAttendanceApi } = await import('@/lib/api/enhanced-attendance')
       vi.mocked(enhancedAttendanceApi.createSession).mockResolvedValue({ id: 'session-1' } as any)
 
       render(<AbrirAulaWorkflow {...defaultProps} />)
-      
+
       const abrirButton = screen.getByRole('button', { name: /abrir.*aula/i })
       fireEvent.click(abrirButton)
-      
-      const today = new Date().toISOString().split('T')[0]
-      
+
       await waitFor(() => {
         expect(enhancedAttendanceApi.createSession).toHaveBeenCalledWith(
           expect.objectContaining({
-            data_aula: today,
+            data_aula: '2026-08-09',
           })
         )
       })
