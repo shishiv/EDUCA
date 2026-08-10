@@ -12,8 +12,8 @@ The repository currently supports a **synthetic-only municipal pilot foundation*
 - `app/app/` holds routes and route handlers. `app/components/`, `app/lib/`, `app/hooks/`, `app/contexts/`, and `app/types/` contain shared UI, business logic, state, and committed database types.
 - `supabase/migrations/` is the canonical ordered schema history. `supabase/config.toml` defines the local Supabase topology.
 - `supabase/pilot/provision-pilot-module-gate.sql` is deliberately outside canonical migrations. Synthetic pilot tests apply it explicitly, so ordinary `supabase db push` does not disable modules.
-- `supabase/seed-demo/` holds the deterministic demo dataset (issue #23): static seed SQL, `attendance-generator.ts`, reset runner and validation. The repository currently has no scheduled reset workflow; restoring automation is the pending `automacao-sandbox` decision. `DEMO.md` is the runbook. `supabase/tests/database/` validates migrations against a temporary raw PostgreSQL cluster. `supabase/tests/pilot/` verifies encrypted portable backup and restore against a local Supabase stack.
-- The repository currently has no `.github/workflows/` files. The former CI contract ran typecheck, lint, unit tests, and an independent full E2E job from `app/`; restore it only through the approved automation ship.
+- `supabase/seed-demo/` holds the deterministic demo dataset (issue #23): static seed SQL, `attendance-generator.ts`, reset runner and validation. `app/scripts/demo-reset.sh` is the versioned local wrapper for reset plus validation; D7 keeps this automation out of GitHub Actions. `DEMO.md` is the runbook. `supabase/tests/database/` validates migrations against a temporary raw PostgreSQL cluster. `supabase/tests/pilot/` verifies encrypted portable backup and restore against a local Supabase stack.
+- The repository has no `.github/workflows/` files. D7 explicitly prohibits restoring GitHub Actions for the demo reset. The former CI contract ran typecheck, lint, unit tests, and an independent full E2E job from `app/`; do not restore it as part of this local reset work.
 - `app/vercel.json` and `app/nixpacks.toml` are deployment inputs. Vercel builds from `app/`; `app/package.json` owns the executable application, test, seed, safety, and deployment commands.
 
 ## Setup
@@ -56,8 +56,9 @@ pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
 pnpm test:e2e:pilot      # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
 pnpm pilot:restore-test  # local synthetic encrypted backup/restore rehearsal
-pnpm seed:demo           # synthetic demo seed / reset (public sandbox, issue #23)
+pnpm seed:demo           # synthetic demo seed / reset primitive (issue #23)
 pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case
+pnpm demo:reset          # local wrapper: preflight demo env, seed, then validate
 pnpm demo:reset-check    # prove a same-anchor reset is idempotent on a live database
 pnpm demo:verify-sql     # offline raw-PG validation of the demo seed (no Docker, no secrets)
 pnpm deploy              # safety-gated Vercel production deploy
@@ -100,14 +101,14 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/pilot/provision-pilot-module-gate.sql` | Explicit synthetic-pilot containment. |
 | `supabase/tests/` | Database and backup/restore validation. |
 | `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
-| `DEMO.md` | Demo sandbox runbook and explicit note that weekly automation is currently absent. |
+| `DEMO.md` | Demo sandbox runbook, local reset command, environment contract and safety boundaries. |
 | `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |
 | `docker-compose.yml` | Optional bare local PostgreSQL development service. |
 
 ## Demo sandbox (issue #23)
 
 - The public demo sandbox ships code and reproducible configuration only; provisioning (Supabase/Vercel/DNS projects) is external and documented in `DEMO.md`.
-- The demo seed is deterministic: static entities use a fixed anchor timestamp and attendance is generated for a 20-school-day window ending at the reset date (seeded PRNG, fixed 70% alert case). `pnpm demo:reset-check` and `supabase/seed-demo/verify-sql.sh` prove repeatable resets. The public scheduled reset is currently absent; the public runtime is not considered deterministic until the `automacao-sandbox` hold is resolved and a controlled reset is proven.
+- The demo seed is deterministic: static entities use a fixed anchor timestamp and attendance is generated for a 20-school-day window ending at the reset date (seeded PRNG, fixed 70% alert case). `app/scripts/demo-reset.sh`, `pnpm demo:reset-check` and `supabase/seed-demo/verify-sql.sh` prove the local reset path and repeatability. The public scheduled reset remains absent; the public runtime is not considered deterministic until `sandbox-ar` approval and a controlled reset prove convergence.
 - Demo sandbox mode (`NEXT_PUBLIC_DEMO_SANDBOX=true`) blocks signup (no UI, no INSERT grant/policy on `users` for authenticated, project setting in `DEMO.md`) and destructive actions (schema `REVOKE DELETE`, middleware + route guards, hidden UI deletes).
 - The demo database runs canonical migrations only - it never applies `supabase/pilot/provision-pilot-module-gate.sql`, so NIS/Bolsa Familia seed fields remain allowed.
 
