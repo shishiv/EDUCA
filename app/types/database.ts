@@ -641,6 +641,225 @@ export type Database = {
           },
         ]
       }
+      certificado_atividade_sessoes: {
+        Row: {
+          atividade_id: string
+          sessao_id: string
+        }
+        Insert: {
+          atividade_id: string
+          sessao_id: string
+        }
+        Update: {
+          atividade_id?: string
+          sessao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificado_atividade_sessoes_atividade_id_fkey"
+            columns: ["atividade_id"]
+            isOneToOne: false
+            referencedRelation: "certificado_atividades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificado_atividade_sessoes_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: true
+            referencedRelation: "sessoes_aula"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificado_atividades: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          tipo: string
+          turma_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          tipo: string
+          turma_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          tipo?: string
+          turma_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificado_atividades_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificado_atividades_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["turma_id"]
+          },
+        ]
+      }
+      certificado_emissores: {
+        Row: {
+          created_at: string
+          escola_id: string
+          id: string
+          identificador_institucional: string
+          nome_institucional: string
+        }
+        Insert: {
+          created_at?: string
+          escola_id: string
+          id?: string
+          identificador_institucional: string
+          nome_institucional: string
+        }
+        Update: {
+          created_at?: string
+          escola_id?: string
+          id?: string
+          identificador_institucional?: string
+          nome_institucional?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificado_emissores_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: true
+            referencedRelation: "escolas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificado_emissores_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: true
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["escola_id"]
+          },
+        ]
+      }
+      certificados_emitidos: {
+        Row: {
+          aluno_id: string
+          ano_letivo: number
+          atividade_id: string
+          carga_horaria_comprovada_minutos: number
+          codigo_verificacao: string
+          created_at: string
+          emissor_id: string
+          emitido_em: string
+          fonte_fingerprint_sha256: string
+          frequencias_comprovadas: number
+          hash_verificacao_sha256: string
+          id: string
+          matricula_id: string
+          sessoes_comprovadas: number
+          turma_id: string
+        }
+        Insert: {
+          aluno_id: string
+          ano_letivo: number
+          atividade_id: string
+          carga_horaria_comprovada_minutos: number
+          codigo_verificacao: string
+          created_at?: string
+          emissor_id: string
+          emitido_em?: string
+          fonte_fingerprint_sha256: string
+          frequencias_comprovadas: number
+          hash_verificacao_sha256: string
+          id?: string
+          matricula_id: string
+          sessoes_comprovadas: number
+          turma_id: string
+        }
+        Update: {
+          aluno_id?: string
+          ano_letivo?: number
+          atividade_id?: string
+          carga_horaria_comprovada_minutos?: number
+          codigo_verificacao?: string
+          created_at?: string
+          emissor_id?: string
+          emitido_em?: string
+          fonte_fingerprint_sha256?: string
+          frequencias_comprovadas?: number
+          hash_verificacao_sha256?: string
+          id?: string
+          matricula_id?: string
+          sessoes_comprovadas?: number
+          turma_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificados_emitidos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_alunos_risco_bolsa_familia"
+            referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_atividade_id_fkey"
+            columns: ["atividade_id"]
+            isOneToOne: false
+            referencedRelation: "certificado_atividades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_emissor_id_fkey"
+            columns: ["emissor_id"]
+            isOneToOne: false
+            referencedRelation: "certificado_emissores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "vw_alunos_risco_bolsa_familia"
+            referencedColumns: ["matricula_id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_emitidos_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["turma_id"]
+          },
+        ]
+      }
       codigos_inep: {
         Row: {
           codigo_inep: string
@@ -1773,6 +1992,27 @@ export type Database = {
         Returns: boolean
       }
       auth_is_admin: { Args: never; Returns: boolean }
+      certificado_calcular_fonte: {
+        Args: {
+          p_atividade_id: string
+          p_emissor_id: string
+          p_exigir_matricula_ativa?: boolean
+          p_matricula_id: string
+        }
+        Returns: {
+          aluno_id: string
+          ano_letivo: number
+          carga_horaria_comprovada_minutos: number
+          fonte_fingerprint_sha256: string
+          frequencias_comprovadas: number
+          sessoes_comprovadas: number
+          turma_id: string
+        }[]
+      }
+      certificado_verificar_fonte: {
+        Args: { p_certificado_id: string }
+        Returns: boolean
+      }
       contar_dias_letivos: {
         Args: { p_data_fim: string; p_data_inicio: string; p_escola_id: string }
         Returns: number
