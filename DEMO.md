@@ -26,6 +26,7 @@ Acceptance criteria from issue #23:
 | 3 escolas, 5 turmas, 10 professores, 50 alunos | `supabase/seed-demo/seed-demo.sql` (static) + generated attendance |
 | Chamadas recentes com frequência variada | `attendance-generator.ts`: 20 school days ending at the reset date |
 | Incluindo < 80% para demonstrar alerta Bolsa Família | matricula `...0401` (aluno "Miguel") fixed at 70% |
+| Fonte sintetica de certificado verificavel | `certificate-generator.ts`: matricula, sessoes fechadas, presenca P, carga derivada, emissor e hash |
 | Reset versionado local | `app/scripts/demo-reset.sh`, invoked by `pnpm --dir app demo:reset` |
 | Signup desabilitado | Supabase project setting (provisioning) + code guards + schema grants |
 
@@ -35,9 +36,10 @@ Acceptance criteria from issue #23:
 | --- | --- |
 | `supabase/seed-demo/seed-demo.sql` | Static deterministic core: escolas, users, turmas, disciplinas, responsaveis, alunos, vinculos, matriculas, notas, calendario, configs, synthetic markers. No `now()`; all `created_at` anchored at `2026-02-03 08:00:00-03`. |
 | `supabase/seed-demo/attendance-generator.ts` | Pure deterministic generator of `sessoes_aula` + `frequencia` for a moving 20-school-day window ending at the reset date. Seeded PRNG per (matricula, date); fixed 70% alert case; FK-safe IDs. |
-| `supabase/seed-demo/seed-demo.ts` | Reset + seed runner (`pnpm seed:demo`): one transaction (TRUNCATE ... CASCADE + static seed + generated attendance + marker configs) via direct Postgres (`SUPABASE_DEMO_DB_URL`), then syncs the demo auth user via Admin API. |
-| `supabase/seed-demo/validate-demo.ts` | `pnpm demo:validate`: proves counts, relationships, synthetic-only markers, the < 80% alert case, generator-exact per-student attendance, and prints md5 fingerprints. |
-| `supabase/seed-demo/verify-sql.sh` | Offline validation on a disposable raw PostgreSQL cluster (no Docker/Supabase): applies canonical migrations (demo shape, no pilot module gate), the seed, generated attendance, structural asserts, and a same-anchor repeatability fingerprint check. |
+| `supabase/seed-demo/certificate-generator.ts` | Pure deterministic certificate-source generator. It selects only the synthetic enrollment's `P` attendance sessions, then the database derives workload, fingerprint, verification code, and hash. It creates no certificate layout. |
+| `supabase/seed-demo/seed-demo.ts` | Reset + seed runner (`pnpm seed:demo`): one transaction (TRUNCATE ... CASCADE + static seed + generated attendance + generated certificate source + marker configs) via direct Postgres (`SUPABASE_DEMO_DB_URL`), then syncs the demo auth user via Admin API. |
+| `supabase/seed-demo/validate-demo.ts` | `pnpm demo:validate`: proves counts, canonical certificate source/receipt, relationships, synthetic-only markers, the < 80% alert case, generator-exact per-student attendance, and prints md5 fingerprints. |
+| `supabase/seed-demo/verify-sql.sh` | Offline validation on a disposable raw PostgreSQL cluster (no Docker/Supabase): applies canonical migrations (demo shape, no pilot module gate), the seed, generated attendance and certificate source, structural asserts, and a same-anchor repeatability fingerprint check. |
 | `app/scripts/demo-reset.sh` | Versioned local wrapper: checks all three `SUPABASE_DEMO_*` variables without printing values, then runs `pnpm seed:demo` and `pnpm demo:validate`. |
 | `.github/workflows/` | Intentionally absent. D7 prohibits restoring GitHub Actions for this reset. |
 | `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Demo-sandbox mode guards: blocks admin data-management APIs, hides destructive UI actions, shows the demo banner. |

@@ -6,6 +6,8 @@
 -- descartavel (verify-sql.sh). Todas as expectativas tem receipt:
 --  - 3 escolas / 5 turmas / 10 professores + 1 admin / 50 alunos: issue #23;
 --  - 20 dias letivos: DEMO_SCHOOL_DAYS em attendance-generator.ts;
+--  - certificado: certificate-generator.ts seleciona somente frequencias P da
+--    matricula sintetica ...0401 e a migracao deriva carga, fingerprint e hash;
 --  - alerta < 80%: issue #23 + app/lib/reports/bolsa-familia-reports.ts
 --    (BOLSA_FAMILIA_THRESHOLD = 80) + configs.frequencia_minima = 80;
 --  - marcador: configs.demo_synthetic_marker = 'SYNTHETIC-EDUCA-DEMO'.
@@ -39,6 +41,14 @@ SELECT pg_temp.assert_true(
   (SELECT count(*) FROM conteudo_aula) = (SELECT count(*) FROM sessoes_aula)
     AND (SELECT count(*) FROM conteudo_aula) = 100,
   '100 conteudos canonicos para 100 sessoes geradas'
+);
+SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM certificado_emissores), '1 emissor institucional sintetico de certificado');
+SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM certificado_atividades), '1 atividade sintetica de certificado');
+SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM certificados_emitidos), '1 emissao sintetica de certificado');
+SELECT pg_temp.assert_true(
+  (SELECT count(*) FROM certificado_atividade_sessoes) =
+    (SELECT count(*) FROM frequencia WHERE matricula_id = '00000000-0000-0000-0000-000000000401' AND status_presenca = 'P'),
+  'as sessoes da atividade sao exatamente as presencas P da matricula sintetica certificada'
 );
 
 -- -----------------------------------------------------------------------------
@@ -95,6 +105,51 @@ SELECT pg_temp.assert_true(
    LEFT JOIN responsaveis r ON r.id = ar.responsavel_id
    WHERE a.id IS NULL OR r.id IS NULL),
   'vinculos aluno-responsavel integros'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 0
+   FROM certificados_emitidos c
+   JOIN certificado_atividades a ON a.id = c.atividade_id
+   JOIN certificado_emissores e ON e.id = c.emissor_id
+   JOIN matriculas m ON m.id = c.matricula_id
+   JOIN turmas t ON t.id = a.turma_id
+   WHERE c.aluno_id <> m.aluno_id
+      OR c.turma_id <> m.turma_id
+      OR c.ano_letivo <> m.ano_letivo
+      OR a.turma_id <> m.turma_id
+      OR e.escola_id <> t.escola_id),
+  'certificado vincula matricula, atividade e emissor da mesma fonte canonica'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 0
+   FROM certificados_emitidos c
+   JOIN certificado_atividade_sessoes cas ON cas.atividade_id = c.atividade_id
+   JOIN sessoes_aula s ON s.id = cas.sessao_id
+   LEFT JOIN frequencia f ON f.sessao_id = s.id AND f.matricula_id = c.matricula_id
+   WHERE s.status <> 'FECHADA'
+      OR s.fechada_em IS NULL
+      OR s.travada_em IS NULL
+      OR s.duracao_minutos IS NULL
+      OR s.duracao_minutos <= 0
+      OR f.status_presenca IS DISTINCT FROM 'P'),
+  'cada sessao certificada tem carga canonica fechada e presenca P'
+);
+SELECT pg_temp.assert_true(
+  NOT EXISTS (
+    SELECT 1
+    FROM certificados_emitidos c
+    WHERE NOT public.certificado_verificar_fonte(c.id)
+  ),
+  'nenhum certificado e emitido sem fonte completa e receipt verificavel'
+);
+SELECT pg_temp.assert_true(
+  (SELECT c.hash_verificacao_sha256 = encode(
+    extensions.digest(c.codigo_verificacao || '|' || c.fonte_fingerprint_sha256, 'sha256'),
+    'hex'
+  )
+   FROM certificados_emitidos c
+   LIMIT 1),
+  'codigo e hash de verificacao conferem com o fingerprint da fonte'
 );
 
 -- -----------------------------------------------------------------------------
