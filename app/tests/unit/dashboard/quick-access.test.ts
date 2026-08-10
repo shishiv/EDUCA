@@ -77,7 +77,7 @@ describe('dashboard quick access routes', () => {
     })
     expect(diretorPilot.map((item) => item.name)).not.toContain('Relatórios')
     expect(diretorPilot.map((item) => item.name)).not.toContain('Config')
-    expect(diretorPilot.find((item) => item.name === 'Diário de Classe')?.href).toBe('/dashboard/diario')
+    expect(diretorPilot.find((item) => item.name === 'Diário de Classe')?.href).toBe('/diario')
 
     const professorPilot = resolveVisibleQuickAccess(quickAccessItems, {
       role: 'professor',

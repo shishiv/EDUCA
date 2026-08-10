@@ -5,8 +5,11 @@
  * Helper de verificacao offline (sem Supabase). Emite para stdout:
  *   1. o SQL de frequencia/aulas para uma data de ancoragem fixa
  *      (attendance-generator.ts);
- *   2. um bloco DO com ASSERTs que conferem a presenca esperada por matricula
- *      (determinismo: o banco deve reproduzir exatamente o padrao gerado).
+ *   2. a fonte sintetica de certificado derivada dessas linhas canonicas
+ *      (certificate-generator.ts);
+ *   3. um bloco DO com ASSERTs que conferem a presenca esperada por matricula
+ *      e o receipt do certificado (determinismo: o banco deve reproduzir
+ *      exatamente o padrao gerado).
  *
  * Usado por supabase/seed-demo/verify-sql.sh, que aplica o seed estatico +
  * esta saida em um cluster PostgreSQL descartavel e depois executa
@@ -17,6 +20,7 @@
  */
 
 import { attendanceSql, isPresentOn, MATRICULAS, schoolDaysEndingOn, DEMO_SCHOOL_DAYS } from './attendance-generator'
+import { certificateSql, DEMO_CERTIFICATE_ISSUANCE_ID } from './certificate-generator'
 
 function parseArgs(argv: string[]): string {
   for (let i = 0; i < argv.length; i += 1) {
@@ -40,11 +44,15 @@ const presenceAssertions = MATRICULAS.map(matricula => {
 
 const output = [
   attendanceSql({ anchorDate }),
+  certificateSql({ anchorDate }),
   '',
-  '-- Determinismo: presenca por matricula conforme o gerador para a ancora fixa',
+  '-- Determinismo: presenca por matricula e receipt conforme os geradores para a ancora fixa',
   `DO $$`,
   `BEGIN`,
   presenceAssertions,
+  `  IF NOT public.certificado_verificar_fonte('${DEMO_CERTIFICATE_ISSUANCE_ID}') THEN`,
+  `    RAISE EXCEPTION 'fonte sintetica de certificado nao verificou';`,
+  `  END IF;`,
   `END $$;`,
   '',
 ].join('\n')

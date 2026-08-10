@@ -29,7 +29,7 @@
     "vercel:login": "vercel login",
     "vercel:env": "vercel env pull",
     "demo:validate": "tsx ../supabase/seed-demo/validate-demo.ts",
-    "demo:reset": "pnpm seed:demo && pnpm demo:validate",
+    "demo:reset": "bash scripts/demo-reset.sh",
     "demo:reset-check": "pnpm seed:demo --date 2026-07-01 && pnpm demo:validate && pnpm seed:demo --date 2026-07-01 && pnpm demo:validate",
     "demo:verify-sql": "bash ../supabase/seed-demo/verify-sql.sh",
     "seed:e2e": "tsx scripts/seed-e2e.ts",

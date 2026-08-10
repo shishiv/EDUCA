@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Table,
@@ -15,10 +15,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
-import { ArrowLeft, Edit, Users, Calendar, BookOpen, TrendingUp, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { ArrowLeft, Edit, Users, Calendar, BookOpen, TrendingUp, CheckCircle2, XCircle, Clock, type LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { logger } from '@/lib/logger'
 
 interface Turma {
@@ -55,13 +56,12 @@ interface Matricula {
 interface SessaoAula {
   id: string
   data_aula: string
-  hora_inicio: string
-  hora_fim: string | null
+  inicio_aula: string
+  fim_aula: string | null
   status: string
-  conteudo_planejado: string | null
+  conteudo_programatico: string
   presentes: number
   ausentes: number
-  created_at: string
 }
 
 export default function TurmaDetalhesPage() {
@@ -80,13 +80,7 @@ export default function TurmaDetalhesPage() {
     frequenciaMedia: 0
   })
 
-  useEffect(() => {
-    if (id) {
-      loadTurmaDetails()
-    }
-  }, [id])
-
-  const loadTurmaDetails = async () => {
+  const loadTurmaDetails = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -125,32 +119,51 @@ export default function TurmaDetalhesPage() {
       if (matriculasError) throw matriculasError
       setMatriculas(matriculasData || [])
 
-      // Load sessoes de aula
+      // Load the recent canonical sessions for this turma.
       const { data: sessoesData, error: sessoesError } = await supabase
         .from('sessoes_aula')
-        .select('*')
+        .select('id, data_aula, inicio_aula, fim_aula, status, conteudo_programatico')
         .eq('turma_id', id)
         .order('data_aula', { ascending: false })
         .limit(10)
 
       if (sessoesError) throw sessoesError
 
-      // Transform sessoes data to match interface
-      const transformedSessoes = (sessoesData || []).map(sessao => ({
-        ...sessao,
-        presentes: 0, // Will be calculated from frequencia
-        ausentes: 0
-      }))
-
-      setSessoes(transformedSessoes as any)
-
-      // Calculate frequency stats
       const matriculasAtivas = matriculasData?.filter(m => m.situacao === 'ativa') || []
+      const attendanceFacts = await loadCanonicalAttendanceFacts(
+        supabase,
+        matriculasAtivas.map(matricula => matricula.id)
+      )
+      const attendanceBySession = new Map<string, { presentes: number; ausentes: number }>()
+
+      for (const attendance of attendanceFacts) {
+        const current = attendanceBySession.get(attendance.sessaoId) ?? {
+          presentes: 0,
+          ausentes: 0,
+        }
+        if (attendance.presente) current.presentes += 1
+        else current.ausentes += 1
+        attendanceBySession.set(attendance.sessaoId, current)
+      }
+
+      const transformedSessoes: SessaoAula[] = (sessoesData ?? []).map(sessao => {
+        const attendance = attendanceBySession.get(sessao.id) ?? { presentes: 0, ausentes: 0 }
+        return {
+          ...sessao,
+          presentes: attendance.presentes,
+          ausentes: attendance.ausentes,
+        }
+      })
+      setSessoes(transformedSessoes)
+
+      const attendanceRate = attendanceFacts.length === 0
+        ? 0
+        : Number(((attendanceFacts.filter(fact => fact.presente).length / attendanceFacts.length) * 100).toFixed(1))
       const stats = {
         totalAlunos: matriculasData?.length || 0,
         matriculados: matriculasAtivas.length,
         vagasDisponiveis: turmaData.capacidade - matriculasAtivas.length,
-        frequenciaMedia: 87.5 // Placeholder - calculate from real data
+        frequenciaMedia: attendanceRate,
       }
       setFrequenciaStats(stats)
 
@@ -162,13 +175,19 @@ export default function TurmaDetalhesPage() {
         }
       })
     } catch (error) {
-      logger.error('Erro ao carregar detalhes da turma:', error as any)
+      logger.error('Erro ao carregar detalhes da turma:', error as Error)
       toast.error('Erro ao carregar dados da turma')
       router.push('/dashboard/turmas')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, router])
+
+  useEffect(() => {
+    if (id) {
+      void loadTurmaDetails()
+    }
+  }, [id, loadTurmaDetails])
 
   const getInitials = (name: string) => {
     return name
@@ -203,7 +222,7 @@ export default function TurmaDetalhesPage() {
   }
 
   const getStatusBadge = (situacao: string) => {
-    const badges: Record<string, { variant: string; label: string }> = {
+    const badges: Record<string, { variant: NonNullable<BadgeProps['variant']>; label: string }> = {
       'ativa': { variant: 'default', label: 'Ativa' },
       'transferida': { variant: 'secondary', label: 'Transferido' },
       'concluida': { variant: 'secondary', label: 'Concluída' },
@@ -213,7 +232,7 @@ export default function TurmaDetalhesPage() {
     const config = badges[situacao] || { variant: 'secondary', label: situacao }
 
     return (
-      <Badge variant={config.variant as any} className={
+      <Badge variant={config.variant} className={
         situacao === 'ativa' ? 'bg-green-100 text-green-800' : ''
       }>
         {config.label}
@@ -222,7 +241,7 @@ export default function TurmaDetalhesPage() {
   }
 
   const getSessaoStatusBadge = (status: string) => {
-    const badges: Record<string, { icon: any; color: string; label: string }> = {
+    const badges: Record<string, { icon: LucideIcon; color: string; label: string }> = {
       'PLANEJADA': { icon: Calendar, color: 'bg-blue-100 text-blue-800', label: 'Planejada' },
       'ABERTA': { icon: Clock, color: 'bg-amber-100 text-amber-800', label: 'Aberta' },
       'FECHADA': { icon: CheckCircle2, color: 'bg-green-100 text-green-800', label: 'Fechada' }
@@ -348,7 +367,7 @@ export default function TurmaDetalhesPage() {
           <CardContent>
             <div className="flex items-center text-sm text-gray-600">
               <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-              Acima da meta (75%)
+              {frequenciaStats.frequenciaMedia >= 75 ? 'Acima' : 'Abaixo'} da meta (75%)
             </div>
           </CardContent>
         </Card>
@@ -498,6 +517,7 @@ export default function TurmaDetalhesPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Horário</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Frequência</TableHead>
                   <TableHead>Conteúdo</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -507,12 +527,15 @@ export default function TurmaDetalhesPage() {
                   <TableRow key={sessao.id}>
                     <TableCell>{formatDate(sessao.data_aula)}</TableCell>
                     <TableCell>
-                      {sessao.hora_inicio}
-                      {sessao.hora_fim && ` - ${sessao.hora_fim}`}
+                      {sessao.inicio_aula}
+                      {sessao.fim_aula && ` - ${sessao.fim_aula}`}
                     </TableCell>
                     <TableCell>{getSessaoStatusBadge(sessao.status)}</TableCell>
+                    <TableCell>
+                      {sessao.presentes} presentes / {sessao.ausentes} ausentes
+                    </TableCell>
                     <TableCell className="max-w-xs truncate">
-                      {sessao.conteudo_planejado || '-'}
+                      {sessao.conteudo_programatico || '-'}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>

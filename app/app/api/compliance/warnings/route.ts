@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import {
   filterBolsaFamiliaConditionality,
   getAttendanceConditionality,
@@ -20,7 +21,7 @@ export interface ComplianceWarning {
   count?: number
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -43,9 +44,9 @@ export async function GET(request: NextRequest) {
 
     const warnings: ComplianceWarning[] = []
     const now = new Date()
+    const today = getTodaySaoPaulo()
 
     // WARNING 1: Check for open attendance sessions nearing auto-lock time
-    const today = now.toISOString().split('T')[0]
     const { data: openSessions } = await supabase
       .from('sessoes_aula')
       .select('id, turma_id, aberta_em')
@@ -76,9 +77,7 @@ export async function GET(request: NextRequest) {
 
     // WARNING 2 and 3: legal conditionality and municipality margin come from
     // the canonical PostgreSQL read model. The response keeps them separate.
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString()
-      .split('T')[0]
+    const monthStart = `${today.slice(0, 7)}-01`
     const conditionality = await getAttendanceConditionality(supabase, {
       startDate: monthStart,
       endDate: today,

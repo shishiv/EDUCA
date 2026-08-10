@@ -39,7 +39,7 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page).toHaveURL(/\/dashboard\?pilotScope=disabled/)
 
     await page.goto('/dashboard/diario')
-    await expect(page).toHaveURL(/\/dashboard\/diario/)
+    await expect(page).toHaveURL(/\/diario(?:\?|$)/)
   })
 
   test('keeps offline service worker and IndexedDB disabled', async ({ page }) => {

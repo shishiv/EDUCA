@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import {
   getAttendanceConditionality,
   filterBolsaFamiliaConditionality,
@@ -21,7 +22,7 @@ export interface DashboardAlert {
   createdAt: string
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     const alerts: DashboardAlert[] = []
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodaySaoPaulo()
 
     // Build school filter based on role
     let escolaFilter: string | null = null
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
           description: `${turmasSemChamada.length} turma(s) sem chamada hoje: ${turmaNames}${moreCount}`,
           action: {
             label: 'Fazer chamada',
-            href: '/chamada'
+            href: '/dashboard/turmas'
           },
           priority: 1,
           createdAt: new Date().toISOString()
@@ -99,10 +100,8 @@ export async function GET(request: NextRequest) {
 
     // 2. Resolve all Bolsa Família legal and municipality statuses from the
     // canonical read model. No threshold is reconstructed in this route.
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
     const monthConditionality = await getAttendanceConditionality(supabase, {
-      startDate: startOfMonth.toISOString().split('T')[0],
+      startDate: `${today.slice(0, 7)}-01`,
       endDate: today,
       escolaId: escolaFilter ?? undefined,
     })
