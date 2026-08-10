@@ -226,7 +226,7 @@ export default function NotasPage() {
     const nota = parseFloat(editingNote.nota)
 
     if (isNaN(nota) || nota < 0 || nota > 10) {
-      toast.error('Nota deve ser um numero entre 0 e 10')
+      toast.error('Nota deve ser um número entre 0 e 10')
       return
     }
 
@@ -347,7 +347,7 @@ export default function NotasPage() {
 
   const saveAllNotas = async () => {
     // This would trigger a full sync - for now just show success
-    toast.info('Todas as notas ja estao salvas no banco de dados')
+    toast.info('Todas as notas já estão salvas no banco de dados')
   }
 
   const filteredTurmas = turmas.filter(turma => {
@@ -508,7 +508,7 @@ export default function NotasPage() {
                   : '-'
               })()}
             </div>
-            <div className="text-sm text-gray-600">Media Geral</div>
+            <div className="text-sm text-gray-600">Média Geral</div>
           </CardContent>
         </Card>
       </div>
@@ -626,7 +626,7 @@ export default function NotasPage() {
                             {disciplina}
                           </TableHead>
                         ))}
-                        <TableHead className="text-center">Situacao Geral</TableHead>
+                        <TableHead className="text-center">Situação Geral</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -746,7 +746,7 @@ export default function NotasPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="observacoes">Observacoes (opcional)</Label>
+              <Label htmlFor="observacoes">Observações (opcional)</Label>
               <Textarea
                 id="observacoes"
                 value={editingNote.observacoes}

@@ -78,7 +78,7 @@ export function AttendanceGridSummary({
       {lockInfo.isLocked && (
         <div className="mt-6 pt-4 border-t flex items-center justify-center text-sm text-orange-600">
           <Lock className="h-4 w-4 mr-2" />
-          <span>Frequencia bloqueada - Somente visualizacao disponivel</span>
+          <span>Frequência bloqueada - Somente visualização disponível</span>
         </div>
       )}
     </>

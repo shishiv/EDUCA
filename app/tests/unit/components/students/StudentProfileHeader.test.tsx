@@ -214,7 +214,7 @@ describe('StudentProfileHeader', () => {
       
       render(<StudentProfileHeader student={mockStudent} stats={stats} />)
       
-      expect(screen.getByText('12 vivencias')).toBeInTheDocument()
+      expect(screen.getByText('12 vivências')).toBeInTheDocument()
     })
 
     it('should render singular vivencia for 1', () => {
@@ -222,7 +222,7 @@ describe('StudentProfileHeader', () => {
       
       render(<StudentProfileHeader student={mockStudent} stats={stats} />)
       
-      expect(screen.getByText('1 vivencia')).toBeInTheDocument()
+      expect(screen.getByText('1 vivência')).toBeInTheDocument()
     })
 
     it('should render frequencia percentage', () => {
@@ -230,7 +230,7 @@ describe('StudentProfileHeader', () => {
       
       render(<StudentProfileHeader student={mockStudent} stats={stats} />)
       
-      expect(screen.getByText('87% frequencia')).toBeInTheDocument()
+      expect(screen.getByText('87% frequência')).toBeInTheDocument()
     })
 
     it('should render both stats when provided', () => {
@@ -238,8 +238,8 @@ describe('StudentProfileHeader', () => {
       
       render(<StudentProfileHeader student={mockStudent} stats={stats} />)
       
-      expect(screen.getByText('15 vivencias')).toBeInTheDocument()
-      expect(screen.getByText('92% frequencia')).toBeInTheDocument()
+      expect(screen.getByText('15 vivências')).toBeInTheDocument()
+      expect(screen.getByText('92% frequência')).toBeInTheDocument()
     })
 
     it('should handle 0 vivencias', () => {
@@ -247,7 +247,7 @@ describe('StudentProfileHeader', () => {
       
       render(<StudentProfileHeader student={mockStudent} stats={stats} />)
       
-      expect(screen.getByText('0 vivencias')).toBeInTheDocument()
+      expect(screen.getByText('0 vivências')).toBeInTheDocument()
     })
 
     it('should handle 100% frequencia', () => {
@@ -255,7 +255,7 @@ describe('StudentProfileHeader', () => {
       
       render(<StudentProfileHeader student={mockStudent} stats={stats} />)
       
-      expect(screen.getByText('100% frequencia')).toBeInTheDocument()
+      expect(screen.getByText('100% frequência')).toBeInTheDocument()
     })
   })
 

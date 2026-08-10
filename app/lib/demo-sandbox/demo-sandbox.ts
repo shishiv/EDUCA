@@ -308,8 +308,8 @@ export function demoSandboxGuardResponse(
     {
       error: externalEffect ? 'DEMO_EXTERNAL_EFFECT_BLOCKED' : 'DEMO_SANDBOX_READ_ONLY',
       message: externalEffect
-        ? 'Efeito externo bloqueado no sandbox publico de demonstracao.'
-        : 'Operacao indisponivel no sandbox publico de demonstracao.',
+        ? 'Efeito externo bloqueado no sandbox público de demonstração.'
+        : 'Operação indisponível no sandbox público de demonstração.',
     },
     { status: 403 }
   )

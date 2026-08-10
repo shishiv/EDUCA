@@ -96,11 +96,11 @@ const CAMPO_FIELD_MAP: Record<CampoType, keyof ReportFormValues> = {
 }
 
 const PLACEHOLDERS: Record<CampoType, string> = {
-  eu: 'Descreva como a crianca desenvolveu sua identidade pessoal, interacoes sociais e senso de coletividade durante este periodo...',
-  corpo: 'Descreva o desenvolvimento motor da crianca, sua expressao corporal e participacao em atividades fisicas...',
-  tracos: 'Descreva a expressao artistica da crianca, seu interesse por musica, artes visuais e manifestacoes culturais...',
-  escuta: 'Descreva o desenvolvimento da linguagem oral, capacidade de comunicacao, criatividade e imaginacao...',
-  espacos: 'Descreva a compreensao da crianca sobre espaco, tempo, quantidade e sua relacao com o ambiente...',
+  eu: 'Descreva como a criança desenvolveu sua identidade pessoal, interações sociais e senso de coletividade durante este período...',
+  corpo: 'Descreva o desenvolvimento motor da criança, sua expressão corporal e participação em atividades físicas...',
+  tracos: 'Descreva a expressão artística da criança, seu interesse por música, artes visuais e manifestações culturais...',
+  escuta: 'Descreva o desenvolvimento da linguagem oral, capacidade de comunicação, criatividade e imaginação...',
+  espacos: 'Descreva a compreensão da criança sobre espaço, tempo, quantidade e sua relação com o ambiente...',
 }
 
 const DEFAULT_VALUES: ReportFormValues = {
@@ -217,7 +217,7 @@ export function DevelopmentReportWriter({
   const handleFinalize = useCallback(async () => {
     if (!canFinalize.canFinalize) {
       toast.error(
-        `Preencha todos os campos obrigatorios: ${canFinalize.missingFields.join(', ')}`
+        `Preencha todos os campos obrigatórios: ${canFinalize.missingFields.join(', ')}`
       )
       return
     }
@@ -225,13 +225,13 @@ export function DevelopmentReportWriter({
     setIsFinalizing(true)
     try {
       await onFinalize?.(values)
-      toast.success('Relatorio finalizado com sucesso!')
+      toast.success('Relatório finalizado com sucesso!')
     } catch (error) {
       logger.error('Error finalizing report', error as Error, {
         feature: 'reports',
         action: 'finalize_development_report'
       })
-      toast.error('Erro ao finalizar relatorio')
+      toast.error('Erro ao finalizar relatório')
     } finally {
       setIsFinalizing(false)
     }
@@ -245,7 +245,7 @@ export function DevelopmentReportWriter({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center justify-between">
-            <span>Progresso do Relatorio</span>
+            <span>Progresso do Relatório</span>
             <span className="text-sm font-medium text-purple-600">
               {progress.filled}/{progress.total} campos
             </span>
@@ -305,7 +305,7 @@ export function DevelopmentReportWriter({
             onChange={(e) =>
               handleFieldChange('observacoes_gerais', e.target.value)
             }
-            placeholder="Informacoes adicionais, recomendacoes ou pontos de atencao..."
+            placeholder="Informações adicionais, recomendações ou pontos de atenção..."
             disabled={isFormDisabled}
             className="min-h-[100px] resize-y"
           />

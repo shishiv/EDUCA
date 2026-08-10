@@ -213,7 +213,7 @@ export function VivenciaForm({
           id="observacoes"
           {...register('observacoes')}
           disabled={isDisabled}
-          placeholder="Anotacoes adicionais, contexto, ou observacoes para acompanhamento..."
+          placeholder="Anotações adicionais, contexto ou observações para acompanhamento..."
           rows={3}
           className={cn(
             errors.observacoes && 'border-red-500 focus:ring-red-500/30 focus:border-red-500'

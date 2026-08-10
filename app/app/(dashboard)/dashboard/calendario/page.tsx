@@ -127,7 +127,7 @@ export default function CalendarioPage() {
 
   const handleDeleteEvento = async (eventoId: string) => {
   if (isDemoSandboxEnabled()) {
-    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    toast.error('Ação bloqueada no sandbox público de demonstração')
     return
   }
 

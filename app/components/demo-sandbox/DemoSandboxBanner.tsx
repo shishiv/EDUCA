@@ -20,11 +20,11 @@ export function DemoSandboxBanner() {
     <Alert className="mb-4 bg-amber-50 border-amber-200">
       <FlaskConical className="h-4 w-4 text-amber-600" />
       <AlertTitle className="text-amber-800">
-        Sandbox publico de demonstracao
+        Sandbox público de demonstração
       </AlertTitle>
       <AlertDescription className="text-amber-700">
-        Dados 100% sinteticos, reiniciados semanalmente. Nao ha criacao de
-        conta e acoes destrutivas estao bloqueadas.
+        Dados 100% sintéticos, reiniciados semanalmente. Não há criação de
+        conta e ações destrutivas estão bloqueadas.
       </AlertDescription>
     </Alert>
   )

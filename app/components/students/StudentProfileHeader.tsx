@@ -112,14 +112,14 @@ export function StudentProfileHeader({
               <div className="flex items-center gap-1.5 text-sm text-gray-600">
                 <BookOpen className="h-4 w-4 text-violet-500" />
                 <span>
-                  {stats.vivencias} {stats.vivencias === 1 ? 'vivencia' : 'vivencias'}
+                  {stats.vivencias} {stats.vivencias === 1 ? 'vivência' : 'vivências'}
                 </span>
               </div>
             )}
             {stats.frequencia !== undefined && (
               <div className="flex items-center gap-1.5 text-sm text-gray-600">
                 <Percent className="h-4 w-4 text-emerald-500" />
-                <span>{stats.frequencia}% frequencia</span>
+                <span>{stats.frequencia}% frequência</span>
               </div>
             )}
           </div>

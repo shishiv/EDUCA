@@ -249,7 +249,7 @@ function ReportHeader({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Crianca:</span>
+            <span className="text-sm text-gray-600">Criança:</span>
           </div>
           <p className="font-semibold text-gray-900 pl-6">{student.nome}</p>
         </div>
@@ -279,7 +279,7 @@ function ReportHeader({
 
         {reportDate && (
           <div className="space-y-2">
-            <span className="text-sm text-gray-600">Data de Emissao:</span>
+            <span className="text-sm text-gray-600">Data de Emissão:</span>
             <p className="font-semibold text-gray-900">
               {formatDate(reportDate)}
             </p>
@@ -444,7 +444,7 @@ function SemesterReportCard({
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Info className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-blue-700">Observacoes Gerais</span>
+              <span className="font-medium text-blue-700">Observações Gerais</span>
             </div>
             <p className="text-sm text-blue-800 leading-relaxed">
               {report.observacoesGerais}
@@ -463,7 +463,7 @@ function EmptyReportsState() {
   return (
     <Alert className="border-purple-200 bg-purple-50">
       <BookOpen className="h-4 w-4 text-purple-600" />
-      <AlertTitle className="text-purple-800">Nenhum Relatorio Encontrado</AlertTitle>
+      <AlertTitle className="text-purple-800">Nenhum Relatório Encontrado</AlertTitle>
       <AlertDescription className="text-purple-700">
         Nao ha relatorios descritivos registrados para esta crianca.
         Os relatorios sao preenchidos pelo professor ao final de cada semestre.
@@ -622,7 +622,7 @@ export function StudentReportInfantil({
       {/* Print footer */}
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
-          <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestao Escolar EDUCA</p>
+          <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestão Escolar EDUCA</p>
           <p>{municipalConfig.nome}</p>
         </div>
       )}

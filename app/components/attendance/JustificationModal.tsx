@@ -90,7 +90,7 @@ function OpenJustificationModal({
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ex: Atestado medico, comparecimento a audiencia, doenca familiar..."
+              placeholder="Ex: Atestado médico, comparecimento a audiência, doença familiar..."
               className="min-h-[100px] resize-none"
               autoFocus
             />

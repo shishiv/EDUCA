@@ -90,7 +90,7 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
   const { userProfile } = useAuth()
 
   if (!userProfile) {
-    return <div>Loading...</div>
+    return <div>Carregando...</div>
   }
 
   return (

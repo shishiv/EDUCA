@@ -434,7 +434,7 @@ export default function TurmasPage() {
             search={{
               value: search,
               onChange: setSearch,
-              placeholder: 'Buscar por nome, serie, escola ou professor...',
+              placeholder: 'Buscar por nome, série, escola ou professor...',
             }}
             filters={[
               {
@@ -453,7 +453,7 @@ export default function TurmasPage() {
               },
               {
                 id: 'serie',
-                placeholder: 'Serie',
+                placeholder: 'Série',
                 value: serieFilter,
                 options: [
                   { value: 'todas', label: 'Todas' },

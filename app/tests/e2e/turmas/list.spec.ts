@@ -54,7 +54,7 @@ test.describe('Turmas - Filters', () => {
   test('has accessible search and select filters', async ({ page }) => {
     await expect(page.getByPlaceholder(/buscar por nome/i)).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Escola' })).toBeVisible()
-    await expect(page.getByRole('combobox', { name: 'Serie' })).toBeVisible()
+    await expect(page.getByRole('combobox', { name: 'Série' })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Turno' })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Status' })).toBeVisible()
   })
@@ -81,7 +81,7 @@ test.describe('Turmas - Filters', () => {
   })
 
   test('combines series and shift filters', async ({ page }) => {
-    await page.getByRole('combobox', { name: 'Serie' }).click()
+    await page.getByRole('combobox', { name: 'Série' }).click()
     await page.getByRole('option', { name: '1º Ano', exact: true }).click()
     await page.getByRole('combobox', { name: 'Turno' }).click()
     await page.getByRole('option', { name: 'Matutino', exact: true }).click()

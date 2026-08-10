@@ -92,7 +92,7 @@ export function StudentInfoGrid({
       case 'ativa':
         return <Badge variant="success">Ativa</Badge>
       case 'concluida':
-        return <Badge variant="outline">Concluida</Badge>
+        return <Badge variant="outline">Concluída</Badge>
       case 'transferida':
         return <Badge variant="secondary">Transferida</Badge>
       case 'cancelada':
@@ -145,7 +145,7 @@ export function StudentInfoGrid({
 
             {student.endereco && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Endereco</label>
+                <label className="text-sm font-medium text-gray-500">Endereço</label>
                 <div className="flex items-start gap-2 mt-1">
                   <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                   <span className="text-sm">{student.endereco}</span>
@@ -155,12 +155,12 @@ export function StudentInfoGrid({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Mae</label>
-                <p className="mt-1 text-sm">{student.nome_mae || 'Nao informado'}</p>
+                <label className="text-sm font-medium text-gray-500">Mãe</label>
+                <p className="mt-1 text-sm">{student.nome_mae || 'Não informado'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Pai</label>
-                <p className="mt-1 text-sm">{student.nome_pai || 'Nao informado'}</p>
+                <p className="mt-1 text-sm">{student.nome_pai || 'Não informado'}</p>
               </div>
             </div>
 
@@ -213,10 +213,10 @@ export function StudentInfoGrid({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                Frequencia
+                Frequência
               </CardTitle>
               <CardDescription>
-                Resumo de presencas e faltas
+                Resumo de presenças e faltas
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -231,7 +231,7 @@ export function StudentInfoGrid({
                   <div className="text-xl font-bold text-green-600">
                     {frequencia.presencas}
                   </div>
-                  <div className="text-xs text-green-600">Presencas</div>
+                  <div className="text-xs text-green-600">Presenças</div>
                 </div>
                 <div className="text-center p-3 bg-red-50 rounded-lg">
                   <div className="text-xl font-bold text-red-600">
@@ -262,14 +262,14 @@ export function StudentInfoGrid({
                     <>
                       <CheckCircle className="h-4 w-4 text-green-600" />
                       <span className="text-green-600">
-                        Frequencia adequada (minimo 75%)
+                        Frequência adequada (mínimo 75%)
                       </span>
                     </>
                   ) : (
                     <>
                       <AlertTriangle className="h-4 w-4 text-red-600" />
                       <span className="text-red-600">
-                        Atencao: Frequencia abaixo do minimo
+                        Atenção: Frequência abaixo do mínimo
                       </span>
                     </>
                   )}
@@ -285,7 +285,7 @@ export function StudentInfoGrid({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <School className="h-5 w-5" />
-                Historico de Matriculas
+                Histórico de Matrículas
               </CardTitle>
             </CardHeader>
             <CardContent>

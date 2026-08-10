@@ -220,7 +220,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                   </div>
                   {session.attendance_percentage < 75 && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      ⚠️ Atenção: Frequência abaixo do mínimo legal de 75%
+                      Atenção: Frequência abaixo do mínimo legal de 75%
                     </p>
                   )}
                 </div>
