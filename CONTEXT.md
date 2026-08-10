@@ -4,7 +4,7 @@
 
 EDUCA is an MIT-licensed school-management application for Brazilian municipal and small-town school networks. The product covers schools, users, students, guardians, classes, enrolments, teacher assignments, attendance, dashboard views, and reporting surfaces.
 
-The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, Bolsa Família/NIS, health, disability, and race data are disabled by the pilot provisioner.
+The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, health, disability, and race data remain disabled. The hardening ship releases only the scoped Bolsa Família conditionality read model and descriptive-report table; real Bolsa Família data remains blocked by the synthetic-only gate.
 
 ## Architecture
 
@@ -79,7 +79,7 @@ It needs `initdb`, `pg_ctl`, and `psql` from PostgreSQL 15 or newer. It creates 
 
 `app/types/database.ts` is generated from the local Supabase schema and is required by the application build. Preserve it and regenerate it only through the command above. It intentionally lags the live schema: pilot code casts at the seam (`asPilotRpcClient`, `asWhatsAppClient`).
 
-The canonical migrations retain the full product schema. The pilot-only provisioner revokes high-risk modules and blocks high-risk student fields only during synthetic pilot rehearsal. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness.
+The canonical migrations retain the full product schema. The pilot-only provisioner revokes grades, Educacenso, and the legacy Bolsa Família view, and blocks high-risk student fields during synthetic pilot rehearsal. The hardening migration releases only the security-invoker conditionality RPC/view and scoped descriptive-report table. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness.
 
 `supabase/pilot/provision-pilot-descriptive-report-demo.sql` is a companion grant for `pnpm test:e2e:pilot:descriptive` only. It follows the base revoke, requires the local synthetic marker and environment gate at the route, and never applies to the public demo sandbox.
 

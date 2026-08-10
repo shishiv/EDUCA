@@ -78,9 +78,29 @@ async function seed() {
   ], { onConflict: 'id' })
   if (enrollmentsError) throw enrollmentsError
 
+  const sessionId = '70000000-0000-0000-0000-000000000010'
+  const { error: sessionError } = await service.from('sessoes_aula').upsert({
+    id: sessionId,
+    turma_id: classA,
+    escola_id: schoolA,
+    professor_id: professorA,
+    data_aula: '2026-08-10',
+    status: 'ABERTA',
+    conteudo_programatico: 'Chamada sintética do piloto',
+    aberta_em: new Date().toISOString(),
+  }, { onConflict: 'id' })
+  if (sessionError) throw sessionError
+
   const { error: attendanceError } = await service.from('frequencia').upsert({
-    id: '70000000-0000-0000-0000-000000000001', matricula_id: '50000000-0000-0000-0000-000000000001',
-    data_aula: '2026-07-27', presente: true, status_presenca: 'presente', professor_id: professorA, marcado_por: professorA, marcado_em: new Date().toISOString(),
+    id: '70000000-0000-0000-0000-000000000001',
+    matricula_id: '50000000-0000-0000-0000-000000000001',
+    sessao_id: sessionId,
+    data_aula: '2026-08-10',
+    presente: true,
+    status_presenca: 'P',
+    professor_id: professorA,
+    marcado_por: professorA,
+    marcado_em: new Date().toISOString(),
   }, { onConflict: 'id' })
   if (attendanceError) throw attendanceError
 

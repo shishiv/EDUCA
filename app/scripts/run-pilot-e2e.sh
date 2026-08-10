@@ -13,6 +13,7 @@ eval "$(pnpm exec supabase --workdir "$ROOT_DIR" status -o env 2>/dev/null | gre
 export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
 export NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
 export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+export SUPABASE_DB_URL="$DB_URL"
 export NEXT_PUBLIC_APP_URL="http://127.0.0.1:3000"
 export NEXT_PUBLIC_PILOT_MODE=true
 export PILOT_MODE=true
@@ -31,4 +32,8 @@ node -e "require('node:fs').rmSync(process.env.PILOT_AUTH_STATE_PATH, { force: t
 pnpm exec supabase --workdir "$ROOT_DIR" db reset
 psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql" >/dev/null
 pnpm exec tsx scripts/seed-pilot-synthetic.ts
-pnpm exec playwright test tests/e2e/pilot --project=chromium
+if [[ -n "${PILOT_PLAYWRIGHT_CONFIG:-}" ]]; then
+  pnpm exec playwright test --config "$PILOT_PLAYWRIGHT_CONFIG"
+else
+  pnpm exec playwright test tests/e2e/pilot --project=chromium
+fi

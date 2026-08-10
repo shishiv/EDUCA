@@ -43,6 +43,30 @@ SELECT pg_temp.assert_true((SELECT count(*) >= 2 FROM alunos), 'secretariat sees
 SELECT pg_temp.assert_true((SELECT count(*) >= 2 FROM escolas), 'secretariat sees all schools in dedicated project');
 SELECT pg_temp.assert_true((SELECT count(*) = 3 FROM pilot_dashboard_metrics(NULL)), 'dashboard RPC is deployed');
 
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO matriculas(id, aluno_id, turma_id, ano_letivo, situacao)
+    VALUES (
+      '50000000-0000-0000-0000-000000000003',
+      '40000000-0000-0000-0000-000000000001',
+      '30000000-0000-0000-0000-000000000001',
+      2027,
+      'ativa'
+    );
+    RAISE EXCEPTION 'secretariat write unexpectedly succeeded';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'secretariat write unexpectedly succeeded' THEN
+      RAISE;
+    END IF;
+  END;
+END $$;
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 0 FROM matriculas WHERE id = '50000000-0000-0000-0000-000000000003'),
+  'secretariat is read-only for enrollments'
+);
+
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000002',true);
 INSERT INTO matriculas(id, aluno_id, turma_id, ano_letivo, situacao)
 VALUES (
   '50000000-0000-0000-0000-000000000003',
@@ -53,8 +77,9 @@ VALUES (
 );
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 1 FROM matriculas WHERE id = '50000000-0000-0000-0000-000000000003'),
-  'secretariat can insert an enrollment without recursive RLS'
+  'director can insert an enrollment in the own school'
 );
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
 
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000005',true);
 SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM alunos), 'inactive user has no school access');
@@ -65,9 +90,9 @@ SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM alunos), 'guardian role is 
 RESET ROLE;
 SELECT pg_temp.assert_true(
   NOT has_table_privilege('authenticated','notas','SELECT')
-  AND NOT has_table_privilege('authenticated','relatorios_descritivos','SELECT')
+  AND has_table_privilege('authenticated','relatorios_descritivos','SELECT')
   AND NOT has_table_privilege('authenticated','educacenso_exports','SELECT'),
-  'notes, descriptive reports, and Educacenso grants are disabled by the base pilot gate'
+  'grades and Educacenso stay disabled while governed reports are released'
 );
 SELECT pg_temp.assert_true(
   (SELECT reloptions @> ARRAY['security_invoker=true'] FROM pg_class WHERE oid='vw_frequencia_completa'::regclass),

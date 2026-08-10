@@ -14,9 +14,11 @@
 -- database.
 
 -- -----------------------------------------------------------------------------
--- Unsupported pilot modules are inaccessible even when their legacy tables exist.
+-- Grades, Educacenso, and the legacy Bolsa Família view remain inaccessible.
+-- Governed descriptive reports and the new security-invoker conditionality
+-- RPC/view are released only by the hardening migration and its tests.
 -- -----------------------------------------------------------------------------
-REVOKE ALL ON notas, relatorios_descritivos, educacenso_exports, codigos_inep FROM anon, authenticated;
+REVOKE ALL ON notas, educacenso_exports, codigos_inep FROM anon, authenticated;
 REVOKE ALL ON vw_alunos_risco_bolsa_familia FROM anon, authenticated;
 
 -- -----------------------------------------------------------------------------
@@ -26,6 +28,7 @@ REVOKE ALL ON vw_alunos_risco_bolsa_familia FROM anon, authenticated;
 CREATE OR REPLACE FUNCTION pilot_reject_high_risk_student_fields()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   IF NEW.nis IS NOT NULL
