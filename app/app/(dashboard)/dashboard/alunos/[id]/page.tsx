@@ -200,7 +200,7 @@ export default function AlunoDetalhesPage() {
           matriculas: alunoData.matriculas || [],
           frequencia,
           notas: [], // Notas not implemented yet
-          bolsa_familia: alunoData.nis ? true : false,
+          bolsa_familia: alunoData.bolsa_familia ?? false,
           vivencias_count: 0 // Will be populated when vivencias API exists
         }
 

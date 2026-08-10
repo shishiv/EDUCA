@@ -461,8 +461,7 @@ AS $$
       student.id AS aluno_id,
       student.nome_completo AS aluno_nome,
       student.nis,
-      (coalesce(student.bolsa_familia, false) OR nullif(btrim(student.nis), '') IS NOT NULL)
-        AS is_bolsa_familia,
+      coalesce(student.bolsa_familia, false) AS is_bolsa_familia,
       student.data_nascimento,
       EXTRACT(YEAR FROM age(params.end_date, student.data_nascimento))::integer AS idade_anos,
       EXISTS (
