@@ -144,7 +144,7 @@ const navigationGroups: NavigationGroup[] = [
       },
       {
         name: 'Diário de Classe',
-        href: '/dashboard/diario',
+        href: '/diario',
         icon: BookText,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
       },

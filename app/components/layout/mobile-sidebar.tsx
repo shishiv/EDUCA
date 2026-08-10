@@ -71,7 +71,7 @@ const navigation = [
   },
   {
     name: 'Diário de Classe',
-    href: '/dashboard/diario',
+    href: '/diario',
     icon: BookText,
   },
   {
