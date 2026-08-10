@@ -18,6 +18,9 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import type { AttendanceStatus } from '@/components/attendance/AttendanceCell'
+import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 // ============================================================================
 // Types
@@ -236,11 +239,10 @@ export function useLessons(options: UseLessonsOptions) {
         // Content table might not exist yet
       }
 
-      // Load attendance stats for all sessions in one query
-      const { data: attendance } = await supabase
-        .from('frequencia')
-        .select('sessao_id, presente, status_presenca')
-        .in('sessao_id', sessionIds)
+      // Load attendance stats for all sessions through the canonical query.
+      const attendance = await loadCanonicalAttendanceFacts(supabase, [], {
+        sessaoIds: sessionIds,
+      })
 
       // Aggregate attendance by session
       const attendanceStats = new Map<
@@ -248,27 +250,23 @@ export function useLessons(options: UseLessonsOptions) {
         { total: number; presentes: number; ausentes: number; atestados: number }
       >()
 
-      if (attendance) {
-        attendance.forEach((a: any) => {
-          const stats = attendanceStats.get(a.sessao_id) || {
-            total: 0,
-            presentes: 0,
-            ausentes: 0,
-            atestados: 0,
-          }
-
-          stats.total++
-          if (a.status_presenca === 'P' || (a.presente && !a.status_presenca)) {
-            stats.presentes++
-          } else if (a.status_presenca === 'F' || (!a.presente && !a.status_presenca)) {
-            stats.ausentes++
-          } else if (a.status_presenca === 'A') {
-            stats.atestados++
-          }
-
-          attendanceStats.set(a.sessao_id, stats)
-        })
-      }
+      attendance.forEach((fact) => {
+        const stats = attendanceStats.get(fact.sessaoId) || {
+          total: 0,
+          presentes: 0,
+          ausentes: 0,
+          atestados: 0,
+        }
+        const counts = countAttendanceRecords([{
+          presente: fact.presente,
+          status_presenca: fact.statusPresenca,
+        }])
+        stats.total += counts.total
+        stats.presentes += counts.presencas
+        stats.ausentes += counts.faltas
+        stats.atestados += counts.atestados
+        attendanceStats.set(fact.sessaoId, stats)
+      })
 
       // Build lesson summaries
       return sessions.map((session: any): LessonSummary => {
@@ -351,28 +349,25 @@ export function useLessonDetail(lessonId: string | null) {
         // Content table might not exist
       }
 
-      // Get attendance stats
-      const { data: attendance } = await supabase
-        .from('frequencia')
-        .select('presente, status_presenca')
-        .eq('sessao_id', lessonId)
+      // Get attendance stats from the canonical session-backed read.
+      const attendance = await loadCanonicalAttendanceFacts(supabase, [], {
+        sessaoIds: [lessonId],
+      })
 
       let total = 0,
         presentes = 0,
         ausentes = 0,
         atestados = 0
-      if (attendance) {
-        attendance.forEach((a: any) => {
-          total++
-          if (a.status_presenca === 'P' || (a.presente && !a.status_presenca)) {
-            presentes++
-          } else if (a.status_presenca === 'F' || (!a.presente && !a.status_presenca)) {
-            ausentes++
-          } else if (a.status_presenca === 'A') {
-            atestados++
-          }
-        })
-      }
+      attendance.forEach((fact) => {
+        const counts = countAttendanceRecords([{
+          presente: fact.presente,
+          status_presenca: fact.statusPresenca,
+        }])
+        total += counts.total
+        presentes += counts.presencas
+        ausentes += counts.faltas
+        atestados += counts.atestados
+      })
 
       const turma = session.turmas as { id: string; nome: string; serie: string } | null
 
@@ -478,52 +473,28 @@ export function useStudentsAtRisk(turmaId: string | null) {
         return []
       }
 
-      // Get attendance records for these matriculas
       const matriculaIds = matriculas.map((m) => m.id)
-      const { data: attendance, error: attendanceError } = await supabase
-        .from('frequencia')
-        .select('matricula_id, presente, status_presenca')
-        .in('matricula_id', matriculaIds)
-
-      if (attendanceError) {
-        logger.error('Error loading attendance for risk:', attendanceError, {
-          feature: 'diary-query',
-          action: 'load_risk_attendance',
-        })
-        throw attendanceError
-      }
+      const attendance = await loadCanonicalAttendanceFacts(supabase, matriculaIds)
+      const attendanceByMatricula = summarizeCanonicalAttendanceFacts(attendance, matriculaIds)
 
       // Calculate attendance percentage for each student
       const studentsAtRisk: StudentAtRisk[] = []
 
       for (const matricula of matriculas) {
-        const studentAttendance = attendance?.filter((a) => a.matricula_id === matricula.id) || []
-        const total = studentAttendance.length
+        const summary = attendanceByMatricula.get(matricula.id)
 
-        if (total === 0) continue // Skip students with no attendance records
+        if (!summary || summary.total === 0) continue // Skip students with no attendance records
 
-        const presentes = studentAttendance.filter(
-          (a) => a.status_presenca === 'P' || (a.presente && !a.status_presenca)
-        ).length
-        const atestados = studentAttendance.filter((a) => a.status_presenca === 'A').length
-        const faltas = studentAttendance.filter(
-          (a) => a.status_presenca === 'F' || (!a.presente && !a.status_presenca)
-        ).length
-
-        // Calculate attendance rate (presentes + atestados count as attended)
-        const attended = presentes + atestados
-        const percentage = Math.round((attended / total) * 100)
-
-        // Only include students below 80% threshold
-        if (percentage < 80) {
+        // Only include students below the Bolsa Família compliance threshold.
+        if (summary.percentual < CONFORMIDADE) {
           const aluno = matricula.alunos as { id: string; nome_completo: string } | null
           studentsAtRisk.push({
             id: aluno?.id || matricula.aluno_id,
             nome: aluno?.nome_completo || 'Aluno',
             nis: undefined,
-            frequenciaPercentual: percentage,
-            totalFaltas: faltas,
-            totalAtestados: atestados,
+            frequenciaPercentual: summary.percentual,
+            totalFaltas: summary.faltas,
+            totalAtestados: summary.atestados,
             matriculaId: matricula.id,
           })
         }

@@ -180,34 +180,33 @@ describe('Brazilian Validation Utils', () => {
   })
 
   describe('Status de Frequencia', () => {
-    it('deve retornar "adequate" para frequencia >= 80%', () => {
-      expect(getAttendanceStatus(80)).toBe('adequate')
+    it('deve retornar "adequate" para frequencia >= 85%', () => {
+      expect(getAttendanceStatus(85)).toBe('adequate')
       expect(getAttendanceStatus(90)).toBe('adequate')
       expect(getAttendanceStatus(100)).toBe('adequate')
     })
 
-    it('deve retornar "warning" para frequencia entre 75-79%', () => {
-      expect(getAttendanceStatus(75)).toBe('warning')
-      expect(getAttendanceStatus(77)).toBe('warning')
-      expect(getAttendanceStatus(79)).toBe('warning')
+    it('deve retornar "warning" para frequencia entre 80-84%', () => {
+      expect(getAttendanceStatus(80)).toBe('warning')
+      expect(getAttendanceStatus(82)).toBe('warning')
+      expect(getAttendanceStatus(84)).toBe('warning')
     })
 
-    it('deve retornar "critical" para frequencia < 75%', () => {
-      expect(getAttendanceStatus(74)).toBe('critical')
+    it('deve retornar "critical" para frequencia < 80%', () => {
+      expect(getAttendanceStatus(79)).toBe('critical')
       expect(getAttendanceStatus(50)).toBe('critical')
       expect(getAttendanceStatus(0)).toBe('critical')
     })
   })
 
   describe('Validacao de Frequencia Minima', () => {
-    it('deve validar frequencia >= 75% (requisito brasileiro)', () => {
-      expect(validateMinimumAttendance(75)).toBe(true)
+    it('deve validar a condicionalidade de frequencia >= 80%', () => {
       expect(validateMinimumAttendance(80)).toBe(true)
       expect(validateMinimumAttendance(100)).toBe(true)
     })
 
-    it('deve rejeitar frequencia < 75%', () => {
-      expect(validateMinimumAttendance(74)).toBe(false)
+    it('deve rejeitar frequencia < 80%', () => {
+      expect(validateMinimumAttendance(79)).toBe(false)
       expect(validateMinimumAttendance(50)).toBe(false)
       expect(validateMinimumAttendance(0)).toBe(false)
     })

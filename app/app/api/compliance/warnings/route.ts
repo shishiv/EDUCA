@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
+import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
 
 export interface ComplianceWarning {
   id: string
@@ -101,48 +103,52 @@ export async function GET(_request: NextRequest) {
 
         if (bolsaMatriculaIds.length > 0) {
           const startOfMonth = `${today.slice(0, 7)}-01`
-          const { data: frequenciasBolsa, error: frequenciasBolsaError } = await supabase
-            .from('frequencia')
-            .select('matricula_id, presente, status_presenca')
-            .in('matricula_id', bolsaMatriculaIds)
-            .not('sessao_id', 'is', null)
-            .gte('data_aula', startOfMonth)
-            .lte('data_aula', today)
+          const canonicalFacts = await loadCanonicalAttendanceFacts(supabase, bolsaMatriculaIds, {
+            startDate: startOfMonth,
+            endDate: today,
+          })
+          const attendanceByMatricula = summarizeCanonicalAttendanceFacts(
+            canonicalFacts,
+            bolsaMatriculaIds
+          )
+          const criticalCount = bolsaMatriculaIds.filter((matriculaId) => {
+            const attendance = attendanceByMatricula.get(matriculaId)
+            return Boolean(attendance && attendance.total > 0 && attendance.percentual < CONFORMIDADE)
+          }).length
+          const attentionCount = bolsaMatriculaIds.filter((matriculaId) => {
+            const attendance = attendanceByMatricula.get(matriculaId)
+            return Boolean(
+              attendance &&
+              attendance.total > 0 &&
+              attendance.percentual >= CONFORMIDADE &&
+              attendance.percentual < ATENCAO
+            )
+          }).length
 
-          if (frequenciasBolsaError) {
-            logger.error('Error fetching Bolsa Familia attendance for compliance warnings', frequenciasBolsaError)
-          } else {
-            const attendanceByMatricula = new Map<string, { total: number; presentes: number }>()
-            for (const frequencia of frequenciasBolsa ?? []) {
-              if (frequencia.status_presenca === 'NAO_MARCADO') continue
-
-              const attendance = attendanceByMatricula.get(frequencia.matricula_id) ?? {
-                total: 0,
-                presentes: 0,
-              }
-              attendance.total += 1
-              if (frequencia.presente) attendance.presentes += 1
-              attendanceByMatricula.set(frequencia.matricula_id, attendance)
-            }
-
-            const atRiskCount = bolsaMatriculaIds.filter(matriculaId => {
-              const attendance = attendanceByMatricula.get(matriculaId)
-              return Boolean(attendance && attendance.total > 0 && (attendance.presentes / attendance.total) * 100 < 80)
-            }).length
-
-            if (atRiskCount > 0) {
+            if (criticalCount > 0) {
               warnings.push({
                 id: 'bolsa-familia-baixa-frequencia',
-                title: 'Alerta Bolsa Família',
-                message: `${atRiskCount} aluno(s) do Bolsa Família estão com frequência abaixo de 80% neste mês.`,
+                title: 'Não conformidade Bolsa Família',
+                message: `${criticalCount} aluno(s) do Bolsa Família estão abaixo de ${CONFORMIDADE}% neste mês. A condicionalidade do benefício não foi atendida.`,
                 type: 'critical',
                 icon: 'AlertTriangle',
                 actionUrl: '/relatorios/bolsa-familia',
                 actionText: 'Ver relatório Bolsa Família',
-                count: atRiskCount,
+                count: criticalCount,
               })
             }
-          }
+            if (attentionCount > 0) {
+              warnings.push({
+                id: 'bolsa-familia-atencao-preventiva',
+                title: 'Atenção preventiva de frequência',
+                message: `${attentionCount} aluno(s) do Bolsa Família estão entre ${CONFORMIDADE}% e menos de ${ATENCAO}%. A condicionalidade permanece atendida, mas requer margem preventiva municipal.`,
+                type: 'warning',
+                icon: 'AlertCircle',
+                actionUrl: '/relatorios/bolsa-familia',
+                actionText: 'Ver relatório Bolsa Família',
+                count: attentionCount,
+              })
+            }
         }
       }
     }

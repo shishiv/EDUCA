@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import type { BolsaFamiliaStudent, BolsaFamiliaStatus } from '@/lib/reports/bolsa-familia-reports';
-import { BOLSA_FAMILIA_THRESHOLD, BOLSA_FAMILIA_WARNING_THRESHOLD } from '@/lib/reports/bolsa-familia-reports';
+import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy';
 
 // ============================================================================
 // TYPES
@@ -41,14 +41,14 @@ function StatusBadge({ status }: { status: BolsaFamiliaStatus }) {
       return (
         <Badge variant="destructive" className="gap-1">
           <AlertTriangle className="h-3 w-3" />
-          Crítico
+          Não conforme
         </Badge>
       );
-    case 'ALERTA':
+    case 'ATENCAO':
       return (
         <Badge variant="outline" className="gap-1 border-amber-500 text-amber-700 bg-amber-50">
           <AlertCircle className="h-3 w-3" />
-          Alerta
+          Atenção preventiva
         </Badge>
       );
     case 'CONFORME':
@@ -63,8 +63,8 @@ function StatusBadge({ status }: { status: BolsaFamiliaStatus }) {
 
 function AttendanceBar({ percentual }: { percentual: number }) {
   const getColor = () => {
-    if (percentual < BOLSA_FAMILIA_THRESHOLD) return 'bg-red-500';
-    if (percentual < BOLSA_FAMILIA_WARNING_THRESHOLD) return 'bg-amber-500';
+    if (percentual < CONFORMIDADE) return 'bg-red-500';
+    if (percentual < ATENCAO) return 'bg-amber-500';
     return 'bg-green-500';
   };
 
@@ -136,7 +136,7 @@ function BolsaFamiliaAlertCompact({
       <div className="p-3 border border-green-200 bg-green-50 rounded-lg">
         <div className="flex items-center gap-2 text-green-700">
           <CheckCircle className="h-4 w-4" />
-          <span className="text-sm font-medium">Bolsa Família: Todos conformes</span>
+          <span className="text-sm font-medium">Bolsa Família: Condicionalidade atendida</span>
         </div>
       </div>
     );
@@ -148,12 +148,12 @@ function BolsaFamiliaAlertCompact({
         <div className="flex items-center gap-2 text-amber-700">
           <AlertTriangle className="h-4 w-4" />
           <span className="text-sm font-medium">
-            Bolsa Família: {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} em risco
+            Frequência: {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} em acompanhamento
           </span>
         </div>
         {criticos.length > 0 && (
           <Badge variant="destructive" className="text-xs">
-            {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
+            {criticos.length} não conforme{criticos.length > 1 ? 's' : ''}
           </Badge>
         )}
       </div>
@@ -218,7 +218,7 @@ export function BolsaFamiliaAlert({
 
   const atRisk = students.filter((s) => s.status !== 'CONFORME');
   const criticos = atRisk.filter((s) => s.status === 'CRITICO');
-  const emAlerta = atRisk.filter((s) => s.status === 'ALERTA');
+  const emAtencao = atRisk.filter((s) => s.status === 'ATENCAO');
   const displayStudents = atRisk.slice(0, maxItems);
 
   if (atRisk.length === 0) {
@@ -227,10 +227,10 @@ export function BolsaFamiliaAlert({
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            <CardTitle className="text-green-800">Bolsa Família: Sem Alertas</CardTitle>
+            <CardTitle className="text-green-800">Bolsa Família: Condicionalidade atendida</CardTitle>
           </div>
           <CardDescription className="text-green-700">
-            Todos os alunos do Bolsa Família estão com frequência acima de {BOLSA_FAMILIA_THRESHOLD}%
+            Todos os alunos do Bolsa Família atendem à condicionalidade de {CONFORMIDADE}%.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -246,25 +246,29 @@ export function BolsaFamiliaAlert({
               className={`h-5 w-5 ${criticos.length > 0 ? 'text-red-600' : 'text-amber-600'}`}
             />
             <CardTitle className={criticos.length > 0 ? 'text-red-800' : 'text-amber-800'}>
-              Alerta Bolsa Família
+              Bolsa Família: conformidade e atenção preventiva
             </CardTitle>
           </div>
           <div className="flex gap-2">
             {criticos.length > 0 && (
               <Badge variant="destructive">
-                {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
+                {criticos.length} não conforme{criticos.length > 1 ? 's' : ''}
               </Badge>
             )}
-            {emAlerta.length > 0 && (
+            {emAtencao.length > 0 && (
               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                {emAlerta.length} em alerta
+                {emAtencao.length} em atenção preventiva
               </Badge>
             )}
           </div>
         </div>
         <CardDescription className={criticos.length > 0 ? 'text-red-700' : 'text-amber-700'}>
-          {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} com frequência abaixo de{' '}
-          {BOLSA_FAMILIA_WARNING_THRESHOLD}% - risco de perda do benefício
+          {criticos.length > 0 && (
+            <span>{criticos.length} aluno{criticos.length > 1 ? 's' : ''} abaixo de {CONFORMIDADE}% não atende{criticos.length > 1 ? 'm' : ''} à condicionalidade Bolsa Família. </span>
+          )}
+          {emAtencao.length > 0 && (
+            <span>{emAtencao.length} aluno{emAtencao.length > 1 ? 's' : ''} em atenção preventiva abaixo de {ATENCAO}%, com condicionalidade atendida a partir de {CONFORMIDADE}%.</span>
+          )}
         </CardDescription>
       </CardHeader>
 
@@ -318,7 +322,7 @@ export function BolsaFamiliaAlert({
                     {student.status !== 'CRITICO' && student.faltasParaCritico > 0 && (
                       <span className="text-amber-600">
                         {student.faltasParaCritico} falta{student.faltasParaCritico > 1 ? 's' : ''}{' '}
-                        para crítico
+                        para não conformidade
                       </span>
                     )}
                   </div>
@@ -344,7 +348,7 @@ export function BolsaFamiliaAlert({
             className="w-full mt-4"
             onClick={onViewAll}
           >
-            Ver todos os {atRisk.length} alunos em risco
+            Ver todos os {atRisk.length} alunos em acompanhamento
           </Button>
         )}
 
@@ -354,15 +358,15 @@ export function BolsaFamiliaAlert({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span>Crítico (&lt;{BOLSA_FAMILIA_THRESHOLD}%)</span>
+                <span>Não conformidade (&lt;{CONFORMIDADE}%)</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <span>Alerta ({BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</span>
+                <span>Atenção preventiva ({CONFORMIDADE}% - &lt;{ATENCAO}%)</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span>Conforme (&gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%)</span>
+                <span>Conformidade Bolsa Família (&gt;={CONFORMIDADE}%)</span>
               </div>
             </div>
             <p className="text-gray-400">

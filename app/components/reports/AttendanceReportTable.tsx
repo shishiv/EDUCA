@@ -49,6 +49,11 @@ import {
 import { cn } from "@/lib/utils";
 import type { StatusPresenca } from "@/types/diario-classe";
 import { municipalConfig } from "@/lib/config";
+import {
+	ATENCAO,
+	CONFORMIDADE,
+	getFrequencyPolicyStatus,
+} from "@/lib/attendance/attendance-policy";
 
 // ============================================================================
 // TYPES
@@ -74,7 +79,7 @@ export interface AttendanceReportTableProps {
 	turmaName?: string;
 	/** Period description */
 	periodoLabel?: string;
-	/** Risk threshold percentage (default: 80) */
+	/** Compliance threshold percentage. The canonical default is 80. */
 	riskThreshold?: number;
 	/** Whether the table is loading */
 	isLoading?: boolean;
@@ -99,8 +104,7 @@ type SortDirection = "asc" | "desc";
 // CONSTANTS
 // ============================================================================
 
-const DEFAULT_RISK_THRESHOLD = 80;
-const CRITICAL_THRESHOLD = 75;
+const DEFAULT_RISK_THRESHOLD = CONFORMIDADE;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -113,10 +117,10 @@ function getAttendanceBadgeClass(
 	percentual: number,
 	threshold: number,
 ): string {
-	if (percentual >= threshold) {
+	if (percentual >= ATENCAO) {
 		return "bg-green-100 text-green-800 border-green-300";
 	}
-	if (percentual >= CRITICAL_THRESHOLD) {
+	if (percentual >= threshold) {
 		return "bg-yellow-100 text-yellow-800 border-yellow-300";
 	}
 	return "bg-red-100 text-red-800 border-red-300";
@@ -126,10 +130,10 @@ function getAttendanceBadgeClass(
  * Get row highlight class based on risk status
  */
 function getRowClass(percentual: number, threshold: number): string {
-	if (percentual < CRITICAL_THRESHOLD) {
+	if (percentual < threshold) {
 		return "bg-red-50 hover:bg-red-100";
 	}
-	if (percentual < threshold) {
+	if (percentual < ATENCAO) {
 		return "bg-yellow-50 hover:bg-yellow-100";
 	}
 	return "hover:bg-gray-50";
@@ -197,18 +201,18 @@ function SummaryBar({
 }) {
 	const stats = useMemo(() => {
 		const total = data.length;
-		const atRisk = data.filter((row) => row.percentual < riskThreshold).length;
-		const critical = data.filter(
-			(row) => row.percentual < CRITICAL_THRESHOLD,
+		const critical = data.filter((row) => row.percentual < riskThreshold).length;
+		const preventiveAttention = data.filter(
+			(row) => row.percentual >= riskThreshold && row.percentual < ATENCAO,
 		).length;
-		const healthy = total - atRisk;
+		const healthy = data.filter((row) => row.percentual >= riskThreshold).length;
 
 		const avgAttendance =
 			total > 0
 				? Math.round(data.reduce((sum, row) => sum + row.percentual, 0) / total)
 				: 0;
 
-		return { total, atRisk, critical, healthy, avgAttendance };
+		return { total, critical, preventiveAttention, healthy, avgAttendance };
 	}, [data, riskThreshold]);
 
 	return (
@@ -226,7 +230,7 @@ function SummaryBar({
 					<CheckCircle2 className="h-4 w-4 text-green-600" />
 				</div>
 				<div className="text-xl font-bold text-green-700">{stats.healthy}</div>
-				<div className="text-xs text-green-600">Frequência OK</div>
+				<div className="text-xs text-green-600">Conformidade Bolsa Família</div>
 			</div>
 
 			<div className="p-3 bg-yellow-50 rounded-lg text-center">
@@ -234,9 +238,9 @@ function SummaryBar({
 					<AlertTriangle className="h-4 w-4 text-yellow-600" />
 				</div>
 				<div className="text-xl font-bold text-yellow-700">
-					{stats.atRisk - stats.critical}
+					{stats.preventiveAttention}
 				</div>
-				<div className="text-xs text-yellow-600">Em Alerta</div>
+				<div className="text-xs text-yellow-600">Atenção preventiva</div>
 			</div>
 
 			<div className="p-3 bg-red-50 rounded-lg text-center">
@@ -244,15 +248,15 @@ function SummaryBar({
 					<UserX className="h-4 w-4 text-red-600" />
 				</div>
 				<div className="text-xl font-bold text-red-700">{stats.critical}</div>
-				<div className="text-xs text-red-600">Crítico (&lt;75%)</div>
+				<div className="text-xs text-red-600">Não conformidade (&lt;{riskThreshold}%)</div>
 			</div>
 
 			<div
 				className={cn(
 					"p-3 rounded-lg text-center",
-					stats.avgAttendance >= riskThreshold
+					stats.avgAttendance >= ATENCAO
 						? "bg-green-100"
-						: stats.avgAttendance >= CRITICAL_THRESHOLD
+						: stats.avgAttendance >= riskThreshold
 							? "bg-yellow-100"
 							: "bg-red-100",
 				)}
@@ -488,8 +492,9 @@ export function AttendanceReportTable({
 							</TableHeader>
 							<TableBody>
 								{sortedData.map((row, index) => {
-									const isAtRisk = row.percentual < riskThreshold;
-									const isCritical = row.percentual < CRITICAL_THRESHOLD;
+									const policyStatus = getFrequencyPolicyStatus(row.percentual);
+									const isAtRisk = policyStatus === "CRITICO";
+									const isPreventiveAttention = policyStatus === "ATENCAO";
 
 									return (
 										<TableRow
@@ -503,11 +508,11 @@ export function AttendanceReportTable({
 											<TableCell className="text-gray-500 text-sm">
 												{index + 1}
 											</TableCell>
-											<TableCell className="font-medium">
-												<div className="flex items-center gap-2">
-													{isCritical && (
-														<AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
-													)}
+							<TableCell className="font-medium">
+								<div className="flex items-center gap-2">
+									{isAtRisk && (
+										<AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
+									)}
 													{row.nome}
 												</div>
 											</TableCell>
@@ -541,19 +546,19 @@ export function AttendanceReportTable({
 												>
 													{formatPercentage(row.percentual)}
 												</Badge>
-											</TableCell>
-											<TableCell className="text-center">
-												{isCritical ? (
-													<Badge className="bg-red-500 text-white">
-														Crítico
-													</Badge>
-												) : isAtRisk ? (
-													<Badge className="bg-yellow-500 text-white">
-														Alerta
-													</Badge>
-												) : (
-													<Badge className="bg-green-500 text-white">OK</Badge>
-												)}
+							</TableCell>
+							<TableCell className="text-center">
+								{isAtRisk ? (
+									<Badge className="bg-red-500 text-white">
+										Não conforme
+									</Badge>
+								) : isPreventiveAttention ? (
+									<Badge className="bg-yellow-500 text-white">
+										Atenção preventiva
+									</Badge>
+								) : (
+									<Badge className="bg-green-500 text-white">Conforme</Badge>
+								)}
 											</TableCell>
 										</TableRow>
 									);
@@ -568,19 +573,19 @@ export function AttendanceReportTable({
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-green-500" />
 						<span>
-							Frequência OK ({">="} {riskThreshold}%)
+							Conformidade Bolsa Família ({">="} {riskThreshold}%)
 						</span>
 					</div>
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-yellow-500" />
 						<span>
-							Em Alerta ({CRITICAL_THRESHOLD}% - {riskThreshold}%)
+							Atenção preventiva ({riskThreshold}% - &lt;{ATENCAO}%)
 						</span>
 					</div>
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-red-500" />
 						<span>
-							Crítico ({"<"} {CRITICAL_THRESHOLD}%)
+							Não conformidade ({"<"} {riskThreshold}%)
 						</span>
 					</div>
 				</div>

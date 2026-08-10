@@ -37,6 +37,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
 import {
   createPDFDocument,
   addPDFHeader,
@@ -395,22 +396,22 @@ export default function BoletimPage() {
 
       // Fetch attendance summary (for both levels)
       if (matriculaRaw?.turma_id) {
-        const { data: attendanceData, error: attendanceError } = await supabase
-          .from('frequencia')
-          .select('presente')
-          .eq('matricula_id', matriculaRaw.id)
+        const attendanceSummary = (await loadCanonicalAttendanceSummaries(
+          supabase,
+          [matriculaRaw.id]
+        )).get(matriculaRaw.id)
 
-        if (!attendanceError && attendanceData) {
-          const total = attendanceData.length
-          const presencas = attendanceData.filter((a: any) => a.presente === true).length
-          const faltas = total - presencas
+        if (attendanceSummary) {
+          const total = attendanceSummary.total
+          const presencas = attendanceSummary.presencas
+          const faltas = attendanceSummary.faltas
 
           setAttendance(
             calculateAttendanceSummary({
               total_aulas: total,
               presencas,
               faltas,
-              atestados: 0, // Not tracked in basic frequencia table
+              atestados: attendanceSummary.atestados,
             })
           )
         }

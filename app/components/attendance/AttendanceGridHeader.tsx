@@ -38,6 +38,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AttendanceStats, SessionLockInfo } from './AttendanceGridTypes'
+import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // Types
@@ -74,13 +75,14 @@ export interface AttendanceGridHeaderProps {
 
 /**
  * Get attendance rate badge color
- * - Green >= 80%
- * - Yellow >= 75%
- * - Red < 75%
+ * - Green >= 85%
+ * - Yellow 80% to < 85%
+ * - Red < 80%
  */
 function getAttendanceRateBadgeClass(rate: number): string {
-  if (rate >= 80) return 'bg-green-100 border-green-600 text-green-700'
-  if (rate >= 75) return 'bg-yellow-100 border-yellow-600 text-yellow-700'
+  const status = getFrequencyPolicyStatus(rate)
+  if (status === 'CONFORME') return 'bg-green-100 border-green-600 text-green-700'
+  if (status === 'ATENCAO') return 'bg-yellow-100 border-yellow-600 text-yellow-700'
   return 'bg-red-100 border-red-600 text-red-700'
 }
 

@@ -1,3 +1,5 @@
+import { CONFORMIDADE } from '../../app/lib/attendance/attendance-policy'
+
 /**
  * attendance-generator.ts
  *
@@ -42,8 +44,8 @@ export const LOW_ATTENDANCE_RATE = 0.7
 export const ATTENDANCE_RATE_MIN = 0.86
 export const ATTENDANCE_RATE_MAX = 0.98
 
-/** Bolsa Família attendance threshold mirrored from the product code. */
-export const BOLSA_FAMILIA_THRESHOLD = 80
+/** Bolsa Família compliance threshold from the shared attendance policy. */
+export const BOLSA_FAMILIA_THRESHOLD = CONFORMIDADE
 
 /** Anchor timestamp used for every static created_at in the demo dataset. */
 export const STATIC_CREATED_AT = '2026-02-03 08:00:00-03'

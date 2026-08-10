@@ -43,6 +43,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -160,19 +162,25 @@ export default function MatriculaDetailsPage() {
         observacoes: matriculaData.observacoes || ''
       })
 
-      // Load attendance history
-      const { data: frequenciaData, error: frequenciaError } = await supabase
-        .from('frequencia')
-        .select('id, data_aula, presente, justificativa')
-        .eq('matricula_id', id)
-        .order('data_aula', { ascending: false })
-
-      if (frequenciaError) {
-        logger.error('Erro ao carregar frequência:', frequenciaError)
-      } else {
-        setFrequencia(frequenciaData || [])
-        calculateAttendanceStats(frequenciaData || [])
-      }
+      // Load the historical card and its policy stats from the canonical read.
+      const attendanceFacts = await loadCanonicalAttendanceFacts(supabase, [id])
+      const attendanceSummary = summarizeCanonicalAttendanceFacts(attendanceFacts, [id]).get(id)
+      setFrequencia(
+        attendanceFacts
+          .map((fact) => ({
+            id: fact.id,
+            data_aula: fact.dataAula,
+            presente: fact.presente,
+            justificativa: fact.justificativa,
+          }))
+          .sort((a, b) => b.data_aula.localeCompare(a.data_aula))
+      )
+      setAttendanceStats({
+        totalAulas: attendanceSummary?.total ?? 0,
+        presencas: attendanceSummary ? attendanceSummary.presencas + attendanceSummary.atestados : 0,
+        faltas: attendanceSummary?.faltas ?? 0,
+        percentualPresenca: attendanceSummary?.percentual ?? 0,
+      })
     } catch (error: any) {
       logger.error('Erro ao carregar matrícula:', error)
       toast.error('Erro ao carregar detalhes da matrícula')
@@ -180,20 +188,6 @@ export default function MatriculaDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const calculateAttendanceStats = (records: FrequenciaRecord[]) => {
-    const totalAulas = records.length
-    const presencas = records.filter(r => r.presente).length
-    const faltas = totalAulas - presencas
-    const percentualPresenca = totalAulas > 0 ? (presencas / totalAulas) * 100 : 0
-
-    setAttendanceStats({
-      totalAulas,
-      presencas,
-      faltas,
-      percentualPresenca
-    })
   }
 
   const handleSave = async () => {
@@ -281,8 +275,9 @@ export default function MatriculaDetailsPage() {
   }
 
   const getAttendanceStatusColor = (percentual: number) => {
-    if (percentual >= 85) return 'text-green-600'
-    if (percentual >= 75) return 'text-yellow-600'
+    const status = getFrequencyPolicyStatus(percentual)
+    if (status === 'CONFORME') return 'text-green-600'
+    if (status === 'ATENCAO') return 'text-yellow-600'
     return 'text-red-600'
   }
 
@@ -534,19 +529,19 @@ export default function MatriculaDetailsPage() {
                 </p>
               </div>
             </div>
-            {attendanceStats.percentualPresenca < 75 && (
+            {getFrequencyPolicyStatus(attendanceStats.percentualPresenca) === 'CRITICO' && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Atenção: Frequência abaixo do mínimo legal de 75%
+                  Não conformidade Bolsa Família: frequência abaixo de {CONFORMIDADE}%.
                 </AlertDescription>
               </Alert>
             )}
-            {attendanceStats.percentualPresenca >= 75 && attendanceStats.percentualPresenca < 85 && (
+            {getFrequencyPolicyStatus(attendanceStats.percentualPresenca) === 'ATENCAO' && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Aviso: Frequência próxima ao limite mínimo (75%)
+                  Atenção preventiva municipal: frequência abaixo de {ATENCAO}%; condicionalidade atendida a partir de {CONFORMIDADE}%.
                 </AlertDescription>
               </Alert>
             )}

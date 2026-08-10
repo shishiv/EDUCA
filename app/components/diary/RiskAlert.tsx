@@ -1,12 +1,12 @@
 /**
  * RiskAlert Component - Display students at risk of Bolsa Familia non-compliance
- * Task 1.4.3: Implement risk alert for students with < 80% attendance
+ * Task 1.4.3: Implement the canonical frequency policy alert
  *
  * Features:
- * - Highlight students with attendance below 80%
+ * - Highlight the canonical Bolsa Família compliance and municipal attention bands
  * - Red badge showing absence count
  * - Link to student details
- * - Visual distinction between warning (75-80%) and critical (< 75%)
+ * - Visual distinction between preventive attention (80% to < 85%) and non-compliance (< 80%)
  *
  * @see openspec/changes/2025-12-04-diario-de-classe/spec.md
  * @see planning/visuals/frequencia.html
@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ATENCAO, CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // Types
@@ -46,7 +47,7 @@ export interface StudentAtRisk {
 }
 
 export interface RiskAlertProps {
-  /** List of students at risk (< 80% attendance) */
+  /** List of students below the canonical attention threshold */
   studentsAtRisk: StudentAtRisk[]
   /** Whether to show detailed information */
   showDetails?: boolean
@@ -56,8 +57,6 @@ export interface RiskAlertProps {
   onStudentClick?: (student: StudentAtRisk) => void
   /** Whether the component is in loading state */
   loading?: boolean
-  /** Threshold percentage for risk (default: 80) */
-  riskThreshold?: number
   /** Whether to show link to student details */
   showStudentLink?: boolean
 }
@@ -68,12 +67,12 @@ export interface RiskAlertProps {
 
 /**
  * Get risk level based on attendance percentage
- * - Critical: < 75% (red)
- * - Warning: 75-80% (yellow/orange)
+ * - Critical: below the Bolsa Família compliance threshold
+ * - Warning: preventive municipal attention below the attention threshold
  */
-function getRiskLevel(percentage: number, threshold: number = 80): 'critical' | 'warning' | 'safe' {
-  if (percentage >= threshold) return 'safe'
-  if (percentage < 75) return 'critical'
+function getRiskLevel(percentage: number): 'critical' | 'warning' | 'safe' {
+  if (percentage >= ATENCAO) return 'safe'
+  if (percentage < CONFORMIDADE) return 'critical'
   return 'warning'
 }
 
@@ -112,10 +111,9 @@ function getRiskIcon(riskLevel: 'critical' | 'warning' | 'safe') {
 export function RiskAlert({
   studentsAtRisk,
   showDetails = true,
-  title = 'Alunos em Risco (Frequência < 80%)',
+  title = `Atenção de frequência (abaixo de ${ATENCAO}%)`,
   onStudentClick,
   loading = false,
-  riskThreshold = 80,
   showStudentLink = true,
 }: RiskAlertProps) {
   // Don't render if no students at risk
@@ -129,8 +127,8 @@ export function RiskAlert({
   )
 
   // Count critical vs warning
-  const criticalCount = sortedStudents.filter(s => s.frequenciaPercentual < 75).length
-  const warningCount = sortedStudents.filter(s => s.frequenciaPercentual >= 75 && s.frequenciaPercentual < riskThreshold).length
+  const criticalCount = sortedStudents.filter(s => s.frequenciaPercentual < CONFORMIDADE).length
+  const warningCount = sortedStudents.filter(s => s.frequenciaPercentual >= CONFORMIDADE && s.frequenciaPercentual < ATENCAO).length
 
   return (
     <Alert
@@ -179,7 +177,7 @@ export function RiskAlert({
                 {warningCount > 0 && (
                   <Badge className="bg-yellow-500 hover:bg-yellow-500 text-xs">
                     <AlertTriangle className="h-3 w-3 mr-1" />
-                    {warningCount} em alerta
+                    {warningCount} em atenção preventiva
                   </Badge>
                 )}
               </div>
@@ -187,7 +185,7 @@ export function RiskAlert({
               {/* Student list */}
               <div className="space-y-2">
                 {sortedStudents.map((student) => {
-                  const riskLevel = getRiskLevel(student.frequenciaPercentual, riskThreshold)
+                  const riskLevel = getRiskLevel(student.frequenciaPercentual)
                   const isClickable = onStudentClick || showStudentLink
 
                   const StudentRow = (
@@ -276,7 +274,7 @@ export function RiskAlert({
                     'text-xs',
                     criticalCount > 0 ? 'text-red-600' : 'text-yellow-600'
                   )}>
-                    Total de {sortedStudents.length} alunos com frequencia abaixo de {riskThreshold}%
+                    Total de {sortedStudents.length} alunos em acompanhamento abaixo de {ATENCAO}%
                   </p>
                 </div>
               )}

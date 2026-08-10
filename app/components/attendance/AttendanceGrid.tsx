@@ -5,7 +5,7 @@
  * Features:
  * - Three-state attendance: P (Presente), F (Falta), A (Attestado)
  * - Touch-optimized with 44px minimum touch targets
- * - Real-time summary with attendance rate badge (green >= 80%, yellow >= 75%, red < 75%)
+ * - Real-time summary with the canonical attendance policy colors
  * - Batch operations and real-time sync
  * - Visual lock indicator when session is locked after 18:00
  * - Brazilian educational compliance: "nao existe o esquecer"
