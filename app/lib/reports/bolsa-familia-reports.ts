@@ -170,8 +170,11 @@ function countAttendanceStatus(records: Array<{ status_presenca: StatusPresenca 
 // ============================================================================
 
 /**
- * Get all Bolsa Família students with attendance data
- * Filters for students with NIS or bolsa_familia flag
+ * Get all Bolsa Família students with attendance data.
+ *
+ * A NIS alone is not proof that a student receives Bolsa Família. The report
+ * uses the explicit bolsa_familia enrollment flag so its total matches the
+ * benefit population.
  *
  * @param supabase - Supabase client
  * @param filters - Period and optional school/class filters
@@ -219,7 +222,7 @@ export async function getBolsaFamiliaStudents(
           )
         )
       `)
-      .eq('situacao', 'Ativa');
+      .eq('situacao', 'ativa');
 
     // Apply optional filters
     if (filters.turmaId) {
@@ -237,12 +240,8 @@ export async function getBolsaFamiliaStudents(
       return { data: null, error: matriculasError.message };
     }
 
-    // Filter for Bolsa Família students (has NIS or bolsa_familia flag)
-    // This filtering is done in code because Supabase PostgREST doesn't support
-    // .or() filters on columns from related tables
     const matriculas = (matriculasData || []).filter((m: any) => {
-      const aluno = m.alunos;
-      return aluno && (aluno.nis || aluno.bolsa_familia);
+      return m.alunos?.bolsa_familia === true;
     });
 
     if (matriculas.length === 0) {
