@@ -626,8 +626,8 @@ export default function StudentReportsPage() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6 max-w-4xl">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -637,7 +637,7 @@ export default function StudentReportsPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="flex items-center gap-2 text-2xl font-bold">
               <User className="h-6 w-6 text-purple-600" />
               {studentInfo.nome_completo}
             </h1>
@@ -659,7 +659,7 @@ export default function StudentReportsPage() {
         </div>
         <Button
           onClick={handleCreateNew}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="self-start bg-purple-600 hover:bg-purple-700"
         >
           <Plus className="h-4 w-4 mr-2" />
           Novo Relatorio
@@ -706,7 +706,7 @@ export default function StudentReportsPage() {
                 onClick={() => handleOpenReport(report)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -723,7 +723,7 @@ export default function StudentReportsPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 self-start sm:justify-end">
                       {descriptiveReportEmissionEnabled && report.status === 'finalizado' && (
                         <Button
                           type="button"

@@ -86,10 +86,11 @@ printf 'PILOT_DESCRIPTIVE_PHASE: build\n'
 pnpm build
 
 APP_LOG="$ISOLATED_PROJECT_DIR/next.log"
-(
-  cd "$APP_DIR"
-  portless run --name educa-pilot-descriptive pnpm start >"$APP_LOG" 2>&1
-) &
+# Run portless directly so cleanup can terminate its app process. `--force`
+# removes an orphan from an interrupted previous rehearsal before this isolated
+# database becomes visible to the browser.
+cd "$APP_DIR"
+portless run --name educa-pilot-descriptive --force pnpm start >"$APP_LOG" 2>&1 &
 APP_PID=$!
 
 BASE_URL=''

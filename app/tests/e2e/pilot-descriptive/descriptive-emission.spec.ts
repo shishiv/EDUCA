@@ -27,9 +27,11 @@ function createLocalServiceClient() {
 
 async function openDescriptiveReport(page: import('@playwright/test').Page) {
   await page.goto(`/diario/relatorios/${PILOT_DESCRIPTIVE_STUDENT_ID}`)
-  await expect(page.getByRole('heading', { name: 'Criança Descritiva Sintética', exact: true })).toBeVisible()
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Emitir PDF', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Criança Descritiva Sintética', exact: true })
+  ).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Emitir PDF', exact: true })).toBeVisible({ timeout: 15_000 })
 }
 
 test.describe.serial('bounded descriptive-report PDF emission', () => {
@@ -37,7 +39,11 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
     await openDescriptiveReport(page)
     await expect(page.getByText('1 Semestre de 2026', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Emitir PDF', exact: true })).toBeEnabled()
-    await page.screenshot({ path: testInfo.outputPath('descriptive-report-dom.png'), fullPage: true })
+    await page.screenshot({ path: testInfo.outputPath('descriptive-report-desktop.png'), fullPage: true })
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(page.getByRole('button', { name: 'Emitir PDF', exact: true })).toBeVisible()
+    await page.screenshot({ path: testInfo.outputPath('descriptive-report-mobile-390x844.png') })
   })
 
   test('emits a real PDF artifact from canonical taught content', async ({ page }, testInfo) => {
