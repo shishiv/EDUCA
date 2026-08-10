@@ -63,6 +63,10 @@ export function generateContentReportPDF(
     includeDisciplineSummary = true,
   } = options;
 
+  if (report.aulas.length === 0) {
+    throw new Error('CONTENT_REPORT_EMPTY: nao ha conteudo real no periodo selecionado');
+  }
+
   const doc = createPDFDocument('portrait');
 
   // Header

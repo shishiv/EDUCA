@@ -526,8 +526,8 @@ export default function ContentReportsPage() {
 
   // Handle export PDF
   const handleExportPDF = () => {
-    if (!reportData) {
-      toast.error('Gere um relatorio primeiro')
+    if (!reportData || reportData.aulas.length === 0) {
+      toast.error('Não há conteúdo real no período selecionado para exportar')
       return
     }
     try {
@@ -584,7 +584,12 @@ export default function ContentReportsPage() {
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={!reportData}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportPDF}
+          disabled={!reportData || reportData.aulas.length === 0}
+        >
           <FileText className="h-4 w-4 mr-2" />
           Exportar PDF
         </Button>
@@ -750,6 +755,19 @@ export default function ContentReportsPage() {
 
       {/* Report Content */}
       {reportData && (
+        reportData.aulas.length === 0 ? (
+          <Card data-testid="content-report-empty-state" role="status">
+            <CardContent className="text-center py-12">
+              <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg font-medium text-gray-600">
+                Nenhum conteúdo real registrado no período selecionado
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                O PDF está indisponível porque não existe conteúdo canônico para este período.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -875,6 +893,7 @@ export default function ContentReportsPage() {
             </TabsContent>
           </Tabs>
         </>
+        )
       )}
 
       {/* Empty State */}
