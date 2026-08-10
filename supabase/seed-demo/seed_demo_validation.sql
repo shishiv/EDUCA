@@ -42,6 +42,51 @@ SELECT pg_temp.assert_true(
     AND (SELECT count(*) FROM conteudo_aula) = 100,
   '100 conteudos canonicos para 100 sessoes geradas'
 );
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 100
+   FROM conteudo_aula c
+   JOIN sessoes_aula s ON s.id = c.sessao_id
+   WHERE s.status = 'FECHADA'
+     AND s.fechada_em IS NOT NULL
+     AND s.travada_em IS NOT NULL
+     AND trim(c.tema) <> ''
+     AND trim(c.objetivo) <> ''
+     AND cardinality(c.habilidades_bncc) > 0
+     AND coalesce(trim(c.metodologia), '') <> ''
+     AND coalesce(trim(c.recursos), '') <> ''
+     AND c.created_by IS NOT NULL),
+  'cada conteudo atende o contrato minimo do relatorio descritivo'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 5 AND bool_and(content_count = 20)
+   FROM (
+     SELECT s.disciplina_id, count(*)::bigint AS content_count
+     FROM conteudo_aula c
+     JOIN sessoes_aula s ON s.id = c.sessao_id
+     GROUP BY s.disciplina_id
+   ) discipline_content),
+  'cada uma das 5 disciplinas tem 20 conteudos canonicos'
+);
+-- The fixed receipt excludes the moving lesson date and created_at fields.
+SELECT pg_temp.assert_true(
+  (SELECT md5(string_agg(row_hash, '|' ORDER BY row_hash))
+   FROM (
+     SELECT md5(concat_ws('|',
+       c.id::text,
+       c.sessao_id::text,
+       s.disciplina_id::text,
+       c.tema,
+       c.objetivo,
+       array_to_string(c.habilidades_bncc, ','),
+       coalesce(c.metodologia, ''),
+       coalesce(c.recursos, ''),
+       coalesce(c.created_by::text, '')
+     )) AS row_hash
+     FROM conteudo_aula c
+     JOIN sessoes_aula s ON s.id = c.sessao_id
+   ) content_rows) = '888045b03e3eae986b28d6ffc3eb630c',
+  'fingerprint fixo do contrato de conteudo canonico'
+);
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM certificado_emissores), '1 emissor institucional sintetico de certificado');
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM certificado_atividades), '1 atividade sintetica de certificado');
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM certificados_emitidos), '1 emissao sintetica de certificado');

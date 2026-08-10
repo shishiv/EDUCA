@@ -20,7 +20,8 @@
 #      com matricula, sessoes fechadas, presenca P, carga e hash verificaveis;
 #   4. seed_demo_validation.sql passa (contagens, relacionamentos, marcadores
 #      synthetic-only e caso de alerta < 80%);
-#   5. repetibilidade: um segundo reset com a MESMA ancora produz
+#   5. deliberate-break: remover conteudo_aula torna a validacao vermelha;
+#   6. repetibilidade: um segundo reset com a MESMA ancora produz
 #      fingerprints md5 identicos nas tabelas-chave.
 #
 # Uso:
@@ -89,12 +90,26 @@ echo "    (replay relatorios_descritivos, como run.sh)"
 echo "==> Gerando sessoes/frequencias para a ancora $ANCHOR_DATE..."
 (cd "$APP_DIR" && pnpm exec tsx "$SEED_DIR/emit-verify.ts" --date "$ANCHOR_DATE") > "$WORK_DIR/attendance.sql"
 
-echo "==> Aplicando seed estatico + frequencia gerada..."
+echo "==> Aplicando seed estatico + sessoes/conteudo/frequencia gerados..."
 "${PSQL[@]}" -f "$SEED_DIR/seed-demo.sql" >/dev/null
 "${PSQL[@]}" -f "$WORK_DIR/attendance.sql" >/dev/null
 
 echo "==> Validacao estrutural (contagens, relacionamentos, marcadores, alerta)..."
 "${PSQL[@]}" -v anchor_date="$ANCHOR_DATE" -f "$SEED_DIR/seed_demo_validation.sql" >/dev/null
+
+echo "==> Deliberate-break: remover conteudo_aula deve deixar a validacao vermelha..."
+"${PSQL[@]}" -c "TRUNCATE conteudo_aula;" >/dev/null
+BREAK_LOG="$WORK_DIR/content-break.log"
+if "${PSQL[@]}" -v anchor_date="$ANCHOR_DATE" -f "$SEED_DIR/seed_demo_validation.sql" >/dev/null 2>"$BREAK_LOG"; then
+  echo "FALHOU: a validacao passou mesmo sem conteudo_aula"
+  exit 1
+fi
+if ! grep -Fq "100 conteudos canonicos para 100 sessoes geradas" "$BREAK_LOG"; then
+  echo "FALHOU: a quebra nao falhou pelo contrato de conteudo_aula"
+  cat "$BREAK_LOG" >&2
+  exit 1
+fi
+echo "OK: remover conteudo_aula torna a validacao vermelha"
 
 echo "==> Prova de repetibilidade: segundo reset com a mesma ancora..."
 "${PSQL[@]}" -c "TRUNCATE certificados_emitidos, certificado_atividade_sessoes, certificado_atividades, certificado_emissores, frequencia, conteudo_aula, sessoes_aula, aulas_abertas, notas, matriculas, aluno_responsaveis, alunos, responsaveis, disciplinas, turmas, calendario_escolar, configs, audit_logs, audit_trail, audit_sessoes_aula, codigos_inep, educacenso_exports, users, escolas CASCADE;" >/dev/null
