@@ -85,7 +85,7 @@ The canonical migrations retain the full product schema. The pilot-only provisio
 
 `app/scripts/pilot-safety-gate.ts` blocks external deploys while `PILOT_MODE=true`. To authorize real data or external pilot deployment, make a separate reviewed change with named legal and governance approvals. Do not weaken the gate as part of routine feature work.
 
-The backup/restore rehearsal writes generated evidence under ignored `.pilot-evidence/`. It verifies portable CSV data, Auth and Storage representations, policies, grants, views, RPCs, tombstones, and RPO/RTO without modifying its source database.
+The backup/restore rehearsal writes generated evidence under ignored `.pilot-evidence/`. It verifies portable CSV data, Auth and Storage representations, policies, grants, views, RPCs, tombstones, and RPO/RTO without modifying its source database. Governed pilot CSV preparation is proof-only: `app/scripts/run-pilot-import-proof-e2e.sh` creates a disposable PostgreSQL database, requires the named owner and processing agreement, encrypts the payload, records counts and fingerprints, cleans expired ciphertext, and exercises rollback. It never targets the public demo or a production endpoint; see `docs/PILOT-DATA-IMPORT.md`.
 
 ## WhatsApp attendance notifications (bounded MVP)
 
@@ -104,6 +104,7 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/config.toml`, `supabase/migrations/` | Local Supabase configuration and canonical schema evolution. |
 | `supabase/pilot/provision-pilot-module-gate.sql` | Explicit synthetic-pilot containment. |
 | `supabase/tests/` | Database and backup/restore validation. |
+| `docs/PILOT-DATA-IMPORT.md`, `app/scripts/pilot-import-proof.ts`, `app/scripts/run-pilot-import-proof-e2e.sh` | Governed CSV contract, proof-only import runner, retention, rollback, fingerprints, and isolated PostgreSQL receipt. |
 | `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
 | `DEMO.md` | Demo sandbox runbook, local reset command, environment contract and safety boundaries. |
 | `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |

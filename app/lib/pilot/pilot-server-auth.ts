@@ -4,6 +4,7 @@ export type PilotUserRole = 'admin' | 'secretario' | 'diretor' | 'professor'
 
 export interface PilotActor {
   id: string
+  name: string
   role: PilotUserRole
   schoolId: string | null
   email: string | null
@@ -17,7 +18,7 @@ export async function requirePilotActor(allowedRoles: PilotUserRole[]): Promise<
 
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('id,tipo_usuario,escola_id,email,ativo')
+    .select('id,nome,tipo_usuario,escola_id,email,ativo')
     .eq('id', user.id)
     .eq('ativo', true)
     .single()
@@ -26,5 +27,11 @@ export async function requirePilotActor(allowedRoles: PilotUserRole[]): Promise<
     throw new Error('PILOT_ROLE_DENIED')
   }
 
-  return { id: profile.id, role: profile.tipo_usuario as PilotUserRole, schoolId: profile.escola_id, email: profile.email }
+  return {
+    id: profile.id,
+    name: profile.nome,
+    role: profile.tipo_usuario as PilotUserRole,
+    schoolId: profile.escola_id,
+    email: profile.email,
+  }
 }

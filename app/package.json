@@ -25,6 +25,8 @@
     "seed:demo": "tsx ../supabase/seed-demo/seed-demo.ts",
     "pilot:safety": "tsx scripts/pilot-safety-gate.ts",
     "pilot:restore-test": "bash scripts/run-pilot-restore-test.sh",
+    "pilot:import:proof": "tsx scripts/pilot-import-proof.ts",
+    "test:e2e:pilot:import": "bash scripts/run-pilot-import-proof-e2e.sh",
     "deploy": "tsx scripts/pilot-safety-gate.ts deploy && vercel --prod",
     "deploy:preview": "tsx scripts/pilot-safety-gate.ts deploy && vercel",
     "vercel:login": "vercel login",

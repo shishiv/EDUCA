@@ -1,4 +1,11 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash } from 'node:crypto'
+import {
+  createPilotDryRunValidationToken,
+  decryptPilotImportPayload,
+  encryptPilotImportPayload,
+  verifyPilotDryRunValidationToken,
+  type PilotEncryptedImportPayload,
+} from './pilot-import-crypto'
 
 export const SYNTHETIC_CSV_MARKER = 'SYNTHETIC-EDUCA-PILOT'
 export const SYNTHETIC_STUDENT_CSV_HEADERS = [
@@ -42,12 +49,7 @@ export interface SyntheticCsvValidationReport {
   issues: CsvValidationIssue[]
 }
 
-export interface EncryptedStagingPayload {
-  encryptionKeyId: string
-  ciphertext: string
-  iv: string
-  authTag: string
-}
+export type EncryptedStagingPayload = PilotEncryptedImportPayload
 
 function parseCsvRecords(csv: string): string[][] {
   const records: string[][] = []
@@ -157,34 +159,14 @@ export function validateSyntheticStudentCsv(csv: string): {
   }
 }
 
-function readEncryptionKey(base64Key: string): Buffer {
-  const key = Buffer.from(base64Key, 'base64')
-  if (key.length !== 32) throw new Error('PILOT_IMPORT_KEY_INVALID: expected a base64 AES-256 key')
-  return key
-}
+/** Encrypts the legacy synthetic CSV contract before database staging. */
+export const encryptSyntheticCsvForStaging = encryptPilotImportPayload
 
-/** Encrypts CSV before database staging using AES-256-GCM. */
-export function encryptSyntheticCsvForStaging(csv: string, base64Key: string, encryptionKeyId: string): EncryptedStagingPayload {
-  const iv = randomBytes(12)
-  const cipher = createCipheriv('aes-256-gcm', readEncryptionKey(base64Key), iv)
-  const ciphertext = Buffer.concat([cipher.update(csv, 'utf8'), cipher.final()])
-  return { encryptionKeyId, ciphertext: ciphertext.toString('base64'), iv: iv.toString('base64'), authTag: cipher.getAuthTag().toString('base64') }
-}
+/** Decrypts the legacy synthetic staging payload only on the server. */
+export const decryptSyntheticCsvFromStaging = decryptPilotImportPayload
 
-/** Decrypts an authenticated staging payload only on the server. */
-export function decryptSyntheticCsvFromStaging(payload: EncryptedStagingPayload, base64Key: string): string {
-  const decipher = createDecipheriv('aes-256-gcm', readEncryptionKey(base64Key), Buffer.from(payload.iv, 'base64'))
-  decipher.setAuthTag(Buffer.from(payload.authTag, 'base64'))
-  return Buffer.concat([decipher.update(Buffer.from(payload.ciphertext, 'base64')), decipher.final()]).toString('utf8')
-}
+/** Binds the legacy synthetic staging path to a successful dry run. */
+export const createDryRunValidationToken = createPilotDryRunValidationToken
 
-/** Binds staging to a prior successful dry run without storing raw values. */
-export function createDryRunValidationToken(contentSha256: string, base64Key: string): string {
-  return createHmac('sha256', readEncryptionKey(base64Key)).update(`educa-pilot-dry-run:${contentSha256}`).digest('hex')
-}
-
-export function verifyDryRunValidationToken(contentSha256: string, token: string, base64Key: string): boolean {
-  const expected = Buffer.from(createDryRunValidationToken(contentSha256, base64Key), 'hex')
-  const actual = Buffer.from(token, 'hex')
-  return expected.length === actual.length && timingSafeEqual(expected, actual)
-}
+/** Verifies the legacy synthetic dry-run token with a constant-time comparison. */
+export const verifyDryRunValidationToken = verifyPilotDryRunValidationToken

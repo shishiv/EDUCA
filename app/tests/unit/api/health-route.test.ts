@@ -74,6 +74,7 @@ const failingResult: QueryResult = {
 
 const adminActor = {
   id: 'operator-1',
+  name: 'Admin de Teste',
   role: 'admin' as const,
   schoolId: null,
   email: 'admin@example.com',
