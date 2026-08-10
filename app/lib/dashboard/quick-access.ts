@@ -1,4 +1,4 @@
-import { Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, GraduationCap, LucideIcon } from 'lucide-react'
+import { Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, GraduationCap, BookText, LucideIcon } from 'lucide-react'
 import { isPilotDisabledPath } from '@/lib/pilot/pilot-scope'
 import { resolveDemoSandboxCapability } from '@/lib/demo-sandbox/demo-sandbox'
 
@@ -30,6 +30,7 @@ export const quickAccessItems: QuickAccessItem[] = [
   { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
   { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, iconColor: 'text-emerald-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
   { name: 'Frequência', href: ATTENDANCE_ROUTE, icon: CheckSquare, iconColor: 'text-amber-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Diário de Classe', href: '/dashboard/diario', icon: BookText, iconColor: 'text-indigo-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
   { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, iconColor: 'text-violet-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
   { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600', roles: ['admin', 'diretor', 'secretario'] },
   { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, iconColor: 'text-slate-600', roles: ['admin', 'diretor'] },
