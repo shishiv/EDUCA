@@ -36,7 +36,7 @@ export default function PrimeiroAcessoPage() {
   async function completeFirstAccess(event: FormEvent) {
     event.preventDefault()
     if (demoSandbox) {
-      setError('O primeiro acesso fica bloqueado no sandbox publico. Use a conta demo fornecida.')
+      setError('O primeiro acesso fica bloqueado no sandbox público. Use a conta demo fornecida.')
       return
     }
     setSubmitting(true)

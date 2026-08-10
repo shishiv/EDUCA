@@ -366,7 +366,7 @@ function ContentTable({ lessons }: { lessons: LessonContentReportItem[] }) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Data</TableHead>
-            <TableHead>Tema/Conteudo</TableHead>
+            <TableHead>Tema/Conteúdo</TableHead>
             <TableHead className="hidden md:table-cell">Objetivo</TableHead>
             <TableHead className="w-[120px] text-center">Habilidades</TableHead>
             <TableHead className="hidden lg:table-cell">Turma</TableHead>
@@ -642,7 +642,7 @@ export default function ContentReportsPage() {
 
             {/* Period Selector */}
             <div className="space-y-2">
-              <Label htmlFor="periodo">Periodo</Label>
+              <Label htmlFor="periodo">Período</Label>
               <Select value={periodOption} onValueChange={setPeriodOption}>
                 <SelectTrigger id="periodo">
                   <SelectValue />
@@ -789,7 +789,7 @@ export default function ContentReportsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{reportData.resumo.mediaHabilidadesPorAula.toFixed(1)}</p>
-                    <p className="text-sm text-gray-500">Media/Aula</p>
+                    <p className="text-sm text-gray-500">Média/Aula</p>
                   </div>
                 </div>
               </CardContent>
@@ -837,7 +837,7 @@ export default function ContentReportsPage() {
                       Nenhuma aula registrada no periodo
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
-                      Periodo: {periodoLabel}
+                      Período: {periodoLabel}
                     </p>
                   </CardContent>
                 </Card>

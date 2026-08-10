@@ -246,7 +246,7 @@ export default function DiarioInfantilPage() {
       <div className="p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
           <p className="font-medium">Erro ao carregar pagina</p>
-          <p className="text-sm mt-1">{error || 'Aluno nao encontrado'}</p>
+          <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
           <Button
             variant="outline"
             size="sm"
@@ -353,7 +353,7 @@ export default function DiarioInfantilPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Vivencia</AlertDialogTitle>
+            <AlertDialogTitle>Excluir Vivência</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir esta vivencia? Esta acao nao pode ser desfeita.
             </AlertDialogDescription>

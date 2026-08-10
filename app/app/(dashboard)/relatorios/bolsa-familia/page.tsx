@@ -257,11 +257,11 @@ export default function BolsaFamiliaReportPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
-            <span className="hidden xs:inline">Relatorio </span>Bolsa Familia
+            <span className="hidden xs:inline">Relatório </span>Bolsa Família
           </h1>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            <span className="hidden sm:inline">Monitoramento de frequencia para alunos do programa</span>
-            <span className="sm:hidden">Frequencia alunos BF</span>
+            <span className="hidden sm:inline">Monitoramento de frequência para alunos do programa</span>
+            <span className="sm:hidden">Frequência alunos BF</span>
           </p>
         </div>
 
@@ -350,7 +350,7 @@ export default function BolsaFamiliaReportPage() {
 
             {/* Period Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label htmlFor="bolsa-familia-periodo" className="text-xs sm:text-sm font-medium text-gray-700">Periodo</label>
+              <label htmlFor="bolsa-familia-periodo" className="text-xs sm:text-sm font-medium text-gray-700">Período</label>
               <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as PeriodOption)}>
                 <SelectTrigger id="bolsa-familia-periodo" className="min-h-[44px]">
                   <SelectValue placeholder="Selecione o periodo" />
@@ -358,10 +358,10 @@ export default function BolsaFamiliaReportPage() {
                 <SelectContent>
                   <SelectItem value="current_month" className="py-3">Mes Atual</SelectItem>
                   <SelectItem value="last_month" className="py-3">Mes Anterior</SelectItem>
-                  <SelectItem value="bimester_1" className="py-3">1o Bimestre</SelectItem>
-                  <SelectItem value="bimester_2" className="py-3">2o Bimestre</SelectItem>
-                  <SelectItem value="bimester_3" className="py-3">3o Bimestre</SelectItem>
-                  <SelectItem value="bimester_4" className="py-3">4o Bimestre</SelectItem>
+                  <SelectItem value="bimester_1" className="py-3">1º Bimestre</SelectItem>
+                  <SelectItem value="bimester_2" className="py-3">2º Bimestre</SelectItem>
+                  <SelectItem value="bimester_3" className="py-3">3º Bimestre</SelectItem>
+                  <SelectItem value="bimester_4" className="py-3">4º Bimestre</SelectItem>
                   <SelectItem value="custom" className="py-3">Personalizado</SelectItem>
                 </SelectContent>
               </Select>
@@ -436,7 +436,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.totalAlunosBolsaFamilia}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Alunos Bolsa Familia</span>
+                    <span className="hidden sm:inline">Alunos Bolsa Família</span>
                     <span className="sm:hidden">Total BF</span>
                   </p>
                 </div>
@@ -552,7 +552,7 @@ export default function BolsaFamiliaReportPage() {
               ) : report && report.alunos.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 px-3">
                   <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm sm:text-base">Nenhum aluno do Bolsa Familia encontrado</p>
+                  <p className="text-sm sm:text-base">Nenhum aluno do Bolsa Família encontrado</p>
                   <p className="text-xs sm:text-sm mt-1">Verifique os filtros ou se os alunos possuem NIS cadastrado</p>
                 </div>
               ) : report && (
@@ -644,8 +644,8 @@ export default function BolsaFamiliaReportPage() {
               <strong>Legenda:</strong> P = Presenca, F = Falta, A = Atestado
             </p>
             <p className="hidden sm:block">
-              <strong>Calculo de Frequencia:</strong> Atestados medicos (A) contam como presenca
-              para o calculo de conformidade do Bolsa Familia.
+              <strong>Cálculo de Frequência:</strong> Atestados médicos (A) contam como presença
+              para o cálculo de conformidade do Bolsa Família.
             </p>
             <p>
               <strong>Thresholds:</strong> Critico &lt;{BOLSA_FAMILIA_THRESHOLD}% | Alerta {BOLSA_FAMILIA_THRESHOLD}-{BOLSA_FAMILIA_WARNING_THRESHOLD}% | Conforme &gt;{BOLSA_FAMILIA_WARNING_THRESHOLD}%

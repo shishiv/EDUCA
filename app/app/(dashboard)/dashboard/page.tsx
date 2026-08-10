@@ -158,7 +158,7 @@ export default function DashboardPage() {
         dashboardAlerts.push({
           id: 'alert-baixa-freq',
           severity: newStats.alunosComBaixaFrequencia > 5 ? 'error' : 'warning',
-          message: `${newStats.alunosComBaixaFrequencia} aluno(s) com frequencia abaixo de 75%`,
+          message: `${newStats.alunosComBaixaFrequencia} aluno(s) com frequência abaixo de 75%`,
           timestamp: new Date().toISOString()
         })
       }
@@ -166,7 +166,7 @@ export default function DashboardPage() {
         dashboardAlerts.push({
           id: 'alert-docs',
           severity: 'warning',
-          message: `${newStats.alunosComDocumentosPendentes} alunos com documentacao pendente`,
+          message: `${newStats.alunosComDocumentosPendentes} alunos com documentação pendente`,
           timestamp: new Date().toISOString()
         })
       }
@@ -174,7 +174,7 @@ export default function DashboardPage() {
         dashboardAlerts.push({
           id: 'alert-meta',
           severity: 'success',
-          message: 'Meta de frequencia alcancada! Parabens!',
+          message: 'Meta de frequência alcançada! Parabéns!',
           timestamp: new Date().toISOString()
         })
       }
@@ -311,7 +311,7 @@ export default function DashboardPage() {
           icon={CalendarCheck}
           iconColor="yellow"
           value={`${stats.frequenciaMedia}%`}
-          label="Frequencia Media"
+          label="Frequência Média"
           trend={stats.frequenciaMedia >= 75 ? { value: "Acima da meta", direction: "up" } : undefined}
         />
         <StatCard
@@ -363,7 +363,7 @@ export default function DashboardPage() {
               )}
               <Button variant="outline" className="w-full mt-2" asChild>
                 <Link href="/dashboard/turmas">
-                  Ver Todas as Turmas
+                  Ver todas as turmas
                 </Link>
               </Button>
             </div>
@@ -379,7 +379,7 @@ export default function DashboardPage() {
                 Alertas Recentes
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
-                Notificacoes e alertas do sistema
+                Notificações e alertas do sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -402,7 +402,7 @@ export default function DashboardPage() {
           <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="font-display text-lg text-gray-800">
-                Acoes Rapidas
+                Ações Rápidas
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
                 Atalhos para tarefas frequentes

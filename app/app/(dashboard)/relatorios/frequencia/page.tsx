@@ -346,8 +346,8 @@ export default function AttendanceReportsPage() {
             <span className="hidden xs:inline">Relatorios de </span>Frequencia
           </h1>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            <span className="hidden sm:inline">Visualize e exporte relatorios de frequencia por turma e periodo</span>
-            <span className="sm:hidden">Relatorios por turma e periodo</span>
+            <span className="hidden sm:inline">Visualize e exporte relatórios de frequência por turma e período</span>
+            <span className="sm:hidden">Relatórios por turma e período</span>
           </p>
         </div>
 
@@ -410,7 +410,7 @@ export default function AttendanceReportsPage() {
 
             {/* Period Selector */}
             <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="periodo" className="text-xs sm:text-sm">Periodo</Label>
+              <Label htmlFor="periodo" className="text-xs sm:text-sm">Período</Label>
               <Select value={periodOption} onValueChange={setPeriodOption}>
                 <SelectTrigger id="periodo" className="min-h-[44px]">
                   <SelectValue />
@@ -529,7 +529,7 @@ export default function AttendanceReportsPage() {
               </TabsTrigger>
               <TabsTrigger value="chart" className="flex items-center gap-1 min-h-[44px]">
                 <BarChart3 className="h-4 w-4" />
-                <span className="hidden xs:inline">Grafico</span>
+                <span className="hidden xs:inline">Gráfico</span>
               </TabsTrigger>
             </TabsList>
 
@@ -553,14 +553,14 @@ export default function AttendanceReportsPage() {
             <TabsContent value="chart" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Visualizacao Grafica</CardTitle>
+                  <CardTitle className="text-base">Visualização Gráfica</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-8 sm:py-12 text-gray-500">
                     <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-base sm:text-lg font-medium">Grafico em desenvolvimento</p>
+                    <p className="text-base sm:text-lg font-medium">Gráfico em desenvolvimento</p>
                     <p className="text-xs sm:text-sm mt-1">
-                      A visualizacao grafica sera implementada em breve.
+                      A visualização gráfica será implementada em breve.
                     </p>
                   </div>
                 </CardContent>
@@ -575,7 +575,7 @@ export default function AttendanceReportsPage() {
         <Card>
           <CardContent className="text-center py-8 sm:py-12">
             <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-base sm:text-lg font-medium text-gray-600">Selecione uma turma e periodo</p>
+            <p className="text-base sm:text-lg font-medium text-gray-600">Selecione uma turma e período</p>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Use os filtros acima para gerar o relatorio de frequencia.
             </p>

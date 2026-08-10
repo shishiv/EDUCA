@@ -126,7 +126,7 @@ export default function AlunoDetalhesPage() {
 
         if (alunoError) throw alunoError
         if (!alunoData) {
-          setError('Aluno nao encontrado')
+          setError('Aluno não encontrado')
           return
         }
 
@@ -196,10 +196,10 @@ export default function AlunoDetalhesPage() {
           ativo: alunoData.ativo ?? true,
           created_at: alunoData.created_at ?? new Date().toISOString(),
           responsavel: {
-            nome: alunoData.nome_mae || alunoData.nome_pai || 'Nao informado',
-            telefone: alunoData.telefone || 'Nao informado',
+            nome: alunoData.nome_mae || alunoData.nome_pai || 'Não informado',
+            telefone: alunoData.telefone || 'Não informado',
             email: undefined,
-            parentesco: alunoData.nome_mae ? 'Mae' : 'Pai'
+            parentesco: alunoData.nome_mae ? 'Mãe' : 'Pai'
           },
           matriculas: alunoData.matriculas || [],
           frequencia,
@@ -259,7 +259,7 @@ export default function AlunoDetalhesPage() {
   if (!aluno || error) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">{error || 'Aluno nao encontrado'}</p>
+        <p className="text-muted-foreground">{error || 'Aluno não encontrado'}</p>
         <Button asChild className="mt-4">
           <Link href="/dashboard/alunos">Voltar para lista</Link>
         </Button>
@@ -287,7 +287,7 @@ export default function AlunoDetalhesPage() {
             <Button variant="outline" asChild>
               <Link href={`/dashboard/alunos/${aluno.id}/diario`}>
                 <BookOpen className="h-4 w-4 mr-2" />
-                Ver Diario Infantil
+                Ver Diário Infantil
               </Link>
             </Button>
           )}
@@ -354,7 +354,7 @@ export default function AlunoDetalhesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                Desempenho Academico - 2024
+                Desempenho Acadêmico - 2024
               </CardTitle>
               <CardDescription>
                 Notas por disciplina e bimestre
@@ -366,12 +366,12 @@ export default function AlunoDetalhesPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Disciplina</TableHead>
-                      <TableHead className="text-center">1o Bim</TableHead>
-                      <TableHead className="text-center">2o Bim</TableHead>
-                      <TableHead className="text-center">3o Bim</TableHead>
-                      <TableHead className="text-center">4o Bim</TableHead>
-                      <TableHead className="text-center">Media</TableHead>
-                      <TableHead className="text-center">Situacao</TableHead>
+                      <TableHead className="text-center">1º Bim</TableHead>
+                      <TableHead className="text-center">2º Bim</TableHead>
+                      <TableHead className="text-center">3º Bim</TableHead>
+                      <TableHead className="text-center">4º Bim</TableHead>
+                      <TableHead className="text-center">Média</TableHead>
+                      <TableHead className="text-center">Situação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -315,7 +315,7 @@ export function getCanonicalSessionLockInfo(
       isLocked: true,
       lockReason: 'session_closed',
       canEdit: false,
-      message: 'Sessao finalizada. Frequencia nao pode ser modificada.',
+      message: 'Sessão finalizada. Frequência não pode ser modificada.',
       timeUntilLockMinutes: null,
     }
   }
@@ -326,7 +326,7 @@ export function getCanonicalSessionLockInfo(
       lockReason: sessionDate < today ? 'past_date' : 'date_not_current',
       canEdit: false,
       message: sessionDate < today
-        ? 'Data passada. Frequencia bloqueada para garantir integridade dos registros.'
+        ? 'Data passada. Frequência bloqueada para garantir integridade dos registros.'
         : 'A frequência só pode ser registrada na data atual de São Paulo.',
       timeUntilLockMinutes: null,
     }
@@ -348,7 +348,7 @@ export function getCanonicalSessionLockInfo(
       isLocked: true,
       lockReason: 'time_18h',
       canEdit: false,
-      message: 'Frequencia bloqueada apos 18:00. Principio "nao existe o esquecer" da legislacao educacional brasileira.',
+      message: 'Frequência bloqueada após 18:00. Princípio "não existe o esquecer" da legislação educacional brasileira.',
       timeUntilLockMinutes: 0,
     }
   }
@@ -358,7 +358,7 @@ export function getCanonicalSessionLockInfo(
     lockReason: null,
     canEdit: true,
     message: timeUntilLockMinutes <= 60
-      ? `Atencao: Bloqueio automatico em ${formatLockTime(timeUntilLockMinutes)}`
+      ? `Atenção: Bloqueio automático em ${formatLockTime(timeUntilLockMinutes)}`
       : '',
     timeUntilLockMinutes,
   }

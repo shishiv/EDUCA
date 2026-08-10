@@ -38,7 +38,7 @@ export const quickAccessItems: QuickAccessItem[] = [
 
 export const defaultQuickActionCards: QuickActionCard[] = [
   { name: 'Nova Chamada', href: ATTENDANCE_ROUTE, icon: CheckSquare, iconColor: 'text-amber-600' },
-  { name: 'Lancar Notas', href: '/dashboard/notas', icon: GraduationCap, iconColor: 'text-violet-600' },
+  { name: 'Lançar Notas', href: '/dashboard/notas', icon: GraduationCap, iconColor: 'text-violet-600' },
   { name: 'Ver Relatorios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600' },
   { name: 'Cadastrar Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', schoolWrite: true },
 ]

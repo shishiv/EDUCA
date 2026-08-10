@@ -142,7 +142,7 @@ export function ChamadaDateNav({
         variant="outline"
         size="icon"
         onClick={handleNextDay}
-        aria-label="Proximo dia"
+        aria-label="Próximo dia"
         className="h-10 w-10"
       >
         <ChevronRight className="h-4 w-4" />

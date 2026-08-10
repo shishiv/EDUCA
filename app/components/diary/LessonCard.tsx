@@ -247,7 +247,7 @@ export function LessonCard({
                 'transition-colors duration-200',
                 getRateColor(attendanceRate)
               )}
-              aria-label={`Taxa de frequencia: ${attendanceRate}%`}
+              aria-label={`Taxa de frequência: ${attendanceRate}%`}
             >
               {attendanceRate}%
             </Badge>

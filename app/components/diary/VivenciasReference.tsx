@@ -319,8 +319,8 @@ function EmptyState({ selectedCampo }: EmptyStateProps) {
       <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
       <p className="text-sm">
         {selectedCampo
-          ? `Nenhuma vivencia registrada para "${campoName}"`
-          : 'Nenhuma vivencia registrada'}
+          ? `Nenhuma vivência registrada para "${campoName}"`
+          : 'Nenhuma vivência registrada'}
       </p>
       <p className="text-xs mt-1">
         Registre vivencias no Diario para usar como referencia

@@ -314,14 +314,14 @@ export function LessonDetailPanel({
                 getAttendanceColor(attendanceRate)
               )}
             >
-              <span className="text-xs sm:text-sm font-medium">Taxa de Frequencia</span>
+              <span className="text-xs sm:text-sm font-medium">Taxa de Frequência</span>
               <span className="text-lg sm:text-xl font-bold">{attendanceRate}%</span>
             </div>
 
             {attendanceRate < 75 && (
               <div className="flex items-start gap-2 text-xs sm:text-sm text-red-600 bg-red-50 rounded-lg p-2 sm:p-3">
                 <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
-                <span>Atencao: Frequencia abaixo do minimo legal de 75%</span>
+                <span>Atenção: Frequência abaixo do mínimo legal de 75%</span>
               </div>
             )}
           </div>

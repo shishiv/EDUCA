@@ -115,7 +115,7 @@ describe('dashboard quick access routes', () => {
       canManageSchool: false,
     })
     expect(professorDemo.some((item) => item.schoolWrite)).toBe(false)
-    expect(resolveVisibleQuickActionCards(true, true, true).map((card) => card.name)).toContain('Lancar Notas')
+    expect(resolveVisibleQuickActionCards(true, true, true).map((card) => card.name)).toContain('Lançar Notas')
   })
 
   it('filters school-write action cards when the caller cannot manage the school', () => {

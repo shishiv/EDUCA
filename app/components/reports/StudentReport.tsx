@@ -310,7 +310,7 @@ function ReportHeader({
 
         {reportDate && (
           <div className="space-y-2">
-            <span className="text-sm text-gray-600">Data de Emissao:</span>
+            <span className="text-sm text-gray-600">Data de Emissão:</span>
             <p className="font-semibold text-gray-900">
               {formatDate(reportDate)}
             </p>
@@ -342,8 +342,8 @@ function GradesTable({
                 {opt.value}o Bim
               </TableHead>
             ))}
-            <TableHead className="text-center font-bold w-20 bg-gray-100">Media</TableHead>
-            <TableHead className="text-center font-semibold w-24">Situacao</TableHead>
+            <TableHead className="text-center font-bold w-20 bg-gray-100">Média</TableHead>
+            <TableHead className="text-center font-semibold w-24">Situação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -430,7 +430,7 @@ function AttendanceSummaryCard({
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <div className="text-xl font-bold text-green-700">{attendance.presencas}</div>
-            <div className="text-xs text-green-600">Presencas</div>
+            <div className="text-xs text-green-600">Presenças</div>
           </div>
           <div className="p-3 bg-red-50 rounded-lg">
             <div className="text-xl font-bold text-red-700">{attendance.faltas}</div>
@@ -502,7 +502,7 @@ function ReportSummary({
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-sm text-gray-600">Media Geral</div>
+              <div className="text-sm text-gray-600">Média Geral</div>
               <div
                 className={cn(
                   'text-3xl font-bold',
@@ -517,7 +517,7 @@ function ReportSummary({
               <>
                 <Separator orientation="vertical" className="h-12" />
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">Frequencia</div>
+                  <div className="text-sm text-gray-600">Frequência</div>
                   <div
                     className={cn(
                       'text-3xl font-bold',
@@ -664,7 +664,7 @@ export function StudentReport({
             </div>
             <div className="flex items-center gap-1">
               <span className="h-3 w-3 rounded bg-yellow-500" />
-              <span>{'Atencao (>= 5,0)'}</span>
+              <span>{'Atenção (>= 5,0)'}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="h-3 w-3 rounded bg-red-500" />
@@ -672,7 +672,7 @@ export function StudentReport({
             </div>
             <div className="flex items-center gap-1">
               <span className="text-gray-400">-</span>
-              <span>Nota nao lancada</span>
+              <span>Nota não lançada</span>
             </div>
           </div>
         </CardContent>
@@ -689,7 +689,7 @@ export function StudentReport({
       {/* Print footer */}
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
-          <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestao Escolar EDUCA</p>
+          <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestão Escolar EDUCA</p>
           <p>{municipalConfig.nome}</p>
         </div>
       )}

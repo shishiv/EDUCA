@@ -54,19 +54,19 @@ const navigationItems: NavItem[] = [
     matchPath: '/dashboard',
   },
   {
-    name: 'Frequencia',
+    name: 'Frequência',
     href: '/dashboard/turmas',
     icon: CheckSquare,
     matchPath: '/dashboard/turmas',
   },
   {
-    name: 'Diario',
+    name: 'Diário',
     href: '/diario',
     icon: BookText,
     matchPath: '/diario',
   },
   {
-    name: 'Relatorios',
+    name: 'Relatórios',
     href: '/dashboard/relatorios',
     icon: FileText,
     matchPath: '/dashboard/relatorios',
@@ -116,7 +116,7 @@ export function MobileNav() {
         // Hide on desktop (md and above)
         'md:hidden'
       )}
-      aria-label="Navegacao principal mobile"
+      aria-label="Navegação principal mobile"
     >
       <div className="flex items-center justify-around h-16 px-2">
         {visibleNavigationItems.map((item) => {

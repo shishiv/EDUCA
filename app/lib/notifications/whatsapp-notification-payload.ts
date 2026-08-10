@@ -37,9 +37,9 @@ export function buildAttendanceMessageBody(payload: AttendanceNotificationPayloa
   const schoolSuffix = payload.schoolName ? ` - ${payload.schoolName}` : ''
   const formattedDate = formatBrazilianDate(payload.date)
   if (payload.type === 'presenca_falta') {
-    return `Frequencia escolar: ${payload.studentName} ficou ausente em ${formattedDate}.${schoolSuffix}`
+    return `Frequência escolar: ${payload.studentName} ficou ausente em ${formattedDate}.${schoolSuffix}`
   }
-  return `Frequencia escolar: presenca de ${payload.studentName} confirmada em ${formattedDate}.${schoolSuffix}`
+  return `Frequência escolar: presença de ${payload.studentName} confirmada em ${formattedDate}.${schoolSuffix}`
 }
 
 /**

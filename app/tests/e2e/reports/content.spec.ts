@@ -2,7 +2,7 @@ import { test, expect } from '../support/diagnostics'
 
 async function openReport(page: import('@playwright/test').Page) {
   await page.goto('/relatorios/conteudo')
-  await expect(page.getByRole('heading', { name: /relatorio de conteudo ministrado/i })).toBeVisible({ timeout: 15000 })
+  await expect(page.getByRole('heading', { name: /relatório de conteúdo ministrado|relatorio de conteudo ministrado/i })).toBeVisible({ timeout: 15000 })
 }
 
 async function generateReport(page: import('@playwright/test').Page) {
@@ -16,7 +16,7 @@ test.describe('Content report', () => {
   })
 
   test('shows description, filters and disabled export before generation', async ({ page }) => {
-    await expect(page.getByText(/visualize o conteudo das aulas/i)).toBeVisible()
+    await expect(page.getByText(/visualize o conteúdo das aulas|visualize o conteudo das aulas/i)).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Filtros', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: /exportar pdf/i })).toBeDisabled()
   })
@@ -24,11 +24,11 @@ test.describe('Content report', () => {
   test('provides accessible class, discipline and period filters', async ({ page }) => {
     await expect(page.getByLabel('Turma', { exact: true })).toBeVisible()
     await expect(page.getByLabel(/disciplina/i)).toBeVisible()
-    await expect(page.getByLabel('Periodo', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('Período', { exact: true })).toBeVisible()
   })
 
   test('shows custom date controls for a custom period', async ({ page }) => {
-    await page.getByLabel('Periodo', { exact: true }).click()
+    await page.getByLabel('Período', { exact: true }).click()
     await page.getByRole('option', { name: /personalizado/i }).click()
     await expect(page.getByRole('button', { name: 'Data Inicio', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Data Fim', exact: true })).toBeVisible()
@@ -38,7 +38,7 @@ test.describe('Content report', () => {
     await generateReport(page)
     await expect(page.getByText('Aulas', { exact: true }).last()).toBeVisible()
     await expect(page.getByText('Habilidades BNCC', { exact: true }).last()).toBeVisible()
-    await expect(page.getByText('Media/Aula', { exact: true })).toBeVisible()
+    await expect(page.getByText('Média/Aula', { exact: true })).toBeVisible()
     await expect(page.getByText('Disciplinas', { exact: true })).toBeVisible()
   })
 

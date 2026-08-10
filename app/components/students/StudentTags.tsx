@@ -84,7 +84,7 @@ export function StudentTags({
       {showBolsaFamilia && bolsaFamilia && (
         <Badge variant="warning" className="flex items-center gap-1">
           <AlertTriangle className="h-3 w-3" />
-          <span>Bolsa Familia</span>
+          <span>Bolsa Família</span>
         </Badge>
       )}
     </div>

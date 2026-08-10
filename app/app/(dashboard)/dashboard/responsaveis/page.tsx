@@ -233,7 +233,7 @@ export default function ResponsaveisPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar por nome, CPF, telefone ou email..."
+                placeholder="Buscar por nome, CPF, telefone ou e-mail..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"

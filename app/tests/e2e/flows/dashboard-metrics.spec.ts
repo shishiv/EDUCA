@@ -38,7 +38,7 @@ test.describe('Dashboard - Stat Cards', () => {
   })
 
   test('should display Frequencia Media stat card', async ({ page }) => {
-    await expect(page.getByText('Frequencia Media')).toBeVisible()
+    await expect(page.getByText('Frequência Média')).toBeVisible()
   })
 
   test('should display Professores Ativos stat card', async ({ page }) => {

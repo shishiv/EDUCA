@@ -45,14 +45,14 @@ test.describe('Student detail', () => {
     await expect(page.getByText('Dados Pessoais', { exact: true })).toBeVisible()
     await expect(page.getByText('Data de Nascimento', { exact: true })).toBeVisible()
     await expect(page.getByText('Sexo', { exact: true })).toBeVisible()
-    await expect(page.locator('label').filter({ hasText: /^Mae$/ })).toBeVisible()
+    await expect(page.locator('label').filter({ hasText: /^Mãe$/ })).toBeVisible()
     await expect(page.locator('label').filter({ hasText: /^Pai$/ })).toBeVisible()
   })
 
   test('shows enrollment history and attendance summary', async ({ page }) => {
-    await expect(page.getByText('Historico de Matriculas', { exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Frequencia', exact: true })).toBeVisible()
-    await expect(page.getByText(/\d+% frequencia/i).first()).toBeVisible()
+    await expect(page.getByText('Histórico de Matrículas', { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Frequência', exact: true })).toBeVisible()
+    await expect(page.getByText(/\d+% frequência/i).first()).toBeVisible()
   })
 
   test('shows active/class tags', async ({ page }) => {

@@ -129,9 +129,9 @@ export function LessonContentForm({
       try {
         const transformedData = transformFormDataToInput(data, sessionId)
         await onSubmit?.(transformedData)
-        toast.success('Conteudo da aula salvo com sucesso!')
+        toast.success('Conteúdo da aula salvo com sucesso!')
       } catch (error) {
-        toast.error('Erro ao salvar conteudo da aula')
+        toast.error('Erro ao salvar conteúdo da aula')
         throw error
       }
     },
@@ -177,7 +177,7 @@ export function LessonContentForm({
           <AlertDescription className="text-blue-800">
             {educationLevel === 'infantil' ? (
               <>
-                <strong>Educacao Infantil</strong> - Use os Campos de Experiencia
+                <strong>Educação Infantil</strong> - Use os Campos de Experiência
                 da BNCC
               </>
             ) : (
@@ -236,7 +236,7 @@ export function LessonContentForm({
                   <FormControl>
                     <Textarea
                       id="objetivo"
-                      placeholder="Ex: Desenvolver a compreensao das operacoes basicas de adicao e subtracao, relacionando-as com situacoes do cotidiano"
+                      placeholder="Ex: Desenvolver a compreensão das operações básicas de adição e subtração, relacionando-as com situações do cotidiano"
                       disabled={isFormDisabled}
                       {...field}
                       className="min-h-[100px] resize-y"
@@ -396,7 +396,7 @@ export function LessonContentForm({
               name="observacoes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="observacoes">Observacoes</FormLabel>
+                  <FormLabel htmlFor="observacoes">Observações</FormLabel>
                   <FormControl>
                     <Textarea
                       id="observacoes"
@@ -407,7 +407,7 @@ export function LessonContentForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Observacoes sobre a aula, dificuldades encontradas ou destaques
+                    Observações sobre a aula, dificuldades encontradas ou destaques
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

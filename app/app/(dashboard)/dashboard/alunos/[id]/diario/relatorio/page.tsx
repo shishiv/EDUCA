@@ -407,14 +407,14 @@ export default function RelatorioPage() {
         metadata: { alunoId, matriculaId: matricula.id, semestre: selectedSemester }
       })
 
-      toast.success('Relatorio finalizado com sucesso')
+      toast.success('Relatório finalizado com sucesso')
     } catch (err) {
       logger.error('Error finalizing report', err as Error, {
         feature: 'relatorios-descritivos',
         action: 'finalize_report_error',
         metadata: { alunoId }
       })
-      toast.error('Erro ao finalizar relatorio')
+      toast.error('Erro ao finalizar relatório')
     } finally {
       setIsSaving(false)
       setShowFinalizeDialog(false)
@@ -432,7 +432,7 @@ export default function RelatorioPage() {
 
   const handlePrint = useCallback(() => {
     // PDF export - out of scope for this plan
-    toast.info('Exportacao PDF sera implementada em breve')
+    toast.info('Exportação PDF será implementada em breve')
   }, [])
 
   // Compute initial values from existing report
@@ -481,7 +481,7 @@ export default function RelatorioPage() {
       <div className="p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
           <p className="font-medium">Erro ao carregar pagina</p>
-          <p className="text-sm mt-1">{error || 'Aluno nao encontrado'}</p>
+          <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
           <Button
             variant="outline"
             size="sm"
@@ -528,7 +528,7 @@ export default function RelatorioPage() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:max-w-md p-0">
                   <SheetHeader className="sr-only">
-                    <SheetTitle>Vivencias de Referencia</SheetTitle>
+                    <SheetTitle>Vivências de Referência</SheetTitle>
                   </SheetHeader>
                   <VivenciasReference
                     vivencias={vivencias}
@@ -611,7 +611,7 @@ export default function RelatorioPage() {
               {isReportFinalized && (
                 <Alert className="mb-4 border-green-200 bg-green-50">
                   <Lock className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-800">Relatorio Finalizado</AlertTitle>
+                  <AlertTitle className="text-green-800">Relatório Finalizado</AlertTitle>
                   <AlertDescription className="text-green-700">
                     Este relatorio foi finalizado e nao pode mais ser editado.
                   </AlertDescription>
@@ -650,9 +650,9 @@ export default function RelatorioPage() {
       <AlertDialog open={showFinalizeDialog} onOpenChange={setShowFinalizeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Finalizar Relatorio</AlertDialogTitle>
+            <AlertDialogTitle>Finalizar Relatório</AlertDialogTitle>
             <AlertDialogDescription>
-              Ao finalizar, o relatorio nao podera mais ser editado. Tem certeza que deseja continuar?
+              Ao finalizar, o relatório não poderá mais ser editado. Tem certeza que deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

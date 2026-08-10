@@ -67,7 +67,7 @@ export function generateContentReportPDF(
 
   // Header
   let currentY = addPDFHeader(doc, {
-    title: 'Relatorio de Conteudo Ministrado',
+    title: 'Relatório de Conteúdo Ministrado',
     subtitle: report.turma
       ? `${report.turma.serie} - ${report.turma.nome}`
       : 'Todas as Turmas',
@@ -92,12 +92,12 @@ export function generateContentReportPDF(
   // Summary metrics
   currentY = addPDFSummary(
     doc,
-    'Resumo do Periodo',
+    'Resumo do Período',
     [
       { label: 'Total de Aulas', value: report.resumo.totalAulas, color: [219, 234, 254] },
       { label: 'Habilidades BNCC', value: report.resumo.totalHabilidadesBncc, color: [237, 233, 254] },
-      { label: 'Habilidades Unicas', value: report.resumo.habilidadesUnicas, color: [220, 252, 231] },
-      { label: 'Media por Aula', value: report.resumo.mediaHabilidadesPorAula.toFixed(1), color: [254, 243, 199] },
+      { label: 'Habilidades Únicas', value: report.resumo.habilidadesUnicas, color: [220, 252, 231] },
+      { label: 'Média por Aula', value: report.resumo.mediaHabilidadesPorAula.toFixed(1), color: [254, 243, 199] },
     ],
     currentY,
     CONTENT_STYLES
@@ -159,8 +159,8 @@ export function generateContentReportPDF(
         rows: skillRows,
         title: 'Habilidades BNCC Trabalhadas',
         summary: report.habilidadesBncc.length > 15
-          ? `Exibindo 15 de ${report.habilidadesBncc.length} habilidades (ordenadas por frequencia)`
-          : `Total: ${report.habilidadesBncc.length} habilidades trabalhadas no periodo`,
+          ? `Exibindo 15 de ${report.habilidadesBncc.length} habilidades (ordenadas por frequência)`
+          : `Total: ${report.habilidadesBncc.length} habilidades trabalhadas no período`,
       },
       currentY,
       BNCC_STYLES
@@ -200,7 +200,7 @@ export function generateContentReportPDF(
         columns: lessonColumns,
         rows: lessonRows,
         title: 'Detalhamento das Aulas',
-        summary: `Total: ${report.aulas.length} aulas registradas no periodo`,
+        summary: `Total: ${report.aulas.length} aulas registradas no período`,
       },
       currentY,
       CONTENT_STYLES
@@ -212,8 +212,8 @@ export function generateContentReportPDF(
   addPDFText(
     doc,
     'Este documento foi gerado automaticamente pelo sistema EDUCA para fins de ' +
-    'registro oficial do conteudo ministrado, em conformidade com a Base Nacional ' +
-    'Comum Curricular (BNCC) e a legislacao educacional brasileira.',
+    'registro oficial do conteúdo ministrado, em conformidade com a Base Nacional ' +
+    'Comum Curricular (BNCC) e a legislação educacional brasileira.',
     currentY,
     { fontSize: 7, fontStyle: 'italic', color: [120, 120, 120] }
   );
@@ -245,7 +245,7 @@ export function generateBNNCSkillsReportPDF(
 
   // Header - convert periodo to period format expected by PDFHeader
   let currentY = addPDFHeader(doc, {
-    title: 'Relatorio de Habilidades BNCC',
+    title: 'Relatório de Habilidades BNCC',
     subtitle: metadata.turma
       ? `${metadata.turma.serie} - ${metadata.turma.nome}`
       : 'Todas as Turmas',
@@ -267,7 +267,7 @@ export function generateBNNCSkillsReportPDF(
     doc,
     'Resumo por Nivel',
     [
-      { label: 'Habilidades Unicas', value: skills.length, color: [219, 234, 254] },
+      { label: 'Habilidades Únicas', value: skills.length, color: [219, 234, 254] },
       { label: 'Ensino Fundamental', value: fundamentalSkills.length, color: [220, 252, 231] },
       { label: 'Ed. Infantil', value: infantilSkills.length, color: [254, 243, 199] },
       { label: 'Total Trabalhado', value: fundamentalTotal + infantilTotal, color: [237, 233, 254] },
@@ -280,8 +280,8 @@ export function generateBNNCSkillsReportPDF(
 
   // Full skills table
   const skillColumns: PDFTableColumn[] = [
-    { header: 'Codigo BNCC', dataKey: 'codigo', halign: 'center', width: 28 },
-    { header: 'Area/Campo de Experiencia', dataKey: 'descricao', halign: 'left' },
+    { header: 'Código BNCC', dataKey: 'codigo', halign: 'center', width: 28 },
+    { header: 'Área/Campo de Experiência', dataKey: 'descricao', halign: 'left' },
     { header: 'Vezes Trabalhado', dataKey: 'vezes', halign: 'center', width: 25 },
     { header: 'Nivel', dataKey: 'nivel', halign: 'center', width: 22 },
   ];
@@ -298,7 +298,7 @@ export function generateBNNCSkillsReportPDF(
     {
       columns: skillColumns,
       rows: skillRows,
-      title: 'Habilidades BNCC Trabalhadas (ordenadas por frequencia)',
+      title: 'Habilidades BNCC Trabalhadas (ordenadas por frequência)',
     },
     currentY,
     BNCC_STYLES
@@ -308,12 +308,12 @@ export function generateBNNCSkillsReportPDF(
   currentY += 10;
   addPDFText(
     doc,
-    'LEGENDA DE CODIGOS BNCC:\n' +
-    '- EF: Ensino Fundamental (ex: EF01MA06 = Fund. 1o ano, Matematica, habilidade 06)\n' +
-    '- EI: Educacao Infantil (ex: EI03EO01 = Infantil 3 anos, Campo EO, habilidade 01)\n\n' +
-    'Campos de Experiencia (Ed. Infantil): EO = O eu, o outro e o nos | CG = Corpo, gestos e movimentos | ' +
-    'TS = Tracos, sons, cores e formas | EF = Escuta, fala, pensamento e imaginacao | ' +
-    'ET = Espacos, tempos, quantidades',
+    'LEGENDA DE CÓDIGOS BNCC:\n' +
+    '- EF: Ensino Fundamental (ex: EF01MA06 = Fund. 1º ano, Matemática, habilidade 06)\n' +
+    '- EI: Educação Infantil (ex: EI03EO01 = Infantil 3 anos, Campo EO, habilidade 01)\n\n' +
+    'Campos de Experiência (Ed. Infantil): EO = O eu, o outro e o nós | CG = Corpo, gestos e movimentos | ' +
+    'TS = Traços, sons, cores e formas | EF = Escuta, fala, pensamento e imaginação | ' +
+    'ET = Espaços, tempos, quantidades',
     currentY,
     { fontSize: 7, fontStyle: 'italic', color: [100, 100, 100] }
   );

@@ -227,7 +227,7 @@ function getPeriodLabel(key: string, groupBy: 'week' | 'month' | 'bimestre'): st
     }
     case 'bimestre': {
       const [year, bim] = key.split('-B');
-      return `${bim}o Bimestre de ${year}`;
+      return `${bim}º Bimestre de ${year}`;
     }
   }
 }
