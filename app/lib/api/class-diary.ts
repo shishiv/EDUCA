@@ -230,13 +230,13 @@ export async function getClassDiary(
     const sessionIds = aulas.map((session) => session.id)
     const { data: frequencias } = await supabase
       .from('frequencia')
-      .select('sessao_id, presente')
+      .select('sessao_id, presente, status_presenca')
       .in('sessao_id', sessionIds)
 
     // Build frequency facts by canonical session ID.
     const frequenciaMap = new Map<string, { presentes: number; ausentes: number; total: number }>()
     frequencias?.forEach((freq) => {
-      if (!freq.sessao_id) return
+      if (!freq.sessao_id || freq.status_presenca === 'NAO_MARCADO') return
       if (!frequenciaMap.has(freq.sessao_id)) {
         frequenciaMap.set(freq.sessao_id, { presentes: 0, ausentes: 0, total: 0 })
       }
@@ -321,6 +321,7 @@ export async function getAttendanceHistory(
         id,
         sessao_id,
         data_aula,
+        status_presenca,
         matricula_id,
         presente,
         observacoes,
@@ -361,17 +362,19 @@ export async function getAttendanceHistory(
     }
 
     // Transform data
-    const transformedData: AttendanceHistoryRecord[] = (data || []).map((record) => ({
-      id: record.id,
-      aula_id: record.sessao_id || '',
-      data: record.data_aula,
-      aluno_id: record.matriculas?.alunos?.id || '',
-      aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
-      presente: record.presente,
-      observacoes: record.observacoes,
-      turma_nome: record.sessoes_aula?.turmas?.nome || 'N/A',
-      is_locked: true,
-    }))
+    const transformedData: AttendanceHistoryRecord[] = (data || [])
+      .filter(record => record.status_presenca !== 'NAO_MARCADO')
+      .map((record) => ({
+        id: record.id,
+        aula_id: record.sessao_id || '',
+        data: record.data_aula,
+        aluno_id: record.matriculas?.alunos?.id || '',
+        aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
+        presente: record.presente,
+        observacoes: record.observacoes,
+        turma_nome: record.sessoes_aula?.turmas?.nome || 'N/A',
+        is_locked: true,
+      }))
 
     return { data: transformedData, error: null }
   } catch (error) {
@@ -450,6 +453,7 @@ export async function getClassDetail(
         id,
         sessao_id,
         data_aula,
+        status_presenca,
         matricula_id,
         presente,
         observacoes,
@@ -469,8 +473,11 @@ export async function getClassDetail(
     }
 
     // Calculate attendance statistics
-    const totalAlunos = attendanceData?.length || 0
-    const totalPresentes = attendanceData?.filter(r => r.presente).length || 0
+    const markedAttendanceData = (attendanceData || []).filter(
+      record => record.status_presenca !== 'NAO_MARCADO'
+    )
+    const totalAlunos = markedAttendanceData.length
+    const totalPresentes = markedAttendanceData.filter(record => record.presente).length
     const totalAusentes = totalAlunos - totalPresentes
 
     const session = sessionData
@@ -480,7 +487,7 @@ export async function getClassDetail(
     const disciplina = session.disciplina
 
     // Transform attendance records
-    const attendanceRecords: AttendanceHistoryRecord[] = (attendanceData || []).map(
+    const attendanceRecords: AttendanceHistoryRecord[] = markedAttendanceData.map(
       (record) => ({
         id: record.id,
         aula_id: record.sessao_id || sessionId,
