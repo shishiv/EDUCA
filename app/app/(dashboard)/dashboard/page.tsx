@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
-import { StatCard, AlertItem } from '@/components/ui'
+import { StatCard } from '@/components/ui'
 import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
+import { AlertasCard } from '@/components/dashboard/alertas-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -45,13 +46,6 @@ interface Turma {
   alunosCount: number
 }
 
-interface DashboardAlert {
-  id: string
-  severity: 'warning' | 'error' | 'info' | 'success'
-  message: string
-  timestamp: string
-}
-
 export default function DashboardPage() {
   const { userProfile } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
@@ -66,7 +60,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState<RecentActivity[]>([])
   const [turmas, setTurmas] = useState<Turma[]>([])
-  const [alerts, setAlerts] = useState<DashboardAlert[]>([])
 
   useEffect(() => {
     loadDashboardData()
@@ -151,42 +144,6 @@ export default function DashboardPage() {
         alunosCount: Math.floor(Math.random() * 20) + 15 // Placeholder - would need join query
       }))
       setTurmas(turmasWithCount)
-
-      // Generate alerts based on stats
-      const dashboardAlerts: DashboardAlert[] = []
-      if (newStats.alunosComBaixaFrequencia > 0) {
-        dashboardAlerts.push({
-          id: 'alert-baixa-freq',
-          severity: newStats.alunosComBaixaFrequencia > 5 ? 'error' : 'warning',
-          message: `${newStats.alunosComBaixaFrequencia} aluno(s) com frequencia abaixo de 75%`,
-          timestamp: new Date().toISOString()
-        })
-      }
-      if (newStats.alunosComDocumentosPendentes > 0) {
-        dashboardAlerts.push({
-          id: 'alert-docs',
-          severity: 'warning',
-          message: `${newStats.alunosComDocumentosPendentes} alunos com documentacao pendente`,
-          timestamp: new Date().toISOString()
-        })
-      }
-      if (newStats.frequenciaMedia >= 85) {
-        dashboardAlerts.push({
-          id: 'alert-meta',
-          severity: 'success',
-          message: 'Meta de frequencia alcancada! Parabens!',
-          timestamp: new Date().toISOString()
-        })
-      }
-      if (dashboardAlerts.length === 0) {
-        dashboardAlerts.push({
-          id: 'alert-info',
-          severity: 'info',
-          message: 'Nenhum alerta pendente no momento.',
-          timestamp: new Date().toISOString()
-        })
-      }
-      setAlerts(dashboardAlerts)
 
     } catch (error) {
       logger.error('Erro ao carregar dados do dashboard:', error as any)
@@ -372,31 +329,7 @@ export default function DashboardPage() {
 
         {/* Right Column - Alerts + Quick Actions */}
         <div className="space-y-6">
-          {/* Alerts Panel */}
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-lg text-gray-800">
-                Alertas Recentes
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-500">
-                Notificacoes e alertas do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {alerts.map((alert) => (
-                  <AlertItem key={alert.id} severity={alert.severity}>
-                    <div className="flex justify-between items-start gap-2">
-                      <span>{alert.message}</span>
-                      <span className="text-xs opacity-70 whitespace-nowrap">
-                        {new Date(alert.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  </AlertItem>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <AlertasCard />
 
           {/* Quick Actions */}
           <Card className="bg-white border border-gray-200 shadow-sm">
