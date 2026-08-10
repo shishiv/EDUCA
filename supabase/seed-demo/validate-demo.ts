@@ -7,19 +7,21 @@
  *
  *  1. Contagens do contrato: 3 escolas, 5 turmas, 10 professores + 1 admin,
  *     50 alunos, 50 responsaveis, 50 vinculos, 50 matriculas, 300 notas,
- *     15 eventos de calendario, 11 configs, e a frequencia/aulas/conteudos
+ *     15 eventos de calendario, 12 configs, e a frequencia/aulas/conteudos
  *     gerados para a janela ancorada (20 dias letivos).
- *  2. Fonte de certificado: um emissor institucional, uma atividade, sessoes
+ *  2. Contrato descritivo: cada sessao fechada tem um conteudo completo,
+ *     distribuido nas cinco disciplinas e conferido por fingerprint fixo.
+ *  3. Fonte de certificado: um emissor institucional, uma atividade, sessoes
  *     fechadas, presenca P, carga derivada, fingerprint e hash verificavel.
- *  3. Relacionamentos: integridade referencial e consistencia escola -> turma
+ *  4. Relacionamentos: integridade referencial e consistencia escola -> turma
  *     -> matricula -> frequencia; cada aluno em exatamente uma turma da sua
  *     escola; frequencia sempre vinculada a uma aula da turma certa.
- *  4. Marcadores synthetic-only: configs.demo_synthetic_marker =
+ *  5. Marcadores synthetic-only: configs.demo_synthetic_marker =
  *     'SYNTHETIC-EDUCA-DEMO'; dominios de contato reservados; identidades
  *     fake.
- *  5. Caso de alerta: existe aluno com bolsa_familia=true e frequencia
+ *  6. Caso de alerta: existe aluno com bolsa_familia=true e frequencia
  *     < 80% (matricula 401, receita issue #23 e app BOLSA_FAMILIA_THRESHOLD).
- *  6. Determinismo/repetibilidade: as contagens e a presenca por aluno
+ *  7. Determinismo/repetibilidade: as contagens e a presenca por aluno
  *     conferem exatamente com o que attendance-generator.ts produz para a
  *     data de ancoragem registrada (demo_seed_anchor_date), e um fingerprint
  *     md5 por tabela e impresso - dois resets com a mesma ancora produzem
@@ -86,6 +88,20 @@ const STATIC_COUNTS: Record<string, number> = {
 
 const EXPECTED_SYNTHETIC_MARKER = 'SYNTHETIC-EDUCA-DEMO'
 const ALERT_THRESHOLD = CONFORMIDADE
+
+// Receipt for the five canonical disciplines used by the generated sessions.
+// Each discipline owns one seeded turma and therefore one content row per day.
+const EXPECTED_CONTENT_DISCIPLINES = [
+  '00000000-0000-0000-0000-000000000600',
+  '00000000-0000-0000-0000-000000000601',
+  '00000000-0000-0000-0000-000000000602',
+  '00000000-0000-0000-0000-000000000608',
+  '00000000-0000-0000-0000-000000000612',
+] as const
+
+// Fixed-content receipt excludes the moving lesson date and created_at fields.
+// It catches template drift while the full table fingerprint remains anchor-specific.
+const EXPECTED_CONTENT_FINGERPRINT = '888045b03e3eae986b28d6ffc3eb630c'
 
 interface CheckResult {
   name: string
@@ -173,6 +189,81 @@ async function run(): Promise<void> {
     record('count_sessoes_aula', Number(counts.sessoes_aula) === expectedAulas, `${counts.sessoes_aula} == ${expectedAulas} (${TURMAS.length} turmas x ${schoolDays.length} dias)`)
     record('count_conteudo_aula', Number(counts.conteudo_aula) === expectedAulas, `${counts.conteudo_aula} == ${expectedAulas} (uma fonte canonica por sessao)`)
     record('count_frequencia', Number(counts.frequencia) === expectedFrequencia, `${counts.frequencia} == ${expectedFrequencia} (${MATRICULAS.length} matriculas x ${schoolDays.length} dias)`)
+
+    const contentContract = await client.query(`
+      SELECT
+        count(*)::bigint AS total,
+        count(*) FILTER (
+          WHERE trim(c.tema) <> ''
+            AND trim(c.objetivo) <> ''
+            AND cardinality(c.habilidades_bncc) > 0
+            AND coalesce(trim(c.metodologia), '') <> ''
+            AND coalesce(trim(c.recursos), '') <> ''
+            AND c.created_by IS NOT NULL
+        )::bigint AS complete,
+        count(*) FILTER (
+          WHERE s.status = 'FECHADA'
+            AND s.fechada_em IS NOT NULL
+            AND s.travada_em IS NOT NULL
+        )::bigint AS closed
+      FROM conteudo_aula c
+      JOIN sessoes_aula s ON s.id = c.sessao_id
+    `)
+    const contentContractRow = contentContract.rows[0] as { total: string; complete: string; closed: string }
+    record(
+      'content_descriptive_contract',
+      Number(contentContractRow.total) === expectedAulas
+        && Number(contentContractRow.complete) === expectedAulas
+        && Number(contentContractRow.closed) === expectedAulas,
+      `${contentContractRow.complete}/${contentContractRow.total} conteudos completos em sessoes fechadas (${contentContractRow.closed})`
+    )
+
+    const contentByDiscipline = await client.query(`
+      SELECT s.disciplina_id, count(*)::bigint AS content_count
+      FROM conteudo_aula c
+      JOIN sessoes_aula s ON s.id = c.sessao_id
+      GROUP BY s.disciplina_id
+      ORDER BY s.disciplina_id
+    `)
+    const disciplineCounts = new Map(
+      (contentByDiscipline.rows as Array<{ disciplina_id: string; content_count: string }>).map(row => [
+        row.disciplina_id,
+        Number(row.content_count),
+      ])
+    )
+    const contentPerDisciplineOk = EXPECTED_CONTENT_DISCIPLINES.every(
+      disciplineId => disciplineCounts.get(disciplineId) === schoolDays.length
+    ) && disciplineCounts.size === EXPECTED_CONTENT_DISCIPLINES.length
+    record(
+      'content_por_disciplina',
+      contentPerDisciplineOk,
+      EXPECTED_CONTENT_DISCIPLINES.map(disciplineId => `${disciplineId.slice(-3)}=${disciplineCounts.get(disciplineId) ?? 0}`).join(', ')
+    )
+
+    const contentFingerprintResult = await client.query(`
+      SELECT md5(string_agg(row_hash, '|' ORDER BY row_hash)) AS fingerprint
+      FROM (
+        SELECT md5(concat_ws('|',
+          c.id::text,
+          c.sessao_id::text,
+          s.disciplina_id::text,
+          c.tema,
+          c.objetivo,
+          array_to_string(c.habilidades_bncc, ','),
+          coalesce(c.metodologia, ''),
+          coalesce(c.recursos, ''),
+          coalesce(c.created_by::text, '')
+        )) AS row_hash
+        FROM conteudo_aula c
+        JOIN sessoes_aula s ON s.id = c.sessao_id
+      ) content_rows
+    `)
+    const contentFingerprint = contentFingerprintResult.rows[0]?.fingerprint as string | null
+    record(
+      'fingerprint_conteudo_contrato',
+      contentFingerprint === EXPECTED_CONTENT_FINGERPRINT,
+      `${contentFingerprint ?? '(vazio)'} == ${EXPECTED_CONTENT_FINGERPRINT}`
+    )
 
     const certificateSessionCount = await client.query(`
       SELECT
