@@ -136,7 +136,7 @@ function isDiarySessionLocked(status: string, travadaEm: string | null): boolean
 export async function getClassDiary(
   supabase: SupabaseClient<Database>,
   filters: ClassDiaryFilters = {}
-): Promise<{ data: ClassDiaryEntry[] | null; error: any }> {
+): Promise<{ data: ClassDiaryEntry[] | null; error: unknown }> {
   try {
     // Sessions and session-scoped attendance are the canonical diary source.
     let query = supabase
@@ -312,7 +312,7 @@ export async function getAttendanceHistory(
   turma_id: string,
   date_from?: string,
   date_to?: string
-): Promise<{ data: AttendanceHistoryRecord[] | null; error: any }> {
+): Promise<{ data: AttendanceHistoryRecord[] | null; error: unknown }> {
   try {
 
     let query = supabase
@@ -398,7 +398,7 @@ export async function getAttendanceHistory(
 export async function getClassDetail(
   supabase: SupabaseClient<Database>,
   sessionId: string
-): Promise<{ data: DetailedSession | null; error: any }> {
+): Promise<{ data: DetailedSession | null; error: unknown }> {
   try {
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessoes_aula')
@@ -551,7 +551,7 @@ export async function getAvailableTurmas(
   supabase: SupabaseClient<Database>,
   professor_id?: string,
   escola_id?: string
-): Promise<{ data: Array<{ id: string; nome: string; serie: string; ano_letivo: number }> | null; error: any }> {
+): Promise<{ data: Array<{ id: string; nome: string; serie: string; ano_letivo: number }> | null; error: unknown }> {
   try {
 
     let query = supabase
@@ -622,7 +622,7 @@ export async function updateSession(
   supabase: SupabaseClient<Database>,
   sessionId: string,
   updates: UpdateSessionInput
-): Promise<{ data: { id: string } | null; error: any }> {
+): Promise<{ data: { id: string } | null; error: unknown }> {
   try {
     const { data, error } = await supabase
       .from('sessoes_aula')
@@ -674,7 +674,7 @@ interface ConteudoAulaCleanupClient {
 export async function deleteSession(
   supabase: SupabaseClient<Database>,
   sessionId: string
-): Promise<{ success: boolean; error: any }> {
+): Promise<{ success: boolean; error: unknown }> {
   try {
     // First try to delete associated conteudo_aula (if table exists)
     try {

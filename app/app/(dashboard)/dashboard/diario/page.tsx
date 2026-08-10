@@ -88,7 +88,10 @@ export default function DiarioPage() {
       })
 
       if (fetchError || !data) {
-        logger.error('Error fetching class diary:', fetchError || 'No data')
+        logger.error(
+          'Error fetching class diary:',
+          fetchError instanceof Error ? fetchError : 'No data'
+        )
         setError('Erro ao carregar o diário de classe. Tente novamente.')
         setLoading(false)
         return
