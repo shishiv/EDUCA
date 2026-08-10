@@ -93,7 +93,7 @@ test.describe('Permissions - Professor', () => {
 
   for (const entry of [
     { label: 'classes', route: '/dashboard/turmas' },
-    { label: 'diary', route: '/dashboard/diario' },
+    { label: 'diary', route: '/diario' },
     { label: 'attendance', route: '/dashboard/turmas' },
     { label: 'grades', route: '/dashboard/notas' },
   ]) {

@@ -9,15 +9,17 @@
  *     50 alunos, 50 responsaveis, 50 vinculos, 50 matriculas, 300 notas,
  *     15 eventos de calendario, 11 configs, e a frequencia/aulas/conteudos
  *     gerados para a janela ancorada (20 dias letivos).
- *  2. Relacionamentos: integridade referencial e consistencia escola -> turma
+ *  2. Fonte de certificado: um emissor institucional, uma atividade, sessoes
+ *     fechadas, presenca P, carga derivada, fingerprint e hash verificavel.
+ *  3. Relacionamentos: integridade referencial e consistencia escola -> turma
  *     -> matricula -> frequencia; cada aluno em exatamente uma turma da sua
  *     escola; frequencia sempre vinculada a uma aula da turma certa.
- *  3. Marcadores synthetic-only: configs.demo_synthetic_marker =
+ *  4. Marcadores synthetic-only: configs.demo_synthetic_marker =
  *     'SYNTHETIC-EDUCA-DEMO'; dominios de contato reservados; identidades
  *     fake.
- *  4. Caso de alerta: existe aluno com bolsa_familia=true e frequencia
+ *  5. Caso de alerta: existe aluno com bolsa_familia=true e frequencia
  *     < 80% (matricula 401, receita issue #23 e app BOLSA_FAMILIA_THRESHOLD).
- *  5. Determinismo/repetibilidade: as contagens e a presenca por aluno
+ *  6. Determinismo/repetibilidade: as contagens e a presenca por aluno
  *     conferem exatamente com o que attendance-generator.ts produz para a
  *     data de ancoragem registrada (demo_seed_anchor_date), e um fingerprint
  *     md5 por tabela e impresso - dois resets com a mesma ancora produzem
@@ -52,6 +54,12 @@ import {
   isPresentOn,
   LOW_ATTENDANCE_MATRICULA_ID,
 } from './attendance-generator'
+import {
+  DEMO_CERTIFICATE_ACTIVITY_ID,
+  DEMO_CERTIFICATE_EMITTER_ID,
+  DEMO_CERTIFICATE_ISSUANCE_ID,
+  DEMO_CERTIFICATE_MATRICULA_ID,
+} from './certificate-generator'
 
 const DB_URL = process.env.SUPABASE_DEMO_DB_URL || ''
 const API_URL = process.env.SUPABASE_DEMO_URL || ''
@@ -70,6 +78,9 @@ const STATIC_COUNTS: Record<string, number> = {
   notas: 300,
   calendario_escolar: 15,
   configs: 12, // 8 configs + 3 marcadores (960/961/962) + demo_seed_anchor_date (963) gravado pelo reset
+  certificado_emissores: 1,
+  certificado_atividades: 1,
+  certificados_emitidos: 1,
 }
 
 const EXPECTED_SYNTHETIC_MARKER = 'SYNTHETIC-EDUCA-DEMO'
@@ -147,7 +158,11 @@ async function run(): Promise<void> {
         (SELECT count(*) FROM configs) AS configs,
         (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
         (SELECT count(*) FROM conteudo_aula) AS conteudo_aula,
-        (SELECT count(*) FROM frequencia) AS frequencia
+        (SELECT count(*) FROM frequencia) AS frequencia,
+        (SELECT count(*) FROM certificado_emissores) AS certificado_emissores,
+        (SELECT count(*) FROM certificado_atividades) AS certificado_atividades,
+        (SELECT count(*) FROM certificado_atividade_sessoes) AS certificado_atividade_sessoes,
+        (SELECT count(*) FROM certificados_emitidos) AS certificados_emitidos
     `
     const counts = (await client.query(countQuery)).rows[0] as Record<string, number>
     for (const [table, expected] of Object.entries(STATIC_COUNTS)) {
@@ -157,6 +172,19 @@ async function run(): Promise<void> {
     record('count_sessoes_aula', Number(counts.sessoes_aula) === expectedAulas, `${counts.sessoes_aula} == ${expectedAulas} (${TURMAS.length} turmas x ${schoolDays.length} dias)`)
     record('count_conteudo_aula', Number(counts.conteudo_aula) === expectedAulas, `${counts.conteudo_aula} == ${expectedAulas} (uma fonte canonica por sessao)`)
     record('count_frequencia', Number(counts.frequencia) === expectedFrequencia, `${counts.frequencia} == ${expectedFrequencia} (${MATRICULAS.length} matriculas x ${schoolDays.length} dias)`)
+
+    const certificateSessionCount = await client.query(`
+      SELECT
+        (SELECT count(*) FROM certificado_atividade_sessoes) AS activity_sessions,
+        (SELECT count(*) FROM frequencia
+         WHERE matricula_id = $1 AND status_presenca = 'P') AS qualifying_attendance
+    `, [DEMO_CERTIFICATE_MATRICULA_ID])
+    const certificateSessions = certificateSessionCount.rows[0] as { activity_sessions: string; qualifying_attendance: string }
+    record(
+      'count_certificado_atividade_sessoes',
+      Number(certificateSessions.activity_sessions) === Number(certificateSessions.qualifying_attendance),
+      `${certificateSessions.activity_sessions} sessoes certificadas == ${certificateSessions.qualifying_attendance} presencas P da matricula demo`
+    )
 
     // ---------------------------------------------------------------------
     // 2. Relacionamentos
@@ -230,6 +258,58 @@ async function run(): Promise<void> {
     `)
     record('rel_aluno_responsavel', Number(vinculoOrphan.rows[0].n) === 0, `${vinculoOrphan.rows[0].n} vinculos orfaos`)
 
+    const certificateSource = await client.query(`
+      SELECT
+        (SELECT count(*)
+         FROM certificados_emitidos c
+         WHERE c.id = $1
+           AND c.atividade_id = $2
+           AND c.emissor_id = $3
+           AND c.matricula_id = $4) AS demo_identity,
+        (SELECT count(*)
+         FROM certificados_emitidos c
+         WHERE NOT public.certificado_verificar_fonte(c.id)) AS unverifiable,
+        (SELECT count(*)
+         FROM certificados_emitidos c
+         JOIN certificado_atividades a ON a.id = c.atividade_id
+         JOIN certificado_emissores e ON e.id = c.emissor_id
+         JOIN matriculas m ON m.id = c.matricula_id
+         JOIN turmas t ON t.id = a.turma_id
+         CROSS JOIN LATERAL (
+           SELECT
+             count(*)::bigint AS session_count,
+             coalesce(sum(s.duracao_minutos), 0)::bigint AS workload_minutes,
+             count(f.id) FILTER (WHERE f.status_presenca = 'P')::bigint AS attendance_count
+           FROM certificado_atividade_sessoes cas
+           JOIN sessoes_aula s ON s.id = cas.sessao_id
+           LEFT JOIN frequencia f ON f.sessao_id = s.id AND f.matricula_id = c.matricula_id
+           WHERE cas.atividade_id = c.atividade_id
+         ) source
+         WHERE c.aluno_id <> m.aluno_id
+            OR c.turma_id <> m.turma_id
+            OR c.ano_letivo <> m.ano_letivo
+            OR a.turma_id <> m.turma_id
+            OR e.escola_id <> t.escola_id
+            OR c.carga_horaria_comprovada_minutos <> source.workload_minutes
+            OR c.sessoes_comprovadas <> source.session_count
+            OR c.frequencias_comprovadas <> source.attendance_count) AS source_faults,
+        (SELECT count(*)
+         FROM certificados_emitidos c
+         WHERE c.hash_verificacao_sha256 IS DISTINCT FROM encode(
+           extensions.digest(c.codigo_verificacao || '|' || c.fonte_fingerprint_sha256, 'sha256'),
+           'hex'
+         )) AS hash_faults
+    `, [
+      DEMO_CERTIFICATE_ISSUANCE_ID,
+      DEMO_CERTIFICATE_ACTIVITY_ID,
+      DEMO_CERTIFICATE_EMITTER_ID,
+      DEMO_CERTIFICATE_MATRICULA_ID,
+    ])
+    const certificate = certificateSource.rows[0] as Record<string, string>
+    record('rel_certificado_demo_identity', Number(certificate.demo_identity) === 1, `${certificate.demo_identity} emissao demo com ids sinteticos esperados`)
+    record('rel_certificado_fonte_completa', Number(certificate.source_faults) === 0, `${certificate.source_faults} receipts de certificado divergentes da fonte canonica`)
+    record('rel_certificado_verificavel', Number(certificate.unverifiable) === 0 && Number(certificate.hash_faults) === 0, `${certificate.unverifiable} fontes ou ${certificate.hash_faults} hashes de certificado invalidos`)
+
     // ---------------------------------------------------------------------
     // 3. Marcadores synthetic-only
     // ---------------------------------------------------------------------
@@ -293,7 +373,19 @@ async function run(): Promise<void> {
     // Fingerprints (order-independent md5 over the business columns). Two
     // resets with the same anchor produce identical fingerprints. Auth creates
     // a new external id for the demo user, so that non-business id is excluded.
-    const fingerprintTables = ['escolas', 'users', 'turmas', 'matriculas', 'sessoes_aula', 'conteudo_aula', 'frequencia']
+    const fingerprintTables = [
+      'escolas',
+      'users',
+      'turmas',
+      'matriculas',
+      'sessoes_aula',
+      'conteudo_aula',
+      'frequencia',
+      'certificado_emissores',
+      'certificado_atividades',
+      'certificado_atividade_sessoes',
+      'certificados_emitidos',
+    ]
     const fingerprints: Record<string, string> = {}
     for (const table of fingerprintTables) {
       const fingerprintValue = table === 'users' ? "(to_jsonb(t) - 'id')::text" : 't::text'
@@ -330,6 +422,7 @@ async function run(): Promise<void> {
     console.log('='.repeat(64))
     console.log(`  Anchor date:  ${anchorDate} (${schoolDays.length} dias letivos)`)
     console.log(`  Frequencia:   ${counts.frequencia} registros | Sessoes: ${counts.sessoes_aula}`)
+    console.log(`  Certificados: ${counts.certificados_emitidos} emissao com fonte verificavel`)
     console.log('')
     for (const c of checks) {
       console.log(`  [${c.ok ? 'PASS' : 'FAIL'}] ${c.name}: ${c.detail}`)

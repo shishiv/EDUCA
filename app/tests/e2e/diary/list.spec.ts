@@ -5,7 +5,8 @@ import { waitForPageLoad } from '../utils/test-helpers'
  * E2E Tests: Diário de Classe - List View
  * Tests for listing, filtering, and viewing class diary entries
  * 
- * @see app/(dashboard)/dashboard/diario/page.tsx
+ * @see components/diary/CanonicalDiaryPage.tsx
+ * @see app/(dashboard)/dashboard/diario/page.tsx for the compatibility redirect
  */
 
 test.describe('Diário - Page Access', () => {

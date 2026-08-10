@@ -71,8 +71,8 @@ implemented. Tests assert the denial boundary until a parent portal is defined.
 | `/dashboard/responsaveis/[id]` | admin, diretor, secretario | desktop | contact edit, linked students, unlink confirmation | `responsaveis/crud.spec.ts` | covered |
 | `/dashboard/atribuicoes` | admin, diretor | desktop + mobile | school/class/teacher filters, single titular assignment action | `assignments/teacher.spec.ts` | covered |
 | `/dashboard/calendario` | admin, secretario | desktop + mobile | month navigation, add/edit event, day selection | `config/settings.spec.ts` | covered |
-| `/dashboard/diario` | admin, diretor, secretario, professor | desktop + mobile | class filters, student diary navigation, role-scoped results | `diary/list.spec.ts` | covered |
-| `/diario` | admin, diretor, secretario, professor | desktop + mobile | class/date selection, session cards and navigation | `diary/list.spec.ts` | covered |
+| `/diario` | admin, diretor, secretario, professor | desktop + mobile | class filters, student diary navigation, role-scoped results | `diary/list.spec.ts` | covered |
+| `/dashboard/diario` | authenticated diary roles | desktop + mobile | compatibility redirect to `/diario` | `diary/canonical-route.spec.ts` | covered |
 | `/diario/frequencia` | authenticated users | desktop + mobile | deprecated redirect to `/dashboard/turmas` | no new writes | compatibility redirect |
 | `/diario/relatorios/[alunoId]` | admin, diretor, secretario, professor | desktop | range, attendance summary, export | `reports/frequency.spec.ts` | covered |
 | `/dashboard/notas` | admin, diretor, secretario, professor | desktop + mobile | class/period/subject filters, grade entry, validation, calculated averages, save | `grades/entry.spec.ts`, `flows/notas-boletim.spec.ts` | covered |
@@ -95,7 +95,7 @@ defects, not test exclusions:
 |---|---|---|
 | `/dashboard/frequencia` | dashboard quick action and mobile drawer | corrected to `/dashboard/turmas` |
 | `/relatorios` | mobile bottom navigation | corrected to `/dashboard/relatorios` |
-| `/dashboard/turmas/[id]/diario` | class-list action | corrected to `/dashboard/diario?turma=[id]` |
+| `/dashboard/turmas/[id]/diario` | class-list action | corrected to `/diario?turma=[id]` |
 | `/dashboard/frequencia?sessao=[id]` | session page action | corrected to `/dashboard/turmas/[id]/chamada?sessao=[id]` |
 | `/reset-password` | login link | page implemented and covered |
 | `/offline` | service worker fallback | page implemented and covered |

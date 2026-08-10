@@ -13,7 +13,9 @@
  *          ancorado (deterministico);
  *       c. sessoes_aula + frequencia geradas por attendance-generator.ts para uma
  *          janela de 20 dias letivos terminando na data do reset;
- *       d. configs de marcador (demo_synthetic_marker, demo_seed_anchor_date).
+ *       d. fonte sintetica de certificado, derivada de matricula, sessoes e
+ *          frequencia canonicas por certificate-generator.ts;
+ *       e. configs de marcador (demo_synthetic_marker, demo_seed_anchor_date).
  *  2. Cria/recria o usuario de auth demo@educa.app.br via Admin API e
  *     sincroniza users.id com o id gerado pelo Supabase Auth (o vinculo
  *     auth -> perfil e feito por id em getServerUser).
@@ -45,6 +47,7 @@ import { createRequire } from 'node:module'
 import type { Client as PgClient } from 'pg'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { attendanceSql, STATIC_CREATED_AT } from './attendance-generator'
+import { certificateSql } from './certificate-generator'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -72,6 +75,10 @@ const SUPABASE_DB_URL = process.env.SUPABASE_DEMO_DB_URL || ''
 
 /** Tables owned by the demo reset, cleared every run (TRUNCATE ... CASCADE). */
 const DEMO_TABLES = [
+  'certificados_emitidos',
+  'certificado_atividade_sessoes',
+  'certificado_atividades',
+  'certificado_emissores',
   'frequencia',
   'conteudo_aula',
   'aulas_abertas',
@@ -168,6 +175,7 @@ function safeSeedErrorCode(error: unknown): string {
 function resetSql(anchorDate: string): string {
   const staticSql = readFileSync(join(__dirname, 'seed-demo.sql'), 'utf-8')
   const attendance = attendanceSql({ anchorDate })
+  const certificate = certificateSql({ anchorDate })
 
   const storageTruncate = `
 DO $$
@@ -183,6 +191,7 @@ END $$;`
     storageTruncate,
     staticSql,
     attendance,
+    certificate,
     // Marker configs - written after the static seed so the anchor is the
     // actual date used (provenance receipt read by validate-demo.ts).
     `INSERT INTO configs (id,chave,valor,categoria,descricao,tipo_valor,valor_padrao,ativo,created_at) VALUES`,
@@ -311,12 +320,16 @@ async function main(): Promise<void> {
         (SELECT count(*) FROM sessoes_aula) AS sessoes_aula,
         (SELECT count(*) FROM conteudo_aula) AS conteudo_aula,
         (SELECT count(*) FROM frequencia) AS frequencia,
+        (SELECT count(*) FROM certificado_emissores) AS certificado_emissores,
+        (SELECT count(*) FROM certificado_atividades) AS certificado_atividades,
+        (SELECT count(*) FROM certificado_atividade_sessoes) AS certificado_atividade_sessoes,
+        (SELECT count(*) FROM certificados_emitidos) AS certificados_emitidos,
         (SELECT count(*) FROM notas) AS notas,
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,
         (SELECT count(*) FROM configs) AS configs
     `)
     console.log('   contagens agregadas: ' + JSON.stringify(counts.rows[0], null, 0))
-    console.log('   OK  contagens conferem com o contrato do seed (inclui conteudo canonico)')
+    console.log('   OK  contagens conferem com o contrato do seed (inclui fonte canonica de certificado)')
 
     console.log('4/4  Concluido.')
     console.log('  Usuario demo sincronizado; credenciais omitidas dos logs.')

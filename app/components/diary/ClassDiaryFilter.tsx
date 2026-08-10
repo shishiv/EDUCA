@@ -62,7 +62,10 @@ export function ClassDiaryFilter({
       const { data, error } = await getAvailableTurmas(supabase, profesor_id, escola_id)
 
       if (error) {
-        logger.error('Error fetching turmas:', error)
+        logger.error(
+          'Error fetching turmas:',
+          error instanceof Error ? error : 'Erro desconhecido ao carregar turmas'
+        )
         setLoadingTurmas(false)
         return
       }
