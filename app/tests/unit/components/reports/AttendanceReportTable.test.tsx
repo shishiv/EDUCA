@@ -177,29 +177,29 @@ describe('AttendanceReportTable', () => {
   })
 
   describe('Status Badges', () => {
-    it('should show OK badge for good attendance', () => {
+    it('should show Conforme badge for good attendance', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText('OK')).toBeInTheDocument()
+      expect(screen.getByText('Conforme')).toBeInTheDocument()
     })
 
-    it('should show Alerta badge for at-risk students', () => {
+    it('should show Não conforme badge for students below compliance', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText('Alerta')).toBeInTheDocument()
+      expect(screen.getAllByText('Não conforme').length).toBeGreaterThan(0)
     })
 
-    it('should show Critico badge for critical students', () => {
+    it('should show the non-compliance policy badge for critical students', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText(/critico|crítico/i)).toBeInTheDocument()
+      expect(screen.getByText(/não conformidade|não conforme/i)).toBeInTheDocument()
     })
 
     it('should use custom risk threshold', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={95} />)
       
       // With 95% threshold, Ana (90%) should be at risk
-      const badges = screen.getAllByText(/alerta|critico|crítico/i)
+      const badges = screen.getAllByText(/atenção preventiva|não conforme/i)
       expect(badges.length).toBeGreaterThanOrEqual(2)
     })
   })
@@ -213,7 +213,18 @@ describe('AttendanceReportTable', () => {
     })
 
     it('should highlight at-risk rows with yellow background', () => {
-      const { container } = render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
+      const attentionData: AttendanceTableRow[] = [
+        ...mockData,
+        {
+          ...mockData[0],
+          matriculaId: '4',
+          alunoId: 'a4',
+          nome: 'Diana Souza',
+          percentual: 82,
+          emRisco: false,
+        },
+      ]
+      const { container } = render(<AttendanceReportTable data={attentionData} riskThreshold={80} />)
       
       const yellowRows = container.querySelectorAll('[class*="bg-yellow"]')
       expect(yellowRows.length).toBeGreaterThan(0)
@@ -239,19 +250,19 @@ describe('AttendanceReportTable', () => {
     it('should display healthy students count', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText(/frequência.*ok|frequencia.*ok/i)).toBeInTheDocument()
+      expect(screen.getByText(/conformidade bolsa família/i)).toBeInTheDocument()
     })
 
     it('should display at-risk students count', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText(/em.*alerta/i)).toBeInTheDocument()
+      expect(screen.getByText(/atenção preventiva/i)).toBeInTheDocument()
     })
 
     it('should display critical students count', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText(/critico|crítico/i)).toBeInTheDocument()
+      expect(screen.getByText(/não conformidade|não conforme/i)).toBeInTheDocument()
     })
 
     it('should calculate average attendance correctly', () => {
@@ -405,9 +416,9 @@ describe('AttendanceReportTable', () => {
     it('should display legend with thresholds', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      expect(screen.getByText(/frequência.*ok|frequencia.*ok/i)).toBeInTheDocument()
-      expect(screen.getByText(/em.*alerta/i)).toBeInTheDocument()
-      expect(screen.getByText(/critico|crítico/i)).toBeInTheDocument()
+      expect(screen.getByText(/conformidade bolsa família/i)).toBeInTheDocument()
+      expect(screen.getByText(/atenção preventiva/i)).toBeInTheDocument()
+      expect(screen.getByText(/não conformidade/i)).toBeInTheDocument()
     })
 
     it('should show colored boxes in legend', () => {
@@ -420,9 +431,9 @@ describe('AttendanceReportTable', () => {
     it('should display threshold percentages', () => {
       render(<AttendanceReportTable data={mockData} riskThreshold={80} />)
       
-      // Legend should show: >= 80%, 75-80%, < 75%
+      // Legend should show: >= 80%, 80% to < 85%, < 80%
       expect(screen.getByText(/80%/)).toBeInTheDocument()
-      expect(screen.getByText(/75%/)).toBeInTheDocument()
+      expect(screen.getByText(/85%/)).toBeInTheDocument()
     })
   })
 

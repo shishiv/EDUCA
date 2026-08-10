@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
+import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import type { LessonContent } from '@/types/lesson-content'
 
 // ============================================================================
@@ -96,8 +97,9 @@ export function LessonDetailPanel({
 
   // Get attendance rate color
   const getAttendanceColor = (rate: number) => {
-    if (rate >= 80) return 'bg-green-100 text-green-700'
-    if (rate >= 75) return 'bg-yellow-100 text-yellow-700'
+    const status = getFrequencyPolicyStatus(rate)
+    if (status === 'CONFORME') return 'bg-green-100 text-green-700'
+    if (status === 'ATENCAO') return 'bg-yellow-100 text-yellow-700'
     return 'bg-red-100 text-red-700'
   }
 
@@ -156,6 +158,8 @@ export function LessonDetailPanel({
   }
 
   if (!lesson) return null
+
+  const attendanceStatus = getFrequencyPolicyStatus(attendanceRate)
 
   // Format date
   const lessonDate = new Date(lesson.data_aula + 'T12:00:00')
@@ -318,10 +322,13 @@ export function LessonDetailPanel({
               <span className="text-lg sm:text-xl font-bold">{attendanceRate}%</span>
             </div>
 
-            {attendanceRate < 75 && (
-              <div className="flex items-start gap-2 text-xs sm:text-sm text-red-600 bg-red-50 rounded-lg p-2 sm:p-3">
+            {attendanceStatus !== 'CONFORME' && (
+              <div className={cn(
+                'flex items-start gap-2 text-xs sm:text-sm rounded-lg p-2 sm:p-3',
+                attendanceStatus === 'CRITICO' ? 'text-red-600 bg-red-50' : 'text-yellow-700 bg-yellow-50'
+              )}>
                 <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
-                <span>Atenção: Frequência abaixo do mínimo legal de 75%</span>
+                <span>{attendanceStatus === 'CRITICO' ? `Não conformidade Bolsa Família: frequência abaixo de ${CONFORMIDADE}%.` : `Atenção preventiva: frequência abaixo de ${ATENCAO}%; a condicionalidade é atendida a partir de ${CONFORMIDADE}%.`}</span>
               </div>
             )}
           </div>

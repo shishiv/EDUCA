@@ -47,6 +47,7 @@ import {
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { municipalConfig } from "@/lib/config"
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
   type Bimester,
   formatGrade,
@@ -136,7 +137,7 @@ const PASSING_GRADE = 6.0
 /**
  * Minimum attendance percentage
  */
-const MINIMUM_ATTENDANCE = 75
+const MINIMUM_ATTENDANCE = CONFORMIDADE
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -468,7 +469,7 @@ function AttendanceSummaryCard({
         {!isAttendanceOk && (
           <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-sm text-red-700">
             <AlertTriangle className="h-4 w-4" />
-            Atencao: Frequencia abaixo do minimo exigido (75%)
+            Não conformidade Bolsa Família: frequência abaixo de {CONFORMIDADE}%
           </div>
         )}
       </CardContent>

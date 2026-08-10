@@ -33,6 +33,7 @@ import {
 import { isInfantilAge } from '@/lib/utils/faixa-etaria'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
 
 interface AlunoDetalhado {
   id: string
@@ -152,23 +153,18 @@ export default function AlunoDetalhesPage() {
           const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
             .toISOString().split('T')[0]
 
-          const { data: attendanceData } = await supabase
-            .from('frequencia')
-            .select('presente, status_presenca')
-            .eq('matricula_id', activeMatricula.id)
-            .gte('data_aula', monthStart)
-            .lte('data_aula', monthEnd)
+          const attendanceSummary = (await loadCanonicalAttendanceSummaries(
+            supabase,
+            [activeMatricula.id],
+            { startDate: monthStart, endDate: monthEnd }
+          )).get(activeMatricula.id)
 
-          if (attendanceData && attendanceData.length > 0) {
-            const total = attendanceData.length
-            const presentes = attendanceData.filter(r =>
-              r.presente || r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
-            ).length
-            const faltas = attendanceData.filter(r => r.status_presenca === 'falta').length
-            const justificadas = attendanceData.filter(r =>
-              r.status_presenca === 'justificada' || r.status_presenca === 'atestado'
-            ).length
-            const percentual = Math.round((presentes / total) * 100)
+          if (attendanceSummary && attendanceSummary.total > 0) {
+            const total = attendanceSummary.total
+            const presentes = attendanceSummary.presencas + attendanceSummary.atestados
+            const faltas = attendanceSummary.faltas
+            const justificadas = attendanceSummary.atestados
+            const percentual = attendanceSummary.percentual
 
             frequencia = {
               percentual,

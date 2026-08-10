@@ -67,6 +67,8 @@ import { logger } from '@/lib/logger'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { cn } from '@/lib/utils'
 import { deleteSession, updateSession } from '@/lib/api/class-diary'
+import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 // ============================================================================
 // Types
@@ -271,22 +273,17 @@ export default function DiarioPage() {
       // For each session, get attendance stats
       const lessonsWithStats: LessonCardData[] = await Promise.all(
         sessions.map(async (session: any) => {
-          // Get attendance stats for this session
-          const { data: attendance } = await supabase
-            .from('frequencia')
-            .select('id, presente, status_presenca')
-            .eq('sessao_id', session.id)
-
-          const total = attendance?.length || 0
-          const presentes =
-            attendance?.filter(
-              (a: any) => a.status_presenca === 'P' || (a.presente && !a.status_presenca)
-            ).length || 0
-          const ausentes =
-            attendance?.filter(
-              (a: any) => a.status_presenca === 'F' || (!a.presente && !a.status_presenca)
-            ).length || 0
-          const atestados = attendance?.filter((a: any) => a.status_presenca === 'A').length || 0
+          const attendance = await loadCanonicalAttendanceFacts(supabase, [], {
+            sessaoIds: [session.id],
+          })
+          const counts = countAttendanceRecords(attendance.map((fact) => ({
+            presente: fact.presente,
+            status_presenca: fact.statusPresenca,
+          })))
+          const total = counts.total
+          const presentes = counts.presencas
+          const ausentes = counts.faltas
+          const atestados = counts.atestados
 
           const content = session.conteudo
 

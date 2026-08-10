@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
+import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
 
 interface TrendDataPoint {
   date: string
@@ -72,7 +74,8 @@ export async function GET(request: NextRequest) {
             totalAbsent: 0,
             complianceStatus: {
               inep: false,
-              bolsaFamilia: false
+              bolsaFamilia: false,
+              atencaoPreventiva: false,
             }
           }
         })
@@ -81,29 +84,16 @@ export async function GET(request: NextRequest) {
       const matriculaIds = matriculas.map(m => m.id)
       const studentTurmaId = matriculas[0].turma_id
 
-      const { data: attendanceRecords, error } = await supabase
-        .from('frequencia')
-        .select(`
-          data_aula,
-          presente,
-          matricula_id,
-          sessao_id
-        `)
-        .in('matricula_id', matriculaIds)
-        .gte('data_aula', startDateStr)
-        .lte('data_aula', endDateStr)
-        .order('data_aula', { ascending: true })
-
-      if (error) {
-        logger.error('Error fetching attendance trends', error.message, { metadata: { studentId } })
-        return NextResponse.json({ error: 'Erro ao buscar dados de frequência' }, { status: 500 })
-      }
+      const attendanceRecords = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
+        startDate: startDateStr,
+        endDate: endDateStr,
+      })
 
       // Group by date and calculate daily percentages
       const dailyData: Record<string, { presente: number; total: number; turmaId?: string }> = {}
 
-      attendanceRecords?.forEach(record => {
-        const date = record.data_aula
+      attendanceRecords.forEach(record => {
+        const date = record.dataAula
 
         if (!dailyData[date]) {
           dailyData[date] = { presente: 0, total: 0, turmaId: studentTurmaId }
@@ -129,16 +119,14 @@ export async function GET(request: NextRequest) {
         if (turmaMatriculas && turmaMatriculas.length > 0) {
           const turmaMatriculaIds = turmaMatriculas.map(m => m.id)
 
-          const { data: classRecords } = await supabase
-            .from('frequencia')
-            .select('data_aula, presente')
-            .in('matricula_id', turmaMatriculaIds)
-            .gte('data_aula', startDateStr)
-            .lte('data_aula', endDateStr)
+          const classRecords = await loadCanonicalAttendanceFacts(supabase, turmaMatriculaIds, {
+            startDate: startDateStr,
+            endDate: endDateStr,
+          })
 
           const classDaily: Record<string, { presente: number; total: number }> = {}
-          classRecords?.forEach(record => {
-            const date = record.data_aula
+          classRecords.forEach(record => {
+            const date = record.dataAula
             if (!classDaily[date]) {
               classDaily[date] = { presente: 0, total: 0 }
             }
@@ -179,7 +167,8 @@ export async function GET(request: NextRequest) {
           totalAbsent: totalClasses - totalPresent,
           complianceStatus: {
             inep: overallPercentage >= 75, // INEP minimum
-            bolsaFamilia: overallPercentage >= 80 // Bolsa Família threshold
+            bolsaFamilia: overallPercentage >= CONFORMIDADE,
+            atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
           }
         }
       })
@@ -211,7 +200,8 @@ export async function GET(request: NextRequest) {
             averageStudentsPerDay: 0,
             complianceStatus: {
               inep: false,
-              bolsaFamilia: false
+              bolsaFamilia: false,
+              atencaoPreventiva: false,
             }
           }
         })
@@ -221,24 +211,16 @@ export async function GET(request: NextRequest) {
       // Create a map from matricula_id to aluno_id for counting unique students
       const matriculaToAlunoMap = new Map(turmaMatriculas.map(m => [m.id, m.aluno_id]))
 
-      const { data: classRecords, error } = await supabase
-        .from('frequencia')
-        .select('data_aula, presente, matricula_id')
-        .in('matricula_id', turmaMatriculaIds)
-        .gte('data_aula', startDateStr)
-        .lte('data_aula', endDateStr)
-        .order('data_aula', { ascending: true })
-
-      if (error) {
-        logger.error('Error fetching class attendance trends', error.message, { metadata: { turmaId } })
-        return NextResponse.json({ error: 'Erro ao buscar dados da turma' }, { status: 500 })
-      }
+      const classRecords = await loadCanonicalAttendanceFacts(supabase, turmaMatriculaIds, {
+        startDate: startDateStr,
+        endDate: endDateStr,
+      })
 
       // Group by date
       const dailyData: Record<string, { presente: number; total: number; students: Set<string> }> = {}
 
-      classRecords?.forEach(record => {
-        const date = record.data_aula
+      classRecords.forEach(record => {
+        const date = record.dataAula
 
         if (!dailyData[date]) {
           dailyData[date] = { presente: 0, total: 0, students: new Set() }
@@ -246,7 +228,7 @@ export async function GET(request: NextRequest) {
 
         dailyData[date].total++
         // Use the aluno_id from the matricula for unique student count
-        const alunoId = matriculaToAlunoMap.get(record.matricula_id)
+        const alunoId = matriculaToAlunoMap.get(record.matriculaId)
         if (alunoId) {
           dailyData[date].students.add(alunoId)
         }
@@ -278,7 +260,8 @@ export async function GET(request: NextRequest) {
           averageStudentsPerDay: Math.round(totalClasses / trendData.length),
           complianceStatus: {
             inep: overallPercentage >= 75,
-            bolsaFamilia: overallPercentage >= 80
+            bolsaFamilia: overallPercentage >= CONFORMIDADE,
+            atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
           }
         }
       })

@@ -9,6 +9,12 @@
 import type { ClassAttendanceReport } from '@/lib/reports/attendance-reports';
 import type { BolsaFamiliaReport } from '@/lib/reports/bolsa-familia-reports';
 import {
+  ATENCAO,
+  CONFORMIDADE,
+  getFrequencyPolicyLabel,
+  getFrequencyPolicyStatus,
+} from '@/lib/attendance/attendance-policy';
+import {
   createPDFDocument,
   addPDFHeader,
   addPDFFooter,
@@ -99,7 +105,7 @@ export function generateAttendanceReportPDF(
     atestados: student.atestados,
     total: student.totalAulas,
     percentual: `${student.percentual}%`,
-    status: student.emRisco ? 'RISCO' : 'OK',
+    status: getFrequencyPolicyLabel(getFrequencyPolicyStatus(student.percentual)),
   }));
 
   currentY = addPDFTable(
@@ -107,7 +113,7 @@ export function generateAttendanceReportPDF(
     {
       columns,
       rows,
-      summary: 'P = Presença, F = Falta, A = Atestado. Risco = frequência abaixo de 80%.',
+      summary: `P = Presença, F = Falta, A = Atestado. Não conformidade = frequência abaixo de ${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a menos de ${ATENCAO}%.`,
     },
     currentY,
     ATTENDANCE_STYLES
@@ -152,9 +158,9 @@ export function generateBolsaFamiliaReportPDF(
     'Resumo de Conformidade',
     [
       { label: 'Total Bolsa Família', value: report.resumo.totalAlunosBolsaFamilia, color: [219, 234, 254] },
-      { label: 'Conformes (>85%)', value: report.resumo.conformes, color: [220, 252, 231] },
-      { label: 'Em Alerta (80-85%)', value: report.resumo.emAlerta, color: [254, 243, 199] },
-      { label: 'Críticos (<80%)', value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
+      { label: `Conformidade Bolsa Família (>=${CONFORMIDADE}%)`, value: report.resumo.conformes, color: [220, 252, 231] },
+      { label: `Atenção preventiva (${CONFORMIDADE}% a <${ATENCAO}%)`, value: report.resumo.emAtencaoPreventiva, color: [254, 243, 199] },
+      { label: `Não conformes (<${CONFORMIDADE}%)`, value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
       { label: '% Conformidade', value: `${report.resumo.percentualConformidade}%`, color: [219, 234, 254] },
     ],
     currentY,
@@ -198,7 +204,7 @@ export function generateBolsaFamiliaReportPDF(
       faltas: student.faltas,
       atestados: student.atestados,
       percentual: `${student.percentual}%`,
-      status: student.status === 'CRITICO' ? 'CRÍTICO' : student.status === 'ALERTA' ? 'ALERTA' : 'OK',
+      status: student.status === 'CRITICO' ? 'NÃO CONFORME' : student.status === 'ATENCAO' ? 'ATENÇÃO PREVENTIVA' : 'CONFORME',
     }));
 
     currentY = addPDFTable(
@@ -207,7 +213,7 @@ export function generateBolsaFamiliaReportPDF(
         columns,
         rows,
         title: showAllStudents ? 'Todos os Alunos' : 'Alunos em Risco',
-        summary: 'P = Presença, F = Falta, A = Atestado (conta como presença). Crítico = <80%, Alerta = 80-85%.',
+        summary: `P = Presença, F = Falta, A = Atestado (conta como presença). Não conformidade = <${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a <${ATENCAO}%.`,
       },
       currentY,
       BOLSA_FAMILIA_STYLES
@@ -219,7 +225,7 @@ export function generateBolsaFamiliaReportPDF(
   addPDFText(
     doc,
     'NOTA: Para fins de conformidade com o Programa Bolsa Família, atestados médicos (A) são contabilizados como presença. ' +
-    'O limite mínimo de frequência para manutenção do benefício é de 80%.',
+    `A condicionalidade Bolsa Família exige ${CONFORMIDADE}% de frequência. A faixa abaixo de ${ATENCAO}% sinaliza atenção preventiva municipal.`,
     currentY,
     { fontSize: 8, fontStyle: 'italic', color: [100, 100, 100] }
   );
@@ -292,11 +298,10 @@ export function generateStudentReportPDF(data: StudentReportData): void {
   currentY += 5;
 
   // Summary
-  const riskStatus = data.attendance.percentual < 80 ? 'EM RISCO' :
-                     data.attendance.percentual < 85 ? 'ALERTA' : 'OK';
+  const riskStatus = getFrequencyPolicyStatus(data.attendance.percentual);
   const riskColor: [number, number, number] =
-    riskStatus === 'EM RISCO' ? [254, 226, 226] :
-    riskStatus === 'ALERTA' ? [254, 243, 199] : [220, 252, 231];
+    riskStatus === 'CRITICO' ? [254, 226, 226] :
+    riskStatus === 'ATENCAO' ? [254, 243, 199] : [220, 252, 231];
 
   currentY = addPDFSummary(
     doc,
@@ -306,7 +311,7 @@ export function generateStudentReportPDF(data: StudentReportData): void {
       { label: 'Faltas', value: data.attendance.faltas, color: [254, 226, 226] },
       { label: 'Atestados', value: data.attendance.atestados, color: [254, 243, 199] },
       { label: 'Total', value: data.attendance.totalAulas, color: [219, 234, 254] },
-      { label: 'Frequência', value: `${data.attendance.percentual}%`, color: riskColor },
+      { label: getFrequencyPolicyLabel(riskStatus), value: `${data.attendance.percentual}%`, color: riskColor },
     ],
     currentY,
     ATTENDANCE_STYLES

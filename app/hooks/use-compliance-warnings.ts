@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { CONFORMIDADE, ATENCAO, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 /**
  * Compliance warning types for Brazilian educational requirements
@@ -20,23 +22,16 @@ export interface ComplianceWarning {
 }
 
 /**
- * Thresholds for compliance warnings
- * Based on Brazilian educational law (LDB) requirements
+ * Non-frequency gap threshold. Frequency policy thresholds come from the
+ * canonical attendance policy module.
  */
-const THRESHOLDS = {
-  /** Bolsa Familia requires 85% attendance - critical at 80% */
-  BOLSA_FAMILIA_CRITICAL: 80,
-  /** General attendance warning threshold */
-  ATTENDANCE_WARNING: 75,
-  /** Days without attendance records before warning */
-  ATTENDANCE_GAP_DAYS: 5,
-}
+const ATTENDANCE_GAP_DAYS = 5
 
 /**
  * Hook to fetch and calculate compliance warnings for a school
  * Checks for:
- * - Bolsa Familia students with low attendance (< 80%)
- * - Any student with attendance below 75%
+ * - Students below the Bolsa Família compliance threshold
+ * - Students below the preventive municipal attention threshold
  * - Students missing required INEP fields (CPF, NIS)
  * - Classes without attendance for > 5 days
  *
@@ -95,7 +90,8 @@ export function useComplianceWarnings(escolaId?: string) {
               id,
               nome_completo,
               cpf,
-              nis
+              nis,
+              bolsa_familia
             )
           `
           )
@@ -110,70 +106,39 @@ export function useComplianceWarnings(escolaId?: string) {
           return []
         }
 
-        // Fetch attendance records for the current month
-        const { data: frequencias, error: freqError } = await supabase
-          .from('frequencia')
-          .select('matricula_id, status_presenca, data_aula')
-          .gte('data_aula', firstDayOfMonth)
-          .lte('data_aula', today)
-
-        if (freqError) {
-          logger.error('Error fetching frequencia for compliance', freqError, {
-            feature: 'compliance',
-            action: 'fetch_frequencia',
-          })
-          // Continue with empty attendance data
-        }
-
-        // Build attendance stats per matricula
-        const attendanceStats = new Map<
-          string,
-          { total: number; present: number; lastDate: string | null }
-        >()
-
-        frequencias?.forEach((f) => {
-          const stats = attendanceStats.get(f.matricula_id) || {
-            total: 0,
-            present: 0,
-            lastDate: null,
-          }
-          if (f.status_presenca === 'NAO_MARCADO') return
-          stats.total++
-          if (f.status_presenca === 'presente' || f.status_presenca === 'P' || f.status_presenca === 'J' || f.status_presenca === 'A') {
-            stats.present++
-          }
-          if (!stats.lastDate || f.data_aula > stats.lastDate) {
-            stats.lastDate = f.data_aula
-          }
-          attendanceStats.set(f.matricula_id, stats)
+        const matriculaIds = (matriculas ?? []).map((matricula) => matricula.id)
+        const canonicalFacts = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
+          startDate: firstDayOfMonth,
+          endDate: today,
         })
+        const attendanceStats = summarizeCanonicalAttendanceFacts(canonicalFacts, matriculaIds)
 
         // Check each student for compliance issues
-        matriculas?.forEach((m: any) => {
+        matriculas?.forEach((m) => {
           const aluno = m.aluno
           if (!aluno) return
 
           const turmaName = turmaMap.get(m.turma_id) || 'Turma desconhecida'
-          const stats = attendanceStats.get(m.id) || {
-            total: 0,
-            present: 0,
-            lastDate: null,
-          }
+          const stats = attendanceStats.get(m.id)
+          if (!stats || stats.total === 0) return
 
-          // Calculate attendance rate
-          const attendanceRate =
-            stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 100
+          const attendanceRate = stats.percentual
+          const policyStatus = getFrequencyPolicyStatus(attendanceRate)
+          const isBolsaFamilia = aluno.bolsa_familia === true
 
-          const hasNis = !!aluno.nis
-
-          // Check 1: Bolsa Familia students with low attendance (CRITICAL)
-          if (hasNis && attendanceRate < THRESHOLDS.BOLSA_FAMILIA_CRITICAL) {
+          // Compliance is the legal Bolsa Família conditionality. The 85%
+          // band is preventive and never changes the legal result.
+          if (policyStatus === 'CRITICO') {
             warnings.push({
-              id: `bf-${aluno.id}`,
-              type: 'bolsa-familia',
+              id: `${isBolsaFamilia ? 'bf' : 'freq'}-${aluno.id}`,
+              type: isBolsaFamilia ? 'bolsa-familia' : 'frequencia',
               severity: 'critical',
-              title: 'Aluno Bolsa Familia com frequencia abaixo de 80%',
-              description: `${aluno.nome_completo} (${turmaName}) - frequencia atual: ${attendanceRate}%. Risco de perda do beneficio.`,
+              title: isBolsaFamilia
+                ? `Não conformidade Bolsa Família (frequência abaixo de ${CONFORMIDADE}%)`
+                : `Não conformidade de frequência (abaixo de ${CONFORMIDADE}%)`,
+              description: isBolsaFamilia
+                ? `${aluno.nome_completo} (${turmaName}) - frequência atual: ${attendanceRate}%. A condicionalidade do benefício não foi atendida.`
+                : `${aluno.nome_completo} (${turmaName}) - frequência atual: ${attendanceRate}%.`,
               studentId: aluno.id,
               studentName: aluno.nome_completo,
               turmaId: m.turma_id,
@@ -181,15 +146,13 @@ export function useComplianceWarnings(escolaId?: string) {
               attendanceRate,
               created_at: now.toISOString(),
             })
-          }
-          // Check 2: Any student below 75% (WARNING)
-          else if (attendanceRate < THRESHOLDS.ATTENDANCE_WARNING) {
+          } else if (policyStatus === 'ATENCAO') {
             warnings.push({
               id: `freq-${aluno.id}`,
-              type: 'frequencia',
+              type: isBolsaFamilia ? 'bolsa-familia' : 'frequencia',
               severity: 'warning',
-              title: 'Aluno com frequencia abaixo de 75%',
-              description: `${aluno.nome_completo} (${turmaName}) - frequencia atual: ${attendanceRate}%. Abaixo do minimo legal.`,
+              title: `Atenção preventiva de frequência (abaixo de ${ATENCAO}%)`,
+              description: `${aluno.nome_completo} (${turmaName}) - frequência atual: ${attendanceRate}%. A condicionalidade Bolsa Família permanece atendida a partir de ${CONFORMIDADE}%.`,
               studentId: aluno.id,
               studentName: aluno.nome_completo,
               turmaId: m.turma_id,
@@ -217,14 +180,14 @@ export function useComplianceWarnings(escolaId?: string) {
         })
 
         // Check 4: Classes without attendance for > 5 days
+        const turmaByMatricula = new Map((matriculas ?? []).map((m) => [m.id, m.turma_id]))
         const turmaLastAttendance = new Map<string, string>()
-        frequencias?.forEach((f: any) => {
-          // We need to map matricula_id back to turma_id
-          const matricula = matriculas?.find((m: any) => m.id === f.matricula_id)
-          if (matricula) {
-            const current = turmaLastAttendance.get(matricula.turma_id)
-            if (!current || f.data_aula > current) {
-              turmaLastAttendance.set(matricula.turma_id, f.data_aula)
+        canonicalFacts.forEach((fact) => {
+          const turmaId = turmaByMatricula.get(fact.matriculaId)
+          if (turmaId) {
+            const current = turmaLastAttendance.get(turmaId)
+            if (!current || fact.dataAula > current) {
+              turmaLastAttendance.set(turmaId, fact.dataAula)
             }
           }
         })
@@ -235,7 +198,7 @@ export function useComplianceWarnings(escolaId?: string) {
             const daysSinceLastAttendance = Math.floor(
               (now.getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24)
             )
-            if (daysSinceLastAttendance > THRESHOLDS.ATTENDANCE_GAP_DAYS) {
+            if (daysSinceLastAttendance > ATTENDANCE_GAP_DAYS) {
               warnings.push({
                 id: `gap-${turma.id}`,
                 type: 'attendance-gap',

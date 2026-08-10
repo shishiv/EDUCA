@@ -15,22 +15,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 import { logger } from '@/lib/logger';
-import { calculateAttendancePercentage } from './attendance-reports';
+import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts';
+import { CONFORMIDADE, getFrequencyPolicyStatus, type FrequencyPolicyStatus } from '@/lib/attendance/attendance-policy';
 
 // ============================================================================
-// CONSTANTS
+// POLICY RECEIPTS
 // ============================================================================
-
-/**
- * Bolsa Família minimum attendance threshold (80%)
- * Students below this threshold lose benefits
- */
-export const BOLSA_FAMILIA_THRESHOLD = 80;
-
-/**
- * Warning threshold (85%) - alert before critical
- */
-export const BOLSA_FAMILIA_WARNING_THRESHOLD = 85;
 
 // ============================================================================
 // TYPES
@@ -44,7 +34,7 @@ export interface BolsaFamiliaFilters {
   onlyAtRisk?: boolean;
 }
 
-export type BolsaFamiliaStatus = 'CONFORME' | 'ALERTA' | 'CRITICO';
+export type BolsaFamiliaStatus = FrequencyPolicyStatus;
 
 export interface BolsaFamiliaStudent {
   matriculaId: string;
@@ -63,7 +53,7 @@ export interface BolsaFamiliaStudent {
   totalAulas: number;
   percentual: number;
   status: BolsaFamiliaStatus;
-  faltasParaCritico: number; // How many more absences until < 80%
+  faltasParaCritico: number; // How many more absences until below CONFORMIDADE
 }
 
 export interface BolsaFamiliaReport {
@@ -74,7 +64,7 @@ export interface BolsaFamiliaReport {
   resumo: {
     totalAlunosBolsaFamilia: number;
     conformes: number;
-    emAlerta: number;
+    emAtencaoPreventiva: number;
     emRiscoCritico: number;
     percentualConformidade: number;
   };
@@ -95,74 +85,32 @@ export interface BolsaFamiliaReportResult {
  * Calculate Bolsa Família compliance status
  */
 export function calculateBolsaFamiliaStatus(percentual: number): BolsaFamiliaStatus {
-  if (percentual < BOLSA_FAMILIA_THRESHOLD) {
-    return 'CRITICO';
-  }
-  if (percentual < BOLSA_FAMILIA_WARNING_THRESHOLD) {
-    return 'ALERTA';
-  }
-  return 'CONFORME';
+  return getFrequencyPolicyStatus(percentual);
 }
 
-/**
- * Calculate how many more absences until the student falls below 80%
- */
+/** Calculate how many more absences until the student falls below CONFORMIDADE. */
 export function calculateFaltasParaCritico(
   presencas: number,
   faltas: number,
   atestados: number
 ): number {
-  // Current: (presencas + atestados) / total >= 0.80
+  // Current: (presencas + atestados) / total >= CONFORMIDADE
   // We need to find how many more absences (n) would make:
-  // (presencas + atestados) / (total + n) < 0.80
+  // (presencas + atestados) / (total + n) < CONFORMIDADE
 
   const presentDays = presencas + atestados;
   const total = presencas + faltas + atestados;
 
   if (total === 0) return 0;
 
-  // Solve: presentDays / (total + n) = 0.80
-  // presentDays = 0.80 * (total + n)
-  // presentDays = 0.80 * total + 0.80 * n
-  // presentDays - 0.80 * total = 0.80 * n
-  // n = (presentDays - 0.80 * total) / 0.80
-  // n = presentDays / 0.80 - total
+  // Solve for the first whole absence that makes the ratio strictly lower.
+  const complianceRate = CONFORMIDADE / 100;
+  const n = Math.floor(presentDays / complianceRate - total) + 1;
 
-  const n = Math.floor(presentDays / 0.80 - total);
-
-  // If already below 80%, return 0
+  // If already below the compliance threshold, return 0
   if (n < 0) return 0;
 
   return n;
-}
-
-/**
- * Count attendance status from records
- */
-function countAttendanceStatus(records: Array<{ status_presenca: string | null }>) {
-  let presencas = 0;
-  let faltas = 0;
-  let atestados = 0;
-
-  for (const record of records) {
-    switch (record.status_presenca) {
-      case 'P':
-        presencas++;
-        break;
-      case 'F':
-        faltas++;
-        break;
-      case 'A':
-        atestados++;
-        break;
-      default:
-        // null or unknown status - count as absence
-        faltas++;
-        break;
-    }
-  }
-
-  return { presencas, faltas, atestados, total: records.length };
 }
 
 // ============================================================================
@@ -253,7 +201,7 @@ export async function getBolsaFamiliaStudents(
         resumo: {
           totalAlunosBolsaFamilia: 0,
           conformes: 0,
-          emAlerta: 0,
+          emAtencaoPreventiva: 0,
           emRiscoCritico: 0,
           percentualConformidade: 100,
         },
@@ -265,49 +213,35 @@ export async function getBolsaFamiliaStudents(
 
     const matriculaIds = matriculas.map((matricula) => matricula.id);
 
-    // Fetch attendance for all Bolsa Família students
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('frequencia')
-      .select('matricula_id, status_presenca, data_aula')
-      .in('matricula_id', matriculaIds)
-      .gte('data_aula', filters.startDate)
-      .lte('data_aula', filters.endDate);
-
-    if (attendanceError) {
-      logger.error('Failed to fetch attendance records', attendanceError.message);
-      return { data: null, error: attendanceError.message };
-    }
-
-    // Group attendance by student
-    const attendanceByStudent: Record<string, Array<{ status_presenca: string | null }>> = {};
-    for (const record of attendanceData || []) {
-      if (!attendanceByStudent[record.matricula_id]) {
-        attendanceByStudent[record.matricula_id] = [];
-      }
-      attendanceByStudent[record.matricula_id].push({
-        status_presenca: record.status_presenca,
-      });
-    }
+    const attendanceByStudent = await loadCanonicalAttendanceSummaries(
+      supabase,
+      matriculaIds,
+      { startDate: filters.startDate, endDate: filters.endDate }
+    );
 
     // Build student list with attendance data
     const alunos: BolsaFamiliaStudent[] = [];
     let conformes = 0;
-    let emAlerta = 0;
+    let emAtencaoPreventiva = 0;
     let emRiscoCritico = 0;
 
     for (const matricula of matriculas) {
-      const records = attendanceByStudent[matricula.id] || [];
-      const { presencas, faltas, atestados, total } = countAttendanceStatus(records);
-      const percentual = calculateAttendancePercentage(presencas, faltas, atestados);
-      const status = calculateBolsaFamiliaStatus(percentual);
-      const faltasParaCritico = calculateFaltasParaCritico(presencas, faltas, atestados);
+      const summary = attendanceByStudent.get(matricula.id);
+      if (!summary) continue;
+      const status = calculateBolsaFamiliaStatus(summary.percentual);
+      const faltasParaCritico = calculateFaltasParaCritico(
+        summary.presencas,
+        summary.faltas,
+        summary.atestados
+      );
 
-      // Count by status
-      if (status === 'CONFORME') conformes++;
-      else if (status === 'ALERTA') emAlerta++;
-      else emRiscoCritico++;
+      // Compliance includes the preventive band. The band is a separate
+      // municipal signal and must not lower the Bolsa Família compliance rate.
+      if (summary.conforme) conformes++;
+      if (status === 'ATENCAO') emAtencaoPreventiva++;
+      if (status === 'CRITICO') emRiscoCritico++;
 
-      // Skip if onlyAtRisk and student is compliant
+      // The risk view includes preventive attention and critical cases.
       if (filters.onlyAtRisk && status === 'CONFORME') {
         continue;
       }
@@ -327,11 +261,11 @@ export async function getBolsaFamiliaStudents(
         turmaSerie: turma?.serie || '',
         escolaId: escola?.id || '',
         escolaNome: escola?.nome || '',
-        presencas,
-        faltas,
-        atestados,
-        totalAulas: total,
-        percentual,
+        presencas: summary.presencas,
+        faltas: summary.faltas,
+        atestados: summary.atestados,
+        totalAulas: summary.total,
+        percentual: summary.percentual,
         status,
         faltasParaCritico,
       });
@@ -340,7 +274,7 @@ export async function getBolsaFamiliaStudents(
     // Sort by percentage (worst first)
     alunos.sort((a, b) => a.percentual - b.percentual);
 
-    const totalBF = conformes + emAlerta + emRiscoCritico;
+    const totalBF = matriculas.length;
     const percentualConformidade = totalBF > 0 ? Math.round((conformes / totalBF) * 100) : 100;
 
     const report: BolsaFamiliaReport = {
@@ -351,7 +285,7 @@ export async function getBolsaFamiliaStudents(
       resumo: {
         totalAlunosBolsaFamilia: totalBF,
         conformes,
-        emAlerta,
+        emAtencaoPreventiva,
         emRiscoCritico,
         percentualConformidade,
       },
@@ -365,7 +299,7 @@ export async function getBolsaFamiliaStudents(
       metadata: {
         total: totalBF,
         conformes,
-        emAlerta,
+        emAtencaoPreventiva,
         emRiscoCritico,
       },
     });
@@ -403,14 +337,14 @@ export async function getBolsaFamiliaSummary(
       escolaNome: string;
       total: number;
       conformes: number;
-      emAlerta: number;
+      emAtencaoPreventiva: number;
       emRiscoCritico: number;
       percentualConformidade: number;
     }>;
     overall: {
       total: number;
       conformes: number;
-      emAlerta: number;
+      emAtencaoPreventiva: number;
       emRiscoCritico: number;
       percentualConformidade: number;
     };
@@ -431,7 +365,7 @@ export async function getBolsaFamiliaSummary(
     escolaNome: string;
     total: number;
     conformes: number;
-    emAlerta: number;
+    emAtencaoPreventiva: number;
     emRiscoCritico: number;
   }> = {};
 
@@ -442,15 +376,15 @@ export async function getBolsaFamiliaSummary(
         escolaNome: aluno.escolaNome,
         total: 0,
         conformes: 0,
-        emAlerta: 0,
+        emAtencaoPreventiva: 0,
         emRiscoCritico: 0,
       };
     }
 
     schoolMap[aluno.escolaId].total++;
-    if (aluno.status === 'CONFORME') schoolMap[aluno.escolaId].conformes++;
-    else if (aluno.status === 'ALERTA') schoolMap[aluno.escolaId].emAlerta++;
-    else schoolMap[aluno.escolaId].emRiscoCritico++;
+    if (aluno.percentual >= CONFORMIDADE) schoolMap[aluno.escolaId].conformes++;
+    if (aluno.status === 'ATENCAO') schoolMap[aluno.escolaId].emAtencaoPreventiva++;
+    if (aluno.status === 'CRITICO') schoolMap[aluno.escolaId].emRiscoCritico++;
   }
 
   const bySchool = Object.values(schoolMap).map((school) => ({
@@ -469,7 +403,7 @@ export async function getBolsaFamiliaSummary(
       overall: {
         total: report.resumo.totalAlunosBolsaFamilia,
         conformes: report.resumo.conformes,
-        emAlerta: report.resumo.emAlerta,
+        emAtencaoPreventiva: report.resumo.emAtencaoPreventiva,
         emRiscoCritico: report.resumo.emRiscoCritico,
         percentualConformidade: report.resumo.percentualConformidade,
       },

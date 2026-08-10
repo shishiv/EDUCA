@@ -4,6 +4,8 @@ import { BaseApiService } from './base'
 import { supabase, Tables, Inserts, Aluno } from '@/lib/supabase'
 import { StudentFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 export type StudentWithDetails = Aluno & {
   responsavel?: Tables<'responsaveis'>
@@ -318,34 +320,30 @@ export class StudentsApiService extends BaseApiService {
 
       const matriculaIds = matriculas.map((m) => m.id)
 
-      let query = supabase
-        .from('frequencia')
-        .select('data_aula, status_presenca, presente')
-        .in('matricula_id', matriculaIds)
-
-      if (period) {
-        query = query
-          .gte('data_aula', period.start)
-          .lte('data_aula', period.end)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      const records = data ?? []
-      const totalDays = records.length
-      const presentDays = records.filter(f => f.presente || f.status_presenca === 'presente').length
-      const absentDays = records.filter(f => !f.presente && (!f.status_presenca || f.status_presenca === 'falta')).length
-      const excusedDays = records.filter(f => f.status_presenca === 'justificada').length
-
-      const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0
+      const records = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
+        startDate: period?.start,
+        endDate: period?.end,
+      })
+      const summaries = summarizeCanonicalAttendanceFacts(records, matriculaIds)
+      const summary = matriculaIds.reduce((total, matriculaId) => {
+        const enrollment = summaries.get(matriculaId)
+        if (!enrollment) return total
+        return {
+          total: total.total + enrollment.total,
+          presencas: total.presencas + enrollment.presencas,
+          faltas: total.faltas + enrollment.faltas,
+          atestados: total.atestados + enrollment.atestados,
+        }
+      }, { total: 0, presencas: 0, faltas: 0, atestados: 0 })
+      const attendanceRate = summary.total > 0
+        ? Math.round(((summary.presencas + summary.atestados) / summary.total) * 100)
+        : 0
 
       return {
-        totalDays,
-        presentDays,
-        absentDays,
-        excusedDays,
+        totalDays: summary.total,
+        presentDays: summary.presencas + summary.atestados,
+        absentDays: summary.faltas,
+        excusedDays: summary.atestados,
         attendanceRate,
         details: records
       }
@@ -355,7 +353,7 @@ export class StudentsApiService extends BaseApiService {
   }
 
   // Get at-risk students (below 80% attendance)
-  async getAtRiskStudents(schoolId?: string, threshold: number = 80) {
+  async getAtRiskStudents(schoolId?: string, threshold: number = CONFORMIDADE) {
     try {
       // This is a complex query that would need to be implemented as a database view
       // or stored procedure for optimal performance

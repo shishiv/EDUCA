@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Heart,
 } from 'lucide-react'
+import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 interface Matricula {
   id: string
@@ -82,8 +83,9 @@ export function StudentInfoGrid({
   className,
 }: StudentInfoGridProps) {
   const getFrequenciaColor = (percentual: number) => {
-    if (percentual >= 75) return 'text-green-600'
-    if (percentual >= 60) return 'text-amber-600'
+    const status = getFrequencyPolicyStatus(percentual)
+    if (status === 'CONFORME') return 'text-green-600'
+    if (status === 'ATENCAO') return 'text-amber-600'
     return 'text-red-600'
   }
 
@@ -258,11 +260,18 @@ export function StudentInfoGrid({
                 </div>
                 <Progress value={frequencia.percentual} className="h-2" />
                 <div className="flex items-center gap-2 text-sm">
-                  {frequencia.percentual >= 75 ? (
+                  {getFrequencyPolicyStatus(frequencia.percentual) === 'CONFORME' ? (
                     <>
                       <CheckCircle className="h-4 w-4 text-green-600" />
                       <span className="text-green-600">
-                        Frequência adequada (mínimo 75%)
+                        Condicionalidade Bolsa Família atendida (a partir de {CONFORMIDADE}%)
+                      </span>
+                    </>
+                  ) : getFrequencyPolicyStatus(frequencia.percentual) === 'ATENCAO' ? (
+                    <>
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <span className="text-amber-600">
+                        Atenção preventiva municipal (abaixo de {ATENCAO}%)
                       </span>
                     </>
                   ) : (

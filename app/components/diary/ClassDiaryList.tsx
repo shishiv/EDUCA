@@ -39,6 +39,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ClassDiaryEntry } from '@/lib/api/class-diary'
+import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 interface ClassDiaryListProps {
   entries: ClassDiaryEntry[]
@@ -227,7 +228,7 @@ export function ClassDiaryList({
                   <TableCell className="text-center">
                     <span
                       className={`font-semibold ${
-                        percentage >= 75 ? 'text-green-600' : 'text-red-600'
+                        getFrequencyPolicyStatus(percentage) === 'CONFORME' ? 'text-green-600' : getFrequencyPolicyStatus(percentage) === 'ATENCAO' ? 'text-amber-600' : 'text-red-600'
                       }`}
                     >
                       {percentage}%
@@ -302,7 +303,7 @@ export function ClassDiaryList({
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-sm font-semibold ${
-                          percentage >= 75 ? 'text-green-600' : 'text-red-600'
+                          getFrequencyPolicyStatus(percentage) === 'CONFORME' ? 'text-green-600' : getFrequencyPolicyStatus(percentage) === 'ATENCAO' ? 'text-amber-600' : 'text-red-600'
                         }`}
                       >
                         {percentage}% freq.

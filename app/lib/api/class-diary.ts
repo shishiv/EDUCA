@@ -5,7 +5,7 @@
  * Legal Context:
  * The Class Diary (Diário de Classe) is a legal document in Brazilian education that must:
  * - Record all classes taught with date and content
- * - Track attendance for Bolsa Família compliance (minimum 75% attendance)
+ * - Track attendance for Bolsa Família compliance at the canonical 80% threshold and expose the 85% preventive margin
  * - Be auditable and immutable after locking
  * - Support director/secretary review
  *
@@ -19,6 +19,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 /**
  * Interface: Class Diary Entry
@@ -228,25 +230,24 @@ export async function getClassDiary(
 
     // Attendance belongs to the canonical session, never the legacy aula_id.
     const sessionIds = aulas.map((session) => session.id)
-    const { data: frequencias } = await supabase
-      .from('frequencia')
-      .select('sessao_id, presente, status_presenca')
-      .in('sessao_id', sessionIds)
+    const frequencias = await loadCanonicalAttendanceFacts(supabase, [], {
+      sessaoIds: sessionIds,
+    })
 
     // Build frequency facts by canonical session ID.
     const frequenciaMap = new Map<string, { presentes: number; ausentes: number; total: number }>()
-    frequencias?.forEach((freq) => {
-      if (!freq.sessao_id || freq.status_presenca === 'NAO_MARCADO') return
-      if (!frequenciaMap.has(freq.sessao_id)) {
-        frequenciaMap.set(freq.sessao_id, { presentes: 0, ausentes: 0, total: 0 })
+    frequencias.forEach((freq) => {
+      if (!frequenciaMap.has(freq.sessaoId)) {
+        frequenciaMap.set(freq.sessaoId, { presentes: 0, ausentes: 0, total: 0 })
       }
-      const stats = frequenciaMap.get(freq.sessao_id)!
-      stats.total++
-      if (freq.presente) {
-        stats.presentes++
-      } else {
-        stats.ausentes++
-      }
+      const stats = frequenciaMap.get(freq.sessaoId)!
+      const counts = countAttendanceRecords([{
+        presente: freq.presente,
+        status_presenca: freq.statusPresenca,
+      }])
+      stats.total += counts.total
+      stats.presentes += counts.presencas + counts.atestados
+      stats.ausentes += counts.faltas
     })
 
     // Transform data to match ClassDiaryEntry interface

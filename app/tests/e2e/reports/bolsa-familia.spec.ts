@@ -400,7 +400,7 @@ test.describe('Bolsa Familia Report - Thresholds', () => {
 
   test('should display threshold information', async ({ page }) => {
     // Look for threshold info in footer
-    const thresholdInfo = page.getByText(/threshold|critico.*75|alerta.*80/i)
+    const thresholdInfo = page.getByText(/política|politica|não conformidade|nao conformidade|atenção preventiva|atencao preventiva/i)
     const hasInfo = await thresholdInfo.isVisible().catch(() => false)
     
     if (hasInfo) {

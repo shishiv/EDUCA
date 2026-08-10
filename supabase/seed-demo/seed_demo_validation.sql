@@ -6,8 +6,8 @@
 -- descartavel (verify-sql.sh). Todas as expectativas tem receipt:
 --  - 3 escolas / 5 turmas / 10 professores + 1 admin / 50 alunos: issue #23;
 --  - 20 dias letivos: DEMO_SCHOOL_DAYS em attendance-generator.ts;
---  - alerta < 80%: issue #23 + app/lib/reports/bolsa-familia-reports.ts
---    (BOLSA_FAMILIA_THRESHOLD = 80) + configs.frequencia_minima = 80;
+--  - alerta abaixo da conformidade: issue #23 + canonical attendance policy
+--    + configs.frequencia_minima contains the seed's 80% compliance receipt;
 --  - marcador: configs.demo_synthetic_marker = 'SYNTHETIC-EDUCA-DEMO'.
 -- =============================================================================
 
@@ -114,7 +114,7 @@ SELECT pg_temp.assert_true(
 );
 
 -- -----------------------------------------------------------------------------
--- 4. Caso de alerta Bolsa Familia (< 80%)
+-- 4. Caso de não conformidade Bolsa Família (below the configured policy)
 -- -----------------------------------------------------------------------------
 SELECT pg_temp.assert_true(
   EXISTS (
@@ -122,16 +122,21 @@ SELECT pg_temp.assert_true(
    FROM matriculas m
    JOIN alunos a ON a.id = m.aluno_id
    JOIN frequencia f ON f.matricula_id = m.id
+   CROSS JOIN (SELECT valor::numeric AS conformidade FROM configs WHERE chave = 'frequencia_minima') policy
    WHERE a.bolsa_familia = true
+     AND f.sessao_id IS NOT NULL
    GROUP BY m.id
-   HAVING 100.0 * count(*) FILTER (WHERE f.presente) / count(*) < 80
+   HAVING 100.0 * count(*) FILTER (WHERE f.presente) / count(*) < max(policy.conformidade)
   ),
-  'existe aluno bolsa_familia com frequencia < 80% (alerta)'
+  'existe aluno bolsa_familia abaixo da conformidade'
 );
 SELECT pg_temp.assert_true(
-  (SELECT 100.0 * count(*) FILTER (WHERE presente) / count(*) < 80
-   FROM frequencia WHERE matricula_id = '00000000-0000-0000-0000-000000000401'),
-  'matricula 401 e o caso designado de alerta (< 80%)'
+  (SELECT 100.0 * count(*) FILTER (WHERE f.presente) / count(*) < max(policy.conformidade)
+   FROM frequencia f
+   CROSS JOIN (SELECT valor::numeric AS conformidade FROM configs WHERE chave = 'frequencia_minima') policy
+   WHERE f.matricula_id = '00000000-0000-0000-0000-000000000401'
+     AND f.sessao_id IS NOT NULL),
+  'matricula 401 e o caso designado abaixo da conformidade'
 );
 
 -- -----------------------------------------------------------------------------

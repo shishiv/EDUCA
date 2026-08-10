@@ -169,34 +169,34 @@ describe('LessonCard', () => {
   })
 
   describe('Attendance Badge Styling', () => {
-    it('should use green color for good attendance (>=80%)', () => {
+    it('should use green color for good attendance (>=85%)', () => {
       const goodAttendance: LessonCardData = {
         ...mockLesson,
         total_presentes: 20,
-        total_ausentes: 5,
+        total_ausentes: 2,
       }
       
       const { container } = render(<LessonCard lesson={goodAttendance} />)
       
-      const badge = screen.getByText('80%').closest('[class*="badge"]')
+      const badge = screen.getByText('91%').closest('[class*="badge"]')
       expect(badge).toHaveClass(/green/)
     })
 
-    it('should use amber color for warning attendance (75-79%)', () => {
+    it('should use amber color for preventive attention (80-84%)', () => {
       const warningAttendance: LessonCardData = {
         ...mockLesson,
         total_alunos: 20,
-        total_presentes: 15,
-        total_ausentes: 5,
+        total_presentes: 16,
+        total_ausentes: 4,
       }
       
       const { container } = render(<LessonCard lesson={warningAttendance} />)
       
-      const badge = screen.getByText('75%').closest('[class*="badge"]')
+      const badge = screen.getByText('80%').closest('[class*="badge"]')
       expect(badge).toHaveClass(/amber|yellow/)
     })
 
-    it('should use red color for low attendance (<75%)', () => {
+    it('should use red color for non-compliance (<80%)', () => {
       const lowAttendance: LessonCardData = {
         ...mockLesson,
         total_presentes: 15,
