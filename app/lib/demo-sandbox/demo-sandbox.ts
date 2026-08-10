@@ -22,11 +22,6 @@ import type { DemoActionOperation } from '@/lib/demo-sandbox/demo-audit'
 /** Env flag that switches the instance into public demo sandbox mode. */
 export const DEMO_SANDBOX_ENV_KEY = 'NEXT_PUBLIC_DEMO_SANDBOX'
 
-// Next.js only exposes public variables to Client Components when the access
-// is literal. Keep this reference direct so banner and navigation decisions
-// use the same public demo flag as the server route guards.
-const publicDemoSandboxEnabled = process.env.NEXT_PUBLIC_DEMO_SANDBOX === 'true'
-
 /** Marker written by the deterministic demo seed and checked by validation. */
 export const DEMO_SYNTHETIC_DATA_MARKER = 'SYNTHETIC-EDUCA-DEMO'
 
@@ -41,7 +36,9 @@ export function isDemoSandboxEnabled(
     return env.NEXT_PUBLIC_DEMO_SANDBOX === 'true' || env.DEMO_SANDBOX === 'true'
   }
 
-  return publicDemoSandboxEnabled || process.env.DEMO_SANDBOX === 'true'
+  // Keep this access literal so Next.js replaces it in Client Components.
+  // Read it at call time so tests and server processes observe current env state.
+  return process.env.NEXT_PUBLIC_DEMO_SANDBOX === 'true' || process.env.DEMO_SANDBOX === 'true'
 }
 
 /**
