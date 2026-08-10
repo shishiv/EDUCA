@@ -16,19 +16,6 @@ const supabase = createClient<any>(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-/**
- * `conteudo_aula` is created by the Product Modules migration, which lands on
- * main separately from the Test Adapter. When the table is absent (main before
- * that migration), the seed must still be deterministic: skip the optional
- * content-lesson fixture and its cleanup instead of crashing the local run.
- */
-async function tableExists(table: string): Promise<boolean> {
-  const { error } = await supabase.from(table).select('id').limit(1)
-  return !error
-}
-
-const conteudoAulaAvailable = tableExists('conteudo_aula')
-
 const assertLocal = () => {
   const host = new URL(SUPABASE_URL).hostname
   if (host !== '127.0.0.1' && host !== 'localhost') {
@@ -65,9 +52,7 @@ async function deleteDependentRows(studentIds: string[], classIds: string[]) {
   }
   if (sessionIds.length > 0) {
     await supabase.from('frequencia').delete().in('sessao_id', sessionIds)
-    if (await conteudoAulaAvailable) {
-      await supabase.from('conteudo_aula').delete().in('sessao_id', sessionIds)
-    }
+    await supabase.from('conteudo_aula').delete().in('sessao_id', sessionIds)
     await supabase.from('sessoes_aula').delete().in('id', sessionIds)
   }
   if (enrollmentIds.length > 0) await supabase.from('matriculas').delete().in('id', enrollmentIds)
@@ -256,9 +241,7 @@ export async function seedE2E() {
   const todaySessionIds = ids(todaySessions)
   if (todaySessionIds.length > 0) {
     await supabase.from('frequencia').delete().in('sessao_id', todaySessionIds)
-    if (await conteudoAulaAvailable) {
-      await supabase.from('conteudo_aula').delete().in('sessao_id', todaySessionIds)
-    }
+    await supabase.from('conteudo_aula').delete().in('sessao_id', todaySessionIds)
     await supabase.from('sessoes_aula').delete().in('id', todaySessionIds)
   }
 
@@ -286,29 +269,47 @@ export async function seedE2E() {
     })
   }
 
-  for (const [code, name] of [['MAT', 'Matemática'], ['PORT', 'Português'], ['CIEN', 'Ciências']]) {
-    await ensureRow('disciplinas', { codigo: code, escola_id: school1.id }, {
-      codigo: code, nome: name, escola_id: school1.id, ativa: true,
-    })
-  }
+  const mathDiscipline = await ensureRow('disciplinas', { codigo: 'MAT', escola_id: school1.id }, {
+    codigo: 'MAT', nome: 'Matemática', escola_id: school1.id, ativa: true,
+  })
+  const portugueseDiscipline = await ensureRow('disciplinas', { codigo: 'PORT', escola_id: school1.id }, {
+    codigo: 'PORT', nome: 'Português', escola_id: school1.id, ativa: true,
+  })
+  await ensureRow('disciplinas', { codigo: 'CIEN', escola_id: school1.id }, {
+    codigo: 'CIEN', nome: 'Ciências', escola_id: school1.id, ativa: true,
+  })
 
-  // Stable current-month lesson for content-report coverage.
+  // Stable current-month sessions and canonical content for content-report coverage.
   const lessonDate = `${today.slice(0, 7)}-15`
-  const session = await ensureRow('sessoes_aula', { turma_id: class1.id, data_aula: lessonDate }, {
+  const secondLessonDate = `${today.slice(0, 7)}-16`
+  const mathSession = await ensureRow('sessoes_aula', { turma_id: class1.id, data_aula: lessonDate }, {
     turma_id: class1.id, escola_id: school1.id, professor_id: profiles.get('professor').id,
+    disciplina_id: mathDiscipline.id,
     data_aula: lessonDate, inicio_aula: '08:00:00', fim_aula: '08:50:00',
     conteudo_programatico: 'Números e operações', objetivos_aprendizagem: 'Resolver situações de adição',
     metodologia: 'Aprendizagem baseada em problemas', recursos_utilizados: 'Material dourado',
     status: 'FECHADA',
   })
-  if (await conteudoAulaAvailable) {
-    await ensureRow('conteudo_aula', { sessao_id: session.id }, {
-      sessao_id: session.id, tema: 'Adição com números naturais',
-      objetivo: 'Resolver e elaborar problemas de adição', habilidades_bncc: ['EF01MA06'],
-      metodologia: 'Resolução colaborativa de problemas', recursos: 'Material dourado e quadro',
-      observacoes: 'Aula E2E determinística', created_by: profiles.get('professor').id,
-    })
-  }
+  const portugueseSession = await ensureRow('sessoes_aula', { turma_id: class1.id, data_aula: secondLessonDate }, {
+    turma_id: class1.id, escola_id: school1.id, professor_id: profiles.get('professor').id,
+    disciplina_id: portugueseDiscipline.id,
+    data_aula: secondLessonDate, inicio_aula: '09:00:00', fim_aula: '09:50:00',
+    conteudo_programatico: 'Leitura e interpretação', objetivos_aprendizagem: 'Localizar informações explícitas',
+    metodologia: 'Leitura compartilhada', recursos_utilizados: 'Livro didático',
+    status: 'FECHADA',
+  })
+  await ensureRow('conteudo_aula', { sessao_id: mathSession.id }, {
+    sessao_id: mathSession.id, tema: 'Adição com números naturais',
+    objetivo: 'Resolver e elaborar problemas de adição', habilidades_bncc: ['EF01MA06'],
+    metodologia: 'Resolução colaborativa de problemas', recursos: 'Material dourado e quadro',
+    observacoes: 'Aula E2E determinística de Matemática', created_by: profiles.get('professor').id,
+  })
+  await ensureRow('conteudo_aula', { sessao_id: portugueseSession.id }, {
+    sessao_id: portugueseSession.id, tema: 'Leitura de textos informativos',
+    objetivo: 'Localizar informações explícitas em textos curtos', habilidades_bncc: ['EF01LP02'],
+    metodologia: 'Leitura compartilhada e conversa orientada', recursos: 'Livro didático e quadro',
+    observacoes: 'Aula E2E determinística de Português', created_by: profiles.get('professor').id,
+  })
 
   console.log('E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students')
 }

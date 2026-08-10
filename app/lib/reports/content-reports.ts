@@ -16,8 +16,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import {
-  type LessonContent,
-  type LessonContentDetailed,
   BNCC_SUBJECTS,
   BNCC_EXPERIENCE_FIELDS,
   type BNNCSubjectCode,
@@ -37,6 +35,132 @@ export interface ContentReportFilters {
   escolaId?: string;
 }
 
+/**
+ * The report filter uses BNCC component codes, while the legacy discipline
+ * catalog keeps its own short codes. Keep the translation at the query seam
+ * so the filter still resolves through sessoes_aula.disciplina_id.
+ */
+const DISCIPLINE_DATABASE_CODES: Record<BNNCSubjectCode, readonly string[]> = {
+  LP: ['LP', 'POR', 'PORT'],
+  MA: ['MA', 'MAT'],
+  CI: ['CI', 'CIE', 'CIEN'],
+  HI: ['HI', 'HIS'],
+  GE: ['GE', 'GEO'],
+  AR: ['AR', 'ART'],
+  EF: ['EF', 'EDF'],
+  ER: ['ER'],
+  LI: ['LI', 'ING'],
+};
+
+interface ContentReportRow {
+  id: string;
+  sessao_id: string;
+  tema: string;
+  objetivo: string;
+  habilidades_bncc: string[];
+  metodologia: string | null;
+  recursos: string | null;
+  observacoes: string | null;
+  created_at: string;
+  sessoes_aula: {
+    id: string;
+    data_aula: string;
+    inicio_aula: string | null;
+    fim_aula: string | null;
+    turma_id: string;
+    professor_id: string;
+    turmas: {
+      id: string;
+      nome: string;
+      serie: string;
+      escola_id: string;
+      escolas: {
+        id: string;
+        nome: string;
+      } | null;
+    } | null;
+    users: {
+      id: string;
+      nome: string;
+    } | null;
+    disciplinas: {
+      id: string;
+      codigo: string;
+      nome: string;
+    } | null;
+  } | null;
+}
+
+interface ContentReportQueryResult {
+  data: ContentReportRow[] | null;
+  error: { message: string } | null;
+}
+
+/**
+ * Narrow seam for the content table, which is not in the committed generated
+ * database type surface yet. The runtime client remains the real Supabase
+ * client and this seam exposes only the report query contract.
+ */
+interface ContentReportQueryBuilder {
+  select(columns: string): ContentReportQueryBuilder;
+  gte(column: string, value: string): ContentReportQueryBuilder;
+  lte(column: string, value: string): ContentReportQueryBuilder;
+  eq(column: string, value: string): ContentReportQueryBuilder;
+  in(column: string, values: string[]): ContentReportQueryBuilder;
+  order(column: string, options: { ascending: boolean }): ContentReportQueryBuilder;
+  then<TResult1 = ContentReportQueryResult, TResult2 = never>(
+    onfulfilled?: ((value: ContentReportQueryResult) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): PromiseLike<TResult1 | TResult2>;
+}
+
+interface ContentReportClient {
+  from(table: 'conteudo_aula'): ContentReportQueryBuilder;
+}
+
+function contentReportSelect(disciplineFilter: boolean): string {
+  const disciplineRelation = disciplineFilter ? 'disciplinas!inner' : 'disciplinas';
+
+  return `
+    id,
+    sessao_id,
+    tema,
+    objetivo,
+    habilidades_bncc,
+    metodologia,
+    recursos,
+    observacoes,
+    created_at,
+    sessoes_aula!inner (
+      id,
+      data_aula,
+      inicio_aula,
+      fim_aula,
+      turma_id,
+      professor_id,
+      turmas!inner (
+        id,
+        nome,
+        serie,
+        escola_id,
+        escolas (
+          id,
+          nome
+        )
+      ),
+      users (
+        id,
+        nome
+      ),
+      ${disciplineRelation} (
+        id,
+        codigo,
+        nome
+      )
+    )
+  `;
+}
+
 export interface LessonContentReportItem {
   id: string;
   sessaoId: string;
@@ -51,6 +175,8 @@ export interface LessonContentReportItem {
   turmaSerie: string;
   professorNome: string;
   escolaNome: string;
+  disciplinaCodigo: string | null;
+  disciplinaNome: string | null;
   createdAt: string;
 }
 
@@ -259,42 +385,13 @@ export async function generateContentReport(
       },
     });
 
-    // Build query for lesson content with session and class info
-    let query = supabase
+    // Build the report from the canonical content -> session -> class ->
+    // school/teacher/discipline chain. A discipline filter must be an
+    // embedded database predicate, not a client-side post-filter.
+    const reportClient = supabase as unknown as ContentReportClient;
+    let query = reportClient
       .from('conteudo_aula')
-      .select(`
-        id,
-        sessao_id,
-        tema,
-        objetivo,
-        habilidades_bncc,
-        metodologia,
-        recursos,
-        observacoes,
-        created_at,
-        sessoes_aula!inner (
-          id,
-          data_aula,
-          inicio_aula,
-          fim_aula,
-          turma_id,
-          professor_id,
-          turmas!inner (
-            id,
-            nome,
-            serie,
-            escola_id,
-            escolas (
-              id,
-              nome
-            )
-          ),
-          users (
-            id,
-            nome
-          )
-        )
-      `)
+      .select(contentReportSelect(Boolean(filters.disciplina)))
       .gte('sessoes_aula.data_aula', filters.startDate)
       .lte('sessoes_aula.data_aula', filters.endDate)
       .order('sessoes_aula(data_aula)', { ascending: false });
@@ -310,6 +407,13 @@ export async function generateContentReport(
 
     if (filters.escolaId) {
       query = query.eq('sessoes_aula.turmas.escola_id', filters.escolaId);
+    }
+
+    if (filters.disciplina) {
+      query = query.in(
+        'sessoes_aula.disciplinas.codigo',
+        [...DISCIPLINE_DATABASE_CODES[filters.disciplina]],
+      );
     }
 
     const { data: contentData, error: contentError } = await query;
@@ -354,10 +458,11 @@ export async function generateContentReport(
     let professorInfo: ContentReport['professor'];
 
     for (const record of content) {
-      const sessao = record.sessoes_aula as any;
-      const turma = sessao?.turmas as any;
-      const escola = turma?.escolas as any;
-      const professor = sessao?.users as any;
+      const sessao = record.sessoes_aula;
+      const turma = sessao?.turmas;
+      const escola = turma?.escolas;
+      const professor = sessao?.users;
+      const disciplina = sessao?.disciplinas;
 
       // Set header info from first record if filtering by turma
       if (!turmaInfo && filters.turmaId && turma) {
@@ -395,6 +500,8 @@ export async function generateContentReport(
         turmaSerie: turma?.serie || '',
         professorNome: professor?.nome || '',
         escolaNome: escola?.nome || '',
+        disciplinaCodigo: disciplina?.codigo || null,
+        disciplinaNome: disciplina?.nome || null,
         createdAt: record.created_at,
       };
 
