@@ -1,8 +1,7 @@
 -- Narrow companion provisioner for the isolated synthetic descriptive-report rehearsal.
 --
--- Apply only after provision-pilot-module-gate.sql and only from
--- app/scripts/run-pilot-descriptive-e2e.sh. The base pilot gate keeps this
--- table revoked in every other pilot path.
+-- The governed security migration owns this grant. This idempotent companion
+-- remains explicit in the descriptive rehearsal and never applies to the demo.
 
 BEGIN;
 
