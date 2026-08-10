@@ -7,7 +7,7 @@
  * Task Group 5.1.2: Mobile responsiveness fixes
  *
  * Page for viewing and exporting Bolsa Familia compliance reports.
- * Shows students with NIS who are at risk of losing benefits due to
+ * Shows active beneficiaries who are at risk of losing benefits due to
  * low attendance against the resolved municipal margin.
  */
 
@@ -551,7 +551,7 @@ export default function BolsaFamiliaReportPage() {
                 <div className="text-center py-8 text-gray-500 px-3">
                   <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
                   <p className="text-sm sm:text-base">Nenhum aluno do Bolsa Família encontrado</p>
-                  <p className="text-xs sm:text-sm mt-1">Verifique os filtros ou se os alunos possuem NIS cadastrado</p>
+                  <p className="text-xs sm:text-sm mt-1">Verifique os filtros ou o cadastro do benefício Bolsa Família</p>
                 </div>
               ) : report && (
                 <div className="overflow-x-auto">

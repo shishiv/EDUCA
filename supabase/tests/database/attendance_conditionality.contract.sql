@@ -365,6 +365,90 @@ WHERE enrollment.id IN (
 );
 
 -- ---------------------------------------------------------------------------
+-- Beneficiary selection contract: 26 of 50 active enrollments have the
+-- boolean benefit flag. Every fixture student has a synthetic NIS, so a
+-- deliberate return to NIS-based selection makes the 26-row assertion red.
+-- ---------------------------------------------------------------------------
+INSERT INTO public.turmas(
+  id, nome, serie, turno, ano_letivo, capacidade, escola_id, professor_id,
+  ativo, etapa_ensino
+)
+VALUES (
+  '12000000-0000-0000-0000-000000000026',
+  'Turma seleção Bolsa Família',
+  '2º Ano',
+  'matutino',
+  2026,
+  60,
+  '12000000-0000-0000-0000-000000000001',
+  '12000000-0000-0000-0000-000000000011',
+  true,
+  'AI'
+);
+
+INSERT INTO public.alunos(
+  id, nome_completo, data_nascimento, sexo, nis, bolsa_familia, escola_id, ativo
+)
+SELECT
+  ('12000000-0000-0000-0000-' || lpad((100 + student_number)::text, 12, '0'))::uuid,
+  format('Aluno seleção BF %s', lpad(student_number::text, 2, '0')),
+  DATE '2018-01-01',
+  CASE WHEN student_number % 2 = 0 THEN 'F' ELSE 'M' END,
+  'COND-BF-NIS-' || lpad(student_number::text, 3, '0'),
+  student_number <= 26,
+  '12000000-0000-0000-0000-000000000001',
+  true
+FROM generate_series(1, 51) AS fixture(student_number);
+
+INSERT INTO public.matriculas(
+  id, aluno_id, turma_id, ano_letivo, situacao
+)
+SELECT
+  ('12000000-0000-0000-0000-' || lpad((200 + student_number)::text, 12, '0'))::uuid,
+  ('12000000-0000-0000-0000-' || lpad((100 + student_number)::text, 12, '0'))::uuid,
+  '12000000-0000-0000-0000-000000000026',
+  2026,
+  CASE WHEN student_number = 51 THEN 'cancelada' ELSE 'ativa' END
+FROM generate_series(1, 51) AS fixture(student_number);
+
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 50
+   FROM public.get_attendance_conditionality(
+     DATE '2026-08-01', DATE '2026-08-31', NULL,
+     '12000000-0000-0000-0000-000000000026'
+   )),
+  'beneficiary fixture contains exactly 50 active enrollment rows'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) FILTER (WHERE is_bolsa_familia) = 26
+   FROM public.get_attendance_conditionality(
+     DATE '2026-08-01', DATE '2026-08-31', NULL,
+     '12000000-0000-0000-0000-000000000026'
+   )),
+  'beneficiary selection uses bolsa_familia=true: 26 of 50 active rows'
+);
+SELECT pg_temp.assert_true(
+  (SELECT is_bolsa_familia = false
+   FROM public.get_attendance_conditionality(
+     DATE '2026-08-01', DATE '2026-08-31', NULL,
+     '12000000-0000-0000-0000-000000000026'
+   )
+   WHERE nis = 'COND-BF-NIS-027'),
+  'an active student with NIS but bolsa_familia=false stays outside selection'
+);
+SELECT pg_temp.assert_true(
+  (SELECT NOT EXISTS (
+     SELECT 1
+     FROM public.get_attendance_conditionality(
+       DATE '2026-08-01', DATE '2026-08-31', NULL,
+       '12000000-0000-0000-0000-000000000026'
+     )
+     WHERE nis = 'COND-BF-NIS-051'
+   )),
+  'a bolsa_familia student with an inactive matrícula stays outside selection'
+);
+
+-- ---------------------------------------------------------------------------
 -- Legal floors and municipal margins through the canonical read model
 -- ---------------------------------------------------------------------------
 SELECT pg_temp.assert_true(
@@ -431,19 +515,19 @@ SELECT pg_temp.assert_true(
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','12000000-0000-0000-0000-000000000010',true);
 SELECT pg_temp.assert_true(
-  (SELECT count(*) = 4
+  (SELECT count(*) = 54
    FROM public.get_attendance_conditionality(
      DATE '2026-08-01', DATE '2026-08-31', NULL, NULL
    )),
-  'municipal secretariat reads all scoped municipality rows through the RPC'
+  'municipal secretariat reads all active scoped municipality rows through the RPC'
 );
 SELECT set_config('request.jwt.claim.sub','12000000-0000-0000-0000-000000000011',true);
 SELECT pg_temp.assert_true(
-  (SELECT count(*) = 3
+  (SELECT count(*) = 53
    FROM public.get_attendance_conditionality(
      DATE '2026-08-01', DATE '2026-08-31', NULL, NULL
    )),
-  'school teacher reads only the own school rows through the RPC'
+  'school teacher reads only the own school active rows through the RPC'
 );
 
 RESET ROLE;
