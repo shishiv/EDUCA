@@ -29,6 +29,7 @@ import {
   MessageSquare,
   Loader2,
   Save,
+  ShieldAlert,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -57,6 +58,7 @@ import {
 } from '@/components/ui/form'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   lessonContentFormSchema,
   type LessonContentFormData,
@@ -82,6 +84,31 @@ interface NewLessonModalProps {
   onSuccess?: () => void
 }
 
+interface ConteudoAulaInsert {
+  sessao_id: string
+  tema: string
+  objetivo: string
+  habilidades_bncc: string[]
+  metodologia: string | null
+  recursos: string | null
+  observacoes: string | null
+}
+
+interface ConteudoAulaClient {
+  from(table: 'conteudo_aula'): {
+    insert(values: ConteudoAulaInsert): Promise<{ error: { code: string } | null }>
+  }
+}
+
+/** Explains why an authorized diary write did not complete. */
+function getLessonCreationErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42501') {
+    return 'Seu perfil pode apenas visualizar o diário. Professores e diretores registram aulas.'
+  }
+
+  return 'Não foi possível criar a aula. Tente novamente.'
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -98,6 +125,8 @@ export function NewLessonModal({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const canCreateLesson = userProfile?.tipo_usuario === 'professor' || userProfile?.tipo_usuario === 'diretor'
 
   // Form setup
   const form = useForm({
@@ -128,6 +157,7 @@ export function NewLessonModal({
         education_level: educationLevel,
       } as LessonContentFormData)
       setSelectedDate(new Date())
+      setSubmissionError(null)
     }
   }, [open, form, educationLevel])
 
@@ -142,8 +172,14 @@ export function NewLessonModal({
       return
     }
 
+    if (!canCreateLesson) {
+      setSubmissionError('Seu perfil pode apenas visualizar o diário. Professores e diretores registram aulas.')
+      return
+    }
+
     try {
       setIsSubmitting(true)
+      setSubmissionError(null)
 
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
@@ -212,7 +248,7 @@ export function NewLessonModal({
         observacoes: formData.observacoes?.trim() || null,
       }
 
-      const { error: contentError } = await (supabase as any)
+      const { error: contentError } = await (supabase as unknown as ConteudoAulaClient)
         .from('conteudo_aula')
         .insert(contentInput)
 
@@ -243,11 +279,13 @@ export function NewLessonModal({
 
       onSuccess?.()
     } catch (err) {
+      const message = getLessonCreationErrorMessage(err)
       logger.error('Error creating lesson:', err as Error, {
         feature: 'diario',
         action: 'create_lesson_error',
       })
-      toast.error('Erro ao criar aula. Tente novamente.')
+      setSubmissionError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -270,9 +308,25 @@ export function NewLessonModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-180px)] pr-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!canCreateLesson ? (
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Perfil com acesso de visualização</AlertTitle>
+            <AlertDescription>
+              Seu perfil pode apenas visualizar o diário. Professores e diretores registram aulas.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <ScrollArea className="max-h-[calc(90vh-180px)] pr-4">
+            {submissionError && (
+              <Alert variant="destructive" className="mb-4">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Não foi possível registrar a aula</AlertTitle>
+                <AlertDescription>{submissionError}</AlertDescription>
+              </Alert>
+            )}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Date Selector */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Data da Aula</Label>
@@ -503,9 +557,10 @@ export function NewLessonModal({
                   </FormItem>
                 )}
               />
-            </form>
-          </Form>
-        </ScrollArea>
+              </form>
+            </Form>
+          </ScrollArea>
+        )}
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button
@@ -519,7 +574,7 @@ export function NewLessonModal({
           <Button
             type="submit"
             onClick={form.handleSubmit(onSubmit)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !canCreateLesson}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isSubmitting ? (

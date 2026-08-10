@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 
 export interface ComplianceWarning {
   id: string
@@ -14,7 +15,7 @@ export interface ComplianceWarning {
   count?: number
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -37,9 +38,9 @@ export async function GET(request: NextRequest) {
 
     const warnings: ComplianceWarning[] = []
     const now = new Date()
+    const today = getTodaySaoPaulo()
 
     // WARNING 1: Check for open attendance sessions nearing auto-lock time
-    const today = now.toISOString().split('T')[0]
     const { data: openSessions } = await supabase
       .from('sessoes_aula')
       .select('id, turma_id, aberta_em')
@@ -68,11 +69,83 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // WARNING 2 and 3 (Bolsa Família and INEP attendance thresholds) were
-    // previously backed by rpc('get_students_below_attendance_threshold'), a
-    // function absent from the committed schema. At runtime PostgREST rejected
-    // it, so these warnings never rendered; the calls are removed until a real
-    // threshold function or query exists in supabase/migrations.
+    // WARNING 2: Bolsa Família attendance below the legal threshold.
+    // NIS alone is not a benefit enrollment, so this starts from the explicit
+    // bolsa_familia flag on active enrollments and canonical session records.
+    if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
+      let bolsaMatriculasQuery = supabase
+        .from('matriculas')
+        .select(`
+          id,
+          alunos!inner(
+            bolsa_familia
+          ),
+          turmas!inner(
+            escola_id
+          )
+        `)
+        .eq('situacao', 'ativa')
+
+      if (userProfile.tipo_usuario !== 'admin' && userProfile.escola_id) {
+        bolsaMatriculasQuery = bolsaMatriculasQuery.eq('turmas.escola_id', userProfile.escola_id)
+      }
+
+      const { data: matriculasBolsa, error: matriculasBolsaError } = await bolsaMatriculasQuery
+
+      if (matriculasBolsaError) {
+        logger.error('Error fetching Bolsa Familia enrollments for compliance warnings', matriculasBolsaError)
+      } else {
+        const bolsaMatriculaIds = (matriculasBolsa ?? [])
+          .filter(matricula => matricula.alunos?.bolsa_familia === true)
+          .map(matricula => matricula.id)
+
+        if (bolsaMatriculaIds.length > 0) {
+          const startOfMonth = `${today.slice(0, 7)}-01`
+          const { data: frequenciasBolsa, error: frequenciasBolsaError } = await supabase
+            .from('frequencia')
+            .select('matricula_id, presente, status_presenca')
+            .in('matricula_id', bolsaMatriculaIds)
+            .not('sessao_id', 'is', null)
+            .gte('data_aula', startOfMonth)
+            .lte('data_aula', today)
+
+          if (frequenciasBolsaError) {
+            logger.error('Error fetching Bolsa Familia attendance for compliance warnings', frequenciasBolsaError)
+          } else {
+            const attendanceByMatricula = new Map<string, { total: number; presentes: number }>()
+            for (const frequencia of frequenciasBolsa ?? []) {
+              if (frequencia.status_presenca === 'NAO_MARCADO') continue
+
+              const attendance = attendanceByMatricula.get(frequencia.matricula_id) ?? {
+                total: 0,
+                presentes: 0,
+              }
+              attendance.total += 1
+              if (frequencia.presente) attendance.presentes += 1
+              attendanceByMatricula.set(frequencia.matricula_id, attendance)
+            }
+
+            const atRiskCount = bolsaMatriculaIds.filter(matriculaId => {
+              const attendance = attendanceByMatricula.get(matriculaId)
+              return Boolean(attendance && attendance.total > 0 && (attendance.presentes / attendance.total) * 100 < 80)
+            }).length
+
+            if (atRiskCount > 0) {
+              warnings.push({
+                id: 'bolsa-familia-baixa-frequencia',
+                title: 'Alerta Bolsa Família',
+                message: `${atRiskCount} aluno(s) do Bolsa Família estão com frequência abaixo de 80% neste mês.`,
+                type: 'critical',
+                icon: 'AlertTriangle',
+                actionUrl: '/relatorios/bolsa-familia',
+                actionText: 'Ver relatório Bolsa Família',
+                count: atRiskCount,
+              })
+            }
+          }
+        }
+      }
+    }
 
     // WARNING 4: Educacenso deadline approaching (if within 30 days)
     const educacensoDeadline = new Date('2025-07-31')
