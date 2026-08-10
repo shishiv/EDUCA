@@ -32,6 +32,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { AttendanceSummary } from '@/types/diario-classe'
+import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // Types
@@ -107,8 +108,9 @@ export function FrequencyControls({
 
   // Calculate attendance rate color
   const getAttendanceRateColor = (rate: number) => {
-    if (rate >= 80) return 'text-green-600'
-    if (rate >= 75) return 'text-yellow-600'
+    const status = getFrequencyPolicyStatus(rate)
+    if (status === 'CONFORME') return 'text-green-600'
+    if (status === 'ATENCAO') return 'text-yellow-600'
     return 'text-red-600'
   }
 

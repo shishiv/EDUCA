@@ -6,6 +6,7 @@
  */
 
 import { logger } from '@/lib/logger'
+import { CONFORMIDADE, type FrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import {
   filterBolsaFamiliaConditionality,
   getAttendanceConditionality,
@@ -23,7 +24,7 @@ export interface BolsaFamiliaFilters extends AttendanceConditionalityFilters {
   onlyAtRisk?: boolean
 }
 
-export type BolsaFamiliaStatus = 'CONFORME' | 'ALERTA' | 'CRITICO'
+export type BolsaFamiliaStatus = FrequencyPolicyStatus
 
 export interface BolsaFamiliaStudent {
   matriculaId: string
@@ -86,7 +87,7 @@ export interface BolsaFamiliaReport {
   resumo: {
     totalAlunosBolsaFamilia: number
     conformes: number
-    emAlerta: number
+    emAtencaoPreventiva: number
     emRiscoCritico: number
     percentualConformidade: number
     condicionalidadesLegaisCriticas: number
@@ -109,11 +110,12 @@ export interface BolsaFamiliaReportResult {
 /** Resolves a display status from a municipality margin supplied by PostgreSQL. */
 export function calculateBolsaFamiliaStatus(
   percentual: number,
-  criticalPercent: number,
-  warningPercent: number,
+  criticalPercent?: number,
+  warningPercent?: number,
 ): BolsaFamiliaStatus {
-  if (percentual < criticalPercent) return 'CRITICO'
-  if (percentual < warningPercent) return 'ALERTA'
+  const legalCriticalPercent = criticalPercent ?? CONFORMIDADE
+  if (percentual < legalCriticalPercent) return 'CRITICO'
+  if (warningPercent !== undefined && percentual < warningPercent) return 'ATENCAO'
   return 'CONFORME'
 }
 
@@ -125,7 +127,7 @@ export function calculateFaltasParaCritico(
   presencas: number,
   faltas: number,
   atestados: number,
-  criticalPercent: number,
+  criticalPercent = CONFORMIDADE,
 ): number {
   const presentDays = presencas + atestados
   const total = presencas + faltas + atestados
@@ -140,9 +142,10 @@ export function calculateFaltasParaCritico(
 }
 
 function resolveDisplayStatus(row: AttendanceConditionalityRow): BolsaFamiliaStatus {
+  if (row.condicionalidade_legal_status === 'CRITICO') return 'CRITICO'
   if (row.margem_municipal_status === 'CRITICO') return 'CRITICO'
   if (row.margem_municipal_status === 'CONFORME') return 'CONFORME'
-  return 'ALERTA'
+  return 'ATENCAO'
 }
 
 function toMunicipalMarginResolution(
@@ -251,8 +254,11 @@ export async function getBolsaFamiliaStudents(
       ).values(),
     )
 
-    const conformes = students.filter((student) => student.status === 'CONFORME').length
-    const emAlerta = students.filter((student) => student.status === 'ALERTA').length
+    const conformes = students.filter((student) => (
+      student.statusLegal !== 'CRITICO'
+      && student.statusLegal !== 'SEM_DADOS'
+    )).length
+    const emAtencaoPreventiva = students.filter((student) => student.status === 'ATENCAO').length
     const emRiscoCritico = students.filter((student) => student.status === 'CRITICO').length
     const condicionalidadesLegaisCriticas = students.filter(
       (student) => student.statusLegal === 'CRITICO',
@@ -269,7 +275,7 @@ export async function getBolsaFamiliaStudents(
       resumo: {
         totalAlunosBolsaFamilia: students.length,
         conformes,
-        emAlerta,
+        emAtencaoPreventiva,
         emRiscoCritico,
         percentualConformidade: students.length > 0
           ? Math.round((conformes / students.length) * 100)
@@ -288,7 +294,7 @@ export async function getBolsaFamiliaStudents(
       metadata: {
         total: students.length,
         conformes,
-        emAlerta,
+        emAtencaoPreventiva,
         emRiscoCritico,
         condicionalidadesLegaisCriticas,
       },
@@ -321,7 +327,7 @@ export async function getBolsaFamiliaSummary(
       escolaNome: string
       total: number
       conformes: number
-      emAlerta: number
+      emAtencaoPreventiva: number
       emRiscoCritico: number
       percentualConformidade: number
     }>
@@ -340,7 +346,7 @@ export async function getBolsaFamiliaSummary(
     escolaNome: string
     total: number
     conformes: number
-    emAlerta: number
+    emAtencaoPreventiva: number
     emRiscoCritico: number
   }>()
 
@@ -350,14 +356,14 @@ export async function getBolsaFamiliaSummary(
       escolaNome: student.escolaNome,
       total: 0,
       conformes: 0,
-      emAlerta: 0,
+      emAtencaoPreventiva: 0,
       emRiscoCritico: 0,
     }
 
     school.total++
-    if (student.status === 'CONFORME') school.conformes++
-    else if (student.status === 'ALERTA') school.emAlerta++
-    else school.emRiscoCritico++
+    if (student.statusLegal !== 'CRITICO' && student.statusLegal !== 'SEM_DADOS') school.conformes++
+    if (student.status === 'ATENCAO') school.emAtencaoPreventiva++
+    if (student.status === 'CRITICO') school.emRiscoCritico++
     schoolMap.set(student.escolaId, school)
   }
 

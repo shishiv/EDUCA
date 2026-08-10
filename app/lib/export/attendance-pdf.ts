@@ -152,9 +152,9 @@ export function generateBolsaFamiliaReportPDF(
     'Resumo de Conformidade',
     [
       { label: 'Total Bolsa Família', value: report.resumo.totalAlunosBolsaFamilia, color: [219, 234, 254] },
-      { label: 'Conformes na margem municipal', value: report.resumo.conformes, color: [220, 252, 231] },
-      { label: 'Em alerta municipal', value: report.resumo.emAlerta, color: [254, 243, 199] },
-      { label: 'Críticos na margem municipal', value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
+      { label: 'Conformidade legal atendida', value: report.resumo.conformes, color: [220, 252, 231] },
+      { label: 'Atenção preventiva municipal', value: report.resumo.emAtencaoPreventiva, color: [254, 243, 199] },
+      { label: 'Não conformes legalmente', value: report.resumo.emRiscoCritico, color: [254, 226, 226] },
       { label: 'Condicionalidades legais críticas', value: report.resumo.condicionalidadesLegaisCriticas, color: [254, 226, 226] },
       { label: '% Conformidade municipal', value: `${report.resumo.percentualConformidade}%`, color: [219, 234, 254] },
     ],
@@ -217,7 +217,7 @@ export function generateBolsaFamiliaReportPDF(
       margemMunicipal: student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null
         ? `${student.margemMunicipalCriticaPercent}%/${student.margemMunicipalAlertaPercent}%`
         : 'não configurada',
-      status: student.status === 'CRITICO' ? 'CRÍTICO' : student.status === 'ALERTA' ? 'ALERTA' : 'OK',
+      status: student.status === 'CRITICO' ? 'NÃO CONFORME' : student.status === 'ATENCAO' ? 'ATENÇÃO PREVENTIVA' : 'CONFORME',
     }));
 
     currentY = addPDFTable(
@@ -238,7 +238,7 @@ export function generateBolsaFamiliaReportPDF(
   addPDFText(
     doc,
     'NOTA: Para fins de conformidade com o Programa Bolsa Família, atestados médicos (A) são contabilizados como presença. ' +
-    'O piso legal por faixa etária e a margem municipal de alerta precoce são resolvidos separadamente.',
+    'O piso legal por faixa etária e a margem municipal de alerta precoce são resolvidos separadamente. A condicionalidade legal e a atenção preventiva não são o mesmo sinal.',
     currentY,
     { fontSize: 8, fontStyle: 'italic', color: [100, 100, 100] }
   );

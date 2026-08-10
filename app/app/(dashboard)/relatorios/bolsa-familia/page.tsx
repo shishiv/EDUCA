@@ -452,8 +452,8 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.conformes}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Conformes na margem municipal</span>
-                    <span className="sm:hidden">OK</span>
+                    <span className="hidden sm:inline">Conformidade legal atendida</span>
+                    <span className="sm:hidden">Conforme</span>
                   </p>
                 </div>
                 <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 hidden xs:block" />
@@ -467,11 +467,11 @@ export default function BolsaFamiliaReportPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xl sm:text-2xl font-bold text-amber-600">
-                    {report.resumo.emAlerta}
+                    {report.resumo.emAtencaoPreventiva}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Em alerta municipal</span>
-                    <span className="sm:hidden">Alerta</span>
+                    <span className="hidden sm:inline">Atenção preventiva municipal</span>
+                    <span className="sm:hidden">Atenção</span>
                   </p>
                 </div>
                 <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 hidden xs:block" />
@@ -488,8 +488,8 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.emRiscoCritico}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Críticos na margem municipal</span>
-                    <span className="sm:hidden">Critico</span>
+                    <span className="hidden sm:inline">Não conformes legalmente</span>
+                    <span className="sm:hidden">Não conforme</span>
                   </p>
                 </div>
                 <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 hidden xs:block" />
@@ -579,7 +579,7 @@ export default function BolsaFamiliaReportPage() {
                           className={cn(
                             'min-h-[44px]',
                             aluno.status === 'CRITICO' && 'bg-red-50',
-                            aluno.status === 'ALERTA' && 'bg-amber-50'
+                            aluno.status === 'ATENCAO' && 'bg-amber-50'
                           )}
                         >
                           <TableCell className="font-medium text-xs sm:text-sm py-3">
@@ -598,7 +598,7 @@ export default function BolsaFamiliaReportPage() {
                             <span
                               className={cn(
                                 aluno.status === 'CRITICO' && 'text-red-600',
-                                aluno.status === 'ALERTA' && 'text-amber-600',
+                                aluno.status === 'ATENCAO' && 'text-amber-600',
                                 aluno.status === 'CONFORME' && 'text-green-600'
                               )}
                             >
@@ -622,9 +622,9 @@ export default function BolsaFamiliaReportPage() {
                                 <AlertTriangle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}
-                            {aluno.status === 'ALERTA' && (
+                            {aluno.status === 'ATENCAO' && (
                               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">Alerta</span>
+                                <span className="hidden sm:inline">Atenção</span>
                                 <AlertCircle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}
@@ -658,12 +658,13 @@ export default function BolsaFamiliaReportPage() {
               para o cálculo de conformidade do Bolsa Família.
             </p>
             <p>
-              <strong>Margens municipais:</strong>{' '}
+              <strong>Política e margem municipal:</strong>{' '}
               {report && report.resolucoesMargemMunicipal.length > 0
                 ? report.resolucoesMargemMunicipal.map((resolution) => (
                   `${resolution.criticalPercent ?? 'não configurada'}/${resolution.warningPercent ?? 'não configurada'}% (${resolution.source ?? 'origem não informada'}, precedência ${resolution.precedence ?? 'n/a'}, fallback ${resolution.fallback ? 'sim' : 'não'})`
                 )).join(', ')
                 : 'não configuradas'}
+              {' '}A condicionalidade legal e a margem municipal permanecem separadas.
             </p>
             {report && (
               <p className="text-gray-400">

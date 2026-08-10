@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Lock, Save } from 'lucide-react'
+import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // Types
@@ -59,6 +60,7 @@ export function ChamadaHeader({
   const attendanceRate = studentCount > 0
     ? Math.round((presentCount / studentCount) * 100)
     : 0
+  const attendanceStatus = getFrequencyPolicyStatus(attendanceRate)
 
   return (
     <div className="space-y-3">
@@ -100,9 +102,9 @@ export function ChamadaHeader({
             </p>
             <p className={cn(
               "text-sm font-medium tabular-nums",
-              attendanceRate >= 75 && "text-green-600",
-              attendanceRate >= 60 && attendanceRate < 75 && "text-amber-600",
-              attendanceRate < 60 && "text-red-600"
+              attendanceStatus === 'CONFORME' && "text-green-600",
+              attendanceStatus === 'ATENCAO' && "text-amber-600",
+              attendanceStatus === 'CRITICO' && "text-red-600"
             )}>
               {attendanceRate}% frequencia
             </p>

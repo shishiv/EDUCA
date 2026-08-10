@@ -31,6 +31,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 interface Student {
   id: string
@@ -70,14 +71,16 @@ function getInitials(nome: string): string {
 }
 
 function getFrequencyColor(percentage: number): string {
-  if (percentage >= 75) return 'text-green-600'
-  if (percentage >= 60) return 'text-amber-600'
+  const status = getFrequencyPolicyStatus(percentage)
+  if (status === 'CONFORME') return 'text-green-600'
+  if (status === 'ATENCAO') return 'text-amber-600'
   return 'text-red-600'
 }
 
 function getFrequencyBgColor(percentage: number): string {
-  if (percentage >= 75) return ''
-  if (percentage >= 60) return 'bg-amber-50'
+  const status = getFrequencyPolicyStatus(percentage)
+  if (status === 'CONFORME') return ''
+  if (status === 'ATENCAO') return 'bg-amber-50'
   return 'bg-red-50'
 }
 
@@ -610,7 +613,7 @@ export default function ChamadaPage() {
                 <div className="space-y-2">
                   {students.map(student => {
                     const record = attendance.get(student.matriculaId)
-                    const isAtRisk = student.frequencia < 75
+                    const isAtRisk = getFrequencyPolicyStatus(student.frequencia) !== 'CONFORME'
 
                     return (
                       <div
@@ -629,7 +632,13 @@ export default function ChamadaPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <p className="truncate font-medium text-foreground">{student.nome}</p>
-                              {isAtRisk && <Badge variant="outline" className="text-xs">Atenção</Badge>}
+                              {isAtRisk && (
+                                <Badge variant="outline" className="text-xs">
+                                  {getFrequencyPolicyStatus(student.frequencia) === 'CRITICO'
+                                    ? 'Não conformidade'
+                                    : 'Atenção preventiva'}
+                                </Badge>
+                              )}
                             </div>
                             <p className={cn('text-sm tabular-nums', getFrequencyColor(student.frequencia))}>
                               {student.frequencia.toFixed(1)}% de frequência

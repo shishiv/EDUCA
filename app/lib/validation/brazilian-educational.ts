@@ -12,6 +12,7 @@ import {
   validateCPF as validateCPFBase,
   formatCPF as formatCPFBase
 } from '@/lib/validation/brazilian'
+import { ATENCAO, CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 // ===== CPF VALIDATION =====
 // Re-export from brazilian.ts to maintain consistent validation logic
@@ -158,17 +159,17 @@ export function validateAttendancePercentage(percentage: number): {
   status: 'adequate' | 'warning' | 'critical'
   message: string
 } {
-  if (percentage >= 80) {
+  if (percentage >= ATENCAO) {
     return {
       isValid: true,
       status: 'adequate',
       message: 'Frequência adequada conforme LDB'
     }
-  } else if (percentage >= 75) {
+  } else if (percentage >= CONFORMIDADE) {
     return {
       isValid: true,
       status: 'warning',
-      message: 'Frequência no limite mínimo legal (75%)'
+      message: `Atenção preventiva municipal abaixo de ${ATENCAO}%; condicionalidade Bolsa Família atendida a partir de ${CONFORMIDADE}%`
     }
   } else {
     return {

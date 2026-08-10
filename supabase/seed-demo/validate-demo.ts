@@ -54,6 +54,7 @@ import {
   isPresentOn,
   LOW_ATTENDANCE_MATRICULA_ID,
 } from './attendance-generator'
+import { CONFORMIDADE } from '../../app/lib/attendance/attendance-policy'
 import {
   DEMO_CERTIFICATE_ACTIVITY_ID,
   DEMO_CERTIFICATE_EMITTER_ID,
@@ -84,7 +85,7 @@ const STATIC_COUNTS: Record<string, number> = {
 }
 
 const EXPECTED_SYNTHETIC_MARKER = 'SYNTHETIC-EDUCA-DEMO'
-const ALERT_THRESHOLD = 80
+const ALERT_THRESHOLD = CONFORMIDADE
 
 interface CheckResult {
   name: string

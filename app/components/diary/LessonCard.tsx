@@ -27,6 +27,7 @@ import { ptBR } from 'date-fns/locale'
 import { Calendar, Users, ChevronRight, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // Types
@@ -63,8 +64,9 @@ interface LessonCardProps {
  * Get attendance rate badge color with WCAG 2.1 AA contrast
  */
 function getRateColor(rate: number): string {
-  if (rate >= 80) return 'text-green-700 bg-green-100 border-green-200'
-  if (rate >= 75) return 'text-amber-700 bg-amber-100 border-amber-200'
+  const status = getFrequencyPolicyStatus(rate)
+  if (status === 'CONFORME') return 'text-green-700 bg-green-100 border-green-200'
+  if (status === 'ATENCAO') return 'text-amber-700 bg-amber-100 border-amber-200'
   return 'text-red-700 bg-red-100 border-red-200'
 }
 

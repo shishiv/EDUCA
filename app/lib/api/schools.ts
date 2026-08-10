@@ -2,6 +2,7 @@ import { BaseApiService } from './base'
 import { supabase, Tables, Escola } from '@/lib/supabase'
 import { SchoolFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
 import { auditApi } from './audit'
 
 export type SchoolWithDetails = Escola & {
@@ -263,15 +264,13 @@ export class SchoolsApiService extends BaseApiService {
 
       const matriculaIds = matriculasData?.map((m) => m.id) ?? []
 
-      const attendanceData = await supabase
-        .from('frequencia')
-        .select('status_presenca, presente, data_aula')
-        .in('matricula_id', matriculaIds.length > 0 ? matriculaIds : [''])
-        .gte('data_aula', `${currentMonth}-01`)
-        .lte('data_aula', `${currentMonth}-31`)
+      const attendanceData = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
+        startDate: `${currentMonth}-01`,
+        endDate: `${currentMonth}-31`,
+      })
 
-      const attendanceSummary = attendanceData.data?.reduce((acc, record) => {
-        const status = record.status_presenca || (record.presente ? 'presente' : 'falta')
+      const attendanceSummary = attendanceData.reduce((acc, record) => {
+        const status = record.statusPresenca || (record.presente ? 'presente' : 'falta')
         acc[status] = (acc[status] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {}

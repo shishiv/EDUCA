@@ -4,6 +4,7 @@ import { BaseApiService } from './base'
 import { supabase, Tables, Turma } from '@/lib/supabase'
 import { ClassFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
 
 export type ClassWithDetails = Turma & {
   escola?: Tables<'escolas'>
@@ -231,23 +232,18 @@ export class ClassesApiService extends BaseApiService {
       let totalAttendanceRecords = 0
 
       if (matriculaIds.length > 0) {
-        const { data: attendanceData, error: attendanceError } = await supabase
-          .from('frequencia')
-          .select('status_presenca, presente, data_aula, matricula_id')
-          .in('matricula_id', matriculaIds)
-          .gte('data_aula', `${currentMonth}-01`)
-          .lte('data_aula', `${currentMonth}-31`)
+        const attendanceData = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
+          startDate: `${currentMonth}-01`,
+          endDate: `${currentMonth}-31`,
+        })
 
-        if (attendanceError) throw attendanceError
-
-        const markedRecords = (attendanceData ?? []).filter(record => record.status_presenca !== 'NAO_MARCADO')
-        attendanceSummary = markedRecords.reduce((acc, record) => {
-          const status = record.status_presenca || (record.presente ? 'P' : 'F')
+        attendanceSummary = attendanceData.reduce((acc, record) => {
+          const status = record.statusPresenca || (record.presente ? 'P' : 'F')
           acc[status] = (acc[status] || 0) + 1
           return acc
         }, {} as Record<string, number>)
 
-        totalAttendanceRecords = markedRecords.length
+        totalAttendanceRecords = attendanceData.length
       }
 
       // Calculate attendance rate

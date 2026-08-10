@@ -5,8 +5,7 @@
  * OpenSpec Change: 2025-12-04-diario-de-classe
  * Task Group 4.2: Alerta Bolsa Família
  *
- * Displays alert for students at risk of losing Bolsa Família benefits
- * due to low attendance (< 80% threshold).
+ * Displays legal conditionality and resolved municipal early-warning status separately.
  */
 
 import { AlertTriangle, AlertCircle, CheckCircle, ExternalLink, User } from 'lucide-react';
@@ -44,14 +43,14 @@ function StatusBadge({ status }: { status: BolsaFamiliaStatus }) {
       return (
         <Badge variant="destructive" className="gap-1">
           <AlertTriangle className="h-3 w-3" />
-          Crítico
+          Não conforme
         </Badge>
       );
-    case 'ALERTA':
+    case 'ATENCAO':
       return (
         <Badge variant="outline" className="gap-1 border-amber-500 text-amber-700 bg-amber-50">
           <AlertCircle className="h-3 w-3" />
-          Alerta
+          Atenção preventiva
         </Badge>
       );
     case 'CONFORME':
@@ -230,7 +229,7 @@ export function BolsaFamiliaAlert({
 
   const atRisk = students.filter((student) => getOverallStatus(student) !== 'CONFORME');
   const criticos = atRisk.filter((student) => getOverallStatus(student) === 'CRITICO');
-  const emAlerta = atRisk.filter((student) => getOverallStatus(student) === 'ALERTA');
+  const emAtencao = atRisk.filter((student) => getOverallStatus(student) === 'ATENCAO');
   const displayStudents = atRisk.slice(0, maxItems);
   const resolvedMargins = Array.from(new Set(
     students
@@ -250,10 +249,10 @@ export function BolsaFamiliaAlert({
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            <CardTitle className="text-green-800">Bolsa Família: Sem Alertas</CardTitle>
+            <CardTitle className="text-green-800">Bolsa Família: Condicionalidade atendida</CardTitle>
           </div>
           <CardDescription className="text-green-700">
-            Todos os alunos do Bolsa Família estão acima da margem municipal resolvida.
+            Todos os alunos do Bolsa Família atendem à condicionalidade legal e estão acima da margem municipal resolvida.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -275,19 +274,24 @@ export function BolsaFamiliaAlert({
           <div className="flex gap-2">
             {criticos.length > 0 && (
               <Badge variant="destructive">
-                {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
+                {criticos.length} não conforme{criticos.length > 1 ? 's' : ''}
               </Badge>
             )}
-            {emAlerta.length > 0 && (
+            {emAtencao.length > 0 && (
               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                {emAlerta.length} em alerta
+                {emAtencao.length} em atenção preventiva
               </Badge>
             )}
           </div>
         </div>
         <CardDescription className={criticos.length > 0 ? 'text-red-700' : 'text-amber-700'}>
-          {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} com alerta legal ou municipal.
-          As duas resoluções aparecem separadas em cada registro.
+          {criticos.length > 0 && (
+            <span>{criticos.length} aluno{criticos.length > 1 ? 's' : ''} abaixo do piso legal ou da margem crítica resolvida. </span>
+          )}
+          {emAtencao.length > 0 && (
+            <span>{emAtencao.length} aluno{emAtencao.length > 1 ? 's' : ''} em atenção preventiva municipal, com a condicionalidade legal atendida. </span>
+          )}
+          <span>As duas resoluções aparecem separadas em cada registro.</span>
         </CardDescription>
       </CardHeader>
 
@@ -381,7 +385,7 @@ export function BolsaFamiliaAlert({
             className="w-full mt-4"
             onClick={onViewAll}
           >
-            Ver todos os {atRisk.length} alunos em risco
+            Ver todos os {atRisk.length} alunos em acompanhamento
           </Button>
         )}
 

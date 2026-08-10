@@ -21,6 +21,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { logger } from '@/lib/logger'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 interface Turma {
   id: string
@@ -367,7 +368,7 @@ export default function TurmaDetalhesPage() {
           <CardContent>
             <div className="flex items-center text-sm text-gray-600">
               <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-              {frequenciaStats.frequenciaMedia >= 75 ? 'Acima' : 'Abaixo'} da meta (75%)
+              {frequenciaStats.frequenciaMedia >= CONFORMIDADE ? 'Acima' : 'Abaixo'} da conformidade ({CONFORMIDADE}%)
             </div>
           </CardContent>
         </Card>

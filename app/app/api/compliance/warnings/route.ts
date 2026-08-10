@@ -6,7 +6,6 @@ import {
   filterBolsaFamiliaConditionality,
   getAttendanceConditionality,
   isLegalAttendanceRisk,
-  isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
 
 export interface ComplianceWarning {
@@ -84,37 +83,40 @@ export async function GET(_request: NextRequest) {
       escolaId: userProfile.escola_id ?? undefined,
     })
 
-    if (!conditionality.error) {
+    if (!conditionality.error && ['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
       const rows = filterBolsaFamiliaConditionality(conditionality.data)
       const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
-      const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
+      const municipalAttentionCount = rows.filter((row) => (
+        row.condicionalidade_legal_status !== 'CRITICO'
+        && row.margem_municipal_status === 'ALERTA'
+      )).length
 
       if (legalRiskCount > 0) {
         warnings.push({
           id: 'bolsa-familia-legal-conditionality',
-          title: 'Condicionalidade legal Bolsa Família',
-          message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
+          title: 'Não conformidade Bolsa Família',
+          message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária. A condicionalidade do benefício não foi atendida.`,
           type: 'critical',
           icon: 'AlertTriangle',
           actionUrl: '/relatorios/bolsa-familia',
-          actionText: 'Ver relatório',
+          actionText: 'Ver relatório Bolsa Família',
           count: legalRiskCount,
         })
       }
 
-      if (municipalRiskCount > 0) {
+      if (municipalAttentionCount > 0) {
         warnings.push({
           id: 'bolsa-familia-municipal-margin',
-          title: 'Margem municipal de alerta precoce',
-          message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
+          title: 'Atenção preventiva de frequência',
+          message: `${municipalAttentionCount} aluno(s) estão abaixo da margem municipal resolvida. A condicionalidade legal permanece separada.`,
           type: 'warning',
           icon: 'AlertCircle',
           actionUrl: '/relatorios/bolsa-familia',
-          actionText: 'Ver relatório',
-          count: municipalRiskCount,
+          actionText: 'Ver relatório Bolsa Família',
+          count: municipalAttentionCount,
         })
       }
-    } else {
+    } else if (conditionality.error) {
       logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
         feature: 'compliance-warnings',
         action: 'resolve_attendance_conditionality',

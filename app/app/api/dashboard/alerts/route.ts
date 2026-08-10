@@ -6,7 +6,6 @@ import {
   getAttendanceConditionality,
   filterBolsaFamiliaConditionality,
   isLegalAttendanceRisk,
-  isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
 
 export interface DashboardAlert {
@@ -66,7 +65,6 @@ export async function GET(_request: NextRequest) {
 
     const { data: turmas } = await turmasQuery
     const turmaIds = turmas?.map(t => t.id) || []
-    const visibleTurmaIds = new Set(turmaIds)
 
     if (turmaIds.length > 0) {
       // Get sessions done today
@@ -98,8 +96,8 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // 2. Resolve all Bolsa Família legal and municipality statuses from the
-    // canonical read model. No threshold is reconstructed in this route.
+    // 2. Resolve legal conditionality and municipal early-warning status from
+    // the canonical read model. Each signal remains a separate alert.
     const monthConditionality = await getAttendanceConditionality(supabase, {
       startDate: `${today.slice(0, 7)}-01`,
       endDate: today,
@@ -112,52 +110,38 @@ export async function GET(_request: NextRequest) {
         action: 'resolve_attendance_conditionality',
       })
     } else if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
-      const bolsaFamiliaRows = filterBolsaFamiliaConditionality(monthConditionality.data)
-      const atRiskRows = bolsaFamiliaRows.filter((row) => (
-        isMunicipalAttendanceRisk(row) || isLegalAttendanceRisk(row)
+      const rows = filterBolsaFamiliaConditionality(monthConditionality.data)
+      const criticalRows = rows.filter((row) => (
+        isLegalAttendanceRisk(row) || row.margem_municipal_status === 'CRITICO'
+      ))
+      const attentionRows = rows.filter((row) => (
+        !isLegalAttendanceRisk(row)
+        && row.margem_municipal_status === 'ALERTA'
       ))
 
-      if (atRiskRows.length > 0) {
-        const legalRiskCount = atRiskRows.filter(isLegalAttendanceRisk).length
-        const municipalRiskCount = atRiskRows.filter(isMunicipalAttendanceRisk).length
+      if (criticalRows.length > 0) {
         alerts.push({
-          id: 'baixa-frequencia-bf',
+          id: 'dashboard-bolsa-familia-nao-conforme',
           type: 'error',
-          title: 'Alerta Bolsa Família',
-          description: `${atRiskRows.length} aluno(s) com risco resolvido pelo modelo canônico` +
-            ` (${legalRiskCount} condicionalidade legal, ${municipalRiskCount} margem municipal)`,
+          title: 'Não conformidade Bolsa Família',
+          description: `${criticalRows.length} aluno(s) abaixo do piso legal ou da margem crítica resolvida.`,
           action: {
-            label: 'Ver relatório',
+            label: 'Ver conformidade Bolsa Família',
             href: '/relatorios/bolsa-familia',
           },
           priority: 1,
           createdAt: new Date().toISOString(),
         })
       }
-    }
 
-    // 3. Check today's attendance against the resolved municipality margin.
-    if (turmaIds.length > 0) {
-      const todayConditionality = await getAttendanceConditionality(supabase, {
-        startDate: today,
-        endDate: today,
-        escolaId: escolaFilter ?? undefined,
-      })
-      const rowsBelowMargin = todayConditionality.data.filter((row) => (
-        row.tem_dados_frequencia
-        && visibleTurmaIds.has(row.turma_id)
-        && row.is_bolsa_familia
-        && isMunicipalAttendanceRisk(row)
-      ))
-
-      if (rowsBelowMargin.length > 0) {
+      if (attentionRows.length > 0) {
         alerts.push({
-          id: 'frequencia-baixa',
+          id: 'dashboard-frequencia-atencao-preventiva',
           type: 'warning',
-          title: 'Frequência abaixo da margem municipal',
-          description: `${rowsBelowMargin.length} aluno(s) abaixo da margem municipal resolvida hoje.`,
+          title: 'Atenção preventiva de frequência',
+          description: `${attentionRows.length} aluno(s) abaixo da margem municipal resolvida, com condicionalidade legal atendida.`,
           action: {
-            label: 'Ver detalhes',
+            label: 'Ver atenção preventiva',
             href: '/relatorios/bolsa-familia',
           },
           priority: 2,
@@ -166,7 +150,7 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // 4. Info alert if no classes assigned (for professors)
+    // 3. Info alert if no classes assigned (for professors)
     if (userProfile.tipo_usuario === 'professor' && turmaIds.length === 0) {
       alerts.push({
         id: 'sem-turmas',

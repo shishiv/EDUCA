@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { usersApi } from './users'
 import { schoolsApi } from './schools'
 import { logger } from '@/lib/logger'
+import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
 
 export interface Report {
   id: string
@@ -99,21 +100,26 @@ export class ReportsApiService extends BaseApiService {
           break
 
         case 'frequencia':
-          // Get attendance statistics
-          const { count: totalFrequencia } = await supabase
-            .from('frequencia')
-            .select('*', { count: 'exact', head: true })
+          // Get attendance statistics from the canonical session-backed read.
+          const { data: attendanceMatriculas, error: attendanceMatriculasError } = await supabase
+            .from('matriculas')
+            .select('id')
+            .eq('situacao', 'ativa')
 
-          const { count: presentes } = await supabase
-            .from('frequencia')
-            .select('*', { count: 'exact', head: true })
-            .eq('presente', true)
+          if (attendanceMatriculasError) throw attendanceMatriculasError
+
+          const attendanceFacts = await loadCanonicalAttendanceFacts(
+            supabase,
+            (attendanceMatriculas ?? []).map((matricula) => matricula.id)
+          )
+          const totalFrequencia = attendanceFacts.length
+          const presentes = attendanceFacts.filter((fact) => fact.presente).length
 
           dados = {
-            total: totalFrequencia || 0,
-            presentes: presentes || 0,
-            ausentes: (totalFrequencia || 0) - (presentes || 0),
-            percentualPresenca: totalFrequencia ? ((presentes || 0) / totalFrequencia * 100).toFixed(2) : '0'
+            total: totalFrequencia,
+            presentes,
+            ausentes: totalFrequencia - presentes,
+            percentualPresenca: totalFrequencia ? (presentes / totalFrequencia * 100).toFixed(2) : '0'
           }
           titulo = 'Relatório de Frequência'
           descricao = 'Estatísticas de presença dos alunos'

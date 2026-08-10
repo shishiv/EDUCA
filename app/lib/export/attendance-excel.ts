@@ -217,12 +217,12 @@ export async function generateBolsaFamiliaReportExcel(
   styleHeaderRow(summaryHeaderRow, 'D97706');
 
   summarySheet.addRow(['Total Bolsa Família', report.resumo.totalAlunosBolsaFamilia]);
-  summarySheet.addRow(['Conformes na margem municipal', report.resumo.conformes]);
-  summarySheet.addRow(['Em alerta municipal', report.resumo.emAlerta]);
-  summarySheet.addRow(['Críticos na margem municipal', report.resumo.emRiscoCritico]);
+  summarySheet.addRow(['Conformidade legal atendida', report.resumo.conformes]);
+  summarySheet.addRow(['Atenção preventiva municipal', report.resumo.emAtencaoPreventiva]);
+  summarySheet.addRow(['Não conformes legalmente', report.resumo.emRiscoCritico]);
   summarySheet.addRow(['Condicionalidades legais críticas', report.resumo.condicionalidadesLegaisCriticas]);
   summarySheet.addRow(['Sem condicionalidade legal aplicável', report.resumo.semCondicionalidadeLegal]);
-  summarySheet.addRow(['% Conformidade municipal', `${report.resumo.percentualConformidade}%`]);
+  summarySheet.addRow(['% Condicionalidade legal atendida', `${report.resumo.percentualConformidade}%`]);
   for (const resolution of report.resolucoesMargemMunicipal) {
     summarySheet.addRow([
       `Resolução municipal ${resolution.municipalityId}`,
@@ -257,8 +257,8 @@ export async function generateBolsaFamiliaReportExcel(
 
   // Data rows
   studentsToShow.forEach((student, index) => {
-    const statusLabel = student.status === 'CRITICO' ? 'CRÍTICO' :
-                        student.status === 'ALERTA' ? 'ALERTA' : 'OK';
+    const statusLabel = student.status === 'CRITICO' ? 'NÃO CONFORME' :
+                        student.status === 'ATENCAO' ? 'ATENÇÃO PREVENTIVA' : 'CONFORME';
 
     const row = studentsSheet.addRow([
       student.nome,
@@ -286,7 +286,7 @@ export async function generateBolsaFamiliaReportExcel(
           fgColor: { argb: 'FFFEE2E2' },
         };
       });
-    } else if (student.status === 'ALERTA') {
+    } else if (student.status === 'ATENCAO') {
       row.eachCell((cell) => {
         cell.fill = {
           type: 'pattern',
@@ -309,7 +309,7 @@ export async function generateBolsaFamiliaReportExcel(
   const marginSummary = report.resolucoesMargemMunicipal.map((resolution) =>
     `${resolution.municipalityId}: crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}%, origem ${resolution.source ?? 'não informada'}`,
   ).join(' | ')
-  studentsSheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado (conta como presença).']);
+  studentsSheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado (conta como presença). Não conformidade = piso legal ou margem crítica; atenção = margem municipal.']);
   studentsSheet.addRow([`Margens municipais resolvidas: ${marginSummary || 'não configuradas'}`]);
   studentsSheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 

@@ -13,6 +13,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { StatusPresenca } from '@/types/diario-classe';
 import { logger } from '@/lib/logger';
+import {
+  loadCanonicalAttendanceFacts,
+  loadCanonicalAttendanceSummaries,
+  summarizeCanonicalAttendanceFacts,
+} from '@/lib/api/canonical-attendance-facts';
+import {
+  CONFORMIDADE,
+  type FrequencyPolicyStatus,
+} from '@/lib/attendance/attendance-policy';
+
+export { calculateAttendancePercentage } from '@/lib/attendance/attendance-calculations';
 
 // ============================================================================
 // TYPES
@@ -21,7 +32,8 @@ import { logger } from '@/lib/logger';
 export interface AttendanceReportFilters {
   startDate: string;
   endDate: string;
-  riskThreshold?: number; // Default: 80
+  /** Kept as an explicit report filter, with the canonical policy as default. */
+  riskThreshold?: number;
 }
 
 export interface StudentAttendanceReport {
@@ -60,6 +72,7 @@ export interface ClassAttendanceReport {
     totalAulas: number;
     percentual: number;
     emRisco: boolean;
+    status: FrequencyPolicyStatus;
   }>;
   periodo: {
     inicio: string;
@@ -90,59 +103,6 @@ export interface ReportResult<T> {
 // HELPER FUNCTIONS
 // ============================================================================
 
-/**
- * Calculate attendance percentage
- * Attestados (A) count as present for Brazilian educational compliance
- *
- * @param presencas - Number of P (present) days
- * @param faltas - Number of F (absent) days
- * @param atestados - Number of A (excused) days
- * @returns Percentage (0-100) rounded to nearest integer
- */
-export function calculateAttendancePercentage(
-  presencas: number,
-  faltas: number,
-  atestados: number
-): number {
-  const total = presencas + faltas + atestados;
-  if (total === 0) return 0;
-
-  // Attestados count as present for Bolsa Família compliance
-  const presentDays = presencas + atestados;
-  const percentage = (presentDays / total) * 100;
-
-  return Math.round(percentage);
-}
-
-/**
- * Count attendance status from records
- */
-function countAttendanceStatus(records: Array<{ status_presenca: StatusPresenca | null }>) {
-  let presencas = 0;
-  let faltas = 0;
-  let atestados = 0;
-
-  for (const record of records) {
-    switch (record.status_presenca) {
-      case 'P':
-        presencas++;
-        break;
-      case 'F':
-        faltas++;
-        break;
-      case 'A':
-        atestados++;
-        break;
-      default:
-        // null or unknown status - count as absence
-        faltas++;
-        break;
-    }
-  }
-
-  return { presencas, faltas, atestados, total: records.length };
-}
-
 // ============================================================================
 // REPORT GENERATION FUNCTIONS
 // ============================================================================
@@ -171,41 +131,30 @@ export async function generateStudentAttendanceReport(
       }
     });
 
-    // Fetch attendance records for the student
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('frequencia')
-      .select('status_presenca, data_aula')
-      .eq('matricula_id', matriculaId)
-      .gte('data_aula', filters.startDate)
-      .lte('data_aula', filters.endDate)
-      .order('data_aula', { ascending: true });
+    const records = await loadCanonicalAttendanceFacts(supabase, [matriculaId], {
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+    });
+    const summary = summarizeCanonicalAttendanceFacts(records, [matriculaId]).get(matriculaId);
 
-    if (attendanceError) {
-      logger.error('Failed to fetch attendance records', attendanceError.message, {
-        feature: 'attendance-reports',
-        action: 'fetch_attendance'
-      });
-      return { data: null, error: attendanceError.message };
+    if (!summary) {
+      return { data: null, error: 'Não foi possível calcular a frequência' };
     }
-
-    const records = attendanceData || [];
-    const { presencas, faltas, atestados, total } = countAttendanceStatus(records);
-    const percentual = calculateAttendancePercentage(presencas, faltas, atestados);
 
     const report: StudentAttendanceReport = {
       matriculaId,
-      presencas,
-      faltas,
-      atestados,
-      totalAulas: total,
-      percentual,
+      presencas: summary.presencas,
+      faltas: summary.faltas,
+      atestados: summary.atestados,
+      totalAulas: summary.total,
+      percentual: summary.percentual,
       periodo: {
         inicio: filters.startDate,
         fim: filters.endDate,
       },
       detalhes: records.map((r) => ({
-        data: r.data_aula,
-        status: r.status_presenca,
+        data: r.dataAula,
+        status: r.statusPresenca as StatusPresenca | null,
       })),
     };
 
@@ -214,8 +163,8 @@ export async function generateStudentAttendanceReport(
       action: 'student_report_complete',
       metadata: {
         matriculaId,
-        total,
-        percentual,
+        total: summary.total,
+        percentual: summary.percentual,
       }
     });
 
@@ -244,7 +193,7 @@ export async function generateClassAttendanceReport(
   filters: AttendanceReportFilters
 ): Promise<ReportResult<ClassAttendanceReport>> {
   try {
-    const riskThreshold = filters.riskThreshold ?? 80;
+    const riskThreshold = filters.riskThreshold ?? CONFORMIDADE;
 
     logger.info('Generating class attendance report', {
       feature: 'attendance-reports',
@@ -288,7 +237,7 @@ export async function generateClassAttendanceReport(
       return { data: null, error: 'Turma não encontrada' };
     }
 
-    const matriculaIds = turmaData.matriculas?.map((m: any) => m.id) || [];
+    const matriculaIds = turmaData.matriculas?.map((m) => m.id) || [];
 
     if (matriculaIds.length === 0) {
       // No students enrolled
@@ -308,33 +257,11 @@ export async function generateClassAttendanceReport(
       return { data: emptyReport, error: null };
     }
 
-    // Fetch attendance for all students
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('frequencia')
-      .select('matricula_id, status_presenca, data_aula')
-      .in('matricula_id', matriculaIds)
-      .gte('data_aula', filters.startDate)
-      .lte('data_aula', filters.endDate)
-      .order('data_aula', { ascending: true });
-
-    if (attendanceError) {
-      logger.error('Failed to fetch attendance records', attendanceError.message, {
-        feature: 'attendance-reports',
-        action: 'fetch_attendance'
-      });
-      return { data: null, error: attendanceError.message };
-    }
-
-    // Group attendance by student
-    const attendanceByStudent: Record<string, Array<{ status_presenca: StatusPresenca | null }>> = {};
-    for (const record of attendanceData || []) {
-      if (!attendanceByStudent[record.matricula_id]) {
-        attendanceByStudent[record.matricula_id] = [];
-      }
-      attendanceByStudent[record.matricula_id].push({
-        status_presenca: record.status_presenca,
-      });
-    }
+    const attendanceByStudent = await loadCanonicalAttendanceSummaries(
+      supabase,
+      matriculaIds,
+      { startDate: filters.startDate, endDate: filters.endDate }
+    );
 
     // Calculate attendance for each student
     const students: ClassAttendanceReport['students'] = [];
@@ -343,17 +270,16 @@ export async function generateClassAttendanceReport(
     let alunosEmRisco = 0;
 
     for (const matricula of turmaData.matriculas || []) {
-      const records = attendanceByStudent[matricula.id] || [];
-      const { presencas, faltas, atestados, total } = countAttendanceStatus(records);
-      const percentual = calculateAttendancePercentage(presencas, faltas, atestados);
-      const emRisco = percentual < riskThreshold;
+      const summary = attendanceByStudent.get(matricula.id);
+      if (!summary) continue;
+      const emRisco = summary.percentual < riskThreshold;
 
       if (emRisco) {
         alunosEmRisco++;
       }
 
-      if (total > 0) {
-        totalPercentage += percentual;
+      if (summary.total > 0) {
+        totalPercentage += summary.percentual;
         studentsWithData++;
       }
 
@@ -364,12 +290,13 @@ export async function generateClassAttendanceReport(
         matriculaId: matricula.id,
         alunoId: matricula.aluno_id,
         nome: alunoData?.nome_completo || 'Nome não disponível',
-        presencas,
-        faltas,
-        atestados,
-        totalAulas: total,
-        percentual,
+        presencas: summary.presencas,
+        faltas: summary.faltas,
+        atestados: summary.atestados,
+        totalAulas: summary.total,
+        percentual: summary.percentual,
         emRisco,
+        status: summary.status,
       });
     }
 
@@ -430,7 +357,7 @@ export async function getStudentsAtRisk(
   filters: AttendanceReportFilters
 ): Promise<ReportResult<{ studentsAtRisk: StudentAtRiskReport[]; total: number }>> {
   try {
-    const riskThreshold = filters.riskThreshold ?? 80;
+    const riskThreshold = filters.riskThreshold ?? CONFORMIDADE;
 
     logger.info('Getting students at risk', {
       feature: 'attendance-reports',
@@ -475,50 +402,27 @@ export async function getStudentsAtRisk(
       return { data: null, error: 'Turma não encontrada' };
     }
 
-    const matriculaIds = turmaData.matriculas?.map((m: any) => m.id) || [];
+    const matriculaIds = turmaData.matriculas?.map((m) => m.id) || [];
 
     if (matriculaIds.length === 0) {
       return { data: { studentsAtRisk: [], total: 0 }, error: null };
     }
 
-    // Fetch attendance for all students
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('frequencia')
-      .select('matricula_id, status_presenca, data_aula')
-      .in('matricula_id', matriculaIds)
-      .gte('data_aula', filters.startDate)
-      .lte('data_aula', filters.endDate)
-      .order('data_aula', { ascending: true });
-
-    if (attendanceError) {
-      logger.error('Failed to fetch attendance records', attendanceError.message, {
-        feature: 'attendance-reports',
-        action: 'fetch_attendance'
-      });
-      return { data: null, error: attendanceError.message };
-    }
-
-    // Group attendance by student
-    const attendanceByStudent: Record<string, Array<{ status_presenca: StatusPresenca | null }>> = {};
-    for (const record of attendanceData || []) {
-      if (!attendanceByStudent[record.matricula_id]) {
-        attendanceByStudent[record.matricula_id] = [];
-      }
-      attendanceByStudent[record.matricula_id].push({
-        status_presenca: record.status_presenca,
-      });
-    }
+    const attendanceByStudent = await loadCanonicalAttendanceSummaries(
+      supabase,
+      matriculaIds,
+      { startDate: filters.startDate, endDate: filters.endDate }
+    );
 
     // Find students at risk
     const studentsAtRisk: StudentAtRiskReport[] = [];
 
     for (const matricula of turmaData.matriculas || []) {
-      const records = attendanceByStudent[matricula.id] || [];
-      const { presencas, faltas, atestados, total } = countAttendanceStatus(records);
-      const percentual = calculateAttendancePercentage(presencas, faltas, atestados);
+      const summary = attendanceByStudent.get(matricula.id);
+      if (!summary) continue;
 
       // Only include students below threshold
-      if (percentual < riskThreshold) {
+      if (summary.percentual < riskThreshold) {
         // Supabase nested select returns array for nested relations
         const alunosArray = matricula.alunos as unknown as Array<{ id: string; nome_completo: string; nis: string | null }> | null;
         const alunoData = alunosArray?.[0];
@@ -529,11 +433,11 @@ export async function getStudentsAtRisk(
           nis: alunoData?.nis || null,
           turmaId,
           turmaNome: turmaData.nome,
-          presencas,
-          faltas,
-          atestados,
-          totalAulas: total,
-          percentual,
+          presencas: summary.presencas,
+          faltas: summary.faltas,
+          atestados: summary.atestados,
+          totalAulas: summary.total,
+          percentual: summary.percentual,
         });
       }
     }
