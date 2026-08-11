@@ -11,6 +11,11 @@ import {
   isDemoSandboxEnabled,
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
+import {
+  createSupabaseUserLifecyclePorts,
+  startOrResumeUserRegistration,
+  UserLifecycleError,
+} from '@/lib/services/user-lifecycle'
 
 const invitationSchema = z.object({
   email: z.string().email().refine(email => email.endsWith('.invalid'), 'Synthetic invitation email required'),
@@ -86,61 +91,85 @@ export async function POST(request: Request) {
       if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
     }
 
-    const { data: priorInvitations, error: priorInvitationError } = await service
-      .from('pilot_user_invitations')
-      .select('id,email,invited_role,escola_id,created_at,accepted_at')
-      .eq('email', input.email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-    if (priorInvitationError) throw priorInvitationError
-    const priorInvitation = priorInvitations?.[0]
-    if (priorInvitation?.accepted_at) return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_ACCEPTED' }, { status: 409 })
-    if (priorInvitation) {
-      const { accepted_at: _acceptedAt, ...invitation } = priorInvitation
+    const redirectBase = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'
+    let registration
+    try {
+      registration = await startOrResumeUserRegistration(
+        createSupabaseUserLifecyclePorts({ serviceClient: service, sessionClient: service }),
+        {
+          email: input.email,
+          name: input.name,
+          role: input.role,
+          schoolId: input.schoolId,
+          invitedBy: actor.id,
+        },
+        `${redirectBase}/primeiro-acesso`,
+      )
+    } catch (error) {
+      if (error instanceof UserLifecycleError) return userLifecycleErrorResponse(error)
+      throw error
+    }
+
+    if (!registration.created) {
+      const invitation = publicInvitation(registration.invitation)
+      if (registration.resumed) {
+        return NextResponse.json({
+          invitation,
+          resumed: true,
+          registration: { status: 'incomplete', resumePath: '/primeiro-acesso' },
+        }, { status: 200 })
+      }
       return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_PENDING', invitation, emailResent: false }, { status: 409 })
     }
 
-    const redirectBase = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'
-    const { data: invited, error: inviteError } = await service.auth.admin.inviteUserByEmail(input.email, {
-      redirectTo: `${redirectBase}/primeiro-acesso`,
-      data: { synthetic: true, pilot_role: input.role, pilot_school_id: input.schoolId },
-    })
-    if (inviteError) {
-      const alreadyRegistered = /already (been )?registered|already exists|email_exists/i.test(inviteError.message)
-      if (alreadyRegistered) return NextResponse.json({ error: 'PILOT_INVITE_EMAIL_ALREADY_REGISTERED' }, { status: 409 })
-      throw inviteError
-    }
-    if (!invited.user) throw new Error('PILOT_INVITE_AUTH_USER_MISSING')
-
-    const { error: profileError } = await service.from('users').upsert({
-      id: invited.user.id,
-      nome: input.name,
-      email: input.email,
-      tipo_usuario: input.role,
-      escola_id: input.schoolId,
-      ativo: true,
-      primeiro_login: true,
-      senha_padrao: false,
-    }, { onConflict: 'id' })
-    if (profileError) throw profileError
-    const { data: invitation, error: invitationError } = await service.from('pilot_user_invitations').upsert({
-      auth_user_id: invited.user.id,
-      email: input.email,
-      invited_role: input.role,
-      escola_id: input.schoolId,
-      invited_by: actor.id,
-    }, { onConflict: 'auth_user_id' }).select('id,email,invited_role,escola_id,created_at').single()
-    if (invitationError) throw invitationError
-
     const supabase = await createClient()
     await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
-      p_event_type: 'user_invited', p_entity_type: 'user', p_entity_id: invited.user.id,
+      p_event_type: 'user_invited', p_entity_type: 'user', p_entity_id: registration.invitation.auth_user_id,
       p_escola_id: input.schoolId ?? undefined, p_metadata: { role: input.role },
     })
-    return NextResponse.json({ invitation }, { status: 201 })
+    return NextResponse.json({ invitation: publicInvitation(registration.invitation) }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_INVITE_INVALID', issues: error.issues.map(issue => ({ path: issue.path, code: issue.code })) }, { status: 400 })
     return pilotErrorResponse(error, { feature: 'pilot-invitations', fallbackCode: 'PILOT_INVITE_FAILED' })
+  }
+}
+
+function userLifecycleErrorResponse(error: UserLifecycleError): NextResponse {
+  if (error.code === 'AUTH_USER_ALREADY_REGISTERED') {
+    return NextResponse.json({ error: 'PILOT_INVITE_EMAIL_ALREADY_REGISTERED' }, { status: 409 })
+  }
+
+  if (error.code === 'INVITATION_ALREADY_ACCEPTED') {
+    return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_ACCEPTED' }, { status: 409 })
+  }
+
+  if (error.code === 'PROFILE_INCOMPLETE' || error.code === 'INVITATION_PERSISTENCE_FAILED') {
+    return NextResponse.json({
+      error: error.code === 'PROFILE_INCOMPLETE'
+        ? 'PILOT_INVITE_PROFILE_INCOMPLETE'
+        : 'PILOT_INVITE_REGISTRATION_INCOMPLETE',
+      completed: false,
+      identityPreserved: true,
+      registration: { status: 'incomplete', resumePath: error.resumePath },
+    }, { status: 503 })
+  }
+
+  return NextResponse.json({ error: 'PILOT_INVITE_FAILED' }, { status: 502 })
+}
+
+function publicInvitation(invitation: {
+  id: string
+  email: string
+  invited_role: string
+  escola_id: string | null
+  created_at?: string | null
+}) {
+  return {
+    id: invitation.id,
+    email: invitation.email,
+    invited_role: invitation.invited_role,
+    escola_id: invitation.escola_id,
+    ...(invitation.created_at ? { created_at: invitation.created_at } : {}),
   }
 }
 
