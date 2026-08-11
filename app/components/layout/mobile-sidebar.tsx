@@ -10,6 +10,7 @@ import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
+import { EscolaSelector } from '@/components/layout/escola-selector'
 import {
   GraduationCap,
   Users,
@@ -106,7 +107,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50 md:hidden" onClose={onClose}>
+      <Dialog as="div" className="relative z-50 lg:hidden" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="transition-opacity ease-linear duration-300"
@@ -166,6 +167,11 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       <p className="text-xs text-municipal-gray-500">Secretaria de Educação Municipal</p>
                     </div>
                   </div>
+                </div>
+
+                {/* School context remains available on small screens for multi-school users. */}
+                <div className="border-b border-gray-100 pb-4">
+                  <EscolaSelector />
                 </div>
 
                 {/* Navigation */}

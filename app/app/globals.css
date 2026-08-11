@@ -99,6 +99,21 @@
     padding: 8px;
   }
 
+  /* Shared app-shell spacing for the fixed mobile and tablet navigation. */
+  .mobile-content-padding {
+    padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom)));
+  }
+
+  .mobile-nav-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-content-padding {
+      padding-bottom: 1.5rem;
+    }
+  }
+
   /* Mobile layout optimizations */
   .mobile-layout {
     touch-action: manipulation;
