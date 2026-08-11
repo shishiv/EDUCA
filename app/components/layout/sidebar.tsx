@@ -44,9 +44,8 @@ import {
  * - Lexend font for header title
  *
  * Responsive behavior (LAY-05):
- * - Desktop (1200+): Full sidebar visible (260px width)
- * - Tablet (768-1199): Sidebar can be collapsed via button
- * - Mobile (<768): Sidebar hidden, MobileNav used instead
+ * - Desktop (1024+): Full sidebar visible (260px width)
+ * - Mobile and tablet (<1024): Sidebar hidden, drawer and MobileNav used instead
  */
 
 interface SidebarProps {
@@ -221,8 +220,8 @@ export function Sidebar({ className }: SidebarProps) {
       "relative flex-col bg-white border-r border-gray-200 sidebar-transition",
       // Width based on collapsed state
       collapsed ? "w-16" : "w-[260px]",
-      // Responsive: hidden on mobile (<768px), flex on tablet+
-      "hidden md:flex",
+      // Responsive: hidden below the desktop layout breakpoint
+      "hidden lg:flex",
       className
     )}>
       {/* Sidebar Header - EDUCA styled */}

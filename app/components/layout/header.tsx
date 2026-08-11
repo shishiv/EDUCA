@@ -111,7 +111,7 @@ export function Header() {
   return (
     <>
       {/* Header - EDUCA mockup: 70px height, white bg, border-bottom */}
-      <header className="hidden md:flex items-center justify-between px-8 h-[70px] bg-white border-b border-gray-200">
+      <header className="hidden lg:flex items-center justify-between px-8 h-[70px] bg-white border-b border-gray-200">
         {/* Header Left - Page title area (can be used by pages) */}
         <div className="flex items-center gap-6">
           {/* Page title placeholder - will be set by individual pages via context/props if needed */}
@@ -121,7 +121,7 @@ export function Header() {
         <div className="flex items-center gap-4">
           {/* Global Search Box - EDUCA mockup: LAY-02 requirement */}
           {/* Mockup: padding 10px 16px, bg gray-50, border 1px gray-200, border-radius 10px, width 280px */}
-          <div className="hidden lg:flex items-center gap-2.5 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-[10px] w-[280px]">
+          <div className="hidden xl:flex items-center gap-2.5 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-[10px] w-[280px]">
             <Search className="h-[18px] w-[18px] text-gray-400 flex-shrink-0" />
             <input
               type="text"

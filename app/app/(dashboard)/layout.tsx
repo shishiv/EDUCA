@@ -50,36 +50,36 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-[var(--educa-paper)]">
-      {/* Desktop Sidebar - Hidden on mobile */}
-      <div className="hidden md:block">
+      {/* Desktop Sidebar - Full navigation starts when the content can support it */}
+      <div className="hidden shrink-0 lg:block">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile and tablet sidebar overlay */}
       <MobileSidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Desktop Header - Hidden on mobile */}
-        <div className="hidden md:block">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Desktop Header - Full controls start at the desktop layout breakpoint */}
+        <div className="hidden shrink-0 lg:block">
           <Header />
         </div>
 
-        {/* Mobile Header - Visible on mobile only */}
-        <div className="md:hidden">
+        {/* Mobile and tablet Header */}
+        <div className="lg:hidden">
           <MobileHeader
             onMenuToggle={toggleMobileMenu}
             isMenuOpen={isMobileMenuOpen}
           />
         </div>
 
-        {/* Main content with bottom padding for mobile nav */}
-        <main id="main-content" className="flex-1 overflow-auto p-4 pb-20 sm:p-6 md:pb-6">
+        {/* Main content reserves space for the mobile and tablet navigation bar */}
+        <main id="main-content" className="mobile-content-padding min-h-0 min-w-0 flex-1 overflow-auto p-4 sm:p-6 lg:px-8 lg:py-6">
           {isDemoSandboxEnabled() && <DemoSandboxBanner />}
           {children}
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation - Visible on mobile only */}
+      {/* Mobile and tablet Bottom Navigation */}
       <MobileNav />
     </div>
   )

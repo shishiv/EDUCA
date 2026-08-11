@@ -11,8 +11,8 @@
  * - 10px border-radius per mockup styling
  *
  * Responsive (LAY-05):
- * - Mobile (<768px): Visible, hamburger menu pattern
- * - Tablet/Desktop (768+): Hidden, full sidebar used instead
+ * - Mobile and tablet (<1024px): Visible, hamburger menu pattern
+ * - Desktop (1024+): Hidden, full sidebar used instead
  */
 
 'use client'
@@ -112,9 +112,9 @@ export function MobileNav() {
         // Border and shadow
         'border-t border-gray-200 shadow-lg',
         // Safe area padding for iOS devices
-        'pb-safe',
-        // Hide on desktop (md and above)
-        'md:hidden'
+        'mobile-nav-safe-area',
+        // Hide on desktop (lg and above)
+        'lg:hidden'
       )}
       aria-label="Navegação principal mobile"
     >
@@ -133,7 +133,7 @@ export function MobileNav() {
                 // Touch-friendly size (minimum 44px per WCAG)
                 'min-w-[64px] min-h-[44px] px-2 py-1',
                 // Transition
-                'transition-all duration-200',
+                'relative transition-all duration-200',
                 // EDUCA mockup: 10px border-radius
                 'rounded-[10px]',
                 // Active/inactive states - EDUCA green styling
@@ -194,7 +194,7 @@ export function MobileNav() {
 export function MobileNavSpacer() {
   return (
     <div
-      className="h-16 md:hidden"
+      className="h-16 lg:hidden"
       aria-hidden="true"
     />
   )
