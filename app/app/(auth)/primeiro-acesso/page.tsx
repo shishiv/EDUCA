@@ -24,6 +24,7 @@ export default function PrimeiroAcessoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const demoSandbox = isDemoSandboxEnabled()
+  const resumeRegistration = searchParams.get('resume') === '1'
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -58,7 +59,11 @@ export default function PrimeiroAcessoPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Primeiro acesso</CardTitle>
-          <CardDescription>Defina sua senha individual. Contas compartilhadas não são permitidas.</CardDescription>
+          <CardDescription>
+            {resumeRegistration
+              ? 'Seu cadastro ainda não foi concluído. Defina sua senha para retomar com a mesma identidade.'
+              : 'Defina sua senha individual. Contas compartilhadas não são permitidas.'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={completeFirstAccess} className="space-y-4" aria-label="Primeiro acesso">

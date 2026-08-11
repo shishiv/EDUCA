@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -70,11 +69,11 @@ export default function LoginPage() {
             }
           })
 
-          setError('Perfil de usuário não encontrado. Contate o administrador.')
-          toast.error('Erro: Perfil não encontrado')
+          setError('Perfil de usuário não encontrado. A sessão foi preservada para retomar o cadastro.')
+          toast.error('Cadastro incompleto. Retomando o primeiro acesso.')
 
-          // Logout user since profile doesn't exist
-          await supabase.auth.signOut()
+          // Keep the real Auth session so the pending registration can resume.
+          router.replace('/primeiro-acesso?resume=1')
           setLoading(false)
           return
         }
@@ -92,9 +91,10 @@ export default function LoginPage() {
         // Only redirect after profile is confirmed to exist
         router.replace('/dashboard')
       }
-    } catch (err: any) {
-      logger.error('Login error', err as Error)
-      setError(err.message || 'Erro ao fazer login')
+    } catch (err: unknown) {
+      const loginError = err instanceof Error ? err : new Error(String(err))
+      logger.error('Login error', loginError)
+      setError(loginError.message || 'Erro ao fazer login')
       toast.error('Erro ao fazer login')
     } finally {
       setLoading(false)
