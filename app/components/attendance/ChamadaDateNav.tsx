@@ -89,14 +89,14 @@ export function ChamadaDateNav({
   const modifiers = getModifiers()
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex w-full flex-wrap items-center gap-2">
       {/* Previous day button */}
       <Button
         variant="outline"
         size="icon"
         onClick={handlePrevDay}
         aria-label="Dia anterior"
-        className="h-10 w-10"
+        className="h-10 w-10 shrink-0"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -107,13 +107,15 @@ export function ChamadaDateNav({
           <Button
             variant="outline"
             className={cn(
-              "min-w-[200px] justify-start text-left font-normal",
+              "min-w-0 flex-1 justify-start text-left font-normal sm:min-w-[200px] sm:flex-none",
               !currentDate && "text-muted-foreground"
             )}
             aria-label="Selecionar data"
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">
+              {format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
