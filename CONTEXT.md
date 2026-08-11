@@ -55,6 +55,7 @@ pnpm lint                # ESLint
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
 pnpm test:e2e:pilot                     # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
+pnpm test:e2e:pilot:canonical           # isolated local Supabase, synthetic gate/identity, named app, one canonical attendance E2E
 pnpm test:e2e:pilot:descriptive         # isolated synthetic seed, bounded descriptive-report PDF E2E
 pnpm test:database:attendance:conditionality  # isolated raw PostgreSQL legal floors, municipal margins, fallback, and RLS
 pnpm pilot:restore-test                 # local synthetic encrypted backup/restore rehearsal
@@ -65,6 +66,12 @@ pnpm demo:reset-check    # prove a same-anchor reset is idempotent on a live dat
 pnpm demo:verify-sql     # offline raw-PG validation of the demo seed (no Docker, no secrets)
 pnpm deploy              # safety-gated Vercel production deploy
 pnpm deploy:preview      # safety-gated Vercel preview deploy
+```
+
+The bounded R1 tripwire must fail after removing one local attendance RLS policy, then clean the isolated stack:
+
+```bash
+PILOT_CANONICAL_DELIBERATE_BREAK=security pnpm test:e2e:pilot:canonical  # expected red
 ```
 
 Run database migration validation from the repository root:
