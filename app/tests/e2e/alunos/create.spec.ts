@@ -11,6 +11,10 @@ import {
  * Tests for student creation form with CPF, date validation, and Brazilian compliance
  */
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const serviceHeaders = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+
 test.describe('Alunos - Create Form Layout', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/dashboard/alunos/novo')
@@ -531,15 +535,78 @@ test.describe('Alunos - Successful Creation', () => {
     ).toBeVisible({ timeout: 5000 })
   })
 
+  test('persists the student, guardian, and relationship through the real admission boundary', async ({ page, request }) => {
+    const timestamp = Date.now()
+    const studentName = `E2E Admission Student ${timestamp}`
+    const guardianName = `E2E Admission Guardian ${timestamp}`
+    let studentId: string | undefined
+    let guardianId: string | undefined
+
+    try {
+      await page.getByLabel(/nome.*completo/i).fill(studentName)
+      await page.getByLabel(/data.*nascimento/i).fill('2015-03-15')
+
+      const sexoSelect = page.locator('#sexo')
+      await sexoSelect.click()
+      await page.getByRole('option', { name: /masculino/i }).first().click()
+      await page.getByLabel(/nome.*mãe/i).fill('Mãe Admission E2E')
+      await page.getByLabel(/endereço.*completo/i).fill('Rua Admission E2E, 123, Centro')
+
+      await page.getByRole('tab', { name: /responsável/i }).click()
+      await page.locator('#resp_nome').fill(guardianName)
+      await page.locator('#resp_parentesco').click()
+      await page.getByRole('option', { name: 'Pai', exact: true }).click()
+      await page.locator('#resp_telefone').fill('(34) 99999-0012')
+
+      await page.getByRole('button', { name: /cadastrar aluno/i }).click()
+      await expectFormSuccess(page)
+
+      const studentResponse = await request.get(
+        `${SUPABASE_URL}/rest/v1/alunos?select=id&nome_completo=${encodeURIComponent(`eq.${studentName}`)}`,
+        { headers: serviceHeaders }
+      )
+      expect(studentResponse.ok()).toBe(true)
+      const students = await studentResponse.json() as Array<{ id: string }>
+      studentId = students[0]?.id
+      expect(students).toHaveLength(1)
+
+      const guardianResponse = await request.get(
+        `${SUPABASE_URL}/rest/v1/responsaveis?select=id&nome=${encodeURIComponent(`eq.${guardianName}`)}`,
+        { headers: serviceHeaders }
+      )
+      expect(guardianResponse.ok()).toBe(true)
+      const guardians = await guardianResponse.json() as Array<{ id: string }>
+      guardianId = guardians[0]?.id
+      expect(guardians).toHaveLength(1)
+
+      const linkResponse = await request.get(
+        `${SUPABASE_URL}/rest/v1/aluno_responsaveis?select=id&aluno_id=eq.${studentId}&responsavel_id=eq.${guardianId}`,
+        { headers: serviceHeaders }
+      )
+      expect(linkResponse.ok()).toBe(true)
+      expect(await linkResponse.json()).toHaveLength(1)
+    } finally {
+      if (studentId) {
+        await request.delete(`${SUPABASE_URL}/rest/v1/aluno_responsaveis?aluno_id=eq.${studentId}`, { headers: serviceHeaders })
+      }
+      if (guardianId) {
+        await request.delete(`${SUPABASE_URL}/rest/v1/responsaveis?id=eq.${guardianId}`, { headers: serviceHeaders })
+      }
+      if (studentId) {
+        await request.delete(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${studentId}`, { headers: serviceHeaders })
+      }
+    }
+  })
+
   test('should show loading state during submission', async ({ page }) => {
     const timestamp = Date.now()
 
-    // Hold the insert response until the loading state has been observed.
+    // Hold the admission RPC until the loading state has been observed.
     let releaseInsert = () => {}
     const insertPaused = new Promise<void>(resolve => {
       releaseInsert = resolve
     })
-    await page.route('**/rest/v1/alunos**', async route => {
+    await page.route('**/rest/v1/rpc/create_student_admission', async route => {
       if (route.request().method() !== 'POST') {
         await route.continue()
         return

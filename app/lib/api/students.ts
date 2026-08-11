@@ -1,7 +1,8 @@
 'use client'
 
 import { BaseApiService } from './base'
-import { supabase, Tables, Inserts, Aluno } from '@/lib/supabase'
+import { createStudentAdmission } from './student-admission'
+import { supabase, Tables, Aluno } from '@/lib/supabase'
 import { StudentFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
@@ -196,62 +197,31 @@ export class StudentsApiService extends BaseApiService {
         throw new Error('PILOT_STUDENT_SCHOOL_REQUIRED: selecione uma escola antes de cadastrar um aluno')
       }
 
-      // Create student - extract only known fields
-      const insertData = {
-        nome_completo: aluno.nome_completo,
-        data_nascimento: aluno.data_nascimento,
-        sexo: aluno.sexo,
-        cpf: aluno.cpf,
-        rg: aluno.rg,
-        email: aluno.email,
-        telefone: aluno.telefone,
-        endereco: aluno.endereco,
-        nome_mae: aluno.nome_mae,
-        nome_pai: aluno.nome_pai,
-        necessidades_especiais: aluno.necessidades_especiais,
-        escola_id: resolvedEscolaId,
-        ativo: true,
-      } as Inserts<'alunos'> & { escola_id: string }
-
-      const { data: studentResult, error: studentError } = await supabase
-        .from('alunos')
-        .insert(insertData)
-        .select()
-        .single()
-
-      if (studentError) throw studentError
-
-      // Create guardian relationship if provided
-      if (responsavel && studentResult) {
-        // First create the responsavel
-        const { data: responsavelData, error: responsavelError } = await supabase
-          .from('responsaveis')
-          .insert({
-            nome: responsavel.nome,
-            telefone: responsavel.telefone ?? '',
-            email: responsavel.email,
-            parentesco: responsavel.grau_parentesco,
-            escola_id: resolvedEscolaId,
-            cpf: '', // Required field
-            ativo: true
-          } as Inserts<'responsaveis'> & { escola_id: string })
-          .select()
-          .single()
-
-        if (!responsavelError && responsavelData) {
-          // Then create the join table entry
-          await supabase
-            .from('aluno_responsaveis')
-            .insert({
-              aluno_id: studentResult.id,
-              responsavel_id: responsavelData.id,
-              tipo_responsabilidade: responsavel.grau_parentesco,
-              ativo: true
-            })
-        }
-      }
-
-      return studentResult
+      // The RPC owns the three related writes in one database transaction.
+      // Auth/profile reads remain preflight checks; school RLS is enforced again
+      // by the invoker function and each table policy.
+      return await createStudentAdmission(supabase, {
+        p_nome_completo: aluno.nome_completo,
+        p_data_nascimento: aluno.data_nascimento,
+        p_sexo: aluno.sexo,
+        p_escola_id: resolvedEscolaId,
+        p_cpf: aluno.cpf ?? null,
+        p_rg: aluno.rg ?? null,
+        p_email: aluno.email ?? null,
+        p_telefone: aluno.telefone ?? null,
+        p_endereco: aluno.endereco ?? null,
+        p_nome_mae: aluno.nome_mae ?? null,
+        p_nome_pai: aluno.nome_pai ?? null,
+        p_necessidades_especiais: aluno.necessidades_especiais ?? null,
+        p_responsavel: responsavel
+          ? {
+              nome: responsavel.nome,
+              telefone: responsavel.telefone,
+              email: responsavel.email,
+              grau_parentesco: responsavel.grau_parentesco,
+            }
+          : null,
+      })
     } catch (error) {
       throw error
     }
