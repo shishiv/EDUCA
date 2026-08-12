@@ -24,7 +24,10 @@ const {
 vi.mock('@/lib/pilot/pilot-server-auth', () => ({ requirePilotActor: actorMock }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }))
 vi.mock('@/lib/supabase/service-role', () => ({ createServiceRoleClient: serviceRoleMock }))
-vi.mock('@/lib/pilot/pilot-safety-gate', () => ({ assertSyntheticPilotSafety: safetyMock }))
+vi.mock('@/lib/pilot/pilot-safety-gate', () => ({
+  assertSyntheticPilotSafety: safetyMock,
+  PILOT_PROOF_SYNTHETIC_MARKER: 'SYNTHETIC-EDUCA-PILOT',
+}))
 vi.mock('@/lib/pilot/pilot-api-error', () => ({
   pilotErrorResponse: vi.fn((error: unknown) => new Response(JSON.stringify({ error: String(error) }), { status: 500 })),
 }))

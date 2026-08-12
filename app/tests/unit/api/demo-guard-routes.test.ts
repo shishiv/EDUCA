@@ -22,6 +22,7 @@ vi.mock('@/lib/supabase/service-role', () => ({
 
 vi.mock('@/lib/pilot/pilot-safety-gate', () => ({
   assertSyntheticPilotSafety: safetyMock,
+  PILOT_PROOF_SYNTHETIC_MARKER: 'SYNTHETIC-EDUCA-PILOT',
 }))
 
 import { POST as importPOST } from '@/app/api/pilot/imports/route'
