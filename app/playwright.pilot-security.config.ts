@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 import path from 'node:path'
+import { LEGACY_PILOT_APP_NAME } from './tests/e2e/pilot/legacy-pilot-manifest'
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000'
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || `https://${LEGACY_PILOT_APP_NAME}.localhost`
 const authStatePath = process.env.PILOT_AUTH_STATE_PATH || path.join(process.cwd(), '.pilot-e2e/auth/user.json')
 
 export default defineConfig({
@@ -13,6 +14,7 @@ export default defineConfig({
   use: {
     baseURL,
     serviceWorkers: 'block',
+    ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',

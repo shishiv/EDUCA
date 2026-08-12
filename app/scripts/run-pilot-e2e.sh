@@ -26,6 +26,9 @@ DELIBERATE_BREAK="${PILOT_LEGACY_DELIBERATE_BREAK:-none}"
 APP_NAME="educa-r3-legacy-pilot-${RUN_SLUG}"
 EXPECTED_TEST_COUNT=15
 EXPECTED_RUN_TEST_COUNT=15
+SECURITY_EXPECTED_SPEC_TEST_COUNT=2
+SECURITY_EXPECTED_SETUP_TEST_COUNT=1
+SECURITY_EXPECTED_RUN_TEST_COUNT=3
 PLAYWRIGHT_CONFIG='playwright.pilot-legacy.config.ts'
 LEGACY_MANIFEST_MODE=true
 
@@ -306,30 +309,53 @@ const [finalPath, setupPath, databasePath, browserPath, testPath, cleanupPath, o
 const readJson = file => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null
 const relative = file => path.relative(process.cwd(), file)
 const isLegacyManifest = process.env.PILOT_LEGACY_MANIFEST_MODE === 'true'
+const selectedManifest = isLegacyManifest
+  ? {
+      config: process.env.PILOT_LEGACY_PLAYWRIGHT_CONFIG,
+      setup: 'tests/e2e/auth.setup.ts',
+      specs: [
+        'tests/e2e/pilot/core-scope.spec.ts',
+        'tests/e2e/pilot/csv-import.spec.ts',
+        'tests/e2e/pilot/deployed-isolation.spec.ts',
+        'tests/e2e/pilot/invalid-refresh-token.spec.ts',
+        'tests/e2e/pilot/invitation-first-access.spec.ts',
+        'tests/e2e/pilot/security-hardening.spec.ts',
+      ],
+      expectedTests: 15,
+      selectionIsExact: true,
+      excluded: [
+        'tests/e2e/pilot/capacity-contract.spec.ts',
+        'tests/e2e/pilot-descriptive/descriptive-emission.spec.ts',
+        'tests/e2e/pilot/canonical-pilot.spec.ts',
+      ],
+    }
+  : {
+      config: process.env.PILOT_LEGACY_PLAYWRIGHT_CONFIG,
+      setup: 'tests/e2e/auth.setup.ts',
+      specs: ['tests/e2e/pilot/security-hardening.spec.ts'],
+      expectedTests: 3,
+      selectionIsExact: true,
+      excluded: [
+        'tests/e2e/pilot/core-scope.spec.ts',
+        'tests/e2e/pilot/csv-import.spec.ts',
+        'tests/e2e/pilot/deployed-isolation.spec.ts',
+        'tests/e2e/pilot/invalid-refresh-token.spec.ts',
+        'tests/e2e/pilot/invitation-first-access.spec.ts',
+        'tests/e2e/pilot/capacity-contract.spec.ts',
+        'tests/e2e/pilot/capacity-auth.setup.ts',
+        'tests/e2e/pilot-descriptive/descriptive-emission.spec.ts',
+        'tests/e2e/pilot-descriptive/descriptive-auth.setup.ts',
+        'tests/e2e/pilot/canonical-pilot.spec.ts',
+        'tests/e2e/pilot/canonical-auth.setup.ts',
+      ],
+    }
 const receipt = {
   contract: 'R3-T1 bounded legacy pilot E2E',
+  vertical: isLegacyManifest ? 'legacy' : 'security',
   result: Number(exitCode) === 0 ? 'passed' : Number(exitCode) === 130 || Number(exitCode) === 143 ? 'interrupted' : 'failed',
   exitCode: Number(exitCode),
-  command: 'cd app && pnpm test:e2e:pilot',
-  selectedManifest: {
-    config: process.env.PILOT_LEGACY_PLAYWRIGHT_CONFIG,
-    setup: 'tests/e2e/auth.setup.ts',
-    specs: [
-      'tests/e2e/pilot/core-scope.spec.ts',
-      'tests/e2e/pilot/csv-import.spec.ts',
-      'tests/e2e/pilot/deployed-isolation.spec.ts',
-      'tests/e2e/pilot/invalid-refresh-token.spec.ts',
-      'tests/e2e/pilot/invitation-first-access.spec.ts',
-      'tests/e2e/pilot/security-hardening.spec.ts',
-    ],
-    expectedTests: isLegacyManifest ? 15 : null,
-    selectionIsExact: isLegacyManifest,
-    excluded: [
-      'tests/e2e/pilot/capacity-contract.spec.ts',
-      'tests/e2e/pilot-descriptive/descriptive-emission.spec.ts',
-      'tests/e2e/pilot/canonical-pilot.spec.ts',
-    ],
-  },
+  command: isLegacyManifest ? 'cd app && pnpm test:e2e:pilot' : 'cd app && pnpm test:e2e:pilot:security',
+  selectedManifest,
   setup: readJson(setupPath),
   database: readJson(databasePath),
   browser: readJson(browserPath),
@@ -519,14 +545,36 @@ if [[ "$LEGACY_MANIFEST_MODE" == true ]]; then
 else
   selected_test_count=$(grep -Ec '^[[:space:]]+\[chromium-pilot-security\] ' "$MANIFEST_LIST_LOG" || true)
   setup_test_count=$(grep -Ec '^[[:space:]]+\[setup\] ' "$MANIFEST_LIST_LOG" || true)
-  if [[ "$selected_test_count" -eq 0 || "$setup_test_count" -ne 1 ]]; then
-    echo "PILOT_LEGACY_SECURITY_RED: observed_tests=$selected_test_count observed_setup=$setup_test_count" >&2
+  observed_test_count=$((selected_test_count + setup_test_count))
+  if ! grep -Fq 'auth.setup.ts' "$MANIFEST_LIST_LOG" || ! grep -Fq 'pilot/security-hardening.spec.ts' "$MANIFEST_LIST_LOG"; then
+    echo 'PILOT_LEGACY_SECURITY_RED: dedicated setup or focused security spec missing' >&2
     exit 1
   fi
-  EXPECTED_RUN_TEST_COUNT="$selected_test_count"
-  PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$selected_test_count"
+  if [[ "$selected_test_count" -ne "$SECURITY_EXPECTED_SPEC_TEST_COUNT" || "$setup_test_count" -ne "$SECURITY_EXPECTED_SETUP_TEST_COUNT" || "$observed_test_count" -ne "$SECURITY_EXPECTED_RUN_TEST_COUNT" ]]; then
+    echo "PILOT_LEGACY_SECURITY_RED: expected_specs=$SECURITY_EXPECTED_SPEC_TEST_COUNT expected_setup=$SECURITY_EXPECTED_SETUP_TEST_COUNT expected_tests=$SECURITY_EXPECTED_RUN_TEST_COUNT observed_specs=$selected_test_count observed_setup=$setup_test_count observed_tests=$observed_test_count" >&2
+    exit 1
+  fi
+  for excluded_file in \
+    'pilot/core-scope.spec.ts' \
+    'pilot/csv-import.spec.ts' \
+    'pilot/deployed-isolation.spec.ts' \
+    'pilot/invalid-refresh-token.spec.ts' \
+    'pilot/invitation-first-access.spec.ts' \
+    'pilot/capacity-contract.spec.ts' \
+    'pilot/capacity-auth.setup.ts' \
+    'pilot-descriptive/descriptive-emission.spec.ts' \
+    'pilot-descriptive/descriptive-auth.setup.ts' \
+    'pilot/canonical-pilot.spec.ts' \
+    'pilot/canonical-auth.setup.ts'; do
+    if grep -Fq "$excluded_file" "$MANIFEST_LIST_LOG"; then
+      echo "PILOT_LEGACY_SECURITY_RED: excluded_file_selected=$excluded_file" >&2
+      exit 1
+    fi
+  done
+  EXPECTED_RUN_TEST_COUNT="$SECURITY_EXPECTED_RUN_TEST_COUNT"
+  PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$SECURITY_EXPECTED_RUN_TEST_COUNT"
   export EXPECTED_RUN_TEST_COUNT PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT
-  printf 'PILOT_LEGACY_SECURITY_RECEIPT: setup=1 shared_specs=1 tests=%s\n' "$selected_test_count"
+  printf 'PILOT_LEGACY_SECURITY_RECEIPT: setup=1 focused_spec=1 tests=%s csv=false invitation=false capacity=false descriptive=false r1_canonical=false\n' "$EXPECTED_RUN_TEST_COUNT"
 fi
 
 if [[ "$DELIBERATE_BREAK" == selection ]]; then
@@ -596,5 +644,5 @@ fi
 
 RESULT='passed'
 TEST_EXIT=0
-printf 'PILOT_LEGACY_TEST_RECEIPT: status=pass tests=%s output_redacted=true\n' "$EXPECTED_TEST_COUNT"
+printf 'PILOT_LEGACY_TEST_RECEIPT: status=pass tests=%s output_redacted=true\n' "$EXPECTED_RUN_TEST_COUNT"
 exit 0
