@@ -89,7 +89,7 @@ function fakeLifecyclePorts() {
   let storedInvitation: UserLifecycleInvitation | null = null
   let storedProfile: UserLifecycleProfile | null = null
   let failProfileCreate = true
-  const deleteIdentity = vi.fn()
+  const deleteIdentity = vi.fn(async () => 'removed' as const)
   const auth = {
     inviteUserByEmail: vi.fn(async () => AUTH_USER),
     getUserById: vi.fn(async () => AUTH_USER),
@@ -109,6 +109,7 @@ function fakeLifecyclePorts() {
         return PROFILE
       }),
       complete: vi.fn(async () => PROFILE),
+      deactivate: vi.fn(async () => ({ ...PROFILE, ativo: false })),
     },
     invitation: {
       findByEmail: vi.fn(async () => storedInvitation),

@@ -16,6 +16,7 @@
     "test:e2e:pilot": "bash scripts/run-pilot-aggregate-e2e.sh",
     "test:e2e:pilot:legacy": "bash scripts/run-pilot-e2e.sh",
     "test:e2e:pilot:security": "PILOT_PLAYWRIGHT_CONFIG=playwright.pilot-security.config.ts bash scripts/run-pilot-e2e.sh",
+    "test:e2e:pilot:revocation": "playwright test --config=playwright.pilot-revocation.config.ts",
     "test:e2e:pilot:capacity": "bash scripts/run-pilot-capacity-e2e.sh",
     "test:e2e:pilot:descriptive": "bash scripts/run-pilot-descriptive-e2e.sh",
     "test:e2e:ui": "playwright test --ui",
