@@ -24,6 +24,7 @@
     "seed:superadmin": "tsx scripts/seed-superadmin.ts",
     "seed:pilot:capacity": "tsx scripts/seed-pilot-capacity.ts",
     "validate:pilot:capacity": "tsx scripts/validate-pilot-capacity.ts",
+    "validate:support-runbook": "tsx scripts/validate-support-runbook.ts",
     "seed:demo": "tsx ../supabase/seed-demo/seed-demo.ts",
     "pilot:safety": "tsx scripts/pilot-safety-gate.ts",
     "pilot:restore-test": "bash scripts/run-pilot-restore-test.sh",

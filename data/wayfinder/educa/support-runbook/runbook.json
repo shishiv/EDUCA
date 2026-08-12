@@ -1,0 +1,276 @@
+{
+  "schema": "educa.support-runbook/v1",
+  "version": 1,
+  "classification": "internal synthetic-only support runbook",
+  "title": "Support runbook - redacted pilot-support incident rehearsal",
+  "status": "rehearsal only",
+  "source": "T11 - G3 support runbook",
+  "sourceDate": "2026-08-12",
+  "syntheticOnly": true,
+  "externalActions": false,
+  "supportScope": [
+    {
+      "id": "access",
+      "label": "Access",
+      "purpose": "Correlate and contain an unexpected access result without inspecting identity data."
+    },
+    {
+      "id": "roles",
+      "label": "Roles",
+      "purpose": "Check the expected role boundary against the redacted synthetic observation."
+    },
+    {
+      "id": "chamada",
+      "label": "Chamada",
+      "purpose": "Protect attendance entry and identify a blocked attendance flow."
+    },
+    {
+      "id": "diario",
+      "label": "Diário",
+      "purpose": "Check the class diary surface and its school boundary."
+    },
+    {
+      "id": "observed_inconsistency",
+      "label": "Observed inconsistency",
+      "purpose": "Record the difference between expected and observed behavior using redacted references only."
+    },
+    {
+      "id": "data_incident",
+      "label": "Data incident",
+      "purpose": "Contain possible loss, alteration or cross-school exposure of attendance data."
+    },
+    {
+      "id": "rollback",
+      "label": "Rollback",
+      "purpose": "Restore the local fixture baseline without deployment or real-data changes."
+    }
+  ],
+  "exclusions": [
+    "No student name, CPF, NIS, phone, email, raw content or real institution.",
+    "No contact with a reporter, owner, substitute or institution.",
+    "No deployment, production access, telemetry or CRM.",
+    "No SLA, rollout, acceptance or other service promise.",
+    "No real attendance data, identity data or institution-specific diagnosis."
+  ],
+  "classificationRules": {
+    "criticalSeverity": "critical",
+    "criticalCriteria": [
+      {
+        "id": "blocked_chamada",
+        "definition": "blocked chamada"
+      },
+      {
+        "id": "possible_cross_school_access",
+        "definition": "possible cross-school access"
+      },
+      {
+        "id": "attendance_loss_or_alteration",
+        "definition": "loss or alteration of attendance"
+      },
+      {
+        "id": "data_containment",
+        "definition": "data containment"
+      }
+    ],
+    "ordinarySeverity": "ordinary",
+    "ordinaryCriteria": [
+      {
+        "id": "questions",
+        "definition": "questions"
+      },
+      {
+        "id": "visual_improvements",
+        "definition": "visual improvements"
+      },
+      {
+        "id": "feature_requests",
+        "definition": "feature requests"
+      }
+    ],
+    "classificationRule": "Use critical when any critical criterion is present. Use ordinary for questions, visual improvements and feature requests when no critical criterion is present."
+  },
+  "humanBinding": {
+    "gate": "T12",
+    "status": "pending human binding",
+    "owner": "a confirmar",
+    "substitute": "a confirmar",
+    "channel": "a confirmar",
+    "calendar": "a confirmar",
+    "known": false,
+    "requiresHumanConfirmation": true,
+    "existingTechnicalTargets": {
+      "status": "reference only",
+      "arePromises": false,
+      "statement": "Existing technical targets remain rehearsal references and are not promises."
+    },
+    "noSlaPromise": true,
+    "noRolloutPromise": true,
+    "t12Statement": "T12 is the human binding gate for owner, substitute, channel and calendar."
+  },
+  "rehearsal": {
+    "mode": "local synthetic fixture",
+    "fixture": "local redacted",
+    "source": "versioned runbook fixture",
+    "rawContentIncluded": false,
+    "contactsUsed": false,
+    "deploymentUsed": false,
+    "telemetryUsed": false,
+    "crmUsed": false,
+    "rehearsableWithoutContact": true,
+    "rehearsableWithoutDeployment": true,
+    "rehearsableWithoutTelemetry": true,
+    "rehearsableWithoutCrm": true
+  },
+  "incident": {
+    "id": "SYN-INC-001",
+    "correlationId": "SYN-CORR-001",
+    "correlation": {
+      "key": "SYN-CORR-001",
+      "sources": [
+        "local redacted fixture",
+        "receipt-redacted-correlation-001"
+      ],
+      "reporter": "[REDACTED]",
+      "observedAt": "[REDACTED]"
+    },
+    "reportedBy": "[REDACTED]",
+    "reportedAt": "[REDACTED]",
+    "category": "data incident",
+    "surfaces": [
+      "access",
+      "roles",
+      "chamada",
+      "diario",
+      "observed_inconsistency",
+      "data_incident",
+      "rollback"
+    ],
+    "observedInconsistency": "[REDACTED] - the synthetic role visibility result differed from the expected school boundary; raw content is omitted.",
+    "severity": "critical",
+    "severityReason": "possible cross-school access and attendance data containment risk",
+    "scope": {
+      "boundary": "[REDACTED synthetic school boundary]",
+      "roles": "[REDACTED synthetic roles]",
+      "records": "[REDACTED attendance records]",
+      "surfaces": [
+        "access",
+        "roles",
+        "chamada",
+        "diario"
+      ],
+      "confirmed": false,
+      "scopeReceiptReference": "receipt-redacted-scope-001"
+    },
+    "owner": "a confirmar",
+    "ownerBinding": "T12",
+    "firstResponse": [
+      "Correlate the incident with SYN-CORR-001 and use only redacted receipt references.",
+      "Classify the incident as critical because possible cross-school access can affect data containment.",
+      "Contain the rehearsal scope: do not broaden access checks and do not copy raw content.",
+      "Protect chamada and Diário state by stopping any synthetic action that could alter attendance.",
+      "Record the redacted first-response receipt before escalation."
+    ],
+    "escalation": {
+      "trigger": "Any critical criterion, including blocked chamada, possible cross-school access, loss or alteration of attendance, or data containment.",
+      "destination": "a confirmar - T12",
+      "substitute": "a confirmar - T12",
+      "channel": "a confirmar - T12",
+      "calendar": "a confirmar - T12",
+      "actions": [
+        "Preserve the correlation and containment receipts.",
+        "Ask T12 to bind the owner, substitute, channel and calendar before any real support action.",
+        "Do not promise a response time, rollout, remediation or deployment."
+      ],
+      "notPromised": true
+    },
+    "receiptReference": "receipt-redacted-incident-001",
+    "rollback": {
+      "available": true,
+      "mode": "local fixture only",
+      "trigger": "The rehearsal cannot prove the expected access boundary or attendance integrity.",
+      "action": "Restore the local redacted fixture baseline and record receipt-redacted-rollback-001.",
+      "deploymentUsed": false,
+      "realDataUsed": false,
+      "receiptReference": "receipt-redacted-rollback-001"
+    },
+    "closure": {
+      "state": "closed in synthetic rehearsal",
+      "productionState": "blocked pending T12",
+      "checks": [
+        {
+          "id": "correlation_recorded",
+          "result": "receipt reference recorded"
+        },
+        {
+          "id": "severity_recorded",
+          "result": "critical"
+        },
+        {
+          "id": "scope_contained",
+          "result": "redacted synthetic scope only"
+        },
+        {
+          "id": "rollback_rehearsed",
+          "result": "local fixture baseline restored"
+        },
+        {
+          "id": "t12_binding_pending",
+          "result": "owner, substitute, channel and calendar remain a confirmar"
+        }
+      ],
+      "ownerConfirmation": "a confirmar - T12",
+      "closedBy": "a confirmar",
+      "receiptReference": "receipt-redacted-closure-001",
+      "closureRule": "Close the rehearsal only after correlation, classification, containment, escalation, receipt and rollback checks are recorded. Do not represent it as a production closure."
+    }
+  },
+  "receipts": [
+    {
+      "id": "receipt-redacted-correlation-001",
+      "kind": "correlation",
+      "status": "recorded",
+      "redacted": true,
+      "source": "local synthetic fixture",
+      "content": "[REDACTED]"
+    },
+    {
+      "id": "receipt-redacted-scope-001",
+      "kind": "scope",
+      "status": "recorded",
+      "redacted": true,
+      "source": "local synthetic fixture",
+      "content": "[REDACTED]"
+    },
+    {
+      "id": "receipt-redacted-incident-001",
+      "kind": "first response",
+      "status": "recorded",
+      "redacted": true,
+      "source": "local synthetic fixture",
+      "content": "[REDACTED]"
+    },
+    {
+      "id": "receipt-redacted-rollback-001",
+      "kind": "rollback",
+      "status": "recorded",
+      "redacted": true,
+      "source": "local synthetic fixture",
+      "content": "[REDACTED]"
+    },
+    {
+      "id": "receipt-redacted-closure-001",
+      "kind": "closure",
+      "status": "recorded",
+      "redacted": true,
+      "source": "local synthetic fixture",
+      "content": "[REDACTED]"
+    }
+  ],
+  "servicePromises": {
+    "sla": false,
+    "rollout": false,
+    "deployment": false,
+    "technicalTargets": false,
+    "statement": "This runbook is a rehearsal contract, not an SLA or rollout promise."
+  }
+}
