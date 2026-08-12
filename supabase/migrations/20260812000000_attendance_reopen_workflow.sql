@@ -75,6 +75,7 @@ CREATE POLICY attendance_reopen_select
   );
 
 REVOKE INSERT, UPDATE, DELETE ON public.attendance_reopen_requests FROM anon, authenticated;
+REVOKE TRUNCATE ON public.attendance_reopen_requests FROM authenticated, anon;
 GRANT SELECT ON public.attendance_reopen_requests TO authenticated;
 GRANT ALL ON public.attendance_reopen_requests TO service_role;
 

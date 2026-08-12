@@ -271,6 +271,32 @@ SELECT pg_temp.assert_true(
   'approval writes an allowlisted audit event on the canonical session'
 );
 
+SELECT pg_temp.assert_true(
+  NOT has_table_privilege('authenticated', 'public.attendance_reopen_requests', 'TRUNCATE')
+    AND NOT has_table_privilege('anon', 'public.attendance_reopen_requests', 'TRUNCATE'),
+  'browser roles cannot truncate attendance reopen requests'
+);
+
+SET LOCAL ROLE authenticated;
+DO $$
+BEGIN
+  BEGIN
+    TRUNCATE TABLE public.attendance_reopen_requests;
+    RAISE EXCEPTION 'authenticated TRUNCATE unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END;
+$$;
+RESET ROLE;
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 1
+   FROM public.attendance_reopen_requests
+   WHERE sessao_id = '62000000-0000-0000-0000-000000000001'
+     AND status = 'APROVADA'),
+  'reopen request remains after rejected authenticated TRUNCATE'
+);
+
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','22000000-0000-0000-0000-000000000001',true);
 UPDATE public.frequencia
