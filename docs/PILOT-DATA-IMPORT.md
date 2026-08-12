@@ -89,14 +89,18 @@ O payload CSV fica em repouso como `aes-256-gcm` com `PILOT_IMPORT_ENCRYPTION_KE
 
 Cada linha canônica recebe `pilot_import_batch_id`. A tabela do lote registra owner, acordo, aprovadores, contagens, fingerprints, retenção e timestamps.
 
+Objetos de Storage do proof recebem os metadados `pilot_import_batch_id` e `pilot_import_object_fingerprint`. O rollback usa a associação exata do lote, nunca o nome amplo do objeto.
+
 - `pilot_cleanup_import_retention()` remove ciphertext após `rawPayloadExpiresAt`.
-- `pilot_rollback_import_batch()` remove somente linhas canônicas daquele lote, registra tombstone e auditoria.
+- `pilot_rollback_import_batch()` remove somente linhas canônicas e objetos de Storage associados àquele lote, registra tombstone e auditoria.
 - O rollback manual exige owner operacional ativo, motivo e janela `rollbackUntil` vigente.
 - Após `canonicalDataExpiresAt`, a limpeza de retenção usa o mesmo rollback transacional com motivo `retention_expired`.
 - O rollback recusa lotes com frequência já vinculada ou responsável compartilhado fora do lote.
 
 ## Receipt
 
-O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, contagens, fingerprints, estado criptográfico e retenção. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família.
+O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, contagens, fingerprints, objetos de Storage, estado criptográfico e retenção. O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida e replay idempotente.
 
-O E2E também executa dois deliberate-breaks: aprovação sem owner e import sem chave. Cada falha precisa ficar vermelha. Se uma validação de governança for removida, o teste falha.
+O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém PII. O receipt identifica uma prova isolada sintética e não representa prontidão municipal.
+
+O E2E também executa os deliberate-breaks de governança sem owner e sem chave. O teste de banco cobre associação de lote ausente, lote ausente, alvo demo ou incorreto, expiração, frequência vinculada, responsável compartilhado, isolamento e replay. Cada falha precisa ficar vermelha.

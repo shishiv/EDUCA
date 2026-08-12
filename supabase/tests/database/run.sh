@@ -8,6 +8,7 @@ PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 CENSO_MIGRATION="20260719031000_add_censo_escolar_fields.sql"
 RELATORIOS_MIGRATION="20260124133337_create_relatorios_descritivos.sql"
 SECURITY_HARDENING_MIGRATION="20260810220000_governed_pilot_security_hardening.sql"
+ROLLBACK_STORAGE_MIGRATION="20260812231418_pilot_import_batch_rollback_storage.sql"
 
 for command in initdb pg_ctl psql; do
   if ! command -v "$command" >/dev/null 2>&1; then
@@ -67,6 +68,8 @@ echo "Replaying $RELATORIOS_MIGRATION"
 # final hardening so this isolated database matches the deployed migration state.
 echo "Reapplying $(basename "$SECURITY_HARDENING_MIGRATION") after legacy replay"
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$SECURITY_HARDENING_MIGRATION" >/dev/null
+echo "Reapplying $(basename "$ROLLBACK_STORAGE_MIGRATION") after legacy replay"
+"${PSQL[@]}" -f "$MIGRATIONS_DIR/$ROLLBACK_STORAGE_MIGRATION" >/dev/null
 
 echo "Applying pilot-only provisioning $(basename "$PILOT_PROVISIONING")"
 "${PSQL[@]}" -f "$PILOT_PROVISIONING" >/dev/null

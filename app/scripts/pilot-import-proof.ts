@@ -77,7 +77,27 @@ interface RollbackRow {
   deleted_relationships: number
   deleted_students: number
   deleted_guardians: number
+  deleted_storage_objects: number
+  storage_object_fingerprints: string[]
   final_status: string
+}
+
+interface StorageObjectState {
+  ownedCount: number
+  fingerprints: string[]
+}
+
+interface StorageObjectMetadataExpressions {
+  batchAssociation: string
+  objectFingerprint: string
+  hasUserMetadata: boolean
+}
+
+interface RollbackEvidence {
+  auditCount: number
+  auditIsRedacted: boolean
+  tombstoneCount: number
+  tombstoneMatchesBatch: boolean
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -234,7 +254,128 @@ async function readBatch(client: Client, batchId: string): Promise<BatchRow> {
   return batch
 }
 
-function buildImportReceipt(batch: BatchRow): Record<string, unknown> {
+/** Resolves the current Storage custom metadata columns without trusting object names. */
+async function readStorageObjectMetadataExpressions(
+  client: Client
+): Promise<StorageObjectMetadataExpressions | null> {
+  const tableResult = await client.query<{ table_name: string | null }>(
+    `SELECT to_regclass('storage.objects')::text AS table_name`
+  )
+  if (!tableResult.rows[0]?.table_name) return null
+
+  const columnResult = await client.query<{ has_user_metadata: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'storage'
+         AND table_name = 'objects'
+         AND column_name = 'user_metadata'
+     ) AS has_user_metadata`
+  )
+  const hasUserMetadata = columnResult.rows[0]?.has_user_metadata ?? false
+  return hasUserMetadata
+    ? {
+        batchAssociation: "coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id')",
+        objectFingerprint: "coalesce(user_metadata->>'pilot_import_object_fingerprint', metadata->>'pilot_import_object_fingerprint', id::text)",
+        hasUserMetadata,
+      }
+    : {
+        batchAssociation: "metadata->>'pilot_import_batch_id'",
+        objectFingerprint: "coalesce(metadata->>'pilot_import_object_fingerprint', id::text)",
+        hasUserMetadata,
+      }
+}
+
+/** Reads Storage metadata owned by one batch without exposing object names. */
+async function readStorageObjectState(client: Client, batchId: string): Promise<StorageObjectState> {
+  const expressions = await readStorageObjectMetadataExpressions(client)
+  if (!expressions) return { ownedCount: 0, fingerprints: [] }
+
+  const result = await client.query<{ owned_count: number; fingerprints: string[] }>(
+    `SELECT count(*)::integer AS owned_count,
+            coalesce(array_agg(${expressions.objectFingerprint} ORDER BY id), ARRAY[]::text[]) AS fingerprints
+     FROM storage.objects
+     WHERE ${expressions.batchAssociation} = $1`,
+    [batchId]
+  )
+  return {
+    ownedCount: result.rows[0]?.owned_count ?? 0,
+    fingerprints: result.rows[0]?.fingerprints ?? [],
+  }
+}
+
+/** Creates one synthetic Storage metadata object associated with a proof batch. */
+async function createProofStorageObject(client: Client, batchId: string): Promise<string> {
+  const bucketId = 'pilot-import-staging'
+  const objectName = `proof/${batchId}/source.csv`
+  const objectFingerprint = createHash('sha256').update(`${bucketId}/${objectName}`, 'utf8').digest('hex')
+  const expressions = await readStorageObjectMetadataExpressions(client)
+  if (!expressions) {
+    throw new Error('PILOT_IMPORT_PROOF_STORAGE_REQUIRED: local Storage metadata is required')
+  }
+
+  const association = {
+    pilot_import_batch_id: batchId,
+    pilot_import_object_fingerprint: objectFingerprint,
+    synthetic_only: true,
+  }
+  if (expressions.hasUserMetadata) {
+    await client.query(
+      `INSERT INTO storage.objects (id, bucket_id, name, metadata, user_metadata, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, now())`,
+      [bucketId, objectName, association, association]
+    )
+  } else {
+    await client.query(
+      `INSERT INTO storage.objects (id, bucket_id, name, metadata, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, now())`,
+      [bucketId, objectName, association]
+    )
+  }
+  return objectFingerprint
+}
+
+/** Reads redacted rollback audit and tombstone evidence for a proof receipt. */
+async function readRollbackEvidence(
+  client: Client,
+  batch: BatchRow
+): Promise<RollbackEvidence> {
+  const auditResult = await client.query<{ audit_count: number; audit_is_redacted: boolean }>(
+    `SELECT count(*) FILTER (
+              WHERE event_type = 'import_rolled_back'
+                AND entity_type = 'pilot_import_batch'
+                AND entity_id = $1
+            )::integer AS audit_count,
+            coalesce(
+              bool_and(NOT (redacted_metadata ?| ARRAY[
+                'cpf', 'nis', 'rg', 'password', 'senha', 'health', 'saude',
+                'deficiencia', 'race', 'cor_raca'
+              ])),
+              true
+            ) AS audit_is_redacted
+     FROM public.pilot_audit_log
+     WHERE entity_type = 'pilot_import_batch'
+       AND entity_id = $1`,
+    [batch.id]
+  )
+  const tombstoneResult = await client.query<{ tombstone_count: number; tombstone_matches_batch: boolean }>(
+    `SELECT count(*)::integer AS tombstone_count,
+            coalesce(bool_or(source_fingerprint = $1), false) AS tombstone_matches_batch
+     FROM public.pilot_data_tombstones
+     WHERE entity_type = 'pilot_import_batch'
+       AND source_fingerprint = $1`,
+    [batch.content_sha256]
+  )
+  return {
+    auditCount: auditResult.rows[0]?.audit_count ?? 0,
+    auditIsRedacted: auditResult.rows[0]?.audit_is_redacted ?? true,
+    tombstoneCount: tombstoneResult.rows[0]?.tombstone_count ?? 0,
+    tombstoneMatchesBatch: tombstoneResult.rows[0]?.tombstone_matches_batch ?? false,
+  }
+}
+
+async function buildImportReceipt(client: Client, batch: BatchRow): Promise<Record<string, unknown>> {
+  const storage = await readStorageObjectState(client, batch.id)
   return {
     batchId: batch.id,
     target: batch.import_target,
@@ -251,6 +392,10 @@ function buildImportReceipt(batch: BatchRow): Record<string, unknown> {
       keyId: batch.encryption_key_id,
       ciphertextStored: Boolean(batch.encrypted_payload && batch.iv && batch.auth_tag),
       plaintextStored: false,
+    },
+    storageObjects: {
+      ownedCount: storage.ownedCount,
+      fingerprints: storage.fingerprints,
     },
     retention: {
       policy: batch.retention_policy,
@@ -280,7 +425,10 @@ async function runGovernedProofImport(
   const { rows, report } = validateGovernedPilotStudentCsv(csv, dataMode)
   if (!report.valid) throw new Error(`PILOT_IMPORT_CSV_INVALID: ${JSON.stringify(report.issues)}`)
   const canonicalRows = transformGovernedPilotCsvToCanonicalRows(rows)
-  const canonicalCounts = countCanonicalPilotRows(canonicalRows)
+  const canonicalCounts = {
+    ...countCanonicalPilotRows(canonicalRows),
+    storageObjects: 1,
+  }
   const canonicalFingerprint = fingerprintCanonicalPilotRows(canonicalRows)
   const governanceFingerprint = fingerprintPilotImportGovernance(manifest)
   const encrypted = encryptPilotImportPayload(csv, encryptionKey, readEncryptionKeyId())
@@ -312,7 +460,7 @@ async function runGovernedProofImport(
         throw new Error('PILOT_IMPORT_IDEMPOTENCY_GOVERNANCE_MISMATCH: existing batch has different governance')
       }
       await client.query('COMMIT')
-      return buildImportReceipt(await readBatch(client, existing.rows[0].id))
+      return buildImportReceipt(client, await readBatch(client, existing.rows[0].id))
     }
 
     const batchResult = await client.query<{ id: string }>(
@@ -372,6 +520,8 @@ async function runGovernedProofImport(
     )
     const batchId = batchResult.rows[0]?.id
     if (!batchId) throw new Error('PILOT_IMPORT_PROOF_BATCH_CREATE_FAILED: batch id is missing')
+
+    await createProofStorageObject(client, batchId)
 
     const reportFingerprint = createHash('sha256').update(JSON.stringify(report), 'utf8').digest('hex')
     await client.query(
@@ -452,11 +602,17 @@ async function runGovernedProofImport(
     )
 
     await client.query('COMMIT')
-    return buildImportReceipt(await readBatch(client, batchId))
+    return buildImportReceipt(client, await readBatch(client, batchId))
   } catch (error) {
     await client.query('ROLLBACK')
     throw error
   }
+}
+
+function expectedCanonicalCount(batch: BatchRow, key: string): number | null {
+  if (!batch.canonical_counts || typeof batch.canonical_counts !== 'object') return null
+  const value = (batch.canonical_counts as Record<string, unknown>)[key]
+  return typeof value === 'number' ? value : null
 }
 
 async function runRollback(
@@ -467,21 +623,54 @@ async function runRollback(
 ): Promise<Record<string, unknown>> {
   if (!UUID_PATTERN.test(batchId)) throw new Error('PILOT_IMPORT_PROOF_BATCH_INVALID: batch id must be a UUID')
   const actor = await findActiveActor(client, actorEmail, 'PILOT_IMPORT_ROLLBACK_ACTOR_REQUIRED')
+  const batchBefore = await readBatch(client, batchId)
   const result = await client.query<RollbackRow>(
     `SELECT * FROM public.pilot_rollback_import_batch($1, $2, $3)`,
     [batchId, actor.id, reason]
   )
   const rollback = result.rows[0]
   if (!rollback) throw new Error('PILOT_IMPORT_ROLLBACK_EMPTY: rollback receipt is missing')
+
+  if (batchBefore.status !== 'rolled_back') {
+    const expectedCounts = [
+      ['enrollments', rollback.deleted_enrollments],
+      ['relationships', rollback.deleted_relationships],
+      ['students', rollback.deleted_students],
+      ['guardians', rollback.deleted_guardians],
+      ['storageObjects', rollback.deleted_storage_objects],
+    ] as const
+    for (const [key, observed] of expectedCounts) {
+      const expected = expectedCanonicalCount(batchBefore, key)
+      if (expected !== null && observed !== expected) {
+        throw new Error(`PILOT_IMPORT_ROLLBACK_RECEIPT_MISMATCH: ${key} count does not match ownership receipt`)
+      }
+    }
+  }
+
   const batch = await readBatch(client, batchId)
+  const storage = await readStorageObjectState(client, batchId)
+  const evidence = await readRollbackEvidence(client, batch)
   return {
-    ...buildImportReceipt(batch),
+    ...await buildImportReceipt(client, batch),
     rollback: {
-      actorEmail: actor.email,
+      actorId: actor.id,
       deletedEnrollments: rollback.deleted_enrollments,
       deletedRelationships: rollback.deleted_relationships,
       deletedStudents: rollback.deleted_students,
       deletedGuardians: rollback.deleted_guardians,
+      storageObjects: {
+        requested: rollback.storage_object_fingerprints.length,
+        removed: rollback.deleted_storage_objects,
+        remaining: storage.ownedCount,
+      },
+      tombstone: {
+        count: evidence.tombstoneCount,
+        matchesBatch: evidence.tombstoneMatchesBatch,
+      },
+      audit: {
+        rollbackEvents: evidence.auditCount,
+        redacted: evidence.auditIsRedacted,
+      },
       reasonRecorded: true,
     },
   }
