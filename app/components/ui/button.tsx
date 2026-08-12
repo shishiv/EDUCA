@@ -9,9 +9,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary - Green gradient like mockup buttons
+        // Primary - Solid municipal green; emphasis from weight and color, not gradient
         default:
-          'bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-700 hover:to-green-600 shadow-sm',
+          'bg-green-600 text-white hover:bg-green-700 shadow-sm',
 
         // Secondary - Outlined with green border
         secondary:

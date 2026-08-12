@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-12 sm:py-20">
-      <div className="mx-auto w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
         <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2">
           <Link href="/login">
             <ArrowLeft className="mr-2 h-4 w-4" />

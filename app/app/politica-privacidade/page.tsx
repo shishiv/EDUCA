@@ -27,7 +27,7 @@ export default function PoliticaPrivacidadePage() {
 
 			{/* Content */}
 			<main className="max-w-4xl mx-auto px-4 py-8">
-				<div className="bg-white rounded-lg shadow-sm border p-6 sm:p-8">
+				<div className="bg-white rounded-lg border p-6 sm:p-8">
 					<h1 className="text-3xl font-bold text-gray-900 mb-2">
 						Política de Privacidade
 					</h1>

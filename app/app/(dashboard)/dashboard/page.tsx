@@ -247,7 +247,7 @@ export default function DashboardPage() {
       {/* Main Content Grid - 2 columns on desktop, stack on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Minhas Turmas */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="font-display text-lg text-gray-800">
               Minhas Turmas
@@ -297,7 +297,7 @@ export default function DashboardPage() {
           <AlertasCard />
 
           {/* Quick Actions */}
-          <Card className="bg-white border border-gray-200 shadow-sm">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="font-display text-lg text-gray-800">
                 Ações Rápidas

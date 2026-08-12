@@ -183,7 +183,7 @@ function formatDateApi(date: Date): string {
  */
 function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
   return (
-    <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+    <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>

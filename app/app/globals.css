@@ -33,7 +33,6 @@
   /* Font Families (populated by next/font) */
   --font-display: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-cursive: var(--font-caveat), cursive;
 
   /* Canonical EDUCA surface token */
   --educa-paper: #f4faf7;
@@ -276,7 +275,7 @@
   }
   
   .stat-card {
-    @apply bg-white border border-gray-200 rounded-educa-md p-6 shadow-educa card-hover;
+    @apply bg-white border border-gray-200 rounded-educa-md p-6;
   }
 
   /* Sign-in surface: restrained municipal color roles and task-feedback motion. */
