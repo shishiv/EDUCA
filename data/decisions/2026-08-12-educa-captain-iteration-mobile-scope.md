@@ -65,6 +65,20 @@ screen.
    - Evidence: after screenshots (usuarios, dashboard) in the report. Status:
      awaiting captain acceptance.
 
+3. Bold direction (captain: the layout/adapt/simplify pass was too timid/
+   invisible - amplify). Flagship = dashboard. MATERIAL visual change.
+   - Branded hero header using the brand's OWN identity gradient (the
+     emerald->teal->sky gradient the sign-in surface already owns), with the
+     compliance-critical Frequencia metric given the lead position; count
+     metrics demoted to a secondary 3-up row. Greeting no longer a plain line.
+   - Demo sandbox banner slimmed from a full Alert box to a one-line note
+     (also drops an assertive live region that re-announced on every page).
+   - Preserves all data and every action. Families/tokens unchanged; reuses the
+     brand gradient and existing radii.
+   - Evidence: before (generic dashboard) vs after (branded hero) full-page
+     desktop + mobile screenshots in the report. Status: proposed as the bold
+     direction to roll across screens - awaiting captain confirmation.
+
 ## Progress log
 
 - 2026-08-12: systemic mobile pass committed (`f68e9d8..c93a731`): distill
