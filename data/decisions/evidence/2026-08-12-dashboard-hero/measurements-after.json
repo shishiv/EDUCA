@@ -1,0 +1,804 @@
+{
+  "state": "after",
+  "base": "http://localhost:3000",
+  "capturedAt": "2026-08-12T04:34:44.122Z",
+  "gradientStops": {
+    "emerald-700": [
+      4,
+      120,
+      87
+    ],
+    "teal-700": [
+      15,
+      118,
+      110
+    ],
+    "sky-800": [
+      7,
+      89,
+      133
+    ]
+  },
+  "viewports": {
+    "desktop": {
+      "contrast": [
+        {
+          "text": "Bom dia, Admin!",
+          "tag": "h1",
+          "fontSizePx": 36,
+          "isLargeText": true,
+          "overChip": false,
+          "perStop": {
+            "emerald-700": 5.48,
+            "teal-700": 5.47,
+            "sky-800": 7.56
+          },
+          "minRatio": 5.47,
+          "passesAA": true,
+          "aaThreshold": 3
+        },
+        {
+          "text": "Rede Municipal de Educação · Ano Letivo ",
+          "tag": "p",
+          "fontSizePx": 16,
+          "isLargeText": false,
+          "overChip": false,
+          "perStop": {
+            "emerald-700": 4.54,
+            "teal-700": 4.54,
+            "sky-800": 6.15
+          },
+          "minRatio": 4.54,
+          "passesAA": true,
+          "aaThreshold": 4.5
+        },
+        {
+          "text": "Frequência média da rede",
+          "tag": "p",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 4,
+            "teal-700": 3.97,
+            "sky-800": 5.27
+          },
+          "minRatio": 3.97,
+          "passesAA": false,
+          "aaThreshold": 4.5
+        },
+        {
+          "text": "100%",
+          "tag": "span",
+          "fontSizePx": 36,
+          "isLargeText": true,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 4.53,
+            "teal-700": 4.5,
+            "sky-800": 5.97
+          },
+          "minRatio": 4.5,
+          "passesAA": true,
+          "aaThreshold": 3
+        },
+        {
+          "text": "conforme",
+          "tag": "span",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 3.4,
+            "teal-700": 3.38,
+            "sky-800": 4.15
+          },
+          "minRatio": 3.38,
+          "passesAA": false,
+          "aaThreshold": 4.5
+        }
+      ],
+      "readability": [
+        {
+          "text": "Bom dia, Admin!",
+          "tag": "h1",
+          "fontFamily": "Lexend",
+          "fontSizePx": 36,
+          "lineHeight": "40px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.36px"
+        },
+        {
+          "text": "Rede Municipal de Educação · Ano Letivo ",
+          "tag": "p",
+          "fontFamily": "Inter",
+          "fontSizePx": 16,
+          "lineHeight": "24px",
+          "fontWeight": "400",
+          "letterSpacing": "normal"
+        },
+        {
+          "text": "Frequência média da rede",
+          "tag": "p",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "600",
+          "letterSpacing": "0.3px"
+        },
+        {
+          "text": "100%",
+          "tag": "span",
+          "fontFamily": "Lexend",
+          "fontSizePx": 36,
+          "lineHeight": "36px",
+          "fontWeight": "700",
+          "letterSpacing": "normal"
+        },
+        {
+          "text": "conforme",
+          "tag": "span",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "600",
+          "letterSpacing": "normal"
+        }
+      ],
+      "hierarchy": [
+        {
+          "level": "h2",
+          "text": "Sistema Escolar",
+          "fontSizePx": 14,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h1",
+          "text": "Bom dia, Admin!",
+          "fontSizePx": 36,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Minhas Turmas",
+          "fontSizePx": 18,
+          "fontWeight": "400",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Alertas",
+          "fontSizePx": 16,
+          "fontWeight": "600",
+          "fontFamily": "Lexend"
+        }
+      ],
+      "actions": [
+        {
+          "tag": "a",
+          "name": "Novo Aluno",
+          "href": "/dashboard/alunos/novo",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Matrícula",
+          "href": "/dashboard/matriculas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Diário de Classe",
+          "href": "/diario",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Nova Turma",
+          "href": "/dashboard/turmas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Relatórios",
+          "href": "/dashboard/relatorios",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Config",
+          "href": "/dashboard/configuracoes",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "1º Ano A E2E1º Ano - matutino3 alunos",
+          "href": "/dashboard/turmas/468d0b62-bb87-4e11-9118-113ca2cf209e",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "2º Ano B E2E2º Ano - vespertino2 alunos",
+          "href": "/dashboard/turmas/17a67ee2-8eb7-481f-8b3f-ce62ce85df5b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Berçário A E2EBerçário - integral0 aluno",
+          "href": "/dashboard/turmas/f2b10a23-83c1-4ebb-91ca-3ef452aaea2b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica A1 ano - matutino1 aluno",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000001",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica B1 ano - vespertino1 alu",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000002",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Ver todas as turmas",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 40
+        },
+        {
+          "tag": "a",
+          "name": "Fazer chamada →",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 16
+        }
+      ],
+      "focusWalk": [
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "button",
+          "name": "Selecione uma escola",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Recolher menu lateral",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Dashboard",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Cadastros",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Alunos",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Usuários",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Escolas",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Turmas",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Matrículas",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Atribuições",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Responsáveis",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Acadêmico",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        }
+      ],
+      "focusSummary": {
+        "interactive": 14,
+        "focusable": 14,
+        "walkStops": 16,
+        "withVisibleRing": 13
+      }
+    },
+    "mobile": {
+      "contrast": [
+        {
+          "text": "Bom dia, Admin!",
+          "tag": "h1",
+          "fontSizePx": 30,
+          "isLargeText": true,
+          "overChip": false,
+          "perStop": {
+            "emerald-700": 5.48,
+            "teal-700": 5.47,
+            "sky-800": 7.56
+          },
+          "minRatio": 5.47,
+          "passesAA": true,
+          "aaThreshold": 3
+        },
+        {
+          "text": "Rede Municipal de Educação · Ano Letivo ",
+          "tag": "p",
+          "fontSizePx": 14,
+          "isLargeText": false,
+          "overChip": false,
+          "perStop": {
+            "emerald-700": 4.54,
+            "teal-700": 4.54,
+            "sky-800": 6.15
+          },
+          "minRatio": 4.54,
+          "passesAA": true,
+          "aaThreshold": 4.5
+        },
+        {
+          "text": "Frequência média da rede",
+          "tag": "p",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 4,
+            "teal-700": 3.97,
+            "sky-800": 5.27
+          },
+          "minRatio": 3.97,
+          "passesAA": false,
+          "aaThreshold": 4.5
+        },
+        {
+          "text": "100%",
+          "tag": "span",
+          "fontSizePx": 36,
+          "isLargeText": true,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 4.53,
+            "teal-700": 4.5,
+            "sky-800": 5.97
+          },
+          "minRatio": 4.5,
+          "passesAA": true,
+          "aaThreshold": 3
+        },
+        {
+          "text": "conforme",
+          "tag": "span",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 3.4,
+            "teal-700": 3.38,
+            "sky-800": 4.15
+          },
+          "minRatio": 3.38,
+          "passesAA": false,
+          "aaThreshold": 4.5
+        }
+      ],
+      "readability": [
+        {
+          "text": "Bom dia, Admin!",
+          "tag": "h1",
+          "fontFamily": "Lexend",
+          "fontSizePx": 30,
+          "lineHeight": "37.5px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.3px"
+        },
+        {
+          "text": "Rede Municipal de Educação · Ano Letivo ",
+          "tag": "p",
+          "fontFamily": "Inter",
+          "fontSizePx": 14,
+          "lineHeight": "20px",
+          "fontWeight": "400",
+          "letterSpacing": "normal"
+        },
+        {
+          "text": "Frequência média da rede",
+          "tag": "p",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "600",
+          "letterSpacing": "0.3px"
+        },
+        {
+          "text": "100%",
+          "tag": "span",
+          "fontFamily": "Lexend",
+          "fontSizePx": 36,
+          "lineHeight": "36px",
+          "fontWeight": "700",
+          "letterSpacing": "normal"
+        },
+        {
+          "text": "conforme",
+          "tag": "span",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "600",
+          "letterSpacing": "normal"
+        }
+      ],
+      "hierarchy": [
+        {
+          "level": "h2",
+          "text": "Sistema Escolar",
+          "fontSizePx": 14,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h1",
+          "text": "Bom dia, Admin!",
+          "fontSizePx": 30,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Minhas Turmas",
+          "fontSizePx": 18,
+          "fontWeight": "400",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Alertas",
+          "fontSizePx": 16,
+          "fontWeight": "600",
+          "fontFamily": "Lexend"
+        }
+      ],
+      "actions": [
+        {
+          "tag": "a",
+          "name": "Novo Aluno",
+          "href": "/dashboard/alunos/novo",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Matrícula",
+          "href": "/dashboard/matriculas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Diário de Classe",
+          "href": "/diario",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Nova Turma",
+          "href": "/dashboard/turmas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Relatórios",
+          "href": "/dashboard/relatorios",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Config",
+          "href": "/dashboard/configuracoes",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "1º Ano A E2E1º Ano - matutino3 alunos",
+          "href": "/dashboard/turmas/468d0b62-bb87-4e11-9118-113ca2cf209e",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "2º Ano B E2E2º Ano - vespertino2 alunos",
+          "href": "/dashboard/turmas/17a67ee2-8eb7-481f-8b3f-ce62ce85df5b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Berçário A E2EBerçário - integral0 aluno",
+          "href": "/dashboard/turmas/f2b10a23-83c1-4ebb-91ca-3ef452aaea2b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica A1 ano - matutino1 aluno",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000001",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica B1 ano - vespertino1 alu",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000002",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Ver todas as turmas",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 40
+        },
+        {
+          "tag": "a",
+          "name": "Fazer chamada →",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 16
+        }
+      ],
+      "focusWalk": [
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "button",
+          "name": "Abrir menu",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Abrir notificações",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "AT",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Novo Aluno",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Matrícula",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Diário de Classe",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Nova Turma",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Relatórios",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Config",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "1º Ano A E2E1º Ano - matutino3 aluno",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "2º Ano B E2E2º Ano - vespertino2 alu",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Berçário A E2EBerçário - integral0 a",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        }
+      ],
+      "focusSummary": {
+        "interactive": 14,
+        "focusable": 14,
+        "walkStops": 16,
+        "withVisibleRing": 13
+      }
+    }
+  }
+}

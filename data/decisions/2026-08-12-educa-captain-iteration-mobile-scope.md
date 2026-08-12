@@ -78,6 +78,16 @@ screen.
    - Evidence: before (generic dashboard) vs after (branded hero) full-page
      desktop + mobile screenshots in the report. Status: proposed as the bold
      direction to roll across screens - awaiting captain confirmation.
+   - EVIDENCE PACK (captain-requested, not propagation):
+     `data/decisions/evidence/2026-08-12-dashboard-hero/` - see `report.md`.
+     Before/after HTML + desktop/mobile screenshots at equal data, plus measured
+     contrast, readability, keyboard focus, hierarchy, and action reachability;
+     `capture.mjs` regenerates it. f28d304 left unchanged.
+     Key finding: two 12px hero chip labels ("Frequência média da rede" 3.97:1
+     and the "conforme" badge 3.38:1) fail WCAG AA contrast (need 4.5:1); a
+     one-line fix (labels -> text-white) exists but is NOT applied pending the
+     captain's decision. Greeting, subtitle, and the 100% value pass.
+     The [key=bold-direction] decision remains OPEN.
 
 ## Progress log
 
