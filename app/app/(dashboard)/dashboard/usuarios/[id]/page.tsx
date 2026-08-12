@@ -210,7 +210,7 @@ export default function UsuarioDetalhesPage() {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900">Detalhes do Usuário</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Detalhes do Usuário</h1>
           <p className="text-gray-600 mt-1">
             Informações completas e histórico de atividades
           </p>

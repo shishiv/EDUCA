@@ -266,7 +266,7 @@ export default function EscolaDetailsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard/escolas">
@@ -275,7 +275,7 @@ export default function EscolaDetailsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{escola.nome}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{escola.nome}</h1>
             <p className="text-gray-600 mt-1">
               Informações completas e estatísticas da escola
             </p>
@@ -302,7 +302,7 @@ export default function EscolaDetailsPage() {
       </Alert>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">Total de Alunos</CardTitle>

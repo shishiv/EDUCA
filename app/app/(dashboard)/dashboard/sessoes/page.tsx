@@ -435,7 +435,7 @@ export default function SessoesPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="responsive-stack-table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
