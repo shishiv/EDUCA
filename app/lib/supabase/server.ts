@@ -116,6 +116,7 @@ export async function verifyUserRole(
     .from('users')
     .select('tipo_usuario')
     .eq('id', user.id)
+    .eq('ativo', true)
     .single()
 
   if (error || !userData) {

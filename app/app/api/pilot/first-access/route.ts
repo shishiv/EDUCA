@@ -56,6 +56,16 @@ export async function POST(request: Request) {
     }
 
     const service = createServiceRoleClient()
+    const { data: lifecycleProfile, error: lifecycleProfileError } = await service
+      .from('users')
+      .select('ativo')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (lifecycleProfileError) throw lifecycleProfileError
+    if (lifecycleProfile?.ativo === false) {
+      return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_REVOKED' }, { status: 403 })
+    }
+
     let completion
     try {
       const lifecycleUser: UserLifecycleAuthUser = {
