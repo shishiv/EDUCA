@@ -214,7 +214,7 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">{relatorios.length}</div>
@@ -285,7 +285,7 @@ export default function RelatoriosPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Relatório</TableHead>
