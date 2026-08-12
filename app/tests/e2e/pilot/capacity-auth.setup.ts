@@ -1,5 +1,5 @@
 import { expect, test as setup } from '@playwright/test'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import {
   PILOT_CAPACITY_AUTH_PASSWORD,
@@ -17,4 +17,17 @@ setup('authenticate isolated capacity director', async ({ page }) => {
   await expect(page).toHaveURL(/dashboard/, { timeout: 30_000 })
   mkdirSync(path.dirname(AUTH_STATE_PATH), { recursive: true })
   await page.context().storageState({ path: AUTH_STATE_PATH })
+
+  const roleSetupReceiptPath = process.env.PILOT_CAPACITY_ROLE_SETUP_RECEIPT_PATH
+  if (roleSetupReceiptPath) {
+    mkdirSync(path.dirname(roleSetupReceiptPath), { recursive: true })
+    writeFileSync(roleSetupReceiptPath, `${JSON.stringify({
+      result: 'pass',
+      boundary: 'real-playwright-browser',
+      identity: PILOT_CAPACITY_DIRECTOR_EMAIL,
+      role: 'diretor',
+      authStatePath: AUTH_STATE_PATH,
+      landingRoute: new URL(page.url()).pathname,
+    }, null, 2)}\n`, 'utf8')
+  }
 })
