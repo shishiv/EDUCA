@@ -90,7 +90,7 @@ The canonical migrations retain the full product schema. The pilot-only provisio
 
 `app/scripts/pilot-safety-gate.ts` blocks external deploys while `PILOT_MODE=true`. To authorize real data or external pilot deployment, make a separate reviewed change with named legal and governance approvals. Do not weaken the gate as part of routine feature work.
 
-The backup/restore rehearsal writes generated evidence under ignored `.pilot-evidence/`. It verifies portable CSV data, Auth and Storage representations, policies, grants, views, RPCs, tombstones, and RPO/RTO without modifying its source database. Governed pilot CSV preparation is proof-only: `app/scripts/run-pilot-import-proof-e2e.sh` creates a disposable PostgreSQL database, requires the named owner and processing agreement, encrypts the payload, records counts and fingerprints, cleans expired ciphertext, and exercises rollback. It never targets the public demo or a production endpoint; see `docs/PILOT-DATA-IMPORT.md`.
+The backup/restore rehearsal writes generated evidence under ignored `.pilot-evidence/`. It verifies portable CSV data, Auth and Storage representations, policies, grants, views, RPCs, tombstones, and RPO/RTO without modifying its source database. Governed pilot CSV preparation is proof-only: `app/scripts/run-pilot-import-proof-e2e.sh` creates a disposable PostgreSQL database, requires the explicit `isolated-proof` target and synthetic marker, encrypts the payload, records redacted safety receipts, counts and fingerprints, cleans expired ciphertext, and exercises rollback. It rejects the public demo, `SUPABASE_DEMO_*`, real mode, and production endpoints before database access; see `docs/PILOT-DATA-IMPORT.md`.
 
 ## WhatsApp attendance notifications (bounded MVP)
 

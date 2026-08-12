@@ -34,6 +34,37 @@ BEGIN
   END;
 END $$;
 
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO public.pilot_import_batches(
+      escola_id, dataset, idempotency_key, content_sha256, encryption_key_id,
+      encrypted_payload, iv, auth_tag, validation_report, status, submitted_by,
+      import_target, source_mode, encryption_algorithm,
+      governance_owner_name, governance_owner_email, submitted_by_name,
+      submitted_by_email, approved_by_name, approved_by_email,
+      processing_agreement_reference, processing_agreement_version,
+      processing_agreement_recorded_at, processing_agreement_recorded_by,
+      retention_policy, raw_expires_at, canonical_expires_at, rollback_until,
+      source_row_count, canonical_fingerprint_sha256, governance_fingerprint_sha256
+    ) VALUES (
+      '91000000-0000-0000-0000-000000000001', 'students', 'governance-invalid-retention',
+      'invalid-retention-sha256', 'proof-test-v1', 'ciphertext', 'iv', 'tag', '{}'::jsonb,
+      'published', '92000000-0000-0000-0000-000000000001', 'isolated_proof', 'synthetic',
+      'aes-256-gcm', 'Owner Governanca', 'owner.governanca@synthetic.invalid',
+      'Secretaria Governanca', 'secretaria.governanca@synthetic.invalid',
+      'Diretora Governanca', 'diretora.governanca@synthetic.invalid',
+      'DPA-SYN-GOV-INVALID', 'v1', now(),
+      '92000000-0000-0000-0000-000000000001', 'proof-only-test',
+      now() + interval '7 days', now() + interval '30 days', now() + interval '1 day',
+      1, repeat('c', 64), repeat('d', 64)
+    );
+    RAISE EXCEPTION 'deliberate retention break did not turn governance red';
+  EXCEPTION WHEN check_violation THEN
+    IF SQLERRM NOT LIKE '%pilot_import_batches_governance_check%' THEN RAISE; END IF;
+  END;
+END $$;
+
 INSERT INTO public.pilot_import_batches(
   id, escola_id, dataset, idempotency_key, content_sha256, encryption_key_id,
   encrypted_payload, iv, auth_tag, validation_report, status, submitted_by, approved_by,

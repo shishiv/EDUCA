@@ -134,15 +134,7 @@ export async function POST(request: Request) {
     }
 
     const recordedAt = new Date().toISOString()
-    const governanceMetadata = {
-      owner: governance.owner,
-      processingAgreement: {
-        ...governance.processingAgreement,
-        recordedAt,
-        recordedBy: { name: actor.name, email: actor.email },
-      },
-      retention: governance.retention,
-    }
+    const governanceMetadata = governance
     const encrypted = encryptPilotImportPayload(body.csv, key, keyId)
     const { data: batch, error: insertError } = await service
       .from('pilot_import_batches')

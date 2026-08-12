@@ -6,8 +6,10 @@ import {
   verifyPilotDryRunValidationToken,
   type PilotEncryptedImportPayload,
 } from './pilot-import-crypto'
+import { PILOT_PROOF_SYNTHETIC_MARKER } from './pilot-safety-gate'
 
-export const SYNTHETIC_CSV_MARKER = 'SYNTHETIC-EDUCA-PILOT'
+/** CSV marker shared by the synthetic pilot proof and its safety gate. */
+export const SYNTHETIC_CSV_MARKER = PILOT_PROOF_SYNTHETIC_MARKER
 export const SYNTHETIC_STUDENT_CSV_HEADERS = [
   'synthetic_marker',
   'source_id',

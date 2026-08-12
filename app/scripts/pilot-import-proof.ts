@@ -10,12 +10,17 @@ import {
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
   fingerprintPilotImportGovernance,
+  SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION,
   transformGovernedPilotCsvToCanonicalRows,
   validateGovernedPilotImportManifest,
   validateGovernedPilotStudentCsv,
   type GovernedPilotImportDataMode,
 } from '../lib/pilot/governed-csv-import'
-import { assertGovernedPilotProofSafety } from '../lib/pilot/governed-import-safety'
+import {
+  assertGovernedPilotProofSafety,
+  type GovernedPilotProofSafetyReceipt,
+  readGovernedPilotProofEnvironment,
+} from '../lib/pilot/governed-import-safety'
 import {
   encryptPilotImportPayload,
   validatePilotImportEncryptionKey,
@@ -122,7 +127,8 @@ function parseProofImportArguments(argv: string[]): ProofImportArguments {
 }
 
 function readDataMode(): GovernedPilotImportDataMode {
-  const dataMode = process.env.PILOT_IMPORT_DATA_MODE || 'synthetic'
+  const dataMode = process.env.PILOT_IMPORT_DATA_MODE
+  if (!dataMode) throw new Error('PILOT_IMPORT_PROOF_DATA_MODE_REQUIRED: explicit data mode is required')
   if (dataMode !== 'synthetic' && dataMode !== 'real') {
     throw new Error('PILOT_IMPORT_PROOF_DATA_MODE_INVALID: data mode must be synthetic or real')
   }
@@ -234,17 +240,22 @@ async function readBatch(client: Client, batchId: string): Promise<BatchRow> {
   return batch
 }
 
-function buildImportReceipt(batch: BatchRow): Record<string, unknown> {
+function buildImportReceipt(
+  batch: BatchRow,
+  safetyReceipt: GovernedPilotProofSafetyReceipt
+): Record<string, unknown> {
   return {
     batchId: batch.id,
-    target: batch.import_target,
+    target: safetyReceipt.target,
     status: batch.status,
+    safety: safetyReceipt,
     sourceMode: batch.source_mode,
     sourceRowCount: batch.source_row_count,
     canonicalCounts: batch.canonical_counts,
     sourceFingerprintSha256: batch.content_sha256,
     canonicalFingerprintSha256: batch.canonical_fingerprint_sha256,
     databaseFingerprintSha256: batch.database_fingerprint_sha256,
+    governanceManifestVersion: SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION,
     governanceFingerprintSha256: batch.governance_fingerprint_sha256,
     encryption: {
       algorithm: 'aes-256-gcm',
@@ -265,7 +276,8 @@ function buildImportReceipt(batch: BatchRow): Record<string, unknown> {
 async function runGovernedProofImport(
   client: Client,
   csvPath: string,
-  approvalPath: string
+  approvalPath: string,
+  safetyReceipt: GovernedPilotProofSafetyReceipt
 ): Promise<Record<string, unknown>> {
   const dataMode = readDataMode()
   const encryptionKey = process.env.PILOT_IMPORT_ENCRYPTION_KEY
@@ -312,7 +324,7 @@ async function runGovernedProofImport(
         throw new Error('PILOT_IMPORT_IDEMPOTENCY_GOVERNANCE_MISMATCH: existing batch has different governance')
       }
       await client.query('COMMIT')
-      return buildImportReceipt(await readBatch(client, existing.rows[0].id))
+      return buildImportReceipt(await readBatch(client, existing.rows[0].id), safetyReceipt)
     }
 
     const batchResult = await client.query<{ id: string }>(
@@ -452,7 +464,7 @@ async function runGovernedProofImport(
     )
 
     await client.query('COMMIT')
-    return buildImportReceipt(await readBatch(client, batchId))
+    return buildImportReceipt(await readBatch(client, batchId), safetyReceipt)
   } catch (error) {
     await client.query('ROLLBACK')
     throw error
@@ -463,7 +475,8 @@ async function runRollback(
   client: Client,
   batchId: string,
   actorEmail: string,
-  reason: string
+  reason: string,
+  safetyReceipt: GovernedPilotProofSafetyReceipt
 ): Promise<Record<string, unknown>> {
   if (!UUID_PATTERN.test(batchId)) throw new Error('PILOT_IMPORT_PROOF_BATCH_INVALID: batch id must be a UUID')
   const actor = await findActiveActor(client, actorEmail, 'PILOT_IMPORT_ROLLBACK_ACTOR_REQUIRED')
@@ -475,9 +488,9 @@ async function runRollback(
   if (!rollback) throw new Error('PILOT_IMPORT_ROLLBACK_EMPTY: rollback receipt is missing')
   const batch = await readBatch(client, batchId)
   return {
-    ...buildImportReceipt(batch),
+    ...buildImportReceipt(batch, safetyReceipt),
     rollback: {
-      actorEmail: actor.email,
+      actorResolved: true,
       deletedEnrollments: rollback.deleted_enrollments,
       deletedRelationships: rollback.deleted_relationships,
       deletedStudents: rollback.deleted_students,
@@ -487,33 +500,38 @@ async function runRollback(
   }
 }
 
-async function runRetentionCleanup(client: Client): Promise<Record<string, unknown>> {
+async function runRetentionCleanup(
+  client: Client,
+  safetyReceipt: GovernedPilotProofSafetyReceipt
+): Promise<Record<string, unknown>> {
   const result = await client.query<{ pilot_cleanup_import_retention: number }>(
     `SELECT public.pilot_cleanup_import_retention()`
   )
   return {
-    target: 'isolated-proof',
+    target: safetyReceipt.target,
+    safety: safetyReceipt,
     rawPayloadsCleaned: result.rows[0]?.pilot_cleanup_import_retention ?? 0,
   }
 }
 
 async function main(): Promise<void> {
   const args = parseProofImportArguments(process.argv.slice(2))
-  assertGovernedPilotProofSafety()
-  const proofDatabaseUrl = process.env.PILOT_IMPORT_PROOF_DATABASE_URL
+  const proofEnvironment = readGovernedPilotProofEnvironment()
+  const safetyReceipt = assertGovernedPilotProofSafety(proofEnvironment, args.command)
+  const proofDatabaseUrl = proofEnvironment.proofDatabaseUrl
   if (!proofDatabaseUrl) throw new Error('PILOT_IMPORT_PROOF_DATABASE_REQUIRED: proof database URL is required')
   const client = new Client({ connectionString: proofDatabaseUrl })
   await client.connect()
   try {
     let receipt: Record<string, unknown>
     if (args.command === 'import') {
-      receipt = await runGovernedProofImport(client, args.csvPath!, args.approvalPath!)
+      receipt = await runGovernedProofImport(client, args.csvPath!, args.approvalPath!, safetyReceipt)
       console.info(`PILOT_GOVERNED_IMPORT_RECEIPT: ${JSON.stringify(receipt)}`)
     } else if (args.command === 'rollback') {
-      receipt = await runRollback(client, args.batchId!, args.actorEmail!, args.reason!)
+      receipt = await runRollback(client, args.batchId!, args.actorEmail!, args.reason!, safetyReceipt)
       console.info(`PILOT_GOVERNED_ROLLBACK_RECEIPT: ${JSON.stringify(receipt)}`)
     } else {
-      receipt = await runRetentionCleanup(client)
+      receipt = await runRetentionCleanup(client, safetyReceipt)
       console.info(`PILOT_GOVERNED_RETENTION_RECEIPT: ${JSON.stringify(receipt)}`)
     }
   } finally {
