@@ -1,0 +1,164 @@
+{
+  "status": "PASS",
+  "releaseRevision": "d0c6cde6bc2f7a2d701f84ec5801c2095db2d5cc",
+  "environment": "local synthetic pilot rehearsal",
+  "boundedScope": {
+    "schoolId": "21000000-0000-0000-0000-000000000001",
+    "classId": "22000000-0000-0000-0000-000000000001",
+    "studentId": "23000000-0000-0000-0000-000000000001"
+  },
+  "reportingPeriod": {
+    "year": 2026,
+    "semester": "primeiro",
+    "start": "2026-02-01",
+    "end": "2026-07-31"
+  },
+  "canonicalSource": "public.conteudo_aula via generateContentReport (from('conteudo_aula'))",
+  "fingerprintAlgorithm": "MD5",
+  "nonLegalBoundary": "Este é um relatório operacional de ensaio piloto sintético local. Não é documento legal, emissão municipal oficial, assinatura, certificado, comprovação de conformidade ou exportação Educacenso.",
+  "expected": {
+    "counts": {
+      "schools": 1,
+      "classes": 1,
+      "students": 1,
+      "enrollments": 1,
+      "reports": 1,
+      "sessions": 2,
+      "canonicalContent": 2
+    },
+    "canonicalContentFingerprint": "5b197cac1ee74fd588edafa4f8558d85"
+  },
+  "actual": {
+    "schools": 1,
+    "classes": 1,
+    "students": 1,
+    "enrollments": 1,
+    "reports": 1,
+    "sessions": 2,
+    "canonical_content": 2,
+    "marker": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE",
+    "release_revision": "d0c6cde6bc2f7a2d701f84ec5801c2095db2d5cc",
+    "rehearsal_environment": "local synthetic pilot rehearsal",
+    "canonical_source": "public.conteudo_aula via generateContentReport (from('conteudo_aula'))",
+    "canonical_content_fingerprint": "5b197cac1ee74fd588edafa4f8558d85",
+    "descriptive_report_fingerprint": "57332b4709130f4616f0bb6c3e8ce66d",
+    "school_scope": {
+      "id": "21000000-0000-0000-0000-000000000001",
+      "name": "Escola Descritiva Sintética",
+      "code": "PILOT-DESC"
+    },
+    "class_scope": {
+      "id": "22000000-0000-0000-0000-000000000001",
+      "name": "Pré II Sintético",
+      "serie": "Pré II",
+      "schoolId": "21000000-0000-0000-0000-000000000001"
+    },
+    "reporting_period": {
+      "year": 2026,
+      "semester": "primeiro",
+      "start": "2026-02-01",
+      "end": "2026-07-31"
+    },
+    "issuer_context": {
+      "reportId": "28000000-0000-0000-0000-000000000001",
+      "reportProfessorId": "d6b5eb96-bf8d-4e2e-8db0-7abe8079c4bb",
+      "actorId": "d6b5eb96-bf8d-4e2e-8db0-7abe8079c4bb",
+      "name": "Professora Descritiva Sintética",
+      "email": "professora.descritivo@synthetic.invalid",
+      "role": "professor",
+      "authEmail": "professora.descritivo@synthetic.invalid"
+    }
+  },
+  "checks": [
+    {
+      "name": "count_schools",
+      "ok": true,
+      "detail": "1 == 1"
+    },
+    {
+      "name": "count_classes",
+      "ok": true,
+      "detail": "1 == 1"
+    },
+    {
+      "name": "count_students",
+      "ok": true,
+      "detail": "1 == 1"
+    },
+    {
+      "name": "count_enrollments",
+      "ok": true,
+      "detail": "1 == 1"
+    },
+    {
+      "name": "count_reports",
+      "ok": true,
+      "detail": "1 == 1"
+    },
+    {
+      "name": "count_sessions",
+      "ok": true,
+      "detail": "2 == 2"
+    },
+    {
+      "name": "count_canonical_content",
+      "ok": true,
+      "detail": "2 == 2"
+    },
+    {
+      "name": "marker_synthetic",
+      "ok": true,
+      "detail": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE == SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE"
+    },
+    {
+      "name": "release_revision",
+      "ok": true,
+      "detail": "d0c6cde6bc2f7a2d701f84ec5801c2095db2d5cc == d0c6cde6bc2f7a2d701f84ec5801c2095db2d5cc"
+    },
+    {
+      "name": "environment_local_synthetic",
+      "ok": true,
+      "detail": "local synthetic pilot rehearsal == local synthetic pilot rehearsal"
+    },
+    {
+      "name": "canonical_source",
+      "ok": true,
+      "detail": "public.conteudo_aula via generateContentReport (from('conteudo_aula')) == public.conteudo_aula via generateContentReport (from('conteudo_aula'))"
+    },
+    {
+      "name": "fingerprint_algorithm",
+      "ok": true,
+      "detail": "MD5"
+    },
+    {
+      "name": "fingerprint_canonical_content",
+      "ok": true,
+      "detail": "5b197cac1ee74fd588edafa4f8558d85 == 5b197cac1ee74fd588edafa4f8558d85"
+    },
+    {
+      "name": "fingerprint_descriptive_report",
+      "ok": true,
+      "detail": "57332b4709130f4616f0bb6c3e8ce66d == 57332b4709130f4616f0bb6c3e8ce66d"
+    },
+    {
+      "name": "scope_school",
+      "ok": true,
+      "detail": "Escola Descritiva Sintética / 21000000-0000-0000-0000-000000000001"
+    },
+    {
+      "name": "scope_class",
+      "ok": true,
+      "detail": "Pré II Sintético / 22000000-0000-0000-0000-000000000001"
+    },
+    {
+      "name": "reporting_period",
+      "ok": true,
+      "detail": "{\"year\":2026,\"semester\":\"primeiro\",\"start\":\"2026-02-01\",\"end\":\"2026-07-31\"}"
+    },
+    {
+      "name": "issuer_authenticated_synthetic",
+      "ok": true,
+      "detail": "{\"reportId\":\"28000000-0000-0000-0000-000000000001\",\"reportProfessorId\":\"d6b5eb96-bf8d-4e2e-8db0-7abe8079c4bb\",\"actorId\":\"d6b5eb96-bf8d-4e2e-8db0-7abe8079c4bb\",\"name\":\"Professora Descritiva Sintética\",\"email\":\"professora.descritivo@synthetic.invalid\",\"role\":\"professor\",\"authEmail\":\"professora.descritivo@synthetic.invalid\"}"
+    }
+  ]
+}
