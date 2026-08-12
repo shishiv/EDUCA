@@ -42,7 +42,11 @@ BEGIN
     'Diretora Rollback Sintetica', 'diretora.rollback@synthetic.invalid',
     'DPA-SYN-ROLLBACK-001', 'v1', now(),
     '97000000-0000-0000-0000-000000000001', 'Secretaria Rollback Sintetica',
-    'secretaria.rollback@synthetic.invalid', 'proof-only-test', now() + interval '1 day',
+    'secretaria.rollback@synthetic.invalid', 'proof-only-test',
+    CASE WHEN p_rollback_until <= now()
+      THEN p_rollback_until - interval '1 hour'
+      ELSE now() + interval '1 day'
+    END,
     now() + interval '30 days', p_rollback_until, 1, p_canonical_counts,
     repeat('a', 64), repeat('b', 64), '{}'::jsonb
   );

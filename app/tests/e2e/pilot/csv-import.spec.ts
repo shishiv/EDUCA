@@ -8,13 +8,31 @@ const csv = [
 ].join('\n')
 
 const governance = {
+  version: 'educa-synthetic-pilot-governance-v1',
   owner: { name: 'Owner do Piloto Sintetico', email: 'owner@synthetic.invalid' },
-  processingAgreement: { reference: 'DPA-SYN-E2E-001', version: 'v1' },
+  controller: { name: 'Controlador do Piloto Sintetico', email: 'controller@synthetic.invalid', status: 'a confirmar' },
+  processor: { name: 'Processador do Piloto Sintetico', email: 'processor@synthetic.invalid', status: 'a confirmar' },
+  purpose: 'preparacao tecnica do piloto sintetico',
+  legalBasis: 'a confirmar',
+  processingAgreement: { reference: 'DPA-SYN-E2E-001', version: 'v1', status: 'a confirmar' },
+  subprocessors: [{
+    name: 'Armazenamento do Piloto Sintetico', email: 'storage@synthetic.invalid', status: 'a confirmar',
+    service: 'armazenamento cifrado de prova', processingLocation: 'isolated-proof-local',
+  }],
+  location: { primary: 'isolated-proof-local', transfer: 'a confirmar' },
+  encryption: { algorithm: 'aes-256-gcm', keyReference: 'synthetic-local-v1', inTransit: 'a confirmar', plaintextStored: false },
   retention: {
     policy: 'synthetic-proof-30d',
     rawPayloadExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     canonicalDataExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     rollbackUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  exit: {
+    trigger: 'fim da prova tecnica', dataDisposition: 'a confirmar', accessRevocation: 'a confirmar', evidence: 'a confirmar',
+  },
+  incident: {
+    contact: { name: 'Contato Incidente Sintetico', email: 'incidente@synthetic.invalid' },
+    notification: 'a confirmar', response: 'a confirmar',
   },
 }
 
