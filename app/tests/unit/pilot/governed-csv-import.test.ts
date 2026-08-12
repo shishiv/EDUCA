@@ -244,6 +244,21 @@ describe('governed pilot CSV contract', () => {
       syntheticOnly: true,
       syntheticMarkerPresent: true,
     })
+
+    const restoreReceipt = assertGovernedPilotProofSafety({
+      pilotMode: 'true',
+      target: 'isolated-proof',
+      proofDatabaseUrl: 'postgresql://postgres@127.0.0.1/educa_pilot_proof_restore_test',
+      demoSandbox: 'false',
+      supabaseDemoReferences: [],
+      dataMode: 'synthetic',
+      syntheticOnly: 'true',
+      syntheticMarker: SYNTHETIC_CSV_MARKER,
+      encryptionKey: key,
+    }, 'restore')
+
+    expect(restoreReceipt.operation).toBe('restore')
+    expect(restoreReceipt.target).toBe(PILOT_PROOF_TARGET_IDENTITY.target)
   })
 
   it('rejects unsafe targets before proof access and emits a redacted receipt', () => {
