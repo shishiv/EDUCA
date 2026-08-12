@@ -102,44 +102,35 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      {/* Left Panel - Hero with gradient */}
-      <div className="relative hidden flex-col justify-center overflow-hidden bg-gradient-to-br from-green-600 to-blue-500 p-12 md:flex lg:p-16">
-        <div
-          className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-white/10"
-          aria-hidden="true"
-        />
-        <div className="relative z-10 max-w-md pl-6 before:absolute before:left-0 before:top-1 before:h-9 before:w-1 before:rounded-full before:bg-yellow-300">
-          <h1 className="font-display text-4xl font-bold leading-tight text-white lg:text-5xl">
+    <div className="auth-login min-h-screen grid md:grid-cols-2">
+      {/* Left Panel - municipal identity stays secondary to the sign-in task. */}
+      <div className="auth-login__welcome relative hidden flex-col justify-center overflow-hidden p-12 md:flex lg:p-16">
+        <div className="auth-login__welcome-orb pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full" aria-hidden="true" />
+        <div className="auth-login__welcome-copy relative z-10 max-w-md">
+          <h1 className="font-display text-4xl font-bold leading-tight lg:text-5xl">
             Bem-vindo ao EDUCA
           </h1>
-          <p className="mt-5 max-w-sm text-lg leading-relaxed text-white/85">
+          <p className="mt-5 max-w-sm text-lg leading-relaxed">
             O sistema que simplifica a gestão escolar da rede municipal.
           </p>
         </div>
       </div>
 
-      {/* Right Panel - Form */}
-      <div className="flex flex-col justify-center items-center p-8 bg-white">
-        <div className="w-full max-w-[380px]">
+      {/* Right Panel - the credential task remains the visual and semantic focus. */}
+      <div className="auth-login__access flex flex-col items-center justify-center p-6 sm:p-8">
+        <div className="auth-login__form w-full max-w-[380px]">
           {/* Logo */}
-          <div className="mb-10 text-center">
-            <svg viewBox="0 0 180 52" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[50px] mx-auto">
-              <defs>
-                <linearGradient id="gradLogin" x1="0%" y1="50%" x2="100%" y2="50%">
-                  <stop offset="0%" stopColor="#059669"/>
-                  <stop offset="100%" stopColor="#0ea5e9"/>
-                </linearGradient>
-              </defs>
-              <text x="5" y="36" fontFamily="Lexend, sans-serif" fontWeight="700" fontSize="40" fill="url(#gradLogin)">EDUCA</text>
-              <path d="M8 46 Q40 51 75 46 Q110 41 146 46" stroke="#fcd34d" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+          <div className="auth-login__brand mb-10 text-center">
+            <svg viewBox="0 0 180 52" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[50px] mx-auto" aria-hidden="true">
+              <text x="5" y="36" fontFamily="Lexend, sans-serif" fontWeight="700" fontSize="40" fill="#047857">EDUCA</text>
+              <path className="auth-login__brand-track" d="M8 46 Q40 51 75 46 Q110 41 146 46" pathLength="1" stroke="#d97706" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
             </svg>
           </div>
 
-          <h2 className="font-display text-2xl font-semibold text-gray-800 mb-2">
+          <h2 className="auth-login__title font-display text-2xl font-semibold mb-2">
             Entrar no sistema
           </h2>
-          <p className="text-gray-500 mb-8">
+          <p className="auth-login__subtitle mb-8">
             Digite suas credenciais para acessar
           </p>
 
@@ -149,9 +140,9 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="auth-login__fields space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="email" className="auth-login__label text-sm font-medium">
                 E-mail
               </Label>
               <Input
@@ -162,12 +153,12 @@ export default function LoginPage() {
                 placeholder="seu.email@municipio.edu.br"
                 autoComplete="email"
                 required
-                className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                className="auth-login__input h-12 border-2 rounded-xl"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="password" className="auth-login__label text-sm font-medium">
                 Senha
               </Label>
               <Input
@@ -178,22 +169,22 @@ export default function LoginPage() {
                 placeholder="********"
                 autoComplete="current-password"
                 required
-                className="h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                className="auth-login__input h-12 border-2 rounded-xl"
               />
             </div>
 
-            <div className="flex justify-between items-center">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <div className="flex items-center justify-between">
+              <label className="auth-login__remember flex cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
-                  className="w-[18px] h-[18px] border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                  className="w-[18px] h-[18px]"
                 />
                 <span>Manter conectado</span>
               </label>
               <Link
                 href="/reset-password"
-                className="text-sm font-medium text-green-600 hover:underline"
+                className="auth-login__recovery text-sm font-medium"
               >
                 Esqueci minha senha
               </Link>
@@ -203,7 +194,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               aria-busy={loading}
-              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className="auth-login__submit w-full h-12 text-base font-semibold rounded-xl"
             >
               {loading ? (
                 <>
@@ -219,7 +210,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-gray-400">
+          <p className="auth-login__footer mt-8 text-center text-sm">
             Secretaria Municipal de Educação
           </p>
         </div>
