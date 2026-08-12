@@ -4,7 +4,9 @@
 
 EDUCA is an MIT-licensed school-management application for Brazilian municipal and small-town school networks. The product covers schools, users, students, guardians, classes, enrolments, teacher assignments, attendance, dashboard views, and reporting surfaces.
 
-The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, health, disability, and race data remain disabled. The hardening ship releases only the scoped Bolsa Família conditionality read model and descriptive-report table; real Bolsa Família data remains blocked by the synthetic-only gate.
+The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim.
+
+The R3-T4 pilot aggregate runs the legacy, capacity, descriptive, and focused security children as separate lifecycle processes. It acquires one cross-worktree Docker-aware port-range lease and passes it to every child until cleanup completes. Capacity and descriptive setup files remain outside the shared legacy Playwright project, and the R1 canonical runner remains independent. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, health, disability, and race data remain disabled. The hardening ship releases only the scoped Bolsa Família conditionality read model and descriptive-report table; real Bolsa Família data remains blocked by the synthetic-only gate.
 
 ## Architecture
 
@@ -54,7 +56,10 @@ pnpm typecheck           # TypeScript, including E2E specs and enabled unit test
 pnpm lint                # ESLint
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
-pnpm test:e2e:pilot                     # reset local Supabase, provision synthetic pilot, build, and run pilot E2E
+pnpm test:e2e:pilot                     # R3-T4 aggregate: legacy, capacity, descriptive, and focused security children
+pnpm test:e2e:pilot:legacy              # R3-T1 shared legacy slice only
+pnpm test:e2e:pilot:security             # focused security child with its own R3-T1 lifecycle
+pnpm test:e2e:pilot:capacity             # isolated synthetic capacity seed and concurrency E2E
 pnpm test:e2e:pilot:descriptive         # isolated synthetic seed, bounded descriptive-report PDF E2E
 pnpm test:database:attendance:conditionality  # isolated raw PostgreSQL legal floors, municipal margins, fallback, and RLS
 pnpm pilot:restore-test                 # local synthetic encrypted backup/restore rehearsal

@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
@@ -67,6 +67,19 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
     expect(download.suggestedFilename()).toBe(`relatorio_descritivo_2026_primeiro_${PILOT_DESCRIPTIVE_REPORT_ID}.pdf`)
     expect(bytes.subarray(0, 5).toString('ascii')).toBe('%PDF-')
     expect(bytes.length).toBeGreaterThan(0)
+
+    const pdfReceiptPath = process.env.PILOT_DESCRIPTIVE_PDF_RECEIPT_PATH
+    if (pdfReceiptPath) {
+      await writeFile(pdfReceiptPath, `${JSON.stringify({
+        result: 'pass',
+        boundary: 'real-playwright-browser',
+        filename: download.suggestedFilename(),
+        artifactPath: evidencePath,
+        bytes: bytes.length,
+        pdfHeader: bytes.subarray(0, 5).toString('ascii'),
+      }, null, 2)}\n`, 'utf8')
+    }
+    console.info(`PILOT_DESCRIPTIVE_PDF_RECEIPT: filename=${download.suggestedFilename()} bytes=${bytes.length} artifact=${evidencePath}`)
   })
 
   test('deliberate break: removing canonical content blocks emission in the browser', async ({ page }) => {
@@ -77,6 +90,7 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
       .in('id', [...PILOT_DESCRIPTIVE_CONTENT_IDS])
     if (snapshotError || !snapshot) throw snapshotError ?? new Error('PILOT_DESCRIPTIVE_E2E_CONTENT_SNAPSHOT_MISSING')
 
+    let breakObserved = false
     try {
       const { data: deleted, error: deleteError } = await service
         .from('conteudo_aula')
@@ -98,9 +112,24 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
       await expect(page.getByTestId('descriptive-report-emission-error')).toContainText(
         'Não há conteúdo ministrado registrado no período deste relatório'
       )
+      breakObserved = true
     } finally {
       const { error: restoreError } = await service.from('conteudo_aula').insert(snapshot)
       if (restoreError) throw restoreError
+
+      const deliberateBreakReceiptPath = process.env.PILOT_DESCRIPTIVE_PRODUCT_BREAK_RECEIPT_PATH
+      if (deliberateBreakReceiptPath && breakObserved) {
+        await writeFile(deliberateBreakReceiptPath, `${JSON.stringify({
+          result: 'pass',
+          target: 'canonical-content-removal',
+          boundary: 'real-browser-and-postgrest',
+          observedStatus: 422,
+          restored: true,
+        }, null, 2)}\n`, 'utf8')
+      }
+      if (breakObserved) {
+        console.info('PILOT_DESCRIPTIVE_DELIBERATE_BREAK_RECEIPT: removed_content_blocked_pdf=true restored=true status=422')
+      }
     }
   })
 })
