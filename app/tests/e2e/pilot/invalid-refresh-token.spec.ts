@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { LEGACY_PILOT_APP_NAME } from './legacy-pilot-manifest'
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -17,7 +18,8 @@ function createExpiredSyntheticAuthCookie(): string {
 }
 
 test('clears an invalid synthetic refresh token and redirects to login', async ({ page, context }) => {
-  const appUrl = process.env.PLAYWRIGHT_BASE_URL || 'https://educa-r3-legacy-pilot.localhost'
+  const appName = process.env.PILOT_LEGACY_APP_NAME || LEGACY_PILOT_APP_NAME
+  const appUrl = process.env.PLAYWRIGHT_BASE_URL || `https://${appName}.localhost`
   await context.addCookies([{
     name: 'sb-127-auth-token',
     value: createExpiredSyntheticAuthCookie(),

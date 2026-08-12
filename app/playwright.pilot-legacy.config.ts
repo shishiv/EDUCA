@@ -48,7 +48,7 @@ export default defineConfig({
   webServer: process.env.PILOT_LEGACY_SERVER_MANAGED === 'true'
     ? undefined
     : {
-      command: process.env.PLAYWRIGHT_SERVER_COMMAND || `portless run --name ${LEGACY_PILOT_APP_NAME} pnpm start`,
+      command: process.env.PLAYWRIGHT_SERVER_COMMAND || `portless run --name ${legacyAppName} pnpm start`,
       url: baseURL,
       reuseExistingServer: false,
       timeout: 180_000,
