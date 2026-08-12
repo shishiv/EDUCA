@@ -11,6 +11,7 @@ import {
   completePilotImportGovernance,
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
+  fingerprintPilotImportGovernance,
   transformGovernedPilotCsvToCanonicalRows,
   validatePilotImportGovernanceInput,
   validateGovernedPilotStudentCsv,
@@ -91,19 +92,7 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
 
     const submittedByName = typeof batch.submitted_by_name === 'string' ? batch.submitted_by_name : ''
     const submittedByEmail = typeof batch.submitted_by_email === 'string' ? batch.submitted_by_email : ''
-    const governanceInput = validatePilotImportGovernanceInput({
-      owner: { name: batch.governance_owner_name, email: batch.governance_owner_email },
-      processingAgreement: {
-        reference: batch.processing_agreement_reference,
-        version: batch.processing_agreement_version,
-      },
-      retention: {
-        policy: batch.retention_policy,
-        rawPayloadExpiresAt: batch.raw_expires_at,
-        canonicalDataExpiresAt: batch.canonical_expires_at,
-        rollbackUntil: batch.rollback_until,
-      },
-    })
+    const governanceInput = validatePilotImportGovernanceInput(batch.governance_metadata)
     if (!actor.email || !submittedByName || !submittedByEmail) throw new Error('PILOT_IMPORT_GOVERNANCE_ACTOR_SNAPSHOT_MISSING')
     const now = new Date()
     const completeGovernance = completePilotImportGovernance(
@@ -112,7 +101,7 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
       { name: actor.name, email: actor.email },
       now,
     )
-    const governanceFingerprint = createHash('sha256').update(JSON.stringify(completeGovernance)).digest('hex')
+    const governanceFingerprint = fingerprintPilotImportGovernance(completeGovernance)
     const reportSha256 = createHash('sha256').update(JSON.stringify(batch.validation_report)).digest('hex')
     const { error: approvalError } = await service.from('pilot_import_approvals').upsert({
       batch_id: batch.id, escola_id: batch.escola_id, submitted_by: batch.submitted_by,
