@@ -1,4 +1,6 @@
 import { expect, test as setup } from '@playwright/test'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 import {
   PILOT_DESCRIPTIVE_AUTH_EMAIL,
   PILOT_DESCRIPTIVE_AUTH_PASSWORD,
@@ -17,4 +19,17 @@ setup('authenticate the synthetic descriptive-report teacher', async ({ page }) 
   await page.getByRole('button', { name: /entrar/i }).click()
   await expect(page).toHaveURL(/\/dashboard/)
   await page.context().storageState({ path: authStatePath })
+
+  const roleSetupReceiptPath = process.env.PILOT_DESCRIPTIVE_ROLE_SETUP_RECEIPT_PATH
+  if (roleSetupReceiptPath) {
+    mkdirSync(path.dirname(roleSetupReceiptPath), { recursive: true })
+    writeFileSync(roleSetupReceiptPath, `${JSON.stringify({
+      result: 'pass',
+      boundary: 'real-playwright-browser',
+      identity: PILOT_DESCRIPTIVE_AUTH_EMAIL,
+      role: 'professor',
+      authStatePath,
+      landingRoute: new URL(page.url()).pathname,
+    }, null, 2)}\n`, 'utf8')
+  }
 })

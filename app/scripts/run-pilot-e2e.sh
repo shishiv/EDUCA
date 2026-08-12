@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2329
+# shellcheck disable=SC2329,SC1091
 set -euo pipefail
 
 APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 cd "$APP_DIR"
+# shellcheck source=pilot-port-range-lease.sh
+# shellcheck source=pilot-supabase-cleanup.sh
+source "$APP_DIR/scripts/pilot-port-range-lease.sh"
+source "$APP_DIR/scripts/pilot-supabase-cleanup.sh"
 
-RECEIPT_DIR="$ROOT_DIR/.pilot-evidence"
+RECEIPT_DIR="${PILOT_E2E_RECEIPT_DIR:-$ROOT_DIR/.pilot-evidence}"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 RUN_SLUG="$(printf '%s' "$RUN_ID" | tr '[:upper:]' '[:lower:]')"
 RECEIPT_STEM="$RECEIPT_DIR/r3-t1-legacy-pilot-e2e-$RUN_ID"
 ISOLATED_PROJECT_DIR=''
+SUPABASE_PROJECT_ID=''
 SUPABASE_STARTED=false
 APP_PID=''
 APP_STOPPED=false
@@ -19,24 +24,30 @@ DATABASE_STOPPED=false
 AUTH_STATE_REMOVED=false
 TEMP_REMOVED=false
 CLEANUP_FAILED=false
+PORT_LEASE_RELEASE_FAILED=false
 BASE_URL=''
 RESULT='failed'
 TEST_EXIT=1
+SKIPPED=false
 DELIBERATE_BREAK="${PILOT_LEGACY_DELIBERATE_BREAK:-none}"
 APP_NAME="educa-r3-legacy-pilot-${RUN_SLUG}"
 EXPECTED_TEST_COUNT=15
-EXPECTED_RUN_TEST_COUNT=15
+SELECTED_TEST_COUNT=15
+EXPECTED_RUN_TEST_COUNT=16
 SECURITY_EXPECTED_SPEC_TEST_COUNT=2
 SECURITY_EXPECTED_SETUP_TEST_COUNT=1
 SECURITY_EXPECTED_RUN_TEST_COUNT=3
 PLAYWRIGHT_CONFIG='playwright.pilot-legacy.config.ts'
 LEGACY_MANIFEST_MODE=true
+SECURITY_CHILD=false
 
 if [[ -n "${PILOT_PLAYWRIGHT_CONFIG:-}" ]]; then
   case "$PILOT_PLAYWRIGHT_CONFIG" in
     playwright.pilot-security.config.ts)
       PLAYWRIGHT_CONFIG="$PILOT_PLAYWRIGHT_CONFIG"
       LEGACY_MANIFEST_MODE=false
+      SECURITY_CHILD=true
+      APP_NAME='educa-r3-security-pilot'
       ;;
     *)
       echo 'PILOT_LEGACY_CONFIG_REJECTED: only the shared legacy manifest or existing security slice is allowed' >&2
@@ -98,14 +109,11 @@ run_captured() {
 }
 
 choose_port_base() {
-  local candidate="${PILOT_LEGACY_PORT_BASE:-55341}"
+  local candidate="${PILOT_E2E_PORT_BASE:-}"
   if [[ ! "$candidate" =~ ^[0-9]+$ ]]; then
-    echo 'PILOT_LEGACY_E2E_PORT_BASE_INVALID: PILOT_LEGACY_PORT_BASE must be numeric' >&2
+    echo 'PILOT_LEGACY_E2E_PORT_BASE_INVALID: a leased PILOT_E2E_PORT_BASE is required' >&2
     return 1
   fi
-  while ss -ltn | awk '{print $4}' | grep -Eq ":($(seq "$candidate" "$((candidate + 8))" | paste -sd'|' -))$"; do
-    candidate=$((candidate + 10))
-  done
   printf '%s' "$candidate"
 }
 
@@ -155,6 +163,12 @@ const receipt = {
     publishableAliasPresent: process.env.PUBLISHABLE_KEY?.startsWith('sb_publishable_') === true,
     secretAliasPresent: process.env.SECRET_KEY?.startsWith('sb_secret_') === true,
     deprecatedAliasesUsed: false,
+  },
+  portRangeLease: {
+    base: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) : null,
+    end: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) + 8 : null,
+    external: process.env.PILOT_E2E_PORT_LEASE_EXTERNAL === 'true',
+    leaseDir: process.env.PILOT_E2E_PORT_LEASE_DIR || null,
   },
   externalCredentialsUsed: false,
   publicDemoUsed: false,
@@ -231,7 +245,7 @@ cleanup() {
   fi
 
   if [[ "$SUPABASE_STARTED" == true && -d "$ISOLATED_PROJECT_DIR" ]]; then
-    if pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" stop --no-backup >"$ISOLATED_PROJECT_DIR/stop.log" 2>&1; then
+    if pilot_supabase_stop_project "$ISOLATED_PROJECT_DIR" "$SUPABASE_PROJECT_ID" >"$ISOLATED_PROJECT_DIR/stop.log" 2>&1; then
       DATABASE_STOPPED=true
     else
       DATABASE_STOPPED=false
@@ -271,6 +285,11 @@ cleanup() {
     CLEANUP_FAILED=true
   fi
 
+  if ! pilot_port_range_lease_release; then
+    PORT_LEASE_RELEASE_FAILED=true
+    CLEANUP_FAILED=true
+  fi
+
   if [[ ! -f "$SETUP_RECEIPT" ]]; then
     printf '%s\n' '{"result":"unavailable","redacted":true}' > "$SETUP_RECEIPT"
   fi
@@ -297,11 +316,14 @@ cleanup() {
   "databaseStopped": $DATABASE_STOPPED,
   "syntheticAuthStateRemoved": $AUTH_STATE_REMOVED,
   "isolatedDirectoryRemoved": $TEMP_REMOVED,
+  "portRangeLeaseExternal": $([[ "$PILOT_E2E_PORT_LEASE_EXTERNAL" == true ]] && printf true || printf false),
+  "portRangeLeaseReleased": $([[ "$PILOT_E2E_PORT_LEASE_RELEASED" == true ]] && printf true || printf false),
+  "portRangeLeaseReleaseFailed": $PORT_LEASE_RELEASE_FAILED,
   "redacted": true
 }
 JSON
 
-  node - "$FINAL_RECEIPT" "$SETUP_RECEIPT" "$DATABASE_RECEIPT" "$BROWSER_RECEIPT" "$TEST_RECEIPT" "$CLEANUP_RECEIPT" "$TEST_OUTPUT_RECEIPT" "$exit_code" "$RESULT" "$BASE_URL" "$DELIBERATE_BREAK" <<'NODE'
+  PILOT_LEGACY_SECURITY_CHILD="$SECURITY_CHILD" PILOT_LEGACY_SKIPPED="$SKIPPED" node - "$FINAL_RECEIPT" "$SETUP_RECEIPT" "$DATABASE_RECEIPT" "$BROWSER_RECEIPT" "$TEST_RECEIPT" "$CLEANUP_RECEIPT" "$TEST_OUTPUT_RECEIPT" "$exit_code" "$RESULT" "$BASE_URL" "$DELIBERATE_BREAK" <<'NODE'
 const fs = require('node:fs')
 const path = require('node:path')
 
@@ -309,6 +331,8 @@ const [finalPath, setupPath, databasePath, browserPath, testPath, cleanupPath, o
 const readJson = file => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null
 const relative = file => path.relative(process.cwd(), file)
 const isLegacyManifest = process.env.PILOT_LEGACY_MANIFEST_MODE === 'true'
+const securityChild = process.env.PILOT_LEGACY_SECURITY_CHILD === 'true'
+const skipped = process.env.PILOT_LEGACY_SKIPPED === 'true'
 const selectedManifest = isLegacyManifest
   ? {
       config: process.env.PILOT_LEGACY_PLAYWRIGHT_CONFIG,
@@ -322,6 +346,7 @@ const selectedManifest = isLegacyManifest
         'tests/e2e/pilot/security-hardening.spec.ts',
       ],
       expectedTests: 15,
+      expectedRunTests: 16,
       selectionIsExact: true,
       excluded: [
         'tests/e2e/pilot/capacity-contract.spec.ts',
@@ -334,6 +359,7 @@ const selectedManifest = isLegacyManifest
       setup: 'tests/e2e/auth.setup.ts',
       specs: ['tests/e2e/pilot/security-hardening.spec.ts'],
       expectedTests: 3,
+      expectedRunTests: 3,
       selectionIsExact: true,
       excluded: [
         'tests/e2e/pilot/core-scope.spec.ts',
@@ -350,15 +376,29 @@ const selectedManifest = isLegacyManifest
       ],
     }
 const receipt = {
-  contract: 'R3-T1 bounded legacy pilot E2E',
+  contract: securityChild ? 'R3-T4 focused security pilot E2E' : 'R3-T1 bounded legacy pilot E2E',
   vertical: isLegacyManifest ? 'legacy' : 'security',
-  result: Number(exitCode) === 0 ? 'passed' : Number(exitCode) === 130 || Number(exitCode) === 143 ? 'interrupted' : 'failed',
+  result: skipped ? 'skipped' : Number(exitCode) === 0 ? 'passed' : Number(exitCode) === 130 || Number(exitCode) === 143 ? 'interrupted' : 'failed',
   exitCode: Number(exitCode),
-  command: isLegacyManifest ? 'cd app && pnpm test:e2e:pilot' : 'cd app && pnpm test:e2e:pilot:security',
+  command: securityChild ? 'cd app && pnpm test:e2e:pilot:security' : 'cd app && pnpm test:e2e:pilot:legacy',
   selectedManifest,
   setup: readJson(setupPath),
+  seed: {
+    result: readJson(databasePath)?.result || 'unavailable',
+    marker: 'SYNTHETIC-EDUCA-PILOT',
+    command: 'pnpm exec tsx scripts/seed-pilot-synthetic.ts',
+    validationCommand: 'pnpm exec tsx scripts/validate-pilot-legacy.ts',
+  },
   database: readJson(databasePath),
+  roleSetup: readJson(browserPath),
   browser: readJson(browserPath),
+  portRangeLease: {
+    base: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) : null,
+    end: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) + 8 : null,
+    external: process.env.PILOT_E2E_PORT_LEASE_EXTERNAL === 'true',
+    leaseDir: process.env.PILOT_E2E_PORT_LEASE_DIR || null,
+    released: process.env.PILOT_E2E_PORT_LEASE_RELEASED === 'true',
+  },
   tests: {
     receipt: readJson(testPath),
     outputPath: fs.existsSync(outputPath) ? relative(outputPath) : null,
@@ -376,6 +416,7 @@ NODE
 
   printf 'PILOT_LEGACY_CLEANUP_RECEIPT: app_stopped=%s named_route_removed=%s database_stopped=%s auth_state_removed=%s isolated_removed=%s result=%s receipt=%s\n' \
     "$APP_STOPPED" "$APP_ROUTE_REMOVED" "$DATABASE_STOPPED" "$AUTH_STATE_REMOVED" "$TEMP_REMOVED" "$([[ "$CLEANUP_FAILED" == true ]] && printf failed || printf pass)" "$FINAL_RECEIPT"
+  printf 'PILOT_E2E_FINAL_RECEIPT: %s\n' "$FINAL_RECEIPT"
   exit "$exit_code"
 }
 
@@ -383,7 +424,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for command in ss pnpm psql portless curl node setsid; do
+for command in ss docker pnpm psql portless curl node setsid; do
   command -v "$command" >/dev/null || {
     echo "PILOT_LEGACY_E2E_PREREQUISITE_MISSING: $command" >&2
     exit 1
@@ -398,6 +439,9 @@ case "$DELIBERATE_BREAK" in
     ;;
 esac
 
+if ! pilot_port_range_lease_use_external; then
+  exit 1
+fi
 PORT_BASE=$(choose_port_base)
 API_PORT=$PORT_BASE
 DB_PORT=$((PORT_BASE + 1))
@@ -408,6 +452,8 @@ VECTOR_PORT=$((PORT_BASE + 7))
 POOLER_PORT=$((PORT_BASE + 8))
 
 ISOLATED_PROJECT_DIR=$(mktemp -d "$ROOT_DIR/.pilot-r3-t1-legacy-supabase.XXXXXX")
+SUPABASE_PROJECT_ID=$(basename "$ISOLATED_PROJECT_DIR")
+SUPABASE_PROJECT_ID="${SUPABASE_PROJECT_ID#.}"
 SUPABASE_CONFIG_DIR="$ISOLATED_PROJECT_DIR/supabase"
 AUTH_DIR="$ISOLATED_PROJECT_DIR/auth"
 AUTH_STATE_PATH="$AUTH_DIR/user.json"
@@ -439,8 +485,8 @@ sed -i \
   -e "0,/port = 54327/s//port = $ANALYTICS_PORT/" \
   -e "0,/vector_port = 54328/s//vector_port = $VECTOR_PORT/" \
   -e "0,/port = 54329/s//port = $POOLER_PORT/" \
-  -e 's#site_url = "http://127.0.0.1:3000"#site_url = "https://educa-r3-legacy-pilot.localhost"#' \
-  -e 's#additional_redirect_urls = \["http://127.0.0.1:3000"\]#additional_redirect_urls = ["https://educa-r3-legacy-pilot.localhost"]#' \
+  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"https://$APP_NAME.localhost\"#" \
+  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"https://$APP_NAME.localhost\"]#" \
   "$SUPABASE_CONFIG_DIR/config.toml"
 
 # The fixed R3-T1 template is rewritten per run so concurrent runners never share a host.
@@ -451,8 +497,8 @@ unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_RO
 unset SUPABASE_PROJECT_REF SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD VERCEL_TOKEN
 export NO_COLOR=1
 
-run_captured 'supabase_start' "$SUPABASE_LOG" pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" start
 SUPABASE_STARTED=true
+run_captured 'supabase_start' "$SUPABASE_LOG" pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" start
 
 if ! pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" status -o env >"$STATUS_ENV_PATH" 2>"$STATUS_LOG"; then
   echo 'PILOT_LEGACY_E2E_FAILED: phase=supabase_status' >&2
@@ -494,6 +540,7 @@ export PILOT_LEGACY_SERVER_MANAGED=true
 export PILOT_LEGACY_PLAYWRIGHT_CONFIG="$PLAYWRIGHT_CONFIG"
 export PILOT_LEGACY_MANIFEST_MODE="$LEGACY_MANIFEST_MODE"
 export PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$EXPECTED_RUN_TEST_COUNT"
+export PILOT_LEGACY_SECURITY_CHILD="$SECURITY_CHILD"
 PILOT_IMPORT_ENCRYPTION_KEY="$(printf 'synthetic-pilot-encryption-key!!' | base64 -w0)"
 export PILOT_IMPORT_ENCRYPTION_KEY
 export PILOT_IMPORT_ENCRYPTION_KEY_ID=synthetic-local-v1
@@ -572,7 +619,8 @@ else
     fi
   done
   EXPECTED_RUN_TEST_COUNT="$SECURITY_EXPECTED_RUN_TEST_COUNT"
-  PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$SECURITY_EXPECTED_RUN_TEST_COUNT"
+  SELECTED_TEST_COUNT="$selected_test_count"
+  PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$EXPECTED_RUN_TEST_COUNT"
   export EXPECTED_RUN_TEST_COUNT PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT
   printf 'PILOT_LEGACY_SECURITY_RECEIPT: setup=1 focused_spec=1 tests=%s csv=false invitation=false capacity=false descriptive=false r1_canonical=false\n' "$EXPECTED_RUN_TEST_COUNT"
 fi
@@ -627,7 +675,19 @@ set +e
 pnpm exec playwright test --config "$PLAYWRIGHT_CONFIG" --reporter=line >"$PLAYWRIGHT_OUTPUT_TMP" 2>&1
 TEST_EXIT=$?
 set -e
+if grep -Eiq '(^|[[:space:]])[0-9]+ skipped([[:space:]]|$)' "$PLAYWRIGHT_OUTPUT_TMP"; then
+  SKIPPED=true
+  write_test_receipt skipped
+  echo 'PILOT_LEGACY_E2E_SKIPPED: a selected pilot test was skipped' >&2
+  exit 1
+fi
 if [[ "$TEST_EXIT" -eq 0 ]]; then
+  if ! grep -Eq "[[:space:]]${EXPECTED_RUN_TEST_COUNT} passed([[:space:]]|$)" "$PLAYWRIGHT_OUTPUT_TMP"; then
+    write_test_receipt fail
+    echo "PILOT_LEGACY_E2E_RESULT_COUNT_RED: expected=${EXPECTED_RUN_TEST_COUNT} passed" >&2
+    show_log_on_failure "$PLAYWRIGHT_OUTPUT_TMP"
+    exit 1
+  fi
   write_test_receipt pass
 else
   write_test_receipt fail
@@ -644,5 +704,5 @@ fi
 
 RESULT='passed'
 TEST_EXIT=0
-printf 'PILOT_LEGACY_TEST_RECEIPT: status=pass tests=%s output_redacted=true\n' "$EXPECTED_RUN_TEST_COUNT"
+printf 'PILOT_LEGACY_TEST_RECEIPT: status=pass tests=%s run_tests=%s output_redacted=true\n' "$SELECTED_TEST_COUNT" "$EXPECTED_RUN_TEST_COUNT"
 exit 0

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import {
   PILOT_CAPACITY_AUTH_PASSWORD,
@@ -143,6 +144,20 @@ test.describe('isolated pilot capacity contract', () => {
         .eq('situacao', 'ativa')
       expect(error).toBeNull()
       expect(data).toHaveLength(1)
+
+      const concurrencyReceiptPath = process.env.PILOT_CAPACITY_CONCURRENCY_RECEIPT_PATH
+      if (concurrencyReceiptPath) {
+        mkdirSync(path.dirname(concurrencyReceiptPath), { recursive: true })
+        writeFileSync(concurrencyReceiptPath, `${JSON.stringify({
+          result: 'pass',
+          boundary: 'real-postgrest',
+          successCount,
+          capacityErrors,
+          activeEnrollments: data?.length ?? 0,
+          errorMarker: 'PILOT_CAPACITY_EXCEEDED',
+        }, null, 2)}\n`, 'utf8')
+      }
+      console.info(`PILOT_CAPACITY_CONCURRENCY_RECEIPT: success_count=${successCount} capacity_errors=${capacityErrors} active_enrollments=${data?.length ?? 0}`)
     } finally {
       await removeProbeRows()
     }
