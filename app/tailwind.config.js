@@ -143,32 +143,17 @@ module.exports = {
           config: '#F9FAFB',
         },
 
-        // Legacy support - map old names to new
+        // Canonical semantic brand tokens. Source of truth: the CSS variables
+        // in app/globals.css. The former hardcoded indigo/zinc scales were dead
+        // (0 numbered usages) and are replaced by the shadcn semantic mapping,
+        // so bg-primary / text-primary-foreground now read --primary.
         primary: {
-          50: '#EEF2FF',
-          100: '#E0E7FF',
-          200: '#C7D2FE',
-          300: '#A5B4FC',
-          400: '#818CF8',
-          500: '#4361EE',
-          600: '#3730A3',
-          700: '#312E81',
-          800: '#1E1B4B',
-          900: '#0F0D29',
-          950: '#0A0818',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
-          50: '#FAFAFA',
-          100: '#F4F4F5',
-          200: '#E4E4E7',
-          300: '#D4D4D8',
-          400: '#A1A1AA',
-          500: '#71717A',
-          600: '#52525B',
-          700: '#3F3F46',
-          800: '#27272A',
-          900: '#18181B',
-          950: '#09090B',
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
         },
         success: {
           50: '#ECFDF5',

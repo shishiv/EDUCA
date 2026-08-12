@@ -108,11 +108,24 @@ Proposed canonical architecture (3 layers):
 3. shadcn ui/ components refactored to semantic tokens (bg-primary, border-
    border, bg-card...) instead of hardcoded green-*/gray-*.
 
-Open fork for the captain (`[key=canonical-tokens]`): the canonical brand green.
-Recommend the emerald family already used by the hero + sign-in (#047857 /
-#059669), which is also educa's "success" green. Aligning --primary to it and
-migrating the 240 hardcoded usages is a MATERIAL visual change (mostly a
-consistency correction) - before/after evidence to follow per contract.
+Captain approved (2026-08-12): emerald canonical, first pass = semantic layer +
+core components, then sweep, and simplify the code.
+
+First pass DONE (see commit): the Tailwind `primary`/`secondary` keys were dead
+hardcoded indigo/zinc scales (0 numbered usages) that left `bg-primary` unwired;
+repaired them to `hsl(var(--primary|--secondary))`. Set `--primary`/`--ring` to
+emerald (#059669; dark uses emerald-500), `--secondary` to a neutral surface,
+dropped the dead `--space-*` tokens. Migrated Button, Card, Input to semantic
+tokens. The 9 previously-unwired `bg-primary` controls (checkbox, switch, badge
+default, progress, spinners) now render the brand emerald.
+
+Evidence: `data/decisions/evidence/2026-08-12-canonical-tokens/` (capture.mjs +
+before/after screenshots + measurements). Measured proof: primary button bg
+`rgb(22,163,74)` green-600 (before) -> `rgb(5,148,103)` emerald from --primary
+(after); `--primary` 220 90% 56% -> 161 94% 30%.
+
+Still open (not yet done): sweep the 240 hardcoded `green-*` usages onto tokens;
+reconcile `--accent`/module/campo palettes; consolidate `municipal-*`.
 
 ## Progress log
 

@@ -1,0 +1,19 @@
+{
+  "state": "before",
+  "capturedAt": "2026-08-12T05:30:26.738Z",
+  "tokens": {
+    "primary": "220 90% 56%",
+    "primaryForeground": "210 40% 98%",
+    "ring": "220 90% 56%",
+    "secondary": "142 69% 58%"
+  },
+  "components": {
+    "usuarios": {
+      "novoButtonBg": "rgb(22, 163, 74)"
+    },
+    "novo-aluno": {
+      "primaryButtonBg": "rgb(22, 163, 74)",
+      "firstButtonBg": "rgb(255, 255, 255)"
+    }
+  }
+}

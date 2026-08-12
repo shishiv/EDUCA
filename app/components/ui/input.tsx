@@ -14,20 +14,20 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         type={type}
         className={cn(
           // Base styles
-          'flex h-10 w-full rounded-educa border bg-white px-3 py-2 text-sm text-gray-900',
-          'placeholder:text-gray-400',
+          'flex h-10 w-full rounded-educa border bg-background px-3 py-2 text-sm text-foreground',
+          'placeholder:text-muted-foreground',
           'transition-colors duration-150',
           // File input styles
           'file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
-          // Focus states (visible per ACESS-02)
-          'focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500',
-          'focus-visible:ring-2 focus-visible:ring-green-500/30 focus-visible:border-green-500',
+          // Focus states (visible per ACESS-02) - brand ring from the token
+          'focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring',
+          'focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring',
           // Disabled state
-          'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400',
+          'disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground',
           // Default border
-          !error && 'border-gray-300',
+          !error && 'border-input',
           // Error state
-          error && 'border-red-500 focus:ring-red-500/30 focus:border-red-500 focus-visible:ring-red-500/30 focus-visible:border-red-500',
+          error && 'border-destructive focus:ring-destructive/30 focus:border-destructive focus-visible:ring-destructive/30 focus-visible:border-destructive',
           className
         )}
         ref={ref}
