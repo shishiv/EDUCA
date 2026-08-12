@@ -57,7 +57,7 @@ function createFakePorts(options: { failProfileCreate?: boolean; existingProfile
   const inviteUserByEmail = vi.fn(async () => AUTH_USER)
   const getUserById = vi.fn(async () => AUTH_USER)
   const updatePassword = vi.fn(async () => undefined)
-  const deletedIdentity = vi.fn()
+  const deletedIdentity = vi.fn(async () => 'removed' as const)
   const auth = { inviteUserByEmail, getUserById, updatePassword, deleteUser: deletedIdentity }
   const createIncomplete = vi.fn(async () => {
     if (failProfileCreate) {
@@ -78,6 +78,7 @@ function createFakePorts(options: { failProfileCreate?: boolean; existingProfile
       findById: vi.fn(async () => storedProfile),
       createIncomplete,
       complete,
+      deactivate: vi.fn(async () => storedProfile ?? profile({ ativo: false })),
     },
     invitation: {
       findByEmail: vi.fn(async () => pendingInvitation),

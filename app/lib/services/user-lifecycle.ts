@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 /**
  * User lifecycle orchestration for Auth identities, profiles, invitations, and first access.
  *
@@ -12,6 +14,8 @@ export interface UserLifecycleAuthUser {
   email?: string | null
   user_metadata?: Record<string, unknown> | null
 }
+
+export type UserLifecycleAuthRemoval = 'removed' | 'already_missing'
 
 export interface UserLifecycleInvitation {
   id: string
@@ -59,6 +63,7 @@ export interface UserLifecycleAuthPort {
     data: Record<string, unknown>
   }): Promise<UserLifecycleAuthUser>
   getUserById(userId: string): Promise<UserLifecycleAuthUser>
+  deleteUser(userId: string): Promise<UserLifecycleAuthRemoval>
   updatePassword(password: string): Promise<void>
 }
 
@@ -66,6 +71,7 @@ export interface UserLifecycleProfilePort {
   findById(userId: string): Promise<UserLifecycleProfile | null>
   createIncomplete(input: UserLifecycleProfileInput): Promise<UserLifecycleProfile>
   complete(userId: string, completedAt: string): Promise<UserLifecycleProfile>
+  deactivate(userId: string): Promise<UserLifecycleProfile>
 }
 
 export interface UserLifecycleInvitationPort {
@@ -113,6 +119,7 @@ interface SupabaseLifecycleClient {
         options: { redirectTo: string; data: Record<string, unknown> },
       ): Promise<{ data: { user: UserLifecycleAuthUser | null }; error: unknown | null }>
       getUserById(userId: string): Promise<{ data: { user: UserLifecycleAuthUser | null }; error: unknown | null }>
+      deleteUser(userId: string, shouldSoftDelete?: boolean): Promise<{ data: { user: UserLifecycleAuthUser | null }; error: unknown | null }>
     }
     updateUser(attributes: { password: string }): Promise<{ data: unknown; error: unknown | null }>
   }
@@ -146,6 +153,14 @@ export function createSupabaseUserLifecyclePorts(clients: {
           throw new UserLifecycleError('AUTH_USER_MISSING', 'A identidade Auth do cadastro não existe.')
         }
         return response.data.user
+      },
+      async deleteUser(userId) {
+        const response = await serviceClient.auth.admin.deleteUser(userId, false)
+        if (response.error) {
+          if (isAuthUserMissingError(response.error)) return 'already_missing'
+          throw response.error
+        }
+        return response.data.user ? 'removed' : 'already_missing'
       },
       async updatePassword(password) {
         const response = await sessionClient.auth.updateUser({ password })
@@ -189,6 +204,17 @@ export function createSupabaseUserLifecyclePorts(clients: {
           .single()
         const profile = readSupabaseLifecycleData<UserLifecycleProfile | null>(response)
         if (!profile) throw new Error('USER_LIFECYCLE_PROFILE_UPDATE_EMPTY')
+        return profile
+      },
+      async deactivate(userId) {
+        const response = await serviceClient
+          .from('users')
+          .update({ ativo: false })
+          .eq('id', userId)
+          .select('id,email,nome,tipo_usuario,escola_id,ativo,primeiro_login,senha_padrao,data_ultimo_acesso')
+          .maybeSingle()
+        const profile = readSupabaseLifecycleData<UserLifecycleProfile | null>(response)
+        if (!profile) throw new UserLifecycleError('PROFILE_NOT_FOUND', 'O perfil sintético não existe.')
         return profile
       },
     },
@@ -256,6 +282,13 @@ export type UserLifecycleErrorCode =
   | 'PROFILE_COMPLETION_FAILED'
   | 'INVITATION_COMPLETION_FAILED'
   | 'FIRST_ACCESS_PASSWORD_UNCHANGED'
+  | 'PROFILE_NOT_FOUND'
+  | 'PROFILE_REVOCATION_FAILED'
+  | 'AUTH_IDENTITY_REVOCATION_FAILED'
+  | 'SYNTHETIC_IDENTITY_REQUIRED'
+  | 'USER_ROLE_NOT_REVOCABLE'
+  | 'REVOCATION_RECEIPT_INVALID'
+  | 'INVITATION_REVOKED'
 
 /** Error for a lifecycle transition that preserves the real Auth identity. */
 export class UserLifecycleError extends Error {
@@ -286,9 +319,106 @@ export interface UserLifecycleCompletionResult {
   idempotentReplay: boolean
 }
 
+export interface UserLifecycleRevocationInput {
+  userId: string
+  reason: string
+  release: string
+}
+
+export interface UserLifecycleRevocationResult {
+  revoked: true
+  idempotent: boolean
+  profileDeactivated: boolean
+  authIdentity: UserLifecycleAuthRemoval
+  identity: string
+  role: UserLifecycleRole
+  schoolId: string | null
+  revokedAt: string
+}
+
 /** Returns true when the profile or first-access state still needs completion. */
 export function isIncompleteUserProfile(profile: UserLifecycleProfile | null): boolean {
   return profile === null || profile.primeiro_login !== false
+}
+
+/**
+ * Deactivates a synthetic pilot profile before removing its Auth identity.
+ *
+ * Supabase access JWTs cannot be assumed to invalidate immediately after Auth
+ * deletion, so every observable boundary must continue checking ativo.
+ */
+export async function revokeSyntheticPilotIdentity(
+  ports: UserLifecyclePorts,
+  input: UserLifecycleRevocationInput,
+  revokedAt = new Date().toISOString(),
+): Promise<UserLifecycleRevocationResult> {
+  if (!isSafeLifecycleReceiptCode(input.release) || !isSafeLifecycleReceiptCode(input.reason) || input.reason.length < 3) {
+    throw new UserLifecycleError(
+      'REVOCATION_RECEIPT_INVALID',
+      'O recibo de revogação exige identificadores seguros.',
+    )
+  }
+
+  const currentProfile = await ports.profile.findById(input.userId)
+  if (!currentProfile) {
+    throw new UserLifecycleError('PROFILE_NOT_FOUND', 'O perfil sintético não existe.')
+  }
+
+  let authUser: UserLifecycleAuthUser | null = null
+  try {
+    authUser = await ports.auth.getUserById(input.userId)
+  } catch (error) {
+    if (!isAuthUserMissingLifecycleError(error)) throw error
+  }
+
+  if (!isSyntheticPilotIdentity(authUser?.email ?? currentProfile.email)) {
+    throw new UserLifecycleError(
+      'SYNTHETIC_IDENTITY_REQUIRED',
+      'A revogação exige uma identidade sintética .invalid.',
+    )
+  }
+
+  if (!isRevocablePilotRole(currentProfile.tipo_usuario)) {
+    throw new UserLifecycleError(
+      'USER_ROLE_NOT_REVOCABLE',
+      'A revogação exige um papel de usuário do piloto.',
+    )
+  }
+
+  const profileDeactivated = currentProfile.ativo === true
+  if (profileDeactivated) {
+    try {
+      await ports.profile.deactivate(input.userId)
+    } catch (error) {
+      throw new UserLifecycleError(
+        'PROFILE_REVOCATION_FAILED',
+        'O perfil sintético não foi desativado.',
+        { cause: error },
+      )
+    }
+  }
+
+  let authIdentity: UserLifecycleAuthRemoval
+  try {
+    authIdentity = await ports.auth.deleteUser(input.userId)
+  } catch (error) {
+    throw new UserLifecycleError(
+      'AUTH_IDENTITY_REVOCATION_FAILED',
+      'A identidade Auth sintética não foi removida.',
+      { cause: error },
+    )
+  }
+
+  return {
+    revoked: true,
+    idempotent: !profileDeactivated && authIdentity === 'already_missing',
+    profileDeactivated,
+    authIdentity,
+    identity: redactLifecycleIdentity(input.userId),
+    role: currentProfile.tipo_usuario,
+    schoolId: currentProfile.escola_id,
+    revokedAt,
+  }
 }
 
 /** Resolves a display name without using editable metadata for authorization. */
@@ -392,6 +522,12 @@ export async function completePendingUserRegistration(
         'O convite foi aceito, mas o perfil não está disponível para a sessão.',
       )
     }
+    if (profile.ativo !== true) {
+      throw new UserLifecycleError(
+        'INVITATION_REVOKED',
+        'Este convite pertence a uma identidade revogada.',
+      )
+    }
     return {
       completed: true,
       invitation,
@@ -402,6 +538,12 @@ export async function completePendingUserRegistration(
   }
 
   const currentProfile = await ports.profile.findById(authUser.id)
+  if (currentProfile?.ativo !== true && currentProfile !== null) {
+    throw new UserLifecycleError(
+      'INVITATION_REVOKED',
+      'Este convite pertence a uma identidade revogada.',
+    )
+  }
   const profile = currentProfile ?? await ensureIncompleteProfile(ports, authUser, invitation, invitation.email)
 
   try {
@@ -463,6 +605,12 @@ async function resumeExistingInvitation(
 
   const profile = await ports.profile.findById(invitation.auth_user_id)
   if (profile) {
+    if (profile.ativo !== true) {
+      throw new UserLifecycleError(
+        'INVITATION_REVOKED',
+        'Este convite pertence a uma identidade revogada.',
+      )
+    }
     return {
       status: 'incomplete',
       invitation,
@@ -528,6 +676,42 @@ async function acceptInvitation(
 function isAlreadyRegisteredError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : readErrorMessage(error)
   return /already (been )?registered|already exists|email_exists/i.test(message)
+}
+
+function isAuthUserMissingLifecycleError(error: unknown): boolean {
+  if (error instanceof UserLifecycleError) return error.code === 'AUTH_USER_MISSING'
+  return isAuthUserMissingError(error)
+}
+
+function isAuthUserMissingError(error: unknown): boolean {
+  const code = readErrorCode(error)
+  const message = readErrorMessage(error)
+  const status = readErrorStatus(error)
+  return status === 404 || code === 'user_not_found' || /user not found|user does not exist/i.test(message)
+}
+
+function readErrorStatus(error: unknown): number | undefined {
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const status = error.status
+    return typeof status === 'number' ? status : undefined
+  }
+  return undefined
+}
+
+function isSyntheticPilotIdentity(email: string | null | undefined): boolean {
+  return typeof email === 'string' && email.toLowerCase().endsWith('@synthetic.invalid')
+}
+
+function isRevocablePilotRole(role: string): role is UserLifecycleRole {
+  return role === 'secretario' || role === 'diretor' || role === 'professor'
+}
+
+function isSafeLifecycleReceiptCode(value: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(value)
+}
+
+function redactLifecycleIdentity(userId: string): string {
+  return `synthetic-${createHash('md5').update(userId).digest('hex').slice(0, 16)}`
 }
 
 function isSamePasswordError(error: unknown): boolean {
