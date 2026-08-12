@@ -9,7 +9,10 @@ import {
   validateGovernedPilotImportManifest,
   validateGovernedPilotStudentCsv,
 } from '@/lib/pilot/governed-csv-import'
-import { assertGovernedPilotProofSafety } from '@/lib/pilot/governed-import-safety'
+import {
+  assertGovernedPilotProofSafety,
+  PILOT_PROOF_TARGET_IDENTITY,
+} from '@/lib/pilot/governed-import-safety'
 import { SYNTHETIC_CSV_MARKER } from '@/lib/pilot/synthetic-csv-import'
 
 const csv = [
@@ -99,18 +102,70 @@ describe('governed pilot CSV contract', () => {
     })).toThrow(/MAKER_CHECKER_REQUIRED/)
   })
 
-  it('rejects demo, remote, and unconfirmed proof targets', () => {
-    expect(() => assertGovernedPilotProofSafety({
-      pilotMode: 'true', target: 'isolated-proof', proofDatabaseUrl: 'postgresql://postgres@127.0.0.1/educa_pilot_proof_test',
-      demoSandbox: 'true', dataMode: 'synthetic', syntheticOnly: 'true', encryptionKey: key,
-    })).toThrow(/DEMO_DENIED/)
-    expect(() => assertGovernedPilotProofSafety({
-      pilotMode: 'true', target: 'isolated-proof', proofDatabaseUrl: 'postgresql://postgres@db.example/educa_pilot_proof_test',
-      demoSandbox: 'false', dataMode: 'synthetic', syntheticOnly: 'true', encryptionKey: key,
-    })).toThrow(/LOCAL_ONLY/)
-    expect(() => assertGovernedPilotProofSafety({
-      pilotMode: 'true', target: 'isolated-proof', proofDatabaseUrl: 'postgresql://postgres@127.0.0.1/educa_pilot_proof_test',
-      demoSandbox: 'false', dataMode: 'real', syntheticOnly: 'false', encryptionKey: key,
-    })).toThrow(/CONFIRMATION_REQUIRED/)
+  it('accepts only the explicit local synthetic proof target', () => {
+    const receipt = assertGovernedPilotProofSafety({
+      pilotMode: 'true',
+      target: 'isolated-proof',
+      proofDatabaseUrl: 'postgresql://postgres@127.0.0.1/educa_pilot_proof_test',
+      demoSandbox: 'false',
+      supabaseDemoReferences: [],
+      dataMode: 'synthetic',
+      syntheticOnly: 'true',
+      syntheticMarker: SYNTHETIC_CSV_MARKER,
+      encryptionKey: key,
+    }, 'import')
+
+    expect(receipt).toMatchObject({
+      operation: 'import',
+      allowed: true,
+      attemptedTarget: 'isolated-proof',
+      target: PILOT_PROOF_TARGET_IDENTITY.target,
+      reason: 'PILOT_IMPORT_PROOF_SAFETY_ACCEPTED',
+      dataMode: 'synthetic',
+      syntheticOnly: true,
+      syntheticMarkerPresent: true,
+    })
+  })
+
+  it('rejects unsafe targets before proof access and emits a redacted receipt', () => {
+    const safe = {
+      pilotMode: 'true',
+      target: 'isolated-proof',
+      proofDatabaseUrl: 'postgresql://postgres@127.0.0.1/educa_pilot_proof_test',
+      demoSandbox: 'false',
+      supabaseDemoReferences: [],
+      dataMode: 'synthetic',
+      syntheticOnly: 'true',
+      syntheticMarker: SYNTHETIC_CSV_MARKER,
+      encryptionKey: key,
+    }
+
+    expect(() => assertGovernedPilotProofSafety({ ...safe, target: 'municipal-pilot' })).toThrow(/TARGET_MISMATCH/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, proofDatabaseUrl: 'postgresql://db.example/educa_pilot_proof_test' })).toThrow(/LOCAL_ONLY/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, demoSandbox: 'true' })).toThrow(/DEMO_DENIED/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, supabaseDemoReferences: ['https://demo.example'] })).toThrow(/DEMO_REFERENCE_DENIED/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, dataMode: 'real', syntheticOnly: 'false' })).toThrow(/CONFIRMATION_REQUIRED/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, dataMode: 'real', syntheticOnly: 'false', realDataConfirmation: 'isolated-proof-only' })).toThrow(/REAL_DATA_DENIED/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, syntheticMarker: undefined })).toThrow(/SYNTHETIC_MARKER_REQUIRED/)
+    expect(() => assertGovernedPilotProofSafety({ ...safe, dataMode: undefined })).toThrow(/DATA_MODE_REQUIRED/)
+
+    let safetyError: unknown
+    try {
+      assertGovernedPilotProofSafety({
+        ...safe,
+        target: 'municipal-pilot',
+        proofDatabaseUrl: 'postgresql://secret:password@db.example/educa_pilot_proof_test',
+      }, 'cleanup')
+    } catch (error) {
+      safetyError = error
+    }
+    expect(safetyError).toBeInstanceOf(Error)
+    const message = safetyError instanceof Error ? safetyError.message : String(safetyError)
+    expect(message).toContain('PILOT_IMPORT_PROOF_SAFETY_RECEIPT')
+    expect(message).toContain('"operation":"cleanup"')
+    expect(message).toContain('"attemptedTarget":"municipal-pilot"')
+    expect(message).toContain('"reason":"PILOT_IMPORT_PROOF_TARGET_MISMATCH"')
+    expect(message).not.toContain('password')
+    expect(message).not.toContain('db.example')
   })
 })

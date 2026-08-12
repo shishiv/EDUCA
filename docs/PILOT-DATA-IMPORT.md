@@ -14,9 +14,8 @@ synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,gu
 
 Cada linha vira registros canônicos em `alunos`, `responsaveis`, `aluno_responsaveis` e `matriculas`.
 
-- O modo `synthetic` exige `SYNTHETIC-EDUCA-PILOT` em `synthetic_marker`.
-- O modo `real` exige a coluna `synthetic_marker` vazia.
-- O modo `real` exige confirmação explícita de que o alvo é somente o banco de prova isolado.
+- A prova no modo `synthetic` exige `SYNTHETIC-EDUCA-PILOT` em `synthetic_marker`.
+- A representação de modo `real` permanece coberta pelo validador para uma mudança futura, mas o guard atual rejeita esse modo antes do banco.
 - O validador rejeita colunas extras, fórmulas de planilha, duplicatas, datas inválidas e lotes de várias escolas.
 
 O pipeline não salva o CSV em arquivo de evidência, log ou tabela auxiliar.
@@ -50,6 +49,16 @@ O arquivo JSON de aprovação acompanha o CSV e contém:
 
 O pipeline resolve `recordedBy`, `submittedBy` e `approvedBy` em usuários ativos do banco de prova. O owner fica registrado como snapshot nomeado. O fingerprint do manifesto impede replay com governança diferente.
 
+## Identidades e limites
+
+As três identidades não se misturam:
+
+- **Prova sintética isolada:** usa `PILOT_IMPORT_TARGET=isolated-proof`, banco local `educa_pilot_proof_*`, modo `synthetic` e o marcador `SYNTHETIC-EDUCA-PILOT`.
+- **Demo público:** usa `NEXT_PUBLIC_DEMO_SANDBOX=true` e referências `SUPABASE_DEMO_*`. O demo não é alvo de importação e continua simulado e somente leitura.
+- **Piloto municipal:** é uma implantação posterior, com aprovação própria. O alvo municipal não pode reutilizar a configuração da prova sintética.
+
+A identidade de código fica em `PILOT_PROOF_TARGET_IDENTITY`, exportada por `app/lib/pilot/pilot-safety-gate.ts` e pelo guard de importação. A prova não autoriza dados reais, infraestrutura remota, credenciais municipais ou DNS.
+
 ## Execução isolada
 
 A execução local de prova usa o banco temporário criado pelo próprio E2E:
@@ -59,7 +68,7 @@ cd app
 pnpm test:e2e:pilot:import
 ```
 
-Para uma execução manual, defina todos estes valores:
+Para uma execução manual, defina todos estes valores explícitos:
 
 ```bash
 export PILOT_MODE=true
@@ -67,21 +76,15 @@ export PILOT_IMPORT_TARGET=isolated-proof
 export PILOT_IMPORT_PROOF_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/educa_pilot_proof_local
 export PILOT_IMPORT_DATA_MODE=synthetic
 export PILOT_SYNTHETIC_DATA_ONLY=true
+export PILOT_IMPORT_SYNTHETIC_MARKER=SYNTHETIC-EDUCA-PILOT
 export PILOT_IMPORT_ENCRYPTION_KEY='<base64 de uma chave AES-256>'
 export PILOT_IMPORT_ENCRYPTION_KEY_ID=proof-local-v1
 pnpm pilot:import:proof import --csv /caminho/piloto.csv --approval /caminho/aprovacao.json
 ```
 
-Para uma carga real aprovada, o arquivo deve permanecer fora do repositório e o alvo precisa continuar local:
+O gate rejeita URLs remotas, nomes de banco fora de `educa_pilot_proof_`, modo demo, referências `SUPABASE_DEMO_*`, modo real, modo não confirmado, marcador ausente, chave ausente e qualquer alvo diferente de `isolated-proof`. A checagem acontece antes de abrir o cliente do banco, e o receipt redigido registra o alvo tentado e o motivo sem URL, chave ou conteúdo.
 
-```bash
-export PILOT_IMPORT_DATA_MODE=real
-export PILOT_SYNTHETIC_DATA_ONLY=false
-export PILOT_IMPORT_REAL_DATA_CONFIRMATION=isolated-proof-only
-pnpm pilot:import:proof import --csv /caminho/dado-aprovado.csv --approval /caminho/aprovacao.json
-```
-
-O gate rejeita URLs remotas, nomes de banco fora de `educa_pilot_proof_`, modo demo, chave ausente e carga real sem confirmação.
+Uma futura carga real exige uma mudança revisada separada, com aprovações legais e de governança nomeadas. Este contrato não abre essa porta.
 
 ## Encriptação, retenção e rollback
 
@@ -97,6 +100,6 @@ Cada linha canônica recebe `pilot_import_batch_id`. A tabela do lote registra o
 
 ## Receipt
 
-O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, contagens, fingerprints, estado criptográfico e retenção. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família.
+O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt de segurança, contagens, fingerprints, estado criptográfico e retenção. Falhas emitem `PILOT_IMPORT_PROOF_SAFETY_RECEIPT` com o alvo tentado e o motivo, sem URL, chave ou conteúdo. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família.
 
 O E2E também executa dois deliberate-breaks: aprovação sem owner e import sem chave. Cada falha precisa ficar vermelha. Se uma validação de governança for removida, o teste falha.
