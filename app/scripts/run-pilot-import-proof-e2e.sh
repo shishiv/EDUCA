@@ -201,13 +201,13 @@ run_expected_safety_failure PILOT_IMPORT_PROOF_TARGET_MISMATCH env \
   PILOT_IMPORT_TARGET=unexpected-target PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_DATABASE_LOCAL_ONLY env \
-  PILOT_IMPORT_PROOF_DATABASE_URL='postgresql://postgres@db.example/educa_pilot_proof_test' \
+  PILOT_IMPORT_PROOF_DATABASE_URL='postgresql://postgres@127.0.0.2/educa_pilot_proof_test' \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_DEMO_DENIED env \
   NEXT_PUBLIC_DEMO_SANDBOX=true PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_DEMO_REFERENCE_DENIED env \
-  SUPABASE_DEMO_URL='https://demo.example.invalid' PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
+  SUPABASE_DEMO_URL='synthetic-demo-reference' PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_REAL_DATA_DENIED env \
   PILOT_IMPORT_DATA_MODE=real PILOT_SYNTHETIC_DATA_ONLY=false \
