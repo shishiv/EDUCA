@@ -6,6 +6,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const SCHOOL_A = '10000000-0000-0000-0000-000000000001'
 const TURMA_A = '30000000-0000-0000-0000-000000000001'
 const SESSION_ID = randomUUID()
+const CONFLICT_SESSION_ID = randomUUID()
 const PASSWORD = 'Synthetic-Only-2026!'
 
 function serviceHeaders() {
@@ -59,12 +60,22 @@ async function login(page: import('@playwright/test').Page, email: string) {
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 })
 }
 
-async function prepareClosedSession(request: import('@playwright/test').APIRequestContext) {
+async function deleteSession(
+  request: import('@playwright/test').APIRequestContext,
+  sessionId: string
+) {
+  await serviceRequest(request, `/rest/v1/attendance_reopen_requests?sessao_id=eq.${sessionId}`, { method: 'DELETE' })
+  await serviceRequest(request, `/rest/v1/frequencia?sessao_id=eq.${sessionId}`, { method: 'DELETE' })
+  await serviceRequest(request, `/rest/v1/sessoes_aula?id=eq.${sessionId}`, { method: 'DELETE' })
+}
+
+async function prepareClosedSession(
+  request: import('@playwright/test').APIRequestContext,
+  withOpenConflict = false
+) {
   const professorId = await userId(request, 'professora.a@synthetic.invalid')
-  const sessionFilter = `?id=eq.${SESSION_ID}`
-  await serviceRequest(request, `/rest/v1/attendance_reopen_requests?sessao_id=eq.${SESSION_ID}`, { method: 'DELETE' })
-  await serviceRequest(request, `/rest/v1/frequencia?sessao_id=eq.${SESSION_ID}`, { method: 'DELETE' })
-  await serviceRequest(request, `/rest/v1/sessoes_aula${sessionFilter}`, { method: 'DELETE' })
+  await deleteSession(request, SESSION_ID)
+  await deleteSession(request, CONFLICT_SESSION_ID)
 
   const now = new Date().toISOString()
   await serviceRequest(request, '/rest/v1/sessoes_aula', {
@@ -84,24 +95,39 @@ async function prepareClosedSession(request: import('@playwright/test').APIReque
       conteudo_programatico: 'Chamada de reabertura E2E',
     },
   })
+
+  if (withOpenConflict) {
+    await serviceRequest(request, '/rest/v1/sessoes_aula', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      data: {
+        id: CONFLICT_SESSION_ID,
+        turma_id: TURMA_A,
+        escola_id: SCHOOL_A,
+        professor_id: professorId,
+        data_aula: todayInSaoPaulo(),
+        status: 'ABERTA',
+        aberta_em: now,
+        conteudo_programatico: 'Sessão aberta que bloqueia a reabertura',
+      },
+    })
+  }
 }
 
 async function cleanupSession(request: import('@playwright/test').APIRequestContext) {
-  await serviceRequest(request, `/rest/v1/attendance_reopen_requests?sessao_id=eq.${SESSION_ID}`, { method: 'DELETE' })
-  await serviceRequest(request, `/rest/v1/frequencia?sessao_id=eq.${SESSION_ID}`, { method: 'DELETE' })
-  await serviceRequest(request, `/rest/v1/sessoes_aula?id=eq.${SESSION_ID}`, { method: 'DELETE' })
+  await deleteSession(request, SESSION_ID)
+  await deleteSession(request, CONFLICT_SESSION_ID)
 }
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
 test.describe('Attendance reopen workflow', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async () => {
     if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('Local Supabase variables are required')
     const host = new URL(SUPABASE_URL).hostname
     if (!['127.0.0.1', 'localhost'].includes(host) || !SERVICE_KEY.startsWith('sb_secret_')) {
       throw new Error('Attendance reopen E2E is synthetic-local only')
     }
-    await prepareClosedSession(request)
   })
 
   test.afterEach(async ({ request }) => {
@@ -109,6 +135,7 @@ test.describe('Attendance reopen workflow', () => {
   })
 
   test('teacher requests and school director approves only the canonical session', async ({ page, browser, request }) => {
+    await prepareClosedSession(request)
     const sessionPath = `/dashboard/turmas/${TURMA_A}/chamada?sessao=${SESSION_ID}`
     await login(page, 'professora.a@synthetic.invalid')
     await page.goto(sessionPath)
@@ -141,7 +168,8 @@ test.describe('Attendance reopen workflow', () => {
       await expect(directorPage.getByRole('button', { name: 'Aprovar reabertura' })).toBeVisible()
       await directorPage.getByRole('button', { name: 'Aprovar reabertura' }).click()
       await expect(directorPage.getByRole('button', { name: 'Fechar chamada' })).toBeVisible()
-      await expect(directorPage.getByRole('option', { name: /Aberta/ })).toBeVisible()
+      await expect(directorPage.locator('#attendance-session')).toHaveValue(SESSION_ID)
+      await expect(directorPage.locator('#attendance-session')).toContainText('Aberta')
     } finally {
       await directorContext.close()
     }
@@ -149,5 +177,78 @@ test.describe('Attendance reopen workflow', () => {
     const sessionResponse = await serviceRequest(request, `/rest/v1/sessoes_aula?id=eq.${SESSION_ID}&select=id,status`)
     await expect(sessionResponse).toBeOK()
     await expect(await sessionResponse.json()).toEqual([{ id: SESSION_ID, status: 'ABERTA' }])
+  })
+
+  test('director sees an actionable conflict and preserves the pending request', async ({ page, browser, request }) => {
+    await prepareClosedSession(request, true)
+    const sessionPath = `/dashboard/turmas/${TURMA_A}/chamada?sessao=${SESSION_ID}`
+
+    await login(page, 'professora.a@synthetic.invalid')
+    await page.goto(sessionPath)
+    await page.getByRole('button', { name: 'Solicitar reabertura' }).click()
+    await page.getByLabel('Motivo da reabertura').fill('Corrigir a falta após conferir o diário.')
+    await page.getByRole('button', { name: 'Enviar solicitação' }).click()
+    await expect(page.getByText('Pendente')).toBeVisible()
+
+    const directorContext = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const directorPage = await directorContext.newPage()
+    try {
+      await login(directorPage, 'diretora.a@synthetic.invalid')
+      await directorPage.goto(sessionPath)
+      await directorPage.getByRole('button', { name: 'Aprovar reabertura' }).click()
+
+      const conflictAlert = directorPage.getByRole('alert').filter({ hasText: 'Já existe uma sessão aberta' })
+      await expect(conflictAlert).toBeVisible()
+      await expect(conflictAlert).toContainText('Feche a sessão aberta antes de aprovar')
+      await expect(directorPage.getByText('Pendente', { exact: true })).toBeVisible()
+      await expect(directorPage.getByText(/Sessão fechada/)).toBeVisible()
+    } finally {
+      await directorContext.close()
+    }
+
+    const sessionResponse = await serviceRequest(
+      request,
+      `/rest/v1/sessoes_aula?id=eq.${SESSION_ID}&select=id,status`
+    )
+    await expect(sessionResponse).toBeOK()
+    await expect(await sessionResponse.json()).toEqual([{ id: SESSION_ID, status: 'FECHADA' }])
+
+    const requestResponse = await serviceRequest(
+      request,
+      `/rest/v1/attendance_reopen_requests?sessao_id=eq.${SESSION_ID}&select=id,status,decided_by,decided_at,after_state`
+    )
+    await expect(requestResponse).toBeOK()
+    const requestRows = await requestResponse.json() as Array<{
+      id: string
+      status: string
+      decided_by: string | null
+      decided_at: string | null
+      after_state: unknown
+    }>
+    await expect(requestRows).toEqual([{
+      id: expect.any(String),
+      status: 'PENDENTE',
+      decided_by: null,
+      decided_at: null,
+      after_state: null,
+    }])
+
+    const conflictResponse = await serviceRequest(
+      request,
+      `/rest/v1/sessoes_aula?id=eq.${CONFLICT_SESSION_ID}&select=id,status`
+    )
+    await expect(conflictResponse).toBeOK()
+    await expect(await conflictResponse.json()).toEqual([{ id: CONFLICT_SESSION_ID, status: 'ABERTA' }])
+
+    const decisionAuditResponse = await serviceRequest(
+      request,
+      `/rest/v1/pilot_audit_log?event_type=eq.attendance_reopen_decided&entity_id=eq.${SESSION_ID}&select=event_type,redacted_metadata`
+    )
+    await expect(decisionAuditResponse).toBeOK()
+    const decisionAuditRows = await decisionAuditResponse.json() as Array<{
+      event_type: string
+      redacted_metadata: { request_id?: string }
+    }>
+    await expect(decisionAuditRows.filter(row => row.redacted_metadata.request_id === requestRows[0].id)).toEqual([])
   })
 })
