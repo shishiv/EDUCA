@@ -618,7 +618,7 @@ export default function NotasPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Aluno</TableHead>
+                        <TableHead className="sticky left-0 z-20 bg-white border-r border-gray-200">Aluno</TableHead>
                         {turma.disciplinas
                           .filter(d => disciplinaFilter === 'todas' || d === disciplinaFilter)
                           .map((disciplina) => (
@@ -632,7 +632,7 @@ export default function NotasPage() {
                     <TableBody>
                       {turma.alunos.map((aluno) => (
                         <TableRow key={aluno.id}>
-                          <TableCell>
+                          <TableCell className="sticky left-0 z-10 bg-white border-r border-gray-200">
                             <div className="flex items-center space-x-3">
                               <Avatar>
                                 <AvatarFallback>

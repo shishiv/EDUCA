@@ -15,7 +15,7 @@ import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
-import { quickAccessItems, resolveVisibleQuickAccess, resolveVisibleQuickActionCards, type QuickAccessRole } from '@/lib/dashboard/quick-access'
+import { quickAccessItems, resolveVisibleQuickAccess, type QuickAccessRole } from '@/lib/dashboard/quick-access'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 interface DashboardStats {
@@ -177,8 +177,6 @@ export default function DashboardPage() {
     demoSandbox,
   })
 
-  const visibleQuickActionCards = resolveVisibleQuickActionCards(pilotMode, canManageSchool, demoSandbox)
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Page heading and one compact action row */}
@@ -292,37 +290,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Right Column - Alerts + Quick Actions */}
-        <div className="space-y-6">
-          <AlertasCard />
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-lg text-gray-800">
-                Ações Rápidas
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-500">
-                Atalhos para tarefas frequentes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {visibleQuickActionCards.map((card) => {
-                  const CardIcon = card.icon
-                  return (
-                    <Button key={card.name} variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                      <Link href={card.href}>
-                        <CardIcon className={`h-5 w-5 ${card.iconColor}`} />
-                        <span className="text-sm">{card.name}</span>
-                      </Link>
-                    </Button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Right Column - Alerts (quick actions live in the single Acessos rápidos row above) */}
+        <AlertasCard />
       </div>
 
     </div>
