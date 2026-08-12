@@ -23,6 +23,7 @@ import {
   JustificationModal,
   ViewOnlyNotice,
   FecharAulaDialog,
+  AttendanceReopenPanel,
   type AttendanceStatus,
 } from '@/components/attendance'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,6 +33,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import type { AttendanceReopenRequest } from '@/lib/services/attendance-reopen'
 
 interface Student {
   id: string
@@ -130,6 +132,7 @@ export default function ChamadaPage() {
   const [turma, setTurma] = useState<Turma | null>(null)
   const [students, setStudents] = useState<Student[]>([])
   const [sessions, setSessions] = useState<AttendanceSession[]>([])
+  const [reopenRequest, setReopenRequest] = useState<AttendanceReopenRequest | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(requestedSessionId)
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null)
   const [attendance, setAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
@@ -138,6 +141,7 @@ export default function ChamadaPage() {
   const [loading, setLoading] = useState(true)
   const [loadingSessions, setLoadingSessions] = useState(false)
   const [loadingAttendance, setLoadingAttendance] = useState(false)
+  const [loadingReopenRequest, setLoadingReopenRequest] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -157,6 +161,8 @@ export default function ChamadaPage() {
   const today = startOfDay(getTodaySaoPauloDate())
   const isFutureDate = isAfter(startOfDay(currentDate), today)
   const canRecord = canRecordAttendance(userProfile?.tipo_usuario ?? null)
+  const isTeacher = userProfile?.tipo_usuario === 'professor'
+  const isDirector = userProfile?.tipo_usuario === 'diretor'
   const isViewOnly = !canRecord
   const lockInfo = useMemo(
     () => getSessionLockInfo(selectedSession?.data_aula ?? dateString, selectedSession?.status),
@@ -241,6 +247,26 @@ export default function ChamadaPage() {
     }
   }, [dateString, requestedSessionId, turmaId])
 
+  const loadReopenRequest = useCallback(async (sessionId: string | null) => {
+    if (!sessionId) {
+      setReopenRequest(null)
+      return
+    }
+
+    setLoadingReopenRequest(true)
+    try {
+      const request = await attendanceApi.getAttendanceReopenRequest(sessionId)
+      setReopenRequest(request)
+    } catch (loadError) {
+      logger.error('ATTENDANCE_REOPEN_REQUEST_READ_FAILED', loadError as Error, {
+        metadata: { sessionId },
+      })
+      setReopenRequest(null)
+    } finally {
+      setLoadingReopenRequest(false)
+    }
+  }, [])
+
   const loadAttendance = useCallback(async (sessionId: string | null) => {
     if (!sessionId) {
       setAttendance(new Map())
@@ -312,7 +338,8 @@ export default function ChamadaPage() {
   useEffect(() => {
     if (authLoading || !userProfile?.id) return
     void loadAttendance(selectedSessionId)
-  }, [authLoading, loadAttendance, selectedSessionId, userProfile?.id])
+    void loadReopenRequest(selectedSessionId)
+  }, [authLoading, loadAttendance, loadReopenRequest, selectedSessionId, userProfile?.id])
 
   const initializeAllPresent = useCallback(() => {
     const initial = new Map<string, AttendanceRecord>()
@@ -451,6 +478,7 @@ export default function ChamadaPage() {
       ))
       setCloseDialogOpen(false)
       setDraftSessionId(null)
+      setReopenRequest(null)
       toast.success('Chamada fechada. Os registros agora são imutáveis.')
     } catch (closeError) {
       logger.error('ATTENDANCE_SESSION_CLOSE_UI_FAILED', closeError as Error, { metadata: { sessionId: selectedSession.id } })
@@ -460,6 +488,14 @@ export default function ChamadaPage() {
       setIsClosing(false)
     }
   }, [canEditSelectedSession, hasUnsavedChanges, selectedSession])
+
+  const handleReopenRequestCompleted = useCallback(async () => {
+    await loadReopenRequest(selectedSessionId)
+  }, [loadReopenRequest, selectedSessionId])
+
+  const handleReopenDecisionCompleted = useCallback(async () => {
+    await loadSessions()
+  }, [loadSessions])
 
   const handleJustificationNeeded = useCallback((student: Student) => {
     setJustificationModal({ matriculaId: student.matriculaId, studentName: student.nome })
@@ -533,6 +569,19 @@ export default function ChamadaPage() {
           onClose={() => setCloseDialogOpen(true)}
           closeDisabled={Boolean(disabledReason) || hasUnsavedChanges || isClosing}
           canEdit={canEditSelectedSession}
+        />
+      )}
+
+      {selectedSession && !loadingReopenRequest && (
+        <AttendanceReopenPanel
+          sessionId={selectedSession.id}
+          sessionStatus={selectedSession.status}
+          request={reopenRequest}
+          isTeacher={isTeacher}
+          isDirector={isDirector}
+          onRequestChanged={setReopenRequest}
+          onRequestCompleted={handleReopenRequestCompleted}
+          onDecisionCompleted={handleReopenDecisionCompleted}
         />
       )}
 
