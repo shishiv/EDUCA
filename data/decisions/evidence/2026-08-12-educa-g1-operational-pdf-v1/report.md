@@ -41,7 +41,7 @@ Unit and repository receipts:
 - Typecheck: passed.
 - Lint: passed with the repository's existing warning baseline and zero errors.
 - Full Vitest suite: `767 passed`, `19 skipped`, `57 passed files`, `2 skipped files`.
-- Final isolated database validation: `PASS` in [`validation-receipt.json`](./validation-receipt.json).
+- Final isolated database validation: `PASS` in [validation-receipt.json](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/validation-receipt.json).
 
 ## Deliberate break
 
@@ -55,14 +55,14 @@ The source fingerprint unit test also proves that changing a canonical source ro
 
 ## PDF artifact and visual evidence
 
-- Real downloaded PDF before the change: [`before.pdf`](./before.pdf)
-- Real downloaded PDF after the change: [`after.pdf`](./after.pdf)
-- Before PDF page image: [`before-page-1.png`](./before-page-1.png)
-- After PDF page one: [`after-page-1.png`](./after-page-1.png)
-- After PDF page two: [`after-page-2.png`](./after-page-2.png)
-- Extracted after-PDF text: [`after-text.txt`](./after-text.txt)
-- Browser report-page evidence: [`browser-report-page.png`](./browser-report-page.png)
-- Browser post-emission evidence: [`browser-report-after-emission.png`](./browser-report-after-emission.png)
+- Real downloaded PDF before the change: [before.pdf](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/before.pdf)
+- Real downloaded PDF after the change: [after.pdf](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/after.pdf)
+- Before PDF page image: [before-page-1.png](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/before-page-1.png)
+- After PDF page one: [after-page-1.png](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/after-page-1.png)
+- After PDF page two: [after-page-2.png](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/after-page-2.png)
+- Extracted after-PDF text: [after-text.txt](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/after-text.txt)
+- Browser report-page evidence: [browser-report-page.png](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/browser-report-page.png)
+- Browser post-emission evidence: [browser-report-after-emission.png](https://github.com/shishiv/EDUCA/blob/e1fb9d5/data/decisions/evidence/2026-08-12-educa-g1-operational-pdf-v1/browser-report-after-emission.png)
 
 The before image shows the original one-page report. The after images show the new boundary and provenance block on page one, with the taught-content section preserved on page two.
 
