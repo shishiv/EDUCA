@@ -1,0 +1,16 @@
+{
+  "state": "after",
+  "capturedAt": "2026-08-12T05:33:19.428Z",
+  "tokens": {
+    "primary": "161 94% 30%",
+    "primaryForeground": "0 0% 100%",
+    "ring": "161 94% 30%",
+    "secondary": "210 40% 96%"
+  },
+  "components": {
+    "usuarios": {
+      "novoButtonBg": "rgb(5, 148, 103)"
+    },
+    "novo-aluno": {}
+  }
+}

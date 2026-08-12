@@ -33,7 +33,6 @@
   /* Font Families (populated by next/font) */
   --font-display: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-cursive: var(--font-caveat), cursive;
 
   /* Canonical EDUCA surface token */
   --educa-paper: #f4faf7;
@@ -77,17 +76,6 @@
   --sidebar-width: 260px;
   --header-height: 70px;
   --content-max-width: 1400px;
-
-  /* Spacing Scale */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
 }
 
 /* Tablet & Mobile Touch Optimization for Brazilian Classrooms */
@@ -181,9 +169,11 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 220 90% 56%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 142 69% 58%;
+    /* Canonical brand primary: emerald (#059669), shared with the hero and
+       sign-in surfaces. Secondary is a neutral surface. */
+    --primary: 161 94% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
     --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -193,7 +183,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 220 90% 56%;
+    --ring: 161 94% 30%;
     --chart-1: 220 90% 56%;
     --chart-2: 142 69% 58%;
     --chart-3: 38 92% 50%;
@@ -209,8 +199,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 220 90% 56%;
-    --primary-foreground: 222.2 84% 4.9%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -221,7 +211,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 220 90% 56%;
+    --ring: 160 84% 39%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -233,6 +223,22 @@
 @layer base {
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* One consistent title voice: headings use the display family (Lexend).
+     Tailwind font utilities (e.g. font-sans) still override per element where a
+     body voice is intended. Larger display sizes get slight negative tracking
+     and balanced wrapping. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  h1,
+  h2 {
+    letter-spacing: -0.01em;
+    text-wrap: balance;
   }
 }
 
@@ -276,7 +282,65 @@
   }
   
   .stat-card {
-    @apply bg-white border border-gray-200 rounded-educa-md p-6 shadow-educa card-hover;
+    @apply bg-white border border-gray-200 rounded-educa-md p-6;
+  }
+
+  /* Responsive data lists: on phones (<768px) stack each table row into a
+     card so no column is hidden behind a horizontal scroll. Opt-in per list
+     with <Table className="responsive-stack-table">. Tablets and desktops keep
+     the tabular layout. */
+  @media (max-width: 767.98px) {
+    .responsive-stack-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .responsive-stack-table tbody {
+      display: block;
+    }
+    .responsive-stack-table tbody tr {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .responsive-stack-table tbody tr:hover {
+      background: #fff;
+    }
+    .responsive-stack-table td {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      text-align: left;
+      white-space: normal;
+    }
+    .responsive-stack-table td:first-child {
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .responsive-stack-table td:last-child {
+      padding-top: 0.5rem;
+      border-top: 1px solid #f3f4f6;
+    }
+    .responsive-stack-table td:last-child > * {
+      justify-content: flex-start;
+    }
+    .responsive-stack-table td[colspan] {
+      text-align: center;
+      border: 0;
+      padding: 1.5rem 0;
+    }
   }
 
   /* Sign-in surface: restrained municipal color roles and task-feedback motion. */

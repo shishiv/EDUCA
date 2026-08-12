@@ -270,14 +270,14 @@ export default function AlunoDetalhesPage() {
   return (
     <div className="space-y-6">
       {/* Back button + Actions */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button variant="ghost" size="sm" className="self-start" asChild>
           <Link href="/dashboard/alunos">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Link>
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Diario Infantil button for young students */}
           {isInfantil && (
             <Button variant="outline" asChild>

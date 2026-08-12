@@ -1,0 +1,674 @@
+{
+  "state": "before",
+  "base": "http://localhost:3000",
+  "capturedAt": "2026-08-12T04:35:38.640Z",
+  "gradientStops": {
+    "emerald-700": [
+      4,
+      120,
+      87
+    ],
+    "teal-700": [
+      15,
+      118,
+      110
+    ],
+    "sky-800": [
+      7,
+      89,
+      133
+    ]
+  },
+  "viewports": {
+    "desktop": {
+      "contrast": [
+        {
+          "text": "Online",
+          "tag": "span",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 7.23,
+            "teal-700": 7.23,
+            "sky-800": 7.23
+          },
+          "minRatio": 7.23,
+          "passesAA": true,
+          "aaThreshold": 4.5
+        },
+        {
+          "text": "Nenhuma escola",
+          "tag": "span",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 4.76,
+            "teal-700": 4.76,
+            "sky-800": 4.76
+          },
+          "minRatio": 4.76,
+          "passesAA": true,
+          "aaThreshold": 4.5
+        }
+      ],
+      "readability": [
+        {
+          "text": "Online",
+          "tag": "span",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "500",
+          "letterSpacing": "normal"
+        },
+        {
+          "text": "Nenhuma escola",
+          "tag": "span",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "500",
+          "letterSpacing": "normal"
+        }
+      ],
+      "hierarchy": [
+        {
+          "level": "h2",
+          "text": "Sistema Escolar",
+          "fontSizePx": 14,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h5",
+          "text": "Sandbox público de demonstração",
+          "fontSizePx": 16,
+          "fontWeight": "500",
+          "fontFamily": "Inter"
+        },
+        {
+          "level": "h1",
+          "text": "Bom dia, Admin!",
+          "fontSizePx": 30,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Minhas Turmas",
+          "fontSizePx": 18,
+          "fontWeight": "400",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Alertas",
+          "fontSizePx": 16,
+          "fontWeight": "600",
+          "fontFamily": "Lexend"
+        }
+      ],
+      "actions": [
+        {
+          "tag": "a",
+          "name": "Novo Aluno",
+          "href": "/dashboard/alunos/novo",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Matrícula",
+          "href": "/dashboard/matriculas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Diário de Classe",
+          "href": "/diario",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Nova Turma",
+          "href": "/dashboard/turmas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Relatórios",
+          "href": "/dashboard/relatorios",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Config",
+          "href": "/dashboard/configuracoes",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "1º Ano A E2E1º Ano - matutino3 alunos",
+          "href": "/dashboard/turmas/468d0b62-bb87-4e11-9118-113ca2cf209e",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "2º Ano B E2E2º Ano - vespertino2 alunos",
+          "href": "/dashboard/turmas/17a67ee2-8eb7-481f-8b3f-ce62ce85df5b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Berçário A E2EBerçário - integral0 aluno",
+          "href": "/dashboard/turmas/f2b10a23-83c1-4ebb-91ca-3ef452aaea2b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica A1 ano - matutino1 aluno",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000001",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica B1 ano - vespertino1 alu",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000002",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Ver todas as turmas",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 40
+        },
+        {
+          "tag": "a",
+          "name": "Fazer chamada →",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 16
+        }
+      ],
+      "focusWalk": [
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "button",
+          "name": "Selecione uma escola",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Recolher menu lateral",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Dashboard",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Cadastros",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Alunos",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Usuários",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Escolas",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Turmas",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Matrículas",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Atribuições",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Responsáveis",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Acadêmico",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        }
+      ],
+      "focusSummary": {
+        "interactive": 14,
+        "focusable": 14,
+        "walkStops": 16,
+        "withVisibleRing": 13
+      }
+    },
+    "mobile": {
+      "contrast": [
+        {
+          "text": "Online",
+          "tag": "span",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 7.23,
+            "teal-700": 7.23,
+            "sky-800": 7.23
+          },
+          "minRatio": 7.23,
+          "passesAA": true,
+          "aaThreshold": 4.5
+        },
+        {
+          "text": "Nenhuma escola",
+          "tag": "span",
+          "fontSizePx": 12,
+          "isLargeText": false,
+          "overChip": true,
+          "perStop": {
+            "emerald-700": 4.76,
+            "teal-700": 4.76,
+            "sky-800": 4.76
+          },
+          "minRatio": 4.76,
+          "passesAA": true,
+          "aaThreshold": 4.5
+        }
+      ],
+      "readability": [
+        {
+          "text": "Online",
+          "tag": "span",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "500",
+          "letterSpacing": "normal"
+        },
+        {
+          "text": "Nenhuma escola",
+          "tag": "span",
+          "fontFamily": "Inter",
+          "fontSizePx": 12,
+          "lineHeight": "16px",
+          "fontWeight": "500",
+          "letterSpacing": "normal"
+        }
+      ],
+      "hierarchy": [
+        {
+          "level": "h2",
+          "text": "Sistema Escolar",
+          "fontSizePx": 14,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h5",
+          "text": "Sandbox público de demonstração",
+          "fontSizePx": 16,
+          "fontWeight": "500",
+          "fontFamily": "Inter"
+        },
+        {
+          "level": "h1",
+          "text": "Bom dia, Admin!",
+          "fontSizePx": 24,
+          "fontWeight": "700",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Minhas Turmas",
+          "fontSizePx": 18,
+          "fontWeight": "400",
+          "fontFamily": "Lexend"
+        },
+        {
+          "level": "h3",
+          "text": "Alertas",
+          "fontSizePx": 16,
+          "fontWeight": "600",
+          "fontFamily": "Lexend"
+        }
+      ],
+      "actions": [
+        {
+          "tag": "a",
+          "name": "Novo Aluno",
+          "href": "/dashboard/alunos/novo",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Matrícula",
+          "href": "/dashboard/matriculas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Diário de Classe",
+          "href": "/diario",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Nova Turma",
+          "href": "/dashboard/turmas/nova",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Relatórios",
+          "href": "/dashboard/relatorios",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "Config",
+          "href": "/dashboard/configuracoes",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 44
+        },
+        {
+          "tag": "a",
+          "name": "1º Ano A E2E1º Ano - matutino3 alunos",
+          "href": "/dashboard/turmas/468d0b62-bb87-4e11-9118-113ca2cf209e",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "2º Ano B E2E2º Ano - vespertino2 alunos",
+          "href": "/dashboard/turmas/17a67ee2-8eb7-481f-8b3f-ce62ce85df5b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Berçário A E2EBerçário - integral0 aluno",
+          "href": "/dashboard/turmas/f2b10a23-83c1-4ebb-91ca-3ef452aaea2b",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica A1 ano - matutino1 aluno",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000001",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Turma Sintetica B1 ano - vespertino1 alu",
+          "href": "/dashboard/turmas/30000000-0000-0000-0000-000000000002",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 74
+        },
+        {
+          "tag": "a",
+          "name": "Ver todas as turmas",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 40
+        },
+        {
+          "tag": "a",
+          "name": "Fazer chamada →",
+          "href": "/dashboard/turmas",
+          "tabIndex": 0,
+          "focusable": true,
+          "hitPx": 16
+        }
+      ],
+      "focusWalk": [
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "nextjs-portal",
+          "name": "",
+          "hasOutline": false,
+          "hasShadowRing": false,
+          "visibleRing": false
+        },
+        {
+          "tag": "button",
+          "name": "Abrir menu",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "Abrir notificações",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "button",
+          "name": "AT",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Novo Aluno",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Matrícula",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Frequência",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Diário de Classe",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Nova Turma",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Relatórios",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Config",
+          "hasOutline": true,
+          "hasShadowRing": true,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "1º Ano A E2E1º Ano - matutino3 aluno",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "2º Ano B E2E2º Ano - vespertino2 alu",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        },
+        {
+          "tag": "a",
+          "name": "Berçário A E2EBerçário - integral0 a",
+          "hasOutline": true,
+          "hasShadowRing": false,
+          "visibleRing": true
+        }
+      ],
+      "focusSummary": {
+        "interactive": 14,
+        "focusable": 14,
+        "walkStops": 16,
+        "withVisibleRing": 13
+      }
+    }
+  }
+}

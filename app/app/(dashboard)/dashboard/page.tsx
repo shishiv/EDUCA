@@ -9,13 +9,13 @@ import { AlertasCard } from '@/components/dashboard/alertas-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Users, UserCheck, GraduationCap, CalendarCheck } from 'lucide-react'
+import { Users, UserCheck, GraduationCap } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
-import { quickAccessItems, resolveVisibleQuickAccess, resolveVisibleQuickActionCards, type QuickAccessRole } from '@/lib/dashboard/quick-access'
+import { quickAccessItems, resolveVisibleQuickAccess, type QuickAccessRole } from '@/lib/dashboard/quick-access'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
 interface DashboardStats {
@@ -177,19 +177,41 @@ export default function DashboardPage() {
     demoSandbox,
   })
 
-  const visibleQuickActionCards = resolveVisibleQuickActionCards(pilotMode, canManageSchool, demoSandbox)
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Page heading and one compact action row */}
-      <div className="mb-8 flex flex-col gap-2 border-b border-gray-200 pb-6">
-        <h1 className="font-display text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">
-          {getGreeting()}, {userProfile?.nome?.split(' ')[0] || 'Usuário'}!
-        </h1>
-        <p className="text-sm text-gray-600 sm:text-base">
-          Sistema de Gestão Educacional - Ano Letivo 2024
-        </p>
-      </div>
+      {/* Branded hero header - the network's key signal leads, in the brand's
+          own identity gradient (shared with the sign-in surface). */}
+      <header className="relative overflow-hidden rounded-educa-lg bg-gradient-to-br from-emerald-700 via-teal-700 to-sky-800 px-6 py-7 text-white sm:px-8 sm:py-9">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
+              {getGreeting()}, {userProfile?.nome?.split(' ')[0] || 'Usuário'}!
+            </h1>
+            <p className="mt-2 text-sm text-emerald-50/90 sm:text-base">
+              Rede Municipal de Educação &middot; Ano Letivo 2024
+            </p>
+          </div>
+          <div className="shrink-0 rounded-educa-md bg-white/10 px-5 py-4 ring-1 ring-inset ring-white/15">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">
+              Frequência média da rede
+            </p>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-display text-4xl font-bold leading-none tabular-nums">
+                {stats.frequenciaMedia}%
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  stats.frequenciaMedia >= CONFORMIDADE
+                    ? 'bg-emerald-400/25 text-emerald-50'
+                    : 'bg-amber-400/25 text-amber-50'
+                }`}
+              >
+                {stats.frequenciaMedia >= CONFORMIDADE ? 'conforme' : 'atenção'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {visibleQuickAccess.length > 0 && (
         <nav aria-label="Acessos rápidos" className="mb-8">
@@ -215,8 +237,8 @@ export default function DashboardPage() {
         </nav>
       )}
 
-      {/* Statistics Cards - Responsive grid: 1 col mobile, 2 cols tablet, 4 cols desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Secondary metrics - the counts; the rate leads in the header above. */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <StatCard
           icon={Users}
           iconColor="blue"
@@ -230,13 +252,6 @@ export default function DashboardPage() {
           label="Turmas Ativas"
         />
         <StatCard
-          icon={CalendarCheck}
-          iconColor="yellow"
-          value={`${stats.frequenciaMedia}%`}
-          label="Frequência Média"
-          trend={stats.frequenciaMedia >= CONFORMIDADE ? { value: "Acima da conformidade", direction: "up" } : undefined}
-        />
-        <StatCard
           icon={UserCheck}
           iconColor="pink"
           value={stats.totalProfessores}
@@ -247,7 +262,7 @@ export default function DashboardPage() {
       {/* Main Content Grid - 2 columns on desktop, stack on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Minhas Turmas */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="font-display text-lg text-gray-800">
               Minhas Turmas
@@ -292,37 +307,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Right Column - Alerts + Quick Actions */}
-        <div className="space-y-6">
-          <AlertasCard />
-
-          {/* Quick Actions */}
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-lg text-gray-800">
-                Ações Rápidas
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-500">
-                Atalhos para tarefas frequentes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {visibleQuickActionCards.map((card) => {
-                  const CardIcon = card.icon
-                  return (
-                    <Button key={card.name} variant="outline" className="h-auto py-3 flex flex-col items-center gap-2" asChild>
-                      <Link href={card.href}>
-                        <CardIcon className={`h-5 w-5 ${card.iconColor}`} />
-                        <span className="text-sm">{card.name}</span>
-                      </Link>
-                    </Button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Right Column - Alerts (quick actions live in the single Acessos rápidos row above) */}
+        <AlertasCard />
       </div>
 
     </div>

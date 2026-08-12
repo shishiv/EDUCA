@@ -308,7 +308,7 @@ export default function MatriculaDetailsPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard/matriculas">
@@ -317,7 +317,7 @@ export default function MatriculaDetailsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Detalhes da Matrícula</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Detalhes da Matrícula</h1>
             <p className="text-gray-600 mt-1">
               Informações completas e histórico de frequência
             </p>

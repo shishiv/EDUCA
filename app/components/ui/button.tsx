@@ -5,31 +5,31 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-educa text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-educa text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        // Primary - Green gradient like mockup buttons
+        // Primary - solid brand color from the primary token
         default:
-          'bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-700 hover:to-green-600 shadow-sm',
+          'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
 
-        // Secondary - Outlined with green border
+        // Secondary - outlined in the brand color
         secondary:
-          'border-2 border-green-600 text-green-700 bg-white hover:bg-green-50',
+          'border-2 border-primary text-primary bg-background hover:bg-primary/5',
 
-        // Ghost - Minimal, just text
-        ghost: 'text-gray-600 hover:text-green-600 hover:bg-green-50',
+        // Ghost - minimal; brand color on hover
+        ghost: 'text-muted-foreground hover:text-primary hover:bg-primary/5',
 
-        // Destructive - Keep existing, already good
+        // Destructive
         destructive:
           'bg-destructive text-destructive-foreground hover:bg-destructive/90',
 
-        // Outline - Gray border variant
+        // Outline - neutral border variant
         outline:
-          'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400',
+          'border border-input bg-background text-foreground hover:bg-muted hover:border-ring',
 
-        // Link - Text link style
-        link: 'text-green-600 underline-offset-4 hover:underline',
+        // Link - text link style
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-10 px-4 py-2 text-sm',

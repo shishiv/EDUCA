@@ -302,7 +302,7 @@ export default function TurmaDetalhesPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {turma.nome}
             </h1>
             <p className="text-gray-600 mt-1">
@@ -327,11 +327,11 @@ export default function TurmaDetalhesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Alunos Matriculados</CardDescription>
-            <CardTitle className="text-3xl flex items-center">
+            <CardTitle className="text-2xl sm:text-3xl flex items-center">
               {frequenciaStats.matriculados}
               <span className="text-sm text-gray-500 ml-2">/ {turma.capacidade}</span>
             </CardTitle>
@@ -347,7 +347,7 @@ export default function TurmaDetalhesPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Vagas Disponíveis</CardDescription>
-            <CardTitle className="text-3xl text-blue-600">
+            <CardTitle className="text-2xl sm:text-3xl text-blue-600">
               {frequenciaStats.vagasDisponiveis}
             </CardTitle>
           </CardHeader>
@@ -361,7 +361,7 @@ export default function TurmaDetalhesPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Frequência Média</CardDescription>
-            <CardTitle className="text-3xl text-green-600">
+            <CardTitle className="text-2xl sm:text-3xl text-green-600">
               {frequenciaStats.frequenciaMedia}%
             </CardTitle>
           </CardHeader>
@@ -376,7 +376,7 @@ export default function TurmaDetalhesPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Sessões de Aula</CardDescription>
-            <CardTitle className="text-3xl">{sessoes.length}</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl">{sessoes.length}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600">

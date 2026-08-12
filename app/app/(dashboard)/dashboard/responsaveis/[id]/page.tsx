@@ -288,7 +288,7 @@ export default function ResponsavelDetalhesPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {responsavel.nome}
             </h1>
             <p className="text-gray-600 mt-1">

@@ -252,7 +252,7 @@ export default function UsuariosPage() {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Usuário</TableHead>

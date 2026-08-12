@@ -375,7 +375,7 @@ export default function AlunosPage() {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Aluno</TableHead>
