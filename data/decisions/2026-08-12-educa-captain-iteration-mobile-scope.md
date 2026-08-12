@@ -89,6 +89,31 @@ screen.
      captain's decision. Greeting, subtitle, and the 100% value pass.
      The [key=bold-direction] decision remains OPEN.
 
+## Canonical tokens + shadcn components (proposed)
+
+Audit (2026-08-12): shadcn is configured (`app/components.json`, cssVariables),
+but there is no single canonical token source. Three disconnected color systems
+coexist - shadcn semantic (`--primary` is a generic blue, used ~15x), the
+`educa.*` Tailwind palette (its "primary" is indigo #4361EE, its green #059669),
+and `municipal-*` CSS vars (22x). The real brand green is hardcoded as Tailwind
+`green-*` **240x**, wired to none of them. `--space-*` tokens are dead (0 uses),
+`--text-*` nearly dead (1). The 15 `--primary` consumers (switch, checkbox,
+badge, progress, toast, spinners, selection rings) render blue today - off-brand.
+
+Proposed canonical architecture (3 layers):
+1. Primitive tokens - one brand palette (raw scales) as CSS vars; single source.
+2. Semantic tokens (shadcn: --primary/secondary/accent/border/ring/card/...)
+   mapped to primitives; **--primary = brand green** (corrects the 15 blue
+   spots). Components consume ONLY these.
+3. shadcn ui/ components refactored to semantic tokens (bg-primary, border-
+   border, bg-card...) instead of hardcoded green-*/gray-*.
+
+Open fork for the captain (`[key=canonical-tokens]`): the canonical brand green.
+Recommend the emerald family already used by the hero + sign-in (#047857 /
+#059669), which is also educa's "success" green. Aligning --primary to it and
+migrating the 240 hardcoded usages is a MATERIAL visual change (mostly a
+consistency correction) - before/after evidence to follow per contract.
+
 ## Progress log
 
 - 2026-08-12: systemic mobile pass committed (`f68e9d8..c93a731`): distill
