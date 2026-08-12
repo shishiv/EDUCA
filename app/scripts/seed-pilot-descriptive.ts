@@ -8,6 +8,17 @@ import { Client } from 'pg'
 import { createClient } from '@supabase/supabase-js'
 import { assertPilotDescriptiveReportDemoSafety } from '../lib/pilot/descriptive-report-demo-safety'
 import {
+  PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+  PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_ID,
+  PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
+  PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_ID,
+  PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
+  PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+  PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_ID,
+  PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+  requirePilotDescriptiveReleaseRevision,
+} from '../lib/pilot/descriptive-report-demo-contract'
+import {
   PILOT_DESCRIPTIVE_AUTH_EMAIL,
   PILOT_DESCRIPTIVE_AUTH_PASSWORD,
   PILOT_DESCRIPTIVE_CLASS_ID,
@@ -16,6 +27,7 @@ import {
   PILOT_DESCRIPTIVE_ENROLLMENT_ID,
   PILOT_DESCRIPTIVE_EXPECTED_COUNTS,
   PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS,
+  PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD,
   PILOT_DESCRIPTIVE_MARKER_CONFIG_ID,
   PILOT_DESCRIPTIVE_REPORT_ID,
   PILOT_DESCRIPTIVE_SCHOOL_ID,
@@ -31,6 +43,7 @@ assertPilotDescriptiveReportDemoSafety()
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL || ''
+const RELEASE_REVISION = requirePilotDescriptiveReleaseRevision()
 
 const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -155,6 +168,42 @@ async function writeDescriptiveSeed(client: Client, professorId: string): Promis
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [PILOT_DESCRIPTIVE_MARKER_CONFIG_ID, PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY, PILOT_DESCRIPTIVE_SEED_MARKER, 'pilot', 'Marker for the bounded descriptive-report rehearsal', 'string', PILOT_DESCRIPTIVE_SEED_MARKER, true, PILOT_DESCRIPTIVE_SEED_CREATED_AT]
     )
+    await client.query(
+      `INSERT INTO public.configs (id,chave,valor,categoria,descricao,tipo_valor,valor_padrao,ativo,created_at)
+       VALUES
+         ($1,$2,$3,$4,$5,$6,$7,$8,$9),
+         ($10,$11,$12,$13,$14,$15,$16,$17,$18),
+         ($19,$20,$21,$22,$23,$24,$25,$26,$27)`,
+      [
+        PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_ID,
+        PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+        RELEASE_REVISION,
+        'pilot',
+        'Source revision used by the bounded descriptive-report rehearsal',
+        'string',
+        RELEASE_REVISION,
+        true,
+        PILOT_DESCRIPTIVE_SEED_CREATED_AT,
+        PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_ID,
+        PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
+        PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+        'pilot',
+        'Environment used by the bounded descriptive-report rehearsal',
+        'string',
+        PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+        true,
+        PILOT_DESCRIPTIVE_SEED_CREATED_AT,
+        PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_ID,
+        PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
+        PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+        'pilot',
+        'Canonical source used by the bounded descriptive-report rehearsal',
+        'string',
+        PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+        true,
+        PILOT_DESCRIPTIVE_SEED_CREATED_AT,
+      ]
+    )
 
     await client.query('COMMIT')
   } catch (error) {
@@ -172,15 +221,28 @@ async function readDescriptiveSeedReceipt(client: Client): Promise<Record<string
       (SELECT count(*) FROM public.matriculas WHERE id = $4) AS enrollments,
       (SELECT count(*) FROM public.relatorios_descritivos WHERE id = $5) AS reports,
       (SELECT count(*) FROM public.sessoes_aula WHERE id = ANY($6::uuid[])) AS sessions,
-      (SELECT count(*) FROM public.conteudo_aula WHERE id = ANY($7::uuid[])) AS canonical_content,
+      (SELECT count(*) FROM public.conteudo_aula c
+        JOIN public.sessoes_aula s ON s.id = c.sessao_id
+        WHERE s.turma_id = $2
+          AND s.data_aula >= $10::date
+          AND s.data_aula <= $11::date) AS canonical_content,
       (SELECT md5(string_agg(line, '|' ORDER BY line)) FROM (
-        SELECT concat_ws('|', c.id::text, c.sessao_id::text, c.tema, c.objetivo, array_to_string(c.habilidades_bncc, ',')) AS line
-        FROM public.conteudo_aula c WHERE c.id = ANY($7::uuid[])
+        SELECT concat_ws('|', c.id::text, c.sessao_id::text, s.data_aula::text, c.tema, c.objetivo,
+          array_to_string(c.habilidades_bncc, ','), COALESCE(c.metodologia, ''),
+          COALESCE(c.recursos, ''), COALESCE(c.observacoes, '')) AS line
+        FROM public.conteudo_aula c
+        JOIN public.sessoes_aula s ON s.id = c.sessao_id
+        WHERE s.turma_id = $2
+          AND s.data_aula >= $10::date
+          AND s.data_aula <= $11::date
       ) content_rows) AS canonical_content_fingerprint,
       (SELECT md5(string_agg(line, '|' ORDER BY line)) FROM (
         SELECT concat_ws('|', r.id::text, r.matricula_id::text, r.turma_id::text, r.status, r.ano_letivo::text, r.semestre) AS line
         FROM public.relatorios_descritivos r WHERE r.id = $5
-      ) report_rows) AS descriptive_report_fingerprint`,
+      ) report_rows) AS descriptive_report_fingerprint,
+      (SELECT valor FROM public.configs WHERE chave = $7) AS release_revision,
+      (SELECT valor FROM public.configs WHERE chave = $8) AS rehearsal_environment,
+      (SELECT valor FROM public.configs WHERE chave = $9) AS canonical_source`,
     [
       PILOT_DESCRIPTIVE_SCHOOL_ID,
       PILOT_DESCRIPTIVE_CLASS_ID,
@@ -188,7 +250,11 @@ async function readDescriptiveSeedReceipt(client: Client): Promise<Record<string
       PILOT_DESCRIPTIVE_ENROLLMENT_ID,
       PILOT_DESCRIPTIVE_REPORT_ID,
       PILOT_DESCRIPTIVE_SESSION_IDS,
-      PILOT_DESCRIPTIVE_CONTENT_IDS,
+      PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+      PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
+      PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
+      PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.start,
+      PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.end,
     ]
   )
   return rows[0] ?? {}
@@ -205,6 +271,11 @@ export async function seedPilotDescriptive(): Promise<void> {
     const receipt = await readDescriptiveSeedReceipt(client)
     console.info(`PILOT_DESCRIPTIVE_SEED_RECEIPT: ${JSON.stringify({
       marker: PILOT_DESCRIPTIVE_SEED_MARKER,
+      provenance: {
+        releaseRevision: RELEASE_REVISION,
+        environment: PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+        canonicalSource: PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+      },
       expected: {
         counts: PILOT_DESCRIPTIVE_EXPECTED_COUNTS,
         fingerprints: PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS,

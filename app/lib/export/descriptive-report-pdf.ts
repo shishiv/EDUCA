@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable'
 import { formatDateBR, formatDateShortBR } from '@/lib/date-utils'
 import { createPDFDocument } from '@/lib/export/pdf-utils'
 import type { DescriptiveReportEmissionData } from '@/lib/reports/descriptive-report-emission'
+import { PILOT_DESCRIPTIVE_NON_LEGAL_BOUNDARY } from '@/lib/pilot/descriptive-report-demo-contract'
 
 const REPORT_MARGIN = {
   top: 16,
@@ -160,7 +161,7 @@ function drawDescriptiveReportTitle(
 
   const metadataRows = [
     ['Escola', data.escola.nome, 'Código da escola', data.escola.codigo ?? 'Não cadastrado'],
-    ['Turma', `${data.turma.nome} · ${data.turma.serie}`, 'Ano letivo / período', data.periodo.label],
+    ['Turma', `${data.turma.nome} · ${data.turma.serie}`, 'Período de reporte', data.periodo.label],
     ['Aluno(a)', data.student.nome, 'Nascimento', formatDateBR(data.student.dataNascimento)],
     ['Professor(a)', data.professor.nome, 'Registros de conteúdo', String(data.conteudoMinistrado.aulas.length)],
   ]
@@ -187,6 +188,102 @@ function drawDescriptiveReportTitle(
       3: { cellWidth: 'auto' },
     },
     margin: { left: REPORT_MARGIN.left, right: REPORT_MARGIN.right },
+  })
+
+  return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+}
+
+function drawDescriptiveReportBoundary(
+  doc: ReturnType<typeof createPDFDocument>,
+  startY: number
+): number {
+  const width = doc.internal.pageSize.getWidth() - REPORT_MARGIN.left - REPORT_MARGIN.right
+  const lines = doc.splitTextToSize(PILOT_DESCRIPTIVE_NON_LEGAL_BOUNDARY, width - 8)
+  const height = Math.max(17, 11 + lines.length * 3.4)
+
+  doc.setFillColor(255, 251, 235)
+  doc.setDrawColor(245, 158, 11)
+  doc.setLineWidth(0.35)
+  doc.roundedRect(REPORT_MARGIN.left, startY, width, height, 2, 2, 'FD')
+  doc.setLineWidth(0.2)
+  doc.setFont('Inter', 'bold')
+  doc.setFontSize(7.4)
+  doc.setTextColor(146, 64, 14)
+  doc.text('Limite de uso', REPORT_MARGIN.left + 4, startY + 5)
+  doc.setFont('Inter', 'normal')
+  doc.text(lines, REPORT_MARGIN.left + 4, startY + 10, { lineHeightFactor: 1.15 })
+
+  return startY + height
+}
+
+function drawDescriptiveReportProvenance(
+  doc: ReturnType<typeof createPDFDocument>,
+  startY: number,
+  data: DescriptiveReportEmissionData,
+  assets: DescriptiveReportPdfAssets
+): number {
+  const provenanceY = drawDescriptiveReportSectionTitle(doc, 'Proveniência operacional da simulação', startY + 8)
+  const rows = [
+    [
+      'Ambiente',
+      data.provenance.environment,
+      'Revisão de origem',
+      data.provenance.releaseRevision,
+    ],
+    [
+      'Escopo autorizado',
+      `${data.escola.nome} / ${data.turma.nome} · ${data.turma.serie}`,
+      'Período de reporte',
+      `${data.periodo.label} · ${formatDateShortBR(data.periodo.inicio)} - ${formatDateShortBR(data.periodo.fim)}`,
+    ],
+    [
+      'Fonte canônica',
+      data.provenance.canonicalSource,
+      'Linhas da fonte',
+      String(data.provenance.canonicalRowCount),
+    ],
+    [
+      'Fingerprint da fonte',
+      `${data.provenance.fingerprintAlgorithm}: ${data.provenance.canonicalContentFingerprint}`,
+      'Emissor responsável',
+      `${data.issuer.actorName} · perfil ${data.issuer.actorRole}`,
+    ],
+    [
+      'Ator autenticado',
+      `${data.issuer.actorId} · ${data.issuer.actorEmail ?? 'e-mail não informado'}`,
+      'Contexto do relatório',
+      `${data.issuer.reportId} · professor ${data.issuer.reportProfessorId}`,
+    ],
+  ]
+
+  autoTable(doc, {
+    startY: provenanceY,
+    body: rows.map(row => [
+      { content: row[0].toUpperCase(), styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
+      { content: row[1], styles: { textColor: REPORT_COLORS.ink } },
+      { content: row[2].toUpperCase(), styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
+      { content: row[3], styles: { textColor: REPORT_COLORS.ink } },
+    ]),
+    theme: 'plain',
+    styles: {
+      font: 'Inter',
+      fontSize: 7.2,
+      cellPadding: { top: 1.1, right: 1.8, bottom: 1.1, left: 0 },
+      lineColor: REPORT_COLORS.border,
+      overflow: 'linebreak',
+    },
+    columnStyles: {
+      0: { cellWidth: 31, fontSize: 6.5 },
+      1: { cellWidth: 59 },
+      2: { cellWidth: 31, fontSize: 6.5 },
+      3: { cellWidth: 'auto' },
+    },
+    margin: { left: REPORT_MARGIN.left, right: REPORT_MARGIN.right, top: 58, bottom: 27 },
+    willDrawPage: () => {
+      if (doc.getCurrentPageInfo().pageNumber > 1) {
+        drawDescriptiveReportPageHeader(doc, assets)
+      }
+    },
   })
 
   return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
@@ -255,6 +352,8 @@ export async function renderDescriptiveReportPdf(
 
   let currentY = drawDescriptiveReportPageHeader(doc, assets)
   currentY = drawDescriptiveReportTitle(doc, currentY, data)
+  currentY = drawDescriptiveReportBoundary(doc, currentY + 5)
+  currentY = drawDescriptiveReportProvenance(doc, currentY, data, assets)
   currentY = drawDescriptiveReportSectionTitle(doc, 'Desenvolvimento da criança', currentY + 8)
 
   autoTable(doc, {

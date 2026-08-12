@@ -2,8 +2,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import {
   PILOT_DESCRIPTIVE_SEED_MARKER,
+  PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+  PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
+  PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
+  PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM,
+  PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+  PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+  requirePilotDescriptiveReleaseRevision,
   PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY,
 } from '@/lib/pilot/descriptive-report-demo-contract'
+import { fingerprintCanonicalContentRows } from '@/lib/pilot/descriptive-report-provenance'
+import type { PilotActor } from '@/lib/pilot/pilot-server-auth'
 import {
   EXPERIENCE_FIELDS_CONFIG,
   SEMESTER_CONFIG,
@@ -68,6 +77,22 @@ export interface DescriptiveReportEmissionData {
     label: string
   }
   conteudoMinistrado: ContentReport
+  provenance: {
+    releaseRevision: string
+    environment: typeof PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT
+    canonicalSource: typeof PILOT_DESCRIPTIVE_CANONICAL_SOURCE
+    fingerprintAlgorithm: typeof PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM
+    canonicalRowCount: number
+    canonicalContentFingerprint: string
+  }
+  issuer: {
+    actorId: string
+    actorName: string
+    actorRole: PilotActor['role']
+    actorEmail: string | null
+    reportId: string
+    reportProfessorId: string
+  }
 }
 
 /** Calculates the canonical semester window used to query taught content. */
@@ -114,17 +139,33 @@ function resolveFinalizedDescriptiveReportFields(
  */
 export async function loadDescriptiveReportEmissionData(
   supabase: SupabaseClient<Database>,
-  reportId: string
+  reportId: string,
+  actor: PilotActor
 ): Promise<DescriptiveReportEmissionData> {
-  const { data: syntheticMarker, error: markerError } = await supabase
+  const releaseRevision = requirePilotDescriptiveReleaseRevision()
+  const { data: seedConfigs, error: markerError } = await supabase
     .from('configs')
-    .select('valor')
-    .eq('chave', PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY)
-    .maybeSingle()
+    .select('chave,valor')
+    .in('chave', [
+      PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY,
+      PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+      PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
+      PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
+    ])
 
   if (markerError) throw markerError
-  if (syntheticMarker?.valor !== PILOT_DESCRIPTIVE_SEED_MARKER) {
+  const configByKey = new Map((seedConfigs ?? []).map(config => [config.chave, config.valor]))
+  if (configByKey.get(PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY) !== PILOT_DESCRIPTIVE_SEED_MARKER) {
     throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_SYNTHETIC_SEED_REQUIRED', 403)
+  }
+  if (configByKey.get(PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY) !== releaseRevision) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_RELEASE_REVISION_MISMATCH', 409)
+  }
+  if (configByKey.get(PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY) !== PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_ENVIRONMENT_INVALID', 403)
+  }
+  if (configByKey.get(PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY) !== PILOT_DESCRIPTIVE_CANONICAL_SOURCE) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CANONICAL_SOURCE_INVALID', 409)
   }
 
   const { data: report, error: reportError } = await supabase
@@ -188,6 +229,9 @@ export async function loadDescriptiveReportEmissionData(
   if (contentResult.data.aulas.length === 0) {
     throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_EMPTY', 422)
   }
+  if (contentResult.data.turma?.id !== report.turma_id) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_SCOPE_MISMATCH', 422)
+  }
 
   const { data: escola, error: escolaError } = await supabase
     .from('escolas')
@@ -197,6 +241,8 @@ export async function loadDescriptiveReportEmissionData(
 
   if (escolaError) throw escolaError
   if (!escola) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
+
+  const canonicalContentFingerprint = fingerprintCanonicalContentRows(contentResult.data.aulas)
 
   return {
     report: {
@@ -227,5 +273,21 @@ export async function loadDescriptiveReportEmissionData(
     },
     periodo,
     conteudoMinistrado: contentResult.data,
+    provenance: {
+      releaseRevision,
+      environment: PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+      canonicalSource: PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+      fingerprintAlgorithm: PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM,
+      canonicalRowCount: contentResult.data.aulas.length,
+      canonicalContentFingerprint,
+    },
+    issuer: {
+      actorId: actor.id,
+      actorName: actor.name,
+      actorRole: actor.role,
+      actorEmail: actor.email,
+      reportId: report.id,
+      reportProfessorId: report.professor_id,
+    },
   }
 }

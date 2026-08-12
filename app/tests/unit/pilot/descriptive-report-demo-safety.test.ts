@@ -4,6 +4,7 @@ import {
   assertPilotDescriptiveReportDemoSafety,
   isPilotDescriptiveReportDemoEnabled,
 } from '@/lib/pilot/descriptive-report-demo-safety'
+import { requirePilotDescriptiveReleaseRevision } from '@/lib/pilot/descriptive-report-demo-contract'
 
 const safeEnvironment = {
   pilotMode: 'true',
@@ -32,5 +33,12 @@ describe('bounded descriptive-report demo safety', () => {
     const external = { ...safeEnvironment, supabaseUrl: 'https://example.supabase.co' }
     expect(() => assertPilotDescriptiveReportDemoSafety(external)).toThrow(/only local/)
     expect(isPilotDescriptiveReportDemoEnabled(external)).toBe(false)
+  })
+
+  it('requires an explicit source revision for operational provenance', () => {
+    expect(requirePilotDescriptiveReleaseRevision('source-revision-001')).toBe('source-revision-001')
+    expect(() => requirePilotDescriptiveReleaseRevision('')).toThrow(
+      /PILOT_DESCRIPTIVE_RELEASE_REVISION_REQUIRED/
+    )
   })
 })
