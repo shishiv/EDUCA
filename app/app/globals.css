@@ -278,6 +278,64 @@
     @apply bg-white border border-gray-200 rounded-educa-md p-6;
   }
 
+  /* Responsive data lists: on phones (<768px) stack each table row into a
+     card so no column is hidden behind a horizontal scroll. Opt-in per list
+     with <Table className="responsive-stack-table">. Tablets and desktops keep
+     the tabular layout. */
+  @media (max-width: 767.98px) {
+    .responsive-stack-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .responsive-stack-table tbody {
+      display: block;
+    }
+    .responsive-stack-table tbody tr {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .responsive-stack-table tbody tr:hover {
+      background: #fff;
+    }
+    .responsive-stack-table td {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      text-align: left;
+      white-space: normal;
+    }
+    .responsive-stack-table td:first-child {
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .responsive-stack-table td:last-child {
+      padding-top: 0.5rem;
+      border-top: 1px solid #f3f4f6;
+    }
+    .responsive-stack-table td:last-child > * {
+      justify-content: flex-start;
+    }
+    .responsive-stack-table td[colspan] {
+      text-align: center;
+      border: 0;
+      padding: 1.5rem 0;
+    }
+  }
+
   /* Sign-in surface: restrained municipal color roles and task-feedback motion. */
   .auth-login {
     --auth-login-canvas: #f7fbf8;

@@ -247,7 +247,7 @@ export default function EscolasPage() {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Escola</TableHead>

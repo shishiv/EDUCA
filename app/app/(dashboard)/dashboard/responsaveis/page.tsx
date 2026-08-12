@@ -265,7 +265,7 @@ export default function ResponsaveisPage() {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="responsive-stack-table">
             <TableHeader>
               <TableRow>
                 <TableHead>Responsável</TableHead>

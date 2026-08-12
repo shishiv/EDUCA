@@ -216,7 +216,7 @@ export default function DashboardPage() {
       )}
 
       {/* Statistics Cards - Responsive grid: 1 col mobile, 2 cols tablet, 4 cols desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           icon={Users}
           iconColor="blue"

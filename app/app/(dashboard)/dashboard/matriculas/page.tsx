@@ -530,7 +530,7 @@ export default function MatriculasPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Aluno</TableHead>
