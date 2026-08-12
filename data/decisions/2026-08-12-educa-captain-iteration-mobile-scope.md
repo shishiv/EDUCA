@@ -52,6 +52,19 @@ screen.
    - Evidence: before/after full-page desktop screenshots presented to the
      captain in the iteration report. Status: awaiting captain acceptance.
 
+2. Typeset pass: unify the title voice (VISUAL change - captain requested a
+   simplify/typeset pass).
+   - Before: ~38 raw page-title `<h1>`s rendered in the body family (Inter),
+     while titles via PageHeader/CardTitle and the dashboard used the display
+     family (Lexend) - an inconsistent heading voice.
+   - After: a base-layer rule makes h1/h2/h3 use the display family (Lexend), so
+     every title shares one voice; utility classes still override per element.
+     h1/h2 get -0.01em tracking and balanced wrapping; KPI numbers use tabular
+     figures. Families unchanged (Inter body + Lexend display, already the
+     committed identity).
+   - Evidence: after screenshots (usuarios, dashboard) in the report. Status:
+     awaiting captain acceptance.
+
 ## Progress log
 
 - 2026-08-12: systemic mobile pass committed (`f68e9d8..c93a731`): distill

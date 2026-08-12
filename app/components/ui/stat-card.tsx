@@ -52,7 +52,7 @@ export function StatCard({
           </span>
         )}
       </div>
-      <p className="font-display text-2xl sm:text-3xl font-bold text-gray-800 mb-0.5 sm:mb-1">
+      <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums text-gray-800 mb-0.5 sm:mb-1">
         {value}
       </p>
       <p className="text-[0.8rem] sm:text-[0.85rem] text-gray-500 leading-tight">{label}</p>

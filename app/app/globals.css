@@ -233,6 +233,22 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* One consistent title voice: headings use the display family (Lexend).
+     Tailwind font utilities (e.g. font-sans) still override per element where a
+     body voice is intended. Larger display sizes get slight negative tracking
+     and balanced wrapping. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  h1,
+  h2 {
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
 }
 
 @layer components {
