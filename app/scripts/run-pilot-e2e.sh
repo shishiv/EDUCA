@@ -8,11 +8,13 @@ cd "$APP_DIR"
 
 RECEIPT_DIR="$ROOT_DIR/.pilot-evidence"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
+RUN_SLUG="$(printf '%s' "$RUN_ID" | tr '[:upper:]' '[:lower:]')"
 RECEIPT_STEM="$RECEIPT_DIR/r3-t1-legacy-pilot-e2e-$RUN_ID"
 ISOLATED_PROJECT_DIR=''
 SUPABASE_STARTED=false
 APP_PID=''
 APP_STOPPED=false
+APP_ROUTE_REMOVED=false
 DATABASE_STOPPED=false
 AUTH_STATE_REMOVED=false
 TEMP_REMOVED=false
@@ -21,7 +23,7 @@ BASE_URL=''
 RESULT='failed'
 TEST_EXIT=1
 DELIBERATE_BREAK="${PILOT_LEGACY_DELIBERATE_BREAK:-none}"
-APP_NAME='educa-r3-legacy-pilot'
+APP_NAME="educa-r3-legacy-pilot-${RUN_SLUG}"
 EXPECTED_TEST_COUNT=15
 EXPECTED_RUN_TEST_COUNT=15
 PLAYWRIGHT_CONFIG='playwright.pilot-legacy.config.ts'
@@ -185,22 +187,44 @@ fs.writeFileSync(outputPath, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8')
 NODE
 }
 
+app_process_group_alive() {
+  ps -eo sid= | awk -v session_id="$APP_PID" '$1 == session_id { found=1 } END { exit found ? 0 : 1 }'
+}
+
+app_named_route_removed() {
+  ! portless list 2>/dev/null | grep -Fq "$APP_NAME"
+}
+
+stop_app_process_group() {
+  if [[ -z "$APP_PID" ]]; then
+    APP_STOPPED=true
+    return
+  fi
+
+  kill -TERM -- "-$APP_PID" 2>/dev/null || kill -TERM "$APP_PID" 2>/dev/null || true
+  wait "$APP_PID" 2>/dev/null || true
+  for _ in $(seq 1 10); do
+    if ! app_process_group_alive; then
+      APP_STOPPED=true
+      return
+    fi
+    sleep 1
+  done
+  APP_STOPPED=false
+  CLEANUP_FAILED=true
+}
+
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
   set +e
 
-  if [[ -n "$APP_PID" ]]; then
-    kill "$APP_PID" 2>/dev/null || true
-    wait "$APP_PID" 2>/dev/null || true
-    if kill -0 "$APP_PID" 2>/dev/null; then
-      APP_STOPPED=false
-      CLEANUP_FAILED=true
-    else
-      APP_STOPPED=true
-    fi
+  stop_app_process_group
+  if app_named_route_removed; then
+    APP_ROUTE_REMOVED=true
   else
-    APP_STOPPED=true
+    APP_ROUTE_REMOVED=false
+    CLEANUP_FAILED=true
   fi
 
   if [[ "$SUPABASE_STARTED" == true && -d "$ISOLATED_PROJECT_DIR" ]]; then
@@ -266,6 +290,7 @@ cleanup() {
 {
   "result": "$([[ "$CLEANUP_FAILED" == true ]] && printf failed || printf pass)",
   "appStopped": $APP_STOPPED,
+  "namedRouteRemoved": $APP_ROUTE_REMOVED,
   "databaseStopped": $DATABASE_STOPPED,
   "syntheticAuthStateRemoved": $AUTH_STATE_REMOVED,
   "isolatedDirectoryRemoved": $TEMP_REMOVED,
@@ -323,8 +348,8 @@ const receipt = {
 fs.writeFileSync(finalPath, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8')
 NODE
 
-  printf 'PILOT_LEGACY_CLEANUP_RECEIPT: app_stopped=%s database_stopped=%s auth_state_removed=%s isolated_removed=%s result=%s receipt=%s\n' \
-    "$APP_STOPPED" "$DATABASE_STOPPED" "$AUTH_STATE_REMOVED" "$TEMP_REMOVED" "$([[ "$CLEANUP_FAILED" == true ]] && printf failed || printf pass)" "$FINAL_RECEIPT"
+  printf 'PILOT_LEGACY_CLEANUP_RECEIPT: app_stopped=%s named_route_removed=%s database_stopped=%s auth_state_removed=%s isolated_removed=%s result=%s receipt=%s\n' \
+    "$APP_STOPPED" "$APP_ROUTE_REMOVED" "$DATABASE_STOPPED" "$AUTH_STATE_REMOVED" "$TEMP_REMOVED" "$([[ "$CLEANUP_FAILED" == true ]] && printf failed || printf pass)" "$FINAL_RECEIPT"
   exit "$exit_code"
 }
 
@@ -332,7 +357,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for command in ss pnpm psql portless curl node; do
+for command in ss pnpm psql portless curl node setsid; do
   command -v "$command" >/dev/null || {
     echo "PILOT_LEGACY_E2E_PREREQUISITE_MISSING: $command" >&2
     exit 1
@@ -392,6 +417,9 @@ sed -i \
   -e 's#additional_redirect_urls = \["http://127.0.0.1:3000"\]#additional_redirect_urls = ["https://educa-r3-legacy-pilot.localhost"]#' \
   "$SUPABASE_CONFIG_DIR/config.toml"
 
+# The fixed R3-T1 template is rewritten per run so concurrent runners never share a host.
+sed -i "s#https://educa-r3-legacy-pilot.localhost#https://$APP_NAME.localhost#g" "$SUPABASE_CONFIG_DIR/config.toml"
+
 # Do not let inherited remote project settings or credentials influence this run.
 unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL
 unset SUPABASE_PROJECT_REF SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD VERCEL_TOKEN
@@ -435,6 +463,7 @@ export PILOT_LEGACY_SETUP_RECEIPT_PATH="$SETUP_RECEIPT_TMP"
 export PILOT_LEGACY_TEST_RECEIPT_PATH="$TEST_RECEIPT_TMP"
 export PILOT_LEGACY_PLAYWRIGHT_OUTPUT_PATH="$PLAYWRIGHT_OUTPUT_TMP"
 export PILOT_LEGACY_NAMED_APP_URL="$NEXT_PUBLIC_APP_URL"
+export PILOT_LEGACY_APP_NAME="$APP_NAME"
 export PILOT_LEGACY_SERVER_MANAGED=true
 export PILOT_LEGACY_PLAYWRIGHT_CONFIG="$PLAYWRIGHT_CONFIG"
 export PILOT_LEGACY_MANIFEST_MODE="$LEGACY_MANIFEST_MODE"
@@ -514,7 +543,7 @@ run_captured 'database_validation' "$DATABASE_VALIDATION_LOG" pnpm exec tsx scri
 run_captured 'build' "$BUILD_LOG" pnpm build
 printf 'PILOT_LEGACY_BUILD_RECEIPT: status=pass\n'
 
-portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
+setsid portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
 APP_PID=$!
 for _ in $(seq 1 60); do
   BASE_URL=$(portless get "$APP_NAME" 2>/dev/null || true)
