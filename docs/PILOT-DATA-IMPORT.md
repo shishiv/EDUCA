@@ -149,5 +149,5 @@ O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt d
 
 O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família. O receipt não contém CSV, nomes, e-mails ou PII e identifica uma prova isolada sintética, não prontidão municipal.
 
-O E2E executa deliberate-breaks de segurança e governança: alvo inesperado, banco remoto, demo, modo real, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
+O E2E executa deliberate-breaks de segurança e governança: alvo inesperado, host de banco fora da lista local, demo, modo real configurado, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
 O teste de banco cobre associação de lote ausente, lote ausente, alvo demo ou incorreto, expiração, frequência vinculada, responsável compartilhado, isolamento, rollback exato e replay. Se uma validação for removida, o teste falha.
