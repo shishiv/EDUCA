@@ -1,6 +1,13 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import { SYNTHETIC_CSV_MARKER } from './synthetic-csv-import'
+import { PILOT_IMPORT_ENCRYPTION_ALGORITHM } from './pilot-import-crypto'
+
+/** Versioned technical contract for the synthetic pilot governance manifest. */
+export const SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION = 'educa-synthetic-pilot-governance-v1' as const
+
+/** Placeholder for decisions reserved for the captain or municipality. */
+export const PILOT_GOVERNANCE_UNCONFIRMED = 'a confirmar' as const
 
 /** Exact CSV columns accepted by the governed student import contract. */
 export const GOVERNED_PILOT_STUDENT_CSV_HEADERS = [
@@ -69,9 +76,50 @@ export interface PilotImportPerson {
   email: string
 }
 
+/** A governance role with a synthetic identity and no legal confirmation. */
+export interface PilotImportGovernanceRole extends PilotImportPerson {
+  status: typeof PILOT_GOVERNANCE_UNCONFIRMED
+}
+
+/** A subprocessador recorded as a technical placeholder, never as an approval. */
+export interface PilotImportSubprocessor extends PilotImportGovernanceRole {
+  service: string
+  processingLocation: string
+}
+
+/** The proof location and unresolved transfer decision for synthetic data. */
+export interface PilotImportLocation {
+  primary: string
+  transfer: typeof PILOT_GOVERNANCE_UNCONFIRMED
+}
+
+/** Encryption metadata only; this field never carries a key or secret. */
+export interface PilotImportEncryption {
+  algorithm: typeof PILOT_IMPORT_ENCRYPTION_ALGORITHM
+  keyReference: string
+  inTransit: typeof PILOT_GOVERNANCE_UNCONFIRMED
+  plaintextStored: false
+}
+
+/** Technical exit fields that remain unresolved until the pilot authority decides. */
+export interface PilotImportExitPlan {
+  trigger: string
+  dataDisposition: typeof PILOT_GOVERNANCE_UNCONFIRMED
+  accessRevocation: typeof PILOT_GOVERNANCE_UNCONFIRMED
+  evidence: typeof PILOT_GOVERNANCE_UNCONFIRMED
+}
+
+/** Incident contact and response placeholders for the synthetic proof. */
+export interface PilotImportIncidentPlan {
+  contact: PilotImportPerson
+  notification: typeof PILOT_GOVERNANCE_UNCONFIRMED
+  response: typeof PILOT_GOVERNANCE_UNCONFIRMED
+}
+
 export interface PilotImportProcessingAgreementInput {
   reference: string
   version: string
+  status: typeof PILOT_GOVERNANCE_UNCONFIRMED
 }
 
 export interface PilotImportRetentionInput {
@@ -83,9 +131,19 @@ export interface PilotImportRetentionInput {
 
 /** Governance fields recorded before the CSV can enter a proof database. */
 export interface PilotImportGovernanceInput {
+  version: typeof SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION
   owner: PilotImportPerson
+  controller: PilotImportGovernanceRole
+  processor: PilotImportGovernanceRole
+  purpose: string
+  legalBasis: typeof PILOT_GOVERNANCE_UNCONFIRMED
   processingAgreement: PilotImportProcessingAgreementInput
+  subprocessors: PilotImportSubprocessor[]
+  location: PilotImportLocation
+  encryption: PilotImportEncryption
   retention: PilotImportRetentionInput
+  exit: PilotImportExitPlan
+  incident: PilotImportIncidentPlan
 }
 
 export interface PilotImportProcessingAgreement extends PilotImportProcessingAgreementInput {
@@ -93,17 +151,29 @@ export interface PilotImportProcessingAgreement extends PilotImportProcessingAgr
   recordedBy: PilotImportPerson
 }
 
+/** Existing import maker-checker approval only; never a legal or contracting approval. */
 export interface PilotImportApprovalInput {
   submittedBy: PilotImportPerson
   approvedBy: PilotImportPerson
   approvedAt: string
 }
 
+/** Complete synthetic manifest whose approval block remains technical, not legal. */
 export interface GovernedPilotImportManifest {
+  version: typeof SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION
   owner: PilotImportPerson
+  controller: PilotImportGovernanceRole
+  processor: PilotImportGovernanceRole
+  purpose: string
+  legalBasis: typeof PILOT_GOVERNANCE_UNCONFIRMED
   processingAgreement: PilotImportProcessingAgreement
   approval: PilotImportApprovalInput
+  subprocessors: PilotImportSubprocessor[]
+  location: PilotImportLocation
+  encryption: PilotImportEncryption
   retention: PilotImportRetentionInput
+  exit: PilotImportExitPlan
+  incident: PilotImportIncidentPlan
 }
 
 export interface GovernedCsvCanonicalCounts {
@@ -119,38 +189,90 @@ const personSchema = z.object({
   email: z.string().trim().email().max(320),
 }).strict()
 
+function requireSyntheticIdentity(person: { email: string }, context: z.RefinementCtx): void {
+  const domain = person.email.slice(person.email.lastIndexOf('@') + 1).toLowerCase()
+  if (!domain.endsWith('.invalid')) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'synthetic_identity_required', path: ['email'] })
+  }
+}
+
+const syntheticPersonSchema = personSchema.superRefine(requireSyntheticIdentity)
+const governanceRoleSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  email: z.string().trim().email().max(320),
+  status: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+}).strict().superRefine(requireSyntheticIdentity)
+const subprocessorSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  email: z.string().trim().email().max(320),
+  status: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+  service: z.string().trim().min(2).max(160),
+  processingLocation: z.string().trim().min(2).max(120),
+}).strict().superRefine(requireSyntheticIdentity)
+
+const processingAgreementInputSchema = z.object({
+  reference: z.string().trim().min(2).max(200),
+  version: z.string().trim().min(1).max(80),
+  status: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+}).strict()
+
+const retentionSchema = z.object({
+  policy: z.string().trim().min(2).max(120),
+  rawPayloadExpiresAt: z.string().trim().min(1),
+  canonicalDataExpiresAt: z.string().trim().min(1),
+  rollbackUntil: z.string().trim().min(1),
+}).strict()
+
+const governanceFieldsSchema = {
+  version: z.literal(SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION),
+  owner: syntheticPersonSchema,
+  controller: governanceRoleSchema,
+  processor: governanceRoleSchema,
+  purpose: z.string().trim().min(2).max(240),
+  legalBasis: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+  processingAgreement: processingAgreementInputSchema,
+  subprocessors: z.array(subprocessorSchema).max(32),
+  location: z.object({
+    primary: z.string().trim().min(2).max(120),
+    transfer: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+  }).strict(),
+  encryption: z.object({
+    algorithm: z.literal(PILOT_IMPORT_ENCRYPTION_ALGORITHM),
+    keyReference: z.string().trim().min(2).max(80).regex(/^[A-Za-z0-9._-]+$/),
+    inTransit: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+    plaintextStored: z.literal(false),
+  }).strict(),
+  retention: retentionSchema,
+  exit: z.object({
+    trigger: z.string().trim().min(2).max(160),
+    dataDisposition: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+    accessRevocation: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+    evidence: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+  }).strict(),
+  incident: z.object({
+    contact: syntheticPersonSchema,
+    notification: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+    response: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+  }).strict(),
+} as const
+
 const governanceInputSchema = z.object({
-  owner: personSchema,
-  processingAgreement: z.object({
-    reference: z.string().trim().min(2).max(200),
-    version: z.string().trim().min(1).max(80),
-  }).strict(),
-  retention: z.object({
-    policy: z.string().trim().min(2).max(120),
-    rawPayloadExpiresAt: z.string().trim().min(1),
-    canonicalDataExpiresAt: z.string().trim().min(1),
-    rollbackUntil: z.string().trim().min(1),
-  }).strict(),
+  ...governanceFieldsSchema,
 }).strict()
 
 const manifestSchema = z.object({
-  owner: personSchema,
+  ...governanceFieldsSchema,
   processingAgreement: z.object({
     reference: z.string().trim().min(2).max(200),
     version: z.string().trim().min(1).max(80),
+    status: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
     recordedAt: z.string().trim().min(1),
-    recordedBy: personSchema,
+    recordedBy: syntheticPersonSchema,
   }).strict(),
   approval: z.object({
-    submittedBy: personSchema,
-    approvedBy: personSchema,
+    submittedBy: syntheticPersonSchema,
+    approvedBy: syntheticPersonSchema,
     approvedAt: z.string().trim().min(1),
-  }).strict(),
-  retention: z.object({
-    policy: z.string().trim().min(2).max(120),
-    rawPayloadExpiresAt: z.string().trim().min(1),
-    canonicalDataExpiresAt: z.string().trim().min(1),
-    rollbackUntil: z.string().trim().min(1),
   }).strict(),
 }).strict()
 
@@ -216,6 +338,79 @@ function normalizeGovernancePerson(person: PilotImportPerson): PilotImportPerson
   return { name: person.name.trim(), email: person.email.trim().toLowerCase() }
 }
 
+function normalizeGovernanceRole(role: PilotImportGovernanceRole): PilotImportGovernanceRole {
+  return { ...normalizeGovernancePerson(role), status: role.status }
+}
+
+function normalizeGovernanceSubprocessors(subprocessors: PilotImportSubprocessor[]): PilotImportSubprocessor[] {
+  return subprocessors
+    .map(subprocessor => ({
+      ...normalizeGovernanceRole(subprocessor),
+      service: subprocessor.service.trim(),
+      processingLocation: subprocessor.processingLocation.trim(),
+    }))
+    .sort((left, right) => {
+      const leftKey = `${left.email}|${left.service}|${left.processingLocation}|${left.name}|${left.status}`
+      const rightKey = `${right.email}|${right.service}|${right.processingLocation}|${right.name}|${right.status}`
+      return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0
+    })
+}
+
+function normalizeGovernanceRetention(retention: PilotImportRetentionInput): PilotImportRetentionInput {
+  return {
+    policy: retention.policy.trim(),
+    rawPayloadExpiresAt: normalizeTimestamp(retention.rawPayloadExpiresAt, 'PILOT_IMPORT_RETENTION_INVALID: raw payload expiry is invalid'),
+    canonicalDataExpiresAt: normalizeTimestamp(retention.canonicalDataExpiresAt, 'PILOT_IMPORT_RETENTION_INVALID: canonical expiry is invalid'),
+    rollbackUntil: normalizeTimestamp(retention.rollbackUntil, 'PILOT_IMPORT_RETENTION_INVALID: rollback expiry is invalid'),
+  }
+}
+
+function normalizeGovernanceInputValues(input: PilotImportGovernanceInput): PilotImportGovernanceInput {
+  return {
+    version: input.version,
+    owner: normalizeGovernancePerson(input.owner),
+    controller: normalizeGovernanceRole(input.controller),
+    processor: normalizeGovernanceRole(input.processor),
+    purpose: input.purpose.trim(),
+    legalBasis: input.legalBasis,
+    processingAgreement: {
+      reference: input.processingAgreement.reference.trim(),
+      version: input.processingAgreement.version.trim(),
+      status: input.processingAgreement.status,
+    },
+    subprocessors: normalizeGovernanceSubprocessors(input.subprocessors),
+    location: {
+      primary: input.location.primary.trim(),
+      transfer: input.location.transfer,
+    },
+    encryption: {
+      algorithm: input.encryption.algorithm,
+      keyReference: input.encryption.keyReference.trim(),
+      inTransit: input.encryption.inTransit,
+      plaintextStored: input.encryption.plaintextStored,
+    },
+    retention: normalizeGovernanceRetention(input.retention),
+    exit: {
+      trigger: input.exit.trigger.trim(),
+      dataDisposition: input.exit.dataDisposition,
+      accessRevocation: input.exit.accessRevocation,
+      evidence: input.exit.evidence,
+    },
+    incident: {
+      contact: normalizeGovernancePerson(input.incident.contact),
+      notification: input.incident.notification,
+      response: input.incident.response,
+    },
+  }
+}
+
+function throwGovernanceSchemaError(issues: z.ZodIssue[], message: string): never {
+  if (issues.some(issue => issue.message === 'synthetic_identity_required')) {
+    throw new Error('PILOT_IMPORT_GOVERNANCE_SYNTHETIC_IDENTITY_REQUIRED: every governance identity must use a .invalid email')
+  }
+  throw new Error(message)
+}
+
 function assertRetentionWindow(retention: PilotImportRetentionInput, now: Date): void {
   const rawExpiry = Date.parse(retention.rawPayloadExpiresAt)
   const canonicalExpiry = Date.parse(retention.canonicalDataExpiresAt)
@@ -225,47 +420,57 @@ function assertRetentionWindow(retention: PilotImportRetentionInput, now: Date):
   }
   if (rawExpiry <= now.getTime()) throw new Error('PILOT_IMPORT_RETENTION_RAW_EXPIRED: raw payload expiry must be in the future')
   if (canonicalExpiry <= rawExpiry) throw new Error('PILOT_IMPORT_RETENTION_CANONICAL_ORDER_INVALID: canonical expiry must follow raw expiry')
-  if (rollbackExpiry <= now.getTime() || rollbackExpiry > canonicalExpiry) {
-    throw new Error('PILOT_IMPORT_RETENTION_ROLLBACK_WINDOW_INVALID: rollback must end before canonical expiry')
+  if (rollbackExpiry <= rawExpiry || rollbackExpiry >= canonicalExpiry || rollbackExpiry <= now.getTime()) {
+    throw new Error('PILOT_IMPORT_RETENTION_ROLLBACK_WINDOW_INVALID: rollback must follow raw expiry and end before canonical expiry')
   }
 }
 
-/** Validates the named owner, agreement record, approval, and retention rule. */
+/** Validates the versioned technical governance fields before a synthetic CSV enters a proof database. */
 export function validatePilotImportGovernanceInput(
   input: unknown,
   now: Date = new Date()
 ): PilotImportGovernanceInput {
   const parsed = governanceInputSchema.safeParse(input)
-  if (!parsed.success) throw new Error('PILOT_IMPORT_GOVERNANCE_INVALID: owner, agreement, and retention are required')
-  const normalized: PilotImportGovernanceInput = {
-    owner: normalizeGovernancePerson(parsed.data.owner),
-    processingAgreement: {
-      reference: parsed.data.processingAgreement.reference.trim(),
-      version: parsed.data.processingAgreement.version.trim(),
-    },
-    retention: {
-      policy: parsed.data.retention.policy.trim(),
-      rawPayloadExpiresAt: normalizeTimestamp(parsed.data.retention.rawPayloadExpiresAt, 'PILOT_IMPORT_RETENTION_INVALID: raw payload expiry is invalid'),
-      canonicalDataExpiresAt: normalizeTimestamp(parsed.data.retention.canonicalDataExpiresAt, 'PILOT_IMPORT_RETENTION_INVALID: canonical expiry is invalid'),
-      rollbackUntil: normalizeTimestamp(parsed.data.retention.rollbackUntil, 'PILOT_IMPORT_RETENTION_INVALID: rollback expiry is invalid'),
-    },
+  if (!parsed.success) {
+    throwGovernanceSchemaError(parsed.error.issues, 'PILOT_IMPORT_GOVERNANCE_INVALID: versioned governance fields are required')
   }
+  const normalized = normalizeGovernanceInputValues(parsed.data)
   assertRetentionWindow(normalized.retention, now)
   return normalized
 }
 
-/** Validates the complete approval manifest consumed by the isolated proof runner. */
+/** Validates the complete versioned manifest while reusing the existing maker-checker approval shape. */
 export function validateGovernedPilotImportManifest(
   input: unknown,
   now: Date = new Date()
 ): GovernedPilotImportManifest {
   const parsed = manifestSchema.safeParse(input)
-  if (!parsed.success) throw new Error('PILOT_IMPORT_GOVERNANCE_INVALID: complete approval manifest is required')
-  const normalized: GovernedPilotImportManifest = {
-    owner: normalizeGovernancePerson(parsed.data.owner),
+  if (!parsed.success) {
+    throwGovernanceSchemaError(parsed.error.issues, 'PILOT_IMPORT_GOVERNANCE_INVALID: complete versioned manifest is required')
+  }
+  const normalizedInput = normalizeGovernanceInputValues({
+    version: parsed.data.version,
+    owner: parsed.data.owner,
+    controller: parsed.data.controller,
+    processor: parsed.data.processor,
+    purpose: parsed.data.purpose,
+    legalBasis: parsed.data.legalBasis,
     processingAgreement: {
-      reference: parsed.data.processingAgreement.reference.trim(),
-      version: parsed.data.processingAgreement.version.trim(),
+      reference: parsed.data.processingAgreement.reference,
+      version: parsed.data.processingAgreement.version,
+      status: parsed.data.processingAgreement.status,
+    },
+    subprocessors: parsed.data.subprocessors,
+    location: parsed.data.location,
+    encryption: parsed.data.encryption,
+    retention: parsed.data.retention,
+    exit: parsed.data.exit,
+    incident: parsed.data.incident,
+  })
+  const normalized: GovernedPilotImportManifest = {
+    ...normalizedInput,
+    processingAgreement: {
+      ...normalizedInput.processingAgreement,
       recordedAt: normalizeTimestamp(parsed.data.processingAgreement.recordedAt, 'PILOT_IMPORT_GOVERNANCE_TIMESTAMP_INVALID: agreement time is invalid'),
       recordedBy: normalizeGovernancePerson(parsed.data.processingAgreement.recordedBy),
     },
@@ -273,12 +478,6 @@ export function validateGovernedPilotImportManifest(
       submittedBy: normalizeGovernancePerson(parsed.data.approval.submittedBy),
       approvedBy: normalizeGovernancePerson(parsed.data.approval.approvedBy),
       approvedAt: normalizeTimestamp(parsed.data.approval.approvedAt, 'PILOT_IMPORT_GOVERNANCE_TIMESTAMP_INVALID: approval time is invalid'),
-    },
-    retention: {
-      policy: parsed.data.retention.policy.trim(),
-      rawPayloadExpiresAt: normalizeTimestamp(parsed.data.retention.rawPayloadExpiresAt, 'PILOT_IMPORT_RETENTION_INVALID: raw payload expiry is invalid'),
-      canonicalDataExpiresAt: normalizeTimestamp(parsed.data.retention.canonicalDataExpiresAt, 'PILOT_IMPORT_RETENTION_INVALID: canonical expiry is invalid'),
-      rollbackUntil: normalizeTimestamp(parsed.data.retention.rollbackUntil, 'PILOT_IMPORT_RETENTION_INVALID: rollback expiry is invalid'),
     },
   }
   if (!isValidTimestamp(normalized.processingAgreement.recordedAt) || !isValidTimestamp(normalized.approval.approvedAt)) {
@@ -435,14 +634,44 @@ export function countCanonicalPilotRows(rows: CanonicalPilotStudentRow[]): Gover
   }
 }
 
-/** Fingerprints governance metadata so approval changes cannot be hidden. */
-export function fingerprintPilotImportGovernance(manifest: GovernedPilotImportManifest): string {
-  const canonicalManifest = {
+function canonicalizeGovernedPilotImportManifest(manifest: GovernedPilotImportManifest): GovernedPilotImportManifest {
+  const normalizedInput = normalizeGovernanceInputValues({
+    version: manifest.version,
     owner: manifest.owner,
-    processingAgreement: manifest.processingAgreement,
-    approval: manifest.approval,
+    controller: manifest.controller,
+    processor: manifest.processor,
+    purpose: manifest.purpose,
+    legalBasis: manifest.legalBasis,
+    processingAgreement: {
+      reference: manifest.processingAgreement.reference,
+      version: manifest.processingAgreement.version,
+      status: manifest.processingAgreement.status,
+    },
+    subprocessors: manifest.subprocessors,
+    location: manifest.location,
+    encryption: manifest.encryption,
     retention: manifest.retention,
+    exit: manifest.exit,
+    incident: manifest.incident,
+  })
+  return {
+    ...normalizedInput,
+    processingAgreement: {
+      ...normalizedInput.processingAgreement,
+      recordedAt: new Date(manifest.processingAgreement.recordedAt).toISOString(),
+      recordedBy: normalizeGovernancePerson(manifest.processingAgreement.recordedBy),
+    },
+    approval: {
+      submittedBy: normalizeGovernancePerson(manifest.approval.submittedBy),
+      approvedBy: normalizeGovernancePerson(manifest.approval.approvedBy),
+      approvedAt: new Date(manifest.approval.approvedAt).toISOString(),
+    },
   }
+}
+
+/** Fingerprints every normalized governance field so approval changes cannot hide. */
+export function fingerprintPilotImportGovernance(manifest: GovernedPilotImportManifest): string {
+  const canonicalManifest = canonicalizeGovernedPilotImportManifest(manifest)
   return createHash('sha256').update(JSON.stringify(canonicalManifest), 'utf8').digest('hex')
 }
 
@@ -455,9 +684,19 @@ export function completePilotImportGovernance(
 ): GovernedPilotImportManifest {
   const recordedAt = now.toISOString()
   return validateGovernedPilotImportManifest({
+    version: input.version,
     owner: input.owner,
+    controller: input.controller,
+    processor: input.processor,
+    purpose: input.purpose,
+    legalBasis: input.legalBasis,
     processingAgreement: { ...input.processingAgreement, recordedAt, recordedBy: submittedBy },
     approval: { submittedBy, approvedBy, approvedAt: recordedAt },
+    subprocessors: input.subprocessors,
+    location: input.location,
+    encryption: input.encryption,
     retention: input.retention,
+    exit: input.exit,
+    incident: input.incident,
   }, now)
 }

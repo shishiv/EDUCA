@@ -10,6 +10,7 @@ import {
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
   fingerprintPilotImportGovernance,
+  SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION,
   transformGovernedPilotCsvToCanonicalRows,
   validateGovernedPilotImportManifest,
   validateGovernedPilotStudentCsv,
@@ -245,6 +246,7 @@ function buildImportReceipt(batch: BatchRow): Record<string, unknown> {
     sourceFingerprintSha256: batch.content_sha256,
     canonicalFingerprintSha256: batch.canonical_fingerprint_sha256,
     databaseFingerprintSha256: batch.database_fingerprint_sha256,
+    governanceManifestVersion: SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION,
     governanceFingerprintSha256: batch.governance_fingerprint_sha256,
     encryption: {
       algorithm: 'aes-256-gcm',
@@ -477,7 +479,7 @@ async function runRollback(
   return {
     ...buildImportReceipt(batch),
     rollback: {
-      actorEmail: actor.email,
+      actorResolved: true,
       deletedEnrollments: rollback.deleted_enrollments,
       deletedRelationships: rollback.deleted_relationships,
       deletedStudents: rollback.deleted_students,

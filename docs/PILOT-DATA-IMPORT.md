@@ -21,34 +21,77 @@ Cada linha vira registros canônicos em `alunos`, `responsaveis`, `aluno_respons
 
 O pipeline não salva o CSV em arquivo de evidência, log ou tabela auxiliar.
 
-## Manifesto de governança
+## Manifesto versionado de governança G2
 
-O arquivo JSON de aprovação acompanha o CSV e contém:
+O manifesto técnico `educa-synthetic-pilot-governance-v1` acompanha a preparação e reutiliza o mesmo bloco `approval` do import governado.
+Todos os e-mails do exemplo usam o domínio reservado `.invalid`.
 
 ```json
 {
-  "owner": {"name": "Nome do owner", "email": "owner@municipio.gov.br"},
+  "version": "educa-synthetic-pilot-governance-v1",
+  "owner": {"name": "Owner Sintetico", "email": "owner@synthetic.invalid"},
+  "controller": {"name": "Controlador Sintetico", "email": "controller@synthetic.invalid", "status": "a confirmar"},
+  "processor": {"name": "Processador Sintetico", "email": "processor@synthetic.invalid", "status": "a confirmar"},
+  "purpose": "preparacao tecnica do piloto sintetico",
+  "legalBasis": "a confirmar",
   "processingAgreement": {
-    "reference": "DPA-2026-001",
+    "reference": "DPA-SYN-001",
     "version": "v1",
+    "status": "a confirmar",
     "recordedAt": "2026-08-10T12:00:00.000Z",
-    "recordedBy": {"name": "Secretaria", "email": "secretaria@municipio.gov.br"}
+    "recordedBy": {"name": "Secretaria Sintetica", "email": "secretaria@synthetic.invalid"}
   },
   "approval": {
-    "submittedBy": {"name": "Secretaria", "email": "secretaria@municipio.gov.br"},
-    "approvedBy": {"name": "Direção", "email": "direcao@municipio.gov.br"},
+    "submittedBy": {"name": "Secretaria Sintetica", "email": "secretaria@synthetic.invalid"},
+    "approvedBy": {"name": "Diretora Sintetica", "email": "diretora@synthetic.invalid"},
     "approvedAt": "2026-08-10T12:05:00.000Z"
+  },
+  "subprocessors": [{
+    "name": "Armazenamento Sintetico",
+    "email": "storage@synthetic.invalid",
+    "status": "a confirmar",
+    "service": "armazenamento cifrado de prova",
+    "processingLocation": "isolated-proof-local"
+  }],
+  "location": {"primary": "isolated-proof-local", "transfer": "a confirmar"},
+  "encryption": {
+    "algorithm": "aes-256-gcm",
+    "keyReference": "proof-local-v1",
+    "inTransit": "a confirmar",
+    "plaintextStored": false
   },
   "retention": {
     "policy": "proof-only-30d",
     "rawPayloadExpiresAt": "2026-08-11T12:00:00.000Z",
     "canonicalDataExpiresAt": "2026-09-09T12:00:00.000Z",
     "rollbackUntil": "2026-08-17T12:00:00.000Z"
+  },
+  "exit": {
+    "trigger": "fim da prova tecnica",
+    "dataDisposition": "a confirmar",
+    "accessRevocation": "a confirmar",
+    "evidence": "a confirmar"
+  },
+  "incident": {
+    "contact": {"name": "Contato Incidente Sintetico", "email": "incidente@synthetic.invalid"},
+    "notification": "a confirmar",
+    "response": "a confirmar"
   }
 }
 ```
 
-O pipeline resolve `recordedBy`, `submittedBy` e `approvedBy` em usuários ativos do banco de prova. O owner fica registrado como snapshot nomeado. O fingerprint do manifesto impede replay com governança diferente.
+O pipeline resolve `recordedBy`, `submittedBy` e `approvedBy` em usuários ativos do banco de prova. O owner fica registrado como snapshot nomeado.
+O fingerprint canônico inclui todos os campos, normaliza espaços, e-mails, timestamps e ordena subprocessadores.
+
+O validador exige owner, controller, processor, propósito, base legal, acordo, aprovadores maker-checker, subprocessadores, localização, criptografia, retenção, janela de rollback, saída e incidente.
+Ele rejeita campos incompletos, identidade que não termina em `.invalid`, aprovação pelo próprio submitter e a ordem `rawPayloadExpiresAt < rollbackUntil < canonicalDataExpiresAt`.
+
+### Limite explícito do G2
+
+Este contrato prova somente completude técnica do preparo sintético.
+Ele não aprova a base legal, não confirma a identidade do controller e não autoriza contratação municipal.
+Os campos reservados ao captain ou ao município permanecem exatamente como `a confirmar`.
+O receipt guarda a versão e o fingerprint de governança, mas não guarda CSV, nomes, e-mails ou qualquer PII.
 
 ## Execução isolada
 
@@ -99,4 +142,4 @@ Cada linha canônica recebe `pilot_import_batch_id`. A tabela do lote registra o
 
 O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, contagens, fingerprints, estado criptográfico e retenção. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família.
 
-O E2E também executa dois deliberate-breaks: aprovação sem owner e import sem chave. Cada falha precisa ficar vermelha. Se uma validação de governança for removida, o teste falha.
+O E2E também executa três deliberate-breaks: aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha. Se uma validação de governança for removida, o teste falha.
