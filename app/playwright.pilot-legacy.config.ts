@@ -7,7 +7,8 @@ import {
   LEGACY_PILOT_SPEC_FILES,
 } from './tests/e2e/pilot/legacy-pilot-manifest'
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || `https://${LEGACY_PILOT_APP_NAME}.localhost`
+const legacyAppName = process.env.PILOT_LEGACY_APP_NAME || LEGACY_PILOT_APP_NAME
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || `https://${legacyAppName}.localhost`
 const authStatePath = process.env.PILOT_AUTH_STATE_PATH || path.join(process.cwd(), '.pilot-e2e/auth/user.json')
 const excludedTestFiles = LEGACY_PILOT_EXCLUDED_FILES
   .filter(file => file.endsWith('.spec.ts') || file.endsWith('.setup.ts'))

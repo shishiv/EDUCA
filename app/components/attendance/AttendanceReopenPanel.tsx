@@ -51,6 +51,7 @@ export function AttendanceReopenPanel({
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [decisionError, setDecisionError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (sessionStatus !== 'FECHADA') return null
@@ -78,6 +79,7 @@ export function AttendanceReopenPanel({
 
     setIsSubmitting(true)
     setError(null)
+    setDecisionError(null)
     try {
       const params: RequestAttendanceReopenParams = {
         session_id: sessionId,
@@ -108,6 +110,7 @@ export function AttendanceReopenPanel({
 
     setIsSubmitting(true)
     setError(null)
+    setDecisionError(null)
     try {
       const result = await decideAttendanceReopenAction({
         request_id: request.id,
@@ -115,7 +118,8 @@ export function AttendanceReopenPanel({
         reason: reason || undefined,
       })
       if (!result.success || !result.request) {
-        setError(result.error || 'Não foi possível registrar a decisão.')
+        const decisionMessage = result.error || 'Não foi possível registrar a decisão.'
+        setDecisionError(decisionMessage)
         return
       }
       onRequestChanged(result.request)
@@ -192,6 +196,20 @@ export function AttendanceReopenPanel({
           )}
         </div>
       </div>
+
+      {decisionError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-medium">Não foi possível registrar a decisão.</p>
+            <p className="mt-1">{decisionError}</p>
+          </div>
+        </div>
+      )}
 
       <Dialog open={dialogMode !== null} onOpenChange={open => !open && closeDialog()}>
         <DialogContent className="sm:max-w-[520px]">

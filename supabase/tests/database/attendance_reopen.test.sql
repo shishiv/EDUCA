@@ -327,6 +327,95 @@ SELECT pg_temp.assert_true(
   'rejection records its decision time and unchanged after-state'
 );
 
+-- Conflict regression: a different open session for the same class and date
+-- must keep the database invariant when approval tries to reopen this session.
+SELECT set_config('request.jwt.claim.sub','22000000-0000-0000-0000-000000000001',true);
+INSERT INTO public.sessoes_aula(
+  id, turma_id, escola_id, professor_id, data_aula, status,
+  aberta_em, conteudo_programatico
+) VALUES (
+  '62000000-0000-0000-0000-000000000003',
+  '32000000-0000-0000-0000-000000000001',
+  '12000000-0000-0000-0000-000000000001',
+  '22000000-0000-0000-0000-000000000001',
+  current_setting('educa.attendance_test_date')::date,
+  'ABERTA', now(), 'Chamada de conflito de reabertura'
+);
+UPDATE public.sessoes_aula
+SET status = 'FECHADA', fechada_em = now()
+WHERE id = '62000000-0000-0000-0000-000000000003';
+INSERT INTO public.sessoes_aula(
+  id, turma_id, escola_id, professor_id, data_aula, status,
+  aberta_em, conteudo_programatico
+) VALUES (
+  '62000000-0000-0000-0000-000000000004',
+  '32000000-0000-0000-0000-000000000001',
+  '12000000-0000-0000-0000-000000000001',
+  '22000000-0000-0000-0000-000000000001',
+  current_setting('educa.attendance_test_date')::date,
+  'ABERTA', now(), 'Sessão aberta que bloqueia a reabertura'
+);
+SELECT public.request_attendance_reopen(
+  '62000000-0000-0000-0000-000000000003',
+  'Corrigir a falta após conferir o diário.'
+);
+
+SELECT set_config('request.jwt.claim.sub','22000000-0000-0000-0000-000000000002',true);
+DO $$
+BEGIN
+  BEGIN
+    PERFORM public.decide_attendance_reopen(
+      (SELECT id FROM public.attendance_reopen_requests
+       WHERE sessao_id = '62000000-0000-0000-0000-000000000003'
+         AND status = 'PENDENTE'),
+      'APROVADA',
+      NULL
+    );
+    RAISE EXCEPTION 'open-session conflict unexpectedly succeeded';
+  EXCEPTION WHEN unique_violation THEN
+    IF SQLERRM NOT LIKE '%idx_sessoes_aula_open_turma_date%' THEN RAISE; END IF;
+  END;
+END;
+$$;
+SELECT pg_temp.assert_true(
+  (SELECT status = 'FECHADA'
+   FROM public.sessoes_aula
+   WHERE id = '62000000-0000-0000-0000-000000000003'),
+  'open-session conflict preserves the requested closed session'
+);
+SELECT pg_temp.assert_true(
+  (SELECT status = 'ABERTA'
+   FROM public.sessoes_aula
+   WHERE id = '62000000-0000-0000-0000-000000000004'),
+  'open-session conflict preserves the existing open session'
+);
+SELECT pg_temp.assert_true(
+  (SELECT status = 'PENDENTE'
+      AND decided_by IS NULL
+      AND decided_at IS NULL
+      AND after_state IS NULL
+   FROM public.attendance_reopen_requests
+   WHERE sessao_id = '62000000-0000-0000-0000-000000000003'
+     AND status = 'PENDENTE'),
+  'open-session conflict does not create a false approval or state transition'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 0
+   FROM public.pilot_audit_log
+   WHERE event_type = 'attendance_reopen_decided'
+     AND entity_id = '62000000-0000-0000-0000-000000000003'),
+  'open-session conflict does not create a decision audit event'
+);
+SELECT pg_temp.assert_true(
+  (SELECT indexdef LIKE '%UNIQUE INDEX idx_sessoes_aula_open_turma_date%'
+      AND indexdef LIKE '%PLANEJADA%'
+      AND indexdef LIKE '%ABERTA%'
+   FROM pg_indexes
+   WHERE schemaname = 'public'
+     AND indexname = 'idx_sessoes_aula_open_turma_date'),
+  'open-session uniqueness invariant remains present and scoped to planned/open sessions'
+);
+
 -- Deliberate break: a permissive browser INSERT must make the independent
 -- direct-write oracle red, then the savepoint restores the production guard.
 SELECT set_config('request.jwt.claim.sub','22000000-0000-0000-0000-000000000001',true);

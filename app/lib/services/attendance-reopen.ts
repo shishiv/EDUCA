@@ -38,6 +38,7 @@ export type AttendanceReopenErrorCode =
   | 'DECISION_REASON_REQUIRED'
   | 'SESSION_NOT_CLOSED'
   | 'SESSION_STATE_CHANGED'
+  | 'SESSION_ALREADY_OPEN'
   | 'REOPEN_FAILED'
 
 export interface AttendanceReopenResult {
@@ -47,11 +48,28 @@ export interface AttendanceReopenResult {
   code?: AttendanceReopenErrorCode
 }
 
-function mapDatabaseError(error: { message?: string } | null): {
+const OPEN_SESSION_UNIQUE_CONSTRAINT = 'idx_sessoes_aula_open_turma_date'
+const OPEN_SESSION_CONFLICT_MESSAGE =
+  'Já existe uma sessão aberta para esta turma nesta data. Feche a sessão aberta antes de aprovar a reabertura.'
+
+function mapDatabaseError(error: { code?: string; constraint?: string; message?: string } | null): {
   code: AttendanceReopenErrorCode
   error: string
 } {
   const message = error?.message ?? 'Não foi possível processar a reabertura da chamada'
+  const isOpenSessionConflict = error?.code === '23505'
+    && (
+      error.constraint === OPEN_SESSION_UNIQUE_CONSTRAINT
+      || message.includes(OPEN_SESSION_UNIQUE_CONSTRAINT)
+    )
+
+  if (isOpenSessionConflict) {
+    return {
+      code: 'SESSION_ALREADY_OPEN',
+      error: OPEN_SESSION_CONFLICT_MESSAGE,
+    }
+  }
+
   const knownCodes: Array<[string, AttendanceReopenErrorCode]> = [
     ['ATTENDANCE_REOPEN_REASON_REQUIRED', 'REASON_REQUIRED'],
     ['ATTENDANCE_REOPEN_DECISION_REASON_REQUIRED', 'DECISION_REASON_REQUIRED'],
