@@ -5,6 +5,10 @@ import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
 import { createAttendanceModule } from '@/lib/services/attendance-module'
+import {
+  createAttendanceReopenService,
+  type AttendanceReopenRequest,
+} from '@/lib/services/attendance-reopen'
 
 /**
  * Browser adapter for the canonical Attendance session module.
@@ -123,6 +127,10 @@ export class AttendanceApiService {
     frequencia: number
   }[]> {
     return this.canonicalAttendance.getStudentsForChamada(turmaId)
+  }
+
+  async getAttendanceReopenRequest(sessionId: string): Promise<AttendanceReopenRequest | null> {
+    return createAttendanceReopenService(supabase).getRequestForSession(sessionId)
   }
 
   async getAttendanceForSession(sessionId: string): Promise<Map<string, {
