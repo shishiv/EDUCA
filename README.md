@@ -22,21 +22,21 @@
 
 ## Modelo · Model
 
-**PT:** Todo o produto é OSS, sem módulos paywall. O que pode ser pago é apenas a operação na infraestrutura da equipe, se a escola ou secretaria não quiser manter servidor.
+**PT:** Este repositório disponibiliza o software de gestão escolar sob a licença MIT e uma configuração de demonstração pública com dados sintéticos. O caminho atualmente disponível é o self-host a partir deste repositório. **Cloud Free** e **Cloud Pro** são modelos futuros, não disponíveis no momento. Registre seu interesse nesses modelos.
 
-| Como usa | Escolas | Custo de software |
-| --- | --- | --- |
-| **Self-host** | Ilimitadas (você opera) | Grátis (MIT) |
-| **Cloud Free** | **1 escola** | Grátis (hospedagem nossa) |
-| **Cloud Pro** | Rede (N escolas) | Hospedagem + suporte |
+| Modelo | Situação |
+| --- | --- |
+| **Self-host** | Código disponível neste repositório sob a licença MIT. |
+| **Cloud Free** | Modelo futuro, não disponível no momento. |
+| **Cloud Pro** | Modelo futuro, não disponível no momento. |
 
-**EN:** The entire product is OSS, with no paywalled modules. The only paid option is operation on the team's infrastructure, when a school or board does not want to run its own server.
+**EN:** This repository provides the school-management software under the MIT License and a public-demo configuration with synthetic data. The currently available path is self-hosting from this repository. **Cloud Free** and **Cloud Pro** are future models, not currently available. Register your interest in these models.
 
-| How you use it | Schools | Software cost |
-| --- | --- | --- |
-| **Self-host** | Unlimited (you operate) | Free (MIT) |
-| **Cloud Free** | **1 school** | Free (our hosting) |
-| **Cloud Pro** | Network (N schools) | Hosting + support |
+| Model | Status |
+| --- | --- |
+| **Self-host** | Code available in this repository under the MIT License. |
+| **Cloud Free** | Future model, not currently available. |
+| **Cloud Pro** | Future model, not currently available. |
 
 WhatsApp é **BYO (bring your own)**: a escola ou prefeitura traz conta Meta/BSP, número e templates; sem credencial, o envio fica desligado. · WhatsApp is **BYO**: the school or municipality brings the Meta/BSP account, number, and templates; without credentials, sending stays off.
 
