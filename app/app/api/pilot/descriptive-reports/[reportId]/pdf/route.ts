@@ -21,11 +21,11 @@ export async function GET(
 ) {
   try {
     assertPilotDescriptiveReportDemoSafety()
-    await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
+    const actor = await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
 
     const { reportId } = routeParamsSchema.parse(await context.params)
     const supabase = await createClient()
-    const emissionData = await loadDescriptiveReportEmissionData(supabase, reportId)
+    const emissionData = await loadDescriptiveReportEmissionData(supabase, reportId, actor)
     const pdf = await renderDescriptiveReportPdf(emissionData)
     const filename = `relatorio_descritivo_${emissionData.report.anoLetivo}_${emissionData.report.semestre}_${emissionData.report.id}.pdf`
 
@@ -46,7 +46,9 @@ export async function GET(
     }
     if (
       error instanceof Error &&
-      (error.message.startsWith('PILOT_SAFETY_GATE') || error.message.startsWith('PILOT_DESCRIPTIVE_REPORT_DEMO_DISABLED'))
+      (error.message.startsWith('PILOT_SAFETY_GATE') ||
+        error.message.startsWith('PILOT_DESCRIPTIVE_REPORT_DEMO_DISABLED') ||
+        error.message.startsWith('PILOT_DESCRIPTIVE_RELEASE_REVISION_REQUIRED'))
     ) {
       return NextResponse.json({ error: error.message }, { status: 403 })
     }

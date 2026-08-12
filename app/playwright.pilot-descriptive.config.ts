@@ -48,6 +48,7 @@ export default defineConfig({
         PILOT_SYNTHETIC_DATA_ONLY: 'true',
         NEXT_PUBLIC_PILOT_DESCRIPTIVE_REPORT_DEMO: 'true',
         PILOT_DESCRIPTIVE_REPORT_DEMO: 'true',
+        EDUCA_RELEASE_REVISION: process.env.EDUCA_RELEASE_REVISION || '',
         NEXT_DISABLE_DEV_TOOLS: '1',
       },
     },

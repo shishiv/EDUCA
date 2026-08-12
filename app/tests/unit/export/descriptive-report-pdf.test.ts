@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { renderDescriptiveReportPdf } from '@/lib/export/descriptive-report-pdf'
+import { fingerprintCanonicalContentRows } from '@/lib/pilot/descriptive-report-provenance'
 import type { DescriptiveReportEmissionData } from '@/lib/reports/descriptive-report-emission'
 
 function createDescriptiveReportEmissionFixture(): DescriptiveReportEmissionData {
@@ -41,6 +42,22 @@ function createDescriptiveReportEmissionFixture(): DescriptiveReportEmissionData
       inicio: '2026-02-01',
       fim: '2026-07-31',
       label: '1 Semestre de 2026',
+    },
+    provenance: {
+      releaseRevision: 'test-source-revision',
+      environment: 'local synthetic pilot rehearsal',
+      canonicalSource: "public.conteudo_aula via generateContentReport (from('conteudo_aula'))",
+      fingerprintAlgorithm: 'MD5',
+      canonicalRowCount: 1,
+      canonicalContentFingerprint: '0123456789abcdef0123456789abcdef',
+    },
+    issuer: {
+      actorId: '20000000-0000-0000-0000-000000000001',
+      actorName: 'Professora Descritiva Sintética',
+      actorRole: 'professor',
+      actorEmail: 'professora.descritivo@synthetic.invalid',
+      reportId: '28000000-0000-0000-0000-000000000001',
+      reportProfessorId: '20000000-0000-0000-0000-000000000001',
     },
     conteudoMinistrado: {
       periodo: { inicio: '2026-02-01', fim: '2026-07-31' },
@@ -93,5 +110,14 @@ describe('descriptive report PDF renderer', () => {
     await expect(renderDescriptiveReportPdf(fixture)).rejects.toThrow(
       /DESCRIPTIVE_REPORT_PDF_CONTENT_EMPTY/
     )
+  })
+
+  it('changes the canonical fingerprint when a source row changes', () => {
+    const fixture = createDescriptiveReportEmissionFixture()
+    const initialFingerprint = fingerprintCanonicalContentRows(fixture.conteudoMinistrado.aulas)
+
+    fixture.conteudoMinistrado.aulas[0].tema = 'Tema canônico alterado'
+
+    expect(fingerprintCanonicalContentRows(fixture.conteudoMinistrado.aulas)).not.toBe(initialFingerprint)
   })
 })
