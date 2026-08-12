@@ -17,13 +17,13 @@ function createExpiredSyntheticAuthCookie(): string {
 }
 
 test('clears an invalid synthetic refresh token and redirects to login', async ({ page, context }) => {
+  const appUrl = process.env.PLAYWRIGHT_BASE_URL || 'https://educa-r3-legacy-pilot.localhost'
   await context.addCookies([{
     name: 'sb-127-auth-token',
     value: createExpiredSyntheticAuthCookie(),
-    domain: 'localhost',
-    path: '/',
+    url: appUrl,
     httpOnly: false,
-    secure: false,
+    secure: appUrl.startsWith('https://'),
     sameSite: 'Lax',
   }])
 

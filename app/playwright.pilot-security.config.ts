@@ -32,12 +32,14 @@ export default defineConfig({
       dependencies: ['setup'],
     },
   ],
-  webServer: {
-    command: process.env.PLAYWRIGHT_SERVER_COMMAND || 'pnpm build && pnpm start',
-    url: baseURL,
-    reuseExistingServer: false,
-    timeout: 180_000,
-    env: {
+  webServer: process.env.PILOT_LEGACY_SERVER_MANAGED === 'true'
+    ? undefined
+    : {
+      command: process.env.PLAYWRIGHT_SERVER_COMMAND || 'pnpm build && pnpm start',
+      url: baseURL,
+      reuseExistingServer: false,
+      timeout: 180_000,
+      env: {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',

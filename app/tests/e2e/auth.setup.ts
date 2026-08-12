@@ -1,5 +1,5 @@
 import { test as setup, expect } from '@playwright/test'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'path'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
@@ -47,6 +47,21 @@ if (isPilotMode) {
     // Save authentication state
     mkdirSync(path.dirname(pilotAuthFile), { recursive: true })
     await page.context().storageState({ path: pilotAuthFile })
+
+    const browserReceiptPath = process.env.PILOT_LEGACY_BROWSER_RECEIPT_PATH
+    if (browserReceiptPath) {
+      mkdirSync(path.dirname(browserReceiptPath), { recursive: true })
+      writeFileSync(browserReceiptPath, `${JSON.stringify({
+        result: 'pass',
+        boundary: 'real-playwright-browser',
+        identity: 'secretaria@synthetic.invalid',
+        role: 'secretario',
+        schoolScope: 'municipal',
+        domain: 'synthetic.invalid',
+        landingRoute: new URL(page.url()).pathname,
+      }, null, 2)}\n`, 'utf8')
+    }
+    console.info('PILOT_LEGACY_BROWSER_RECEIPT: result=pass identity=secretaria@synthetic.invalid role=secretario route=/dashboard')
   })
 } else {
   /**

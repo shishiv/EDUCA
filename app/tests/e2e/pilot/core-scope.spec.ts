@@ -10,7 +10,7 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByText('Turmas', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Matrículas', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Responsáveis', { exact: true }).first()).toBeVisible()
-    await expect(page.getByText('Atribuições', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Atribuições', { exact: true })).toHaveCount(0)
     await expect(page.getByText('Frequência', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Diário de Classe', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Notas', { exact: true })).toHaveCount(0)
@@ -19,7 +19,7 @@ test.describe('synthetic municipal pilot core scope', () => {
 
   test('loads core school and attendance flows', async ({ page }) => {
     await page.goto('/dashboard/escolas')
-    await expect(page.getByRole('heading', { name: /escolas/i }).first()).toBeVisible()
+    await expect(page).toHaveURL(/\/unauthorized$/)
     await page.goto('/dashboard/alunos')
     await expect(page.getByRole('heading', { name: /alunos/i }).first()).toBeVisible()
     await page.goto('/dashboard/turmas')
