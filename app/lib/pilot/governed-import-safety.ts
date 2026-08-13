@@ -19,7 +19,7 @@ const PROOF_DATABASE_NAME = /^educa_pilot_proof_[A-Za-z0-9_-]+$/
 const REAL_DATA_PROOF_CONFIRMATION = 'isolated-proof-only'
 
 /** Operations that must carry the isolated synthetic proof target identity. */
-export type GovernedPilotProofOperation = 'import' | 'rollback' | 'cleanup'
+export type GovernedPilotProofOperation = 'import' | 'rollback' | 'cleanup' | 'restore'
 
 export interface GovernedImportProofEnvironment {
   pilotMode?: string
