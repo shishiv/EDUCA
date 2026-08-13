@@ -20,6 +20,7 @@ PROOF_DB="educa_pilot_proof_$$"
 PROOF_URL="postgresql://postgres@127.0.0.1:$PORT/$PROOF_DB"
 SERVER_STARTED=false
 CSV_FILE="$WORK_DIR/pilot.csv"
+SECOND_CSV_FILE="$WORK_DIR/pilot-second.csv"
 APPROVAL_FILE="$WORK_DIR/approval.json"
 MISSING_OWNER_FILE="$WORK_DIR/approval-missing-owner.json"
 CHANGED_GOVERNANCE_FILE="$WORK_DIR/approval-changed-governance.json"
@@ -42,6 +43,29 @@ PSQL=(psql -X -h 127.0.0.1 -p "$PORT" -U postgres -v ON_ERROR_STOP=1)
 "${PSQL[@]}" -d postgres -c "CREATE DATABASE \"$PROOF_DB\"" >/dev/null
 
 "${PSQL[@]}" -d "$PROOF_DB" -f "$BOOTSTRAP" >/dev/null
+"${PSQL[@]}" -d "$PROOF_DB" >/dev/null <<'SQL'
+CREATE SCHEMA storage;
+CREATE TABLE storage.buckets (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  public boolean NOT NULL DEFAULT false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+CREATE TABLE storage.objects (
+  id uuid PRIMARY KEY,
+  bucket_id text NOT NULL REFERENCES storage.buckets(id),
+  name text NOT NULL,
+  metadata jsonb,
+  user_metadata jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION storage.foldername(name text) RETURNS text[]
+LANGUAGE sql IMMUTABLE AS $$ SELECT string_to_array(name, '/') $$;
+GRANT USAGE ON SCHEMA storage TO service_role;
+GRANT ALL ON storage.buckets, storage.objects TO service_role;
+SQL
 mapfile -t migrations < <(find "$MIGRATIONS_DIR" -maxdepth 1 -type f -name '*.sql' -print | sort)
 for migration in "${migrations[@]}"; do
   "${PSQL[@]}" -d "$PROOF_DB" -f "$migration" >/dev/null
@@ -62,6 +86,10 @@ SQL
 cat > "$CSV_FILE" <<'CSV'
 synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,guardian_name,guardian_phone,guardian_relationship
 SYNTHETIC-EDUCA-PILOT,synthetic-proof-student,SYN-PROOF,SYN-PROOF-CLASS,Aluno Prova Sintetico,2018-05-20,M,Responsavel Prova Sintetico,11999990000,mae
+CSV
+cat > "$SECOND_CSV_FILE" <<'CSV'
+synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,guardian_name,guardian_phone,guardian_relationship
+SYNTHETIC-EDUCA-PILOT,synthetic-proof-student-two,SYN-PROOF,SYN-PROOF-CLASS,Aluno Prova Sintetico Dois,2018-06-21,F,Responsavel Prova Sintetico Dois,11999990001,pai
 CSV
 
 RECORDED_AT=$(date -u -d '1 minute ago' +%Y-%m-%dT%H:%M:%S.000Z)
@@ -170,16 +198,16 @@ run_expected_safety_failure() {
 UNREACHABLE_PROOF_URL="postgresql://postgres@127.0.0.1:$((PORT + 1))/educa_pilot_proof_blocked"
 INITIAL_BATCH_COUNT=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT count(*) FROM public.pilot_import_batches")
 run_expected_safety_failure PILOT_IMPORT_PROOF_TARGET_MISMATCH env \
-  PILOT_IMPORT_TARGET=municipal-pilot PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
+  PILOT_IMPORT_TARGET=unexpected-target PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_DATABASE_LOCAL_ONLY env \
-  PILOT_IMPORT_PROOF_DATABASE_URL='postgresql://postgres@db.example/educa_pilot_proof_test' \
+  PILOT_IMPORT_PROOF_DATABASE_URL='postgresql://postgres@127.0.0.2/educa_pilot_proof_test' \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_DEMO_DENIED env \
   NEXT_PUBLIC_DEMO_SANDBOX=true PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_DEMO_REFERENCE_DENIED env \
-  SUPABASE_DEMO_URL='https://demo.example.invalid' PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
+  SUPABASE_DEMO_URL='synthetic-demo-reference' PILOT_IMPORT_PROOF_DATABASE_URL="$UNREACHABLE_PROOF_URL" \
   pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 run_expected_safety_failure PILOT_IMPORT_PROOF_REAL_DATA_DENIED env \
   PILOT_IMPORT_DATA_MODE=real PILOT_SYNTHETIC_DATA_ONLY=false \
@@ -197,6 +225,7 @@ run_expected_safety_failure PILOT_IMPORT_PROOF_PILOT_MODE_REQUIRED env \
 
 run_expected_failure PILOT_IMPORT_GOVERNANCE_INVALID pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$MISSING_OWNER_FILE"
 run_expected_failure PILOT_IMPORT_KEY_MISSING env -u PILOT_IMPORT_ENCRYPTION_KEY pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
+run_expected_failure PILOT_IMPORT_PROOF_DEMO_DENIED env NEXT_PUBLIC_DEMO_SANDBOX=true DEMO_SANDBOX=false pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$APPROVAL_FILE"
 
 AFTER_FAILURE_BATCH_COUNT=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT count(*) FROM public.pilot_import_batches")
 [[ "$AFTER_FAILURE_BATCH_COUNT" == "$INITIAL_BATCH_COUNT" ]] || {
@@ -224,6 +253,11 @@ GOVERNANCE_VERSION=$(printf '%s\n' "$IMPORT_OUTPUT" | sed -n 's/.*"governanceMan
   echo "PILOT_IMPORT_PROOF_E2E_RECEIPT_MISSING: batch or fingerprint receipt field not found" >&2
   exit 1
 }
+STORAGE_FINGERPRINT=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT coalesce(user_metadata->>'pilot_import_object_fingerprint', metadata->>'pilot_import_object_fingerprint') FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$BATCH_ID'")
+[[ "$STORAGE_FINGERPRINT" =~ ^[a-f0-9]{64}$ ]] || {
+  echo "PILOT_IMPORT_PROOF_E2E_STORAGE_RECEIPT_MISSING: Storage association fingerprint not found" >&2
+  exit 1
+}
 if printf '%s\n' "$IMPORT_OUTPUT" | grep -E 'Aluno Prova Sintetico|Responsavel Prova Sintetico|@synthetic\.invalid' >/dev/null; then
   echo "PILOT_IMPORT_PROOF_E2E_RECEIPT_PII: receipt contains CSV or PII" >&2
   exit 1
@@ -233,10 +267,18 @@ cp "$APPROVAL_FILE" "$CHANGED_GOVERNANCE_FILE"
 node -e "const fs=require('node:fs'); const p=process.argv[1]; const x=JSON.parse(fs.readFileSync(p,'utf8')); x.purpose='preparacao tecnica de rollback sintetico'; fs.writeFileSync(p, JSON.stringify(x));" "$CHANGED_GOVERNANCE_FILE"
 run_expected_failure PILOT_IMPORT_IDEMPOTENCY_GOVERNANCE_MISMATCH pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$CSV_FILE" --approval "$CHANGED_GOVERNANCE_FILE"
 
-PAYLOAD_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (import_target = 'isolated_proof' AND source_mode = 'synthetic' AND encrypted_payload IS NOT NULL AND iv IS NOT NULL AND auth_tag IS NOT NULL AND encrypted_payload NOT LIKE '%Aluno Prova Sintetico%' AND source_row_count = 1 AND canonical_fingerprint_sha256 IS NOT NULL AND database_fingerprint_sha256 IS NOT NULL AND governance_fingerprint_sha256 IS NOT NULL AND governance_owner_name = 'Owner Prova Sintetico' AND processing_agreement_reference = 'DPA-SYN-PROOF-001' AND retention_policy = 'proof-only-30d') FROM public.pilot_import_batches WHERE id = '$BATCH_ID'")
+SECOND_IMPORT_OUTPUT=$(pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$SECOND_CSV_FILE" --approval "$APPROVAL_FILE")
+printf '%s\n' "$SECOND_IMPORT_OUTPUT"
+SECOND_BATCH_ID=$(printf '%s\n' "$SECOND_IMPORT_OUTPUT" | sed -n 's/.*"batchId":"\([0-9a-f-]*\)".*/\1/p' | tail -1)
+[[ -n "$SECOND_BATCH_ID" && "$SECOND_BATCH_ID" != "$BATCH_ID" ]] || {
+  echo "PILOT_IMPORT_PROOF_E2E_ISOLATION_SETUP_FAILED: second batch was not created" >&2
+  exit 1
+}
+
+PAYLOAD_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (import_target = 'isolated_proof' AND source_mode = 'synthetic' AND encrypted_payload IS NOT NULL AND iv IS NOT NULL AND auth_tag IS NOT NULL AND encrypted_payload NOT LIKE '%Aluno Prova Sintetico%' AND source_row_count = 1 AND canonical_counts->>'storageObjects' = '1' AND canonical_fingerprint_sha256 IS NOT NULL AND database_fingerprint_sha256 IS NOT NULL AND governance_fingerprint_sha256 IS NOT NULL AND governance_owner_name = 'Owner Prova Sintetico' AND processing_agreement_reference = 'DPA-SYN-PROOF-001' AND retention_policy = 'proof-only-30d') FROM public.pilot_import_batches WHERE id = '$BATCH_ID'")
 [[ "$PAYLOAD_CHECK" == t ]] || { echo "PILOT_IMPORT_PROOF_E2E_CONTRACT_FAILED: encrypted governance batch receipt" >&2; exit 1; }
 
-ROW_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT ((SELECT count(*) FROM public.alunos WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.aluno_responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.matriculas WHERE pilot_import_batch_id = '$BATCH_ID') = 1)")
+ROW_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT ((SELECT count(*) FROM public.alunos WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.aluno_responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.matriculas WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$BATCH_ID') = 1)")
 [[ "$ROW_CHECK" == t ]] || { echo "PILOT_IMPORT_PROOF_E2E_CANONICAL_FAILED: canonical counts or batch trace missing" >&2; exit 1; }
 
 "${PSQL[@]}" -d "$PROOF_DB" -c "UPDATE public.pilot_import_batches SET raw_expires_at = now() - interval '1 minute' WHERE id = '$BATCH_ID'" >/dev/null
@@ -251,8 +293,21 @@ if printf '%s\n' "$ROLLBACK_OUTPUT" | grep -E 'Aluno Prova Sintetico|Responsavel
   echo "PILOT_IMPORT_PROOF_E2E_ROLLBACK_RECEIPT_PII: receipt contains CSV or PII" >&2
   exit 1
 fi
-ROLLBACK_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (status = 'rolled_back' AND rolled_back_at IS NOT NULL AND (SELECT count(*) FROM public.alunos WHERE pilot_import_batch_id = '$BATCH_ID') = 0 AND (SELECT count(*) FROM public.responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 0 AND EXISTS (SELECT 1 FROM public.pilot_data_tombstones WHERE entity_type = 'pilot_import_batch' AND source_fingerprint = content_sha256)) FROM public.pilot_import_batches WHERE id = '$BATCH_ID'")
-[[ "$ROLLBACK_CHECK" == t ]] || { echo "PILOT_IMPORT_PROOF_E2E_ROLLBACK_FAILED: rollback did not remove batch rows" >&2; exit 1; }
+ROLLBACK_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (status = 'rolled_back' AND rolled_back_at IS NOT NULL AND encrypted_payload IS NULL AND iv IS NULL AND auth_tag IS NULL AND (SELECT count(*) FROM public.alunos WHERE pilot_import_batch_id = '$BATCH_ID') = 0 AND (SELECT count(*) FROM public.responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 0 AND (SELECT count(*) FROM public.aluno_responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 0 AND (SELECT count(*) FROM public.matriculas WHERE pilot_import_batch_id = '$BATCH_ID') = 0 AND (SELECT count(*) FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$BATCH_ID') = 0 AND (SELECT count(*) FROM public.pilot_data_tombstones WHERE entity_type = 'pilot_import_batch' AND source_fingerprint = content_sha256) = 1 AND (SELECT count(*) FROM public.pilot_audit_log WHERE event_type = 'import_rolled_back' AND entity_type = 'pilot_import_batch' AND entity_id = '$BATCH_ID' AND NOT (redacted_metadata ?| ARRAY['cpf','nis','rg','password','senha','health','saude','deficiencia','race','cor_raca'])) = 1) FROM public.pilot_import_batches WHERE id = '$BATCH_ID'")
+[[ "$ROLLBACK_CHECK" == t ]] || { echo "PILOT_IMPORT_PROOF_E2E_ROLLBACK_FAILED: rollback did not remove exact batch rows, Storage objects, ciphertext, tombstone, or redacted audit" >&2; exit 1; }
+
+OTHER_BATCH_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (status = 'published' AND encrypted_payload IS NOT NULL AND (SELECT count(*) FROM public.alunos WHERE pilot_import_batch_id = '$SECOND_BATCH_ID') = 1 AND (SELECT count(*) FROM public.responsaveis WHERE pilot_import_batch_id = '$SECOND_BATCH_ID') = 1 AND (SELECT count(*) FROM public.aluno_responsaveis WHERE pilot_import_batch_id = '$SECOND_BATCH_ID') = 1 AND (SELECT count(*) FROM public.matriculas WHERE pilot_import_batch_id = '$SECOND_BATCH_ID') = 1 AND (SELECT count(*) FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$SECOND_BATCH_ID') = 1) FROM public.pilot_import_batches WHERE id = '$SECOND_BATCH_ID'")
+[[ "$OTHER_BATCH_CHECK" == t ]] || { echo "PILOT_IMPORT_PROOF_E2E_ISOLATION_FAILED: another batch changed during rollback" >&2; exit 1; }
+
+REPLAY_OUTPUT=$(pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts rollback --batch "$BATCH_ID" --actor-email diretora.prova@synthetic.invalid --reason 'synthetic proof rollback replay')
+printf '%s\n' "$REPLAY_OUTPUT"
+REPLAY_CHECK=false
+if printf '%s\n' "$REPLAY_OUTPUT" | grep -F '"deletedEnrollments":0' >/dev/null \
+  && printf '%s\n' "$REPLAY_OUTPUT" | grep -F '"removed":0' >/dev/null \
+  && printf '%s\n' "$REPLAY_OUTPUT" | grep -F '"rollbackEvents":1' >/dev/null; then
+  REPLAY_CHECK=true
+fi
+[[ "$REPLAY_CHECK" == true ]] || { echo "PILOT_IMPORT_PROOF_E2E_REPLAY_FAILED: replay was not idempotent" >&2; exit 1; }
 
 mkdir -p "$(dirname "$EVIDENCE_FILE")"
 cat > "$EVIDENCE_FILE" <<EOF
@@ -267,6 +322,8 @@ This evidence was generated against a disposable PostgreSQL cluster and one data
 | Batch | $BATCH_ID |
 | CSV rows | 1 |
 | Canonical rows | 1 student, 1 guardian, 1 relationship, 1 enrollment |
+| Storage objects owned before rollback | 1 |
+| Storage object fingerprint | $STORAGE_FINGERPRINT |
 | Source SHA-256 | $SOURCE_FINGERPRINT |
 | Canonical SHA-256 | $CANONICAL_FINGERPRINT |
 | Database SHA-256 | $DATABASE_FINGERPRINT |
@@ -280,7 +337,12 @@ This evidence was generated against a disposable PostgreSQL cluster and one data
 | Governance change fingerprint mismatch | red |
 | Deliberate break without encryption key | red |
 | Raw payload retention cleanup | true |
-| Rollback and tombstone | true |
+| Rollback removed ciphertext, IV, tag, canonical rows, and Storage object | true |
+| Tombstone and redacted audit | true |
+| Other batch remained unchanged | true |
+| Idempotent rollback replay | true |
+
+This is a synthetic isolated proof receipt. It is not evidence of municipal readiness.
 EOF
 
 cleanup
@@ -290,4 +352,4 @@ cleanup
 }
 trap - EXIT
 
-echo "PILOT_IMPORT_PROOF_E2E_OK: isolated PostgreSQL governance, encryption, retention, fingerprints, rollback, safety guard, and cleanup passed"
+echo "PILOT_IMPORT_PROOF_E2E_OK: synthetic isolated PostgreSQL and Storage governance, safety guard, retention, fingerprints, exact rollback, isolation, replay, and cleanup passed"

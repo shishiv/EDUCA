@@ -1118,6 +1118,10 @@ $$;
 REVOKE ALL ON FUNCTION public.pilot_cleanup_import_staging() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.pilot_cleanup_import_staging() TO service_role;
 
+-- The later rollback-storage migration extends this function's return row.
+-- Drop here so isolated replay can reapply this historical migration safely.
+DROP FUNCTION IF EXISTS public.pilot_rollback_import_batch(uuid, uuid, text);
+
 CREATE OR REPLACE FUNCTION public.pilot_rollback_import_batch(
   p_batch_id uuid,
   p_actor_user_id uuid,

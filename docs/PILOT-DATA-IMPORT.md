@@ -135,14 +135,19 @@ O payload CSV fica em repouso como `aes-256-gcm` com `PILOT_IMPORT_ENCRYPTION_KE
 
 Cada linha canônica recebe `pilot_import_batch_id`. A tabela do lote registra owner, acordo, aprovadores, contagens, fingerprints, retenção e timestamps.
 
+Objetos de Storage do proof recebem os metadados `pilot_import_batch_id` e `pilot_import_object_fingerprint`. O rollback usa a associação exata do lote, nunca o nome amplo do objeto.
+
 - `pilot_cleanup_import_retention()` remove ciphertext após `rawPayloadExpiresAt`.
-- `pilot_rollback_import_batch()` remove somente linhas canônicas daquele lote, registra tombstone e auditoria.
+- `pilot_rollback_import_batch()` remove somente linhas canônicas e objetos de Storage associados àquele lote, registra tombstone e auditoria.
 - O rollback manual exige owner operacional ativo, motivo e janela `rollbackUntil` vigente.
 - Após `canonicalDataExpiresAt`, a limpeza de retenção usa o mesmo rollback transacional com motivo `retention_expired`.
 - O rollback recusa lotes com frequência já vinculada ou responsável compartilhado fora do lote.
 
 ## Receipt
 
-O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt de segurança, contagens, fingerprints, estado criptográfico e retenção. Falhas emitem `PILOT_IMPORT_PROOF_SAFETY_RECEIPT` com o alvo tentado e o motivo, sem URL, chave ou conteúdo. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família.
+O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt de segurança, contagens, fingerprints, objetos de Storage, estado criptográfico e retenção. Falhas emitem `PILOT_IMPORT_PROOF_SAFETY_RECEIPT` com o alvo tentado e o motivo, sem URL, chave ou conteúdo.
 
-O E2E também executa três deliberate-breaks: aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha. Se uma validação de governança for removida, o teste falha.
+O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família. O receipt não contém CSV, nomes, e-mails ou PII e identifica uma prova isolada sintética, não prontidão municipal.
+
+O E2E executa deliberate-breaks de segurança e governança: alvo inesperado, host de banco fora da lista local, demo, modo real configurado, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
+O teste de banco cobre associação de lote ausente, lote ausente, alvo demo ou incorreto, expiração, frequência vinculada, responsável compartilhado, isolamento, rollback exato e replay. Se uma validação for removida, o teste falha.

@@ -7,6 +7,7 @@ TESTS_DIR="$ROOT_DIR/supabase/tests/database"
 CENSO_MIGRATION="20260719031000_add_censo_escolar_fields.sql"
 RELATORIOS_MIGRATION="20260124133337_create_relatorios_descritivos.sql"
 SECURITY_HARDENING_MIGRATION="20260810220000_governed_pilot_security_hardening.sql"
+ROLLBACK_STORAGE_MIGRATION="20260812231418_pilot_import_batch_rollback_storage.sql"
 
 for command in initdb pg_ctl psql; do
   if ! command -v "$command" >/dev/null 2>&1; then
@@ -62,6 +63,7 @@ done
 # The replayed legacy report migration recreates its old policies. Reapply the
 # final hardening so this isolated database matches the deployed migration state.
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$SECURITY_HARDENING_MIGRATION" >/dev/null
+"${PSQL[@]}" -f "$MIGRATIONS_DIR/$ROLLBACK_STORAGE_MIGRATION" >/dev/null
 
 # The pilot provisioning file is intentionally not applied here. The contract
 # needs synthetic NIS/PBF rows to exercise the real legal read model.
