@@ -8,7 +8,6 @@
  * - useFeatureFlagsWithStatus: Admin matrix view
  * - useToggleFlags: Mutation for bulk toggle
  *
- * @see hooks/use-diary-query.ts for pattern reference
  * @see lib/api/feature-flags.ts for API
  */
 
