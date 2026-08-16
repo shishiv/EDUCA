@@ -11,6 +11,7 @@ import {
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 import {
+  assertPilotImportOwnerMatchesActor,
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
   transformGovernedPilotCsvToCanonicalRows,
@@ -30,6 +31,52 @@ function getImportKey(): { key: string; keyId: string } {
   const keyId = process.env.PILOT_IMPORT_ENCRYPTION_KEY_ID || 'synthetic-local-v1'
   if (!key) throw new Error('PILOT_IMPORT_KEY_MISSING')
   return { key, keyId }
+}
+
+interface ConfirmedTreatmentAgreement {
+  id: string
+  confirmedAt: string
+  confirmedBy: string
+  recorderName: string
+  recorderEmail: string
+}
+
+async function requireConfirmedTreatmentAgreement(
+  service: ReturnType<typeof createServiceRoleClient>,
+  schoolId: string,
+  reference: string,
+  version: string
+): Promise<ConfirmedTreatmentAgreement> {
+  const { data: agreement, error: agreementError } = await service
+    .from('pilot_data_treatment_agreements')
+    .select('id,confirmed,confirmed_at,confirmed_by')
+    .eq('escola_id', schoolId)
+    .eq('reference', reference)
+    .eq('version', version)
+    .eq('confirmed', true)
+    .maybeSingle()
+  if (agreementError) throw agreementError
+  if (!agreement?.id || agreement.confirmed !== true || !agreement.confirmed_at || !agreement.confirmed_by) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
+  }
+
+  const { data: recorder, error: recorderError } = await service
+    .from('users')
+    .select('id,nome,email,ativo')
+    .eq('id', agreement.confirmed_by)
+    .eq('ativo', true)
+    .single()
+  if (recorderError || !recorder?.nome || !recorder?.email) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_REQUIRED: agreement confirmer must be active')
+  }
+
+  return {
+    id: agreement.id,
+    confirmedAt: agreement.confirmed_at,
+    confirmedBy: agreement.confirmed_by,
+    recorderName: recorder.nome,
+    recorderEmail: recorder.email,
+  }
 }
 
 export async function POST(request: Request) {
@@ -97,17 +144,8 @@ export async function POST(request: Request) {
     }
 
     const { key, keyId } = getImportKey()
-    if (!actor.email) throw new Error('PILOT_IMPORT_ACTOR_EMAIL_REQUIRED')
     if (!report.valid) return NextResponse.json({ report }, { status: 422 })
-    if (body.dryRun) {
-      return NextResponse.json({ report, validationToken: createPilotDryRunValidationToken(report.contentSha256, key) })
-    }
-    if (!body.validationToken || !verifyPilotDryRunValidationToken(report.contentSha256, body.validationToken, key)) {
-      return NextResponse.json({ error: 'PILOT_IMPORT_DRY_RUN_REQUIRED' }, { status: 409 })
-    }
-    if (!body.idempotencyKey || !/^[A-Za-z0-9_-]{8,128}$/.test(body.idempotencyKey)) {
-      return NextResponse.json({ error: 'PILOT_IMPORT_IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 })
-    }
+    const owner = assertPilotImportOwnerMatchesActor(governance.owner, actor)
 
     const supabase = await createClient()
     const { data: school, error: schoolError } = await supabase
@@ -118,6 +156,23 @@ export async function POST(request: Request) {
     if (schoolError || !school) return NextResponse.json({ error: 'PILOT_IMPORT_SCHOOL_NOT_FOUND', report }, { status: 422 })
 
     const service = createServiceRoleClient()
+    const agreement = await requireConfirmedTreatmentAgreement(
+      service,
+      school.id,
+      governance.processingAgreement.reference,
+      governance.processingAgreement.version,
+    )
+
+    if (body.dryRun) {
+      return NextResponse.json({ report, validationToken: createPilotDryRunValidationToken(report.contentSha256, key) })
+    }
+    if (!body.validationToken || !verifyPilotDryRunValidationToken(report.contentSha256, body.validationToken, key)) {
+      return NextResponse.json({ error: 'PILOT_IMPORT_DRY_RUN_REQUIRED' }, { status: 409 })
+    }
+    if (!body.idempotencyKey || !/^[A-Za-z0-9_-]{8,128}$/.test(body.idempotencyKey)) {
+      return NextResponse.json({ error: 'PILOT_IMPORT_IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 })
+    }
+
     const { data: existingBatches, error: existingError } = await service
       .from('pilot_import_batches')
       .select('id,status,validation_report,idempotency_key,content_sha256')
@@ -134,7 +189,7 @@ export async function POST(request: Request) {
     }
 
     const recordedAt = new Date().toISOString()
-    const governanceMetadata = governance
+    const governanceMetadata = { ...governance, owner }
     const encrypted = encryptPilotImportPayload(body.csv, key, keyId)
     const { data: batch, error: insertError } = await service
       .from('pilot_import_batches')
@@ -152,16 +207,20 @@ export async function POST(request: Request) {
         import_target: 'synthetic_local',
         source_mode: 'synthetic',
         encryption_algorithm: 'aes-256-gcm',
-        governance_owner_name: governance.owner.name,
-        governance_owner_email: governance.owner.email,
+        governance_owner_name: owner.name,
+        governance_owner_email: owner.email,
+        governance_owner_user_id: actor.id,
+        governance_owner_authorized_at: recordedAt,
         submitted_by_name: actor.name,
         submitted_by_email: actor.email,
+        processing_agreement_id: agreement.id,
+        processing_agreement_confirmed: true,
         processing_agreement_reference: governance.processingAgreement.reference,
         processing_agreement_version: governance.processingAgreement.version,
-        processing_agreement_recorded_at: recordedAt,
-        processing_agreement_recorded_by: actor.id,
-        processing_agreement_recorded_by_name: actor.name,
-        processing_agreement_recorded_by_email: actor.email,
+        processing_agreement_recorded_at: agreement.confirmedAt,
+        processing_agreement_recorded_by: agreement.confirmedBy,
+        processing_agreement_recorded_by_name: agreement.recorderName,
+        processing_agreement_recorded_by_email: agreement.recorderEmail,
         retention_policy: governance.retention.policy,
         raw_expires_at: governance.retention.rawPayloadExpiresAt,
         canonical_expires_at: governance.retention.canonicalDataExpiresAt,

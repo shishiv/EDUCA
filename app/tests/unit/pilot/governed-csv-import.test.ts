@@ -3,11 +3,14 @@ import { describe, expect, it } from 'vitest'
 import {
   GOVERNED_PILOT_STUDENT_CSV_HEADERS,
   PILOT_GOVERNANCE_UNCONFIRMED,
+  PILOT_TREATMENT_AGREEMENT_CONFIRMED,
   SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION,
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
   fingerprintPilotImportGovernance,
   transformGovernedPilotCsvToCanonicalRows,
+  assertPilotImportOwnerMatchesActor,
+  assertPilotImportTreatmentAgreementConfirmed,
   validatePilotImportGovernanceInput,
   validateGovernedPilotImportManifest,
   validateGovernedPilotStudentCsv,
@@ -46,7 +49,8 @@ function approvalManifest() {
     processingAgreement: {
       reference: 'DPA-SYN-001',
       version: 'v1',
-      status: PILOT_GOVERNANCE_UNCONFIRMED,
+      status: PILOT_TREATMENT_AGREEMENT_CONFIRMED,
+      confirmed: true,
       recordedAt,
       recordedBy: { name: 'Secretaria Sintetica', email: 'secretaria@synthetic.invalid' },
     },
@@ -144,6 +148,7 @@ describe('governed pilot CSV contract', () => {
       reference: manifest.processingAgreement.reference,
       version: manifest.processingAgreement.version,
       status: manifest.processingAgreement.status,
+      confirmed: manifest.processingAgreement.confirmed,
     }
     expect(validatePilotImportGovernanceInput({
       version: manifest.version,
@@ -160,6 +165,32 @@ describe('governed pilot CSV contract', () => {
       incident: manifest.incident,
       processingAgreement: agreementInput,
     }).processingAgreement).toEqual(agreementInput)
+  })
+
+  it('requires explicit treatment agreement confirmation before import', () => {
+    const manifest = approvalManifest()
+    expect(() => assertPilotImportTreatmentAgreementConfirmed({
+      ...manifest.processingAgreement,
+      confirmed: false,
+    })).toThrow(/TREATMENT_AGREEMENT_REQUIRED/)
+    expect(() => validateGovernedPilotImportManifest({
+      ...manifest,
+      processingAgreement: { ...manifest.processingAgreement, status: PILOT_GOVERNANCE_UNCONFIRMED, confirmed: false },
+    })).toThrow(/TREATMENT_AGREEMENT_REQUIRED/)
+  })
+
+  it('requires the named owner to match the authenticated secretary', () => {
+    const manifest = approvalManifest()
+    expect(() => validateGovernedPilotImportManifest({
+      ...manifest,
+      owner: { name: 'Outra Pessoa', email: 'outra@synthetic.invalid' },
+    })).not.toThrow()
+    expect(() => assertPilotImportOwnerMatchesActor(manifest.owner, {
+      name: 'Secretaria Sintetica',
+      email: 'secretaria@synthetic.invalid',
+      role: 'secretario',
+      schoolId: null,
+    })).toThrow(/OWNER_DENIED/)
   })
 
   it('rejects incomplete governance, equal maker-checker actors, bad retention order, and real identities', () => {

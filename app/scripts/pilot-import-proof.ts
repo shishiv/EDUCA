@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { Client } from 'pg'
 import {
+  assertPilotImportOwnerMatchesActor,
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
   fingerprintPilotImportGovernance,
@@ -40,6 +41,7 @@ interface ActorRow {
   nome: string
   email: string
   ativo: boolean
+  tipo_usuario: string
 }
 
 interface SchoolRow {
@@ -177,7 +179,7 @@ async function readJsonFile(path: string): Promise<unknown> {
 
 async function findActiveActor(client: Client, email: string, errorCode: string): Promise<ActorRow> {
   const result = await client.query<ActorRow>(
-    `SELECT id, nome, email, ativo
+    `SELECT id, nome, email, ativo, tipo_usuario
      FROM public.users
      WHERE lower(email) = lower($1) AND ativo = true
      LIMIT 1`,
@@ -456,8 +458,36 @@ async function runGovernedProofImport(
       manifest.processingAgreement.recordedBy.email,
       'PILOT_IMPORT_AGREEMENT_RECORDER_REQUIRED'
     )
+    const owner = await findActiveActor(client, manifest.owner.email, 'PILOT_IMPORT_OWNER_REQUIRED')
+    assertPilotImportOwnerMatchesActor(manifest.owner, {
+      name: owner.nome,
+      email: owner.email,
+      role: owner.tipo_usuario,
+      schoolId: null,
+    })
+    if (owner.id !== submitter.id) throw new Error('PILOT_IMPORT_OWNER_DENIED: owner must authorize the submitted batch')
     if (submitter.id === approver.id) throw new Error('PILOT_IMPORT_MAKER_CHECKER_REQUIRED: submitter and approver must differ')
-    const ownerEmail = manifest.owner.email
+    const agreementResult = await client.query<{
+      id: string
+      confirmed: boolean
+      confirmed_at: string | null
+      confirmed_by: string | null
+      escola_id: string
+    }>(
+      `SELECT id, confirmed, confirmed_at, confirmed_by, escola_id
+       FROM public.pilot_data_treatment_agreements
+       WHERE escola_id = $1 AND reference = $2 AND version = $3 AND confirmed = true
+       LIMIT 1`,
+      [school.id, manifest.processingAgreement.reference, manifest.processingAgreement.version]
+    )
+    const agreement = agreementResult.rows[0]
+    if (!agreement || !agreement.confirmed || !agreement.confirmed_at || !agreement.confirmed_by) {
+      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
+    }
+    if (agreement.confirmed_by !== agreementRecorder.id) {
+      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_MISMATCH: agreement confirmer does not match the manifest')
+    }
+    const ownerEmail = owner.email
     const idempotencyKey = `proof-${report.contentSha256}`
     const existing = await client.query<{ id: string; governance_fingerprint_sha256: string | null }>(
       `SELECT id, governance_fingerprint_sha256
@@ -482,7 +512,9 @@ async function runGovernedProofImport(
          encrypted_payload, iv, auth_tag, validation_report, status, submitted_by,
          approved_by, approved_at, published_at, raw_expires_at, import_target,
          source_mode, encryption_algorithm, governance_owner_name, governance_owner_email,
-         submitted_by_name, submitted_by_email, approved_by_name, approved_by_email,
+         governance_owner_user_id, governance_owner_authorized_at, submitted_by_name, submitted_by_email,
+         approved_by_name, approved_by_email,
+         processing_agreement_id, processing_agreement_confirmed,
          processing_agreement_reference, processing_agreement_version,
          processing_agreement_recorded_at, processing_agreement_recorded_by,
          processing_agreement_recorded_by_name, processing_agreement_recorded_by_email,
@@ -493,7 +525,7 @@ async function runGovernedProofImport(
          $1, 'students', $2, $3, $4, $5, $6, $7, $8, 'approved', $9,
          $10, $11, NULL, $12, 'isolated_proof', $13, 'aes-256-gcm', $14, $15,
          $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
-         $29, $30, $31, $32, $33
+         $29, $30, $31, $32, $33, $34, $35, $36, $37
        ) RETURNING id`,
       [
         school.id,
@@ -509,15 +541,19 @@ async function runGovernedProofImport(
         manifest.approval.approvedAt,
         manifest.retention.rawPayloadExpiresAt,
         dataMode,
-        manifest.owner.name,
+        owner.nome,
         ownerEmail,
+        owner.id,
+        manifest.approval.approvedAt,
         submitter.nome,
         submitter.email,
         approver.nome,
         approver.email,
+        agreement.id,
+        true,
         manifest.processingAgreement.reference,
         manifest.processingAgreement.version,
-        manifest.processingAgreement.recordedAt,
+        agreement.confirmed_at,
         agreementRecorder.id,
         agreementRecorder.nome,
         agreementRecorder.email,

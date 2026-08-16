@@ -9,6 +9,7 @@ import {
 
 const legacyAppName = process.env.PILOT_LEGACY_APP_NAME || LEGACY_PILOT_APP_NAME
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `https://${legacyAppName}.localhost`
+const executablePath = process.env.PILOT_PLAYWRIGHT_EXECUTABLE_PATH
 const authStatePath = process.env.PILOT_AUTH_STATE_PATH || path.join(process.cwd(), '.pilot-e2e/auth/user.json')
 const excludedTestFiles = LEGACY_PILOT_EXCLUDED_FILES
   .filter(file => file.endsWith('.spec.ts') || file.endsWith('.setup.ts'))
@@ -27,6 +28,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'off',
     ignoreHTTPSErrors: true,
+    ...(executablePath ? { launchOptions: { executablePath } } : {}),
   },
   projects: [
     {
