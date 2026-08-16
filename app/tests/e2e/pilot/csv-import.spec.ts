@@ -9,12 +9,12 @@ const csv = [
 
 const governance = {
   version: 'educa-synthetic-pilot-governance-v1',
-  owner: { name: 'Owner do Piloto Sintetico', email: 'owner@synthetic.invalid' },
+  owner: { name: 'Secretaria Sintetica', email: 'secretaria@synthetic.invalid' },
   controller: { name: 'Controlador do Piloto Sintetico', email: 'controller@synthetic.invalid', status: 'a confirmar' },
   processor: { name: 'Processador do Piloto Sintetico', email: 'processor@synthetic.invalid', status: 'a confirmar' },
   purpose: 'preparacao tecnica do piloto sintetico',
   legalBasis: 'a confirmar',
-  processingAgreement: { reference: 'DPA-SYN-E2E-001', version: 'v1', status: 'a confirmar' },
+  processingAgreement: { reference: 'DPA-SYN-E2E-001', version: 'v1', status: 'confirmed', confirmed: true },
   subprocessors: [{
     name: 'Armazenamento do Piloto Sintetico', email: 'storage@synthetic.invalid', status: 'a confirmar',
     service: 'armazenamento cifrado de prova', processingLocation: 'isolated-proof-local',
@@ -40,8 +40,43 @@ const secretariatEmail = 'secretaria@synthetic.invalid'
 const directorEmail = 'diretora.a@synthetic.invalid'
 const sourceFingerprint = createHash('sha256').update(csv, 'utf8').digest('hex')
 
-test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({ page, browser }) => {
+test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', async ({ page, browser }) => {
   await page.goto('/dashboard')
+  const blockedWithoutAgreement = await page.evaluate(async ({ csvPayload, governancePayload }) => {
+    const response = await fetch('/api/pilot/imports', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ csv: csvPayload, dryRun: true, governance: governancePayload }),
+    })
+    return { status: response.status, body: await response.json() }
+  }, {
+    csvPayload: csv,
+    governancePayload: {
+      ...governance,
+      processingAgreement: { ...governance.processingAgreement, status: 'a confirmar', confirmed: false },
+    },
+  })
+  expect(blockedWithoutAgreement).toEqual({
+    status: 409,
+    body: { error: 'PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement is required' },
+  })
+  const blockedWithoutOwner = await page.evaluate(async ({ csvPayload, governancePayload }) => {
+    const response = await fetch('/api/pilot/imports', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ csv: csvPayload, dryRun: true, governance: governancePayload }),
+    })
+    return { status: response.status, body: await response.json() }
+  }, {
+    csvPayload: csv,
+    governancePayload: {
+      ...governance,
+      owner: { name: 'Outro Owner Sintetico', email: 'outro-owner@synthetic.invalid' },
+    },
+  })
+  expect(blockedWithoutOwner).toEqual({
+    status: 403,
+    body: { error: 'PILOT_IMPORT_OWNER_DENIED: the named owner must be the authenticated authorizer' },
+  })
+
   const dryRun = await page.evaluate(async ({ csvPayload, governancePayload }) => {
     const response = await fetch('/api/pilot/imports', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -69,7 +104,7 @@ test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({
   const service = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
   const [{ data: submitter, error: submitterError }, { data: encryptedBatch, error: encryptedBatchError }] = await Promise.all([
     service.from('users').select('id,email').eq('email', secretariatEmail).single(),
-    service.from('pilot_import_batches').select('id,status,import_target,source_mode,encryption_algorithm,encryption_key_id,encrypted_payload,iv,auth_tag,submitted_by,approved_by,content_sha256,source_row_count,canonical_counts,canonical_fingerprint_sha256,governance_owner_name,governance_owner_email,processing_agreement_reference,processing_agreement_version,processing_agreement_recorded_by,raw_expires_at,canonical_expires_at,rollback_until').eq('id', batchId).single(),
+    service.from('pilot_import_batches').select('id,status,import_target,source_mode,encryption_algorithm,encryption_key_id,encrypted_payload,iv,auth_tag,submitted_by,approved_by,content_sha256,source_row_count,canonical_counts,canonical_fingerprint_sha256,governance_owner_name,governance_owner_email,processing_agreement_id,processing_agreement_confirmed,processing_agreement_reference,processing_agreement_version,processing_agreement_recorded_by,raw_expires_at,canonical_expires_at,rollback_until').eq('id', batchId).single(),
   ])
   expect(submitterError).toBeNull()
   expect(encryptedBatchError).toBeNull()
@@ -85,11 +120,13 @@ test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({
     content_sha256: sourceFingerprint,
     source_row_count: 1,
     canonical_counts: { sourceRows: 1, students: 1, guardians: 1, relationships: 1, enrollments: 1 },
-    governance_owner_name: 'Owner do Piloto Sintetico',
-    governance_owner_email: 'owner@synthetic.invalid',
+    governance_owner_name: 'Secretaria Sintetica',
+    governance_owner_email: 'secretaria@synthetic.invalid',
     processing_agreement_reference: 'DPA-SYN-E2E-001',
     processing_agreement_version: 'v1',
     processing_agreement_recorded_by: submitter?.id,
+    processing_agreement_confirmed: true,
+    processing_agreement_id: expect.any(String),
   })
   expect(encryptedBatch?.encrypted_payload).toEqual(expect.any(String))
   expect(encryptedBatch?.iv).toEqual(expect.any(String))
@@ -130,8 +167,6 @@ test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({
     return { status: response.status, body: await response.json() }
   }, batchId)
   expect(approval).toEqual(expect.objectContaining({ status: 200, body: expect.objectContaining({ batch: expect.objectContaining({ status: 'published' }) }) }))
-  await directorContext.close()
-
   const [
     { data: finalBatch, error: finalBatchError },
     { data: approvalRecord, error: approvalRecordError },
@@ -167,11 +202,11 @@ test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({
     approved_by: approver?.id,
     source_row_count: 1,
     canonical_counts: { sourceRows: 1, students: 1, guardians: 1, relationships: 1, enrollments: 1 },
-    encrypted_payload: null,
-    iv: null,
-    auth_tag: null,
+    encrypted_payload: expect.any(String),
+    iv: expect.any(String),
+    auth_tag: expect.any(String),
     published_at: expect.any(String),
-    cleaned_at: expect.any(String),
+    cleaned_at: null,
   })
   expect(finalBatch?.canonical_fingerprint_sha256).toBe(encryptedBatch?.canonical_fingerprint_sha256)
   expect(finalBatch?.governance_fingerprint_sha256).toMatch(/^[a-f0-9]{64}$/)
@@ -220,4 +255,82 @@ test('dry-runs, stages, approves, publishes, and cleans synthetic CSV', async ({
       plaintext_stored: false,
     },
   })
+
+  const { error: rawExpiryError } = await service
+    .from('pilot_import_batches')
+    .update({ raw_expires_at: new Date(Date.now() - 60_000).toISOString() })
+    .eq('id', batchId)
+  expect(rawExpiryError).toBeNull()
+  const { data: cleanedCount, error: cleanupError } = await service.rpc('pilot_cleanup_import_retention')
+  expect(cleanupError).toBeNull()
+  expect(cleanedCount).toBe(1)
+  const [{ data: retainedBatch, error: retainedBatchError }, { data: retainedStudents, error: retainedStudentsError }] = await Promise.all([
+    service.from('pilot_import_batches').select('status,encrypted_payload,iv,auth_tag,cleaned_at').eq('id', batchId).single(),
+    service.from('alunos').select('id').eq('pilot_import_batch_id', batchId),
+  ])
+  expect(retainedBatchError).toBeNull()
+  expect(retainedStudentsError).toBeNull()
+  expect(retainedBatch).toMatchObject({ status: 'published', encrypted_payload: null, iv: null, auth_tag: null, cleaned_at: expect.any(String) })
+  expect(retainedStudents).toHaveLength(1)
+
+  const rollback = await directorPage.evaluate(async id => {
+    const response = await fetch(`/api/pilot/imports/${id}/rollback`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ reason: 'synthetic E2E rollback proof' }),
+    })
+    return { status: response.status, body: await response.json() }
+  }, batchId)
+  expect(rollback).toEqual(expect.objectContaining({
+    status: 200,
+    body: expect.objectContaining({
+      batch: { id: batchId, status: 'rolled_back' },
+      rollback: expect.objectContaining({ deletedStudents: 1, deletedGuardians: 1 }),
+    }),
+  }))
+  await directorContext.close()
+
+  const [
+    { data: rolledBackBatch, error: rolledBackBatchError },
+    { data: remainingStudents, error: remainingStudentsError },
+    { data: remainingGuardians, error: remainingGuardiansError },
+    { data: remainingRelationships, error: remainingRelationshipsError },
+    { data: remainingEnrollments, error: remainingEnrollmentsError },
+    { data: rollbackAudit, error: rollbackAuditError },
+    { data: tombstones, error: tombstoneError },
+  ] = await Promise.all([
+    service.from('pilot_import_batches').select('id,status,encrypted_payload,iv,auth_tag,rolled_back_at,rollback_reason').eq('id', batchId).single(),
+    service.from('alunos').select('id').eq('pilot_import_batch_id', batchId),
+    service.from('responsaveis').select('id').eq('pilot_import_batch_id', batchId),
+    service.from('aluno_responsaveis').select('id').eq('pilot_import_batch_id', batchId),
+    service.from('matriculas').select('id').eq('pilot_import_batch_id', batchId),
+    service.from('pilot_audit_log').select('event_type,entity_id,redacted_metadata').eq('entity_id', batchId).eq('event_type', 'import_rolled_back'),
+    service.from('pilot_data_tombstones').select('entity_type,source_fingerprint').eq('entity_type', 'pilot_import_batch').eq('source_fingerprint', sourceFingerprint),
+  ])
+  expect(rolledBackBatchError).toBeNull()
+  expect(remainingStudentsError).toBeNull()
+  expect(remainingGuardiansError).toBeNull()
+  expect(remainingRelationshipsError).toBeNull()
+  expect(remainingEnrollmentsError).toBeNull()
+  expect(rollbackAuditError).toBeNull()
+  expect(tombstoneError).toBeNull()
+  expect(rolledBackBatch).toMatchObject({
+    id: batchId,
+    status: 'rolled_back',
+    encrypted_payload: null,
+    iv: null,
+    auth_tag: null,
+    rolled_back_at: expect.any(String),
+    rollback_reason: 'synthetic E2E rollback proof',
+  })
+  expect(remainingStudents).toHaveLength(0)
+  expect(remainingGuardians).toHaveLength(0)
+  expect(remainingRelationships).toHaveLength(0)
+  expect(remainingEnrollments).toHaveLength(0)
+  expect(rollbackAudit).toHaveLength(1)
+  expect(rollbackAudit?.[0]).toMatchObject({
+    event_type: 'import_rolled_back',
+    entity_id: batchId,
+    redacted_metadata: { reason_recorded: true },
+  })
+  expect(tombstones).toHaveLength(1)
 })

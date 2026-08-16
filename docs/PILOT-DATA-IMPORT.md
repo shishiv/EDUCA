@@ -2,7 +2,7 @@
 
 Este contrato prepara dados para o piloto sem colocar dados reais no deploy ou no demo.
 
-O import governado só grava em um banco de prova isolado. O demo continua com o efeito de import bloqueado e simulado. O gate de deploy continua bloqueando dados reais e endpoints externos.
+O import governado exige um owner nomeado e um acordo de tratamento confirmado em arquivo antes de gravar qualquer lote. O owner deve ser o secretário municipal ou o operador designado autenticado. O demo continua com o efeito de import bloqueado e simulado. O gate de deploy continua bloqueando dados reais e endpoints externos.
 
 ## Contrato do CSV
 
@@ -28,7 +28,7 @@ Todos os e-mails do exemplo usam o domínio reservado `.invalid`.
 ```json
 {
   "version": "educa-synthetic-pilot-governance-v1",
-  "owner": {"name": "Owner Sintetico", "email": "owner@synthetic.invalid"},
+  "owner": {"name": "Secretaria Sintetica", "email": "secretaria@synthetic.invalid"},
   "controller": {"name": "Controlador Sintetico", "email": "controller@synthetic.invalid", "status": "a confirmar"},
   "processor": {"name": "Processador Sintetico", "email": "processor@synthetic.invalid", "status": "a confirmar"},
   "purpose": "preparacao tecnica do piloto sintetico",
@@ -36,7 +36,8 @@ Todos os e-mails do exemplo usam o domínio reservado `.invalid`.
   "processingAgreement": {
     "reference": "DPA-SYN-001",
     "version": "v1",
-    "status": "a confirmar",
+    "status": "confirmed",
+    "confirmed": true,
     "recordedAt": "2026-08-10T12:00:00.000Z",
     "recordedBy": {"name": "Secretaria Sintetica", "email": "secretaria@synthetic.invalid"}
   },
@@ -79,8 +80,8 @@ Todos os e-mails do exemplo usam o domínio reservado `.invalid`.
 }
 ```
 
-O pipeline resolve `recordedBy`, `submittedBy` e `approvedBy` em usuários ativos do banco de prova. O owner fica registrado como snapshot nomeado.
-O fingerprint canônico inclui todos os campos, normaliza espaços, e-mails, timestamps e ordena subprocessadores.
+O pipeline resolve `recordedBy`, `submittedBy` e `approvedBy` em usuários ativos. A tabela `pilot_data_treatment_agreements` é a fonte do gate booleano `confirmed`; referência, versão, confirmer e timestamp ficam vinculados ao lote. O owner autenticado fica registrado como snapshot nomeado e `governance_owner_user_id`. Sem owner correspondente ao ator autenticado, o lote não é criado.
+A aprovação publica a projeção canônica no RPC transacional `pilot_publish_synthetic_import_batch`; qualquer falha desfaz aprovação e linhas parciais. O fingerprint canônico inclui todos os campos, normaliza espaços, e-mails, timestamps e ordena subprocessadores.
 
 O validador exige owner, controller, processor, propósito, base legal, acordo, aprovadores maker-checker, subprocessadores, localização, criptografia, retenção, janela de rollback, saída e incidente.
 Ele rejeita campos incompletos, identidade que não termina em `.invalid`, aprovação pelo próprio submitter e a ordem `rawPayloadExpiresAt < rollbackUntil < canonicalDataExpiresAt`.
@@ -131,17 +132,18 @@ Uma futura carga real exige uma mudança revisada separada, com aprovações leg
 
 ## Encriptação, retenção e rollback
 
-O payload CSV fica em repouso como `aes-256-gcm` com `PILOT_IMPORT_ENCRYPTION_KEY`. A tabela guarda somente o `encryption_key_id`, IV, tag e ciphertext. A chave nunca entra no banco, no log ou no receipt.
+O payload CSV fica em repouso como `aes-256-gcm` com `PILOT_IMPORT_ENCRYPTION_KEY`. A rota lê a chave exclusivamente do ambiente e nunca a grava no banco, no log ou no receipt. O ciphertext, IV e tag permanecem no lote até `rawPayloadExpiresAt`; a limpeza remove o envelope inteiro. As projeções canônicas ficam vinculadas ao lote e são removidas pelo rollback exato.
 
 Cada linha canônica recebe `pilot_import_batch_id`. A tabela do lote registra owner, acordo, aprovadores, contagens, fingerprints, retenção e timestamps.
 
 Objetos de Storage do proof recebem os metadados `pilot_import_batch_id` e `pilot_import_object_fingerprint`. O rollback usa a associação exata do lote, nunca o nome amplo do objeto.
 
 - `pilot_cleanup_import_retention()` remove ciphertext após `rawPayloadExpiresAt`.
-- `pilot_rollback_import_batch()` remove somente linhas canônicas e objetos de Storage associados àquele lote, registra tombstone e auditoria.
-- O rollback manual exige owner operacional ativo, motivo e janela `rollbackUntil` vigente.
-- Após `canonicalDataExpiresAt`, a limpeza de retenção usa o mesmo rollback transacional com motivo `retention_expired`.
-- O rollback recusa lotes com frequência já vinculada ou responsável compartilhado fora do lote.
+- `pilot_rollback_synthetic_import_batch()` remove somente linhas canônicas do lote `synthetic_local`, registra tombstone e auditoria.
+- `pilot_rollback_import_batch()` mantém a prova isolada com Storage e sua associação por fingerprint.
+- O endpoint `POST /api/pilot/imports/{batchId}/rollback` exige ator autenticado, motivo e janela `rollbackUntil` vigente.
+- Após `canonicalDataExpiresAt`, a limpeza de retenção usa o rollback transacional com motivo `retention_expired`.
+- O rollback recusa lotes com frequência já vinculada, associação incompleta ou responsável compartilhado fora do lote.
 
 ## Receipt
 
@@ -149,5 +151,5 @@ O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt d
 
 O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família. O receipt não contém CSV, nomes, e-mails ou PII e identifica uma prova isolada sintética, não prontidão municipal.
 
-O E2E executa deliberate-breaks de segurança e governança: alvo inesperado, host de banco fora da lista local, demo, modo real configurado, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
+O E2E de browser executa importação sintética real, aprovação maker-checker, verifica ciphertext e acordo, chama rollback, e confirma que as linhas canônicas, ciphertext, tombstone e auditoria desapareceram ou ficaram redigidos. O proof runner também executa deliberate-breaks de segurança e governança: alvo inesperado, host de banco fora da lista local, demo, modo real configurado, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
 O teste de banco cobre associação de lote ausente, lote ausente, alvo demo ou incorreto, expiração, frequência vinculada, responsável compartilhado, isolamento, rollback exato e replay. Se uma validação for removida, o teste falha.

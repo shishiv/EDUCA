@@ -8,6 +8,8 @@ export const SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION = 'educa-synthetic-pilo
 
 /** Placeholder for decisions reserved for the captain or municipality. */
 export const PILOT_GOVERNANCE_UNCONFIRMED = 'a confirmar' as const
+/** Status recorded only when the data treatment agreement is confirmed on file. */
+export const PILOT_TREATMENT_AGREEMENT_CONFIRMED = 'confirmed' as const
 
 /** Exact CSV columns accepted by the governed student import contract. */
 export const GOVERNED_PILOT_STUDENT_CSV_HEADERS = [
@@ -119,7 +121,8 @@ export interface PilotImportIncidentPlan {
 export interface PilotImportProcessingAgreementInput {
   reference: string
   version: string
-  status: typeof PILOT_GOVERNANCE_UNCONFIRMED
+  status: typeof PILOT_GOVERNANCE_UNCONFIRMED | typeof PILOT_TREATMENT_AGREEMENT_CONFIRMED
+  confirmed: boolean
 }
 
 export interface PilotImportRetentionInput {
@@ -213,7 +216,8 @@ const subprocessorSchema = z.object({
 const processingAgreementInputSchema = z.object({
   reference: z.string().trim().min(2).max(200),
   version: z.string().trim().min(1).max(80),
-  status: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+  status: z.union([z.literal(PILOT_GOVERNANCE_UNCONFIRMED), z.literal(PILOT_TREATMENT_AGREEMENT_CONFIRMED)]),
+  confirmed: z.boolean(),
 }).strict()
 
 const retentionSchema = z.object({
@@ -265,7 +269,8 @@ const manifestSchema = z.object({
   processingAgreement: z.object({
     reference: z.string().trim().min(2).max(200),
     version: z.string().trim().min(1).max(80),
-    status: z.literal(PILOT_GOVERNANCE_UNCONFIRMED),
+    status: z.union([z.literal(PILOT_GOVERNANCE_UNCONFIRMED), z.literal(PILOT_TREATMENT_AGREEMENT_CONFIRMED)]),
+    confirmed: z.boolean(),
     recordedAt: z.string().trim().min(1),
     recordedBy: syntheticPersonSchema,
   }).strict(),
@@ -377,6 +382,7 @@ function normalizeGovernanceInputValues(input: PilotImportGovernanceInput): Pilo
       reference: input.processingAgreement.reference.trim(),
       version: input.processingAgreement.version.trim(),
       status: input.processingAgreement.status,
+      confirmed: input.processingAgreement.confirmed,
     },
     subprocessors: normalizeGovernanceSubprocessors(input.subprocessors),
     location: {
@@ -425,6 +431,35 @@ function assertRetentionWindow(retention: PilotImportRetentionInput, now: Date):
   }
 }
 
+/** Rejects imports until a data treatment agreement is confirmed on file. */
+export function assertPilotImportTreatmentAgreementConfirmed(
+  agreement: PilotImportProcessingAgreementInput
+): void {
+  if (!agreement.confirmed) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement is required')
+  }
+  if (agreement.status !== PILOT_TREATMENT_AGREEMENT_CONFIRMED) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_STATUS_INVALID: confirmed agreement status is required')
+  }
+}
+
+/** Requires the authenticated municipal secretary or designated operator to own the import. */
+export function assertPilotImportOwnerMatchesActor(
+  owner: PilotImportPerson,
+  actor: { name: string; email: string | null; role: string; schoolId: string | null }
+): PilotImportPerson {
+  if (!['admin', 'secretario'].includes(actor.role) || actor.schoolId !== null || !actor.email) {
+    throw new Error('PILOT_IMPORT_OWNER_DENIED: a municipal secretary or designated operator must authorize the import')
+  }
+  if (owner.email.trim().toLowerCase() !== actor.email.trim().toLowerCase()) {
+    throw new Error('PILOT_IMPORT_OWNER_DENIED: the named owner must be the authenticated authorizer')
+  }
+  if (owner.name.trim() !== actor.name.trim()) {
+    throw new Error('PILOT_IMPORT_OWNER_DENIED: the named owner must match the authenticated profile')
+  }
+  return { name: actor.name.trim(), email: actor.email.trim().toLowerCase() }
+}
+
 /** Validates the versioned technical governance fields before a synthetic CSV enters a proof database. */
 export function validatePilotImportGovernanceInput(
   input: unknown,
@@ -435,6 +470,7 @@ export function validatePilotImportGovernanceInput(
     throwGovernanceSchemaError(parsed.error.issues, 'PILOT_IMPORT_GOVERNANCE_INVALID: versioned governance fields are required')
   }
   const normalized = normalizeGovernanceInputValues(parsed.data)
+  assertPilotImportTreatmentAgreementConfirmed(normalized.processingAgreement)
   assertRetentionWindow(normalized.retention, now)
   return normalized
 }
@@ -459,6 +495,7 @@ export function validateGovernedPilotImportManifest(
       reference: parsed.data.processingAgreement.reference,
       version: parsed.data.processingAgreement.version,
       status: parsed.data.processingAgreement.status,
+      confirmed: parsed.data.processingAgreement.confirmed,
     },
     subprocessors: parsed.data.subprocessors,
     location: parsed.data.location,
@@ -489,6 +526,7 @@ export function validateGovernedPilotImportManifest(
   if (Date.parse(normalized.approval.approvedAt) > now.getTime()) {
     throw new Error('PILOT_IMPORT_APPROVAL_FUTURE: approval cannot be in the future')
   }
+  assertPilotImportTreatmentAgreementConfirmed(normalized.processingAgreement)
   if (normalized.approval.submittedBy.email === normalized.approval.approvedBy.email) {
     throw new Error('PILOT_IMPORT_MAKER_CHECKER_REQUIRED: submitter and approver must differ')
   }
@@ -646,6 +684,7 @@ function canonicalizeGovernedPilotImportManifest(manifest: GovernedPilotImportMa
       reference: manifest.processingAgreement.reference,
       version: manifest.processingAgreement.version,
       status: manifest.processingAgreement.status,
+      confirmed: manifest.processingAgreement.confirmed,
     },
     subprocessors: manifest.subprocessors,
     location: manifest.location,

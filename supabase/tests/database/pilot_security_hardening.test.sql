@@ -27,6 +27,14 @@ VALUES
   ('98100000-0000-0000-0000-000000000002', 'Diretora Hardening A', 'diretora.hardening.a@synthetic.invalid', 'diretor', '98000000-0000-0000-0000-000000000001', true, false, false),
   ('98100000-0000-0000-0000-000000000003', 'Diretora Hardening B', 'diretora.hardening.b@synthetic.invalid', 'diretor', '98000000-0000-0000-0000-000000000002', true, false, false),
   ('98100000-0000-0000-0000-000000000004', 'Professor Hardening A', 'professor.hardening.a@synthetic.invalid', 'professor', '98000000-0000-0000-0000-000000000001', true, false, false);
+INSERT INTO public.pilot_data_treatment_agreements(
+  id, escola_id, reference, version, confirmed, confirmed_at, confirmed_by
+) VALUES (
+  '98800000-0000-0000-0000-000000000001',
+  '98000000-0000-0000-0000-000000000001',
+  'DPA-SYN-HARDENING-001', 'v1', true, now() - interval '1 minute',
+  '98100000-0000-0000-0000-000000000001'
+);
 
 INSERT INTO public.turmas(id, nome, serie, turno, ano_letivo, escola_id, professor_id, ativo)
 VALUES
@@ -355,7 +363,13 @@ RESET ROLE;
 INSERT INTO public.pilot_import_batches(
   id, escola_id, dataset, idempotency_key, content_sha256, encryption_key_id,
   encrypted_payload, iv, auth_tag, validation_report, status, submitted_by,
-  raw_expires_at, import_target, source_mode, encryption_algorithm
+  raw_expires_at, import_target, source_mode, encryption_algorithm,
+  governance_owner_name, governance_owner_email, governance_owner_user_id,
+  governance_owner_authorized_at, processing_agreement_id,
+  processing_agreement_confirmed, processing_agreement_reference,
+  processing_agreement_version, processing_agreement_recorded_at,
+  processing_agreement_recorded_by, retention_policy, canonical_expires_at,
+  rollback_until, source_row_count, canonical_fingerprint_sha256
 )
 VALUES (
   '99000000-0000-0000-0000-000000000001',
@@ -363,7 +377,13 @@ VALUES (
   'students', 'security-cleanup', repeat('c', 64), 'security-test-v1',
   'ciphertext', 'iv', 'tag', '{}'::jsonb, 'pending_approval',
   '98100000-0000-0000-0000-000000000001', now() - interval '1 hour',
-  'synthetic_local', 'synthetic', 'aes-256-gcm'
+  'synthetic_local', 'synthetic', 'aes-256-gcm',
+  'Secretaria Hardening', 'secretaria.hardening@synthetic.invalid',
+  '98100000-0000-0000-0000-000000000001', now() - interval '1 minute',
+  '98800000-0000-0000-0000-000000000001', true,
+  'DPA-SYN-HARDENING-001', 'v1', now() - interval '1 minute',
+  '98100000-0000-0000-0000-000000000001', 'synthetic-cleanup-test',
+  now() + interval '30 days', now() + interval '7 days', 1, repeat('a', 64)
 );
 
 SET LOCAL ROLE authenticated;

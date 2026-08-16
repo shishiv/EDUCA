@@ -9,6 +9,7 @@ export type DemoActionOperation =
   | 'demo.user.status_update'
   | 'demo.pilot.import'
   | 'demo.pilot.import_approval'
+  | 'demo.pilot.import_rollback'
   | 'demo.auth.invitation'
   | 'demo.auth.first_access'
 

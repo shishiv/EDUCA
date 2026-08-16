@@ -46,7 +46,7 @@ const GOVERNANCE = {
   processor: { name: 'Processador Sintetico', email: 'processor@synthetic.invalid', status: 'a confirmar' },
   purpose: 'preparacao tecnica do piloto sintetico',
   legalBasis: 'a confirmar',
-  processingAgreement: { reference: 'DPA-DEMO-001', version: 'v1', status: 'a confirmar' },
+  processingAgreement: { reference: 'DPA-DEMO-001', version: 'v1', status: 'confirmed', confirmed: true },
   subprocessors: [{
     name: 'Armazenamento Sintetico', email: 'storage@synthetic.invalid', status: 'a confirmar',
     service: 'armazenamento cifrado de prova', processingLocation: 'isolated-proof-local',

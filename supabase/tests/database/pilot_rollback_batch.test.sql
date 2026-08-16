@@ -25,6 +25,8 @@ BEGIN
     approved_by, approved_at, import_target, source_mode, encryption_algorithm,
     governance_owner_name, governance_owner_email, submitted_by_name,
     submitted_by_email, approved_by_name, approved_by_email,
+    governance_owner_user_id, governance_owner_authorized_at,
+    processing_agreement_id, processing_agreement_confirmed,
     processing_agreement_reference, processing_agreement_version,
     processing_agreement_recorded_at, processing_agreement_recorded_by,
     processing_agreement_recorded_by_name, processing_agreement_recorded_by_email,
@@ -40,7 +42,9 @@ BEGIN
     'aes-256-gcm', 'Owner Rollback Sintetico', 'owner.rollback@synthetic.invalid',
     'Secretaria Rollback Sintetica', 'secretaria.rollback@synthetic.invalid',
     'Diretora Rollback Sintetica', 'diretora.rollback@synthetic.invalid',
-    'DPA-SYN-ROLLBACK-001', 'v1', now(),
+    '97000000-0000-0000-0000-000000000001', now() - interval '1 minute',
+    '97400000-0000-0000-0000-000000000001', true,
+    'DPA-SYN-ROLLBACK-001', 'v1', now() - interval '1 minute',
     '97000000-0000-0000-0000-000000000001', 'Secretaria Rollback Sintetica',
     'secretaria.rollback@synthetic.invalid', 'proof-only-test',
     CASE WHEN p_rollback_until <= now()
@@ -78,6 +82,14 @@ INSERT INTO public.users(id, nome, email, tipo_usuario, escola_id, ativo, primei
 VALUES
   ('97000000-0000-0000-0000-000000000001', 'Secretaria Rollback Sintetica', 'secretaria.rollback@synthetic.invalid', 'secretario', NULL, true, false, false),
   ('97000000-0000-0000-0000-000000000002', 'Diretora Rollback Sintetica', 'diretora.rollback@synthetic.invalid', 'diretor', '96000000-0000-0000-0000-000000000001', true, false, false);
+INSERT INTO public.pilot_data_treatment_agreements(
+  id, escola_id, reference, version, confirmed, confirmed_at, confirmed_by
+) VALUES (
+  '97400000-0000-0000-0000-000000000001',
+  '96000000-0000-0000-0000-000000000001',
+  'DPA-SYN-ROLLBACK-001', 'v1', true, now() - interval '1 minute',
+  '97000000-0000-0000-0000-000000000001'
+);
 INSERT INTO public.turmas(id, import_source_id, nome, serie, turno, ano_letivo, capacidade, escola_id, ativo)
 VALUES ('98000000-0000-0000-0000-000000000001', 'SYN-ROLLBACK-CLASS', 'Turma Rollback Sintetica', '1 ano', 'matutino', 2026, 30, '96000000-0000-0000-0000-000000000001', true);
 

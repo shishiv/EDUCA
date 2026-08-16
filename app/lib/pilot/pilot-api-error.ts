@@ -51,7 +51,13 @@ export function pilotErrorResponse(error: unknown, options: PilotErrorResponseOp
   const detail = readErrorDetail(error)
 
   if (PILOT_SENTINEL_MESSAGE.test(detail.message)) {
-    const status = detail.message.includes('AUTH_REQUIRED') ? 401 : detail.message.includes('_DENIED') ? 403 : fallbackStatus
+    const status = detail.message.includes('AUTH_REQUIRED')
+      ? 401
+      : detail.message.includes('_DENIED')
+        ? 403
+        : detail.message.includes('_REQUIRED') || detail.message.includes('_MISSING')
+          ? 409
+          : fallbackStatus
     return NextResponse.json({ error: detail.message }, { status })
   }
 

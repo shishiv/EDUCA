@@ -23,28 +23,6 @@ import {
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 
-async function findOrCreateByImportSource(
-  service: ReturnType<typeof createServiceRoleClient>,
-  table: 'alunos' | 'responsaveis',
-  schoolId: string,
-  sourceId: string,
-  values: Record<string, unknown>
-): Promise<string> {
-  const { data: existing } = await service.from(table).select('id').eq('escola_id', schoolId).eq('import_source_id', sourceId).maybeSingle()
-  if (existing) {
-    const { error } = await service.from(table).update(values).eq('id', existing.id)
-    if (error) throw error
-    return existing.id
-  }
-  const { data, error } = await service.from(table).insert({
-    ...values,
-    escola_id: schoolId,
-    import_source_id: sourceId,
-  }).select('id').single()
-  if (error) throw error
-  return data.id
-}
-
 export async function POST(request: Request, context: { params: Promise<{ batchId: string }> }) {
   const demoSandbox = isDemoSandboxEnabled()
   try {
@@ -89,6 +67,20 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
     if (batchError || !batch) return NextResponse.json({ error: 'PILOT_IMPORT_BATCH_NOT_FOUND' }, { status: 404 })
     if (batch.escola_id !== actor.schoolId || batch.submitted_by === actor.id) return NextResponse.json({ error: 'PILOT_IMPORT_MAKER_CHECKER_DENIED' }, { status: 403 })
     if (batch.status === 'published' || batch.status === 'rejected') return NextResponse.json({ batch, idempotentReplay: true })
+    if (batch.processing_agreement_confirmed !== true || !batch.processing_agreement_id) {
+      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
+    }
+    const { data: agreement, error: agreementError } = await service
+      .from('pilot_data_treatment_agreements')
+      .select('id,escola_id,confirmed,confirmed_at,confirmed_by')
+      .eq('id', batch.processing_agreement_id)
+      .eq('escola_id', batch.escola_id)
+      .eq('confirmed', true)
+      .maybeSingle()
+    if (agreementError) throw agreementError
+    if (!agreement?.confirmed || !agreement.confirmed_at || !agreement.confirmed_by) {
+      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
+    }
 
     const submittedByName = typeof batch.submitted_by_name === 'string' ? batch.submitted_by_name : ''
     const submittedByEmail = typeof batch.submitted_by_email === 'string' ? batch.submitted_by_email : ''
@@ -103,13 +95,13 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
     )
     const governanceFingerprint = fingerprintPilotImportGovernance(completeGovernance)
     const reportSha256 = createHash('sha256').update(JSON.stringify(batch.validation_report)).digest('hex')
-    const { error: approvalError } = await service.from('pilot_import_approvals').upsert({
-      batch_id: batch.id, escola_id: batch.escola_id, submitted_by: batch.submitted_by,
-      approved_by: actor.id, decision: body.decision!, report_sha256: reportSha256, decided_at: now.toISOString(),
-    }, { onConflict: 'batch_id' })
-    if (approvalError) throw approvalError
 
     if (body.decision === 'rejected') {
+      const { error: approvalError } = await service.from('pilot_import_approvals').upsert({
+        batch_id: batch.id, escola_id: batch.escola_id, submitted_by: batch.submitted_by,
+        approved_by: actor.id, decision: 'rejected', report_sha256: reportSha256, decided_at: now.toISOString(),
+      }, { onConflict: 'batch_id' })
+      if (approvalError) throw approvalError
       const { data: rejected, error } = await service.from('pilot_import_batches').update({
         status: 'rejected', approved_by: actor.id, approved_by_name: actor.name, approved_by_email: actor.email,
         approved_at: now.toISOString(), governance_fingerprint_sha256: governanceFingerprint,
@@ -134,72 +126,35 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
     const canonicalCounts = countCanonicalPilotRows(canonicalRows)
     const canonicalFingerprint = fingerprintCanonicalPilotRows(canonicalRows)
 
-    const { error: approvedUpdateError } = await service.from('pilot_import_batches').update({
-      status: 'approved',
-      approved_by: actor.id,
-      approved_by_name: actor.name,
-      approved_by_email: actor.email,
-      approved_at: now.toISOString(),
-      governance_fingerprint_sha256: governanceFingerprint,
-      governance_metadata: completeGovernance,
-      canonical_counts: canonicalCounts,
-      canonical_fingerprint_sha256: canonicalFingerprint,
-    }).eq('id', batch.id)
-    if (approvedUpdateError) throw approvedUpdateError
-    for (const row of rows) {
-      const { data: turma, error: turmaError } = await service.from('turmas').select('id,ano_letivo').eq('escola_id', batch.escola_id).eq('import_source_id', row.class_code).single()
-      if (turmaError || !turma) throw new Error(`PILOT_IMPORT_CLASS_NOT_FOUND: row ${row.source_id}`)
-      const guardianId = await findOrCreateByImportSource(service, 'responsaveis', batch.escola_id, `guardian:${row.source_id}`, {
-        nome: row.guardian_name,
-        parentesco: row.guardian_relationship,
-        telefone: row.guardian_phone,
-        pilot_import_batch_id: batch.id,
-      })
-      const studentId = await findOrCreateByImportSource(service, 'alunos', batch.escola_id, row.source_id, {
-        nome_completo: row.student_name,
-        data_nascimento: row.birth_date,
-        sexo: row.sex,
-        responsavel_id: guardianId,
-        pilot_import_batch_id: batch.id,
-      })
-      const { error: linkError } = await service.from('aluno_responsaveis').upsert({
-        aluno_id: studentId,
-        responsavel_id: guardianId,
-        tipo_responsabilidade: row.guardian_relationship,
-        pilot_import_batch_id: batch.id,
-      }, { onConflict: 'aluno_id,responsavel_id' })
-      if (linkError) throw linkError
-      const { error: enrollmentError } = await service.from('matriculas').upsert({
-        aluno_id: studentId,
-        turma_id: turma.id,
-        ano_letivo: turma.ano_letivo,
-        situacao: 'ativa',
-        observacoes: 'synthetic pilot CSV import',
-        pilot_import_batch_id: batch.id,
-      }, { onConflict: 'aluno_id,turma_id,ano_letivo' })
-      if (enrollmentError) throw enrollmentError
-    }
-
-    const publishedAt = new Date().toISOString()
-    const { data: published, error: publishError } = await service.from('pilot_import_batches').update({
-      status: 'published', published_at: publishedAt, encrypted_payload: null, iv: null, auth_tag: null, cleaned_at: publishedAt,
-    }).eq('id', batch.id).select('id,status,published_at,cleaned_at').single()
+    const { data: publishedRows, error: publishError } = await asPilotRpcClient(service).rpc<{
+      batch_id: string
+      status: string
+      published_at: string
+      cleaned_at: string | null
+      raw_expires_at: string
+    }[]>('pilot_publish_synthetic_import_batch', {
+      p_batch_id: batch.id,
+      p_approver_user_id: actor.id,
+      p_report_sha256: reportSha256,
+      p_rows: rows,
+      p_canonical_counts: canonicalCounts,
+      p_canonical_fingerprint_sha256: canonicalFingerprint,
+      p_governance_fingerprint_sha256: governanceFingerprint,
+      p_governance_metadata: completeGovernance,
+    })
     if (publishError) throw publishError
+    const published = publishedRows?.[0]
+    if (!published) throw new Error('PILOT_IMPORT_PUBLISH_RECEIPT_MISSING')
 
-    const supabase = await createClient()
-    await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
-      p_event_type: 'import_published', p_entity_type: 'pilot_import_batch', p_entity_id: batch.id,
-      p_escola_id: batch.escola_id,
-      p_metadata: {
-        dataset: 'students',
-        row_count: rows.length,
-        canonical_counts: canonicalCounts,
-        canonical_fingerprint_sha256: canonicalFingerprint,
-        governance_recorded: true,
-        plaintext_stored: false,
+    return NextResponse.json({
+      batch: {
+        id: published.batch_id,
+        status: published.status,
+        published_at: published.published_at,
+        cleaned_at: published.cleaned_at,
+        raw_expires_at: published.raw_expires_at,
       },
     })
-    return NextResponse.json({ batch: published })
   } catch (error) {
     return pilotErrorResponse(error, { feature: 'pilot-import-approval', fallbackCode: 'PILOT_APPROVAL_FAILED' })
   }

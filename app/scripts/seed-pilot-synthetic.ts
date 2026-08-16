@@ -105,6 +105,25 @@ async function seed() {
   if (attendanceError) throw attendanceError
 
   const secretariatId = accountIds.get('secretaria@synthetic.invalid')!
+  const { error: agreementError } = await service.from('pilot_data_treatment_agreements').upsert([
+    {
+      escola_id: schoolA,
+      reference: 'DPA-SYN-E2E-001',
+      version: 'v1',
+      confirmed: true,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: secretariatId,
+    },
+    {
+      escola_id: schoolB,
+      reference: 'DPA-SYN-E2E-001',
+      version: 'v1',
+      confirmed: true,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: secretariatId,
+    },
+  ], { onConflict: 'escola_id,reference,version' })
+  if (agreementError) throw agreementError
   const { error: metricsError } = await service.from('pilot_metric_events').insert([
     { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'weekly_school_active', metric_value: 1, dimensions: { synthetic: true } },
     { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'expected_attendance', metric_value: 1, dimensions: { synthetic: true } },

@@ -81,6 +81,17 @@ VALUES
   ('20000000-0000-0000-0000-000000000098', 'Diretora Prova Sintetica', 'diretora.prova@synthetic.invalid', 'diretor', '10000000-0000-0000-0000-000000000099', true, false, false);
 INSERT INTO public.turmas(id, import_source_id, nome, serie, turno, ano_letivo, capacidade, escola_id, ativo)
 VALUES ('30000000-0000-0000-0000-000000000099', 'SYN-PROOF-CLASS', 'Turma Prova Sintetica', '1 ano', 'matutino', 2026, 30, '10000000-0000-0000-0000-000000000099', true);
+INSERT INTO public.pilot_data_treatment_agreements(
+  escola_id, reference, version, confirmed, confirmed_at, confirmed_by
+)
+VALUES (
+  '10000000-0000-0000-0000-000000000099',
+  'DPA-SYN-PROOF-001',
+  'v1',
+  true,
+  now() - interval '1 minute',
+  '20000000-0000-0000-0000-000000000099'
+);
 SQL
 
 cat > "$CSV_FILE" <<'CSV'
@@ -99,7 +110,7 @@ ROLLBACK_UNTIL=$(date -u -d '7 days' +%Y-%m-%dT%H:%M:%S.000Z)
 cat > "$APPROVAL_FILE" <<JSON
 {
   "version": "educa-synthetic-pilot-governance-v1",
-  "owner": {"name": "Owner Prova Sintetico", "email": "owner.prova@synthetic.invalid"},
+  "owner": {"name": "Secretaria Prova Sintetica", "email": "secretaria.prova@synthetic.invalid"},
   "controller": {"name": "Controlador Prova Sintetico", "email": "controller.prova@synthetic.invalid", "status": "a confirmar"},
   "processor": {"name": "Processador Prova Sintetico", "email": "processor.prova@synthetic.invalid", "status": "a confirmar"},
   "purpose": "preparacao tecnica do piloto sintetico",
@@ -107,7 +118,8 @@ cat > "$APPROVAL_FILE" <<JSON
   "processingAgreement": {
     "reference": "DPA-SYN-PROOF-001",
     "version": "v1",
-    "status": "a confirmar",
+    "status": "confirmed",
+    "confirmed": true,
     "recordedAt": "$RECORDED_AT",
     "recordedBy": {"name": "Secretaria Prova Sintetica", "email": "secretaria.prova@synthetic.invalid"}
   },
@@ -275,7 +287,7 @@ SECOND_BATCH_ID=$(printf '%s\n' "$SECOND_IMPORT_OUTPUT" | sed -n 's/.*"batchId":
   exit 1
 }
 
-PAYLOAD_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (import_target = 'isolated_proof' AND source_mode = 'synthetic' AND encrypted_payload IS NOT NULL AND iv IS NOT NULL AND auth_tag IS NOT NULL AND encrypted_payload NOT LIKE '%Aluno Prova Sintetico%' AND source_row_count = 1 AND canonical_counts->>'storageObjects' = '1' AND canonical_fingerprint_sha256 IS NOT NULL AND database_fingerprint_sha256 IS NOT NULL AND governance_fingerprint_sha256 IS NOT NULL AND governance_owner_name = 'Owner Prova Sintetico' AND processing_agreement_reference = 'DPA-SYN-PROOF-001' AND retention_policy = 'proof-only-30d') FROM public.pilot_import_batches WHERE id = '$BATCH_ID'")
+PAYLOAD_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (import_target = 'isolated_proof' AND source_mode = 'synthetic' AND encrypted_payload IS NOT NULL AND iv IS NOT NULL AND auth_tag IS NOT NULL AND encrypted_payload NOT LIKE '%Aluno Prova Sintetico%' AND source_row_count = 1 AND canonical_counts->>'storageObjects' = '1' AND canonical_fingerprint_sha256 IS NOT NULL AND database_fingerprint_sha256 IS NOT NULL AND governance_fingerprint_sha256 IS NOT NULL AND governance_owner_name = 'Secretaria Prova Sintetica' AND processing_agreement_reference = 'DPA-SYN-PROOF-001' AND processing_agreement_confirmed = true AND retention_policy = 'proof-only-30d') FROM public.pilot_import_batches WHERE id = '$BATCH_ID'")
 [[ "$PAYLOAD_CHECK" == t ]] || { echo "PILOT_IMPORT_PROOF_E2E_CONTRACT_FAILED: encrypted governance batch receipt" >&2; exit 1; }
 
 ROW_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT ((SELECT count(*) FROM public.alunos WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.aluno_responsaveis WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM public.matriculas WHERE pilot_import_batch_id = '$BATCH_ID') = 1 AND (SELECT count(*) FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$BATCH_ID') = 1)")
