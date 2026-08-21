@@ -2,7 +2,8 @@
 
 # EDUCA
 
-**Gestão escolar open source para redes municipais brasileiras · Open-source school management for Brazilian municipal school networks**
+**A planilha da secretaria de educação não aguenta mais. O EDUCA aguenta.**
+**The spreadsheet your school district runs on doesn't scale. EDUCA does.**
 
 [![CI](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml/badge.svg)](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -14,15 +15,43 @@
 
 ---
 
-## O que é · What it is
+## O problema · The problem
 
-**PT:** O EDUCA é um software de gestão escolar **open source (MIT)** para redes municipais e cidades pequenas do Brasil: escolas, usuários, alunos, responsáveis, turmas, matrículas, atribuições de professores, chamada, painéis e relatórios.
+**PT:** Cidade pequena não tem verba pra sistema de gestão escolar caro, e planilha não dá conta de matrícula, chamada e comunicação com responsáveis ao mesmo tempo. O resultado: dado espalhado, secretaria correndo atrás de informação, e ninguém sabe de fato quantos alunos estão matriculados, faltando ou sem professor atribuído.
 
-**EN:** EDUCA is an **open-source (MIT)** school-management application for Brazilian municipal and small-town school networks: schools, users, students, guardians, classes, enrolments, teacher assignments, attendance, dashboards, and reporting.
+**EN:** Small towns can't afford enterprise school-management software, and spreadsheets can't handle enrollment, attendance, and guardian communication at once. The result: scattered data, staff chasing information, and no one really knows how many students are enrolled, absent, or without an assigned teacher.
+
+## O que o EDUCA faz · What EDUCA does
+
+**PT:** Coloca escolas, alunos, responsáveis, turmas, matrículas e chamada num só lugar — com painéis que respondem a pergunta que a secretaria mais faz: *"como estão as escolas agora?"*. É **open source (MIT)**, então a prefeitura ou a escola não fica refém de contrato ou de fornecedor único.
+
+**EN:** Puts schools, students, guardians, classes, enrollment, and attendance in one place — with dashboards that answer the question every district office asks: *"how are the schools doing right now?"*. It's **open source (MIT)**, so the district or school isn't locked into a contract or a single vendor.
+
+## Por que existe · Why it exists
+
+**PT:** O EDUCA nasceu dentro de uma secretaria municipal de educação real, não numa mesa de produto. Foi construído pra resolver o problema de gestão escolar de uma prefeitura pequena — o mesmo tipo de cidade que ele atende hoje.
+
+**EN:** EDUCA started inside a real municipal education department, not on a product roadmap. It was built to solve one small city's school-management problem — the same kind of city it serves today.
+
+## O que ele ainda não é · What it isn't (yet)
+
+**PT:** Sendo direto: hoje o repositório sustenta uma **fundação de piloto municipal com dados sintéticos**. Ele não autoriza dados reais de alunos, implantação municipal, aprovação legal ou alegação de conformidade de produção. Se você precisa disso agora, ainda não é o momento — mas o caminho está sendo construído em público, aqui.
+
+**EN:** To be direct: the repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. If you need that today, it's not ready yet — but it's being built in the open, right here.
+
+## Dúvidas comuns · Common questions
+
+**PT:**
+- **"Minha prefeitura não tem equipe técnica."** — O self-host pede alguém que saiba rodar Docker e Node. Se não tiver essa pessoa hoje, o Cloud Free (modelo futuro) é pensado pra isso — registre interesse.
+- **"E o WhatsApp, tem custo escondido?"** — Não. É BYO: vocês trazem a conta Meta/BSP e os templates. Sem credencial, o envio simplesmente fica desligado, não quebra o sistema.
+- **"Meus dados de aluno ficam seguros?"** — Hoje o piloto roda só com dados sintéticos, de propósito, até essa parte estar madura o suficiente pra dado real. Veja [`SECURITY.md`](SECURITY.md).
+
+**EN:**
+- **"My district has no technical staff."** — Self-hosting requires someone comfortable with Docker and Node. If you don't have that yet, Cloud Free (a future model) is meant for this — register your interest.
+- **"Is WhatsApp a hidden cost?"** — No. It's BYO: you bring the Meta/BSP account and templates. Without credentials, sending just stays off — it doesn't break the system.
+- **"Is student data safe?"** — The pilot runs on synthetic data only, on purpose, until that part is mature enough for real data. See [`SECURITY.md`](SECURITY.md).
 
 ## Modelo · Model
-
-**PT:** Este repositório disponibiliza o software de gestão escolar sob a licença MIT e uma configuração de demonstração pública com dados sintéticos. O caminho atualmente disponível é o self-host a partir deste repositório. **Cloud Free** e **Cloud Pro** são modelos futuros, não disponíveis no momento. Registre seu interesse nesses modelos.
 
 | Modelo | Situação |
 | --- | --- |
@@ -30,23 +59,13 @@
 | **Cloud Free** | Modelo futuro, não disponível no momento. |
 | **Cloud Pro** | Modelo futuro, não disponível no momento. |
 
-**EN:** This repository provides the school-management software under the MIT License and a public-demo configuration with synthetic data. The currently available path is self-hosting from this repository. **Cloud Free** and **Cloud Pro** are future models, not currently available. Register your interest in these models.
-
 | Model | Status |
 | --- | --- |
 | **Self-host** | Code available in this repository under the MIT License. |
 | **Cloud Free** | Future model, not currently available. |
 | **Cloud Pro** | Future model, not currently available. |
 
-WhatsApp é **BYO (bring your own)**: a escola ou prefeitura traz conta Meta/BSP, número e templates; sem credencial, o envio fica desligado. · WhatsApp is **BYO**: the school or municipality brings the Meta/BSP account, number, and templates; without credentials, sending stays off.
-
-## Status atual · Current status
-
-**PT:** O repositório sustenta hoje uma **fundação de piloto municipal sintética**. Ele não autoriza dados reais de alunos, implantação municipal, aprovação legal ou alegação de conformidade de produção.
-
-**EN:** The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim.
-
-## Começando · Getting started
+## Comece agora · Get started
 
 **PT:** Pré-requisitos: Node.js 20+, pnpm 9+ e Docker (para Supabase local). Comandos executados a partir de `app/`.
 
@@ -64,9 +83,7 @@ Setup completo, comandos exatos e limites do piloto: [`CONTEXT.md`](CONTEXT.md).
 
 ## Segurança · Security
 
-**PT:** Para reportar vulnerabilidades em privado, veja [`SECURITY.md`](SECURITY.md).
-
-**EN:** To report vulnerabilities privately, see [`SECURITY.md`](SECURITY.md).
+Para reportar vulnerabilidades em privado, veja [`SECURITY.md`](SECURITY.md). · To report vulnerabilities privately, see [`SECURITY.md`](SECURITY.md).
 
 ## Licença · License
 
