@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Baby } from 'lucide-react'
+import { useRegistryTranslations } from '@/i18n/registry'
 
 const faixaColorClasses: Record<FaixaEtaria, string> = {
   bebes: 'bg-orange-100 text-orange-700 border border-orange-200',
@@ -45,6 +46,7 @@ export function FaixaEtariaIndicator({
   showIcon = true,
   className,
 }: FaixaEtariaIndicatorProps) {
+  const t = useRegistryTranslations()
   const faixa = calculateFaixaEtaria(birthDate)
 
   // Return null if student is not in Infantil age range

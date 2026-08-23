@@ -24,6 +24,7 @@ import { VivenciaCard } from './VivenciaCard'
 
 // Types
 import { type Vivencia } from '@/types/diario-infantil'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -60,6 +61,7 @@ export function VivenciasTimeline({
   onDeleteVivencia,
   className,
 }: VivenciasTimelineProps) {
+  const t = useClassroomTranslations()
   // Group vivencias by date
   const groups = React.useMemo(() => {
     if (groupBy === 'week') {

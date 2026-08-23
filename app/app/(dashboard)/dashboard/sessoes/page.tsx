@@ -299,7 +299,7 @@ export default function SessoesPage() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Workflow de Sessões:</strong> PLANEJADA → ABERTA → FECHADA.
+          <strong>{t('sessions.workflow')}</strong> PLANEJADA → ABERTA → FECHADA.
           Uma vez fechada, a sessão não pode ser modificada (compliance legal).
         </AlertDescription>
       </Alert>
@@ -398,11 +398,11 @@ export default function SessoesPage() {
                   <SelectValue placeholder={t('diary.allStatuses')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="PLANEJADA">Planejada</SelectItem>
-                  <SelectItem value="ABERTA">Aberta</SelectItem>
-                  <SelectItem value="FECHADA">Fechada</SelectItem>
-                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                  <SelectItem value="todos">{t('labels.all')}</SelectItem>
+                  <SelectItem value="PLANEJADA">{t('status.planned')}</SelectItem>
+                  <SelectItem value="ABERTA">{t('status.open')}</SelectItem>
+                  <SelectItem value="FECHADA">{t('status.closed')}</SelectItem>
+                  <SelectItem value="CANCELADA">{t('status.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -427,7 +427,7 @@ export default function SessoesPage() {
             Sessões de Aula ({filteredSessoes.length})
           </CardTitle>
           <CardDescription>
-            Histórico completo de sessões cadastradas no sistema
+            {t('sessions.history')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -498,7 +498,7 @@ export default function SessoesPage() {
                               ) : (
                                 <>
                                   <Users className="h-4 w-4 mr-1" />
-                                  Frequência
+                                  {t('labels.frequency')}
                                 </>
                               )}
                             </Button>

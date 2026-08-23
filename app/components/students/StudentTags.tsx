@@ -63,7 +63,7 @@ export function StudentTags({
       {/* Status Badge */}
       {ativo !== undefined && (
         <Badge variant={ativo ? 'success' : 'secondary'}>
-          {ativo ? 'Ativo' : t('labels.inativo')}
+          {ativo ? t('ui.ativo') : t('labels.inativo')}
         </Badge>
       )}
 

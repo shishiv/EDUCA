@@ -163,11 +163,11 @@ export default function PerfilPage() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="perfil" className="flex items-center space-x-2">
                 <User className="h-4 w-4" />
-                <span>Perfil</span>
+                <span>{t('profile.profile')}</span>
               </TabsTrigger>
               <TabsTrigger value="senha" className="flex items-center space-x-2">
                 <Key className="h-4 w-4" />
-                <span>Senha</span>
+                <span>{t('profile.password')}</span>
               </TabsTrigger>
               <TabsTrigger value="seguranca" className="flex items-center space-x-2">
                 <Shield className="h-4 w-4" />
@@ -193,7 +193,7 @@ export default function PerfilPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t('profile.email')}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -205,7 +205,7 @@ export default function PerfilPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="telefone">Telefone</Label>
+                        <Label htmlFor="telefone">{t('profile.phone')}</Label>
                         <Input
                           id="telefone"
                           value={profileData.telefone}
@@ -227,7 +227,7 @@ export default function PerfilPage() {
                         {loading ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Salvando...
+                            {t('profile.saving')}
                           </>
                         ) : (
                           <>
@@ -285,12 +285,12 @@ export default function PerfilPage() {
                         {loading ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Alterando...
+                            {t('profile.changing')}
                           </>
                         ) : (
                           <>
                             <Key className="h-4 w-4 mr-2" />
-                            Alterar Senha
+                            {t('profile.changePassword')}
                           </>
                         )}
                       </Button>

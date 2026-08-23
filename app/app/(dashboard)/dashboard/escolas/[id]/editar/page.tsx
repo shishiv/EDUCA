@@ -97,7 +97,7 @@ export default function EditarEscolaPage() {
       })
     } catch (error) {
       logger.error('Erro ao carregar escola:', error as any)
-      toast.error('Erro ao carregar dados da escola')
+      toast.error(t('ui.erro-ao-carregar-dados-da-escola'))
       router.push('/dashboard/escolas')
     } finally {
       setLoading(false)
@@ -121,7 +121,7 @@ export default function EditarEscolaPage() {
       // Validar código INEP (8 dígitos)
       const codigoLimpo = formData.codigo.replace(/\D/g, '')
       if (codigoLimpo.length !== 8) {
-        toast.error('Código INEP deve ter exatamente 8 dígitos')
+        toast.error(t('ui.codigo-inep-deve-ter-exatamente-8-digitos'))
         setSaving(false)
         return
       }
@@ -148,7 +148,7 @@ export default function EditarEscolaPage() {
         await schoolsApi.assignDirector(escolaId, formData.diretor_id)
       }
 
-      toast.success('Escola atualizada com sucesso!')
+      toast.success(t('ui.escola-atualizada-com-sucesso'))
       router.push('/dashboard/escolas')
     } catch (error: any) {
       logger.error('Erro ao atualizar escola:', error)
@@ -231,7 +231,7 @@ export default function EditarEscolaPage() {
         <Button variant="outline" asChild>
           <Link href="/dashboard/escolas">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
       </div>
@@ -263,7 +263,7 @@ export default function EditarEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.informacoes-basicas')}</CardTitle>
                 <CardDescription>
-                  Dados principais da unidade escolar
+                  {t('ui.dados-principais-da-unidade-escolar')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -312,10 +312,10 @@ export default function EditarEscolaPage() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="space-y-1">
                     <Label htmlFor="ativo" className="text-base font-medium">
-                      Status da Escola
+                      {t('ui.status-da-escola')}
                     </Label>
                     <p className="text-sm text-gray-600">
-                      {formData.ativo ? 'Escola ativa no sistema' : 'Escola inativa no sistema'}
+                      {formData.ativo ? t('ui.escola-ativa-no-sistema') : t('ui.escola-inativa-no-sistema')}
                     </p>
                   </div>
                   <Switch
@@ -331,11 +331,10 @@ export default function EditarEscolaPage() {
                       <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-orange-900">
-                          Escola Inativa
+                          {t('ui.escola-inativa')}
                         </p>
                         <p className="text-sm text-orange-700">
-                          Escolas inativas não aparecem nas listagens principais e não podem
-                          receber novas matrículas.
+                          {t('ui.escolas-inativas-nao-aparecem-nas-listagens-principais-e-nao-podem-receb')}
                         </p>
                       </div>
                     </div>
@@ -351,7 +350,7 @@ export default function EditarEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.localizacao')}</CardTitle>
                 <CardDescription>
-                  Endereço completo da unidade escolar
+                  {t('ui.endereco-completo-da-unidade-escolar')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -420,7 +419,7 @@ export default function EditarEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.informacoes-de-contato')}</CardTitle>
                 <CardDescription>
-                  Telefone e email da escola
+                  {t('ui.telefone-e-email-da-escola')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -455,7 +454,7 @@ export default function EditarEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.gestao-escolar')}</CardTitle>
                 <CardDescription>
-                  Atribuição de diretor e informações administrativas
+                  {t('ui.atribuicao-de-diretor-e-informacoes-administrativas')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -483,7 +482,7 @@ export default function EditarEscolaPage() {
                   </Select>
                   <p className="text-xs text-gray-500">
                     {diretoresDisponiveis.length === 0 && !escola?.diretor
-                      ? 'Nenhum diretor disponível para atribuição'
+                      ? t('ui.nenhum-diretor-disponivel-para-atribuicao')
                       : `Diretor atual ou ${diretoresDisponiveis.length} disponíveis`}
                   </p>
                 </div>
@@ -493,10 +492,10 @@ export default function EditarEscolaPage() {
                     <School className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-blue-900">
-                        Informação sobre Diretores
+                        {t('ui.informacao-sobre-diretores')}
                       </p>
                       <p className="text-sm text-blue-700">
-                        Ao trocar o diretor, o diretor anterior será automaticamente desvinculado desta escola.
+                        {t('ui.ao-trocar-o-diretor-o-diretor-anterior-sera-automaticamente-desvinculado')}
                       </p>
                     </div>
                   </div>
@@ -510,7 +509,7 @@ export default function EditarEscolaPage() {
             <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/dashboard/escolas">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Cancelar
+                {t('labels.cancelar')}
               </Link>
             </Button>
             <Button type="submit" disabled={saving} className="w-full sm:w-auto">
@@ -522,7 +521,7 @@ export default function EditarEscolaPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Alterações
+                  {t('ui.salvar-alteracoes-a2ca13')}
                 </>
               )}
             </Button>

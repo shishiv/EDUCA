@@ -185,7 +185,7 @@ export default function MatriculaDetailsPage() {
       })
     } catch (error: any) {
       logger.error('Erro ao carregar matrícula:', error)
-      toast.error('Erro ao carregar detalhes da matrícula')
+      toast.error(t('ui.erro-ao-carregar-detalhes-da-matricula'))
       router.push('/dashboard/matriculas')
     } finally {
       setLoading(false)
@@ -207,12 +207,12 @@ export default function MatriculaDetailsPage() {
 
       if (error) throw error
 
-      toast.success('Matrícula atualizada com sucesso!')
+      toast.success(t('ui.matricula-atualizada-com-sucesso'))
       setEditMode(false)
       loadMatriculaDetails()
     } catch (error: any) {
       logger.error('Erro ao atualizar matrícula:', error)
-      toast.error('Erro ao atualizar matrícula')
+      toast.error(t('ui.erro-ao-atualizar-matricula'))
     } finally {
       setSaving(false)
     }
@@ -315,13 +315,13 @@ export default function MatriculaDetailsPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard/matriculas">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              {t('ui.voltar')}
             </Link>
           </Button>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.detalhes-da-matricula')}</h1>
             <p className="text-gray-600 mt-1">
-              Informações completas e histórico de frequência
+              {t('ui.informacoes-completas-e-historico-de-frequencia')}
             </p>
           </div>
         </div>
@@ -329,17 +329,17 @@ export default function MatriculaDetailsPage() {
           {!editMode ? (
             <Button onClick={() => setEditMode(true)} variant="outline">
               <Edit2 className="h-4 w-4 mr-2" />
-              Editar
+              {t('ui.editar')}
             </Button>
           ) : (
             <>
               <Button onClick={handleCancel} variant="outline">
                 <X className="h-4 w-4 mr-2" />
-                Cancelar
+                {t('labels.cancelar')}
               </Button>
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Salvando...' : 'Salvar'}
+                {saving ? 'Salvando...' : t('ui.salvar')}
               </Button>
             </>
           )}
@@ -379,19 +379,19 @@ export default function MatriculaDetailsPage() {
               <div>
                 <Label className="text-gray-600">{t('labels.idade')}</Label>
                 <p className="font-medium">
-                  {calculateAge(matricula.alunos?.data_nascimento || '')} anos
+                  {calculateAge(matricula.alunos?.data_nascimento || '')} {t('ui.anos')}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-gray-600">{t('labels.sexo')}</Label>
-                <p className="font-medium">{matricula.alunos?.sexo === 'M' ? 'Masculino' : 'Feminino'}</p>
+                <p className="font-medium">{matricula.alunos?.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}</p>
               </div>
               <div>
                 <Label className="text-gray-600">{t('labels.status')}</Label>
                 <Badge variant={matricula.alunos?.ativo ? 'default' : 'secondary'}>
-                  {matricula.alunos?.ativo ? 'Ativo' : t('labels.inativo')}
+                  {matricula.alunos?.ativo ? t('ui.ativo') : t('labels.inativo')}
                 </Badge>
               </div>
             </div>
@@ -401,7 +401,7 @@ export default function MatriculaDetailsPage() {
                 size="sm"
                 onClick={() => router.push(`/dashboard/alunos/${matricula.aluno_id}`)}
               >
-                Ver Perfil Completo
+                {t('ui.ver-perfil-completo')}
               </Button>
             </div>
           </CardContent>
@@ -444,7 +444,7 @@ export default function MatriculaDetailsPage() {
                 size="sm"
                 onClick={() => router.push(`/dashboard/turmas/${matricula.turma_id}`)}
               >
-                Ver Detalhes da Turma
+                {t('ui.ver-detalhes-da-turma')}
               </Button>
             </div>
           </CardContent>
@@ -560,7 +560,7 @@ export default function MatriculaDetailsPage() {
               <CardTitle>{t('labels.historico-de-frequencia')}</CardTitle>
             </div>
             <CardDescription>
-              {frequencia.length} registros de aula
+              {frequencia.length} {t('ui.registros-de-aula')}
             </CardDescription>
           </div>
         </CardHeader>
@@ -590,12 +590,12 @@ export default function MatriculaDetailsPage() {
                         {record.presente ? (
                           <Badge variant="default" className="bg-green-50 text-green-600">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Presente
+                            {t('ui.presente')}
                           </Badge>
                         ) : (
                           <Badge variant="destructive" className="bg-red-50 text-red-600">
                             <XCircle className="h-3 w-3 mr-1" />
-                            Falta
+                            {t('ui.falta')}
                           </Badge>
                         )}
                       </TableCell>

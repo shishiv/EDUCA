@@ -128,7 +128,7 @@ export default function NovaMatriculaPage() {
           feature: 'matriculas',
           action: 'load_matricula_data'
         })
-        toast.error('Erro ao carregar dados')
+        toast.error(t('ui.erro-ao-carregar-dados'))
       } finally {
         setLoadingData(false)
       }
@@ -155,7 +155,7 @@ export default function NovaMatriculaPage() {
 
       if (error) throw error
 
-      toast.success('Matrícula realizada com sucesso!')
+      toast.success(t('ui.matricula-realizada-com-sucesso'))
       router.push('/dashboard/matriculas')
     } catch (error) {
       logger.error('Error creating matricula', error as Error, {
@@ -163,7 +163,7 @@ export default function NovaMatriculaPage() {
         action: 'create_matricula',
         metadata: { alunoId: formData.aluno_id, turmaId: formData.turma_id }
       })
-      toast.error('Erro ao realizar matricula')
+      toast.error(t('ui.erro-ao-realizar-matricula'))
     } finally {
       setLoading(false)
     }
@@ -254,13 +254,13 @@ export default function NovaMatriculaPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/matriculas">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('labels.nova-matricula')}</h1>
           <p className="text-gray-600 mt-1">
-            Realize uma nova matricula no sistema
+            {t('ui.realize-uma-nova-matricula-no-sistema')}
           </p>
         </div>
       </div>
@@ -277,7 +277,7 @@ export default function NovaMatriculaPage() {
                   <span>{t('labels.selecionar-aluno')}</span>
                 </CardTitle>
                 <CardDescription>
-                  Busque e selecione o aluno para matrícula
+                  {t('ui.busque-e-selecione-o-aluno-para-matricula')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -309,8 +309,8 @@ export default function NovaMatriculaPage() {
                             <div className="flex-1">
                               <div className="font-medium">{aluno.nome_completo}</div>
                               <div className="text-sm text-gray-500">
-                                {calculateAge(aluno.data_nascimento)} anos • 
-                                {aluno.sexo === 'M' ? ' Masculino' : ' Feminino'} • 
+                                {calculateAge(aluno.data_nascimento)} {t('ui.anos-464c57')}
+                                {' '}{aluno.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')} •
                                 Resp: {aluno.responsavel}
                               </div>
                             </div>
@@ -318,7 +318,7 @@ export default function NovaMatriculaPage() {
                         ))}
                         {filteredAlunos.length === 0 && (
                           <div className="p-4 text-center text-gray-500">
-                            Nenhum aluno encontrado
+                            {t('ui.nenhum-aluno-encontrado')}
                           </div>
                         )}
                       </div>
@@ -335,8 +335,7 @@ export default function NovaMatriculaPage() {
                       <div>
                         <div className="font-medium">{selectedAluno.nome_completo}</div>
                         <div className="text-sm text-gray-600">
-                          {calculateAge(selectedAluno.data_nascimento)} anos • 
-                          Resp: {selectedAluno.responsavel}
+                          {calculateAge(selectedAluno.data_nascimento)} {t('ui.anos-resp')} {selectedAluno.responsavel}
                         </div>
                       </div>
                     </div>
@@ -349,7 +348,7 @@ export default function NovaMatriculaPage() {
                         setFormData(prev => ({ ...prev, aluno_id: '' }))
                       }}
                     >
-                      Alterar
+                      {t('ui.alterar')}
                     </Button>
                   </div>
                 )}
@@ -364,7 +363,7 @@ export default function NovaMatriculaPage() {
                   <span>{t('labels.dados-da-matricula')}</span>
                 </CardTitle>
                 <CardDescription>
-                  Preencha as informações da matrícula
+                  {t('ui.preencha-as-informacoes-da-matricula')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -431,7 +430,7 @@ export default function NovaMatriculaPage() {
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" asChild>
                 <Link href="/dashboard/matriculas">
-                  Cancelar
+                  {t('labels.cancelar')}
                 </Link>
               </Button>
               <Button 
@@ -446,7 +445,7 @@ export default function NovaMatriculaPage() {
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Realizar Matrícula
+                    {t('ui.realizar-matricula')}
                   </>
                 )}
               </Button>
@@ -497,7 +496,7 @@ export default function NovaMatriculaPage() {
                   </div>
                   <div className="mt-2 text-center">
                     <Badge variant={vagasDisponiveis > 0 ? 'default' : 'destructive'}>
-                      {vagasDisponiveis} vagas disponíveis
+                      {vagasDisponiveis} {t('ui.vagas-disponiveis')}
                     </Badge>
                   </div>
                 </div>

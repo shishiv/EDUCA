@@ -173,7 +173,7 @@ export default function AlunosPage() {
       }
     } catch (error: any) {
       logger.error('Erro ao carregar alunos:', error)
-      toast.error('Erro ao carregar lista de alunos')
+      toast.error(t('ui.erro-ao-carregar-lista-de-alunos'))
       setAlunos([])
     } finally {
       setLoading(false)
@@ -186,11 +186,11 @@ export default function AlunosPage() {
     try {
       await studentsApi.updateStudentStatus(studentToDeactivate.id, false)
       setStudentToDeactivate(null)
-      toast.success('Aluno desativado com sucesso!')
+      toast.success(t('ui.aluno-desativado-com-sucesso'))
       await loadAlunos()
     } catch (error) {
       logger.error('Erro ao desativar aluno:', error instanceof Error ? error : String(error))
-      toast.error('Não foi possível desativar o aluno')
+      toast.error(t('ui.nao-foi-possivel-desativar-o-aluno'))
     }
   }
 
@@ -277,12 +277,12 @@ export default function AlunosPage() {
             <>
               <Button variant="outline" className="gap-2">
                 <Download className="h-4 w-4" />
-                Exportar
+                {t('labels.exportar')}
               </Button>
               <Button asChild className="gap-2">
                 <Link href="/dashboard/alunos/novo">
                   <Plus className="h-4 w-4" />
-                  Novo Aluno
+                  {t('labels.novo-aluno')}
                 </Link>
               </Button>
             </>
@@ -306,12 +306,12 @@ export default function AlunosPage() {
           <>
             <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
-              Exportar
+              {t('labels.exportar')}
             </Button>
             <Button asChild className="gap-2">
               <Link href="/dashboard/alunos/novo">
                 <Plus className="h-4 w-4" />
-                Novo Aluno
+                {t('labels.novo-aluno')}
               </Link>
             </Button>
           </>
@@ -332,7 +332,7 @@ export default function AlunosPage() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle className="text-lg">Alunos ({filteredAlunos.length})</CardTitle>
+            <CardTitle className="text-lg">{t('ui.alunos')}{filteredAlunos.length})</CardTitle>
           </div>
           <InlineFilters
             search={{
@@ -401,14 +401,14 @@ export default function AlunosPage() {
                         <div>
                           <div className="font-medium">{aluno.nome_completo}</div>
                           <div className="text-sm text-gray-500">
-                            {aluno.sexo === 'M' ? 'Masculino' : 'Feminino'}
+                            {aluno.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}
                             {aluno.cpf && ` • CPF: ${aluno.cpf}`}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>{calculateAge(aluno.data_nascimento)} anos</div>
+                      <div>{calculateAge(aluno.data_nascimento)} {t('ui.anos')}</div>
                       <div className="text-sm text-gray-500">
                         {formatDateBR(aluno.data_nascimento)}
                       </div>
@@ -474,13 +474,13 @@ export default function AlunosPage() {
                     icon={search || statusFilter !== 'todos' || sexoFilter !== 'todos' ? SearchIcon : Users}
                     title={
                       search || statusFilter !== 'todos' || sexoFilter !== 'todos'
-                        ? 'Nenhum aluno encontrado'
+                        ? t('ui.nenhum-aluno-encontrado')
                         : t('labels.nenhum-aluno-cadastrado')
                     }
                     description={
                       search || statusFilter !== 'todos' || sexoFilter !== 'todos'
-                        ? 'Tente ajustar os filtros para encontrar o que procura.'
-                        : 'Comece adicionando o primeiro aluno ao sistema.'
+                        ? t('ui.tente-ajustar-os-filtros-para-encontrar-o-que-procura')
+                        : t('ui.comece-adicionando-o-primeiro-aluno-ao-sistema')
                     }
                     actions={
                       search || statusFilter !== 'todos' || sexoFilter !== 'todos'
@@ -521,7 +521,7 @@ export default function AlunosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('labels.desativar-aluno')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja desativar {studentToDeactivate?.nome_completo}? O registro permanece disponível para consulta.
+              {t('ui.tem-certeza-que-deseja-desativar')} {studentToDeactivate?.nome_completo}{t('ui.o-registro-permanece-disponivel-para-consulta')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

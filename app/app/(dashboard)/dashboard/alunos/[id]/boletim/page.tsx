@@ -287,7 +287,7 @@ export default function BoletimPage() {
 
       if (studentError) {
         if (studentError.code === 'PGRST116') {
-          setError('Aluno não encontrado ou sem matrícula ativa')
+          setError(t('ui.aluno-nao-encontrado-ou-sem-matricula-ativa'))
         } else {
           throw studentError
         }
@@ -423,8 +423,8 @@ export default function BoletimPage() {
         feature: 'boletim',
         action: 'fetch_failed',
       })
-      setError('Erro ao carregar dados do boletim')
-      toast.error('Erro ao carregar boletim')
+      setError(t('ui.erro-ao-carregar-dados-do-boletim'))
+      toast.error(t('ui.erro-ao-carregar-boletim'))
     } finally {
       setLoading(false)
     }
@@ -552,7 +552,7 @@ export default function BoletimPage() {
       const filename = `boletim-${student.nome_completo.replace(/\s+/g, '-').toLowerCase()}`
       savePDF(doc, filename)
 
-      toast.success('PDF exportado com sucesso!')
+      toast.success(t('ui.pdf-exportado-com-sucesso'))
       logger.info('PDF exported successfully', {
         feature: 'boletim',
         action: 'export_pdf',
@@ -563,7 +563,7 @@ export default function BoletimPage() {
         feature: 'boletim',
         action: 'export_pdf_failed',
       })
-      toast.error('Erro ao exportar PDF')
+      toast.error(t('ui.erro-ao-exportar-pdf'))
     } finally {
       setExportingPDF(false)
     }
@@ -599,7 +599,7 @@ export default function BoletimPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/dashboard/alunos/${studentId}`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              {t('ui.voltar')}
             </Link>
           </Button>
         </div>
@@ -631,7 +631,7 @@ export default function BoletimPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/alunos/${studentId}`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div className="flex-1">
@@ -645,8 +645,8 @@ export default function BoletimPage() {
           </h1>
           <p className="text-gray-600">
             {educationLevel === 'infantil'
-              ? 'Relatório de Desenvolvimento - Educação Infantil'
-              : 'Desempenho Acadêmico - Ensino Fundamental'}
+              ? t('ui.relatorio-de-desenvolvimento-educacao-infantil')
+              : t('ui.desempenho-academico-ensino-fundamental')}
           </p>
         </div>
       </div>

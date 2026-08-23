@@ -44,6 +44,7 @@ import {
   getAllCampos,
   type Vivencia,
 } from '@/types/diario-infantil'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -127,6 +128,7 @@ export function DevelopmentReportWriter({
   disabled = false,
   className,
 }: DevelopmentReportWriterProps) {
+  const t = useClassroomTranslations()
   // Form state
   const [values, setValues] = useState<ReportFormValues>({
     ...DEFAULT_VALUES,
@@ -245,7 +247,7 @@ export function DevelopmentReportWriter({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center justify-between">
-            <span>Progresso do Relatório</span>
+            <span>{t('diary.progress')}</span>
             <span className="text-sm font-medium text-purple-600">
               {progress.filled}/{progress.total} campos
             </span>
@@ -317,7 +319,7 @@ export function DevelopmentReportWriter({
         <Alert className="border-yellow-200 bg-yellow-50">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertTitle className="text-yellow-800">
-            Campos Incompletos
+            {t('diary.incomplete')}
           </AlertTitle>
           <AlertDescription className="text-yellow-700">
             Para finalizar, preencha todos os campos com pelo menos{' '}
@@ -342,12 +344,12 @@ export function DevelopmentReportWriter({
           {isSaving ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Salvando...
+              {t('actions.saving')}
             </>
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              Salvar Rascunho
+              {t('diary.saveDraft')}
             </>
           )}
         </Button>
@@ -371,7 +373,7 @@ export function DevelopmentReportWriter({
           ) : (
             <>
               <CheckCircle className="h-4 w-4 mr-2" />
-              Finalizar
+              {t('diary.finalize')}
             </>
           )}
         </Button>
@@ -413,6 +415,7 @@ function CampoField({
   onFocus,
   onBlur,
 }: CampoFieldProps) {
+  const t = useClassroomTranslations()
   return (
     <Card
       className={cn(

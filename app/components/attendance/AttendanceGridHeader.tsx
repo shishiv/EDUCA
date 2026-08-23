@@ -39,6 +39,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { AttendanceStats, SessionLockInfo } from './AttendanceGridTypes'
 import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -103,6 +104,7 @@ export function AttendanceGridHeader({
   isOnline,
   syncStatus,
 }: AttendanceGridHeaderProps) {
+  const t = useClassroomTranslations()
   return (
     <CardHeader className="pb-4">
       {/* Lock Status Banner */}
@@ -257,7 +259,7 @@ export function AttendanceGridHeader({
             className="min-h-[36px]"
           >
             <UserCheck className="h-3 w-3 mr-1" />
-            Marcar Presentes
+            {t('attendance.markPresent')}
           </Button>
           <Button
             size="sm"
@@ -267,7 +269,7 @@ export function AttendanceGridHeader({
             className="min-h-[36px]"
           >
             <UserX className="h-3 w-3 mr-1" />
-            Marcar Ausentes
+            {t('attendance.markAbsent')}
           </Button>
           <Button
             size="sm"

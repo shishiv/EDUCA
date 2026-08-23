@@ -406,12 +406,12 @@ export default function TurmasPage() {
           <>
             <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
-              Exportar
+              {t('actions.export')}
             </Button>
             <Button asChild className="gap-2">
               <Link href="/dashboard/turmas/nova">
                 <Plus className="h-4 w-4" />
-                Nova Turma
+                {t('classes.newTitle')}
               </Link>
             </Button>
           </>

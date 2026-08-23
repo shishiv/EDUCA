@@ -257,7 +257,7 @@ export default function NovaTurmaPage() {
                     disabled={loadingData}
                   >
                     <SelectTrigger id="escola_id">
-                      <SelectValue placeholder={loadingData ? 'Carregando…' : 'Selecione a escola'} />
+                      <SelectValue placeholder={loadingData ? 'Carregando…' : t('forms.selectSchool')} />
                     </SelectTrigger>
                     <SelectContent>
                       {escolas.map((escola) => (
@@ -317,7 +317,7 @@ export default function NovaTurmaPage() {
                       disabled={!formData.escola_id}
                     >
                       <SelectTrigger id="professor_id">
-                        <SelectValue placeholder="Selecione o professor" />
+                        <SelectValue placeholder={t('forms.selectTeacher')} />
                       </SelectTrigger>
                       <SelectContent>
                         {professores.map((prof) => (

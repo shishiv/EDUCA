@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Loader2, XCircle, CheckCircle } from 'lucide-react'
 import { logger } from '@/lib/logger'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 export interface FecharAulaDialogProps {
   open: boolean
@@ -16,6 +17,7 @@ export interface FecharAulaDialogProps {
 }
 
 export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: FecharAulaDialogProps) {
+  const t = useClassroomTranslations()
   const [observacoes, setObservacoes] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -42,10 +44,10 @@ export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: Fe
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            Encerrar Aula
+            {t('attendance.closeLesson')}
           </DialogTitle>
           <DialogDescription>
-            Confirme o encerramento da aula. Após confirmar, a frequência será bloqueada e não poderá ser alterada.
+            {t('attendance.closeLessonHint')}
           </DialogDescription>
         </DialogHeader>
 
@@ -71,7 +73,7 @@ export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: Fe
             <div className="flex gap-2">
               <XCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-amber-800">
-                <strong>Atenção:</strong> Esta ação não pode ser desfeita. A frequência ficará bloqueada após o encerramento.
+                <strong>Atenção:</strong> {t('attendance.closeWarning')}
               </div>
             </div>
           </div>
@@ -84,7 +86,7 @@ export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: Fe
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancelar
+            {t('actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -100,7 +102,7 @@ export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: Fe
             ) : (
               <>
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Confirmar Encerramento
+                {t('attendance.confirmClose')}
               </>
             )}
           </Button>

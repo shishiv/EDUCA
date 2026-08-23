@@ -115,14 +115,14 @@ export function StudentInfoGrid({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Dados Pessoais
+              {t('labels.dados-pessoais')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">
-                  Data de Nascimento
+                  {t('labels.data-de-nascimento')}
                 </label>
                 <div className="flex items-center gap-2 mt-1">
                   <Calendar className="h-4 w-4 text-gray-400" />
@@ -133,7 +133,7 @@ export function StudentInfoGrid({
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">{t('labels.sexo')}</label>
-                <p className="mt-1">{student.sexo === 'M' ? 'Masculino' : 'Feminino'}</p>
+                <p className="mt-1">{student.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}</p>
               </div>
             </div>
 
@@ -202,7 +202,7 @@ export function StudentInfoGrid({
               </div>
               <div className="text-sm space-y-1">
                 <p>Tel: {responsavel.telefone}</p>
-                {responsavel.email && <p>Email: {responsavel.email}</p>}
+                {responsavel.email && <p>{t('ui.email')} {responsavel.email}</p>}
               </div>
             </CardContent>
           </Card>
@@ -217,10 +217,10 @@ export function StudentInfoGrid({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                Frequência
+                {t('ui.frequencia')}
               </CardTitle>
               <CardDescription>
-                Resumo de presenças e faltas
+                {t('ui.resumo-de-presencas-e-faltas')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -296,7 +296,7 @@ export function StudentInfoGrid({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <School className="h-5 w-5" />
-                Histórico de Matrículas
+                {t('ui.historico-de-matriculas')}
               </CardTitle>
             </CardHeader>
             <CardContent>

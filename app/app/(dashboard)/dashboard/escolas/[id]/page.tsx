@@ -150,7 +150,7 @@ export default function EscolaDetailsPage() {
       await calculateStats(id)
     } catch (error: any) {
       logger.error('Erro ao carregar escola:', error)
-      toast.error('Erro ao carregar detalhes da escola')
+      toast.error(t('ui.erro-ao-carregar-detalhes-da-escola'))
       router.push('/dashboard/escolas')
     } finally {
       setLoading(false)
@@ -273,23 +273,23 @@ export default function EscolaDetailsPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard/escolas">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              {t('ui.voltar')}
             </Link>
           </Button>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{escola.nome}</h1>
             <p className="text-gray-600 mt-1">
-              Informações completas e estatísticas da escola
+              {t('ui.informacoes-completas-e-estatisticas-da-escola')}
             </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-            {escola.ativo ? t('labels.ativa') : 'Inativa'}
+            {escola.ativo ? t('labels.ativa') : t('ui.inativa')}
           </Badge>
           <Button onClick={() => router.push(`/dashboard/escolas/${id}/editar`)} variant="outline">
             <Edit2 className="h-4 w-4 mr-2" />
-            Editar
+            {t('ui.editar')}
           </Button>
         </div>
       </div>
@@ -387,7 +387,7 @@ export default function EscolaDetailsPage() {
               <Label className="text-gray-600">{t('labels.status')}</Label>
               <div className="mt-1">
                 <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-                  {escola.ativo ? t('labels.ativa') : 'Inativa'}
+                  {escola.ativo ? t('labels.ativa') : t('ui.inativa')}
                 </Badge>
               </div>
             </div>
@@ -474,7 +474,7 @@ export default function EscolaDetailsPage() {
               <CardTitle>{t('labels.turmas-da-escola')}</CardTitle>
             </div>
             <CardDescription>
-              {turmas.length} turmas ativas
+              {turmas.length} {t('ui.turmas-ativas')}
             </CardDescription>
           </div>
         </CardHeader>
@@ -489,7 +489,7 @@ export default function EscolaDetailsPage() {
                 className="mt-4"
                 onClick={() => router.push('/dashboard/turmas/nova')}
               >
-                Criar Nova Turma
+                {t('ui.criar-nova-turma')}
               </Button>
             </div>
           ) : (
@@ -515,7 +515,7 @@ export default function EscolaDetailsPage() {
                       </TableCell>
                       <TableCell>{getTurnoLabel(turma.turno)}</TableCell>
                       <TableCell>{turma.professor?.nome || '-'}</TableCell>
-                      <TableCell>{turma.capacidade} alunos</TableCell>
+                      <TableCell>{turma.capacidade} {t('ui.alunos-258311')}</TableCell>
                       <TableCell>{turma.ano_letivo}</TableCell>
                       <TableCell className="text-right">
                         <Button

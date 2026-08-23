@@ -103,7 +103,7 @@ export default function DiarioInfantilPage() {
         action: 'load_student',
         metadata: { alunoId }
       })
-      setError('Erro ao carregar dados do aluno')
+      setError(t('ui.erro-ao-carregar-dados-do-aluno'))
     }
   }, [alunoId])
 
@@ -163,7 +163,7 @@ export default function DiarioInfantilPage() {
 
       await vivenciasApi.update(editingVivencia.id, updateData)
 
-      toast.success('Vivencia atualizada com sucesso')
+      toast.success(t('ui.vivencia-atualizada-com-sucesso'))
       setIsEditModalOpen(false)
       setEditingVivencia(null)
       await loadVivencias()
@@ -173,7 +173,7 @@ export default function DiarioInfantilPage() {
         action: 'update_vivencia',
         metadata: { vivenciaId: editingVivencia.id }
       })
-      toast.error('Erro ao atualizar vivencia')
+      toast.error(t('ui.erro-ao-atualizar-vivencia'))
     } finally {
       setIsEditLoading(false)
     }
@@ -197,7 +197,7 @@ export default function DiarioInfantilPage() {
 
       await vivenciasApi.delete(deletingVivencia.id)
 
-      toast.success('Vivencia excluida com sucesso')
+      toast.success(t('ui.vivencia-excluida-com-sucesso'))
       setIsDeleteDialogOpen(false)
       setDeletingVivencia(null)
       await loadVivencias()
@@ -207,7 +207,7 @@ export default function DiarioInfantilPage() {
         action: 'delete_vivencia',
         metadata: { vivenciaId: deletingVivencia.id }
       })
-      toast.error('Erro ao excluir vivencia')
+      toast.error(t('ui.erro-ao-excluir-vivencia'))
     } finally {
       setIsDeleteLoading(false)
     }
@@ -248,7 +248,7 @@ export default function DiarioInfantilPage() {
       <div className="p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
           <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
-          <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
+          <p className="text-sm mt-1">{error || t('ui.aluno-nao-encontrado')}</p>
           <Button
             variant="outline"
             size="sm"
@@ -256,7 +256,7 @@ export default function DiarioInfantilPage() {
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Button>
         </div>
       </div>
@@ -270,7 +270,7 @@ export default function DiarioInfantilPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/alunos/${alunoId}`}>
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Perfil do Aluno
+            {t('ui.perfil-do-aluno')}
           </Link>
         </Button>
       </div>
@@ -297,7 +297,7 @@ export default function DiarioInfantilPage() {
           <Button asChild>
             <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
               <Plus className="h-4 w-4 mr-2" />
-              Nova Vivencia
+              {t('ui.nova-vivencia')}
             </Link>
           </Button>
         </div>
@@ -307,7 +307,7 @@ export default function DiarioInfantilPage() {
       {vivencias.length === 0 && (
         <div className="text-center py-12 border rounded-lg bg-muted/30">
           <p className="text-muted-foreground">
-            Nenhuma vivencia registrada ainda.
+            {t('ui.nenhuma-vivencia-registrada-ainda')}
           </p>
           <Button asChild className="mt-4">
             <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
@@ -357,12 +357,12 @@ export default function DiarioInfantilPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('labels.excluir-vivencia')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta vivencia? Esta acao nao pode ser desfeita.
+              {t('ui.tem-certeza-que-deseja-excluir-esta-vivencia-esta-acao-nao-pode-ser-desf')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleteLoading}>
-              Cancelar
+              {t('labels.cancelar')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
@@ -375,7 +375,7 @@ export default function DiarioInfantilPage() {
                   Excluindo...
                 </>
               ) : (
-                'Excluir'
+                t('ui.excluir')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

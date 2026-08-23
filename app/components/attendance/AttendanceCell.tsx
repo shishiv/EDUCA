@@ -15,6 +15,7 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { Check, X, FileText, Lock } from 'lucide-react'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -57,6 +58,7 @@ export function AttendanceCell({
   size = 'md',
   className,
 }: AttendanceCellProps) {
+  const t = useClassroomTranslations()
   const handleClick = () => {
     if (disabled || locked) return
 
@@ -174,6 +176,7 @@ export function AttendanceCellRow({
   locked = false,
   className,
 }: AttendanceCellRowProps) {
+  const t = useClassroomTranslations()
   return (
     <div
       className={cn(

@@ -119,7 +119,7 @@ export default function AtribuicoesPage() {
         action: 'load_turmas',
         metadata: { escolaId: selectedEscolaId }
       })
-      setError('Erro ao carregar turmas')
+      setError(t('ui.erro-ao-carregar-turmas'))
     } finally {
       setLoading(false)
     }
@@ -210,7 +210,7 @@ export default function AtribuicoesPage() {
         description={
           selectedEscola
             ? `Defina os professores titulares - ${selectedEscola.nome}`
-            : 'Defina um professor titular para cada turma'
+            : t('labels.defina-um-professor-titular-para-cada-turma')
         }
       />
 
@@ -258,7 +258,7 @@ export default function AtribuicoesPage() {
             <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <p className="text-lg font-medium">{t('labels.nenhuma-turma-encontrada')}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Esta escola ainda nao possui turmas cadastradas.
+              {t('ui.esta-escola-ainda-nao-possui-turmas-cadastradas')}
             </p>
           </CardContent>
         </Card>
@@ -324,7 +324,7 @@ export default function AtribuicoesPage() {
                       }}
                     >
                       <UserPlus className="h-4 w-4 mr-2" />
-                      Atribuir
+                      {t('ui.atribuir')}
                     </Button>
 
                   </div>
@@ -340,7 +340,7 @@ export default function AtribuicoesPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedTurma?.professor ? 'Alterar professor titular' : 'Definir professor titular'}
+              {selectedTurma?.professor ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
             </DialogTitle>
           </DialogHeader>
           {selectedTurma && selectedEscolaId && (

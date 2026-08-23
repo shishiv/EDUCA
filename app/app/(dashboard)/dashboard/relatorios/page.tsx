@@ -199,7 +199,7 @@ export default function RelatoriosPage() {
                 {isGenerating ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Gerando...
+                    {t('reports.generating')}
                   </>
                 ) : (
                   t('reports.generate')
@@ -286,7 +286,7 @@ export default function RelatoriosPage() {
                   <TableHead>{t('reports.report')}</TableHead>
                   <TableHead>{t('reports.typeColumn')}</TableHead>
                   <TableHead>{t('reports.generatedAt')}</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('components.attendance.status')}</TableHead>
                   <TableHead className="text-right">{t('reports.actions')}</TableHead>
                 </TableRow>
               </TableHeader>

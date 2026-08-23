@@ -141,11 +141,11 @@ export default function CalendarioPage() {
 
       if (error) throw error
 
-      toast.success('Evento excluído com sucesso')
+      toast.success(t('calendar.deleteSuccess'))
       fetchEventos()
     } catch (error) {
       logger.error('Erro ao excluir evento:', error as Error)
-      toast.error('Erro ao excluir evento')
+      toast.error(t('calendar.deleteError'))
     }
   }
 
@@ -228,7 +228,7 @@ export default function CalendarioPage() {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleToday}>
-                  Hoje
+                  {t('actions.today')}
                 </Button>
                 <Button variant="outline" size="icon" onClick={handleNextMonth}>
                   <ChevronRight className="h-4 w-4" />
@@ -336,7 +336,7 @@ export default function CalendarioPage() {
                 <span className="text-sm">{label}</span>
                 {(tipo === 'feriado' || tipo === 'recesso') && (
                   <Badge variant="secondary" className="text-xs">
-                    Afeta Frequência
+                    {t('calendar.affectsAttendance')}
                   </Badge>
                 )}
               </div>

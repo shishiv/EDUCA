@@ -274,7 +274,7 @@ export default function MatriculasPage() {
       setMatriculas(formattedMatriculas as any)
     } catch (error) {
       logger.error('Error loading matriculas', error as any)
-      toast.error('Erro ao carregar lista de matrículas')
+      toast.error(t('ui.erro-ao-carregar-lista-de-matriculas'))
       setMatriculas([])
     } finally {
       setLoading(false)
@@ -283,7 +283,7 @@ export default function MatriculasPage() {
 
   const handleDeleteMatricula = async (matriculaId: string, alunoNome: string) => {
   if (isDemoSandboxEnabled()) {
-    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    toast.error(t('ui.acao-bloqueada-no-sandbox-publico-de-demonstracao'))
     return
   }
 
@@ -315,9 +315,9 @@ export default function MatriculasPage() {
 
       // User-friendly error messages
       if (error.code === '23503') {
-        toast.error('Não é possível cancelar esta matrícula pois existem registros de frequência ou notas vinculados.')
+        toast.error(t('ui.nao-e-possivel-cancelar-esta-matricula-pois-existem-registros-de-frequen'))
       } else if (error.code === '42501' || error.message?.includes('permission')) {
-        toast.error('Você não tem permissão para cancelar esta matrícula.')
+        toast.error(t('ui.voce-nao-tem-permissao-para-cancelar-esta-matricula'))
       } else {
         toast.error(`Erro ao cancelar matrícula: ${error.message || 'Tente novamente.'}`)
       }
@@ -418,18 +418,18 @@ export default function MatriculasPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('labels.matriculas')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie as matrículas dos alunos na rede municipal
+            {t('ui.gerencie-as-matriculas-dos-alunos-na-rede-municipal')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
-            Exportar
+            {t('labels.exportar')}
           </Button>
           <Button asChild className="gap-2">
             <Link href="/dashboard/matriculas/nova">
               <Plus className="h-4 w-4" />
-              Nova Matrícula
+              {t('labels.nova-matricula')}
             </Link>
           </Button>
         </div>
@@ -468,7 +468,7 @@ export default function MatriculasPage() {
         <CardHeader>
           <CardTitle>{t('labels.filtros')}</CardTitle>
           <CardDescription>
-            Use os filtros abaixo para encontrar matrículas específicas
+            {t('ui.use-os-filtros-abaixo-para-encontrar-matriculas-especificas')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -529,7 +529,7 @@ export default function MatriculasPage() {
       {/* Lista de Matrículas */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Matrículas ({filteredMatriculas.length})</CardTitle>
+          <CardTitle>{t('ui.lista-de-matriculas')}{filteredMatriculas.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -559,7 +559,7 @@ export default function MatriculasPage() {
                           <div className="text-sm text-gray-500">
                             {calculateAge(matricula.aluno?.data_nascimento) !== null
                               ? `${calculateAge(matricula.aluno?.data_nascimento)} anos`
-                              : 'Idade não informada'}
+                              : t('ui.idade-nao-informada')}
                             {matricula.aluno?.sexo && (matricula.aluno.sexo === 'M' ? ' • Masculino' : ' • Feminino')}
                             {matricula.aluno?.cpf && ` • CPF: ${matricula.aluno.cpf}`}
                           </div>
@@ -627,7 +627,7 @@ export default function MatriculasPage() {
                 {filteredMatriculas.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      Nenhuma matrícula encontrada com os filtros aplicados.
+                      {t('ui.nenhuma-matricula-encontrada-com-os-filtros-aplicados')}
                     </TableCell>
                   </TableRow>
                 )}

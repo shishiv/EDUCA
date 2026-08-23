@@ -222,7 +222,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
                     <p className="text-sm text-gray-600">{turma.serie} - {turma.turno}</p>
                     <p className="mt-1 flex items-center gap-1 text-sm text-gray-600">
                       <Users className="h-4 w-4" />
-                      {turma.alunosAtivos} alunos ativos
+                      {turma.alunosAtivos} {t('dashboard.studentsActiveCount')}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">

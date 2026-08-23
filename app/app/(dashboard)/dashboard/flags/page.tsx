@@ -280,7 +280,7 @@ export default function FlagsPage() {
                     <CardDescription>{selectedFlag?.description}</CardDescription>
                   </div>
                   <Badge variant="outline" className="text-sm">
-                    {getEnabledCount(selectedFlag!)}/{allEscolas.length} ativas
+                    {getEnabledCount(selectedFlag!)}/{allEscolas.length} {t('flags.active')}
                   </Badge>
                 </div>
               </CardHeader>
@@ -290,7 +290,7 @@ export default function FlagsPage() {
                 <div className="border-b border-blue-200 bg-blue-50 px-6 py-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-blue-900">
-                      {selectedEscolaIds.length} escola(s) selecionada(s)
+                      {selectedEscolaIds.length} {t('flags.selected')}
                     </span>
                     <div className="flex gap-2">
                       <Button
@@ -314,7 +314,7 @@ export default function FlagsPage() {
                         variant="ghost"
                         onClick={() => setSelectedEscolaIds([])}
                       >
-                        Cancelar
+                        {t('flags.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -336,8 +336,8 @@ export default function FlagsPage() {
                         onCheckedChange={handleSelectAll}
                         aria-label={t('flags.selectAll')}
                       />
-                      <div className="flex-1">Escola</div>
-                      <div className="w-24 text-center">Status</div>
+                      <div className="flex-1">{t('flags.school')}</div>
+                      <div className="w-24 text-center">{t('flags.status')}</div>
                     </div>
 
                     {/* Escola rows */}

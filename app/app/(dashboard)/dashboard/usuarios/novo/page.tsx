@@ -45,7 +45,7 @@ export default function NovoUsuarioPage() {
       const data = await schoolsApi.getAll<SchoolOption>()
       setEscolas(data)
     } catch {
-      toast.error("Erro ao carregar lista de escolas")
+      toast.error(t('ui.erro-ao-carregar-lista-de-escolas'))
     }
   }
 
@@ -67,19 +67,19 @@ export default function NovoUsuarioPage() {
       const result = await response.json().catch(() => ({}))
 
       if (response.status === 409 && result.error === 'PILOT_INVITE_ALREADY_PENDING') {
-        toast.warning('Este e-mail já tem um convite pendente. Nenhum novo e-mail foi enviado e o cadastro atual permanece inalterado.')
+        toast.warning(t('ui.este-e-mail-ja-tem-um-convite-pendente-nenhum-novo-e-mail-foi-enviado-e'))
         return
       }
       if (response.status === 409 && result.error === 'PILOT_INVITE_ALREADY_ACCEPTED') {
-        toast.warning('Este e-mail já concluiu o primeiro acesso. Nenhum convite foi enviado.')
+        toast.warning(t('ui.este-e-mail-ja-concluiu-o-primeiro-acesso-nenhum-convite-foi-enviado'))
         return
       }
       if (!response.ok) throw new Error(result.error || 'PILOT_INVITE_FAILED')
 
-      toast.success('Convite enviado com sucesso!')
+      toast.success(t('ui.convite-enviado-com-sucesso'))
       router.push('/dashboard/usuarios')
     } catch {
-      toast.error('Erro ao criar usuário')
+      toast.error(t('ui.erro-ao-criar-usuario'))
     } finally {
       setLoading(false)
     }
@@ -96,13 +96,13 @@ export default function NovoUsuarioPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/usuarios">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-usuario')}</h1>
           <p className="text-gray-600 mt-1">
-            Cadastre um novo usuário no sistema
+            {t('ui.cadastre-um-novo-usuario-no-sistema')}
           </p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function NovoUsuarioPage() {
                 <span>{t('labels.dados-do-usuario')}</span>
               </CardTitle>
               <CardDescription>
-                Preencha as informações básicas do usuário
+                {t('ui.preencha-as-informacoes-basicas-do-usuario')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -182,7 +182,7 @@ export default function NovoUsuarioPage() {
                     </Select>
                     {formData.tipo_usuario === 'secretario' && (
                       <p className="text-sm text-gray-500">
-                        Este tipo de usuário tem acesso a todas as escolas
+                        {t('ui.este-tipo-de-usuario-tem-acesso-a-todas-as-escolas')}
                       </p>
                     )}
                   </div>
@@ -191,7 +191,7 @@ export default function NovoUsuarioPage() {
                 <div className="flex justify-end space-x-4">
                   <Button type="button" variant="outline" asChild>
                     <Link href="/dashboard/usuarios">
-                      Cancelar
+                      {t('labels.cancelar')}
                     </Link>
                   </Button>
                   <Button type="submit" disabled={loading} aria-label={t('labels.criar-usuario')}>
@@ -232,7 +232,7 @@ export default function NovoUsuarioPage() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">{t('labels.primeiro-acesso')}</h4>
                 <p className="text-sm text-gray-600">
-                  O usuário receberá um convite individual e definirá a senha no primeiro acesso.
+                  {t('ui.o-usuario-recebera-um-convite-individual-e-definira-a-senha-no-primeiro')}
                 </p>
               </div>
             </CardContent>

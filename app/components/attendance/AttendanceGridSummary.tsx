@@ -19,6 +19,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { CheckSquare, Square, Lock } from 'lucide-react'
 import type { SessionLockInfo } from './AttendanceGridTypes'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -48,6 +49,7 @@ export function AttendanceGridSummary({
   onSelectUnmarked,
   onClearSelection,
 }: AttendanceGridSummaryProps) {
+  const t = useClassroomTranslations()
   return (
     <>
       {/* Quick actions - Only show if not locked */}

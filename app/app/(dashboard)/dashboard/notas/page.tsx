@@ -190,10 +190,10 @@ export default function NotasPage() {
 
   const getSituacaoBadge = (situacao: string) => {
     switch (situacao) {
-      case 'aprovado': return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>
-      case 'reprovado': return <Badge variant="destructive">Reprovado</Badge>
+      case 'aprovado': return <Badge className="bg-green-100 text-green-800">{t('status.approved')}</Badge>
+      case 'reprovado': return <Badge variant="destructive">{t('status.failed')}</Badge>
       case 'recuperacao': return <Badge className="bg-orange-100 text-orange-800">Recuperacao</Badge>
-      case 'cursando': return <Badge variant="outline">Cursando</Badge>
+      case 'cursando': return <Badge variant="outline">{t('status.enrolled')}</Badge>
       default: return <Badge variant="secondary">-</Badge>
     }
   }
@@ -538,11 +538,11 @@ export default function NotasPage() {
               </div>
             </div>
             <Select value={turmaFilter} onValueChange={setTurmaFilter}>
-              <SelectTrigger className="w-full lg:w-48" aria-label="Turma">
-                <SelectValue placeholder="Turma" />
+              <SelectTrigger className="w-full lg:w-48" aria-label={t('labels.class')}>
+                <SelectValue placeholder={t('labels.class')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas as turmas</SelectItem>
+                <SelectItem value="todas">{t('grades.allClasses')}</SelectItem>
                 {turmas.map((turma) => (
                   <SelectItem key={turma.id} value={turma.id}>
                     {turma.nome} - {turma.serie}
@@ -551,11 +551,11 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={disciplinaFilter} onValueChange={setDisciplinaFilter}>
-              <SelectTrigger className="w-full lg:w-40" aria-label="Disciplina">
-                <SelectValue placeholder="Disciplina" />
+              <SelectTrigger className="w-full lg:w-40" aria-label={t('labels.subject')}>
+                <SelectValue placeholder={t('labels.subject')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="todas">{t('labels.allF')}</SelectItem>
                 {todasDisciplinas.map((disciplina) => (
                   <SelectItem key={disciplina} value={disciplina}>
                     {disciplina}
@@ -564,11 +564,11 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={bimestreFilter} onValueChange={setBimestreFilter}>
-              <SelectTrigger className="w-full lg:w-32" aria-label="Bimestre">
-                <SelectValue placeholder="Bimestre" />
+              <SelectTrigger className="w-full lg:w-32" aria-label={t('grades.term')}>
+                <SelectValue placeholder={t('grades.term')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="todos">{t('labels.all')}</SelectItem>
                 <SelectItem value="1">1 Bim</SelectItem>
                 <SelectItem value="2">2 Bim</SelectItem>
                 <SelectItem value="3">3 Bim</SelectItem>
@@ -600,13 +600,13 @@ export default function NotasPage() {
                       href={`/dashboard/alunos/${turma.alunos[0].aluno.id}/boletim`}
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
-                      Boletim
+                      {t('grades.report')}
                     </Link>
                   </Button>
                 ) : (
                   <Button variant="outline" size="sm" disabled>
                     <BookOpen className="h-4 w-4 mr-2" />
-                    Boletim
+                    {t('grades.report')}
                   </Button>
                 )}
               </div>
@@ -728,7 +728,7 @@ export default function NotasPage() {
           <DialogHeader>
             <DialogTitle>{t('grades.edit')}</DialogTitle>
             <DialogDescription>
-              Lancar nota para {editingNote.alunoNome} - {editingNote.disciplina} - {editingNote.bimestre} Bimestre
+              Lancar nota para {editingNote.alunoNome} - {editingNote.disciplina} - {editingNote.bimestre} {t('grades.term')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -766,7 +766,7 @@ export default function NotasPage() {
             <Button variant="outline" onClick={() =>
               setEditingNote(prev => ({ ...prev, open: false }))
             }>
-              Cancelar
+              {t('actions.cancel')}
             </Button>
             <Button onClick={saveNote} disabled={saving}>
               {saving ? t('actions.saving') : `${t('actions.save')} ${t('grades.edit').replace('Edit', 'Grade')}`}

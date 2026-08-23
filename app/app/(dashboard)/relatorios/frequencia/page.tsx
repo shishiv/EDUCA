@@ -364,7 +364,7 @@ export default function AttendanceReportsPage() {
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Excel</span>
+            <span className="hidden sm:inline">{t('attendance.excel')}</span>
           </Button>
           <Button
             variant="outline"
@@ -373,7 +373,7 @@ export default function AttendanceReportsPage() {
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <FileText className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">PDF</span>
+            <span className="hidden sm:inline">{t('attendance.pdf')}</span>
           </Button>
         </div>
       </div>
@@ -388,7 +388,7 @@ export default function AttendanceReportsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Turma Selector */}
             <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="turma" className="text-xs sm:text-sm">Turma</Label>
+              <Label htmlFor="turma" className="text-xs sm:text-sm">{t('attendance.class')}</Label>
               {isLoadingTurmas ? (
                 <Skeleton className="h-10 sm:h-11 w-full" />
               ) : (
@@ -527,7 +527,7 @@ export default function AttendanceReportsPage() {
             <TabsList className="grid w-full sm:w-auto sm:max-w-[200px] grid-cols-2">
               <TabsTrigger value="table" className="flex items-center gap-1 min-h-[44px]">
                 <TableIcon className="h-4 w-4" />
-                <span className="hidden xs:inline">Tabela</span>
+                <span className="hidden xs:inline">{t('attendance.table')}</span>
               </TabsTrigger>
               <TabsTrigger value="chart" className="flex items-center gap-1 min-h-[44px]">
                 <BarChart3 className="h-4 w-4" />

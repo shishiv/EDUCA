@@ -120,7 +120,7 @@ export function ClassDiaryFilter({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Turma Selector */}
           <div className="space-y-2">
-            <Label htmlFor="turma-select">Turma</Label>
+            <Label htmlFor="turma-select">{t('labels.class')}</Label>
             <Select value={turmaId} onValueChange={setTurmaId}>
               <SelectTrigger id="turma-select">
                 <SelectValue placeholder={t('diary.selectClass')} />
@@ -129,7 +129,7 @@ export function ClassDiaryFilter({
                 <SelectItem value="all">{t('diary.allClasses')}</SelectItem>
                 {loadingTurmas ? (
                   <SelectItem value="loading" disabled>
-                    Carregando...
+                    {t('actions.loading')}
                   </SelectItem>
                 ) : turmas.length === 0 ? (
                   <SelectItem value="empty" disabled>
@@ -179,9 +179,9 @@ export function ClassDiaryFilter({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('diary.allStatuses')}</SelectItem>
-                <SelectItem value="aberta">Aberta</SelectItem>
-                <SelectItem value="fechada">Fechada</SelectItem>
-                <SelectItem value="travada">Travada</SelectItem>
+                <SelectItem value="aberta">{t('status.open')}</SelectItem>
+                <SelectItem value="fechada">{t('status.closed')}</SelectItem>
+                <SelectItem value="travada">{t('status.locked')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

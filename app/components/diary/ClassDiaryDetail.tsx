@@ -119,7 +119,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
             <div className="text-center py-12">
               <p className="text-sm text-destructive">{error}</p>
               <Button variant="outline" onClick={onClose} className="mt-4">
-                Fechar
+                {t('diary.close')}
               </Button>
             </div>
           )}
@@ -182,21 +182,21 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                   <div className="bg-muted p-4 rounded-lg text-center">
                     <Users className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-2xl font-bold">{session.total_alunos}</p>
-                    <p className="text-xs text-muted-foreground">Total de Alunos</p>
+                    <p className="text-xs text-muted-foreground">{t('grades.totalStudents')}</p>
                   </div>
                   <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg text-center">
                     <CheckCircle2 className="h-5 w-5 mx-auto mb-2 text-green-600" />
                     <p className="text-2xl font-bold text-green-600">
                       {session.total_presentes}
                     </p>
-                    <p className="text-xs text-muted-foreground">Presentes</p>
+                    <p className="text-xs text-muted-foreground">{t('labels.present')}</p>
                   </div>
                   <div className="bg-red-50 dark:bg-red-950 p-4 rounded-lg text-center">
                     <XCircle className="h-5 w-5 mx-auto mb-2 text-red-600" />
                     <p className="text-2xl font-bold text-red-600">
                       {session.total_ausentes}
                     </p>
-                    <p className="text-xs text-muted-foreground">Ausentes</p>
+                    <p className="text-xs text-muted-foreground">{t('labels.absent')}</p>
                   </div>
                 </div>
 
@@ -275,7 +275,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                           )}
                           {record.presente ? (
                             <Badge variant="outline" className="text-green-600">
-                              Presente
+                              {t('attendance.present')}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-red-600">

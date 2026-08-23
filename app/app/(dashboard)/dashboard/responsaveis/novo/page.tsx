@@ -82,7 +82,7 @@ export default function NovoResponsavelPage() {
     try {
       // Validate required fields
       if (!formData.nome || !formData.cpf || !formData.parentesco) {
-        toast.error('Preencha todos os campos obrigatórios')
+        toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
         setLoading(false)
         return
       }
@@ -95,13 +95,13 @@ export default function NovoResponsavelPage() {
       // Validate CPF
       const cleanedCPF = formData.cpf.replace(/\D/g, '')
       if (!validateCPF(cleanedCPF)) {
-        toast.error('CPF inválido. Verifique os dados inseridos.')
+        toast.error(t('ui.cpf-invalido-verifique-os-dados-inseridos'))
         setLoading(false)
         return
       }
 
       if (formData.telefone && !validatePhone(formData.telefone)) {
-        toast.error('Telefone inválido. Informe um telefone com 10 ou 11 dígitos.')
+        toast.error(t('ui.telefone-invalido-informe-um-telefone-com-10-ou-11-digitos'))
         setLoading(false)
         return
       }
@@ -136,7 +136,7 @@ export default function NovoResponsavelPage() {
 
       if (error) {
         if (error.message.includes('duplicate') || error.code === '23505') {
-          toast.error('CPF já cadastrado no sistema')
+          toast.error(t('ui.cpf-ja-cadastrado-no-sistema'))
         } else {
           throw error
         }
@@ -145,7 +145,7 @@ export default function NovoResponsavelPage() {
       }
 
       logger.info('Responsável cadastrado:', { metadata: data })
-      toast.success('Responsável cadastrado com sucesso!')
+      toast.success(t('ui.responsavel-cadastrado-com-sucesso'))
       router.push('/dashboard/responsaveis')
     } catch (error: any) {
       logger.error('Erro ao cadastrar responsável:', error)
@@ -191,13 +191,13 @@ export default function NovoResponsavelPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/responsaveis">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-responsavel')}</h1>
           <p className="text-gray-600 mt-1">
-            Cadastre um novo responsável no sistema
+            {t('ui.cadastre-um-novo-responsavel-no-sistema')}
           </p>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function NovoResponsavelPage() {
       {shouldShowSelector && !selectedEscolaId && (
         <Alert variant="destructive">
           <AlertDescription>
-            Selecione uma escola no menu lateral antes de cadastrar um responsável.
+            {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-responsavel')}
           </AlertDescription>
         </Alert>
       )}
@@ -220,14 +220,14 @@ export default function NovoResponsavelPage() {
               <CardTitle>{t('labels.dados-pessoais')}</CardTitle>
             </div>
             <CardDescription>
-              Informações básicas do responsável
+              {t('ui.informacoes-basicas-do-responsavel')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <Label htmlFor="nome">
-                  Nome Completo <span className="text-red-500">*</span>
+                  {t('labels.nome-completo')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="nome"
@@ -240,7 +240,7 @@ export default function NovoResponsavelPage() {
 
               <div>
                 <Label htmlFor="cpf">
-                  CPF <span className="text-red-500">*</span>
+                  {t('labels.cpf')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="cpf"
@@ -254,7 +254,7 @@ export default function NovoResponsavelPage() {
 
               <div>
                 <Label htmlFor="parentesco">
-                  Parentesco <span className="text-red-500">*</span>
+                  {t('labels.parentesco')} <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.parentesco}
@@ -286,7 +286,7 @@ export default function NovoResponsavelPage() {
               <CardTitle>{t('labels.dados-de-contato')}</CardTitle>
             </div>
             <CardDescription>
-              Informações para comunicação com o responsável
+              {t('ui.informacoes-para-comunicacao-com-o-responsavel')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -302,7 +302,7 @@ export default function NovoResponsavelPage() {
                   maxLength={15}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Telefone para contato (celular ou fixo)
+                  {t('ui.telefone-para-contato-celular-ou-fixo')}
                 </p>
               </div>
 
@@ -332,7 +332,7 @@ export default function NovoResponsavelPage() {
               <CardTitle>{t('labels.informacoes-adicionais')}</CardTitle>
             </div>
             <CardDescription>
-              Dados complementares do responsável
+              {t('ui.dados-complementares-do-responsavel')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -373,7 +373,7 @@ export default function NovoResponsavelPage() {
               <CardTitle>{t('labels.tratamento-de-dados')}</CardTitle>
             </div>
             <CardDescription>
-              Informações sobre o uso dos dados cadastrados
+              {t('ui.informacoes-sobre-o-uso-dos-dados-cadastrados')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -397,11 +397,11 @@ export default function NovoResponsavelPage() {
             onClick={() => router.push('/dashboard/responsaveis')}
             disabled={loading}
           >
-            Cancelar
+            {t('labels.cancelar')}
           </Button>
           <Button type="submit" disabled={loading}>
             <Save className="mr-2 h-4 w-4" />
-            {loading ? 'Salvando...' : 'Salvar Responsável'}
+            {loading ? 'Salvando...' : t('ui.salvar-responsavel')}
           </Button>
         </div>
       </form>

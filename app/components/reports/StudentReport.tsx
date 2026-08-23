@@ -284,7 +284,7 @@ function ReportHeader({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Aluno(a):</span>
+            <span className="text-sm text-gray-600">{t('components.studentReport.student')}</span>
           </div>
           <p className="font-semibold text-gray-900 pl-6">{student.nome}</p>
         </div>
@@ -640,7 +640,7 @@ export function StudentReport({
                 {onExportPDF && (
                   <Button variant="outline" size="sm" onClick={onExportPDF}>
                     <Download className="h-4 w-4 mr-2" />
-                    PDF
+                    {t('attendance.pdf')}
                   </Button>
                 )}
               </div>

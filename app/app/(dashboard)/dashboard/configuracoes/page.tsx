@@ -154,7 +154,7 @@ export default function ConfiguracoesPage() {
                 onClick={() => handleResetToDefault(config)}
                 className="h-8 px-2"
               >
-                Resetar
+                {t('settings.reset')}
               </Button>
             </div>
           )}
@@ -182,7 +182,7 @@ export default function ConfiguracoesPage() {
               onClick={() => handleResetToDefault(config)}
               className="h-8 px-2 text-xs"
             >
-              Resetar
+              {t('settings.reset')}
             </Button>
           )}
         </div>
@@ -228,7 +228,7 @@ export default function ConfiguracoesPage() {
             {saving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Salvando...
+                {t('profile.saving')}
               </>
             ) : (
               <>
@@ -245,7 +245,7 @@ export default function ConfiguracoesPage() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="geral" className="flex items-center space-x-2">
             <Building className="h-4 w-4" />
-            <span>Geral</span>
+            <span>{t('settings.general')}</span>
           </TabsTrigger>
           <TabsTrigger value="academico" className="flex items-center space-x-2">
             <GraduationCap className="h-4 w-4" />

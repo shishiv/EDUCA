@@ -132,7 +132,7 @@ export default function EditarTurmaPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/turmas/${id}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+            {t('actions.back')}
           </Link>
         </Button>
         <div>
@@ -164,7 +164,7 @@ export default function EditarTurmaPage() {
               <div className="space-y-2">
                 <Label htmlFor="edit-turno">{t('forms.shift')} *</Label>
                 <Select value={form.turno} onValueChange={value => update('turno', value as ClassForm['turno'])}>
-                  <SelectTrigger id="edit-turno" aria-label="Turno">
+                  <SelectTrigger id="edit-turno" aria-label={t('labels.shift')}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -181,7 +181,7 @@ export default function EditarTurmaPage() {
               <div className="space-y-2">
                 <Label htmlFor="edit-escola">{t('forms.school')} *</Label>
                 <Select value={form.escola_id} onValueChange={value => update('escola_id', value)}>
-                  <SelectTrigger id="edit-escola" aria-label="Escola">
+                  <SelectTrigger id="edit-escola" aria-label={t('labels.school')}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -192,7 +192,7 @@ export default function EditarTurmaPage() {
               <div className="space-y-2">
                 <Label htmlFor="edit-professor">{t('labels.teacher')}</Label>
                 <Select value={form.professor_id} onValueChange={value => update('professor_id', value)}>
-                  <SelectTrigger id="edit-professor" aria-label="Professor">
+                  <SelectTrigger id="edit-professor" aria-label={t('labels.teacher')}>
                     <SelectValue placeholder={t('forms.noTeacher')} />
                   </SelectTrigger>
                   <SelectContent>

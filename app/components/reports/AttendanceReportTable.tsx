@@ -424,7 +424,7 @@ export function AttendanceReportTable({
 							{onExportPDF && (
 								<Button variant="outline" size="sm" onClick={onExportPDF}>
 									<Download className="h-4 w-4 mr-2" />
-									PDF
+									{t('attendance.pdf')}
 								</Button>
 							)}
 						</div>
@@ -482,7 +482,7 @@ export function AttendanceReportTable({
 											onSort={handleSort}
 										/>
 									</TableHead>
-									<TableHead className="text-center w-20">Total</TableHead>
+									<TableHead className="text-center w-20">{t('components.attendance.total')}</TableHead>
 									<TableHead className="text-center w-28">
 										<SortableHeader
 											label="Frequencia"
@@ -492,7 +492,7 @@ export function AttendanceReportTable({
 											onSort={handleSort}
 										/>
 									</TableHead>
-									<TableHead className="text-center w-24">Status</TableHead>
+									<TableHead className="text-center w-24">{t('components.attendance.status')}</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -558,7 +558,7 @@ export function AttendanceReportTable({
 								) : isPreventiveAttention ? (
 									<Badge className="bg-yellow-500 text-white">{t('components.attendance.preventive')}</Badge>
 								) : (
-									<Badge className="bg-green-500 text-white">Conforme</Badge>
+									<Badge className="bg-green-500 text-white">{t('components.bolsa.compliant')}</Badge>
 								)}
 											</TableCell>
 										</TableRow>

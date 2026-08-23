@@ -84,7 +84,7 @@ export function ChamadaHeader({
             {isLocked && (
               <Badge variant="secondary" className="gap-1" title={lockReason || undefined}>
                 <Lock className="h-3 w-3" />
-                Travada
+                {t('attendance.locked')}
               </Badge>
             )}
           </div>

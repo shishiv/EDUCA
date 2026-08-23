@@ -81,7 +81,7 @@ export function TeacherAssignment({
           setCurrentTeacher(teacher ?? null)
         }
       } catch (error) {
-        toast.error('Erro ao carregar dados')
+        toast.error(t('ui.erro-ao-carregar-dados'))
       }
     }
 
@@ -106,7 +106,7 @@ export function TeacherAssignment({
 
       onAssignmentChange?.(selectedTeacherId)
     } catch (error) {
-      toast.error('Erro ao atribuir professor')
+      toast.error(t('ui.erro-ao-atribuir-professor'))
     } finally {
       setLoading(false)
     }
@@ -120,7 +120,7 @@ export function TeacherAssignment({
       setCurrentTeacher(null)
       setSelectedTeacherId('')
 
-      toast.success('Professor titular removido da turma com sucesso!')
+      toast.success(t('ui.professor-titular-removido-da-turma-com-sucesso'))
 
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['classes'] })
@@ -128,7 +128,7 @@ export function TeacherAssignment({
 
       onAssignmentChange?.(null)
     } catch (error) {
-      toast.error('Erro ao remover professor')
+      toast.error(t('ui.erro-ao-remover-professor'))
     } finally {
       setLoading(false)
     }
@@ -158,10 +158,10 @@ export function TeacherAssignment({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          Professor titular da turma
+          {t('ui.professor-titular-da-turma')}
         </CardTitle>
         <CardDescription>
-          Defina o professor titular da turma {classData?.nome}
+          {t('ui.defina-o-professor-titular-da-turma')} {classData?.nome}
         </CardDescription>
       </CardHeader>
 
@@ -170,7 +170,7 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <School className="h-4 w-4" />
-            Informações da Turma
+            {t('labels.informacoes-da-turma')}
           </h4>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -207,7 +207,7 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <User className="h-4 w-4" />
-            Professor Atual
+            {t('ui.professor-atual')}
           </h4>
 
           {currentTeacher ? (
@@ -242,7 +242,7 @@ export function TeacherAssignment({
                 <span className="font-medium text-amber-800">{t('labels.nenhum-professor-titular-definido')}</span>
               </div>
               <p className="text-sm text-amber-700 mt-1">
-                Defina um professor titular para abrir e registrar a chamada desta turma.
+                {t('ui.defina-um-professor-titular-para-abrir-e-registrar-a-chamada-desta-turma')}
               </p>
             </div>
           )}
@@ -254,7 +254,7 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <Users className="h-4 w-4" />
-            {currentTeacher ? 'Alterar professor titular' : 'Definir professor titular'}
+            {currentTeacher ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
           </h4>
 
           {availableTeachers.length > 0 ? (
@@ -297,7 +297,7 @@ export function TeacherAssignment({
                   className="flex-1"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  {currentTeacher ? 'Alterar professor titular' : 'Definir professor titular'}
+                  {currentTeacher ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
                 </LoadingButton>
               </div>
             </div>
@@ -305,8 +305,7 @@ export function TeacherAssignment({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Nenhum professor disponível para atribuição nesta escola.
-                Cadastre professores no painel de usuários primeiro.
+                {t('ui.nenhum-professor-disponivel-para-atribuicao-nesta-escola-cadastre-profes')}
               </AlertDescription>
             </Alert>
           )}

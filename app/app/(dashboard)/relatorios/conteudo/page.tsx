@@ -243,7 +243,7 @@ function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
 
         {lesson.professorNome && (
           <p className="text-xs text-gray-400 pt-2 border-t">
-            Professor(a): {lesson.professorNome}
+            {t('content.teacher')} {lesson.professorNome}
           </p>
         )}
       </CardContent>
@@ -268,7 +268,7 @@ function BNNCSkillsSummary({ skills, onExport }: { skills: BNNCSkillUsage[]; onE
           {onExport && (
             <Button variant="outline" size="sm" onClick={onExport}>
               <FileText className="h-4 w-4 mr-2" />
-              PDF
+              {t('attendance.pdf')}
             </Button>
           )}
         </div>
@@ -368,11 +368,11 @@ function ContentTable({ lessons }: { lessons: LessonContentReportItem[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">Data</TableHead>
+            <TableHead className="w-[100px]">{t('content.date')}</TableHead>
             <TableHead>{t('content.topic')}</TableHead>
             <TableHead className="hidden md:table-cell">Objetivo</TableHead>
             <TableHead className="w-[120px] text-center">Habilidades</TableHead>
-            <TableHead className="hidden lg:table-cell">Turma</TableHead>
+            <TableHead className="hidden lg:table-cell">{t('content.class')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -607,7 +607,7 @@ export default function ContentReportsPage() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Turma Selector */}
             <div className="space-y-2">
-              <Label htmlFor="turma">Turma</Label>
+              <Label htmlFor="turma">{t('content.class')}</Label>
               {isLoadingTurmas ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
@@ -837,7 +837,7 @@ export default function ContentReportsPage() {
               </TabsTrigger>
               <TabsTrigger value="table" className="flex items-center gap-1">
                 <TableIcon className="h-4 w-4" />
-                Tabela
+                {t('attendance.table')}
               </TabsTrigger>
             </TabsList>
 

@@ -285,7 +285,7 @@ export default function BolsaFamiliaReportPage() {
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Excel</span>
+            <span className="hidden sm:inline">{t('attendance.excel')}</span>
           </Button>
           <Button
             variant="outline"
@@ -294,7 +294,7 @@ export default function BolsaFamiliaReportPage() {
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <Download className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">PDF</span>
+            <span className="hidden sm:inline">{t('attendance.pdf')}</span>
           </Button>
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function BolsaFamiliaReportPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* School Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label htmlFor="bolsa-familia-escola" className="text-xs sm:text-sm font-medium text-gray-700">Escola</label>
+              <label htmlFor="bolsa-familia-escola" className="text-xs sm:text-sm font-medium text-gray-700">{t('bolsa.school')}</label>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
                 <SelectTrigger id="bolsa-familia-escola" className="min-h-[44px]">
                   <SelectValue placeholder={t('bolsa.allSchools')} />
@@ -329,7 +329,7 @@ export default function BolsaFamiliaReportPage() {
 
             {/* Turma Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label htmlFor="bolsa-familia-turma" className="text-xs sm:text-sm font-medium text-gray-700">Turma</label>
+              <label htmlFor="bolsa-familia-turma" className="text-xs sm:text-sm font-medium text-gray-700">{t('bolsa.class')}</label>
               <Select
                 value={selectedTurma}
                 onValueChange={setSelectedTurma}
@@ -359,10 +359,10 @@ export default function BolsaFamiliaReportPage() {
                 <SelectContent>
                   <SelectItem value="current_month" className="py-3">Mes Atual</SelectItem>
                   <SelectItem value="last_month" className="py-3">Mes Anterior</SelectItem>
-                  <SelectItem value="bimester_1" className="py-3">1º Bimestre</SelectItem>
-                  <SelectItem value="bimester_2" className="py-3">2º Bimestre</SelectItem>
-                  <SelectItem value="bimester_3" className="py-3">3º Bimestre</SelectItem>
-                  <SelectItem value="bimester_4" className="py-3">4º Bimestre</SelectItem>
+                  <SelectItem value="bimester_1" className="py-3">{t('reports.firstBimester')}</SelectItem>
+                  <SelectItem value="bimester_2" className="py-3">{t('reports.secondBimester')}</SelectItem>
+                  <SelectItem value="bimester_3" className="py-3">{t('reports.thirdBimester')}</SelectItem>
+                  <SelectItem value="bimester_4" className="py-3">{t('reports.fourthBimester')}</SelectItem>
                   <SelectItem value="custom" className="py-3">{t('bolsa.custom')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -474,7 +474,7 @@ export default function BolsaFamiliaReportPage() {
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
                     <span className="hidden sm:inline">{t('bolsa.municipalAlert')}</span>
-                    <span className="sm:hidden">Alerta</span>
+                    <span className="sm:hidden">{t('components.bolsa.alert')}</span>
                   </p>
                 </div>
                 <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 hidden xs:block" />
@@ -511,7 +511,7 @@ export default function BolsaFamiliaReportPage() {
           </TabsTrigger>
           <TabsTrigger value="table" className="min-h-[44px]">
             <span className="hidden sm:inline">{t('bolsa.fullTable')}</span>
-            <span className="sm:hidden">Tabela</span>
+            <span className="sm:hidden">{t('attendance.table')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -563,16 +563,16 @@ export default function BolsaFamiliaReportPage() {
                       <TableRow>
                         <TableHead className="min-w-[150px]">Nome</TableHead>
                         <TableHead className="hidden sm:table-cell">NIS</TableHead>
-                        <TableHead className="hidden lg:table-cell">Turma</TableHead>
-                        <TableHead className="hidden xl:table-cell">Escola</TableHead>
+                        <TableHead className="hidden lg:table-cell">{t('bolsa.class')}</TableHead>
+                        <TableHead className="hidden xl:table-cell">{t('bolsa.school')}</TableHead>
                         <TableHead className="text-center w-10">P</TableHead>
                         <TableHead className="text-center w-10">F</TableHead>
                         <TableHead className="text-center w-10 hidden xs:table-cell">A</TableHead>
-                        <TableHead className="text-center w-12 hidden sm:table-cell">Total</TableHead>
+                        <TableHead className="text-center w-12 hidden sm:table-cell">{t('bolsa.total')}</TableHead>
                         <TableHead className="text-center w-14">%</TableHead>
-                        <TableHead className="text-center hidden md:table-cell">Legal</TableHead>
-                        <TableHead className="text-center hidden lg:table-cell">Margem</TableHead>
-                        <TableHead className="text-center w-16 sm:w-20">Status</TableHead>
+                        <TableHead className="text-center hidden md:table-cell">{t('bolsa.legal')}</TableHead>
+                        <TableHead className="text-center hidden lg:table-cell">{t('bolsa.margin')}</TableHead>
+                        <TableHead className="text-center w-16 sm:w-20">{t('bolsa.status')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -627,7 +627,7 @@ export default function BolsaFamiliaReportPage() {
                             )}
                             {aluno.status === 'ALERTA' && (
                               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">Alerta</span>
+                                <span className="hidden sm:inline">{t('components.bolsa.alert')}</span>
                                 <AlertCircle className="h-3 w-3 sm:hidden" />
                               </Badge>
                             )}

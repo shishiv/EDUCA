@@ -419,7 +419,7 @@ function SemesterReportCard({
             {report.professorNome && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                Professor(a): {report.professorNome}
+                {t('components.infantil.teacher')} {report.professorNome}
               </div>
             )}
             {report.finalizadoEm && (
@@ -572,7 +572,7 @@ export function StudentReportInfantil({
                 {onExportPDF && (
                   <Button variant="outline" size="sm" onClick={onExportPDF}>
                     <Download className="h-4 w-4 mr-2" />
-                    PDF
+                    {t('attendance.pdf')}
                   </Button>
                 )}
               </div>

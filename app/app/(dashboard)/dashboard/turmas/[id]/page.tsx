@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase'
 import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { logger } from '@/lib/logger'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 interface Turma {
   id: string
@@ -66,6 +67,7 @@ interface SessaoAula {
 }
 
 export default function TurmaDetalhesPage() {
+  const t = useClassroomTranslations()
   const router = useRouter()
   const params = useParams()
   const id = params?.id as string
@@ -285,7 +287,7 @@ export default function TurmaDetalhesPage() {
   if (!turma) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Turma não encontrada</p>
+        <p className="text-gray-500">{t('classes.notFound')}</p>
       </div>
     )
   }
@@ -298,7 +300,7 @@ export default function TurmaDetalhesPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard/turmas">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              {t('actions.back')}
             </Link>
           </Button>
           <div>
@@ -314,13 +316,13 @@ export default function TurmaDetalhesPage() {
           <Button variant="outline" asChild>
             <Link href={`/dashboard/turmas/${id}/chamada`}>
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              Abrir chamada
+              {t('actions.openAttendance')}
             </Link>
           </Button>
           <Button asChild>
             <Link href={`/dashboard/turmas/${id}/editar`}>
               <Edit className="mr-2 h-4 w-4" />
-              Editar
+              {t('actions.edit')}
             </Link>
           </Button>
         </div>
@@ -330,7 +332,7 @@ export default function TurmaDetalhesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Alunos Matriculados</CardDescription>
+            <CardDescription>{t('classes.studentsEnrolled')}</CardDescription>
             <CardTitle className="text-2xl sm:text-3xl flex items-center">
               {frequenciaStats.matriculados}
               <span className="text-sm text-gray-500 ml-2">/ {turma.capacidade}</span>
@@ -346,7 +348,7 @@ export default function TurmaDetalhesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Vagas Disponíveis</CardDescription>
+            <CardDescription>{t('classes.availableSeats')}</CardDescription>
             <CardTitle className="text-2xl sm:text-3xl text-blue-600">
               {frequenciaStats.vagasDisponiveis}
             </CardTitle>
@@ -360,7 +362,7 @@ export default function TurmaDetalhesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Frequência Média</CardDescription>
+            <CardDescription>{t('classes.averageAttendance')}</CardDescription>
             <CardTitle className="text-2xl sm:text-3xl text-green-600">
               {frequenciaStats.frequenciaMedia}%
             </CardTitle>
@@ -375,7 +377,7 @@ export default function TurmaDetalhesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Sessões de Aula</CardDescription>
+            <CardDescription>{t('classes.classSessions')}</CardDescription>
             <CardTitle className="text-2xl sm:text-3xl">{sessoes.length}</CardTitle>
           </CardHeader>
           <CardContent>
@@ -389,36 +391,36 @@ export default function TurmaDetalhesPage() {
       {/* Turma Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Informações da Turma</CardTitle>
+          <CardTitle>{t('classes.info')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <p className="text-sm text-gray-500">Série</p>
+              <p className="text-sm text-gray-500">{t('labels.series')}</p>
               <p className="text-lg font-medium">{turma.serie}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Turno</p>
+              <p className="text-sm text-gray-500">{t('labels.shift')}</p>
               <Badge variant="secondary">{getTurnoLabel(turma.turno)}</Badge>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Professor Responsável</p>
-              <p className="text-lg font-medium">{turma.users?.nome || 'Não atribuído'}</p>
+              <p className="text-sm text-gray-500">{t('forms.teacher')}</p>
+              <p className="text-lg font-medium">{turma.users?.nome || t('status.notAssigned')}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Capacidade</p>
+              <p className="text-sm text-gray-500">{t('labels.capacity')}</p>
               <p className="text-lg font-medium">{turma.capacidade} alunos</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Ano Letivo</p>
+              <p className="text-sm text-gray-500">{t('labels.year')}</p>
               <p className="text-lg font-medium">{turma.ano_letivo}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Status</p>
+              <p className="text-sm text-gray-500">{t('labels.status')}</p>
               {turma.ativo ? (
-                <Badge className="bg-green-100 text-green-800">Ativa</Badge>
+                <Badge className="bg-green-100 text-green-800">{t('status.active')}</Badge>
               ) : (
-                <Badge variant="secondary">Inativa</Badge>
+                <Badge variant="secondary">{t('status.inactive')}</Badge>
               )}
             </div>
           </div>
@@ -431,30 +433,30 @@ export default function TurmaDetalhesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-blue-600" />
-              <CardTitle>Alunos Matriculados</CardTitle>
+              <CardTitle>{t('classes.studentsEnrolled')}</CardTitle>
             </div>
             <Badge variant="secondary">
               {matriculas.filter(m => m.situacao === 'ativa').length} ativos
             </Badge>
           </div>
           <CardDescription>
-            Lista de alunos matriculados nesta turma
+            {t('classes.studentList')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {matriculas.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
-              Nenhum aluno matriculado nesta turma
+              {t('classes.noStudents')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Aluno</TableHead>
+                  <TableHead>{t('labels.student')}</TableHead>
                   <TableHead>Idade</TableHead>
                   <TableHead>Sexo</TableHead>
                   <TableHead>Status da Matrícula</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right">{t('labels.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -476,7 +478,7 @@ export default function TurmaDetalhesPage() {
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/dashboard/alunos/${matricula.alunos.id}`}>
-                          Ver Perfil
+                          {t('actions.viewProfile')}
                         </Link>
                       </Button>
                     </TableCell>
@@ -494,33 +496,33 @@ export default function TurmaDetalhesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 text-purple-600" />
-              <CardTitle>Sessões de Aula Recentes</CardTitle>
+              <CardTitle>{t('classes.recentSessions')}</CardTitle>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/dashboard/turmas/${id}/chamada`}>
-                Ver chamadas
+                {t('actions.viewAttendances')}
               </Link>
             </Button>
           </div>
           <CardDescription>
-            Últimas 10 sessões de aula registradas
+            {t('classes.recentSessionsHint')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {sessoes.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
-              Nenhuma sessão de aula registrada
+              {t('classes.noSessions')}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Horário</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Frequência</TableHead>
-                  <TableHead>Conteúdo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.date')}</TableHead>
+                  <TableHead>{t('labels.time')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead>{t('labels.frequency')}</TableHead>
+                  <TableHead>{t('labels.content')}</TableHead>
+                  <TableHead className="text-right">{t('labels.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -541,7 +543,7 @@ export default function TurmaDetalhesPage() {
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/dashboard/turmas/${id}/chamada?sessao=${sessao.id}`}>
-                          Ver chamada
+                          {t('actions.viewAttendance')}
                         </Link>
                       </Button>
                     </TableCell>

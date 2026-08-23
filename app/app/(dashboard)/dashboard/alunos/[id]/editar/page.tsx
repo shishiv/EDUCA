@@ -57,7 +57,7 @@ export default function EditarAlunoPage() {
     const load = async () => {
       const { data, error } = await supabase.from('alunos').select('*').eq('id', id).single()
       if (error || !data) {
-        toast.error('Não foi possível carregar o aluno')
+        toast.error(t('ui.nao-foi-possivel-carregar-o-aluno'))
         router.replace('/dashboard/alunos')
         return
       }
@@ -137,7 +137,7 @@ export default function EditarAlunoPage() {
       return
     }
 
-    toast.success('Aluno atualizado com sucesso!')
+    toast.success(t('ui.aluno-atualizado-com-sucesso'))
     router.push(`/dashboard/alunos/${id}`)
   }
 
@@ -159,7 +159,7 @@ export default function EditarAlunoPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/alunos/${id}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div>
@@ -237,7 +237,7 @@ export default function EditarAlunoPage() {
               <Button variant="outline" asChild><Link href={`/dashboard/alunos/${id}`}>{t('labels.cancelar')}</Link></Button>
               <Button type="submit" disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {saving ? 'Salvando...' : 'Salvar alterações'}
+                {saving ? 'Salvando...' : t('ui.salvar-alteracoes')}
               </Button>
             </div>
           </form>

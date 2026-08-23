@@ -67,6 +67,7 @@ import {
   formatSemester,
 } from '@/types/descriptive-report'
 import { transformFormDataToInput } from '@/lib/validation/descriptive-report'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // TYPES
@@ -119,6 +120,7 @@ function ReportCardSkeleton() {
 // ============================================================================
 
 export default function StudentReportsPage() {
+  const t = useClassroomTranslations()
   const params = useParams()
   const router = useRouter()
   const alunoId = params.alunoId as string
@@ -594,7 +596,7 @@ export default function StudentReportsPage() {
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+          {t('actions.back')}
         </Button>
       </div>
     )
@@ -606,7 +608,7 @@ export default function StudentReportsPage() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Aluno não encontrado</AlertTitle>
+          <AlertTitle>{t('reports.studentNotFound')}</AlertTitle>
           <AlertDescription>
             Nao foi possivel encontrar o aluno ou o aluno nao possui matricula ativa.
           </AlertDescription>
@@ -617,7 +619,7 @@ export default function StudentReportsPage() {
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+          {t('actions.back')}
         </Button>
       </div>
     )
@@ -676,7 +678,7 @@ export default function StudentReportsPage() {
         {emissionError && (
           <Alert variant="destructive" data-testid="descriptive-report-emission-error">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>PDF não emitido</AlertTitle>
+            <AlertTitle>{t('reports.pdfNotIssued')}</AlertTitle>
             <AlertDescription>{emissionError}</AlertDescription>
           </Alert>
         )}
@@ -751,12 +753,12 @@ export default function StudentReportsPage() {
                         {report.status === 'finalizado' ? (
                           <>
                             <CheckCircle className="h-3 w-3" />
-                            Finalizado
+                            {t('status.finalized')}
                           </>
                         ) : (
                           <>
                             <PenLine className="h-3 w-3" />
-                            Rascunho
+                            {t('status.draft')}
                           </>
                         )}
                       </Badge>
@@ -766,7 +768,7 @@ export default function StudentReportsPage() {
                   {/* Progress bar */}
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                      <span>Progresso</span>
+                      <span>{t('reports.progress')}</span>
                       <span>
                         {report.campos_preenchidos} de {report.total_campos} campos
                       </span>
@@ -789,12 +791,12 @@ export default function StudentReportsPage() {
                     {report.status === 'finalizado' ? (
                       <>
                         <Eye className="h-3 w-3 mr-1" />
-                        Clique para visualizar
+                        {t('reports.clickView')}
                       </>
                     ) : (
                       <>
                         <Edit className="h-3 w-3 mr-1" />
-                        Clique para editar
+                        {t('reports.clickEdit')}
                       </>
                     )}
                   </div>
@@ -829,7 +831,7 @@ export default function StudentReportsPage() {
           {isCreatingNew && (
             <div className="flex items-center gap-4 py-4 border-b">
               <div className="flex-1">
-                <label className="text-sm font-medium">Ano Letivo</label>
+                <label className="text-sm font-medium">{t('labels.year')}</label>
                 <Select
                   value={newReportYear.toString()}
                   onValueChange={(v) => setNewReportYear(parseInt(v))}
@@ -847,7 +849,7 @@ export default function StudentReportsPage() {
                 </Select>
               </div>
               <div className="flex-1">
-                <label className="text-sm font-medium">Semestre</label>
+                <label className="text-sm font-medium">{t('labels.semester')}</label>
                 <Select
                   value={newReportSemester}
                   onValueChange={(v) => setNewReportSemester(v as SemestreType)}

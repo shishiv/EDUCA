@@ -111,7 +111,7 @@ export default function UsuarioDetalhesPage() {
       }
     } catch (error) {
       // logger.error('Erro ao carregar usuário:', error as any)
-      toast.error('Erro ao carregar dados do usuário')
+      toast.error(t('ui.erro-ao-carregar-dados-do-usuario'))
     } finally {
       setLoading(false)
     }
@@ -208,13 +208,13 @@ export default function UsuarioDetalhesPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/usuarios">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.detalhes-do-usuario')}</h1>
           <p className="text-gray-600 mt-1">
-            Informações completas e histórico de atividades
+            {t('ui.informacoes-completas-e-historico-de-atividades')}
           </p>
         </div>
       </div>
@@ -264,7 +264,7 @@ export default function UsuarioDetalhesPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{t('labels.status')}</span>
                   <Badge variant={usuario.ativo ? 'default' : 'secondary'}>
-                    {usuario.ativo ? 'Ativo' : t('labels.inativo')}
+                    {usuario.ativo ? t('ui.ativo') : t('labels.inativo')}
                   </Badge>
                 </div>
               </div>
@@ -323,7 +323,7 @@ export default function UsuarioDetalhesPage() {
                 <CardHeader>
                   <CardTitle>{t('labels.historico-de-atividades')}</CardTitle>
                   <CardDescription>
-                    Últimas ações realizadas pelo usuário no sistema
+                    {t('ui.ultimas-acoes-realizadas-pelo-usuario-no-sistema')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -359,7 +359,7 @@ export default function UsuarioDetalhesPage() {
                 <CardHeader>
                   <CardTitle>{t('labels.permissoes-do-usuario')}</CardTitle>
                   <CardDescription>
-                    Módulos e funcionalidades que o usuário tem acesso
+                    {t('ui.modulos-e-funcionalidades-que-o-usuario-tem-acesso')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -396,7 +396,7 @@ export default function UsuarioDetalhesPage() {
                 <CardHeader>
                   <CardTitle>{t('labels.configuracoes-da-conta')}</CardTitle>
                   <CardDescription>
-                    Configurações específicas do usuário
+                    {t('ui.configuracoes-especificas-do-usuario')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -439,11 +439,11 @@ export default function UsuarioDetalhesPage() {
                       <label className="text-sm font-medium text-gray-700">{t('labels.status-da-conta')}</label>
                       <div className="flex items-center space-x-2">
                         <Badge variant={usuario.ativo === true ? 'default' : 'secondary'}>
-                          {usuario.ativo === true ? t('labels.ativa') : 'Inativa'}
+                          {usuario.ativo === true ? t('labels.ativa') : t('ui.inativa')}
                         </Badge>
                         {usuario.ativo !== true && (
                           <span className="text-sm text-gray-500">
-                            Conta desativada pelo administrador
+                            {t('ui.conta-desativada-pelo-administrador')}
                           </span>
                         )}
                       </div>

@@ -66,7 +66,7 @@ export default function NovaEscolaPage() {
       setDiretoresDisponiveis(diretores || [])
     } catch (error) {
       logger.error('Erro ao carregar diretores:', error as any)
-      toast.error('Erro ao carregar lista de diretores disponíveis')
+      toast.error(t('ui.erro-ao-carregar-lista-de-diretores-disponiveis'))
     }
   }
 
@@ -77,7 +77,7 @@ export default function NovaEscolaPage() {
     try {
       // Validações básicas
       if (!formData.nome || !formData.codigo || !formData.tipo) {
-        toast.error('Preencha todos os campos obrigatórios')
+        toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
         setLoading(false)
         return
       }
@@ -85,7 +85,7 @@ export default function NovaEscolaPage() {
       // Validar código INEP (8 dígitos)
       const codigoLimpo = formData.codigo.replace(/\D/g, '')
       if (codigoLimpo.length !== 8) {
-        toast.error('Código INEP deve ter exatamente 8 dígitos')
+        toast.error(t('ui.codigo-inep-deve-ter-exatamente-8-digitos'))
         setLoading(false)
         return
       }
@@ -106,7 +106,7 @@ export default function NovaEscolaPage() {
       // Criar escola via API
       await schoolsApi.createSchool(schoolData)
 
-      toast.success('Escola cadastrada com sucesso!')
+      toast.success(t('ui.escola-cadastrada-com-sucesso'))
       router.push('/dashboard/escolas')
     } catch (error: any) {
       logger.error('Erro ao cadastrar escola:', error)
@@ -171,13 +171,13 @@ export default function NovaEscolaPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.nova-escola')}</h1>
           <p className="text-gray-600 mt-1">
-            Cadastre uma nova unidade escolar no sistema
+            {t('ui.cadastre-uma-nova-unidade-escolar-no-sistema')}
           </p>
         </div>
         <Button variant="outline" asChild>
           <Link href="/dashboard/escolas">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
       </div>
@@ -209,7 +209,7 @@ export default function NovaEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.informacoes-basicas')}</CardTitle>
                 <CardDescription>
-                  Dados principais da unidade escolar
+                  {t('ui.dados-principais-da-unidade-escolar')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -277,7 +277,7 @@ export default function NovaEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.localizacao')}</CardTitle>
                 <CardDescription>
-                  Endereço completo da unidade escolar
+                  {t('ui.endereco-completo-da-unidade-escolar')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -346,7 +346,7 @@ export default function NovaEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.informacoes-de-contato')}</CardTitle>
                 <CardDescription>
-                  Telefone e email da escola
+                  {t('ui.telefone-e-email-da-escola')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -383,7 +383,7 @@ export default function NovaEscolaPage() {
               <CardHeader>
                 <CardTitle>{t('labels.gestao-escolar')}</CardTitle>
                 <CardDescription>
-                  Atribuição de diretor e informações administrativas
+                  {t('ui.atribuicao-de-diretor-e-informacoes-administrativas')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -406,7 +406,7 @@ export default function NovaEscolaPage() {
                   </Select>
                   <p className="text-xs text-gray-500">
                     {diretoresDisponiveis.length === 0
-                      ? 'Nenhum diretor disponível para atribuição'
+                      ? t('ui.nenhum-diretor-disponivel-para-atribuicao')
                       : `${diretoresDisponiveis.length} disponíveis`}
                   </p>
                 </div>
@@ -416,11 +416,10 @@ export default function NovaEscolaPage() {
                     <School className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-blue-900">
-                        Informação sobre Diretores
+                        {t('ui.informacao-sobre-diretores')}
                       </p>
                       <p className="text-sm text-blue-700">
-                        Apenas diretores sem escola atribuída aparecem nesta lista.
-                        Para reatribuir um diretor, primeiro remova-o da escola atual.
+                        {t('ui.apenas-diretores-sem-escola-atribuida-aparecem-nesta-lista-para-reatribu')}
                       </p>
                     </div>
                   </div>
@@ -434,7 +433,7 @@ export default function NovaEscolaPage() {
             <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/dashboard/escolas">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Cancelar
+                {t('labels.cancelar')}
               </Link>
             </Button>
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
@@ -446,7 +445,7 @@ export default function NovaEscolaPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Cadastrar Escola
+                  {t('ui.cadastrar-escola')}
                 </>
               )}
             </Button>

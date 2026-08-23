@@ -313,7 +313,7 @@ export function BolsaFamiliaAlert({
                   {showDetails && (
                     <div className="mt-1 text-sm text-gray-600 space-y-0.5">
                       <div>NIS: {student.nis || t('components.bolsa.notInformed')}</div>
-                      <div>Turma: {student.turmaNome} ({student.turmaSerie})</div>
+                      <div>{t('components.studentReport.class')} {student.turmaNome} ({student.turmaSerie})</div>
                       {student.escolaNome && <div>Escola: {student.escolaNome}</div>}
                       <div>
                         Condicionalidade legal: {student.statusLegal}

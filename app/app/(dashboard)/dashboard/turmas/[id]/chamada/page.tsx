@@ -34,6 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import type { AttendanceReopenRequest } from '@/lib/services/attendance-reopen'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 interface Student {
   id: string
@@ -122,6 +123,7 @@ function statusLabel(status: string): string {
 }
 
 export default function ChamadaPage() {
+  const t = useClassroomTranslations()
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -524,10 +526,10 @@ export default function ChamadaPage() {
       <div className="space-y-4 p-4">
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
           <p className="font-medium">Erro ao carregar a chamada</p>
-          <p className="mt-1 text-sm">{error || 'Turma não encontrada'}</p>
+          <p className="mt-1 text-sm">{error || t('classes.notFound')}</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+            {t('actions.back')}
           </Button>
         </div>
       </div>
@@ -550,7 +552,7 @@ export default function ChamadaPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/turmas/${turmaId}`}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Turma
+            {t('labels.class')}
           </Link>
         </Button>
       </div>
@@ -620,7 +622,7 @@ export default function ChamadaPage() {
         <Card>
           <CardContent className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <CalendarClock className="h-5 w-5 animate-pulse" />
-            Carregando sessão e registros...
+            {t('attendance.loading')}
           </CardContent>
         </Card>
       ) : !selectedSession ? (
@@ -628,14 +630,14 @@ export default function ChamadaPage() {
           <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
             <CalendarClock className="h-12 w-12 text-muted-foreground" />
             <div>
-              <h2 className="text-lg font-semibold">Nenhuma chamada nesta data</h2>
+              <h2 className="text-lg font-semibold">{t('attendance.noCall')}</h2>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Abra uma sessão para registrar a presença dos alunos matriculados nesta turma.
+                {t('attendance.openHintDate')}
               </p>
             </div>
             {canOpenSession ? (
               <Button onClick={handleOpenSession} disabled={isSaving}>
-                {isSaving ? 'Abrindo...' : 'Abrir chamada'}
+                {isSaving ? t('attendance.opening') : t('actions.openAttendance')}
               </Button>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -650,14 +652,14 @@ export default function ChamadaPage() {
           {sessionStateLocked && (
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
               <Lock className="h-4 w-4" />
-              Sessão {statusLabel(selectedSession.status).toLowerCase()}. Os registros não podem ser alterados.
+              {t('labels.session')} {statusLabel(selectedSession.status).toLowerCase()}. Os registros não podem ser alterados.
             </div>
           )}
 
           <Card>
             <CardContent className="p-4">
               {students.length === 0 ? (
-                <p className="py-8 text-center text-muted-foreground">Nenhum aluno matriculado nesta turma.</p>
+                <p className="py-8 text-center text-muted-foreground">{t('attendance.noStudents')}</p>
               ) : (
                 <div className="space-y-2">
                   {students.map(student => {

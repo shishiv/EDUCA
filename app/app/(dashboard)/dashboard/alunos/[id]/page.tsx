@@ -129,7 +129,7 @@ export default function AlunoDetalhesPage() {
 
         if (alunoError) throw alunoError
         if (!alunoData) {
-          setError('Aluno não encontrado')
+          setError(t('ui.aluno-nao-encontrado'))
           return
         }
 
@@ -213,8 +213,8 @@ export default function AlunoDetalhesPage() {
           action: 'load_student_profile',
           metadata: { studentId: params?.id }
         })
-        setError('Erro ao carregar dados do aluno')
-        toast.error('Erro ao carregar dados do aluno')
+        setError(t('ui.erro-ao-carregar-dados-do-aluno'))
+        toast.error(t('ui.erro-ao-carregar-dados-do-aluno'))
       } finally {
         setLoading(false)
       }
@@ -257,7 +257,7 @@ export default function AlunoDetalhesPage() {
   if (!aluno || error) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">{error || 'Aluno não encontrado'}</p>
+        <p className="text-muted-foreground">{error || t('ui.aluno-nao-encontrado')}</p>
         <Button asChild className="mt-4">
           <Link href="/dashboard/alunos">{t('labels.voltar-para-lista')}</Link>
         </Button>
@@ -276,7 +276,7 @@ export default function AlunoDetalhesPage() {
         <Button variant="ghost" size="sm" className="self-start" asChild>
           <Link href="/dashboard/alunos">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
@@ -285,14 +285,14 @@ export default function AlunoDetalhesPage() {
             <Button variant="outline" asChild>
               <Link href={`/dashboard/alunos/${aluno.id}/diario`}>
                 <BookOpen className="h-4 w-4 mr-2" />
-                Ver Diário Infantil
+                {t('ui.ver-diario-infantil')}
               </Link>
             </Button>
           )}
           <Button asChild>
             <Link href={`/dashboard/alunos/${aluno.id}/editar`}>
               <Edit className="h-4 w-4 mr-2" />
-              Editar
+              {t('ui.editar')}
             </Link>
           </Button>
         </div>
@@ -352,7 +352,7 @@ export default function AlunoDetalhesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                Desempenho Acadêmico - 2024
+                {t('ui.desempenho-academico-2024')}
               </CardTitle>
               <CardDescription>
                 Notas por disciplina e bimestre

@@ -37,6 +37,7 @@ import {
   parseBNNCCodes,
   validateBNNCCodes,
 } from '@/lib/validation/lesson-content'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 export interface BNNCSelectorProps {
   /** Current value (comma-separated BNCC codes) */
@@ -76,6 +77,7 @@ export function BNNCSelector({
   className,
   id = 'bncc-selector',
 }: BNNCSelectorProps) {
+  const t = useClassroomTranslations()
   const [inputValue, setInputValue] = useState(value ?? '')
   const [isFocused, setIsFocused] = useState(false)
   const currentValue = value ?? inputValue

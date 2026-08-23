@@ -297,7 +297,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                          {turma.alunosCount} alunos
+                          {turma.alunosCount} {t('dashboard.students')}
                         </Badge>
                       </div>
                     </div>

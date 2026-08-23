@@ -70,6 +70,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import type { EducationLevel } from '@/types/lesson-content'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -121,6 +122,7 @@ export function NewLessonModal({
   educationLevel = 'fundamental',
   onSuccess,
 }: NewLessonModalProps) {
+  const t = useClassroomTranslations()
   const { userProfile } = useAuth()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -301,7 +303,7 @@ export function NewLessonModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <BookOpen className="h-5 w-5 text-green-600" />
-            Nova Aula
+            {t('actions.newLesson')}
           </DialogTitle>
           <DialogDescription>
             Registre o conteudo da aula para {turmaName || 'a turma selecionada'}
@@ -311,9 +313,9 @@ export function NewLessonModal({
         {!canCreateLesson ? (
           <Alert variant="destructive">
             <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Perfil com acesso de visualização</AlertTitle>
+            <AlertTitle>{t('diary.viewOnly')}</AlertTitle>
             <AlertDescription>
-              Seu perfil pode apenas visualizar o diário. Professores e diretores registram aulas.
+              {t('diary.viewOnlyHint')}
             </AlertDescription>
           </Alert>
         ) : (
@@ -329,7 +331,7 @@ export function NewLessonModal({
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Date Selector */}
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Data da Aula</Label>
+                <Label className="text-sm font-semibold">{t('diary.date')}</Label>
                 <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -406,7 +408,7 @@ export function NewLessonModal({
                       />
                     </FormControl>
                     <FormDescription>
-                      O que os alunos devem aprender ou desenvolver nesta aula
+                      {t('diary.objectiveHint')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -421,7 +423,7 @@ export function NewLessonModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-blue-500" />
-                      Habilidades BNCC
+                      {t('diary.bnccSkills')}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -501,7 +503,7 @@ export function NewLessonModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Lightbulb className="h-4 w-4 text-blue-500" />
-                      Metodologia
+                      {t('diary.methodology')}
                     </FormLabel>
                     <FormControl>
                       <Textarea
@@ -544,7 +546,7 @@ export function NewLessonModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <MessageSquare className="h-4 w-4 text-blue-500" />
-                      Observações
+                      {t('labels.observations')}
                     </FormLabel>
                     <FormControl>
                       <Textarea
@@ -569,7 +571,7 @@ export function NewLessonModal({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Cancelar
+            {t('diary.cancel')}
           </Button>
           <Button
             type="submit"
@@ -580,7 +582,7 @@ export function NewLessonModal({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Salvando...
+                {t('actions.saving')}
               </>
             ) : (
               <>

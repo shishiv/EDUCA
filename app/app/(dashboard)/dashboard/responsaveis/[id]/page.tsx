@@ -145,7 +145,7 @@ export default function ResponsavelDetalhesPage() {
       })
     } catch (error) {
       logger.error('Erro ao carregar responsável:', error as any)
-      toast.error('Erro ao carregar dados do responsável')
+      toast.error(t('ui.erro-ao-carregar-dados-do-responsavel'))
       router.push('/dashboard/responsaveis')
     } finally {
       setLoading(false)
@@ -158,7 +158,7 @@ export default function ResponsavelDetalhesPage() {
 
       // Validate required fields
       if (!formData.nome || !formData.cpf || !formData.parentesco) {
-        toast.error('Preencha todos os campos obrigatórios')
+        toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
         setSaving(false)
         return
       }
@@ -181,12 +181,12 @@ export default function ResponsavelDetalhesPage() {
 
       if (error) throw error
 
-      toast.success('Responsável atualizado com sucesso!')
+      toast.success(t('ui.responsavel-atualizado-com-sucesso'))
       setEditMode(false)
       await loadResponsavel() // Reload data
     } catch (error: any) {
       logger.error('Erro ao atualizar responsável:', error)
-      toast.error('Erro ao atualizar responsável')
+      toast.error(t('ui.erro-ao-atualizar-responsavel'))
     } finally {
       setSaving(false)
     }
@@ -286,7 +286,7 @@ export default function ResponsavelDetalhesPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard/responsaveis">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              {t('ui.voltar')}
             </Link>
           </Button>
           <div>
@@ -294,14 +294,14 @@ export default function ResponsavelDetalhesPage() {
               {responsavel.nome}
             </h1>
             <p className="text-gray-600 mt-1">
-              Detalhes do responsável
+              {t('ui.detalhes-do-responsavel')}
             </p>
           </div>
         </div>
         {!editMode ? (
           <Button onClick={() => setEditMode(true)}>
             <Edit className="mr-2 h-4 w-4" />
-            Editar
+            {t('ui.editar')}
           </Button>
         ) : (
           <div className="flex space-x-2">
@@ -321,11 +321,11 @@ export default function ResponsavelDetalhesPage() {
               }}
               disabled={saving}
             >
-              Cancelar
+              {t('labels.cancelar')}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               <Save className="mr-2 h-4 w-4" />
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? 'Salvando...' : t('ui.salvar')}
             </Button>
           </div>
         )}
@@ -469,16 +469,16 @@ export default function ResponsavelDetalhesPage() {
               <Users className="h-5 w-5 text-purple-600" />
               <CardTitle>{t('labels.alunos-vinculados')}</CardTitle>
             </div>
-            <Badge variant="secondary">{alunos.length} {alunos.length === 1 ? 'aluno' : 'alunos'}</Badge>
+            <Badge variant="secondary">{alunos.length} {alunos.length === 1 ? t('ui.aluno') : t('ui.alunos-258311')}</Badge>
           </div>
           <CardDescription>
-            Alunos sob responsabilidade de {responsavel.nome.split(' ')[0]}
+            {t('ui.alunos-sob-responsabilidade-de')} {responsavel.nome.split(' ')[0]}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {alunos.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
-              Nenhum aluno vinculado a este responsável
+              {t('ui.nenhum-aluno-vinculado-a-este-responsavel')}
             </p>
           ) : (
             <Table>
@@ -507,15 +507,15 @@ export default function ResponsavelDetalhesPage() {
                           <span className="font-medium">{aluno.nome_completo}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{calculateAge(aluno.data_nascimento)} anos</TableCell>
-                      <TableCell>{aluno.sexo === 'M' ? 'Masculino' : 'Feminino'}</TableCell>
+                      <TableCell>{calculateAge(aluno.data_nascimento)} {t('ui.anos')}</TableCell>
+                      <TableCell>{aluno.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}</TableCell>
                       <TableCell>
                         {matriculaAtiva?.turmas?.escolas?.nome || '-'}
                       </TableCell>
                       <TableCell>
                         {aluno.ativo ? (
                           <Badge variant="default" className="bg-green-100 text-green-800">
-                            Ativo
+                            {t('ui.ativo')}
                           </Badge>
                         ) : (
                           <Badge variant="secondary">{t('labels.inativo')}</Badge>
@@ -524,7 +524,7 @@ export default function ResponsavelDetalhesPage() {
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/dashboard/alunos/${aluno.id}`}>
-                            Ver Detalhes
+                            {t('ui.ver-detalhes')}
                           </Link>
                         </Button>
                       </TableCell>

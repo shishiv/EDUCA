@@ -105,7 +105,7 @@ export default function NovoAlunoPage() {
         if (!nextErrors[field]) nextErrors[field] = issue.message
       }
       setFieldErrors(nextErrors)
-      toast.error('Corrija os campos obrigatórios antes de continuar')
+      toast.error(t('ui.corrija-os-campos-obrigatorios-antes-de-continuar'))
       return
     }
 
@@ -143,7 +143,7 @@ export default function NovoAlunoPage() {
         escola_id_override: selectedEscolaId ?? undefined,
       })
 
-      toast.success('Aluno cadastrado com sucesso!')
+      toast.success(t('ui.aluno-cadastrado-com-sucesso'))
       router.push('/dashboard/alunos')
     } catch (error: any) {
       logger.error('Erro ao cadastrar aluno:', error)
@@ -208,13 +208,13 @@ export default function NovoAlunoPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/alunos">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-aluno')}</h1>
           <p className="text-gray-600 mt-1">
-            Cadastre um novo aluno no sistema
+            {t('ui.cadastre-um-novo-aluno-no-sistema')}
           </p>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function NovoAlunoPage() {
       {shouldShowSelector && !selectedEscolaId && (
         <Alert variant="destructive">
           <AlertDescription>
-            Selecione uma escola no menu lateral antes de cadastrar um aluno.
+            {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-aluno')}
           </AlertDescription>
         </Alert>
       )}
@@ -232,7 +232,7 @@ export default function NovoAlunoPage() {
         {Object.keys(fieldErrors).length > 0 && (
           <Alert variant="destructive" className="mb-6" role="alert">
             <AlertDescription>
-              Corrija os campos obrigatórios destacados antes de continuar.
+              {t('ui.corrija-os-campos-obrigatorios-destacados-antes-de-continuar')}
             </AlertDescription>
           </Alert>
         )}
@@ -263,7 +263,7 @@ export default function NovoAlunoPage() {
                   <CardHeader>
                     <CardTitle>{t('labels.informacoes-pessoais')}</CardTitle>
                     <CardDescription>
-                      Dados básicos de identificação do aluno
+                      {t('ui.dados-basicos-de-identificacao-do-aluno')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -505,7 +505,7 @@ export default function NovoAlunoPage() {
               <CardHeader>
                 <CardTitle>{t('labels.dados-do-responsavel')}</CardTitle>
                 <CardDescription>
-                  Informações do responsável legal pelo aluno
+                  {t('ui.informacoes-do-responsavel-legal-pelo-aluno')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -622,7 +622,7 @@ export default function NovoAlunoPage() {
               <CardHeader>
                 <CardTitle>{t('labels.informacoes-medicas-e-especiais')}</CardTitle>
                 <CardDescription>
-                  Dados importantes sobre saúde e necessidades especiais
+                  {t('ui.dados-importantes-sobre-saude-e-necessidades-especiais')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -678,7 +678,7 @@ export default function NovoAlunoPage() {
               <CardHeader>
                 <CardTitle>{t('labels.upload-de-documentos')}</CardTitle>
                 <CardDescription>
-                  Anexe os documentos necessários para a matrícula
+                  {t('ui.anexe-os-documentos-necessarios-para-a-matricula')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8">
@@ -694,7 +694,7 @@ export default function NovoAlunoPage() {
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
                       <p className="text-sm font-medium text-gray-700 mb-3">{t('labels.certidao-de-nascimento')}</p>
                       <Button variant="outline" size="sm" className="w-full">
-                        Selecionar Arquivo
+                        {t('ui.selecionar-arquivo')}
                       </Button>
                     </div>
 
@@ -702,7 +702,7 @@ export default function NovoAlunoPage() {
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
                       <p className="text-sm font-medium text-gray-700 mb-3">{t('labels.cartao-de-vacina')}</p>
                       <Button variant="outline" size="sm" className="w-full">
-                        Selecionar Arquivo
+                        {t('ui.selecionar-arquivo')}
                       </Button>
                     </div>
 
@@ -710,7 +710,7 @@ export default function NovoAlunoPage() {
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
                       <p className="text-sm font-medium text-gray-700 mb-3">{t('labels.comprovante-de-residencia')}</p>
                       <Button variant="outline" size="sm" className="w-full">
-                        Selecionar Arquivo
+                        {t('ui.selecionar-arquivo')}
                       </Button>
                     </div>
                   </div>
@@ -728,7 +728,7 @@ export default function NovoAlunoPage() {
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
                       <p className="text-sm font-medium text-gray-600 mb-3">{t('labels.foto-3x4')}</p>
                       <Button variant="outline" size="sm" className="w-full" disabled>
-                        Selecionar Arquivo
+                        {t('ui.selecionar-arquivo')}
                       </Button>
                     </div>
 
@@ -736,7 +736,7 @@ export default function NovoAlunoPage() {
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
                       <p className="text-sm font-medium text-gray-600 mb-3">{t('labels.historico-escolar')}</p>
                       <Button variant="outline" size="sm" className="w-full" disabled>
-                        Selecionar Arquivo
+                        {t('ui.selecionar-arquivo')}
                       </Button>
                     </div>
 
@@ -744,7 +744,7 @@ export default function NovoAlunoPage() {
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
                       <p className="text-sm font-medium text-gray-600 mb-3">{t('labels.laudos-medicos')}</p>
                       <Button variant="outline" size="sm" className="w-full" disabled>
-                        Selecionar Arquivo
+                        {t('ui.selecionar-arquivo')}
                       </Button>
                     </div>
                   </div>
@@ -757,7 +757,7 @@ export default function NovoAlunoPage() {
             <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/dashboard/alunos">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Cancelar
+                {t('labels.cancelar')}
               </Link>
             </Button>
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
@@ -769,7 +769,7 @@ export default function NovoAlunoPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Cadastrar Aluno
+                  {t('labels.cadastrar-aluno')}
                 </>
               )}
             </Button>

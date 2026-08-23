@@ -33,6 +33,7 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { AttendanceSummary } from '@/types/diario-classe'
 import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -86,6 +87,7 @@ export function FrequencyControls({
   loading = false,
   disabled = false,
 }: FrequencyControlsProps) {
+  const t = useClassroomTranslations()
   // Date navigation handlers
   const handlePreviousDay = () => {
     onDateChange(subDays(selectedDate, 1))
@@ -121,7 +123,7 @@ export function FrequencyControls({
           {/* Turma Selector */}
           <div className="space-y-2">
             <Label htmlFor="turma-select" className="text-sm font-semibold text-gray-900">
-              Turma
+              {t('labels.class')}
             </Label>
             <Select
               value={selectedTurmaId || ''}
@@ -149,7 +151,7 @@ export function FrequencyControls({
           {/* Date Selector with Navigation */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-900">
-              Data
+              {t('labels.date')}
             </Label>
             <div className="flex gap-2">
               <Popover>
@@ -161,7 +163,7 @@ export function FrequencyControls({
                       !selectedDate && 'text-muted-foreground'
                     )}
                     disabled={loading || disabled}
-                    aria-label="Selecionar data"
+                    aria-label={t('attendance.selectDate')}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })}
@@ -183,7 +185,7 @@ export function FrequencyControls({
                 onClick={handlePreviousDay}
                 disabled={loading || disabled}
                 className="bg-gray-300 hover:bg-gray-400 border-gray-300"
-                aria-label="Dia anterior"
+                aria-label={t('attendance.previousDay')}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -193,7 +195,7 @@ export function FrequencyControls({
                 onClick={handleNextDay}
                 disabled={loading || disabled}
                 className="bg-gray-300 hover:bg-gray-400 border-gray-300"
-                aria-label="Próximo dia"
+                aria-label={t('attendance.nextDay')}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -203,7 +205,7 @@ export function FrequencyControls({
           {/* Period Toggle */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-900">
-              Período
+              {t('labels.period')}
             </Label>
             <div className="flex gap-2">
               <Button
@@ -251,7 +253,7 @@ export function FrequencyControls({
                 <div className="space-y-1 text-xs text-gray-600">
                   <div className="flex items-center gap-1">
                     <UserCheck className="h-3 w-3 text-green-600" />
-                    <span>{summary.presentes} presentes</span>
+                    <span>{summary.presentes} {t('attendance.presentCount')}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <UserX className="h-3 w-3 text-red-600" />
@@ -269,7 +271,7 @@ export function FrequencyControls({
               <div className="text-center py-2">
                 <Users className="h-6 w-6 mx-auto text-gray-400 mb-1" />
                 <p className="text-xs text-gray-500">
-                  Selecione uma turma
+                  {t('diary.selectClass')}
                 </p>
               </div>
             )}

@@ -97,7 +97,7 @@ export default function ResponsaveisPage() {
       logger.info('Responsáveis carregados:', { metadata: { count: responsaveisWithCount.length } })
     } catch (error) {
       logger.error('Erro ao carregar responsáveis:', error as any)
-      toast.error('Erro ao carregar lista de responsáveis')
+      toast.error(t('ui.erro-ao-carregar-lista-de-responsaveis'))
       setResponsaveis([])
     } finally {
       setLoading(false)
@@ -180,13 +180,13 @@ export default function ResponsaveisPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('labels.responsaveis')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie os responsáveis pelos alunos
+            {t('ui.gerencie-os-responsaveis-pelos-alunos')}
           </p>
         </div>
         <Button asChild>
           <Link href="/dashboard/responsaveis/novo">
             <Plus className="mr-2 h-4 w-4" />
-            Novo Responsável
+            {t('labels.novo-responsavel')}
           </Link>
         </Button>
       </div>
@@ -282,7 +282,7 @@ export default function ResponsaveisPage() {
               {filteredResponsaveis.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-gray-500 py-8">
-                    Nenhum responsável encontrado
+                    {t('ui.nenhum-responsavel-encontrado')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -336,7 +336,7 @@ export default function ResponsaveisPage() {
                         <User className="h-4 w-4 text-gray-400" />
                         <span className="font-medium">{responsavel.alunos_count || 0}</span>
                         <span className="text-sm text-gray-500">
-                          {responsavel.alunos_count === 1 ? 'aluno' : 'alunos'}
+                          {responsavel.alunos_count === 1 ? t('ui.aluno') : t('ui.alunos-258311')}
                         </span>
                       </div>
                     </TableCell>

@@ -33,6 +33,7 @@ import {
   getCampoBadgeVariant,
   getAllCampos,
 } from '@/types/diario-infantil'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -59,6 +60,7 @@ export function VivenciasReference({
   onFilterChange,
   className,
 }: VivenciasReferenceProps) {
+  const t = useClassroomTranslations()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Filter vivencias based on selected campo
@@ -118,7 +120,7 @@ export function VivenciasReference({
             onClick={() => handleFilterClick(null)}
             className="h-7 text-xs"
           >
-            Todos
+            {t('labels.all')}
           </Button>
           {campos.map((campo) => {
             const isSelected = selectedCampo === campo.key
@@ -206,6 +208,7 @@ function CompactVivenciaCard({
   onToggleExpand,
   highlightCampo,
 }: CompactVivenciaCardProps) {
+  const t = useClassroomTranslations()
   return (
     <div
       className={cn(
@@ -310,6 +313,7 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ selectedCampo }: EmptyStateProps) {
+  const t = useClassroomTranslations()
   const campoName = selectedCampo
     ? CAMPOS_EXPERIENCIA[selectedCampo].shortName
     : null
