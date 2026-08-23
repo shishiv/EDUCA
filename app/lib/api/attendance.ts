@@ -1,3 +1,33 @@
+/**
+ * Attendance Browser Adapter — UI-friendly wrappers for attendance operations.
+ *
+ * This module owns **only** the browser-side translations between the UI and
+ * the canonical attendance domain module (`services/attendance-module`).  It
+ * delegates authorization and writes to server actions.
+ *
+ * ## Authentication
+ *
+ * Operations call server actions which resolve the authenticated actor from
+ * the server session.  The browser client never sends `professor_id` or
+ * `escola_id` — those are resolved server-side.
+ *
+ * ## RLS
+ *
+ * Read queries use the signed-in JWT; writes go through authorized server
+ * actions that enforce ownership before touching `sessoes_aula`/`frequencia`.
+ *
+ * ## Error codes
+ *
+ * Methods throw plain `Error` with a Portuguese message on failure.  Callers
+ * should catch and display `.message` directly.
+ *
+ * ## Mode availability
+ *
+ * Pilot and production (real writes).  In demo sandbox the attendance page
+ * is read-only — mutations are blocked by the demo guard layer.
+ *
+ * @module api/attendance
+ */
 'use client'
 
 import { supabase, type Inserts } from '@/lib/supabase'

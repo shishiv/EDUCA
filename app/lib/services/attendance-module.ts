@@ -1,4 +1,9 @@
 /**
+ * @module services/attendance-module
+ * @see {@link createAttendanceModule} for the factory function
+ * @see {@link AttendanceSessionModule} for the full operation interface
+ */
+/**
  * Canonical Attendance session module.
  *
  * This is the domain seam for the canonical attendance flow. Server actions,

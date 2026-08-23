@@ -1,3 +1,25 @@
+/**
+ * Schools API Service — school CRUD, dashboard, statistics, and director assignment.
+ *
+ * ## Authentication & RLS
+ *
+ * Uses the browser Supabase client.  `escolas` table RLS policies scope
+ * visibility: school-bound users see only their own escola; secretariat
+ * users see all active schools.
+ *
+ * ## Audit
+ *
+ * Status changes (activate/deactivate) are logged to the audit trail via
+ * {@link SchoolsApiService.updateSchoolStatus}.  Audit writes are async and
+ * non-blocking — a failed audit log does not roll back the status change.
+ *
+ * ## Mode availability
+ *
+ * All modes.  Demo sandbox allows reads and simulated writes (no-op for
+ * destructive operations like deactivation).
+ *
+ * @module api/schools
+ */
 import { BaseApiService } from './base'
 import { supabase, Tables, Escola } from '@/lib/supabase'
 import { SchoolFormData } from '@/lib/validation'

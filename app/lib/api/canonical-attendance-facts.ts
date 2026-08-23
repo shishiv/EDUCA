@@ -1,3 +1,32 @@
+/**
+ * Canonical Attendance Facts — the single shared read query for attendance data.
+ *
+ * This is the authoritative read interface for every attendance consumer:
+ * reports, compliance warnings, dashboard alerts, and attendance cards.
+ * The canonical contract is `frequencia.sessao_id` — legacy `aula_id`-only
+ * rows never enter a policy calculation.
+ *
+ * ## Authentication
+ *
+ * Accepts a Supabase client injected by the caller (server component, API
+ * route, or browser context).  The client's JWT determines RLS visibility.
+ *
+ * ## RLS
+ *
+ * The `frequencia` table RLS policies enforce school-scoped reads.  This
+ * module never elevates privileges — it runs within the caller's context.
+ *
+ * ## Policy thresholds
+ *
+ * - `CONFORMIDADE = 80%` — Bolsa Família legal floor
+ * - `ATENCAO = 85%` — preventive municipal margin
+ *
+ * ## Mode availability
+ *
+ * All modes (pilot, demo, production).
+ *
+ * @module api/canonical-attendance-facts
+ */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import {

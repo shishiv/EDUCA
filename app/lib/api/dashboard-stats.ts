@@ -1,3 +1,6 @@
+/**
+ * Dashboard Statistics — aggregate counts and attendance frequency for the dashboard cards.  Pure reads with no write operations.
+ */
 import { supabase } from '@/lib/supabase'
 import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { logger } from '@/lib/logger'

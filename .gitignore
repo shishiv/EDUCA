@@ -61,3 +61,6 @@ PROPOSTA-ORGANIZACAO-CLEANUP-ROADMAP.md
 # Internal docs
 docs/security-analysis.md
 docs/bugs-analysis.md
+
+# Generated API reference
+docs/api/
