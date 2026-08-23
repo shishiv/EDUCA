@@ -1,54 +1,54 @@
-# Public Demo Journeys Contract
+# Contrato de jornadas do demo público
 
-Issue: #79 — Jornadas do demo público
-Status: draft, blocked by #76 (mutability) and #77 (privacy)
+Issue: #79: Jornadas do demo público
+Status: rascunho, bloqueado por #76 (mutabilidade) e #77 (privacidade)
 
 ## Purpose
 
-Define the observable journeys that the public demo must satisfy before activation.
-Each journey has a persona, environment, data boundary, expected result, and verification method.
+Define as jornadas observáveis que o demo público deve satisfazer antes da ativação.
+Cada jornada tem persona, ambiente, limite de dados, resultado esperado e método de verificação.
 
 ## Environments
 
-| Label | URL | Mutations allowed | Data |
+| Rótulo | URL | Mutações permitidas | Dados |
 |-------|-----|-------------------|------|
-| `local-synthetic` | `http://localhost:3000` | Yes (disposable stack) | Synthetic seed only |
-| `public-demo` | `https://educa-demo.vercel.app` | **No** — smoke is non-destructive | Shared sandbox |
+| `local-synthetic` | Origem local nomeada pelo runner | Sim, stack descartável | Somente seed sintético |
+| `public-demo` | `https://educa-demo.vercel.app` | **Não**: smoke não destrutivo | Sandbox compartilhado |
 
 ## Persona Matrix
 
 | # | Persona | Ambiente | Dados | Jornada | Resultado esperado | Verificação |
 |---|---------|----------|-------|---------|-------------------|-------------|
 | J1 | Visitante público | public-demo | Nenhum | Acessa URL raiz, vê redirect para `/login`, vê link de política de privacidade | `/login` renderiza sem erro; política acessível sem auth | Playwright: status 200, heading presente |
-| J2 | Operador municipal sintético (admin) | local-synthetic | Demo seed | Login, navega escolas, alunos, turmas, matrículas; abre chamada; salva presença; verifica persistência | CRUD visível, frequência salva, reload confirma write | Playwright com Supabase local |
-| J3 | Diretor de escola | local-synthetic | Demo seed | Login como diretor; vê apenas escola própria; tenta acessar escola alheia → unauthorized | Isolamento de escola via RLS | Playwright + asserção de RLS |
-| J4 | Professor titular | local-synthetic | Demo seed | Login; abre chamada da turma atribuída; registra presença; tenta turma de outra escola → bloqueado | Write na turma própria, deny na alheia | Playwright + Supabase client |
-| J5 | Convite / primeiro acesso | local-synthetic | Synthetic invite | Admin convida professor; professor faz primeiro login com senha temporária; completa first-access | Profile atualizado, `primeiro_login=false`, `senha_padrao=false` | Playwright (reusa harness de `invitation-first-access.spec.ts`) |
-| J6 | Negativas do Pilot Gate | local-synthetic | Pilot provisioner | Usuário autenticado tenta acessar módulos desabilitados (notas, calendário, configurações, sessões) | Redirect para `/dashboard?pilotScope=disabled` | Playwright (reusa padrão de `core-scope.spec.ts`) |
+| J2 | Operador municipal sintético | local-synthetic | Seed sintético | Fluxo de escolas, alunos, turmas, matrículas e chamada | CRUD e frequência observáveis | Suíte existente `core-scope.spec.ts` e manifests do runner legacy |
+| J3 | Diretor de escola | local-synthetic | Seed sintético | Isolamento entre escolas | Leitura alheia negada por RLS | `deployed-isolation.spec.ts` |
+| J4 | Professor titular | local-synthetic | Seed sintético | Leitura e escrita da chamada própria, negação entre escolas | Write próprio e deny alheio | `canonical-pilot.spec.ts` |
+| J5 | Convite e primeiro acesso | local-synthetic | Convite sintético | Admin convida professor e conclui primeiro acesso | Perfil atualizado | `invitation-first-access.spec.ts` |
+| J6 | Negativas do Pilot Gate | local-synthetic | Pilot provisioner | Usuário tenta módulos desabilitados | Redirect para `/dashboard?pilotScope=disabled` | `core-scope.spec.ts` |
 
 ## Mutation boundary
 
-- **Local-synthetic:** mutations são permitidas e exercitadas. A stack é descartável (Supabase local + demo seed).
-- **Public-demo:** o smoke verifica apenas leitura. Nenhum POST, PUT, DELETE, ou RPC mutante é emitido contra o sandbox público compartilhado.
+- **Local-synthetic:** mutações são permitidas e exercitadas. A stack é descartável (Supabase local + seed sintético).
+- **Public-demo:** o smoke verifica apenas leitura. Nenhum POST, PUT, DELETE ou RPC mutante é emitido contra o sandbox público compartilhado.
 
 ## Blockers
 
-1. **Deploy do site divergente** — não é possível provar que o smoke público reflete o código local.
-2. **Credencial pública do demo inválida** — login no endpoint público falha; J1 é o único journey executável externamente.
-3. **Contrato de privacidade (#77)** — texto da política pode mudar; J1 depende de heading estável.
-4. **Mutabilidade (#76)** — definição de operações permitidas no sandbox ainda aberta; J2-J5 só executam local.
+1. **Deploy do site divergente**: não é possível provar que o smoke público reflete o código local.
+2. **Credencial pública do demo inválida**: login no endpoint público falha; J1 é a única jornada executável externamente.
+3. **Contrato de privacidade (#77)**: texto da política pode mudar; J1 depende de heading estável.
+4. **Mutabilidade (#76)**: definição de operações permitidas no sandbox ainda aberta; J2-J6 só executam local.
 
 ## Acceptance criteria
 
 1. Cada jornada tem resultado observável documentado acima.
 2. Mutações rodam somente em stack sintética descartável.
 3. Produção/demo público recebe apenas smoke não destrutivo.
-4. Specs em `app/tests/e2e/public-demo/` cobrem J1-J6.
+4. J1 tem smoke dedicado em `app/tests/e2e/public-demo/`; J2-J6 são mapeadas para as suítes existentes robustas.
 5. Nenhum dado real, credencial real, ou identidade real aparece nos testes.
 
 ## Verification
 
-- Playwright local com Supabase isolado para J2-J6.
-- Smoke HTTP/browser no site público para J1 (quando deploy convergir).
-- Teste explícito de RLS/tenant/role para J3 e J4.
+- Suítes Playwright existentes com Supabase isolado para J2-J6.
+- Smoke HTTP/browser no site público para J1, quando o deploy convergir.
+- Testes explícitos de RLS, tenant e role nas suítes canônica e de isolamento.
 - Reuso dos harnesses sintéticos existentes (`.invalid` emails, UUIDs determinísticos).

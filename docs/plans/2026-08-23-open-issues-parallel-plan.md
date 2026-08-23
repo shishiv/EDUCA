@@ -441,3 +441,19 @@ Começar por #76, #77 e #79 em paralelo. #82 integra os três resultados. Em par
   espaços/tabs reais ao fim de linha.
 - O agregado R3-T4 continua unmet pelo blocker já reproduzido de portless sem
   sudo; a E2E canônica autenticada permanece aprovada em stack isolada.
+
+## Registro verificado da integração: simplificação final de E2E
+
+- Os cinco specs duplicados J2-J6 em `app/tests/e2e/public-demo/` foram
+  removidos. O contrato #79 agora aponta J2-J6 para `core-scope`,
+  `deployed-isolation`, `canonical-pilot` e `invitation-first-access`, que são
+  as suítes existentes com lifecycle e fixtures próprios.
+- J1 permaneceu como smoke público somente leitura. A configuração dedicada
+  `playwright.public-demo.config.ts` não possui `webServer`, exige origem HTTPS
+  pública e executou 5 de 5 testes contra `educa-demo.vercel.app`.
+- Foi tentada a execução `PORTLESS=0 pnpm test:e2e:pilot` sem alterar runners ou
+  produto. O agregado encerrou por timeout no primeiro child, pois os runners
+  existentes ainda chamam `portless`; o lease foi liberado e o cleanup ocorreu.
+  O blocker R3-T4 permanece unmet, sem uso de sudo.
+- A documentação de `docs/operations/public-demo-*.md` foi revisada para
+  português, sem travessão longo e sem URLs localhost numeradas.

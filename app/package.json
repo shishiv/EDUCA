@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:public-demo": "playwright test --config playwright.public-demo.config.ts",
     "test:e2e:pilot": "bash scripts/run-pilot-aggregate-e2e.sh",
     "test:e2e:pilot:canonical": "bash scripts/run-pilot-canonical-e2e.sh",
     "test:e2e:pilot:legacy": "bash scripts/run-pilot-e2e.sh",
