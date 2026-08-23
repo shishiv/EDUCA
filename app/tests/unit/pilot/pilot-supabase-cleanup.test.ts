@@ -129,12 +129,17 @@ function runCleanup(projectDir: string, projectId: string): { exitCode: number; 
     ], { encoding: 'utf8' })
     const stderr = readFileSync(stderrFile, 'utf8')
     return { exitCode: 0, output: stdout + stderr, callLog: readFileSync(callLog, 'utf8') }
-  } catch (e: any) {
+  } catch (error: unknown) {
+    const failure = error as {
+      status?: number
+      stdout?: string
+      stderr?: string
+    }
     let stderrContent = ''
     try { stderrContent = readFileSync(stderrFile, 'utf8') } catch { /* */ }
     return {
-      exitCode: e.status ?? 1,
-      output: (e.stdout ?? '') + stderrContent + (e.stderr ?? ''),
+      exitCode: failure.status ?? 1,
+      output: (failure.stdout ?? '') + stderrContent + (failure.stderr ?? ''),
       callLog: readFileSync(callLog, 'utf8'),
     }
   }
