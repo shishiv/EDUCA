@@ -67,7 +67,7 @@ pilot_supabase_stop_project() {
     mapfile -t network_ids <<< "$resource_output"
   fi
 
-  # Phase 6: Nothing to remove — early success
+  # Phase 6: Nothing to remove, so return early
   if [[ ${#all_container_ids[@]} -eq 0 && ${#volume_names[@]} -eq 0 && ${#network_ids[@]} -eq 0 ]]; then
     echo "PILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=$project_id" >&2
     return 0
@@ -97,7 +97,7 @@ pilot_supabase_stop_project() {
     }
   fi
 
-  # Phase 10: Validate absence — nothing from this project id remains
+  # Phase 10: Validate that nothing from this project id remains
   local -a remaining_containers=()
   local -a remaining_volumes=()
   local -a remaining_networks=()
