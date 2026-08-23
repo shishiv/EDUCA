@@ -1,6 +1,7 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
 import { supabase } from '@/lib/supabase'
@@ -38,17 +39,15 @@ import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { recordDemoClientAction } from '@/lib/demo-sandbox/demo-audit-client'
 
 export default function UsuariosPage() {
+  const t = useTranslations('registry')
+
   const [usuarios, setUsuarios] = useState<UserWithSchool[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [tipoFilter, setTipoFilter] = useState('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
 
-  useEffect(() => {
-    loadUsuarios()
-  }, [])
-
-  const loadUsuarios = async () => {
+  const loadUsuarios = useCallback(async () => {
     try {
       logger.info('Loading usuarios...')
       // Simple query without joins first
@@ -67,24 +66,28 @@ export default function UsuariosPage() {
       setUsuarios(data || [])
     } catch (error) {
       logger.error('Erro ao carregar usuários:', error as any)
-      toast.error('Erro ao carregar lista de usuários')
+      toast.error(t('ui.erro-ao-carregar-lista-de-usuarios'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadUsuarios()
+  }, [loadUsuarios])
 
   const handleDeleteUser = async (id: string) => {
   if (isDemoSandboxEnabled()) {
-    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    toast.error(t('ui.acao-bloqueada-no-sandbox-publico-de-demonstracao'))
     return
   }
 
     try {
       await usersApi.delete(id)
       setUsuarios(usuarios.filter(u => u.id !== id))
-      toast.success('Usuário excluído com sucesso!')
+      toast.success(t('ui.usuario-excluido-com-sucesso'))
     } catch (error) {
-      toast.error('Erro ao excluir usuário')
+      toast.error(t('ui.erro-ao-excluir-usuario'))
     }
   }
 
@@ -108,7 +111,7 @@ export default function UsuariosPage() {
         toast.success(`Usuário ${!user.ativo ? 'ativado' : 'desativado'} com sucesso!`)
       }
     } catch (error) {
-      toast.error('Erro ao alterar status do usuário')
+      toast.error(t('ui.erro-ao-alterar-status-do-usuario'))
     }
   }
 
@@ -124,10 +127,10 @@ export default function UsuariosPage() {
   const getRoleLabel = (role: string) => {
     const roles = {
       admin: 'Administrador',
-      diretor: 'Diretor(a)',
+      diretor: t('labels.diretor-a'),
       secretario: 'Secretário(a)',
       professor: 'Professor(a)',
-      responsavel: 'Responsável'
+      responsavel: t('labels.responsavel')
     }
     return roles[role as keyof typeof roles] || role
   }
@@ -145,9 +148,9 @@ export default function UsuariosPage() {
   const filteredUsuarios = usuarios.filter(usuario => {
     const matchesSearch = usuario.nome.toLowerCase().includes(search.toLowerCase()) ||
                          (usuario.email?.toLowerCase() || "").includes(search.toLowerCase())
-    
+
     const matchesTipo = tipoFilter === 'todos' || usuario.tipo_usuario === tipoFilter
-    const matchesStatus = statusFilter === 'todos' || 
+    const matchesStatus = statusFilter === 'todos' ||
                          (statusFilter === 'ativo' && usuario.ativo) ||
                          (statusFilter === 'inativo' && !usuario.ativo)
 
@@ -174,20 +177,20 @@ export default function UsuariosPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Usuários</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.usuarios')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie os usuários e permissões do sistema
+            {t('ui.gerencie-os-usuarios-e-permissoes-do-sistema')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
-            Exportar
+            {t('labels.exportar')}
           </Button>
           <Button asChild className="gap-2">
             <Link href="/dashboard/usuarios/novo">
               <Plus className="h-4 w-4" />
-              Novo Usuário
+              {t('labels.novo-usuario')}
             </Link>
           </Button>
         </div>
@@ -196,9 +199,9 @@ export default function UsuariosPage() {
       {/* Estatísticas compactas */}
       <StatsBar
         stats={[
-          { label: 'Total', value: usuarios.length, icon: Users },
+          { label: t('labels.total'), value: usuarios.length, icon: Users },
           { label: 'Ativos', value: usuarios.filter(u => u.ativo).length, icon: CheckCircle, variant: 'success' },
-          { label: 'Professores', value: usuarios.filter(u => u.tipo_usuario === 'professor').length, icon: GraduationCap, variant: 'info' },
+          { label: t('labels.professores'), value: usuarios.filter(u => u.tipo_usuario === 'professor').length, icon: GraduationCap, variant: 'info' },
           { label: 'Diretores', value: usuarios.filter(u => u.tipo_usuario === 'diretor').length, icon: Crown, variant: 'warning' },
         ]}
       />
@@ -207,7 +210,7 @@ export default function UsuariosPage() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle className="text-lg">Usuários ({filteredUsuarios.length})</CardTitle>
+            <CardTitle className="text-lg">{t('ui.usuarios')}{filteredUsuarios.length})</CardTitle>
           </div>
           <InlineFilters
             search={{
@@ -218,24 +221,24 @@ export default function UsuariosPage() {
             filters={[
               {
                 id: 'tipo',
-                placeholder: 'Tipo',
+                placeholder: t('labels.tipo'),
                 value: tipoFilter,
                 options: [
                   { value: 'todos', label: 'Todos os tipos' },
                   { value: 'admin', label: 'Administrador' },
-                  { value: 'diretor', label: 'Diretor' },
-                  { value: 'secretario', label: 'Secretário' },
-                  { value: 'professor', label: 'Professor' },
+                  { value: 'diretor', label: t('labels.diretor') },
+                  { value: 'secretario', label: t('labels.secretario') },
+                  { value: 'professor', label: t('labels.professor') },
                 ],
                 onChange: setTipoFilter,
                 width: 'w-full sm:w-44',
               },
               {
                 id: 'status',
-                placeholder: 'Status',
+                placeholder: t('labels.status'),
                 value: statusFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
+                  { value: 'todos', label: t('labels.todos') },
                   { value: 'ativo', label: 'Ativos' },
                   { value: 'inativo', label: 'Inativos' },
                 ],
@@ -255,12 +258,12 @@ export default function UsuariosPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Escola</TableHead>
-                  <TableHead>Último Acesso</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.usuario')}</TableHead>
+                  <TableHead>{t('labels.tipo')}</TableHead>
+                  <TableHead>{t('labels.escola')}</TableHead>
+                  <TableHead>{t('labels.ultimo-acesso')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -296,7 +299,7 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={usuario.ativo ? 'default' : 'secondary'}>
-                        {usuario.ativo ? 'Ativo' : 'Inativo'}
+                        {usuario.ativo ? t('ui.ativo') : t('labels.inativo')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -306,9 +309,9 @@ export default function UsuariosPage() {
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => toggleUserStatus(usuario.id)}
                           className={usuario.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
                         >
@@ -322,19 +325,18 @@ export default function UsuariosPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogTitle>{t('labels.confirmar-exclusao')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Tem certeza que deseja excluir o usuário &quot;{usuario.nome}&quot;?
-                                Esta ação não pode ser desfeita.
+                                {t('ui.tem-certeza-que-deseja-excluir-o-usuario-quote')}{usuario.nome}{t('ui.quote-esta-acao-nao-pode-ser-desfeita')}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
+                              <AlertDialogCancel>{t('labels.cancelar')}</AlertDialogCancel>
+                              <AlertDialogAction
                                 onClick={() => handleDeleteUser(usuario.id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
-                                Excluir
+                                {t('ui.excluir')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -349,13 +351,13 @@ export default function UsuariosPage() {
                     icon={search || tipoFilter !== 'todos' || statusFilter !== 'todos' ? SearchIcon : Users}
                     title={
                       search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? 'Nenhum usuário encontrado'
-                        : 'Nenhum usuário cadastrado'
+                        ? t('ui.nenhum-usuario-encontrado')
+                        : t('ui.nenhum-usuario-cadastrado')
                     }
                     description={
                       search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? 'Tente ajustar os filtros para encontrar o que procura.'
-                        : 'Comece adicionando o primeiro usuário do sistema.'
+                        ? t('ui.tente-ajustar-os-filtros-para-encontrar-o-que-procura')
+                        : t('ui.comece-adicionando-o-primeiro-usuario-do-sistema')
                     }
                     actions={
                       search || tipoFilter !== 'todos' || statusFilter !== 'todos'
@@ -372,7 +374,7 @@ export default function UsuariosPage() {
                           ]
                         : [
                             {
-                              label: 'Novo Usuário',
+                              label: t('labels.novo-usuario'),
                               href: '/dashboard/usuarios/novo',
                               icon: UserPlus,
                             },

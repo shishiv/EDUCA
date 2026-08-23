@@ -17,6 +17,7 @@ import {
   type RequestAttendanceReopenParams,
 } from '@/app/actions/attendance/request-reopen'
 import type { AttendanceReopenRequest } from '@/lib/services/attendance-reopen'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 export interface AttendanceReopenPanelProps {
   sessionId: string
@@ -48,6 +49,7 @@ export function AttendanceReopenPanel({
   onRequestCompleted,
   onDecisionCompleted,
 }: AttendanceReopenPanelProps) {
+  const t = useClassroomTranslations()
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -149,7 +151,7 @@ export function AttendanceReopenPanel({
           )}
           <div className="space-y-1">
             <h2 id="attendance-reopen-title" className="font-semibold text-amber-950">
-              {canDecide ? 'Solicitação de reabertura pendente' : 'Solicitar reabertura da chamada'}
+              {canDecide ? t('attendance.reopenPending') : 'Solicitar reabertura da chamada'}
             </h2>
             <p className="text-sm text-amber-900">
               {canDecide
@@ -163,8 +165,8 @@ export function AttendanceReopenPanel({
                 <div className="flex items-center gap-2">
                   <Clock3 className="h-4 w-4" aria-hidden="true" />
                   <span>Solicitada em {formatTimestamp(request.requested_at)}</span>
-                  {isPending && <Badge variant="outline">Pendente</Badge>}
-                  {isRejected && <Badge variant="destructive">Rejeitada</Badge>}
+                  {isPending && <Badge variant="outline">{t('status.pending')}</Badge>}
+                  {isRejected && <Badge variant="destructive">{t('status.rejected')}</Badge>}
                 </div>
                 <p><strong>Motivo:</strong> {request.request_reason}</p>
                 {isRejected && request.decision_reason && (
@@ -179,18 +181,18 @@ export function AttendanceReopenPanel({
           {canRequest && (
             <Button type="button" onClick={() => setDialogMode('request')}>
               <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
-              {isRejected ? 'Solicitar novamente' : 'Solicitar reabertura'}
+              {isRejected ? 'Solicitar novamente' : t('attendance.reopen')}
             </Button>
           )}
           {canDecide && (
             <>
               <Button type="button" onClick={() => void handleDecision('APROVADA')} disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />}
-                Aprovar reabertura
+                {t('attendance.approve')}
               </Button>
               <Button type="button" variant="outline" onClick={() => setDialogMode('reject')} disabled={isSubmitting}>
                 <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                Rejeitar
+                {t('attendance.reject')}
               </Button>
             </>
           )}
@@ -215,7 +217,7 @@ export function AttendanceReopenPanel({
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === 'reject' ? 'Rejeitar reabertura' : 'Solicitar reabertura'}
+              {dialogMode === 'reject' ? 'Rejeitar reabertura' : t('attendance.reopen')}
             </DialogTitle>
             <DialogDescription>
               {dialogMode === 'reject'
@@ -250,7 +252,7 @@ export function AttendanceReopenPanel({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
-              Cancelar
+              {t('actions.cancel')}
             </Button>
             <Button
               type="button"

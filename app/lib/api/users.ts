@@ -1,3 +1,28 @@
+/**
+ * Users API Service - user management, statistics, and role queries.
+ *
+ * ## Authentication & RLS
+ *
+ * Uses the browser Supabase client.  The `users` table RLS policies enforce
+ * school-scoped visibility: directors see their school's users, secretariat
+ * users (admin, escola_id IS NULL) see all.
+ *
+ * ## Roles
+ *
+ * | Role | Access |
+ * |------|--------|
+ * | admin | Full read/write across all schools |
+ * | diretor | Read/write within own escola |
+ * | secretario | Read/write within own escola |
+ * | professor | Read own profile only |
+ *
+ * ## Mode availability
+ *
+ * All modes.  Demo sandbox blocks destructive status changes via the
+ * demo guard but allows reads.
+ *
+ * @module api/users
+ */
 'use client'
 
 import { BaseApiService } from './base'

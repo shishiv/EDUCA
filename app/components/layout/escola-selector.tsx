@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useEscola } from '@/contexts/escola-context'
+import { useTranslations } from 'next-intl'
 
 interface EscolaSelectorProps {
   className?: string
@@ -36,6 +37,8 @@ interface EscolaSelectorProps {
  * - In collapsed sidebar, shows only School icon with tooltip
  */
 export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
+  const t = useTranslations('layout.schoolSelector')
+  const common = useTranslations('common.status')
   const [open, setOpen] = React.useState(false)
   const {
     escolas,
@@ -60,7 +63,7 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
           disabled
           className="w-full justify-between rounded-[10px] px-3 py-2 h-10"
         >
-          <span className="text-sm text-gray-400">Carregando...</span>
+          <span className="text-sm text-gray-400">{common('loading')}</span>
         </Button>
       </div>
     )
@@ -80,16 +83,16 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
                 ? 'text-green-600 bg-green-50 hover:bg-green-100'
                 : 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100'
             )}
-            title={selectedEscola?.nome || 'Selecione uma escola'}
+            title={selectedEscola?.nome || t('select')}
           >
             <School className="h-5 w-5" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[280px] p-0" align="start" side="right">
           <Command>
-            <CommandInput placeholder="Buscar escola..." />
+            <CommandInput placeholder={t('search')} />
             <CommandList>
-              <CommandEmpty>Nenhuma escola encontrada.</CommandEmpty>
+              <CommandEmpty>{t('empty')}</CommandEmpty>
               <CommandGroup>
                 {escolas.map((escola) => (
                   <CommandItem
@@ -143,7 +146,7 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
               'truncate text-sm',
               selectedEscola ? 'text-gray-700' : 'text-yellow-700'
             )}>
-              {selectedEscola?.nome || 'Selecione uma escola'}
+              {selectedEscola?.nome || t('select')}
             </span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -151,9 +154,9 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Buscar escola..." />
+          <CommandInput placeholder={t('search')} />
           <CommandList>
-            <CommandEmpty>Nenhuma escola encontrada.</CommandEmpty>
+            <CommandEmpty>{t('empty')}</CommandEmpty>
             <CommandGroup>
               {escolas.map((escola) => (
                 <CommandItem

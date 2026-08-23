@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useTranslations } from 'next-intl'
 
 export default function ResetPasswordPage() {
+  const t = useTranslations('auth.resetPassword')
   const { loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,7 +38,7 @@ export default function ResetPasswordPage() {
     })
 
     if (resetError) {
-      setError('Não foi possível enviar o link. Verifique o e-mail e tente novamente.')
+      setError(t('error'))
       setLoading(false)
       return
     }
@@ -51,7 +53,7 @@ export default function ResetPasswordPage() {
         <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2">
           <Link href="/login">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar ao login
+            {t('backToLogin')}
           </Link>
         </Button>
 
@@ -60,17 +62,17 @@ export default function ResetPasswordPage() {
         </div>
 
         <h1 className="font-display text-2xl font-semibold text-gray-900">
-          {sent ? 'Confira seu e-mail' : 'Redefinir senha'}
+          {sent ? t('sentTitle') : t('title')}
         </h1>
         <p className="mt-2 text-sm leading-6 text-gray-600">
           {sent
-            ? `Enviamos as instruções de redefinição para ${email}.`
-            : 'Informe o e-mail da sua conta para receber um link seguro de redefinição.'}
+            ? t('sentDescription', { email })
+            : t('description')}
         </p>
 
         {sent ? (
           <Button asChild className="mt-8 w-full">
-            <Link href="/login">Voltar ao login</Link>
+            <Link href="/login">{t('backToLogin')}</Link>
           </Button>
         ) : (
           <form
@@ -85,13 +87,13 @@ export default function ResetPasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="reset-email">E-mail</Label>
+              <Label htmlFor="reset-email">{t('emailLabel')}</Label>
               <Input
                 id="reset-email"
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="seu.email@municipio.edu.br"
+                placeholder={t('emailPlaceholder')}
                 required
               />
             </div>
@@ -100,10 +102,10 @@ export default function ResetPasswordPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enviando...
+                  {t('submitting')}
                 </>
               ) : (
-                'Enviar link de redefinição'
+                t('submit')
               )}
             </Button>
           </form>

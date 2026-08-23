@@ -7,6 +7,8 @@
 
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useState } from 'react'
 import {
   Dialog,
@@ -46,6 +48,7 @@ function OpenJustificationModal({
   onConfirm,
   studentName,
 }: JustificationModalProps) {
+  const t = useClassroomTranslations()
   const [motivo, setMotivo] = useState('')
 
   const handleConfirm = () => {
@@ -74,7 +77,7 @@ function OpenJustificationModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Justificar Falta</DialogTitle>
+          <DialogTitle>{t('attendance.justify')}</DialogTitle>
           <DialogDescription>
             Informe o motivo da falta justificada para {studentName}
           </DialogDescription>
@@ -83,7 +86,7 @@ function OpenJustificationModal({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="motivo">
-              Motivo <span className="text-red-500">*</span>
+              {t('attendance.reason')} <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="motivo"
@@ -107,14 +110,14 @@ function OpenJustificationModal({
             variant="outline"
             onClick={handleClose}
           >
-            Cancelar
+            {t('actions.cancel')}
           </Button>
           <Button
             type="button"
             onClick={handleConfirm}
             disabled={!isValidMotivo}
           >
-            Confirmar
+            {t('actions.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

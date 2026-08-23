@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -23,6 +24,7 @@ import { schoolsApi } from '@/lib/api/schools'
 import { logger } from '@/lib/logger'
 
 export default function EditarEscolaPage() {
+  const t = useTranslations('registry')
   const router = useRouter()
   const params = useParams()
   const escolaId = params.id as string
@@ -46,7 +48,7 @@ export default function EditarEscolaPage() {
     endereco: '',
     bairro: '',
     cep: '',
-    cidade: 'Cidade',
+    cidade: t('labels.cidade'),
     estado: 'MG',
 
     // Contato
@@ -85,7 +87,7 @@ export default function EditarEscolaPage() {
         endereco: logradouro,
         bairro: bairro.trim(),
         cep: cep,
-        cidade: 'Cidade',
+        cidade: t('labels.cidade'),
         estado: 'MG',
         telefone: formatTelefone(data.telefone || ''),
         email: data.email || '',
@@ -95,7 +97,7 @@ export default function EditarEscolaPage() {
       })
     } catch (error) {
       logger.error('Erro ao carregar escola:', error as any)
-      toast.error('Erro ao carregar dados da escola')
+      toast.error(t('ui.erro-ao-carregar-dados-da-escola'))
       router.push('/dashboard/escolas')
     } finally {
       setLoading(false)
@@ -119,7 +121,7 @@ export default function EditarEscolaPage() {
       // Validar código INEP (8 dígitos)
       const codigoLimpo = formData.codigo.replace(/\D/g, '')
       if (codigoLimpo.length !== 8) {
-        toast.error('Código INEP deve ter exatamente 8 dígitos')
+        toast.error(t('ui.codigo-inep-deve-ter-exatamente-8-digitos'))
         setSaving(false)
         return
       }
@@ -146,7 +148,7 @@ export default function EditarEscolaPage() {
         await schoolsApi.assignDirector(escolaId, formData.diretor_id)
       }
 
-      toast.success('Escola atualizada com sucesso!')
+      toast.success(t('ui.escola-atualizada-com-sucesso'))
       router.push('/dashboard/escolas')
     } catch (error: any) {
       logger.error('Erro ao atualizar escola:', error)
@@ -221,7 +223,7 @@ export default function EditarEscolaPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Editar Escola</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.editar-escola')}</h1>
           <p className="text-gray-600 mt-1">
             {escola?.nome}
           </p>
@@ -229,7 +231,7 @@ export default function EditarEscolaPage() {
         <Button variant="outline" asChild>
           <Link href="/dashboard/escolas">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
       </div>
@@ -239,19 +241,19 @@ export default function EditarEscolaPage() {
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 h-auto p-1">
             <TabsTrigger value="basicos" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <School className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Dados Básicos</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.dados-basicos')}</span>
             </TabsTrigger>
             <TabsTrigger value="endereco" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Endereço</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.endereco')}</span>
             </TabsTrigger>
             <TabsTrigger value="contato" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <Phone className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Contato</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.contato')}</span>
             </TabsTrigger>
             <TabsTrigger value="gestao" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <Users className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Gestão</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.gestao')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -259,17 +261,17 @@ export default function EditarEscolaPage() {
           <TabsContent value="basicos">
             <Card>
               <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
+                <CardTitle>{t('labels.informacoes-basicas')}</CardTitle>
                 <CardDescription>
-                  Dados principais da unidade escolar
+                  {t('ui.dados-principais-da-unidade-escolar')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome da Escola *</Label>
+                  <Label htmlFor="nome">{t('labels.nome-da-escola-2')}</Label>
                   <Input
                     id="nome"
-                    placeholder="Ex: CEMEI Pequenos Passos"
+                    placeholder={t('labels.ex-cemei-pequenos-passos')}
                     value={formData.nome}
                     onChange={(e) => handleInputChange('nome', e.target.value)}
                     required
@@ -277,7 +279,7 @@ export default function EditarEscolaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="codigo">Código INEP *</Label>
+                  <Label htmlFor="codigo">{t('labels.codigo-inep-2')}</Label>
                   <Input
                     id="codigo"
                     placeholder="12345678"
@@ -286,18 +288,18 @@ export default function EditarEscolaPage() {
                     required
                     maxLength={8}
                   />
-                  <p className="text-xs text-gray-500">Código INEP da escola (8 dígitos numéricos)</p>
+                  <p className="text-xs text-gray-500">{t('labels.codigo-inep-da-escola-8-digitos-numericos')}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Ensino *</Label>
+                  <Label htmlFor="tipo">{t('labels.tipo-de-ensino')}</Label>
                   <Select
                     value={formData.tipo}
                     onValueChange={(value) => handleInputChange('tipo', value)}
                     required
                   >
                     <SelectTrigger id="tipo">
-                      <SelectValue placeholder="Selecione o tipo" />
+                      <SelectValue placeholder={t('labels.selecione-o-tipo')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="creche">{getTipoLabel('creche')}</SelectItem>
@@ -310,10 +312,10 @@ export default function EditarEscolaPage() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="space-y-1">
                     <Label htmlFor="ativo" className="text-base font-medium">
-                      Status da Escola
+                      {t('ui.status-da-escola')}
                     </Label>
                     <p className="text-sm text-gray-600">
-                      {formData.ativo ? 'Escola ativa no sistema' : 'Escola inativa no sistema'}
+                      {formData.ativo ? t('ui.escola-ativa-no-sistema') : t('ui.escola-inativa-no-sistema')}
                     </p>
                   </div>
                   <Switch
@@ -329,11 +331,10 @@ export default function EditarEscolaPage() {
                       <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-orange-900">
-                          Escola Inativa
+                          {t('ui.escola-inativa')}
                         </p>
                         <p className="text-sm text-orange-700">
-                          Escolas inativas não aparecem nas listagens principais e não podem
-                          receber novas matrículas.
+                          {t('ui.escolas-inativas-nao-aparecem-nas-listagens-principais-e-nao-podem-receb')}
                         </p>
                       </div>
                     </div>
@@ -347,17 +348,17 @@ export default function EditarEscolaPage() {
           <TabsContent value="endereco">
             <Card>
               <CardHeader>
-                <CardTitle>Localização</CardTitle>
+                <CardTitle>{t('labels.localizacao')}</CardTitle>
                 <CardDescription>
-                  Endereço completo da unidade escolar
+                  {t('ui.endereco-completo-da-unidade-escolar')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="endereco">Logradouro *</Label>
+                  <Label htmlFor="endereco">{t('labels.logradouro')}</Label>
                   <Input
                     id="endereco"
-                    placeholder="Ex: Rua das Flores, 123"
+                    placeholder={t('labels.ex-rua-das-flores-123')}
                     value={formData.endereco}
                     onChange={(e) => handleInputChange('endereco', e.target.value)}
                     required
@@ -366,17 +367,17 @@ export default function EditarEscolaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="bairro">Bairro</Label>
+                    <Label htmlFor="bairro">{t('labels.bairro')}</Label>
                     <Input
                       id="bairro"
-                      placeholder="Ex: Centro"
+                      placeholder={t('labels.ex-centro')}
                       value={formData.bairro}
                       onChange={(e) => handleInputChange('bairro', e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cep">CEP</Label>
+                    <Label htmlFor="cep">{t('labels.cep')}</Label>
                     <Input
                       id="cep"
                       placeholder="38290-000"
@@ -389,7 +390,7 @@ export default function EditarEscolaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade</Label>
+                    <Label htmlFor="cidade">{t('labels.cidade')}</Label>
                     <Input
                       id="cidade"
                       value={formData.cidade}
@@ -399,7 +400,7 @@ export default function EditarEscolaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="estado">Estado</Label>
+                    <Label htmlFor="estado">{t('labels.estado')}</Label>
                     <Input
                       id="estado"
                       value={formData.estado}
@@ -416,14 +417,14 @@ export default function EditarEscolaPage() {
           <TabsContent value="contato">
             <Card>
               <CardHeader>
-                <CardTitle>Informações de Contato</CardTitle>
+                <CardTitle>{t('labels.informacoes-de-contato')}</CardTitle>
                 <CardDescription>
-                  Telefone e email da escola
+                  {t('ui.telefone-e-email-da-escola')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
+                  <Label htmlFor="telefone">{t('labels.telefone')}</Label>
                   <Input
                     id="telefone"
                     placeholder="(34) 99999-9999"
@@ -434,7 +435,7 @@ export default function EditarEscolaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('labels.email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -451,20 +452,20 @@ export default function EditarEscolaPage() {
           <TabsContent value="gestao">
             <Card>
               <CardHeader>
-                <CardTitle>Gestão Escolar</CardTitle>
+                <CardTitle>{t('labels.gestao-escolar')}</CardTitle>
                 <CardDescription>
-                  Atribuição de diretor e informações administrativas
+                  {t('ui.atribuicao-de-diretor-e-informacoes-administrativas')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="diretor">Diretor(a)</Label>
+                  <Label htmlFor="diretor">{t('labels.diretor-a')}</Label>
                   <Select
                     value={formData.diretor_id}
                     onValueChange={(value) => handleInputChange('diretor_id', value)}
                   >
                     <SelectTrigger id="diretor">
-                      <SelectValue placeholder="Selecione um diretor" />
+                      <SelectValue placeholder={t('labels.selecione-um-diretor')} />
                     </SelectTrigger>
                     <SelectContent>
                       {escola?.diretor && (
@@ -481,7 +482,7 @@ export default function EditarEscolaPage() {
                   </Select>
                   <p className="text-xs text-gray-500">
                     {diretoresDisponiveis.length === 0 && !escola?.diretor
-                      ? 'Nenhum diretor disponível para atribuição'
+                      ? t('ui.nenhum-diretor-disponivel-para-atribuicao')
                       : `Diretor atual ou ${diretoresDisponiveis.length} disponíveis`}
                   </p>
                 </div>
@@ -491,10 +492,10 @@ export default function EditarEscolaPage() {
                     <School className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-blue-900">
-                        Informação sobre Diretores
+                        {t('ui.informacao-sobre-diretores')}
                       </p>
                       <p className="text-sm text-blue-700">
-                        Ao trocar o diretor, o diretor anterior será automaticamente desvinculado desta escola.
+                        {t('ui.ao-trocar-o-diretor-o-diretor-anterior-sera-automaticamente-desvinculado')}
                       </p>
                     </div>
                   </div>
@@ -508,7 +509,7 @@ export default function EditarEscolaPage() {
             <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/dashboard/escolas">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Cancelar
+                {t('labels.cancelar')}
               </Link>
             </Button>
             <Button type="submit" disabled={saving} className="w-full sm:w-auto">
@@ -520,7 +521,7 @@ export default function EditarEscolaPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Alterações
+                  {t('ui.salvar-alteracoes-a2ca13')}
                 </>
               )}
             </Button>

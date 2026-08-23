@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import {
   Card,
@@ -82,6 +83,7 @@ export function StudentInfoGrid({
   frequencia,
   className,
 }: StudentInfoGridProps) {
+  const t = useTranslations('registry')
   const getFrequenciaColor = (percentual: number) => {
     const status = getFrequencyPolicyStatus(percentual)
     if (status === 'CONFORME') return 'text-green-600'
@@ -92,13 +94,13 @@ export function StudentInfoGrid({
   const getSituacaoMatriculaBadge = (situacao: string) => {
     switch (situacao) {
       case 'ativa':
-        return <Badge variant="success">Ativa</Badge>
+        return <Badge variant="success">{t('labels.ativa')}</Badge>
       case 'concluida':
-        return <Badge variant="outline">Concluída</Badge>
+        return <Badge variant="outline">{t('labels.concluida')}</Badge>
       case 'transferida':
-        return <Badge variant="secondary">Transferida</Badge>
+        return <Badge variant="secondary">{t('labels.transferida')}</Badge>
       case 'cancelada':
-        return <Badge variant="destructive">Cancelada</Badge>
+        return <Badge variant="destructive">{t('labels.cancelada')}</Badge>
       default:
         return <Badge variant="outline">{situacao}</Badge>
     }
@@ -113,14 +115,14 @@ export function StudentInfoGrid({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Dados Pessoais
+              {t('labels.dados-pessoais')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">
-                  Data de Nascimento
+                  {t('labels.data-de-nascimento')}
                 </label>
                 <div className="flex items-center gap-2 mt-1">
                   <Calendar className="h-4 w-4 text-gray-400" />
@@ -130,14 +132,14 @@ export function StudentInfoGrid({
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Sexo</label>
-                <p className="mt-1">{student.sexo === 'M' ? 'Masculino' : 'Feminino'}</p>
+                <label className="text-sm font-medium text-gray-500">{t('labels.sexo')}</label>
+                <p className="mt-1">{student.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}</p>
               </div>
             </div>
 
             {student.cpf && (
               <div>
-                <label className="text-sm font-medium text-gray-500">CPF</label>
+                <label className="text-sm font-medium text-gray-500">{t('labels.cpf')}</label>
                 <div className="flex items-center gap-2 mt-1">
                   <FileText className="h-4 w-4 text-gray-400" />
                   <span>{student.cpf}</span>
@@ -147,7 +149,7 @@ export function StudentInfoGrid({
 
             {student.endereco && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Endereço</label>
+                <label className="text-sm font-medium text-gray-500">{t('labels.endereco')}</label>
                 <div className="flex items-start gap-2 mt-1">
                   <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                   <span className="text-sm">{student.endereco}</span>
@@ -157,11 +159,11 @@ export function StudentInfoGrid({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Mãe</label>
+                <label className="text-sm font-medium text-gray-500">{t('labels.mae')}</label>
                 <p className="mt-1 text-sm">{student.nome_mae || 'Não informado'}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Pai</label>
+                <label className="text-sm font-medium text-gray-500">{t('labels.pai')}</label>
                 <p className="mt-1 text-sm">{student.nome_pai || 'Não informado'}</p>
               </div>
             </div>
@@ -200,7 +202,7 @@ export function StudentInfoGrid({
               </div>
               <div className="text-sm space-y-1">
                 <p>Tel: {responsavel.telefone}</p>
-                {responsavel.email && <p>Email: {responsavel.email}</p>}
+                {responsavel.email && <p>{t('ui.email')} {responsavel.email}</p>}
               </div>
             </CardContent>
           </Card>
@@ -215,10 +217,10 @@ export function StudentInfoGrid({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                Frequência
+                {t('ui.frequencia')}
               </CardTitle>
               <CardDescription>
-                Resumo de presenças e faltas
+                {t('ui.resumo-de-presencas-e-faltas')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -227,31 +229,31 @@ export function StudentInfoGrid({
                   <div className="text-xl font-bold text-blue-600">
                     {frequencia.total_aulas}
                   </div>
-                  <div className="text-xs text-blue-600">Total</div>
+                  <div className="text-xs text-blue-600">{t('labels.total')}</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <div className="text-xl font-bold text-green-600">
                     {frequencia.presencas}
                   </div>
-                  <div className="text-xs text-green-600">Presenças</div>
+                  <div className="text-xs text-green-600">{t('labels.presencas')}</div>
                 </div>
                 <div className="text-center p-3 bg-red-50 rounded-lg">
                   <div className="text-xl font-bold text-red-600">
                     {frequencia.faltas}
                   </div>
-                  <div className="text-xs text-red-600">Faltas</div>
+                  <div className="text-xs text-red-600">{t('labels.faltas')}</div>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
                   <div className="text-xl font-bold text-orange-600">
                     {frequencia.faltas_justificadas}
                   </div>
-                  <div className="text-xs text-orange-600">Justificadas</div>
+                  <div className="text-xs text-orange-600">{t('labels.justificadas')}</div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Percentual</span>
+                  <span className="text-sm font-medium">{t('labels.percentual')}</span>
                   <span
                     className={`font-bold ${getFrequenciaColor(frequencia.percentual)}`}
                   >
@@ -294,7 +296,7 @@ export function StudentInfoGrid({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <School className="h-5 w-5" />
-                Histórico de Matrículas
+                {t('ui.historico-de-matriculas')}
               </CardTitle>
             </CardHeader>
             <CardContent>

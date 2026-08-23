@@ -1,3 +1,6 @@
+/**
+ * Reports API - attendance, enrollment, and school reports generation.  Uses canonical attendance facts for compliance calculations.
+ */
 'use client'
 
 import { BaseApiService, type TableName } from './base'

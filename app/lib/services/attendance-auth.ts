@@ -1,4 +1,8 @@
 /**
+ * @module services/attendance-auth
+ * @see {@link AttendanceAuthError} for structured error codes
+ */
+/**
  * Attendance Authorization - single server-side authorization interface
  * for the attendance server actions.
  *

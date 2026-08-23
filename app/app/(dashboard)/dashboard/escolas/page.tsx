@@ -1,6 +1,7 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
@@ -45,17 +46,14 @@ interface Escola {
 
 
 export default function EscolasPage() {
+  const t = useTranslations('registry')
   const [escolas, setEscolas] = useState<Escola[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [tipoFilter, setTipoFilter] = useState('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
 
-  useEffect(() => {
-    loadEscolas()
-  }, [])
-
-  const loadEscolas = async () => {
+  const loadEscolas = useCallback(async () => {
     setLoading(true)
     try {
       const schoolsData = await schoolsApi.getSchoolsWithDetails()
@@ -85,14 +83,18 @@ export default function EscolasPage() {
       setEscolas(formattedSchools)
     } catch (error) {
       // logger.error('Erro ao carregar escolas:', error)
-      toast.error('Erro ao carregar lista de escolas. Verifique a conexão.')
+      toast.error(t('ui.erro-ao-carregar-lista-de-escolas-verifique-a-conexao'))
 
       // Show empty state instead of mock data
       setEscolas([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadEscolas()
+  }, [loadEscolas])
 
   const getInitials = (name: string) => {
     return name
@@ -136,9 +138,9 @@ export default function EscolasPage() {
     const matchesSearch = escola.nome.toLowerCase().includes(search.toLowerCase()) ||
                          escola.codigo.toLowerCase().includes(search.toLowerCase()) ||
                          escola.diretor.nome.toLowerCase().includes(search.toLowerCase())
-    
+
     const matchesTipo = tipoFilter === 'todos' || escola.tipo === tipoFilter
-    const matchesStatus = statusFilter === 'todos' || 
+    const matchesStatus = statusFilter === 'todos' ||
                          (statusFilter === 'ativo' && escola.ativo) ||
                          (statusFilter === 'inativo' && !escola.ativo)
 
@@ -170,20 +172,20 @@ export default function EscolasPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Escolas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.escolas')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie as unidades escolares da rede municipal
+            {t('ui.gerencie-as-unidades-escolares-da-rede-municipal')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
-            Exportar
+            {t('labels.exportar')}
           </Button>
           <Button asChild className="gap-2">
             <Link href="/dashboard/escolas/nova">
               <Plus className="h-4 w-4" />
-              Nova Escola
+              {t('labels.nova-escola')}
             </Link>
           </Button>
         </div>
@@ -192,10 +194,10 @@ export default function EscolasPage() {
       {/* Estatísticas compactas */}
       <StatsBar
         stats={[
-          { label: 'Total', value: totalEscolas, icon: School },
-          { label: 'Ativas', value: escolasAtivas, icon: CheckCircle, variant: 'success' },
+          { label: t('labels.total'), value: totalEscolas, icon: School },
+          { label: t('labels.ativas'), value: escolasAtivas, icon: CheckCircle, variant: 'success' },
           { label: 'Alunos', value: totalAlunos, icon: Users, variant: 'info' },
-          { label: 'Turmas', value: totalTurmas, icon: BookOpen, variant: 'warning' },
+          { label: t('labels.turmas'), value: totalTurmas, icon: BookOpen, variant: 'warning' },
         ]}
       />
 
@@ -203,7 +205,7 @@ export default function EscolasPage() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle className="text-lg">Escolas ({filteredEscolas.length})</CardTitle>
+            <CardTitle className="text-lg">{t('ui.escolas')}{filteredEscolas.length})</CardTitle>
           </div>
           <InlineFilters
             search={{
@@ -214,7 +216,7 @@ export default function EscolasPage() {
             filters={[
               {
                 id: 'tipo',
-                placeholder: 'Tipo',
+                placeholder: t('labels.tipo'),
                 value: tipoFilter,
                 options: [
                   { value: 'todos', label: 'Todos os tipos' },
@@ -227,11 +229,11 @@ export default function EscolasPage() {
               },
               {
                 id: 'status',
-                placeholder: 'Status',
+                placeholder: t('labels.status'),
                 value: statusFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
-                  { value: 'ativo', label: 'Ativas' },
+                  { value: 'todos', label: t('labels.todos') },
+                  { value: 'ativo', label: t('labels.ativas') },
                   { value: 'inativo', label: 'Inativas' },
                 ],
                 onChange: setStatusFilter,
@@ -250,13 +252,13 @@ export default function EscolasPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Escola</TableHead>
-                  <TableHead>Diretor</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Ocupação</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.escola')}</TableHead>
+                  <TableHead>{t('labels.diretor')}</TableHead>
+                  <TableHead>{t('labels.tipo')}</TableHead>
+                  <TableHead>{t('labels.ocupacao')}</TableHead>
+                  <TableHead>{t('labels.contato')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,7 +274,7 @@ export default function EscolasPage() {
                           <div>
                             <div className="font-medium">{escola.nome}</div>
                             <div className="text-sm text-gray-500">
-                              Código: {escola.codigo}
+                              {t('ui.codigo')} {escola.codigo}
                             </div>
                           </div>
                         </div>
@@ -304,7 +306,7 @@ export default function EscolasPage() {
                             </span>
                           </div>
                           <div className={`text-xs font-medium ${getOcupacaoColor(ocupacaoPercentual)}`}>
-                            {ocupacaoPercentual}% ocupação
+                            {ocupacaoPercentual}{t('ui.ocupacao')}
                           </div>
                         </div>
                       </TableCell>
@@ -324,7 +326,7 @@ export default function EscolasPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-                          {escola.ativo ? 'Ativa' : 'Inativa'}
+                          {escola.ativo ? t('labels.ativa') : t('ui.inativa')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -353,13 +355,13 @@ export default function EscolasPage() {
                     icon={search || tipoFilter !== 'todos' || statusFilter !== 'todos' ? SearchIcon : School}
                     title={
                       search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? 'Nenhuma escola encontrada'
-                        : 'Nenhuma escola cadastrada'
+                        ? t('ui.nenhuma-escola-encontrada')
+                        : t('ui.nenhuma-escola-cadastrada')
                     }
                     description={
                       search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? 'Tente ajustar os filtros para encontrar o que procura.'
-                        : 'Comece adicionando a primeira escola da rede.'
+                        ? t('ui.tente-ajustar-os-filtros-para-encontrar-o-que-procura')
+                        : t('ui.comece-adicionando-a-primeira-escola-da-rede')
                     }
                     actions={
                       search || tipoFilter !== 'todos' || statusFilter !== 'todos'
@@ -376,7 +378,7 @@ export default function EscolasPage() {
                           ]
                         : [
                             {
-                              label: 'Nova Escola',
+                              label: t('labels.nova-escola'),
                               href: '/dashboard/escolas/nova',
                               icon: Plus,
                             },

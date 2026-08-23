@@ -25,6 +25,7 @@ import { Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AttendanceCell, type AttendanceStatus } from './AttendanceCell'
 import type { Student, AttendanceRecord } from './AttendanceGridTypes'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -119,6 +120,7 @@ export function AttendanceGridRow({
   onSelectionChange,
   onStatusChange,
 }: AttendanceGridRowProps) {
+  const t = useClassroomTranslations()
   return (
     <div className={getRowClassName(attendanceStatus, isSelected, isRecordLocked)}>
       <div className="flex items-center space-x-3 flex-1">
@@ -212,7 +214,7 @@ export function AttendanceGridRow({
               attendanceStatus === 'A' && 'bg-yellow-500'
             )}
           >
-            {attendanceStatus === 'P' && 'Presente'}
+            {attendanceStatus === 'P' && t('attendance.present')}
             {attendanceStatus === 'F' && 'Ausente'}
             {attendanceStatus === 'A' && 'Atestado'}
             {attendanceStatus === null && 'Não marcado'}

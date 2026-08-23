@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -54,6 +55,7 @@ export function TeacherAssignment({
   onAssignmentChange,
   className
 }: TeacherAssignmentProps) {
+  const t = useTranslations('registry')
   const [loading, setLoading] = useState(false)
   const [selectedTeacherId, setSelectedTeacherId] = useState(currentTeacherId || '')
   const [availableTeachers, setAvailableTeachers] = useState<TeacherOption[]>([])
@@ -79,12 +81,12 @@ export function TeacherAssignment({
           setCurrentTeacher(teacher ?? null)
         }
       } catch (error) {
-        toast.error('Erro ao carregar dados')
+        toast.error(t('ui.erro-ao-carregar-dados'))
       }
     }
 
     loadData()
-  }, [classId, schoolId, currentTeacherId])
+  }, [classId, schoolId, currentTeacherId, t])
 
   const handleAssignTeacher = async () => {
     if (!selectedTeacherId) return
@@ -104,7 +106,7 @@ export function TeacherAssignment({
 
       onAssignmentChange?.(selectedTeacherId)
     } catch (error) {
-      toast.error('Erro ao atribuir professor')
+      toast.error(t('ui.erro-ao-atribuir-professor'))
     } finally {
       setLoading(false)
     }
@@ -118,7 +120,7 @@ export function TeacherAssignment({
       setCurrentTeacher(null)
       setSelectedTeacherId('')
 
-      toast.success('Professor titular removido da turma com sucesso!')
+      toast.success(t('ui.professor-titular-removido-da-turma-com-sucesso'))
 
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['classes'] })
@@ -126,7 +128,7 @@ export function TeacherAssignment({
 
       onAssignmentChange?.(null)
     } catch (error) {
-      toast.error('Erro ao remover professor')
+      toast.error(t('ui.erro-ao-remover-professor'))
     } finally {
       setLoading(false)
     }
@@ -143,7 +145,7 @@ export function TeacherAssignment({
           <div className="flex items-center justify-center">
             <div className="text-center">
               <GraduationCap className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">Carregando dados da turma...</p>
+              <p className="text-sm text-gray-500">{t('labels.carregando-dados-da-turma')}</p>
             </div>
           </div>
         </CardContent>
@@ -156,10 +158,10 @@ export function TeacherAssignment({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          Professor titular da turma
+          {t('ui.professor-titular-da-turma')}
         </CardTitle>
         <CardDescription>
-          Defina o professor titular da turma {classData?.nome}
+          {t('ui.defina-o-professor-titular-da-turma')} {classData?.nome}
         </CardDescription>
       </CardHeader>
 
@@ -168,28 +170,28 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <School className="h-4 w-4" />
-            Informações da Turma
+            {t('labels.informacoes-da-turma')}
           </h4>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">Nome:</span>
+                <span className="font-medium text-gray-700">{t('labels.nome')}</span>
                 <p>{classData.nome}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Série:</span>
+                <span className="font-medium text-gray-700">{t('labels.serie-2')}</span>
                 <p>{classData.serie}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Turno:</span>
+                <span className="font-medium text-gray-700">{t('labels.turno-2')}</span>
                 <Badge variant="outline" className="bg-blue-50 border-blue-200">
                   <Clock className="h-3 w-3 mr-1" />
                   {classData.turno}
                 </Badge>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Ano Letivo:</span>
+                <span className="font-medium text-gray-700">{t('labels.ano-letivo-3')}</span>
                 <Badge variant="outline" className="bg-green-50 border-green-200">
                   <Calendar className="h-3 w-3 mr-1" />
                   {classData.ano_letivo}
@@ -205,7 +207,7 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <User className="h-4 w-4" />
-            Professor Atual
+            {t('ui.professor-atual')}
           </h4>
 
           {currentTeacher ? (
@@ -214,7 +216,7 @@ export function TeacherAssignment({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-800">Professor titular definido</span>
+                    <span className="font-medium text-green-800">{t('labels.professor-titular-definido')}</span>
                   </div>
                   <div className="text-sm text-green-700">
                     <p className="font-medium">{currentTeacher.nome}</p>
@@ -237,10 +239,10 @@ export function TeacherAssignment({
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span className="font-medium text-amber-800">Nenhum professor titular definido</span>
+                <span className="font-medium text-amber-800">{t('labels.nenhum-professor-titular-definido')}</span>
               </div>
               <p className="text-sm text-amber-700 mt-1">
-                Defina um professor titular para abrir e registrar a chamada desta turma.
+                {t('ui.defina-um-professor-titular-para-abrir-e-registrar-a-chamada-desta-turma')}
               </p>
             </div>
           )}
@@ -252,7 +254,7 @@ export function TeacherAssignment({
         <div className="space-y-4">
           <h4 className="font-medium flex items-center gap-2">
             <Users className="h-4 w-4" />
-            {currentTeacher ? 'Alterar professor titular' : 'Definir professor titular'}
+            {currentTeacher ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
           </h4>
 
           {availableTeachers.length > 0 ? (
@@ -262,8 +264,8 @@ export function TeacherAssignment({
                 onValueChange={setSelectedTeacherId}
                 disabled={loading}
               >
-                <SelectTrigger id="professor" aria-label="Professor titular">
-                  <SelectValue placeholder="Selecione um professor" />
+                <SelectTrigger id="professor" aria-label={t('labels.professor-titular')}>
+                  <SelectValue placeholder={t('labels.selecione-um-professor')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableTeachers.map((teacher) => (
@@ -280,7 +282,7 @@ export function TeacherAssignment({
               {selectedTeacherId && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
-                    <span className="font-medium">Professor selecionado:</span>{' '}
+                    <span className="font-medium">{t('labels.professor-selecionado')}</span>{' '}
                     {getSelectedTeacher()?.nome}
                   </p>
                   <p className="text-sm text-blue-600">{getSelectedTeacher()?.email}</p>
@@ -295,7 +297,7 @@ export function TeacherAssignment({
                   className="flex-1"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  {currentTeacher ? 'Alterar professor titular' : 'Definir professor titular'}
+                  {currentTeacher ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
                 </LoadingButton>
               </div>
             </div>
@@ -303,8 +305,7 @@ export function TeacherAssignment({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Nenhum professor disponível para atribuição nesta escola.
-                Cadastre professores no painel de usuários primeiro.
+                {t('ui.nenhum-professor-disponivel-para-atribuicao-nesta-escola-cadastre-profes')}
               </AlertDescription>
             </Alert>
           )}
@@ -312,12 +313,12 @@ export function TeacherAssignment({
 
         {/* Assignment Guidelines */}
         <div className="space-y-2">
-          <h4 className="font-medium text-sm text-gray-700">Orientações</h4>
+          <h4 className="font-medium text-sm text-gray-700">{t('labels.orientacoes')}</h4>
           <div className="text-xs text-gray-600 space-y-1">
-            <p>• Apenas professores cadastrados na mesma escola podem ser titulares</p>
-            <p>• Um professor pode ser titular de mais de uma turma</p>
-            <p>• O professor titular pode abrir e registrar a chamada da turma</p>
-            <p>• A turma tem um único professor titular no piloto</p>
+            <p>{t('labels.apenas-professores-cadastrados-na-mesma-escola-podem-ser-tit')}</p>
+            <p>{t('labels.um-professor-pode-ser-titular-de-mais-de-uma-turma')}</p>
+            <p>{t('labels.o-professor-titular-pode-abrir-e-registrar-a-chamada-da-turm')}</p>
+            <p>{t('labels.a-turma-tem-um-unico-professor-titular-no-piloto')}</p>
           </div>
         </div>
       </CardContent>

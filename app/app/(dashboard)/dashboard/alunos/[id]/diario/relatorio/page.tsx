@@ -13,6 +13,7 @@
  */
 
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -115,6 +116,7 @@ function formatSemesterLabel(semestre: SemestreType, ano: number): string {
 // ============================================================================
 
 export default function RelatorioPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const { userProfile } = useAuth()
@@ -180,9 +182,9 @@ export default function RelatorioPage() {
         action: 'load_student_relatorio',
         metadata: { alunoId }
       })
-      setError('Erro ao carregar dados do aluno')
+      setError(t('ui.erro-ao-carregar-dados-do-aluno'))
     }
-  }, [alunoId])
+  }, [alunoId, t])
 
   // Load vivencias
   const loadVivencias = useCallback(async () => {
@@ -276,7 +278,7 @@ export default function RelatorioPage() {
   // Handlers
   const handleSaveDraft = useCallback(async (data: ReportFormValues) => {
     if (!matricula || !userProfile) {
-      toast.error('Erro: dados da matricula nao encontrados')
+      toast.error(t('ui.erro-dados-da-matricula-nao-encontrados'))
       return
     }
 
@@ -327,18 +329,18 @@ export default function RelatorioPage() {
         metadata: { alunoId, matriculaId: matricula.id, semestre: selectedSemester }
       })
 
-      toast.success('Rascunho salvo com sucesso')
+      toast.success(t('ui.rascunho-salvo-com-sucesso'))
     } catch (err) {
       logger.error('Error saving draft', err as Error, {
         feature: 'relatorios-descritivos',
         action: 'save_draft_error',
         metadata: { alunoId }
       })
-      toast.error('Erro ao salvar rascunho')
+      toast.error(t('ui.erro-ao-salvar-rascunho'))
     } finally {
       setIsSaving(false)
     }
-  }, [alunoId, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb])
+  }, [alunoId, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, t])
 
   const handleFinalizeRequest = useCallback(async (data: ReportFormValues) => {
     // Show confirmation dialog before finalizing
@@ -348,7 +350,7 @@ export default function RelatorioPage() {
 
   const handleFinalizeConfirm = useCallback(async () => {
     if (!pendingFinalizeData || !matricula || !userProfile) {
-      toast.error('Erro: dados incompletos para finalizacao')
+      toast.error(t('ui.erro-dados-incompletos-para-finalizacao'))
       return
     }
 
@@ -407,20 +409,20 @@ export default function RelatorioPage() {
         metadata: { alunoId, matriculaId: matricula.id, semestre: selectedSemester }
       })
 
-      toast.success('Relatório finalizado com sucesso')
+      toast.success(t('ui.relatorio-finalizado-com-sucesso'))
     } catch (err) {
       logger.error('Error finalizing report', err as Error, {
         feature: 'relatorios-descritivos',
         action: 'finalize_report_error',
         metadata: { alunoId }
       })
-      toast.error('Erro ao finalizar relatório')
+      toast.error(t('ui.erro-ao-finalizar-relatorio'))
     } finally {
       setIsSaving(false)
       setShowFinalizeDialog(false)
       setPendingFinalizeData(null)
     }
-  }, [pendingFinalizeData, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, alunoId])
+  }, [pendingFinalizeData, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, alunoId, t])
 
   const handleCampoFocus = useCallback((campo: CampoType | null) => {
     setSelectedCampo(campo)
@@ -432,8 +434,8 @@ export default function RelatorioPage() {
 
   const handlePrint = useCallback(() => {
     // PDF export - out of scope for this plan
-    toast.info('Exportação PDF será implementada em breve')
-  }, [])
+    toast.info(t('ui.exportacao-pdf-sera-implementada-em-breve'))
+  }, [t])
 
   // Compute initial values from existing report
   const initialValues = useMemo(() => {
@@ -480,8 +482,8 @@ export default function RelatorioPage() {
     return (
       <div className="p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
-          <p className="font-medium">Erro ao carregar pagina</p>
-          <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
+          <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
+          <p className="text-sm mt-1">{error || t('ui.aluno-nao-encontrado')}</p>
           <Button
             variant="outline"
             size="sm"
@@ -489,7 +491,7 @@ export default function RelatorioPage() {
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Button>
         </div>
       </div>
@@ -528,7 +530,7 @@ export default function RelatorioPage() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:max-w-md p-0">
                   <SheetHeader className="sr-only">
-                    <SheetTitle>Vivências de Referência</SheetTitle>
+                    <SheetTitle>{t('labels.vivencias-de-referencia')}</SheetTitle>
                   </SheetHeader>
                   <VivenciasReference
                     vivencias={vivencias}
@@ -542,7 +544,7 @@ export default function RelatorioPage() {
               {/* Print button */}
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Exportar</span>
+                <span className="hidden sm:inline">{t('labels.exportar')}</span>
               </Button>
             </div>
           </div>
@@ -552,7 +554,7 @@ export default function RelatorioPage() {
             <div>
               <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <FileText className="h-5 w-5 text-purple-600" />
-                Relatorio de Desenvolvimento
+                {t('ui.relatorio-de-desenvolvimento')}
               </h1>
               <p className="text-muted-foreground mt-1">
                 {student.nome_completo}
@@ -567,7 +569,7 @@ export default function RelatorioPage() {
               }
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Selecione o semestre" />
+                <SelectValue placeholder={t('labels.selecione-o-semestre')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="primeiro">
@@ -588,10 +590,10 @@ export default function RelatorioPage() {
         {vivencias.length === 0 && (
           <div className="text-center py-12 border rounded-lg bg-muted/30 print:hidden">
             <p className="text-muted-foreground">
-              Nenhuma vivencia registrada para gerar relatorio.
+              {t('ui.nenhuma-vivencia-registrada-para-gerar-relatorio')}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Registre vivencias no Diario Infantil para construir o relatorio de desenvolvimento.
+              {t('ui.registre-vivencias-no-diario-infantil-para-construir-o-relatorio-de-dese')}
             </p>
             <Button asChild className="mt-4">
               <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
@@ -611,9 +613,9 @@ export default function RelatorioPage() {
               {isReportFinalized && (
                 <Alert className="mb-4 border-green-200 bg-green-50">
                   <Lock className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-800">Relatório Finalizado</AlertTitle>
+                  <AlertTitle className="text-green-800">{t('labels.relatorio-finalizado')}</AlertTitle>
                   <AlertDescription className="text-green-700">
-                    Este relatorio foi finalizado e nao pode mais ser editado.
+                    {t('ui.este-relatorio-foi-finalizado-e-nao-pode-mais-ser-editado')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -650,13 +652,13 @@ export default function RelatorioPage() {
       <AlertDialog open={showFinalizeDialog} onOpenChange={setShowFinalizeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Finalizar Relatório</AlertDialogTitle>
+            <AlertDialogTitle>{t('labels.finalizar-relatorio')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Ao finalizar, o relatório não poderá mais ser editado. Tem certeza que deseja continuar?
+              {t('ui.ao-finalizar-o-relatorio-nao-podera-mais-ser-editado-tem-certeza-que-des')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSaving}>{t('labels.cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleFinalizeConfirm}
               disabled={isSaving}

@@ -1,6 +1,8 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter, Lexend } from 'next/font/google'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Providers } from './providers'
 
 // Body text font
@@ -18,22 +20,30 @@ const lexend = Lexend({
   weight: ['400', '500', '600', '700', '800'],
 })
 
-export const metadata: Metadata = {
-  title: 'EDUCA - Sistema de Gestão Escolar Municipal',
-  description: 'Sistema aberto de gestão escolar para municípios brasileiros',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('common.metadata')
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
+
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${lexend.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${lexend.variable}`}>
       <body className={inter.className}>
-        <Providers>
-          {children}
-        </Providers>
+        <NextIntlClientProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

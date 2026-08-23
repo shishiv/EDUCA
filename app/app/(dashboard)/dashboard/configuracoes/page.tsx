@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
+
+import { useCallback, useEffect, useState } from 'react'
 import { configsApi, Config } from '@/lib/api/configs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,9 +12,9 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { 
-  Settings, 
-  Save, 
+import {
+  Settings,
+  Save,
   RefreshCw,
   Shield,
   Bell,
@@ -23,20 +25,17 @@ import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
 export default function ConfiguracoesPage() {
+  const t = useTranslations('platform')
   const [configs, setConfigs] = useState<Config[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [configValues, setConfigValues] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    loadConfigs()
-  }, [])
-
-  const loadConfigs = async () => {
+  const loadConfigs = useCallback(async () => {
     try {
       const data = await configsApi.getAll()
       setConfigs(data)
-      
+
       // Inicializar valores
       const values: Record<string, string> = {}
       data.forEach(config => {
@@ -45,11 +44,15 @@ export default function ConfiguracoesPage() {
       setConfigValues(values)
     } catch (error) {
       // logger.error('Erro ao carregar configurações:', error)
-      toast.error('Erro ao carregar configurações')
+      toast.error(t('settings.errorLoad'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadConfigs()
+  }, [loadConfigs])
 
   const handleSave = async () => {
     setSaving(true)
@@ -84,15 +87,15 @@ export default function ConfiguracoesPage() {
       }
 
       if (savedCount > 0) {
-        toast.success(`${savedCount} configuração(ões) salva(s) com sucesso!`)
+        toast.success(t('settings.savedCount', { count: savedCount }))
         // Reload configs to reflect changes
         await loadConfigs()
       } else {
-        toast.info('Nenhuma alteração foi detectada')
+        toast.info(t('settings.noChanges'))
       }
     } catch (error: any) {
       logger.error('Erro ao salvar configurações:', error)
-      toast.error(error.message || 'Erro ao salvar configurações')
+      toast.error(error.message || t('settings.loadErrorGeneric'))
     } finally {
       setSaving(false)
     }
@@ -109,11 +112,11 @@ export default function ConfiguracoesPage() {
   const handleResetToDefault = async (config: Config) => {
     try {
       await configsApi.resetToDefault(config.id)
-      toast.success(`Configuração "${config.descricao}" resetada para valor padrão`)
+      toast.success(t('settings.resetSuccess', { description: config.descricao }))
       await loadConfigs()
     } catch (error: any) {
       logger.error('Erro ao resetar configuração:', error)
-      toast.error('Erro ao resetar configuração')
+      toast.error(t('settings.resetError'))
     }
   }
 
@@ -144,14 +147,14 @@ export default function ConfiguracoesPage() {
           </div>
           {isChanged && (
             <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-xs">Alterado</Badge>
+              <Badge variant="outline" className="text-xs">{t('settings.changed')}</Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleResetToDefault(config)}
                 className="h-8 px-2"
               >
-                Resetar
+                {t('settings.reset')}
               </Button>
             </div>
           )}
@@ -179,7 +182,7 @@ export default function ConfiguracoesPage() {
               onClick={() => handleResetToDefault(config)}
               className="h-8 px-2 text-xs"
             >
-              Resetar
+              {t('settings.reset')}
             </Button>
           )}
         </div>
@@ -189,9 +192,7 @@ export default function ConfiguracoesPage() {
           </p>
         )}
         {isChanged && isValid && (
-          <p className="text-sm text-orange-600">
-            Valor alterado (não salvo)
-          </p>
+          <p className="text-sm text-orange-600">{t('settings.unsaved')}</p>
         )}
       </div>
     )
@@ -217,26 +218,22 @@ export default function ConfiguracoesPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
-          <p className="text-gray-600 mt-1">
-            Gerencie as configurações gerais do sistema
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('settings.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('settings.subtitle')}</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" onClick={loadConfigs}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Recarregar
-          </Button>
+            <RefreshCw className="h-4 w-4 mr-2" />{t('settings.reload')}</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Salvando...
+                {t('profile.saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Salvar Alterações
+                {t('settings.save')}
               </>
             )}
           </Button>
@@ -248,19 +245,19 @@ export default function ConfiguracoesPage() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="geral" className="flex items-center space-x-2">
             <Building className="h-4 w-4" />
-            <span>Geral</span>
+            <span>{t('settings.general')}</span>
           </TabsTrigger>
           <TabsTrigger value="academico" className="flex items-center space-x-2">
             <GraduationCap className="h-4 w-4" />
-            <span>Acadêmico</span>
+            <span>{t('settings.academic')}</span>
           </TabsTrigger>
           <TabsTrigger value="notificacoes" className="flex items-center space-x-2">
             <Bell className="h-4 w-4" />
-            <span>Notificações</span>
+            <span>{t('settings.notifications')}</span>
           </TabsTrigger>
           <TabsTrigger value="seguranca" className="flex items-center space-x-2">
             <Shield className="h-4 w-4" />
-            <span>Segurança</span>
+                <span>{t('settings.security')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -269,11 +266,9 @@ export default function ConfiguracoesPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Building className="h-5 w-5" />
-                <span>Configurações Gerais</span>
+                <span>{t('settings.generalTitle')}</span>
               </CardTitle>
-              <CardDescription>
-                Configurações básicas do sistema e da instituição
-              </CardDescription>
+              <CardDescription>{t('settings.generalDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {getConfigsByCategory('geral').map((config) => (
@@ -296,11 +291,9 @@ export default function ConfiguracoesPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <GraduationCap className="h-5 w-5" />
-                <span>Configurações Acadêmicas</span>
+                <span>{t('settings.academicTitle')}</span>
               </CardTitle>
-              <CardDescription>
-                Parâmetros relacionados ao ensino e avaliação
-              </CardDescription>
+              <CardDescription>{t('settings.academicDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {getConfigsByCategory('academico').map((config) => (
@@ -323,11 +316,9 @@ export default function ConfiguracoesPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Bell className="h-5 w-5" />
-                <span>Configurações de Notificações</span>
+                <span>{t('settings.notificationsTitle')}</span>
               </CardTitle>
-              <CardDescription>
-                Gerencie como e quando as notificações são enviadas
-              </CardDescription>
+              <CardDescription>{t('settings.notificationsDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {getConfigsByCategory('notificacoes').map((config) => (
@@ -350,11 +341,9 @@ export default function ConfiguracoesPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Shield className="h-5 w-5" />
-                <span>Configurações de Segurança</span>
+                <span>{t('settings.securityTitle')}</span>
               </CardTitle>
-              <CardDescription>
-                Configurações relacionadas à segurança e backup do sistema
-              </CardDescription>
+              <CardDescription>{t('settings.securityDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {getConfigsByCategory('seguranca').map((config) => (
@@ -378,23 +367,23 @@ export default function ConfiguracoesPage() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Settings className="h-5 w-5" />
-            <span>Informações do Sistema</span>
+            <span>{t('settings.systemInfo')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Versão do Sistema</Label>
+              <Label className="text-sm font-medium text-gray-500">{t('settings.version')}</Label>
               <div className="text-lg font-semibold">v1.0.0</div>
             </div>
             <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Última Atualização</Label>
+              <Label className="text-sm font-medium text-gray-500">{t('settings.lastUpdate')}</Label>
               <div className="text-lg font-semibold">28/01/2024</div>
             </div>
             <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Ambiente</Label>
+              <Label className="text-sm font-medium text-gray-500">{t('settings.environment')}</Label>
               <div className="text-lg font-semibold">
-                <Badge variant="secondary">Desenvolvimento</Badge>
+                <Badge variant="secondary">{t('settings.development')}</Badge>
               </div>
             </div>
           </div>

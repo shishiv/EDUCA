@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase'
@@ -48,14 +50,6 @@ const TIPO_CORES: Record<string, string> = {
   conselho: 'bg-amber-500',
 }
 
-const TIPO_LABELS: Record<string, string> = {
-  feriado: 'Feriado',
-  recesso: 'Recesso',
-  dia_letivo: 'Dia Letivo Extra',
-  evento: 'Evento',
-  reuniao: 'Reunião',
-  conselho: 'Conselho de Classe',
-}
 
 export default function CalendarioPage() {
   const { userProfile } = useAuth()
@@ -65,6 +59,12 @@ export default function CalendarioPage() {
   const [showEventForm, setShowEventForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [editingEvento, setEditingEvento] = useState<CalendarioEvento | null>(null)
+
+  const t = useClassroomTranslations()
+  const tipoLabels: Record<string, string> = {
+    feriado: t('calendar.types.holiday'), recesso: t('calendar.types.break'), dia_letivo: t('calendar.types.schoolDay'),
+    evento: t('calendar.types.event'), reuniao: t('calendar.types.meeting'), conselho: t('calendar.types.council'),
+  }
 
   const isAdmin = userProfile?.tipo_usuario === 'admin' || userProfile?.tipo_usuario === 'secretario'
 
@@ -141,11 +141,11 @@ export default function CalendarioPage() {
 
       if (error) throw error
 
-      toast.success('Evento excluído com sucesso')
+      toast.success(t('calendar.deleteSuccess'))
       fetchEventos()
     } catch (error) {
       logger.error('Erro ao excluir evento:', error as Error)
-      toast.error('Erro ao excluir evento')
+      toast.error(t('calendar.deleteError'))
     }
   }
 
@@ -191,15 +191,15 @@ export default function CalendarioPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Calendário Escolar</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('calendar.title')}</h1>
           <p className="text-muted-foreground">
-            Gerencie feriados, recessos e eventos do ano letivo
+            {t('calendar.subtitle')}
           </p>
         </div>
         {isAdmin && (
           <Button onClick={() => { setSelectedDate(new Date()); setShowEventForm(true) }} className="mt-4 md:mt-0">
             <Plus className="h-4 w-4 mr-2" />
-            Novo Evento
+            {t('actions.newEvent')}
           </Button>
         )}
       </div>
@@ -208,9 +208,9 @@ export default function CalendarioPage() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Escola:</strong> {(userProfile as any).escola?.nome || 'Escola não informada'}
+          <strong>{t('labels.school')}:</strong> {(userProfile as any).escola?.nome || t('calendar.schoolNotInformed')}
           {' | '}
-          <strong>Ano Letivo:</strong> {new Date().getFullYear()}
+          <strong>{t('calendar.schoolYear')}:</strong> {new Date().getFullYear()}
         </AlertDescription>
       </Alert>
 
@@ -228,7 +228,7 @@ export default function CalendarioPage() {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleToday}>
-                  Hoje
+                  {t('actions.today')}
                 </Button>
                 <Button variant="outline" size="icon" onClick={handleNextMonth}>
                   <ChevronRight className="h-4 w-4" />
@@ -236,7 +236,7 @@ export default function CalendarioPage() {
               </div>
             </div>
             <CardDescription>
-              Clique em um dia para ver os eventos ou adicionar um novo
+              {t('calendar.clickDay')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -306,7 +306,7 @@ export default function CalendarioPage() {
         {/* Event List */}
         <Card>
           <CardHeader>
-            <CardTitle>Eventos do Mês</CardTitle>
+            <CardTitle>{t('calendar.events')}</CardTitle>
             <CardDescription>
               {eventos.length} evento(s) em {format(currentDate, 'MMMM', { locale: ptBR })}
             </CardDescription>
@@ -316,7 +316,7 @@ export default function CalendarioPage() {
               eventos={eventos}
               onEdit={isAdmin ? handleEditEvento : undefined}
               onDelete={isAdmin && !isDemoSandboxEnabled() ? handleDeleteEvento : undefined}
-              tipoLabels={TIPO_LABELS}
+              tipoLabels={tipoLabels}
               tipoCores={TIPO_CORES}
             />
           </CardContent>
@@ -326,17 +326,17 @@ export default function CalendarioPage() {
       {/* Legend */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Legenda</CardTitle>
+          <CardTitle className="text-sm">{t('calendar.legend')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            {Object.entries(TIPO_LABELS).map(([tipo, label]) => (
+            {Object.entries(tipoLabels).map(([tipo, label]) => (
               <div key={tipo} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded ${TIPO_CORES[tipo]}`} />
                 <span className="text-sm">{label}</span>
                 {(tipo === 'feriado' || tipo === 'recesso') && (
                   <Badge variant="secondary" className="text-xs">
-                    Afeta Frequência
+                    {t('calendar.affectsAttendance')}
                   </Badge>
                 )}
               </div>
@@ -353,7 +353,7 @@ export default function CalendarioPage() {
           evento={editingEvento}
           onClose={handleFormClose}
           onSuccess={handleFormSuccess}
-          tipoLabels={TIPO_LABELS}
+          tipoLabels={tipoLabels}
         />
       )}
     </div>

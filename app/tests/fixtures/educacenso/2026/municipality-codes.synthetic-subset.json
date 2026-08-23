@@ -1,0 +1,15 @@
+{
+  "sourceArtifact": "Tabela de Municípios 2026.xlsx",
+  "sourceArtifactSha256": "cea115117f79a697f3402eb67133976788544399b15c9789bcd9fe2ad08d80a3",
+  "coverage": "synthetic-fixture-subset",
+  "codes": [
+    {
+      "code": "2704302",
+      "officialWorkbookRow": 1705
+    },
+    {
+      "code": "5300108",
+      "officialWorkbookRow": 5579
+    }
+  ]
+}

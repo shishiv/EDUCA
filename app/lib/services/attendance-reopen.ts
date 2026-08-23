@@ -1,3 +1,6 @@
+/**
+ * Attendance Reopen - workflow for requesting and deciding session reopening.  Only titular teacher requests; only same-school director decides.
+ */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import {

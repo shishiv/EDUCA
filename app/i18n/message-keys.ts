@@ -1,0 +1,22 @@
+export type NavigationItemMessageKey =
+  | 'items.dashboard'
+  | 'items.students'
+  | 'items.users'
+  | 'items.schools'
+  | 'items.classes'
+  | 'items.enrolments'
+  | 'items.assignments'
+  | 'items.guardians'
+  | 'items.attendance'
+  | 'items.classDiary'
+  | 'items.diary'
+  | 'items.grades'
+  | 'items.calendar'
+  | 'items.reports'
+  | 'items.settings'
+
+export type NavigationGroupMessageKey =
+  | 'groups.main'
+  | 'groups.registrations'
+  | 'groups.academic'
+  | 'groups.management'

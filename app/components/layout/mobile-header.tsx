@@ -19,6 +19,7 @@ import { Bell, LogOut, User, Settings, Menu, X, Wifi, WifiOff, Clock, Users, Ale
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useFormatter, useTranslations } from 'next-intl'
 
 interface MobileHeaderProps {
   onMenuToggle?: () => void
@@ -39,6 +40,8 @@ function ConnectionIndicator({
   connectionStatus,
   pendingSync,
 }: Pick<MobileHeaderProps, 'connectionStatus' | 'pendingSync'>) {
+  const t = useTranslations('common.status')
+
   return (
     <div className="flex items-center gap-1" data-testid="connection-status">
       {connectionStatus === 'connected' ? (
@@ -47,7 +50,7 @@ function ConnectionIndicator({
         <WifiOff className="h-4 w-4 text-red-500" />
       )}
       <span className="text-xs text-muted-foreground hidden sm:inline">
-        {connectionStatus === 'connected' ? 'Online' : 'Offline'}
+        {connectionStatus === 'connected' ? t('online') : t('offline')}
       </span>
       {(pendingSync ?? 0) > 0 && (
         <Badge variant="secondary" className="ml-1 text-xs">
@@ -66,6 +69,10 @@ export function MobileHeader({
   pendingSync = 0,
   notifications = 0
 }: MobileHeaderProps) {
+  const t = useTranslations('layout.mobileHeader')
+  const header = useTranslations('layout.header')
+  const common = useTranslations('common')
+  const format = useFormatter()
   const { userProfile, signOut } = useAuth()
   const [currentTime, setCurrentTime] = useState(new Date())
   const showOfflineAlert = connectionStatus === 'disconnected' || connectionStatus === 'error'
@@ -82,9 +89,9 @@ export function MobileHeader({
   const handleSignOut = async () => {
     try {
       await signOut()
-      toast.success('Logout realizado com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao fazer logout')
+      toast.success(header('signOutSuccess'))
+    } catch {
+      toast.error(header('signOutError'))
     }
   }
 
@@ -98,21 +105,9 @@ export function MobileHeader({
   }
 
   const getRoleLabel = (role: string) => {
-    const roles = {
-      admin: 'Administrador',
-      diretor: 'Diretor(a)',
-      secretario: 'Secretário(a)',
-      professor: 'Professor(a)',
-      responsavel: 'Responsável'
-    }
-    return roles[role as keyof typeof roles] || role
-  }
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const roleKeys = ['admin', 'diretor', 'secretario', 'professor', 'responsavel'] as const
+    const roleKey = roleKeys.find(key => key === role)
+    return roleKey ? common(`roles.${roleKey}`) : role
   }
 
   const getPhaseColor = (fase: string) => {
@@ -127,11 +122,11 @@ export function MobileHeader({
 
   const getPhaseLabel = (fase: string) => {
     switch (fase) {
-      case 'planejamento': return 'Planejamento'
-      case 'chamada': return 'Chamada'
-      case 'finalizada': return 'Finalizada'
-      case 'bloqueada': return 'Bloqueada'
-      default: return 'Indefinido'
+      case 'planejamento': return t('phases.planning')
+      case 'chamada': return t('phases.attendance')
+      case 'finalizada': return t('phases.finished')
+      case 'bloqueada': return t('phases.blocked')
+      default: return t('phases.unknown')
     }
   }
 
@@ -153,7 +148,7 @@ export function MobileHeader({
               size="icon"
               onClick={onMenuToggle}
               className="h-11 w-11 text-municipal-gray-500 hover:bg-municipal-gray-50 hover:text-municipal-primary touch-target-large"
-              aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-label={isMenuOpen ? t('closeMenu') : t('openMenu')}
               data-testid="menu-toggle"
             >
               {isMenuOpen ? (
@@ -178,7 +173,7 @@ export function MobileHeader({
                     {currentSession.turma_nome}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {getPhaseLabel(currentSession.fase)} • {currentSession.total_presentes}/{currentSession.total_alunos}
+                    {getPhaseLabel(currentSession.fase)} • {format.number(currentSession.total_presentes, 'integer')}/{format.number(currentSession.total_alunos, 'integer')}
                   </p>
                 </div>
               </div>
@@ -198,7 +193,7 @@ export function MobileHeader({
             {/* Current Time - Classroom essential */}
             <div className="text-right hidden xs:block">
               <p className="text-sm font-medium">
-                {formatTime(currentTime)}
+                {format.dateTime(currentTime, 'time')}
               </p>
               <p className="text-xs text-muted-foreground">
                 {getRoleLabel(userProfile?.tipo_usuario || '')}
@@ -212,7 +207,7 @@ export function MobileHeader({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Abrir notificações"
+              aria-label={header('openNotifications')}
               className="relative h-11 w-11 text-municipal-gray-500 hover:bg-municipal-gray-50 hover:text-municipal-primary touch-target-large"
             >
               <Bell className="h-4 w-4" />
@@ -229,7 +224,11 @@ export function MobileHeader({
             {/* Profile Menu - Larger touch target */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-municipal-gray-50 touch-target-large">
+                <Button
+                  variant="ghost"
+                  aria-label={header('openUserMenu')}
+                  className="relative h-10 w-10 rounded-full hover:bg-municipal-gray-50 touch-target-large"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-municipal-primary text-municipal-primary-foreground text-xs">
                       {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
@@ -241,7 +240,7 @@ export function MobileHeader({
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {userProfile?.nome || 'Usuário'}
+                      {userProfile?.nome || header('userFallback')}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {getRoleLabel(userProfile?.tipo_usuario || '')}
@@ -252,19 +251,19 @@ export function MobileHeader({
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/perfil">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Meu Perfil</span>
+                    <span>{header('myProfile')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/configuracoes">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Configurações</span>
+                    <span>{header('settings')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-municipal-red hover:text-municipal-red hover:bg-red-50">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
+                  <span>{t('signOut')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -278,12 +277,12 @@ export function MobileHeader({
               <div className="flex items-center gap-2 min-w-0">
                 <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm truncate">
-                  Turma: {currentSession.turma_nome}
+                  {t('class', { name: currentSession.turma_nome })}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                <span>Aula {getPhaseLabel(currentSession.fase).toLowerCase()}</span>
+                <span>{t('lesson', { phase: getPhaseLabel(currentSession.fase).toLowerCase() })}</span>
               </div>
             </div>
           </div>
@@ -295,12 +294,7 @@ export function MobileHeader({
         <Alert className="mx-4 mt-2 border-orange-200 bg-orange-50" data-testid="offline-alert">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
-            Modo Offline: Suas alterações serão sincronizadas quando a conexão for restabelecida
-            {pendingSync > 0 && (
-              <span className="font-medium">
-                {' '}({pendingSync} pendente{pendingSync !== 1 ? 's' : ''})
-              </span>
-            )}
+            {t('offlineMessage', { pending: pendingSync })}
           </AlertDescription>
         </Alert>
       )}

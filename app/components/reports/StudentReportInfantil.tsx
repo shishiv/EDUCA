@@ -18,6 +18,8 @@
 
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useMemo, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -227,6 +229,7 @@ function ReportHeader({
   reportDate?: Date
   printMode?: boolean
 }) {
+  const t = useTranslations('platform')
   return (
     <div className={cn('space-y-4', printMode && 'print:space-y-2')}>
       {/* School and Year Header */}
@@ -249,7 +252,7 @@ function ReportHeader({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Criança:</span>
+            <span className="text-sm text-gray-600">{t('components.infantil.child')}</span>
           </div>
           <p className="font-semibold text-gray-900 pl-6">{student.nome}</p>
         </div>
@@ -257,7 +260,7 @@ function ReportHeader({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Baby className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Turma:</span>
+            <span className="text-sm text-gray-600">{t('components.studentReport.class')}</span>
           </div>
           <p className="font-semibold text-gray-900 pl-6">
             {student.turma}
@@ -269,7 +272,7 @@ function ReportHeader({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Data de Nascimento:</span>
+              <span className="text-sm text-gray-600">{t('components.studentReport.birthDate')}</span>
             </div>
             <p className="font-semibold text-gray-900 pl-6">
               {formatDate(student.dataNascimento)}
@@ -279,7 +282,7 @@ function ReportHeader({
 
         {reportDate && (
           <div className="space-y-2">
-            <span className="text-sm text-gray-600">Data de Emissão:</span>
+            <span className="text-sm text-gray-600">{t('components.studentReport.issueDate')}</span>
             <p className="font-semibold text-gray-900">
               {formatDate(reportDate)}
             </p>
@@ -358,6 +361,7 @@ function SemesterReportCard({
   report: ReportSummary
   printMode?: boolean
 }) {
+  const t = useTranslations('platform')
   const semesterConfig = SEMESTER_CONFIG[report.semestre]
   const statusConfig = REPORT_STATUS_CONFIG[report.status]
   const completion = calculateCompletion(report)
@@ -403,7 +407,7 @@ function SemesterReportCard({
         {/* Progress */}
         <div className="space-y-2 mt-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Campos preenchidos</span>
+            <span className="text-gray-600">{t('components.descriptive.fieldsComplete')}</span>
             <span className="font-medium text-purple-700">{completion}%</span>
           </div>
           <Progress value={completion} className="h-2" />
@@ -415,7 +419,7 @@ function SemesterReportCard({
             {report.professorNome && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                Professor(a): {report.professorNome}
+                {t('components.infantil.teacher')} {report.professorNome}
               </div>
             )}
             {report.finalizadoEm && (
@@ -444,7 +448,7 @@ function SemesterReportCard({
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Info className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-blue-700">Observações Gerais</span>
+              <span className="font-medium text-blue-700">{t('components.infantil.generalObservations')}</span>
             </div>
             <p className="text-sm text-blue-800 leading-relaxed">
               {report.observacoesGerais}
@@ -460,10 +464,11 @@ function SemesterReportCard({
  * Empty state for no reports
  */
 function EmptyReportsState() {
+  const t = useTranslations('platform')
   return (
     <Alert className="border-purple-200 bg-purple-50">
       <BookOpen className="h-4 w-4 text-purple-600" />
-      <AlertTitle className="text-purple-800">Nenhum Relatório Encontrado</AlertTitle>
+      <AlertTitle className="text-purple-800">{t('components.infantil.none')}</AlertTitle>
       <AlertDescription className="text-purple-700">
         Nao ha relatorios descritivos registrados para esta crianca.
         Os relatorios sao preenchidos pelo professor ao final de cada semestre.
@@ -515,6 +520,7 @@ export function StudentReportInfantil({
   className,
   printMode = false,
 }: StudentReportInfantilProps) {
+  const t = useTranslations('platform')
   const reportRef = useRef<HTMLDivElement>(null)
 
   // Sort reports by year and semester (most recent first)
@@ -566,7 +572,7 @@ export function StudentReportInfantil({
                 {onExportPDF && (
                   <Button variant="outline" size="sm" onClick={onExportPDF}>
                     <Download className="h-4 w-4 mr-2" />
-                    PDF
+                    {t('attendance.pdf')}
                   </Button>
                 )}
               </div>
@@ -622,7 +628,7 @@ export function StudentReportInfantil({
       {/* Print footer */}
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
-          <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestão Escolar EDUCA</p>
+          <p>{t('components.infantil.generated', { date: formatDate(reportDate) })}</p>
           <p>{municipalConfig.nome}</p>
         </div>
       )}

@@ -4,8 +4,6 @@ import { useAuth } from '@/hooks/use-auth'
 import { useSessionRealtime } from '@/contexts/session-realtime-context'
 import { useComplianceWarnings } from '@/hooks/use-compliance-warnings'
 import { useEscola } from '@/contexts/escola-context'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -15,10 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MunicipalHeaderIdentity } from '@/components/identity/municipal-assets'
-import { Bell, LogOut, User, Settings, Wifi, WifiOff, Clock, FileText, AlertTriangle, AlertCircle, XCircle, ExternalLink, Search, School } from 'lucide-react'
+import { Bell, LogOut, User, Settings, Wifi, WifiOff, FileText, AlertTriangle, AlertCircle, Search, School } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 /**
  * Header Component - EDUCA Design System
@@ -30,21 +28,12 @@ import Link from 'next/link'
  * - Responsive behavior (search hidden on mobile)
  */
 
-// Helper function to map icon names to components
-function getIconComponent(iconName: string) {
-  const iconMap: Record<string, any> = {
-    Clock,
-    FileText,
-    AlertTriangle,
-    AlertCircle,
-    XCircle
-  }
-  return iconMap[iconName] || Bell
-}
-
 export function Header() {
+  const t = useTranslations('layout.header')
+  const common = useTranslations('common')
+  const schoolSelector = useTranslations('layout.schoolSelector')
   const { userProfile, signOut } = useAuth()
-  const { connectionStatus, notifications, clearNotification } = useSessionRealtime()
+  const { connectionStatus, notifications } = useSessionRealtime()
   const { data: complianceWarnings = [] } = useComplianceWarnings()
   const { selectedEscola, shouldShowSelector } = useEscola()
 
@@ -66,26 +55,10 @@ export function Header() {
   const handleSignOut = async () => {
     try {
       await signOut()
-      toast.success('Logout realizado com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao fazer logout')
+      toast.success(t('signOutSuccess'))
+    } catch {
+      toast.error(t('signOutError'))
     }
-  }
-
-  const formatTimeRemaining = (deadline: Date) => {
-    const now = new Date()
-    const diff = deadline.getTime() - now.getTime()
-
-    if (diff <= 0) return 'Vencido'
-
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(hours / 24)
-
-    if (days > 0) return `${days} dia${days !== 1 ? 's' : ''}`
-    if (hours > 0) return `${hours} hora${hours !== 1 ? 's' : ''}`
-
-    const minutes = Math.floor(diff / (1000 * 60))
-    return `${minutes} minuto${minutes !== 1 ? 's' : ''}`
   }
 
   const getInitials = (name: string) => {
@@ -98,14 +71,9 @@ export function Header() {
   }
 
   const getRoleLabel = (role: string) => {
-    const roles = {
-      admin: 'Administrador',
-      diretor: 'Diretor(a)',
-      secretario: 'Secretário(a)',
-      professor: 'Professor(a)',
-      responsavel: 'Responsável'
-    }
-    return roles[role as keyof typeof roles] || role
+    const roleKeys = ['admin', 'diretor', 'secretario', 'professor', 'responsavel'] as const
+    const roleKey = roleKeys.find(key => key === role)
+    return roleKey ? common(`roles.${roleKey}`) : role
   }
 
   return (
@@ -125,20 +93,25 @@ export function Header() {
             <Search className="h-[18px] w-[18px] text-gray-400 flex-shrink-0" />
             <input
               type="text"
-              placeholder="Buscar alunos, turmas..."
+              placeholder={t('searchPlaceholder')}
               className="border-none bg-transparent outline-none font-sans text-[0.9rem] text-gray-800 w-full placeholder:text-gray-400"
             />
           </div>
 
           {/* Connection Status - compact indicator */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-gray-50 border border-gray-200" title={`Conexão: ${connectionStatus}`}>
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-gray-50 border border-gray-200"
+            title={t('connection', {
+              status: connectionStatus === 'connected' ? common('status.online') : common('status.offline'),
+            })}
+          >
             {connectionStatus === 'connected' ? (
               <Wifi className="h-4 w-4 text-green-500" />
             ) : (
               <WifiOff className="h-4 w-4 text-red-500" />
             )}
             <span className="text-xs font-medium text-gray-600 hidden xl:inline">
-              {connectionStatus === 'connected' ? 'Online' : 'Offline'}
+              {connectionStatus === 'connected' ? common('status.online') : common('status.offline')}
             </span>
           </div>
 
@@ -156,7 +129,7 @@ export function Header() {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-yellow-50 border border-yellow-200">
               <School className="h-4 w-4 text-yellow-600" />
               <span className="text-xs font-medium text-yellow-700 hidden xl:inline">
-                Nenhuma escola
+                {schoolSelector('none')}
               </span>
             </div>
           )}
@@ -166,7 +139,7 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                aria-label="Abrir notificações"
+                aria-label={t('openNotifications')}
                 className="relative flex h-10 w-10 items-center justify-center rounded-[10px] border border-gray-200 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
               >
                 <Bell className="h-5 w-5" aria-hidden="true" />
@@ -177,7 +150,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-96 max-h-96 overflow-y-auto shadow-xl border-0 ring-1 ring-black/5" align="end">
               <DropdownMenuLabel className="font-semibold text-green-600">
-                Notificações do Sistema
+                {t('notifications')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {allNotifications.length > 0 ? (
@@ -222,7 +195,7 @@ export function Header() {
                                         : 'border-yellow-200 bg-yellow-50 text-yellow-800'
                                     }`}
                                   >
-                                    {severity === 'critical' ? 'Urgente' : 'Atenção'}
+                                    {severity === 'critical' ? t('urgent') : t('attention')}
                                   </Badge>
                                 </div>
                               )}
@@ -237,7 +210,7 @@ export function Header() {
                 <DropdownMenuItem disabled className="p-3">
                   <div className="flex items-center space-x-3 text-gray-500">
                     <Bell className="h-4 w-4" />
-                    <span className="text-sm">Nenhuma notificação</span>
+                    <span className="text-sm">{t('noNotifications')}</span>
                   </div>
                 </DropdownMenuItem>
               )}
@@ -247,7 +220,7 @@ export function Header() {
         {/* Profile Menu - EDUCA styled avatar with gradient */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label="Abrir menu do usuário" className="relative flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-green-600 to-sky-600 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2">
+            <button type="button" aria-label={t('openUserMenu')} className="relative flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-green-600 to-sky-600 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2">
               {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
             </button>
           </DropdownMenuTrigger>
@@ -255,13 +228,13 @@ export function Header() {
             <DropdownMenuLabel className="font-normal p-4">
               <div className="flex flex-col space-y-2">
                 <p className="text-sm font-semibold leading-none text-green-600">
-                  {userProfile?.nome || 'Usuário'}
+                  {userProfile?.nome || t('userFallback')}
                 </p>
                 <p className="text-xs leading-none text-gray-500">
                   {getRoleLabel(userProfile?.tipo_usuario || '')}
                 </p>
                 <div className="mt-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">Sistema Educacional Municipal</p>
+                  <p className="text-xs text-gray-500">{common('brand.municipalEducationSystem')}</p>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -269,19 +242,19 @@ export function Header() {
             <DropdownMenuItem asChild className="p-3 hover:bg-green-50">
               <Link href="/dashboard/perfil">
                 <User className="mr-3 h-4 w-4 text-green-600" />
-                <span className="font-medium">Meu Perfil</span>
+                <span className="font-medium">{t('myProfile')}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className="p-3 hover:bg-green-50">
               <Link href="/dashboard/configuracoes">
                 <Settings className="mr-3 h-4 w-4 text-green-600" />
-                <span className="font-medium">Configurações</span>
+                <span className="font-medium">{t('settings')}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="p-3 text-red-600 hover:text-red-700 hover:bg-red-50 font-medium">
               <LogOut className="mr-3 h-4 w-4" />
-              <span>Sair do Sistema</span>
+              <span>{t('signOut')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

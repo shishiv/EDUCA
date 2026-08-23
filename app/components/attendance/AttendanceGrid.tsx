@@ -40,6 +40,7 @@ import type {
   SessionLockInfo,
   AttendanceGridProps,
 } from './AttendanceGridTypes'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // Re-export types for consumers
 export type { AttendanceStats, AttendanceGridProps } from './AttendanceGridTypes'
@@ -57,6 +58,7 @@ export function AttendanceGrid({
   showPhotos = true,
   onAttendanceChange
 }: AttendanceGridProps) {
+  const t = useClassroomTranslations()
   // State
   const [students, setStudents] = useState<Student[]>([])
   const [attendance, setAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
@@ -483,7 +485,7 @@ export function AttendanceGrid({
 
           {filteredStudents.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              {searchTerm ? 'Nenhum aluno encontrado com esse nome.' : 'Nenhum aluno matriculado nesta turma.'}
+              {searchTerm ? 'Nenhum aluno encontrado com esse nome.' : t('attendance.noStudents')}
             </div>
           )}
         </div>

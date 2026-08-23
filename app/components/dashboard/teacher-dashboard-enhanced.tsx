@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { BookOpenCheck, CheckCircle2, Clock3, GraduationCap, Users } from 'lucide-react'
@@ -28,41 +30,55 @@ interface TeacherClassSummary {
   sessaoHoje: TeacherClassSession | null
 }
 
+type TeacherDashboardMessageKey =
+  | 'dashboard.pendingCall'
+  | 'dashboard.openCall'
+  | 'dashboard.openedCall'
+  | 'dashboard.continueCall'
+  | 'dashboard.completedCall'
+  | 'dashboard.viewCall'
+  | 'dashboard.cancelledSession'
+  | 'dashboard.viewClass'
+
 /** Labels each teacher class by its real attendance session for the São Paulo day. */
-function getTeacherSessionStatus(session: TeacherClassSession | null) {
+function getTeacherSessionStatus(
+  session: TeacherClassSession | null,
+  t: (key: TeacherDashboardMessageKey) => string
+) {
   if (!session) {
     return {
-      label: 'Chamada pendente',
+      label: t('dashboard.pendingCall'),
       variant: 'warning' as const,
-      actionLabel: 'Abrir chamada',
+      actionLabel: t('dashboard.openCall'),
     }
   }
 
   if (session.status === 'ABERTA') {
     return {
-      label: 'Chamada aberta',
+      label: t('dashboard.openedCall'),
       variant: 'info' as const,
-      actionLabel: 'Continuar chamada',
+      actionLabel: t('dashboard.continueCall'),
     }
   }
 
   if (session.status === 'FECHADA') {
     return {
-      label: 'Chamada concluída',
+      label: t('dashboard.completedCall'),
       variant: 'success' as const,
-      actionLabel: 'Ver chamada',
+      actionLabel: t('dashboard.viewCall'),
     }
   }
 
   return {
-    label: 'Sessão cancelada',
+    label: t('dashboard.cancelledSession'),
     variant: 'secondary' as const,
-    actionLabel: 'Ver turma',
+    actionLabel: t('dashboard.viewClass'),
   }
 }
 
 /** Shows a professor only the assigned classes, active enrollments, and today's calls. */
 export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhancedProps) {
+  const t = useTranslations('platform')
   const [turmas, setTurmas] = useState<TeacherClassSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -135,14 +151,14 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
           action: 'load_assigned_classes',
           metadata: { professorId },
         })
-        setError('Não foi possível carregar suas turmas.')
+        setError(t('dashboard.teacherLoadError'))
       } finally {
         setLoading(false)
       }
     }
 
     void loadTeacherDashboard()
-  }, [professorId])
+  }, [professorId, t])
 
   if (loading) {
     return (
@@ -169,30 +185,26 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="border-b border-gray-200 pb-6">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-          <GraduationCap className="h-7 w-7 text-green-700" />
-          Painel do Professor
-        </h1>
-        <p className="mt-1 text-sm text-gray-600 sm:text-base">
-          Acompanhe suas turmas e a chamada de hoje.
-        </p>
+          <GraduationCap className="h-7 w-7 text-green-700" />{t('dashboard.teacherPanel')}</h1>
+        <p className="mt-1 text-sm text-gray-600 sm:text-base">{t('dashboard.teacherSubtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Minhas turmas</CardDescription>
+            <CardDescription>{t('dashboard.myClassesShort')}</CardDescription>
             <CardTitle className="text-3xl">{turmas.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Alunos ativos</CardDescription>
+            <CardDescription>{t('dashboard.activeStudents')}</CardDescription>
             <CardTitle className="text-3xl">{totalAlunos}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Chamadas registradas hoje</CardDescription>
+            <CardDescription>{t('dashboard.callsToday')}</CardDescription>
             <CardTitle className="text-3xl">{chamadasRegistradas}</CardTitle>
           </CardHeader>
         </Card>
@@ -200,15 +212,15 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
 
       <Card>
         <CardHeader>
-          <CardTitle>Turmas atribuídas</CardTitle>
-          <CardDescription>Abra ou revise a chamada de cada turma.</CardDescription>
+          <CardTitle>{t('dashboard.assignedClasses')}</CardTitle>
+          <CardDescription>{t('dashboard.openOrReview')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {turmas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma turma foi atribuída a este professor.</p>
+            <p className="text-sm text-muted-foreground">{t('dashboard.noAssigned')}</p>
           ) : (
             turmas.map(turma => {
-              const session = getTeacherSessionStatus(turma.sessaoHoje)
+              const session = getTeacherSessionStatus(turma.sessaoHoje, t)
               const chamadaHref = turma.sessaoHoje
                 ? `/dashboard/turmas/${turma.id}/chamada?sessao=${turma.sessaoHoje.id}`
                 : `/dashboard/turmas/${turma.id}/chamada`
@@ -223,7 +235,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
                     <p className="text-sm text-gray-600">{turma.serie} - {turma.turno}</p>
                     <p className="mt-1 flex items-center gap-1 text-sm text-gray-600">
                       <Users className="h-4 w-4" />
-                      {turma.alunosAtivos} alunos ativos
+                      {turma.alunosAtivos} {t('dashboard.studentsActiveCount')}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -244,15 +256,11 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
 
       {chamadasRegistradas < turmas.length && (
         <p className="flex items-center gap-2 text-sm text-amber-700">
-          <Clock3 className="h-4 w-4" />
-          Há turmas sem chamada registrada hoje.
-        </p>
+          <Clock3 className="h-4 w-4" />{t('dashboard.missingCalls')}</p>
       )}
       {turmas.length > 0 && chamadasRegistradas === turmas.length && (
         <p className="flex items-center gap-2 text-sm text-green-700">
-          <CheckCircle2 className="h-4 w-4" />
-          Todas as suas turmas têm chamada registrada hoje.
-        </p>
+          <CheckCircle2 className="h-4 w-4" />{t('dashboard.allCalls')}</p>
       )}
     </div>
   )

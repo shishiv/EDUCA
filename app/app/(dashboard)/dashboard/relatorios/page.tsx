@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
+
+import { useCallback, useEffect, useState } from 'react'
 import { reportsApi, Report } from '@/lib/api/reports'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,14 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -30,10 +32,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { 
-  FileText, 
-  Download, 
-  Plus, 
+import {
+  FileText,
+  Download,
+  Plus,
   Calendar,
   Users,
   GraduationCap,
@@ -47,6 +49,7 @@ import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 
 export default function RelatoriosPage() {
+  const t = useTranslations('platform')
   const [relatorios, setRelatorios] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -55,35 +58,35 @@ export default function RelatoriosPage() {
     parametros: {}
   })
 
-  useEffect(() => {
-    loadRelatorios()
-  }, [])
-
-  const loadRelatorios = async () => {
+  const loadRelatorios = useCallback(async () => {
     try {
       const data = await reportsApi.getAll()
       setRelatorios(data)
     } catch (error) {
       // logger.error('Erro ao carregar relatórios:', error)
-      toast.error('Erro ao carregar lista de relatórios')
+      toast.error(t('reports.loadError'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadRelatorios()
+  }, [loadRelatorios])
 
   const handleGenerateReport = async () => {
     if (!newReport.tipo) {
-      toast.error('Selecione o tipo de relatório')
+      toast.error(t('reports.selectError'))
       return
     }
 
     setIsGenerating(true)
     try {
       const report = await reportsApi.generateReport(newReport.tipo as any, newReport.parametros); setRelatorios(prev => [report, ...prev])
-      toast.success('Relatório sendo gerado! Você será notificado quando estiver pronto.')
+      toast.success(t('reports.generated'))
       loadRelatorios()
     } catch (error) {
-      toast.error('Erro ao gerar relatório')
+      toast.error(t('reports.generateError'))
     } finally {
       setIsGenerating(false)
     }
@@ -105,13 +108,13 @@ export default function RelatoriosPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'concluido':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Concluído</Badge>
+        return <Badge variant="default" className="bg-green-100 text-green-800">{t('reports.completed')}</Badge>
       case 'processando':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Processando</Badge>
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">{t('reports.processing')}</Badge>
       case 'erro':
-        return <Badge variant="destructive">Erro</Badge>
+        return <Badge variant="destructive">{t('reports.error')}</Badge>
       default:
-        return <Badge variant="outline">Desconhecido</Badge>
+        return <Badge variant="outline">{t('reports.unknown')}</Badge>
     }
   }
 
@@ -131,10 +134,10 @@ export default function RelatoriosPage() {
   }
 
   const tiposRelatorio = [
-    { value: "usuarios", label: "Relatório de Usuários", icon: Users },
-    { value: "escolas", label: "Relatório de Escolas", icon: GraduationCap },
-    { value: "alunos", label: "Relatório de Alunos", icon: Users },
-    { value: "frequencia", label: "Relatório de Frequência", icon: Calendar }
+    { value: "usuarios", label: t('reports.users'), icon: Users },
+    { value: "escolas", label: t('reports.schools'), icon: GraduationCap },
+    { value: "alunos", label: t('reports.students'), icon: Users },
+    { value: "frequencia", label: t('reports.attendance'), icon: Calendar }
   ]
 
   if (loading) {
@@ -157,31 +160,25 @@ export default function RelatoriosPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-          <p className="text-gray-600 mt-1">
-            Gere e gerencie relatórios do sistema educacional
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('reports.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('reports.subtitle')}</p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Gerar Relatório
-            </Button>
+              <Plus className="h-4 w-4" />{t('reports.generate')}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Gerar Novo Relatório</DialogTitle>
-              <DialogDescription>
-                Selecione o tipo de relatório que deseja gerar
-              </DialogDescription>
+              <DialogTitle>{t('reports.new')}</DialogTitle>
+              <DialogDescription>{t('reports.selectType')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo de Relatório</Label>
+                <Label htmlFor="tipo">{t('reports.type')}</Label>
                 <Select value={newReport.tipo} onValueChange={(value) => setNewReport({...newReport, tipo: value})}>
                   <SelectTrigger id="tipo">
-                    <SelectValue placeholder="Selecione o tipo" />
+                    <SelectValue placeholder={t('reports.select')} />
                   </SelectTrigger>
                   <SelectContent>
                     {tiposRelatorio.map((tipo) => (
@@ -197,15 +194,15 @@ export default function RelatoriosPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline">Cancelar</Button>
+              <Button variant="outline">{t('flags.cancel')}</Button>
               <Button onClick={handleGenerateReport} disabled={isGenerating}>
                 {isGenerating ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Gerando...
+                    {t('reports.generating')}
                   </>
                 ) : (
-                  'Gerar Relatório'
+                  t('reports.generate')
                 )}
               </Button>
             </DialogFooter>
@@ -218,7 +215,7 @@ export default function RelatoriosPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">{relatorios.length}</div>
-            <div className="text-sm text-gray-600">Total de Relatórios</div>
+            <div className="text-sm text-gray-600">{t('reports.total')}</div>
           </CardContent>
         </Card>
         <Card>
@@ -226,7 +223,7 @@ export default function RelatoriosPage() {
             <div className="text-2xl font-bold text-green-600">
               {relatorios.filter(r => r.status === 'concluido').length}
             </div>
-            <div className="text-sm text-gray-600">Concluídos</div>
+            <div className="text-sm text-gray-600">{t('reports.completedCount')}</div>
           </CardContent>
         </Card>
         <Card>
@@ -234,7 +231,7 @@ export default function RelatoriosPage() {
             <div className="text-2xl font-bold text-orange-600">
               {relatorios.filter(r => r.status === 'processando').length}
             </div>
-            <div className="text-sm text-gray-600">Em Processamento</div>
+            <div className="text-sm text-gray-600">{t('reports.processingCount')}</div>
           </CardContent>
         </Card>
         <Card>
@@ -242,7 +239,7 @@ export default function RelatoriosPage() {
             <div className="text-2xl font-bold text-red-600">
               {relatorios.filter(r => r.status === 'erro').length}
             </div>
-            <div className="text-sm text-gray-600">Com Erro</div>
+            <div className="text-sm text-gray-600">{t('reports.errorCount')}</div>
           </CardContent>
         </Card>
       </div>
@@ -250,10 +247,8 @@ export default function RelatoriosPage() {
       {/* Relatórios Rápidos */}
       <Card>
         <CardHeader>
-          <CardTitle>Relatórios Rápidos</CardTitle>
-          <CardDescription>
-            Gere relatórios comuns com um clique
-          </CardDescription>
+          <CardTitle>{t('reports.quick')}</CardTitle>
+          <CardDescription>{t('reports.quickDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -280,7 +275,7 @@ export default function RelatoriosPage() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <ClipboardList className="h-5 w-5" />
-            <span>Histórico de Relatórios</span>
+            <span>{t('reports.history')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -288,11 +283,11 @@ export default function RelatoriosPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Relatório</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Data de Geração</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('reports.report')}</TableHead>
+                  <TableHead>{t('reports.typeColumn')}</TableHead>
+                  <TableHead>{t('reports.generatedAt')}</TableHead>
+                  <TableHead>{t('components.attendance.status')}</TableHead>
+                  <TableHead className="text-right">{t('reports.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -337,9 +332,7 @@ export default function RelatoriosPage() {
                 ))}
                 {relatorios.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                      Nenhum relatório encontrado. Gere seu primeiro relatório!
-                    </TableCell>
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">{t('reports.none')}</TableCell>
                   </TableRow>
                 )}
               </TableBody>

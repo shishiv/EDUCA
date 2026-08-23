@@ -1,3 +1,6 @@
+/**
+ * Classes API - turma CRUD, capacity, teacher assignment, and enrollment management.  RLS enforces school-scoped access.
+ */
 'use client'
 
 import { BaseApiService } from './base'

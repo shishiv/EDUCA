@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -89,6 +91,8 @@ const getTurnoBadgeVariant = (turno: string): 'default' | 'secondary' | 'outline
 }
 
 export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
+  const t = useClassroomTranslations()
+
   const router = useRouter()
   const serieColor = getSerieColor(turma.serie)
   const gradientClasses = serieColorClasses[serieColor]
@@ -136,7 +140,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
               <CardDescription className="truncate">{turma.escola.nome}</CardDescription>
             </div>
             {!turma.ativo && (
-              <Badge variant="secondary" className="shrink-0">Inativa</Badge>
+              <Badge variant="secondary" className="shrink-0">{t('status.inactive')}</Badge>
             )}
           </div>
         </CardHeader>
@@ -177,7 +181,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
               onClick={handleChamadaClick}
             >
               <ClipboardList className="h-3.5 w-3.5" />
-              Fazer Chamada
+              {t('classes.callAction')}
             </Button>
             <Button
               size="sm"
@@ -186,7 +190,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
               onClick={handleDiarioClick}
             >
               <BookOpen className="h-3.5 w-3.5" />
-              Ver Diario
+              {t('classes.viewDiary')}
             </Button>
           </div>
         </CardContent>

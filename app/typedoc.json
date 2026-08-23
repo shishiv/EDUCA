@@ -1,0 +1,43 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "lib/api/base.ts",
+    "lib/api/attendance.ts",
+    "lib/api/audit.ts",
+    "lib/api/canonical-attendance-facts.ts",
+    "lib/api/class-diary.ts",
+    "lib/api/classes.ts",
+    "lib/api/configs.ts",
+    "lib/api/dashboard-stats.ts",
+    "lib/api/enhanced-attendance.ts",
+    "lib/api/feature-flags.ts",
+    "lib/api/grades.ts",
+    "lib/api/reports.ts",
+    "lib/api/schools.ts",
+    "lib/api/student-admission.ts",
+    "lib/api/students.ts",
+    "lib/api/users.ts",
+    "lib/api/vivencias.ts",
+    "lib/services/attendance-auth.ts",
+    "lib/services/attendance-module.ts",
+    "lib/services/attendance-reopen.ts",
+    "lib/services/attendance-reopen-database.ts",
+    "lib/services/user-lifecycle.ts",
+    "lib/utils.ts"
+  ],
+  "tsconfig": "tsconfig.json",
+  "out": "../docs/api",
+  "name": "EDUCA API Reference",
+  "readme": "none",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "sort": ["source-order"],
+  "categorizeByGroup": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "cleanOutputDir": true
+}

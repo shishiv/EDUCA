@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# Cross-worktree atomic lease for the nine Supabase host ports used by pilot E2E.
+# Cross-worktree atomic lease for the Supabase host ports plus one direct app port.
 
 PILOT_E2E_PORT_LEASE_EXTERNAL="${PILOT_E2E_PORT_LEASE_EXTERNAL:-false}"
 PILOT_E2E_PORT_LEASE_ACQUIRED="${PILOT_E2E_PORT_LEASE_ACQUIRED:-false}"
@@ -30,7 +30,7 @@ pilot_port_range_probe() {
     return 2
   }
 
-  for ((port = base; port <= base + 8; port += 1)); do
+  for ((port = base; port <= base + 9; port += 1)); do
     if grep -Eq ":${port}[[:space:]]" <<<"$listeners"; then
       return 0
     fi
@@ -114,13 +114,13 @@ pilot_port_range_lease_acquire() {
     printf '%s\n' "$$" > "$lease_dir/owner.pid"
     printf '%s\n' "$(pwd -P)" > "$lease_dir/owner.worktree"
     printf '%s\n' "$base" > "$lease_dir/base"
-    printf '%s\n' "$((base + 8))" > "$lease_dir/range"
+    printf '%s\n' "$((base + 9))" > "$lease_dir/range"
     PILOT_E2E_PORT_BASE="$base"
     PILOT_E2E_PORT_LEASE_DIR="$lease_dir"
     PILOT_E2E_PORT_LEASE_ACQUIRED=true
     PILOT_E2E_PORT_LEASE_RELEASED=false
     export PILOT_E2E_PORT_BASE PILOT_E2E_PORT_LEASE_DIR PILOT_E2E_PORT_LEASE_ACQUIRED PILOT_E2E_PORT_LEASE_RELEASED
-    printf 'PILOT_PORT_RANGE_LEASE: base=%s end=%s lease_dir=%s owner_pid=%s\n' "$base" "$((base + 8))" "$lease_dir" "$$"
+    printf 'PILOT_PORT_RANGE_LEASE: base=%s end=%s lease_dir=%s owner_pid=%s\n' "$base" "$((base + 9))" "$lease_dir" "$$"
     return 0
   done
 
@@ -144,11 +144,11 @@ pilot_port_range_lease_use_external() {
   fi
   recorded_base=$(<"$lease_dir/base")
   recorded_end=$(<"$lease_dir/range")
-  if [[ "$recorded_base" != "$base" || "$recorded_end" != "$((base + 8))" ]]; then
+  if [[ "$recorded_base" != "$base" || "$recorded_end" != "$((base + 9))" ]]; then
     echo "PILOT_PORT_LEASE_EXTERNAL_MISMATCH: base=$base recorded_base=$recorded_base recorded_end=$recorded_end" >&2
     return 1
   fi
-  printf 'PILOT_PORT_RANGE_LEASE_EXTERNAL: base=%s end=%s lease_dir=%s\n' "$base" "$((base + 8))" "$lease_dir"
+  printf 'PILOT_PORT_RANGE_LEASE_EXTERNAL: base=%s end=%s lease_dir=%s\n' "$base" "$((base + 9))" "$lease_dir"
 }
 
 pilot_port_range_lease_release() {

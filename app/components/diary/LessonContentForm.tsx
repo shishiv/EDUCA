@@ -51,6 +51,7 @@ import {
   EXPERIENCE_FIELD_OPTIONS,
 } from '@/lib/validation/lesson-content'
 import type { EducationLevel, BNNCExperienceFieldCode } from '@/types/lesson-content'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 export interface LessonContentFormProps {
   /** Session ID to associate the content with */
@@ -81,6 +82,7 @@ export function LessonContentForm({
   disabled = false,
   className,
 }: LessonContentFormProps) {
+  const t = useClassroomTranslations()
   // Form setup with Zod validation
   const form = useForm({
     resolver: zodResolver(lessonContentFormSchema),
@@ -306,7 +308,7 @@ export function LessonContentForm({
         {/* BNCC Skills */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Habilidades BNCC</CardTitle>
+            <CardTitle className="text-lg">{t('diary.bnccSkills')}</CardTitle>
           </CardHeader>
           <CardContent>
             <FormField
@@ -335,7 +337,7 @@ export function LessonContentForm({
         {/* Optional Fields */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Detalhes Adicionais</CardTitle>
+            <CardTitle className="text-lg">{t('diary.additionalDetails')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Metodologia */}
@@ -344,7 +346,7 @@ export function LessonContentForm({
               name="metodologia"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="metodologia">Metodologia</FormLabel>
+                  <FormLabel htmlFor="metodologia">{t('diary.methodology')}</FormLabel>
                   <FormControl>
                     <Textarea
                       id="metodologia"
@@ -370,7 +372,7 @@ export function LessonContentForm({
               name="recursos"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="recursos">Recursos</FormLabel>
+                  <FormLabel htmlFor="recursos">{t('diary.resources')}</FormLabel>
                   <FormControl>
                     <Textarea
                       id="recursos"
@@ -396,7 +398,7 @@ export function LessonContentForm({
               name="observacoes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="observacoes">Observações</FormLabel>
+                  <FormLabel htmlFor="observacoes">{t('labels.observations')}</FormLabel>
                   <FormControl>
                     <Textarea
                       id="observacoes"
@@ -426,7 +428,7 @@ export function LessonContentForm({
             className="min-w-[100px]"
           >
             <X className="h-4 w-4 mr-2" />
-            Cancelar
+            {t('diary.cancel')}
           </Button>
           <Button
             type="submit"
@@ -436,7 +438,7 @@ export function LessonContentForm({
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Salvando...
+                {t('actions.saving')}
               </>
             ) : (
               <>

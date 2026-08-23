@@ -5,7 +5,6 @@
 **A planilha da secretaria de educação não aguenta mais. O EDUCA aguenta.**
 **The spreadsheet your school district runs on doesn't scale. EDUCA does.**
 
-[![CI](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml/badge.svg)](https://github.com/shishiv/EDUCA/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
@@ -42,44 +41,43 @@
 ## Dúvidas comuns · Common questions
 
 **PT:**
-- **"Minha prefeitura não tem equipe técnica."** — O self-host pede alguém que saiba rodar Docker e Node. Se não tiver essa pessoa hoje, o Cloud Free (modelo futuro) é pensado pra isso — registre interesse.
+- **"Minha prefeitura não tem equipe técnica."** - O self-host pede alguém que saiba rodar Docker e Node. Quando uma opção gerenciada existir, será anunciada aqui.
 - **"E o WhatsApp, tem custo escondido?"** — Não. É BYO: vocês trazem a conta Meta/BSP e os templates. Sem credencial, o envio simplesmente fica desligado, não quebra o sistema.
 - **"Meus dados de aluno ficam seguros?"** — Hoje o piloto roda só com dados sintéticos, de propósito, até essa parte estar madura o suficiente pra dado real. Veja [`SECURITY.md`](SECURITY.md).
 
 **EN:**
-- **"My district has no technical staff."** — Self-hosting requires someone comfortable with Docker and Node. If you don't have that yet, Cloud Free (a future model) is meant for this — register your interest.
+- **"My district has no technical staff."** - Self-hosting requires someone comfortable with Docker and Node. When a managed option becomes available it will be announced here.
 - **"Is WhatsApp a hidden cost?"** — No. It's BYO: you bring the Meta/BSP account and templates. Without credentials, sending just stays off — it doesn't break the system.
 - **"Is student data safe?"** — The pilot runs on synthetic data only, on purpose, until that part is mature enough for real data. See [`SECURITY.md`](SECURITY.md).
 
-## Modelo · Model
+## Disponibilidade · Availability
 
-| Modelo | Situação |
-| --- | --- |
-| **Self-host** | Código disponível neste repositório sob a licença MIT. |
-| **Cloud Free** | Modelo futuro, não disponível no momento. |
-| **Cloud Pro** | Modelo futuro, não disponível no momento. |
+**PT:** O único modelo disponível hoje é **self-host**: código-fonte sob licença MIT neste repositório. Não existe serviço hospedado oferecido, gratuito ou pago.
 
-| Model | Status |
-| --- | --- |
-| **Self-host** | Code available in this repository under the MIT License. |
-| **Cloud Free** | Future model, not currently available. |
-| **Cloud Pro** | Future model, not currently available. |
+**EN:** The only model available today is **self-host**: source code under the MIT License in this repository. There is no hosted service offered, free or paid.
 
 ## Comece agora · Get started
 
-**PT:** Pré-requisitos: Node.js 20+, pnpm 9+ e Docker (para Supabase local). Comandos executados a partir de `app/`.
+**PT:** Pré-requisitos: Node.js 20+, pnpm 9+ e Docker (para Supabase CLI local).
 
-**EN:** Prerequisites: Node.js 20+, pnpm 9+, and Docker (for local Supabase). Commands run from `app/`.
+**EN:** Prerequisites: Node.js 20+, pnpm 9+, and Docker (for the local Supabase CLI).
 
 ```bash
 git clone https://github.com/shishiv/EDUCA.git
 cd EDUCA/app
-cp .env.local.example .env.local
 pnpm install --frozen-lockfile
-pnpm dev
+pnpm dev:local
 ```
 
-Setup completo, comandos exatos e limites do piloto: [`CONTEXT.md`](CONTEXT.md). · Full setup, exact commands, and pilot boundaries: [`CONTEXT.md`](CONTEXT.md).
+O comando inicia o Supabase local, aplica migrations, configura `.env.local` e abre o servidor Next.js. No encerramento (Ctrl-C), limpa apenas os recursos que ele iniciou.
+
+The command starts local Supabase, applies migrations, configures `.env.local`, and opens the Next.js dev server. On exit (Ctrl-C), it cleans up only the resources it started.
+
+Para resetar o banco com seed sintético: `pnpm dev:local --reset`
+To reset the database with synthetic seed: `pnpm dev:local --reset`
+
+Setup completo, comandos exatos e limites do piloto: [`CONTEXT.md`](CONTEXT.md).
+Full setup, exact commands, and pilot boundaries: [`CONTEXT.md`](CONTEXT.md).
 
 ## Segurança · Security
 

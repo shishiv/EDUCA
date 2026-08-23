@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -15,15 +16,17 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Save, User, Phone, Mail, Briefcase, Shield } from 'lucide-react'
+import { ArrowLeft, Save, User, Phone, Mail, Briefcase, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { ConsentCheckbox } from '@/components/lgpd'
+import { OperationalDataNotice, OptionalConsentCheckbox } from '@/components/lgpd'
 import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoResponsavelPage() {
+  const t = useTranslations('registry')
+
   const router = useRouter()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
@@ -79,28 +82,26 @@ export default function NovoResponsavelPage() {
     try {
       // Validate required fields
       if (!formData.nome || !formData.cpf || !formData.parentesco) {
-        toast.error('Preencha todos os campos obrigatórios')
+        toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
         setLoading(false)
         return
       }
 
-      // Validate LGPD consent
-      if (!formData.lgpd_consentimento) {
-        toast.error('É necessário aceitar a Política de Privacidade para continuar')
-        setLoading(false)
-        return
-      }
+      // NOTE: lgpd_consentimento is NOT required for registration.
+      // Guardian registration is a necessary school routine; consent is only
+      // collected for optional purposes (communications). The operational
+      // notice is displayed but does not gate submission.
 
       // Validate CPF
       const cleanedCPF = formData.cpf.replace(/\D/g, '')
       if (!validateCPF(cleanedCPF)) {
-        toast.error('CPF inválido. Verifique os dados inseridos.')
+        toast.error(t('ui.cpf-invalido-verifique-os-dados-inseridos'))
         setLoading(false)
         return
       }
 
       if (formData.telefone && !validatePhone(formData.telefone)) {
-        toast.error('Telefone inválido. Informe um telefone com 10 ou 11 dígitos.')
+        toast.error(t('ui.telefone-invalido-informe-um-telefone-com-10-ou-11-digitos'))
         setLoading(false)
         return
       }
@@ -114,8 +115,12 @@ export default function NovoResponsavelPage() {
         parentesco: formData.parentesco,
         endereco: formData.endereco || null,
         profissao: formData.profissao || null,
+        // lgpd_consentimento tracks OPTIONAL consent for additional
+        // communications, not a gate for the registration itself.
         lgpd_consentimento: formData.lgpd_consentimento,
-        lgpd_data_consentimento: new Date().toISOString(),
+        lgpd_data_consentimento: formData.lgpd_consentimento
+          ? new Date().toISOString()
+          : null,
         // escola_id scopes the record to the school the admin selected;
         // school-scoped users (diretor, secretario) have their own escola_id
         // which RLS enforces at the database seam.
@@ -131,7 +136,7 @@ export default function NovoResponsavelPage() {
 
       if (error) {
         if (error.message.includes('duplicate') || error.code === '23505') {
-          toast.error('CPF já cadastrado no sistema')
+          toast.error(t('ui.cpf-ja-cadastrado-no-sistema'))
         } else {
           throw error
         }
@@ -140,7 +145,7 @@ export default function NovoResponsavelPage() {
       }
 
       logger.info('Responsável cadastrado:', { metadata: data })
-      toast.success('Responsável cadastrado com sucesso!')
+      toast.success(t('ui.responsavel-cadastrado-com-sucesso'))
       router.push('/dashboard/responsaveis')
     } catch (error: any) {
       logger.error('Erro ao cadastrar responsável:', error)
@@ -186,13 +191,13 @@ export default function NovoResponsavelPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/responsaveis">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Novo Responsável</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-responsavel')}</h1>
           <p className="text-gray-600 mt-1">
-            Cadastre um novo responsável no sistema
+            {t('ui.cadastre-um-novo-responsavel-no-sistema')}
           </p>
         </div>
       </div>
@@ -201,7 +206,7 @@ export default function NovoResponsavelPage() {
       {shouldShowSelector && !selectedEscolaId && (
         <Alert variant="destructive">
           <AlertDescription>
-            Selecione uma escola no menu lateral antes de cadastrar um responsável.
+            {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-responsavel')}
           </AlertDescription>
         </Alert>
       )}
@@ -212,30 +217,30 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <User className="h-5 w-5 text-blue-600" />
-              <CardTitle>Dados Pessoais</CardTitle>
+              <CardTitle>{t('labels.dados-pessoais')}</CardTitle>
             </div>
             <CardDescription>
-              Informações básicas do responsável
+              {t('ui.informacoes-basicas-do-responsavel')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <Label htmlFor="nome">
-                  Nome Completo <span className="text-red-500">*</span>
+                  {t('labels.nome-completo')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="nome"
                   value={formData.nome}
                   onChange={(e) => handleInputChange('nome', e.target.value)}
-                  placeholder="Nome completo do responsável"
+                  placeholder={t('labels.nome-completo-do-responsavel')}
                   required
                 />
               </div>
 
               <div>
                 <Label htmlFor="cpf">
-                  CPF <span className="text-red-500">*</span>
+                  {t('labels.cpf')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="cpf"
@@ -249,7 +254,7 @@ export default function NovoResponsavelPage() {
 
               <div>
                 <Label htmlFor="parentesco">
-                  Parentesco <span className="text-red-500">*</span>
+                  {t('labels.parentesco')} <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.parentesco}
@@ -257,15 +262,15 @@ export default function NovoResponsavelPage() {
                   required
                 >
                   <SelectTrigger id="parentesco">
-                    <SelectValue placeholder="Selecione o parentesco" />
+                    <SelectValue placeholder={t('labels.selecione-o-parentesco')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Mae">Mãe</SelectItem>
-                    <SelectItem value="Pai">Pai</SelectItem>
-                    <SelectItem value="Avo">Avó/Avô</SelectItem>
-                    <SelectItem value="Tio">Tia/Tio</SelectItem>
-                    <SelectItem value="Irmao">Irmão/Irmã</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    <SelectItem value="Mae">{t('labels.mae')}</SelectItem>
+                    <SelectItem value="Pai">{t('labels.pai')}</SelectItem>
+                    <SelectItem value="Avo">{t('labels.avo-avo')}</SelectItem>
+                    <SelectItem value="Tio">{t('labels.tia-tio')}</SelectItem>
+                    <SelectItem value="Irmao">{t('labels.irmao-irma')}</SelectItem>
+                    <SelectItem value="Outro">{t('labels.outro')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -278,16 +283,16 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Phone className="h-5 w-5 text-green-600" />
-              <CardTitle>Dados de Contato</CardTitle>
+              <CardTitle>{t('labels.dados-de-contato')}</CardTitle>
             </div>
             <CardDescription>
-              Informações para comunicação com o responsável
+              {t('ui.informacoes-para-comunicacao-com-o-responsavel')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">{t('labels.telefone')}</Label>
                 <Input
                   id="telefone"
                   type="tel"
@@ -297,12 +302,12 @@ export default function NovoResponsavelPage() {
                   maxLength={15}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Telefone para contato (celular ou fixo)
+                  {t('ui.telefone-para-contato-celular-ou-fixo')}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t('labels.e-mail')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -324,21 +329,21 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Briefcase className="h-5 w-5 text-purple-600" />
-              <CardTitle>Informações Adicionais</CardTitle>
+              <CardTitle>{t('labels.informacoes-adicionais')}</CardTitle>
             </div>
             <CardDescription>
-              Dados complementares do responsável
+              {t('ui.dados-complementares-do-responsavel')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="profissao">Profissão</Label>
+                <Label htmlFor="profissao">{t('labels.profissao')}</Label>
                 <Input
                   id="profissao"
                   value={formData.profissao}
                   onChange={(e) => handleInputChange('profissao', e.target.value)}
-                  placeholder="Profissão do responsável"
+                  placeholder={t('labels.profissao-do-responsavel')}
                 />
               </div>
 
@@ -347,12 +352,12 @@ export default function NovoResponsavelPage() {
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="endereco">Endereço Completo</Label>
+                <Label htmlFor="endereco">{t('labels.endereco-completo')}</Label>
                 <Textarea
                   id="endereco"
                   value={formData.endereco}
                   onChange={(e) => handleInputChange('endereco', e.target.value)}
-                  placeholder="Rua, número, bairro, cidade, CEP..."
+                  placeholder={t('labels.rua-numero-bairro-cidade-cep')}
                   rows={3}
                 />
               </div>
@@ -360,19 +365,23 @@ export default function NovoResponsavelPage() {
           </CardContent>
         </Card>
 
-        {/* LGPD Consent */}
+        {/* Data Treatment Notice + Optional Consent */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-amber-600" />
-              <CardTitle>Consentimento LGPD</CardTitle>
+              <Info className="h-5 w-5 text-blue-600" />
+              <CardTitle>{t('labels.tratamento-de-dados')}</CardTitle>
             </div>
             <CardDescription>
-              Autorização para tratamento de dados pessoais
+              {t('ui.informacoes-sobre-o-uso-dos-dados-cadastrados')}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ConsentCheckbox
+          <CardContent className="space-y-4">
+            {/* Operational notice - informational, does not block */}
+            <OperationalDataNotice />
+
+            {/* Optional consent - for additional communications only */}
+            <OptionalConsentCheckbox
               checked={formData.lgpd_consentimento}
               onCheckedChange={(checked) => handleInputChange('lgpd_consentimento', checked)}
               disabled={loading}
@@ -388,11 +397,11 @@ export default function NovoResponsavelPage() {
             onClick={() => router.push('/dashboard/responsaveis')}
             disabled={loading}
           >
-            Cancelar
+            {t('labels.cancelar')}
           </Button>
           <Button type="submit" disabled={loading}>
             <Save className="mr-2 h-4 w-4" />
-            {loading ? 'Salvando...' : 'Salvar Responsável'}
+            {loading ? 'Salvando...' : t('ui.salvar-responsavel')}
           </Button>
         </div>
       </form>

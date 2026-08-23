@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessagesForLocale } from '@/i18n/messages'
 import { StudentTags } from '@/components/students/StudentTags'
+
+function renderWithIntl(ui: ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="pt-BR" messages={getMessagesForLocale('pt-BR')}>
+      {ui}
+    </NextIntlClientProvider>,
+  )
+}
 
 /**
  * Unit Tests: StudentTags Component
@@ -10,33 +21,33 @@ import { StudentTags } from '@/components/students/StudentTags'
 describe('StudentTags', () => {
   describe('Status Badge', () => {
     it('should show "Ativo" badge for active students', () => {
-      render(<StudentTags ativo={true} />)
-      
+      renderWithIntl(<StudentTags ativo={true} />)
+
       expect(screen.getByText('Ativo')).toBeInTheDocument()
     })
 
     it('should show "Inativo" badge for inactive students', () => {
-      render(<StudentTags ativo={false} />)
-      
+      renderWithIntl(<StudentTags ativo={false} />)
+
       expect(screen.getByText('Inativo')).toBeInTheDocument()
     })
 
     it('should show ativo badge by default', () => {
-      render(<StudentTags />)
-      
+      renderWithIntl(<StudentTags />)
+
       expect(screen.getByText('Ativo')).toBeInTheDocument()
     })
 
     it('should apply success variant for active status', () => {
-      const { container } = render(<StudentTags ativo={true} />)
-      
+      const { container } = renderWithIntl(<StudentTags ativo={true} />)
+
       const badge = screen.getByText('Ativo')
       expect(badge).toBeInTheDocument()
     })
 
     it('should apply secondary variant for inactive status', () => {
-      const { container } = render(<StudentTags ativo={false} />)
-      
+      const { container } = renderWithIntl(<StudentTags ativo={false} />)
+
       const badge = screen.getByText('Inativo')
       expect(badge).toBeInTheDocument()
     })
@@ -44,36 +55,36 @@ describe('StudentTags', () => {
 
   describe('Turma Badge', () => {
     it('should display turma name', () => {
-      render(<StudentTags turma="5º Ano A" />)
-      
+      renderWithIntl(<StudentTags turma="5º Ano A" />)
+
       expect(screen.getByText('5º Ano A')).toBeInTheDocument()
     })
 
     it('should not display turma badge when null', () => {
-      render(<StudentTags turma={null} />)
-      
+      renderWithIntl(<StudentTags turma={null} />)
+
       expect(screen.queryByText(/ano|turma/i)).not.toBeInTheDocument()
     })
 
     it('should not display turma badge when undefined', () => {
-      render(<StudentTags turma={undefined} />)
-      
+      renderWithIntl(<StudentTags turma={undefined} />)
+
       expect(screen.queryByText(/ano|turma/i)).not.toBeInTheDocument()
     })
 
     it('should handle various turma formats', () => {
       const turmas = ['1º Ano', 'Maternal II', 'Pré-escola', '9º B']
-      
+
       turmas.forEach((turma) => {
-        const { rerender } = render(<StudentTags turma={turma} />)
+        const { rerender } = renderWithIntl(<StudentTags turma={turma} />)
         expect(screen.getByText(turma)).toBeInTheDocument()
         rerender(<div />)
       })
     })
 
     it('should apply info variant for turma', () => {
-      const { container } = render(<StudentTags turma="5º Ano A" />)
-      
+      const { container } = renderWithIntl(<StudentTags turma="5º Ano A" />)
+
       const badge = screen.getByText('5º Ano A')
       expect(badge).toBeInTheDocument()
     })
@@ -81,50 +92,50 @@ describe('StudentTags', () => {
 
   describe('Turno Badge', () => {
     it('should display "Matutino" for matutino shift', () => {
-      render(<StudentTags turno="matutino" />)
-      
+      renderWithIntl(<StudentTags turno="matutino" />)
+
       expect(screen.getByText('Matutino')).toBeInTheDocument()
     })
 
     it('should display "Vespertino" for vespertino shift', () => {
-      render(<StudentTags turno="vespertino" />)
-      
+      renderWithIntl(<StudentTags turno="vespertino" />)
+
       expect(screen.getByText('Vespertino')).toBeInTheDocument()
     })
 
     it('should display "Integral" for integral shift', () => {
-      render(<StudentTags turno="integral" />)
-      
+      renderWithIntl(<StudentTags turno="integral" />)
+
       expect(screen.getByText('Integral')).toBeInTheDocument()
     })
 
     it('should display "Noturno" for noturno shift', () => {
-      render(<StudentTags turno="noturno" />)
-      
+      renderWithIntl(<StudentTags turno="noturno" />)
+
       expect(screen.getByText('Noturno')).toBeInTheDocument()
     })
 
     it('should handle case-insensitive turno', () => {
-      render(<StudentTags turno="MATUTINO" />)
-      
+      renderWithIntl(<StudentTags turno="MATUTINO" />)
+
       expect(screen.getByText('Matutino')).toBeInTheDocument()
     })
 
     it('should display unknown turno as-is', () => {
-      render(<StudentTags turno="Custom Shift" />)
-      
+      renderWithIntl(<StudentTags turno="Custom Shift" />)
+
       expect(screen.getByText('Custom Shift')).toBeInTheDocument()
     })
 
     it('should not display turno badge when null', () => {
-      render(<StudentTags turno={null} />)
-      
+      renderWithIntl(<StudentTags turno={null} />)
+
       expect(screen.queryByText(/matutino|vespertino|integral/i)).not.toBeInTheDocument()
     })
 
     it('should apply secondary variant for turno', () => {
-      const { container } = render(<StudentTags turno="matutino" />)
-      
+      const { container } = renderWithIntl(<StudentTags turno="matutino" />)
+
       const badge = screen.getByText('Matutino')
       expect(badge).toBeInTheDocument()
     })
@@ -132,56 +143,56 @@ describe('StudentTags', () => {
 
   describe('Bolsa Família Badge', () => {
     it('should not show Bolsa Família badge by default', () => {
-      render(<StudentTags bolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={true} />)
+
       expect(screen.queryByText(/bolsa.*fam[ií]lia/i)).not.toBeInTheDocument()
     })
 
     it('should show Bolsa Família badge when showBolsaFamilia is true', () => {
-      render(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
+
       expect(screen.getByText(/bolsa.*fam[ií]lia/i)).toBeInTheDocument()
     })
 
     it('should not show Bolsa Família badge when false', () => {
-      render(<StudentTags bolsaFamilia={false} showBolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={false} showBolsaFamilia={true} />)
+
       expect(screen.queryByText(/bolsa.*fam[ií]lia/i)).not.toBeInTheDocument()
     })
 
     it('should show warning icon with Bolsa Família badge', () => {
-      const { container } = render(
+      const { container } = renderWithIntl(
         <StudentTags bolsaFamilia={true} showBolsaFamilia={true} />
       )
-      
+
       const badge = screen.getByText(/bolsa.*fam[ií]lia/i)
       expect(badge).toBeInTheDocument()
-      
+
       // Should have warning icon (AlertTriangle)
       const icon = container.querySelector('svg')
       expect(icon).toBeInTheDocument()
     })
 
     it('should apply warning variant for Bolsa Família', () => {
-      const { container } = render(
+      const { container } = renderWithIntl(
         <StudentTags bolsaFamilia={true} showBolsaFamilia={true} />
       )
-      
+
       const badge = screen.getByText(/bolsa.*fam[ií]lia/i)
       expect(badge).toBeInTheDocument()
     })
 
     it('should respect privacy by hiding Bolsa Família by default', () => {
       // This is a privacy feature per the component implementation
-      render(<StudentTags bolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={true} />)
+
       expect(screen.queryByText(/bolsa.*fam[ií]lia/i)).not.toBeInTheDocument()
     })
   })
 
   describe('Multiple Tags', () => {
     it('should display all tags when provided', () => {
-      render(
+      renderWithIntl(
         <StudentTags
           turma="5º Ano A"
           turno="matutino"
@@ -190,7 +201,7 @@ describe('StudentTags', () => {
           ativo={true}
         />
       )
-      
+
       expect(screen.getByText('Ativo')).toBeInTheDocument()
       expect(screen.getByText('5º Ano A')).toBeInTheDocument()
       expect(screen.getByText('Matutino')).toBeInTheDocument()
@@ -198,16 +209,16 @@ describe('StudentTags', () => {
     })
 
     it('should display only provided tags', () => {
-      render(<StudentTags turma="3º Ano B" ativo={true} />)
-      
+      renderWithIntl(<StudentTags turma="3º Ano B" ativo={true} />)
+
       expect(screen.getByText('Ativo')).toBeInTheDocument()
       expect(screen.getByText('3º Ano B')).toBeInTheDocument()
       expect(screen.queryByText(/matutino|vespertino/i)).not.toBeInTheDocument()
     })
 
     it('should handle empty props', () => {
-      const { container } = render(<StudentTags />)
-      
+      const { container } = renderWithIntl(<StudentTags />)
+
       // Should show default Ativo badge
       expect(screen.getByText('Ativo')).toBeInTheDocument()
     })
@@ -215,27 +226,27 @@ describe('StudentTags', () => {
 
   describe('Layout', () => {
     it('should use flex layout with gap', () => {
-      const { container } = render(<StudentTags turma="5º Ano A" />)
-      
+      const { container } = renderWithIntl(<StudentTags turma="5º Ano A" />)
+
       const wrapper = container.querySelector('.flex')
       expect(wrapper).toBeInTheDocument()
       expect(wrapper).toHaveClass('flex-wrap', 'items-center', 'gap-2')
     })
 
     it('should apply custom className', () => {
-      const { container } = render(
+      const { container } = renderWithIntl(
         <StudentTags turma="5º Ano A" className="custom-tags" />
       )
-      
+
       const wrapper = container.querySelector('.custom-tags')
       expect(wrapper).toBeInTheDocument()
     })
 
     it('should wrap tags responsively', () => {
-      const { container } = render(
+      const { container } = renderWithIntl(
         <StudentTags turma="5º Ano A" turno="matutino" ativo={true} />
       )
-      
+
       const wrapper = container.querySelector('.flex-wrap')
       expect(wrapper).toBeInTheDocument()
     })
@@ -243,32 +254,32 @@ describe('StudentTags', () => {
 
   describe('Tag Order', () => {
     it('should display status badge first', () => {
-      render(
+      renderWithIntl(
         <StudentTags turma="5º Ano A" turno="matutino" ativo={true} />
       )
-      
+
       // Just verify the badge exists
       expect(screen.getByText('Ativo')).toBeInTheDocument()
     })
 
     it('should display turma badge', () => {
-      render(
+      renderWithIntl(
         <StudentTags turma="5º Ano A" turno="matutino" ativo={true} />
       )
-      
+
       expect(screen.getByText('5º Ano A')).toBeInTheDocument()
     })
 
     it('should display turno badge', () => {
-      render(
+      renderWithIntl(
         <StudentTags turma="5º Ano A" turno="matutino" ativo={true} />
       )
-      
+
       expect(screen.getByText('Matutino')).toBeInTheDocument()
     })
 
     it('should display Bolsa Família badge when enabled', () => {
-      render(
+      renderWithIntl(
         <StudentTags
           turma="5º Ano A"
           turno="matutino"
@@ -277,7 +288,7 @@ describe('StudentTags', () => {
           ativo={true}
         />
       )
-      
+
       expect(screen.getByText(/bolsa.*fam[ií]lia/i)).toBeInTheDocument()
     })
   })
@@ -292,22 +303,22 @@ describe('StudentTags', () => {
       ]
 
       turnos.forEach(({ input, expected }) => {
-        const { rerender } = render(<StudentTags turno={input} />)
+        const { rerender } = renderWithIntl(<StudentTags turno={input} />)
         expect(screen.getByText(expected)).toBeInTheDocument()
         rerender(<div />)
       })
     })
 
     it('should preserve capitalization for unknown turno', () => {
-      render(<StudentTags turno="Especial" />)
-      
+      renderWithIntl(<StudentTags turno="Especial" />)
+
       expect(screen.getByText('Especial')).toBeInTheDocument()
     })
   })
 
   describe('Conditional Rendering', () => {
     it('should return null when no tags are provided', () => {
-      const { container } = render(
+      const { container } = renderWithIntl(
         <StudentTags
           turma={null}
           turno={null}
@@ -316,21 +327,21 @@ describe('StudentTags', () => {
           ativo={undefined}
         />
       )
-      
+
       // Should have wrapper but might be empty or have default ativo
       expect(container.firstChild).toBeInTheDocument()
     })
 
     it('should render when at least one tag is provided', () => {
-      render(<StudentTags turma="1º Ano" />)
-      
+      renderWithIntl(<StudentTags turma="1º Ano" />)
+
       expect(screen.getByText('1º Ano')).toBeInTheDocument()
     })
   })
 
   describe('Badge Variants', () => {
     it('should use different variants for different badge types', () => {
-      render(
+      renderWithIntl(
         <StudentTags
           turma="5º Ano A"
           turno="matutino"
@@ -339,7 +350,7 @@ describe('StudentTags', () => {
           ativo={true}
         />
       )
-      
+
       // Each badge type should have its own styling
       expect(screen.getByText('Ativo')).toBeInTheDocument()
       expect(screen.getByText('5º Ano A')).toBeInTheDocument()
@@ -350,64 +361,64 @@ describe('StudentTags', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty string turma', () => {
-      render(<StudentTags turma="" />)
-      
+      renderWithIntl(<StudentTags turma="" />)
+
       expect(screen.queryByText(/ano|turma/i)).not.toBeInTheDocument()
     })
 
     it('should handle empty string turno', () => {
-      render(<StudentTags turno="" />)
-      
+      renderWithIntl(<StudentTags turno="" />)
+
       expect(screen.queryByText(/matutino|vespertino/i)).not.toBeInTheDocument()
     })
 
     it('should handle very long turma name', () => {
       const longName = '5º Ano A - Turma Especial com Nome Muito Longo'
-      render(<StudentTags turma={longName} />)
-      
+      renderWithIntl(<StudentTags turma={longName} />)
+
       expect(screen.getByText(longName)).toBeInTheDocument()
     })
 
     it('should handle special characters in turma', () => {
-      render(<StudentTags turma="Pré-escola II (Tarde)" />)
-      
+      renderWithIntl(<StudentTags turma="Pré-escola II (Tarde)" />)
+
       expect(screen.getByText('Pré-escola II (Tarde)')).toBeInTheDocument()
     })
 
     it('should handle boolean true for ativo explicitly', () => {
-      render(<StudentTags ativo={true} />)
-      
+      renderWithIntl(<StudentTags ativo={true} />)
+
       expect(screen.getByText('Ativo')).toBeInTheDocument()
     })
 
     it('should handle boolean false for ativo explicitly', () => {
-      render(<StudentTags ativo={false} />)
-      
+      renderWithIntl(<StudentTags ativo={false} />)
+
       expect(screen.getByText('Inativo')).toBeInTheDocument()
     })
   })
 
   describe('Accessibility', () => {
     it('should render semantic HTML', () => {
-      const { container } = render(
+      const { container } = renderWithIntl(
         <StudentTags turma="5º Ano A" turno="matutino" />
       )
-      
+
       const wrapper = container.firstChild
       expect(wrapper).toBeInTheDocument()
     })
 
     it('should have proper text content for screen readers', () => {
-      render(<StudentTags turma="5º Ano A" turno="matutino" ativo={true} />)
-      
+      renderWithIntl(<StudentTags turma="5º Ano A" turno="matutino" ativo={true} />)
+
       expect(screen.getByText('Ativo')).toBeInTheDocument()
       expect(screen.getByText('5º Ano A')).toBeInTheDocument()
       expect(screen.getByText('Matutino')).toBeInTheDocument()
     })
 
     it('should have accessible Bolsa Família indicator', () => {
-      render(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
+
       const badge = screen.getByText(/bolsa.*fam[ií]lia/i)
       expect(badge).toBeInTheDocument()
     })
@@ -415,27 +426,28 @@ describe('StudentTags', () => {
 
   describe('Privacy Features', () => {
     it('should hide sensitive information by default', () => {
-      render(<StudentTags bolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={true} />)
+
       // Bolsa Família should be hidden unless explicitly shown
       expect(screen.queryByText(/bolsa.*fam[ií]lia/i)).not.toBeInTheDocument()
     })
 
     it('should only show Bolsa Família when explicitly enabled', () => {
-      render(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
-      
+      renderWithIntl(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
+
       expect(screen.getByText(/bolsa.*fam[ií]lia/i)).toBeInTheDocument()
     })
 
     it('should respect showBolsaFamilia flag', () => {
-      const { rerender } = render(
+      const { unmount } = renderWithIntl(
         <StudentTags bolsaFamilia={true} showBolsaFamilia={false} />
       )
-      
+
       expect(screen.queryByText(/bolsa.*fam[ií]lia/i)).not.toBeInTheDocument()
-      
-      rerender(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
-      
+
+      unmount()
+      renderWithIntl(<StudentTags bolsaFamilia={true} showBolsaFamilia={true} />)
+
       expect(screen.getByText(/bolsa.*fam[ií]lia/i)).toBeInTheDocument()
     })
   })

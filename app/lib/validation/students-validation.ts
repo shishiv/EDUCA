@@ -231,11 +231,12 @@ export const studentRegistrationSchema = z.object({
     .min(3, 'Nome do pai deve ter no mínimo 3 caracteres')
     .optional(),
 
-  // INEP compliance
+  // Official 2026 layouts distinguish this 12-digit person identifier from
+  // the 8-digit school code and the 11-digit CPF.
   codigo_inep_estudante: z
     .string()
-    .length(11, 'Código INEP do estudante deve ter 11 dígitos')
-    .regex(/^\d{11}$/, 'Código INEP deve conter apenas números')
+    .length(12, 'Identificação única Inep do estudante deve ter 12 dígitos')
+    .regex(/^\d{12}$/, 'Identificação única Inep deve conter apenas números')
     .optional(),
 
   // Enrollment details
@@ -268,13 +269,12 @@ export const studentRegistrationSchema = z.object({
   // Social programs
   ...socialProgramsSchema.shape,
 
-  // LGPD compliance
+  // LGPD optional consent - tracks optional consent for additional
+  // communications. NOT a gate for registration (school routines use a
+  // different legal basis defined by the municipal controller).
   lgpd_consentimento: z
     .boolean()
-    .refine(
-      (val) => val === true,
-      'Consentimento LGPD é obrigatório para registrar aluno'
-    ),
+    .default(false),
 })
 
 // ===== STUDENT UPDATE SCHEMA =====

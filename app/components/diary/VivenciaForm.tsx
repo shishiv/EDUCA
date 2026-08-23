@@ -36,6 +36,7 @@ import {
   VIVENCIA_VALIDATION,
   VIVENCIA_ERROR_MESSAGES,
 } from '@/types/diario-infantil'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Validation Schema
@@ -91,6 +92,7 @@ export function VivenciaForm({
   onCancel,
   className,
 }: VivenciaFormProps) {
+  const t = useClassroomTranslations()
   const {
     register,
     handleSubmit,
@@ -234,7 +236,7 @@ export function VivenciaForm({
             disabled={isSubmitting}
           >
             <X className="h-4 w-4 mr-2" />
-            Cancelar
+            {t('diary.cancel')}
           </Button>
         )}
         <Button
@@ -244,7 +246,7 @@ export function VivenciaForm({
           {isSubmitting || isLoading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Salvando...
+              {t('actions.saving')}
             </>
           ) : (
             <>

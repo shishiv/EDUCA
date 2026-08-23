@@ -1,25 +1,49 @@
 /**
- * Base API Service
- * Provides common functionality for all API services
+ * Base API Service - shared CRUD and pagination primitives.
+ *
+ * Every domain service in `app/lib/api/` extends {@link BaseApiService} and
+ * inherits type-safe CRUD operations scoped to one Supabase table.
+ *
+ * ## Authentication & RLS
+ *
+ * All operations execute through the browser Supabase client (`@/lib/supabase`)
+ * which carries the signed-in user's JWT.  Row-Level Security policies on
+ * each table act as the final authorization boundary - the service layer
+ * never bypasses RLS.
+ *
+ * ## Error handling
+ *
+ * Methods throw {@link ApiError} (or raw Supabase `PostgrestError`) on failure.
+ * `PGRST116` (row not found) is normalized to `null` in `getById`.
+ *
+ * ## Mode availability
+ *
+ * Available in all modes (pilot, demo sandbox, production).
+ *
+ * @module api/base
  */
 
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/types/database'
 
-// Type helper for table names
-// Exported so services that anchor a future (not yet generated) table can
-// declare their intent with a narrow cast instead of an any-escape.
+/** Union of all table names in the `public` schema. */
 export type TableName = keyof Database['public']['Tables']
 type TableInsert = Database['public']['Tables'][TableName]['Insert']
 type TableUpdate = Database['public']['Tables'][TableName]['Update']
 type TableRow = Database['public']['Tables'][TableName]['Row']
 
+/** Standard pagination input accepted by {@link BaseApiService.getPaginated}. */
 export interface PaginationParams {
   page?: number
   limit?: number
 }
 
+/**
+ * Paginated result envelope returned by {@link BaseApiService.getPaginated}.
+ *
+ * `hasMore` is `true` when additional pages exist beyond the current one.
+ */
 export interface PaginatedResult<T> {
   data: T[]
   total: number
@@ -29,7 +53,13 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Custom API error class for better error handling
+ * Structured API error with an optional machine-readable `code`.
+ *
+ * Domain services throw this or let raw Supabase errors propagate.
+ * Callers inspect `code` for programmatic recovery and display `message`.
+ *
+ * @example
+ * throw new ApiError('Escola não encontrada', 'PGRST116')
  */
 export class ApiError extends Error {
   constructor(
@@ -42,6 +72,17 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Abstract base for all table-scoped API services.
+ *
+ * Subclasses pass their `tableName` at construction and inherit
+ * type-safe CRUD, pagination, and count operations.
+ *
+ * @example
+ * class SchoolsApiService extends BaseApiService {
+ *   constructor() { super('escolas') }
+ * }
+ */
 export abstract class BaseApiService {
   protected tableName: TableName
 

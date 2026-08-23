@@ -12,6 +12,7 @@
  */
 
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -49,6 +50,7 @@ interface Matricula {
 // ============================================================================
 
 export default function NovaVivenciaPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const alunoId = params?.id as string
@@ -100,11 +102,11 @@ export default function NovaVivenciaPage() {
         action: 'load_student_data',
         metadata: { alunoId }
       })
-      setError('Erro ao carregar dados do aluno')
+      setError(t('ui.erro-ao-carregar-dados-do-aluno'))
     } finally {
       setLoading(false)
     }
-  }, [alunoId])
+  }, [alunoId, t])
 
   // Initial load
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function NovaVivenciaPage() {
     if (!alunoId || !student) return
 
     if (!matricula?.turma_id) {
-      toast.error('Aluno não possui matrícula ativa', {
+      toast.error(t('ui.aluno-nao-possui-matricula-ativa'), {
         description: 'O aluno precisa estar matriculado em uma turma para registrar vivencias.',
       })
       return
@@ -144,7 +146,7 @@ export default function NovaVivenciaPage() {
         throw new Error(errorData.error || 'Erro ao salvar vivencia')
       }
 
-      toast.success('Vivência registrada com sucesso!', {
+      toast.success(t('ui.vivencia-registrada-com-sucesso'), {
         description: `Vivencia de ${student.nome_completo} salva.`,
       })
 
@@ -157,12 +159,12 @@ export default function NovaVivenciaPage() {
         metadata: { alunoId, turmaId: matricula?.turma_id }
       })
       const errorMessage = err instanceof Error ? err.message : 'Tente novamente.'
-      toast.error('Erro ao salvar vivencia', {
+      toast.error(t('ui.erro-ao-salvar-vivencia'), {
         description: errorMessage,
       })
       throw err // Re-throw to keep form in submitting state
     }
-  }, [alunoId, student, matricula, router])
+  }, [alunoId, student, matricula, router, t])
 
   // Handle cancel
   const handleCancel = useCallback(() => {
@@ -197,8 +199,8 @@ export default function NovaVivenciaPage() {
     return (
       <div className="p-4 max-w-2xl mx-auto">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
-          <p className="font-medium">Erro ao carregar pagina</p>
-          <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
+          <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
+          <p className="text-sm mt-1">{error || t('ui.aluno-nao-encontrado')}</p>
           <Button
             variant="outline"
             size="sm"
@@ -206,7 +208,7 @@ export default function NovaVivenciaPage() {
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('ui.voltar')}
           </Button>
         </div>
       </div>
@@ -228,7 +230,7 @@ export default function NovaVivenciaPage() {
       {/* Form card */}
       <Card>
         <CardHeader>
-          <CardTitle>Registrar Vivencia</CardTitle>
+          <CardTitle>{t('labels.registrar-vivencia')}</CardTitle>
         </CardHeader>
         <CardContent>
           <VivenciaForm

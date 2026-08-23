@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import { useTranslations } from 'next-intl';
 
 /**
  * Bolsa Família Alert Component
@@ -39,26 +41,27 @@ function getOverallStatus(student: BolsaFamiliaStudent): BolsaFamiliaStatus {
 }
 
 function StatusBadge({ status }: { status: BolsaFamiliaStatus }) {
+  const t = useTranslations('platform')
   switch (status) {
     case 'CRITICO':
       return (
         <Badge variant="destructive" className="gap-1">
           <AlertTriangle className="h-3 w-3" />
-          Crítico
+          {t('components.bolsa.critical')}
         </Badge>
       );
     case 'ALERTA':
       return (
         <Badge variant="outline" className="gap-1 border-amber-500 text-amber-700 bg-amber-50">
           <AlertCircle className="h-3 w-3" />
-          Alerta
+          {t('components.bolsa.alert')}
         </Badge>
       );
     case 'CONFORME':
       return (
         <Badge variant="outline" className="gap-1 border-green-500 text-green-700 bg-green-50">
           <CheckCircle className="h-3 w-3" />
-          Conforme
+          {t('components.bolsa.compliant')}
         </Badge>
       );
   }
@@ -139,6 +142,7 @@ function BolsaFamiliaAlertCompact({
   maxItems = 3,
   onViewAll,
 }: BolsaFamiliaAlertProps) {
+  const t = useTranslations('platform')
   const atRisk = students.filter((student) => getOverallStatus(student) !== 'CONFORME');
   const criticos = atRisk.filter((student) => getOverallStatus(student) === 'CRITICO');
   const displayStudents = atRisk.slice(0, maxItems);
@@ -148,7 +152,7 @@ function BolsaFamiliaAlertCompact({
       <div className="p-3 border border-green-200 bg-green-50 rounded-lg">
         <div className="flex items-center gap-2 text-green-700">
           <CheckCircle className="h-4 w-4" />
-          <span className="text-sm font-medium">Bolsa Família: Todos conformes</span>
+          <span className="text-sm font-medium">{t('components.bolsa.allCompliant')}</span>
         </div>
       </div>
     );
@@ -160,12 +164,12 @@ function BolsaFamiliaAlertCompact({
         <div className="flex items-center gap-2 text-amber-700">
           <AlertTriangle className="h-4 w-4" />
           <span className="text-sm font-medium">
-            Bolsa Família: {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} em risco
+            {t('components.bolsa.riskSummary', { count: atRisk.length })}
           </span>
         </div>
         {criticos.length > 0 && (
           <Badge variant="destructive" className="text-xs">
-            {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
+            {t('components.bolsa.criticalSummary', { count: criticos.length })}
           </Badge>
         )}
       </div>
@@ -214,6 +218,7 @@ export function BolsaFamiliaAlert({
   loading = false,
   compact = false,
 }: BolsaFamiliaAlertProps) {
+  const t = useTranslations('platform')
   if (loading) {
     return <BolsaFamiliaAlertSkeleton compact={compact} />;
   }
@@ -240,9 +245,9 @@ export function BolsaFamiliaAlert({
   const marginLabel = resolvedMargins.length === 1
     ? (() => {
       const [critical, warning] = resolvedMargins[0].split(':');
-      return `Crítico (<${critical}%) | Alerta (${critical}-${warning}%) | Conforme (>=${warning}%)`;
+      return t('components.bolsa.marginSummary', { critical, warning });
     })()
-    : 'Margens municipais resolvidas por município';
+    : t('components.bolsa.margins');
 
   if (atRisk.length === 0) {
     return (
@@ -250,11 +255,9 @@ export function BolsaFamiliaAlert({
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            <CardTitle className="text-green-800">Bolsa Família: Sem Alertas</CardTitle>
+            <CardTitle className="text-green-800">{t('components.bolsa.noAlerts')}</CardTitle>
           </div>
-          <CardDescription className="text-green-700">
-            Todos os alunos do Bolsa Família estão acima da margem municipal resolvida.
-          </CardDescription>
+          <CardDescription className="text-green-700">{t('components.bolsa.aboveMargin')}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -269,25 +272,24 @@ export function BolsaFamiliaAlert({
               className={`h-5 w-5 ${criticos.length > 0 ? 'text-red-600' : 'text-amber-600'}`}
             />
             <CardTitle className={criticos.length > 0 ? 'text-red-800' : 'text-amber-800'}>
-              Alerta Bolsa Família
+              {t('components.bolsa.alertTitle')}
             </CardTitle>
           </div>
           <div className="flex gap-2">
             {criticos.length > 0 && (
               <Badge variant="destructive">
-                {criticos.length} crítico{criticos.length > 1 ? 's' : ''}
+                {t('components.bolsa.criticalSummary', { count: criticos.length })}
               </Badge>
             )}
             {emAlerta.length > 0 && (
               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                {emAlerta.length} em alerta
+                {t('components.bolsa.alertSummary', { count: emAlerta.length })}
               </Badge>
             )}
           </div>
         </div>
         <CardDescription className={criticos.length > 0 ? 'text-red-700' : 'text-amber-700'}>
-          {atRisk.length} aluno{atRisk.length > 1 ? 's' : ''} com alerta legal ou municipal.
-          As duas resoluções aparecem separadas em cada registro.
+          {t('components.bolsa.legalAlert', { count: atRisk.length })} {t('components.bolsa.separate')}
         </CardDescription>
       </CardHeader>
 
@@ -310,8 +312,8 @@ export function BolsaFamiliaAlert({
                   </div>
                   {showDetails && (
                     <div className="mt-1 text-sm text-gray-600 space-y-0.5">
-                      <div>NIS: {student.nis || 'Não informado'}</div>
-                      <div>Turma: {student.turmaNome} ({student.turmaSerie})</div>
+                      <div>NIS: {student.nis || t('components.bolsa.notInformed')}</div>
+                      <div>{t('components.studentReport.class')} {student.turmaNome} ({student.turmaSerie})</div>
                       {student.escolaNome && <div>Escola: {student.escolaNome}</div>}
                       <div>
                         Condicionalidade legal: {student.statusLegal}
@@ -332,7 +334,7 @@ export function BolsaFamiliaAlert({
               {/* Attendance details */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Frequência</span>
+                  <span className="text-gray-600">{t('components.bolsa.frequency')}</span>
                   <span
                     className={`font-bold ${
                       getOverallStatus(student) === 'CRITICO' ? 'text-red-600' : 'text-amber-600'
@@ -355,7 +357,7 @@ export function BolsaFamiliaAlert({
                     {getOverallStatus(student) !== 'CRITICO' && student.faltasParaCritico > 0 && (
                       <span className="text-amber-600">
                         {student.faltasParaCritico} falta{student.faltasParaCritico > 1 ? 's' : ''}{' '}
-                        para crítico
+                        {t('components.bolsa.toCritical')}
                       </span>
                     )}
                   </div>

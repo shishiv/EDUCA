@@ -19,6 +19,8 @@
 
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useMemo, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -259,6 +261,7 @@ function ReportHeader({
   reportDate?: Date
   printMode?: boolean
 }) {
+  const t = useTranslations('platform')
   return (
     <div className={cn('space-y-4', printMode && 'print:space-y-2')}>
       {/* School and Year Header */}
@@ -281,7 +284,7 @@ function ReportHeader({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Aluno(a):</span>
+            <span className="text-sm text-gray-600">{t('components.studentReport.student')}</span>
           </div>
           <p className="font-semibold text-gray-900 pl-6">{student.nome}</p>
         </div>
@@ -289,7 +292,7 @@ function ReportHeader({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Turma:</span>
+            <span className="text-sm text-gray-600">{t('components.studentReport.class')}</span>
           </div>
           <p className="font-semibold text-gray-900 pl-6">
             {student.serie} - {student.turma}
@@ -301,7 +304,7 @@ function ReportHeader({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Data de Nascimento:</span>
+              <span className="text-sm text-gray-600">{t('components.studentReport.birthDate')}</span>
             </div>
             <p className="font-semibold text-gray-900 pl-6">
               {formatDate(student.dataNascimento)}
@@ -311,7 +314,7 @@ function ReportHeader({
 
         {reportDate && (
           <div className="space-y-2">
-            <span className="text-sm text-gray-600">Data de Emissão:</span>
+            <span className="text-sm text-gray-600">{t('components.studentReport.issueDate')}</span>
             <p className="font-semibold text-gray-900">
               {formatDate(reportDate)}
             </p>
@@ -332,19 +335,20 @@ function GradesTable({
   grades: DisciplineGrade[]
   printMode?: boolean
 }) {
+  const t = useTranslations('platform')
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50">
-            <TableHead className="font-semibold">Disciplina</TableHead>
+            <TableHead className="font-semibold">{t('components.studentReport.subject')}</TableHead>
             {BIMESTER_OPTIONS.map((opt) => (
               <TableHead key={opt.value} className="text-center font-semibold w-20">
                 {opt.value}o Bim
               </TableHead>
             ))}
-            <TableHead className="text-center font-bold w-20 bg-gray-100">Média</TableHead>
-            <TableHead className="text-center font-semibold w-24">Situação</TableHead>
+            <TableHead className="text-center font-bold w-20 bg-gray-100">{t('components.studentReport.average')}</TableHead>
+            <TableHead className="text-center font-semibold w-24">{t('components.studentReport.situation')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -413,6 +417,7 @@ function AttendanceSummaryCard({
   attendance: AttendanceSummary
   printMode?: boolean
 }) {
+  const t = useTranslations('platform')
   const isAttendanceOk = attendance.percentual >= MINIMUM_ATTENDANCE
 
   return (
@@ -427,19 +432,19 @@ function AttendanceSummaryCard({
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
           <div className="p-3 bg-blue-50 rounded-lg">
             <div className="text-xl font-bold text-blue-700">{attendance.totalAulas}</div>
-            <div className="text-xs text-blue-600">Total de Aulas</div>
+            <div className="text-xs text-blue-600">{t('components.studentReport.totalLessons')}</div>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <div className="text-xl font-bold text-green-700">{attendance.presencas}</div>
-            <div className="text-xs text-green-600">Presenças</div>
+            <div className="text-xs text-green-600">{t('components.studentReport.presences')}</div>
           </div>
           <div className="p-3 bg-red-50 rounded-lg">
             <div className="text-xl font-bold text-red-700">{attendance.faltas}</div>
-            <div className="text-xs text-red-600">Faltas</div>
+            <div className="text-xs text-red-600">{t('components.attendance.absences')}</div>
           </div>
           <div className="p-3 bg-yellow-50 rounded-lg">
             <div className="text-xl font-bold text-yellow-700">{attendance.atestados}</div>
-            <div className="text-xs text-yellow-600">Atestados</div>
+            <div className="text-xs text-yellow-600">{t('components.studentReport.excused')}</div>
           </div>
           <div
             className={cn(
@@ -469,7 +474,7 @@ function AttendanceSummaryCard({
         {!isAttendanceOk && (
           <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-sm text-red-700">
             <AlertTriangle className="h-4 w-4" />
-            Não conformidade Bolsa Família: frequência abaixo de {CONFORMIDADE}%
+            {t('components.studentReport.bolsaWarning', { threshold: CONFORMIDADE })}
           </div>
         )}
       </CardContent>
@@ -489,6 +494,7 @@ function ReportSummary({
   attendance?: AttendanceSummary
   printMode?: boolean
 }) {
+  const t = useTranslations('platform')
   const status = calculateStatus(grades, attendance)
   const overallAverage = calculateOverallAverage(grades)
   const statusConfig = getStatusConfig(status)
@@ -497,13 +503,13 @@ function ReportSummary({
   return (
     <Card className={cn('border-gray-200', printMode && 'print:border print:shadow-none')}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Resultado Final</CardTitle>
+        <CardTitle className="text-base">{t('components.studentReport.finalResult')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-sm text-gray-600">Média Geral</div>
+              <div className="text-sm text-gray-600">{t('components.studentReport.overallAverage')}</div>
               <div
                 className={cn(
                   'text-3xl font-bold',
@@ -518,7 +524,7 @@ function ReportSummary({
               <>
                 <Separator orientation="vertical" className="h-12" />
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">Frequência</div>
+                  <div className="text-sm text-gray-600">{t('components.studentReport.frequency')}</div>
                   <div
                     className={cn(
                       'text-3xl font-bold',
@@ -590,6 +596,7 @@ export function StudentReport({
   className,
   printMode = false,
 }: StudentReportProps) {
+  const t = useTranslations('platform')
   const reportRef = useRef<HTMLDivElement>(null)
 
   // Calculate status
@@ -617,9 +624,7 @@ export function StudentReport({
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-xl flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-blue-600" />
-                Boletim Escolar
-              </CardTitle>
+                <GraduationCap className="h-5 w-5 text-blue-600" />{t('components.studentReport.reportCard')}</CardTitle>
               <CardDescription className="mt-1">
                 Ensino Fundamental - Anos Iniciais
               </CardDescription>
@@ -635,7 +640,7 @@ export function StudentReport({
                 {onExportPDF && (
                   <Button variant="outline" size="sm" onClick={onExportPDF}>
                     <Download className="h-4 w-4 mr-2" />
-                    PDF
+                    {t('attendance.pdf')}
                   </Button>
                 )}
               </div>
@@ -665,7 +670,7 @@ export function StudentReport({
             </div>
             <div className="flex items-center gap-1">
               <span className="h-3 w-3 rounded bg-yellow-500" />
-              <span>{'Atenção (>= 5,0)'}</span>
+              <span>{t('components.studentReport.attention')}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="h-3 w-3 rounded bg-red-500" />
@@ -673,7 +678,7 @@ export function StudentReport({
             </div>
             <div className="flex items-center gap-1">
               <span className="text-gray-400">-</span>
-              <span>Nota não lançada</span>
+              <span>{t('components.studentReport.notLaunched')}</span>
             </div>
           </div>
         </CardContent>
@@ -690,7 +695,7 @@ export function StudentReport({
       {/* Print footer */}
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
-          <p>Documento gerado em {formatDate(reportDate)} - Sistema de Gestão Escolar EDUCA</p>
+          <p>{t('components.studentReport.generated', { date: formatDate(reportDate) })}</p>
           <p>{municipalConfig.nome}</p>
         </div>
       )}

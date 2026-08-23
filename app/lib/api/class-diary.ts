@@ -1,4 +1,7 @@
 /**
+ * Class Diary API - Diário de Classe (legal document in Brazilian education).  Reads canonical sessoes_aula with frequencia.sessao_id.
+ */
+/**
  * Class Diary API Layer
  * Brazilian Educational Compliance: Diário de Classe Implementation
  *

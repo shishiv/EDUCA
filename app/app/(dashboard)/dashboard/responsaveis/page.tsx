@@ -1,6 +1,7 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -58,16 +59,13 @@ interface ResponsavelWithAlunos extends Responsavel {
 }
 
 export default function ResponsaveisPage() {
+  const t = useTranslations('registry')
   const [responsaveis, setResponsaveis] = useState<ResponsavelWithAlunos[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [parentescoFilter, setParentescoFilter] = useState('todos')
 
-  useEffect(() => {
-    loadResponsaveis()
-  }, [])
-
-  const loadResponsaveis = async () => {
+  const loadResponsaveis = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -95,12 +93,16 @@ export default function ResponsaveisPage() {
       logger.info('Responsáveis carregados:', { metadata: { count: responsaveisWithCount.length } })
     } catch (error) {
       logger.error('Erro ao carregar responsáveis:', error as any)
-      toast.error('Erro ao carregar lista de responsáveis')
+      toast.error(t('ui.erro-ao-carregar-lista-de-responsaveis'))
       setResponsaveis([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadResponsaveis()
+  }, [loadResponsaveis])
 
   const getInitials = (name: string) => {
     return name
@@ -176,15 +178,15 @@ export default function ResponsaveisPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Responsáveis</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.responsaveis')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie os responsáveis pelos alunos
+            {t('ui.gerencie-os-responsaveis-pelos-alunos')}
           </p>
         </div>
         <Button asChild>
           <Link href="/dashboard/responsaveis/novo">
             <Plus className="mr-2 h-4 w-4" />
-            Novo Responsável
+            {t('labels.novo-responsavel')}
           </Link>
         </Button>
       </div>
@@ -193,13 +195,13 @@ export default function ResponsaveisPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total de Responsáveis</CardDescription>
+            <CardDescription>{t('labels.total-de-responsaveis')}</CardDescription>
             <CardTitle className="text-3xl">{responsaveis.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Mães</CardDescription>
+            <CardDescription>{t('labels.maes')}</CardDescription>
             <CardTitle className="text-3xl">
               {responsaveis.filter(r => r.parentesco.toLowerCase() === 'mae').length}
             </CardTitle>
@@ -207,7 +209,7 @@ export default function ResponsaveisPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Pais</CardDescription>
+            <CardDescription>{t('labels.pais')}</CardDescription>
             <CardTitle className="text-3xl">
               {responsaveis.filter(r => r.parentesco.toLowerCase() === 'pai').length}
             </CardTitle>
@@ -215,7 +217,7 @@ export default function ResponsaveisPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Outros</CardDescription>
+            <CardDescription>{t('labels.outros')}</CardDescription>
             <CardTitle className="text-3xl">
               {responsaveis.filter(r => !['mae', 'pai'].includes(r.parentesco.toLowerCase())).length}
             </CardTitle>
@@ -226,14 +228,14 @@ export default function ResponsaveisPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros e Busca</CardTitle>
+          <CardTitle>{t('labels.filtros-e-busca')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+                placeholder={t('labels.buscar-por-nome-cpf-telefone-ou-e-mail')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -242,21 +244,21 @@ export default function ResponsaveisPage() {
 
             <Select value={parentescoFilter} onValueChange={setParentescoFilter}>
               <SelectTrigger id="parentesco_filter">
-                <SelectValue placeholder="Filtrar por parentesco" />
+                <SelectValue placeholder={t('labels.filtrar-por-parentesco')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos os Parentescos</SelectItem>
-                <SelectItem value="mae">Mãe</SelectItem>
-                <SelectItem value="pai">Pai</SelectItem>
-                <SelectItem value="avo">Avó/Avô</SelectItem>
-                <SelectItem value="tio">Tia/Tio</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
+                <SelectItem value="todos">{t('labels.todos-os-parentescos')}</SelectItem>
+                <SelectItem value="mae">{t('labels.mae')}</SelectItem>
+                <SelectItem value="pai">{t('labels.pai')}</SelectItem>
+                <SelectItem value="avo">{t('labels.avo-avo')}</SelectItem>
+                <SelectItem value="tio">{t('labels.tia-tio')}</SelectItem>
+                <SelectItem value="outro">{t('labels.outro')}</SelectItem>
               </SelectContent>
             </Select>
 
             <div className="flex items-center text-sm text-gray-600">
               <span className="font-medium">{filteredResponsaveis.length}</span>
-              <span className="ml-1">responsáveis encontrados</span>
+              <span className="ml-1">{t('labels.responsaveis-encontrados')}</span>
             </div>
           </div>
         </CardContent>
@@ -268,19 +270,19 @@ export default function ResponsaveisPage() {
           <Table className="responsive-stack-table">
             <TableHeader>
               <TableRow>
-                <TableHead>Responsável</TableHead>
-                <TableHead>CPF</TableHead>
-                <TableHead>Parentesco</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Alunos Vinculados</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('labels.responsavel')}</TableHead>
+                <TableHead>{t('labels.cpf')}</TableHead>
+                <TableHead>{t('labels.parentesco')}</TableHead>
+                <TableHead>{t('labels.contato')}</TableHead>
+                <TableHead>{t('labels.alunos-vinculados')}</TableHead>
+                <TableHead className="text-right">{t('labels.acoes')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredResponsaveis.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-gray-500 py-8">
-                    Nenhum responsável encontrado
+                    {t('ui.nenhum-responsavel-encontrado')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -334,7 +336,7 @@ export default function ResponsaveisPage() {
                         <User className="h-4 w-4 text-gray-400" />
                         <span className="font-medium">{responsavel.alunos_count || 0}</span>
                         <span className="text-sm text-gray-500">
-                          {responsavel.alunos_count === 1 ? 'aluno' : 'alunos'}
+                          {responsavel.alunos_count === 1 ? t('ui.aluno') : t('ui.alunos-258311')}
                         </span>
                       </div>
                     </TableCell>

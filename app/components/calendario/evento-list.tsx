@@ -7,6 +7,7 @@ import { Pencil, Trash2, Calendar, AlertCircle } from 'lucide-react'
 import { format, parseISO, isSameDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { CalendarioEvento } from '@/app/(dashboard)/dashboard/calendario/page'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 interface CalendarioEventListProps {
   eventos: CalendarioEvento[]
@@ -23,6 +24,7 @@ export function CalendarioEventList({
   tipoLabels,
   tipoCores,
 }: CalendarioEventListProps) {
+  const t = useClassroomTranslations()
   if (eventos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -66,7 +68,7 @@ export function CalendarioEventList({
                   {evento.afeta_frequencia && (
                     <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
                       <AlertCircle className="h-3 w-3 mr-1" />
-                      Afeta Frequência
+                      {t('calendar.affectsAttendance')}
                     </Badge>
                   )}
                 </div>

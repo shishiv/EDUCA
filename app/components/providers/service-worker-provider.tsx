@@ -14,12 +14,14 @@ import { useServiceWorker } from '@/hooks/use-service-worker'
 import { toast } from 'sonner'
 import { WifiOff, Wifi, Download } from 'lucide-react'
 import { logger } from '@/lib/logger'
+import { useTranslations } from 'next-intl'
 
 interface ServiceWorkerProviderProps {
   children: React.ReactNode
 }
 
 export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) {
+  const t = useTranslations('layout.serviceWorker')
   const { isInstalled, isOnline, needsUpdate, activateUpdate, getOfflineCount } = useServiceWorker()
 
   // Track if initial render is complete to avoid ForwardRef warning
@@ -42,13 +44,13 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
         action: 'sw_installed'
       })
 
-      toast.success('Sistema preparado para uso offline', {
-        description: 'Você pode marcar frequência mesmo sem internet.',
+      toast.success(t('installed'), {
+        description: t('installedDescription'),
         icon: <Wifi className="h-4 w-4" />,
         duration: 3000
       })
     }
-  }, [isInstalled])
+  }, [isInstalled, t])
 
   // Show offline/online notifications
   useEffect(() => {
@@ -56,8 +58,8 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
     if (isInitialRender.current) return
 
     if (!isOnline) {
-      toast.warning('Você está offline', {
-        description: 'Suas marcações serão sincronizadas quando a conexão retornar.',
+      toast.warning(t('offline'), {
+        description: t('offlineDescription'),
         icon: <WifiOff className="h-4 w-4" />,
         duration: 5000
       })
@@ -65,14 +67,14 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
       // Check for offline attendance to sync
       getOfflineCount().then(count => {
         if (count > 0) {
-          toast.info(`Sincronizando ${count} marcações offline...`, {
+          toast.info(t('syncing', { count }), {
             icon: <Wifi className="h-4 w-4" />,
             duration: 3000
           })
         }
       })
     }
-  }, [isOnline, getOfflineCount])
+  }, [isOnline, getOfflineCount, t])
 
   // Show update notification
   useEffect(() => {
@@ -80,15 +82,15 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
     if (isInitialRender.current) return
 
     if (needsUpdate) {
-      toast('Nova versão disponível', {
-        description: 'Clique para atualizar o sistema.',
+      toast(t('update'), {
+        description: t('updateDescription'),
         icon: <Download className="h-4 w-4" />,
         action: {
-          label: 'Atualizar',
+          label: t('updateAction'),
           onClick: () => {
             activateUpdate()
-            toast.success('Atualizando sistema...', {
-              description: 'A página será recarregada.',
+            toast.success(t('updating'), {
+              description: t('updatingDescription'),
               duration: 2000
             })
           }
@@ -96,7 +98,7 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
         duration: 10000
       })
     }
-  }, [needsUpdate, activateUpdate])
+  }, [needsUpdate, activateUpdate, t])
 
   return <>{children}</>
 }

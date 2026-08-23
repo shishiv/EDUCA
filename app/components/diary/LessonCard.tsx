@@ -28,6 +28,7 @@ import { Calendar, Users, ChevronRight, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -81,6 +82,7 @@ export function LessonCard({
   className,
   compact = false,
 }: LessonCardProps) {
+  const t = useClassroomTranslations()
   // State for hover animation
   const [isHovered, setIsHovered] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
@@ -222,7 +224,7 @@ export function LessonCard({
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline">
-                  {lesson.total_presentes}/{lesson.total_alunos} presentes
+                  {lesson.total_presentes}/{lesson.total_alunos} {t('attendance.presentCount')}
                 </span>
                 <span className="sm:hidden" aria-label={`${lesson.total_presentes} de ${lesson.total_alunos} presentes`}>
                   {lesson.total_presentes}/{lesson.total_alunos}
@@ -283,6 +285,7 @@ export function LessonCard({
 // ============================================================================
 
 export function LessonCardSkeleton() {
+  const t = useClassroomTranslations()
   return (
     <div
       className={cn(
@@ -317,7 +320,7 @@ export function LessonCardSkeleton() {
       </div>
 
       {/* Screen reader text */}
-      <span className="sr-only">Carregando...</span>
+      <span className="sr-only">{t('actions.loading')}</span>
     </div>
   )
 }

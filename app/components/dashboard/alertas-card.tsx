@@ -1,10 +1,12 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertCircle, Clock, TrendingUp, Info, CheckCircle, AlertTriangle } from 'lucide-react'
+import { AlertCircle, TrendingUp, Info, CheckCircle, AlertTriangle } from 'lucide-react'
 import type { DashboardAlert } from '@/app/api/dashboard/alerts/route'
 
 const alertConfig = {
@@ -31,6 +33,7 @@ const alertConfig = {
 }
 
 export function AlertasCard() {
+  const t = useTranslations('platform')
   const [alerts, setAlerts] = useState<DashboardAlert[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -55,9 +58,7 @@ export function AlertasCard() {
     return (
       <Card className="bg-white rounded-card border border-gray-200 shadow-card">
         <CardHeader className="border-b border-gray-100 px-6 py-5">
-          <CardTitle className="font-display font-semibold text-gray-800">
-            Alertas
-          </CardTitle>
+          <CardTitle className="font-display font-semibold text-gray-800">{t('dashboard.alerts')}</CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-3">
           {[1, 2, 3].map((i) => (
@@ -71,9 +72,7 @@ export function AlertasCard() {
   return (
     <Card className="bg-white rounded-card border border-gray-200 shadow-card">
       <CardHeader className="border-b border-gray-100 px-6 py-5">
-        <CardTitle className="font-display font-semibold text-gray-800">
-          Alertas
-        </CardTitle>
+        <CardTitle className="font-display font-semibold text-gray-800">{t('dashboard.alerts')}</CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-3">
         {alerts.length === 0 ? (
@@ -83,7 +82,7 @@ export function AlertasCard() {
             </div>
             <div>
               <p className="text-sm text-gray-800">
-                <strong>Tudo certo!</strong> Nenhum alerta no momento.
+                <strong>{t('dashboard.allGood')}</strong> {t('dashboard.noAlerts')}
               </p>
             </div>
           </div>

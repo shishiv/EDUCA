@@ -27,6 +27,7 @@ import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import type { CalendarioEvento } from '@/app/(dashboard)/dashboard/calendario/page'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 interface CalendarioEventFormProps {
   escolaId: string
@@ -54,6 +55,7 @@ export function CalendarioEventForm({
   onSuccess,
   tipoLabels,
 }: CalendarioEventFormProps) {
+  const t = useClassroomTranslations()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     titulo: '',
@@ -170,7 +172,7 @@ export function CalendarioEventForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            {evento ? 'Editar Evento' : 'Novo Evento'}
+            {evento ? 'Editar Evento' : t('actions.newEvent')}
           </DialogTitle>
           <DialogDescription>
             {evento
@@ -244,7 +246,7 @@ export function CalendarioEventForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="descricao">Descrição</Label>
+            <Label htmlFor="descricao">{t('labels.description')}</Label>
             <Textarea
               id="descricao"
               value={formData.descricao}
@@ -280,7 +282,7 @@ export function CalendarioEventForm({
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               <X className="h-4 w-4 mr-2" />
-              Cancelar
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading ? (
@@ -288,7 +290,7 @@ export function CalendarioEventForm({
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              {evento ? 'Atualizar' : 'Salvar'}
+              {evento ? 'Atualizar' : t('actions.save')}
             </Button>
           </DialogFooter>
         </form>

@@ -1,13 +1,14 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -217,6 +218,8 @@ const mockMatriculas: Matricula[] = [
 ]
 
 export default function MatriculasPage() {
+  const t = useTranslations('registry')
+
   const [matriculas, setMatriculas] = useState<Matricula[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -224,11 +227,7 @@ export default function MatriculasPage() {
   const [anoFilter, setAnoFilter] = useState('todos')
   const [escolaFilter, setEscolaFilter] = useState('todas')
 
-  useEffect(() => {
-    loadMatriculas()
-  }, [])
-
-  const loadMatriculas = async () => {
+  const loadMatriculas = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('matriculas')
@@ -271,16 +270,20 @@ export default function MatriculasPage() {
       setMatriculas(formattedMatriculas as any)
     } catch (error) {
       logger.error('Error loading matriculas', error as any)
-      toast.error('Erro ao carregar lista de matrículas')
+      toast.error(t('ui.erro-ao-carregar-lista-de-matriculas'))
       setMatriculas([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadMatriculas()
+  }, [loadMatriculas])
 
   const handleDeleteMatricula = async (matriculaId: string, alunoNome: string) => {
   if (isDemoSandboxEnabled()) {
-    toast.error('Acao bloqueada no sandbox publico de demonstracao')
+    toast.error(t('ui.acao-bloqueada-no-sandbox-publico-de-demonstracao'))
     return
   }
 
@@ -312,9 +315,9 @@ export default function MatriculasPage() {
 
       // User-friendly error messages
       if (error.code === '23503') {
-        toast.error('Não é possível cancelar esta matrícula pois existem registros de frequência ou notas vinculados.')
+        toast.error(t('ui.nao-e-possivel-cancelar-esta-matricula-pois-existem-registros-de-frequen'))
       } else if (error.code === '42501' || error.message?.includes('permission')) {
-        toast.error('Você não tem permissão para cancelar esta matrícula.')
+        toast.error(t('ui.voce-nao-tem-permissao-para-cancelar-esta-matricula'))
       } else {
         toast.error(`Erro ao cancelar matrícula: ${error.message || 'Tente novamente.'}`)
       }
@@ -333,10 +336,10 @@ export default function MatriculasPage() {
 
   const getSituacaoLabel = (situacao: string) => {
     const situacoes = {
-      ativa: 'Ativa',
-      transferida: 'Transferida',
-      concluida: 'Concluída',
-      cancelada: 'Cancelada'
+      ativa: t('labels.ativa'),
+      transferida: t('labels.transferida'),
+      concluida: t('labels.concluida'),
+      cancelada: t('labels.cancelada')
     }
     return situacoes[situacao as keyof typeof situacoes] || situacao
   }
@@ -413,20 +416,20 @@ export default function MatriculasPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Matrículas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.matriculas')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie as matrículas dos alunos na rede municipal
+            {t('ui.gerencie-as-matriculas-dos-alunos-na-rede-municipal')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
-            Exportar
+            {t('labels.exportar')}
           </Button>
           <Button asChild className="gap-2">
             <Link href="/dashboard/matriculas/nova">
               <Plus className="h-4 w-4" />
-              Nova Matrícula
+              {t('labels.nova-matricula')}
             </Link>
           </Button>
         </div>
@@ -437,25 +440,25 @@ export default function MatriculasPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">{totalMatriculas}</div>
-            <div className="text-sm text-gray-600">Total de Matrículas</div>
+            <div className="text-sm text-gray-600">{t('labels.total-de-matriculas')}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">{matriculasAtivas}</div>
-            <div className="text-sm text-gray-600">Matrículas Ativas</div>
+            <div className="text-sm text-gray-600">{t('labels.matriculas-ativas')}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-orange-600">{matriculasTransferidas}</div>
-            <div className="text-sm text-gray-600">Transferidas</div>
+            <div className="text-sm text-gray-600">{t('labels.transferidas')}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-purple-600">{matriculasConcluidas}</div>
-            <div className="text-sm text-gray-600">Concluídas</div>
+            <div className="text-sm text-gray-600">{t('labels.concluidas')}</div>
           </CardContent>
         </Card>
       </div>
@@ -463,9 +466,9 @@ export default function MatriculasPage() {
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle>{t('labels.filtros')}</CardTitle>
           <CardDescription>
-            Use os filtros abaixo para encontrar matrículas específicas
+            {t('ui.use-os-filtros-abaixo-para-encontrar-matriculas-especificas')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -474,7 +477,7 @@ export default function MatriculasPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Buscar por aluno, CPF, turma ou escola..."
+                  placeholder={t('labels.buscar-por-aluno-cpf-turma-ou-escola')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
@@ -483,22 +486,22 @@ export default function MatriculasPage() {
             </div>
             <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
               <SelectTrigger className="w-full lg:w-40">
-                <SelectValue placeholder="Situação" />
+                <SelectValue placeholder={t('labels.situacao')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
-                <SelectItem value="ativa">Ativas</SelectItem>
-                <SelectItem value="transferida">Transferidas</SelectItem>
-                <SelectItem value="concluida">Concluídas</SelectItem>
-                <SelectItem value="cancelada">Canceladas</SelectItem>
+                <SelectItem value="todas">{t('labels.todas')}</SelectItem>
+                <SelectItem value="ativa">{t('labels.ativas')}</SelectItem>
+                <SelectItem value="transferida">{t('labels.transferidas')}</SelectItem>
+                <SelectItem value="concluida">{t('labels.concluidas')}</SelectItem>
+                <SelectItem value="cancelada">{t('labels.canceladas')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={anoFilter} onValueChange={setAnoFilter}>
               <SelectTrigger className="w-full lg:w-32">
-                <SelectValue placeholder="Ano" />
+                <SelectValue placeholder={t('labels.ano')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="todos">{t('labels.todos')}</SelectItem>
                 {anos.map((ano) => (
                   <SelectItem key={ano} value={ano.toString()}>
                     {ano}
@@ -508,10 +511,10 @@ export default function MatriculasPage() {
             </Select>
             <Select value={escolaFilter} onValueChange={setEscolaFilter}>
               <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Escola" />
+                <SelectValue placeholder={t('labels.escola')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="todas">{t('labels.todas')}</SelectItem>
                 {escolas.map((escola) => escola && (
                   <SelectItem key={escola} value={escola}>
                     {escola}
@@ -526,19 +529,19 @@ export default function MatriculasPage() {
       {/* Lista de Matrículas */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Matrículas ({filteredMatriculas.length})</CardTitle>
+          <CardTitle>{t('ui.lista-de-matriculas')}{filteredMatriculas.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Turma/Escola</TableHead>
-                  <TableHead>Ano Letivo</TableHead>
-                  <TableHead>Data Matrícula</TableHead>
-                  <TableHead>Situação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.aluno')}</TableHead>
+                  <TableHead>{t('labels.turma-escola')}</TableHead>
+                  <TableHead>{t('labels.ano-letivo')}</TableHead>
+                  <TableHead>{t('labels.data-matricula')}</TableHead>
+                  <TableHead>{t('labels.situacao')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -556,7 +559,7 @@ export default function MatriculasPage() {
                           <div className="text-sm text-gray-500">
                             {calculateAge(matricula.aluno?.data_nascimento) !== null
                               ? `${calculateAge(matricula.aluno?.data_nascimento)} anos`
-                              : 'Idade não informada'}
+                              : t('ui.idade-nao-informada')}
                             {matricula.aluno?.sexo && (matricula.aluno.sexo === 'M' ? ' • Masculino' : ' • Feminino')}
                             {matricula.aluno?.cpf && ` • CPF: ${matricula.aluno.cpf}`}
                           </div>
@@ -613,7 +616,7 @@ export default function MatriculasPage() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno?.nome_completo || 'Aluno')}
+                          onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno?.nome_completo || t('labels.aluno'))}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -624,7 +627,7 @@ export default function MatriculasPage() {
                 {filteredMatriculas.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      Nenhuma matrícula encontrada com os filtros aplicados.
+                      {t('ui.nenhuma-matricula-encontrada-com-os-filtros-aplicados')}
                     </TableCell>
                   </TableRow>
                 )}

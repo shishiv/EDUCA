@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -94,6 +96,7 @@ function transformTurmaData(data: TurmaNotasData): TurmaNotas {
 }
 
 export default function NotasPage() {
+  const t = useClassroomTranslations()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const { userProfile } = useAuth()
 
@@ -187,10 +190,10 @@ export default function NotasPage() {
 
   const getSituacaoBadge = (situacao: string) => {
     switch (situacao) {
-      case 'aprovado': return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>
-      case 'reprovado': return <Badge variant="destructive">Reprovado</Badge>
+      case 'aprovado': return <Badge className="bg-green-100 text-green-800">{t('status.approved')}</Badge>
+      case 'reprovado': return <Badge variant="destructive">{t('status.failed')}</Badge>
       case 'recuperacao': return <Badge className="bg-orange-100 text-orange-800">Recuperacao</Badge>
-      case 'cursando': return <Badge variant="outline">Cursando</Badge>
+      case 'cursando': return <Badge variant="outline">{t('status.enrolled')}</Badge>
       default: return <Badge variant="secondary">-</Badge>
     }
   }
@@ -383,9 +386,9 @@ export default function NotasPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sistema de Notas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('grades.title')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie as avaliacoes e notas dos alunos
+            {t('grades.subtitle')}
           </p>
         </div>
         <Card>
@@ -393,7 +396,7 @@ export default function NotasPage() {
             <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">{error}</p>
             <Button onClick={loadNotas} variant="outline">
-              Tentar novamente
+              {t('actions.retry')}
             </Button>
           </CardContent>
         </Card>
@@ -406,16 +409,16 @@ export default function NotasPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sistema de Notas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('grades.title')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie as avaliacoes e notas dos alunos
+            {t('grades.subtitle')}
           </p>
         </div>
         <Card>
           <CardContent className="text-center py-12">
             <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhuma turma encontrada
+              {t('classes.noClasses')}
             </h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
               {shouldShowSelector && !selectedEscolaId
@@ -426,7 +429,7 @@ export default function NotasPage() {
               <Button asChild>
                 <Link href="/dashboard/turmas/nova">
                   <Plus className="h-4 w-4 mr-2" />
-                  Criar Turma
+                  {t('actions.newClass')}
                 </Link>
               </Button>
             ) : null}
@@ -441,26 +444,26 @@ export default function NotasPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sistema de Notas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('grades.title')}</h1>
           <p className="text-gray-600 mt-1">
-            Gerencie as avaliacoes e notas dos alunos
+            {t('grades.subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
-            Boletins
+            {t('grades.reports')}
           </Button>
           <Button onClick={saveAllNotas} disabled={saving} className="gap-2">
             {saving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Salvando...
+                {t('actions.saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Salvar Todas
+                {t('grades.saveAll')}
               </>
             )}
           </Button>
@@ -474,7 +477,7 @@ export default function NotasPage() {
             <div className="text-2xl font-bold text-blue-600">
               {turmas.reduce((sum, t) => sum + t.alunos.length, 0)}
             </div>
-            <div className="text-sm text-gray-600">Total de Alunos</div>
+            <div className="text-sm text-gray-600">{t('grades.totalStudents')}</div>
           </CardContent>
         </Card>
         <Card>
@@ -482,7 +485,7 @@ export default function NotasPage() {
             <div className="text-2xl font-bold text-green-600">
               {turmas.reduce((sum, t) => sum + t.disciplinas.length, 0)}
             </div>
-            <div className="text-sm text-gray-600">Disciplinas</div>
+            <div className="text-sm text-gray-600">{t('grades.subjects')}</div>
           </CardContent>
         </Card>
         <Card>
@@ -492,7 +495,7 @@ export default function NotasPage() {
                 Object.values(a.disciplinas).filter(d => d.situacao === 'recuperacao')
               ).length}
             </div>
-            <div className="text-sm text-gray-600">Em Recuperacao</div>
+            <div className="text-sm text-gray-600">{t('grades.inRecovery')}</div>
           </CardContent>
         </Card>
         <Card>
@@ -508,7 +511,7 @@ export default function NotasPage() {
                   : '-'
               })()}
             </div>
-            <div className="text-sm text-gray-600">Média Geral</div>
+            <div className="text-sm text-gray-600">{t('grades.average')}</div>
           </CardContent>
         </Card>
       </div>
@@ -516,7 +519,7 @@ export default function NotasPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle>{t('actions.filter')}</CardTitle>
           <CardDescription>
             Use os filtros para encontrar turmas e disciplinas especificas
           </CardDescription>
@@ -527,7 +530,7 @@ export default function NotasPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Buscar por turma, escola ou professor..."
+                  placeholder={t('grades.searchPlaceholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
@@ -535,11 +538,11 @@ export default function NotasPage() {
               </div>
             </div>
             <Select value={turmaFilter} onValueChange={setTurmaFilter}>
-              <SelectTrigger className="w-full lg:w-48" aria-label="Turma">
-                <SelectValue placeholder="Turma" />
+              <SelectTrigger className="w-full lg:w-48" aria-label={t('labels.class')}>
+                <SelectValue placeholder={t('labels.class')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas as turmas</SelectItem>
+                <SelectItem value="todas">{t('grades.allClasses')}</SelectItem>
                 {turmas.map((turma) => (
                   <SelectItem key={turma.id} value={turma.id}>
                     {turma.nome} - {turma.serie}
@@ -548,11 +551,11 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={disciplinaFilter} onValueChange={setDisciplinaFilter}>
-              <SelectTrigger className="w-full lg:w-40" aria-label="Disciplina">
-                <SelectValue placeholder="Disciplina" />
+              <SelectTrigger className="w-full lg:w-40" aria-label={t('labels.subject')}>
+                <SelectValue placeholder={t('labels.subject')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="todas">{t('labels.allF')}</SelectItem>
                 {todasDisciplinas.map((disciplina) => (
                   <SelectItem key={disciplina} value={disciplina}>
                     {disciplina}
@@ -561,11 +564,11 @@ export default function NotasPage() {
               </SelectContent>
             </Select>
             <Select value={bimestreFilter} onValueChange={setBimestreFilter}>
-              <SelectTrigger className="w-full lg:w-32" aria-label="Bimestre">
-                <SelectValue placeholder="Bimestre" />
+              <SelectTrigger className="w-full lg:w-32" aria-label={t('grades.term')}>
+                <SelectValue placeholder={t('grades.term')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="todos">{t('labels.all')}</SelectItem>
                 <SelectItem value="1">1 Bim</SelectItem>
                 <SelectItem value="2">2 Bim</SelectItem>
                 <SelectItem value="3">3 Bim</SelectItem>
@@ -597,13 +600,13 @@ export default function NotasPage() {
                       href={`/dashboard/alunos/${turma.alunos[0].aluno.id}/boletim`}
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
-                      Boletim
+                      {t('grades.report')}
                     </Link>
                   </Button>
                 ) : (
                   <Button variant="outline" size="sm" disabled>
                     <BookOpen className="h-4 w-4 mr-2" />
-                    Boletim
+                    {t('grades.report')}
                   </Button>
                 )}
               </div>
@@ -611,14 +614,14 @@ export default function NotasPage() {
             <CardContent>
               {turma.alunos.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">Nenhum aluno matriculado nesta turma.</p>
+                  <p className="text-gray-500">{t('grades.noStudents')}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky left-0 z-20 bg-white border-r border-gray-200">Aluno</TableHead>
+                        <TableHead className="sticky left-0 z-20 bg-white border-r border-gray-200">{t('labels.student')}</TableHead>
                         {turma.disciplinas
                           .filter(d => disciplinaFilter === 'todas' || d === disciplinaFilter)
                           .map((disciplina) => (
@@ -626,7 +629,7 @@ export default function NotasPage() {
                             {disciplina}
                           </TableHead>
                         ))}
-                        <TableHead className="text-center">Situação Geral</TableHead>
+                        <TableHead className="text-center">{t('grades.generalStatus')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -710,7 +713,7 @@ export default function NotasPage() {
             <CardContent className="text-center py-8">
               <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">
-                Nenhuma turma encontrada para os filtros aplicados.
+                {t('classes.noClasses')} para os filtros aplicados.
               </p>
             </CardContent>
           </Card>
@@ -723,14 +726,14 @@ export default function NotasPage() {
       }>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Nota</DialogTitle>
+            <DialogTitle>{t('grades.edit')}</DialogTitle>
             <DialogDescription>
-              Lancar nota para {editingNote.alunoNome} - {editingNote.disciplina} - {editingNote.bimestre} Bimestre
+              Lancar nota para {editingNote.alunoNome} - {editingNote.disciplina} - {editingNote.bimestre} {t('grades.term')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nota">Nota (0 a 10)</Label>
+              <Label htmlFor="nota">{t('grades.grade')}</Label>
               <Input
                 id="nota"
                 type="number"
@@ -742,11 +745,11 @@ export default function NotasPage() {
                   ...prev,
                   nota: e.target.value
                 }))}
-                placeholder="Digite a nota"
+                placeholder={t('grades.gradePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações (opcional)</Label>
+              <Label htmlFor="observacoes">{t('labels.observations')} ({t('labels.optional')})</Label>
               <Textarea
                 id="observacoes"
                 value={editingNote.observacoes}
@@ -754,7 +757,7 @@ export default function NotasPage() {
                   ...prev,
                   observacoes: e.target.value
                 }))}
-                placeholder="Observacoes sobre a avaliacao..."
+                placeholder={t('grades.observationsPlaceholder')}
                 rows={3}
               />
             </div>
@@ -763,10 +766,10 @@ export default function NotasPage() {
             <Button variant="outline" onClick={() =>
               setEditingNote(prev => ({ ...prev, open: false }))
             }>
-              Cancelar
+              {t('actions.cancel')}
             </Button>
             <Button onClick={saveNote} disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar Nota'}
+              {saving ? t('actions.saving') : `${t('actions.save')} ${t('grades.edit').replace('Edit', 'Grade')}`}
             </Button>
           </DialogFooter>
         </DialogContent>

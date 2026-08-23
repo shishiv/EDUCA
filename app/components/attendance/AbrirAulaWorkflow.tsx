@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +22,7 @@ export interface AbrirAulaWorkflowProps {
 
 /** Opens the canonical turma session through the server-backed API adapter. */
 export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }: AbrirAulaWorkflowProps) {
+  const t = useClassroomTranslations()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -71,10 +74,10 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
-          Abrir Aula
+          {t('attendance.open')}
         </CardTitle>
         <CardDescription>
-          Inicie uma nova sessão para registrar a presença dos alunos desta turma.
+          {t('attendance.openHint')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -83,15 +86,15 @@ export function AbrirAulaWorkflow({ turmaId, professorId, onSuccess, onCancel }:
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Abrindo...
+                {t('attendance.opening')}
               </>
             ) : (
-              'Abrir Aula'
+              t('attendance.open')
             )}
           </Button>
           {onCancel && (
             <Button variant="outline" onClick={onCancel} disabled={loading}>
-              Cancelar
+              {t('actions.cancel')}
             </Button>
           )}
         </div>

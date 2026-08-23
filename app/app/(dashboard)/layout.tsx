@@ -15,6 +15,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { ModalProvider } from '@/components/ui/modal-manager'
 import { ModalRenderer } from '@/components/ui/modal-renderer'
+import { useTranslations } from 'next-intl'
 
 export default function DashboardLayout({
   children,
@@ -87,10 +88,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
 // Wrapper component to access user data after authentication
 function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('layout.dashboard')
   const { userProfile } = useAuth()
 
   if (!userProfile) {
-    return <div>Carregando...</div>
+    return <div>{t('loading')}</div>
   }
 
   return (

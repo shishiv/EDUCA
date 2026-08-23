@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessagesForLocale } from '@/i18n/messages'
 
 const { fromMock, routerPushMock, useEscolaMock } = vi.hoisted(() => ({
   fromMock: vi.fn(),
@@ -152,7 +154,11 @@ describe('demo deploy package regressions', () => {
     })
     fromMock.mockReturnValue(matriculasQuery)
 
-    render(<MatriculasPage />)
+    render(
+      <NextIntlClientProvider locale="pt-BR" messages={getMessagesForLocale('pt-BR')}>
+        <MatriculasPage />
+      </NextIntlClientProvider>,
+    )
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /^Matrículas$/ })).toBeInTheDocument()

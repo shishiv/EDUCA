@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -79,6 +81,7 @@ interface StatsData {
 }
 
 export default function SessoesPage() {
+  const t = useClassroomTranslations()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [sessoes, setSessoes] = useState<Sessao[]>([])
@@ -285,9 +288,9 @@ export default function SessoesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestão de Sessões de Aula</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('sessions.title')}</h1>
           <p className="text-gray-600 mt-1">
-            Controle completo de todas as sessões de aula do sistema
+            {t('sessions.subtitle')}
           </p>
         </div>
       </div>
@@ -296,7 +299,7 @@ export default function SessoesPage() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Workflow de Sessões:</strong> PLANEJADA → ABERTA → FECHADA.
+          <strong>{t('sessions.workflow')}</strong> PLANEJADA → ABERTA → FECHADA.
           Uma vez fechada, a sessão não pode ser modificada (compliance legal).
         </AlertDescription>
       </Alert>
@@ -305,7 +308,7 @@ export default function SessoesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total de Sessões</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">{t('labels.sessions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -317,7 +320,7 @@ export default function SessoesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-blue-600">Planejadas</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-600">{t('sessions.planned')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -329,7 +332,7 @@ export default function SessoesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-600">Abertas</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-600">{t('sessions.open')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -341,7 +344,7 @@ export default function SessoesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Fechadas</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">{t('sessions.closed')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -353,7 +356,7 @@ export default function SessoesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-red-600">Canceladas</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-600">{t('sessions.cancelled')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -369,43 +372,43 @@ export default function SessoesPage() {
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Filter className="h-5 w-5 text-blue-600" />
-            <CardTitle>Filtros</CardTitle>
+            <CardTitle>{t('actions.filter')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="search">Buscar</Label>
+              <Label htmlFor="search">{t('actions.search')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Turma, professor, escola..."
+                  placeholder={t('labels.class') + ', ' + t('labels.teacher').toLowerCase() + ', ' + t('labels.school').toLowerCase() + '...'}
                   className="pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t('labels.status')}</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="status">
-                  <SelectValue placeholder="Todos os status" />
+                  <SelectValue placeholder={t('diary.allStatuses')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="PLANEJADA">Planejada</SelectItem>
-                  <SelectItem value="ABERTA">Aberta</SelectItem>
-                  <SelectItem value="FECHADA">Fechada</SelectItem>
-                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                  <SelectItem value="todos">{t('labels.all')}</SelectItem>
+                  <SelectItem value="PLANEJADA">{t('status.planned')}</SelectItem>
+                  <SelectItem value="ABERTA">{t('status.open')}</SelectItem>
+                  <SelectItem value="FECHADA">{t('status.closed')}</SelectItem>
+                  <SelectItem value="CANCELADA">{t('status.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor="date">Data da Aula</Label>
+              <Label htmlFor="date">{t('sessions.date')}</Label>
               <Input
                 id="date"
                 type="date"
@@ -424,30 +427,30 @@ export default function SessoesPage() {
             Sessões de Aula ({filteredSessoes.length})
           </CardTitle>
           <CardDescription>
-            Histórico completo de sessões cadastradas no sistema
+            {t('sessions.history')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredSessoes.length === 0 ? (
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhuma sessão encontrada com os filtros aplicados</p>
+              <p className="text-gray-600">{t('sessions.empty')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table className="responsive-stack-table">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Turma</TableHead>
-                    <TableHead>Série</TableHead>
-                    <TableHead>Turno</TableHead>
-                    <TableHead>Professor</TableHead>
-                    <TableHead>Escola</TableHead>
-                    <TableHead>Horário</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Criada em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t('labels.date')}</TableHead>
+                    <TableHead>{t('labels.class')}</TableHead>
+                    <TableHead>{t('labels.series')}</TableHead>
+                    <TableHead>{t('labels.shift')}</TableHead>
+                    <TableHead>{t('labels.teacher')}</TableHead>
+                    <TableHead>{t('labels.school')}</TableHead>
+                    <TableHead>{t('labels.time')}</TableHead>
+                    <TableHead>{t('labels.status')}</TableHead>
+                    <TableHead>{t('sessions.createdAt')}</TableHead>
+                    <TableHead className="text-right">{t('labels.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -495,7 +498,7 @@ export default function SessoesPage() {
                               ) : (
                                 <>
                                   <Users className="h-4 w-4 mr-1" />
-                                  Frequência
+                                  {t('labels.frequency')}
                                 </>
                               )}
                             </Button>

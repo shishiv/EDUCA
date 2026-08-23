@@ -1,3 +1,28 @@
+/**
+ * User Lifecycle - invitation, first access, profile completion, and revocation.
+ *
+ * This module implements the full user registration lifecycle for the
+ * synthetic pilot: invite → first access → password change → active profile.
+ * It also owns the revocation path for synthetic identities.
+ *
+ * ## Authentication
+ *
+ * Operations use a **service-role** Supabase client (passed via ports) for
+ * admin operations (invite, delete) and a **session** client for user-facing
+ * operations (password change).  Never use the browser client directly.
+ *
+ * ## Error handling
+ *
+ * All lifecycle failures throw {@link UserLifecycleError} with a typed `code`.
+ * The error preserves the Auth identity (`identityPreserved = true`) and
+ * provides a `resumePath` for the UI to redirect the user.
+ *
+ * ## Mode availability
+ *
+ * Pilot only.  Revocation requires synthetic `.invalid` identities.
+ *
+ * @module services/user-lifecycle
+ */
 import { createHash } from 'node:crypto'
 
 /**

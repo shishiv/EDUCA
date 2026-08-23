@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "title": "EDUCA - Sistema de Gestão Escolar Municipal",
+    "description": "Sistema aberto de gestão escolar para municípios brasileiros"
+  },
+  "locale": {
+    "label": "Idioma da aplicação",
+    "portuguese": "Português (Brasil)",
+    "english": "English",
+    "changing": "Alterando idioma",
+    "error": "Não foi possível alterar o idioma. Tente novamente."
+  },
+  "roles": {
+    "admin": "Administrador",
+    "diretor": "Diretor(a)",
+    "secretario": "Secretário(a)",
+    "professor": "Professor(a)",
+    "responsavel": "Responsável"
+  },
+  "status": {
+    "loading": "Carregando...",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "brand": {
+    "schoolSystem": "Sistema Escolar",
+    "municipalEducationDepartment": "Secretaria de Educação Municipal",
+    "municipalEducationSystem": "Sistema Educacional Municipal"
+  }
+}

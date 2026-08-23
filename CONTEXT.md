@@ -50,10 +50,12 @@ Run package commands from `app/`.
 
 ```bash
 pnpm dev                 # local Next.js development server
+pnpm dev:local           # canonical local: Supabase CLI + migrations + Next.js + cleanup
 pnpm build               # production build
 pnpm start               # serve a production build
 pnpm typecheck           # TypeScript, including E2E specs and enabled unit tests
 pnpm lint                # ESLint
+pnpm check:diff-typography # rejects new U+2014 em dashes relative to main
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
 pnpm test:e2e:pilot                     # R3-T4 aggregate: legacy, capacity, descriptive, and focused security children
@@ -120,7 +122,6 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
 | `DEMO.md` | Demo sandbox runbook, local reset command, environment contract and safety boundaries. |
 | `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |
-| `docker-compose.yml` | Optional bare local PostgreSQL development service. |
 
 ## Demo sandbox (issue #23)
 

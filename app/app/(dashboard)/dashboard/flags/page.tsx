@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState, useEffect } from 'react'
 import { useFeatureFlagsWithStatus, useToggleFlags, useToggleSingleFlag } from '@/hooks/use-feature-flag'
 import { useAuth } from '@/hooks/use-auth'
@@ -20,6 +22,7 @@ interface EscolaBasic {
 }
 
 export default function FlagsPage() {
+  const t = useTranslations('platform')
   const { userProfile, loading: authLoading } = useAuth()
   const { data: flagsWithStatus, isLoading: flagsLoading, error, refetch } = useFeatureFlagsWithStatus()
   const toggleFlagsMutation = useToggleFlags()
@@ -44,13 +47,13 @@ export default function FlagsPage() {
         if (error) throw error
         setAllEscolas(data || [])
       } catch (err) {
-        toast.error('Erro ao carregar escolas')
+        toast.error(t('bolsa.loadSchoolsError'))
       } finally {
         setEscolasLoading(false)
       }
     }
     fetchEscolas()
-  }, [])
+  }, [t])
 
   // Access control - only admin and gestor_sme can access
   const canAccess = userProfile?.tipo_usuario === 'admin' || userProfile?.tipo_usuario === 'gestor_sme'
@@ -140,8 +143,8 @@ export default function FlagsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Feature Flags</h1>
-          <p className="text-gray-600 mt-1">Gerencie módulos por escola</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
         </div>
         <TableLoading rows={5} columns={4} />
       </div>
@@ -153,19 +156,17 @@ export default function FlagsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Feature Flags</h1>
-          <p className="text-gray-600 mt-1">Gerencie módulos por escola</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
         </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Acesso Negado</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.denied')}</h3>
               <p className="text-gray-600">
-                Você não tem permissão para acessar esta página.
-                <br />
-                Apenas administradores podem gerenciar feature flags.
-              </p>
+                {t('flags.noPermission')}
+                <br />{t('flags.adminOnly')}</p>
             </div>
           </CardContent>
         </Card>
@@ -178,19 +179,17 @@ export default function FlagsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Feature Flags</h1>
-          <p className="text-gray-600 mt-1">Gerencie módulos por escola</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
         </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Erro ao carregar flags</h3>
-              <p className="text-gray-600 mb-4">Ocorreu um erro ao buscar os feature flags.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.loadError')}</h3>
+              <p className="text-gray-600 mb-4">{t('flags.fetchError')}</p>
               <Button onClick={() => refetch()} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Tentar Novamente
-              </Button>
+                <RefreshCw className="h-4 w-4 mr-2" />{t('flags.retry')}</Button>
             </div>
           </CardContent>
         </Card>
@@ -202,8 +201,8 @@ export default function FlagsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Feature Flags</h1>
-        <p className="text-gray-600 mt-1">Gerencie a ativação de módulos por escola</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+        <p className="text-gray-600 mt-1">{t('flags.activationSubtitle')}</p>
       </div>
 
       {/* Two-column layout */}
@@ -213,16 +212,14 @@ export default function FlagsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Flag className="h-5 w-5" />
-                Módulos
-              </CardTitle>
-              <CardDescription>Selecione um módulo para gerenciar</CardDescription>
+                <Flag className="h-5 w-5" />{t('flags.modules')}</CardTitle>
+              <CardDescription>{t('flags.selectModule')}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {!flagsWithStatus || flagsWithStatus.length === 0 ? (
                 <div className="text-center py-8 px-4">
                   <Flag className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600 text-sm">Nenhum flag cadastrado</p>
+                  <p className="text-gray-600 text-sm">{t('flags.none')}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
@@ -266,10 +263,8 @@ export default function FlagsPage() {
               <CardContent className="pt-6">
                 <div className="text-center py-12">
                   <School className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione um flag</h3>
-                  <p className="text-gray-600">
-                    Escolha um módulo na lista à esquerda para gerenciar suas escolas.
-                  </p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.selectFlag')}</h3>
+                  <p className="text-gray-600">{t('flags.chooseModule')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -285,7 +280,7 @@ export default function FlagsPage() {
                     <CardDescription>{selectedFlag?.description}</CardDescription>
                   </div>
                   <Badge variant="outline" className="text-sm">
-                    {getEnabledCount(selectedFlag!)}/{allEscolas.length} ativas
+                    {getEnabledCount(selectedFlag!)}/{allEscolas.length} {t('flags.active')}
                   </Badge>
                 </div>
               </CardHeader>
@@ -295,7 +290,7 @@ export default function FlagsPage() {
                 <div className="border-b border-blue-200 bg-blue-50 px-6 py-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-blue-900">
-                      {selectedEscolaIds.length} escola(s) selecionada(s)
+                      {selectedEscolaIds.length} {t('flags.selected')}
                     </span>
                     <div className="flex gap-2">
                       <Button
@@ -305,9 +300,7 @@ export default function FlagsPage() {
                         disabled={toggleFlagsMutation.isPending}
                         className="text-green-700 border-green-300 hover:bg-green-50"
                       >
-                        <Check className="h-4 w-4 mr-1" />
-                        Ativar Selecionadas
-                      </Button>
+                        <Check className="h-4 w-4 mr-1" />{t('flags.enableSelected')}</Button>
                       <Button
                         size="sm"
                         variant="outline"
@@ -315,15 +308,13 @@ export default function FlagsPage() {
                         disabled={toggleFlagsMutation.isPending}
                         className="text-red-700 border-red-300 hover:bg-red-50"
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Desativar Selecionadas
-                      </Button>
+                        <X className="h-4 w-4 mr-1" />{t('flags.disableSelected')}</Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => setSelectedEscolaIds([])}
                       >
-                        Cancelar
+                        {t('flags.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -334,7 +325,7 @@ export default function FlagsPage() {
                 {allEscolas.length === 0 ? (
                   <div className="text-center py-8 px-4">
                     <School className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 text-sm">Nenhuma escola cadastrada</p>
+                    <p className="text-gray-600 text-sm">{t('flags.noSchools')}</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-200">
@@ -343,10 +334,10 @@ export default function FlagsPage() {
                       <Checkbox
                         checked={selectedEscolaIds.length === allEscolas.length && allEscolas.length > 0}
                         onCheckedChange={handleSelectAll}
-                        aria-label="Selecionar todas"
+                        aria-label={t('flags.selectAll')}
                       />
-                      <div className="flex-1">Escola</div>
-                      <div className="w-24 text-center">Status</div>
+                      <div className="flex-1">{t('flags.school')}</div>
+                      <div className="w-24 text-center">{t('flags.status')}</div>
                     </div>
 
                     {/* Escola rows */}
@@ -374,7 +365,7 @@ export default function FlagsPage() {
                               checked={isEnabled}
                               onCheckedChange={() => handleToggleSingle(escola.id, isEnabled)}
                               disabled={toggleSingleFlagMutation.isPending}
-                              aria-label={`${isEnabled ? 'Desativar' : 'Ativar'} ${selectedFlag?.flag_name} para ${escola.nome}`}
+                              aria-label={`${isEnabled ? t('flags.deactivate') : t('flags.activate')} ${selectedFlag?.flag_name} para ${escola.nome}`}
                             />
                           </div>
                         </div>

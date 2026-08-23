@@ -37,6 +37,7 @@ import {
   CAMPOS_EXPERIENCIA,
   getCampoBadgeVariant,
 } from '@/types/diario-infantil'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -66,6 +67,7 @@ export function VivenciaCard({
   showDate = true,
   className,
 }: VivenciaCardProps) {
+  const t = useClassroomTranslations()
   const hasActions = onEdit || onDelete
   const formattedDate = formatDate(vivencia.data_vivencia)
 
@@ -106,7 +108,7 @@ export function VivenciaCard({
               {onEdit && (
                 <DropdownMenuItem onClick={onEdit}>
                   <Edit2 className="h-4 w-4 mr-2" />
-                  Editar
+                  {t('actions.edit')}
                 </DropdownMenuItem>
               )}
               {onDelete && (
@@ -115,7 +117,7 @@ export function VivenciaCard({
                   className="text-red-600 focus:text-red-600"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
+                  {t('actions.delete')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

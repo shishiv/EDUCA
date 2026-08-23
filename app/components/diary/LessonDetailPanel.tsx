@@ -40,6 +40,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import type { LessonContent } from '@/types/lesson-content'
+import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -84,6 +85,7 @@ export function LessonDetailPanel({
   loading = false,
   className,
 }: LessonDetailPanelProps) {
+  const t = useClassroomTranslations()
   // Calculate attendance rate
   const attendanceRate = lesson
     ? lesson.total_alunos > 0
@@ -117,7 +119,7 @@ export function LessonDetailPanel({
         <div className="text-center py-8 sm:py-12">
           <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-300 mb-4" />
           <h3 className="text-base sm:text-lg font-medium text-gray-600 mb-2">
-            Selecione uma aula
+            {t('diary.selectLesson')}
           </h3>
           <p className="text-sm text-gray-500">
             Clique em um card a esquerda para visualizar detalhes
@@ -205,7 +207,7 @@ export function LessonDetailPanel({
               <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
-                  Objetivo
+                  {t('diary.objective')}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-5 sm:pl-6">
                   {lesson.objetivo}
@@ -229,7 +231,7 @@ export function LessonDetailPanel({
               <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
-                  Habilidades BNCC
+                  {t('diary.bnccSkills')}
                 </h3>
                 <div className="flex flex-wrap gap-1 pl-5 sm:pl-6">
                   {lesson.habilidades_bncc.map((code) => (
@@ -250,7 +252,7 @@ export function LessonDetailPanel({
               <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <Lightbulb className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
-                  Metodologia
+                  {t('diary.methodology')}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-5 sm:pl-6">
                   {lesson.metodologia}
@@ -263,7 +265,7 @@ export function LessonDetailPanel({
               <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
-                  Recursos
+                  {t('diary.resources')}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-5 sm:pl-6">
                   {lesson.recursos}
@@ -286,19 +288,19 @@ export function LessonDetailPanel({
                 <div className="text-base sm:text-lg font-bold text-gray-900">
                   {lesson.total_alunos}
                 </div>
-                <div className="text-[10px] sm:text-xs text-gray-500">Total</div>
+                <div className="text-[10px] sm:text-xs text-gray-500">{t('labels.total')}</div>
               </div>
               <div className="bg-green-50 rounded-lg p-2 sm:p-3 text-center">
                 <div className="text-base sm:text-lg font-bold text-green-600">
                   {lesson.total_presentes}
                 </div>
-                <div className="text-[10px] sm:text-xs text-gray-500">Presentes</div>
+                <div className="text-[10px] sm:text-xs text-gray-500">{t('labels.present')}</div>
               </div>
               <div className="bg-red-50 rounded-lg p-2 sm:p-3 text-center">
                 <div className="text-base sm:text-lg font-bold text-red-600">
                   {lesson.total_ausentes}
                 </div>
-                <div className="text-[10px] sm:text-xs text-gray-500">Ausentes</div>
+                <div className="text-[10px] sm:text-xs text-gray-500">{t('labels.absent')}</div>
               </div>
             </div>
 

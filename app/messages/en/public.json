@@ -1,0 +1,124 @@
+{
+  "offline": {
+    "title": "You are offline",
+    "description": "EDUCA could not reach the network. Attendance marks saved on this device will be synchronized when the connection is restored.",
+    "action": "Try again"
+  },
+  "unauthorized": {
+    "title": "Unauthorized access",
+    "description": "Your profile is not permitted to access this area. Return to the dashboard or request access from the system administrator.",
+    "action": "Back to dashboard"
+  },
+  "notFound": {
+    "subtitle": "Page not found",
+    "description": "The page you are looking for does not exist or has moved.",
+    "hint": "Check that the address is correct or navigate to one of the available pages.",
+    "dashboardAction": "Go to dashboard",
+    "backAction": "Back",
+    "mainPages": "Main pages",
+    "links": {
+      "students": "Students",
+      "studentsDescription": "Manage students",
+      "users": "Users",
+      "usersDescription": "Manage users",
+      "schools": "Schools",
+      "schoolsDescription": "School units",
+      "classes": "Classes",
+      "classesDescription": "Classes and teachers",
+      "enrolments": "Enrolments",
+      "enrolmentsDescription": "Academic enrolments",
+      "reports": "Reports",
+      "reportsDescription": "Generate reports"
+    },
+    "helpTitle": "Need help?",
+    "helpDescription": "Contact the Municipal Department of Education technical support team",
+    "helpContact": "Email: suporte@municipio.edu.br | Phone: (34) 3555-0000"
+  },
+  "loading": {
+    "title": "Loading system...",
+    "subtitle": "Municipal Department of Education"
+  },
+  "privacy": {
+    "metadataTitle": "Demo Privacy Policy - EDUCA",
+    "metadataDescription": "Privacy notice for the public EDUCA demo, a demonstration environment with synthetic data and no real data subjects.",
+    "brandSubtitle": "Education Management System",
+    "title": "Privacy Policy",
+    "updated": "Last updated: August 2026",
+    "demo": {
+      "title": "This is a public demo",
+      "paragraph1": "EDUCA provides this instance as an open product demonstration. The records shown here are <strong>synthetic</strong> and do not correspond to real people: no real data subject is associated with the demo data.",
+      "paragraph2": "Do not enter real personal data in this environment, especially data about children and adolescents. Use only fictitious values when testing the interface."
+    },
+    "scope": {
+      "title": "1. Scope of this policy",
+      "paragraph1": "This page explains the privacy conditions of the public EDUCA demo. It describes a demonstration environment with synthetic data, not a real municipal operation and not a privacy policy issued by a department of education.",
+      "paragraph2": "The demo is intended for exploring the product interface and workflows. The business data shown on screen is fictitious and may be reset periodically as part of sandbox operations."
+    },
+    "data": {
+      "title": "2. Data used in the demo",
+      "paragraph1": "The functional data displayed and used in the demo is synthetic. It simulates school management routines without identifying a student, guardian, education professional, or any other real person.",
+      "paragraph2": "This environment was not made available to receive real personal data. Do not provide a name, CPF, RG, address, phone number, email, health data, real education data, or any other data that could identify a person.",
+      "bullet1": "Demo records have no real data subject.",
+      "bullet2": "Test values must always be fictitious.",
+      "bullet3": "The demo is not a municipal production database."
+    },
+    "roles": {
+      "title": "3. Roles and responsibilities",
+      "paragraph1": "In this demo, <strong>EDUCA is not the controller of any data subject's personal data</strong>, because the demonstration records are synthetic and do not correspond to real people.",
+      "paragraph2": "In a real municipal deployment, the adopting municipality defines the data controller and appoints the data protection officer (DPO), publishes contact channels, and responds to data subject requests. EDUCA acts as a processor according to the contract and the controller's instructions."
+    },
+    "municipal": {
+      "title": "4. Product use in a municipal deployment",
+      "introduction": "In a municipal deployment, the controller must define purposes, legal bases, necessary data, retention periods, and access rules. EDUCA can support routines such as:",
+      "bullet1": "Educational and administrative school management.",
+      "bullet2": "Recording and monitoring school attendance.",
+      "bullet3": "Organizing classes, enrolments, and guardians.",
+      "bullet4": "Reports and monitoring of students' school life.",
+      "bullet5": "Administrative routines defined by the adopting municipality."
+    },
+    "sharing": {
+      "title": "5. Sharing and external effects",
+      "paragraph1": "The demo does not share real personal data and must not be used to send information to government agencies, Educacenso, Bolsa Família, child protection services, or any other third party. The presence of demonstration screens and reports does not mean that an external transmission is taking place.",
+      "paragraph2": "In a municipal deployment, the controller must define permitted sharing, its purposes, and the corresponding legal bases. The municipality must also review and approve any integration with government agencies or third parties before putting it into operation."
+    },
+    "children": {
+      "title": "6. Children and adolescents",
+      "paragraph1": "This demo does not contain data about real children or adolescents. Do not enter this kind of data in the environment, even to test a workflow.",
+      "paragraph2": "In a municipal deployment, the controller must assess and document the processing of children's and adolescents' data under Article 14 of Brazil's LGPD, considering their best interests, transparency, necessity, and the procedures applicable to the case. This page does not replace that assessment."
+    },
+    "rights": {
+      "title": "7. Data subject rights",
+      "paragraph1": "Because the demo's functional records are synthetic and have no real data subject, this page does not receive data subject requests concerning those records.",
+      "paragraph2": "In a real municipal deployment, requests for access, correction, deletion, information, and other rights provided by the LGPD must be sent to the controller and data protection officer (DPO) appointed by the adopting municipality.",
+      "paragraph3": "For this reason, this page does not publish a DPO address, phone number, or email: no municipality is the controller of this demo."
+    },
+    "runbook": {
+      "title": "8. Runbook for the adopting municipality",
+      "introduction": "The product provides an LGPD readiness runbook to help an adopting municipality complete its own obligations before a real deployment. Among other measures, the municipality must:",
+      "bullet1": "Define the controller, processor, and data protection officer (DPO).",
+      "bullet2": "Publish the municipal policy and channels for data subjects.",
+      "bullet3": "Define legal bases, purposes, access, and retention.",
+      "bullet4": "Document the processing of children's and adolescents' data.",
+      "bullet5": "Review workflows such as Educacenso and other data sharing."
+    },
+    "notice": {
+      "title": "9. Operational notice and optional consent",
+      "paragraph1": "Registering guardians and students is an administrative routine required for school management. Recording required data does not depend on the data subject's consent: the legal basis for processing is defined by the adopting municipality (for example, a legal obligation, execution of public policy, or compliance with a regulatory obligation).",
+      "paragraph2": "The system displays an <strong>informational notice</strong> (acknowledgement) during registration, explaining which data is processed and for what purpose. This notice does not collect consent and does not make registration conditional on consent.",
+      "paragraph3": "For <strong>optional</strong> purposes (for example, WhatsApp messages or informational email beyond what is strictly necessary), the system offers separate, optional consent that can be withdrawn at any time without affecting registration or the provision of school services.",
+      "bullet1": "Data needed for school routines: informational notice, with no mandatory consent.",
+      "bullet2": "Optional communications: separate, optional, and revocable consent.",
+      "bullet3": "Refusing optional consent does not prevent registration or service delivery."
+    },
+    "security": {
+      "title": "10. Security and changes",
+      "paragraph1": "The sandbox applies access controls, blocks external effects, and may be reset to preserve the synthetic nature of the demonstration. These measures do not make the demo an environment authorized for real personal data.",
+      "paragraph2": "This policy may be updated to reflect changes to the demo. The date at the beginning of the page indicates the latest version of this notice."
+    },
+    "footer": {
+      "line1": "EDUCA - Public demonstration demo",
+      "line2": "Synthetic data, with no real data subject",
+      "copyright": "© 2025-2026 - EDUCA System"
+    }
+  }
+}

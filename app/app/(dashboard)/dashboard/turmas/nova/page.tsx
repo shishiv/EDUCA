@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -44,6 +46,7 @@ const SERIES_BY_TIPO: Record<string, string[]> = {
 }
 
 export default function NovaTurmaPage() {
+  const t = useClassroomTranslations()
   const router = useRouter()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
 
@@ -84,7 +87,7 @@ export default function NovaTurmaPage() {
           feature: 'turmas',
           action: 'load_escolas',
         })
-        toast.error('Erro ao carregar escolas')
+        toast.error(t('classes.loadError'))
       } finally {
         setLoadingData(false)
       }
@@ -135,19 +138,19 @@ export default function NovaTurmaPage() {
     e.preventDefault()
 
     if (!formData.escola_id) {
-      toast.error('Selecione uma escola')
+      toast.error(t('forms.selectSchool'))
       return
     }
     if (!formData.nome.trim()) {
-      toast.error('Informe o nome da turma')
+      toast.error(t('forms.className'))
       return
     }
     if (!formData.serie) {
-      toast.error('Selecione a série')
+      toast.error(t('forms.selectSeries'))
       return
     }
     if (!formData.turno) {
-      toast.error('Selecione o turno')
+      toast.error(t('forms.selectShift'))
       return
     }
 
@@ -166,14 +169,14 @@ export default function NovaTurmaPage() {
 
       if (error) throw error
 
-      toast.success('Turma criada com sucesso!')
+      toast.success(t('classes.createSuccess'))
       router.push('/dashboard/turmas')
     } catch (err) {
       logger.error('Error creating turma', err as Error, {
         feature: 'turmas',
         action: 'create_turma',
       })
-      toast.error('Erro ao criar turma. Tente novamente.')
+      toast.error(t('classes.createError'))
     } finally {
       setLoading(false)
     }
@@ -185,19 +188,19 @@ export default function NovaTurmaPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/turmas">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('actions.back')}
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nova Turma</h1>
-          <p className="text-gray-600 mt-1">Crie uma nova turma no sistema</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('classes.newTitle')}</h1>
+          <p className="text-gray-600 mt-1">{t('classes.newSubtitle')}</p>
         </div>
       </div>
 
       {shouldShowSelector && !formData.escola_id && (
         <Alert variant="destructive">
           <AlertDescription>
-            Selecione uma escola no menu lateral ou no formulário abaixo antes de criar uma turma.
+            {t('forms.selectSchool')} no menu lateral ou no formulário abaixo antes de criar uma turma.
           </AlertDescription>
         </Alert>
       )}
@@ -208,17 +211,17 @@ export default function NovaTurmaPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <GraduationCap className="h-5 w-5" />
-                <span>Dados da Turma</span>
+                <span>{t('classes.data')}</span>
               </CardTitle>
               <CardDescription>
-                Preencha as informações básicas da turma
+                {t('classes.dataHint')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nome">Nome da Turma *</Label>
+                    <Label htmlFor="nome">{t('forms.className')} *</Label>
                     <Input
                       id="nome"
                       value={formData.nome}
@@ -229,7 +232,7 @@ export default function NovaTurmaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="ano_letivo">Ano Letivo *</Label>
+                    <Label htmlFor="ano_letivo">{t('forms.schoolYear')} *</Label>
                     <Input
                       id="ano_letivo"
                       type="number"
@@ -243,7 +246,7 @@ export default function NovaTurmaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="escola_id">Escola *</Label>
+                  <Label htmlFor="escola_id">{t('forms.school')} *</Label>
                   <Select
                     value={formData.escola_id}
                     onValueChange={(value) => {
@@ -254,7 +257,7 @@ export default function NovaTurmaPage() {
                     disabled={loadingData}
                   >
                     <SelectTrigger id="escola_id">
-                      <SelectValue placeholder={loadingData ? 'Carregando…' : 'Selecione a escola'} />
+                      <SelectValue placeholder={loadingData ? 'Carregando…' : t('forms.selectSchool')} />
                     </SelectTrigger>
                     <SelectContent>
                       {escolas.map((escola) => (
@@ -268,14 +271,14 @@ export default function NovaTurmaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="serie">Série *</Label>
+                    <Label htmlFor="serie">{t('forms.series')} *</Label>
                     <Select
                       value={formData.serie}
                       onValueChange={(value) => handleInputChange('serie', value)}
                       disabled={!formData.escola_id}
                     >
                       <SelectTrigger id="serie">
-                        <SelectValue placeholder="Selecione a série" />
+                        <SelectValue placeholder={t('forms.selectSeries')} />
                       </SelectTrigger>
                       <SelectContent>
                         {getSeriesPorTipo().map((serie) => (
@@ -288,13 +291,13 @@ export default function NovaTurmaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="turno">Turno *</Label>
+                    <Label htmlFor="turno">{t('forms.shift')} *</Label>
                     <Select
                       value={formData.turno}
                       onValueChange={(value) => handleInputChange('turno', value)}
                     >
                       <SelectTrigger id="turno">
-                        <SelectValue placeholder="Selecione o turno" />
+                        <SelectValue placeholder={t('forms.selectShift')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="matutino">Matutino</SelectItem>
@@ -307,14 +310,14 @@ export default function NovaTurmaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="professor_id">Professor Responsável</Label>
+                    <Label htmlFor="professor_id">{t('forms.teacher')}</Label>
                     <Select
                       value={formData.professor_id}
                       onValueChange={(value) => handleInputChange('professor_id', value)}
                       disabled={!formData.escola_id}
                     >
                       <SelectTrigger id="professor_id">
-                        <SelectValue placeholder="Selecione o professor" />
+                        <SelectValue placeholder={t('forms.selectTeacher')} />
                       </SelectTrigger>
                       <SelectContent>
                         {professores.map((prof) => (
@@ -324,7 +327,7 @@ export default function NovaTurmaPage() {
                         ))}
                         {professores.length === 0 && formData.escola_id && (
                           <SelectItem value="__none" disabled>
-                            Nenhum professor nesta escola
+                            {t('forms.noTeacher')}
                           </SelectItem>
                         )}
                       </SelectContent>
@@ -332,7 +335,7 @@ export default function NovaTurmaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="capacidade">Capacidade Máxima *</Label>
+                    <Label htmlFor="capacidade">{t('forms.capacity')} *</Label>
                     <Input
                       id="capacidade"
                       type="number"
@@ -346,12 +349,12 @@ export default function NovaTurmaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
+                  <Label htmlFor="observacoes">{t('forms.notes')}</Label>
                   <Textarea
                     id="observacoes"
                     value={formData.observacoes}
                     onChange={(e) => handleInputChange('observacoes', e.target.value)}
-                    placeholder="Observações adicionais sobre a turma"
+                    placeholder={t('forms.additionalNotes')}
                     rows={3}
                   />
                 </div>
@@ -362,12 +365,12 @@ export default function NovaTurmaPage() {
                     checked={formData.ativo}
                     onCheckedChange={(checked) => handleInputChange('ativo', checked)}
                   />
-                  <Label htmlFor="ativo">Turma ativa</Label>
+                  <Label htmlFor="ativo">{t('forms.active')}</Label>
                 </div>
 
                 <div className="flex justify-end space-x-4">
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/dashboard/turmas">Cancelar</Link>
+                    <Link href="/dashboard/turmas">{t('actions.cancel')}</Link>
                   </Button>
                   <Button type="submit" disabled={loading || loadingData}>
                     {loading ? (
@@ -378,7 +381,7 @@ export default function NovaTurmaPage() {
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        Criar Turma
+                        {t('actions.create')} {t('labels.class')}
                       </>
                     )}
                   </Button>
@@ -393,7 +396,7 @@ export default function NovaTurmaPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <School className="h-5 w-5" />
-                <span>Informações da Escola</span>
+                <span>{t('forms.schoolInfo')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -408,17 +411,17 @@ export default function NovaTurmaPage() {
                     </p>
                   )}
                   <p>
-                    <span className="text-gray-500">Professores disponíveis: </span>
+                    <span className="text-gray-500">{t('forms.availableTeachers')} </span>
                     {professores.length}
                   </p>
                   <p>
-                    <span className="text-gray-500">Séries disponíveis: </span>
+                    <span className="text-gray-500">{t('forms.availableSeries')} </span>
                     {getSeriesPorTipo().length}
                   </p>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">
-                  Selecione uma escola para ver as informações
+                  {t('forms.selectSchool')} para ver as informações
                 </p>
               )}
             </CardContent>
@@ -428,17 +431,17 @@ export default function NovaTurmaPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="h-5 w-5" />
-                <span>Capacidade</span>
+                <span>{t('labels.capacity')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-2xl font-bold text-blue-600">{formData.capacidade} alunos</p>
-              <p className="text-sm text-gray-600">Capacidade máxima da turma</p>
-              <p className="text-sm font-medium text-gray-700">Recomendações</p>
+              <p className="text-sm text-gray-600">{t('forms.capacityInfo')}</p>
+              <p className="text-sm font-medium text-gray-700">{t('forms.recommendations')}</p>
               <ul className="text-xs text-gray-500 space-y-1">
-                <li>• Berçário/Maternal: 15-20 alunos</li>
-                <li>• Pré-escola: 20-25 alunos</li>
-                <li>• Fundamental: 25-30 alunos</li>
+                <li>{t('forms.recommendationNursery')}</li>
+                <li>{t('forms.recommendationPreschool')}</li>
+                <li>{t('forms.recommendationElementary')}</li>
               </ul>
             </CardContent>
           </Card>

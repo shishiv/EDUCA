@@ -48,6 +48,7 @@ package-lock.json
 .env*.local
 
 # Internal agent/planning files (never commit to public repo)
+.unlazy/
 .apontamento/
 .claude/
 .prompts/
@@ -61,3 +62,6 @@ PROPOSTA-ORGANIZACAO-CLEANUP-ROADMAP.md
 # Internal docs
 docs/security-analysis.md
 docs/bugs-analysis.md
+
+# Generated API reference
+docs/api/
