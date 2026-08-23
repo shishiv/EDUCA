@@ -7,6 +7,7 @@ ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 cd "$APP_DIR"
 # shellcheck source=pilot-port-range-lease.sh
 source "$APP_DIR/scripts/pilot-port-range-lease.sh"
+source "$APP_DIR/scripts/pilot-app-server.sh"
 
 RECEIPT_ROOT="${PILOT_E2E_RECEIPT_DIR:-$ROOT_DIR/.pilot-evidence}"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -94,6 +95,7 @@ run_child() {
     "PILOT_E2E_RECEIPT_DIR=$child_receipt_dir"
     "PILOT_E2E_PORT_BASE=$PILOT_E2E_PORT_BASE"
     "PILOT_E2E_PORT_LEASE_DIR=$PILOT_E2E_PORT_LEASE_DIR"
+    "PILOT_E2E_APP_SERVER=${PILOT_E2E_APP_SERVER:-portless}"
     'PILOT_E2E_PORT_LEASE_EXTERNAL=true'
     'PILOT_LEGACY_DELIBERATE_BREAK=none'
     'PILOT_CAPACITY_DELIBERATE_BREAK=none'
@@ -166,9 +168,8 @@ finalize() {
   "result": "$([[ "$PORT_LEASE_RELEASE_FAILED" == true ]] && printf failed || printf pass)",
   "childReceiptsPreserved": true,
   "childLogsRedacted": true,
-  "portRangeLeaseBase": ${PILOT_E2E_PORT_BASE:-null},
-  "portRangeLeaseEnd": $(if [[ -n "${PILOT_E2E_PORT_BASE:-}" ]]; then printf '%s' "$((PILOT_E2E_PORT_BASE + 8))"; else printf null; fi),
-  "portRangeLeaseDir": "${PILOT_E2E_PORT_LEASE_DIR:-}",
+  "serverMode": "${PILOT_E2E_APP_SERVER:-portless}",
+  "portRangeLeaseDir": null,
   "portRangeLeaseReleased": $([[ "$PILOT_E2E_PORT_LEASE_RELEASED" == true ]] && printf true || printf false),
   "aggregateDirectory": "$AGGREGATE_DIR"
 }
@@ -220,10 +221,9 @@ const receipt = {
   externalCredentialsUsed: false,
   publicDemoUsed: false,
   portRangeLease: {
-    base: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) : null,
-    end: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) + 8 : null,
+    serverMode: process.env.PILOT_E2E_APP_SERVER || 'portless',
     external: process.env.PILOT_E2E_PORT_LEASE_EXTERNAL === 'true',
-    leaseDir: process.env.PILOT_E2E_PORT_LEASE_DIR || null,
+    leaseDir: null,
     released: process.env.PILOT_E2E_PORT_LEASE_RELEASED === 'true',
   },
 }
@@ -239,12 +239,17 @@ trap finalize EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+AGGREGATE_SERVER_MODE=$(pilot_app_server_mode)
 for command in bash env node pnpm ss docker; do
   command -v "$command" >/dev/null || {
     echo "PILOT_AGGREGATE_PREREQUISITE_MISSING: $command" >&2
     exit 1
   }
 done
+if [[ "$AGGREGATE_SERVER_MODE" == portless ]] && ! command -v portless >/dev/null; then
+  echo 'PILOT_AGGREGATE_PREREQUISITE_MISSING: portless' >&2
+  exit 1
+fi
 
 case "$AGGREGATE_DELIBERATE_BREAK" in
   none|legacy|capacity|descriptive|security) ;;

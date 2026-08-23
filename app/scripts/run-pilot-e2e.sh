@@ -9,6 +9,7 @@ cd "$APP_DIR"
 # shellcheck source=pilot-supabase-cleanup.sh
 source "$APP_DIR/scripts/pilot-port-range-lease.sh"
 source "$APP_DIR/scripts/pilot-supabase-cleanup.sh"
+source "$APP_DIR/scripts/pilot-app-server.sh"
 
 RECEIPT_DIR="${PILOT_E2E_RECEIPT_DIR:-$ROOT_DIR/.pilot-evidence}"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -25,6 +26,9 @@ AUTH_STATE_REMOVED=false
 TEMP_REMOVED=false
 CLEANUP_FAILED=false
 PORT_LEASE_RELEASE_FAILED=false
+APP_SERVER_MODE=""
+APP_PORT=""
+APP_ORIGIN=""
 BASE_URL=''
 RESULT='failed'
 TEST_EXIT=1
@@ -128,9 +132,18 @@ const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const databaseUrl = process.env.SUPABASE_DB_URL || ''
 const appUrl = process.env.PILOT_LEGACY_NAMED_APP_URL || process.env.NEXT_PUBLIC_APP_URL || ''
 const isLocalHost = value => ['127.0.0.1', 'localhost'].includes(new URL(value).hostname)
+const serverMode = process.env.PILOT_E2E_APP_SERVER || 'portless'
 const isNamedLocalUrl = value => {
   const url = new URL(value)
-  return ['http:', 'https:'].includes(url.protocol) && url.hostname.endsWith('.localhost') && url.port === ''
+  return serverMode === 'direct'
+    ? ['127.0.0.1', 'localhost'].includes(url.hostname) && url.protocol === 'http:'
+    : ['http:', 'https:'].includes(url.protocol) && url.hostname.endsWith('.localhost') && url.port === ''
+}
+const receiptUrl = value => {
+  if (!value) return null
+  const url = new URL(value)
+  url.port = ''
+  return url.toString().replace(/\/$/, '')
 }
 
 const receipt = {
@@ -144,9 +157,10 @@ const receipt = {
     externalProjectUsed: false,
   },
   app: {
-    url: appUrl || null,
+    url: receiptUrl(appUrl),
     namedLocalUrl: appUrl ? isNamedLocalUrl(appUrl) : false,
-    server: 'portless',
+    server: serverMode,
+    serverMode,
   },
   flags: {
     nextPublicPilotMode: process.env.NEXT_PUBLIC_PILOT_MODE === 'true',
@@ -165,10 +179,9 @@ const receipt = {
     deprecatedAliasesUsed: false,
   },
   portRangeLease: {
-    base: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) : null,
-    end: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) + 8 : null,
+    serverMode: process.env.PILOT_E2E_APP_SERVER || 'portless',
     external: process.env.PILOT_E2E_PORT_LEASE_EXTERNAL === 'true',
-    leaseDir: process.env.PILOT_E2E_PORT_LEASE_DIR || null,
+    leaseDir: null,
   },
   externalCredentialsUsed: false,
   publicDemoUsed: false,
@@ -393,10 +406,9 @@ const receipt = {
   roleSetup: readJson(browserPath),
   browser: readJson(browserPath),
   portRangeLease: {
-    base: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) : null,
-    end: process.env.PILOT_E2E_PORT_BASE ? Number(process.env.PILOT_E2E_PORT_BASE) + 8 : null,
+    serverMode: process.env.PILOT_E2E_APP_SERVER || 'portless',
     external: process.env.PILOT_E2E_PORT_LEASE_EXTERNAL === 'true',
-    leaseDir: process.env.PILOT_E2E_PORT_LEASE_DIR || null,
+    leaseDir: null,
     released: process.env.PILOT_E2E_PORT_LEASE_RELEASED === 'true',
   },
   tests: {
@@ -405,7 +417,7 @@ const receipt = {
     outputRedacted: true,
   },
   cleanup: readJson(cleanupPath),
-  namedBaseUrl: baseUrl || null,
+  namedBaseUrl: (() => { if (!baseUrl) return null; const url = new URL(baseUrl); url.port = ''; return url.toString().replace(/\/$/, '') })(),
   deliberateBreak: deliberateBreak === 'none' ? null : deliberateBreak,
   r1Independent: true,
   externalCredentialsUsed: false,
@@ -424,12 +436,17 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for command in ss docker pnpm psql portless curl node setsid; do
+APP_SERVER_MODE=$(pilot_app_server_mode)
+for command in ss docker pnpm psql curl node setsid; do
   command -v "$command" >/dev/null || {
     echo "PILOT_LEGACY_E2E_PREREQUISITE_MISSING: $command" >&2
     exit 1
   }
 done
+if [[ "$APP_SERVER_MODE" == portless ]] && ! command -v portless >/dev/null; then
+  echo 'PILOT_LEGACY_E2E_PREREQUISITE_MISSING: portless' >&2
+  exit 1
+fi
 
 case "$DELIBERATE_BREAK" in
   none|selection|safety|cleanup) ;;
@@ -450,6 +467,9 @@ MAILPIT_PORT=$((PORT_BASE + 3))
 ANALYTICS_PORT=$((PORT_BASE + 6))
 VECTOR_PORT=$((PORT_BASE + 7))
 POOLER_PORT=$((PORT_BASE + 8))
+APP_SERVER_MODE=$(pilot_app_server_mode)
+APP_PORT=$(pilot_app_server_port "$PORT_BASE" "$APP_SERVER_MODE")
+APP_ORIGIN=$(pilot_app_server_origin "$APP_NAME" "$APP_SERVER_MODE" "$APP_PORT")
 
 ISOLATED_PROJECT_DIR=$(mktemp -d "$ROOT_DIR/.pilot-r3-t1-legacy-supabase.XXXXXX")
 SUPABASE_PROJECT_ID=$(basename "$ISOLATED_PROJECT_DIR")
@@ -485,12 +505,14 @@ sed -i \
   -e "0,/port = 54327/s//port = $ANALYTICS_PORT/" \
   -e "0,/vector_port = 54328/s//vector_port = $VECTOR_PORT/" \
   -e "0,/port = 54329/s//port = $POOLER_PORT/" \
-  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"https://$APP_NAME.localhost\"#" \
-  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"https://$APP_NAME.localhost\"]#" \
+  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"$APP_ORIGIN\"#" \
+  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"$APP_ORIGIN\"]#" \
   "$SUPABASE_CONFIG_DIR/config.toml"
 
 # The fixed R3-T1 template is rewritten per run so concurrent runners never share a host.
-sed -i "s#https://educa-r3-legacy-pilot.localhost#https://$APP_NAME.localhost#g" "$SUPABASE_CONFIG_DIR/config.toml"
+if [[ "$APP_SERVER_MODE" == portless ]]; then
+  sed -i "s#https://educa-r3-legacy-pilot.localhost#$APP_ORIGIN#g" "$SUPABASE_CONFIG_DIR/config.toml"
+fi
 
 # Do not let inherited remote project settings or credentials influence this run.
 unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL
@@ -516,7 +538,8 @@ export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
 export NEXT_PUBLIC_SUPABASE_ANON_KEY="$PUBLISHABLE_KEY"
 export SUPABASE_SERVICE_ROLE_KEY="$SECRET_KEY"
 export SUPABASE_DB_URL="$DB_URL"
-export NEXT_PUBLIC_APP_URL="https://$APP_NAME.localhost"
+export NEXT_PUBLIC_APP_URL="$APP_ORIGIN"
+export PILOT_E2E_APP_SERVER="$APP_SERVER_MODE"
 export NEXT_PUBLIC_PILOT_MODE=true
 export PILOT_MODE=true
 export PILOT_SYNTHETIC_DATA_ONLY=true
@@ -564,7 +587,9 @@ if (process.env.PILOT_LEGAL_APPROVAL_STATUS !== 'not_approved') throw new Error(
 if (!process.env.PUBLISHABLE_KEY?.startsWith('sb_publishable_')) throw new Error('PILOT_LEGACY_PRE_RESET_PUBLISHABLE_ALIAS_REQUIRED')
 if (!process.env.SECRET_KEY?.startsWith('sb_secret_')) throw new Error('PILOT_LEGACY_PRE_RESET_SECRET_ALIAS_REQUIRED')
 const namedUrl = new URL(appUrl)
-if (!namedUrl.hostname.endsWith('.localhost') || namedUrl.port !== '') throw new Error('PILOT_LEGACY_PRE_RESET_NAMED_APP_URL_REQUIRED')
+if (process.env.PILOT_E2E_APP_SERVER === 'direct') {
+  if (!['127.0.0.1', 'localhost'].includes(namedUrl.hostname) || namedUrl.protocol !== 'http:') throw new Error('PILOT_LEGACY_PRE_RESET_DIRECT_ORIGIN_REQUIRED')
+} else if (!namedUrl.hostname.endsWith('.localhost') || namedUrl.port !== '') throw new Error('PILOT_LEGACY_PRE_RESET_NAMED_APP_URL_REQUIRED')
 console.log('PILOT_LEGACY_PRE_RESET_SAFETY_RECEIPT: local=true synthetic_only=true external_deploy=false legal=not_approved current_aliases=true')
 NODE
 run_captured 'pilot_safety_gate' "$GATE_LOG" pnpm exec tsx scripts/pilot-safety-gate.ts seed
@@ -639,10 +664,18 @@ run_captured 'database_validation' "$DATABASE_VALIDATION_LOG" pnpm exec tsx scri
 run_captured 'build' "$BUILD_LOG" pnpm build
 printf 'PILOT_LEGACY_BUILD_RECEIPT: status=pass\n'
 
-setsid portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
-APP_PID=$!
+if [[ "$APP_SERVER_MODE" == direct ]]; then
+  PORT="$APP_PORT" HOSTNAME=127.0.0.1 pnpm start >"$APP_LOG" 2>&1 &
+  APP_PID=$!
+  BASE_URL="$APP_ORIGIN"
+else
+  setsid portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
+  APP_PID=$!
+fi
 for _ in $(seq 1 60); do
-  BASE_URL=$(portless get "$APP_NAME" 2>/dev/null || true)
+  if [[ "$APP_SERVER_MODE" == portless ]]; then
+    BASE_URL=$(portless get "$APP_NAME" 2>/dev/null || true)
+  fi
   if [[ -n "$BASE_URL" ]] && curl --silent --show-error --insecure --fail "$BASE_URL/login" >/dev/null 2>&1; then
     break
   fi
@@ -658,7 +691,9 @@ node <<'NODE'
 const value = process.env.PILOT_LEGACY_BASE_URL
 if (!value) throw new Error('PILOT_LEGACY_NAMED_APP_URL_MISSING')
 const url = new URL(value)
-if (!['http:', 'https:'].includes(url.protocol) || !url.hostname.endsWith('.localhost') || url.port !== '') {
+if (process.env.PILOT_E2E_APP_SERVER === 'direct') {
+  if (!['127.0.0.1', 'localhost'].includes(url.hostname) || url.protocol !== 'http:') throw new Error('PILOT_LEGACY_DIRECT_ORIGIN_REQUIRED')
+} else if (!['http:', 'https:'].includes(url.protocol) || !url.hostname.endsWith('.localhost') || url.port !== '') {
   throw new Error('PILOT_LEGACY_NAMED_APP_URL_INVALID')
 }
 console.log('PILOT_LEGACY_BROWSER_SETUP_RECEIPT: named_url=true numbered_port=false')

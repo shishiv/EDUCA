@@ -457,3 +457,18 @@ Começar por #76, #77 e #79 em paralelo. #82 integra os três resultados. Em par
   O blocker R3-T4 permanece unmet, sem uso de sudo.
 - A documentação de `docs/operations/public-demo-*.md` foi revisada para
   português, sem travessão longo e sem URLs localhost numeradas.
+
+## Registro verificado da integração: servidor direto R3
+
+- Os harnesses R3 legacy, capacity e descriptive agora aceitam
+  `PILOT_E2E_APP_SERVER=direct`; o padrão `portless` mantém a exigência de
+  origem `.localhost` sem porta.
+- O modo direto usa loopback e reserva o décimo slot da lease para o app,
+  enquanto o Supabase mantém os nove slots originais. A origem do Auth é
+  configurada com a origem direta somente no stack descartável.
+- Receipts registram apenas `serverMode` e removem portas e caminhos da lease;
+  controles positivo e negativo de origem estão em teste unitário.
+- `PILOT_E2E_APP_SERVER=direct pnpm test:e2e:pilot` passou com os quatro filhos
+  (legacy, capacity, descriptive e security). Cleanup reportou app parado,
+  bases isoladas paradas, diretórios temporários removidos e lease liberada;
+  não restaram containers da campanha.
