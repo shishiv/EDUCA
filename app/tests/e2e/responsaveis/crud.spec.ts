@@ -10,7 +10,7 @@ import {
 async function completeRelationshipAndConsent(page: import('@playwright/test').Page) {
   await page.locator('#parentesco').click()
   await page.getByRole('option', { name: /mãe|pai|responsável/i }).first().click()
-  await page.getByRole('checkbox', { name: /consentimento lgpd/i }).click()
+  // Optional consent — no longer required for registration
 }
 
 /**
@@ -194,7 +194,7 @@ test.describe('Responsáveis - Create Form', () => {
       await page.getByRole('option', { name: /mãe|pai|responsável/i }).first().click()
     }
     
-    await page.getByRole('checkbox', { name: /consentimento lgpd/i }).click()
+    // Optional consent — no longer required for registration
 
     // Optional email
     const emailField = page.getByLabel(/email/i)
@@ -236,7 +236,7 @@ test.describe('Responsáveis - Create Form', () => {
     const parentescoSelect = page.locator('#parentesco')
     await parentescoSelect.click()
     await page.getByRole('option').first().click()
-    await page.getByRole('checkbox', { name: /consentimento lgpd/i }).click()
+    // Optional consent — no longer required for registration
     
     const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
     await saveButton.click()

@@ -237,12 +237,47 @@ export default function PoliticaPrivacidadePage() {
 						</ul>
 					</section>
 
+					{/* Section 9 — Notice vs Consent */}
+					<section className="mb-8">
+						<div className="flex items-center gap-2 mb-4">
+							<Shield className="h-5 w-5 text-blue-600" />
+							<h2 className="text-xl font-semibold text-gray-900">
+								9. Aviso operacional e consentimento opcional
+							</h2>
+						</div>
+						<p className="text-gray-700 leading-relaxed mb-4">
+							O cadastro de responsáveis e alunos é uma rotina administrativa
+							necessária à gestão escolar. O registro dos dados obrigatórios não
+							depende de consentimento do titular: a base legal do tratamento é
+							definida pelo município adotante (ex.: obrigação legal, execução de
+							políticas públicas ou cumprimento de obrigação regulatória).
+						</p>
+						<p className="text-gray-700 leading-relaxed mb-4">
+							O sistema exibe um <strong>aviso informativo</strong> (ciência) no
+							momento do cadastro, explicando quais dados são tratados e para qual
+							finalidade. Esse aviso não é uma coleta de consentimento e não
+							condiciona o cadastro.
+						</p>
+						<p className="text-gray-700 leading-relaxed mb-4">
+							Para finalidades <strong>opcionais</strong> (ex.: comunicações por
+							WhatsApp, e-mail informativo além do estritamente necessário), o
+							sistema oferece um consentimento separado e facultativo, que pode ser
+							revogado a qualquer momento sem prejuízo ao cadastro ou à prestação
+							do serviço escolar.
+						</p>
+						<ul className="list-disc list-inside space-y-2 text-gray-700 ml-4">
+							<li>Dados necessários à rotina escolar: aviso informativo, sem consentimento obrigatório.</li>
+							<li>Comunicações opcionais: consentimento separado, facultativo e revogável.</li>
+							<li>A recusa do consentimento opcional não impede o cadastro nem a prestação do serviço.</li>
+						</ul>
+					</section>
+
 					{/* Section 9 */}
 					<section className="mb-8">
 						<div className="flex items-center gap-2 mb-4">
 							<Lock className="h-5 w-5 text-red-600" />
 							<h2 className="text-xl font-semibold text-gray-900">
-								9. Segurança e alterações
+								10. Segurança e alterações
 							</h2>
 						</div>
 						<p className="text-gray-700 leading-relaxed mb-4">

@@ -268,13 +268,12 @@ export const studentRegistrationSchema = z.object({
   // Social programs
   ...socialProgramsSchema.shape,
 
-  // LGPD compliance
+  // LGPD optional consent — tracks optional consent for additional
+  // communications. NOT a gate for registration (school routines use a
+  // different legal basis defined by the municipal controller).
   lgpd_consentimento: z
     .boolean()
-    .refine(
-      (val) => val === true,
-      'Consentimento LGPD é obrigatório para registrar aluno'
-    ),
+    .default(false),
 })
 
 // ===== STUDENT UPDATE SCHEMA =====

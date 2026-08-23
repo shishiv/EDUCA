@@ -1,1 +1,1 @@
-export { ConsentCheckbox, ConsentCheckboxSimple } from './consent-checkbox'
+export { ConsentCheckbox, ConsentCheckboxSimple, OperationalDataNotice, OptionalConsentCheckbox } from './consent-checkbox'

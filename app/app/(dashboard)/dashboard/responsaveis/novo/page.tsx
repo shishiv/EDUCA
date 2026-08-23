@@ -15,12 +15,12 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Save, User, Phone, Mail, Briefcase, Shield } from 'lucide-react'
+import { ArrowLeft, Save, User, Phone, Mail, Briefcase, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { ConsentCheckbox } from '@/components/lgpd'
+import { OperationalDataNotice, OptionalConsentCheckbox } from '@/components/lgpd'
 import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoResponsavelPage() {
@@ -84,12 +84,10 @@ export default function NovoResponsavelPage() {
         return
       }
 
-      // Validate LGPD consent
-      if (!formData.lgpd_consentimento) {
-        toast.error('É necessário aceitar a Política de Privacidade para continuar')
-        setLoading(false)
-        return
-      }
+      // NOTE: lgpd_consentimento is NOT required for registration.
+      // Guardian registration is a necessary school routine; consent is only
+      // collected for optional purposes (communications). The operational
+      // notice is displayed but does not gate submission.
 
       // Validate CPF
       const cleanedCPF = formData.cpf.replace(/\D/g, '')
@@ -114,8 +112,12 @@ export default function NovoResponsavelPage() {
         parentesco: formData.parentesco,
         endereco: formData.endereco || null,
         profissao: formData.profissao || null,
+        // lgpd_consentimento tracks OPTIONAL consent for additional
+        // communications, not a gate for the registration itself.
         lgpd_consentimento: formData.lgpd_consentimento,
-        lgpd_data_consentimento: new Date().toISOString(),
+        lgpd_data_consentimento: formData.lgpd_consentimento
+          ? new Date().toISOString()
+          : null,
         // escola_id scopes the record to the school the admin selected;
         // school-scoped users (diretor, secretario) have their own escola_id
         // which RLS enforces at the database seam.
@@ -360,19 +362,23 @@ export default function NovoResponsavelPage() {
           </CardContent>
         </Card>
 
-        {/* LGPD Consent */}
+        {/* Data Treatment Notice + Optional Consent */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-amber-600" />
-              <CardTitle>Consentimento LGPD</CardTitle>
+              <Info className="h-5 w-5 text-blue-600" />
+              <CardTitle>Tratamento de Dados</CardTitle>
             </div>
             <CardDescription>
-              Autorização para tratamento de dados pessoais
+              Informações sobre o uso dos dados cadastrados
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ConsentCheckbox
+          <CardContent className="space-y-4">
+            {/* Operational notice — informational, does not block */}
+            <OperationalDataNotice />
+
+            {/* Optional consent — for additional communications only */}
+            <OptionalConsentCheckbox
               checked={formData.lgpd_consentimento}
               onCheckedChange={(checked) => handleInputChange('lgpd_consentimento', checked)}
               disabled={loading}
