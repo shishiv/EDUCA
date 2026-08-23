@@ -1,0 +1,16 @@
+[
+  {
+    "localStudentCode": "EDUCA0001",
+    "fullName": "PESSOA SINTETICA UM",
+    "birthDate": "01/01/2015",
+    "birthMunicipalityCode": "5300108"
+  },
+  {
+    "localStudentCode": "EDUCA0002",
+    "fullName": "PESSOA SINTETICA DOIS",
+    "birthDate": "29/02/2016",
+    "affiliation1": "FILIACAO SINTETICA A",
+    "affiliation2": "FILIACAO SINTETICA B",
+    "birthMunicipalityCode": "2704302"
+  }
+]

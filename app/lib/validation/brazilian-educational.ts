@@ -92,8 +92,10 @@ export function validateINEP(inepCode: string): boolean {
 
   const clean = inepCode.replace(/[^\d]/g, '')
 
-  // INEP codes: 8 digits for schools, 12 digits for students (cod_aluno_inep)
-  // Source: portabilis/i-educar-educacenso-package Record 90/91 — cod_aluno_inep = exactly 12 digits
+  // Official 2026 import/export layout: record 00 field 2 is an 8-digit
+  // school code; records 30/40/50/60 field 4 use a 12-digit unique person ID.
+  // File exports use the strict, non-normalizing validators in
+  // lib/educacenso/2026/identifiers.ts.
   return clean.length === 8 || clean.length === 12
 }
 
