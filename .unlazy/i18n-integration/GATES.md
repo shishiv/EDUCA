@@ -29,3 +29,17 @@
 
 - Existing lint warnings remain in legacy screens; lint reports no errors.
 - Authenticated domain E2E still depends on local synthetic Supabase fixtures and was not rerun in this final recovery pass.
+
+## Recovery verification
+
+- The integration commit was cherry-picked onto `campaign/open-issues-e2e` at
+  `7089549d` without changing the locale architecture: `pt-BR` remains the
+  default and URLs remain unprefixed.
+- Repository unit tests, typecheck, lint, API docs, and synthetic build passed
+  after this lane was integrated.
+- The independent canonical authenticated pilot E2E was rerun against an
+  isolated local Supabase stack and passed its two tests, including UI login,
+  authenticated attendance read/write, and cross-school RLS isolation.
+- The broader R3-T4 aggregate could not pass because its named-URL scripts
+  reject the unprivileged portless `:1355` fallback; no sudo was used. This
+  remains an environment gate, not evidence of a locale regression.

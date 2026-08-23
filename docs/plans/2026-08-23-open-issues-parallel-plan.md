@@ -400,3 +400,25 @@ Começar por #76, #77 e #79 em paralelo. #82 integra os três resultados. Em par
 - A lane JOURNEYS (`campaign/leaf-journeys`) não foi integrada nesta fase: seu handoff declara que typecheck e E2E não foram executados por falta de dependências/stack e registra bloqueios materiais de ativação pública (claims, privacidade e credencial do demo). Os commits permanecem no branch da lane.
 - A lane PRIVACY mantém pendente a definição da base legal pelo controlador municipal; nenhum fundamento jurídico foi inventado no código integrado.
 - A geração de API docs é reproduzível via `cd app && pnpm docs:api`; a saída `docs/api/` permanece gerada e ignorada.
+
+## Registro verificado da integração — recuperação da Onda 1
+
+- A lane `campaign/leaf-i18n` foi integrada a partir da base `7089549d`, com
+  os cinco commits da fundação, registry, classroom, platform e integração,
+  terminando no commit de origem `7d29766c`. `pt-BR` permanece padrão, não há
+  prefixos de locale nas URLs, e a delegação para auth/Pilot Gate, RLS e
+  autorização de relatórios foi preservada.
+- O commit Educacenso de origem `e8410998` foi integrado. O escopo verificado
+  é apenas o serializer/validator puro da Identification Layout 2026 v1, com
+  fixtures sintéticos e fontes oficiais fixadas; não há rota, UI, persistência,
+  transmissão ou habilitação no demo/piloto.
+- Após a integração, frozen install, typecheck, lint, unit tests, geração de
+  API docs e build sintético passaram. O teste unitário completo reportou 70
+  arquivos aprovados, 3 ignorados, 823 testes aprovados e 20 ignorados.
+- A E2E canônica autenticada passou em stack Supabase local isolada: login de
+  professor sintético, leitura/escrita autenticada e isolamento RLS entre
+  escolas.
+- O agregado R3-T4 permanece não atendido neste ambiente: os scripts exigem
+  URL `.localhost` sem porta, mas o proxy portless sem sudo só pôde usar `:1355`.
+  As tentativas limparam os stacks isolados e liberaram os leases; não houve
+  uso de sudo nem acesso a banco compartilhado.
