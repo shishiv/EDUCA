@@ -138,9 +138,9 @@ export default function EscolasPage() {
     const matchesSearch = escola.nome.toLowerCase().includes(search.toLowerCase()) ||
                          escola.codigo.toLowerCase().includes(search.toLowerCase()) ||
                          escola.diretor.nome.toLowerCase().includes(search.toLowerCase())
-    
+
     const matchesTipo = tipoFilter === 'todos' || escola.tipo === tipoFilter
-    const matchesStatus = statusFilter === 'todos' || 
+    const matchesStatus = statusFilter === 'todos' ||
                          (statusFilter === 'ativo' && escola.ativo) ||
                          (statusFilter === 'inativo' && !escola.ativo)
 

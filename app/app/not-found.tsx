@@ -23,7 +23,7 @@ export default function NotFound() {
             </CardDescription>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <div className="text-center space-y-4">
             <p className="text-gray-600">

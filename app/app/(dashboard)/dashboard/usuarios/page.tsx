@@ -148,9 +148,9 @@ export default function UsuariosPage() {
   const filteredUsuarios = usuarios.filter(usuario => {
     const matchesSearch = usuario.nome.toLowerCase().includes(search.toLowerCase()) ||
                          (usuario.email?.toLowerCase() || "").includes(search.toLowerCase())
-    
+
     const matchesTipo = tipoFilter === 'todos' || usuario.tipo_usuario === tipoFilter
-    const matchesStatus = statusFilter === 'todos' || 
+    const matchesStatus = statusFilter === 'todos' ||
                          (statusFilter === 'ativo' && usuario.ativo) ||
                          (statusFilter === 'inativo' && !usuario.ativo)
 
@@ -309,9 +309,9 @@ export default function UsuariosPage() {
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => toggleUserStatus(usuario.id)}
                           className={usuario.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
                         >
@@ -332,7 +332,7 @@ export default function UsuariosPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>{t('labels.cancelar')}</AlertDialogCancel>
-                              <AlertDialogAction 
+                              <AlertDialogAction
                                 onClick={() => handleDeleteUser(usuario.id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >

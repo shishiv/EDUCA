@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -48,23 +48,23 @@ export default function NovoAlunoPage() {
     endereco: '',
     telefone: '',
     email: '',
-    
+
     // Dados familiares
     nome_mae: '',
     nome_pai: '',
     responsavel_principal: '',
-    
+
     // Dados médicos/especiais
     necessidades_especiais: '',
     alergias: '',
     medicamentos: '',
     observacoes_medicas: '',
-    
+
     // Dados escolares
     escola_anterior: '',
     serie_pretendida: '',
     turno_preferencia: '',
-    
+
     // Status
     ativo: true
   })
@@ -285,7 +285,7 @@ export default function NovoAlunoPage() {
                           </p>
                         )}
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="data_nascimento">{t('labels.data-de-nascimento-2')}</Label>
                         <Input
@@ -303,7 +303,7 @@ export default function NovoAlunoPage() {
                           </p>
                         )}
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="sexo">{t('labels.sexo-2')}</Label>
                         <Select value={formData.sexo} onValueChange={(value) => handleInputChange('sexo', value)}>
@@ -345,7 +345,7 @@ export default function NovoAlunoPage() {
                           </p>
                         )}
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="rg">{t('labels.rg')}</Label>
                         <Input
@@ -386,7 +386,7 @@ export default function NovoAlunoPage() {
                           maxLength={15}
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="email">{t('labels.email')}</Label>
                         <Input
@@ -417,7 +417,7 @@ export default function NovoAlunoPage() {
                           </p>
                         )}
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="nome_pai">{t('labels.nome-do-pai')}</Label>
                         <Input
@@ -520,7 +520,7 @@ export default function NovoAlunoPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="resp_parentesco">{t('labels.parentesco-2')}</Label>
                     <Select value={responsavelData.parentesco} onValueChange={(value) => handleResponsavelChange('parentesco', value)}>
@@ -551,7 +551,7 @@ export default function NovoAlunoPage() {
  required={!pilotMode}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="resp_telefone">{t('labels.telefone-2')}</Label>
                     <Input
@@ -576,7 +576,7 @@ export default function NovoAlunoPage() {
                       placeholder="email@exemplo.com"
                     />
                   </div>
-                  
+
                   <div className={pilotMode ? 'hidden' : 'space-y-2'}>
                     <Label htmlFor="resp_profissao">{t('labels.profissao')}</Label>
                     <Input

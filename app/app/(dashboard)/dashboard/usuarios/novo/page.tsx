@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -133,7 +133,7 @@ export default function NovoUsuarioPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="email">{t('labels.email-2')}</Label>
                     <Input
@@ -228,7 +228,7 @@ export default function NovoUsuarioPage() {
                   <div><strong>{t('labels.professor-2')}</strong>{t('labels.gestao-de-turmas-e-alunos')}</div>
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">{t('labels.primeiro-acesso')}</h4>
                 <p className="text-sm text-gray-600">

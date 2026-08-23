@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -18,12 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  ArrowLeft, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Phone,
+  MapPin,
   Calendar,
   Shield,
   School,
@@ -243,21 +243,21 @@ export default function UsuarioDetalhesPage() {
                 <Mail className="h-4 w-4 text-gray-500" />
                 <span>{usuario.email}</span>
               </div>
-              
+
               {usuario.escola?.nome && (
                 <div className="flex items-center space-x-3 text-sm">
                   <School className="h-4 w-4 text-gray-500" />
                   <span>{usuario.escola?.nome}</span>
                 </div>
               )}
-              
+
               <div className="flex items-center space-x-3 text-sm">
                 <Calendar className="h-4 w-4 text-gray-500" />
                 <span>
                   Criado em {usuario.created_at ? new Date(usuario.created_at || "").toLocaleDateString('pt-BR') : 'N/A'}
                 </span>
               </div>
-              
+
               {/* Último acesso não está disponível no schema atual */}
 
               <div className="pt-4 border-t">

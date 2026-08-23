@@ -208,25 +208,25 @@ export default function AlunosPage() {
     const birth = new Date(birthDate)
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--
     }
-    
+
     return age
   }
 
   const getStatusBadge = (aluno: AlunoWithDetails) => {
     const matriculaAtiva = aluno.matriculas?.find(m => m.situacao === 'ativa')
-    
+
     if (!aluno.ativo) {
       return <Badge variant="secondary">{t('labels.inativo')}</Badge>
     }
-    
+
     if (matriculaAtiva) {
       return <Badge variant="default" className="bg-green-100 text-green-800">{t('labels.matriculado')}</Badge>
     }
-    
+
     return <Badge variant="outline">{t('labels.nao-matriculado')}</Badge>
   }
 
@@ -239,13 +239,13 @@ export default function AlunosPage() {
     const matchesSearch = aluno.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
                          aluno.cpf?.includes(search) ||
                          aluno.responsaveis?.nome?.toLowerCase().includes(search.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'todos' || 
+
+    const matchesStatus = statusFilter === 'todos' ||
                          (statusFilter === 'ativo' && aluno.ativo) ||
                          (statusFilter === 'inativo' && !aluno.ativo) ||
                          (statusFilter === 'matriculado' && aluno.matriculas?.some(m => m.situacao === 'ativa')) ||
                          (statusFilter === 'nao_matriculado' && !aluno.matriculas?.some(m => m.situacao === 'ativa'))
-    
+
     const matchesSexo = sexoFilter === 'todos' || aluno.sexo === sexoFilter
 
     return matchesSearch && matchesStatus && matchesSexo

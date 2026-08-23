@@ -193,11 +193,11 @@ export default function NovaMatriculaPage() {
     const birth = new Date(birthDate)
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--
     }
-    
+
     return age
   }
 
@@ -292,7 +292,7 @@ export default function NovaMatriculaPage() {
                         className="pl-10"
                       />
                     </div>
-                    
+
                     {searchAluno && (
                       <div className="border rounded-lg max-h-60 overflow-y-auto">
                         {filteredAlunos.map((aluno) => (
@@ -433,8 +433,8 @@ export default function NovaMatriculaPage() {
                   {t('labels.cancelar')}
                 </Link>
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={loading || !selectedAluno || !formData.turma_id}
               >
                 {loading ? (
@@ -468,7 +468,7 @@ export default function NovaMatriculaPage() {
                   <div className="font-medium text-lg">{selectedTurma.nome}</div>
                   <div className="text-sm text-gray-500">{selectedTurma.serie}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="text-sm">
                     <span className="font-medium">{t('labels.escola-2')}</span> {selectedTurma.escola}
@@ -489,8 +489,8 @@ export default function NovaMatriculaPage() {
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
                       style={{ width: `${(selectedTurma.matriculados / selectedTurma.capacidade) * 100}%` }}
                     ></div>
                   </div>

@@ -422,3 +422,22 @@ Começar por #76, #77 e #79 em paralelo. #82 integra os três resultados. Em par
   URL `.localhost` sem porta, mas o proxy portless sem sudo só pôde usar `:1355`.
   As tentativas limparam os stacks isolados e liberaram os leases; não houve
   uso de sudo nem acesso a banco compartilhado.
+
+## Registro verificado da integração — correção final de jornadas
+
+- Os commits completos de JOURNEYS `9a8ecb7a`, `7b76236d` e `8cce4d91` foram
+  integrados; `c1037fc0` e todos os arquivos `.unlazy/**` ficaram fora da
+  árvore rastreada. `.unlazy/` agora é ignorado pelo repositório.
+- Os seis specs `app/tests/e2e/public-demo/**` e os documentos de jornadas e
+  ativação estão presentes. O typecheck completo passou e a suíte unitária
+  passou com 70 arquivos, 823 testes aprovados e 20 ignorados.
+- Foi feita uma tentativa de execução dos specs public-demo em stack Supabase
+  sintética isolada. A inicialização/reset falhou no bootstrap Docker local;
+  nenhum banco compartilhado foi usado e a limpeza foi executada. Portanto a
+  execução J1-J6 permanece não atendida.
+- Foram removidos 206 runs reais de espaços/tabs ao fim de linha, preservando
+  CRLF/LF. A verificação sem falsos positivos de CRLF (`git -c
+  core.whitespace=cr-at-eol diff --check main...HEAD`) passou; não restam
+  espaços/tabs reais ao fim de linha.
+- O agregado R3-T4 continua unmet pelo blocker já reproduzido de portless sem
+  sudo; a E2E canônica autenticada permanece aprovada em stack isolada.
