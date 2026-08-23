@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { hasPermission, canAccessSchool } from '@/lib/auth'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useTranslations } from 'next-intl'
 
 export interface AuthGuardProps {
   children: React.ReactNode
@@ -20,6 +21,8 @@ export function AuthGuard({
   requiredSchoolId,
   fallbackPath = '/unauthorized'
 }: AuthGuardProps) {
+  const t = useTranslations('layout.authGuard')
+  const common = useTranslations('common.status')
   const { user, userProfile, loading } = useAuth()
   const router = useRouter()
 
@@ -63,7 +66,7 @@ export function AuthGuard({
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-gray-600">Carregando...</p>
+          <p className="text-gray-600">{common('loading')}</p>
         </div>
       </div>
     )
@@ -81,7 +84,7 @@ export function AuthGuard({
         <Alert className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Erro ao carregar perfil do usuário. Tente fazer login novamente.
+            {t('profileError')}
           </AlertDescription>
         </Alert>
       </div>

@@ -8,19 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
-function firstAccessErrorMessage(code: unknown): string {
-  switch (code) {
-    case 'PILOT_FIRST_ACCESS_PASSWORD_INVALID':
-      return 'Use 12+ caracteres com maiúscula, minúscula, número e símbolo.'
-    case 'PILOT_FIRST_ACCESS_PASSWORD_UNCHANGED':
-      return 'A nova senha precisa ser diferente da senha temporária. O primeiro acesso continua pendente.'
-    default:
-      return 'Não foi possível concluir o primeiro acesso.'
-  }
-}
+import { useTranslations } from 'next-intl'
 
 export default function PrimeiroAcessoPage() {
+  const t = useTranslations('auth.firstAccess')
   const router = useRouter()
   const searchParams = useSearchParams()
   const demoSandbox = isDemoSandboxEnabled()
@@ -29,15 +20,26 @@ export default function PrimeiroAcessoPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  function firstAccessErrorMessage(code: unknown): string {
+    switch (code) {
+      case 'PILOT_FIRST_ACCESS_PASSWORD_INVALID':
+        return t('errors.passwordInvalid')
+      case 'PILOT_FIRST_ACCESS_PASSWORD_UNCHANGED':
+        return t('errors.passwordUnchanged')
+      default:
+        return t('errors.failed')
+    }
+  }
+
   useEffect(() => {
     const code = searchParams.get('code')
-    if (code) supabase.auth.exchangeCodeForSession(code).catch(() => setError('Convite inválido ou expirado.'))
-  }, [searchParams])
+    if (code) supabase.auth.exchangeCodeForSession(code).catch(() => setError(t('errors.invalidInvite')))
+  }, [searchParams, t])
 
   async function completeFirstAccess(event: FormEvent) {
     event.preventDefault()
     if (demoSandbox) {
-      setError('O primeiro acesso fica bloqueado no sandbox público. Use a conta demo fornecida.')
+      setError(t('errors.demoBlocked'))
       return
     }
     setSubmitting(true)
@@ -58,21 +60,23 @@ export default function PrimeiroAcessoPage() {
     <main className="min-h-screen grid place-items-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Primeiro acesso</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
           <CardDescription>
             {resumeRegistration
-              ? 'Seu cadastro ainda não foi concluído. Defina sua senha para retomar com a mesma identidade.'
-              : 'Defina sua senha individual. Contas compartilhadas não são permitidas.'}
+              ? t('descriptionResume')
+              : t('descriptionDefault')}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={completeFirstAccess} className="space-y-4" aria-label="Primeiro acesso">
+          <form onSubmit={completeFirstAccess} className="space-y-4" aria-label={t('formLabel')}>
             <div className="space-y-2">
-              <Label htmlFor="password">Nova senha</Label>
+              <Label htmlFor="password">{t('passwordLabel')}</Label>
               <Input id="password" type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="new-password" required minLength={12} />
             </div>
             {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" disabled={submitting || demoSandbox} className="w-full">{submitting ? 'Salvando...' : 'Concluir acesso'}</Button>
+            <Button type="submit" disabled={submitting || demoSandbox} className="w-full">
+              {submitting ? t('submitting') : t('submit')}
+            </Button>
           </form>
         </CardContent>
       </Card>

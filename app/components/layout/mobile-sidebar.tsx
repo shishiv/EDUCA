@@ -8,17 +8,14 @@ import { cn } from '@/lib/utils'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { MunicipalBrasao } from '@/components/identity/municipal-assets'
 import { EscolaSelector } from '@/components/layout/escola-selector'
 import {
-  GraduationCap,
   Users,
   School,
   UserCheck,
   Calendar,
   ClipboardList,
-  BarChart3,
   Settings,
   Home,
   FileText,
@@ -28,6 +25,7 @@ import {
   BookText,
   X
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface MobileSidebarProps {
   isOpen: boolean
@@ -36,68 +34,70 @@ interface MobileSidebarProps {
 
 const navigation = [
   {
-    name: 'Dashboard',
+    label: 'items.dashboard',
     href: '/dashboard',
     icon: Home,
   },
   {
-    name: 'Alunos',
+    label: 'items.students',
     href: '/dashboard/alunos',
     icon: Users,
   },
   {
-    name: 'Usuários',
+    label: 'items.users',
     href: '/dashboard/usuarios',
     icon: User,
   },
   {
-    name: 'Escolas',
+    label: 'items.schools',
     href: '/dashboard/escolas',
     icon: School,
   },
   {
-    name: 'Turmas',
+    label: 'items.classes',
     href: '/dashboard/turmas',
     icon: BookOpen,
   },
   {
-    name: 'Matrículas',
+    label: 'items.enrolments',
     href: '/dashboard/matriculas',
     icon: UserCheck,
   },
   {
-    name: 'Frequência',
+    label: 'items.attendance',
     href: '/dashboard/turmas',
     icon: CheckSquare,
   },
   {
-    name: 'Diário de Classe',
+    label: 'items.classDiary',
     href: '/diario',
     icon: BookText,
   },
   {
-    name: 'Notas',
+    label: 'items.grades',
     href: '/dashboard/notas',
     icon: ClipboardList,
   },
   {
-    name: 'Calendário',
+    label: 'items.calendar',
     href: '/dashboard/calendario',
     icon: Calendar,
   },
   {
-    name: 'Relatórios',
+    label: 'items.reports',
     href: '/dashboard/relatorios',
     icon: FileText,
   },
   {
-    name: 'Configurações',
+    label: 'items.settings',
     href: '/dashboard/configuracoes',
     icon: Settings,
   },
-]
+] as const
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
+  const t = useTranslations('layout.navigation')
+  const brand = useTranslations('common.brand')
   const pathname = usePathname()
   const visibleNavigation = navigation.filter(item =>
     !isPilotModeEnabled() ||
@@ -147,7 +147,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     onClick={onClose}
                     className="-m-2.5 p-2.5 text-white hover:text-white hover:bg-white/20"
                   >
-                    <span className="sr-only">Fechar sidebar</span>
+                    <span className="sr-only">{t('closeSidebar')}</span>
                     <X className="h-6 w-6" aria-hidden="true" />
                   </Button>
                 </div>
@@ -163,8 +163,8 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       <MunicipalBrasao size="sm" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-municipal-primary">Sistema Escolar</h2>
-                      <p className="text-xs text-municipal-gray-500">Secretaria de Educação Municipal</p>
+                      <h2 className="text-sm font-bold text-municipal-primary">{brand('schoolSystem')}</h2>
+                      <p className="text-xs text-municipal-gray-500">{brand('municipalEducationDepartment')}</p>
                     </div>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     {visibleNavigation.map((item) => {
                           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                           return (
-                            <li key={item.name}>
+                            <li key={item.label}>
                               <Link
                                 href={item.href}
                                 onClick={onClose} // Close menu when navigation item is clicked
@@ -202,7 +202,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                                   )}
                                   aria-hidden="true"
                                 />
-                                {item.name}
+                                {t(item.label)}
                               </Link>
                             </li>
                           )

@@ -13,8 +13,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 export default function LoginPage() {
+  const t = useTranslations('auth.login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
@@ -69,8 +71,8 @@ export default function LoginPage() {
             }
           })
 
-          setError('Perfil de usuário não encontrado. A sessão foi preservada para retomar o cadastro.')
-          toast.error('Cadastro incompleto. Retomando o primeiro acesso.')
+          setError(t('profileMissing'))
+          toast.error(t('profileIncomplete'))
 
           // Keep the real Auth session so the pending registration can resume.
           router.replace('/primeiro-acesso?resume=1')
@@ -86,7 +88,7 @@ export default function LoginPage() {
           }
         })
 
-        toast.success('Login realizado com sucesso!')
+        toast.success(t('success'))
 
         // Only redirect after profile is confirmed to exist
         router.replace('/dashboard')
@@ -94,8 +96,11 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const loginError = err instanceof Error ? err : new Error(String(err))
       logger.error('Login error', loginError)
-      setError(loginError.message || 'Erro ao fazer login')
-      toast.error('Erro ao fazer login')
+      const message = loginError.message.toLowerCase().includes('invalid login credentials')
+        ? t('errors.invalidCredentials')
+        : t('errors.failed')
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -108,10 +113,10 @@ export default function LoginPage() {
         <div className="auth-login__welcome-orb pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full" aria-hidden="true" />
         <div className="auth-login__welcome-copy relative z-10 max-w-md">
           <h1 className="font-display text-4xl font-bold leading-tight lg:text-5xl">
-            Bem-vindo ao EDUCA
+            {t('welcomeTitle')}
           </h1>
           <p className="mt-5 max-w-sm text-lg leading-relaxed">
-            O sistema que simplifica a gestão escolar da rede municipal.
+            {t('welcomeDescription')}
           </p>
         </div>
       </div>
@@ -128,10 +133,10 @@ export default function LoginPage() {
           </div>
 
           <h2 className="auth-login__title font-display text-2xl font-semibold mb-2">
-            Entrar no sistema
+            {t('title')}
           </h2>
           <p className="auth-login__subtitle mb-8">
-            Digite suas credenciais para acessar
+            {t('subtitle')}
           </p>
 
           {error && (
@@ -143,14 +148,14 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="auth-login__fields space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="auth-login__label text-sm font-medium">
-                E-mail
+                {t('emailLabel')}
               </Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@municipio.edu.br"
+                placeholder={t('emailPlaceholder')}
                 autoComplete="email"
                 required
                 className="auth-login__input h-12 border-2 rounded-xl"
@@ -159,14 +164,14 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="auth-login__label text-sm font-medium">
-                Senha
+                {t('passwordLabel')}
               </Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
+                placeholder={t('passwordPlaceholder')}
                 autoComplete="current-password"
                 required
                 className="auth-login__input h-12 border-2 rounded-xl"
@@ -180,13 +185,13 @@ export default function LoginPage() {
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
                   className="w-[18px] h-[18px]"
                 />
-                <span>Manter conectado</span>
+                <span>{t('remember')}</span>
               </label>
               <Link
                 href="/reset-password"
                 className="auth-login__recovery text-sm font-medium"
               >
-                Esqueci minha senha
+                {t('forgotPassword')}
               </Link>
             </div>
 
@@ -199,11 +204,11 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Entrando...
+                  {t('submitting')}
                 </>
               ) : (
                 <>
-                  Entrar
+                  {t('submit')}
                   <LogIn className="h-5 w-5 ml-2" />
                 </>
               )}
@@ -211,7 +216,7 @@ export default function LoginPage() {
           </form>
 
           <p className="auth-login__footer mt-8 text-center text-sm">
-            Secretaria Municipal de Educação
+            {t('footer')}
           </p>
         </div>
       </div>

@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "loading": "Loading..."
+  },
+  "authGuard": {
+    "profileError": "Unable to load the user profile. Try signing in again."
+  },
+  "schoolSelector": {
+    "select": "Select a school",
+    "search": "Search schools...",
+    "empty": "No schools found.",
+    "none": "No school selected"
+  },
+  "header": {
+    "searchPlaceholder": "Search students, classes...",
+    "connection": "Connection: {status}",
+    "openNotifications": "Open notifications",
+    "notifications": "System notifications",
+    "urgent": "Urgent",
+    "attention": "Attention",
+    "noNotifications": "No notifications",
+    "openUserMenu": "Open user menu",
+    "userFallback": "User",
+    "myProfile": "My profile",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signOutSuccess": "Signed out successfully!",
+    "signOutError": "Unable to sign out"
+  },
+  "navigation": {
+    "ariaLabel": "Main mobile navigation",
+    "groups": {
+      "main": "Main",
+      "registrations": "Records",
+      "academic": "Academics",
+      "management": "Management"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "students": "Students",
+      "users": "Users",
+      "schools": "Schools",
+      "classes": "Classes",
+      "enrolments": "Enrolments",
+      "assignments": "Assignments",
+      "guardians": "Guardians",
+      "attendance": "Attendance",
+      "classDiary": "Class diary",
+      "diary": "Diary",
+      "grades": "Grades",
+      "calendar": "Calendar",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar",
+    "closeSidebar": "Close sidebar"
+  },
+  "mobileHeader": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "class": "Class: {name}",
+    "lesson": "Lesson {phase}",
+    "phases": {
+      "planning": "Planning",
+      "attendance": "Attendance",
+      "finished": "Finished",
+      "blocked": "Blocked",
+      "unknown": "Unknown"
+    },
+    "signOut": "Sign out",
+    "offlineMessage": "Offline mode: Your changes will be synchronized when the connection is restored{pending, plural, =0 {} one { (# pending)} other { (# pending)}}"
+  },
+  "demoSandbox": {
+    "title": "Demonstration sandbox",
+    "description": "· synthetic data reset weekly; account creation unavailable; destructive actions blocked."
+  },
+  "serviceWorker": {
+    "installed": "System ready for offline use",
+    "installedDescription": "You can record attendance without an internet connection.",
+    "offline": "You are offline",
+    "offlineDescription": "Your attendance marks will be synchronized when the connection is restored.",
+    "syncing": "Synchronizing {count, plural, one {# offline attendance mark} other {# offline attendance marks}}...",
+    "update": "New version available",
+    "updateDescription": "Click to update the system.",
+    "updateAction": "Update",
+    "updating": "Updating system...",
+    "updatingDescription": "The page will reload."
+  }
+}

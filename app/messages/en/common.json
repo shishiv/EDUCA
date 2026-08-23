@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "title": "EDUCA - Municipal School Management System",
+    "description": "Open school management system for Brazilian municipalities"
+  },
+  "locale": {
+    "label": "Application language",
+    "portuguese": "Português (Brasil)",
+    "english": "English",
+    "changing": "Changing language",
+    "error": "Unable to change the language. Try again."
+  },
+  "roles": {
+    "admin": "Administrator",
+    "diretor": "Principal",
+    "secretario": "School secretary",
+    "professor": "Teacher",
+    "responsavel": "Guardian"
+  },
+  "status": {
+    "loading": "Loading...",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "brand": {
+    "schoolSystem": "School System",
+    "municipalEducationDepartment": "Municipal Department of Education",
+    "municipalEducationSystem": "Municipal Education System"
+  }
+}

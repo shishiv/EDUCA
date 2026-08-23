@@ -32,6 +32,8 @@ import {
   UserCog,
   type LucideIcon
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import type { NavigationGroupMessageKey, NavigationItemMessageKey } from '@/i18n/message-keys'
 
 /**
  * Sidebar Component - EDUCA Design System
@@ -53,14 +55,15 @@ interface SidebarProps {
 }
 
 interface NavigationItem {
-  name: string
+  label: NavigationItemMessageKey
   href: string
   icon: LucideIcon
   roles: string[]
 }
 
 interface NavigationGroup {
-  name: string
+  id: string
+  label: NavigationGroupMessageKey
   icon: LucideIcon
   items: NavigationItem[]
   defaultOpen?: boolean
@@ -69,12 +72,13 @@ interface NavigationGroup {
 // Organized navigation with groups (Notion-style)
 const navigationGroups: NavigationGroup[] = [
   {
-    name: 'Principal',
+    id: 'main',
+    label: 'groups.main',
     icon: Home,
     defaultOpen: true,
     items: [
       {
-        name: 'Dashboard',
+        label: 'items.dashboard',
         href: '/dashboard',
         icon: Home,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
@@ -82,48 +86,49 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    name: 'Cadastros',
+    id: 'registrations',
+    label: 'groups.registrations',
     icon: FolderOpen,
     defaultOpen: true,
     items: [
       {
-        name: 'Alunos',
+        label: 'items.students',
         href: '/dashboard/alunos',
         icon: Users,
         roles: ['admin', 'diretor', 'secretario'],
       },
       {
-        name: 'Usuários',
+        label: 'items.users',
         href: '/dashboard/usuarios',
         icon: User,
         roles: ['admin', 'secretario'],
       },
       {
-        name: 'Escolas',
+        label: 'items.schools',
         href: '/dashboard/escolas',
         icon: School,
         roles: ['admin', 'secretario'],
       },
       {
-        name: 'Turmas',
+        label: 'items.classes',
         href: '/dashboard/turmas',
         icon: BookOpen,
         roles: ['admin', 'diretor', 'secretario'],
       },
       {
-        name: 'Matrículas',
+        label: 'items.enrolments',
         href: '/dashboard/matriculas',
         icon: UserCheck,
         roles: ['admin', 'diretor', 'secretario'],
       },
       {
-        name: 'Atribuições',
+        label: 'items.assignments',
         href: '/dashboard/atribuicoes',
         icon: UserCog,
         roles: ['admin', 'diretor'],
       },
       {
-        name: 'Responsáveis',
+        label: 'items.guardians',
         href: '/dashboard/responsaveis',
         icon: Users,
         roles: ['admin', 'diretor', 'secretario'],
@@ -131,24 +136,25 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    name: 'Acadêmico',
+    id: 'academic',
+    label: 'groups.academic',
     icon: GraduationCap,
     defaultOpen: true,
     items: [
       {
-        name: 'Frequência',
+        label: 'items.attendance',
         href: '/dashboard/turmas',
         icon: CheckSquare,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
       },
       {
-        name: 'Diário de Classe',
+        label: 'items.classDiary',
         href: '/diario',
         icon: BookText,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
       },
       {
-        name: 'Notas',
+        label: 'items.grades',
         href: '/dashboard/notas',
         icon: ClipboardList,
         roles: ['admin', 'diretor', 'secretario', 'professor'],
@@ -156,18 +162,19 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    name: 'Gestão',
+    id: 'management',
+    label: 'groups.management',
     icon: BarChart3,
     defaultOpen: false,
     items: [
       {
-        name: 'Relatórios',
+        label: 'items.reports',
         href: '/dashboard/relatorios',
         icon: FileText,
         roles: ['admin', 'diretor', 'secretario'],
       },
       {
-        name: 'Configurações',
+        label: 'items.settings',
         href: '/dashboard/configuracoes',
         icon: Settings,
         roles: ['admin', 'diretor'],
@@ -192,6 +199,8 @@ function getNavigationForRole(userRole: string): NavigationGroup[] {
 }
 
 export function Sidebar({ className }: SidebarProps) {
+  const t = useTranslations('layout.navigation')
+  const brand = useTranslations('common.brand')
   const [collapsed, setCollapsed] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const pathname = usePathname()
@@ -239,8 +248,8 @@ export function Sidebar({ className }: SidebarProps) {
               <MunicipalBrasao size="sm" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-green-600 font-display">Sistema Escolar</h2>
-              <p className="text-xs text-gray-500">Secretaria de Educação Municipal</p>
+              <h2 className="text-sm font-bold text-green-600 font-display">{brand('schoolSystem')}</h2>
+              <p className="text-xs text-gray-500">{brand('municipalEducationDepartment')}</p>
             </div>
           </div>
         )}
@@ -258,7 +267,7 @@ export function Sidebar({ className }: SidebarProps) {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+          aria-label={collapsed ? t('expand') : t('collapse')}
           className="h-10 w-10 p-0 rounded-full border border-gray-200 bg-white text-green-900 shadow-sm transition-colors duration-200 hover:border-green-200 hover:bg-green-50 hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -269,17 +278,17 @@ export function Sidebar({ className }: SidebarProps) {
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-6 px-3">
           {navigationGroups.map((group) => {
-            const isExpanded = expandedGroups[group.name] ?? group.defaultOpen
+            const isExpanded = expandedGroups[group.id] ?? group.defaultOpen
             const groupActive = isGroupActive(group)
 
             // If sidebar is collapsed, just show icons for first item of each group
             if (collapsed) {
               return (
-                <div key={group.name} className="space-y-1">
+                <div key={group.id} className="space-y-1">
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
                     return (
-                      <Link key={item.name} href={item.href} aria-current={isActive ? 'page' : undefined}>
+                      <Link key={item.href} href={item.href} aria-current={isActive ? 'page' : undefined}>
                         <Button
                           variant="ghost"
                           className={cn(
@@ -288,7 +297,7 @@ export function Sidebar({ className }: SidebarProps) {
                               ? "bg-green-50 text-green-600 hover:bg-green-100"
                               : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                           )}
-                          title={item.name}
+                          title={t(item.label)}
                         >
                           <item.icon className="h-5 w-5" />
                         </Button>
@@ -301,11 +310,11 @@ export function Sidebar({ className }: SidebarProps) {
 
             // Expanded sidebar with collapsible groups
             return (
-              <div key={group.name} className="space-y-2">
+              <div key={group.id} className="space-y-2">
                 {/* Group Section Title - EDUCA mockup style: 0.7rem, uppercase, tracking-wide */}
                 {group.items.length > 1 ? (
                   <button
-                    onClick={() => toggleGroup(group.name)}
+                    onClick={() => toggleGroup(group.id)}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.5px] rounded-lg transition-colors",
                       groupActive
@@ -315,7 +324,7 @@ export function Sidebar({ className }: SidebarProps) {
                   >
                     <span className="flex items-center gap-2">
                       <group.icon className="h-3.5 w-3.5" />
-                      {group.name}
+                      {t(group.label)}
                     </span>
                     <ChevronDown
                       className={cn(
@@ -336,7 +345,7 @@ export function Sidebar({ className }: SidebarProps) {
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
                     return (
-                      <Link key={item.name} href={item.href} aria-current={isActive ? 'page' : undefined}>
+                      <Link key={item.href} href={item.href} aria-current={isActive ? 'page' : undefined}>
                         {/* A single active marker keeps route orientation without another badge or panel. */}
                         <div
                           className={cn(
@@ -349,7 +358,7 @@ export function Sidebar({ className }: SidebarProps) {
                           )}
                         >
                           <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
-                          <span className="sidebar-transition">{item.name}</span>
+                          <span className="sidebar-transition">{t(item.label)}</span>
                         </div>
                       </Link>
                     )

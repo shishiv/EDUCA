@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "loading": "Carregando..."
+  },
+  "authGuard": {
+    "profileError": "Erro ao carregar perfil do usuário. Tente fazer login novamente."
+  },
+  "schoolSelector": {
+    "select": "Selecione uma escola",
+    "search": "Buscar escola...",
+    "empty": "Nenhuma escola encontrada.",
+    "none": "Nenhuma escola"
+  },
+  "header": {
+    "searchPlaceholder": "Buscar alunos, turmas...",
+    "connection": "Conexão: {status}",
+    "openNotifications": "Abrir notificações",
+    "notifications": "Notificações do Sistema",
+    "urgent": "Urgente",
+    "attention": "Atenção",
+    "noNotifications": "Nenhuma notificação",
+    "openUserMenu": "Abrir menu do usuário",
+    "userFallback": "Usuário",
+    "myProfile": "Meu Perfil",
+    "settings": "Configurações",
+    "signOut": "Sair do Sistema",
+    "signOutSuccess": "Logout realizado com sucesso!",
+    "signOutError": "Erro ao fazer logout"
+  },
+  "navigation": {
+    "ariaLabel": "Navegação principal mobile",
+    "groups": {
+      "main": "Principal",
+      "registrations": "Cadastros",
+      "academic": "Acadêmico",
+      "management": "Gestão"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "students": "Alunos",
+      "users": "Usuários",
+      "schools": "Escolas",
+      "classes": "Turmas",
+      "enrolments": "Matrículas",
+      "assignments": "Atribuições",
+      "guardians": "Responsáveis",
+      "attendance": "Frequência",
+      "classDiary": "Diário de Classe",
+      "diary": "Diário",
+      "grades": "Notas",
+      "calendar": "Calendário",
+      "reports": "Relatórios",
+      "settings": "Configurações"
+    },
+    "expand": "Expandir menu lateral",
+    "collapse": "Recolher menu lateral",
+    "closeSidebar": "Fechar sidebar"
+  },
+  "mobileHeader": {
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "class": "Turma: {name}",
+    "lesson": "Aula {phase}",
+    "phases": {
+      "planning": "Planejamento",
+      "attendance": "Chamada",
+      "finished": "Finalizada",
+      "blocked": "Bloqueada",
+      "unknown": "Indefinido"
+    },
+    "signOut": "Sair",
+    "offlineMessage": "Modo Offline: Suas alterações serão sincronizadas quando a conexão for restabelecida{pending, plural, =0 {} one { (# pendente)} other { (# pendentes)}}"
+  },
+  "demoSandbox": {
+    "title": "Sandbox de demonstração",
+    "description": "· dados sintéticos, reiniciados semanalmente; sem criação de conta; ações destrutivas bloqueadas."
+  },
+  "serviceWorker": {
+    "installed": "Sistema preparado para uso offline",
+    "installedDescription": "Você pode marcar frequência mesmo sem internet.",
+    "offline": "Você está offline",
+    "offlineDescription": "Suas marcações serão sincronizadas quando a conexão retornar.",
+    "syncing": "Sincronizando {count, plural, one {# marcação offline} other {# marcações offline}}...",
+    "update": "Nova versão disponível",
+    "updateDescription": "Clique para atualizar o sistema.",
+    "updateAction": "Atualizar",
+    "updating": "Atualizando sistema...",
+    "updatingDescription": "A página será recarregada."
+  }
+}

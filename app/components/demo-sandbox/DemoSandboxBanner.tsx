@@ -13,8 +13,11 @@
 'use client'
 
 import { FlaskConical } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 export function DemoSandboxBanner() {
+  const t = useTranslations('layout.demoSandbox')
+
   return (
     <div
       role="note"
@@ -22,10 +25,9 @@ export function DemoSandboxBanner() {
     >
       <FlaskConical className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
       <p className="min-w-0">
-        <span className="font-semibold">Sandbox de demonstração</span>
+        <span className="font-semibold">{t('title')}</span>
         <span className="text-amber-700">
-          {' '}&middot; dados sintéticos, reiniciados semanalmente; sem criação de
-          conta; ações destrutivas bloqueadas.
+          {' '}{t('description')}
         </span>
       </p>
     </div>

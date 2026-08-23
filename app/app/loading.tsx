@@ -1,4 +1,8 @@
+import { useTranslations } from 'next-intl'
+
 export default function Loading() {
+  const t = useTranslations('public.loading')
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="text-center">
@@ -10,8 +14,8 @@ export default function Loading() {
             <div className="w-20 h-20 border-4 border-transparent border-t-blue-600 rounded-full"></div>
           </div>
         </div>
-        <p className="text-gray-700 font-medium">Carregando Sistema...</p>
-        <p className="text-sm text-gray-600 mt-2">SME</p>
+        <p className="text-gray-700 font-medium">{t('title')}</p>
+        <p className="text-sm text-gray-600 mt-2">{t('subtitle')}</p>
       </div>
     </div>
   )

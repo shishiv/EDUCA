@@ -29,13 +29,15 @@ import {
   BookText,
   FileText,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import type { NavigationItemMessageKey } from '@/i18n/message-keys'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface NavItem {
-  name: string
+  label: NavigationItemMessageKey
   href: string
   icon: React.ComponentType<{ className?: string }>
   /** Match pattern for active state (supports partial path matching) */
@@ -48,25 +50,25 @@ interface NavItem {
 
 const navigationItems: NavItem[] = [
   {
-    name: 'Dashboard',
+    label: 'items.dashboard',
     href: '/dashboard',
     icon: Home,
     matchPath: '/dashboard',
   },
   {
-    name: 'Frequência',
+    label: 'items.attendance',
     href: '/dashboard/turmas',
     icon: CheckSquare,
     matchPath: '/dashboard/turmas',
   },
   {
-    name: 'Diário',
+    label: 'items.diary',
     href: '/diario',
     icon: BookText,
     matchPath: '/diario',
   },
   {
-    name: 'Relatórios',
+    label: 'items.reports',
     href: '/dashboard/relatorios',
     icon: FileText,
     matchPath: '/dashboard/relatorios',
@@ -78,6 +80,7 @@ const navigationItems: NavItem[] = [
 // ============================================================================
 
 export function MobileNav() {
+  const t = useTranslations('layout.navigation')
   const pathname = usePathname()
   const visibleNavigationItems = navigationItems.filter(item =>
     !isPilotModeEnabled() ||
@@ -116,7 +119,7 @@ export function MobileNav() {
         // Hide on desktop (lg and above)
         'lg:hidden'
       )}
-      aria-label="Navegação principal mobile"
+      aria-label={t('ariaLabel')}
     >
       <div className="flex items-center justify-around h-16 px-2">
         {visibleNavigationItems.map((item) => {
@@ -125,7 +128,7 @@ export function MobileNav() {
 
           return (
             <Link
-              key={item.name}
+              key={item.href}
               href={item.href}
               className={cn(
                 // Base button styling
@@ -165,7 +168,7 @@ export function MobileNav() {
                   active ? 'text-green-600' : 'text-gray-500'
                 )}
               >
-                {item.name}
+                {t(item.label)}
               </span>
 
               {/* Active indicator dot - EDUCA green */}

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider'
 import { AuthProvider } from '@/contexts/auth-context'
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -23,6 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AuthProvider>
         <ServiceWorkerProvider>
           {children}
+          <LocaleSwitcher />
         </ServiceWorkerProvider>
       </AuthProvider>
     </QueryClientProvider>
