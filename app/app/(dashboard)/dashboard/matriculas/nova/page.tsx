@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -43,6 +44,7 @@ interface Turma {
 }
 
 export default function NovaMatriculaPage() {
+  const t = useTranslations('registry')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
@@ -213,7 +215,7 @@ export default function NovaMatriculaPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Carregando dados...</span>
+        <span className="ml-2 text-muted-foreground">{t('labels.carregando-dados')}</span>
       </div>
     )
   }
@@ -223,10 +225,10 @@ export default function NovaMatriculaPage() {
     return (
       <div className="text-center py-12">
         <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Nenhum aluno cadastrado</h2>
-        <p className="text-muted-foreground mb-4">Cadastre um aluno primeiro para realizar matriculas.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('labels.nenhum-aluno-cadastrado')}</h2>
+        <p className="text-muted-foreground mb-4">{t('labels.cadastre-um-aluno-primeiro-para-realizar-matriculas')}</p>
         <Button asChild>
-          <Link href="/dashboard/alunos/novo">Cadastrar Aluno</Link>
+          <Link href="/dashboard/alunos/novo">{t('labels.cadastrar-aluno')}</Link>
         </Button>
       </div>
     )
@@ -236,10 +238,10 @@ export default function NovaMatriculaPage() {
     return (
       <div className="text-center py-12">
         <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Nenhuma turma disponivel</h2>
-        <p className="text-muted-foreground mb-4">Cadastre uma turma primeiro para realizar matriculas.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('labels.nenhuma-turma-disponivel')}</h2>
+        <p className="text-muted-foreground mb-4">{t('labels.cadastre-uma-turma-primeiro-para-realizar-matriculas')}</p>
         <Button asChild>
-          <Link href="/dashboard/turmas/nova">Cadastrar Turma</Link>
+          <Link href="/dashboard/turmas/nova">{t('labels.cadastrar-turma')}</Link>
         </Button>
       </div>
     )
@@ -256,7 +258,7 @@ export default function NovaMatriculaPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nova Matrícula</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.nova-matricula')}</h1>
           <p className="text-gray-600 mt-1">
             Realize uma nova matricula no sistema
           </p>
@@ -272,7 +274,7 @@ export default function NovaMatriculaPage() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="h-5 w-5" />
-                  <span>Selecionar Aluno</span>
+                  <span>{t('labels.selecionar-aluno')}</span>
                 </CardTitle>
                 <CardDescription>
                   Busque e selecione o aluno para matrícula
@@ -284,7 +286,7 @@ export default function NovaMatriculaPage() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
-                        placeholder="Buscar por nome, responsável ou CPF..."
+                        placeholder={t('labels.buscar-por-nome-responsavel-ou-cpf')}
                         value={searchAluno}
                         onChange={(e) => setSearchAluno(e.target.value)}
                         className="pl-10"
@@ -359,7 +361,7 @@ export default function NovaMatriculaPage() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <UserCheck className="h-5 w-5" />
-                  <span>Dados da Matrícula</span>
+                  <span>{t('labels.dados-da-matricula')}</span>
                 </CardTitle>
                 <CardDescription>
                   Preencha as informações da matrícula
@@ -368,10 +370,10 @@ export default function NovaMatriculaPage() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="turma_id">Turma *</Label>
+                    <Label htmlFor="turma_id">{t('labels.turma-2')}</Label>
                     <Select value={formData.turma_id} onValueChange={(value) => handleInputChange('turma_id', value)}>
                       <SelectTrigger id="turma_id">
-                        <SelectValue placeholder="Selecione a turma" />
+                        <SelectValue placeholder={t('labels.selecione-a-turma')} />
                       </SelectTrigger>
                       <SelectContent>
                         {turmas.map((turma) => (
@@ -389,7 +391,7 @@ export default function NovaMatriculaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="ano_letivo">Ano Letivo *</Label>
+                    <Label htmlFor="ano_letivo">{t('labels.ano-letivo-2')}</Label>
                     <Input
                       id="ano_letivo"
                       type="number"
@@ -403,7 +405,7 @@ export default function NovaMatriculaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="data_matricula">Data da Matrícula *</Label>
+                  <Label htmlFor="data_matricula">{t('labels.data-da-matricula')}</Label>
                   <Input
                     id="data_matricula"
                     type="date"
@@ -414,12 +416,12 @@ export default function NovaMatriculaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
+                  <Label htmlFor="observacoes">{t('labels.observacoes')}</Label>
                   <Textarea
                     id="observacoes"
                     value={formData.observacoes}
                     onChange={(e) => handleInputChange('observacoes', e.target.value)}
-                    placeholder="Observações sobre a matrícula"
+                    placeholder={t('labels.observacoes-sobre-a-matricula')}
                     rows={3}
                   />
                 </div>
@@ -459,7 +461,7 @@ export default function NovaMatriculaPage() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <GraduationCap className="h-5 w-5" />
-                  <span>Informações da Turma</span>
+                  <span>{t('labels.informacoes-da-turma')}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -470,19 +472,19 @@ export default function NovaMatriculaPage() {
                 
                 <div className="space-y-2">
                   <div className="text-sm">
-                    <span className="font-medium">Escola:</span> {selectedTurma.escola}
+                    <span className="font-medium">{t('labels.escola-2')}</span> {selectedTurma.escola}
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Professor:</span> {selectedTurma.professor}
+                    <span className="font-medium">{t('labels.professor-2')}</span> {selectedTurma.professor}
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Turno:</span> {selectedTurma.turno}
+                    <span className="font-medium">{t('labels.turno-2')}</span> {selectedTurma.turno}
                   </div>
                 </div>
 
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Ocupação</span>
+                    <span className="text-sm font-medium">{t('labels.ocupacao')}</span>
                     <span className="text-sm text-gray-600">
                       {selectedTurma.matriculados}/{selectedTurma.capacidade}
                     </span>
@@ -505,29 +507,29 @@ export default function NovaMatriculaPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Documentos Necessários</CardTitle>
+              <CardTitle>{t('labels.documentos-necessarios')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span>Certidão de Nascimento</span>
+                  <span>{t('labels.certidao-de-nascimento')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span>Cartão de Vacina</span>
+                  <span>{t('labels.cartao-de-vacina')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span>Comprovante de Residência</span>
+                  <span>{t('labels.comprovante-de-residencia')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span>Foto 3x4 (opcional)</span>
+                  <span>{t('labels.foto-3x4-opcional')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span>Histórico Escolar (se houver)</span>
+                  <span>{t('labels.historico-escolar-se-houver')}</span>
                 </div>
               </div>
             </CardContent>

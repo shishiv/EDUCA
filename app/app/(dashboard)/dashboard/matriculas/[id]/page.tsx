@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -94,6 +95,7 @@ interface AttendanceStats {
 }
 
 export default function MatriculaDetailsPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
@@ -151,7 +153,7 @@ export default function MatriculaDetailsPage() {
 
       if (matriculaError) throw matriculaError
       if (!matriculaData) {
-        toast.error('Matrícula não encontrada')
+        toast.error(t('labels.matricula-nao-encontrada'))
         router.push('/dashboard/matriculas')
         return
       }
@@ -228,10 +230,10 @@ export default function MatriculaDetailsPage() {
 
   const getSituacaoBadge = (situacao: Matricula['situacao']) => {
     const config: Record<string, { variant: any; icon: any; label: string; color: string }> = {
-      ativa: { variant: 'default' as const, icon: CheckCircle2, label: 'Ativa', color: 'text-green-600 bg-green-50' },
-      transferida: { variant: 'secondary' as const, icon: TrendingUp, label: 'Transferida', color: 'text-blue-600 bg-blue-50' },
-      concluida: { variant: 'outline' as const, icon: CheckCircle2, label: 'Concluída', color: 'text-gray-600 bg-gray-50' },
-      cancelada: { variant: 'destructive' as const, icon: XCircle, label: 'Cancelada', color: 'text-red-600 bg-red-50' }
+      ativa: { variant: 'default' as const, icon: CheckCircle2, label: t('labels.ativa'), color: 'text-green-600 bg-green-50' },
+      transferida: { variant: 'secondary' as const, icon: TrendingUp, label: t('labels.transferida'), color: 'text-blue-600 bg-blue-50' },
+      concluida: { variant: 'outline' as const, icon: CheckCircle2, label: t('labels.concluida'), color: 'text-gray-600 bg-gray-50' },
+      cancelada: { variant: 'destructive' as const, icon: XCircle, label: t('labels.cancelada'), color: 'text-red-600 bg-red-50' }
     }
 
     const cfg = config[situacao] || config['ativa']
@@ -268,7 +270,7 @@ export default function MatriculaDetailsPage() {
     const labels: Record<string, string> = {
       matutino: 'Manhã',
       vespertino: 'Tarde',
-      integral: 'Integral',
+      integral: t('labels.integral'),
       noturno: 'Noite'
     }
     return labels[turno] || turno
@@ -300,7 +302,7 @@ export default function MatriculaDetailsPage() {
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600">Matrícula não encontrada</p>
+        <p className="text-gray-600">{t('labels.matricula-nao-encontrada')}</p>
       </div>
     )
   }
@@ -317,7 +319,7 @@ export default function MatriculaDetailsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Detalhes da Matrícula</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.detalhes-da-matricula')}</h1>
             <p className="text-gray-600 mt-1">
               Informações completas e histórico de frequência
             </p>
@@ -348,9 +350,9 @@ export default function MatriculaDetailsPage() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Status da Matrícula:</strong> {getSituacaoBadge(matricula.situacao)}
-          {' '}• <strong>Ano Letivo:</strong> {matricula.ano_letivo}
-          {' '}• <strong>Matrícula em:</strong> {formatDate(matricula.data_matricula)}
+          <strong>{t('labels.status-da-matricula-2')}</strong> {getSituacaoBadge(matricula.situacao)}
+          {' '}• <strong>{t('labels.ano-letivo-3')}</strong> {matricula.ano_letivo}
+          {' '}• <strong>{t('labels.matricula-em')}</strong> {formatDate(matricula.data_matricula)}
         </AlertDescription>
       </Alert>
 
@@ -361,21 +363,21 @@ export default function MatriculaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <User className="h-5 w-5 text-blue-600" />
-              <CardTitle>Dados do Aluno</CardTitle>
+              <CardTitle>{t('labels.dados-do-aluno')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Nome Completo</Label>
+              <Label className="text-gray-600">{t('labels.nome-completo')}</Label>
               <p className="font-medium text-lg">{matricula.alunos?.nome_completo || '-'}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">Data de Nascimento</Label>
+                <Label className="text-gray-600">{t('labels.data-de-nascimento')}</Label>
                 <p className="font-medium">{formatDate(matricula.alunos?.data_nascimento || '')}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Idade</Label>
+                <Label className="text-gray-600">{t('labels.idade')}</Label>
                 <p className="font-medium">
                   {calculateAge(matricula.alunos?.data_nascimento || '')} anos
                 </p>
@@ -383,13 +385,13 @@ export default function MatriculaDetailsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">Sexo</Label>
+                <Label className="text-gray-600">{t('labels.sexo')}</Label>
                 <p className="font-medium">{matricula.alunos?.sexo === 'M' ? 'Masculino' : 'Feminino'}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Status</Label>
+                <Label className="text-gray-600">{t('labels.status')}</Label>
                 <Badge variant={matricula.alunos?.ativo ? 'default' : 'secondary'}>
-                  {matricula.alunos?.ativo ? 'Ativo' : 'Inativo'}
+                  {matricula.alunos?.ativo ? 'Ativo' : t('labels.inativo')}
                 </Badge>
               </div>
             </div>
@@ -410,30 +412,30 @@ export default function MatriculaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 text-green-600" />
-              <CardTitle>Dados da Turma</CardTitle>
+              <CardTitle>{t('labels.dados-da-turma')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Turma</Label>
+              <Label className="text-gray-600">{t('labels.turma')}</Label>
               <p className="font-medium text-lg">{matricula.turmas?.nome || '-'}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">Série</Label>
+                <Label className="text-gray-600">{t('labels.serie')}</Label>
                 <Badge variant="outline">{matricula.turmas?.serie || '-'}</Badge>
               </div>
               <div>
-                <Label className="text-gray-600">Turno</Label>
+                <Label className="text-gray-600">{t('labels.turno')}</Label>
                 <p className="font-medium">{getTurnoLabel(matricula.turmas?.turno || '')}</p>
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Escola</Label>
+              <Label className="text-gray-600">{t('labels.escola')}</Label>
               <p className="font-medium">{matricula.turmas?.escolas?.nome || '-'}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Ano Letivo</Label>
+              <Label className="text-gray-600">{t('labels.ano-letivo')}</Label>
               <p className="font-medium">{matricula.turmas?.ano_letivo || '-'}</p>
             </div>
             <div>
@@ -453,22 +455,22 @@ export default function MatriculaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <FileText className="h-5 w-5 text-purple-600" />
-              <CardTitle>Status da Matrícula</CardTitle>
+              <CardTitle>{t('labels.status-da-matricula')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="situacao">Situação</Label>
+              <Label htmlFor="situacao">{t('labels.situacao')}</Label>
               {editMode ? (
                 <Select value={formData.situacao} onValueChange={(value: any) => setFormData({ ...formData, situacao: value })}>
                   <SelectTrigger id="situacao">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ativa">Ativa</SelectItem>
-                    <SelectItem value="transferida">Transferida</SelectItem>
-                    <SelectItem value="concluida">Concluída</SelectItem>
-                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                    <SelectItem value="ativa">{t('labels.ativa')}</SelectItem>
+                    <SelectItem value="transferida">{t('labels.transferida')}</SelectItem>
+                    <SelectItem value="concluida">{t('labels.concluida')}</SelectItem>
+                    <SelectItem value="cancelada">{t('labels.cancelada')}</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
@@ -478,13 +480,13 @@ export default function MatriculaDetailsPage() {
               )}
             </div>
             <div>
-              <Label htmlFor="observacoes">Observações</Label>
+              <Label htmlFor="observacoes">{t('labels.observacoes')}</Label>
               {editMode ? (
                 <Textarea
                   id="observacoes"
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Observações sobre a matrícula..."
+                  placeholder={t('labels.observacoes-sobre-a-matricula-2')}
                   rows={4}
                 />
               ) : (
@@ -494,7 +496,7 @@ export default function MatriculaDetailsPage() {
               )}
             </div>
             <div className="pt-2 border-t">
-              <Label className="text-gray-600">Data de Cadastro</Label>
+              <Label className="text-gray-600">{t('labels.data-de-cadastro')}</Label>
               <p className="text-sm text-gray-600">{formatDate(matricula.created_at || '')}</p>
             </div>
           </CardContent>
@@ -505,25 +507,25 @@ export default function MatriculaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-orange-600" />
-              <CardTitle>Estatísticas de Frequência</CardTitle>
+              <CardTitle>{t('labels.estatisticas-de-frequencia')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <Label className="text-blue-600 text-sm">Total de Aulas</Label>
+                <Label className="text-blue-600 text-sm">{t('labels.total-de-aulas')}</Label>
                 <p className="text-2xl font-bold text-blue-600">{attendanceStats.totalAulas}</p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <Label className="text-green-600 text-sm">Presenças</Label>
+                <Label className="text-green-600 text-sm">{t('labels.presencas')}</Label>
                 <p className="text-2xl font-bold text-green-600">{attendanceStats.presencas}</p>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
-                <Label className="text-red-600 text-sm">Faltas</Label>
+                <Label className="text-red-600 text-sm">{t('labels.faltas')}</Label>
                 <p className="text-2xl font-bold text-red-600">{attendanceStats.faltas}</p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <Label className="text-purple-600 text-sm">% Presença</Label>
+                <Label className="text-purple-600 text-sm">{t('labels.presenca')}</Label>
                 <p className={`text-2xl font-bold ${getAttendanceStatusColor(attendanceStats.percentualPresenca)}`}>
                   {attendanceStats.percentualPresenca.toFixed(1)}%
                 </p>
@@ -555,7 +557,7 @@ export default function MatriculaDetailsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-blue-600" />
-              <CardTitle>Histórico de Frequência</CardTitle>
+              <CardTitle>{t('labels.historico-de-frequencia')}</CardTitle>
             </div>
             <CardDescription>
               {frequencia.length} registros de aula
@@ -566,16 +568,16 @@ export default function MatriculaDetailsPage() {
           {frequencia.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhum registro de frequência encontrado</p>
+              <p className="text-gray-600">{t('labels.nenhum-registro-de-frequencia-encontrado')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data da Aula</TableHead>
-                    <TableHead>Presença</TableHead>
-                    <TableHead>Justificativa</TableHead>
+                    <TableHead>{t('labels.data-da-aula')}</TableHead>
+                    <TableHead>{t('labels.presenca-2')}</TableHead>
+                    <TableHead>{t('labels.justificativa')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -13,6 +13,7 @@
  */
 
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -63,6 +64,7 @@ interface Student {
 // ============================================================================
 
 export default function DiarioInfantilPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const alunoId = params?.id as string
@@ -245,7 +247,7 @@ export default function DiarioInfantilPage() {
     return (
       <div className="p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
-          <p className="font-medium">Erro ao carregar pagina</p>
+          <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
           <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
           <Button
             variant="outline"
@@ -330,7 +332,7 @@ export default function DiarioInfantilPage() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Vivencia</DialogTitle>
+            <DialogTitle>{t('labels.editar-vivencia')}</DialogTitle>
           </DialogHeader>
           {editingVivencia && student && (
             <VivenciaForm
@@ -353,7 +355,7 @@ export default function DiarioInfantilPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Vivência</AlertDialogTitle>
+            <AlertDialogTitle>{t('labels.excluir-vivencia')}</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir esta vivencia? Esta acao nao pode ser desfeita.
             </AlertDialogDescription>

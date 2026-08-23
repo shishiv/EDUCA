@@ -53,7 +53,6 @@ describe('i18n foundation', () => {
     const english = getMessagesForLocale('en')
 
     expect(leafPaths(english).sort()).toEqual(leafPaths(portuguese).sort())
-    expect(portuguese.registry).toEqual({})
     expect(portuguese.classroom).toEqual({})
     expect(portuguese.platform).toEqual({})
   })

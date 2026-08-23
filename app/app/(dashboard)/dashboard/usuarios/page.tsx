@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -38,6 +39,8 @@ import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { recordDemoClientAction } from '@/lib/demo-sandbox/demo-audit-client'
 
 export default function UsuariosPage() {
+  const t = useTranslations('registry')
+
   const [usuarios, setUsuarios] = useState<UserWithSchool[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -124,10 +127,10 @@ export default function UsuariosPage() {
   const getRoleLabel = (role: string) => {
     const roles = {
       admin: 'Administrador',
-      diretor: 'Diretor(a)',
+      diretor: t('labels.diretor-a'),
       secretario: 'Secretário(a)',
       professor: 'Professor(a)',
-      responsavel: 'Responsável'
+      responsavel: t('labels.responsavel')
     }
     return roles[role as keyof typeof roles] || role
   }
@@ -174,7 +177,7 @@ export default function UsuariosPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Usuários</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.usuarios')}</h1>
           <p className="text-gray-600 mt-1">
             Gerencie os usuários e permissões do sistema
           </p>
@@ -196,9 +199,9 @@ export default function UsuariosPage() {
       {/* Estatísticas compactas */}
       <StatsBar
         stats={[
-          { label: 'Total', value: usuarios.length, icon: Users },
+          { label: t('labels.total'), value: usuarios.length, icon: Users },
           { label: 'Ativos', value: usuarios.filter(u => u.ativo).length, icon: CheckCircle, variant: 'success' },
-          { label: 'Professores', value: usuarios.filter(u => u.tipo_usuario === 'professor').length, icon: GraduationCap, variant: 'info' },
+          { label: t('labels.professores'), value: usuarios.filter(u => u.tipo_usuario === 'professor').length, icon: GraduationCap, variant: 'info' },
           { label: 'Diretores', value: usuarios.filter(u => u.tipo_usuario === 'diretor').length, icon: Crown, variant: 'warning' },
         ]}
       />
@@ -218,24 +221,24 @@ export default function UsuariosPage() {
             filters={[
               {
                 id: 'tipo',
-                placeholder: 'Tipo',
+                placeholder: t('labels.tipo'),
                 value: tipoFilter,
                 options: [
                   { value: 'todos', label: 'Todos os tipos' },
                   { value: 'admin', label: 'Administrador' },
-                  { value: 'diretor', label: 'Diretor' },
-                  { value: 'secretario', label: 'Secretário' },
-                  { value: 'professor', label: 'Professor' },
+                  { value: 'diretor', label: t('labels.diretor') },
+                  { value: 'secretario', label: t('labels.secretario') },
+                  { value: 'professor', label: t('labels.professor') },
                 ],
                 onChange: setTipoFilter,
                 width: 'w-full sm:w-44',
               },
               {
                 id: 'status',
-                placeholder: 'Status',
+                placeholder: t('labels.status'),
                 value: statusFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
+                  { value: 'todos', label: t('labels.todos') },
                   { value: 'ativo', label: 'Ativos' },
                   { value: 'inativo', label: 'Inativos' },
                 ],
@@ -255,12 +258,12 @@ export default function UsuariosPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Escola</TableHead>
-                  <TableHead>Último Acesso</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.usuario')}</TableHead>
+                  <TableHead>{t('labels.tipo')}</TableHead>
+                  <TableHead>{t('labels.escola')}</TableHead>
+                  <TableHead>{t('labels.ultimo-acesso')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -296,7 +299,7 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={usuario.ativo ? 'default' : 'secondary'}>
-                        {usuario.ativo ? 'Ativo' : 'Inativo'}
+                        {usuario.ativo ? 'Ativo' : t('labels.inativo')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -322,14 +325,14 @@ export default function UsuariosPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogTitle>{t('labels.confirmar-exclusao')}</AlertDialogTitle>
                               <AlertDialogDescription>
                                 Tem certeza que deseja excluir o usuário &quot;{usuario.nome}&quot;?
                                 Esta ação não pode ser desfeita.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogCancel>{t('labels.cancelar')}</AlertDialogCancel>
                               <AlertDialogAction 
                                 onClick={() => handleDeleteUser(usuario.id)}
                                 className="bg-red-600 hover:bg-red-700"
@@ -372,7 +375,7 @@ export default function UsuariosPage() {
                           ]
                         : [
                             {
-                              label: 'Novo Usuário',
+                              label: t('labels.novo-usuario'),
                               href: '/dashboard/usuarios/novo',
                               icon: UserPlus,
                             },

@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -22,6 +23,7 @@ import { schoolsApi } from '@/lib/api/schools'
 import { logger } from '@/lib/logger'
 
 export default function NovaEscolaPage() {
+  const t = useTranslations('registry')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [diretoresDisponiveis, setDiretoresDisponiveis] = useState<Array<{
@@ -40,7 +42,7 @@ export default function NovaEscolaPage() {
     endereco: '',
     bairro: '',
     cep: '',
-    cidade: 'Cidade',
+    cidade: t('labels.cidade'),
     estado: 'MG',
 
     // Contato
@@ -167,7 +169,7 @@ export default function NovaEscolaPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Nova Escola</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.nova-escola')}</h1>
           <p className="text-gray-600 mt-1">
             Cadastre uma nova unidade escolar no sistema
           </p>
@@ -185,19 +187,19 @@ export default function NovaEscolaPage() {
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 h-auto p-1">
             <TabsTrigger value="basicos" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <School className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Dados Básicos</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.dados-basicos')}</span>
             </TabsTrigger>
             <TabsTrigger value="endereco" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Endereço</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.endereco')}</span>
             </TabsTrigger>
             <TabsTrigger value="contato" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <Phone className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Contato</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.contato')}</span>
             </TabsTrigger>
             <TabsTrigger value="gestao" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <Users className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Gestão</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.gestao')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -205,26 +207,26 @@ export default function NovaEscolaPage() {
           <TabsContent value="basicos">
             <Card>
               <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
+                <CardTitle>{t('labels.informacoes-basicas')}</CardTitle>
                 <CardDescription>
                   Dados principais da unidade escolar
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome da Escola *</Label>
+                  <Label htmlFor="nome">{t('labels.nome-da-escola-2')}</Label>
                   <Input
                     id="nome"
-                    placeholder="Ex: CEMEI Pequenos Passos"
+                    placeholder={t('labels.ex-cemei-pequenos-passos')}
                     value={formData.nome}
                     onChange={(e) => handleInputChange('nome', e.target.value)}
                     required
                   />
-                  <p className="text-xs text-gray-500">Nome completo da unidade escolar</p>
+                  <p className="text-xs text-gray-500">{t('labels.nome-completo-da-unidade-escolar')}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="codigo">Código INEP *</Label>
+                  <Label htmlFor="codigo">{t('labels.codigo-inep-2')}</Label>
                   <Input
                     id="codigo"
                     placeholder="12345678"
@@ -233,18 +235,18 @@ export default function NovaEscolaPage() {
                     required
                     maxLength={8}
                   />
-                  <p className="text-xs text-gray-500">Código INEP da escola (8 dígitos numéricos)</p>
+                  <p className="text-xs text-gray-500">{t('labels.codigo-inep-da-escola-8-digitos-numericos')}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Ensino *</Label>
+                  <Label htmlFor="tipo">{t('labels.tipo-de-ensino')}</Label>
                   <Select
                     value={formData.tipo}
                     onValueChange={(value) => handleInputChange('tipo', value)}
                     required
                   >
                     <SelectTrigger id="tipo">
-                      <SelectValue placeholder="Selecione o tipo" />
+                      <SelectValue placeholder={t('labels.selecione-o-tipo')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="creche">{getTipoLabel('creche')}</SelectItem>
@@ -252,14 +254,14 @@ export default function NovaEscolaPage() {
                       <SelectItem value="fundamental">{getTipoLabel('fundamental')}</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">Modalidade de ensino oferecida</p>
+                  <p className="text-xs text-gray-500">{t('labels.modalidade-de-ensino-oferecida')}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
+                  <Label htmlFor="observacoes">{t('labels.observacoes')}</Label>
                   <Textarea
                     id="observacoes"
-                    placeholder="Informações adicionais sobre a escola..."
+                    placeholder={t('labels.informacoes-adicionais-sobre-a-escola')}
                     value={formData.observacoes}
                     onChange={(e) => handleInputChange('observacoes', e.target.value)}
                     rows={3}
@@ -273,17 +275,17 @@ export default function NovaEscolaPage() {
           <TabsContent value="endereco">
             <Card>
               <CardHeader>
-                <CardTitle>Localização</CardTitle>
+                <CardTitle>{t('labels.localizacao')}</CardTitle>
                 <CardDescription>
                   Endereço completo da unidade escolar
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="endereco">Logradouro *</Label>
+                  <Label htmlFor="endereco">{t('labels.logradouro')}</Label>
                   <Input
                     id="endereco"
-                    placeholder="Ex: Rua das Flores, 123"
+                    placeholder={t('labels.ex-rua-das-flores-123')}
                     value={formData.endereco}
                     onChange={(e) => handleInputChange('endereco', e.target.value)}
                     required
@@ -292,17 +294,17 @@ export default function NovaEscolaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="bairro">Bairro</Label>
+                    <Label htmlFor="bairro">{t('labels.bairro')}</Label>
                     <Input
                       id="bairro"
-                      placeholder="Ex: Centro"
+                      placeholder={t('labels.ex-centro')}
                       value={formData.bairro}
                       onChange={(e) => handleInputChange('bairro', e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cep">CEP</Label>
+                    <Label htmlFor="cep">{t('labels.cep')}</Label>
                     <Input
                       id="cep"
                       placeholder="38290-000"
@@ -315,7 +317,7 @@ export default function NovaEscolaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade</Label>
+                    <Label htmlFor="cidade">{t('labels.cidade')}</Label>
                     <Input
                       id="cidade"
                       value={formData.cidade}
@@ -325,7 +327,7 @@ export default function NovaEscolaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="estado">Estado</Label>
+                    <Label htmlFor="estado">{t('labels.estado')}</Label>
                     <Input
                       id="estado"
                       value={formData.estado}
@@ -342,14 +344,14 @@ export default function NovaEscolaPage() {
           <TabsContent value="contato">
             <Card>
               <CardHeader>
-                <CardTitle>Informações de Contato</CardTitle>
+                <CardTitle>{t('labels.informacoes-de-contato')}</CardTitle>
                 <CardDescription>
                   Telefone e email da escola
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
+                  <Label htmlFor="telefone">{t('labels.telefone')}</Label>
                   <Input
                     id="telefone"
                     placeholder="(34) 99999-9999"
@@ -357,11 +359,11 @@ export default function NovaEscolaPage() {
                     onChange={(e) => handleInputChange('telefone', formatTelefone(e.target.value))}
                     maxLength={15}
                   />
-                  <p className="text-xs text-gray-500">Telefone principal da escola</p>
+                  <p className="text-xs text-gray-500">{t('labels.telefone-principal-da-escola')}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('labels.email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -369,7 +371,7 @@ export default function NovaEscolaPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                   />
-                  <p className="text-xs text-gray-500">Email institucional (opcional)</p>
+                  <p className="text-xs text-gray-500">{t('labels.email-institucional-opcional')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -379,20 +381,20 @@ export default function NovaEscolaPage() {
           <TabsContent value="gestao">
             <Card>
               <CardHeader>
-                <CardTitle>Gestão Escolar</CardTitle>
+                <CardTitle>{t('labels.gestao-escolar')}</CardTitle>
                 <CardDescription>
                   Atribuição de diretor e informações administrativas
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="diretor">Diretor(a)</Label>
+                  <Label htmlFor="diretor">{t('labels.diretor-a')}</Label>
                   <Select
                     value={formData.diretor_id}
                     onValueChange={(value) => handleInputChange('diretor_id', value)}
                   >
                     <SelectTrigger id="diretor">
-                      <SelectValue placeholder="Selecione um diretor (opcional)" />
+                      <SelectValue placeholder={t('labels.selecione-um-diretor-opcional')} />
                     </SelectTrigger>
                     <SelectContent>
                       {diretoresDisponiveis.map((diretor) => (

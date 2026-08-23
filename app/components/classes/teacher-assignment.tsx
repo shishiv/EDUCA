@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -54,6 +55,7 @@ export function TeacherAssignment({
   onAssignmentChange,
   className
 }: TeacherAssignmentProps) {
+  const t = useTranslations('registry')
   const [loading, setLoading] = useState(false)
   const [selectedTeacherId, setSelectedTeacherId] = useState(currentTeacherId || '')
   const [availableTeachers, setAvailableTeachers] = useState<TeacherOption[]>([])
@@ -143,7 +145,7 @@ export function TeacherAssignment({
           <div className="flex items-center justify-center">
             <div className="text-center">
               <GraduationCap className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">Carregando dados da turma...</p>
+              <p className="text-sm text-gray-500">{t('labels.carregando-dados-da-turma')}</p>
             </div>
           </div>
         </CardContent>
@@ -174,22 +176,22 @@ export function TeacherAssignment({
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">Nome:</span>
+                <span className="font-medium text-gray-700">{t('labels.nome')}</span>
                 <p>{classData.nome}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Série:</span>
+                <span className="font-medium text-gray-700">{t('labels.serie-2')}</span>
                 <p>{classData.serie}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Turno:</span>
+                <span className="font-medium text-gray-700">{t('labels.turno-2')}</span>
                 <Badge variant="outline" className="bg-blue-50 border-blue-200">
                   <Clock className="h-3 w-3 mr-1" />
                   {classData.turno}
                 </Badge>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Ano Letivo:</span>
+                <span className="font-medium text-gray-700">{t('labels.ano-letivo-3')}</span>
                 <Badge variant="outline" className="bg-green-50 border-green-200">
                   <Calendar className="h-3 w-3 mr-1" />
                   {classData.ano_letivo}
@@ -214,7 +216,7 @@ export function TeacherAssignment({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-800">Professor titular definido</span>
+                    <span className="font-medium text-green-800">{t('labels.professor-titular-definido')}</span>
                   </div>
                   <div className="text-sm text-green-700">
                     <p className="font-medium">{currentTeacher.nome}</p>
@@ -237,7 +239,7 @@ export function TeacherAssignment({
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span className="font-medium text-amber-800">Nenhum professor titular definido</span>
+                <span className="font-medium text-amber-800">{t('labels.nenhum-professor-titular-definido')}</span>
               </div>
               <p className="text-sm text-amber-700 mt-1">
                 Defina um professor titular para abrir e registrar a chamada desta turma.
@@ -262,8 +264,8 @@ export function TeacherAssignment({
                 onValueChange={setSelectedTeacherId}
                 disabled={loading}
               >
-                <SelectTrigger id="professor" aria-label="Professor titular">
-                  <SelectValue placeholder="Selecione um professor" />
+                <SelectTrigger id="professor" aria-label={t('labels.professor-titular')}>
+                  <SelectValue placeholder={t('labels.selecione-um-professor')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableTeachers.map((teacher) => (
@@ -280,7 +282,7 @@ export function TeacherAssignment({
               {selectedTeacherId && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
-                    <span className="font-medium">Professor selecionado:</span>{' '}
+                    <span className="font-medium">{t('labels.professor-selecionado')}</span>{' '}
                     {getSelectedTeacher()?.nome}
                   </p>
                   <p className="text-sm text-blue-600">{getSelectedTeacher()?.email}</p>
@@ -312,12 +314,12 @@ export function TeacherAssignment({
 
         {/* Assignment Guidelines */}
         <div className="space-y-2">
-          <h4 className="font-medium text-sm text-gray-700">Orientações</h4>
+          <h4 className="font-medium text-sm text-gray-700">{t('labels.orientacoes')}</h4>
           <div className="text-xs text-gray-600 space-y-1">
-            <p>• Apenas professores cadastrados na mesma escola podem ser titulares</p>
-            <p>• Um professor pode ser titular de mais de uma turma</p>
-            <p>• O professor titular pode abrir e registrar a chamada da turma</p>
-            <p>• A turma tem um único professor titular no piloto</p>
+            <p>{t('labels.apenas-professores-cadastrados-na-mesma-escola-podem-ser-tit')}</p>
+            <p>{t('labels.um-professor-pode-ser-titular-de-mais-de-uma-turma')}</p>
+            <p>{t('labels.o-professor-titular-pode-abrir-e-registrar-a-chamada-da-turm')}</p>
+            <p>{t('labels.a-turma-tem-um-unico-professor-titular-no-piloto')}</p>
           </div>
         </div>
       </CardContent>

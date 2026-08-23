@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -24,6 +25,7 @@ interface SchoolOption {
 }
 
 export default function NovoUsuarioPage() {
+  const t = useTranslations('registry')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -98,7 +100,7 @@ export default function NovoUsuarioPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Novo Usuário</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-usuario')}</h1>
           <p className="text-gray-600 mt-1">
             Cadastre um novo usuário no sistema
           </p>
@@ -112,7 +114,7 @@ export default function NovoUsuarioPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <User className="h-5 w-5" />
-                <span>Dados do Usuário</span>
+                <span>{t('labels.dados-do-usuario')}</span>
               </CardTitle>
               <CardDescription>
                 Preencha as informações básicas do usuário
@@ -122,18 +124,18 @@ export default function NovoUsuarioPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nome">Nome Completo *</Label>
+                    <Label htmlFor="nome">{t('labels.nome-completo-2')}</Label>
                     <Input
                       id="nome"
                       value={formData.nome}
                       onChange={(e) => handleInputChange('nome', e.target.value)}
-                      placeholder="Digite o nome completo"
+                      placeholder={t('labels.digite-o-nome-completo')}
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">{t('labels.email-2')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -147,28 +149,28 @@ export default function NovoUsuarioPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tipo_usuario">Tipo de Usuário *</Label>
+                    <Label htmlFor="tipo_usuario">{t('labels.tipo-de-usuario-2')}</Label>
                     <Select value={formData.tipo_usuario} onValueChange={(value) => handleInputChange('tipo_usuario', value)}>
                       <SelectTrigger id="tipo_usuario">
-                        <SelectValue placeholder="Selecione o tipo" />
+                        <SelectValue placeholder={t('labels.selecione-o-tipo')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="diretor">Diretor</SelectItem>
-                        <SelectItem value="secretario">Secretário</SelectItem>
-                        <SelectItem value="professor">Professor</SelectItem>
+                        <SelectItem value="diretor">{t('labels.diretor')}</SelectItem>
+                        <SelectItem value="secretario">{t('labels.secretario')}</SelectItem>
+                        <SelectItem value="professor">{t('labels.professor')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="escola">Escola</Label>
+                    <Label htmlFor="escola">{t('labels.escola')}</Label>
                     <Select
                       value={formData.escola_id}
                       onValueChange={(value) => handleInputChange('escola_id', value)}
                       disabled={formData.tipo_usuario === 'secretario'}
                     >
                       <SelectTrigger id="escola">
-                        <SelectValue placeholder="Selecione a escola" />
+                        <SelectValue placeholder={t('labels.selecione-a-escola')} />
                       </SelectTrigger>
                       <SelectContent>
                         {escolas.map((escola) => (
@@ -192,7 +194,7 @@ export default function NovoUsuarioPage() {
                       Cancelar
                     </Link>
                   </Button>
-                  <Button type="submit" disabled={loading} aria-label="Criar usuário">
+                  <Button type="submit" disabled={loading} aria-label={t('labels.criar-usuario')}>
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -215,20 +217,20 @@ export default function NovoUsuarioPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Informações Importantes</CardTitle>
+              <CardTitle>{t('labels.informacoes-importantes')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Tipos de Usuário</h4>
+                <h4 className="font-medium text-gray-900 mb-2">{t('labels.tipos-de-usuario')}</h4>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <div><strong>Diretor:</strong> Gestão da escola específica</div>
-                  <div><strong>Secretário:</strong> Operações administrativas</div>
-                  <div><strong>Professor:</strong> Gestão de turmas e alunos</div>
+                  <div><strong>{t('labels.diretor-2')}</strong>{t('labels.gestao-da-escola-especifica')}</div>
+                  <div><strong>{t('labels.secretario-2')}</strong>{t('labels.operacoes-administrativas')}</div>
+                  <div><strong>{t('labels.professor-2')}</strong>{t('labels.gestao-de-turmas-e-alunos')}</div>
                 </div>
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Primeiro acesso</h4>
+                <h4 className="font-medium text-gray-900 mb-2">{t('labels.primeiro-acesso')}</h4>
                 <p className="text-sm text-gray-600">
                   O usuário receberá um convite individual e definirá a senha no primeiro acesso.
                 </p>

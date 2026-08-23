@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -87,6 +88,7 @@ const mockActivities: UserActivity[] = [
 ]
 
 export default function UsuarioDetalhesPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const [usuario, setUsuario] = useState<UserWithSchool | null>(null)
@@ -104,7 +106,7 @@ export default function UsuarioDetalhesPage() {
       if (data) {
         setUsuario(data)
       } else {
-        toast.error('Usuário não encontrado')
+        toast.error(t('labels.usuario-nao-encontrado'))
         router.push('/dashboard/usuarios')
       }
     } catch (error) {
@@ -137,10 +139,10 @@ export default function UsuarioDetalhesPage() {
   const getRoleLabel = (role: string) => {
     const roles = {
       admin: 'Administrador',
-      diretor: 'Diretor(a)',
+      diretor: t('labels.diretor-a'),
       secretario: 'Secretário(a)',
       professor: 'Professor(a)',
-      responsavel: 'Responsável'
+      responsavel: t('labels.responsavel')
     }
     return roles[role as keyof typeof roles] || role
   }
@@ -194,7 +196,7 @@ export default function UsuarioDetalhesPage() {
   if (!usuario) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Usuário não encontrado</p>
+        <p className="text-gray-500">{t('labels.usuario-nao-encontrado')}</p>
       </div>
     )
   }
@@ -210,7 +212,7 @@ export default function UsuarioDetalhesPage() {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Detalhes do Usuário</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('labels.detalhes-do-usuario')}</h1>
           <p className="text-gray-600 mt-1">
             Informações completas e histórico de atividades
           </p>
@@ -260,9 +262,9 @@ export default function UsuarioDetalhesPage() {
 
               <div className="pt-4 border-t">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Status</span>
+                  <span className="text-sm font-medium">{t('labels.status')}</span>
                   <Badge variant={usuario.ativo ? 'default' : 'secondary'}>
-                    {usuario.ativo ? 'Ativo' : 'Inativo'}
+                    {usuario.ativo ? 'Ativo' : t('labels.inativo')}
                   </Badge>
                 </div>
               </div>
@@ -274,24 +276,24 @@ export default function UsuarioDetalhesPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="h-5 w-5" />
-                <span>Estatísticas</span>
+                <span>{t('labels.estatisticas')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Total de Logins</span>
+                <span className="text-sm text-gray-600">{t('labels.total-de-logins')}</span>
                 <span className="font-semibold">
                   {activities.filter(a => a.type === 'login').length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Ações Realizadas</span>
+                <span className="text-sm text-gray-600">{t('labels.acoes-realizadas')}</span>
                 <span className="font-semibold">
                   {activities.filter(a => ['create', 'update', 'delete'].includes(a.type)).length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Dias Ativos</span>
+                <span className="text-sm text-gray-600">{t('labels.dias-ativos')}</span>
                 <span className="font-semibold">15</span>
               </div>
             </CardContent>
@@ -304,22 +306,22 @@ export default function UsuarioDetalhesPage() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="atividades" className="flex items-center space-x-2">
                 <Activity className="h-4 w-4" />
-                <span>Atividades</span>
+                <span>{t('labels.atividades')}</span>
               </TabsTrigger>
               <TabsTrigger value="permissoes" className="flex items-center space-x-2">
                 <Shield className="h-4 w-4" />
-                <span>Permissões</span>
+                <span>{t('labels.permissoes')}</span>
               </TabsTrigger>
               <TabsTrigger value="configuracoes" className="flex items-center space-x-2">
                 <User className="h-4 w-4" />
-                <span>Configurações</span>
+                <span>{t('labels.configuracoes')}</span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="atividades">
               <Card>
                 <CardHeader>
-                  <CardTitle>Histórico de Atividades</CardTitle>
+                  <CardTitle>{t('labels.historico-de-atividades')}</CardTitle>
                   <CardDescription>
                     Últimas ações realizadas pelo usuário no sistema
                   </CardDescription>
@@ -355,7 +357,7 @@ export default function UsuarioDetalhesPage() {
             <TabsContent value="permissoes">
               <Card>
                 <CardHeader>
-                  <CardTitle>Permissões do Usuário</CardTitle>
+                  <CardTitle>{t('labels.permissoes-do-usuario')}</CardTitle>
                   <CardDescription>
                     Módulos e funcionalidades que o usuário tem acesso
                   </CardDescription>
@@ -365,14 +367,14 @@ export default function UsuarioDetalhesPage() {
                     {[
                       { modulo: 'Dashboard', acesso: true, descricao: 'Visualizar estatísticas gerais' },
                       { modulo: 'Alunos', acesso: true, descricao: 'Gerenciar cadastro de alunos' },
-                      { modulo: 'Usuários', acesso: usuario.tipo_usuario === 'admin', descricao: 'Gerenciar usuários do sistema' },
-                      { modulo: 'Escolas', acesso: ['admin', 'secretario'].includes(usuario.tipo_usuario), descricao: 'Gerenciar unidades escolares' },
-                      { modulo: 'Matrículas', acesso: true, descricao: 'Processar matrículas' },
-                      { modulo: 'Turmas', acesso: true, descricao: 'Gerenciar turmas e classes' },
+                      { modulo: t('labels.usuarios'), acesso: usuario.tipo_usuario === 'admin', descricao: 'Gerenciar usuários do sistema' },
+                      { modulo: t('labels.escolas'), acesso: ['admin', 'secretario'].includes(usuario.tipo_usuario), descricao: 'Gerenciar unidades escolares' },
+                      { modulo: t('labels.matriculas'), acesso: true, descricao: 'Processar matrículas' },
+                      { modulo: t('labels.turmas'), acesso: true, descricao: 'Gerenciar turmas e classes' },
                       { modulo: 'Frequência', acesso: ['admin', 'diretor', 'professor'].includes(usuario.tipo_usuario), descricao: 'Controlar presença dos alunos' },
                       { modulo: 'Notas', acesso: ['admin', 'diretor', 'professor'].includes(usuario.tipo_usuario), descricao: 'Lançar e gerenciar notas' },
                       { modulo: 'Relatórios', acesso: true, descricao: 'Gerar relatórios do sistema' },
-                      { modulo: 'Configurações', acesso: usuario.tipo_usuario === 'admin', descricao: 'Configurar parâmetros do sistema' }
+                      { modulo: t('labels.configuracoes'), acesso: usuario.tipo_usuario === 'admin', descricao: 'Configurar parâmetros do sistema' }
                     ].map((permissao, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
@@ -392,7 +394,7 @@ export default function UsuarioDetalhesPage() {
             <TabsContent value="configuracoes">
               <Card>
                 <CardHeader>
-                  <CardTitle>Configurações da Conta</CardTitle>
+                  <CardTitle>{t('labels.configuracoes-da-conta')}</CardTitle>
                   <CardDescription>
                     Configurações específicas do usuário
                   </CardDescription>
@@ -401,13 +403,13 @@ export default function UsuarioDetalhesPage() {
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">ID do Usuário</label>
+                        <label className="text-sm font-medium text-gray-700">{t('labels.id-do-usuario')}</label>
                         <div className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
                           {usuario.id}
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Tipo de Usuário</label>
+                        <label className="text-sm font-medium text-gray-700">{t('labels.tipo-de-usuario')}</label>
                         <div className="text-sm text-gray-600">
                           {getRoleLabel(usuario.tipo_usuario)}
                         </div>
@@ -415,29 +417,29 @@ export default function UsuarioDetalhesPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Email</label>
+                      <label className="text-sm font-medium text-gray-700">{t('labels.email')}</label>
                       <div className="text-sm text-gray-600">{usuario.email}</div>
                     </div>
 
                     {usuario.escola?.nome && (
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Escola Vinculada</label>
+                        <label className="text-sm font-medium text-gray-700">{t('labels.escola-vinculada')}</label>
                         <div className="text-sm text-gray-600">{usuario.escola?.nome}</div>
                       </div>
                     )}
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Data de Criação</label>
+                      <label className="text-sm font-medium text-gray-700">{t('labels.data-de-criacao')}</label>
                       <div className="text-sm text-gray-600">
                         {new Date(usuario.created_at || "").toLocaleString('pt-BR')}
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Status da Conta</label>
+                      <label className="text-sm font-medium text-gray-700">{t('labels.status-da-conta')}</label>
                       <div className="flex items-center space-x-2">
                         <Badge variant={usuario.ativo === true ? 'default' : 'secondary'}>
-                          {usuario.ativo === true ? 'Ativa' : 'Inativa'}
+                          {usuario.ativo === true ? t('labels.ativa') : 'Inativa'}
                         </Badge>
                         {usuario.ativo !== true && (
                           <span className="text-sm text-gray-500">

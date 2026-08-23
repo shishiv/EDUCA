@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
@@ -91,6 +92,7 @@ interface AlunoDetalhado {
 }
 
 export default function AlunoDetalhesPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const [aluno, setAluno] = useState<AlunoDetalhado | null>(null)
   const [loading, setLoading] = useState(true)
@@ -195,7 +197,7 @@ export default function AlunoDetalhesPage() {
             nome: alunoData.nome_mae || alunoData.nome_pai || 'Não informado',
             telefone: alunoData.telefone || 'Não informado',
             email: undefined,
-            parentesco: alunoData.nome_mae ? 'Mãe' : 'Pai'
+            parentesco: alunoData.nome_mae ? t('labels.mae') : t('labels.pai')
           },
           matriculas: alunoData.matriculas || [],
           frequencia,
@@ -219,7 +221,7 @@ export default function AlunoDetalhesPage() {
     }
 
     loadStudent()
-  }, [params?.id])
+  }, [params?.id, t])
 
   const getNotaColor = (nota: number) => {
     if (nota >= 8) return 'text-green-600 font-semibold'
@@ -257,7 +259,7 @@ export default function AlunoDetalhesPage() {
       <div className="text-center py-8">
         <p className="text-muted-foreground">{error || 'Aluno não encontrado'}</p>
         <Button asChild className="mt-4">
-          <Link href="/dashboard/alunos">Voltar para lista</Link>
+          <Link href="/dashboard/alunos">{t('labels.voltar-para-lista')}</Link>
         </Button>
       </div>
     )
@@ -361,13 +363,13 @@ export default function AlunoDetalhesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Disciplina</TableHead>
-                      <TableHead className="text-center">1º Bim</TableHead>
-                      <TableHead className="text-center">2º Bim</TableHead>
-                      <TableHead className="text-center">3º Bim</TableHead>
-                      <TableHead className="text-center">4º Bim</TableHead>
-                      <TableHead className="text-center">Média</TableHead>
-                      <TableHead className="text-center">Situação</TableHead>
+                      <TableHead>{t('labels.disciplina')}</TableHead>
+                      <TableHead className="text-center">{t('labels.1o-bim')}</TableHead>
+                      <TableHead className="text-center">{t('labels.2o-bim')}</TableHead>
+                      <TableHead className="text-center">{t('labels.3o-bim')}</TableHead>
+                      <TableHead className="text-center">{t('labels.4o-bim')}</TableHead>
+                      <TableHead className="text-center">{t('labels.media')}</TableHead>
+                      <TableHead className="text-center">{t('labels.situacao')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -390,7 +392,7 @@ export default function AlunoDetalhesPage() {
                           {nota.media.toFixed(1)}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="outline">Cursando</Badge>
+                          <Badge variant="outline">{t('labels.cursando')}</Badge>
                         </TableCell>
                       </TableRow>
                     ))}

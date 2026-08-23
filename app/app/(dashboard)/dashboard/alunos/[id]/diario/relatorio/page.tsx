@@ -13,6 +13,7 @@
  */
 
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -115,6 +116,7 @@ function formatSemesterLabel(semestre: SemestreType, ano: number): string {
 // ============================================================================
 
 export default function RelatorioPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const { userProfile } = useAuth()
@@ -480,7 +482,7 @@ export default function RelatorioPage() {
     return (
       <div className="p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
-          <p className="font-medium">Erro ao carregar pagina</p>
+          <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
           <p className="text-sm mt-1">{error || 'Aluno não encontrado'}</p>
           <Button
             variant="outline"
@@ -528,7 +530,7 @@ export default function RelatorioPage() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:max-w-md p-0">
                   <SheetHeader className="sr-only">
-                    <SheetTitle>Vivências de Referência</SheetTitle>
+                    <SheetTitle>{t('labels.vivencias-de-referencia')}</SheetTitle>
                   </SheetHeader>
                   <VivenciasReference
                     vivencias={vivencias}
@@ -542,7 +544,7 @@ export default function RelatorioPage() {
               {/* Print button */}
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Exportar</span>
+                <span className="hidden sm:inline">{t('labels.exportar')}</span>
               </Button>
             </div>
           </div>
@@ -567,7 +569,7 @@ export default function RelatorioPage() {
               }
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Selecione o semestre" />
+                <SelectValue placeholder={t('labels.selecione-o-semestre')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="primeiro">
@@ -611,7 +613,7 @@ export default function RelatorioPage() {
               {isReportFinalized && (
                 <Alert className="mb-4 border-green-200 bg-green-50">
                   <Lock className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-800">Relatório Finalizado</AlertTitle>
+                  <AlertTitle className="text-green-800">{t('labels.relatorio-finalizado')}</AlertTitle>
                   <AlertDescription className="text-green-700">
                     Este relatorio foi finalizado e nao pode mais ser editado.
                   </AlertDescription>
@@ -650,13 +652,13 @@ export default function RelatorioPage() {
       <AlertDialog open={showFinalizeDialog} onOpenChange={setShowFinalizeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Finalizar Relatório</AlertDialogTitle>
+            <AlertDialogTitle>{t('labels.finalizar-relatorio')}</AlertDialogTitle>
             <AlertDialogDescription>
               Ao finalizar, o relatório não poderá mais ser editado. Tem certeza que deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSaving}>{t('labels.cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleFinalizeConfirm}
               disabled={isSaving}

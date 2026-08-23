@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -43,6 +44,7 @@ const initialForm: FormState = {
 }
 
 export default function EditarAlunoPage() {
+  const t = useTranslations('registry')
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const id = params.id
@@ -141,7 +143,7 @@ export default function EditarAlunoPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center" aria-label="Carregando aluno">
+      <div className="flex min-h-[320px] items-center justify-center" aria-label={t('labels.carregando-aluno')}>
         <Loader2 className="h-8 w-8 animate-spin text-green-600" />
       </div>
     )
@@ -161,78 +163,78 @@ export default function EditarAlunoPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Editar Aluno</h1>
-          <p className="mt-1 text-gray-600">Atualize os dados cadastrais do aluno.</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.editar-aluno')}</h1>
+          <p className="mt-1 text-gray-600">{t('labels.atualize-os-dados-cadastrais-do-aluno')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Dados do Aluno</CardTitle>
-          <CardDescription>Campos com * são obrigatórios.</CardDescription>
+          <CardTitle>{t('labels.dados-do-aluno')}</CardTitle>
+          <CardDescription>{t('labels.campos-com-sao-obrigatorios')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="edit-aluno-nome">Nome Completo *</Label>
+                <Label htmlFor="edit-aluno-nome">{t('labels.nome-completo-2')}</Label>
                 <Input id="edit-aluno-nome" value={form.nome_completo} onChange={event => update('nome_completo', event.target.value)} aria-invalid={Boolean(errors.nome_completo)} required />
                 {fieldError('nome_completo')}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-data">Data de Nascimento *</Label>
+                <Label htmlFor="edit-aluno-data">{t('labels.data-de-nascimento-2')}</Label>
                 <Input id="edit-aluno-data" type="date" value={form.data_nascimento} onChange={event => update('data_nascimento', event.target.value)} aria-invalid={Boolean(errors.data_nascimento)} required />
                 {fieldError('data_nascimento')}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-sexo">Sexo *</Label>
+                <Label htmlFor="edit-aluno-sexo">{t('labels.sexo-2')}</Label>
                 <Select value={form.sexo} onValueChange={value => update('sexo', value as 'M' | 'F')}>
-                  <SelectTrigger id="edit-aluno-sexo" aria-label="Sexo"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="edit-aluno-sexo" aria-label={t('labels.sexo')}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="M">Masculino</SelectItem>
-                    <SelectItem value="F">Feminino</SelectItem>
+                    <SelectItem value="M">{t('labels.masculino')}</SelectItem>
+                    <SelectItem value="F">{t('labels.feminino')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-cpf">CPF</Label>
+                <Label htmlFor="edit-aluno-cpf">{t('labels.cpf')}</Label>
                 <Input id="edit-aluno-cpf" value={form.cpf} onChange={event => update('cpf', event.target.value)} aria-invalid={Boolean(errors.cpf)} />
                 {fieldError('cpf')}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-rg">RG</Label>
+                <Label htmlFor="edit-aluno-rg">{t('labels.rg')}</Label>
                 <Input id="edit-aluno-rg" value={form.rg} onChange={event => update('rg', event.target.value)} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="edit-aluno-endereco">Endereço Completo *</Label>
+                <Label htmlFor="edit-aluno-endereco">{t('labels.endereco-completo-2')}</Label>
                 <Input id="edit-aluno-endereco" value={form.endereco} onChange={event => update('endereco', event.target.value)} aria-invalid={Boolean(errors.endereco)} required />
                 {fieldError('endereco')}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-telefone">Telefone</Label>
+                <Label htmlFor="edit-aluno-telefone">{t('labels.telefone')}</Label>
                 <Input id="edit-aluno-telefone" value={form.telefone} onChange={event => update('telefone', event.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-email">E-mail</Label>
+                <Label htmlFor="edit-aluno-email">{t('labels.e-mail')}</Label>
                 <Input id="edit-aluno-email" type="email" value={form.email} onChange={event => update('email', event.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-mae">Nome da Mãe *</Label>
+                <Label htmlFor="edit-aluno-mae">{t('labels.nome-da-mae')}</Label>
                 <Input id="edit-aluno-mae" value={form.nome_mae} onChange={event => update('nome_mae', event.target.value)} aria-invalid={Boolean(errors.nome_mae)} required />
                 {fieldError('nome_mae')}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-aluno-pai">Nome do Pai</Label>
+                <Label htmlFor="edit-aluno-pai">{t('labels.nome-do-pai')}</Label>
                 <Input id="edit-aluno-pai" value={form.nome_pai} onChange={event => update('nome_pai', event.target.value)} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="edit-aluno-necessidades">Necessidades Educacionais Especiais</Label>
+                <Label htmlFor="edit-aluno-necessidades">{t('labels.necessidades-educacionais-especiais')}</Label>
                 <Textarea id="edit-aluno-necessidades" value={form.necessidades_especiais} onChange={event => update('necessidades_especiais', event.target.value)} />
               </div>
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
-              <Button variant="outline" asChild><Link href={`/dashboard/alunos/${id}`}>Cancelar</Link></Button>
+              <Button variant="outline" asChild><Link href={`/dashboard/alunos/${id}`}>{t('labels.cancelar')}</Link></Button>
               <Button type="submit" disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {saving ? 'Salvando...' : 'Salvar alterações'}

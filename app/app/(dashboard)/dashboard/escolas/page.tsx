@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -45,6 +46,7 @@ interface Escola {
 
 
 export default function EscolasPage() {
+  const t = useTranslations('registry')
   const [escolas, setEscolas] = useState<Escola[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -170,7 +172,7 @@ export default function EscolasPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Escolas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.escolas')}</h1>
           <p className="text-gray-600 mt-1">
             Gerencie as unidades escolares da rede municipal
           </p>
@@ -192,10 +194,10 @@ export default function EscolasPage() {
       {/* Estatísticas compactas */}
       <StatsBar
         stats={[
-          { label: 'Total', value: totalEscolas, icon: School },
-          { label: 'Ativas', value: escolasAtivas, icon: CheckCircle, variant: 'success' },
+          { label: t('labels.total'), value: totalEscolas, icon: School },
+          { label: t('labels.ativas'), value: escolasAtivas, icon: CheckCircle, variant: 'success' },
           { label: 'Alunos', value: totalAlunos, icon: Users, variant: 'info' },
-          { label: 'Turmas', value: totalTurmas, icon: BookOpen, variant: 'warning' },
+          { label: t('labels.turmas'), value: totalTurmas, icon: BookOpen, variant: 'warning' },
         ]}
       />
 
@@ -214,7 +216,7 @@ export default function EscolasPage() {
             filters={[
               {
                 id: 'tipo',
-                placeholder: 'Tipo',
+                placeholder: t('labels.tipo'),
                 value: tipoFilter,
                 options: [
                   { value: 'todos', label: 'Todos os tipos' },
@@ -227,11 +229,11 @@ export default function EscolasPage() {
               },
               {
                 id: 'status',
-                placeholder: 'Status',
+                placeholder: t('labels.status'),
                 value: statusFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
-                  { value: 'ativo', label: 'Ativas' },
+                  { value: 'todos', label: t('labels.todos') },
+                  { value: 'ativo', label: t('labels.ativas') },
                   { value: 'inativo', label: 'Inativas' },
                 ],
                 onChange: setStatusFilter,
@@ -250,13 +252,13 @@ export default function EscolasPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Escola</TableHead>
-                  <TableHead>Diretor</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Ocupação</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.escola')}</TableHead>
+                  <TableHead>{t('labels.diretor')}</TableHead>
+                  <TableHead>{t('labels.tipo')}</TableHead>
+                  <TableHead>{t('labels.ocupacao')}</TableHead>
+                  <TableHead>{t('labels.contato')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -324,7 +326,7 @@ export default function EscolasPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-                          {escola.ativo ? 'Ativa' : 'Inativa'}
+                          {escola.ativo ? t('labels.ativa') : 'Inativa'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -376,7 +378,7 @@ export default function EscolasPage() {
                           ]
                         : [
                             {
-                              label: 'Nova Escola',
+                              label: t('labels.nova-escola'),
                               href: '/dashboard/escolas/nova',
                               icon: Plus,
                             },

@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle } from 'lucide-react'
@@ -30,13 +31,6 @@ interface StudentTagsProps {
   className?: string
 }
 
-const turnoLabels: Record<string, string> = {
-  matutino: 'Matutino',
-  vespertino: 'Vespertino',
-  integral: 'Integral',
-  noturno: 'Noturno',
-}
-
 /**
  * Displays colored tag chips for turma, turno, status, and optionally Bolsa Familia.
  * Uses flex-wrap for responsive layout.
@@ -49,6 +43,13 @@ export function StudentTags({
   ativo = true,
   className,
 }: StudentTagsProps) {
+  const t = useTranslations('registry')
+  const turnoLabels: Record<string, string> = {
+    matutino: t('labels.matutino'),
+    vespertino: t('labels.vespertino'),
+    integral: t('labels.integral'),
+    noturno: t('labels.noturno'),
+  }
   const hasAnyTag =
     turma ||
     turno ||
@@ -62,7 +63,7 @@ export function StudentTags({
       {/* Status Badge */}
       {ativo !== undefined && (
         <Badge variant={ativo ? 'success' : 'secondary'}>
-          {ativo ? 'Ativo' : 'Inativo'}
+          {ativo ? 'Ativo' : t('labels.inativo')}
         </Badge>
       )}
 
@@ -84,7 +85,7 @@ export function StudentTags({
       {showBolsaFamilia && bolsaFamilia && (
         <Badge variant="warning" className="flex items-center gap-1">
           <AlertTriangle className="h-3 w-3" />
-          <span>Bolsa Família</span>
+          <span>{t('labels.bolsa-familia')}</span>
         </Badge>
       )}
     </div>

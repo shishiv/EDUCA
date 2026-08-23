@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
@@ -54,6 +55,7 @@ interface AlunoWithDetails extends Aluno {
 }
 
 export default function AlunosPage() {
+  const t = useTranslations('registry')
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const { userProfile } = useAuth()
   const [alunos, setAlunos] = useState<AlunoWithDetails[]>([])
@@ -218,14 +220,14 @@ export default function AlunosPage() {
     const matriculaAtiva = aluno.matriculas?.find(m => m.situacao === 'ativa')
     
     if (!aluno.ativo) {
-      return <Badge variant="secondary">Inativo</Badge>
+      return <Badge variant="secondary">{t('labels.inativo')}</Badge>
     }
     
     if (matriculaAtiva) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Matriculado</Badge>
+      return <Badge variant="default" className="bg-green-100 text-green-800">{t('labels.matriculado')}</Badge>
     }
     
-    return <Badge variant="outline">Não Matriculado</Badge>
+    return <Badge variant="outline">{t('labels.nao-matriculado')}</Badge>
   }
 
   const getCurrentSchool = (aluno: AlunoWithDetails) => {
@@ -269,8 +271,8 @@ export default function AlunosPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Alunos"
-          description="Gerencie o cadastro de todos os alunos da rede municipal"
+          title={t('labels.alunos')}
+          description={t('labels.gerencie-o-cadastro-de-todos-os-alunos-da-rede-municipa')}
           actions={
             <>
               <Button variant="outline" className="gap-2">
@@ -287,8 +289,8 @@ export default function AlunosPage() {
           }
         />
         <EscolaRequiredState
-          title="Selecione uma Escola"
-          description="Para visualizar os alunos, selecione uma escola no seletor do menu lateral."
+          title={t('labels.selecione-uma-escola')}
+          description={t('labels.para-visualizar-os-alunos-selecione-uma-escola-no-selet')}
         />
       </div>
     )
@@ -298,8 +300,8 @@ export default function AlunosPage() {
     <div className="space-y-6">
       {/* Cabeçalho */}
       <PageHeader
-        title="Alunos"
-        description="Gerencie o cadastro de todos os alunos da rede municipal"
+        title={t('labels.alunos')}
+        description={t('labels.gerencie-o-cadastro-de-todos-os-alunos-da-rede-municipa')}
         actions={
           <>
             <Button variant="outline" className="gap-2">
@@ -319,7 +321,7 @@ export default function AlunosPage() {
       {/* Estatísticas compactas */}
       <StatsBar
         stats={[
-          { label: 'Total', value: alunos.length, icon: Users },
+          { label: t('labels.total'), value: alunos.length, icon: Users },
           { label: 'Matriculados', value: alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserCheck, variant: 'success' },
           { label: 'Não Matriculados', value: alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserX, variant: 'warning' },
           { label: 'NEE', value: alunos.filter(a => a.necessidades_especiais).length, icon: Heart, variant: 'info' },
@@ -341,7 +343,7 @@ export default function AlunosPage() {
             filters={[
               {
                 id: 'status',
-                placeholder: 'Status',
+                placeholder: t('labels.status'),
                 value: statusFilter,
                 options: [
                   { value: 'todos', label: 'Todos os Status' },
@@ -355,10 +357,10 @@ export default function AlunosPage() {
               },
               {
                 id: 'sexo',
-                placeholder: 'Sexo',
+                placeholder: t('labels.sexo'),
                 value: sexoFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
+                  { value: 'todos', label: t('labels.todos') },
                   { value: 'M', label: 'Masculino' },
                   { value: 'F', label: 'Feminino' },
                 ],
@@ -378,12 +380,12 @@ export default function AlunosPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Idade</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Escola Atual</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.aluno')}</TableHead>
+                  <TableHead>{t('labels.idade')}</TableHead>
+                  <TableHead>{t('labels.responsavel')}</TableHead>
+                  <TableHead>{t('labels.escola-atual')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -473,7 +475,7 @@ export default function AlunosPage() {
                     title={
                       search || statusFilter !== 'todos' || sexoFilter !== 'todos'
                         ? 'Nenhum aluno encontrado'
-                        : 'Nenhum aluno cadastrado'
+                        : t('labels.nenhum-aluno-cadastrado')
                     }
                     description={
                       search || statusFilter !== 'todos' || sexoFilter !== 'todos'
@@ -495,7 +497,7 @@ export default function AlunosPage() {
                           ]
                         : [
                             {
-                              label: 'Novo Aluno',
+                              label: t('labels.novo-aluno'),
                               href: '/dashboard/alunos/novo',
                               icon: Plus,
                             },
@@ -517,14 +519,14 @@ export default function AlunosPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Desativar aluno</AlertDialogTitle>
+            <AlertDialogTitle>{t('labels.desativar-aluno')}</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja desativar {studentToDeactivate?.nome_completo}? O registro permanece disponível para consulta.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeactivate}>Desativar</AlertDialogAction>
+            <AlertDialogCancel>{t('labels.cancelar')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivate}>{t('labels.desativar')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

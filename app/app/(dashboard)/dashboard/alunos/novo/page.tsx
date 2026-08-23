@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -28,6 +29,7 @@ import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoAlunoPage() {
+  const t = useTranslations('registry')
   const router = useRouter()
   // The demo database uses the canonical schema and synthetic seed. Keep the
   // pilot-only field restrictions for municipal pilots, but expose this CRUD
@@ -127,7 +129,7 @@ export default function NovoAlunoPage() {
           nome: responsavelData.nome,
           telefone: responsavelData.telefone?.replace(/\D/g, '') || undefined,
           email: responsavelData.email || undefined,
-          grau_parentesco: responsavelData.parentesco || 'Responsável',
+          grau_parentesco: responsavelData.parentesco || t('labels.responsavel'),
         }
       }
 
@@ -210,7 +212,7 @@ export default function NovoAlunoPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Novo Aluno</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-aluno')}</h1>
           <p className="text-gray-600 mt-1">
             Cadastre um novo aluno no sistema
           </p>
@@ -238,19 +240,19 @@ export default function NovoAlunoPage() {
  <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
             <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <User className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Dados Pessoais</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.dados-pessoais')}</span>
             </TabsTrigger>
             <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
               <Users className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Responsável</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.responsavel')}</span>
             </TabsTrigger>
  <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
               <FileText className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Dados Médicos</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.dados-medicos')}</span>
             </TabsTrigger>
  <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
               <Upload className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">Documentos</span>
+              <span className="text-xs md:text-sm font-medium">{t('labels.documentos')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -259,7 +261,7 @@ export default function NovoAlunoPage() {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Informações Pessoais</CardTitle>
+                    <CardTitle>{t('labels.informacoes-pessoais')}</CardTitle>
                     <CardDescription>
                       Dados básicos de identificação do aluno
                     </CardDescription>
@@ -267,12 +269,12 @@ export default function NovoAlunoPage() {
                   <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2 space-y-2">
-                        <Label htmlFor="nome_completo">Nome Completo *</Label>
+                        <Label htmlFor="nome_completo">{t('labels.nome-completo-2')}</Label>
                         <Input
                           id="nome_completo"
                           value={formData.nome_completo}
                           onChange={(e) => handleInputChange('nome_completo', e.target.value)}
- placeholder="Digite o nome completo do aluno"
+ placeholder={t('labels.digite-o-nome-completo-do-aluno')}
  aria-invalid={Boolean(fieldErrors.nome_completo)}
  aria-describedby={fieldErrors.nome_completo ? 'nome_completo-error' : undefined}
  required
@@ -285,7 +287,7 @@ export default function NovoAlunoPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
+                        <Label htmlFor="data_nascimento">{t('labels.data-de-nascimento-2')}</Label>
                         <Input
                           id="data_nascimento"
                           type="date"
@@ -303,18 +305,18 @@ export default function NovoAlunoPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="sexo">Sexo *</Label>
+                        <Label htmlFor="sexo">{t('labels.sexo-2')}</Label>
                         <Select value={formData.sexo} onValueChange={(value) => handleInputChange('sexo', value)}>
                           <SelectTrigger
                             id="sexo"
                             aria-invalid={Boolean(fieldErrors.sexo)}
                             aria-describedby={fieldErrors.sexo ? 'sexo-error' : undefined}
                           >
-                            <SelectValue placeholder="Selecione o sexo" />
+                            <SelectValue placeholder={t('labels.selecione-o-sexo')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="M">Masculino</SelectItem>
-                            <SelectItem value="F">Feminino</SelectItem>
+                            <SelectItem value="M">{t('labels.masculino')}</SelectItem>
+                            <SelectItem value="F">{t('labels.feminino')}</SelectItem>
                           </SelectContent>
                         </Select>
                         {fieldErrors.sexo && (
@@ -327,7 +329,7 @@ export default function NovoAlunoPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="cpf">CPF</Label>
+                        <Label htmlFor="cpf">{t('labels.cpf')}</Label>
                         <Input
                           id="cpf"
                           value={formData.cpf}
@@ -345,23 +347,23 @@ export default function NovoAlunoPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="rg">RG</Label>
+                        <Label htmlFor="rg">{t('labels.rg')}</Label>
                         <Input
                           id="rg"
                           value={formData.rg}
                           onChange={(e) => handleInputChange('rg', e.target.value)}
-                          placeholder="Digite o RG"
+                          placeholder={t('labels.digite-o-rg')}
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="endereco">Endereço Completo *</Label>
+                      <Label htmlFor="endereco">{t('labels.endereco-completo-2')}</Label>
                       <Input
                         id="endereco"
                         value={formData.endereco}
                         onChange={(e) => handleInputChange('endereco', e.target.value)}
-                        placeholder="Rua, número, bairro, cidade"
+                        placeholder={t('labels.rua-numero-bairro-cidade')}
                         aria-invalid={Boolean(fieldErrors.endereco)}
                         aria-describedby={fieldErrors.endereco ? 'endereco-error' : undefined}
                         required
@@ -375,7 +377,7 @@ export default function NovoAlunoPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="telefone">Telefone</Label>
+                        <Label htmlFor="telefone">{t('labels.telefone')}</Label>
                         <Input
                           id="telefone"
                           value={formData.telefone}
@@ -386,7 +388,7 @@ export default function NovoAlunoPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t('labels.email')}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -399,12 +401,12 @@ export default function NovoAlunoPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nome_mae">Nome da Mãe *</Label>
+                        <Label htmlFor="nome_mae">{t('labels.nome-da-mae')}</Label>
                         <Input
                           id="nome_mae"
                           value={formData.nome_mae}
                           onChange={(e) => handleInputChange('nome_mae', e.target.value)}
-                          placeholder="Nome completo da mãe"
+                          placeholder={t('labels.nome-completo-da-mae')}
                           aria-invalid={Boolean(fieldErrors.nome_mae)}
                           aria-describedby={fieldErrors.nome_mae ? 'nome_mae-error' : undefined}
                           required
@@ -417,12 +419,12 @@ export default function NovoAlunoPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="nome_pai">Nome do Pai</Label>
+                        <Label htmlFor="nome_pai">{t('labels.nome-do-pai')}</Label>
                         <Input
                           id="nome_pai"
                           value={formData.nome_pai}
                           onChange={(e) => handleInputChange('nome_pai', e.target.value)}
-                          placeholder="Nome completo do pai"
+                          placeholder={t('labels.nome-completo-do-pai')}
                         />
                       </div>
                     </div>
@@ -433,54 +435,54 @@ export default function NovoAlunoPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Dados Escolares</CardTitle>
+                    <CardTitle>{t('labels.dados-escolares')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="serie_pretendida">Série Pretendida</Label>
+                      <Label htmlFor="serie_pretendida">{t('labels.serie-pretendida')}</Label>
                       <Select value={formData.serie_pretendida} onValueChange={(value) => handleInputChange('serie_pretendida', value)}>
                         <SelectTrigger id="serie_pretendida">
-                          <SelectValue placeholder="Selecione a série" />
+                          <SelectValue placeholder={t('labels.selecione-a-serie')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="berçário">Berçário</SelectItem>
-                          <SelectItem value="maternal">Maternal</SelectItem>
-                          <SelectItem value="pre_i">Pré I</SelectItem>
-                          <SelectItem value="pre_ii">Pré II</SelectItem>
-                          <SelectItem value="1_ano">1º Ano</SelectItem>
-                          <SelectItem value="2_ano">2º Ano</SelectItem>
-                          <SelectItem value="3_ano">3º Ano</SelectItem>
-                          <SelectItem value="4_ano">4º Ano</SelectItem>
-                          <SelectItem value="5_ano">5º Ano</SelectItem>
-                          <SelectItem value="6_ano">6º Ano</SelectItem>
-                          <SelectItem value="7_ano">7º Ano</SelectItem>
-                          <SelectItem value="8_ano">8º Ano</SelectItem>
-                          <SelectItem value="9_ano">9º Ano</SelectItem>
+                          <SelectItem value="berçário">{t('labels.bercario')}</SelectItem>
+                          <SelectItem value="maternal">{t('labels.maternal')}</SelectItem>
+                          <SelectItem value="pre_i">{t('labels.pre-i')}</SelectItem>
+                          <SelectItem value="pre_ii">{t('labels.pre-ii')}</SelectItem>
+                          <SelectItem value="1_ano">{t('labels.1o-ano')}</SelectItem>
+                          <SelectItem value="2_ano">{t('labels.2o-ano')}</SelectItem>
+                          <SelectItem value="3_ano">{t('labels.3o-ano')}</SelectItem>
+                          <SelectItem value="4_ano">{t('labels.4o-ano')}</SelectItem>
+                          <SelectItem value="5_ano">{t('labels.5o-ano')}</SelectItem>
+                          <SelectItem value="6_ano">{t('labels.6o-ano')}</SelectItem>
+                          <SelectItem value="7_ano">{t('labels.7o-ano')}</SelectItem>
+                          <SelectItem value="8_ano">{t('labels.8o-ano')}</SelectItem>
+                          <SelectItem value="9_ano">{t('labels.9o-ano')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="turno_preferencia">Turno de Preferência</Label>
+                      <Label htmlFor="turno_preferencia">{t('labels.turno-de-preferencia')}</Label>
                       <Select value={formData.turno_preferencia} onValueChange={(value) => handleInputChange('turno_preferencia', value)}>
                         <SelectTrigger id="turno_preferencia">
-                          <SelectValue placeholder="Selecione o turno" />
+                          <SelectValue placeholder={t('labels.selecione-o-turno')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="matutino">Matutino</SelectItem>
-                          <SelectItem value="vespertino">Vespertino</SelectItem>
-                          <SelectItem value="integral">Integral</SelectItem>
+                          <SelectItem value="matutino">{t('labels.matutino')}</SelectItem>
+                          <SelectItem value="vespertino">{t('labels.vespertino')}</SelectItem>
+                          <SelectItem value="integral">{t('labels.integral')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="escola_anterior">Escola Anterior</Label>
+                      <Label htmlFor="escola_anterior">{t('labels.escola-anterior')}</Label>
                       <Input
                         id="escola_anterior"
                         value={formData.escola_anterior}
                         onChange={(e) => handleInputChange('escola_anterior', e.target.value)}
-                        placeholder="Nome da escola anterior"
+                        placeholder={t('labels.nome-da-escola-anterior')}
                       />
                     </div>
 
@@ -490,7 +492,7 @@ export default function NovoAlunoPage() {
                         checked={formData.ativo}
                         onCheckedChange={(checked) => handleInputChange('ativo', checked)}
                       />
-                      <Label htmlFor="ativo">Aluno ativo</Label>
+                      <Label htmlFor="ativo">{t('labels.aluno-ativo')}</Label>
                     </div>
                   </CardContent>
                 </Card>
@@ -501,7 +503,7 @@ export default function NovoAlunoPage() {
           <TabsContent value="responsavel">
             <Card>
               <CardHeader>
-                <CardTitle>Dados do Responsável</CardTitle>
+                <CardTitle>{t('labels.dados-do-responsavel')}</CardTitle>
                 <CardDescription>
                   Informações do responsável legal pelo aluno
                 </CardDescription>
@@ -509,29 +511,29 @@ export default function NovoAlunoPage() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="resp_nome">Nome Completo *</Label>
+                    <Label htmlFor="resp_nome">{t('labels.nome-completo-2')}</Label>
                     <Input
                       id="resp_nome"
                       value={responsavelData.nome}
                       onChange={(e) => handleResponsavelChange('nome', e.target.value)}
-                      placeholder="Nome completo do responsável"
+                      placeholder={t('labels.nome-completo-do-responsavel')}
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="resp_parentesco">Parentesco *</Label>
+                    <Label htmlFor="resp_parentesco">{t('labels.parentesco-2')}</Label>
                     <Select value={responsavelData.parentesco} onValueChange={(value) => handleResponsavelChange('parentesco', value)}>
                       <SelectTrigger id="resp_parentesco">
-                        <SelectValue placeholder="Selecione o parentesco" />
+                        <SelectValue placeholder={t('labels.selecione-o-parentesco')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pai">Pai</SelectItem>
-                        <SelectItem value="mae">Mãe</SelectItem>
-                        <SelectItem value="avo">Avô/Avó</SelectItem>
-                        <SelectItem value="tio">Tio/Tia</SelectItem>
-                        <SelectItem value="responsavel_legal">Responsável Legal</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
+                        <SelectItem value="pai">{t('labels.pai')}</SelectItem>
+                        <SelectItem value="mae">{t('labels.mae')}</SelectItem>
+                        <SelectItem value="avo">{t('labels.avo-avo-2')}</SelectItem>
+                        <SelectItem value="tio">{t('labels.tio-tia')}</SelectItem>
+                        <SelectItem value="responsavel_legal">{t('labels.responsavel-legal')}</SelectItem>
+                        <SelectItem value="outro">{t('labels.outro')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -539,7 +541,7 @@ export default function NovoAlunoPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={pilotMode ? 'hidden' : 'space-y-2'}>
-                    <Label htmlFor="resp_cpf">CPF *</Label>
+                    <Label htmlFor="resp_cpf">{t('labels.cpf-2')}</Label>
                     <Input
                       id="resp_cpf"
                       value={responsavelData.cpf}
@@ -551,7 +553,7 @@ export default function NovoAlunoPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="resp_telefone">Telefone *</Label>
+                    <Label htmlFor="resp_telefone">{t('labels.telefone-2')}</Label>
                     <Input
                       id="resp_telefone"
                       value={responsavelData.telefone}
@@ -565,7 +567,7 @@ export default function NovoAlunoPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="resp_email">Email</Label>
+                    <Label htmlFor="resp_email">{t('labels.email')}</Label>
                     <Input
                       id="resp_email"
                       type="email"
@@ -576,38 +578,38 @@ export default function NovoAlunoPage() {
                   </div>
                   
                   <div className={pilotMode ? 'hidden' : 'space-y-2'}>
-                    <Label htmlFor="resp_profissao">Profissão</Label>
+                    <Label htmlFor="resp_profissao">{t('labels.profissao')}</Label>
                     <Input
                       id="resp_profissao"
                       value={responsavelData.profissao}
                       onChange={(e) => handleResponsavelChange('profissao', e.target.value)}
-                      placeholder="Profissão do responsável"
+                      placeholder={t('labels.profissao-do-responsavel')}
                     />
                   </div>
                 </div>
 
                 <div className={pilotMode ? 'hidden' : 'space-y-2'}>
-                  <Label htmlFor="resp_endereco">Endereço</Label>
+                  <Label htmlFor="resp_endereco">{t('labels.endereco')}</Label>
                   <Input
                     id="resp_endereco"
                     value={responsavelData.endereco}
                     onChange={(e) => handleResponsavelChange('endereco', e.target.value)}
-                    placeholder="Endereço completo do responsável"
+                    placeholder={t('labels.endereco-completo-do-responsavel')}
                   />
                 </div>
 
                 <div className={pilotMode ? 'hidden' : 'space-y-2'}>
-                  <Label htmlFor="resp_renda">Renda Familiar</Label>
+                  <Label htmlFor="resp_renda">{t('labels.renda-familiar')}</Label>
                   <Select value={responsavelData.renda_familiar} onValueChange={(value) => handleResponsavelChange('renda_familiar', value)}>
                     <SelectTrigger id="resp_renda">
-                      <SelectValue placeholder="Selecione a faixa de renda" />
+                      <SelectValue placeholder={t('labels.selecione-a-faixa-de-renda')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ate_1_salario">Até 1 salário mínimo</SelectItem>
-                      <SelectItem value="1_a_2_salarios">1 a 2 salários mínimos</SelectItem>
-                      <SelectItem value="2_a_3_salarios">2 a 3 salários mínimos</SelectItem>
-                      <SelectItem value="3_a_5_salarios">3 a 5 salários mínimos</SelectItem>
-                      <SelectItem value="acima_5_salarios">Acima de 5 salários mínimos</SelectItem>
+                      <SelectItem value="ate_1_salario">{t('labels.ate-1-salario-minimo')}</SelectItem>
+                      <SelectItem value="1_a_2_salarios">{t('labels.1-a-2-salarios-minimos')}</SelectItem>
+                      <SelectItem value="2_a_3_salarios">{t('labels.2-a-3-salarios-minimos')}</SelectItem>
+                      <SelectItem value="3_a_5_salarios">{t('labels.3-a-5-salarios-minimos')}</SelectItem>
+                      <SelectItem value="acima_5_salarios">{t('labels.acima-de-5-salarios-minimos')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -618,52 +620,52 @@ export default function NovoAlunoPage() {
           <TabsContent value="medicos">
             <Card>
               <CardHeader>
-                <CardTitle>Informações Médicas e Especiais</CardTitle>
+                <CardTitle>{t('labels.informacoes-medicas-e-especiais')}</CardTitle>
                 <CardDescription>
                   Dados importantes sobre saúde e necessidades especiais
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="necessidades_especiais">Necessidades Educacionais Especiais</Label>
+                  <Label htmlFor="necessidades_especiais">{t('labels.necessidades-educacionais-especiais')}</Label>
                   <Textarea
                     id="necessidades_especiais"
                     value={formData.necessidades_especiais}
                     onChange={(e) => handleInputChange('necessidades_especiais', e.target.value)}
-                    placeholder="Descreva as necessidades especiais do aluno, se houver"
+                    placeholder={t('labels.descreva-as-necessidades-especiais-do-aluno-se-houver')}
                     rows={3}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="alergias">Alergias</Label>
+                  <Label htmlFor="alergias">{t('labels.alergias')}</Label>
                   <Textarea
                     id="alergias"
                     value={formData.alergias}
                     onChange={(e) => handleInputChange('alergias', e.target.value)}
-                    placeholder="Liste as alergias conhecidas"
+                    placeholder={t('labels.liste-as-alergias-conhecidas')}
                     rows={2}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="medicamentos">Medicamentos em Uso</Label>
+                  <Label htmlFor="medicamentos">{t('labels.medicamentos-em-uso')}</Label>
                   <Textarea
                     id="medicamentos"
                     value={formData.medicamentos}
                     onChange={(e) => handleInputChange('medicamentos', e.target.value)}
-                    placeholder="Liste os medicamentos que o aluno faz uso regular"
+                    placeholder={t('labels.liste-os-medicamentos-que-o-aluno-faz-uso-regular')}
                     rows={2}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="observacoes_medicas">Observações Médicas Gerais</Label>
+                  <Label htmlFor="observacoes_medicas">{t('labels.observacoes-medicas-gerais')}</Label>
                   <Textarea
                     id="observacoes_medicas"
                     value={formData.observacoes_medicas}
                     onChange={(e) => handleInputChange('observacoes_medicas', e.target.value)}
-                    placeholder="Outras informações médicas relevantes"
+                    placeholder={t('labels.outras-informacoes-medicas-relevantes')}
                     rows={3}
                   />
                 </div>
@@ -674,7 +676,7 @@ export default function NovoAlunoPage() {
           <TabsContent value="documentos">
             <Card>
               <CardHeader>
-                <CardTitle>Upload de Documentos</CardTitle>
+                <CardTitle>{t('labels.upload-de-documentos')}</CardTitle>
                 <CardDescription>
                   Anexe os documentos necessários para a matrícula
                 </CardDescription>
@@ -683,14 +685,14 @@ export default function NovoAlunoPage() {
                 {/* Documentos Obrigatórios */}
                 <div className="space-y-6">
                   <div className="pb-2">
-                    <h4 className="font-semibold text-lg text-gray-900">Documentos Obrigatórios</h4>
-                    <p className="text-sm text-gray-600 mt-1">Necessários para completar a matrícula</p>
+                    <h4 className="font-semibold text-lg text-gray-900">{t('labels.documentos-obrigatorios')}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{t('labels.necessarios-para-completar-a-matricula')}</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-gray-700 mb-3">Certidão de Nascimento</p>
+                      <p className="text-sm font-medium text-gray-700 mb-3">{t('labels.certidao-de-nascimento')}</p>
                       <Button variant="outline" size="sm" className="w-full">
                         Selecionar Arquivo
                       </Button>
@@ -698,7 +700,7 @@ export default function NovoAlunoPage() {
 
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-gray-700 mb-3">Cartão de Vacina</p>
+                      <p className="text-sm font-medium text-gray-700 mb-3">{t('labels.cartao-de-vacina')}</p>
                       <Button variant="outline" size="sm" className="w-full">
                         Selecionar Arquivo
                       </Button>
@@ -706,7 +708,7 @@ export default function NovoAlunoPage() {
 
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-gray-700 mb-3">Comprovante de Residência</p>
+                      <p className="text-sm font-medium text-gray-700 mb-3">{t('labels.comprovante-de-residencia')}</p>
                       <Button variant="outline" size="sm" className="w-full">
                         Selecionar Arquivo
                       </Button>
@@ -717,14 +719,14 @@ export default function NovoAlunoPage() {
                 {/* Documentos Opcionais */}
                 <div className="space-y-6">
                   <div className="pb-2">
-                    <h4 className="font-semibold text-lg text-gray-900">Documentos Opcionais</h4>
-                    <p className="text-sm text-gray-600 mt-1">Podem ser anexados posteriormente</p>
+                    <h4 className="font-semibold text-lg text-gray-900">{t('labels.documentos-opcionais')}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{t('labels.podem-ser-anexados-posteriormente')}</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-gray-600 mb-3">Foto 3x4</p>
+                      <p className="text-sm font-medium text-gray-600 mb-3">{t('labels.foto-3x4')}</p>
                       <Button variant="outline" size="sm" className="w-full" disabled>
                         Selecionar Arquivo
                       </Button>
@@ -732,7 +734,7 @@ export default function NovoAlunoPage() {
 
                     <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-gray-600 mb-3">Histórico Escolar</p>
+                      <p className="text-sm font-medium text-gray-600 mb-3">{t('labels.historico-escolar')}</p>
                       <Button variant="outline" size="sm" className="w-full" disabled>
                         Selecionar Arquivo
                       </Button>
@@ -740,7 +742,7 @@ export default function NovoAlunoPage() {
 
                     <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors">
                       <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-gray-600 mb-3">Laudos Médicos</p>
+                      <p className="text-sm font-medium text-gray-600 mb-3">{t('labels.laudos-medicos')}</p>
                       <Button variant="outline" size="sm" className="w-full" disabled>
                         Selecionar Arquivo
                       </Button>

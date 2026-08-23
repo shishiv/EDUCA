@@ -17,6 +17,7 @@
  */
 
 'use client'
+import { useTranslations } from 'next-intl'
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -237,6 +238,7 @@ function calculateAttendanceSummary(attendance: AttendanceData): AttendanceSumma
 // ============================================================================
 
 export default function BoletimPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const studentId = params.id as string
@@ -466,7 +468,7 @@ export default function BoletimPage() {
       // Add student info section
       doc.setFontSize(11)
       doc.setFont('helvetica', 'bold')
-      doc.text('Dados do Aluno', 15, currentY)
+      doc.text(t('labels.dados-do-aluno'), 15, currentY)
       currentY += 7
 
       doc.setFontSize(10)
@@ -485,7 +487,7 @@ export default function BoletimPage() {
           {
             title: 'Notas por Disciplina',
             columns: [
-              { header: 'Disciplina', dataKey: 'disciplina', halign: 'left' },
+              { header: t('labels.disciplina'), dataKey: 'disciplina', halign: 'left' },
               { header: '1o Bim', dataKey: 'bimestre1', halign: 'center', width: 20 },
               { header: '2o Bim', dataKey: 'bimestre2', halign: 'center', width: 20 },
               { header: '3o Bim', dataKey: 'bimestre3', halign: 'center', width: 20 },
@@ -565,7 +567,7 @@ export default function BoletimPage() {
     } finally {
       setExportingPDF(false)
     }
-  }, [student, educationLevel, grades, descriptiveReports, attendance])
+  }, [student, educationLevel, grades, descriptiveReports, attendance, t])
 
   // Loading state
   if (loading) {
@@ -604,7 +606,7 @@ export default function BoletimPage() {
 
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Erro</AlertTitle>
+          <AlertTitle>{t('labels.erro')}</AlertTitle>
           <AlertDescription>
             {error || 'Não foi possível carregar os dados do aluno.'}
           </AlertDescription>

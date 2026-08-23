@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -61,6 +62,7 @@ interface Aluno {
 }
 
 export default function ResponsavelDetalhesPage() {
+  const t = useTranslations('registry')
   const router = useRouter()
   const params = useParams()
   const id = params?.id as string
@@ -271,7 +273,7 @@ export default function ResponsavelDetalhesPage() {
   if (!responsavel) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Responsável não encontrado</p>
+        <p className="text-gray-500">{t('labels.responsavel-nao-encontrado')}</p>
       </div>
     )
   }
@@ -334,14 +336,14 @@ export default function ResponsavelDetalhesPage() {
         <CardHeader>
           <div className="flex items-center space-x-2">
             <User className="h-5 w-5 text-blue-600" />
-            <CardTitle>Dados Pessoais</CardTitle>
+            <CardTitle>{t('labels.dados-pessoais')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {editMode ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label htmlFor="nome">Nome Completo</Label>
+                <Label htmlFor="nome">{t('labels.nome-completo')}</Label>
                 <Input
                   id="nome"
                   value={formData.nome}
@@ -349,12 +351,12 @@ export default function ResponsavelDetalhesPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="cpf">CPF</Label>
+                <Label htmlFor="cpf">{t('labels.cpf')}</Label>
                 <Input id="cpf" value={formatCPF(formData.cpf)} disabled />
-                <p className="text-xs text-gray-500 mt-1">CPF não pode ser alterado</p>
+                <p className="text-xs text-gray-500 mt-1">{t('labels.cpf-nao-pode-ser-alterado')}</p>
               </div>
               <div>
-                <Label htmlFor="parentesco">Parentesco</Label>
+                <Label htmlFor="parentesco">{t('labels.parentesco')}</Label>
                 <Select
                   value={formData.parentesco}
                   onValueChange={(value) => handleInputChange('parentesco', value)}
@@ -363,12 +365,12 @@ export default function ResponsavelDetalhesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Mae">Mãe</SelectItem>
-                    <SelectItem value="Pai">Pai</SelectItem>
-                    <SelectItem value="Avo">Avó/Avô</SelectItem>
-                    <SelectItem value="Tio">Tia/Tio</SelectItem>
-                    <SelectItem value="Irmao">Irmão/Irmã</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    <SelectItem value="Mae">{t('labels.mae')}</SelectItem>
+                    <SelectItem value="Pai">{t('labels.pai')}</SelectItem>
+                    <SelectItem value="Avo">{t('labels.avo-avo')}</SelectItem>
+                    <SelectItem value="Tio">{t('labels.tia-tio')}</SelectItem>
+                    <SelectItem value="Irmao">{t('labels.irmao-irma')}</SelectItem>
+                    <SelectItem value="Outro">{t('labels.outro')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -376,21 +378,21 @@ export default function ResponsavelDetalhesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-gray-500">Nome Completo</p>
+                <p className="text-sm text-gray-500">{t('labels.nome-completo')}</p>
                 <p className="text-lg font-medium">{responsavel.nome}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">CPF</p>
+                <p className="text-sm text-gray-500">{t('labels.cpf')}</p>
                 <p className="text-lg font-mono">{formatCPF(responsavel.cpf)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Parentesco</p>
+                <p className="text-sm text-gray-500">{t('labels.parentesco')}</p>
                 <Badge className={getParentescoBadgeColor(responsavel.parentesco)}>
                   {responsavel.parentesco}
                 </Badge>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Profissão</p>
+                <p className="text-sm text-gray-500">{t('labels.profissao')}</p>
                 <p className="text-lg font-medium">{responsavel.profissao || '-'}</p>
               </div>
             </div>
@@ -403,14 +405,14 @@ export default function ResponsavelDetalhesPage() {
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Phone className="h-5 w-5 text-green-600" />
-            <CardTitle>Dados de Contato</CardTitle>
+            <CardTitle>{t('labels.dados-de-contato')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {editMode ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">{t('labels.telefone')}</Label>
                 <Input
                   id="telefone"
                   type="tel"
@@ -421,7 +423,7 @@ export default function ResponsavelDetalhesPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t('labels.e-mail')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -431,7 +433,7 @@ export default function ResponsavelDetalhesPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <Label htmlFor="endereco">Endereço Completo</Label>
+                <Label htmlFor="endereco">{t('labels.endereco-completo')}</Label>
                 <Textarea
                   id="endereco"
                   value={formData.endereco}
@@ -443,15 +445,15 @@ export default function ResponsavelDetalhesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-gray-500">Telefone</p>
+                <p className="text-sm text-gray-500">{t('labels.telefone')}</p>
                 <p className="text-lg font-medium">{formatPhone(responsavel.telefone)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">E-mail</p>
+                <p className="text-sm text-gray-500">{t('labels.e-mail')}</p>
                 <p className="text-lg font-medium">{responsavel.email || '-'}</p>
               </div>
               <div className="md:col-span-2">
-                <p className="text-sm text-gray-500">Endereço</p>
+                <p className="text-sm text-gray-500">{t('labels.endereco')}</p>
                 <p className="text-lg font-medium">{responsavel.endereco || '-'}</p>
               </div>
             </div>
@@ -465,7 +467,7 @@ export default function ResponsavelDetalhesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-purple-600" />
-              <CardTitle>Alunos Vinculados</CardTitle>
+              <CardTitle>{t('labels.alunos-vinculados')}</CardTitle>
             </div>
             <Badge variant="secondary">{alunos.length} {alunos.length === 1 ? 'aluno' : 'alunos'}</Badge>
           </div>
@@ -482,12 +484,12 @@ export default function ResponsavelDetalhesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Idade</TableHead>
-                  <TableHead>Sexo</TableHead>
-                  <TableHead>Escola Atual</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('labels.aluno')}</TableHead>
+                  <TableHead>{t('labels.idade')}</TableHead>
+                  <TableHead>{t('labels.sexo')}</TableHead>
+                  <TableHead>{t('labels.escola-atual')}</TableHead>
+                  <TableHead>{t('labels.status')}</TableHead>
+                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -516,7 +518,7 @@ export default function ResponsavelDetalhesPage() {
                             Ativo
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">Inativo</Badge>
+                          <Badge variant="secondary">{t('labels.inativo')}</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

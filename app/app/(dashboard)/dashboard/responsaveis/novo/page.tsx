@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -24,6 +25,8 @@ import { OperationalDataNotice, OptionalConsentCheckbox } from '@/components/lgp
 import { useEscola } from '@/contexts/escola-context'
 
 export default function NovoResponsavelPage() {
+  const t = useTranslations('registry')
+
   const router = useRouter()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
@@ -192,7 +195,7 @@ export default function NovoResponsavelPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Novo Responsável</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('labels.novo-responsavel')}</h1>
           <p className="text-gray-600 mt-1">
             Cadastre um novo responsável no sistema
           </p>
@@ -214,7 +217,7 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <User className="h-5 w-5 text-blue-600" />
-              <CardTitle>Dados Pessoais</CardTitle>
+              <CardTitle>{t('labels.dados-pessoais')}</CardTitle>
             </div>
             <CardDescription>
               Informações básicas do responsável
@@ -230,7 +233,7 @@ export default function NovoResponsavelPage() {
                   id="nome"
                   value={formData.nome}
                   onChange={(e) => handleInputChange('nome', e.target.value)}
-                  placeholder="Nome completo do responsável"
+                  placeholder={t('labels.nome-completo-do-responsavel')}
                   required
                 />
               </div>
@@ -259,15 +262,15 @@ export default function NovoResponsavelPage() {
                   required
                 >
                   <SelectTrigger id="parentesco">
-                    <SelectValue placeholder="Selecione o parentesco" />
+                    <SelectValue placeholder={t('labels.selecione-o-parentesco')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Mae">Mãe</SelectItem>
-                    <SelectItem value="Pai">Pai</SelectItem>
-                    <SelectItem value="Avo">Avó/Avô</SelectItem>
-                    <SelectItem value="Tio">Tia/Tio</SelectItem>
-                    <SelectItem value="Irmao">Irmão/Irmã</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    <SelectItem value="Mae">{t('labels.mae')}</SelectItem>
+                    <SelectItem value="Pai">{t('labels.pai')}</SelectItem>
+                    <SelectItem value="Avo">{t('labels.avo-avo')}</SelectItem>
+                    <SelectItem value="Tio">{t('labels.tia-tio')}</SelectItem>
+                    <SelectItem value="Irmao">{t('labels.irmao-irma')}</SelectItem>
+                    <SelectItem value="Outro">{t('labels.outro')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -280,7 +283,7 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Phone className="h-5 w-5 text-green-600" />
-              <CardTitle>Dados de Contato</CardTitle>
+              <CardTitle>{t('labels.dados-de-contato')}</CardTitle>
             </div>
             <CardDescription>
               Informações para comunicação com o responsável
@@ -289,7 +292,7 @@ export default function NovoResponsavelPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">{t('labels.telefone')}</Label>
                 <Input
                   id="telefone"
                   type="tel"
@@ -304,7 +307,7 @@ export default function NovoResponsavelPage() {
               </div>
 
               <div>
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t('labels.e-mail')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -326,7 +329,7 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Briefcase className="h-5 w-5 text-purple-600" />
-              <CardTitle>Informações Adicionais</CardTitle>
+              <CardTitle>{t('labels.informacoes-adicionais')}</CardTitle>
             </div>
             <CardDescription>
               Dados complementares do responsável
@@ -335,12 +338,12 @@ export default function NovoResponsavelPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="profissao">Profissão</Label>
+                <Label htmlFor="profissao">{t('labels.profissao')}</Label>
                 <Input
                   id="profissao"
                   value={formData.profissao}
                   onChange={(e) => handleInputChange('profissao', e.target.value)}
-                  placeholder="Profissão do responsável"
+                  placeholder={t('labels.profissao-do-responsavel')}
                 />
               </div>
 
@@ -349,12 +352,12 @@ export default function NovoResponsavelPage() {
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="endereco">Endereço Completo</Label>
+                <Label htmlFor="endereco">{t('labels.endereco-completo')}</Label>
                 <Textarea
                   id="endereco"
                   value={formData.endereco}
                   onChange={(e) => handleInputChange('endereco', e.target.value)}
-                  placeholder="Rua, número, bairro, cidade, CEP..."
+                  placeholder={t('labels.rua-numero-bairro-cidade-cep')}
                   rows={3}
                 />
               </div>
@@ -367,7 +370,7 @@ export default function NovoResponsavelPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Info className="h-5 w-5 text-blue-600" />
-              <CardTitle>Tratamento de Dados</CardTitle>
+              <CardTitle>{t('labels.tratamento-de-dados')}</CardTitle>
             </div>
             <CardDescription>
               Informações sobre o uso dos dados cadastrados

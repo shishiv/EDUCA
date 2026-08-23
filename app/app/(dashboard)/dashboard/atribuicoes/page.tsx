@@ -11,6 +11,7 @@
  */
 
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -56,6 +57,7 @@ interface TurmaWithTeacher {
 }
 
 export default function AtribuicoesPage() {
+  const t = useTranslations('registry')
   const { selectedEscolaId, selectedEscola, shouldShowSelector } = useEscola()
 
   // State
@@ -146,12 +148,12 @@ export default function AtribuicoesPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Professores titulares"
-          description="Defina um professor titular para cada turma"
+          title={t('labels.professores-titulares')}
+          description={t('labels.defina-um-professor-titular-para-cada-turma')}
         />
         <EscolaRequiredState
-          title="Selecione uma escola"
-          description="Para definir professores titulares, primeiro selecione uma escola no menu acima."
+          title={t('labels.selecione-uma-escola-2')}
+          description={t('labels.para-definir-professores-titulares-primeiro-selecione-u')}
         />
       </div>
     )
@@ -162,8 +164,8 @@ export default function AtribuicoesPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Professores titulares"
-          description="Defina um professor titular para cada turma"
+          title={t('labels.professores-titulares')}
+          description={t('labels.defina-um-professor-titular-para-cada-turma')}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
@@ -179,8 +181,8 @@ export default function AtribuicoesPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Professores titulares"
-          description="Defina um professor titular para cada turma"
+          title={t('labels.professores-titulares')}
+          description={t('labels.defina-um-professor-titular-para-cada-turma')}
         />
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-6 text-center text-red-800">
@@ -204,7 +206,7 @@ export default function AtribuicoesPage() {
     <div className="space-y-6">
       {/* Header */}
       <PageHeader
-        title="Professores titulares"
+        title={t('labels.professores-titulares')}
         description={
           selectedEscola
             ? `Defina os professores titulares - ${selectedEscola.nome}`
@@ -221,7 +223,7 @@ export default function AtribuicoesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{assignedCount}</p>
-              <p className="text-sm text-muted-foreground">Com titular</p>
+              <p className="text-sm text-muted-foreground">{t('labels.com-titular')}</p>
             </div>
           </CardContent>
         </Card>
@@ -232,7 +234,7 @@ export default function AtribuicoesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{unassignedCount}</p>
-              <p className="text-sm text-muted-foreground">Sem titular</p>
+              <p className="text-sm text-muted-foreground">{t('labels.sem-titular')}</p>
             </div>
           </CardContent>
         </Card>
@@ -243,7 +245,7 @@ export default function AtribuicoesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{turmas.length}</p>
-              <p className="text-sm text-muted-foreground">Total de turmas</p>
+              <p className="text-sm text-muted-foreground">{t('labels.total-de-turmas')}</p>
             </div>
           </CardContent>
         </Card>
@@ -254,7 +256,7 @@ export default function AtribuicoesPage() {
         <Card>
           <CardContent className="p-8 text-center">
             <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-lg font-medium">Nenhuma turma encontrada</p>
+            <p className="text-lg font-medium">{t('labels.nenhuma-turma-encontrada')}</p>
             <p className="text-sm text-muted-foreground mt-1">
               Esta escola ainda nao possui turmas cadastradas.
             </p>

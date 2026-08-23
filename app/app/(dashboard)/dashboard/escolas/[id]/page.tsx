@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -76,6 +77,7 @@ interface Turma {
 }
 
 export default function EscolaDetailsPage() {
+  const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
@@ -114,7 +116,7 @@ export default function EscolaDetailsPage() {
 
       if (escolaError) throw escolaError
       if (!escolaData) {
-        toast.error('Escola não encontrada')
+        toast.error(t('labels.escola-nao-encontrada'))
         router.push('/dashboard/escolas')
         return
       }
@@ -222,7 +224,7 @@ export default function EscolaDetailsPage() {
     const labels: Record<string, string> = {
       matutino: 'Manhã',
       vespertino: 'Tarde',
-      integral: 'Integral',
+      integral: t('labels.integral'),
       noturno: 'Noite'
     }
     return labels[turno] || turno
@@ -258,7 +260,7 @@ export default function EscolaDetailsPage() {
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600">Escola não encontrada</p>
+        <p className="text-gray-600">{t('labels.escola-nao-encontrada')}</p>
       </div>
     )
   }
@@ -283,7 +285,7 @@ export default function EscolaDetailsPage() {
         </div>
         <div className="flex items-center space-x-2">
           <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-            {escola.ativo ? 'Ativa' : 'Inativa'}
+            {escola.ativo ? t('labels.ativa') : 'Inativa'}
           </Badge>
           <Button onClick={() => router.push(`/dashboard/escolas/${id}/editar`)} variant="outline">
             <Edit2 className="h-4 w-4 mr-2" />
@@ -296,8 +298,8 @@ export default function EscolaDetailsPage() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Código INEP:</strong> {escola.codigo}
-          {' '}• <strong>Tipo:</strong> {getTipoLabel(escola.tipo)}
+          <strong>{t('labels.codigo-inep-3')}</strong> {escola.codigo}
+          {' '}• <strong>{t('labels.tipo-2')}</strong> {getTipoLabel(escola.tipo)}
         </AlertDescription>
       </Alert>
 
@@ -305,53 +307,53 @@ export default function EscolaDetailsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total de Alunos</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">{t('labels.total-de-alunos')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold text-blue-600">{stats.totalAlunos}</span>
               <Users className="h-8 w-8 text-blue-400" />
             </div>
-            <p className="text-xs text-gray-600 mt-1">Matrículas ativas</p>
+            <p className="text-xs text-gray-600 mt-1">{t('labels.matriculas-ativas-2')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Turmas</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">{t('labels.turmas')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold text-green-600">{stats.totalTurmas}</span>
               <BookOpen className="h-8 w-8 text-green-400" />
             </div>
-            <p className="text-xs text-gray-600 mt-1">Turmas ativas</p>
+            <p className="text-xs text-gray-600 mt-1">{t('labels.turmas-ativas')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Professores</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">{t('labels.professores')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold text-purple-600">{stats.totalProfessores}</span>
               <GraduationCap className="h-8 w-8 text-purple-400" />
             </div>
-            <p className="text-xs text-gray-600 mt-1">Ativos no sistema</p>
+            <p className="text-xs text-gray-600 mt-1">{t('labels.ativos-no-sistema')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Matrículas</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">{t('labels.matriculas')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold text-orange-600">{stats.matriculasAtivas}</span>
               <TrendingUp className="h-8 w-8 text-orange-400" />
             </div>
-            <p className="text-xs text-gray-600 mt-1">Ativas este ano</p>
+            <p className="text-xs text-gray-600 mt-1">{t('labels.ativas-este-ano')}</p>
           </CardContent>
         </Card>
       </div>
@@ -363,29 +365,29 @@ export default function EscolaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Building2 className="h-5 w-5 text-blue-600" />
-              <CardTitle>Informações Básicas</CardTitle>
+              <CardTitle>{t('labels.informacoes-basicas')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Nome da Escola</Label>
+              <Label className="text-gray-600">{t('labels.nome-da-escola')}</Label>
               <p className="font-medium text-lg">{escola.nome}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-600">Código INEP</Label>
+                <Label className="text-gray-600">{t('labels.codigo-inep')}</Label>
                 <p className="font-medium font-mono">{escola.codigo}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Tipo</Label>
+                <Label className="text-gray-600">{t('labels.tipo')}</Label>
                 <Badge variant="outline">{getTipoLabel(escola.tipo)}</Badge>
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Status</Label>
+              <Label className="text-gray-600">{t('labels.status')}</Label>
               <div className="mt-1">
                 <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-                  {escola.ativo ? 'Ativa' : 'Inativa'}
+                  {escola.ativo ? t('labels.ativa') : 'Inativa'}
                 </Badge>
               </div>
             </div>
@@ -397,19 +399,19 @@ export default function EscolaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Phone className="h-5 w-5 text-green-600" />
-              <CardTitle>Dados de Contato</CardTitle>
+              <CardTitle>{t('labels.dados-de-contato')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-gray-600">Telefone</Label>
+              <Label className="text-gray-600">{t('labels.telefone')}</Label>
               <div className="flex items-center space-x-2 mt-1">
                 <Phone className="h-4 w-4 text-gray-400" />
                 <p className="font-medium">{formatPhone(escola.telefone)}</p>
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">E-mail</Label>
+              <Label className="text-gray-600">{t('labels.e-mail')}</Label>
               <div className="flex items-center space-x-2 mt-1">
                 <Mail className="h-4 w-4 text-gray-400" />
                 <p className="font-medium">{escola.email || '-'}</p>
@@ -423,7 +425,7 @@ export default function EscolaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <MapPin className="h-5 w-5 text-red-600" />
-              <CardTitle>Endereço</CardTitle>
+              <CardTitle>{t('labels.endereco')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -438,25 +440,25 @@ export default function EscolaDetailsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-purple-600" />
-              <CardTitle>Direção</CardTitle>
+              <CardTitle>{t('labels.direcao')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {escola.diretor ? (
               <>
                 <div>
-                  <Label className="text-gray-600">Diretor(a)</Label>
+                  <Label className="text-gray-600">{t('labels.diretor-a')}</Label>
                   <p className="font-medium">{escola.diretor.nome}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-600">E-mail do Diretor</Label>
+                  <Label className="text-gray-600">{t('labels.e-mail-do-diretor')}</Label>
                   <p className="text-sm text-gray-600">{escola.diretor.email}</p>
                 </div>
               </>
             ) : (
               <div className="text-center py-4">
                 <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600">Nenhum diretor atribuído</p>
+                <p className="text-gray-600">{t('labels.nenhum-diretor-atribuido')}</p>
               </div>
             )}
           </CardContent>
@@ -469,7 +471,7 @@ export default function EscolaDetailsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 text-blue-600" />
-              <CardTitle>Turmas da Escola</CardTitle>
+              <CardTitle>{t('labels.turmas-da-escola')}</CardTitle>
             </div>
             <CardDescription>
               {turmas.length} turmas ativas
@@ -480,7 +482,7 @@ export default function EscolaDetailsPage() {
           {turmas.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhuma turma cadastrada para esta escola</p>
+              <p className="text-gray-600">{t('labels.nenhuma-turma-cadastrada-para-esta-escola')}</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -495,13 +497,13 @@ export default function EscolaDetailsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Turma</TableHead>
-                    <TableHead>Série</TableHead>
-                    <TableHead>Turno</TableHead>
-                    <TableHead>Professor</TableHead>
-                    <TableHead>Capacidade</TableHead>
-                    <TableHead>Ano Letivo</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t('labels.turma')}</TableHead>
+                    <TableHead>{t('labels.serie')}</TableHead>
+                    <TableHead>{t('labels.turno')}</TableHead>
+                    <TableHead>{t('labels.professor')}</TableHead>
+                    <TableHead>{t('labels.capacidade')}</TableHead>
+                    <TableHead>{t('labels.ano-letivo')}</TableHead>
+                    <TableHead className="text-right">{t('labels.acoes')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
