@@ -20,6 +20,8 @@
 
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -90,13 +92,13 @@ interface DateRange {
 
 // Quick period options
 const PERIOD_OPTIONS = [
-  { value: 'current_month', label: 'Mes Atual' },
-  { value: 'last_month', label: 'Mes Anterior' },
-  { value: 'bimestre_1', label: '1o Bimestre' },
-  { value: 'bimestre_2', label: '2o Bimestre' },
-  { value: 'bimestre_3', label: '3o Bimestre' },
-  { value: 'bimestre_4', label: '4o Bimestre' },
-  { value: 'custom', label: 'Personalizado' },
+  { value: 'current_month', label: 'bolsa.currentMonth' },
+  { value: 'last_month', label: 'bolsa.lastMonth' },
+  { value: 'bimestre_1', label: 'reports.firstBimester' },
+  { value: 'bimestre_2', label: 'reports.secondBimester' },
+  { value: 'bimestre_3', label: 'reports.thirdBimester' },
+  { value: 'bimestre_4', label: 'reports.fourthBimester' },
+  { value: 'custom', label: 'bolsa.custom' },
 ]
 
 // ============================================================================
@@ -168,6 +170,7 @@ function formatDateApi(date: Date): string {
 // ============================================================================
 
 export default function AttendanceReportsPage() {
+  const t = useTranslations('platform')
   // State
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [selectedTurma, setSelectedTurma] = useState<string>('')
@@ -226,7 +229,7 @@ export default function AttendanceReportsPage() {
           feature: 'reports',
           action: 'load_frequencia_turmas'
         })
-        setError('Erro ao carregar turmas')
+        setError(t('attendance.loadClassesError'))
       } finally {
         setIsLoadingTurmas(false)
       }
@@ -307,7 +310,7 @@ export default function AttendanceReportsPage() {
         feature: 'reports',
         action: 'export_frequencia_pdf'
       })
-      toast.error('Erro ao gerar PDF')
+      toast.error(t('attendance.exportError'))
     }
   }
 
@@ -325,7 +328,7 @@ export default function AttendanceReportsPage() {
         feature: 'reports',
         action: 'export_frequencia_excel'
       })
-      toast.error('Erro ao gerar Excel')
+      toast.error(t('attendance.excelError'))
     }
   }
 
@@ -344,11 +347,11 @@ export default function AttendanceReportsPage() {
             <span className="hidden xs:inline">Relatorios de </span>Frequencia
           </h1>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            <span className="hidden sm:inline">Visualize e exporte relatórios de frequência por turma e período</span>
-            <span className="sm:hidden">Relatórios por turma e período</span>
+            <span className="hidden sm:inline">{t('attendance.subtitle')}</span>
+            <span className="sm:hidden">{t('attendance.mobileSubtitle')}</span>
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            Conformidade Bolsa Família a partir de {CONFORMIDADE}%; atenção preventiva municipal abaixo de {ATENCAO}%.
+            {t('attendance.policy', { threshold: CONFORMIDADE, attention: ATENCAO })}
           </p>
         </div>
 
@@ -379,9 +382,7 @@ export default function AttendanceReportsPage() {
       <Card>
         <CardHeader className="pb-3 px-3 sm:px-6">
           <CardTitle className="text-sm sm:text-base flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filtros
-          </CardTitle>
+            <Filter className="h-4 w-4" />{t('attendance.filters')}</CardTitle>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -411,7 +412,7 @@ export default function AttendanceReportsPage() {
 
             {/* Period Selector */}
             <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="periodo" className="text-xs sm:text-sm">Período</Label>
+              <Label htmlFor="periodo" className="text-xs sm:text-sm">{t('attendance.period')}</Label>
               <Select value={periodOption} onValueChange={setPeriodOption}>
                 <SelectTrigger id="periodo" className="min-h-[44px]">
                   <SelectValue />
@@ -419,7 +420,7 @@ export default function AttendanceReportsPage() {
                 <SelectContent>
                   {PERIOD_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value} className="py-3">
-                      {opt.label}
+                      {t(opt.label as never)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -430,7 +431,7 @@ export default function AttendanceReportsPage() {
             {periodOption === 'custom' && (
               <>
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label className="text-xs sm:text-sm">Data Inicio</Label>
+                  <Label className="text-xs sm:text-sm">{t('attendance.startDate')}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -458,7 +459,7 @@ export default function AttendanceReportsPage() {
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label className="text-xs sm:text-sm">Data Fim</Label>
+                  <Label className="text-xs sm:text-sm">{t('attendance.endDate')}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -530,7 +531,7 @@ export default function AttendanceReportsPage() {
               </TabsTrigger>
               <TabsTrigger value="chart" className="flex items-center gap-1 min-h-[44px]">
                 <BarChart3 className="h-4 w-4" />
-                <span className="hidden xs:inline">Gráfico</span>
+                <span className="hidden xs:inline">{t('attendance.chart')}</span>
               </TabsTrigger>
             </TabsList>
 
@@ -554,15 +555,13 @@ export default function AttendanceReportsPage() {
             <TabsContent value="chart" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Visualização Gráfica</CardTitle>
+                  <CardTitle className="text-base">{t('attendance.graphView')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-8 sm:py-12 text-gray-500">
                     <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-base sm:text-lg font-medium">Gráfico em desenvolvimento</p>
-                    <p className="text-xs sm:text-sm mt-1">
-                      A visualização gráfica será implementada em breve.
-                    </p>
+                    <p className="text-base sm:text-lg font-medium">{t('attendance.inDevelopment')}</p>
+                    <p className="text-xs sm:text-sm mt-1">{t('attendance.comingSoon')}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -576,7 +575,7 @@ export default function AttendanceReportsPage() {
         <Card>
           <CardContent className="text-center py-8 sm:py-12">
             <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-base sm:text-lg font-medium text-gray-600">Selecione uma turma e período</p>
+            <p className="text-base sm:text-lg font-medium text-gray-600">{t('attendance.selectClassPeriod')}</p>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Use os filtros acima para gerar o relatorio de frequencia.
             </p>

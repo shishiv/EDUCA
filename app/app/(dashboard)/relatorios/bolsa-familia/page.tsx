@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import { useTranslations } from 'next-intl';
 
 /**
  * Bolsa Familia Report Page
@@ -105,6 +107,7 @@ function getPeriodDates(period: PeriodOption, customStart?: Date, customEnd?: Da
 // ============================================================================
 
 export default function BolsaFamiliaReportPage() {
+  const t = useTranslations('platform')
   // Filters state
   const [selectedSchool, setSelectedSchool] = useState<string>('all');
   const [selectedTurma, setSelectedTurma] = useState<string>('all');
@@ -129,7 +132,7 @@ export default function BolsaFamiliaReportPage() {
           feature: 'reports',
           action: 'load_bolsa_familia_schools'
         });
-        toast.error('Erro ao carregar escolas');
+        toast.error(t('bolsa.loadSchoolsError'));
       }
     }
 
@@ -155,7 +158,7 @@ export default function BolsaFamiliaReportPage() {
           action: 'load_bolsa_familia_turmas',
           metadata: { escolaId: selectedSchool }
         });
-        toast.error('Erro ao carregar turmas');
+        toast.error(t('attendance.loadClassesError'));
       }
     }
 
@@ -211,13 +214,13 @@ export default function BolsaFamiliaReportPage() {
         ? schools.find((s) => s.id === selectedSchool)?.nome
         : undefined;
       await generateBolsaFamiliaReportExcel(report, selectedSchoolName, true);
-      toast.success('Excel gerado com sucesso!', { id: 'export-excel' });
+      toast.success(t('bolsa.excelSuccess'), { id: 'export-excel' });
     } catch (error) {
       logger.error('Error exporting Excel', error as Error, {
         feature: 'reports',
         action: 'export_bolsa_familia_excel'
       });
-      toast.error('Erro ao gerar Excel', { id: 'export-excel' });
+      toast.error(t('attendance.excelError'), { id: 'export-excel' });
     }
   };
 
@@ -232,13 +235,13 @@ export default function BolsaFamiliaReportPage() {
         ? schools.find((s) => s.id === selectedSchool)?.nome
         : undefined;
       generateBolsaFamiliaReportPDF(report, selectedSchoolName, true);
-      toast.success('PDF gerado com sucesso!', { id: 'export-pdf' });
+      toast.success(t('bolsa.pdfSuccess'), { id: 'export-pdf' });
     } catch (error) {
       logger.error('Error exporting PDF', error as Error, {
         feature: 'reports',
         action: 'export_bolsa_familia_pdf'
       });
-      toast.error('Erro ao gerar PDF', { id: 'export-pdf' });
+      toast.error(t('attendance.exportError'), { id: 'export-pdf' });
     }
   };
 
@@ -255,11 +258,11 @@ export default function BolsaFamiliaReportPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
-            <span className="hidden xs:inline">Relatório </span>Bolsa Família
+            {t('bolsa.title')}
           </h1>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            <span className="hidden sm:inline">Monitoramento de frequência para alunos do programa</span>
-            <span className="sm:hidden">Frequência alunos BF</span>
+            <span className="hidden sm:inline">{t('bolsa.subtitle')}</span>
+            <span className="sm:hidden">{t('bolsa.mobileSubtitle')}</span>
           </p>
         </div>
 
@@ -269,7 +272,7 @@ export default function BolsaFamiliaReportPage() {
             variant="outline"
             onClick={fetchReport}
             disabled={loading}
-            aria-label="Atualizar relatório"
+            aria-label={t('bolsa.refresh')}
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <RefreshCw className={cn('h-4 w-4 sm:mr-2', loading && 'animate-spin')} />
@@ -278,7 +281,7 @@ export default function BolsaFamiliaReportPage() {
           <Button
             variant="outline"
             onClick={handleExportExcel}
-            aria-label="Exportar para Excel"
+            aria-label={t('bolsa.excel')}
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
@@ -287,7 +290,7 @@ export default function BolsaFamiliaReportPage() {
           <Button
             variant="outline"
             onClick={handleExportPDF}
-            aria-label="Exportar para PDF"
+            aria-label={t('bolsa.pdf')}
             className="min-h-[44px] flex-1 sm:flex-none"
           >
             <Download className="h-4 w-4 sm:mr-2" />
@@ -301,7 +304,7 @@ export default function BolsaFamiliaReportPage() {
         <CardHeader className="pb-3 px-3 sm:px-6">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500" />
-            <CardTitle className="text-sm sm:text-base">Filtros</CardTitle>
+            <CardTitle className="text-sm sm:text-base">{t('attendance.filters')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
@@ -311,10 +314,10 @@ export default function BolsaFamiliaReportPage() {
               <label htmlFor="bolsa-familia-escola" className="text-xs sm:text-sm font-medium text-gray-700">Escola</label>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
                 <SelectTrigger id="bolsa-familia-escola" className="min-h-[44px]">
-                  <SelectValue placeholder="Todas as escolas" />
+                  <SelectValue placeholder={t('bolsa.allSchools')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="py-3">Todas as escolas</SelectItem>
+                  <SelectItem value="all" className="py-3">{t('bolsa.allSchools')}</SelectItem>
                   {schools.map((school) => (
                     <SelectItem key={school.id} value={school.id} className="py-3">
                       {school.nome}
@@ -333,10 +336,10 @@ export default function BolsaFamiliaReportPage() {
                 disabled={selectedSchool === 'all'}
               >
                 <SelectTrigger id="bolsa-familia-turma" className="min-h-[44px]">
-                  <SelectValue placeholder="Todas as turmas" />
+                  <SelectValue placeholder={t('bolsa.allClasses')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="py-3">Todas as turmas</SelectItem>
+                  <SelectItem value="all" className="py-3">{t('bolsa.allClasses')}</SelectItem>
                   {turmas.map((turma) => (
                     <SelectItem key={turma.id} value={turma.id} className="py-3">
                       {turma.nome} ({turma.serie})
@@ -348,7 +351,7 @@ export default function BolsaFamiliaReportPage() {
 
             {/* Period Filter */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label htmlFor="bolsa-familia-periodo" className="text-xs sm:text-sm font-medium text-gray-700">Período</label>
+              <label htmlFor="bolsa-familia-periodo" className="text-xs sm:text-sm font-medium text-gray-700">{t('attendance.period')}</label>
               <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as PeriodOption)}>
                 <SelectTrigger id="bolsa-familia-periodo" className="min-h-[44px]">
                   <SelectValue placeholder="Selecione o periodo" />
@@ -360,7 +363,7 @@ export default function BolsaFamiliaReportPage() {
                   <SelectItem value="bimester_2" className="py-3">2º Bimestre</SelectItem>
                   <SelectItem value="bimester_3" className="py-3">3º Bimestre</SelectItem>
                   <SelectItem value="bimester_4" className="py-3">4º Bimestre</SelectItem>
-                  <SelectItem value="custom" className="py-3">Personalizado</SelectItem>
+                  <SelectItem value="custom" className="py-3">{t('bolsa.custom')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -368,7 +371,7 @@ export default function BolsaFamiliaReportPage() {
             {/* Custom Date Range */}
             {selectedPeriod === 'custom' && (
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-medium text-gray-700">Datas</label>
+                <label className="text-xs sm:text-sm font-medium text-gray-700">{t('bolsa.dates')}</label>
                 <div className="flex gap-2">
                   <Popover>
                     <PopoverTrigger asChild>
@@ -434,8 +437,8 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.totalAlunosBolsaFamilia}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Alunos Bolsa Família</span>
-                    <span className="sm:hidden">Total BF</span>
+                    <span className="hidden sm:inline">{t('bolsa.totalStudents')}</span>
+                    <span className="sm:hidden">{t('bolsa.totalMobile')}</span>
                   </p>
                 </div>
                 <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 hidden xs:block" />
@@ -452,7 +455,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.conformes}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Conformes na margem municipal</span>
+                    <span className="hidden sm:inline">{t('bolsa.compliant')}</span>
                     <span className="sm:hidden">OK</span>
                   </p>
                 </div>
@@ -470,7 +473,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.emAlerta}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Em alerta municipal</span>
+                    <span className="hidden sm:inline">{t('bolsa.municipalAlert')}</span>
                     <span className="sm:hidden">Alerta</span>
                   </p>
                 </div>
@@ -488,7 +491,7 @@ export default function BolsaFamiliaReportPage() {
                     {report.resumo.emRiscoCritico}
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="hidden sm:inline">Críticos na margem municipal</span>
+                    <span className="hidden sm:inline">{t('bolsa.critical')}</span>
                     <span className="sm:hidden">Critico</span>
                   </p>
                 </div>
@@ -503,11 +506,11 @@ export default function BolsaFamiliaReportPage() {
       <Tabs defaultValue="alert" className="space-y-4">
         <TabsList className="grid w-full sm:w-auto sm:max-w-[280px] grid-cols-2">
           <TabsTrigger value="alert" className="min-h-[44px]">
-            <span className="hidden sm:inline">Alerta Visual</span>
-            <span className="sm:hidden">Alertas</span>
+            <span className="hidden sm:inline">{t('bolsa.visualAlert')}</span>
+            <span className="sm:hidden">{t('dashboard.alerts')}</span>
           </TabsTrigger>
           <TabsTrigger value="table" className="min-h-[44px]">
-            <span className="hidden sm:inline">Tabela Completa</span>
+            <span className="hidden sm:inline">{t('bolsa.fullTable')}</span>
             <span className="sm:hidden">Tabela</span>
           </TabsTrigger>
         </TabsList>
@@ -535,7 +538,7 @@ export default function BolsaFamiliaReportPage() {
         <TabsContent value="table">
           <Card>
             <CardHeader className="px-3 sm:px-6">
-              <CardTitle className="text-base sm:text-lg">Lista Completa de Alunos</CardTitle>
+              <CardTitle className="text-base sm:text-lg">{t('bolsa.completeList')}</CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 Periodo: {periodLabel}
               </CardDescription>
@@ -550,8 +553,8 @@ export default function BolsaFamiliaReportPage() {
               ) : report && report.alunos.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 px-3">
                   <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm sm:text-base">Nenhum aluno do Bolsa Família encontrado</p>
-                  <p className="text-xs sm:text-sm mt-1">Verifique os filtros ou o cadastro do benefício Bolsa Família</p>
+                  <p className="text-sm sm:text-base">{t('bolsa.none')}</p>
+                  <p className="text-xs sm:text-sm mt-1">{t('bolsa.checkFilters')}</p>
                 </div>
               ) : report && (
                 <div className="overflow-x-auto">
@@ -651,14 +654,13 @@ export default function BolsaFamiliaReportPage() {
         <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
           <div className="text-xs sm:text-sm text-gray-600 space-y-1.5 sm:space-y-2">
             <p>
-              <strong>Legenda:</strong> P = Presenca, F = Falta, A = Atestado
+              <strong>{t('bolsa.legend')}</strong> P = Presenca, F = Falta, A = Atestado
             </p>
             <p className="hidden sm:block">
-              <strong>Cálculo de Frequência:</strong> Atestados médicos (A) contam como presença
-              para o cálculo de conformidade do Bolsa Família.
+              <strong>{t('bolsa.calculation')}</strong> {t('bolsa.excusedCount')} {t('bolsa.forCompliance')}.
             </p>
             <p>
-              <strong>Margens municipais:</strong>{' '}
+              <strong>{t('bolsa.municipalMargins')}</strong>{' '}
               {report && report.resolucoesMargemMunicipal.length > 0
                 ? report.resolucoesMargemMunicipal.map((resolution) => (
                   `${resolution.criticalPercent ?? 'não configurada'}/${resolution.warningPercent ?? 'não configurada'}% (${resolution.source ?? 'origem não informada'}, precedência ${resolution.precedence ?? 'n/a'}, fallback ${resolution.fallback ? 'sim' : 'não'})`

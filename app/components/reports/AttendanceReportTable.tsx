@@ -16,6 +16,8 @@
 
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import React, { useState, useMemo } from "react";
 import {
 	Table,
@@ -199,6 +201,7 @@ function SummaryBar({
 	data: AttendanceTableRow[];
 	riskThreshold: number;
 }) {
+  const t = useTranslations('platform')
 	const stats = useMemo(() => {
 		const total = data.length;
 		const critical = data.filter((row) => row.percentual < riskThreshold).length;
@@ -222,7 +225,7 @@ function SummaryBar({
 					<Users className="h-4 w-4 text-blue-600" />
 				</div>
 				<div className="text-xl font-bold text-blue-700">{stats.total}</div>
-				<div className="text-xs text-blue-600">Total de Alunos</div>
+				<div className="text-xs text-blue-600">{t('dashboard.totalStudents')}</div>
 			</div>
 
 			<div className="p-3 bg-green-50 rounded-lg text-center">
@@ -230,7 +233,7 @@ function SummaryBar({
 					<CheckCircle2 className="h-4 w-4 text-green-600" />
 				</div>
 				<div className="text-xl font-bold text-green-700">{stats.healthy}</div>
-				<div className="text-xs text-green-600">Conformidade Bolsa Família</div>
+				<div className="text-xs text-green-600">{t('components.attendance.compliance')}</div>
 			</div>
 
 			<div className="p-3 bg-yellow-50 rounded-lg text-center">
@@ -240,7 +243,7 @@ function SummaryBar({
 				<div className="text-xl font-bold text-yellow-700">
 					{stats.preventiveAttention}
 				</div>
-				<div className="text-xs text-yellow-600">Atenção preventiva</div>
+				<div className="text-xs text-yellow-600">{t('components.attendance.preventive')}</div>
 			</div>
 
 			<div className="p-3 bg-red-50 rounded-lg text-center">
@@ -248,7 +251,7 @@ function SummaryBar({
 					<UserX className="h-4 w-4 text-red-600" />
 				</div>
 				<div className="text-xl font-bold text-red-700">{stats.critical}</div>
-				<div className="text-xs text-red-600">Não conformidade (&lt;{riskThreshold}%)</div>
+				<div className="text-xs text-red-600">{t('components.attendance.nonComplianceWithThreshold', { threshold: riskThreshold })}</div>
 			</div>
 
 			<div
@@ -264,7 +267,7 @@ function SummaryBar({
 				<div className="text-xl font-bold">
 					{formatPercentage(stats.avgAttendance)}
 				</div>
-				<div className="text-xs">Média da Turma</div>
+				<div className="text-xs">{t('components.attendance.classAverage')}</div>
 			</div>
 		</div>
 	);
@@ -295,10 +298,11 @@ function TableSkeleton({ rows = 5 }: { rows?: number }) {
  * Empty state
  */
 function EmptyState() {
+  const t = useTranslations('platform')
 	return (
 		<div className="text-center py-12 text-gray-500">
 			<Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-			<p className="text-lg font-medium">Nenhum dado de frequência</p>
+			<p className="text-lg font-medium">{t('components.attendance.noData')}</p>
 			<p className="text-sm mt-1">
 				Nao ha registros de frequencia para o periodo selecionado.
 			</p>
@@ -329,6 +333,7 @@ export function AttendanceReportTable({
 	onExportPDF,
 	className,
 }: AttendanceReportTableProps) {
+  const t = useTranslations('platform')
 	const [sortField, setSortField] = useState<SortField>("nome");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -442,7 +447,7 @@ export function AttendanceReportTable({
 									<TableHead className="w-8">#</TableHead>
 									<TableHead className="min-w-[200px]">
 										<SortableHeader
-											label="Aluno"
+											label={t('components.attendance.student')}
 											field="nome"
 											currentSort={sortField}
 											currentDirection={sortDirection}
@@ -461,7 +466,7 @@ export function AttendanceReportTable({
 									</TableHead>
 									<TableHead className="text-center w-20">
 										<SortableHeader
-											label="Faltas"
+											label={t('components.attendance.absences')}
 											field="faltas"
 											currentSort={sortField}
 											currentDirection={sortDirection}
@@ -470,7 +475,7 @@ export function AttendanceReportTable({
 									</TableHead>
 									<TableHead className="text-center w-24">
 										<SortableHeader
-											label="Atestados"
+											label={t('components.studentReport.excused')}
 											field="atestados"
 											currentSort={sortField}
 											currentDirection={sortDirection}
@@ -549,13 +554,9 @@ export function AttendanceReportTable({
 							</TableCell>
 							<TableCell className="text-center">
 								{isAtRisk ? (
-									<Badge className="bg-red-500 text-white">
-										Não conforme
-									</Badge>
+									<Badge className="bg-red-500 text-white">{t('components.attendance.notCompliant')}</Badge>
 								) : isPreventiveAttention ? (
-									<Badge className="bg-yellow-500 text-white">
-										Atenção preventiva
-									</Badge>
+									<Badge className="bg-yellow-500 text-white">{t('components.attendance.preventive')}</Badge>
 								) : (
 									<Badge className="bg-green-500 text-white">Conforme</Badge>
 								)}
@@ -573,19 +574,19 @@ export function AttendanceReportTable({
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-green-500" />
 						<span>
-							Conformidade Bolsa Família ({">="} {riskThreshold}%)
+							{t('components.attendance.complianceWithThreshold', { threshold: riskThreshold })}
 						</span>
 					</div>
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-yellow-500" />
 						<span>
-							Atenção preventiva ({riskThreshold}% - &lt;{ATENCAO}%)
+							{t('components.attendance.preventiveWithThreshold', { threshold: riskThreshold, attention: ATENCAO })}
 						</span>
 					</div>
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-red-500" />
 						<span>
-							Não conformidade ({"<"} {riskThreshold}%)
+							{t('components.attendance.nonComplianceWithThreshold', { threshold: riskThreshold })}
 						</span>
 					</div>
 				</div>

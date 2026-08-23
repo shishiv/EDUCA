@@ -55,7 +55,7 @@ describe('i18n foundation', () => {
     expect(leafPaths(english).sort()).toEqual(leafPaths(portuguese).sort())
     expect(Object.keys(portuguese.registry as object).length).toBeGreaterThan(0)
     expect(Object.keys(portuguese.classroom as object).length).toBeGreaterThan(0)
-    expect(portuguese.platform).toEqual({})
+    expect(Object.keys(portuguese.platform as object).length).toBeGreaterThan(0)
   })
 
   it('provides translated auth and public messages in both locales', () => {

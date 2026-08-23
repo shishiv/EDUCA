@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
@@ -35,8 +37,18 @@ interface Turma {
 }
 
 export default function DashboardPage() {
+  const t = useTranslations('platform')
   const { userProfile } = useAuth()
   const userRole = userProfile?.tipo_usuario
+  const quickAccessLabelKey: Record<string, string> = {
+    'Novo Aluno': 'dashboard.quick.newStudent',
+    'Matrícula': 'dashboard.quick.enrollment',
+    'Frequência': 'dashboard.quick.attendance',
+    'Diário de Classe': 'dashboard.quick.classDiary',
+    'Nova Turma': 'dashboard.quick.newClass',
+    'Relatórios': 'dashboard.quick.reports',
+    Config: 'dashboard.quick.settings',
+  }
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -118,7 +130,7 @@ export default function DashboardPage() {
         feature: 'dashboard',
         action: 'load_dashboard_data',
       })
-      setLoadError('Não foi possível carregar os indicadores do dashboard.')
+      setLoadError(t('dashboard.loadError'))
     } finally {
       setLoading(false)
     }
@@ -126,9 +138,9 @@ export default function DashboardPage() {
 
   const getGreeting = () => {
     const hour = new Date().getHours()
-    if (hour < 12) return 'Bom dia'
-    if (hour < 18) return 'Boa tarde'
-    return 'Boa noite'
+    if (hour < 12) return t('dashboard.greeting.morning')
+    if (hour < 18) return t('dashboard.greeting.afternoon')
+    return t('dashboard.greeting.evening')
   }
 
   // Color indicator by serie for turmas
@@ -185,16 +197,14 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
-              {getGreeting()}, {userProfile?.nome?.split(' ')[0] || 'Usuário'}!
+              {getGreeting()}, {userProfile?.nome?.split(' ')[0] || t('dashboard.user')}!
             </h1>
             <p className="mt-2 text-sm text-emerald-50/90 sm:text-base">
-              Rede Municipal de Educação &middot; Ano Letivo 2024
+              {t('dashboard.subtitle')}
             </p>
           </div>
           <div className="shrink-0 rounded-educa-md bg-white/10 px-5 py-4 ring-1 ring-inset ring-white/15">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">
-              Frequência média da rede
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">{t('dashboard.averageAttendance')}</p>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="font-display text-4xl font-bold leading-none tabular-nums">
                 {stats.frequenciaMedia}%
@@ -206,7 +216,7 @@ export default function DashboardPage() {
                     : 'bg-amber-400/25 text-amber-50'
                 }`}
               >
-                {stats.frequenciaMedia >= CONFORMIDADE ? 'conforme' : 'atenção'}
+                {stats.frequenciaMedia >= CONFORMIDADE ? t('dashboard.compliant') : t('dashboard.attention')}
               </span>
             </div>
           </div>
@@ -214,7 +224,7 @@ export default function DashboardPage() {
       </header>
 
       {visibleQuickAccess.length > 0 && (
-        <nav aria-label="Acessos rápidos" className="mb-8">
+        <nav aria-label={t('dashboard.quickAccess')} className="mb-8">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
             {visibleQuickAccess.map((item) => {
               const IconComponent = item.icon
@@ -228,7 +238,7 @@ export default function DashboardPage() {
                 >
                   <Link href={item.href}>
                     <IconComponent className={`h-4 w-4 ${item.iconColor}`} aria-hidden="true" />
-                    <span>{item.name}</span>
+                    <span>{t(quickAccessLabelKey[item.name] as never)}</span>
                   </Link>
                 </Button>
               )
@@ -243,19 +253,19 @@ export default function DashboardPage() {
           icon={Users}
           iconColor="blue"
           value={stats.totalAlunos}
-          label="Total de Alunos"
+          label={t('dashboard.totalStudents')}
         />
         <StatCard
           icon={GraduationCap}
           iconColor="green"
           value={stats.totalTurmas}
-          label="Turmas Ativas"
+          label={t('dashboard.activeClasses')}
         />
         <StatCard
           icon={UserCheck}
           iconColor="pink"
           value={stats.totalProfessores}
-          label="Professores Ativos"
+          label={t('dashboard.activeTeachers')}
         />
       </div>
 
@@ -264,17 +274,13 @@ export default function DashboardPage() {
         {/* Left Column - Minhas Turmas */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="font-display text-lg text-gray-800">
-              Minhas Turmas
-            </CardTitle>
-            <CardDescription className="text-sm text-gray-500">
-              Turmas ativas no sistema
-            </CardDescription>
+            <CardTitle className="font-display text-lg text-gray-800">{t('dashboard.myClasses')}</CardTitle>
+            <CardDescription className="text-sm text-gray-500">{t('dashboard.activeClassesDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {turmas.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">Nenhuma turma encontrada</p>
+                <p className="text-sm text-gray-500 text-center py-4">{t('dashboard.noClasses')}</p>
               ) : (
                 turmas.map((turma) => (
                   <Link key={turma.id} href={`/dashboard/turmas/${turma.id}`}>
@@ -299,9 +305,7 @@ export default function DashboardPage() {
                 ))
               )}
               <Button variant="outline" className="w-full mt-2" asChild>
-                <Link href="/dashboard/turmas">
-                  Ver todas as turmas
-                </Link>
+                <Link href="/dashboard/turmas">{t('dashboard.viewAllClasses')}</Link>
               </Button>
             </div>
           </CardContent>

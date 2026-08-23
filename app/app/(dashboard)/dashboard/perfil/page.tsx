@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
@@ -9,10 +11,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  User, 
-  Save, 
-  Key, 
+import {
+  User,
+  Save,
+  Key,
   Shield,
   Clock,
   Mail,
@@ -22,6 +24,7 @@ import {
 import { toast } from 'sonner'
 
 export default function PerfilPage() {
+  const t = useTranslations('platform')
   const { userProfile } = useAuth()
   const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState({
@@ -47,11 +50,11 @@ export default function PerfilPage() {
 
   const getRoleLabel = (role: string) => {
     const roles = {
-      admin: 'Administrador',
-      diretor: 'Diretor(a)',
-      secretario: 'Secretário(a)',
-      professor: 'Professor(a)',
-      responsavel: 'Responsável'
+      admin: t('profile.roleAdmin'),
+      diretor: t('profile.roleDirector'),
+      secretario: t('profile.roleSecretary'),
+      professor: t('profile.roleTeacher'),
+      responsavel: t('profile.roleGuardian')
     }
     return roles[role as keyof typeof roles] || role
   }
@@ -63,9 +66,9 @@ export default function PerfilPage() {
     try {
       // Simular atualização do perfil
       await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success('Perfil atualizado com sucesso!')
+      toast.success(t('profile.updated'))
     } catch (error) {
-      toast.error('Erro ao atualizar perfil')
+      toast.error(t('profile.updateError'))
     } finally {
       setLoading(false)
     }
@@ -73,14 +76,14 @@ export default function PerfilPage() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (passwordData.novaSenha !== passwordData.confirmarSenha) {
-      toast.error('As senhas não coincidem')
+      toast.error(t('profile.passwordMismatch'))
       return
     }
 
     if (passwordData.novaSenha.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres')
+      toast.error(t('profile.passwordLength'))
       return
     }
 
@@ -89,10 +92,10 @@ export default function PerfilPage() {
     try {
       // Simular alteração de senha
       await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success('Senha alterada com sucesso!')
+      toast.success(t('profile.passwordChanged'))
       setPasswordData({ senhaAtual: '', novaSenha: '', confirmarSenha: '' })
     } catch (error) {
-      toast.error('Erro ao alterar senha')
+      toast.error(t('profile.passwordError'))
     } finally {
       setLoading(false)
     }
@@ -110,10 +113,8 @@ export default function PerfilPage() {
     <div className="space-y-6">
       {/* Cabeçalho */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Meu Perfil</h1>
-        <p className="text-gray-600 mt-1">
-          Gerencie suas informações pessoais e configurações de conta
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('profile.title')}</h1>
+        <p className="text-gray-600 mt-1">{t('profile.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -128,7 +129,7 @@ export default function PerfilPage() {
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <CardTitle>{userProfile?.nome || 'Usuário'}</CardTitle>
+              <CardTitle>{userProfile?.nome || t('dashboard.user')}</CardTitle>
               <div className="flex justify-center mt-2">
                 <Badge variant="secondary">
                   {getRoleLabel(userProfile?.tipo_usuario || '')}
@@ -150,7 +151,7 @@ export default function PerfilPage() {
               </div>
               <div className="flex items-center space-x-3 text-sm">
                 <Clock className="h-4 w-4 text-gray-500" />
-                <span>Último acesso: Hoje às 14:30</span>
+                <span>{t('profile.lastAccess')}</span>
               </div>
             </CardContent>
           </Card>
@@ -170,23 +171,21 @@ export default function PerfilPage() {
               </TabsTrigger>
               <TabsTrigger value="seguranca" className="flex items-center space-x-2">
                 <Shield className="h-4 w-4" />
-                <span>Segurança</span>
+                <span>{t('profile.security')}</span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="perfil">
               <Card>
                 <CardHeader>
-                  <CardTitle>Informações Pessoais</CardTitle>
-                  <CardDescription>
-                    Atualize suas informações pessoais
-                  </CardDescription>
+                  <CardTitle>{t('profile.personalInfo')}</CardTitle>
+                  <CardDescription>{t('profile.updatePersonal')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleProfileUpdate} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nome">Nome Completo</Label>
+                        <Label htmlFor="nome">{t('profile.fullName')}</Label>
                         <Input
                           id="nome"
                           value={profileData.nome}
@@ -203,7 +202,7 @@ export default function PerfilPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="telefone">Telefone</Label>
@@ -214,7 +213,7 @@ export default function PerfilPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="endereco">Endereço</Label>
+                        <Label htmlFor="endereco">{t('profile.address')}</Label>
                         <Input
                           id="endereco"
                           value={profileData.endereco}
@@ -233,7 +232,7 @@ export default function PerfilPage() {
                         ) : (
                           <>
                             <Save className="h-4 w-4 mr-2" />
-                            Salvar Alterações
+                            {t('profile.saveChanges')}
                           </>
                         )}
                       </Button>
@@ -246,15 +245,13 @@ export default function PerfilPage() {
             <TabsContent value="senha">
               <Card>
                 <CardHeader>
-                  <CardTitle>Alterar Senha</CardTitle>
-                  <CardDescription>
-                    Mantenha sua conta segura com uma senha forte
-                  </CardDescription>
+                  <CardTitle>{t('profile.changePassword')}</CardTitle>
+                  <CardDescription>{t('profile.keepSecure')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handlePasswordChange} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="senhaAtual">Senha Atual</Label>
+                      <Label htmlFor="senhaAtual">{t('profile.currentPassword')}</Label>
                       <Input
                         id="senhaAtual"
                         type="password"
@@ -262,9 +259,9 @@ export default function PerfilPage() {
                         onChange={(e) => setPasswordData({...passwordData, senhaAtual: e.target.value})}
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="novaSenha">Nova Senha</Label>
+                      <Label htmlFor="novaSenha">{t('profile.newPassword')}</Label>
                       <Input
                         id="novaSenha"
                         type="password"
@@ -272,9 +269,9 @@ export default function PerfilPage() {
                         onChange={(e) => setPasswordData({...passwordData, novaSenha: e.target.value})}
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="confirmarSenha">Confirmar Nova Senha</Label>
+                      <Label htmlFor="confirmarSenha">{t('profile.confirmPassword')}</Label>
                       <Input
                         id="confirmarSenha"
                         type="password"
@@ -306,10 +303,8 @@ export default function PerfilPage() {
             <TabsContent value="seguranca">
               <Card>
                 <CardHeader>
-                  <CardTitle>Histórico de Acessos</CardTitle>
-                  <CardDescription>
-                    Monitore os acessos recentes à sua conta
-                  </CardDescription>
+                  <CardTitle>{t('profile.accessHistory')}</CardTitle>
+                  <CardDescription>{t('profile.monitorAccess')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">

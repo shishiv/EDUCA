@@ -16,6 +16,8 @@
 
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -113,6 +115,7 @@ export function DescriptiveReportForm({
   autoSaveInterval = 30000, // 30 seconds default
   className,
 }: DescriptiveReportFormProps) {
+  const t = useTranslations('platform')
   // State
   const [isSaving, setIsSaving] = useState(false)
   const [isFinalizing, setIsFinalizing] = useState(false)
@@ -210,7 +213,7 @@ export function DescriptiveReportForm({
         setHasUnsavedChanges(false)
         toast.success('Rascunho salvo com sucesso!')
       } catch (error) {
-        toast.error('Erro ao salvar rascunho')
+        toast.error(t('components.descriptive.saveError'))
         throw error
       } finally {
         setIsSaving(false)
@@ -227,7 +230,7 @@ export function DescriptiveReportForm({
     const { canFinalize: canFinal, missingFields } = canFinalize(data)
 
     if (!canFinal) {
-      toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(', ')}`)
+      toast.error(t('components.descriptive.missing', { fields: missingFields.join(', ') }))
       return
     }
 
@@ -235,9 +238,9 @@ export function DescriptiveReportForm({
     try {
       const transformedData = transformFormDataToInput(data)
       await onFinalize?.(transformedData)
-      toast.success('Relatório finalizado com sucesso!')
+      toast.success(t('components.descriptive.finalized'))
     } catch (error) {
-      toast.error('Erro ao finalizar relatório')
+      toast.error(t('components.descriptive.finalizeError'))
       throw error
     } finally {
       setIsFinalizing(false)
@@ -328,19 +331,19 @@ export function DescriptiveReportForm({
                   {hasUnsavedChanges ? (
                     <>
                       <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
-                      <span>Alterações não salvas</span>
+                      <span>{t('components.descriptive.unsaved')}</span>
                     </>
                   ) : (
                     <>
                       <div className="h-2 w-2 rounded-full bg-green-500" />
-                      <span>Todas as alterações salvas</span>
+                      <span>{t('components.descriptive.saved')}</span>
                     </>
                   )}
                 </div>
                 {lastSaved && (
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>Último salvamento: {formatLastSaved(lastSaved)}</span>
+                    <span>{t('components.descriptive.lastSaved', { time: formatLastSaved(lastSaved) })}</span>
                   </div>
                 )}
               </div>
@@ -352,10 +355,9 @@ export function DescriptiveReportForm({
         {isFinalized && (
           <Alert className="border-green-200 bg-green-50">
             <Lock className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Relatório Finalizado</AlertTitle>
+            <AlertTitle className="text-green-800">{t('components.descriptive.finalTitle')}</AlertTitle>
             <AlertDescription className="text-green-700">
-              Este relatorio foi finalizado e nao pode mais ser alterado.
-              Apenas a visualização está disponível.
+              {t('components.descriptive.finalizedReadOnly')}
             </AlertDescription>
           </Alert>
         )}
@@ -446,7 +448,7 @@ export function DescriptiveReportForm({
                     <Textarea
                       {...field}
                       id="observacoes_gerais"
-                      placeholder="Informações complementares sobre o desenvolvimento geral, recomendações ou pontos de atenção..."
+                      placeholder={t('components.descriptive.complementary')}
                       disabled={isFormDisabled}
                       className={cn(
                         'min-h-[100px] resize-y',

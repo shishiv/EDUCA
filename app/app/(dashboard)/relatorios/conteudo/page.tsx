@@ -19,6 +19,8 @@
 
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -102,17 +104,17 @@ interface DateRange {
 // ============================================================================
 
 const PERIOD_OPTIONS = [
-  { value: 'current_month', label: 'Mes Atual' },
-  { value: 'last_month', label: 'Mes Anterior' },
-  { value: 'bimestre_1', label: '1o Bimestre' },
-  { value: 'bimestre_2', label: '2o Bimestre' },
-  { value: 'bimestre_3', label: '3o Bimestre' },
-  { value: 'bimestre_4', label: '4o Bimestre' },
-  { value: 'custom', label: 'Personalizado' },
+  { value: 'current_month', label: 'bolsa.currentMonth' },
+  { value: 'last_month', label: 'bolsa.lastMonth' },
+  { value: 'bimestre_1', label: 'reports.firstBimester' },
+  { value: 'bimestre_2', label: 'reports.secondBimester' },
+  { value: 'bimestre_3', label: 'reports.thirdBimester' },
+  { value: 'bimestre_4', label: 'reports.fourthBimester' },
+  { value: 'custom', label: 'bolsa.custom' },
 ]
 
 const DISCIPLINE_OPTIONS = [
-  { value: 'todas', label: 'Todas as Disciplinas' },
+  { value: 'todas', label: 'content.allSubjects' },
   ...Object.values(BNCC_SUBJECTS).map((s) => ({
     value: s.code,
     label: s.fullName,
@@ -182,6 +184,7 @@ function formatDateApi(date: Date): string {
  * Lesson Card Component
  */
 function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
+  const t = useTranslations('platform')
   return (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
@@ -200,13 +203,13 @@ function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <p className="text-xs font-medium text-gray-500 mb-1">Objetivo:</p>
+          <p className="text-xs font-medium text-gray-500 mb-1">{t('content.objective')}</p>
           <p className="text-sm text-gray-700">{lesson.objetivo}</p>
         </div>
 
         {lesson.habilidadesBncc.length > 0 && (
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-1">Habilidades BNCC:</p>
+            <p className="text-xs font-medium text-gray-500 mb-1">{t('content.skills')}</p>
             <div className="flex flex-wrap gap-1">
               {lesson.habilidadesBncc.map((skill) => (
                 <Badge
@@ -226,14 +229,14 @@ function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
 
         {lesson.metodologia && (
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-1">Metodologia:</p>
+            <p className="text-xs font-medium text-gray-500 mb-1">{t('content.methodology')}</p>
             <p className="text-sm text-gray-600">{lesson.metodologia}</p>
           </div>
         )}
 
         {lesson.recursos && (
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-1">Recursos:</p>
+            <p className="text-xs font-medium text-gray-500 mb-1">{t('content.resources')}</p>
             <p className="text-sm text-gray-600">{lesson.recursos}</p>
           </div>
         )}
@@ -252,6 +255,7 @@ function LessonCard({ lesson }: { lesson: LessonContentReportItem }) {
  * BNCC Skills Summary Component
  */
 function BNNCSkillsSummary({ skills, onExport }: { skills: BNNCSkillUsage[]; onExport?: () => void }) {
+  const t = useTranslations('platform')
   const fundamentalSkills = skills.filter((s) => s.nivel === 'fundamental')
   const infantilSkills = skills.filter((s) => s.nivel === 'infantil')
 
@@ -260,9 +264,7 @@ function BNNCSkillsSummary({ skills, onExport }: { skills: BNNCSkillUsage[]; onE
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <GraduationCap className="h-4 w-4 text-purple-600" />
-            Habilidades BNCC Trabalhadas
-          </CardTitle>
+            <GraduationCap className="h-4 w-4 text-purple-600" />{t('content.skillsWorked')}</CardTitle>
           {onExport && (
             <Button variant="outline" size="sm" onClick={onExport}>
               <FileText className="h-4 w-4 mr-2" />
@@ -360,13 +362,14 @@ function BNNCSkillsSummary({ skills, onExport }: { skills: BNNCSkillUsage[]; onE
  * Content Table Component
  */
 function ContentTable({ lessons }: { lessons: LessonContentReportItem[] }) {
+  const t = useTranslations('platform')
   return (
     <div className="rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Data</TableHead>
-            <TableHead>Tema/Conteúdo</TableHead>
+            <TableHead>{t('content.topic')}</TableHead>
             <TableHead className="hidden md:table-cell">Objetivo</TableHead>
             <TableHead className="w-[120px] text-center">Habilidades</TableHead>
             <TableHead className="hidden lg:table-cell">Turma</TableHead>
@@ -426,6 +429,7 @@ function ContentTable({ lessons }: { lessons: LessonContentReportItem[] }) {
 // ============================================================================
 
 export default function ContentReportsPage() {
+  const t = useTranslations('platform')
   // State
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [selectedTurma, setSelectedTurma] = useState<string>('todas')
@@ -461,7 +465,7 @@ export default function ContentReportsPage() {
           feature: 'reports',
           action: 'load_conteudo_turmas'
         })
-        setError('Erro ao carregar turmas')
+        setError(t('attendance.loadClassesError'))
       } finally {
         setIsLoadingTurmas(false)
       }
@@ -527,7 +531,7 @@ export default function ContentReportsPage() {
   // Handle export PDF
   const handleExportPDF = () => {
     if (!reportData || reportData.aulas.length === 0) {
-      toast.error('Não há conteúdo real no período selecionado para exportar')
+      toast.error(t('content.exportNoContent'))
       return
     }
     try {
@@ -538,14 +542,14 @@ export default function ContentReportsPage() {
         feature: 'reports',
         action: 'export_conteudo_pdf'
       })
-      toast.error('Erro ao gerar PDF')
+      toast.error(t('attendance.exportError'))
     }
   }
 
   // Handle export BNCC skills PDF
   const handleExportBNNCPDF = () => {
     if (!reportData || reportData.habilidadesBncc.length === 0) {
-      toast.error('Nenhuma habilidade BNCC para exportar')
+      toast.error(t('content.exportNoSkills'))
       return
     }
     try {
@@ -561,7 +565,7 @@ export default function ContentReportsPage() {
         feature: 'reports',
         action: 'export_bncc_pdf'
       })
-      toast.error('Erro ao gerar PDF')
+      toast.error(t('attendance.exportError'))
     }
   }
 
@@ -590,18 +594,14 @@ export default function ContentReportsPage() {
           onClick={handleExportPDF}
           disabled={!reportData || reportData.aulas.length === 0}
         >
-          <FileText className="h-4 w-4 mr-2" />
-          Exportar PDF
-        </Button>
+          <FileText className="h-4 w-4 mr-2" />{t('content.export')}</Button>
       </div>
 
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filtros
-          </CardTitle>
+            <Filter className="h-4 w-4" />{t('attendance.filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -616,7 +616,7 @@ export default function ContentReportsPage() {
                     <SelectValue placeholder="Selecione uma turma" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todas">Todas as Turmas</SelectItem>
+                    <SelectItem value="todas">{t('content.allClasses')}</SelectItem>
                     {turmas.map((turma) => (
                       <SelectItem key={turma.id} value={turma.id}>
                         {turma.serie} - {turma.nome}
@@ -630,7 +630,7 @@ export default function ContentReportsPage() {
 
             {/* Discipline Selector (optional) */}
             <div className="space-y-2">
-              <Label htmlFor="disciplina">Disciplina (opcional)</Label>
+              <Label htmlFor="disciplina">{t('content.optionalSubject')}</Label>
               <Select value={selectedDisciplina} onValueChange={setSelectedDisciplina}>
                 <SelectTrigger id="disciplina">
                   <SelectValue />
@@ -638,7 +638,7 @@ export default function ContentReportsPage() {
                 <SelectContent>
                   {DISCIPLINE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      {t(opt.label as never)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -647,7 +647,7 @@ export default function ContentReportsPage() {
 
             {/* Period Selector */}
             <div className="space-y-2">
-              <Label htmlFor="periodo">Período</Label>
+              <Label htmlFor="periodo">{t('attendance.period')}</Label>
               <Select value={periodOption} onValueChange={setPeriodOption}>
                 <SelectTrigger id="periodo">
                   <SelectValue />
@@ -655,7 +655,7 @@ export default function ContentReportsPage() {
                 <SelectContent>
                   {PERIOD_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      {t(opt.label as never)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -666,12 +666,12 @@ export default function ContentReportsPage() {
             {periodOption === 'custom' && (
               <>
                 <div className="space-y-2">
-                  <Label>Data Inicio</Label>
+                  <Label>{t('content.startDate')}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        aria-label="Data Inicio"
+                        aria-label={t('content.startDate')}
                         className={cn(
                           'w-full justify-start text-left font-normal',
                           !dateRange.from && 'text-muted-foreground'
@@ -695,12 +695,12 @@ export default function ContentReportsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Data Fim</Label>
+                  <Label>{t('attendance.endDate')}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        aria-label="Data Fim"
+                        aria-label={t('attendance.endDate')}
                         className={cn(
                           'w-full justify-start text-left font-normal',
                           !dateRange.to && 'text-muted-foreground'
@@ -759,12 +759,8 @@ export default function ContentReportsPage() {
           <Card data-testid="content-report-empty-state" role="status">
             <CardContent className="text-center py-12">
               <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg font-medium text-gray-600">
-                Nenhum conteúdo real registrado no período selecionado
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                O PDF está indisponível porque não existe conteúdo canônico para este período.
-              </p>
+              <p className="text-lg font-medium text-gray-600">{t('content.noRealContent')}</p>
+              <p className="text-sm text-gray-500 mt-1">{t('content.noCanonicalContent')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -793,7 +789,7 @@ export default function ContentReportsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{reportData.resumo.habilidadesUnicas}</p>
-                    <p className="text-sm text-gray-500">Habilidades BNCC</p>
+                    <p className="text-sm text-gray-500">{t('content.skillsCount')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -807,7 +803,7 @@ export default function ContentReportsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{reportData.resumo.mediaHabilidadesPorAula.toFixed(1)}</p>
-                    <p className="text-sm text-gray-500">Média/Aula</p>
+                    <p className="text-sm text-gray-500">{t('content.averageLesson')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -821,7 +817,7 @@ export default function ContentReportsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{reportData.resumo.disciplinasMaisTrabalhadas.length}</p>
-                    <p className="text-sm text-gray-500">Disciplinas</p>
+                    <p className="text-sm text-gray-500">{t('content.subjects')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -855,7 +851,7 @@ export default function ContentReportsPage() {
                       Nenhuma aula registrada no periodo
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
-                      Período: {periodoLabel}
+                      {t('content.period')} {periodoLabel}
                     </p>
                   </CardContent>
                 </Card>
@@ -882,9 +878,7 @@ export default function ContentReportsPage() {
                 <Card>
                   <CardContent className="text-center py-12">
                     <TableIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium text-gray-600">
-                      Nenhum dado para exibir
-                    </p>
+                    <p className="text-lg font-medium text-gray-600">{t('content.noData')}</p>
                   </CardContent>
                 </Card>
               ) : (
