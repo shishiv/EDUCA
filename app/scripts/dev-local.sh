@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/.." && pwd)"
 
-# --- Supabase CLI wrapper (array to preserve quoting) ---
+# --- Supabase CLI wrapper ---
 run_supabase() {
   pnpm exec supabase --workdir "$REPO_ROOT" "$@"
 }
@@ -25,7 +25,7 @@ run_supabase() {
 RESET_DB=false
 STARTED_SUPABASE=false
 NEXT_PID=""
-SHUTTING_DOWN=false
+CLEANUP_EXIT=""
 
 for arg in "$@"; do
   case "$arg" in
@@ -47,14 +47,11 @@ done
 
 # --- Safety gates ---
 
-# Block any non-loopback NEXT_PUBLIC_SUPABASE_URL using Node URL parser
 assert_loopback_url() {
   local url="${1:-}"
-  # Empty is acceptable (will be set from local Supabase status)
   if [[ -z "$url" ]]; then
     return 0
   fi
-  # Use Node.js URL parser for robust validation
   local result
   result=$(node -e "
     try {
@@ -80,26 +77,22 @@ if ! assert_loopback_url "${NEXT_PUBLIC_SUPABASE_URL:-}"; then
   exit 1
 fi
 
-# Block sudo/root
 if [[ "${EUID:-$(id -u)}" == "0" ]]; then
   echo "ERROR: Do not run as root." >&2
   exit 1
 fi
 
-# Check Docker
 if ! docker info >/dev/null 2>&1; then
   echo "ERROR: Docker is not running or not accessible." >&2
   exit 1
 fi
 
-# Check portless binary exists
 if ! command -v portless >/dev/null 2>&1; then
   echo "ERROR: portless is not installed or not on PATH." >&2
   echo "       Install: npm install -g portless" >&2
   exit 1
 fi
 
-# Check portless proxy is already active (do not attempt to start it)
 if ! portless doctor 2>/dev/null | grep -q "Proxy is responding"; then
   echo "ERROR: portless proxy is not running." >&2
   echo "       Start it manually: portless proxy start" >&2
@@ -110,30 +103,46 @@ fi
 # --- Cleanup handler: stop only what we started ---
 # shellcheck disable=SC2329
 cleanup() {
-  if [[ "$SHUTTING_DOWN" == "true" ]]; then
-    return
-  fi
-  SHUTTING_DOWN=true
+  local trigger_exit="${CLEANUP_EXIT:-$?}"
+
+  # Disarm all traps to prevent recursion
+  trap - EXIT INT TERM
+  local cleanup_failed=false
 
   echo ""
   echo "-> Shutting down..."
+
   # Terminate Next.js child if running
   if [[ -n "$NEXT_PID" ]] && kill -0 "$NEXT_PID" 2>/dev/null; then
     kill -TERM "$NEXT_PID" 2>/dev/null || true
     wait "$NEXT_PID" 2>/dev/null || true
   fi
+
   if [[ "$STARTED_SUPABASE" == "true" ]]; then
     echo "-> Stopping Supabase stack (started by this session)..."
-    run_supabase stop || true
-    echo "OK Supabase stopped."
+    if run_supabase stop; then
+      echo "OK Supabase stopped."
+    else
+      echo "WARN: Supabase stop failed. Check for orphaned containers." >&2
+      cleanup_failed=true
+    fi
   else
     echo "   Supabase was already running before this session; leaving it up."
   fi
-  echo "OK Cleanup complete."
+
+  # If the app exited successfully but cleanup itself failed, report error
+  if [[ "$cleanup_failed" == "true" && "$trigger_exit" == "0" ]]; then
+    echo "ERROR: Cleanup failed." >&2
+    exit 1
+  fi
+
+  exit "$trigger_exit"
 }
+
 trap cleanup EXIT
-trap 'cleanup; exit 130' INT
-trap 'cleanup; exit 143' TERM
+# INT/TERM: record the signal exit code and let EXIT handler run once
+trap 'CLEANUP_EXIT=130' INT
+trap 'CLEANUP_EXIT=143' TERM
 
 # --- Detect existing Supabase stack ---
 
@@ -147,8 +156,9 @@ if supabase_running; then
   echo "OK Local Supabase stack already running."
 else
   echo "-> Starting local Supabase stack..."
-  run_supabase start
+  # Mark ownership BEFORE start so cleanup stops partial resources on failure
   STARTED_SUPABASE=true
+  run_supabase start
   echo "OK Supabase stack started."
 fi
 
@@ -165,18 +175,15 @@ write_local_env() {
   local api_url anon_key service_role_key
 
   api_url=$(echo "$status_env" | grep "^API_URL=" | cut -d= -f2-) || true
-  # Prefer PUBLISHABLE_KEY (newer CLI), fall back to ANON_KEY
   anon_key=$(echo "$status_env" | grep "^PUBLISHABLE_KEY=" | cut -d= -f2-) || true
   if [[ -z "$anon_key" ]]; then
     anon_key=$(echo "$status_env" | grep "^ANON_KEY=" | cut -d= -f2-) || true
   fi
-  # Prefer SECRET_KEY (newer CLI), fall back to SERVICE_ROLE_KEY
   service_role_key=$(echo "$status_env" | grep "^SECRET_KEY=" | cut -d= -f2-) || true
   if [[ -z "$service_role_key" ]]; then
     service_role_key=$(echo "$status_env" | grep "^SERVICE_ROLE_KEY=" | cut -d= -f2-) || true
   fi
 
-  # Require all three
   if [[ -z "$api_url" ]]; then
     echo "ERROR: API_URL not found in Supabase status output." >&2
     return 1
@@ -195,7 +202,6 @@ write_local_env() {
     cp "$APP_DIR/.env.local.example" "$env_file"
   fi
 
-  # Securely update env file without printing secrets: write to temp, then move
   local tmp_env
   tmp_env=$(mktemp "$APP_DIR/.env.local.XXXXXX")
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -236,7 +242,7 @@ cd "$APP_DIR" || exit 1
 portless run pnpm dev &
 NEXT_PID=$!
 
-# Wait for child: disable -e to capture exit code, then propagate
+# Wait for child: disable -e to capture exit code, then propagate via cleanup
 set +e
 wait "$NEXT_PID"
 NEXT_EXIT=$?

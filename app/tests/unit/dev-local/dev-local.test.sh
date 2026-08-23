@@ -366,6 +366,87 @@ else
   pass "start failure: portless was not started"
 fi
 
+
+# TEST: child exit code is propagated
+# Create a pnpm stub where dev exits with code 42
+cat > "$STUB_DIR/pnpm_dev_exit42" << 'PNPM_EXIT42'
+#!/usr/bin/env bash
+echo "pnpm $*" >> "${STUB_LOG:-/dev/null}"
+if [[ "$*" == *"supabase"*"status -o env"* ]]; then
+  echo "API_URL=http://127.0.0.1:54321"
+  echo "PUBLISHABLE_KEY=eyJ_stub_publishable"
+  echo "SECRET_KEY=eyJ_stub_secret"
+  exit 0
+fi
+if [[ "$*" == *"supabase"*"status"* ]]; then exit 1; fi
+if [[ "$*" == *"supabase"*"start"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"db push --local"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"stop"* ]]; then exit 0; fi
+if [[ "$*" == *"dev"* ]]; then exit 42; fi
+exit 0
+PNPM_EXIT42
+chmod +x "$STUB_DIR/pnpm_dev_exit42"
+true > "$STUB_LOG"
+cp "$STUB_DIR/pnpm_dev_exit42" "$STUB_DIR/pnpm"
+exit42_rc=0
+PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED" >/dev/null 2>&1 || exit42_rc=$?
+if [[ "$exit42_rc" == "42" ]]; then
+  pass "child exit code 42 propagated"
+else
+  fail "child exit code not propagated (got rc=$exit42_rc, expected 42)"
+fi
+
+# TEST: supabase stop failure is not masked when app exits 0
+cat > "$STUB_DIR/pnpm_stop_fails" << 'PNPM_STOPFAIL'
+#!/usr/bin/env bash
+echo "pnpm $*" >> "${STUB_LOG:-/dev/null}"
+if [[ "$*" == *"supabase"*"status -o env"* ]]; then
+  echo "API_URL=http://127.0.0.1:54321"
+  echo "PUBLISHABLE_KEY=eyJ_stub_publishable"
+  echo "SECRET_KEY=eyJ_stub_secret"
+  exit 0
+fi
+if [[ "$*" == *"supabase"*"status"* ]]; then exit 1; fi
+if [[ "$*" == *"supabase"*"start"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"db push --local"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"stop"* ]]; then
+  echo "stop_attempted" >> "${STUB_LOG:-/dev/null}"
+  exit 1
+fi
+if [[ "$*" == *"dev"* ]]; then sleep 0.05; exit 0; fi
+exit 0
+PNPM_STOPFAIL
+chmod +x "$STUB_DIR/pnpm_stop_fails"
+true > "$STUB_LOG"
+cp "$STUB_DIR/pnpm_stop_fails" "$STUB_DIR/pnpm"
+stopfail_rc=0
+stopfail_output=$(PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED" 2>&1) || stopfail_rc=$?
+if [[ "$stopfail_rc" != "0" ]]; then
+  pass "stop failure turns app success into error exit"
+else
+  fail "stop failure was masked (rc=0, should be non-zero)"
+fi
+if echo "$stopfail_output" | grep -q "WARN.*stop failed"; then
+  pass "stop failure prints warning"
+else
+  fail "stop failure did not print warning"
+fi
+if grep -q "stop_attempted" "$STUB_LOG"; then
+  pass "stop was attempted on cleanup"
+else
+  fail "stop was not attempted"
+fi
+
+# TEST: start failure still calls stop (ownership marked before start)
+true > "$STUB_LOG"
+cp "$STUB_DIR/pnpm_fail_start" "$STUB_DIR/pnpm"
+PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED" >/dev/null 2>&1 || true
+if grep -q "supabase.*stop" "$STUB_LOG"; then
+  pass "start failure: stop called (ownership marked before start)"
+else
+  fail "start failure: stop NOT called (ownership not marked before start)"
+fi
+
 # --- Static analysis ---
 echo ""
 echo "Static analysis:"
