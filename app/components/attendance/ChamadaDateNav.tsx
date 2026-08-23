@@ -7,6 +7,8 @@
 
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useState } from 'react'
 import { addDays, subDays, format, isSameDay, isAfter, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -40,6 +42,7 @@ export function ChamadaDateNav({
   onDateChange,
   chamadaStatus,
 }: ChamadaDateNavProps) {
+  const t = useClassroomTranslations()
   const [calendarOpen, setCalendarOpen] = useState(false)
   const today = startOfDay(new Date())
   const isToday = isSameDay(currentDate, today)
@@ -95,7 +98,7 @@ export function ChamadaDateNav({
         variant="outline"
         size="icon"
         onClick={handlePrevDay}
-        aria-label="Dia anterior"
+        aria-label={t('attendance.previousDay')}
         className="h-10 w-10 shrink-0"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -110,7 +113,7 @@ export function ChamadaDateNav({
               "min-w-0 flex-1 justify-start text-left font-normal sm:min-w-[200px] sm:flex-none",
               !currentDate && "text-muted-foreground"
             )}
-            aria-label="Selecionar data"
+            aria-label={t('attendance.selectDate')}
           >
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">
@@ -144,7 +147,7 @@ export function ChamadaDateNav({
         variant="outline"
         size="icon"
         onClick={handleNextDay}
-        aria-label="Próximo dia"
+        aria-label={t('attendance.nextDay')}
         className="h-10 w-10"
       >
         <ChevronRight className="h-4 w-4" />
@@ -158,14 +161,14 @@ export function ChamadaDateNav({
           onClick={handleToday}
           className="ml-2"
         >
-          Hoje
+          {t('actions.today')}
         </Button>
       )}
 
       {/* Future date indicator */}
       {isFuture && (
         <Badge variant="secondary" className="ml-2">
-          Visualizacao
+          {t('attendance.future')}
         </Badge>
       )}
     </div>

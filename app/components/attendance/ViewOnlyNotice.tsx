@@ -1,3 +1,6 @@
+'use client'
+
+import { useClassroomTranslations } from '@/i18n/classroom'
 /**
  * ViewOnlyNotice - Alert banner for view-only attendance mode
  * Shown to admin/secretario users who can view but not record attendance
@@ -13,13 +16,14 @@ interface ViewOnlyNoticeProps {
 }
 
 export function ViewOnlyNotice({
-  message = "Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores.",
+  message = 'Como administrador, você pode visualizar dados de frequência, mas o registro é feito pelos professores.',
   className
 }: ViewOnlyNoticeProps) {
+  const t = useClassroomTranslations()
   return (
     <Alert className={cn("bg-blue-50 border-blue-200", className)}>
       <Shield className="h-4 w-4 text-blue-600" />
-      <AlertTitle className="text-blue-800">Modo de Visualização</AlertTitle>
+      <AlertTitle className="text-blue-800">{t('attendance.viewOnly')}</AlertTitle>
       <AlertDescription className="text-blue-700">
         {message}
       </AlertDescription>

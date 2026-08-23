@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -207,6 +209,8 @@ const mockTurmas: Turma[] = [
 ]
 
 export default function TurmasPage() {
+  const t = useClassroomTranslations()
+
   const router = useRouter()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const { userProfile } = useAuth()
@@ -367,26 +371,26 @@ export default function TurmasPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Turmas"
-          description="Gerencie as turmas e classes da rede municipal"
+          title={t('classes.title')}
+          description={t('classes.subtitle')}
           actions={
             <>
               <Button variant="outline" className="gap-2">
                 <Download className="h-4 w-4" />
-                Exportar
+                {t('actions.export')}
               </Button>
               <Button asChild className="gap-2">
                 <Link href="/dashboard/turmas/nova">
                   <Plus className="h-4 w-4" />
-                  Nova Turma
+                  {t('actions.newClass')}
                 </Link>
               </Button>
             </>
           }
         />
         <EscolaRequiredState
-          title="Selecione uma Escola"
-          description="Para visualizar as turmas, selecione uma escola no seletor do menu lateral."
+          title={t('classes.selectSchool')}
+          description={t('classes.selectSchoolHint')}
         />
       </div>
     )
@@ -396,8 +400,8 @@ export default function TurmasPage() {
     <div className="space-y-6">
       {/* Cabecalho */}
       <PageHeader
-        title="Turmas"
-        description="Gerencie as turmas e classes da rede municipal"
+        title={t('classes.title')}
+        description={t('classes.subtitle')}
         actions={
           <>
             <Button variant="outline" className="gap-2">
@@ -417,10 +421,10 @@ export default function TurmasPage() {
       {/* Estatisticas compactas */}
       <StatsBar
         stats={[
-          { label: 'Total', value: totalTurmas, icon: BookOpen },
-          { label: 'Ativas', value: turmasAtivas, icon: CheckCircle, variant: 'success' },
-          { label: 'Alunos', value: totalAlunos, icon: Users, variant: 'info' },
-          { label: 'Ocupacao', value: `${capacidadeTotal > 0 ? Math.round((totalAlunos / capacidadeTotal) * 100) : 0}%`, icon: TrendingUp, variant: 'warning' },
+          { label: t('labels.total'), value: totalTurmas, icon: BookOpen },
+          { label: t('status.active'), value: turmasAtivas, icon: CheckCircle, variant: 'success' },
+          { label: t('labels.students'), value: totalAlunos, icon: Users, variant: 'info' },
+          { label: t('labels.capacity'), value: `${capacidadeTotal > 0 ? Math.round((totalAlunos / capacidadeTotal) * 100) : 0}%`, icon: TrendingUp, variant: 'warning' },
         ]}
       />
 
@@ -428,21 +432,21 @@ export default function TurmasPage() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle className="text-lg">Turmas ({filteredTurmas.length})</CardTitle>
+            <CardTitle className="text-lg">{t('labels.classes')} ({filteredTurmas.length})</CardTitle>
           </div>
           <InlineFilters
             search={{
               value: search,
               onChange: setSearch,
-              placeholder: 'Buscar por nome, série, escola ou professor...',
+              placeholder: 'Search by name, series, school or teacher...',
             }}
             filters={[
               {
                 id: 'escola',
-                placeholder: 'Escola',
+                placeholder: t('labels.school'),
                 value: escolaFilter,
                 options: [
-                  { value: 'todas', label: 'Todas as escolas' },
+                  { value: 'todas', label: t('classes.selectSchool') },
                   ...escolas.filter(Boolean).map(escola => ({
                     value: escola?.id || '',
                     label: escola?.nome || '',
@@ -453,10 +457,10 @@ export default function TurmasPage() {
               },
               {
                 id: 'serie',
-                placeholder: 'Série',
+                placeholder: t('labels.series'),
                 value: serieFilter,
                 options: [
-                  { value: 'todas', label: 'Todas' },
+                  { value: 'todas', label: t('labels.allF') },
                   ...series.map(serie => ({ value: serie, label: serie })),
                 ],
                 onChange: setSerieFilter,
@@ -464,10 +468,10 @@ export default function TurmasPage() {
               },
               {
                 id: 'turno',
-                placeholder: 'Turno',
+                placeholder: t('labels.shift'),
                 value: turnoFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
+                  { value: 'todos', label: t('labels.all') },
                   { value: 'matutino', label: 'Matutino' },
                   { value: 'vespertino', label: 'Vespertino' },
                   { value: 'integral', label: 'Integral' },
@@ -477,12 +481,12 @@ export default function TurmasPage() {
               },
               {
                 id: 'status',
-                placeholder: 'Status',
+                placeholder: t('labels.status'),
                 value: statusFilter,
                 options: [
-                  { value: 'todos', label: 'Todos' },
-                  { value: 'ativo', label: 'Ativas' },
-                  { value: 'inativo', label: 'Inativas' },
+                  { value: 'todos', label: t('labels.all') },
+                  { value: 'ativo', label: t('status.active') },
+                  { value: 'inativo', label: t('status.inactive') },
                 ],
                 onChange: setStatusFilter,
                 width: 'w-full sm:w-32',
@@ -508,21 +512,21 @@ export default function TurmasPage() {
               {hasActiveFilters ? (
                 <>
                   <SearchIcon className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhuma turma encontrada</h3>
-                  <p className="text-sm text-gray-500 mb-4">Tente ajustar os filtros para encontrar o que procura.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t('classes.noClasses')}</h3>
+                  <p className="text-sm text-gray-500 mb-4">{t('classes.noClassesHint')}</p>
                   <Button variant="outline" onClick={clearFilters}>
-                    Limpar filtros
+                    {t('actions.clear')}
                   </Button>
                 </>
               ) : (
                 <>
                   <BookOpen className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhuma turma cadastrada</h3>
-                  <p className="text-sm text-gray-500 mb-4">Comece adicionando a primeira turma.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t('classes.empty')}</h3>
+                  <p className="text-sm text-gray-500 mb-4">{t('classes.emptyHint')}</p>
                   <Button asChild>
                     <Link href="/dashboard/turmas/nova">
                       <Plus className="h-4 w-4 mr-2" />
-                      Nova Turma
+                      {t('actions.newClass')}
                     </Link>
                   </Button>
                 </>

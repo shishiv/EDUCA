@@ -1,7 +1,9 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 /**
- * Canonical Diário de Classe screen.
+ * Canonical {t('diary.title')} screen.
  *
  * This is the single product diary surface. It uses the PR88 class-diary
  * component contract, reading sessoes_aula and frequencia.sessao_id only.
@@ -27,8 +29,9 @@ import type { ClassDiaryEntry, ClassDiaryFilters } from '@/lib/api/class-diary'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
-/** The canonical Diário de Classe route is `/diario`; dashboard is an alias. */
+/** The canonical {t('diary.title')} route is `/diario`; dashboard is an alias. */
 export function CanonicalDiaryPage() {
+  const t = useClassroomTranslations()
   const searchParams = useSearchParams()
   const { userProfile, loading: authLoading } = useAuth()
 
@@ -151,36 +154,34 @@ export function CanonicalDiaryPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <BookOpen className="h-8 w-8" />
-            Diário de Classe
+            {t('diary.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Histórico de aulas e frequência dos alunos
+            {t('diary.subtitle')}
           </p>
         </div>
         {canWriteDiary && selectedTurmaId && (
           <Button onClick={() => setIsNewLessonOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Nova Aula
+            {t('actions.newLesson')}
           </Button>
         )}
       </div>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Documento Legal</AlertTitle>
+        <AlertTitle>{t('diary.legal')}</AlertTitle>
         <AlertDescription>
-          O Diário de Classe é um documento oficial na educação brasileira. Todos os
-          registros são auditáveis e imutáveis após o bloqueio, conforme legislação
-          educacional vigente.
+          {t('diary.legalHint')}
         </AlertDescription>
       </Alert>
 
       {isViewOnlyRole && (
         <Alert data-testid="diary-view-only-notice">
           <ShieldAlert className="h-4 w-4" />
-          <AlertTitle>Perfil com acesso de visualização</AlertTitle>
+          <AlertTitle>{t('diary.viewOnly')}</AlertTitle>
           <AlertDescription>
-            Seu perfil pode apenas visualizar o diário. Professores e diretores registram aulas.
+            {t('diary.viewOnlyHint')}
           </AlertDescription>
         </Alert>
       )}

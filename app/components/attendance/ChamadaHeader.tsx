@@ -7,6 +7,8 @@
 
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -57,6 +59,7 @@ export function ChamadaHeader({
   closeDisabled = false,
   canEdit = true,
 }: ChamadaHeaderProps) {
+  const t = useClassroomTranslations()
   const attendanceRate = studentCount > 0
     ? Math.round((presentCount / studentCount) * 100)
     : 0
@@ -68,7 +71,7 @@ export function ChamadaHeader({
       {hasUnsavedChanges && !isLocked && (
         <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          <span className="text-sm font-medium">Alterações não salvas</span>
+          <span className="text-sm font-medium">{t('attendance.unsaved')}</span>
         </div>
       )}
 
@@ -97,7 +100,7 @@ export function ChamadaHeader({
             <p className="text-lg font-semibold tabular-nums">
               {presentCount}/{studentCount}
               <span className="text-sm font-normal text-muted-foreground ml-1">
-                presentes
+                {t('attendance.presentCount')}
               </span>
             </p>
             <p className={cn(
@@ -119,7 +122,7 @@ export function ChamadaHeader({
                   onClick={onClose}
                   disabled={closeDisabled || isSaving}
                 >
-                  Fechar chamada
+                  {t('attendance.close')}
                 </Button>
               )}
               <Button
@@ -147,12 +150,12 @@ export function ChamadaHeader({
                     />
                   </svg>
                 </span>
-                Salvando...
+                {t('attendance.saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Salvar
+                {t('attendance.save')}
               </>
             )}
               </Button>

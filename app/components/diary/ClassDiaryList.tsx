@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 /**
  * Class Diary List Component
  * Brazilian Educational Context: Lista de Aulas do Diário de Classe
@@ -58,6 +60,7 @@ export function ClassDiaryList({
   currentPage = 1,
   totalPages = 1,
 }: ClassDiaryListProps) {
+  const t = useClassroomTranslations()
   const [sortColumn, setSortColumn] = useState<keyof ClassDiaryEntry>('data_aula')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
@@ -137,9 +140,9 @@ export function ClassDiaryList({
         <CardContent>
           <div className="text-center space-y-3">
             <BookOpen className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="text-lg font-semibold">Nenhuma aula encontrada</h3>
+            <h3 className="text-lg font-semibold">{t('diary.noLessons')}</h3>
             <p className="text-sm text-muted-foreground">
-              Não há registros de aulas para os filtros selecionados.
+              {t('diary.noLessonsHint')}
             </p>
           </div>
         </CardContent>
@@ -161,7 +164,7 @@ export function ClassDiaryList({
                   className="-ml-3 h-8"
                   onClick={() => handleSort('data_aula')}
                 >
-                  Data
+                  {t('labels.date')}
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
@@ -172,14 +175,14 @@ export function ClassDiaryList({
                   className="-ml-3 h-8"
                   onClick={() => handleSort('turma_nome')}
                 >
-                  Turma
+                  {t('labels.class')}
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>Professor</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-center">Presentes</TableHead>
-              <TableHead className="text-center">Ausentes</TableHead>
+              <TableHead>{t('labels.teacher')}</TableHead>
+              <TableHead className="text-center">{t('labels.status')}</TableHead>
+              <TableHead className="text-center">{t('labels.present')}</TableHead>
+              <TableHead className="text-center">{t('labels.absent')}</TableHead>
               <TableHead className="text-center">Freq. %</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
@@ -330,7 +333,7 @@ export function ClassDiaryList({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
           >
-            Anterior
+            {t('actions.previous')}
           </Button>
           <span className="text-sm text-muted-foreground">
             Página {currentPage} de {totalPages}
@@ -341,7 +344,7 @@ export function ClassDiaryList({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
-            Próxima
+            {t('actions.next')}
           </Button>
         </div>
       )}

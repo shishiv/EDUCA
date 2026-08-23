@@ -1,8 +1,10 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 /**
  * Class Diary Detail Component
- * Brazilian Educational Context: Detalhes da Aula do Diário de Classe
+ * Brazilian Educational Context: {t('diary.details')} do Diário de Classe
  *
  * Displays complete information about a specific class session:
  * - Session metadata (date, turma, professor, phase)
@@ -51,6 +53,7 @@ interface ClassDiaryDetailProps {
 }
 
 export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetailProps) {
+  const t = useClassroomTranslations()
   const [session, setSession] = useState<DetailedSession | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -98,10 +101,10 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Detalhes da Aula
+            {t('diary.details')}
           </DialogTitle>
           <DialogDescription>
-            Informações completas sobre a sessão de aula e frequência dos alunos
+            {t('diary.detailsHint')}
           </DialogDescription>
         </DialogHeader>
 
@@ -151,7 +154,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                     <User className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{session.professor_nome}</p>
-                      <p className="text-xs text-muted-foreground">Professor</p>
+                      <p className="text-xs text-muted-foreground">{t('diary.teacher')}</p>
                     </div>
                   </div>
                 </div>
@@ -164,7 +167,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    Conteúdo Programático / Observações
+                    {t('diary.programContent')}
                   </h3>
                   <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
                     {session.observacoes}
@@ -174,7 +177,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
 
               {/* Attendance Statistics */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold">Estatísticas de Frequência</h3>
+                <h3 className="text-sm font-semibold">{t('diary.stats')}</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-muted p-4 rounded-lg text-center">
                     <Users className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
@@ -200,7 +203,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                 {/* Attendance Percentage */}
                 <div className="bg-primary/10 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Frequência Geral</span>
+                    <span className="text-sm font-medium">{t('diary.general')}</span>
                     <span
                       className={`text-2xl font-bold ${
                         getFrequencyPolicyStatus(session.attendance_percentage) === 'CONFORME'
@@ -239,10 +242,10 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
 
               {/* Student Attendance List */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold">Frequência por Aluno</h3>
+                <h3 className="text-sm font-semibold">{t('diary.byStudent')}</h3>
                 {session.attendance_records.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    Nenhum registro de frequência encontrado para esta aula.
+                    {t('diary.noAttendance')}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -293,7 +296,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                   <div className="space-y-2">
                     <h3 className="text-sm font-semibold flex items-center gap-2 text-destructive">
                       <Lock className="h-4 w-4" />
-                      Registro Bloqueado
+                      {t('diary.blocked')}
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Este registro foi bloqueado em{' '}
@@ -314,7 +317,7 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
                             {session.hash_integridade}
                           </p>
                           <p className="text-muted-foreground mt-1">
-                            Hash de integridade para auditoria
+                            {t('diary.integrityHash')}
                           </p>
                         </div>
                       </div>

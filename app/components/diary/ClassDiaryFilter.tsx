@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 /**
  * Class Diary Filter Component
  * Brazilian Educational Context: Diário de Classe Filters
@@ -43,6 +45,7 @@ export function ClassDiaryFilter({
   profesor_id,
   escola_id,
 }: ClassDiaryFilterProps) {
+  const t = useClassroomTranslations()
   // Local state for filter values
   const [turmaId, setTurmaId] = useState<string>(initialFilters.turma_id || 'all')
   const [dateFrom, setDateFrom] = useState<string>(initialFilters.date_from || '')
@@ -110,7 +113,7 @@ export function ClassDiaryFilter({
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Filtros do Diário
+          {t('diary.filters')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -120,17 +123,17 @@ export function ClassDiaryFilter({
             <Label htmlFor="turma-select">Turma</Label>
             <Select value={turmaId} onValueChange={setTurmaId}>
               <SelectTrigger id="turma-select">
-                <SelectValue placeholder="Selecione uma turma" />
+                <SelectValue placeholder={t('diary.selectClass')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as turmas</SelectItem>
+                <SelectItem value="all">{t('diary.allClasses')}</SelectItem>
                 {loadingTurmas ? (
                   <SelectItem value="loading" disabled>
                     Carregando...
                   </SelectItem>
                 ) : turmas.length === 0 ? (
                   <SelectItem value="empty" disabled>
-                    Nenhuma turma encontrada
+                    {t('diary.noClasses')}
                   </SelectItem>
                 ) : (
                   turmas.map((turma) => (
@@ -145,7 +148,7 @@ export function ClassDiaryFilter({
 
           {/* Date From */}
           <div className="space-y-2">
-            <Label htmlFor="date-from">Data Inicial</Label>
+            <Label htmlFor="date-from">{t('diary.startDate')}</Label>
             <Input
               id="date-from"
               type="date"
@@ -157,7 +160,7 @@ export function ClassDiaryFilter({
 
           {/* Date To */}
           <div className="space-y-2">
-            <Label htmlFor="date-to">Data Final</Label>
+            <Label htmlFor="date-to">{t('diary.endDate')}</Label>
             <Input
               id="date-to"
               type="date"
@@ -169,13 +172,13 @@ export function ClassDiaryFilter({
 
           {/* Fase/Status Filter */}
           <div className="space-y-2">
-            <Label htmlFor="fase-select">Status da Aula</Label>
+            <Label htmlFor="fase-select">{t('diary.lessonStatus')}</Label>
             <Select value={fase} onValueChange={setFase}>
               <SelectTrigger id="fase-select">
-                <SelectValue placeholder="Selecione o status" />
+                <SelectValue placeholder={t('diary.allStatuses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="all">{t('diary.allStatuses')}</SelectItem>
                 <SelectItem value="aberta">Aberta</SelectItem>
                 <SelectItem value="fechada">Fechada</SelectItem>
                 <SelectItem value="travada">Travada</SelectItem>
@@ -191,7 +194,7 @@ export function ClassDiaryFilter({
             className="w-full sm:w-auto"
             size="default"
           >
-            Buscar
+            {t('actions.search')}
           </Button>
           <Button
             onClick={handleResetFilters}
@@ -199,7 +202,7 @@ export function ClassDiaryFilter({
             className="w-full sm:w-auto"
             size="default"
           >
-            Limpar Filtros
+            {t('actions.clear')}
           </Button>
         </div>
       </CardContent>

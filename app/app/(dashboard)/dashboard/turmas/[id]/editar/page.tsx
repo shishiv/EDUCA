@@ -1,5 +1,7 @@
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -41,6 +43,7 @@ const initialForm: ClassForm = {
 }
 
 export default function EditarTurmaPage() {
+  const t = useClassroomTranslations()
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const id = params.id
@@ -59,7 +62,7 @@ export default function EditarTurmaPage() {
       ])
 
       if (classResult.error || !classResult.data) {
-        toast.error('Não foi possível carregar a turma')
+        toast.error(t('classes.notFound'))
         router.replace('/dashboard/turmas')
         return
       }
@@ -111,7 +114,7 @@ export default function EditarTurmaPage() {
       return
     }
 
-    toast.success('Turma atualizada com sucesso!')
+    toast.success(t('classes.updateSuccess'))
     router.push(`/dashboard/turmas/${id}`)
   }
 
@@ -133,33 +136,33 @@ export default function EditarTurmaPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Editar Turma</h1>
-          <p className="mt-1 text-gray-600">Atualize os dados e a atribuição da turma.</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('classes.editTitle')}</h1>
+          <p className="mt-1 text-gray-600">{t('classes.editSubtitle')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Dados da Turma</CardTitle>
-          <CardDescription>Campos com * são obrigatórios.</CardDescription>
+          <CardTitle>{t('classes.data')}</CardTitle>
+          <CardDescription>{t('classes.requiredHint')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="edit-nome">Nome da Turma *</Label>
+                <Label htmlFor="edit-nome">{t('forms.className')} *</Label>
                 <Input id="edit-nome" value={form.nome} onChange={event => update('nome', event.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-serie">Série *</Label>
+                <Label htmlFor="edit-serie">{t('forms.series')} *</Label>
                 <Input id="edit-serie" value={form.serie} onChange={event => update('serie', event.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-ano">Ano Letivo *</Label>
+                <Label htmlFor="edit-ano">{t('forms.schoolYear')} *</Label>
                 <Input id="edit-ano" type="number" min="2020" max="2100" value={form.ano_letivo} onChange={event => update('ano_letivo', event.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-turno">Turno *</Label>
+                <Label htmlFor="edit-turno">{t('forms.shift')} *</Label>
                 <Select value={form.turno} onValueChange={value => update('turno', value as ClassForm['turno'])}>
                   <SelectTrigger id="edit-turno" aria-label="Turno">
                     <SelectValue />
@@ -172,11 +175,11 @@ export default function EditarTurmaPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-capacidade">Capacidade *</Label>
+                <Label htmlFor="edit-capacidade">{t('forms.capacity')} *</Label>
                 <Input id="edit-capacidade" type="number" min="1" max="100" value={form.capacidade} onChange={event => update('capacidade', event.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-escola">Escola *</Label>
+                <Label htmlFor="edit-escola">{t('forms.school')} *</Label>
                 <Select value={form.escola_id} onValueChange={value => update('escola_id', value)}>
                   <SelectTrigger id="edit-escola" aria-label="Escola">
                     <SelectValue />
@@ -187,13 +190,13 @@ export default function EditarTurmaPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-professor">Professor</Label>
+                <Label htmlFor="edit-professor">{t('labels.teacher')}</Label>
                 <Select value={form.professor_id} onValueChange={value => update('professor_id', value)}>
                   <SelectTrigger id="edit-professor" aria-label="Professor">
-                    <SelectValue placeholder="Sem professor" />
+                    <SelectValue placeholder={t('forms.noTeacher')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Sem professor</SelectItem>
+                    <SelectItem value="none">{t('forms.noTeacher')}</SelectItem>
                     {teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -202,16 +205,16 @@ export default function EditarTurmaPage() {
 
             <div className="flex items-center gap-3">
               <Switch id="edit-ativo" checked={form.ativo} onCheckedChange={value => update('ativo', value)} />
-              <Label htmlFor="edit-ativo">Turma ativa</Label>
+              <Label htmlFor="edit-ativo">{t('forms.active')}</Label>
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
               <Button variant="outline" asChild>
-                <Link href={`/dashboard/turmas/${id}`}>Cancelar</Link>
+                <Link href={`/dashboard/turmas/${id}`}>{t('actions.cancel')}</Link>
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {saving ? 'Salvando...' : 'Salvar alterações'}
+                {saving ? t('actions.saving') : t('actions.save')}
               </Button>
             </div>
           </form>

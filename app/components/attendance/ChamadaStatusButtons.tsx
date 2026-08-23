@@ -10,6 +10,8 @@
 
 'use client'
 
+import { useClassroomTranslations } from '@/i18n/classroom'
+
 import { cn } from '@/lib/utils'
 import { Lock } from 'lucide-react'
 
@@ -33,17 +35,17 @@ export interface ChamadaStatusButtonsProps {
 
 const STATUS_CONFIG = {
   P: {
-    label: 'Presente',
+    label: 'present',
     activeClass: 'bg-green-500 text-white border-green-600 hover:bg-green-600',
     inactiveClass: 'bg-white text-green-700 border-green-300 hover:bg-green-50',
   },
   F: {
-    label: 'Falta',
+    label: 'absent',
     activeClass: 'bg-red-500 text-white border-red-600 hover:bg-red-600',
     inactiveClass: 'bg-white text-red-700 border-red-300 hover:bg-red-50',
   },
   J: {
-    label: 'Justificada',
+    label: 'justified',
     activeClass: 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600',
     inactiveClass: 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50',
   },
@@ -65,6 +67,7 @@ export function ChamadaStatusButtons({
   disabled = false,
   size = 'md',
 }: ChamadaStatusButtonsProps) {
+  const t = useClassroomTranslations()
   const handleClick = (buttonStatus: 'P' | 'F' | 'J') => {
     if (disabled) return
 
@@ -98,7 +101,7 @@ export function ChamadaStatusButtons({
             type="button"
             onClick={() => handleClick(buttonStatus)}
             disabled={disabled}
-            aria-label={config.label}
+            aria-label={config.label === 'present' ? t('attendance.present') : config.label === 'absent' ? t('attendance.absent') : t('attendance.justified')}
             aria-pressed={isActive}
             className={cn(
               'flex items-center justify-center',
