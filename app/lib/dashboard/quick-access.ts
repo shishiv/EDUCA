@@ -9,6 +9,7 @@ export type QuickAccessRole = 'admin' | 'diretor' | 'secretario' | 'professor' |
 
 export interface QuickAccessItem {
   name: string
+  labelKey: 'newStudent' | 'enrollment' | 'attendance' | 'classDiary' | 'newClass' | 'reports' | 'settings'
   href: string
   icon: LucideIcon
   iconColor: string
@@ -27,13 +28,13 @@ export interface QuickActionCard {
 }
 
 export const quickAccessItems: QuickAccessItem[] = [
-  { name: 'Novo Aluno', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
-  { name: 'Matrícula', href: '/dashboard/matriculas/nova', icon: FileText, iconColor: 'text-emerald-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
-  { name: 'Frequência', href: ATTENDANCE_ROUTE, icon: CheckSquare, iconColor: 'text-amber-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  { name: 'Diário de Classe', href: '/diario', icon: BookText, iconColor: 'text-indigo-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  { name: 'Nova Turma', href: '/dashboard/turmas/nova', icon: Building2, iconColor: 'text-violet-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
-  { name: 'Relatórios', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600', roles: ['admin', 'diretor', 'secretario'] },
-  { name: 'Config', href: '/dashboard/configuracoes', icon: Settings, iconColor: 'text-slate-600', roles: ['admin', 'diretor'] },
+  { name: 'Novo Aluno', labelKey: 'newStudent', href: '/dashboard/alunos/novo', icon: UserPlus, iconColor: 'text-blue-600', roles: ['admin', 'diretor', 'secretario'], pilotRoles: ['diretor'], schoolWrite: true },
+  { name: 'Matrícula', labelKey: 'enrollment', href: '/dashboard/matriculas/nova', icon: FileText, iconColor: 'text-emerald-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
+  { name: 'Frequência', labelKey: 'attendance', href: ATTENDANCE_ROUTE, icon: CheckSquare, iconColor: 'text-amber-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Diário de Classe', labelKey: 'classDiary', href: '/diario', icon: BookText, iconColor: 'text-indigo-600', roles: ['admin', 'diretor', 'secretario', 'professor'] },
+  { name: 'Nova Turma', labelKey: 'newClass', href: '/dashboard/turmas/nova', icon: Building2, iconColor: 'text-violet-600', roles: ['admin', 'diretor', 'secretario'], schoolWrite: true },
+  { name: 'Relatórios', labelKey: 'reports', href: '/dashboard/relatorios', icon: BarChart3, iconColor: 'text-rose-600', roles: ['admin', 'diretor', 'secretario'] },
+  { name: 'Config', labelKey: 'settings', href: '/dashboard/configuracoes', icon: Settings, iconColor: 'text-slate-600', roles: ['admin', 'diretor'] },
 ]
 
 export const defaultQuickActionCards: QuickActionCard[] = [

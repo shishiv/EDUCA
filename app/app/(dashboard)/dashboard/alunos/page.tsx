@@ -1,12 +1,12 @@
 'use client'
-import { useTranslations } from 'next-intl'
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { supabase, Aluno } from '@/lib/supabase'
 import { studentsApi } from '@/lib/api/students'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Download, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart, Search as SearchIcon } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, Users, UserCheck, UserX, Heart, Search as SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
@@ -220,19 +220,19 @@ export default function AlunosPage() {
     const matriculaAtiva = aluno.matriculas?.find(m => m.situacao === 'ativa')
 
     if (!aluno.ativo) {
-      return <Badge variant="secondary">{t('labels.inativo')}</Badge>
+      return <Badge variant="secondary">{t('studentsList.inactive')}</Badge>
     }
 
     if (matriculaAtiva) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">{t('labels.matriculado')}</Badge>
+      return <Badge variant="default" className="bg-green-100 text-green-800">{t('studentsList.enrolled')}</Badge>
     }
 
-    return <Badge variant="outline">{t('labels.nao-matriculado')}</Badge>
+    return <Badge variant="outline">{t('studentsList.notEnrolled')}</Badge>
   }
 
   const getCurrentSchool = (aluno: AlunoWithDetails) => {
     const matriculaAtiva = aluno.matriculas?.find(m => m.situacao === 'ativa')
-    return matriculaAtiva?.turmas?.escolas?.nome || 'Não matriculado'
+    return matriculaAtiva?.turmas?.escolas?.nome || t('studentsList.notEnrolled')
   }
 
   const filteredAlunos = alunos.filter(aluno => {
@@ -275,11 +275,7 @@ export default function AlunosPage() {
           description={t('labels.gerencie-o-cadastro-de-todos-os-alunos-da-rede-municipa')}
           actions={
             <>
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                {t('labels.exportar')}
-              </Button>
-              <Button asChild className="gap-2">
+              <Button asChild className="app-primary-action gap-2">
                 <Link href="/dashboard/alunos/novo">
                   <Plus className="h-4 w-4" />
                   {t('labels.novo-aluno')}
@@ -304,11 +300,7 @@ export default function AlunosPage() {
         description={t('labels.gerencie-o-cadastro-de-todos-os-alunos-da-rede-municipa')}
         actions={
           <>
-            <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
-              {t('labels.exportar')}
-            </Button>
-            <Button asChild className="gap-2">
+            <Button asChild className="app-primary-action gap-2">
               <Link href="/dashboard/alunos/novo">
                 <Plus className="h-4 w-4" />
                 {t('labels.novo-aluno')}
@@ -321,10 +313,10 @@ export default function AlunosPage() {
       {/* Estatísticas compactas */}
       <StatsBar
         stats={[
-          { label: t('labels.total'), value: alunos.length, icon: Users },
-          { label: 'Matriculados', value: alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserCheck, variant: 'success' },
-          { label: 'Não Matriculados', value: alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserX, variant: 'warning' },
-          { label: 'NEE', value: alunos.filter(a => a.necessidades_especiais).length, icon: Heart, variant: 'info' },
+          { label: t('studentsList.total'), value: alunos.length, icon: Users },
+          { label: t('studentsList.enrolledPlural'), value: alunos.filter(a => a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserCheck, variant: 'success' },
+          { label: t('studentsList.notEnrolledPlural'), value: alunos.filter(a => !a.matriculas?.some(m => m.situacao === 'ativa')).length, icon: UserX, variant: 'warning' },
+          { label: t('studentsList.specialNeeds'), value: alunos.filter(a => a.necessidades_especiais).length, icon: Heart, variant: 'info' },
         ]}
       />
 
@@ -332,25 +324,25 @@ export default function AlunosPage() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle className="text-lg">{t('ui.alunos')}{filteredAlunos.length})</CardTitle>
+            <h2 className="font-display text-lg font-semibold leading-none tracking-tight text-gray-900">{t('studentsList.studentsCount', { count: filteredAlunos.length })}</h2>
           </div>
           <InlineFilters
             search={{
               value: search,
               onChange: setSearch,
-              placeholder: 'Buscar por nome, CPF ou responsável...',
+              placeholder: t('studentsList.search'),
             }}
             filters={[
               {
                 id: 'status',
-                placeholder: t('labels.status'),
+                placeholder: t('studentsList.status'),
                 value: statusFilter,
                 options: [
-                  { value: 'todos', label: 'Todos os Status' },
-                  { value: 'matriculado', label: 'Matriculados' },
-                  { value: 'nao_matriculado', label: 'Não Matriculados' },
-                  { value: 'ativo', label: 'Ativos' },
-                  { value: 'inativo', label: 'Inativos' },
+                  { value: 'todos', label: t('studentsList.allStatuses') },
+                  { value: 'matriculado', label: t('studentsList.enrolledPlural') },
+                  { value: 'nao_matriculado', label: t('studentsList.notEnrolledPlural') },
+                  { value: 'ativo', label: t('studentsList.active') },
+                  { value: 'inativo', label: t('studentsList.inactivePlural') },
                 ],
                 onChange: setStatusFilter,
                 width: 'w-full sm:w-44',
@@ -360,9 +352,9 @@ export default function AlunosPage() {
                 placeholder: t('labels.sexo'),
                 value: sexoFilter,
                 options: [
-                  { value: 'todos', label: t('labels.todos') },
-                  { value: 'M', label: 'Masculino' },
-                  { value: 'F', label: 'Feminino' },
+                  { value: 'todos', label: t('studentsList.all') },
+                  { value: 'M', label: t('studentsList.male') },
+                  { value: 'F', label: t('studentsList.female') },
                 ],
                 onChange: setSexoFilter,
                 width: 'w-full sm:w-32',
@@ -380,12 +372,12 @@ export default function AlunosPage() {
             <Table className="responsive-stack-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('labels.aluno')}</TableHead>
-                  <TableHead>{t('labels.idade')}</TableHead>
-                  <TableHead>{t('labels.responsavel')}</TableHead>
-                  <TableHead>{t('labels.escola-atual')}</TableHead>
-                  <TableHead>{t('labels.status')}</TableHead>
-                  <TableHead className="text-right">{t('labels.acoes')}</TableHead>
+                  <TableHead>{t('studentsList.student')}</TableHead>
+                  <TableHead>{t('studentsList.age')}</TableHead>
+                  <TableHead>{t('studentsList.guardian')}</TableHead>
+                  <TableHead>{t('studentsList.currentSchool')}</TableHead>
+                  <TableHead>{t('studentsList.status')}</TableHead>
+                  <TableHead className="text-right">{t('studentsList.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -401,21 +393,21 @@ export default function AlunosPage() {
                         <div>
                           <div className="font-medium">{aluno.nome_completo}</div>
                           <div className="text-sm text-gray-500">
-                            {aluno.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}
+                            {aluno.sexo === 'M' ? t('studentsList.male') : t('studentsList.female')}
                             {aluno.cpf && ` • CPF: ${aluno.cpf}`}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>{calculateAge(aluno.data_nascimento)} {t('ui.anos')}</div>
+                      <div>{calculateAge(aluno.data_nascimento)} {t('studentsList.years')}</div>
                       <div className="text-sm text-gray-500">
                         {formatDateBR(aluno.data_nascimento)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        {aluno.responsaveis?.nome || 'Não informado'}
+                        {aluno.responsaveis?.nome || t('studentsList.notProvided')}
                       </div>
                       {aluno.telefone && (
                         <div className="text-sm text-gray-500">{aluno.telefone}</div>
@@ -442,7 +434,7 @@ export default function AlunosPage() {
                         <Button variant="ghost" size="sm" asChild>
                           <Link
                             href={`/dashboard/alunos/${aluno.id}`}
-                            aria-label={`Ver ${aluno.nome_completo}`}
+                            aria-label={t('studentsList.view', { name: aluno.nome_completo })}
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
@@ -450,7 +442,7 @@ export default function AlunosPage() {
                         <Button variant="ghost" size="sm" asChild>
                           <Link
                             href={`/dashboard/alunos/${aluno.id}/editar`}
-                            aria-label={`Editar ${aluno.nome_completo}`}
+                            aria-label={t('studentsList.edit', { name: aluno.nome_completo })}
                           >
                             <Edit className="h-4 w-4" />
                           </Link>
@@ -459,7 +451,7 @@ export default function AlunosPage() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700"
-                          aria-label={`Desativar ${aluno.nome_completo}`}
+                          aria-label={t('studentsList.deactivate', { name: aluno.nome_completo })}
                           onClick={() => setStudentToDeactivate(aluno)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -486,7 +478,7 @@ export default function AlunosPage() {
                       search || statusFilter !== 'todos' || sexoFilter !== 'todos'
                         ? [
                             {
-                              label: 'Limpar filtros',
+                              label: t('studentsList.clearFilters'),
                               variant: 'outline',
                               onClick: () => {
                                 setSearch('')
@@ -521,7 +513,7 @@ export default function AlunosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('labels.desativar-aluno')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('ui.tem-certeza-que-deseja-desativar')} {studentToDeactivate?.nome_completo}{t('ui.o-registro-permanece-disponivel-para-consulta')}
+              {t('studentsList.confirm', { name: studentToDeactivate?.nome_completo ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

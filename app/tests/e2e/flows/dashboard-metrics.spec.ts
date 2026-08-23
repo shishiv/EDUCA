@@ -5,15 +5,15 @@ import { navigateToDashboard } from '../utils/test-helpers'
  * E2E Tests: Dashboard Metrics & Stats
  *
  * Actual stat-card labels (from page.tsx):
- *   "Total de Alunos", "Turmas Ativas", "Frequencia Media", "Professores Ativos"
+ *   "Total de Alunos", "Turmas Ativas", "Frequência Média", "Professores Ativos"
  * Quick-access items visible to admin:
  *   "Novo Aluno", "Matrícula", "Frequência", "Nova Turma", "Relatórios", "Config"
  */
 
 test.describe('Dashboard - Page Loads', () => {
-  test('dashboard renders greeting and year heading', async ({ page }) => {
+  test('dashboard renders greeting and network heading', async ({ page }) => {
     await navigateToDashboard(page)
-    await expect(page.getByText(/Ano Letivo/i)).toBeVisible()
+    await expect(page.getByText(/Rede Municipal de Educação/)).toBeVisible()
   })
 
   test('dashboard shows quick-access actions for admin', async ({ page }) => {
@@ -72,11 +72,20 @@ test.describe('Dashboard - Navigation', () => {
   })
 
   test('Relatórios page loads', async ({ page }) => {
-    // Navigate directly - verifies the page is accessible
     await navigateToDashboard(page)
-    await page.goto('/dashboard/relatorios')
+    await page
+      .getByRole('navigation', { name: 'Acessos rápidos' })
+      .getByRole('link', { name: 'Relatórios', exact: true })
+      .click()
     await expect(page).toHaveURL(/\/dashboard\/relatorios/)
     await expect(page.getByText(/relatório/i).first()).toBeVisible({ timeout: 20000 })
+  })
+
+  test('Diário page loads from the shared navigation', async ({ page }) => {
+    await navigateToDashboard(page)
+    await page.getByRole('link', { name: /Diário de Classe/i }).first().click()
+    await expect(page).toHaveURL(/\/diario/)
+    await expect(page.getByText(/diário/i).first()).toBeVisible({ timeout: 20000 })
   })
 
   test('Configurações page loads', async ({ page }) => {
@@ -106,10 +115,10 @@ test.describe('Dashboard - Mobile Navigation', () => {
   })
 
   test('bottom navigation exposes only implemented routes', async ({ page }) => {
-    const nav = page.getByLabel(/navegacao principal mobile/i)
+    const nav = page.getByLabel(/navegação principal mobile/i)
     await expect(nav).toBeVisible()
-    await expect(nav.getByRole('link', { name: /frequencia/i })).toHaveAttribute('href', '/dashboard/turmas')
-    await expect(nav.getByRole('link', { name: /relatorios/i })).toHaveAttribute('href', '/dashboard/relatorios')
+    await expect(nav.getByRole('link', { name: /frequência/i })).toHaveAttribute('href', '/dashboard/turmas')
+    await expect(nav.getByRole('link', { name: /relatórios/i })).toHaveAttribute('href', '/dashboard/relatorios')
   })
 
   test('drawer opens, exposes role-allowed links and closes', async ({ page }) => {
@@ -124,7 +133,7 @@ test.describe('Dashboard - Mobile Navigation', () => {
 test.describe('Dashboard - Sidebar Navigation', () => {
   test('sidebar nav links are present', async ({ page }) => {
     await READY(page)
-    const sidebar = page.locator('nav, aside').first()
+    const sidebar = page.getByRole('complementary', { name: /navegação principal/i })
     await expect(sidebar).toBeVisible()
   })
 
@@ -135,5 +144,19 @@ test.describe('Dashboard - Sidebar Navigation', () => {
       await alunosLink.click()
       await expect(page).toHaveURL(/\/dashboard\/alunos/)
     }
+  })
+
+  test('shared shell keeps route context on a secondary screen', async ({ page }) => {
+    await READY(page)
+
+    const sidebar = page.getByRole('complementary', { name: /navegação principal/i })
+    await sidebar.getByRole('link', { name: 'Alunos', exact: true }).click()
+
+    await expect(page).toHaveURL(/\/dashboard\/alunos/)
+    await expect(page.getByRole('navigation', { name: 'Alunos' })).toContainText('Alunos')
+    await expect(
+      sidebar.getByRole('link', { name: 'Alunos', exact: true })
+    ).toHaveAttribute('aria-current', 'page')
+    await expect(page.getByRole('heading', { name: 'Alunos', exact: true })).toBeVisible()
   })
 })

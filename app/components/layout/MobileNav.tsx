@@ -1,47 +1,34 @@
-/**
- * MobileNav - Bottom Navigation for Mobile Devices
- *
- * EDUCA Design System - Mobile Navigation
- *
- * Features:
- * - Fixed bottom navigation bar for mobile (hidden on desktop md+)
- * - Icons for: Dashboard, Frequencia, Diario, Relatorios
- * - EDUCA green active state (bg-green-50, text-green-600)
- * - Touch-friendly with 44px minimum targets (WCAG)
- * - 10px border-radius per mockup styling
- *
- * Responsive (LAY-05):
- * - Mobile and tablet (<1024px): Visible, hamburger menu pattern
- * - Desktop (1024+): Hidden, full sidebar used instead
- */
+/** Role-aware bottom navigation for authenticated mobile routes. */
 
 'use client'
 
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
+import { useAuth } from '@/hooks/use-auth'
 import {
   Home,
   CheckSquare,
   BookText,
   FileText,
+  Users,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
-import type { NavigationItemMessageKey } from '@/i18n/message-keys'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface NavItem {
-  label: NavigationItemMessageKey
+  labelKey: 'dashboard' | 'students' | 'attendance' | 'diary' | 'reports'
   href: string
   icon: React.ComponentType<{ className?: string }>
   /** Match pattern for active state (supports partial path matching) */
   matchPath?: string
+  roles: string[]
 }
 
 // ============================================================================
@@ -50,28 +37,39 @@ interface NavItem {
 
 const navigationItems: NavItem[] = [
   {
-    label: 'items.dashboard',
+    labelKey: 'dashboard',
     href: '/dashboard',
     icon: Home,
     matchPath: '/dashboard',
+    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
-    label: 'items.attendance',
+    labelKey: 'students',
+    href: '/dashboard/alunos',
+    icon: Users,
+    matchPath: '/dashboard/alunos',
+    roles: ['admin', 'diretor', 'secretario'],
+  },
+  {
+    labelKey: 'attendance',
     href: '/dashboard/turmas',
     icon: CheckSquare,
     matchPath: '/dashboard/turmas',
+    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
-    label: 'items.diary',
+    labelKey: 'diary',
     href: '/diario',
     icon: BookText,
     matchPath: '/diario',
+    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
-    label: 'items.reports',
+    labelKey: 'reports',
     href: '/dashboard/relatorios',
     icon: FileText,
     matchPath: '/dashboard/relatorios',
+    roles: ['admin', 'diretor', 'secretario'],
   },
 ]
 
@@ -82,10 +80,15 @@ const navigationItems: NavItem[] = [
 export function MobileNav() {
   const t = useTranslations('layout.navigation')
   const pathname = usePathname()
+  const { userProfile } = useAuth()
   const visibleNavigationItems = navigationItems.filter(item =>
-    !isPilotModeEnabled() ||
-    !isPilotDisabledPath(item.href) ||
-    isDemoSandboxPilotPathAllowed(item.href)
+    !!userProfile &&
+    item.roles.includes(userProfile.tipo_usuario) &&
+    (
+      !isPilotModeEnabled() ||
+      !isPilotDisabledPath(item.href) ||
+      isDemoSandboxPilotPathAllowed(item.href)
+    )
   )
 
   /**
@@ -107,77 +110,23 @@ export function MobileNav() {
 
   return (
     <nav
-      className={cn(
-        // Container styling
-        'fixed bottom-0 left-0 right-0 z-50',
-        // Background with blur effect
-        'bg-white/95 backdrop-blur-sm',
-        // Border and shadow
-        'border-t border-gray-200 shadow-lg',
-        // Safe area padding for iOS devices
-        'mobile-nav-safe-area',
-        // Hide on desktop (lg and above)
-        'lg:hidden'
-      )}
+      className="app-mobile-nav mobile-nav-safe-area lg:hidden"
       aria-label={t('ariaLabel')}
     >
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="app-mobile-nav__inner">
         {visibleNavigationItems.map((item) => {
           const active = isActive(item)
           const Icon = item.icon
 
           return (
             <Link
-              key={item.href}
+              key={item.labelKey}
               href={item.href}
-              className={cn(
-                // Base button styling
-                'flex flex-col items-center justify-center',
-                // Touch-friendly size (minimum 44px per WCAG)
-                'min-w-[64px] min-h-[44px] px-2 py-1',
-                // Transition
-                'relative transition-all duration-200',
-                // EDUCA mockup: 10px border-radius
-                'rounded-[10px]',
-                // Active/inactive states - EDUCA green styling
-                active ? [
-                  'text-green-600',
-                  'bg-green-50',
-                ] : [
-                  'text-gray-500',
-                  'hover:text-gray-700',
-                  'hover:bg-gray-50',
-                  'active:bg-gray-100',
-                ],
-              )}
+              className={cn('app-mobile-nav__link', active && 'is-active')}
               aria-current={active ? 'page' : undefined}
             >
-              {/* Icon */}
-              <Icon
-                className={cn(
-                  'w-5 h-5 mb-0.5',
-                  active ? 'text-green-600' : 'text-gray-500'
-                )}
-                aria-hidden="true"
-              />
-
-              {/* Label */}
-              <span
-                className={cn(
-                  'text-[10px] font-medium leading-tight',
-                  active ? 'text-green-600' : 'text-gray-500'
-                )}
-              >
-                {t(item.label)}
-              </span>
-
-              {/* Active indicator dot - EDUCA green */}
-              {active && (
-                <div
-                  className="absolute bottom-1 w-1 h-1 bg-green-600 rounded-full"
-                  aria-hidden="true"
-                />
-              )}
+              <Icon aria-hidden="true" />
+              <span>{t(`items.${item.labelKey}`)}</span>
             </Link>
           )
         })}

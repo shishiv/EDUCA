@@ -88,7 +88,7 @@ test.describe('Permissions - Professor', () => {
   test('sees the teacher-specific dashboard', async ({ page }) => {
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(page.getByText('Dashboard do Professor')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('Painel do Professor')).toBeVisible({ timeout: 15000 })
   })
 
   for (const entry of [

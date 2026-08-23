@@ -23,6 +23,17 @@ describe('checkRouteAccess', () => {
     })
   })
 
+  it('keeps secretary navigation aligned with admin-only routes', () => {
+    expect(checkRouteAccess('/dashboard/usuarios', 'secretario')).toEqual({
+      hasAccess: false,
+      redirectTo: '/unauthorized',
+    })
+    expect(checkRouteAccess('/dashboard/escolas', 'secretario')).toEqual({
+      hasAccess: false,
+      redirectTo: '/unauthorized',
+    })
+  })
+
   it('allows director settings but denies secretary settings', () => {
     expect(checkRouteAccess('/dashboard/configuracoes', 'diretor').hasAccess).toBe(true)
     expect(checkRouteAccess('/dashboard/configuracoes', 'secretario')).toEqual({

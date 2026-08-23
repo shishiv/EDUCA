@@ -57,7 +57,7 @@ export async function navigateToDashboard(
   email = 'admin@test.com'
 ) {
   const dashboardReady = () => email.startsWith('professor@')
-    ? page.getByText('Dashboard do Professor')
+    ? page.getByText('Painel do Professor')
     : page.getByText('Total de Alunos')
 
   await page.goto('/dashboard')

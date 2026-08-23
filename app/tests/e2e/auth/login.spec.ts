@@ -70,9 +70,19 @@ test.describe('Authentication Flows', () => {
     ).toBeVisible()
   })
 
-  test('root / redirects to login when unauthenticated', async ({ page }) => {
+  test('root / renders the public landing page when unauthenticated', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveURL(/login/, { timeout: 10000 })
+    await expect(page).toHaveURL(/\/$/)
+    await expect(
+      page.getByRole('heading', { name: /uma base comum para a gestão escolar/i })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Entrar no sistema', exact: true }).first()
+    ).toHaveAttribute('href', '/login')
+
+    const faviconResponse = await page.request.get('/favicon.ico')
+    expect(faviconResponse.status()).toBe(200)
+    expect(faviconResponse.headers()['content-type']).toContain('image/x-icon')
   })
 
   test('reset-password form sends instructions and shows confirmation', async ({ page }) => {

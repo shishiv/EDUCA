@@ -35,7 +35,7 @@ implemented. Tests assert the denial boundary until a parent portal is defined.
 
 | Route | Role | Viewport | Meaningful interactions and expected result | Playwright spec | Status |
 |---|---|---|---|---|---|
-| `/` | public | desktop | root redirects to `/login` | `auth/login.spec.ts` | covered |
+| `/` | public | desktop | landing heading and login path render without auth; `/favicon.ico` resolves through the Next.js app-icon convention | `auth/login.spec.ts` | covered |
 | `/login` | public | desktop + mobile | fields, remember checkbox, native validation, invalid credentials, reset link | `auth/login.spec.ts` | covered |
 | `/reset-password` | public | desktop + mobile | required email, submit, success state, back link | `auth/login.spec.ts` | covered |
 | `/politica-privacidade` | public | desktop + mobile | heading and policy content render without auth | `auth/login.spec.ts` | covered |
@@ -107,8 +107,7 @@ Only the following are ignored, centrally and with evidence:
 
 1. Browser cancellation errors containing `net::ERR_ABORTED` during an intentional navigation.
 2. Next.js development HMR transport requests under `/_next/webpack-hmr`.
-3. Favicon misses (`/favicon.ico`) because they do not affect application behavior.
-4. `AuthSessionMissingError` / `Auth session missing` console messages, but only in the
+3. `AuthSessionMissingError` / `Auth session missing` console messages, but only in the
    `chromium-unauth` project: the `AuthProvider` hydrates `getUser()` on every
    unauthenticated page, where a missing session is the expected state rather than
    an application failure. Authenticated projects still fail on real auth errors.

@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useTranslations } from 'next-intl'
 import { Check, ChevronsUpDown, School } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useEscola } from '@/contexts/escola-context'
-import { useTranslations } from 'next-intl'
 
 interface EscolaSelectorProps {
   className?: string
@@ -38,7 +38,6 @@ interface EscolaSelectorProps {
  */
 export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
   const t = useTranslations('layout.schoolSelector')
-  const common = useTranslations('common.status')
   const [open, setOpen] = React.useState(false)
   const {
     escolas,
@@ -61,9 +60,9 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
         <Button
           variant="outline"
           disabled
-          className="w-full justify-between rounded-[10px] px-3 py-2 h-10"
+          className="app-school-selector w-full"
         >
-          <span className="text-sm text-gray-400">{common('loading')}</span>
+          <span>{t('select')}</span>
         </Button>
       </div>
     )
@@ -78,17 +77,16 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
             variant="ghost"
             size="sm"
             className={cn(
-              'w-10 h-10 p-0 justify-center rounded-[10px]',
-              selectedEscola
-                ? 'text-green-600 bg-green-50 hover:bg-green-100'
-                : 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100'
+              'app-school-selector app-school-selector--collapsed',
+              !selectedEscola && 'app-school-selector--empty'
             )}
             title={selectedEscola?.nome || t('select')}
+            aria-label={selectedEscola?.nome || t('select')}
           >
-            <School className="h-5 w-5" />
+            <School aria-hidden="true" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[280px] p-0" align="start" side="right">
+        <PopoverContent className="app-school-popover w-[280px] p-0" align="start" side="right">
           <Command>
             <CommandInput placeholder={t('search')} />
             <CommandList>
@@ -132,27 +130,22 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'w-full justify-between rounded-[10px] px-3 py-2 h-10 text-left font-normal',
-            !selectedEscola && 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100',
+            'app-school-selector w-full',
+            !selectedEscola && 'app-school-selector--empty',
             className
           )}
+          aria-label={selectedEscola?.nome || t('select')}
         >
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <School className={cn(
-              'h-4 w-4 flex-shrink-0',
-              selectedEscola ? 'text-green-600' : 'text-yellow-600'
-            )} />
-            <span className={cn(
-              'truncate text-sm',
-              selectedEscola ? 'text-gray-700' : 'text-yellow-700'
-            )}>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <School className="shrink-0" aria-hidden="true" />
+            <span className="truncate">
               {selectedEscola?.nome || t('select')}
             </span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 shrink-0 opacity-60" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent className="app-school-popover w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder={t('search')} />
           <CommandList>

@@ -3,372 +3,126 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { MunicipalBrasao } from '@/components/identity/municipal-assets'
-import { useAuth } from '@/hooks/use-auth'
-import { EscolaSelector } from '@/components/layout/escola-selector'
-import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
-import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
+import { useTranslations } from 'next-intl'
 import {
-  GraduationCap,
-  Users,
-  School,
-  UserCheck,
-  ClipboardList,
-  BarChart3,
-  Settings,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  Home,
-  FileText,
-  User,
-  BookOpen,
-  CheckSquare,
-  BookText,
-  FolderOpen,
-  UserCog,
-  type LucideIcon
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
-import type { NavigationGroupMessageKey, NavigationItemMessageKey } from '@/i18n/message-keys'
-
-/**
- * Sidebar Component - EDUCA Design System
- *
- * Updated to match EDUCA mockups with:
- * - Green active states (bg-green-50, text-green-600)
- * - 10px border-radius on nav items
- * - 0.7rem uppercase section titles
- * - Hierarchical navigation with collapsible groups
- * - Lexend font for header title
- *
- * Responsive behavior (LAY-05):
- * - Desktop (1024+): Full sidebar visible (260px width)
- * - Mobile and tablet (<1024): Sidebar hidden, drawer and MobileNav used instead
- */
+import { EscolaSelector } from '@/components/layout/escola-selector'
+import {
+  appNavigationGroups,
+  getActiveNavigationItemId,
+  getNavigationForRole,
+  isNavigationItemActive,
+} from '@/components/layout/navigation'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { useAuth } from '@/hooks/use-auth'
+import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   className?: string
 }
 
-interface NavigationItem {
-  label: NavigationItemMessageKey
-  href: string
-  icon: LucideIcon
-  roles: string[]
-}
-
-interface NavigationGroup {
-  id: string
-  label: NavigationGroupMessageKey
-  icon: LucideIcon
-  items: NavigationItem[]
-  defaultOpen?: boolean
-}
-
-// Organized navigation with groups (Notion-style)
-const navigationGroups: NavigationGroup[] = [
-  {
-    id: 'main',
-    label: 'groups.main',
-    icon: Home,
-    defaultOpen: true,
-    items: [
-      {
-        label: 'items.dashboard',
-        href: '/dashboard',
-        icon: Home,
-        roles: ['admin', 'diretor', 'secretario', 'professor'],
-      },
-    ],
-  },
-  {
-    id: 'registrations',
-    label: 'groups.registrations',
-    icon: FolderOpen,
-    defaultOpen: true,
-    items: [
-      {
-        label: 'items.students',
-        href: '/dashboard/alunos',
-        icon: Users,
-        roles: ['admin', 'diretor', 'secretario'],
-      },
-      {
-        label: 'items.users',
-        href: '/dashboard/usuarios',
-        icon: User,
-        roles: ['admin', 'secretario'],
-      },
-      {
-        label: 'items.schools',
-        href: '/dashboard/escolas',
-        icon: School,
-        roles: ['admin', 'secretario'],
-      },
-      {
-        label: 'items.classes',
-        href: '/dashboard/turmas',
-        icon: BookOpen,
-        roles: ['admin', 'diretor', 'secretario'],
-      },
-      {
-        label: 'items.enrolments',
-        href: '/dashboard/matriculas',
-        icon: UserCheck,
-        roles: ['admin', 'diretor', 'secretario'],
-      },
-      {
-        label: 'items.assignments',
-        href: '/dashboard/atribuicoes',
-        icon: UserCog,
-        roles: ['admin', 'diretor'],
-      },
-      {
-        label: 'items.guardians',
-        href: '/dashboard/responsaveis',
-        icon: Users,
-        roles: ['admin', 'diretor', 'secretario'],
-      },
-    ],
-  },
-  {
-    id: 'academic',
-    label: 'groups.academic',
-    icon: GraduationCap,
-    defaultOpen: true,
-    items: [
-      {
-        label: 'items.attendance',
-        href: '/dashboard/turmas',
-        icon: CheckSquare,
-        roles: ['admin', 'diretor', 'secretario', 'professor'],
-      },
-      {
-        label: 'items.classDiary',
-        href: '/diario',
-        icon: BookText,
-        roles: ['admin', 'diretor', 'secretario', 'professor'],
-      },
-      {
-        label: 'items.grades',
-        href: '/dashboard/notas',
-        icon: ClipboardList,
-        roles: ['admin', 'diretor', 'secretario', 'professor'],
-      },
-    ],
-  },
-  {
-    id: 'management',
-    label: 'groups.management',
-    icon: BarChart3,
-    defaultOpen: false,
-    items: [
-      {
-        label: 'items.reports',
-        href: '/dashboard/relatorios',
-        icon: FileText,
-        roles: ['admin', 'diretor', 'secretario'],
-      },
-      {
-        label: 'items.settings',
-        href: '/dashboard/configuracoes',
-        icon: Settings,
-        roles: ['admin', 'diretor'],
-      },
-    ],
-  },
-]
-
-// Filter navigation groups based on user role
-function getNavigationForRole(userRole: string): NavigationGroup[] {
-  return navigationGroups
-    .map(group => ({
-      ...group,
-      items: group.items.filter(item =>
-        item.roles.includes(userRole) &&
-        (!isPilotModeEnabled() ||
-          !isPilotDisabledPath(item.href) ||
-          isDemoSandboxPilotPathAllowed(item.href))
-      ),
-    }))
-    .filter(group => group.items.length > 0)
-}
-
 export function Sidebar({ className }: SidebarProps) {
   const t = useTranslations('layout.navigation')
-  const brand = useTranslations('common.brand')
+  const common = useTranslations('common')
   const [collapsed, setCollapsed] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const pathname = usePathname()
   const { userProfile } = useAuth()
-
-  // Get navigation groups based on user role
-  const navigationGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
+  const visibleGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
+  const activeItemId = getActiveNavigationItemId(pathname, visibleGroups)
 
   const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupName]: !prev[groupName]
+    setExpandedGroups(current => ({
+      ...current,
+      [groupName]: !(current[groupName] ?? appNavigationGroups.find(group => group.id === groupName)?.defaultOpen),
     }))
   }
 
-  // Check if any item in a group is active
-  const isGroupActive = (group: NavigationGroup) => {
-    return group.items.some(item =>
-      pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
-    )
-  }
-
   return (
-    <div className={cn(
-      // Base styles
-      "relative flex-col bg-white border-r border-gray-200 sidebar-transition",
-      // Width based on collapsed state
-      collapsed ? "w-16" : "w-[260px]",
-      // Responsive: hidden below the desktop layout breakpoint
-      "hidden lg:flex",
-      className
-    )}>
-      {/* Sidebar Header - EDUCA styled */}
-      <div className="flex items-center justify-between px-6 h-[73px] border-b border-gray-100">
-        {collapsed ? (
-          /* Collapsed state - show only small icon */
-          <div className="flex items-center justify-center w-full">
-            <MunicipalBrasao size="sm" />
-          </div>
-        ) : (
-          /* Expanded state - show full EDUCA identity */
-          <div className="flex items-center space-x-3 sidebar-transition">
-            {/* Municipal Brasão */}
-            <div className="flex-shrink-0">
-              <MunicipalBrasao size="sm" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-green-600 font-display">{brand('schoolSystem')}</h2>
-              <p className="text-xs text-gray-500">{brand('municipalEducationDepartment')}</p>
-            </div>
-          </div>
-        )}
-
+    <aside
+      className={cn('app-sidebar', collapsed && 'app-sidebar--collapsed', className)}
+      aria-label={t('desktopAriaLabel')}
+    >
+      <div className="app-sidebar__brand">
+        <Link href="/dashboard" className="app-wordmark">
+          <span className="app-wordmark__mark" aria-hidden="true">E</span>
+          {!collapsed && (
+            <span className="app-wordmark__copy">
+              <strong>EDUCA</strong>
+              <small>{common('brand.schoolSystem')}</small>
+            </span>
+          )}
+        </Link>
       </div>
 
-      {/* Escola Selector - for admin users */}
-      <div className="px-3 py-2 border-b border-gray-100">
+      <div className="app-sidebar__school">
         <EscolaSelector collapsed={collapsed} />
       </div>
 
-      {/* Collapse/Expand button - EDUCA styled (rounded, subtle) */}
-      <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? t('expand') : t('collapse')}
-          className="h-10 w-10 p-0 rounded-full border border-gray-200 bg-white text-green-900 shadow-sm transition-colors duration-200 hover:border-green-200 hover:bg-green-50 hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
-        >
-          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-        </Button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setCollapsed(current => !current)}
+        aria-label={collapsed ? t('expand') : t('collapse')}
+        className="app-sidebar__collapse"
+      >
+        {collapsed ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
+      </button>
 
-      {/* Navigation with Groups - EDUCA styled */}
-      <ScrollArea className="flex-1 py-4">
-        <nav className="space-y-6 px-3">
-          {navigationGroups.map((group) => {
+      <ScrollArea className="min-h-0 flex-1">
+        <nav className="app-sidebar__nav">
+          {visibleGroups.map(group => {
             const isExpanded = expandedGroups[group.id] ?? group.defaultOpen
-            const groupActive = isGroupActive(group)
+            const groupIsActive = group.items.some(item => isNavigationItemActive(pathname, item))
 
-            // If sidebar is collapsed, just show icons for first item of each group
-            if (collapsed) {
-              return (
-                <div key={group.id} className="space-y-1">
-                  {group.items.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
-                    return (
-                      <Link key={item.href} href={item.href} aria-current={isActive ? 'page' : undefined}>
-                        <Button
-                          variant="ghost"
-                          className={cn(
-                            "w-full justify-center h-10 px-2 sidebar-transition rounded-[10px]",
-                            isActive
-                              ? "bg-green-50 text-green-600 hover:bg-green-100"
-                              : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                          )}
-                          title={t(item.label)}
-                        >
-                          <item.icon className="h-5 w-5" />
-                        </Button>
-                      </Link>
-                    )
-                  })}
-                </div>
-              )
-            }
-
-            // Expanded sidebar with collapsible groups
             return (
-              <div key={group.id} className="space-y-2">
-                {/* Group Section Title - EDUCA mockup style: 0.7rem, uppercase, tracking-wide */}
-                {group.items.length > 1 ? (
+              <section className="app-nav-group" key={group.id} aria-label={t(`groups.${group.labelKey}`)}>
+                {collapsed ? null : (
                   <button
+                    type="button"
                     onClick={() => toggleGroup(group.id)}
-                    className={cn(
-                      "w-full flex items-center justify-between px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.5px] rounded-lg transition-colors",
-                      groupActive
-                        ? "text-green-600"
-                        : "text-gray-400 hover:text-gray-600"
-                    )}
+                    className={cn('app-nav-group__trigger', groupIsActive && 'is-active')}
+                    aria-expanded={isExpanded}
+                    aria-controls={`nav-group-${group.id}`}
                   >
-                    <span className="flex items-center gap-2">
-                      <group.icon className="h-3.5 w-3.5" />
-                      {t(group.label)}
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3.5 w-3.5 transition-transform duration-200",
-                        isExpanded ? "rotate-0" : "-rotate-90"
-                      )}
-                    />
+                    <span>{t(`groups.${group.labelKey}`)}</span>
+                    <ChevronDown aria-hidden="true" className={cn(!isExpanded && '-rotate-90')} />
                   </button>
-                ) : null}
+                )}
 
-                {/* Group Items - EDUCA mockup style */}
                 <div
-                  className={cn(
-                    "space-y-1 overflow-hidden transition-all duration-200",
-                    group.items.length > 1 && !isExpanded ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
-                  )}
+                  id={`nav-group-${group.id}`}
+                  className={cn('app-nav-group__items', !collapsed && !isExpanded && 'is-collapsed')}
                 >
-                  {group.items.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+                  {group.items.map(item => {
+                    const active = activeItemId === item.id
+                    const Icon = item.icon
+
                     return (
-                      <Link key={item.href} href={item.href} aria-current={isActive ? 'page' : undefined}>
-                        {/* A single active marker keeps route orientation without another badge or panel. */}
-                        <div
-                          className={cn(
-                            "group relative flex items-center gap-3 rounded-[10px] px-3 py-3 pl-5 text-[0.9rem] font-medium cursor-pointer transition-colors duration-200",
-                            "before:absolute before:left-2 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-full before:transition-colors",
-                            isActive ? "before:bg-green-600" : "before:bg-transparent group-hover:before:bg-green-200",
-                            isActive
-                              ? "bg-green-50 text-green-600"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
-                          <span className="sidebar-transition">{t(item.label)}</span>
-                        </div>
+                      <Link
+                        key={`${group.id}-${item.id}`}
+                        href={item.href}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn('app-nav-link', active && 'is-active')}
+                        title={collapsed ? t(`items.${item.labelKey}`) : undefined}
+                      >
+                        <Icon aria-hidden="true" />
+                        {collapsed ? <span className="sr-only">{t(`items.${item.labelKey}`)}</span> : <span>{t(`items.${item.labelKey}`)}</span>}
                       </Link>
                     )
                   })}
                 </div>
-              </div>
+              </section>
             )
           })}
         </nav>
       </ScrollArea>
-    </div>
+
+      {collapsed ? null : (
+        <p className="app-sidebar__footnote">{t('authenticatedEnvironment')}</p>
+      )}
+    </aside>
   )
 }

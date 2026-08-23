@@ -1,120 +1,110 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { AlertCircle, TrendingUp, Info, CheckCircle, AlertTriangle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Info,
+  RefreshCw,
+  TrendingUp,
+} from 'lucide-react'
 import type { DashboardAlert } from '@/app/api/dashboard/alerts/route'
 
 const alertConfig = {
-  warning: {
-    icon: AlertCircle,
-    containerClass: 'bg-jardim-yellow-100 border-jardim-yellow-300',
-    iconClass: 'bg-jardim-yellow-400',
-  },
-  error: {
-    icon: AlertTriangle,
-    containerClass: 'bg-red-50 border-red-200',
-    iconClass: 'bg-red-500',
-  },
-  info: {
-    icon: Info,
-    containerClass: 'bg-jardim-blue-50 border-jardim-blue-100',
-    iconClass: 'bg-jardim-blue-500',
-  },
-  success: {
-    icon: TrendingUp,
-    containerClass: 'bg-jardim-green-50 border-jardim-green-100',
-    iconClass: 'bg-jardim-green-500',
-  },
-}
+  warning: { icon: AlertCircle, tone: 'warning' },
+  error: { icon: AlertTriangle, tone: 'error' },
+  info: { icon: Info, tone: 'info' },
+  success: { icon: TrendingUp, tone: 'success' },
+} as const
 
 export function AlertasCard() {
-  const t = useTranslations('platform')
+  const t = useTranslations('platform.dashboard')
   const [alerts, setAlerts] = useState<DashboardAlert[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        const res = await fetch('/api/dashboard/alerts')
-        if (res.ok) {
-          const data = await res.json()
-          setAlerts(data.alerts || [])
-        }
-      } catch {
-        // Silently fail
-      } finally {
-        setLoading(false)
-      }
+  const fetchAlerts = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+
+    try {
+      const response = await fetch('/api/dashboard/alerts')
+      if (!response.ok) throw new Error(`Dashboard alerts returned ${response.status}`)
+      const data = await response.json()
+      setAlerts(data.alerts || [])
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
     }
-    fetchAlerts()
   }, [])
 
-  if (loading) {
-    return (
-      <Card className="bg-white rounded-card border border-gray-200 shadow-card">
-        <CardHeader className="border-b border-gray-100 px-6 py-5">
-          <CardTitle className="font-display font-semibold text-gray-800">{t('dashboard.alerts')}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-          ))}
-        </CardContent>
-      </Card>
-    )
-  }
+  useEffect(() => {
+    void fetchAlerts()
+  }, [fetchAlerts])
 
   return (
-    <Card className="bg-white rounded-card border border-gray-200 shadow-card">
-      <CardHeader className="border-b border-gray-100 px-6 py-5">
-        <CardTitle className="font-display font-semibold text-gray-800">{t('dashboard.alerts')}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6 space-y-3">
-        {alerts.length === 0 ? (
-          <div className="flex items-start gap-3 p-3 bg-jardim-green-50 border border-jardim-green-100 rounded-xl">
-            <div className="w-8 h-8 bg-jardim-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-800">
-                <strong>{t('dashboard.allGood')}</strong> {t('dashboard.noAlerts')}
-              </p>
-            </div>
+    <section className="app-panel app-alerts" aria-labelledby="alerts-title">
+      <header className="app-panel__header">
+        <div>
+          <h2 id="alerts-title">{t('alertsTitle')}</h2>
+          <p>{t('alertsSubtitle')}</p>
+        </div>
+        {!loading && !loadError && alerts.length > 0 ? (
+          <span className="app-alerts__count">{alerts.length > 9 ? '9+' : alerts.length}</span>
+        ) : null}
+      </header>
+
+      {loading ? (
+        <div className="app-alerts__loading" aria-busy="true" aria-label={t('alertsLoading')}>
+          {[0, 1, 2].map(item => <div key={item} className="app-skeleton h-[4.5rem]" />)}
+        </div>
+      ) : loadError ? (
+        <div className="app-alerts__state" role="alert">
+          <AlertTriangle aria-hidden="true" />
+          <div>
+            <strong>{t('alertsUnavailable')}</strong>
+            <p>{t('alertsLoadError')}</p>
+            <button type="button" onClick={() => void fetchAlerts()}>
+              <RefreshCw aria-hidden="true" /> {t('retry')}
+            </button>
           </div>
-        ) : (
-          alerts.slice(0, 4).map((alert) => {
+        </div>
+      ) : alerts.length === 0 ? (
+        <div className="app-alerts__state app-alerts__state--success" role="status">
+          <CheckCircle2 aria-hidden="true" />
+          <div>
+            <strong>{t('noAlerts')}</strong>
+            <p>{t('noAlertsDescription')}</p>
+          </div>
+        </div>
+      ) : (
+        <ul className="app-alert-list">
+          {alerts.slice(0, 4).map(alert => {
             const config = alertConfig[alert.type]
             const Icon = config.icon
+
             return (
-              <div
-                key={alert.id}
-                className={`flex items-start gap-3 p-3 border rounded-xl ${config.containerClass}`}
-              >
-                <div className={`w-8 h-8 ${config.iconClass} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-800">{alert.title}</p>
-                  <p className="text-sm text-gray-600">{alert.description}</p>
-                  {alert.action && (
-                    <Link
-                      href={alert.action.href}
-                      className="text-xs text-jardim-green-600 hover:underline mt-1 inline-block"
-                    >
-                      {alert.action.label} →
+              <li key={alert.id} className="app-alert-row" data-tone={config.tone}>
+                <span className="app-alert-row__icon"><Icon aria-hidden="true" /></span>
+                <span className="app-alert-row__copy">
+                  <strong>{alert.title}</strong>
+                  <small>{alert.description}</small>
+                  {alert.action ? (
+                    <Link href={alert.action.href}>
+                      {alert.action.label} <ArrowRight aria-hidden="true" />
                     </Link>
-                  )}
-                </div>
-              </div>
+                  ) : null}
+                </span>
+              </li>
             )
-          })
-        )}
-      </CardContent>
-    </Card>
+          })}
+        </ul>
+      )}
+    </section>
   )
 }

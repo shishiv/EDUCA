@@ -1,6 +1,7 @@
 {
   "dashboard": {
-    "loading": "Loading..."
+    "loading": "Loading overview",
+    "preparing": "Preparing your workspace..."
   },
   "authGuard": {
     "profileError": "Unable to load the user profile. Try signing in again."
@@ -54,7 +55,11 @@
     },
     "expand": "Expand sidebar",
     "collapse": "Collapse sidebar",
-    "closeSidebar": "Close sidebar"
+    "closeSidebar": "Close sidebar",
+    "desktopAriaLabel": "Main navigation",
+    "drawerTitle": "Main menu",
+    "authenticatedEnvironment": "Municipal network · authenticated environment",
+    "skipToContent": "Skip to main content"
   },
   "mobileHeader": {
     "openMenu": "Open menu",
@@ -69,7 +74,9 @@
       "unknown": "Unknown"
     },
     "signOut": "Sign out",
-    "offlineMessage": "Offline mode: Your changes will be synchronized when the connection is restored{pending, plural, =0 {} one { (# pending)} other { (# pending)}}"
+    "offlineMessage": "Offline mode: Your changes will be synchronized when the connection is restored{pending, plural, =0 {} one { (# pending)} other { (# pending)}}",
+    "userOptions": "User options",
+    "presentCount": "{present}/{total} present"
   },
   "demoSandbox": {
     "title": "Demonstration sandbox",

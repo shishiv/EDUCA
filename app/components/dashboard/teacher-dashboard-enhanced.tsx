@@ -1,13 +1,9 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { BookOpenCheck, CheckCircle2, Clock3, GraduationCap, Users } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { useLocale, useTranslations } from 'next-intl'
+import { AlertTriangle, ArrowRight, BookOpenCheck, CalendarDays, CheckCircle2, Clock3, GraduationCap, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
 import { logger } from '@/lib/logger'
@@ -30,55 +26,10 @@ interface TeacherClassSummary {
   sessaoHoje: TeacherClassSession | null
 }
 
-type TeacherDashboardMessageKey =
-  | 'dashboard.pendingCall'
-  | 'dashboard.openCall'
-  | 'dashboard.openedCall'
-  | 'dashboard.continueCall'
-  | 'dashboard.completedCall'
-  | 'dashboard.viewCall'
-  | 'dashboard.cancelledSession'
-  | 'dashboard.viewClass'
-
-/** Labels each teacher class by its real attendance session for the São Paulo day. */
-function getTeacherSessionStatus(
-  session: TeacherClassSession | null,
-  t: (key: TeacherDashboardMessageKey) => string
-) {
-  if (!session) {
-    return {
-      label: t('dashboard.pendingCall'),
-      variant: 'warning' as const,
-      actionLabel: t('dashboard.openCall'),
-    }
-  }
-
-  if (session.status === 'ABERTA') {
-    return {
-      label: t('dashboard.openedCall'),
-      variant: 'info' as const,
-      actionLabel: t('dashboard.continueCall'),
-    }
-  }
-
-  if (session.status === 'FECHADA') {
-    return {
-      label: t('dashboard.completedCall'),
-      variant: 'success' as const,
-      actionLabel: t('dashboard.viewCall'),
-    }
-  }
-
-  return {
-    label: t('dashboard.cancelledSession'),
-    variant: 'secondary' as const,
-    actionLabel: t('dashboard.viewClass'),
-  }
-}
-
 /** Shows a professor only the assigned classes, active enrollments, and today's calls. */
 export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhancedProps) {
-  const t = useTranslations('platform')
+  const t = useTranslations('platform.dashboard')
+  const locale = useLocale()
   const [turmas, setTurmas] = useState<TeacherClassSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -151,7 +102,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
           action: 'load_assigned_classes',
           metadata: { professorId },
         })
-        setError(t('dashboard.teacherLoadError'))
+        setError(t('teacherLoadError'))
       } finally {
         setLoading(false)
       }
@@ -162,106 +113,123 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {[0, 1, 2].map(index => (
-          <Card key={index} className="h-32 animate-pulse bg-muted" />
-        ))}
+      <div className="app-dashboard app-dashboard-skeleton" aria-busy="true" aria-label={t('teacherLoading')}>
+        <div className="app-skeleton h-20" />
+        <div className="grid grid-cols-3 gap-3">
+          {[0, 1, 2].map(index => <div key={index} className="app-skeleton h-28" />)}
+        </div>
+        <div className="app-skeleton h-72" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <Card className="border-destructive">
-        <CardContent className="py-6 text-sm text-destructive">{error}</CardContent>
-      </Card>
+      <section className="app-dashboard-error" role="alert">
+        <AlertTriangle aria-hidden="true" />
+        <div><h1>{t('teacherUnavailable')}</h1><p>{error}</p></div>
+      </section>
     )
   }
 
   const totalAlunos = turmas.reduce((total, turma) => total + turma.alunosAtivos, 0)
   const chamadasRegistradas = turmas.filter(turma => turma.sessaoHoje).length
+  const number = new Intl.NumberFormat(locale)
+  const now = new Date()
+  const formattedDate = new Intl.DateTimeFormat(locale, { weekday: 'long', day: '2-digit', month: 'long' }).format(now)
+
+  const getTeacherSessionStatus = (session: TeacherClassSession | null) => {
+    if (!session) return { label: t('pendingCall'), tone: 'warning' as const, actionLabel: t('openCall') }
+    if (session.status === 'ABERTA') return { label: t('openedCall'), tone: 'info' as const, actionLabel: t('continueCall') }
+    if (session.status === 'FECHADA') return { label: t('completedCall'), tone: 'success' as const, actionLabel: t('viewCall') }
+    return { label: t('cancelledSession'), tone: 'neutral' as const, actionLabel: t('viewClass') }
+  }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div className="border-b border-gray-200 pb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-          <GraduationCap className="h-7 w-7 text-green-700" />{t('dashboard.teacherPanel')}</h1>
-        <p className="mt-1 text-sm text-gray-600 sm:text-base">{t('dashboard.teacherSubtitle')}</p>
-      </div>
+    <div className="app-dashboard app-teacher-dashboard">
+      <header className="app-dashboard__intro">
+        <div>
+          <h1>{t('teacherPanel')}</h1>
+          <p>{t('teacherSubtitle')}</p>
+        </div>
+        <div className="app-dashboard__date">
+          <CalendarDays aria-hidden="true" />
+          <span>{t('today')}</span>
+          <time dateTime={now.toISOString().slice(0, 10)}>{formattedDate}</time>
+        </div>
+      </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t('dashboard.myClassesShort')}</CardDescription>
-            <CardTitle className="text-3xl">{turmas.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t('dashboard.activeStudents')}</CardDescription>
-            <CardTitle className="text-3xl">{totalAlunos}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t('dashboard.callsToday')}</CardDescription>
-            <CardTitle className="text-3xl">{chamadasRegistradas}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+      <section className="app-dashboard__overview" aria-labelledby="teacher-overview-title">
+        <div className="app-section-heading">
+          <div>
+            <h2 id="teacher-overview-title">{t('teacherTodayRoutine')}</h2>
+            <p>{t('teacherTodaySummary')}</p>
+          </div>
+        </div>
+        <div className="app-metric-grid app-metric-grid--three">
+          <article className="app-metric" data-tone="paper">
+            <div className="app-metric__label"><span>{t('myClassesShort')}</span><GraduationCap aria-hidden="true" /></div>
+            <strong className="text-3xl tabular-nums">{number.format(turmas.length)}</strong>
+            <small>{t('teacherAssignedCount', { count: turmas.length })}</small>
+          </article>
+          <article className="app-metric" data-tone="lime">
+            <div className="app-metric__label"><span>{t('activeStudents')}</span><Users aria-hidden="true" /></div>
+            <strong className="text-3xl tabular-nums">{number.format(totalAlunos)}</strong>
+            <small>{t('teacherCurrentClasses')}</small>
+          </article>
+          <article className="app-metric" data-tone="ink">
+            <div className="app-metric__label"><span>{t('callsToday')}</span><BookOpenCheck aria-hidden="true" /></div>
+            <strong className="text-3xl tabular-nums">{number.format(chamadasRegistradas)}</strong>
+            <small>{t('teacherCallsOfClasses', { calls: chamadasRegistradas, classes: turmas.length })}</small>
+          </article>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('dashboard.assignedClasses')}</CardTitle>
-          <CardDescription>{t('dashboard.openOrReview')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {turmas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('dashboard.noAssigned')}</p>
-          ) : (
-            turmas.map(turma => {
-              const session = getTeacherSessionStatus(turma.sessaoHoje, t)
+      <section className="app-panel" aria-labelledby="assigned-classes-title">
+        <header className="app-panel__header">
+          <div>
+            <h2 id="assigned-classes-title">{t('assignedClasses')}</h2>
+            <p>{t('openOrReview')}</p>
+          </div>
+          {turmas.length > 0 ? (
+            <span className="app-teacher-summary" data-complete={chamadasRegistradas === turmas.length}>
+              {chamadasRegistradas === turmas.length ? <CheckCircle2 aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
+              {chamadasRegistradas === turmas.length ? t('allCalls') : t('teacherPendingCount', { count: turmas.length - chamadasRegistradas })}
+            </span>
+          ) : null}
+        </header>
+
+        {turmas.length === 0 ? (
+          <div className="app-empty-state" role="status">
+            <GraduationCap aria-hidden="true" />
+            <div><strong>{t('noAssigned')}</strong><p>{t('teacherNoAssignedDescription')}</p></div>
+          </div>
+        ) : (
+          <ul className="app-teacher-class-list">
+            {turmas.map(turma => {
+              const session = getTeacherSessionStatus(turma.sessaoHoje)
               const chamadaHref = turma.sessaoHoje
                 ? `/dashboard/turmas/${turma.id}/chamada?sessao=${turma.sessaoHoje.id}`
                 : `/dashboard/turmas/${turma.id}/chamada`
 
               return (
-                <div
-                  key={turma.id}
-                  className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900">{turma.nome}</p>
-                    <p className="text-sm text-gray-600">{turma.serie} - {turma.turno}</p>
-                    <p className="mt-1 flex items-center gap-1 text-sm text-gray-600">
-                      <Users className="h-4 w-4" />
-                      {turma.alunosAtivos} {t('dashboard.studentsActiveCount')}
-                    </p>
+                <li key={turma.id}>
+                  <div className="app-teacher-class-row">
+                    <span className="app-teacher-class-row__copy">
+                      <strong>{turma.nome}</strong>
+                      <small>{turma.serie} · {turma.turno} · {t('teacherActiveStudentCount', { count: turma.alunosAtivos })}</small>
+                    </span>
+                    <span className="app-status-label" data-tone={session.tone}>{session.label}</span>
+                    <Link href={chamadaHref} className="app-row-action">
+                      <span>{session.actionLabel}</span><ArrowRight aria-hidden="true" />
+                    </Link>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={session.variant}>{session.label}</Badge>
-                    <Button asChild size="sm">
-                      <Link href={chamadaHref}>
-                        <BookOpenCheck className="mr-2 h-4 w-4" />
-                        {session.actionLabel}
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
+                </li>
               )
-            })
-          )}
-        </CardContent>
-      </Card>
-
-      {chamadasRegistradas < turmas.length && (
-        <p className="flex items-center gap-2 text-sm text-amber-700">
-          <Clock3 className="h-4 w-4" />{t('dashboard.missingCalls')}</p>
-      )}
-      {turmas.length > 0 && chamadasRegistradas === turmas.length && (
-        <p className="flex items-center gap-2 text-sm text-green-700">
-          <CheckCircle2 className="h-4 w-4" />{t('dashboard.allCalls')}</p>
-      )}
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }

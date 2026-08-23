@@ -10,11 +10,11 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
   return (
-    <header className={cn("flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-end sm:justify-between", className)}>
+    <header className={cn("app-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="min-w-0">
-        <h1 className="font-display text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">{title}</h1>
+        <h1>{title}</h1>
         {description && (
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">{description}</p>
+          <p>{description}</p>
         )}
       </div>
       {actions && (
