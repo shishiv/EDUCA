@@ -25,6 +25,7 @@ function writeStubs(opts: {
   volumes?: string[]
   networks?: string[]
   stopFails?: boolean
+  probeFails?: boolean
   neighborContainers?: string[]
   neighborProject?: string
 }) {
@@ -35,6 +36,7 @@ function writeStubs(opts: {
     volumes = [],
     networks = [],
     stopFails = false,
+    probeFails = false,
     neighborContainers = [],
     neighborProject = 'neighbor-project',
   } = opts
@@ -76,6 +78,7 @@ PROJ=$(get_project "$@")
 
 case "$1" in
   ps)
+    ${probeFails ? 'exit 1' : ':'}
     if [[ "$PROJ" == "${neighborProject}" ]]; then ${printNeighbor || ':'}; exit 0; fi
     if has_running_filter "$@"; then
       if [[ "$(cat "${stateFile}")" == "1" || "$(cat "${stateFile}")" == "2" ]]; then exit 0; fi
@@ -205,6 +208,15 @@ describe('pilot-supabase-cleanup hermetic tests', () => {
     expect(result.exitCode).not.toBe(0)
     expect(result.output).toContain('PILOT_SUPABASE_CLEANUP_STOP_FAILED')
     expect(result.callLog).not.toContain('rm -f')
+  })
+
+  it('fails closed when Docker resource discovery fails', () => {
+    writeStubs({ probeFails: true })
+
+    const result = runCleanup('/tmp/fake', 'proj-probe-failure')
+    expect(result.exitCode).not.toBe(0)
+    expect(result.output).toContain('PILOT_SUPABASE_CLEANUP_RUNNING_PROBE_FAILED')
+    expect(result.callLog).not.toContain('docker rm')
   })
 
   it('handles supabase stop returning nonzero and still cleans resources', () => {

@@ -14,6 +14,7 @@ pilot_supabase_stop_project() {
   local -a all_container_ids=()
   local -a volume_names=()
   local -a network_ids=()
+  local resource_output=''
 
   # Phase 1: CLI stop (best-effort)
   if pnpm exec supabase --workdir "$project_dir" stop --project-id "$project_id" --no-backup; then
@@ -24,10 +25,13 @@ pilot_supabase_stop_project() {
   fi
 
   # Phase 2: Collect ALL running containers for this project id
-  mapfile -t running_ids < <(docker ps -q --filter "label=com.supabase.cli.project=$project_id" --filter status=running 2>/dev/null) || {
+  if ! resource_output=$(docker ps -q --filter "label=com.supabase.cli.project=$project_id" --filter status=running 2>/dev/null); then
     echo "PILOT_SUPABASE_CLEANUP_RUNNING_PROBE_FAILED: project=$project_id" >&2
     return 1
-  }
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t running_ids <<< "$resource_output"
+  fi
 
   # Phase 3: Gracefully stop running containers (no -f)
   if [[ ${#running_ids[@]} -gt 0 ]]; then
@@ -39,20 +43,29 @@ pilot_supabase_stop_project() {
   fi
 
   # Phase 4: Collect ALL containers (stopped) for this project id
-  mapfile -t all_container_ids < <(docker ps -aq --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null) || {
+  if ! resource_output=$(docker ps -aq --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null); then
     echo "PILOT_SUPABASE_CLEANUP_CONTAINER_PROBE_FAILED: project=$project_id" >&2
     return 1
-  }
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t all_container_ids <<< "$resource_output"
+  fi
 
   # Phase 5: Collect volumes and networks
-  mapfile -t volume_names < <(docker volume ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null) || {
+  if ! resource_output=$(docker volume ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null); then
     echo "PILOT_SUPABASE_CLEANUP_VOLUME_PROBE_FAILED: project=$project_id" >&2
     return 1
-  }
-  mapfile -t network_ids < <(docker network ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null) || {
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t volume_names <<< "$resource_output"
+  fi
+  if ! resource_output=$(docker network ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null); then
     echo "PILOT_SUPABASE_CLEANUP_NETWORK_PROBE_FAILED: project=$project_id" >&2
     return 1
-  }
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t network_ids <<< "$resource_output"
+  fi
 
   # Phase 6: Nothing to remove — early success
   if [[ ${#all_container_ids[@]} -eq 0 && ${#volume_names[@]} -eq 0 && ${#network_ids[@]} -eq 0 ]]; then
@@ -88,9 +101,27 @@ pilot_supabase_stop_project() {
   local -a remaining_containers=()
   local -a remaining_volumes=()
   local -a remaining_networks=()
-  mapfile -t remaining_containers < <(docker ps -aq --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null)
-  mapfile -t remaining_volumes < <(docker volume ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null)
-  mapfile -t remaining_networks < <(docker network ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null)
+  if ! resource_output=$(docker ps -aq --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null); then
+    echo "PILOT_SUPABASE_CLEANUP_FINAL_CONTAINER_PROBE_FAILED: project=$project_id" >&2
+    return 1
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t remaining_containers <<< "$resource_output"
+  fi
+  if ! resource_output=$(docker volume ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null); then
+    echo "PILOT_SUPABASE_CLEANUP_FINAL_VOLUME_PROBE_FAILED: project=$project_id" >&2
+    return 1
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t remaining_volumes <<< "$resource_output"
+  fi
+  if ! resource_output=$(docker network ls -q --filter "label=com.supabase.cli.project=$project_id" 2>/dev/null); then
+    echo "PILOT_SUPABASE_CLEANUP_FINAL_NETWORK_PROBE_FAILED: project=$project_id" >&2
+    return 1
+  fi
+  if [[ -n "$resource_output" ]]; then
+    mapfile -t remaining_networks <<< "$resource_output"
+  fi
 
   if [[ ${#remaining_containers[@]} -gt 0 ]]; then
     echo "PILOT_SUPABASE_CLEANUP_CONTAINERS_REMAIN: project=$project_id count=${#remaining_containers[@]}" >&2
