@@ -120,7 +120,6 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
 | `DEMO.md` | Demo sandbox runbook, local reset command, environment contract and safety boundaries. |
 | `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |
-| `docker-compose.yml` | Optional bare local PostgreSQL development service. |
 
 ## Demo sandbox (issue #23)
 
