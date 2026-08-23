@@ -10,7 +10,7 @@
 # It never uses sudo, never connects to remote endpoints, and cleans up
 # only the resources it started.
 
-set -uo pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -156,10 +156,11 @@ fi
 
 write_local_env() {
   local status_env
-  status_env=$(run_supabase status -o env 2>/dev/null) || {
+  status_env=$(run_supabase status -o env 2>/dev/null)
+  if [[ -z "$status_env" ]]; then
     echo "ERROR: Could not read Supabase status." >&2
-    exit 1
-  }
+    return 1
+  fi
 
   local api_url anon_key service_role_key
 
@@ -178,15 +179,15 @@ write_local_env() {
   # Require all three
   if [[ -z "$api_url" ]]; then
     echo "ERROR: API_URL not found in Supabase status output." >&2
-    exit 1
+    return 1
   fi
   if [[ -z "$anon_key" ]]; then
     echo "ERROR: PUBLISHABLE_KEY/ANON_KEY not found in Supabase status output." >&2
-    exit 1
+    return 1
   fi
   if [[ -z "$service_role_key" ]]; then
     echo "ERROR: SECRET_KEY/SERVICE_ROLE_KEY not found in Supabase status output." >&2
-    exit 1
+    return 1
   fi
 
   local env_file="$APP_DIR/.env.local"
@@ -235,8 +236,10 @@ cd "$APP_DIR" || exit 1
 portless run pnpm dev &
 NEXT_PID=$!
 
-# Wait for child and propagate its exit code
+# Wait for child: disable -e to capture exit code, then propagate
+set +e
 wait "$NEXT_PID"
 NEXT_EXIT=$?
+set -e
 NEXT_PID=""
 exit "$NEXT_EXIT"

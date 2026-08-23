@@ -279,6 +279,93 @@ else
   fail "should fail when portless proxy is down (got: $proxy_output)"
 fi
 
+
+# --- Failure mode tests ---
+echo ""
+echo "Failure modes:"
+
+# TEST: db push --local failure aborts, portless never starts, supabase stop runs
+# Create a pnpm stub that fails on db push
+cat > "$STUB_DIR/pnpm_fail_push" << 'PNPM_FAIL'
+#!/usr/bin/env bash
+echo "pnpm $*" >> "${STUB_LOG:-/dev/null}"
+if [[ "$*" == *"supabase"*"status -o env"* ]]; then
+  echo "API_URL=http://127.0.0.1:54321"
+  echo "PUBLISHABLE_KEY=eyJ_stub_publishable"
+  echo "SECRET_KEY=eyJ_stub_secret"
+  exit 0
+fi
+if [[ "$*" == *"supabase"*"status"* ]]; then exit 1; fi
+if [[ "$*" == *"supabase"*"start"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"db push --local"* ]]; then
+  echo "ERROR: migration failed" >&2
+  exit 1
+fi
+if [[ "$*" == *"supabase"*"stop"* ]]; then
+  echo "pnpm_stop_called" >> "${STUB_LOG:-/dev/null}"
+  exit 0
+fi
+if [[ "$*" == *"dev"* ]]; then sleep 0.05; exit 0; fi
+exit 0
+PNPM_FAIL
+chmod +x "$STUB_DIR/pnpm_fail_push"
+true > "$STUB_LOG"
+cp "$STUB_DIR/pnpm_fail_push" "$STUB_DIR/pnpm"
+push_rc=0
+PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED" >/dev/null 2>&1 || push_rc=$?
+if [[ "$push_rc" != "0" ]]; then
+  pass "db push failure: exits non-zero"
+else
+  fail "db push failure: should exit non-zero (got rc=$push_rc)"
+fi
+if grep -q "pnpm_stop_called" "$STUB_LOG"; then
+  pass "db push failure: supabase stop called (cleanup)"
+else
+  fail "db push failure: supabase stop NOT called"
+fi
+if grep -q "portless run" "$STUB_LOG"; then
+  fail "db push failure: portless should NOT have started"
+else
+  pass "db push failure: portless was not started"
+fi
+
+# TEST: supabase start failure aborts immediately, no further steps
+cat > "$STUB_DIR/pnpm_fail_start" << 'PNPM_FSTART'
+#!/usr/bin/env bash
+echo "pnpm $*" >> "${STUB_LOG:-/dev/null}"
+if [[ "$*" == *"supabase"*"status -o env"* ]]; then exit 1; fi
+if [[ "$*" == *"supabase"*"status"* ]]; then exit 1; fi
+if [[ "$*" == *"supabase"*"start"* ]]; then
+  echo "ERROR: start failed" >&2
+  exit 1
+fi
+if [[ "$*" == *"supabase"*"stop"* ]]; then
+  echo "pnpm_stop_called" >> "${STUB_LOG:-/dev/null}"
+  exit 0
+fi
+exit 0
+PNPM_FSTART
+chmod +x "$STUB_DIR/pnpm_fail_start"
+true > "$STUB_LOG"
+cp "$STUB_DIR/pnpm_fail_start" "$STUB_DIR/pnpm"
+start_rc=0
+PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED" >/dev/null 2>&1 || start_rc=$?
+if [[ "$start_rc" != "0" ]]; then
+  pass "start failure: exits non-zero"
+else
+  fail "start failure: should exit non-zero (got rc=$start_rc)"
+fi
+if grep -q "supabase.*db push" "$STUB_LOG"; then
+  fail "start failure: db push should NOT run after start fails"
+else
+  pass "start failure: no db push after start fails"
+fi
+if grep -q "portless run" "$STUB_LOG"; then
+  fail "start failure: portless should NOT run"
+else
+  pass "start failure: portless was not started"
+fi
+
 # --- Static analysis ---
 echo ""
 echo "Static analysis:"
@@ -336,6 +423,13 @@ if grep -q "portless doctor" "$SCRIPT"; then
   pass "checks proxy via doctor, does not attempt to start it"
 else
   fail "proxy handling incorrect"
+fi
+
+
+if head -15 "$SCRIPT" | grep -q 'set -euo pipefail'; then
+  pass "uses set -euo pipefail"
+else
+  fail "missing set -euo pipefail"
 fi
 
 # --- Summary ---
