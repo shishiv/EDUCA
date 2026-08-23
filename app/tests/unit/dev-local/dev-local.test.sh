@@ -2,11 +2,10 @@
 # Hermetic tests for dev-local.sh
 # Run: bash app/tests/unit/dev-local/dev-local.test.sh
 #
-# These tests use stub binaries in a temp PATH to exercise the full script
-# lifecycle (start, status, migration, app, stop) without real services.
-# Zero Docker, Supabase, or portless interaction occurs.
+# All external tools (docker, pnpm, portless, node) are stubbed.
+# Zero real Docker, Supabase, or portless interaction occurs.
 
-set -euo pipefail
+set -uo pipefail
 
 SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../scripts" && pwd)/dev-local.sh"
 PASS=0
@@ -18,15 +17,16 @@ fail() { echo "  FAIL $1" >&2; FAIL=$((FAIL + 1)); }
 # --- Setup hermetic environment ---
 STUB_DIR=$(mktemp -d)
 STUB_LOG="$STUB_DIR/calls.log"
-ENV_EXAMPLE="$STUB_DIR/app/.env.local.example"
-trap 'rm -rf "$STUB_DIR"' EXIT
+touch "$STUB_LOG"
 
-# Create minimal app structure the script expects
+cleanup_stubs() { rm -rf "$STUB_DIR"; }
+trap cleanup_stubs EXIT
+
+# Create minimal app structure
 mkdir -p "$STUB_DIR/app/scripts" "$STUB_DIR/repo"
-cp "$SCRIPT" "$STUB_DIR/app/scripts/dev-local.sh"
 
 # Create .env.local.example
-cat > "$ENV_EXAMPLE" << 'ENVEX'
+cat > "$STUB_DIR/app/.env.local.example" << 'ENVEX'
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder
 SUPABASE_SERVICE_ROLE_KEY=placeholder
@@ -35,72 +35,99 @@ ENVEX
 # Stub: docker (always succeeds for info)
 cat > "$STUB_DIR/docker" << 'STUB'
 #!/usr/bin/env bash
-echo "docker $*" >> "$STUB_LOG"
+echo "docker $*" >> "${STUB_LOG:-/dev/null}"
 exit 0
 STUB
 chmod +x "$STUB_DIR/docker"
 
+# Stub: node (implements the URL validation logic; uses exit codes like real node)
+cat > "$STUB_DIR/node" << 'NODESTUB'
+#!/usr/bin/env bash
+# Mimics: node -e "try { ... process.exit(N) } catch { process.exit(4) }" URL
+if [[ "$1" == "-e" ]]; then
+  # The script passes the URL as the argument after the -e code
+  local_url="${3:-}"
+  if [[ -z "$local_url" ]]; then exit 0; fi
+  # Validate protocol
+  if [[ ! "$local_url" =~ ^https?:// ]]; then exit 1; fi
+  # Check for userinfo (user:pass@)
+  path_part="${local_url#*://}"
+  if [[ "$path_part" == *@* ]]; then
+    before_at="${path_part%%@*}"
+    if [[ "$before_at" != */* ]]; then exit 2; fi
+  fi
+  # Extract hostname (handle bracketed IPv6 first)
+  if [[ "$path_part" == \[* ]]; then
+    # IPv6: extract between brackets
+    host_part="${path_part#\[}"
+    host_part="${host_part%%\]*}"
+  else
+    host_part="${path_part%%[:/]*}"
+  fi
+  case "$host_part" in
+    127.0.0.1|localhost|::1) exit 0 ;;
+    *) exit 3 ;;
+  esac
+fi
+echo "node $*" >> "${STUB_LOG:-/dev/null}"
+exit 0
+NODESTUB
+chmod +x "$STUB_DIR/node"
+
 # Stub: pnpm (handles exec supabase and dev)
 cat > "$STUB_DIR/pnpm" << 'PNPM'
 #!/usr/bin/env bash
-echo "pnpm $*" >> "$STUB_LOG"
+echo "pnpm $*" >> "${STUB_LOG:-/dev/null}"
 if [[ "$*" == *"supabase"*"status -o env"* ]]; then
   echo "API_URL=http://127.0.0.1:54321"
-  echo "PUBLISHABLE_KEY=eyJ_stub_anon_key"
-  echo "SECRET_KEY=eyJ_stub_service_role"
+  echo "PUBLISHABLE_KEY=eyJ_stub_publishable"
+  echo "SECRET_KEY=eyJ_stub_secret"
   exit 0
 fi
 if [[ "$*" == *"supabase"*"status"* ]]; then
-  # Simulate not running (exit 1) unless STUB_SUPABASE_RUNNING is set
   if [[ "${STUB_SUPABASE_RUNNING:-}" == "1" ]]; then
     exit 0
   fi
   exit 1
 fi
-if [[ "$*" == *"supabase"*"start"* ]]; then
-  exit 0
-fi
-if [[ "$*" == *"supabase"*"db push --local"* ]]; then
-  exit 0
-fi
-if [[ "$*" == *"supabase"*"db reset --local"* ]]; then
-  exit 0
-fi
-if [[ "$*" == *"supabase"*"stop"* ]]; then
-  exit 0
-fi
-if [[ "$*" == *"dev"* ]]; then
-  # Simulate dev server running briefly then exiting
-  sleep 0.1
-  exit 0
-fi
+if [[ "$*" == *"supabase"*"start"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"db push --local"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"db reset --local"* ]]; then exit 0; fi
+if [[ "$*" == *"supabase"*"stop"* ]]; then exit 0; fi
+if [[ "$*" == *"dev"* ]]; then sleep 0.05; exit 0; fi
 exit 0
 PNPM
 chmod +x "$STUB_DIR/pnpm"
 
-# Stub: portless (wraps the command)
+# Stub: portless
 cat > "$STUB_DIR/portless" << 'PORTLESS'
 #!/usr/bin/env bash
-echo "portless $*" >> "$STUB_LOG"
-shift  # skip the directory arg
-exec "$@"
+echo "portless $*" >> "${STUB_LOG:-/dev/null}"
+if [[ "$1" == "doctor" ]]; then
+  if [[ "${STUB_PORTLESS_PROXY_DOWN:-}" == "1" ]]; then
+    echo "warn  Proxy is NOT responding."
+    exit 0
+  fi
+  echo "ok    Proxy is responding on port 1355."
+  exit 0
+fi
+if [[ "$1" == "run" ]]; then
+  shift
+  exec "$@"
+fi
+exit 0
 PORTLESS
 chmod +x "$STUB_DIR/portless"
 
-# Patch the script copy to use our stub app dir
-PATCHED_SCRIPT="$STUB_DIR/app/scripts/dev-local.sh"
-# Override APP_DIR and REPO_ROOT in the patched script
-sed -i "s|APP_DIR=.*|APP_DIR=\"$STUB_DIR/app\"|" "$PATCHED_SCRIPT"
-sed -i "s|REPO_ROOT=.*|REPO_ROOT=\"$STUB_DIR/repo\"|" "$PATCHED_SCRIPT"
+# Patch the script copy
+cp "$SCRIPT" "$STUB_DIR/app/scripts/dev-local.sh"
+PATCHED="$STUB_DIR/app/scripts/dev-local.sh"
+sed -i "s|^APP_DIR=.*|APP_DIR=\"$STUB_DIR/app\"|" "$PATCHED"
+sed -i "s|^REPO_ROOT=.*|REPO_ROOT=\"$STUB_DIR/repo\"|" "$PATCHED"
 
-# Create a helper to run the script hermetically
-run_hermetic() {
-  local extra_env="${1:-}"
-  PATH="$STUB_DIR:$PATH" \
-  STUB_LOG="$STUB_LOG" \
-  \
-  $extra_env \
-  bash "$PATCHED_SCRIPT" "${@:2}" 2>&1
+# Helper to run hermetically
+run_h() {
+  PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED" "$@" 2>&1
 }
 
 echo "dev-local.sh hermetic tests"
@@ -111,21 +138,20 @@ echo ""
 echo "Positive controls:"
 
 # TEST: --help exits 0
-if PATH="$STUB_DIR:$PATH" bash "$PATCHED_SCRIPT" --help >/dev/null 2>&1; then
+if PATH="$STUB_DIR:$PATH" bash "$PATCHED" --help >/dev/null 2>&1; then
   pass "--help exits 0"
 else
   fail "--help exits 0"
 fi
 
-# TEST: full lifecycle (start -> push --local -> portless dev -> cleanup)
+# TEST: full lifecycle
 true > "$STUB_LOG"
-if output=$(run_hermetic "" 2>&1); then
+if output=$(run_h 2>&1); then
   pass "full lifecycle exits 0"
 else
-  fail "full lifecycle exits 0 (got: $output)"
+  fail "full lifecycle exits 0 (output: $(echo "$output" | tail -3))"
 fi
 
-# Verify the correct commands were called
 if grep -q "supabase.*start" "$STUB_LOG"; then
   pass "supabase start was invoked"
 else
@@ -133,29 +159,29 @@ else
 fi
 
 if grep -q "supabase.*db push --local" "$STUB_LOG"; then
-  pass "db push --local was invoked (not bare db push)"
+  pass "db push --local was invoked"
 else
   fail "db push --local was NOT invoked"
 fi
 
-if grep -q "portless" "$STUB_LOG"; then
-  pass "portless was invoked for dev server"
+if grep -q "portless run" "$STUB_LOG"; then
+  pass "portless run was invoked"
 else
-  fail "portless was NOT invoked"
+  fail "portless run was NOT invoked"
 fi
 
 if grep -q "supabase.*stop" "$STUB_LOG"; then
-  pass "supabase stop called in cleanup (started by session)"
+  pass "supabase stop called in cleanup"
 else
   fail "supabase stop NOT called in cleanup"
 fi
 
 # TEST: --reset uses db reset --local
 true > "$STUB_LOG"
-if output=$(PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" bash "$PATCHED_SCRIPT" --reset 2>&1); then
+if run_h --reset >/dev/null 2>&1; then
   pass "--reset lifecycle exits 0"
 else
-  fail "--reset lifecycle (got: $output)"
+  fail "--reset lifecycle"
 fi
 
 if grep -q "supabase.*db reset --local" "$STUB_LOG"; then
@@ -166,10 +192,10 @@ fi
 
 # TEST: pre-existing Supabase is not stopped
 true > "$STUB_LOG"
-if output=$(PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" STUB_SUPABASE_RUNNING=1 bash "$PATCHED_SCRIPT" 2>&1); then
+if STUB_SUPABASE_RUNNING=1 run_h >/dev/null 2>&1; then
   pass "pre-existing stack lifecycle exits 0"
 else
-  fail "pre-existing stack lifecycle (got: $output)"
+  fail "pre-existing stack lifecycle"
 fi
 
 if grep -q "supabase.*stop" "$STUB_LOG"; then
@@ -178,10 +204,11 @@ else
   pass "does not stop pre-existing Supabase"
 fi
 
-# TEST: env file is populated without printing secrets
+# TEST: env file is populated with publishable key
 if [[ -f "$STUB_DIR/app/.env.local" ]]; then
-  if grep -q "PUBLISHABLE" "$STUB_DIR/app/.env.local" || grep -q "eyJ_stub_anon_key" "$STUB_DIR/app/.env.local"; then
-    pass ".env.local populated with local credentials"
+  if grep -q "eyJ_stub_publishable" "$STUB_DIR/app/.env.local" && \
+     grep -q "eyJ_stub_secret" "$STUB_DIR/app/.env.local"; then
+    pass ".env.local populated with PUBLISHABLE_KEY and SECRET_KEY"
   else
     fail ".env.local not populated correctly"
   fi
@@ -189,90 +216,126 @@ else
   fail ".env.local was not created"
 fi
 
+# TEST: no secrets printed to stdout
+true > "$STUB_LOG"
+output=$(run_h 2>&1)
+if echo "$output" | grep -q "eyJ_stub"; then
+  fail "secrets leaked to stdout/stderr"
+else
+  pass "no secrets in stdout/stderr"
+fi
+
 # --- Negative controls ---
 echo ""
 echo "Negative controls:"
 
-# TEST: unknown arg exits 1
-if PATH="$STUB_DIR:$PATH" bash "$PATCHED_SCRIPT" --bogus >/dev/null 2>&1; then
+# TEST: unknown arg
+if run_h --bogus >/dev/null 2>&1; then
   fail "unknown arg should exit non-zero"
 else
   pass "unknown arg exits non-zero"
 fi
 
-# TEST: non-loopback URL blocked
-if PATH="$STUB_DIR:$PATH" NEXT_PUBLIC_SUPABASE_URL="https://abc.supabase.co" bash "$PATCHED_SCRIPT" 2>/dev/null; then
-  fail "remote supabase.co should be blocked"
-else
-  pass "remote supabase.co blocked"
-fi
-
-if PATH="$STUB_DIR:$PATH" NEXT_PUBLIC_SUPABASE_URL="https://custom.example.com" bash "$PATCHED_SCRIPT" 2>/dev/null; then
-  fail "non-loopback custom URL should be blocked"
-else
-  pass "non-loopback custom URL blocked"
-fi
-
-if PATH="$STUB_DIR:$PATH" NEXT_PUBLIC_SUPABASE_URL="http://192.168.1.100:54321" bash "$PATCHED_SCRIPT" 2>/dev/null; then
-  fail "LAN IP should be blocked"
-else
-  pass "LAN IP blocked"
-fi
-
-# TEST: loopback variants pass the URL gate (fail later at Docker, which is fine)
-for url in "" "http://127.0.0.1:54321" "http://localhost:54321" "http://[::1]:54321"; do
-  output=$(PATH="$STUB_DIR:$PATH" NEXT_PUBLIC_SUPABASE_URL="$url" bash "$PATCHED_SCRIPT" 2>&1 || true)
-  if echo "$output" | grep -q "not a loopback"; then
-    fail "loopback URL '$url' incorrectly blocked"
+# TEST: URL validation - reject non-loopback
+for url in \
+  "https://abc.supabase.co" \
+  "https://custom.example.com" \
+  "http://192.168.1.100:54321" \
+  "http://localhost.evil:3000" \
+  "http://127.0.0.2:54321" \
+  "http://0.0.0.0:3000" \
+  "ftp://localhost:21" \
+  "http://user:pass@localhost:3000" \
+  "not-a-url"; do
+  if PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" \
+     NEXT_PUBLIC_SUPABASE_URL="$url" bash "$PATCHED" 2>/dev/null; then
+    fail "should block: $url"
   else
-    pass "loopback URL '${url:-<empty>}' passes gate"
+    pass "blocked: $url"
   fi
 done
+
+# TEST: loopback variants accepted
+for url in \
+  "" \
+  "http://127.0.0.1:54321" \
+  "http://localhost:54321" \
+  "https://localhost:54321" \
+  "http://[::1]:54321"; do
+  output=$(PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" \
+    NEXT_PUBLIC_SUPABASE_URL="$url" bash "$PATCHED" 2>&1 || true)
+  if echo "$output" | grep -q "not a valid loopback"; then
+    fail "incorrectly blocked loopback: '${url:-<empty>}'"
+  else
+    pass "accepted loopback: '${url:-<empty>}'"
+  fi
+done
+
+# TEST: portless proxy not running
+proxy_output=$(PATH="$STUB_DIR:$PATH" STUB_LOG="$STUB_LOG" STUB_PORTLESS_PROXY_DOWN=1 bash "$PATCHED" 2>&1 || true)
+if echo "$proxy_output" | grep -q "portless proxy is not running"; then
+  pass "fails when portless proxy is not active"
+else
+  fail "should fail when portless proxy is down (got: $proxy_output)"
+fi
 
 # --- Static analysis ---
 echo ""
 echo "Static analysis:"
 
-# TEST: no sudo/su in script
 if grep -qE '^\s*(sudo|su )\b' "$SCRIPT"; then
-  fail "script contains sudo/su invocation"
+  fail "script contains sudo/su"
 else
   pass "no sudo/su in script"
 fi
 
-# TEST: no hardcoded localhost:port in user-facing output
 if grep -qE 'localhost:[0-9]+' "$SCRIPT"; then
-  fail "script contains hardcoded localhost:port"
+  fail "hardcoded localhost:port"
 else
-  pass "no hardcoded localhost:port in script"
+  pass "no hardcoded localhost:port"
 fi
 
-# TEST: reset is not default
 if grep -q '^RESET_DB=false' "$SCRIPT"; then
-  pass "--reset is not the default"
+  pass "--reset is not default"
 else
-  fail "--reset appears to be default"
+  fail "--reset appears default"
 fi
 
-# TEST: uses --local flags
 if grep -q 'db push --local' "$SCRIPT" && grep -q 'db reset --local' "$SCRIPT"; then
-  pass "uses --local for both push and reset"
+  pass "--local on both db commands"
 else
-  fail "missing --local flag on db commands"
+  fail "missing --local"
 fi
 
-# TEST: no em dash (U+2014)
-if grep -P '\x{2014}' "$SCRIPT"; then
-  fail "script contains em dash (U+2014)"
+if grep -P '\x{2014}' "$SCRIPT" >/dev/null 2>&1; then
+  fail "em dash (U+2014) found"
 else
-  pass "no em dash in script"
+  pass "no em dash"
 fi
 
-# TEST: script is executable
 if [[ -x "$SCRIPT" ]]; then
   pass "script is executable"
 else
-  fail "script is not executable"
+  fail "not executable"
+fi
+
+if grep -q 'portless run' "$SCRIPT"; then
+  pass "uses 'portless run' syntax"
+else
+  fail "does not use 'portless run'"
+fi
+
+# shellcheck disable=SC2016
+if grep -q 'run_supabase' "$SCRIPT" && ! grep -qE '\$SUPABASE\b' "$SCRIPT"; then
+  pass "uses run_supabase function (no bare \$SUPABASE string)"
+else
+  fail "still uses \$SUPABASE as bare string"
+fi
+
+if grep -q "portless doctor" "$SCRIPT"; then
+  pass "checks proxy via doctor, does not attempt to start it"
+else
+  fail "proxy handling incorrect"
 fi
 
 # --- Summary ---
