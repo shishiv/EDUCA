@@ -46,7 +46,9 @@
     "seed:e2e": "tsx scripts/seed-e2e.ts",
     "docs:api": "typedoc --options typedoc.json",
     "test:database:pilot:capacity": "bash ../supabase/tests/database/run-pilot-capacity-contract.sh",
-    "test:database:attendance:conditionality": "bash ../supabase/tests/database/run-attendance-conditionality-contract.sh"
+    "test:database:attendance:conditionality": "bash ../supabase/tests/database/run-attendance-conditionality-contract.sh",
+    "dev:local": "bash scripts/dev-local.sh",
+    "test:dev-local": "bash tests/unit/dev-local/dev-local.test.sh"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

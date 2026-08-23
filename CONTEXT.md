@@ -50,6 +50,7 @@ Run package commands from `app/`.
 
 ```bash
 pnpm dev                 # local Next.js development server
+pnpm dev:local           # canonical local: Supabase CLI + migrations + Next.js + cleanup
 pnpm build               # production build
 pnpm start               # serve a production build
 pnpm typecheck           # TypeScript, including E2E specs and enabled unit tests

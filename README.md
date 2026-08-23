@@ -65,30 +65,16 @@
 ```bash
 git clone https://github.com/shishiv/EDUCA.git
 cd EDUCA/app
-cp .env.local.example .env.local
 pnpm install --frozen-lockfile
-
-# Inicia o Supabase local (Auth, Storage, DB, Realtime)
-# Starts local Supabase (Auth, Storage, DB, Realtime)
-pnpm exec supabase --workdir .. start
-
-# Aplica migrations e seed
-# Applies migrations and seed
-pnpm exec supabase --workdir .. db reset
-
-pnpm dev
+pnpm dev:local
 ```
 
-O servidor de desenvolvimento fica disponível na URL impressa pelo Next.js.
-The dev server is available at the URL printed by Next.js.
+O comando inicia o Supabase local, aplica migrations, configura `.env.local` e abre o servidor Next.js. No encerramento (Ctrl-C), limpa apenas os recursos que ele iniciou.
 
-### Cleanup
+The command starts local Supabase, applies migrations, configures `.env.local`, and opens the Next.js dev server. On exit (Ctrl-C), it cleans up only the resources it started.
 
-```bash
-# Para o Supabase local e remove containers
-# Stops local Supabase and removes containers
-pnpm exec supabase --workdir .. stop
-```
+Para resetar o banco com seed sintético: `pnpm dev:local --reset`
+To reset the database with synthetic seed: `pnpm dev:local --reset`
 
 Setup completo, comandos exatos e limites do piloto: [`CONTEXT.md`](CONTEXT.md).
 Full setup, exact commands, and pilot boundaries: [`CONTEXT.md`](CONTEXT.md).
