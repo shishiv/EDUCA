@@ -1,9 +1,9 @@
 /**
- * Canonical Attendance Facts — the single shared read query for attendance data.
+ * Canonical Attendance Facts - the single shared read query for attendance data.
  *
  * This is the authoritative read interface for every attendance consumer:
  * reports, compliance warnings, dashboard alerts, and attendance cards.
- * The canonical contract is `frequencia.sessao_id` — legacy `aula_id`-only
+ * The canonical contract is `frequencia.sessao_id` - legacy `aula_id`-only
  * rows never enter a policy calculation.
  *
  * ## Authentication
@@ -14,12 +14,12 @@
  * ## RLS
  *
  * The `frequencia` table RLS policies enforce school-scoped reads.  This
- * module never elevates privileges — it runs within the caller's context.
+ * module never elevates privileges - it runs within the caller's context.
  *
  * ## Policy thresholds
  *
- * - `CONFORMIDADE = 80%` — Bolsa Família legal floor
- * - `ATENCAO = 85%` — preventive municipal margin
+ * - `CONFORMIDADE = 80%` - Bolsa Família legal floor
+ * - `ATENCAO = 85%` - preventive municipal margin
  *
  * ## Mode availability
  *

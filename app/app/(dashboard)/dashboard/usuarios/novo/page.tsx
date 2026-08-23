@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
@@ -36,18 +36,18 @@ export default function NovoUsuarioPage() {
   })
 
   const [escolas, setEscolas] = useState<SchoolOption[]>([])
-  useEffect(() => {
-    loadEscolas()
-  }, [])
-
-  const loadEscolas = async () => {
+  const loadEscolas = useCallback(async () => {
     try {
       const data = await schoolsApi.getAll<SchoolOption>()
       setEscolas(data)
     } catch {
       toast.error(t('ui.erro-ao-carregar-lista-de-escolas'))
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadEscolas()
+  }, [loadEscolas])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

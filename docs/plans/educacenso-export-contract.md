@@ -30,7 +30,7 @@ Recuperadas em 23/08/2026 a partir da página oficial de
 
 | Artefato oficial | Evidência usada | SHA-256 |
 | --- | --- | --- |
-| [Etapas e Instruções Gerais para a Migração no Sistema Educacenso — 1ª etapa 2026](https://download.inep.gov.br/educacao_basica/educacenso/migracao/2026/instrucoes_da_migracao_censo_escolar_1_etapa_2026.pdf) | texto plano `.txt`; inexistência de API; separador `\|`; ISO-8859-1; nome e tamanho do arquivo; fluxo manual e sigiloso | `efdf88b968da214b79cc7396ebcd91703e1c10efaaab995f0e3f16d181529e22` |
+| [Etapas e Instruções Gerais para a Migração no Sistema Educacenso - 1ª etapa 2026](https://download.inep.gov.br/educacao_basica/educacenso/migracao/2026/instrucoes_da_migracao_censo_escolar_1_etapa_2026.pdf) | texto plano `.txt`; inexistência de API; separador `\|`; ISO-8859-1; nome e tamanho do arquivo; fluxo manual e sigiloso | `efdf88b968da214b79cc7396ebcd91703e1c10efaaab995f0e3f16d181529e22` |
 | [Layout de Identificação 2026](https://download.inep.gov.br/educacao_basica/educacenso/migracao/2026/layout_de_identificacao_2026.xlsx) | versão 1; nove campos; obrigatoriedade, tamanho e formato de cada campo | `b507c61eb94d277d6d3a1e16d936f0dff80cc39a413dcfa526dd2d653917ec15` |
 | [Layout de Importação e Exportação da Matrícula Inicial 2026](https://download.inep.gov.br/educacao_basica/educacenso/migracao/2026/layout_de_importacao_e_exportacao_2026.xlsx) | changelog observado até V5; códigos de escola com 8 dígitos; identificador único de pessoa com 12 dígitos; inventário dos registros ainda bloqueados | `68abca006f808d8c7d0ae405e350de7b77e3c70385f329cf4b8e7ff597296a09` |
 | [Tabelas auxiliares do Educacenso 2026](https://download.inep.gov.br/educacao_basica/educacenso/migracao/2026/tabelas_auxiliares_2026.rar) | pacote de domínios oficiais | `ca7d1c033dfdebf47f1dc61cc25c3c9fdf4ee227189dd3257d72ae8118e46ac0` |
@@ -86,7 +86,7 @@ pnpm exec tsx scripts/inspect-educacenso-2026-municipalities.ts \
 
 A evidência oficial distingue os conceitos; não há substituição global:
 
-- **Código de escola — Inep:** 8 caracteres numéricos (`registro 00`, campo 2).
+- **Código de escola - Inep:** 8 caracteres numéricos (`registro 00`, campo 2).
 - **Identificação única (Inep) da pessoa:** 12 caracteres numéricos quando
   preenchida (`registros 30, 40, 50 e 60`, campo 4; também campo 9 do Layout de
   Identificação no arquivo de retorno).

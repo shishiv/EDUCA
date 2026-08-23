@@ -1,5 +1,5 @@
 /**
- * Reports API — attendance, enrollment, and school reports generation.  Uses canonical attendance facts for compliance calculations.
+ * Reports API - attendance, enrollment, and school reports generation.  Uses canonical attendance facts for compliance calculations.
  */
 'use client'
 

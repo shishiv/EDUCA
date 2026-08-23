@@ -41,12 +41,12 @@
 ## Dúvidas comuns · Common questions
 
 **PT:**
-- **"Minha prefeitura não tem equipe técnica."** — O self-host pede alguém que saiba rodar Docker e Node. Quando uma opção gerenciada existir, será anunciada aqui.
+- **"Minha prefeitura não tem equipe técnica."** - O self-host pede alguém que saiba rodar Docker e Node. Quando uma opção gerenciada existir, será anunciada aqui.
 - **"E o WhatsApp, tem custo escondido?"** — Não. É BYO: vocês trazem a conta Meta/BSP e os templates. Sem credencial, o envio simplesmente fica desligado, não quebra o sistema.
 - **"Meus dados de aluno ficam seguros?"** — Hoje o piloto roda só com dados sintéticos, de propósito, até essa parte estar madura o suficiente pra dado real. Veja [`SECURITY.md`](SECURITY.md).
 
 **EN:**
-- **"My district has no technical staff."** — Self-hosting requires someone comfortable with Docker and Node. When a managed option becomes available it will be announced here.
+- **"My district has no technical staff."** - Self-hosting requires someone comfortable with Docker and Node. When a managed option becomes available it will be announced here.
 - **"Is WhatsApp a hidden cost?"** — No. It's BYO: you bring the Meta/BSP account and templates. Without credentials, sending just stays off — it doesn't break the system.
 - **"Is student data safe?"** — The pilot runs on synthetic data only, on purpose, until that part is mature enough for real data. See [`SECURITY.md`](SECURITY.md).
 

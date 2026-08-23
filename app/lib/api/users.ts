@@ -1,5 +1,5 @@
 /**
- * Users API Service — user management, statistics, and role queries.
+ * Users API Service - user management, statistics, and role queries.
  *
  * ## Authentication & RLS
  *

@@ -12,7 +12,7 @@ export const EDUCACENSO_SOURCE_2026 = Object.freeze({
   },
   instructions: {
     title:
-      'Etapas e Instruções Gerais para a Migração no Sistema Educacenso — 1ª Etapa da Coleta do Censo Escolar 2026 (Matrícula Inicial)',
+      'Etapas e Instruções Gerais para a Migração no Sistema Educacenso - 1ª Etapa da Coleta do Censo Escolar 2026 (Matrícula Inicial)',
     url: 'https://download.inep.gov.br/educacao_basica/educacenso/migracao/2026/instrucoes_da_migracao_censo_escolar_1_etapa_2026.pdf',
     sha256: 'efdf88b968da214b79cc7396ebcd91703e1c10efaaab995f0e3f16d181529e22',
   },

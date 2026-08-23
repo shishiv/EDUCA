@@ -1,8 +1,8 @@
 /**
- * J1 — Visitante público (non-destructive smoke)
+ * J1 - Visitante público (non-destructive smoke)
  *
- * This spec runs against the public demo OR local stack.
- * It performs NO mutations — read-only assertions only.
+ * This spec runs only against an explicitly configured public demo origin.
+ * It performs NO mutations - read-only assertions only.
  * Safe to run against the shared sandbox.
  */
 import { expect, test } from '@playwright/test'

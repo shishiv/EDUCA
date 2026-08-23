@@ -208,7 +208,6 @@ function CompactVivenciaCard({
   onToggleExpand,
   highlightCampo,
 }: CompactVivenciaCardProps) {
-  const t = useClassroomTranslations()
   return (
     <div
       className={cn(
@@ -313,7 +312,6 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ selectedCampo }: EmptyStateProps) {
-  const t = useClassroomTranslations()
   const campoName = selectedCampo
     ? CAMPOS_EXPERIENCIA[selectedCampo].shortName
     : null

@@ -18,7 +18,6 @@ import {
   getAllCampos,
   type CampoType,
 } from '@/types/diario-infantil'
-import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -48,7 +47,6 @@ export function CampoExperienciaSelector({
   className,
   compact = false,
 }: CampoExperienciaSelectorProps) {
-  const t = useClassroomTranslations()
   const campos = getAllCampos()
 
   /**
@@ -131,7 +129,6 @@ function CampoCard({
   onClick,
   onKeyDown,
 }: CampoCardProps) {
-  const t = useClassroomTranslations()
   // Dynamic background based on campo
   const bgColorClass: Record<CampoType, string> = {
     eu: 'bg-pink-100',

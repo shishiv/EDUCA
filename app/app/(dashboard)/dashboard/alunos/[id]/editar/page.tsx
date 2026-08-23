@@ -77,7 +77,7 @@ export default function EditarAlunoPage() {
       setLoading(false)
     }
     void load()
-  }, [id, router])
+  }, [id, router, t])
 
   const update = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm(previous => ({ ...previous, [field]: value }))

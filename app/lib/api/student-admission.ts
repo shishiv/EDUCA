@@ -1,5 +1,5 @@
 /**
- * Student Admission — transactional student + enrollment + guardian creation via database RPC.  Requires authenticated actor with escola resolution.
+ * Student Admission - transactional student + enrollment + guardian creation via database RPC.  Requires authenticated actor with escola resolution.
  */
 import type { Tables } from '@/lib/supabase'
 

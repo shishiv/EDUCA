@@ -84,7 +84,7 @@ export default function EditarTurmaPage() {
     }
 
     void load()
-  }, [id, router])
+  }, [id, router, t])
 
   const update = <K extends keyof ClassForm>(field: K, value: ClassForm[K]) => {
     setForm(previous => ({ ...previous, [field]: value }))

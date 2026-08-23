@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -65,11 +65,7 @@ export default function ResponsaveisPage() {
   const [search, setSearch] = useState('')
   const [parentescoFilter, setParentescoFilter] = useState('todos')
 
-  useEffect(() => {
-    loadResponsaveis()
-  }, [])
-
-  const loadResponsaveis = async () => {
+  const loadResponsaveis = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -102,7 +98,11 @@ export default function ResponsaveisPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadResponsaveis()
+  }, [loadResponsaveis])
 
   const getInitials = (name: string) => {
     return name

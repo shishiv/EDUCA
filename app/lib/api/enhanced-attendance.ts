@@ -1,5 +1,5 @@
 /**
- * Enhanced Attendance — legacy UI adapter retained for compile-time compatibility.  Use api/attendance for active code paths.
+ * Enhanced Attendance - legacy UI adapter retained for compile-time compatibility.  Use api/attendance for active code paths.
  */
 'use client'
 

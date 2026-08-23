@@ -105,7 +105,7 @@ export default function DiarioInfantilPage() {
       })
       setError(t('ui.erro-ao-carregar-dados-do-aluno'))
     }
-  }, [alunoId])
+  }, [alunoId, t])
 
   // Load vivencias
   const loadVivencias = useCallback(async () => {
@@ -177,7 +177,7 @@ export default function DiarioInfantilPage() {
     } finally {
       setIsEditLoading(false)
     }
-  }, [editingVivencia, loadVivencias])
+  }, [editingVivencia, loadVivencias, t])
 
   const handleEditCancel = useCallback(() => {
     setIsEditModalOpen(false)
@@ -211,7 +211,7 @@ export default function DiarioInfantilPage() {
     } finally {
       setIsDeleteLoading(false)
     }
-  }, [deletingVivencia, loadVivencias])
+  }, [deletingVivencia, loadVivencias, t])
 
   const handleDeleteCancel = useCallback(() => {
     setIsDeleteDialogOpen(false)

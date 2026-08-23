@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { configsApi, Config } from '@/lib/api/configs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,11 +31,7 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving] = useState(false)
   const [configValues, setConfigValues] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    loadConfigs()
-  }, [])
-
-  const loadConfigs = async () => {
+  const loadConfigs = useCallback(async () => {
     try {
       const data = await configsApi.getAll()
       setConfigs(data)
@@ -52,7 +48,11 @@ export default function ConfiguracoesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadConfigs()
+  }, [loadConfigs])
 
   const handleSave = async () => {
     setSaving(true)

@@ -236,7 +236,7 @@ export default function AttendanceReportsPage() {
     }
 
     fetchTurmas()
-  }, [])
+  }, [t])
 
   // Update date range when period option changes
   useEffect(() => {

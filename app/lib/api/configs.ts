@@ -1,5 +1,5 @@
 /**
- * System Configs API — read/write per-escola and global configuration keys.  Demo sandbox applies in-memory overrides without persisting.
+ * System Configs API - read/write per-escola and global configuration keys.  Demo sandbox applies in-memory overrides without persisting.
  */
 'use client'
 

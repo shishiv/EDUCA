@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertCircle, Clock, TrendingUp, Info, CheckCircle, AlertTriangle } from 'lucide-react'
+import { AlertCircle, TrendingUp, Info, CheckCircle, AlertTriangle } from 'lucide-react'
 import type { DashboardAlert } from '@/app/api/dashboard/alerts/route'
 
 const alertConfig = {

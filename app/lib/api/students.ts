@@ -1,5 +1,5 @@
 /**
- * Students API — student CRUD, enrollment queries, and class roster.  RLS enforces school isolation via matriculas → turmas → escolas chain.
+ * Students API - student CRUD, enrollment queries, and class roster.  RLS enforces school isolation via matriculas → turmas → escolas chain.
  */
 'use client'
 

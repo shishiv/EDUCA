@@ -381,7 +381,6 @@ export function LessonDetailPanel({
 // ============================================================================
 
 export function LessonDetailPanelSkeleton() {
-  const t = useClassroomTranslations()
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 h-fit lg:sticky lg:top-24 animate-pulse">
       <div className="space-y-4 sm:space-y-6">

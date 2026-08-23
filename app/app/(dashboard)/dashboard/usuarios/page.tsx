@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
 import { supabase } from '@/lib/supabase'
@@ -47,11 +47,7 @@ export default function UsuariosPage() {
   const [tipoFilter, setTipoFilter] = useState('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
 
-  useEffect(() => {
-    loadUsuarios()
-  }, [])
-
-  const loadUsuarios = async () => {
+  const loadUsuarios = useCallback(async () => {
     try {
       logger.info('Loading usuarios...')
       // Simple query without joins first
@@ -74,7 +70,11 @@ export default function UsuariosPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadUsuarios()
+  }, [loadUsuarios])
 
   const handleDeleteUser = async (id: string) => {
   if (isDemoSandboxEnabled()) {

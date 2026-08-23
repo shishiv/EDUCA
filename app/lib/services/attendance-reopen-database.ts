@@ -1,5 +1,5 @@
 /**
- * Attendance Reopen Database — low-level RPC client for the reopen workflow.  @internal
+ * Attendance Reopen Database - low-level RPC client for the reopen workflow.  @internal
  */
 /**
  * Typed data surface for the attendance reopen feature.

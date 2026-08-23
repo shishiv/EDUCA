@@ -22,7 +22,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ATENCAO, CONFORMIDADE } from '@/lib/attendance/attendance-policy'
-import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -117,7 +116,6 @@ export function RiskAlert({
   loading = false,
   showStudentLink = true,
 }: RiskAlertProps) {
-  const t = useClassroomTranslations()
   // Don't render if no students at risk
   if (!studentsAtRisk || studentsAtRisk.length === 0) {
     return null
@@ -300,7 +298,6 @@ export function RiskAlertCompact({
   criticalCount?: number
   onClick?: () => void
 }) {
-  const t = useClassroomTranslations()
   if (count === 0) return null
 
   return (

@@ -550,10 +550,10 @@
     "age": "{age, plural, one {# year old} other {# years old}}",
     "learning-experience-count": "{count, plural, one {# learning experience} other {# learning experiences}}",
     "attendance-percent": "{value}% attendance",
-    "bolsa-compliant-notice": "Portuguese regulatory text — English translation unavailable pending legal review.",
-    "bolsa-preventive-notice": "Portuguese regulatory text — English translation unavailable pending legal review.",
-    "bolsa-critical-notice": "Portuguese regulatory text — English translation unavailable pending legal review.",
-    "bolsa-noncompliance-detail": "Portuguese regulatory text — English translation unavailable pending legal review.",
-    "bolsa-preventive-detail": "Portuguese regulatory text — English translation unavailable pending legal review."
+    "bolsa-compliant-notice": "Portuguese regulatory text - English translation unavailable pending legal review.",
+    "bolsa-preventive-notice": "Portuguese regulatory text - English translation unavailable pending legal review.",
+    "bolsa-critical-notice": "Portuguese regulatory text - English translation unavailable pending legal review.",
+    "bolsa-noncompliance-detail": "Portuguese regulatory text - English translation unavailable pending legal review.",
+    "bolsa-preventive-detail": "Portuguese regulatory text - English translation unavailable pending legal review."
   }
 }

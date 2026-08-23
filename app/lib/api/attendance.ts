@@ -1,5 +1,5 @@
 /**
- * Attendance Browser Adapter — UI-friendly wrappers for attendance operations.
+ * Attendance Browser Adapter - UI-friendly wrappers for attendance operations.
  *
  * This module owns **only** the browser-side translations between the UI and
  * the canonical attendance domain module (`services/attendance-module`).  It
@@ -9,7 +9,7 @@
  *
  * Operations call server actions which resolve the authenticated actor from
  * the server session.  The browser client never sends `professor_id` or
- * `escola_id` — those are resolved server-side.
+ * `escola_id` - those are resolved server-side.
  *
  * ## RLS
  *
@@ -24,7 +24,7 @@
  * ## Mode availability
  *
  * Pilot and production (real writes).  In demo sandbox the attendance page
- * is read-only — mutations are blocked by the demo guard layer.
+ * is read-only - mutations are blocked by the demo guard layer.
  *
  * @module api/attendance
  */

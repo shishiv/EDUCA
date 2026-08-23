@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { reportsApi, Report } from '@/lib/api/reports'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,11 +58,7 @@ export default function RelatoriosPage() {
     parametros: {}
   })
 
-  useEffect(() => {
-    loadRelatorios()
-  }, [])
-
-  const loadRelatorios = async () => {
+  const loadRelatorios = useCallback(async () => {
     try {
       const data = await reportsApi.getAll()
       setRelatorios(data)
@@ -72,7 +68,11 @@ export default function RelatoriosPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadRelatorios()
+  }, [loadRelatorios])
 
   const handleGenerateReport = async () => {
     if (!newReport.tipo) {

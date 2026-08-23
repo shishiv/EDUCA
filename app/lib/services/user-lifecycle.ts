@@ -1,5 +1,5 @@
 /**
- * User Lifecycle — invitation, first access, profile completion, and revocation.
+ * User Lifecycle - invitation, first access, profile completion, and revocation.
  *
  * This module implements the full user registration lifecycle for the
  * synthetic pilot: invite → first access → password change → active profile.

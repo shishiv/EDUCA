@@ -106,7 +106,7 @@ export default function NovaVivenciaPage() {
     } finally {
       setLoading(false)
     }
-  }, [alunoId])
+  }, [alunoId, t])
 
   // Initial load
   useEffect(() => {
@@ -164,7 +164,7 @@ export default function NovaVivenciaPage() {
       })
       throw err // Re-throw to keep form in submitting state
     }
-  }, [alunoId, student, matricula, router])
+  }, [alunoId, student, matricula, router, t])
 
   // Handle cancel
   const handleCancel = useCallback(() => {

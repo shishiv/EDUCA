@@ -219,7 +219,7 @@ export function DescriptiveReportForm({
         setIsSaving(false)
       }
     },
-    [isFinalized, onSaveDraft]
+    [isFinalized, onSaveDraft, t]
   )
 
   // Handle finalize
@@ -245,7 +245,7 @@ export function DescriptiveReportForm({
     } finally {
       setIsFinalizing(false)
     }
-  }, [isFinalized, getValues, onFinalize])
+  }, [isFinalized, getValues, onFinalize, t])
 
   // Get field status indicator
   const getFieldStatusIcon = (key: ExperienceFieldKey) => {

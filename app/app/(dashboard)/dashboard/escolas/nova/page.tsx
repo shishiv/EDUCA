@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -56,11 +56,7 @@ export default function NovaEscolaPage() {
     observacoes: ''
   })
 
-  useEffect(() => {
-    loadDiretores()
-  }, [])
-
-  const loadDiretores = async () => {
+  const loadDiretores = useCallback(async () => {
     try {
       const diretores = await schoolsApi.getAvailableDirectors() as any
       setDiretoresDisponiveis(diretores || [])
@@ -68,7 +64,11 @@ export default function NovaEscolaPage() {
       logger.error('Erro ao carregar diretores:', error as any)
       toast.error(t('ui.erro-ao-carregar-lista-de-diretores-disponiveis'))
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadDiretores()
+  }, [loadDiretores])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -269,7 +269,7 @@ export const studentRegistrationSchema = z.object({
   // Social programs
   ...socialProgramsSchema.shape,
 
-  // LGPD optional consent — tracks optional consent for additional
+  // LGPD optional consent - tracks optional consent for additional
   // communications. NOT a gate for registration (school routines use a
   // different legal basis defined by the municipal controller).
   lgpd_consentimento: z

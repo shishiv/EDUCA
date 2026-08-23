@@ -394,14 +394,14 @@ Workers podem implementar folhas disjuntas em cópias isoladas ao mesmo tempo. U
 
 Começar por #76, #77 e #79 em paralelo. #82 integra os três resultados. Em paralelo, #20 pode preparar sua fundação e #19 pode fazer somente a pesquisa de contrato. #17 entra depois da alteração do README de #76. #18 não entra em execução sem uma decisão nova de produto.
 
-## Registro verificado da integração — Onda 1 / fase 1
+## Registro verificado da integração - Onda 1 / fase 1
 
 - A base `campaign/open-issues-e2e` integrou os commits completos das lanes DEVX (`6af593e3`, `a377b52b`), PRIVACY (`936db6cc`) e API DOCS (`b529e710`) por cherry-pick.
 - A lane JOURNEYS (`campaign/leaf-journeys`) não foi integrada nesta fase: seu handoff declara que typecheck e E2E não foram executados por falta de dependências/stack e registra bloqueios materiais de ativação pública (claims, privacidade e credencial do demo). Os commits permanecem no branch da lane.
 - A lane PRIVACY mantém pendente a definição da base legal pelo controlador municipal; nenhum fundamento jurídico foi inventado no código integrado.
 - A geração de API docs é reproduzível via `cd app && pnpm docs:api`; a saída `docs/api/` permanece gerada e ignorada.
 
-## Registro verificado da integração — recuperação da Onda 1
+## Registro verificado da integração - recuperação da Onda 1
 
 - A lane `campaign/leaf-i18n` foi integrada a partir da base `7089549d`, com
   os cinco commits da fundação, registry, classroom, platform e integração,
@@ -423,7 +423,7 @@ Começar por #76, #77 e #79 em paralelo. #82 integra os três resultados. Em par
   As tentativas limparam os stacks isolados e liberaram os leases; não houve
   uso de sudo nem acesso a banco compartilhado.
 
-## Registro verificado da integração — correção final de jornadas
+## Registro verificado da integração - correção final de jornadas
 
 - Os commits completos de JOURNEYS `9a8ecb7a`, `7b76236d` e `8cce4d91` foram
   integrados; `c1037fc0` e todos os arquivos `.unlazy/**` ficaram fora da

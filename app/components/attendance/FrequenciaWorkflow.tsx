@@ -4,14 +4,12 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ClipboardList } from 'lucide-react'
-import { useClassroomTranslations } from '@/i18n/classroom'
 
 /**
  * Compatibility shell for the retired daily workflow.
  * The canonical attendance journey starts from a turma and uses sessoes_aula.
  */
 export function FrequenciaWorkflow() {
-  const t = useClassroomTranslations()
   return (
     <Card>
       <CardHeader>

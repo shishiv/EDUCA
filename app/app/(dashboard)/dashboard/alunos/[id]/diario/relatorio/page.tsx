@@ -184,7 +184,7 @@ export default function RelatorioPage() {
       })
       setError(t('ui.erro-ao-carregar-dados-do-aluno'))
     }
-  }, [alunoId])
+  }, [alunoId, t])
 
   // Load vivencias
   const loadVivencias = useCallback(async () => {
@@ -340,7 +340,7 @@ export default function RelatorioPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [alunoId, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb])
+  }, [alunoId, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, t])
 
   const handleFinalizeRequest = useCallback(async (data: ReportFormValues) => {
     // Show confirmation dialog before finalizing
@@ -422,7 +422,7 @@ export default function RelatorioPage() {
       setShowFinalizeDialog(false)
       setPendingFinalizeData(null)
     }
-  }, [pendingFinalizeData, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, alunoId])
+  }, [pendingFinalizeData, matricula, userProfile, existingReport, selectedYear, selectedSemester, mapFormToDb, alunoId, t])
 
   const handleCampoFocus = useCallback((campo: CampoType | null) => {
     setSelectedCampo(campo)
@@ -435,7 +435,7 @@ export default function RelatorioPage() {
   const handlePrint = useCallback(() => {
     // PDF export - out of scope for this plan
     toast.info(t('ui.exportacao-pdf-sera-implementada-em-breve'))
-  }, [])
+  }, [t])
 
   // Compute initial values from existing report
   const initialValues = useMemo(() => {

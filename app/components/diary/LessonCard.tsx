@@ -340,7 +340,6 @@ export function LessonCardEmpty({
   showIcon = true,
   className,
 }: LessonCardEmptyProps) {
-  const t = useClassroomTranslations()
   return (
     <div
       className={cn(

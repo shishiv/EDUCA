@@ -123,7 +123,7 @@ export default function AtribuicoesPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedEscolaId])
+  }, [selectedEscolaId, t])
 
   // Load on mount and when escola changes
   useEffect(() => {

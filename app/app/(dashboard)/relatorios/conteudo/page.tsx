@@ -472,7 +472,7 @@ export default function ContentReportsPage() {
     }
 
     fetchTurmas()
-  }, [])
+  }, [t])
 
   // Update date range when period option changes
   useEffect(() => {

@@ -1,5 +1,5 @@
 /**
- * Schools API Service — school CRUD, dashboard, statistics, and director assignment.
+ * Schools API Service - school CRUD, dashboard, statistics, and director assignment.
  *
  * ## Authentication & RLS
  *
@@ -11,7 +11,7 @@
  *
  * Status changes (activate/deactivate) are logged to the audit trail via
  * {@link SchoolsApiService.updateSchoolStatus}.  Audit writes are async and
- * non-blocking — a failed audit log does not roll back the status change.
+ * non-blocking - a failed audit log does not roll back the status change.
  *
  * ## Mode availability
  *

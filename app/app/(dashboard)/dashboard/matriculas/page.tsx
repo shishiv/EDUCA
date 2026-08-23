@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -227,11 +227,7 @@ export default function MatriculasPage() {
   const [anoFilter, setAnoFilter] = useState('todos')
   const [escolaFilter, setEscolaFilter] = useState('todas')
 
-  useEffect(() => {
-    loadMatriculas()
-  }, [])
-
-  const loadMatriculas = async () => {
+  const loadMatriculas = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('matriculas')
@@ -279,7 +275,11 @@ export default function MatriculasPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadMatriculas()
+  }, [loadMatriculas])
 
   const handleDeleteMatricula = async (matriculaId: string, alunoNome: string) => {
   if (isDemoSandboxEnabled()) {

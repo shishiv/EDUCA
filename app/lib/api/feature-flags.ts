@@ -1,5 +1,5 @@
 /**
- * Feature Flags API — per-escola boolean flags for progressive module activation.  Demo sandbox intercepts writes as no-ops.
+ * Feature Flags API - per-escola boolean flags for progressive module activation.  Demo sandbox intercepts writes as no-ops.
  */
 /**
  * Feature Flags API Service

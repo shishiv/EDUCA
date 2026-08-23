@@ -428,7 +428,7 @@ export default function BoletimPage() {
     } finally {
       setLoading(false)
     }
-  }, [studentId])
+  }, [studentId, t])
 
   // Load data on mount
   useEffect(() => {

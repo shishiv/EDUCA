@@ -30,8 +30,21 @@ interface TeacherClassSummary {
   sessaoHoje: TeacherClassSession | null
 }
 
+type TeacherDashboardMessageKey =
+  | 'dashboard.pendingCall'
+  | 'dashboard.openCall'
+  | 'dashboard.openedCall'
+  | 'dashboard.continueCall'
+  | 'dashboard.completedCall'
+  | 'dashboard.viewCall'
+  | 'dashboard.cancelledSession'
+  | 'dashboard.viewClass'
+
 /** Labels each teacher class by its real attendance session for the São Paulo day. */
-function getTeacherSessionStatus(session: TeacherClassSession | null, t: (key: any) => string) {
+function getTeacherSessionStatus(
+  session: TeacherClassSession | null,
+  t: (key: TeacherDashboardMessageKey) => string
+) {
   if (!session) {
     return {
       label: t('dashboard.pendingCall'),
@@ -145,7 +158,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
     }
 
     void loadTeacherDashboard()
-  }, [professorId])
+  }, [professorId, t])
 
   if (loading) {
     return (

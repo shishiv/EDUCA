@@ -135,7 +135,7 @@ export default function NovaMatriculaPage() {
     }
 
     loadData()
-  }, [])
+  }, [t])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,14 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+import { assertPublicDemoBaseURL } from './scripts/public-demo-origin'
 
 const baseURL = process.env.PUBLIC_DEMO_BASE_URL
 if (!baseURL) {
   throw new Error('PUBLIC_DEMO_BASE_URL is required for the non-destructive public smoke')
 }
 
-const parsedURL = new URL(baseURL)
-if (parsedURL.protocol !== 'https:' || parsedURL.hostname.endsWith('.localhost')) {
-  throw new Error('PUBLIC_DEMO_BASE_URL must be an HTTPS public origin')
-}
+assertPublicDemoBaseURL(baseURL)
 
 export default defineConfig({
   testDir: './tests/e2e/public-demo',

@@ -301,7 +301,7 @@ export const guardianRegistrationSchema = z.object({
 
   renda_familiar: z.number().min(0, 'Renda deve ser positiva').optional(),
 
-  // LGPD optional consent — not a gate for registration
+  // LGPD optional consent - not a gate for registration
   lgpd_consentimento: z.boolean().default(false)
 })
 

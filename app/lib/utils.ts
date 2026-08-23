@@ -1,5 +1,5 @@
 /**
- * UI utility — Tailwind CSS class merging.
+ * UI utility - Tailwind CSS class merging.
  *
  * Re-exports a single `cn` helper that combines `clsx` conditional classes
  * with `tailwind-merge` conflict resolution.

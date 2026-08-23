@@ -377,10 +377,10 @@ export default function NovoResponsavelPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Operational notice — informational, does not block */}
+            {/* Operational notice - informational, does not block */}
             <OperationalDataNotice />
 
-            {/* Optional consent — for additional communications only */}
+            {/* Optional consent - for additional communications only */}
             <OptionalConsentCheckbox
               checked={formData.lgpd_consentimento}
               onCheckedChange={(checked) => handleInputChange('lgpd_consentimento', checked)}

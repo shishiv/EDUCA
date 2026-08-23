@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
@@ -53,11 +53,7 @@ export default function EscolasPage() {
   const [tipoFilter, setTipoFilter] = useState('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
 
-  useEffect(() => {
-    loadEscolas()
-  }, [])
-
-  const loadEscolas = async () => {
+  const loadEscolas = useCallback(async () => {
     setLoading(true)
     try {
       const schoolsData = await schoolsApi.getSchoolsWithDetails()
@@ -94,7 +90,11 @@ export default function EscolasPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    void loadEscolas()
+  }, [loadEscolas])
 
   const getInitials = (name: string) => {
     return name

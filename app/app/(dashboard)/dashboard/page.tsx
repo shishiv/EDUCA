@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
 import { StatCard } from '@/components/ui'
@@ -60,17 +60,7 @@ export default function DashboardPage() {
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!userRole) return
-    if (userRole === 'professor') {
-      setLoading(false)
-      return
-    }
-
-    void loadDashboardData()
-  }, [userRole])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoadError(null)
 
@@ -134,7 +124,17 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    if (!userRole) return
+    if (userRole === 'professor') {
+      setLoading(false)
+      return
+    }
+
+    void loadDashboardData()
+  }, [loadDashboardData, userRole])
 
   const getGreeting = () => {
     const hour = new Date().getHours()

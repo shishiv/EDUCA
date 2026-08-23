@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { FaixaEtariaIndicator } from './FaixaEtariaIndicator'
 import { BookOpen, Percent } from 'lucide-react'
-import { useRegistryTranslations } from '@/i18n/registry'
 
 interface StudentProfileHeaderProps {
   student: {
@@ -33,7 +32,6 @@ export function StudentProfileHeader({
   stats,
   className,
 }: StudentProfileHeaderProps) {
-  const t = useRegistryTranslations()
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
 
   const getInitials = (name: string) => {

@@ -1,5 +1,5 @@
 /**
- * Base API Service — shared CRUD and pagination primitives.
+ * Base API Service - shared CRUD and pagination primitives.
  *
  * Every domain service in `app/lib/api/` extends {@link BaseApiService} and
  * inherits type-safe CRUD operations scoped to one Supabase table.
@@ -8,7 +8,7 @@
  *
  * All operations execute through the browser Supabase client (`@/lib/supabase`)
  * which carries the signed-in user's JWT.  Row-Level Security policies on
- * each table act as the final authorization boundary — the service layer
+ * each table act as the final authorization boundary - the service layer
  * never bypasses RLS.
  *
  * ## Error handling

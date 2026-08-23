@@ -137,7 +137,7 @@ export default function BolsaFamiliaReportPage() {
     }
 
     fetchSchools();
-  }, []);
+  }, [t]);
 
   // Fetch turmas when school changes
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function BolsaFamiliaReportPage() {
     }
 
     fetchTurmas();
-  }, [selectedSchool]);
+  }, [selectedSchool, t]);
 
   // Fetch report data
   const fetchReport = useCallback(async () => {

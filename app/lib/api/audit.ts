@@ -1,5 +1,5 @@
 /**
- * Audit API — user activity logging and audit trail queries.  Currently uses mock data until audit_logs table is created.
+ * Audit API - user activity logging and audit trail queries.  Currently uses mock data until audit_logs table is created.
  */
 /**
  * Audit API client for user activity tracking

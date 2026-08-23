@@ -86,7 +86,7 @@ export function TeacherAssignment({
     }
 
     loadData()
-  }, [classId, schoolId, currentTeacherId])
+  }, [classId, schoolId, currentTeacherId, t])
 
   const handleAssignTeacher = async () => {
     if (!selectedTeacherId) return

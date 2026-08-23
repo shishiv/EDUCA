@@ -53,7 +53,7 @@ export default function FlagsPage() {
       }
     }
     fetchEscolas()
-  }, [])
+  }, [t])
 
   // Access control - only admin and gestor_sme can access
   const canAccess = userProfile?.tipo_usuario === 'admin' || userProfile?.tipo_usuario === 'gestor_sme'

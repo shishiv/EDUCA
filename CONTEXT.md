@@ -54,6 +54,7 @@ pnpm build               # production build
 pnpm start               # serve a production build
 pnpm typecheck           # TypeScript, including E2E specs and enabled unit tests
 pnpm lint                # ESLint
+pnpm check:diff-typography # rejects new U+2014 em dashes relative to main
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
 pnpm test:e2e:pilot                     # R3-T4 aggregate: legacy, capacity, descriptive, and focused security children

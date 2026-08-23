@@ -158,7 +158,6 @@ interface CampoBadgeProps {
 }
 
 function CampoBadge({ campo }: CampoBadgeProps) {
-  const t = useClassroomTranslations()
   const config = CAMPOS_EXPERIENCIA[campo]
   const variant = getCampoBadgeVariant(campo) as
     | 'campo-eu'

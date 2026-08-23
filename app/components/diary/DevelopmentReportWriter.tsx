@@ -415,7 +415,6 @@ function CampoField({
   onFocus,
   onBlur,
 }: CampoFieldProps) {
-  const t = useClassroomTranslations()
   return (
     <Card
       className={cn(

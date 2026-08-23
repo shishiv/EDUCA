@@ -1,5 +1,5 @@
 /**
- * Grades API — bimestral grade CRUD following Brazilian 0–10 scale.  Module is provisioned by pilot gate (currently disabled in pilot/demo).
+ * Grades API - bimestral grade CRUD following Brazilian 0–10 scale.  Module is provisioned by pilot gate (currently disabled in pilot/demo).
  */
 /**
  * Grades API Layer

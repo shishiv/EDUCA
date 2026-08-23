@@ -1,5 +1,5 @@
 /**
- * Vivências API — STUBBED.  The vivencias table does not exist yet.  All methods return stub errors.  @module api/vivencias
+ * Vivências API - STUBBED.  The vivencias table does not exist yet.  All methods return stub errors.  @module api/vivencias
  */
 /**
  * Vivencias API Service
