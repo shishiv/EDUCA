@@ -1,24 +1,31 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
-import { StatCard } from '@/components/ui'
-import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
-import { AlertasCard } from '@/components/dashboard/alertas-card'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Users, UserCheck, GraduationCap } from 'lucide-react'
-import { useAuth } from '@/hooks/use-auth'
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  GraduationCap,
+  UserCheck,
+  Users,
+} from 'lucide-react'
+import { AlertasCard } from '@/components/dashboard/alertas-card'
+import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
+import { useAuth } from '@/hooks/use-auth'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
+import {
+  quickAccessItems,
+  resolveVisibleQuickAccess,
+  type QuickAccessRole,
+} from '@/lib/dashboard/quick-access'
+import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
-import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
-import { quickAccessItems, resolveVisibleQuickAccess, type QuickAccessRole } from '@/lib/dashboard/quick-access'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { supabase } from '@/lib/supabase'
 
 interface DashboardStats {
   totalAlunos: number
@@ -36,19 +43,35 @@ interface Turma {
   alunosCount: number
 }
 
+function getSerieTone(serie: string) {
+  const normalized = serie.toLowerCase()
+  if (normalized.includes('infantil')) return 'infantil'
+  if (normalized.includes('fundamental i') || normalized.includes('fundamental 1')) return 'fundamental-one'
+  if (normalized.includes('fundamental ii') || normalized.includes('fundamental 2')) return 'fundamental-two'
+  return 'default'
+}
+
+function DashboardSkeleton() {
+  const t = useTranslations('layout.dashboard')
+  return (
+    <div className="app-dashboard app-dashboard-skeleton" aria-busy="true" aria-label={t('loading')}>
+      <div className="app-skeleton h-20 w-full" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[0, 1, 2, 3].map(item => <div key={item} className="app-skeleton h-28" />)}
+      </div>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,.8fr)]">
+        <div className="app-skeleton h-80" />
+        <div className="app-skeleton h-80" />
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
-  const t = useTranslations('platform')
+  const t = useTranslations('platform.dashboard')
+  const locale = useLocale()
   const { userProfile } = useAuth()
   const userRole = userProfile?.tipo_usuario
-  const quickAccessLabelKey: Record<string, string> = {
-    'Novo Aluno': 'dashboard.quick.newStudent',
-    'Matrícula': 'dashboard.quick.enrollment',
-    'Frequência': 'dashboard.quick.attendance',
-    'Diário de Classe': 'dashboard.quick.classDiary',
-    'Nova Turma': 'dashboard.quick.newClass',
-    'Relatórios': 'dashboard.quick.reports',
-    Config: 'dashboard.quick.settings',
-  }
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -62,39 +85,41 @@ export default function DashboardPage() {
 
   const loadDashboardData = useCallback(async () => {
     try {
+      setLoading(true)
       setLoadError(null)
 
-      const apiStats = await dashboardStatsApi.getStats()
+      const [apiStats, turmasResult] = await Promise.all([
+        dashboardStatsApi.getStats(),
+        supabase
+          .from('turmas')
+          .select('id, nome, serie, turno')
+          .eq('ativo', true)
+          .order('nome')
+          .limit(5),
+      ])
 
-      const newStats: DashboardStats = {
+      setStats({
         totalAlunos: apiStats.totalAlunos,
         totalEscolas: apiStats.totalEscolas,
         totalTurmas: apiStats.totalTurmas,
         totalProfessores: apiStats.totalProfessores,
         frequenciaMedia: apiStats.frequenciaGeral,
-      }
+      })
 
-      setStats(newStats)
+      if (turmasResult.error) throw turmasResult.error
 
-      const { data: turmasData, error: turmasError } = await supabase
-        .from('turmas')
-        .select('id, nome, serie, turno')
-        .eq('ativo', true)
-        .order('nome')
-        .limit(5)
-
-      if (turmasError) throw turmasError
-
-      const turmaIds = (turmasData ?? []).map(turma => turma.id)
+      const turmaRows = turmasResult.data ?? []
+      const turmaIds = turmaRows.map(turma => turma.id)
       let matriculasData: Array<{ turma_id: string }> = []
+
       if (turmaIds.length > 0) {
-        const { data, error: matriculasError } = await supabase
+        const { data, error } = await supabase
           .from('matriculas')
           .select('turma_id')
           .in('turma_id', turmaIds)
           .eq('situacao', 'ativa')
 
-        if (matriculasError) throw matriculasError
+        if (error) throw error
         matriculasData = data ?? []
       }
 
@@ -106,21 +131,19 @@ export default function DashboardPage() {
         )
       }
 
-      const turmasWithCount: Turma[] = (turmasData || []).map((t) => ({
-        id: t.id,
-        nome: t.nome,
-        serie: t.serie,
-        turno: t.turno,
-        alunosCount: matriculasPorTurma.get(t.id) ?? 0,
-      }))
-      setTurmas(turmasWithCount)
-
+      setTurmas(turmaRows.map(turma => ({
+        id: turma.id,
+        nome: turma.nome,
+        serie: turma.serie,
+        turno: turma.turno,
+        alunosCount: matriculasPorTurma.get(turma.id) ?? 0,
+      })))
     } catch (error) {
       logger.error('DASHBOARD_DATA_LOAD_FAILED', error as Error, {
         feature: 'dashboard',
         action: 'load_dashboard_data',
       })
-      setLoadError(t('dashboard.loadError'))
+      setLoadError(t('loadError'))
     } finally {
       setLoading(false)
     }
@@ -136,35 +159,7 @@ export default function DashboardPage() {
     void loadDashboardData()
   }, [loadDashboardData, userRole])
 
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return t('dashboard.greeting.morning')
-    if (hour < 18) return t('dashboard.greeting.afternoon')
-    return t('dashboard.greeting.evening')
-  }
-
-  // Color indicator by serie for turmas
-  const getSerieColor = (serie: string) => {
-    const serieLower = serie.toLowerCase()
-    if (serieLower.includes('infantil')) return 'bg-pink-500'
-    if (serieLower.includes('fundamental i') || serieLower.includes('fundamental 1')) return 'bg-orange-500'
-    if (serieLower.includes('fundamental ii') || serieLower.includes('fundamental 2')) return 'bg-violet-500'
-    return 'bg-green-500'
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 h-32 rounded-lg"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <DashboardSkeleton />
 
   if (userProfile?.tipo_usuario === 'professor') {
     return <TeacherDashboardEnhanced professorId={userProfile.id} />
@@ -172,149 +167,150 @@ export default function DashboardPage() {
 
   if (loadError) {
     return (
-      <Card className="border-destructive">
-        <CardContent className="py-6 text-sm text-destructive">{loadError}</CardContent>
-      </Card>
+      <section className="app-dashboard-error" role="alert">
+        <AlertTriangle aria-hidden="true" />
+        <div>
+          <h1>{t('errorTitle')}</h1>
+          <p>{loadError} {t('errorHelp')}</p>
+          <button type="button" onClick={() => void loadDashboardData()}>{t('retry')}</button>
+        </div>
+      </section>
     )
   }
 
   const pilotMode = isPilotModeEnabled()
   const demoSandbox = isDemoSandboxEnabled()
   const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
-
   const visibleQuickAccess = resolveVisibleQuickAccess(quickAccessItems, {
     role: (userProfile?.tipo_usuario as QuickAccessRole) ?? null,
     pilotMode,
     canManageSchool,
     demoSandbox,
   })
+  const frequencyIsConformant = stats.frequenciaMedia >= CONFORMIDADE
+  const formattedDate = new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  }).format(new Date())
+  const number = new Intl.NumberFormat(locale)
+
+  const metricItems = [
+    {
+      label: t('averageAttendance'),
+      value: `${stats.frequenciaMedia}%`,
+      detail: frequencyIsConformant ? t('compliant') : t('attention'),
+      icon: frequencyIsConformant ? CheckCircle2 : AlertTriangle,
+      tone: frequencyIsConformant ? 'teal' : 'warning',
+    },
+    { label: t('totalStudents'), value: number.format(stats.totalAlunos), detail: t('students'), icon: Users, tone: 'paper' },
+    { label: t('activeClasses'), value: number.format(stats.totalTurmas), detail: t('activeClassesDescription'), icon: GraduationCap, tone: 'lime' },
+    { label: t('activeTeachers'), value: number.format(stats.totalProfessores), detail: t('activeTeachers'), icon: UserCheck, tone: 'ink' },
+  ] as const
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Branded hero header - the network's key signal leads, in the brand's
-          own identity gradient (shared with the sign-in surface). */}
-      <header className="relative overflow-hidden rounded-educa-lg bg-gradient-to-br from-emerald-700 via-teal-700 to-sky-800 px-6 py-7 text-white sm:px-8 sm:py-9">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
-              {getGreeting()}, {userProfile?.nome?.split(' ')[0] || t('dashboard.user')}!
-            </h1>
-            <p className="mt-2 text-sm text-emerald-50/90 sm:text-base">
-              {t('dashboard.subtitle')}
-            </p>
-          </div>
-          <div className="shrink-0 rounded-educa-md bg-white/10 px-5 py-4 ring-1 ring-inset ring-white/15">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">{t('dashboard.averageAttendance')}</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="font-display text-4xl font-bold leading-none tabular-nums">
-                {stats.frequenciaMedia}%
-              </span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  stats.frequenciaMedia >= CONFORMIDADE
-                    ? 'bg-emerald-400/25 text-emerald-50'
-                    : 'bg-amber-400/25 text-amber-50'
-                }`}
-              >
-                {stats.frequenciaMedia >= CONFORMIDADE ? t('dashboard.compliant') : t('dashboard.attention')}
-              </span>
-            </div>
-          </div>
+    <div className="app-dashboard">
+      <header className="app-dashboard__intro">
+        <div>
+          <h1>{t(`greeting.${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}`)}, {userProfile?.nome?.split(' ')[0] || t('user')}.</h1>
+          <p>{t('subtitle')}</p>
+        </div>
+        <div className="app-dashboard__date">
+          <CalendarDays aria-hidden="true" />
+          <span>{t('today')}</span>
+          <time dateTime={new Date().toISOString().slice(0, 10)}>{formattedDate}</time>
         </div>
       </header>
 
+      <section className="app-dashboard__overview" aria-labelledby="network-overview-title">
+        <div className="app-section-heading">
+          <div>
+            <h2 id="network-overview-title">{t('title')}</h2>
+            <p>{t('subtitle')}</p>
+          </div>
+          <span>{t('activeSchools', { count: stats.totalEscolas })}</span>
+        </div>
+
+        <div className="app-metric-grid">
+          {metricItems.map(({ label, value, detail, icon: Icon, tone }) => (
+            <article className="app-metric" data-tone={tone} key={label}>
+              <div className="app-metric__label">
+                <span>{label}</span>
+                <Icon aria-hidden="true" />
+              </div>
+              <strong className="text-3xl tabular-nums">{value}</strong>
+              <small>{detail}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {visibleQuickAccess.length > 0 && (
-        <nav aria-label={t('dashboard.quickAccess')} className="mb-8">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
-            {visibleQuickAccess.map((item) => {
-              const IconComponent = item.icon
+        <section className="app-dashboard__routines" aria-labelledby="quick-access-title">
+          <div className="app-section-heading app-section-heading--compact">
+            <div>
+              <h2 id="quick-access-title">{t('routines')}</h2>
+              <p>{t('routinesDescription')}</p>
+            </div>
+          </div>
+          <nav className="app-quick-actions" aria-label={t('quickAccess')}>
+            {visibleQuickAccess.map(item => {
+              const Icon = item.icon
               return (
-                <Button
-                  key={item.name}
-                  variant="outline"
-                  size="touch"
-                  asChild
-                  className="w-full justify-start gap-2 border-gray-200 bg-white px-3 text-sm text-green-900 shadow-none hover:border-green-300 hover:bg-green-50 hover:text-green-700 lg:w-auto"
-                >
-                  <Link href={item.href}>
-                    <IconComponent className={`h-4 w-4 ${item.iconColor}`} aria-hidden="true" />
-                    <span>{t(quickAccessLabelKey[item.name] as never)}</span>
-                  </Link>
-                </Button>
+                <Link key={item.name} href={item.href} className="app-quick-action">
+                  <Icon aria-hidden="true" />
+                  <span>{t(`quick.${item.labelKey}`)}</span>
+                  <ArrowRight aria-hidden="true" />
+                </Link>
               )
             })}
-          </div>
-        </nav>
+          </nav>
+        </section>
       )}
 
-      {/* Secondary metrics - the counts; the rate leads in the header above. */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <StatCard
-          icon={Users}
-          iconColor="blue"
-          value={stats.totalAlunos}
-          label={t('dashboard.totalStudents')}
-        />
-        <StatCard
-          icon={GraduationCap}
-          iconColor="green"
-          value={stats.totalTurmas}
-          label={t('dashboard.activeClasses')}
-        />
-        <StatCard
-          icon={UserCheck}
-          iconColor="pink"
-          value={stats.totalProfessores}
-          label={t('dashboard.activeTeachers')}
-        />
-      </div>
-
-      {/* Main Content Grid - 2 columns on desktop, stack on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Minhas Turmas */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-display text-lg text-gray-800">{t('dashboard.myClasses')}</CardTitle>
-            <CardDescription className="text-sm text-gray-500">{t('dashboard.activeClassesDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {turmas.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">{t('dashboard.noClasses')}</p>
-              ) : (
-                turmas.map((turma) => (
-                  <Link key={turma.id} href={`/dashboard/turmas/${turma.id}`}>
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/50 transition-all cursor-pointer group">
-                      {/* Color indicator bar by serie */}
-                      <div className={`w-1 h-12 rounded-full ${getSerieColor(turma.serie)}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 group-hover:text-green-700 transition-colors">
-                          {turma.nome}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {turma.serie} - {turma.turno}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                          {turma.alunosCount} {t('dashboard.students')}
-                        </Badge>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              )}
-              <Button variant="outline" className="w-full mt-2" asChild>
-                <Link href="/dashboard/turmas">{t('dashboard.viewAllClasses')}</Link>
-              </Button>
+      <div className="app-dashboard__work-grid">
+        <section className="app-panel" aria-labelledby="classes-title">
+          <header className="app-panel__header">
+            <div>
+              <h2 id="classes-title">{t('myClasses')}</h2>
+              <p>{t('activeClassesDescription')}</p>
             </div>
-          </CardContent>
-        </Card>
+            <Link href="/dashboard/turmas" className="app-text-link">
+              {t('viewAllClasses')} <ArrowRight aria-hidden="true" />
+            </Link>
+          </header>
 
-        {/* Right Column - Alerts (quick actions live in the single Acessos rápidos row above) */}
+          {turmas.length === 0 ? (
+            <div className="app-empty-state" role="status">
+              <GraduationCap aria-hidden="true" />
+              <div>
+                <strong>{t('noClasses')}</strong>
+              </div>
+            </div>
+          ) : (
+            <ul className="app-class-list">
+              {turmas.map(turma => (
+                <li key={turma.id}>
+                  <Link href={`/dashboard/turmas/${turma.id}`} className="app-class-row">
+                    <span className="app-class-row__marker" data-tone={getSerieTone(turma.serie)} aria-hidden="true" />
+                    <span className="app-class-row__copy">
+                      <strong>{turma.nome}</strong>
+                      <small>{turma.serie} · {turma.turno}</small>
+                    </span>
+                    <span className="app-class-row__count">
+                      <strong className="tabular-nums">{number.format(turma.alunosCount)}</strong>
+                      <small>{t('students')}</small>
+                    </span>
+                    <ArrowRight aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <AlertasCard />
       </div>
-
     </div>
   )
 }

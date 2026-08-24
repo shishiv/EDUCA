@@ -13,9 +13,9 @@ import { DemoSandboxBanner } from '@/components/demo-sandbox/DemoSandboxBanner'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
+import { useTranslations } from 'next-intl'
 import { ModalProvider } from '@/components/ui/modal-manager'
 import { ModalRenderer } from '@/components/ui/modal-renderer'
-import { useTranslations } from 'next-intl'
 
 export default function DashboardLayout({
   children,
@@ -39,10 +39,11 @@ export default function DashboardLayout({
 
 // Inner layout component to manage mobile menu state
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('layout.navigation')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
+    setIsMobileMenuOpen(current => !current)
   }
 
   const closeMobileMenu = () => {
@@ -50,37 +51,34 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-[var(--educa-paper)]">
-      {/* Desktop Sidebar - Full navigation starts when the content can support it */}
+    <div className="educa-app app-shell">
+      <a href="#main-content" className="skip-to-content">{t('skipToContent')}</a>
       <div className="hidden shrink-0 lg:block">
         <Sidebar />
       </div>
 
-      {/* Mobile and tablet sidebar overlay */}
       <MobileSidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Desktop Header - Full controls start at the desktop layout breakpoint */}
         <div className="hidden shrink-0 lg:block">
           <Header />
         </div>
 
-        {/* Mobile and tablet Header */}
-        <div className="lg:hidden">
+        <div className="shrink-0 lg:hidden">
           <MobileHeader
             onMenuToggle={toggleMobileMenu}
             isMenuOpen={isMobileMenuOpen}
           />
         </div>
 
-        {/* Main content reserves space for the mobile and tablet navigation bar */}
-        <main id="main-content" className="mobile-content-padding min-h-0 min-w-0 flex-1 overflow-auto p-4 sm:p-6 lg:px-8 lg:py-6">
-          {isDemoSandboxEnabled() && <DemoSandboxBanner />}
-          {children}
+        <main id="main-content" className="app-main mobile-content-padding">
+          <div className="app-main__inner">
+            {isDemoSandboxEnabled() && <DemoSandboxBanner />}
+            {children}
+          </div>
         </main>
       </div>
 
-      {/* Mobile and tablet Bottom Navigation */}
       <MobileNav />
     </div>
   )
@@ -92,7 +90,12 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
   const { userProfile } = useAuth()
 
   if (!userProfile) {
-    return <div>{t('loading')}</div>
+    return (
+      <div className="educa-app app-auth-state" role="status" aria-live="polite">
+        <span className="app-loading-mark" aria-hidden="true">E</span>
+        <p>{t('preparing')}</p>
+      </div>
+    )
   }
 
   return (

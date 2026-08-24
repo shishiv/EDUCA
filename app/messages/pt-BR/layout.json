@@ -1,6 +1,7 @@
 {
   "dashboard": {
-    "loading": "Carregando..."
+    "loading": "Carregando visão geral",
+    "preparing": "Preparando seu espaço de trabalho..."
   },
   "authGuard": {
     "profileError": "Erro ao carregar perfil do usuário. Tente fazer login novamente."
@@ -54,7 +55,11 @@
     },
     "expand": "Expandir menu lateral",
     "collapse": "Recolher menu lateral",
-    "closeSidebar": "Fechar sidebar"
+    "closeSidebar": "Fechar sidebar",
+    "desktopAriaLabel": "Navegação principal",
+    "drawerTitle": "Menu principal",
+    "authenticatedEnvironment": "Rede municipal · ambiente autenticado",
+    "skipToContent": "Pular para o conteúdo principal"
   },
   "mobileHeader": {
     "openMenu": "Abrir menu",
@@ -69,7 +74,9 @@
       "unknown": "Indefinido"
     },
     "signOut": "Sair",
-    "offlineMessage": "Modo Offline: Suas alterações serão sincronizadas quando a conexão for restabelecida{pending, plural, =0 {} one { (# pendente)} other { (# pendentes)}}"
+    "offlineMessage": "Modo Offline: Suas alterações serão sincronizadas quando a conexão for restabelecida{pending, plural, =0 {} one { (# pendente)} other { (# pendentes)}}",
+    "userOptions": "Opções do usuário",
+    "presentCount": "{present}/{total} presentes"
   },
   "demoSandbox": {
     "title": "Sandbox de demonstração",

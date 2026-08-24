@@ -8,10 +8,12 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('J1: public visitor journey', () => {
-  test('root URL redirects to /login', async ({ page }) => {
+  test('root URL renders the public landing', async ({ page }) => {
     const response = await page.goto('/')
     expect(response?.status()).toBeLessThan(400)
-    await expect(page).toHaveURL(/\/login/)
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(page.getByRole('link', { name: /política de privacidade/i })).toBeVisible()
   })
 
   test('/login renders without errors', async ({ page }) => {

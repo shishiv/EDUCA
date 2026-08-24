@@ -3,215 +3,99 @@
 import { Fragment } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Dialog, Transition } from '@headlessui/react'
-import { cn } from '@/lib/utils'
-import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
-import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
-import { Button } from '@/components/ui/button'
-import { MunicipalBrasao } from '@/components/identity/municipal-assets'
-import { EscolaSelector } from '@/components/layout/escola-selector'
-import {
-  Users,
-  School,
-  UserCheck,
-  Calendar,
-  ClipboardList,
-  Settings,
-  Home,
-  FileText,
-  User,
-  BookOpen,
-  CheckSquare,
-  BookText,
-  X
-} from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { Dialog, Transition } from '@headlessui/react'
+import { X } from 'lucide-react'
+import { EscolaSelector } from '@/components/layout/escola-selector'
+import { getActiveNavigationItemId, getNavigationForRole } from '@/components/layout/navigation'
+import { useAuth } from '@/hooks/use-auth'
+import { cn } from '@/lib/utils'
 
 interface MobileSidebarProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const navigation = [
-  {
-    label: 'items.dashboard',
-    href: '/dashboard',
-    icon: Home,
-  },
-  {
-    label: 'items.students',
-    href: '/dashboard/alunos',
-    icon: Users,
-  },
-  {
-    label: 'items.users',
-    href: '/dashboard/usuarios',
-    icon: User,
-  },
-  {
-    label: 'items.schools',
-    href: '/dashboard/escolas',
-    icon: School,
-  },
-  {
-    label: 'items.classes',
-    href: '/dashboard/turmas',
-    icon: BookOpen,
-  },
-  {
-    label: 'items.enrolments',
-    href: '/dashboard/matriculas',
-    icon: UserCheck,
-  },
-  {
-    label: 'items.attendance',
-    href: '/dashboard/turmas',
-    icon: CheckSquare,
-  },
-  {
-    label: 'items.classDiary',
-    href: '/diario',
-    icon: BookText,
-  },
-  {
-    label: 'items.grades',
-    href: '/dashboard/notas',
-    icon: ClipboardList,
-  },
-  {
-    label: 'items.calendar',
-    href: '/dashboard/calendario',
-    icon: Calendar,
-  },
-  {
-    label: 'items.reports',
-    href: '/dashboard/relatorios',
-    icon: FileText,
-  },
-  {
-    label: 'items.settings',
-    href: '/dashboard/configuracoes',
-    icon: Settings,
-  },
-] as const
-
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const t = useTranslations('layout.navigation')
-  const brand = useTranslations('common.brand')
+  const common = useTranslations('common')
   const pathname = usePathname()
-  const visibleNavigation = navigation.filter(item =>
-    !isPilotModeEnabled() ||
-    !isPilotDisabledPath(item.href) ||
-    isDemoSandboxPilotPathAllowed(item.href)
-  )
+  const { userProfile } = useAuth()
+  const visibleGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
+  const activeItemId = getActiveNavigationItemId(pathname, visibleGroups)
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50 lg:hidden" onClose={onClose}>
+      <Dialog as="div" className="relative z-[70] lg:hidden" onClose={onClose}>
         <Transition.Child
           as={Fragment}
-          enter="transition-opacity ease-linear duration-300"
+          enter="transition-opacity ease-out duration-200"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="transition-opacity ease-linear duration-300"
+          leave="transition-opacity ease-in duration-150"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-900/80" />
+          <div className="app-drawer-backdrop" />
         </Transition.Child>
 
         <div className="fixed inset-0 flex">
           <Transition.Child
             as={Fragment}
-            enter="transition ease-in-out duration-300 transform"
+            enter="transition-transform ease-out duration-200"
             enterFrom="-translate-x-full"
             enterTo="translate-x-0"
-            leave="transition ease-in-out duration-300 transform"
+            leave="transition-transform ease-in duration-150"
             leaveFrom="translate-x-0"
             leaveTo="-translate-x-full"
           >
-            <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-in-out duration-300"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
-                leave="ease-in-out duration-300"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-              >
-                <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="-m-2.5 p-2.5 text-white hover:text-white hover:bg-white/20"
-                  >
-                    <span className="sr-only">{t('closeSidebar')}</span>
-                    <X className="h-6 w-6" aria-hidden="true" />
-                  </Button>
-                </div>
-              </Transition.Child>
-
-              {/* Mobile sidebar content */}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
-                {/* Municipal Header */}
-                <div className="flex items-center justify-between py-4 border-b border-municipal-gray-100">
-                  <div className="flex items-center space-x-3">
-                    {/* Municipal Brasão */}
-                    <div className="flex-shrink-0">
-                      <MunicipalBrasao size="sm" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold text-municipal-primary">{brand('schoolSystem')}</h2>
-                      <p className="text-xs text-municipal-gray-500">{brand('municipalEducationDepartment')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* School context remains available on small screens for multi-school users. */}
-                <div className="border-b border-gray-100 pb-4">
-                  <EscolaSelector />
-                </div>
-
-                {/* Navigation */}
-                <nav className="flex flex-1 flex-col">
-                  <ul role="list" className="flex flex-1 flex-col gap-y-7">
-                    <li>
-                      <ul role="list" className="-mx-2 space-y-1">
-                    {visibleNavigation.map((item) => {
-                          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                          return (
-                            <li key={item.label}>
-                              <Link
-                                href={item.href}
-                                onClick={onClose} // Close menu when navigation item is clicked
-                                className={cn(
-                                  isActive
-                                    ? 'bg-municipal-primary text-white shadow-sm'
-                                    : 'text-municipal-gray-500 hover:text-municipal-primary hover:bg-municipal-gray-50',
-                                  'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium'
-                                )}
-                              >
-                                <item.icon
-                                  className={cn(
-                                    isActive
-                                      ? 'text-white'
-                                      : 'text-municipal-gray-500 group-hover:text-municipal-primary',
-                                    'h-5 w-5 shrink-0'
-                                  )}
-                                  aria-hidden="true"
-                                />
-                                {t(item.label)}
-                              </Link>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </li>
-                  </ul>
-                </nav>
+            <Dialog.Panel className="app-drawer">
+              <div className="app-drawer__header">
+                <Dialog.Title className="sr-only">{t('drawerTitle')}</Dialog.Title>
+                <Link href="/dashboard" className="app-wordmark" onClick={onClose}>
+                  <span className="app-wordmark__mark" aria-hidden="true">E</span>
+                  <span className="app-wordmark__copy">
+                    <strong>EDUCA</strong>
+                    <small>{common('brand.schoolSystem')}</small>
+                  </span>
+                </Link>
+                <button type="button" className="app-drawer__close" onClick={onClose}>
+                  <span className="sr-only">{t('closeSidebar')}</span>
+                  <X aria-hidden="true" />
+                </button>
               </div>
+
+              <div className="app-drawer__school">
+                <EscolaSelector />
+              </div>
+
+              <nav className="app-drawer__nav" aria-label={t('ariaLabel')}>
+                {visibleGroups.map(group => (
+                  <section key={group.id} className="app-drawer__group" aria-label={t(`groups.${group.labelKey}`)}>
+                    <h2>{t(`groups.${group.labelKey}`)}</h2>
+                    <ul>
+                      {group.items.map(item => {
+                        const active = activeItemId === item.id
+                        const Icon = item.icon
+
+                        return (
+                          <li key={`${group.id}-${item.id}`}>
+                            <Link
+                              href={item.href}
+                              onClick={onClose}
+                              aria-current={active ? 'page' : undefined}
+                              className={cn('app-drawer__link', active && 'is-active')}
+                            >
+                              <Icon aria-hidden="true" />
+                              <span>{t(`items.${item.labelKey}`)}</span>
+                            </Link>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </nav>
             </Dialog.Panel>
           </Transition.Child>
         </div>

@@ -19,7 +19,7 @@ Cada jornada tem persona, ambiente, limite de dados, resultado esperado e métod
 
 | # | Persona | Ambiente | Dados | Jornada | Resultado esperado | Verificação |
 |---|---------|----------|-------|---------|-------------------|-------------|
-| J1 | Visitante público | public-demo | Nenhum | Acessa URL raiz, vê redirect para `/login`, vê link de política de privacidade | `/login` renderiza sem erro; política acessível sem auth | Playwright: status 200, heading presente |
+| J1 | Visitante público | public-demo | Nenhum | Acessa URL raiz, vê a landing pública e o link de política de privacidade | Landing renderiza sem erro; política acessível sem auth | Playwright: status 200, heading e link presentes |
 | J2 | Operador municipal sintético | local-synthetic | Seed sintético | Fluxo de escolas, alunos, turmas, matrículas e chamada | CRUD e frequência observáveis | Suíte existente `core-scope.spec.ts` e manifests do runner legacy |
 | J3 | Diretor de escola | local-synthetic | Seed sintético | Isolamento entre escolas | Leitura alheia negada por RLS | `deployed-isolation.spec.ts` |
 | J4 | Professor titular | local-synthetic | Seed sintético | Leitura e escrita da chamada própria, negação entre escolas | Write próprio e deny alheio | `canonical-pilot.spec.ts` |

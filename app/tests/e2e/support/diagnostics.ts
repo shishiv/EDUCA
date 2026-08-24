@@ -5,8 +5,7 @@ interface BrowserIssue {
   message: string
 }
 
-const ignoredUrl = (url: string) =>
-  url.includes('/_next/webpack-hmr') || url.endsWith('/favicon.ico')
+const ignoredUrl = (url: string) => url.includes('/_next/webpack-hmr')
 
 const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
 
