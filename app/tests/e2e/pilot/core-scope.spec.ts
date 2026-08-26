@@ -53,4 +53,52 @@ test.describe('synthetic municipal pilot core scope', () => {
       }
     })).toEqual({ registrations: 0, offlineDatabase: false })
   })
+
+  test('covers the complete synthetic authentication journey', async ({ page }) => {
+    test.setTimeout(60_000)
+    const password = 'Synthetic-Only-2026!'
+    const roles = [
+      ['secretaria@synthetic.invalid', 'Secretário(a)'],
+      ['diretora.a@synthetic.invalid', 'Diretor(a)'],
+      ['professora.a@synthetic.invalid', 'Professor(a)'],
+    ] as const
+
+    await page.context().clearCookies()
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+
+    await page.getByLabel('E-mail', { exact: true }).fill('invalid@synthetic.invalid')
+    await page.getByLabel('Senha', { exact: true }).fill('invalid-password')
+    await page.getByRole('button', { name: /entrar/i }).click()
+    await expect(page.getByRole('alert').filter({ hasText: /credenciais|inválid/i })).toBeVisible()
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+
+    for (const [email, roleLabel] of roles) {
+      await page.getByLabel('E-mail', { exact: true }).fill(email)
+      await page.getByLabel('Senha', { exact: true }).fill(password)
+      await page.getByRole('button', { name: /entrar/i }).click()
+      await expect(page).toHaveURL(/\/dashboard$/)
+      await expect(page.getByRole('button', { name: 'Abrir menu do usuário' })).toBeVisible()
+
+      if (email === roles[0][0]) {
+        await page.reload()
+        await expect(page).toHaveURL(/\/dashboard$/)
+        await expect(page.getByRole('button', { name: 'Abrir menu do usuário' })).toBeVisible()
+      }
+
+      await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
+      await expect(page.getByText(roleLabel, { exact: true }).last()).toBeVisible()
+
+      if (email === roles[2][0]) {
+        await page.getByRole('menuitem', { name: /sair do sistema/i }).click()
+        await expect(page).toHaveURL(/\/login$/)
+      } else {
+        await page.context().clearCookies()
+        await page.goto('/login')
+      }
+    }
+
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+  })
 })
