@@ -17,15 +17,54 @@ SELECT
   'Perfis autorizados a visualizar Bolsa Familia: admin, diretor e secretario',
   'string',
   'admin,diretor,secretario',
-  school.id,
+  NULL,
   true
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM public.configs AS config
+  WHERE config.escola_id IS NULL
+    AND config.chave = 'bolsa_familia_visible_roles'
+);
+
+INSERT INTO public.configs (
+  chave,
+  valor,
+  categoria,
+  descricao,
+  tipo_valor,
+  valor_padrao,
+  escola_id,
+  ativo
+)
+SELECT
+  default_config.chave,
+  default_config.valor,
+  default_config.categoria,
+  default_config.descricao,
+  default_config.tipo_valor,
+  default_config.valor_padrao,
+  school.id,
+  default_config.ativo
 FROM public.escolas AS school
+CROSS JOIN LATERAL (
+  SELECT config.*
+  FROM public.configs AS config
+  WHERE config.escola_id IS NULL
+    AND config.chave = 'bolsa_familia_visible_roles'
+  ORDER BY config.updated_at DESC, config.created_at DESC, config.id DESC
+  LIMIT 1
+) AS default_config
 WHERE NOT EXISTS (
   SELECT 1
   FROM public.configs AS config
   WHERE config.escola_id = school.id
     AND config.chave = 'bolsa_familia_visible_roles'
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS configs_bolsa_familia_visibility_default
+ON public.configs(chave)
+WHERE escola_id IS NULL
+  AND chave = 'bolsa_familia_visible_roles';
 
 CREATE UNIQUE INDEX IF NOT EXISTS configs_bolsa_familia_visibility_school
 ON public.configs(escola_id, chave)
@@ -50,20 +89,25 @@ BEGIN
     ativo
   )
   SELECT
-    'bolsa_familia_visible_roles',
-    'admin,diretor,secretario',
-    'seguranca',
-    'Perfis autorizados a visualizar Bolsa Familia: admin, diretor e secretario',
-    'string',
-    'admin,diretor,secretario',
+    config.chave,
+    config.valor,
+    config.categoria,
+    config.descricao,
+    config.tipo_valor,
+    config.valor_padrao,
     NEW.id,
-    true
-  WHERE NOT EXISTS (
-    SELECT 1
-    FROM public.configs AS config
-    WHERE config.escola_id = NEW.id
-      AND config.chave = 'bolsa_familia_visible_roles'
-  );
+    config.ativo
+  FROM public.configs AS config
+  WHERE config.escola_id IS NULL
+    AND config.chave = 'bolsa_familia_visible_roles'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.configs AS school_config
+      WHERE school_config.escola_id = NEW.id
+        AND school_config.chave = 'bolsa_familia_visible_roles'
+    )
+  ORDER BY config.updated_at DESC, config.created_at DESC, config.id DESC
+  LIMIT 1;
 
   RETURN NEW;
 END;
@@ -130,17 +174,21 @@ AS $$
     AND public.pilot_can_access_school(target_school_id)
     AND public.pilot_current_role() = ANY(
       string_to_array(
-        coalesce(
-          (
-            SELECT config.valor
-            FROM public.configs AS config
-            WHERE config.escola_id = target_school_id
-              AND config.chave = 'bolsa_familia_visible_roles'
-              AND config.ativo = true
-            ORDER BY config.updated_at DESC, config.created_at DESC, config.id DESC
-            LIMIT 1
-          ),
-          'admin,diretor,secretario'
+        (
+          SELECT config.valor
+          FROM public.configs AS config
+          WHERE config.chave = 'bolsa_familia_visible_roles'
+            AND config.ativo = true
+            AND (
+              config.escola_id = target_school_id
+              OR config.escola_id IS NULL
+            )
+          ORDER BY
+            (config.escola_id IS NOT NULL) DESC,
+            config.updated_at DESC,
+            config.created_at DESC,
+            config.id DESC
+          LIMIT 1
         ),
         ','
       )

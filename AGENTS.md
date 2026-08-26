@@ -12,6 +12,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Read [`CONTEXT.md`](CONTEXT.md) before working. Run application commands from `app/`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, and applicable build or pilot commands listed there.
 
+Store every customer- or school-specific value in the database with a seeded default, per-school overrides, role-governed mutation, and strict school isolation. Do not encode these values in source constants, environment variables, repository config, or component literals.
+
 ## Maintaining this file
 
 Keep this file thin. Put durable project context and authoritative commands in `CONTEXT.md`.
