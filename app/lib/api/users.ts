@@ -139,17 +139,17 @@ export class UsersApiService extends BaseApiService {
   }
 
   // Update user status
-  async updateUserStatus(id: string, ativo: boolean, reason?: string) {
+  async updateUserStatus(id: string, ativo: boolean, _reason?: string) {
     try {
-      const result = await this.update(id, { ativo })
-
-      // Log status change
-      await logAuthEvent('session_expired', id, {
-        action: ativo ? 'user_activated' : 'user_deactivated',
-        reason
+      const response = await fetch(`/api/users/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ativo }),
       })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'USER_STATUS_UPDATE_FAILED')
 
-      return result
+      return result.user
     } catch (error) {
       throw error
     }
