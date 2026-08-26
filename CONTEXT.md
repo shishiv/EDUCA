@@ -65,6 +65,9 @@ pnpm test:e2e:pilot:security             # focused security child with its own R
 pnpm test:e2e:pilot:capacity             # isolated synthetic capacity seed and concurrency E2E
 pnpm test:e2e:pilot:descriptive         # isolated synthetic seed, bounded descriptive-report PDF E2E
 pnpm test:database:attendance:conditionality  # isolated raw PostgreSQL legal floors, municipal margins, fallback, and RLS
+pnpm test:database:schema-canary              # isolated synthetic per-school schema setup/export/restore/rollback proof
+pnpm canary:schema:setup                      # local-only synthetic canary setup; requires the documented DB_URL and safety flags
+pnpm canary:schema:rollback                   # removes only canary schema metadata; requires the same local safety flags
 pnpm pilot:restore-test                 # local synthetic encrypted backup/restore rehearsal
 pnpm seed:demo                          # synthetic demo seed / reset primitive (issue #23)
 pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case
@@ -116,6 +119,7 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `app/scripts/` | Seed, pilot, deployment, and operational commands. |
 | `AUDIT-2026-08-10.md` | Bounded reconciliation, current receipts, open ships, and decision holds for the 2026-08-10 session. |
 | `supabase/config.toml`, `supabase/migrations/` | Local Supabase configuration and canonical schema evolution. |
+| `supabase/canary/`, `supabase/tests/canary/`, `docs/SCHOOL-SCHEMA-CANARY.md` | Non-routed synthetic school-schema canary, deterministic rollback, and isolated export/restore proof. |
 | `supabase/pilot/provision-pilot-module-gate.sql` | Explicit synthetic-pilot containment. |
 | `supabase/tests/` | Database and backup/restore validation. |
 | `docs/PILOT-DATA-IMPORT.md`, `app/scripts/pilot-import-proof.ts`, `app/scripts/run-pilot-import-proof-e2e.sh` | Governed CSV contract, proof-only import runner, retention, rollback, fingerprints, and isolated PostgreSQL receipt. |

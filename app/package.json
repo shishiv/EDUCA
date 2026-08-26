@@ -47,6 +47,9 @@
     "docs:api": "typedoc --options typedoc.json",
     "test:database:pilot:capacity": "bash ../supabase/tests/database/run-pilot-capacity-contract.sh",
     "test:database:attendance:conditionality": "bash ../supabase/tests/database/run-attendance-conditionality-contract.sh",
+    "canary:schema:setup": "bash ../supabase/canary/setup.sh",
+    "canary:schema:rollback": "bash ../supabase/canary/rollback.sh",
+    "test:database:schema-canary": "bash ../supabase/tests/canary/run.sh",
     "dev:local": "bash scripts/dev-local.sh",
     "test:dev-local": "bash tests/unit/dev-local/dev-local.test.sh"
   },
