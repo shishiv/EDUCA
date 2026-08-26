@@ -14,9 +14,12 @@ import {
 } from 'lucide-react'
 import { AlertasCard } from '@/components/dashboard/alertas-card'
 import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
+import { EscolaRequiredState } from '@/components/ui/escola-required-state'
+import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
+import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { getTodaySaoPaulo } from '@/lib/date-utils'
 import {
   quickAccessItems,
   resolveVisibleQuickAccess,
@@ -25,6 +28,7 @@ import {
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { createAcademicYearService, type ResolvedAcademicYear } from '@/lib/services/academic-year'
 import { supabase } from '@/lib/supabase'
 
 interface DashboardStats {
@@ -42,6 +46,8 @@ interface Turma {
   turno: string
   alunosCount: number
 }
+
+const academicYearService = createAcademicYearService(supabase)
 
 function getSerieTone(serie: string) {
   const normalized = serie.toLowerCase()
@@ -71,7 +77,9 @@ export default function DashboardPage() {
   const t = useTranslations('platform.dashboard')
   const locale = useLocale()
   const { userProfile } = useAuth()
+  const { selectedEscolaId, shouldShowSelector, loading: escolaLoading } = useEscola()
   const userRole = userProfile?.tipo_usuario
+  const escolaId = shouldShowSelector ? selectedEscolaId : userProfile?.escola_id ?? null
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -81,18 +89,28 @@ export default function DashboardPage() {
   })
   const [loading, setLoading] = useState(true)
   const [turmas, setTurmas] = useState<Turma[]>([])
+  const [academicYear, setAcademicYear] = useState<ResolvedAcademicYear | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadDashboardData = useCallback(async () => {
+    if (!escolaId) return
+
     try {
       setLoading(true)
       setLoadError(null)
 
+      const resolvedAcademicYear = await academicYearService.resolveCurrent(escolaId, getTodaySaoPaulo())
+      setAcademicYear(resolvedAcademicYear)
+
+      if (userRole === 'professor') return
+
       const [apiStats, turmasResult] = await Promise.all([
-        dashboardStatsApi.getStats(),
+        dashboardStatsApi.getStats({ escolaId, academicYear: resolvedAcademicYear }),
         supabase
           .from('turmas')
           .select('id, nome, serie, turno')
+          .eq('escola_id', escolaId)
+          .eq('ano_letivo', resolvedAcademicYear.year)
           .eq('ativo', true)
           .order('nome')
           .limit(5),
@@ -117,6 +135,7 @@ export default function DashboardPage() {
           .from('matriculas')
           .select('turma_id')
           .in('turma_id', turmaIds)
+          .eq('ano_letivo', resolvedAcademicYear.year)
           .eq('situacao', 'ativa')
 
         if (error) throw error
@@ -143,26 +162,32 @@ export default function DashboardPage() {
         feature: 'dashboard',
         action: 'load_dashboard_data',
       })
+      setAcademicYear(null)
       setLoadError(t('loadError'))
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [escolaId, t, userRole])
 
   useEffect(() => {
-    if (!userRole) return
-    if (userRole === 'professor') {
+    if (!userRole || escolaLoading) return
+    if (!escolaId) {
+      setAcademicYear(null)
       setLoading(false)
       return
     }
 
     void loadDashboardData()
-  }, [loadDashboardData, userRole])
+  }, [escolaId, escolaLoading, loadDashboardData, userRole])
 
-  if (loading) return <DashboardSkeleton />
+  if (loading || escolaLoading) return <DashboardSkeleton />
 
-  if (userProfile?.tipo_usuario === 'professor') {
-    return <TeacherDashboardEnhanced professorId={userProfile.id} />
+  if (!escolaId) {
+    return <div className="app-dashboard"><EscolaRequiredState /></div>
+  }
+
+  if (userProfile?.tipo_usuario === 'professor' && academicYear) {
+    return <TeacherDashboardEnhanced professorId={userProfile.id} academicYear={academicYear} />
   }
 
   if (loadError) {
@@ -177,6 +202,8 @@ export default function DashboardPage() {
       </section>
     )
   }
+
+  if (!academicYear) return <DashboardSkeleton />
 
   const pilotMode = isPilotModeEnabled()
   const demoSandbox = isDemoSandboxEnabled()
@@ -204,7 +231,7 @@ export default function DashboardPage() {
       tone: frequencyIsConformant ? 'teal' : 'warning',
     },
     { label: t('totalStudents'), value: number.format(stats.totalAlunos), detail: t('students'), icon: Users, tone: 'paper' },
-    { label: t('activeClasses'), value: number.format(stats.totalTurmas), detail: t('activeClassesDescription'), icon: GraduationCap, tone: 'lime' },
+    { label: t('activeClasses'), value: number.format(stats.totalTurmas), detail: t('activeClassesDescription', { year: academicYear.year }), icon: GraduationCap, tone: 'lime' },
     { label: t('activeTeachers'), value: number.format(stats.totalProfessores), detail: t('activeTeachers'), icon: UserCheck, tone: 'ink' },
   ] as const
 
@@ -213,7 +240,7 @@ export default function DashboardPage() {
       <header className="app-dashboard__intro">
         <div>
           <h1>{t(`greeting.${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}`)}, {userProfile?.nome?.split(' ')[0] || t('user')}.</h1>
-          <p>{t('subtitle')}</p>
+          <p>{t('subtitle', { year: academicYear.year })}</p>
         </div>
         <div className="app-dashboard__date">
           <CalendarDays aria-hidden="true" />
@@ -226,7 +253,7 @@ export default function DashboardPage() {
         <div className="app-section-heading">
           <div>
             <h2 id="network-overview-title">{t('title')}</h2>
-            <p>{t('subtitle')}</p>
+            <p>{t('subtitle', { year: academicYear.year })}</p>
           </div>
           <span>{t('activeSchools', { count: stats.totalEscolas })}</span>
         </div>
@@ -273,7 +300,7 @@ export default function DashboardPage() {
           <header className="app-panel__header">
             <div>
               <h2 id="classes-title">{t('myClasses')}</h2>
-              <p>{t('activeClassesDescription')}</p>
+              <p>{t('activeClassesDescription', { year: academicYear.year })}</p>
             </div>
             <Link href="/dashboard/turmas" className="app-text-link">
               {t('viewAllClasses')} <ArrowRight aria-hidden="true" />
@@ -309,7 +336,7 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <AlertasCard />
+        <AlertasCard escolaId={escolaId} academicYear={academicYear} />
       </div>
     </div>
   )

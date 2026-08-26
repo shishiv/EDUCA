@@ -26,6 +26,46 @@ describe('academic year service', () => {
     })
   })
 
+  it('resolves the persisted current year', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [academicYear], error: null })
+    const service = createAcademicYearService({ rpc } as never)
+
+    await expect(service.resolveCurrent(academicYear.escola_id, '2026-08-26')).resolves.toEqual({
+      year: 2026,
+      startDate: academicYear.data_inicio,
+      endDate: academicYear.data_fim,
+      configured: true,
+    })
+  })
+
+  it('uses the calendar-year default when configuration is missing', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null })
+    const service = createAcademicYearService({ rpc } as never)
+
+    await expect(service.resolveCurrent(academicYear.escola_id, '2028-06-10')).resolves.toEqual({
+      year: 2028,
+      startDate: '2028-01-01',
+      endDate: '2028-12-31',
+      configured: false,
+    })
+  })
+
+  it('resolves January to the new configured year', async () => {
+    const januaryYear = { ...academicYear, ano: 2027, data_inicio: '2027-01-01', data_fim: '2027-12-31' }
+    const rpc = vi.fn().mockResolvedValue({ data: [januaryYear], error: null })
+    const service = createAcademicYearService({ rpc } as never)
+
+    await expect(service.resolveCurrent(academicYear.escola_id, '2027-01-01')).resolves.toMatchObject({
+      year: 2027,
+      startDate: '2027-01-01',
+      endDate: '2027-12-31',
+    })
+    expect(rpc).toHaveBeenCalledWith('get_school_academic_year', {
+      p_escola_id: academicYear.escola_id,
+      p_ano: 2027,
+    })
+  })
+
   it('updates configurable dates through the governed interface', async () => {
     const updated = { ...academicYear, data_inicio: '2026-02-09', data_fim: '2026-12-21' }
     const rpc = vi.fn().mockResolvedValue({ data: [updated], error: null })

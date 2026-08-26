@@ -1,11 +1,10 @@
-/**
- * Dashboard Statistics - aggregate counts and attendance frequency for the dashboard cards.  Pure reads with no write operations.
- */
-import { supabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
+import type { ResolvedAcademicYear } from '@/lib/services/academic-year'
+import type { Database } from '@/types/database'
 
-/** Dashboard indicators calculated from active records and canonical attendance. */
 export interface DashboardStats {
   totalAlunos: number
   totalEscolas: number
@@ -14,145 +13,96 @@ export interface DashboardStats {
   frequenciaGeral: number
 }
 
-/** Optional school scope for dashboard indicators. */
 export interface DashboardStatsOptions {
-  escolaId?: string
-  includeInactive?: boolean
+  escolaId: string
+  academicYear: ResolvedAcademicYear
 }
 
-/** Loads dashboard indicators without sampling or synthesizing attendance data. */
 export class DashboardStatsApiService {
-  async getStats(options: DashboardStatsOptions = {}): Promise<DashboardStats> {
-    const { escolaId, includeInactive = false } = options
+  constructor(private client: SupabaseClient<Database>) {}
+
+  async getStats(options: DashboardStatsOptions): Promise<DashboardStats> {
+    const { escolaId, academicYear } = options
 
     try {
-      const [
-        totalAlunos,
-        totalEscolas,
-        totalTurmas,
-        totalProfessores,
-        attendanceFacts,
-      ] = await Promise.all([
-        this.countAlunos(escolaId, includeInactive),
-        this.countEscolas(escolaId, includeInactive),
-        this.countTurmas(escolaId, includeInactive),
-        this.countProfessores(escolaId, includeInactive),
-        this.loadAttendanceFacts(escolaId),
+      const { data: turmaRows, error: turmasError } = await this.client
+        .from('turmas')
+        .select('id, professor_id')
+        .eq('escola_id', escolaId)
+        .eq('ano_letivo', academicYear.year)
+        .eq('ativo', true)
+
+      if (turmasError) throw turmasError
+
+      const turmaIds = (turmaRows ?? []).map(turma => turma.id)
+      const professorIds = [...new Set(
+        (turmaRows ?? []).map(turma => turma.professor_id).filter((id): id is string => Boolean(id))
+      )]
+
+      const schoolPromise = this.client
+        .from('escolas')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', escolaId)
+        .eq('ativo', true)
+
+      const matriculasPromise = turmaIds.length === 0
+        ? Promise.resolve({ data: [], error: null })
+        : this.client
+            .from('matriculas')
+            .select('id, aluno_id')
+            .in('turma_id', turmaIds)
+            .eq('ano_letivo', academicYear.year)
+            .eq('situacao', 'ativa')
+
+      const professoresPromise = professorIds.length === 0
+        ? Promise.resolve({ count: 0, error: null })
+        : this.client
+            .from('users')
+            .select('id', { count: 'exact', head: true })
+            .in('id', professorIds)
+            .eq('tipo_usuario', 'professor')
+            .eq('ativo', true)
+
+      const [schoolResult, matriculasResult, professoresResult] = await Promise.all([
+        schoolPromise,
+        matriculasPromise,
+        professoresPromise,
       ])
 
+      if (schoolResult.error) throw schoolResult.error
+      if (matriculasResult.error) throw matriculasResult.error
+      if (professoresResult.error) throw professoresResult.error
+
+      const matriculas = matriculasResult.data ?? []
+      const attendanceFacts = await loadCanonicalAttendanceFacts(
+        this.client,
+        matriculas.map(matricula => matricula.id),
+        { startDate: academicYear.startDate, endDate: academicYear.endDate },
+      )
       const presentes = attendanceFacts.filter(fact => fact.presente).length
-      const frequenciaGeral = attendanceFacts.length === 0
-        ? 0
-        : Number(((presentes / attendanceFacts.length) * 100).toFixed(1))
 
       return {
-        totalAlunos,
-        totalEscolas,
-        totalTurmas,
-        totalProfessores,
-        frequenciaGeral,
+        totalAlunos: new Set(matriculas.map(matricula => matricula.aluno_id)).size,
+        totalEscolas: schoolResult.count ?? 0,
+        totalTurmas: turmaIds.length,
+        totalProfessores: professoresResult.count ?? 0,
+        frequenciaGeral: attendanceFacts.length === 0
+          ? 0
+          : Number(((presentes / attendanceFacts.length) * 100).toFixed(1)),
       }
     } catch (error) {
       logger.error('DASHBOARD_STATS_LOAD_FAILED', error as Error, {
         feature: 'dashboard',
         action: 'load_stats',
-        metadata: { escolaId, includeInactive },
+        metadata: { escolaId, academicYear: academicYear.year },
       })
       throw error
     }
   }
-
-  /** Counts active students, scoped through active enrollments when needed. */
-  private async countAlunos(escolaId?: string, includeInactive = false): Promise<number> {
-    if (!escolaId) {
-      let query = supabase.from('alunos').select('id', { count: 'exact', head: true })
-      if (!includeInactive) query = query.eq('ativo', true)
-      const { count, error } = await query
-      if (error) throw error
-      return count ?? 0
-    }
-
-    const turmaIds = await this.loadActiveTurmaIds(escolaId)
-    if (turmaIds.length === 0) return 0
-
-    const { count, error } = await supabase
-      .from('matriculas')
-      .select('aluno_id', { count: 'exact', head: true })
-      .eq('situacao', 'ativa')
-      .in('turma_id', turmaIds)
-
-    if (error) throw error
-    return count ?? 0
-  }
-
-  /** Counts active schools in the current dashboard scope. */
-  private async countEscolas(escolaId?: string, includeInactive = false): Promise<number> {
-    let query = supabase.from('escolas').select('id', { count: 'exact', head: true })
-    if (escolaId) query = query.eq('id', escolaId)
-    if (!includeInactive) query = query.eq('ativo', true)
-
-    const { count, error } = await query
-    if (error) throw error
-    return count ?? 0
-  }
-
-  /** Counts active classes in the current dashboard scope. */
-  private async countTurmas(escolaId?: string, includeInactive = false): Promise<number> {
-    let query = supabase.from('turmas').select('id', { count: 'exact', head: true })
-    if (escolaId) query = query.eq('escola_id', escolaId)
-    if (!includeInactive) query = query.eq('ativo', true)
-
-    const { count, error } = await query
-    if (error) throw error
-    return count ?? 0
-  }
-
-  /** Counts active teacher profiles instead of using the enrollment total. */
-  private async countProfessores(escolaId?: string, includeInactive = false): Promise<number> {
-    let query = supabase
-      .from('users')
-      .select('id', { count: 'exact', head: true })
-      .eq('tipo_usuario', 'professor')
-
-    if (escolaId) query = query.eq('escola_id', escolaId)
-    if (!includeInactive) query = query.eq('ativo', true)
-
-    const { count, error } = await query
-    if (error) throw error
-    return count ?? 0
-  }
-
-  /** Loads active class identifiers for a school-scoped attendance query. */
-  private async loadActiveTurmaIds(escolaId: string): Promise<string[]> {
-    const { data, error } = await supabase
-      .from('turmas')
-      .select('id')
-      .eq('escola_id', escolaId)
-      .eq('ativo', true)
-
-    if (error) throw error
-    return (data ?? []).map(turma => turma.id)
-  }
-
-  /** Loads canonical attendance for active enrollments in the requested scope. */
-  private async loadAttendanceFacts(escolaId?: string) {
-    let query = supabase
-      .from('matriculas')
-      .select('id')
-      .eq('situacao', 'ativa')
-
-    if (escolaId) {
-      const turmaIds = await this.loadActiveTurmaIds(escolaId)
-      if (turmaIds.length === 0) return []
-      query = query.in('turma_id', turmaIds)
-    }
-
-    const { data, error } = await query
-    if (error) throw error
-
-    return loadCanonicalAttendanceFacts(supabase, (data ?? []).map(matricula => matricula.id))
-  }
 }
 
-/** Singleton dashboard stats service used by the dashboard client page. */
-export const dashboardStatsApi = new DashboardStatsApiService()
+export function createDashboardStatsApi(client: SupabaseClient<Database>) {
+  return new DashboardStatsApiService(client)
+}
+
+export const dashboardStatsApi = createDashboardStatsApi(supabase)

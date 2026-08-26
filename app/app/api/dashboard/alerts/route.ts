@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
+import { createAcademicYearService } from '@/lib/services/academic-year'
 import {
   getAttendanceConditionality,
   filterBolsaFamiliaConditionality,
@@ -22,7 +23,7 @@ export interface DashboardAlert {
   createdAt: string
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -43,32 +44,42 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 403 })
     }
 
-    const alerts: DashboardAlert[] = []
-    const today = getTodaySaoPaulo()
-
-    // Build school filter based on role
-    let escolaFilter: string | null = null
-    if (userProfile.tipo_usuario === 'diretor' || userProfile.tipo_usuario === 'secretario') {
-      escolaFilter = userProfile.escola_id
+    const escolaFilter = request.nextUrl.searchParams.get('escolaId')
+    const requestedYearParam = request.nextUrl.searchParams.get('year')
+    if (!escolaFilter || !requestedYearParam || !/^\d{4}$/.test(requestedYearParam)) {
+      return NextResponse.json({ error: 'Escola e ano letivo são obrigatórios' }, { status: 400 })
     }
 
-    // 1. Check for classes without attendance today
+    const requestedYear = Number(requestedYearParam)
+
+    if (userProfile.escola_id && userProfile.escola_id !== escolaFilter) {
+      return NextResponse.json({ error: 'Acesso negado para esta escola' }, { status: 403 })
+    }
+
+    const today = getTodaySaoPaulo()
+    const academicYear = await createAcademicYearService(supabase).resolveCurrent(escolaFilter, today)
+    if (academicYear.year !== requestedYear) {
+      return NextResponse.json({ error: 'Ano letivo desatualizado' }, { status: 409 })
+    }
+
+    const alerts: DashboardAlert[] = []
+    const todayInAcademicYear = today >= academicYear.startDate && today <= academicYear.endDate
     let turmasQuery = supabase
       .from('turmas')
       .select('id, nome')
+      .eq('escola_id', escolaFilter)
+      .eq('ano_letivo', academicYear.year)
       .eq('ativo', true)
 
     if (userProfile.tipo_usuario === 'professor') {
       turmasQuery = turmasQuery.eq('professor_id', userProfile.id)
-    } else if (escolaFilter) {
-      turmasQuery = turmasQuery.eq('escola_id', escolaFilter)
     }
 
     const { data: turmas } = await turmasQuery
     const turmaIds = turmas?.map(t => t.id) || []
     const visibleTurmaIds = new Set(turmaIds)
 
-    if (turmaIds.length > 0) {
+    if (turmaIds.length > 0 && todayInAcademicYear) {
       // Get sessions done today
       const { data: sessoes } = await supabase
         .from('sessoes_aula')
@@ -101,11 +112,13 @@ export async function GET(_request: NextRequest) {
     // 2. Resolve all Bolsa Família legal and municipality statuses from the
     // canonical read model. No threshold is reconstructed in this route.
     const canViewBolsaFamilia = ['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)
-    if (canViewBolsaFamilia) {
+    if (canViewBolsaFamilia && todayInAcademicYear) {
       const monthConditionality = await getAttendanceConditionality(supabase, {
-        startDate: `${today.slice(0, 7)}-01`,
+        startDate: academicYear.startDate > `${today.slice(0, 7)}-01`
+          ? academicYear.startDate
+          : `${today.slice(0, 7)}-01`,
         endDate: today,
-        escolaId: escolaFilter ?? undefined,
+        escolaId: escolaFilter,
       })
 
       if (monthConditionality.error) {
@@ -140,11 +153,11 @@ export async function GET(_request: NextRequest) {
     }
 
     // 3. Check today's attendance against the resolved municipality margin.
-    if (turmaIds.length > 0 && canViewBolsaFamilia) {
+    if (turmaIds.length > 0 && canViewBolsaFamilia && todayInAcademicYear) {
       const todayConditionality = await getAttendanceConditionality(supabase, {
         startDate: today,
         endDate: today,
-        escolaId: escolaFilter ?? undefined,
+        escolaId: escolaFilter,
       })
       const rowsBelowMargin = todayConditionality.data.filter((row) => (
         row.tem_dados_frequencia

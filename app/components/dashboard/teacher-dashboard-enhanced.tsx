@@ -7,9 +7,11 @@ import { AlertTriangle, ArrowRight, BookOpenCheck, CalendarDays, CheckCircle2, C
 import { supabase } from '@/lib/supabase'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
 import { logger } from '@/lib/logger'
+import type { ResolvedAcademicYear } from '@/lib/services/academic-year'
 
 export interface TeacherDashboardEnhancedProps {
   professorId: string
+  academicYear: ResolvedAcademicYear
 }
 
 interface TeacherClassSession {
@@ -27,7 +29,7 @@ interface TeacherClassSummary {
 }
 
 /** Shows a professor only the assigned classes, active enrollments, and today's calls. */
-export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhancedProps) {
+export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherDashboardEnhancedProps) {
   const t = useTranslations('platform.dashboard')
   const locale = useLocale()
   const [turmas, setTurmas] = useState<TeacherClassSummary[]>([])
@@ -44,6 +46,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
           .from('turmas')
           .select('id, nome, serie, turno')
           .eq('professor_id', professorId)
+          .eq('ano_letivo', academicYear.year)
           .eq('ativo', true)
           .order('nome')
 
@@ -60,6 +63,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
             .from('matriculas')
             .select('turma_id')
             .in('turma_id', turmaIds)
+            .eq('ano_letivo', academicYear.year)
             .eq('situacao', 'ativa'),
           supabase
             .from('sessoes_aula')
@@ -109,7 +113,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
     }
 
     void loadTeacherDashboard()
-  }, [professorId, t])
+  }, [academicYear.year, professorId, t])
 
   if (loading) {
     return (
@@ -150,7 +154,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
       <header className="app-dashboard__intro">
         <div>
           <h1>{t('teacherPanel')}</h1>
-          <p>{t('teacherSubtitle')}</p>
+          <p>{t('teacherSubtitle', { year: academicYear.year })}</p>
         </div>
         <div className="app-dashboard__date">
           <CalendarDays aria-hidden="true" />
@@ -175,7 +179,7 @@ export function TeacherDashboardEnhanced({ professorId }: TeacherDashboardEnhanc
           <article className="app-metric" data-tone="lime">
             <div className="app-metric__label"><span>{t('activeStudents')}</span><Users aria-hidden="true" /></div>
             <strong className="text-3xl tabular-nums">{number.format(totalAlunos)}</strong>
-            <small>{t('teacherCurrentClasses')}</small>
+            <small>{t('teacherCurrentClasses', { year: academicYear.year })}</small>
           </article>
           <article className="app-metric" data-tone="ink">
             <div className="app-metric__label"><span>{t('callsToday')}</span><BookOpenCheck aria-hidden="true" /></div>
