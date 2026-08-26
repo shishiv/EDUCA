@@ -58,23 +58,21 @@
 
 ## Comece agora · Get started
 
-**PT:** Pré-requisitos: Node.js 20+, pnpm 9+ e Docker (para Supabase CLI local).
+**PT:** Pré-requisitos: Node.js 20+, pnpm 9+, Docker e [portless](https://github.com/vercel-labs/portless).
 
-**EN:** Prerequisites: Node.js 20+, pnpm 9+, and Docker (for the local Supabase CLI).
+**EN:** Prerequisites: Node.js 20+, pnpm 9+, Docker, and [portless](https://github.com/vercel-labs/portless).
 
 ```bash
 git clone https://github.com/shishiv/EDUCA.git
 cd EDUCA/app
 pnpm install --frozen-lockfile
+portless proxy start
 pnpm dev:local
 ```
 
-O comando inicia o Supabase local, aplica migrations, configura `.env.local` e abre o servidor Next.js. No encerramento (Ctrl-C), limpa apenas os recursos que ele iniciou.
+O comando cria um Supabase local descartável em portas isoladas, aplica as migrations e a contenção do piloto, carrega somente dados sintéticos e imprime a URL local. Entre como secretaria com `secretaria@synthetic.invalid` / `Synthetic-Only-2026!`, abra `/dashboard` e encerre por **Sair do Sistema** no menu do usuário. Pressione Ctrl-C no terminal para remover o app, os contêineres e os dados locais criados pela execução.
 
-The command starts local Supabase, applies migrations, configures `.env.local`, and opens the Next.js dev server. On exit (Ctrl-C), it cleans up only the resources it started.
-
-Para resetar o banco com seed sintético: `pnpm dev:local --reset`
-To reset the database with synthetic seed: `pnpm dev:local --reset`
+The command creates a disposable local Supabase stack on isolated ports, applies migrations and the pilot containment gate, loads only synthetic data, and prints the local URL. Sign in as the secretariat role with `secretaria@synthetic.invalid` / `Synthetic-Only-2026!`, open `/dashboard`, then choose **Sair do Sistema** from the user menu. Press Ctrl-C in the terminal to remove the app, containers, and local data created by the run.
 
 Setup completo, comandos exatos e limites do piloto: [`CONTEXT.md`](CONTEXT.md).
 Full setup, exact commands, and pilot boundaries: [`CONTEXT.md`](CONTEXT.md).

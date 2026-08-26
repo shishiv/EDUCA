@@ -1,41 +1,24 @@
 #!/usr/bin/env bash
-# EDUCA - Canonical local development command (issue #17)
-#
-# Usage:
-#   pnpm dev:local              # start Supabase + Next.js dev; cleanup on exit
-#   pnpm dev:local --reset      # reset DB with synthetic seed before starting
-#
-# Requirements: Node.js 20+, pnpm 9+, Docker running, portless proxy active.
-# The script uses the Supabase CLI pinned in the project dependencies.
-# It never uses sudo, never connects to remote endpoints, and cleans up
-# only the resources it started.
-
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/.." && pwd)"
-
-# --- Supabase CLI wrapper ---
-run_supabase() {
-  pnpm exec supabase --workdir "$REPO_ROOT" "$@"
-}
-
-# Flags
-RESET_DB=false
-STARTED_SUPABASE=false
-NEXT_PID=""
-CLEANUP_EXIT=""
+source "$SCRIPT_DIR/pilot-port-range-lease.sh"
+source "$SCRIPT_DIR/pilot-supabase-cleanup.sh"
 
 for arg in "$@"; do
   case "$arg" in
-    --reset) RESET_DB=true ;;
+    --reset) ;;
     --help|-h)
-      echo "Usage: pnpm dev:local [--reset]"
-      echo ""
-      echo "  --reset   Reset the local database with migrations and seed (destructive)"
-      echo ""
-      echo "Without --reset, migrations are applied non-destructively (db push --local)."
+      printf '%s\n' \
+        'Usage: pnpm dev:local [--reset]' \
+        '' \
+        'Starts an isolated local Supabase stack, loads deterministic synthetic pilot data,' \
+        'starts EDUCA at a named .localhost URL, and removes the stack on exit.' \
+        '' \
+        'Prerequisites: Node.js 20+, pnpm 9+, Docker, and a running portless proxy.' \
+        'Cleanup: press Ctrl-C in the same terminal.'
       exit 0
       ;;
     *)
@@ -45,207 +28,140 @@ for arg in "$@"; do
   esac
 done
 
-# --- Safety gates ---
+for command in docker pnpm portless curl ss setsid node psql; do
+  command -v "$command" >/dev/null || {
+    echo "ERROR: Missing prerequisite: $command" >&2
+    exit 1
+  }
+done
 
-assert_loopback_url() {
-  local url="${1:-}"
-  if [[ -z "$url" ]]; then
-    return 0
-  fi
-  local result
-  result=$(node -e "
-    try {
-      const u = new URL(process.argv[1]);
-      const proto = u.protocol;
-      if (proto !== 'http:' && proto !== 'https:') process.exit(1);
-      if (u.username || u.password) process.exit(2);
-      const h = u.hostname;
-      if (h === '127.0.0.1' || h === 'localhost' || h === '::1') process.exit(0);
-      process.exit(3);
-    } catch { process.exit(4); }
-  " "$url" 2>/dev/null; echo $?)
-  if [[ "$result" != "0" ]]; then
-    return 1
-  fi
-  return 0
+docker info >/dev/null 2>&1 || {
+  echo 'ERROR: Docker is not running or not accessible.' >&2
+  exit 1
+}
+portless doctor 2>/dev/null | grep -q 'Proxy is responding' || {
+  echo 'ERROR: portless proxy is not running. Start it with: portless proxy start' >&2
+  exit 1
 }
 
-if ! assert_loopback_url "${NEXT_PUBLIC_SUPABASE_URL:-}"; then
-  echo "ERROR: NEXT_PUBLIC_SUPABASE_URL is not a valid loopback address." >&2
-  echo "       Only http(s)://127.0.0.1, localhost, or [::1] are allowed." >&2
-  echo "       This command is for local development only." >&2
-  exit 1
-fi
+APP_NAME="educa-dev-local-$$"
+APP_ORIGIN=$(cd "$APP_DIR" && portless get "$APP_NAME")
+ISOLATED_PROJECT_DIR=''
+SUPABASE_PROJECT_ID=''
+SUPABASE_STARTED=false
+APP_PID=''
+CLEANUP_FAILED=false
 
-if [[ "${EUID:-$(id -u)}" == "0" ]]; then
-  echo "ERROR: Do not run as root." >&2
-  exit 1
-fi
-
-if ! docker info >/dev/null 2>&1; then
-  echo "ERROR: Docker is not running or not accessible." >&2
-  exit 1
-fi
-
-if ! command -v portless >/dev/null 2>&1; then
-  echo "ERROR: portless is not installed or not on PATH." >&2
-  echo "       Install: npm install -g portless" >&2
-  exit 1
-fi
-
-if ! portless doctor 2>/dev/null | grep -q "Proxy is responding"; then
-  echo "ERROR: portless proxy is not running." >&2
-  echo "       Start it manually: portless proxy start" >&2
-  echo "       Then re-run: pnpm dev:local" >&2
-  exit 1
-fi
-
-# --- Cleanup handler: stop only what we started ---
-# shellcheck disable=SC2329
 cleanup() {
-  local trigger_exit="${CLEANUP_EXIT:-$?}"
-
-  # Disarm all traps to prevent recursion
+  local exit_code=$?
   trap - EXIT INT TERM
-  local cleanup_failed=false
-
-  echo ""
-  echo "-> Shutting down..."
-
-  # Terminate Next.js child if running
-  if [[ -n "$NEXT_PID" ]] && kill -0 "$NEXT_PID" 2>/dev/null; then
-    kill -TERM "$NEXT_PID" 2>/dev/null || true
-    wait "$NEXT_PID" 2>/dev/null || true
+  set +e
+  if [[ -n "$APP_PID" ]]; then
+    kill -TERM -- "-$APP_PID" 2>/dev/null || kill -TERM "$APP_PID" 2>/dev/null || true
+    wait "$APP_PID" 2>/dev/null || true
   fi
-
-  if [[ "$STARTED_SUPABASE" == "true" ]]; then
-    echo "-> Stopping Supabase stack (started by this session)..."
-    if run_supabase stop; then
-      echo "OK Supabase stopped."
-    else
-      echo "WARN: Supabase stop failed. Check for orphaned containers." >&2
-      cleanup_failed=true
-    fi
-  else
-    echo "   Supabase was already running before this session; leaving it up."
+  if [[ "$SUPABASE_STARTED" == true && -n "$ISOLATED_PROJECT_DIR" ]]; then
+    pilot_supabase_stop_project "$ISOLATED_PROJECT_DIR" "$SUPABASE_PROJECT_ID" >/dev/null 2>&1 || CLEANUP_FAILED=true
   fi
-
-  # If the app exited successfully but cleanup itself failed, report error
-  if [[ "$cleanup_failed" == "true" && "$trigger_exit" == "0" ]]; then
-    echo "ERROR: Cleanup failed." >&2
-    exit 1
+  [[ -z "$ISOLATED_PROJECT_DIR" ]] || rm -rf "$ISOLATED_PROJECT_DIR"
+  pilot_port_range_lease_release >/dev/null 2>&1 || CLEANUP_FAILED=true
+  if [[ "$CLEANUP_FAILED" == true && "$exit_code" -eq 0 ]]; then
+    exit_code=1
   fi
-
-  exit "$trigger_exit"
+  printf '\nLocal EDUCA environment removed.\n'
+  exit "$exit_code"
 }
 
 trap cleanup EXIT
-# INT/TERM: record the signal exit code and let EXIT handler run once
-trap 'CLEANUP_EXIT=130' INT
-trap 'CLEANUP_EXIT=143' TERM
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-# --- Detect existing Supabase stack ---
+pilot_port_range_lease_acquire
+PORT_BASE="$PILOT_E2E_PORT_BASE"
+ISOLATED_PROJECT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-dev-local.XXXXXX")
+SUPABASE_PROJECT_ID=$(basename "$ISOLATED_PROJECT_DIR")
+SUPABASE_CONFIG_DIR="$ISOLATED_PROJECT_DIR/supabase"
+mkdir -p "$SUPABASE_CONFIG_DIR"
+cp "$REPO_ROOT/supabase/config.toml" "$SUPABASE_CONFIG_DIR/config.toml"
+ln -s "$REPO_ROOT/supabase/migrations" "$SUPABASE_CONFIG_DIR/migrations"
+sed -i \
+  -e "0,/port = 54321/s//port = $PORT_BASE/" \
+  -e "0,/port = 54322/s//port = $((PORT_BASE + 1))/" \
+  -e "0,/port = 54323/s//port = $((PORT_BASE + 2))/" \
+  -e "0,/port = 54324/s//port = $((PORT_BASE + 3))/" \
+  -e "0,/port = 54327/s//port = $((PORT_BASE + 6))/" \
+  -e "0,/vector_port = 54328/s//vector_port = $((PORT_BASE + 7))/" \
+  -e "0,/port = 54329/s//port = $((PORT_BASE + 8))/" \
+  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"$APP_ORIGIN\"#" \
+  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"$APP_ORIGIN\"]#" \
+  "$SUPABASE_CONFIG_DIR/config.toml"
 
-supabase_running() {
-  run_supabase status >/dev/null 2>&1
-}
+unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
+unset SUPABASE_DEMO_URL SUPABASE_DEMO_SERVICE_KEY SUPABASE_DEMO_DB_URL
+unset SUPABASE_PROJECT_REF SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD
 
-# --- Start Supabase if not already running ---
+SUPABASE_STARTED=true
+if ! pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" start >"$ISOLATED_PROJECT_DIR/start.log" 2>&1; then
+  echo 'ERROR: isolated Supabase stack failed to start.' >&2
+  exit 1
+fi
+STATUS_ENV=$(pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" status -o env)
+eval "$(printf '%s\n' "$STATUS_ENV" | grep -E '^(API_URL|DB_URL|PUBLISHABLE_KEY|SECRET_KEY)=')"
+node - "$API_URL" "$DB_URL" <<'NODE'
+const [api, database] = process.argv.slice(2).map(value => new URL(value))
+const local = new Set(['127.0.0.1', 'localhost', '::1'])
+if (!local.has(api.hostname) || !local.has(database.hostname)) process.exit(1)
+NODE
 
-if supabase_running; then
-  echo "OK Local Supabase stack already running."
-else
-  echo "-> Starting local Supabase stack..."
-  # Mark ownership BEFORE start so cleanup stops partial resources on failure
-  STARTED_SUPABASE=true
-  run_supabase start
-  echo "OK Supabase stack started."
+export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+export NEXT_PUBLIC_SUPABASE_ANON_KEY="$PUBLISHABLE_KEY"
+export SUPABASE_SERVICE_ROLE_KEY="$SECRET_KEY"
+export SUPABASE_DB_URL="$DB_URL"
+export NEXT_PUBLIC_APP_URL="$APP_ORIGIN"
+export NEXT_PUBLIC_DEMO_SANDBOX=false
+export DEMO_SANDBOX=false
+export NEXT_PUBLIC_PILOT_MODE=true
+export PILOT_MODE=true
+export PILOT_SYNTHETIC_DATA_ONLY=true
+export PILOT_EXTERNAL_DEPLOY_APPROVED=false
+export PILOT_LEGAL_APPROVAL_STATUS=not_approved
+PILOT_IMPORT_ENCRYPTION_KEY="$(printf 'synthetic-pilot-encryption-key!!' | base64 -w0)"
+export PILOT_IMPORT_ENCRYPTION_KEY
+export PILOT_IMPORT_ENCRYPTION_KEY_ID=synthetic-local-v1
+
+pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" db reset --local
+pnpm exec tsx scripts/pilot-safety-gate.ts seed
+psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$REPO_ROOT/supabase/pilot/provision-pilot-module-gate.sql"
+pnpm exec tsx scripts/seed-pilot-synthetic.ts
+pnpm exec tsx scripts/validate-pilot-canonical.ts
+
+setsid portless run --name "$APP_NAME" pnpm dev >"$ISOLATED_PROJECT_DIR/app.log" 2>&1 &
+APP_PID=$!
+BASE_URL=''
+for _ in $(seq 1 90); do
+  BASE_URL=$(portless get "$APP_NAME" 2>/dev/null || true)
+  if [[ -n "$BASE_URL" ]] && curl --silent --show-error --insecure --fail "$BASE_URL/login" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+if [[ -z "$BASE_URL" ]] || ! curl --silent --show-error --insecure --fail "$BASE_URL/login" >/dev/null 2>&1; then
+  echo 'ERROR: EDUCA did not become ready.' >&2
+  exit 1
 fi
 
-# --- Read local credentials and write .env.local securely ---
+printf '%s\n' \
+  '' \
+  "EDUCA: $BASE_URL/login" \
+  'Synthetic secretariat: secretaria@synthetic.invalid' \
+  'Password: Synthetic-Only-2026!' \
+  'Smoke route: sign in, open /dashboard, open the user menu, choose Sair do Sistema.' \
+  'Cleanup: press Ctrl-C in this terminal.' \
+  ''
 
-write_local_env() {
-  local status_env
-  status_env=$(run_supabase status -o env 2>/dev/null)
-  if [[ -z "$status_env" ]]; then
-    echo "ERROR: Could not read Supabase status." >&2
-    return 1
-  fi
-
-  local api_url anon_key service_role_key
-
-  api_url=$(echo "$status_env" | grep "^API_URL=" | cut -d= -f2-) || true
-  anon_key=$(echo "$status_env" | grep "^PUBLISHABLE_KEY=" | cut -d= -f2-) || true
-  if [[ -z "$anon_key" ]]; then
-    anon_key=$(echo "$status_env" | grep "^ANON_KEY=" | cut -d= -f2-) || true
-  fi
-  service_role_key=$(echo "$status_env" | grep "^SECRET_KEY=" | cut -d= -f2-) || true
-  if [[ -z "$service_role_key" ]]; then
-    service_role_key=$(echo "$status_env" | grep "^SERVICE_ROLE_KEY=" | cut -d= -f2-) || true
-  fi
-
-  if [[ -z "$api_url" ]]; then
-    echo "ERROR: API_URL not found in Supabase status output." >&2
-    return 1
-  fi
-  if [[ -z "$anon_key" ]]; then
-    echo "ERROR: PUBLISHABLE_KEY/ANON_KEY not found in Supabase status output." >&2
-    return 1
-  fi
-  if [[ -z "$service_role_key" ]]; then
-    echo "ERROR: SECRET_KEY/SERVICE_ROLE_KEY not found in Supabase status output." >&2
-    return 1
-  fi
-
-  local env_file="$APP_DIR/.env.local"
-  if [[ ! -f "$env_file" ]]; then
-    cp "$APP_DIR/.env.local.example" "$env_file"
-  fi
-
-  local tmp_env
-  tmp_env=$(mktemp "$APP_DIR/.env.local.XXXXXX")
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    case "$line" in
-      NEXT_PUBLIC_SUPABASE_URL=*)
-        printf '%s\n' "NEXT_PUBLIC_SUPABASE_URL=$api_url" >> "$tmp_env" ;;
-      NEXT_PUBLIC_SUPABASE_ANON_KEY=*)
-        printf '%s\n' "NEXT_PUBLIC_SUPABASE_ANON_KEY=$anon_key" >> "$tmp_env" ;;
-      SUPABASE_SERVICE_ROLE_KEY=*)
-        printf '%s\n' "SUPABASE_SERVICE_ROLE_KEY=$service_role_key" >> "$tmp_env" ;;
-      *)
-        printf '%s\n' "$line" >> "$tmp_env" ;;
-    esac
-  done < "$env_file"
-  mv "$tmp_env" "$env_file"
-}
-
-write_local_env
-
-# --- Apply migrations (explicitly local) ---
-
-if [[ "$RESET_DB" == "true" ]]; then
-  echo "-> Resetting database (--reset flag)..."
-  run_supabase db reset --local
-  echo "OK Database reset complete."
-else
-  echo "-> Applying migrations (non-destructive, local only)..."
-  run_supabase db push --local
-  echo "OK Migrations applied."
-fi
-
-# --- Start Next.js dev server via portless ---
-
-echo "-> Starting Next.js development server via portless..."
-echo ""
-
-cd "$APP_DIR" || exit 1
-portless run pnpm dev &
-NEXT_PID=$!
-
-# Wait for child: disable -e to capture exit code, then propagate via cleanup
 set +e
-wait "$NEXT_PID"
-NEXT_EXIT=$?
+wait "$APP_PID"
+APP_EXIT=$?
 set -e
-NEXT_PID=""
-exit "$NEXT_EXIT"
+APP_PID=''
+exit "$APP_EXIT"

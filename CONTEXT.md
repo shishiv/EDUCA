@@ -50,7 +50,7 @@ Run package commands from `app/`.
 
 ```bash
 pnpm dev                 # local Next.js development server
-pnpm dev:local           # canonical local: Supabase CLI + migrations + Next.js + cleanup
+pnpm dev:local           # isolated local Supabase + synthetic pilot seed + Next.js + cleanup
 pnpm build               # production build
 pnpm start               # serve a production build
 pnpm typecheck           # TypeScript, including E2E specs and enabled unit tests
@@ -93,7 +93,7 @@ It needs `initdb`, `pg_ctl`, and `psql` from PostgreSQL 15 or newer. It creates 
 
 `app/types/database.ts` is generated from the local Supabase schema and is required by the application build. Preserve it and regenerate it only through the command above. It intentionally lags the live schema: pilot code casts at the seam (`asPilotRpcClient`, `asWhatsAppClient`).
 
-The canonical migrations retain the full product schema. The pilot-only provisioner revokes grades, Educacenso, and the legacy Bolsa Família view, and blocks high-risk student fields during synthetic pilot rehearsal. The hardening migration releases only the security-invoker conditionality RPC/view and scoped descriptive-report table. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness. The browser CSV route records the authenticated secretary or designated operator as owner, verifies a confirmed `pilot_data_treatment_agreements` row, publishes canonical rows through the transactional `pilot_publish_synthetic_import_batch` RPC, keeps the encrypted source through raw retention, and rolls back exact canonical rows through the service-role RPC.
+`pnpm dev:local` creates a disposable Supabase project on a leased local port range, applies the pilot module gate, loads the synthetic pilot seed, and removes that project on exit. It prints the browser URL and uses the documented `secretaria@synthetic.invalid` secretariat role. The canonical migrations retain the full product schema. The pilot-only provisioner revokes grades, Educacenso, and the legacy Bolsa Família view, and blocks high-risk student fields during synthetic pilot rehearsal. The hardening migration releases only the security-invoker conditionality RPC/view and scoped descriptive-report table. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness. The browser CSV route records the authenticated secretary or designated operator as owner, verifies a confirmed `pilot_data_treatment_agreements` row, publishes canonical rows through the transactional `pilot_publish_synthetic_import_batch` RPC, keeps the encrypted source through raw retention, and rolls back exact canonical rows through the service-role RPC.
 
 `supabase/pilot/provision-pilot-descriptive-report-demo.sql` is a companion grant for `pnpm test:e2e:pilot:descriptive` only. It follows the base revoke, requires the local synthetic marker and environment gate at the route, and never applies to the public demo sandbox.
 
