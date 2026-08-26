@@ -30,11 +30,12 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { getAuthorizedGuardianProfiles } from '@/lib/sensitive-family-access'
 
 interface Responsavel {
   id: string
   nome: string
-  cpf: string
+  cpf: string | null
   telefone: string | null
   email: string | null
   parentesco: string
@@ -92,19 +93,13 @@ export default function ResponsavelDetalhesPage() {
     try {
       setLoading(true)
 
-      // Load responsavel data
-      const { data: respData, error: respError } = await supabase
-        .from('responsaveis')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      if (respError) throw respError
+      const [respData] = await getAuthorizedGuardianProfiles(supabase, { guardianId: id })
+      if (!respData) throw new Error('RESPONSAVEL_NOT_FOUND')
 
       setResponsavel(respData)
       setFormData({
         nome: respData.nome,
-        cpf: respData.cpf,
+        cpf: respData.cpf || '',
         telefone: respData.telefone || '',
         email: respData.email || '',
         parentesco: respData.parentesco,
@@ -139,7 +134,7 @@ export default function ResponsavelDetalhesPage() {
 
       logger.info('Responsável e alunos carregados:', {
         metadata: {
-          responsavel: respData.nome,
+          responsavelId: respData.id,
           alunos: alunosData?.length || 0
         }
       })
@@ -196,7 +191,7 @@ export default function ResponsavelDetalhesPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const formatCPF = (cpf: string) => {
+  const formatCPF = (cpf: string | null) => {
     if (!cpf) return '-'
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
   }
@@ -311,7 +306,7 @@ export default function ResponsavelDetalhesPage() {
                 setEditMode(false)
                 setFormData({
                   nome: responsavel.nome,
-                  cpf: responsavel.cpf,
+                  cpf: responsavel.cpf || '',
                   telefone: responsavel.telefone || '',
                   email: responsavel.email || '',
                   parentesco: responsavel.parentesco,

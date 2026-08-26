@@ -27,11 +27,12 @@ import {
 import { Plus, Search, Eye, Edit, Phone, Mail, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { getAuthorizedGuardianProfiles } from '@/lib/sensitive-family-access'
 
 interface Responsavel {
   id: string
   nome: string
-  cpf: string
+  cpf: string | null
   telefone: string | null
   email: string | null
   parentesco: string
@@ -69,24 +70,16 @@ export default function ResponsaveisPage() {
     try {
       setLoading(true)
 
-      // Load responsaveis with count of linked students
-      const { data: responsaveisData, error: responsaveisError } = await supabase
-        .from('responsaveis')
-        .select(`
-          *,
-          alunos (
-            id,
-            nome_completo
-          )
-        `)
-        .order('nome')
+      const responsaveisData = await getAuthorizedGuardianProfiles(supabase)
+      const { data: alunosData, error: alunosError } = await supabase
+        .from('alunos')
+        .select('id,nome_completo,responsavel_id')
+      if (alunosError) throw alunosError
 
-      if (responsaveisError) throw responsaveisError
-
-      // Transform data to include alunos count
-      const responsaveisWithCount = (responsaveisData || []).map(resp => ({
+      const responsaveisWithCount = responsaveisData.map(resp => ({
         ...resp,
-        alunos_count: resp.alunos?.length || 0
+        alunos: (alunosData ?? []).filter(aluno => aluno.responsavel_id === resp.id),
+        alunos_count: (alunosData ?? []).filter(aluno => aluno.responsavel_id === resp.id).length,
       }))
 
       setResponsaveis(responsaveisWithCount)
@@ -113,7 +106,7 @@ export default function ResponsaveisPage() {
       .slice(0, 2)
   }
 
-  const formatCPF = (cpf: string) => {
+  const formatCPF = (cpf: string | null) => {
     if (!cpf) return '-'
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
   }
@@ -147,7 +140,7 @@ export default function ResponsaveisPage() {
   const filteredResponsaveis = responsaveis.filter(resp => {
     const matchesSearch =
       resp.nome.toLowerCase().includes(search.toLowerCase()) ||
-      resp.cpf.includes(search) ||
+      resp.cpf?.includes(search) ||
       resp.telefone?.includes(search) ||
       resp.email?.toLowerCase().includes(search.toLowerCase())
 

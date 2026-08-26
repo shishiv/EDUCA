@@ -10,8 +10,7 @@ import { StudentFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
-
-const STUDENT_SAFE_COLUMNS = 'id,nome_completo,data_nascimento,sexo,cpf,rg,cor_raca,zona_residencial,transporte_escolar,tipo_deficiencia,nome_mae,nome_pai,telefone,email,endereco,necessidades_especiais,responsavel_id,ativo,created_at'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
 export type StudentWithDetails = Omit<Aluno, 'bolsa_familia' | 'nis'> & {
   responsavel?: Partial<Tables<'responsaveis'>>
@@ -40,7 +39,7 @@ export class StudentsApiService extends BaseApiService {
           situacao,
           data_matricula,
           turma_id,
-          aluno:alunos(id,nome_completo,data_nascimento,sexo,cpf,rg,cor_raca,zona_residencial,transporte_escolar,tipo_deficiencia,nome_mae,nome_pai,telefone,email,endereco,necessidades_especiais,responsavel_id,ativo,created_at)
+          aluno:alunos(id,nome_completo,data_nascimento,sexo,ativo,created_at)
         `)
         .eq('turma_id', classId)
         .eq('situacao', 'ativa')
@@ -48,33 +47,12 @@ export class StudentsApiService extends BaseApiService {
       if (matriculasError) throw matriculasError
       if (!matriculasData || matriculasData.length === 0) return []
 
-      // Get aluno IDs for responsaveis lookup
-      const alunoIds = matriculasData
-        .map((m) => (m.aluno as { id: string } | null)?.id)
-        .filter((id): id is string => !!id)
-
-      // Get responsaveis through aluno_responsaveis join table
-      const { data: alunoResponsaveisData } = await supabase
-        .from('aluno_responsaveis')
-        .select(`
-          aluno_id,
-          responsavel:responsaveis(*)
-        `)
-        .in('aluno_id', alunoIds)
-        .eq('ativo', true)
-
-      const responsaveisMap = new Map(
-        (alunoResponsaveisData ?? []).map((ar) => [ar.aluno_id, ar.responsavel])
-      )
-
-      // Transform data
       const result = matriculasData
         .filter((m) => m.aluno)
         .map((m) => {
           const aluno = m.aluno
           return {
             ...aluno,
-            responsavel: responsaveisMap.get(aluno.id) as Tables<'responsaveis'> | undefined,
             matriculas: [{
               id: m.id,
               situacao: m.situacao,
@@ -104,73 +82,19 @@ export class StudentsApiService extends BaseApiService {
     offset?: number
   }): Promise<StudentWithDetails[]> {
     try {
-      let query = supabase
-        .from('alunos')
-        .select(`
-          ${STUDENT_SAFE_COLUMNS},
-          responsavel:responsaveis(
-            id,
-            nome,
-            telefone,
-            email
-          ),
-          matriculas(
-            id,
-            situacao,
-            data_matricula,
-            turma:turmas(
-              id,
-              nome,
-              serie,
-              turno,
-              escola:escolas(
-                id,
-                nome,
-                codigo
-              )
-            )
-          )
-        `)
-
-      // Apply filters
-      if (options?.activeOnly !== false) {
-        query = query.eq('ativo', true)
-      }
-
-      if (options?.filter) {
-        Object.entries(options.filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value)
-          }
-        })
-      }
-
-      // Search filter
+      const schoolId = typeof options?.filter?.escola_id === 'string' ? options.filter.escola_id : undefined
+      let students = await getAuthorizedStudentProfiles(supabase, { schoolId })
+      if (options?.activeOnly !== false) students = students.filter(student => student.ativo)
       if (options?.searchTerm) {
-        query = query.or(`nome_completo.ilike.%${options.searchTerm}%,cpf.ilike.%${options.searchTerm}%`)
+        const search = options.searchTerm.toLocaleLowerCase()
+        students = students.filter(student =>
+          student.nome_completo.toLocaleLowerCase().includes(search) || student.cpf?.includes(search)
+        )
       }
-
-      // Special needs filter
-      if (options?.specialNeeds === 'yes') {
-        query = query.not('necessidades_especiais', 'is', null)
-      } else if (options?.specialNeeds === 'no') {
-        query = query.is('necessidades_especiais', null)
-      }
-
-      // Apply pagination
-      if (options?.limit) {
-        const from = options.offset || 0
-        const to = from + options.limit - 1
-        query = query.range(from, to)
-      }
-
-      // Order by name
-      query = query.order('nome_completo', { ascending: true })
-
-      const { data, error } = await query
-
-      if (error) throw error
-      return data as StudentWithDetails[]
+      if (options?.specialNeeds === 'yes') students = students.filter(student => student.necessidades_especiais)
+      if (options?.specialNeeds === 'no') students = students.filter(student => !student.necessidades_especiais)
+      const offset = options?.offset ?? 0
+      return students.slice(offset, options?.limit ? offset + options.limit : undefined) as StudentWithDetails[]
     } catch (error) {
       throw error
     }

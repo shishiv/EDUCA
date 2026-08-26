@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
 interface FormState {
   nome_completo: string
@@ -55,12 +56,8 @@ export default function EditarAlunoPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await supabase
-        .from('alunos')
-        .select('id,nome_completo,data_nascimento,sexo,cpf,rg,endereco,telefone,email,nome_mae,nome_pai,necessidades_especiais')
-        .eq('id', id)
-        .single()
-      if (error || !data) {
+      const [data] = await getAuthorizedStudentProfiles(supabase, { studentId: id })
+      if (!data) {
         toast.error(t('ui.nao-foi-possivel-carregar-o-aluno'))
         router.replace('/dashboard/alunos')
         return

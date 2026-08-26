@@ -19,6 +19,7 @@ import {
 } from './whatsapp-delivery-service'
 import { getGuardianWhatsAppOptIn } from './whatsapp-optin-service'
 import { formatWhatsAppReceipt } from './whatsapp-receipts'
+import { getAuthorizedGuardianProfiles } from '@/lib/sensitive-family-access'
 
 export const notifyGuardianAttendanceAlertSchema = z.object({
   responsavelId: z.string().uuid(),
@@ -53,12 +54,7 @@ export async function notifyGuardianAttendanceAlert(
   const now = deps.now?.() ?? new Date()
   const attemptedAt = now.toISOString()
 
-  const { data: guardian, error: guardianError } = await supabase
-    .from('responsaveis')
-    .select('id, telefone, escola_id')
-    .eq('id', parsed.responsavelId)
-    .maybeSingle()
-  if (guardianError) throw guardianError
+  const [guardian] = await getAuthorizedGuardianProfiles(supabase, { guardianId: parsed.responsavelId })
   if (!guardian?.escola_id) {
     throw new Error('PILOT_NOTIFICATION_SCHOOL_DENIED: guardian not visible to actor')
   }

@@ -131,7 +131,7 @@ export default function NovoResponsavelPage() {
       const { data, error } = await supabase
         .from('responsaveis')
         .insert([responsavelData])
-        .select()
+        .select('id')
         .single()
 
       if (error) {
@@ -144,7 +144,7 @@ export default function NovoResponsavelPage() {
         return
       }
 
-      logger.info('Responsável cadastrado:', { metadata: data })
+      logger.info('Responsável cadastrado:', { metadata: { responsavelId: data?.id } })
       toast.success(t('ui.responsavel-cadastrado-com-sucesso'))
       router.push('/dashboard/responsaveis')
     } catch (error: any) {

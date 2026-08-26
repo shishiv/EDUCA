@@ -36,6 +36,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
 import { getStudentBolsaFamilia } from '@/lib/reports/attendance-conditionality'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
 interface AlunoDetalhado {
   id: string
@@ -108,22 +109,12 @@ export default function AlunoDetalhesPage() {
         setError(null)
 
         // Fetch student with matriculas
-        const [{ data: alunoData, error: alunoError }, bolsaFamilia] = await Promise.all([
+        const [profiles, { data: studentRelations, error: alunoError }, bolsaFamilia] = await Promise.all([
+          getAuthorizedStudentProfiles(supabase, { studentId: params.id as string }),
           supabase
           .from('alunos')
           .select(`
             id,
-            nome_completo,
-            data_nascimento,
-            cpf,
-            sexo,
-            endereco,
-            telefone,
-            nome_mae,
-            nome_pai,
-            necessidades_especiais,
-            ativo,
-            created_at,
             matriculas:matriculas(
               id,
               ano_letivo,
@@ -142,15 +133,17 @@ export default function AlunoDetalhesPage() {
           getStudentBolsaFamilia(supabase, params.id as string),
         ])
 
+        const alunoData = profiles[0]
         if (alunoError) throw alunoError
-        if (!alunoData) {
+        if (!alunoData || !studentRelations) {
           setError(t('ui.aluno-nao-encontrado'))
           return
         }
+        const matriculas = studentRelations.matriculas ?? []
 
         // Get active matricula for current year
         const currentYear = new Date().getFullYear()
-        const activeMatricula = alunoData.matriculas?.find(
+        const activeMatricula = matriculas.find(
           (m: { situacao: string; ano_letivo: number }) => m.situacao === 'ativa' && m.ano_letivo === currentYear
         )
 
@@ -214,7 +207,7 @@ export default function AlunoDetalhesPage() {
             email: undefined,
             parentesco: alunoData.nome_mae ? t('labels.mae') : t('labels.pai')
           },
-          matriculas: alunoData.matriculas || [],
+          matriculas,
           frequencia,
           notas: [], // Notas not implemented yet
           bolsa_familia: bolsaFamilia ?? false,
