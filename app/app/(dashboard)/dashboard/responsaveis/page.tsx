@@ -138,11 +138,12 @@ export default function ResponsaveisPage() {
   }
 
   const filteredResponsaveis = responsaveis.filter(resp => {
+    const normalizedSearch = search.toLowerCase()
     const matchesSearch =
-      resp.nome.toLowerCase().includes(search.toLowerCase()) ||
-      resp.cpf?.includes(search) ||
-      resp.telefone?.includes(search) ||
-      resp.email?.toLowerCase().includes(search.toLowerCase())
+      resp.nome.toLowerCase().includes(normalizedSearch) ||
+      (resp.cpf ?? '').includes(search) ||
+      (resp.telefone ?? '').includes(search) ||
+      (resp.email ?? '').toLowerCase().includes(normalizedSearch)
 
     const matchesParentesco =
       parentescoFilter === 'todos' ||
