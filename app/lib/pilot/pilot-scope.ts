@@ -16,7 +16,6 @@ export const PILOT_DISABLED_ROUTE_PREFIXES = [
   '/dashboard/notas',
   '/dashboard/relatorios',
   '/dashboard/calendario',
-  '/dashboard/configuracoes',
   '/dashboard/sessoes',
   '/relatorios',
   '/relatorios/bolsa-familia',

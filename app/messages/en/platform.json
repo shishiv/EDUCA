@@ -115,7 +115,7 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Manage general system settings",
+    "subtitle": "Adjust your school's academic calendar",
     "reload": "Reload",
     "save": "Save changes",
     "saving": "Saving...",
@@ -145,7 +145,20 @@
     "environment": "Environment",
     "development": "Development",
     "loadErrorGeneric": "Error saving settings",
-    "savedCount": "{count} setting(s) saved successfully!"
+    "savedCount": "{count} setting(s) saved successfully!",
+    "academicYearTitle": "Academic year calendar",
+    "academicYearDescription": "Set your school's academic period without changing previous years.",
+    "academicYearLabel": "Academic year {year}",
+    "academicYearStart": "Start date",
+    "academicYearEnd": "End date",
+    "academicYearSave": "Save academic period",
+    "academicYearLoading": "Loading the academic period...",
+    "academicYearSaved": "Academic period saved successfully.",
+    "academicYearLoadError": "Unable to load the academic period.",
+    "academicYearSaveError": "Unable to save the academic period.",
+    "academicYearInvalidRange": "The end date cannot be earlier than the start date.",
+    "academicYearDenied": "You do not have permission to change this school's academic period.",
+    "retry": "Try again"
   },
   "flags": {
     "title": "Feature Flags",

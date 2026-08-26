@@ -64,7 +64,6 @@ describe('synthetic pilot foundation', () => {
     expect(isPilotDisabledPath('/dashboard/notas')).toBe(true)
     expect(isPilotDisabledPath('/dashboard/relatorios')).toBe(true)
     expect(isPilotDisabledPath('/dashboard/calendario')).toBe(true)
-    expect(isPilotDisabledPath('/dashboard/configuracoes')).toBe(true)
     expect(isPilotDisabledPath('/dashboard/sessoes')).toBe(true)
     expect(isPilotDisabledPath('/boletim')).toBe(true)
     expect(isPilotDisabledPath('/api/educacenso/export')).toBe(true)
@@ -73,6 +72,7 @@ describe('synthetic pilot foundation', () => {
 
     // Attendance and non-module routes remain allowed.
     expect(isPilotDisabledPath('/dashboard/turmas/example/chamada')).toBe(false)
+    expect(isPilotDisabledPath('/dashboard/configuracoes')).toBe(false)
     expect(isPilotDisabledPath('/offline')).toBe(false)
   })
 
