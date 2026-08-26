@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -50,20 +49,11 @@ export default function UsuariosPage() {
   const loadUsuarios = useCallback(async () => {
     try {
       logger.info('Loading usuarios...')
-      // Simple query without joins first
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('ativo', true)
-
-      if (error) {
-        logger.error('Supabase error:', error)
-        throw error
-      }
+      const data = await usersApi.getUsersWithSchool()
 
       logger.info('Success! Users found', { metadata: { count: data?.length } })
       logger.info('Users data', { metadata: { data } })
-      setUsuarios(data || [])
+      setUsuarios(data)
     } catch (error) {
       logger.error('Erro ao carregar usuários:', error as any)
       toast.error(t('ui.erro-ao-carregar-lista-de-usuarios'))

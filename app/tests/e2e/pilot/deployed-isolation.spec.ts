@@ -27,8 +27,8 @@ test.describe('deployed Supabase isolation', () => {
       directorA.from('alunos').select('id,escola_id'),
       directorB.from('alunos').select('id,escola_id'),
       teacherA.from('turmas').select('id,escola_id'),
-      directorA.from('users').select('id,escola_id').eq('tipo_usuario', 'professor'),
-      directorB.from('users').select('id,escola_id').eq('tipo_usuario', 'professor').eq('escola_id', schoolA),
+      directorA.from('users').select('id,escola_id,escola:escolas!fk_users_escola(id,nome)').eq('tipo_usuario', 'professor'),
+      directorB.from('users').select('id,escola_id,escola:escolas!fk_users_escola(id,nome)').eq('tipo_usuario', 'professor').eq('escola_id', schoolA),
     ])
     expect(schoolsA.error).toBeNull()
     expect(schoolsA.data).toEqual([expect.objectContaining({ id: schoolA })])
@@ -38,6 +38,9 @@ test.describe('deployed Supabase isolation', () => {
     expect(classesA.data?.every(row => row.escola_id === schoolA)).toBe(true)
     expect(teachersA.data?.length).toBeGreaterThan(0)
     expect(teachersA.data?.every(row => row.escola_id === schoolA)).toBe(true)
+    expect(teachersA.data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ escola_id: schoolA, escola: expect.objectContaining({ id: schoolA, nome: 'Escola Sintetica A' }) }),
+    ]))
     expect(schoolATeachersFromB.data).toEqual([])
 
     const forbiddenWrite = await teacherA.from('alunos').insert({

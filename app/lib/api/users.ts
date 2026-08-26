@@ -55,7 +55,7 @@ export class UsersApiService extends BaseApiService {
         .from('users')
         .select(`
           *,
-          escola:escolas(
+          escola:escolas!fk_users_escola(
             id,
             nome,
             codigo,
@@ -108,6 +108,11 @@ export class UsersApiService extends BaseApiService {
     } catch (error) {
       throw error
     }
+  }
+
+  async getUserWithSchool(id: string): Promise<UserWithSchool | null> {
+    const [user] = await this.getUsersWithSchool({ filter: { id }, activeOnly: false, limit: 1 })
+    return user ?? null
   }
 
   // Create user with proper logging

@@ -102,7 +102,7 @@ export default function UsuarioDetalhesPage() {
 
   const loadUsuario = async () => {
     try {
-      const data = await usersApi.getById(params.id as string) as any
+      const data = await usersApi.getUserWithSchool(params.id as string)
       if (data) {
         setUsuario(data)
       } else {
