@@ -137,7 +137,7 @@ export async function collectSystemMetrics(): Promise<SystemMetrics | null> {
 
     const { count: totalStudents } = await supabase
       .from('alunos')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('ativo', true)
 
     const { count: activeTeachers } = await supabase

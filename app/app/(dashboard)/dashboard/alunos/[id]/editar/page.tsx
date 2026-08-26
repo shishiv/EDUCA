@@ -55,7 +55,11 @@ export default function EditarAlunoPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await supabase.from('alunos').select('*').eq('id', id).single()
+      const { data, error } = await supabase
+        .from('alunos')
+        .select('id,nome_completo,data_nascimento,sexo,cpf,rg,endereco,telefone,email,nome_mae,nome_pai,necessidades_especiais')
+        .eq('id', id)
+        .single()
       if (error || !data) {
         toast.error(t('ui.nao-foi-possivel-carregar-o-aluno'))
         router.replace('/dashboard/alunos')

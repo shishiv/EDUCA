@@ -231,8 +231,13 @@ $$;
 SELECT set_config('request.jwt.claim.sub', '98100000-0000-0000-0000-000000000004', true);
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM public.turmas), 'teacher reads only the titular class');
 SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM public.matriculas), 'teacher enrollment read is titular-class scoped');
-SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM public.get_attendance_conditionality(DATE '2026-08-01', DATE '2026-08-31', NULL, NULL)), 'teacher conditionality is titular-class scoped');
-SELECT pg_temp.assert_true((SELECT count(*) = 1 FROM public.vw_frequencia_condicionalidade), 'teacher conditionality view is titular-class scoped');
+SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM public.get_attendance_conditionality(DATE '2026-08-01', DATE '2026-08-31', NULL, NULL)), 'teacher cannot read conditionality rows');
+SELECT pg_temp.assert_true((SELECT count(*) = 0 FROM public.vw_frequencia_condicionalidade), 'teacher cannot read the conditionality view');
+SELECT pg_temp.assert_true(
+  NOT has_column_privilege('authenticated', 'public.alunos', 'bolsa_familia', 'SELECT')
+    AND NOT has_column_privilege('authenticated', 'public.alunos', 'nis', 'SELECT'),
+  'teacher cannot select Bolsa Familia or NIS from students'
+);
 
 DO $$
 BEGIN

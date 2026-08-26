@@ -75,50 +75,50 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // WARNING 2 and 3: legal conditionality and municipality margin come from
-    // the canonical PostgreSQL read model. The response keeps them separate.
-    const monthStart = `${today.slice(0, 7)}-01`
-    const conditionality = await getAttendanceConditionality(supabase, {
-      startDate: monthStart,
-      endDate: today,
-      escolaId: userProfile.escola_id ?? undefined,
-    })
-
-    if (!conditionality.error) {
-      const rows = filterBolsaFamiliaConditionality(conditionality.data)
-      const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
-      const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
-
-      if (legalRiskCount > 0) {
-        warnings.push({
-          id: 'bolsa-familia-legal-conditionality',
-          title: 'Condicionalidade legal Bolsa Família',
-          message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
-          type: 'critical',
-          icon: 'AlertTriangle',
-          actionUrl: '/relatorios/bolsa-familia',
-          actionText: 'Ver relatório',
-          count: legalRiskCount,
-        })
-      }
-
-      if (municipalRiskCount > 0) {
-        warnings.push({
-          id: 'bolsa-familia-municipal-margin',
-          title: 'Margem municipal de alerta precoce',
-          message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
-          type: 'warning',
-          icon: 'AlertCircle',
-          actionUrl: '/relatorios/bolsa-familia',
-          actionText: 'Ver relatório',
-          count: municipalRiskCount,
-        })
-      }
-    } else {
-      logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
-        feature: 'compliance-warnings',
-        action: 'resolve_attendance_conditionality',
+    if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
+      const monthStart = `${today.slice(0, 7)}-01`
+      const conditionality = await getAttendanceConditionality(supabase, {
+        startDate: monthStart,
+        endDate: today,
+        escolaId: userProfile.escola_id ?? undefined,
       })
+
+      if (!conditionality.error) {
+        const rows = filterBolsaFamiliaConditionality(conditionality.data)
+        const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
+        const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
+
+        if (legalRiskCount > 0) {
+          warnings.push({
+            id: 'bolsa-familia-legal-conditionality',
+            title: 'Condicionalidade legal Bolsa Família',
+            message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
+            type: 'critical',
+            icon: 'AlertTriangle',
+            actionUrl: '/relatorios/bolsa-familia',
+            actionText: 'Ver relatório',
+            count: legalRiskCount,
+          })
+        }
+
+        if (municipalRiskCount > 0) {
+          warnings.push({
+            id: 'bolsa-familia-municipal-margin',
+            title: 'Margem municipal de alerta precoce',
+            message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
+            type: 'warning',
+            icon: 'AlertCircle',
+            actionUrl: '/relatorios/bolsa-familia',
+            actionText: 'Ver relatório',
+            count: municipalRiskCount,
+          })
+        }
+      } else {
+        logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
+          feature: 'compliance-warnings',
+          action: 'resolve_attendance_conditionality',
+        })
+      }
     }
 
     // WARNING 4: Educacenso deadline approaching (if within 30 days)

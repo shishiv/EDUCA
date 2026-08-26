@@ -413,7 +413,7 @@ FROM generate_series(1, 51) AS fixture(student_number);
 
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 50
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31', NULL,
      '12000000-0000-0000-0000-000000000026'
    )),
@@ -421,7 +421,7 @@ SELECT pg_temp.assert_true(
 );
 SELECT pg_temp.assert_true(
   (SELECT count(*) FILTER (WHERE is_bolsa_familia) = 26
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31', NULL,
      '12000000-0000-0000-0000-000000000026'
    )),
@@ -429,7 +429,7 @@ SELECT pg_temp.assert_true(
 );
 SELECT pg_temp.assert_true(
   (SELECT is_bolsa_familia = false
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31', NULL,
      '12000000-0000-0000-0000-000000000026'
    )
@@ -439,7 +439,7 @@ SELECT pg_temp.assert_true(
 SELECT pg_temp.assert_true(
   (SELECT NOT EXISTS (
      SELECT 1
-     FROM public.get_attendance_conditionality(
+     FROM public.get_attendance_conditionality_unrestricted(
        DATE '2026-08-01', DATE '2026-08-31', NULL,
        '12000000-0000-0000-0000-000000000026'
      )
@@ -459,7 +459,7 @@ SELECT pg_temp.assert_true(
           AND margem_municipal_critica_percent = 88
           AND margem_municipal_alerta_percent = 92
           AND margem_municipal_status = 'CRITICO'
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31',
      '12000000-0000-0000-0000-000000000001', NULL
    )
@@ -473,7 +473,7 @@ SELECT pg_temp.assert_true(
           AND educacao_basica_concluida = false
           AND condicionalidade_legal_status = 'CRITICO'
           AND percentual_frequencia = 70
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31',
      '12000000-0000-0000-0000-000000000001', NULL
    )
@@ -484,7 +484,7 @@ SELECT pg_temp.assert_true(
   (SELECT educacao_basica_concluida = true
           AND piso_legal_percent IS NULL
           AND condicionalidade_legal_status = 'NAO_APLICAVEL'
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31',
      '12000000-0000-0000-0000-000000000001', NULL
    )
@@ -495,7 +495,7 @@ SELECT pg_temp.assert_true(
   (SELECT margem_municipal_critica_percent = 55
           AND margem_municipal_alerta_percent = 65
           AND margem_municipal_status = 'ALERTA'
-   FROM public.get_attendance_conditionality(
+   FROM public.get_attendance_conditionality_unrestricted(
      DATE '2026-08-01', DATE '2026-08-31',
      '12000000-0000-0000-0000-000000000003', NULL
    )
@@ -523,11 +523,11 @@ SELECT pg_temp.assert_true(
 );
 SELECT set_config('request.jwt.claim.sub','12000000-0000-0000-0000-000000000011',true);
 SELECT pg_temp.assert_true(
-  (SELECT count(*) = 53
+  (SELECT count(*) = 0
    FROM public.get_attendance_conditionality(
      DATE '2026-08-01', DATE '2026-08-31', NULL, NULL
    )),
-  'school teacher reads only the own school active rows through the RPC'
+  'school teacher cannot read Bolsa Familia conditionality rows through the RPC'
 );
 
 RESET ROLE;

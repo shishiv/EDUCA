@@ -180,6 +180,7 @@ export default function BolsaFamiliaReportPage() {
       });
 
       if (result.error) {
+        setReport(null);
         toast.error(result.error);
         return;
       }

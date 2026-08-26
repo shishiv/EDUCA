@@ -11,13 +11,15 @@ import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 
-export type StudentWithDetails = Aluno & {
-  responsavel?: Tables<'responsaveis'>
-  escola?: Tables<'escolas'>
-  turma?: Tables<'turmas'>
-  matriculas?: (Tables<'matriculas'> & {
-    turma?: Tables<'turmas'> & {
-      escola?: Tables<'escolas'>
+const STUDENT_SAFE_COLUMNS = 'id,nome_completo,data_nascimento,sexo,cpf,rg,cor_raca,zona_residencial,transporte_escolar,tipo_deficiencia,nome_mae,nome_pai,telefone,email,endereco,necessidades_especiais,responsavel_id,ativo,created_at'
+
+export type StudentWithDetails = Omit<Aluno, 'bolsa_familia' | 'nis'> & {
+  responsavel?: Partial<Tables<'responsaveis'>>
+  escola?: Partial<Tables<'escolas'>>
+  turma?: Partial<Tables<'turmas'>>
+  matriculas?: (Partial<Tables<'matriculas'>> & {
+    turma?: Partial<Tables<'turmas'>> & {
+      escola?: Partial<Tables<'escolas'>>
     }
   })[]
 }
@@ -38,7 +40,7 @@ export class StudentsApiService extends BaseApiService {
           situacao,
           data_matricula,
           turma_id,
-          aluno:alunos(*)
+          aluno:alunos(id,nome_completo,data_nascimento,sexo,cpf,rg,cor_raca,zona_residencial,transporte_escolar,tipo_deficiencia,nome_mae,nome_pai,telefone,email,endereco,necessidades_especiais,responsavel_id,ativo,created_at)
         `)
         .eq('turma_id', classId)
         .eq('situacao', 'ativa')
@@ -69,7 +71,7 @@ export class StudentsApiService extends BaseApiService {
       const result = matriculasData
         .filter((m) => m.aluno)
         .map((m) => {
-          const aluno = m.aluno as Tables<'alunos'>
+          const aluno = m.aluno
           return {
             ...aluno,
             responsavel: responsaveisMap.get(aluno.id) as Tables<'responsaveis'> | undefined,
@@ -105,7 +107,7 @@ export class StudentsApiService extends BaseApiService {
       let query = supabase
         .from('alunos')
         .select(`
-          *,
+          ${STUDENT_SAFE_COLUMNS},
           responsavel:responsaveis(
             id,
             nome,
@@ -381,7 +383,12 @@ export class StudentsApiService extends BaseApiService {
   // Update student status
   async updateStudentStatus(id: string, ativo: boolean, reason?: string) {
     try {
-      const result = await this.update(id, { ativo })
+      const { error } = await supabase
+        .from('alunos')
+        .update({ ativo })
+        .eq('id', id)
+
+      if (error) throw error
 
       logger.info(`Student status updated to ${ativo ? 'active' : 'inactive'}`, {
         feature: 'students',
@@ -389,7 +396,7 @@ export class StudentsApiService extends BaseApiService {
         metadata: { studentId: id, ativo, reason }
       })
 
-      return result
+      return { id, ativo }
     } catch (error) {
       logger.error('Error updating student status', error as Error, {
         feature: 'students',
@@ -434,7 +441,7 @@ export class StudentsApiService extends BaseApiService {
       // Calculate grade distribution from enrollments
       students.forEach(student => {
         student.matriculas?.forEach(matricula => {
-          if (matricula.situacao === 'ativa' && matricula.turma) {
+          if (matricula.situacao === 'ativa' && matricula.turma?.serie) {
             const serie = matricula.turma.serie
             stats.byGrade[serie] = (stats.byGrade[serie] || 0) + 1
           }

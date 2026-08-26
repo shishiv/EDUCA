@@ -283,18 +283,6 @@ export async function getBolsaFamiliaStudents(
       geradoEm: new Date().toISOString(),
     }
 
-    logger.info('Bolsa Família report generated from canonical attendance model', {
-      feature: 'bolsa-familia-reports',
-      action: 'report_generated',
-      metadata: {
-        total: students.length,
-        conformes,
-        emAlerta,
-        emRiscoCritico,
-        condicionalidadesLegaisCriticas,
-      },
-    })
-
     return { data: report, error: null }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'

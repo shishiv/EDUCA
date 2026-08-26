@@ -35,6 +35,7 @@ import { isInfantilAge } from '@/lib/utils/faixa-etaria'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
+import { getStudentBolsaFamilia } from '@/lib/reports/attendance-conditionality'
 
 interface AlunoDetalhado {
   id: string
@@ -107,10 +108,22 @@ export default function AlunoDetalhesPage() {
         setError(null)
 
         // Fetch student with matriculas
-        const { data: alunoData, error: alunoError } = await supabase
+        const [{ data: alunoData, error: alunoError }, bolsaFamilia] = await Promise.all([
+          supabase
           .from('alunos')
           .select(`
-            *,
+            id,
+            nome_completo,
+            data_nascimento,
+            cpf,
+            sexo,
+            endereco,
+            telefone,
+            nome_mae,
+            nome_pai,
+            necessidades_especiais,
+            ativo,
+            created_at,
             matriculas:matriculas(
               id,
               ano_letivo,
@@ -125,7 +138,9 @@ export default function AlunoDetalhesPage() {
             )
           `)
           .eq('id', params.id as string)
-          .single()
+          .single(),
+          getStudentBolsaFamilia(supabase, params.id as string),
+        ])
 
         if (alunoError) throw alunoError
         if (!alunoData) {
@@ -202,7 +217,7 @@ export default function AlunoDetalhesPage() {
           matriculas: alunoData.matriculas || [],
           frequencia,
           notas: [], // Notas not implemented yet
-          bolsa_familia: alunoData.bolsa_familia ?? false,
+          bolsa_familia: bolsaFamilia ?? false,
           vivencias_count: 0 // Will be populated when vivencias API exists
         }
 
@@ -321,7 +336,7 @@ export default function AlunoDetalhesPage() {
         turma={currentMatricula?.turma.nome}
         turno={currentMatricula?.turma.turno}
         bolsaFamilia={aluno.bolsa_familia}
-        showBolsaFamilia={true} // TODO: Check user role (gestores only)
+        showBolsaFamilia={aluno.bolsa_familia === true}
         ativo={aluno.ativo}
       />
 

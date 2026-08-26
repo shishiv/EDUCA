@@ -86,11 +86,11 @@ export class ReportsApiService extends BaseApiService {
           // Get student count from alunos table
           const { count: totalAlunos } = await supabase
             .from('alunos')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
 
           const { count: alunosAtivos } = await supabase
             .from('alunos')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('ativo', true)
 
           dados = {

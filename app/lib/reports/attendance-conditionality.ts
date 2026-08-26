@@ -68,9 +68,30 @@ interface AttendanceConditionalityRpcClient {
   }>
 }
 
+interface StudentBolsaFamiliaRpcClient {
+  rpc(
+    functionName: 'get_student_bolsa_familia',
+    args: { p_student_id: string },
+  ): Promise<{
+    data: boolean | null
+    error: { message: string } | null
+  }>
+}
+
 /** Bridges the stale generated client into this migration-owned RPC contract. */
 export function asAttendanceConditionalityClient(client: unknown): AttendanceConditionalityRpcClient {
   return client as AttendanceConditionalityRpcClient
+}
+
+export async function getStudentBolsaFamilia(
+  client: unknown,
+  studentId: string,
+): Promise<boolean | null> {
+  const { data, error } = await (client as StudentBolsaFamiliaRpcClient).rpc(
+    'get_student_bolsa_familia',
+    { p_student_id: studentId },
+  )
+  return error ? null : data
 }
 
 /** Result returned by the canonical attendance conditionality query. */

@@ -8,6 +8,7 @@ CENSO_MIGRATION="20260719031000_add_censo_escolar_fields.sql"
 RELATORIOS_MIGRATION="20260124133337_create_relatorios_descritivos.sql"
 SECURITY_HARDENING_MIGRATION="20260810220000_governed_pilot_security_hardening.sql"
 ROLLBACK_STORAGE_MIGRATION="20260812231418_pilot_import_batch_rollback_storage.sql"
+BOLSA_VISIBILITY_MIGRATION="20260815000000_bolsa_familia_visibility_policy.sql"
 
 for command in initdb pg_ctl psql; do
   if ! command -v "$command" >/dev/null 2>&1; then
@@ -64,6 +65,7 @@ done
 # final hardening so this isolated database matches the deployed migration state.
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$SECURITY_HARDENING_MIGRATION" >/dev/null
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$ROLLBACK_STORAGE_MIGRATION" >/dev/null
+"${PSQL[@]}" -f "$MIGRATIONS_DIR/$BOLSA_VISIBILITY_MIGRATION" >/dev/null
 
 # The pilot provisioning file is intentionally not applied here. The contract
 # needs synthetic NIS/PBF rows to exercise the real legal read model.

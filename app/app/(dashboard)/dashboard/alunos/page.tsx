@@ -39,7 +39,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-interface AlunoWithDetails extends Aluno {
+interface AlunoWithDetails extends Pick<Aluno,
+  'id' | 'nome_completo' | 'data_nascimento' | 'sexo' | 'cpf' |
+  'telefone' | 'necessidades_especiais' | 'ativo'
+> {
   responsaveis?: {
     nome: string
   }
@@ -126,7 +129,14 @@ export default function AlunosPage() {
         const { data, error } = await supabase
           .from('alunos')
           .select(`
-            *,
+            id,
+            nome_completo,
+            data_nascimento,
+            sexo,
+            cpf,
+            telefone,
+            necessidades_especiais,
+            ativo,
             responsaveis:responsavel_id (nome),
             matriculas (
               situacao,
@@ -151,7 +161,14 @@ export default function AlunosPage() {
         const { data, error } = await supabase
           .from('alunos')
           .select(`
-            *,
+            id,
+            nome_completo,
+            data_nascimento,
+            sexo,
+            cpf,
+            telefone,
+            necessidades_especiais,
+            ativo,
             responsaveis:responsavel_id (nome),
             matriculas (
               situacao,
