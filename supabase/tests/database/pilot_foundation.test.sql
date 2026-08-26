@@ -8,8 +8,8 @@ END;
 $$;
 
 INSERT INTO escolas(id, codigo, nome, tipo) VALUES
-  ('10000000-0000-0000-0000-000000000001','SYN-A','Escola Sintetica A','fundamental'),
-  ('10000000-0000-0000-0000-000000000002','SYN-B','Escola Sintetica B','fundamental');
+  ('10000000-0000-0000-0000-000000000001','00000001','Escola Sintetica A','fundamental'),
+  ('10000000-0000-0000-0000-000000000002','00000002','Escola Sintetica B','fundamental');
 INSERT INTO users(id,nome,email,tipo_usuario,escola_id,ativo) VALUES
   ('20000000-0000-0000-0000-000000000001','Secretaria Sintetica','secretaria@synthetic.invalid','secretario',NULL,true),
   ('20000000-0000-0000-0000-000000000002','Diretora A','diretora.a@synthetic.invalid','diretor','10000000-0000-0000-0000-000000000001',true),

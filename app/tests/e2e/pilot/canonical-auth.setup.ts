@@ -34,5 +34,5 @@ setup('authenticate the canonical synthetic teacher', async ({ page }) => {
     }, null, 2)}\n`, 'utf8')
   }
 
-  console.info(`PILOT_CANONICAL_AUTH_RECEIPT: identity=${SYNTHETIC_EMAIL} role=professor school=SYN-A login=ui`)
+  console.info(`PILOT_CANONICAL_AUTH_RECEIPT: identity=${SYNTHETIC_EMAIL} role=professor school=00000001 login=ui`)
 })

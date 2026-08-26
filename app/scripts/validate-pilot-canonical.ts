@@ -138,6 +138,38 @@ async function checkDatabaseMarker(client: Client): Promise<void> {
   assertCondition(privilegeRow?.notes_select === false, 'disabled grades table is exposed to browser roles')
   assertCondition(privilegeRow?.classes_select === true, 'canonical classes read grant is missing')
   assertCondition(privilegeRow?.attendance_insert === true, 'canonical attendance write grant is missing')
+
+  const schoolUpdatePolicies = await client.query<{ qual: string; with_check: string }>(`
+    SELECT qual, with_check
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'escolas'
+      AND cmd = 'UPDATE'
+  `)
+  assertCondition(schoolUpdatePolicies.rows.length === 1, 'admin-only school update policy is missing')
+  const schoolUpdatePolicy = schoolUpdatePolicies.rows[0]
+  assertCondition(
+    schoolUpdatePolicy.qual.includes('pilot_current_role()') &&
+      schoolUpdatePolicy.qual.includes('admin') &&
+      schoolUpdatePolicy.with_check.includes('pilot_current_role()') &&
+      schoolUpdatePolicy.with_check.includes('admin'),
+    'school update policy is not admin-only'
+  )
+
+  const schoolUpdatePrivileges = await client.query<{ column_name: string }>(`
+    SELECT column_name
+    FROM information_schema.column_privileges
+    WHERE table_schema = 'public'
+      AND table_name = 'escolas'
+      AND grantee = 'authenticated'
+      AND privilege_type = 'UPDATE'
+    ORDER BY column_name
+  `)
+  assertCondition(
+    JSON.stringify(schoolUpdatePrivileges.rows.map(row => row.column_name)) ===
+      JSON.stringify(['ativo', 'codigo', 'diretor_id', 'email', 'endereco', 'nome', 'telefone', 'tipo']),
+    'school update privileges are broader than the edit form'
+  )
 }
 
 async function checkSyntheticDataset(client: Client): Promise<CountRow> {
@@ -259,6 +291,20 @@ async function checkPostgrestAccess(): Promise<void> {
   assertCondition(JSON.stringify(sortedIds(teacherClasses.data)) === JSON.stringify([CLASS_A]), 'teacher class scope is incorrect')
   assertCondition(JSON.stringify(sortedIds(teacherStudents.data)) === JSON.stringify([STUDENT_A]), 'teacher student scope is incorrect')
 
+  const adminSchoolUpdate = await admin.from('escolas').update({ codigo: '00000001' }).eq('id', SCHOOL_A).select('codigo').single()
+  assertCondition(!adminSchoolUpdate.error && adminSchoolUpdate.data.codigo === '00000001', 'admin cannot save the seeded school')
+  const adminSchoolReread = await admin.from('escolas').select('codigo').eq('id', SCHOOL_A).single()
+  assertCondition(!adminSchoolReread.error && adminSchoolReread.data.codigo === '00000001', 'admin cannot reread the saved school')
+
+  for (const [role, client] of [
+    ['secretariat', secretariat],
+    ['director', directorA],
+    ['teacher', teacherA],
+  ] as const) {
+    const deniedUpdate = await client.from('escolas').update({ codigo: '00000001' }).eq('id', SCHOOL_A).select('codigo').single()
+    assertCondition(Boolean(deniedUpdate.error), `${role} can update schools through PostgREST`)
+  }
+
   const crossSchoolRead = await directorB.from('turmas').select('id').eq('id', CLASS_A)
   assertCondition(!crossSchoolRead.error && crossSchoolRead.data.length === 0, 'director B can read school A class data')
 
@@ -300,10 +346,12 @@ async function validate(): Promise<void> {
         domain: 'synthetic.invalid',
         admin: ADMIN_EMAIL,
         teacher: TEACHER_A_EMAIL,
-        school: 'SYN-A',
+        school: '00000001',
       },
       access: {
         adminSchoolListRead: 'pass',
+        adminSchoolUpdate: 'pass',
+        nonAdminSchoolUpdateDenied: 'pass',
         schoolIsolation: 'pass',
         teacherOwnClassRead: 'pass',
         teacherStudentWriteDenied: 'pass',

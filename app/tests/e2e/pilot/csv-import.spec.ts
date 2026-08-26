@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 
 const csv = [
   'synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,guardian_name,guardian_phone,guardian_relationship',
-  'SYNTHETIC-EDUCA-PILOT,csv-e2e-student,SYN-A,CLASS-A,Aluno CSV Sintetico,2018-05-20,M,Responsavel CSV Sintetico,(11) 98888-0000,mae',
+  'SYNTHETIC-EDUCA-PILOT,csv-e2e-student,00000001,CLASS-A,Aluno CSV Sintetico,2018-05-20,M,Responsavel CSV Sintetico,(11) 98888-0000,mae',
 ].join('\n')
 
 const governance = {

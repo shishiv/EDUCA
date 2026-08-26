@@ -14,14 +14,14 @@ import { canManagePilotSchool, isPilotDisabledPath } from '@/lib/pilot/pilot-sco
 
 const csv = [
   SYNTHETIC_STUDENT_CSV_HEADERS.join(','),
-  `${SYNTHETIC_CSV_MARKER},student-1,SYN-A,CLASS-A,Aluno Sintetico,2018-04-12,M,Responsavel Sintetico,(11) 99999-0000,mae`,
+  `${SYNTHETIC_CSV_MARKER},student-1,00000001,CLASS-A,Aluno Sintetico,2018-04-12,M,Responsavel Sintetico,(11) 99999-0000,mae`,
 ].join('\n')
 const key = Buffer.alloc(32, 7).toString('base64')
 
 describe('synthetic pilot foundation', () => {
   it('accepts only the minimal synthetic CSV allowlist', () => {
     const result = validateSyntheticStudentCsv(csv)
-    expect(result.report).toMatchObject({ valid: true, totalRows: 1, validRows: 1, schoolCodes: ['SYN-A'] })
+    expect(result.report).toMatchObject({ valid: true, totalRows: 1, validRows: 1, schoolCodes: ['00000001'] })
     expect(result.rows[0].student_name).toBe('Aluno Sintetico')
   })
 

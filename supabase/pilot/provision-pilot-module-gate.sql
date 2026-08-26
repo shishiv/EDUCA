@@ -21,6 +21,15 @@
 REVOKE ALL ON notas, educacenso_exports, codigos_inep FROM anon, authenticated;
 REVOKE ALL ON vw_alunos_risco_bolsa_familia FROM anon, authenticated;
 
+DROP POLICY IF EXISTS pilot_escolas_update ON public.escolas;
+CREATE POLICY pilot_escolas_update ON public.escolas
+FOR UPDATE TO authenticated
+USING (public.pilot_current_role() = 'admin')
+WITH CHECK (public.pilot_current_role() = 'admin');
+REVOKE UPDATE ON public.escolas FROM authenticated;
+GRANT UPDATE (nome, codigo, tipo, endereco, telefone, email, diretor_id, ativo)
+ON public.escolas TO authenticated;
+
 -- -----------------------------------------------------------------------------
 -- High-risk fields are blocked at the database seam while the synthetic pilot
 -- foundation is active.

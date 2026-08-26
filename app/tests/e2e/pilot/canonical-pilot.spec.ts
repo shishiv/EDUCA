@@ -135,7 +135,7 @@ test('canonical synthetic pilot path proves read, write, and school isolation', 
     result: 'pass',
     identity: TEACHER_EMAIL,
     role: 'professor',
-    school: 'SYN-A',
+    school: '00000001',
     route: CANONICAL_ROUTE,
     date: CANONICAL_DATE,
     read: 'class, school, and student rendered through authenticated browser reads',
@@ -150,5 +150,5 @@ test('canonical synthetic pilot path proves read, write, and school isolation', 
     body: Buffer.from(`${JSON.stringify(browserReceipt, null, 2)}\n`),
     contentType: 'application/json',
   })
-  console.info(`PILOT_CANONICAL_BROWSER_RECEIPT: result=pass identity=${TEACHER_EMAIL} school=SYN-A route=${CANONICAL_ROUTE} read=pass write=pass rls=pass`)
+  console.info(`PILOT_CANONICAL_BROWSER_RECEIPT: result=pass identity=${TEACHER_EMAIL} school=00000001 route=${CANONICAL_ROUTE} read=pass write=pass rls=pass`)
 })

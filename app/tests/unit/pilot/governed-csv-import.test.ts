@@ -23,7 +23,7 @@ import { SYNTHETIC_CSV_MARKER } from '@/lib/pilot/synthetic-csv-import'
 
 const csv = [
   GOVERNED_PILOT_STUDENT_CSV_HEADERS.join(','),
-  `${SYNTHETIC_CSV_MARKER},synthetic-student-1,SYN-A,CLASS-A,Aluno Sintetico,2018-05-20,M,Responsavel Sintetico,11999990000,mae`,
+  `${SYNTHETIC_CSV_MARKER},synthetic-student-1,00000001,CLASS-A,Aluno Sintetico,2018-05-20,M,Responsavel Sintetico,11999990000,mae`,
 ].join('\n')
 
 const realCsv = csv.replace(`${SYNTHETIC_CSV_MARKER},`, ',')
@@ -101,12 +101,12 @@ describe('governed pilot CSV contract', () => {
     const canonical = transformGovernedPilotCsvToCanonicalRows(result.rows)
     expect(canonical).toEqual([expect.objectContaining({
       sourceId: 'synthetic-student-1',
-      schoolCode: 'SYN-A',
+      schoolCode: '00000001',
       classCode: 'CLASS-A',
       guardianSourceId: 'guardian:synthetic-student-1',
     })])
     expect(countCanonicalPilotRows(canonical)).toEqual({ sourceRows: 1, students: 1, guardians: 1, relationships: 1, enrollments: 1 })
-    expect(fingerprintCanonicalPilotRows(canonical)).toBe('76d2c7a08f14f8a1f22426f24bdfe9c44cbd397837c78851740e3fb001c5626c')
+    expect(fingerprintCanonicalPilotRows(canonical)).toBe('c09ca1adcfbfb029bab1f23dacdf8bbb98b50db3a2d2541d906a109aa8a7a496')
   })
 
   it('requires a synthetic marker in synthetic mode and a blank marker in real proof mode', () => {
@@ -126,7 +126,7 @@ describe('governed pilot CSV contract', () => {
     expect(validateGovernedPilotStudentCsv(csv.replace('Aluno Sintetico', '=HYPERLINK("https://invalid")'), 'synthetic').report.issues).toContainEqual(
       expect.objectContaining({ code: 'spreadsheet_formula_rejected' })
     )
-    const crossSchool = `${csv}\n${SYNTHETIC_CSV_MARKER},synthetic-student-2,SYN-B,CLASS-B,Outra Pessoa,2018-06-20,F,Outro Responsavel,11999990001,pai`
+    const crossSchool = `${csv}\n${SYNTHETIC_CSV_MARKER},synthetic-student-2,00000002,CLASS-B,Outra Pessoa,2018-06-20,F,Outro Responsavel,11999990001,pai`
     expect(validateGovernedPilotStudentCsv(crossSchool, 'synthetic').report.issues).toContainEqual(
       expect.objectContaining({ code: 'one_school_per_batch_required' })
     )
