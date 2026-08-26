@@ -37,8 +37,8 @@ async function createSyntheticAuthUser(account: typeof accounts[number]): Promis
 
 async function seed() {
   const { error: schoolsError } = await service.from('escolas').upsert([
-    { id: schoolA, codigo: 'SYN-A', nome: 'Escola Sintetica A', tipo: 'fundamental', ativo: true },
-    { id: schoolB, codigo: 'SYN-B', nome: 'Escola Sintetica B', tipo: 'fundamental', ativo: true },
+    { id: schoolA, codigo: '00000001', nome: 'Escola Sintetica A', tipo: 'fundamental', ativo: true },
+    { id: schoolB, codigo: '00000002', nome: 'Escola Sintetica B', tipo: 'fundamental', ativo: true },
   ], { onConflict: 'id' })
   if (schoolsError) throw schoolsError
 
