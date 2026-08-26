@@ -15,14 +15,17 @@ const auditEventSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
+    const actor = await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
     const input = auditEventSchema.parse(await request.json())
+    if (input.schoolId && input.schoolId !== actor.schoolId) {
+      throw new Error('PILOT_AUDIT_SCHOOL_DENIED: actor cannot audit another school')
+    }
     const supabase = await createClient()
     const { data, error } = await asPilotRpcClient(supabase).rpc<string>('write_pilot_audit_event', {
       p_event_type: input.eventType,
       p_entity_type: input.entityType,
       p_entity_id: input.entityId ?? undefined,
-      p_escola_id: input.schoolId ?? undefined,
+      p_escola_id: actor.schoolId ?? undefined,
       p_metadata: input.metadata,
     })
     if (error) throw error

@@ -38,7 +38,7 @@ export const logAuthEvent = async (
     const response = await fetch('/api/pilot/audit', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ eventType: action, entityType: 'auth_session', entityId: userId, schoolId: null, metadata: {} }),
+      body: JSON.stringify({ eventType: action, entityType: 'auth_session', entityId: userId, metadata: {} }),
     })
     if (!response.ok) logger.error('PILOT_AUDIT_WRITE_FAILED', new Error(`status ${response.status}`), { feature: 'auth', action })
   } catch (error) {
