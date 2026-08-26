@@ -236,6 +236,9 @@ export class ConfigsApiService {
       case 'backup_automatico':
         return valor === 'true' || valor === 'false'
 
+      case 'bolsa_familia_visible_roles':
+        return /^(none|admin(,diretor)?(,secretario)?|diretor(,secretario)?|secretario)$/.test(valor)
+
       case 'sistema_nome':
         return valor.length >= 5 && valor.length <= 100
 
@@ -259,6 +262,8 @@ export class ConfigsApiService {
         return 'O máximo de alunos deve estar entre 10 e 50'
       case 'sistema_nome':
         return 'O nome do sistema deve ter entre 5 e 100 caracteres'
+      case 'bolsa_familia_visible_roles':
+        return 'Use none ou uma lista ordenada de admin, diretor e secretario'
       default:
         return 'Valor inválido'
     }

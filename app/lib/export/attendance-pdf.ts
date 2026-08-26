@@ -279,8 +279,6 @@ export interface StudentReportData {
     date: string;
     status: 'P' | 'F' | 'A' | null;
   }>;
-  isBolsaFamilia?: boolean;
-  nis?: string;
   municipalCriticalPercent?: number | null;
   municipalWarningPercent?: number | null;
   legalMinimumPercent?: number | null;
@@ -307,15 +305,6 @@ export function generateStudentReportPDF(data: StudentReportData): void {
     currentY,
     { fontSize: 11, fontStyle: 'bold' }
   );
-
-  if (data.isBolsaFamilia && data.nis) {
-    currentY = addPDFText(
-      doc,
-      `NIS: ${data.nis} | Bolsa Família: Sim`,
-      currentY,
-      { fontSize: 10, color: [180, 83, 9] }
-    );
-  }
 
   currentY += 5;
 

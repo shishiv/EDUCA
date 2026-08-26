@@ -397,7 +397,7 @@ export async function insertSeedData() {
     const { data: alunos, error: alunosError } = await supabase
       .from('alunos')
       .insert(alunosWithResponsaveis)
-      .select()
+      .select('id')
 
     if (alunosError) {
       throw new Error(`Failed to insert students: ${alunosError.message}`)

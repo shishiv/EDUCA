@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { Client as PostgresClient } from 'pg'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -57,6 +57,14 @@ async function signedInClient(email: string) {
   const { error } = await client.auth.signInWithPassword({ email, password })
   if (error) throw error
   return client
+}
+
+async function loginInBrowser(page: Page, email: string) {
+  await page.goto('/login')
+  await page.getByLabel('E-mail', { exact: true }).fill(email)
+  await page.getByLabel('Senha', { exact: true }).fill(password)
+  await page.getByRole('button', { name: /entrar/i }).click()
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 })
 }
 
 async function removeFixtureRows() {
@@ -159,6 +167,19 @@ async function prepareFixture() {
     },
   ])
   if (students.error) throw students.error
+
+  const database = new PostgresClient({ connectionString: databaseUrl })
+  await database.connect()
+  try {
+    await database.query('ALTER TABLE public.alunos DISABLE TRIGGER pilot_high_risk_student_guard')
+    await database.query(
+      'UPDATE public.alunos SET bolsa_familia = true, nis = $1 WHERE id = $2',
+      ['NIS-SYNTHETIC-SECURITY-E2E', fixtureStudent],
+    )
+  } finally {
+    await database.query('ALTER TABLE public.alunos ENABLE TRIGGER pilot_high_risk_student_guard')
+    await database.end()
+  }
 
   const enrollments = await service.from('matriculas').insert([
     {
@@ -270,7 +291,7 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     await removeFixtureRows()
   })
 
-  test('proves the three roles, conditionality release, and negative writes at PostgREST', async ({ page }) => {
+  test('proves the three roles, conditionality release, and negative writes at PostgREST', async ({ page, browser }) => {
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/dashboard/)
 
@@ -317,17 +338,50 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     expect(secretariatRpc.data?.some((row: ConditionalityRow) => row.aluno_id === fixtureStudent)).toBe(true)
     expect(directorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolA)).toBe(true)
     expect(otherDirectorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolB)).toBe(true)
-    expect(teacherRpc.data?.some((row: ConditionalityRow) => row.aluno_id === fixtureStudent)).toBe(true)
-    expect(teacherRpc.data?.some((row: ConditionalityRow) => row.aluno_id === fixtureNonTitularStudent)).toBe(false)
+    expect(teacherRpc.data).toEqual([])
 
-    const [conditionalityView, legacyView, secretariatReports, otherDirectorReports] = await Promise.all([
+    const [teacherColumn, teacherScalar, secretariatScalar] = await Promise.all([
+      teacherClient.from('alunos').select('bolsa_familia').eq('id', fixtureStudent),
+      teacherClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
+      secretariatClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
+    ])
+    expect(teacherColumn.error).not.toBeNull()
+    expect(teacherScalar.error).toBeNull()
+    expect(teacherScalar.data).toBeNull()
+    expect(secretariatScalar.error).toBeNull()
+    expect(secretariatScalar.data).toBe(true)
+
+    const disabledForDirection = await directorClient
+      .from('configs')
+      .update({ valor: 'admin,secretario', updated_at: new Date().toISOString() })
+      .eq('escola_id', schoolA)
+      .eq('chave', 'bolsa_familia_visible_roles')
+      .select('valor')
+      .single()
+    expect(disabledForDirection.error).toBeNull()
+    const configuredDirectorScalar = await directorClient.rpc('get_student_bolsa_familia', {
+      p_student_id: fixtureStudent,
+    })
+    expect(configuredDirectorScalar.error).toBeNull()
+    expect(configuredDirectorScalar.data).toBeNull()
+    const restoreVisibility = await createServiceClient()
+      .from('configs')
+      .update({ valor: 'admin,diretor,secretario', updated_at: new Date().toISOString() })
+      .eq('escola_id', schoolA)
+      .eq('chave', 'bolsa_familia_visible_roles')
+    expect(restoreVisibility.error).toBeNull()
+
+    const [conditionalityView, teacherConditionalityView, legacyView, secretariatReports, otherDirectorReports] = await Promise.all([
       directorClient.from('vw_frequencia_condicionalidade').select('aluno_id,escola_id'),
+      teacherClient.from('vw_frequencia_condicionalidade').select('aluno_id,escola_id'),
       secretariatClient.from('vw_alunos_risco_bolsa_familia').select('aluno_id'),
       secretariatClient.from('relatorios_descritivos').select('id').eq('id', fixtureReport),
       otherDirectorClient.from('relatorios_descritivos').select('id').eq('id', fixtureReport),
     ])
     expect(conditionalityView.error).toBeNull()
     expect(conditionalityView.data?.every(row => row.escola_id === schoolA)).toBe(true)
+    expect(teacherConditionalityView.error).toBeNull()
+    expect(teacherConditionalityView.data).toEqual([])
     expect(legacyView.error).not.toBeNull()
     expect(secretariatReports.error).toBeNull()
     expect(secretariatReports.data).toHaveLength(1)
@@ -371,6 +425,27 @@ test.describe.serial('isolated governed pilot security hardening', () => {
       created_by: await getUserId(teacherClient),
     })
     expect(teacherTitularWrite.error).toBeNull()
+
+    await page.goto('/relatorios/bolsa-familia')
+    await expect(page.getByRole('heading', { name: /Bolsa Família/ })).toBeVisible()
+    await expect(page.getByText('Aluno Security E2E', { exact: true })).toBeVisible()
+
+    const teacherContext = await browser.newContext({ ignoreHTTPSErrors: true })
+    const teacherPage = await teacherContext.newPage()
+    try {
+      await loginInBrowser(teacherPage, teacherA)
+      await expect(teacherPage.getByRole('link', { name: /relatórios/i })).toHaveCount(0)
+      await teacherPage.goto('/relatorios/bolsa-familia')
+      await expect(teacherPage).toHaveURL(/\/unauthorized/)
+
+      const routePayloads = await teacherPage.evaluate(async () => Promise.all([
+        fetch('/api/compliance/warnings').then(response => response.text()),
+        fetch('/api/dashboard/alerts').then(response => response.text()),
+      ]))
+      expect(routePayloads.join('\n')).not.toMatch(/bolsa.família|bolsa-familia|NIS-SYNTHETIC-SECURITY-E2E/i)
+    } finally {
+      await teacherContext.close()
+    }
 
     const teacherDelete = await teacherClient
       .from('conteudo_aula')

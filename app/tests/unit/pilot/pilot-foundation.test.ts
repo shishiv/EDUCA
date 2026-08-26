@@ -68,7 +68,7 @@ describe('synthetic pilot foundation', () => {
     expect(isPilotDisabledPath('/dashboard/sessoes')).toBe(true)
     expect(isPilotDisabledPath('/boletim')).toBe(true)
     expect(isPilotDisabledPath('/api/educacenso/export')).toBe(true)
-    expect(isPilotDisabledPath('/relatorios/bolsa-familia')).toBe(true)
+    expect(isPilotDisabledPath('/relatorios/bolsa-familia')).toBe(false)
     expect(isPilotDisabledPath('/relatorios/conteudo')).toBe(true)
 
     // Attendance and non-module routes remain allowed.

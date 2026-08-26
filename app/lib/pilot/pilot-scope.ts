@@ -36,6 +36,8 @@ const PILOT_DISABLED_ROUTE_FRAGMENTS = ['/boletim'] as const
 
 /** Returns true when the path is in a disabled pilot module. */
 export function isPilotDisabledPath(pathname: string): boolean {
+  if (pathname === '/relatorios/bolsa-familia') return false
+
   return PILOT_DISABLED_ROUTE_PREFIXES.some(prefix =>
     pathname === prefix || pathname.startsWith(`${prefix}/`)
   ) || PILOT_DISABLED_ROUTE_FRAGMENTS.some(fragment => pathname.includes(fragment))

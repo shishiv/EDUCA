@@ -32,8 +32,6 @@ export interface StudentAtRisk {
   id: string
   /** Student full name */
   nome: string
-  /** Student NIS (Numero de Identificacao Social) for Bolsa Familia */
-  nis?: string | null
   /** Student's current attendance percentage */
   frequenciaPercentual: number
   /** Total absences count */
@@ -218,11 +216,6 @@ export function RiskAlert({
                           )}>
                             - {student.frequenciaPercentual.toFixed(0)}%
                           </span>
-                          {student.nis && (
-                            <span className="text-xs text-gray-500 ml-2">
-                              (NIS: {student.nis})
-                            </span>
-                          )}
                         </div>
                       </div>
 

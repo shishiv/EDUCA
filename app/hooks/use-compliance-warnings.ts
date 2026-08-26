@@ -8,6 +8,7 @@ import {
   isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
 import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { useAuth } from '@/hooks/use-auth'
 
 /** Compliance warning types for Brazilian educational requirements. */
 export interface ComplianceWarning {
@@ -36,8 +37,10 @@ const ATTENDANCE_GAP_DAYS = 5
  * Legal floors and municipality margins never come from client constants.
  */
 export function useComplianceWarnings(escolaId?: string) {
+  const { user } = useAuth()
+
   return useQuery<ComplianceWarning[]>({
-    queryKey: ['compliance-warnings', escolaId],
+    queryKey: ['compliance-warnings', user?.id, escolaId],
     queryFn: async () => {
       const warnings: ComplianceWarning[] = []
       const now = new Date()
@@ -253,6 +256,7 @@ export function useComplianceWarnings(escolaId?: string) {
         return []
       }
     },
+    enabled: Boolean(user?.id),
     staleTime: 5 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   })

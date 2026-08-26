@@ -269,7 +269,6 @@ export interface BNNCSkill {
 export interface AlunoRiscoBolsaFamilia {
   alunoId: string;
   alunoNome: string;
-  nis: string;
   turmaId: string;
   turmaNome: string;
   frequenciaPercentual: number;
