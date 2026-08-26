@@ -71,7 +71,7 @@ export const appNavigationGroups: AppNavigationGroup[] = [
     defaultOpen: false,
     items: [
       { id: 'reports', labelKey: 'reports', href: '/dashboard/relatorios', icon: FileText, roles: ['admin', 'diretor', 'secretario'] },
-      { id: 'settings', labelKey: 'settings', href: '/dashboard/configuracoes', icon: Settings, roles: ['admin', 'diretor'] },
+      { id: 'settings', labelKey: 'settings', href: '/dashboard/configuracoes', icon: Settings, roles: ['diretor'] },
     ],
   },
 ]

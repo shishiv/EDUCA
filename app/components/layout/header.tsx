@@ -113,9 +113,11 @@ export function Header() {
             <DropdownMenuItem asChild className="app-dropdown__item">
               <Link href="/dashboard/perfil"><User aria-hidden="true" /> {t('header.myProfile')}</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="app-dropdown__item">
-              <Link href="/dashboard/configuracoes"><Settings aria-hidden="true" /> {t('header.settings')}</Link>
-            </DropdownMenuItem>
+            {role === 'diretor' && (
+              <DropdownMenuItem asChild className="app-dropdown__item">
+                <Link href="/dashboard/configuracoes"><Settings aria-hidden="true" /> {t('header.settings')}</Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="app-dropdown__item app-dropdown__item--danger">
               <LogOut aria-hidden="true" /> {t('header.signOut')}

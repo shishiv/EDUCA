@@ -115,7 +115,7 @@
   },
   "settings": {
     "title": "Configurações",
-    "subtitle": "Gerencie as configurações gerais do sistema",
+    "subtitle": "Ajuste o calendário letivo da sua escola",
     "reload": "Recarregar",
     "save": "Salvar Alterações",
     "saving": "Salvando...",
@@ -145,7 +145,20 @@
     "environment": "Ambiente",
     "development": "Desenvolvimento",
     "loadErrorGeneric": "Erro ao salvar configurações",
-    "savedCount": "{count} configuração(ões) salva(s) com sucesso!"
+    "savedCount": "{count} configuração(ões) salva(s) com sucesso!",
+    "academicYearTitle": "Calendário do ano letivo",
+    "academicYearDescription": "Defina o período letivo da sua escola sem alterar os anos anteriores.",
+    "academicYearLabel": "Ano letivo de {year}",
+    "academicYearStart": "Data de início",
+    "academicYearEnd": "Data de término",
+    "academicYearSave": "Salvar período letivo",
+    "academicYearLoading": "Carregando o período letivo...",
+    "academicYearSaved": "Período letivo salvo com sucesso.",
+    "academicYearLoadError": "Não foi possível carregar o período letivo.",
+    "academicYearSaveError": "Não foi possível salvar o período letivo.",
+    "academicYearInvalidRange": "A data de término não pode ser anterior à data de início.",
+    "academicYearDenied": "Você não tem permissão para alterar o período letivo desta escola.",
+    "retry": "Tentar novamente"
   },
   "flags": {
     "title": "Feature Flags",
