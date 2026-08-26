@@ -12,13 +12,21 @@ END;
 $$;
 
 INSERT INTO public.escolas(id, codigo, nome, tipo, ativo)
-VALUES (
-  'a1000000-0000-0000-0000-000000000001',
-  'BF-VIS',
-  'Escola Bolsa Visibilidade',
-  'fundamental',
-  true
-);
+VALUES
+  (
+    'a1000000-0000-0000-0000-000000000001',
+    'BF-VIS-A',
+    'Escola Bolsa Visibilidade A',
+    'fundamental',
+    true
+  ),
+  (
+    'a1000000-0000-0000-0000-000000000002',
+    'BF-VIS-B',
+    'Escola Bolsa Visibilidade B',
+    'fundamental',
+    true
+  );
 
 INSERT INTO public.users(id, nome, email, tipo_usuario, escola_id, ativo, primeiro_login, senha_padrao)
 VALUES
@@ -107,9 +115,19 @@ SELECT pg_temp.assert_true(
 SELECT pg_temp.assert_true(
   (SELECT valor = 'admin,diretor,secretario'
    FROM public.configs
-   WHERE escola_id = 'a1000000-0000-0000-0000-000000000001'
+   WHERE escola_id IS NULL
      AND chave = 'bolsa_familia_visible_roles'),
-  'each school receives the restrictive role allowlist default'
+  'the visibility default is stored in the database'
+);
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 2 AND bool_and(valor = 'admin,diretor,secretario')
+   FROM public.configs
+   WHERE escola_id IN (
+     'a1000000-0000-0000-0000-000000000001',
+     'a1000000-0000-0000-0000-000000000002'
+   )
+     AND chave = 'bolsa_familia_visible_roles'),
+  'each school receives an isolated override copied from the database default'
 );
 SELECT pg_temp.assert_true(
   EXISTS (
@@ -198,6 +216,20 @@ SELECT pg_temp.assert_true(
   public.get_student_bolsa_familia('a1300000-0000-0000-0000-000000000001') IS NULL,
   'the school can remove direction access'
 );
+DO $$
+DECLARE
+  changed_rows integer;
+BEGIN
+  UPDATE public.configs
+  SET valor = 'admin', updated_at = now()
+  WHERE escola_id = 'a1000000-0000-0000-0000-000000000002'
+    AND chave = 'bolsa_familia_visible_roles';
+  GET DIAGNOSTICS changed_rows = ROW_COUNT;
+  IF changed_rows <> 0 THEN
+    RAISE EXCEPTION 'director changed another school visibility policy';
+  END IF;
+END;
+$$;
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0
    FROM public.get_attendance_conditionality(
