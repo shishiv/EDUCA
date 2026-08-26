@@ -317,6 +317,33 @@ SELECT pg_temp.assert_true(
   'director identity is current before consent audit'
 );
 SELECT public.write_pilot_audit_event(
+  'login', 'auth_session',
+  '98100000-0000-0000-0000-000000000002',
+  NULL,
+  '{}'::jsonb
+);
+SELECT pg_temp.assert_true(
+  (SELECT escola_id = '98000000-0000-0000-0000-000000000001'
+   FROM public.pilot_audit_log
+   WHERE event_type = 'login' AND actor_user_id = '98100000-0000-0000-0000-000000000002'),
+  'director login audit derives the active profile school'
+);
+DO $$
+BEGIN
+  BEGIN
+    PERFORM public.write_pilot_audit_event(
+      'login', 'auth_session',
+      '98100000-0000-0000-0000-000000000002',
+      '98000000-0000-0000-0000-000000000002',
+      '{}'::jsonb
+    );
+    RAISE EXCEPTION 'forged login audit school unexpectedly succeeded';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'forged login audit school unexpectedly succeeded' THEN RAISE; END IF;
+  END;
+END;
+$$;
+SELECT public.write_pilot_audit_event(
   'whatsapp_optin_changed', 'responsavel',
   '98800000-0000-0000-0000-000000000001',
   '98000000-0000-0000-0000-000000000001',
@@ -324,6 +351,18 @@ SELECT public.write_pilot_audit_event(
 );
 
 SELECT set_config('request.jwt.claim.sub', '98100000-0000-0000-0000-000000000001', true);
+SELECT public.write_pilot_audit_event(
+  'login', 'auth_session',
+  '98100000-0000-0000-0000-000000000001',
+  NULL,
+  '{}'::jsonb
+);
+SELECT pg_temp.assert_true(
+  (SELECT escola_id IS NULL
+   FROM public.pilot_audit_log
+   WHERE event_type = 'login' AND actor_user_id = '98100000-0000-0000-0000-000000000001'),
+  'municipal login audit remains global'
+);
 DO $$
 DECLARE
   changed integer;
