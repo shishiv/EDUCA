@@ -54,6 +54,54 @@ test.describe('synthetic municipal pilot core scope', () => {
     })).toEqual({ registrations: 0, offlineDatabase: false })
   })
 
+  test('covers the synthetic school-management journey', async ({ page }) => {
+    test.setTimeout(60_000)
+    const schoolA = '10000000-0000-0000-0000-000000000001'
+
+    await page.goto('/dashboard/escolas')
+    await expect(page).toHaveURL(/\/unauthorized$/)
+
+    await page.context().clearCookies()
+    await page.goto('/login')
+    await page.getByLabel('E-mail', { exact: true }).fill('admin@synthetic.invalid')
+    await page.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
+    await page.getByRole('button', { name: /entrar/i }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+
+    await page.getByRole('link', { name: 'Escolas', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Escolas', exact: true })).toBeVisible()
+    await expect(page.getByText('Escola Sintetica A', { exact: true })).toBeVisible()
+    await expect(page.getByText('Escola Sintetica B', { exact: true })).toBeVisible()
+
+    const search = page.getByPlaceholder('Buscar por nome, código ou diretor...')
+    await search.fill('sem resultado sintetico')
+    await expect(page.getByText(/nenhuma escola encontrada/i)).toBeVisible()
+    await page.getByRole('button', { name: /limpar filtros/i }).click()
+
+    await page.locator(`a[href="/dashboard/escolas/${schoolA}"]`).click()
+    await expect(page.getByRole('heading', { name: 'Escola Sintetica A', exact: true })).toBeVisible()
+    await expect(page.getByText('SYN-A', { exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Escola Sintetica A', exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/escolas/nova')
+    const name = page.getByLabel(/nome da escola/i)
+    await page.getByRole('button', { name: /cadastrar escola/i }).click()
+    expect(await name.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
+
+    await page.goto(`/dashboard/escolas/${schoolA}/editar`)
+    await expect(page.getByLabel(/nome da escola/i)).toHaveValue('Escola Sintetica A')
+    await expect(page.getByLabel(/código inep/i)).toHaveValue('SYN-A')
+    await page.getByRole('button', { name: /salvar alterações/i }).click()
+    await expect(page.getByText(/código inep deve ter exatamente 8 dígitos/i)).toBeVisible()
+
+    await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
+    await page.getByRole('menuitem', { name: /sair do sistema/i }).click()
+    await expect(page).toHaveURL(/\/login$/)
+    await page.goto('/dashboard/escolas')
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+  })
+
   test('covers the complete synthetic authentication journey', async ({ page }) => {
     test.setTimeout(90_000)
     const password = 'Synthetic-Only-2026!'
