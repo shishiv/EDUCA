@@ -1,4 +1,27 @@
 import { expect, test } from '@playwright/test'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const password = 'Synthetic-Only-2026!'
+
+async function login(page: import('@playwright/test').Page, email: string) {
+  await page.context().clearCookies()
+  await page.goto('/login')
+  await page.getByLabel('E-mail', { exact: true }).fill(email)
+  await page.getByLabel('Senha', { exact: true }).fill(password)
+  await page.getByRole('button', { name: /entrar/i }).click()
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 })
+}
+
+async function signedInClient(email: string) {
+  const client = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const { error } = await client.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  return client
+}
 
 test.describe('synthetic municipal pilot core scope', () => {
   test('shows only confirmed pilot modules plus the class diary', async ({ page }) => {
@@ -100,6 +123,174 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page).toHaveURL(/\/login$/)
     await page.goto('/dashboard/escolas')
     await expect(page).toHaveURL(/\/login(?:\?|$)/)
+  })
+
+  test('covers the synthetic student and guardian management journey', async ({ page }) => {
+    test.setTimeout(120_000)
+    const studentA = '40000000-0000-0000-0000-000000000001'
+    const studentB = '40000000-0000-0000-0000-000000000002'
+    const guardianA = '60000000-0000-0000-0000-000000000001'
+    const guardianB = '60000000-0000-0000-0000-000000000002'
+    const studentName = 'Aluno Jornada Sintetica'
+    const updatedStudentName = 'Aluno Jornada Sintetica Atualizado'
+    const guardianName = 'Responsavel Jornada Sintetica'
+    const updatedGuardianName = 'Responsavel Jornada Sintetica Atualizado'
+
+    await login(page, 'diretora.a@synthetic.invalid')
+    await expect(page.getByRole('link', { name: 'Alunos', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Responsáveis', exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/alunos')
+    await expect(page.getByRole('heading', { name: 'Alunos', exact: true })).toBeVisible()
+    await expect(page.getByText('Aluno Sintetico A', { exact: true })).toBeVisible()
+    await expect(page.getByText('Aluna Sintetica B', { exact: true })).toHaveCount(0)
+    const studentSearch = page.getByPlaceholder(/buscar por nome/i)
+    await studentSearch.fill('sem aluno sintetico')
+    await expect(page.getByText('Nenhum aluno encontrado', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: /limpar filtros/i }).click()
+
+    await page.goto(`/dashboard/alunos/${studentA}`)
+    await expect(page.getByRole('heading', { name: 'Aluno Sintetico A', exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Aluno Sintetico A', exact: true })).toBeVisible()
+
+    await page.goto(`/dashboard/alunos/${studentB}`)
+    await expect(page.getByRole('main').getByText(/erro ao carregar|não encontrado/i).first()).toBeVisible()
+    await expect(page.getByText('Aluna Sintetica B', { exact: true })).toHaveCount(0)
+
+    await page.goto('/dashboard/responsaveis')
+    await expect(page.getByRole('heading', { name: 'Responsáveis', exact: true })).toBeVisible()
+    await expect(page.getByText('Responsavel Sintetico A', { exact: true })).toBeVisible()
+    await expect(page.getByText('Responsavel Sintetico B', { exact: true })).toHaveCount(0)
+    const guardianFilter = page.locator('#parentesco_filter')
+    await guardianFilter.click()
+    await page.getByRole('option', { name: 'Outro', exact: true }).click()
+    await expect(page.getByText('Nenhum responsável encontrado', { exact: true })).toBeVisible()
+
+    await page.goto(`/dashboard/responsaveis/${guardianA}`)
+    await expect(page.getByRole('heading', { name: 'Responsavel Sintetico A', exact: true })).toBeVisible()
+    await expect(page.getByText('Aluno Sintetico A', { exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByText('Aluno Sintetico A', { exact: true })).toBeVisible()
+
+    await page.goto(`/dashboard/responsaveis/${guardianB}`)
+    await expect(page).toHaveURL(/\/dashboard\/responsaveis$/)
+    await expect(page.getByText('Responsavel Sintetico B', { exact: true })).toHaveCount(0)
+
+    await page.goto('/dashboard/responsaveis/novo')
+    const guardianNameInput = page.getByLabel(/nome completo/i)
+    await page.getByRole('button', { name: /salvar responsável/i }).click()
+    expect(await guardianNameInput.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
+    await guardianNameInput.fill(guardianName)
+    await page.getByLabel(/^cpf/i).fill('529.982.247-25')
+    await page.locator('#parentesco').click()
+    await page.getByRole('option', { name: 'Mãe', exact: true }).click()
+    await page.getByLabel(/telefone/i).fill('11999990003')
+    await page.getByRole('button', { name: /salvar responsável/i }).click()
+    await expect(page).toHaveURL(/\/dashboard\/responsaveis$/)
+    await expect(page.getByText(guardianName, { exact: true })).toBeVisible()
+
+    const directorClient = await signedInClient('diretora.a@synthetic.invalid')
+    const createdGuardian = await directorClient
+      .from('responsaveis')
+      .select('id,escola_id')
+      .eq('nome', guardianName)
+      .single()
+    expect(createdGuardian.error).toBeNull()
+    expect(createdGuardian.data?.escola_id).toBe('10000000-0000-0000-0000-000000000001')
+
+    await page.goto(`/dashboard/responsaveis/${createdGuardian.data!.id}`)
+    await page.getByRole('button', { name: 'Editar', exact: true }).click()
+    await page.getByLabel(/nome completo/i).fill('')
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(page.getByText(/preencha todos os campos obrigatórios/i)).toBeVisible()
+    await page.getByLabel(/nome completo/i).fill(updatedGuardianName)
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(page.getByRole('heading', { name: updatedGuardianName, exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: updatedGuardianName, exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/alunos/novo')
+    const studentNameInput = page.locator('#nome_completo')
+    expect(await studentNameInput.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
+    await studentNameInput.fill(studentName)
+    await page.locator('#data_nascimento').fill('2018-03-10')
+    await page.locator('#sexo').click()
+    await page.getByRole('option', { name: 'Masculino', exact: true }).click()
+    await page.locator('#endereco').fill('Rua Jornada Sintetica 123')
+    await page.locator('#nome_mae').fill('Mae Jornada Sintetica')
+    await page.getByRole('tab', { name: 'Responsável', exact: true }).click()
+    await page.locator('#resp_nome').fill('Responsavel Vinculado Sintetico')
+    await page.locator('#resp_parentesco').click()
+    await page.getByRole('option', { name: 'Mãe', exact: true }).click()
+    await page.locator('#resp_telefone').fill('11999990004')
+    await page.getByRole('button', { name: /cadastrar aluno/i }).evaluate((button: HTMLButtonElement) => button.form?.requestSubmit())
+    await expect(page).toHaveURL(/\/dashboard\/alunos$/)
+
+    const createdStudent = await directorClient
+      .from('alunos')
+      .select('id,escola_id,ativo')
+      .eq('nome_completo', studentName)
+      .single()
+    expect(createdStudent.error).toBeNull()
+    expect(createdStudent.data).toMatchObject({
+      escola_id: '10000000-0000-0000-0000-000000000001',
+      ativo: true,
+    })
+    const relationship = await directorClient
+      .from('aluno_responsaveis')
+      .select('responsavel_id')
+      .eq('aluno_id', createdStudent.data!.id)
+      .single()
+    expect(relationship.error).toBeNull()
+
+    await page.goto(`/dashboard/alunos/${createdStudent.data!.id}`)
+    await expect(page.getByRole('heading', { name: studentName, exact: true })).toBeVisible()
+    await page.getByRole('link', { name: 'Editar', exact: true }).click()
+    const editStudentName = page.getByLabel(/nome completo/i)
+    await editStudentName.fill('')
+    await page.getByRole('button', { name: /salvar alterações/i }).click()
+    await expect(page.getByRole('alert').filter({ hasText: /nome deve ter/i })).toBeVisible()
+    await editStudentName.fill(updatedStudentName)
+    await page.getByRole('button', { name: /salvar alterações/i }).click()
+    await expect(page.getByRole('heading', { name: updatedStudentName, exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: updatedStudentName, exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/alunos')
+    await page.getByRole('button', { name: 'Desativar Aluno Sintetico A', exact: true }).click()
+    const dialog = page.getByRole('alertdialog', { name: /desativar aluno/i })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Desativar', exact: true }).click()
+    await expect.poll(async () => {
+      const result = await directorClient.from('alunos').select('ativo').eq('id', studentA).single()
+      return result.data?.ativo
+    }).toBe(false)
+    await page.reload()
+    await expect(page.getByRole('row').filter({ hasText: 'Aluno Sintetico A' })).toContainText('Inativo')
+
+    await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
+    await page.getByRole('menuitem', { name: /sair do sistema/i }).click()
+    await expect(page).toHaveURL(/\/login$/)
+    await page.goto('/dashboard/alunos')
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+
+    await login(page, 'professora.a@synthetic.invalid')
+    await expect(page.getByRole('link', { name: 'Alunos', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Responsáveis', exact: true })).toHaveCount(0)
+    await page.goto(`/dashboard/alunos/${studentA}`)
+    await expect(page).toHaveURL(/\/unauthorized$/)
+    await page.goto(`/dashboard/responsaveis/${guardianA}`)
+    await expect(page).toHaveURL(/\/unauthorized$/)
+
+    const teacherClient = await signedInClient('professora.a@synthetic.invalid')
+    const [studentSensitiveColumns, bolsaFamilia] = await Promise.all([
+      teacherClient.from('alunos').select('bolsa_familia,nis').eq('id', studentA),
+      teacherClient.rpc('get_student_bolsa_familia', { p_student_id: studentA }),
+    ])
+    expect(studentSensitiveColumns.error).not.toBeNull()
+    expect(bolsaFamilia.error).toBeNull()
+    expect(bolsaFamilia.data).toBeNull()
   })
 
   test('covers the synthetic class-management journey', async ({ page }) => {
