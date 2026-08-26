@@ -64,6 +64,7 @@ run_baseline() {
 
 output=$(run_baseline)
 grep -q 'EDUCA: https://educa-dev-local' <<<"$output"
+grep -q 'Synthetic admin: admin@synthetic.invalid' <<<"$output"
 grep -q 'Synthetic secretariat: secretaria@synthetic.invalid' <<<"$output"
 grep -q 'supabase .* start' "$CALLS"
 grep -q 'supabase .* db reset --local' "$CALLS"
