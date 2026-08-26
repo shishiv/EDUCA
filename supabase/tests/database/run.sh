@@ -11,6 +11,7 @@ SECURITY_HARDENING_MIGRATION="20260810220000_governed_pilot_security_hardening.s
 ROLLBACK_STORAGE_MIGRATION="20260812231418_pilot_import_batch_rollback_storage.sql"
 AUTH_REVOCATION_MIGRATION="20260812231541_pilot_auth_revocation_boundary.sql"
 BOLSA_VISIBILITY_MIGRATION="20260815000000_bolsa_familia_visibility_policy.sql"
+ACADEMIC_YEAR_MIGRATION="20260826010000_school_academic_years.sql"
 
 for command in initdb pg_ctl psql; do
   if ! command -v "$command" >/dev/null 2>&1; then
@@ -58,6 +59,9 @@ mapfile -t migrations < <(find "$MIGRATIONS_DIR" -maxdepth 1 -type f -name '*.sq
 for migration in "${migrations[@]}"; do
   if [[ $(basename "$migration") == "$CENSO_MIGRATION" ]]; then
     "${PSQL[@]}" -f "$TESTS_DIR/censo_escolar_schema.before.sql" >/dev/null
+  fi
+  if [[ $(basename "$migration") == "$ACADEMIC_YEAR_MIGRATION" ]]; then
+    "${PSQL[@]}" -f "$TESTS_DIR/school_academic_year.before.sql" >/dev/null
   fi
 
   echo "Applying $(basename "$migration")"
