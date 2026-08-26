@@ -13,6 +13,7 @@ ROLLBACK_STORAGE_MIGRATION="20260812231418_pilot_import_batch_rollback_storage.s
 AUTH_REVOCATION_MIGRATION="20260812231541_pilot_auth_revocation_boundary.sql"
 BOLSA_VISIBILITY_MIGRATION="20260815000000_bolsa_familia_visibility_policy.sql"
 SENSITIVE_FAMILY_MIGRATION="20260829000000_sensitive_family_read_boundary.sql"
+CANONICAL_GUARDIAN_LINK_MIGRATION="20260830000000_canonical_guardian_link_reads.sql"
 ACADEMIC_YEAR_MIGRATION="20260826010000_school_academic_years.sql"
 
 for command in initdb pg_ctl psql; do
@@ -88,6 +89,8 @@ echo "Reapplying $(basename "$BOLSA_VISIBILITY_MIGRATION") after legacy replay"
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$BOLSA_VISIBILITY_MIGRATION" >/dev/null
 echo "Reapplying $(basename "$SENSITIVE_FAMILY_MIGRATION") after legacy replay"
 "${PSQL[@]}" -f "$MIGRATIONS_DIR/$SENSITIVE_FAMILY_MIGRATION" >/dev/null
+echo "Reapplying $(basename "$CANONICAL_GUARDIAN_LINK_MIGRATION") after legacy replay"
+"${PSQL[@]}" -f "$MIGRATIONS_DIR/$CANONICAL_GUARDIAN_LINK_MIGRATION" >/dev/null
 
 echo "Applying pilot-only provisioning $(basename "$PILOT_PROVISIONING")"
 "${PSQL[@]}" -f "$PILOT_PROVISIONING" >/dev/null
