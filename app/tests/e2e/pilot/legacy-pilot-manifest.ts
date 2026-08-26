@@ -24,7 +24,7 @@ export const LEGACY_PILOT_EXCLUDED_FILES = Object.freeze([
 ] as const)
 
 /** The measured shared legacy slice size, excluding its setup test. */
-export const LEGACY_PILOT_EXPECTED_TEST_COUNT = 18 as const
+export const LEGACY_PILOT_EXPECTED_TEST_COUNT = 19 as const
 
 /** Named local app route used by the legacy pilot runner. */
 export const LEGACY_PILOT_APP_NAME = 'educa-r3-legacy-pilot' as const

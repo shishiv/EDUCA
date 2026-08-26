@@ -21,12 +21,14 @@ test.describe('deployed Supabase isolation', () => {
     const directorB = await signedInClient('diretora.b@synthetic.invalid')
     const teacherA = await signedInClient('professora.a@synthetic.invalid')
 
-    const [schoolsA, schoolsB, studentsA, studentsB, classesA] = await Promise.all([
+    const [schoolsA, schoolsB, studentsA, studentsB, classesA, teachersA, schoolATeachersFromB] = await Promise.all([
       directorA.from('escolas').select('id'),
       directorB.from('escolas').select('id'),
       directorA.from('alunos').select('id,escola_id'),
       directorB.from('alunos').select('id,escola_id'),
       teacherA.from('turmas').select('id,escola_id'),
+      directorA.from('users').select('id,escola_id').eq('tipo_usuario', 'professor'),
+      directorB.from('users').select('id,escola_id').eq('tipo_usuario', 'professor').eq('escola_id', schoolA),
     ])
     expect(schoolsA.error).toBeNull()
     expect(schoolsA.data).toEqual([expect.objectContaining({ id: schoolA })])
@@ -34,6 +36,9 @@ test.describe('deployed Supabase isolation', () => {
     expect(studentsA.data?.every(row => row.escola_id === schoolA)).toBe(true)
     expect(studentsB.data?.every(row => row.escola_id === schoolB)).toBe(true)
     expect(classesA.data?.every(row => row.escola_id === schoolA)).toBe(true)
+    expect(teachersA.data?.length).toBeGreaterThan(0)
+    expect(teachersA.data?.every(row => row.escola_id === schoolA)).toBe(true)
+    expect(schoolATeachersFromB.data).toEqual([])
 
     const forbiddenWrite = await teacherA.from('alunos').insert({
       nome_completo: 'Write Must Fail', data_nascimento: '2018-01-01', sexo: 'M', escola_id: schoolA,

@@ -35,9 +35,9 @@ TEST_EXIT=1
 SKIPPED=false
 DELIBERATE_BREAK="${PILOT_LEGACY_DELIBERATE_BREAK:-none}"
 APP_NAME="educa-r3-legacy-pilot-${RUN_SLUG}"
-EXPECTED_TEST_COUNT=18
-SELECTED_TEST_COUNT=18
-EXPECTED_RUN_TEST_COUNT=19
+EXPECTED_TEST_COUNT=19
+SELECTED_TEST_COUNT=19
+EXPECTED_RUN_TEST_COUNT=20
 SECURITY_EXPECTED_SPEC_TEST_COUNT=2
 SECURITY_EXPECTED_SETUP_TEST_COUNT=1
 SECURITY_EXPECTED_RUN_TEST_COUNT=3
@@ -358,8 +358,8 @@ const selectedManifest = isLegacyManifest
         'tests/e2e/pilot/invitation-first-access.spec.ts',
         'tests/e2e/pilot/security-hardening.spec.ts',
       ],
-      expectedTests: 18,
-      expectedRunTests: 19,
+      expectedTests: 19,
+      expectedRunTests: 20,
       selectionIsExact: true,
       excluded: [
         'tests/e2e/pilot/capacity-contract.spec.ts',

@@ -169,6 +169,77 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page).toHaveURL(/\/login(?:\?|$)/)
   })
 
+  test('covers the synthetic teacher-management journey', async ({ page }) => {
+    test.setTimeout(90_000)
+    const teacherName = 'Professora Jornada Sintetica'
+    const teacherEmail = 'professora.jornada@synthetic.invalid'
+
+    await page.context().clearCookies()
+    await page.goto('/login')
+    await page.getByLabel('E-mail', { exact: true }).fill('diretora.a@synthetic.invalid')
+    await page.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
+    await page.getByRole('button', { name: /entrar/i }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByRole('link', { name: 'Usuários', exact: true })).toHaveCount(0)
+    await page.goto('/dashboard/usuarios')
+    await expect(page).toHaveURL(/\/unauthorized$/)
+
+    await page.context().clearCookies()
+    await page.goto('/login')
+    await page.getByLabel('E-mail', { exact: true }).fill('admin@synthetic.invalid')
+    await page.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
+    await page.getByRole('button', { name: /entrar/i }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+
+    await page.getByRole('link', { name: 'Usuários', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
+    await expect(page.getByText('Professora Sintetica A', { exact: true })).toBeVisible()
+
+    const search = page.getByPlaceholder('Buscar por nome ou email...')
+    await search.fill('sem professora sintetica')
+    await expect(page.getByText(/nenhum usuário encontrado/i)).toBeVisible()
+    await page.getByRole('button', { name: /limpar filtros/i }).click()
+
+    const teacherRow = page.getByRole('row').filter({ hasText: 'Professora Sintetica A' })
+    await teacherRow.locator('a[href*="/dashboard/usuarios/"]').click()
+    await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
+    await expect(page.getByText('professora.a@synthetic.invalid', { exact: true })).toBeVisible()
+    await expect(page.getByText('Ativo', { exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/usuarios/novo')
+    const name = page.getByLabel(/nome completo/i)
+    const email = page.getByLabel(/^email/i)
+    await page.getByRole('button', { name: /criar usuário/i }).click()
+    expect(await name.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
+    await name.fill(teacherName)
+    await email.fill('email-invalido')
+    await page.getByRole('button', { name: /criar usuário/i }).click()
+    expect(await email.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
+    await email.fill(teacherEmail)
+    await page.locator('#tipo_usuario').click()
+    await page.getByRole('option', { name: 'Professor', exact: true }).click()
+    await page.locator('#escola').click()
+    await page.getByRole('option', { name: 'Escola Sintetica A', exact: true }).click()
+    await page.getByRole('button', { name: /criar usuário/i }).click()
+    await expect(page).toHaveURL(/\/dashboard\/usuarios$/)
+    await expect(page.getByText(/convite enviado com sucesso/i)).toBeVisible()
+    await search.fill(teacherEmail)
+    const createdTeacherRow = page.getByRole('row').filter({ hasText: teacherEmail })
+    await expect(createdTeacherRow).toContainText(teacherName)
+    await expect(createdTeacherRow).toContainText('Professor(a)')
+    await expect(createdTeacherRow).toContainText('Ativo')
+    await page.reload()
+    await expect(page.getByRole('row').filter({ hasText: teacherEmail })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
+    await page.getByRole('menuitem', { name: /sair do sistema/i }).click()
+    await expect(page).toHaveURL(/\/login$/)
+    await page.goto('/dashboard/usuarios')
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+  })
+
   test('covers the complete synthetic authentication journey', async ({ page }) => {
     test.setTimeout(90_000)
     const password = 'Synthetic-Only-2026!'
