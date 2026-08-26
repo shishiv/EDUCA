@@ -11,10 +11,13 @@ import { assertSyntheticPilotSafety } from '../lib/pilot/pilot-safety-gate'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const DATABASE_URL = process.env.SUPABASE_DB_URL || ''
 const RECEIPT_PATH = process.env.PILOT_LEGACY_DATABASE_RECEIPT_PATH || ''
+const SYNTHETIC_ADMIN_ID = '20000000-0000-0000-0000-000000000001'
+const SYNTHETIC_ADMIN_EMAIL = 'admin@synthetic.invalid'
 
 const EXPECTED_COUNTS = Object.freeze({
   schools: 2,
-  users: 4,
+  users: 5,
+  syntheticAdmins: 1,
   classes: 2,
   students: 2,
   guardians: 2,
@@ -36,6 +39,7 @@ type PilotMarkerRow = {
 type PilotCountRow = {
   schools: number
   users: number
+  synthetic_admins: number
   classes: number
   students: number
   guardians: number
@@ -103,6 +107,7 @@ async function writePilotLegacyDatabaseReceipt(): Promise<void> {
       SELECT
         (SELECT count(*)::int FROM public.escolas) AS schools,
         (SELECT count(*)::int FROM public.users) AS users,
+        (SELECT count(*)::int FROM public.users WHERE id = $1::uuid AND email = $2 AND tipo_usuario = 'admin' AND escola_id IS NULL) AS synthetic_admins,
         (SELECT count(*)::int FROM public.turmas) AS classes,
         (SELECT count(*)::int FROM public.alunos) AS students,
         (SELECT count(*)::int FROM public.responsaveis) AS guardians,
@@ -113,11 +118,12 @@ async function writePilotLegacyDatabaseReceipt(): Promise<void> {
         (SELECT count(*)::int FROM public.pilot_metric_events) AS metric_events,
         (SELECT count(*)::int FROM public.pilot_data_tombstones) AS tombstones,
         (SELECT count(*)::int FROM public.users WHERE email NOT LIKE '%@synthetic.invalid') AS non_synthetic_users
-    `)
+    `, [SYNTHETIC_ADMIN_ID, SYNTHETIC_ADMIN_EMAIL])
     const counts = countsResult.rows[0]
     const countMap = {
       schools: Number(counts.schools),
       users: Number(counts.users),
+      syntheticAdmins: Number(counts.synthetic_admins),
       classes: Number(counts.classes),
       students: Number(counts.students),
       guardians: Number(counts.guardians),

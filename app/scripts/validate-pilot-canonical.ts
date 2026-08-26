@@ -28,11 +28,14 @@ const ENROLLMENT_A = '50000000-0000-0000-0000-000000000001'
 const SESSION_A = '70000000-0000-0000-0000-000000000010'
 const ATTENDANCE_A = '70000000-0000-0000-0000-000000000001'
 
+const ADMIN_EMAIL = 'admin@synthetic.invalid'
+const ADMIN_ID = '20000000-0000-0000-0000-000000000001'
 const SECRETARIAT_EMAIL = 'secretaria@synthetic.invalid'
 const DIRECTOR_A_EMAIL = 'diretora.a@synthetic.invalid'
 const TEACHER_A_EMAIL = 'professora.a@synthetic.invalid'
 const DIRECTOR_B_EMAIL = 'diretora.b@synthetic.invalid'
 const EXPECTED_AUTH_EMAILS = [
+  ADMIN_EMAIL,
   SECRETARIAT_EMAIL,
   DIRECTOR_A_EMAIL,
   TEACHER_A_EMAIL,
@@ -167,7 +170,7 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
 
   const expected: CountRow = {
     schools: 2,
-    users: 4,
+    users: 5,
     classes: 2,
     students: 2,
     guardians: 2,
@@ -192,6 +195,7 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
     .map(profile => `${profile.email}|${profile.tipo_usuario}|${profile.escola_id ?? ''}`)
     .sort()
   const expectedProfiles = [
+    `${ADMIN_EMAIL}|admin|`,
     `${DIRECTOR_A_EMAIL}|diretor|${SCHOOL_A}`,
     `${DIRECTOR_B_EMAIL}|diretor|${SCHOOL_B}`,
     `${SECRETARIAT_EMAIL}|secretario|`,
@@ -209,6 +213,7 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
     .filter((email): email is string => Boolean(email))
     .sort()
   assertCondition(JSON.stringify(actualAuthEmails) === JSON.stringify([...EXPECTED_AUTH_EMAILS].sort()), 'synthetic Auth identities are incorrect')
+  assertCondition(authUsers.users.some(user => user.id === ADMIN_ID && user.email === ADMIN_EMAIL), 'synthetic admin identity is not deterministic')
   assertCondition(actualAuthEmails.every(email => email.endsWith('.invalid')), 'Auth identity escaped the synthetic domain')
 
   const session = await client.query<{ status: string; data_aula: string; turma_id: string; escola_id: string }>(`
@@ -224,14 +229,16 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
 }
 
 async function checkPostgrestAccess(): Promise<void> {
-  const [secretariat, directorA, directorB, teacherA] = await Promise.all([
+  const [admin, secretariat, directorA, directorB, teacherA] = await Promise.all([
+    signedInClient(ADMIN_EMAIL),
     signedInClient(SECRETARIAT_EMAIL),
     signedInClient(DIRECTOR_A_EMAIL),
     signedInClient(DIRECTOR_B_EMAIL),
     signedInClient(TEACHER_A_EMAIL),
   ])
 
-  const [secretariatSchools, directorASchools, directorBSchools, teacherClasses, teacherStudents] = await Promise.all([
+  const [adminSchools, secretariatSchools, directorASchools, directorBSchools, teacherClasses, teacherStudents] = await Promise.all([
+    admin.from('escolas').select('id').order('id'),
     secretariat.from('escolas').select('id').order('id'),
     directorA.from('escolas').select('id').order('id'),
     directorB.from('escolas').select('id').order('id'),
@@ -239,11 +246,13 @@ async function checkPostgrestAccess(): Promise<void> {
     teacherA.from('alunos').select('id').order('id'),
   ])
 
+  assertCondition(!adminSchools.error, 'admin cannot read the municipal school list')
   assertCondition(!secretariatSchools.error, 'secretariat cannot read the municipal school list')
   assertCondition(!directorASchools.error, 'director A cannot read the own school')
   assertCondition(!directorBSchools.error, 'director B cannot read the own school')
   assertCondition(!teacherClasses.error, 'teacher cannot read the assigned class')
   assertCondition(!teacherStudents.error, 'teacher cannot read the assigned students')
+  assertCondition(JSON.stringify(sortedIds(adminSchools.data)) === JSON.stringify([SCHOOL_A, SCHOOL_B]), 'admin school scope is incomplete')
   assertCondition(JSON.stringify(sortedIds(secretariatSchools.data)) === JSON.stringify([SCHOOL_A, SCHOOL_B]), 'secretariat school scope is incomplete')
   assertCondition(JSON.stringify(sortedIds(directorASchools.data)) === JSON.stringify([SCHOOL_A]), 'director A school scope is incorrect')
   assertCondition(JSON.stringify(sortedIds(directorBSchools.data)) === JSON.stringify([SCHOOL_B]), 'director B school scope is incorrect')
@@ -289,10 +298,12 @@ async function validate(): Promise<void> {
       identities: {
         authUsers: EXPECTED_AUTH_EMAILS.length,
         domain: 'synthetic.invalid',
+        admin: ADMIN_EMAIL,
         teacher: TEACHER_A_EMAIL,
         school: 'SYN-A',
       },
       access: {
+        adminSchoolListRead: 'pass',
         schoolIsolation: 'pass',
         teacherOwnClassRead: 'pass',
         teacherStudentWriteDenied: 'pass',

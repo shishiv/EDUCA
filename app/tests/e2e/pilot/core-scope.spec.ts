@@ -55,12 +55,13 @@ test.describe('synthetic municipal pilot core scope', () => {
   })
 
   test('covers the complete synthetic authentication journey', async ({ page }) => {
-    test.setTimeout(60_000)
+    test.setTimeout(90_000)
     const password = 'Synthetic-Only-2026!'
     const roles = [
-      ['secretaria@synthetic.invalid', 'Secretário(a)'],
-      ['diretora.a@synthetic.invalid', 'Diretor(a)'],
-      ['professora.a@synthetic.invalid', 'Professor(a)'],
+      ['admin@synthetic.invalid', 'Administrador', true],
+      ['secretaria@synthetic.invalid', 'Secretário(a)', false],
+      ['diretora.a@synthetic.invalid', 'Diretor(a)', false],
+      ['professora.a@synthetic.invalid', 'Professor(a)', false],
     ] as const
 
     await page.context().clearCookies()
@@ -73,23 +74,31 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByRole('alert').filter({ hasText: /credenciais|inválid/i })).toBeVisible()
     await expect(page).toHaveURL(/\/login(?:\?|$)/)
 
-    for (const [email, roleLabel] of roles) {
+    for (const [email, roleLabel, canManageSchools] of roles) {
       await page.getByLabel('E-mail', { exact: true }).fill(email)
       await page.getByLabel('Senha', { exact: true }).fill(password)
       await page.getByRole('button', { name: /entrar/i }).click()
       await expect(page).toHaveURL(/\/dashboard$/)
       await expect(page.getByRole('button', { name: 'Abrir menu do usuário' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Escolas', exact: true })).toHaveCount(canManageSchools ? 1 : 0)
 
-      if (email === roles[0][0]) {
+      await page.goto('/dashboard/escolas')
+      if (canManageSchools) {
+        await expect(page).toHaveURL(/\/dashboard\/escolas$/)
+        await expect(page.getByRole('heading', { name: 'Escolas', exact: true })).toBeVisible()
+        await expect(page.getByText('Escola Sintetica A', { exact: true })).toBeVisible()
+        await expect(page.getByText('Escola Sintetica B', { exact: true })).toBeVisible()
         await page.reload()
-        await expect(page).toHaveURL(/\/dashboard$/)
-        await expect(page.getByRole('button', { name: 'Abrir menu do usuário' })).toBeVisible()
+        await expect(page).toHaveURL(/\/dashboard\/escolas$/)
+      } else {
+        await expect(page).toHaveURL(/\/unauthorized$/)
+        await page.goto('/dashboard')
       }
 
       await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
       await expect(page.getByText(roleLabel, { exact: true }).last()).toBeVisible()
 
-      if (email === roles[2][0]) {
+      if (email === roles[3][0]) {
         await page.getByRole('menuitem', { name: /sair do sistema/i }).click()
         await expect(page).toHaveURL(/\/login$/)
       } else {
@@ -98,7 +107,7 @@ test.describe('synthetic municipal pilot core scope', () => {
       }
     }
 
-    await page.goto('/dashboard')
+    await page.goto('/dashboard/escolas')
     await expect(page).toHaveURL(/\/login(?:\?|$)/)
   })
 })

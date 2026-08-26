@@ -8,12 +8,15 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const service = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
 const password = 'Synthetic-Only-2026!'
+const syntheticAdminEmail = 'admin@synthetic.invalid'
+const syntheticAdminId = '20000000-0000-0000-0000-000000000001'
 const schoolA = '10000000-0000-0000-0000-000000000001'
 const schoolB = '10000000-0000-0000-0000-000000000002'
 const classA = '30000000-0000-0000-0000-000000000001'
 const classB = '30000000-0000-0000-0000-000000000002'
 
 const accounts = [
+  { email: syntheticAdminEmail, name: 'Administrador Sintetico', role: 'admin', schoolId: null },
   { email: 'secretaria@synthetic.invalid', name: 'Secretaria Sintetica', role: 'secretario', schoolId: null },
   { email: 'diretora.a@synthetic.invalid', name: 'Diretora Sintetica A', role: 'diretor', schoolId: schoolA },
   { email: 'professora.a@synthetic.invalid', name: 'Professora Sintetica A', role: 'professor', schoolId: schoolA },
@@ -22,6 +25,7 @@ const accounts = [
 
 async function createSyntheticAuthUser(account: typeof accounts[number]): Promise<string> {
   const { data, error } = await service.auth.admin.createUser({
+    ...(account.email === syntheticAdminEmail ? { id: syntheticAdminId } : {}),
     email: account.email,
     password,
     email_confirm: true,

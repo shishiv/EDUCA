@@ -153,6 +153,7 @@ fi
 printf '%s\n' \
   '' \
   "EDUCA: $BASE_URL/login" \
+  'Synthetic admin: admin@synthetic.invalid' \
   'Synthetic secretariat: secretaria@synthetic.invalid' \
   'Password: Synthetic-Only-2026!' \
   'Smoke route: sign in, open /dashboard, open the user menu, choose Sair do Sistema.' \
