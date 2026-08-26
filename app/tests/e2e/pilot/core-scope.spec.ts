@@ -195,15 +195,20 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
     await expect(page.getByText('Professora Sintetica A', { exact: true })).toBeVisible()
 
+    const adminRow = page.getByRole('row').filter({ hasText: 'admin@synthetic.invalid' })
+    await expect(adminRow).toContainText('Todas as escolas')
+
     const search = page.getByPlaceholder('Buscar por nome ou email...')
     await search.fill('sem professora sintetica')
     await expect(page.getByText(/nenhum usuário encontrado/i)).toBeVisible()
     await page.getByRole('button', { name: /limpar filtros/i }).click()
 
     const teacherRow = page.getByRole('row').filter({ hasText: 'Professora Sintetica A' })
+    await expect(teacherRow).toContainText('Escola Sintetica A')
     await teacherRow.locator('a[href*="/dashboard/usuarios/"]').click()
     await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
     await expect(page.getByText('professora.a@synthetic.invalid', { exact: true })).toBeVisible()
+    await expect(page.getByText('Escola Sintetica A', { exact: true })).toBeVisible()
     await expect(page.getByText('Ativo', { exact: true })).toBeVisible()
     await page.reload()
     await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
