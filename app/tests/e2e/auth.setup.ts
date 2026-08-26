@@ -42,7 +42,7 @@ if (isPilotMode) {
     await expect(page).toHaveURL(/dashboard/, { timeout: 30000 })
 
     // Verify we're logged in
-    await expect(page.getByRole('heading', { name: /bom dia|boa tarde|boa noite/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Abrir menu do usuário' })).toBeVisible()
 
     // Save authentication state
     mkdirSync(path.dirname(pilotAuthFile), { recursive: true })
