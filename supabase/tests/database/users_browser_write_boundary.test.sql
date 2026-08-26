@@ -73,7 +73,7 @@ BEGIN
   END;
 
   BEGIN
-    UPDATE public.users SET nome = 'Browser Update' WHERE id = '92000000-0000-0000-0000-000000000001';
+    UPDATE public.users SET ativo = false WHERE id = '92000000-0000-0000-0000-000000000002';
     RAISE EXCEPTION 'authenticated UPDATE of users unexpectedly succeeded';
   EXCEPTION WHEN insufficient_privilege THEN
     NULL;
@@ -94,6 +94,12 @@ INSERT INTO public.users(id, nome, email, tipo_usuario, escola_id, ativo)
 VALUES ('92000000-0000-0000-0000-000000000005', 'Service User', 'service@synthetic.invalid', 'professor', '91000000-0000-0000-0000-000000000001', true);
 UPDATE public.users SET nome = 'Service User Updated'
 WHERE id = '92000000-0000-0000-0000-000000000005';
+UPDATE public.users SET ativo = false
+WHERE id = '92000000-0000-0000-0000-000000000002';
+SELECT pg_temp.assert_true(
+  (SELECT ativo = false FROM public.users WHERE id = '92000000-0000-0000-0000-000000000002'),
+  'server-side status update persists'
+);
 DELETE FROM public.users WHERE id = '92000000-0000-0000-0000-000000000005';
 
 ROLLBACK;
