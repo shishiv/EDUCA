@@ -102,6 +102,73 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page).toHaveURL(/\/login(?:\?|$)/)
   })
 
+  test('covers the synthetic class-management journey', async ({ page }) => {
+    test.setTimeout(90_000)
+    const classA = '30000000-0000-0000-0000-000000000001'
+    const classB = '30000000-0000-0000-0000-000000000002'
+    const className = 'Turma Jornada Sintetica'
+    const updatedClassName = 'Turma Jornada Sintetica Inativa'
+
+    await page.context().clearCookies()
+    await page.goto('/login')
+    await page.getByLabel('E-mail', { exact: true }).fill('diretora.a@synthetic.invalid')
+    await page.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
+    await page.getByRole('button', { name: /entrar/i }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByRole('link', { name: 'Turmas', exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/turmas')
+    await expect(page.getByRole('heading', { name: 'Turmas', exact: true })).toBeVisible()
+    await expect(page.getByText('Turma Sintetica A', { exact: true })).toBeVisible()
+    await expect(page.getByText('Turma Sintetica B', { exact: true })).toHaveCount(0)
+
+    await page.goto(`/dashboard/turmas/${classB}`)
+    await expect(page).toHaveURL(/\/dashboard\/turmas$/)
+    await expect(page.getByText('Turma Sintetica B', { exact: true })).toHaveCount(0)
+
+    const search = page.getByPlaceholder('Search by name, series, school or teacher...')
+    await search.fill('sem turma sintetica')
+    await expect(page.getByText('Nenhuma turma encontrada', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Limpar', exact: true }).click()
+
+    await page.locator(`a[href="/dashboard/turmas/${classA}"]`).click()
+    await expect(page).toHaveURL(`/dashboard/turmas/${classA}`)
+    await expect(page.getByRole('heading', { name: 'Turma Sintetica A', exact: true })).toBeVisible()
+    await expect(page.getByText('Escola Sintetica A', { exact: false })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Turma Sintetica A', exact: true })).toBeVisible()
+
+    await page.goto('/dashboard/turmas/nova')
+    const name = page.getByLabel(/nome da turma/i)
+    await page.getByRole('button', { name: /criar turma/i }).click()
+    expect(await name.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
+    await name.fill(className)
+    await page.locator('#serie').click()
+    await page.getByRole('option', { name: '1º Ano', exact: true }).click()
+    await page.locator('#turno').click()
+    await page.getByRole('option', { name: 'Matutino', exact: true }).click()
+    await page.getByRole('button', { name: /criar turma/i }).click()
+    await expect(page).toHaveURL(/\/dashboard\/turmas$/)
+    await page.getByText(className, { exact: true }).click()
+    await expect(page.getByRole('heading', { name: className, exact: true })).toBeVisible()
+
+    await page.getByRole('link', { name: 'Editar', exact: true }).click()
+    await page.getByLabel(/nome da turma/i).fill(updatedClassName)
+    await page.locator('#edit-ativo').click()
+    await page.getByRole('button', { name: /salvar/i }).click()
+    await expect(page.getByRole('heading', { name: updatedClassName, exact: true })).toBeVisible()
+    await expect(page.getByText('Inativa', { exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: updatedClassName, exact: true })).toBeVisible()
+    await expect(page.getByText('Inativa', { exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
+    await page.getByRole('menuitem', { name: /sair do sistema/i }).click()
+    await expect(page).toHaveURL(/\/login$/)
+    await page.goto(`/dashboard/turmas/${classA}`)
+    await expect(page).toHaveURL(/\/login(?:\?|$)/)
+  })
+
   test('covers the complete synthetic authentication journey', async ({ page }) => {
     test.setTimeout(90_000)
     const password = 'Synthetic-Only-2026!'
