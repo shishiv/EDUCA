@@ -28,6 +28,7 @@ import { formatDateBR } from '@/lib/date-utils'
 import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaRequiredState } from '@/components/ui/escola-required-state'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,9 +92,8 @@ export default function AlunosPage() {
     }
 
     try {
-      // If we have an escola filter, get alunos via matriculas -> turmas
+      let alunoIds: string[] | undefined
       if (escolaIdToUse) {
-        // First get all turmas for the selected escola
         const { data: turmasData, error: turmasError } = await supabase
           .from('turmas')
           .select('id')
@@ -109,7 +109,6 @@ export default function AlunosPage() {
           return
         }
 
-        // Get matriculas for those turmas
         const { data: matriculasData, error: matriculasError } = await supabase
           .from('matriculas')
           .select('aluno_id')
@@ -117,77 +116,39 @@ export default function AlunosPage() {
 
         if (matriculasError) throw matriculasError
 
-        const alunoIds = [...new Set(matriculasData?.map(m => m.aluno_id) || [])]
+        alunoIds = [...new Set(matriculasData?.map(m => m.aluno_id) || [])]
 
         if (alunoIds.length === 0) {
           setAlunos([])
           setLoading(false)
           return
         }
-
-        // Get alunos with their data
-        const { data, error } = await supabase
-          .from('alunos')
-          .select(`
-            id,
-            nome_completo,
-            data_nascimento,
-            sexo,
-            cpf,
-            telefone,
-            necessidades_especiais,
-            ativo,
-            responsaveis:responsavel_id (nome),
-            matriculas (
-              situacao,
-              turmas (
-                nome,
-                escolas (nome)
-              )
-            )
-          `)
-          .in('id', alunoIds)
-          .order('nome_completo')
-
-        if (error) throw error
-
-        const transformedData = data?.map(aluno => ({
-          ...aluno,
-          responsaveis: aluno.responsaveis || undefined
-        })) || []
-        setAlunos(transformedData)
-      } else {
-        // No escola filter - get all alunos
-        const { data, error } = await supabase
-          .from('alunos')
-          .select(`
-            id,
-            nome_completo,
-            data_nascimento,
-            sexo,
-            cpf,
-            telefone,
-            necessidades_especiais,
-            ativo,
-            responsaveis:responsavel_id (nome),
-            matriculas (
-              situacao,
-              turmas (
-                nome,
-                escolas (nome)
-              )
-            )
-          `)
-          .order('nome_completo')
-
-        if (error) throw error
-
-        const transformedData = data?.map(aluno => ({
-          ...aluno,
-          responsaveis: aluno.responsaveis || undefined
-        })) || []
-        setAlunos(transformedData)
       }
+
+      const profiles = await getAuthorizedStudentProfiles(supabase, { schoolId: escolaIdToUse ?? undefined })
+      const visibleProfiles = alunoIds ? profiles.filter(profile => alunoIds.includes(profile.id)) : profiles
+      const { data: relations, error } = await supabase
+        .from('alunos')
+        .select(`
+          id,
+          responsaveis:responsavel_id (nome),
+          matriculas (
+            situacao,
+            turmas (
+              nome,
+              escolas (nome)
+            )
+          )
+        `)
+        .in('id', visibleProfiles.map(profile => profile.id))
+
+      if (error) throw error
+      const relationsByStudent = new Map((relations ?? []).map(relation => [relation.id, relation]))
+      setAlunos(visibleProfiles.map(profile => ({
+        ...profile,
+        responsaveis: relationsByStudent.get(profile.id)?.responsaveis || undefined,
+        matriculas: relationsByStudent.get(profile.id)?.matriculas || undefined,
+      })))
     } catch (error: any) {
       logger.error('Erro ao carregar alunos:', error)
       toast.error(t('ui.erro-ao-carregar-lista-de-alunos'))

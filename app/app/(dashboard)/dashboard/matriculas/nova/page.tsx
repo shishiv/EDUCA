@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
 interface Aluno {
   id: string
@@ -65,14 +66,9 @@ export default function NovaMatriculaPage() {
     async function loadData() {
       try {
         // Fetch active students
-        const { data: alunosData, error: alunosError } = await supabase
-          .from('alunos')
-          .select('id, nome_completo, data_nascimento, cpf, sexo, nome_mae')
-          .eq('ativo', true)
-          .order('nome_completo')
-          .limit(100)
-
-        if (alunosError) throw alunosError
+        const alunosData = (await getAuthorizedStudentProfiles(supabase))
+          .filter(student => student.ativo)
+          .slice(0, 100)
 
         // Fetch active turmas with school and professor info
         const { data: turmasData, error: turmasError } = await supabase

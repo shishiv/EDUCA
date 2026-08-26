@@ -232,6 +232,10 @@ export function createFakeWhatsAppSupabase(options: FakeSupabaseOptions = {}): {
 
   const auditEvents: Array<Record<string, unknown>> = []
   const defaultRpc = {
+    get_authorized_guardian_profiles: async (args: Record<string, unknown>) => ({
+      data: tables.responsaveis.rows.filter(row => !args.p_guardian_id || row.id === args.p_guardian_id),
+      error: null,
+    }),
     write_pilot_audit_event: async (args: Record<string, unknown>) => {
       auditEvents.push(args)
       return { data: randomUUID(), error: null }

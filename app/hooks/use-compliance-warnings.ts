@@ -9,6 +9,7 @@ import {
 } from '@/lib/reports/attendance-conditionality'
 import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import { useAuth } from '@/hooks/use-auth'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
 /** Compliance warning types for Brazilian educational requirements. */
 export interface ComplianceWarning {
@@ -170,13 +171,10 @@ export function useComplianceWarnings(escolaId?: string) {
         const studentIds = Array.from(new Set(
           conditionality.data.map((row) => row.aluno_id),
         ))
-        const { data: students } = studentIds.length > 0
-          ? await supabase
-            .from('alunos')
-            .select('id, nome_completo, cpf')
-            .in('id', studentIds)
-          : { data: [] }
-        const studentsWithoutCpf = students?.filter((student) => !student.cpf) ?? []
+        const students = studentIds.length > 0
+          ? (await getAuthorizedStudentProfiles(supabase)).filter(student => studentIds.includes(student.id))
+          : []
+        const studentsWithoutCpf = students.filter(student => !student.cpf)
 
         for (const student of studentsWithoutCpf) {
           const row = conditionality.data.find((candidate) => candidate.aluno_id === student.id)

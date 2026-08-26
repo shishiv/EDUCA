@@ -13,6 +13,9 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL,
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : undefined,
     serviceWorkers: 'block',
     ignoreHTTPSErrors: true,
     trace: 'on-first-retry',

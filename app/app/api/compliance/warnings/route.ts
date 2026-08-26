@@ -8,6 +8,7 @@ import {
   isLegalAttendanceRisk,
   isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
+import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
 export interface ComplianceWarning {
   id: string
@@ -140,13 +141,10 @@ export async function GET(_request: NextRequest) {
 
     // WARNING 5: Incomplete student registrations (missing CPF, responsaveis, etc.)
     if (userProfile.tipo_usuario === 'secretario' || userProfile.tipo_usuario === 'admin') {
-      const { data: incompleteRegistrations } = await supabase
-        .from('alunos')
-        .select('id')
-        .is('cpf', null)
-        .eq('ativo', true)
+      const incompleteRegistrations = (await getAuthorizedStudentProfiles(supabase))
+        .filter(student => student.ativo && !student.cpf)
 
-      if (incompleteRegistrations && incompleteRegistrations.length > 0) {
+      if (incompleteRegistrations.length > 0) {
         warnings.push({
           id: 'incomplete-registrations',
           title: 'Cadastros Incompletos',

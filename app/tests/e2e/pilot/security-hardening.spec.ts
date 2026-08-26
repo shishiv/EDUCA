@@ -30,6 +30,7 @@ const fixtureRejectedContent = '71000000-0000-0000-0000-000000000091'
 const fixtureTeacherCreatedContent = '71000000-0000-0000-0000-000000000092'
 const fixtureReport = '72000000-0000-0000-0000-000000000010'
 const fixtureOptIn = '73000000-0000-0000-0000-000000000010'
+const fixtureGuardian = '60000000-0000-0000-0000-000000000001'
 
 let teacherUserId = ''
 let directorAUserId = ''
@@ -173,8 +174,12 @@ async function prepareFixture() {
   try {
     await database.query('ALTER TABLE public.alunos DISABLE TRIGGER pilot_high_risk_student_guard')
     await database.query(
-      'UPDATE public.alunos SET bolsa_familia = true, nis = $1 WHERE id = $2',
-      ['NIS-SYNTHETIC-SECURITY-E2E', fixtureStudent],
+      'UPDATE public.alunos SET bolsa_familia = true, nis = $1, cpf = $2, nome_mae = $3, nome_pai = $4, necessidades_especiais = $5 WHERE id = $6',
+      ['NIS-SYNTHETIC-SECURITY-E2E', 'CPF-SYNTHETIC-SECURITY-E2E', 'MAE-SYNTHETIC-SECURITY-E2E', 'PAI-SYNTHETIC-SECURITY-E2E', 'NEE-SYNTHETIC-SECURITY-E2E', fixtureStudent],
+    )
+    await database.query(
+      'UPDATE public.responsaveis SET cpf = $1, telefone = $2, renda_familiar = $3 WHERE id = $4',
+      ['GUARDIAN-CPF-SYNTHETIC-E2E', 'GUARDIAN-PHONE-SYNTHETIC-E2E', 1234, fixtureGuardian],
     )
   } finally {
     await database.query('ALTER TABLE public.alunos ENABLE TRIGGER pilot_high_risk_student_guard')
@@ -321,6 +326,15 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     ]))
     expect(teacherClasses.data?.some((row: SchoolScopedRow) => row.id === fixtureNonTitularClass)).toBe(false)
 
+    const [teacherGuardianSensitive, teacherStudentSensitive] = await Promise.all([
+      teacherClient.from('responsaveis').select('cpf,telefone,renda_familiar').eq('escola_id', schoolA).limit(1),
+      teacherClient.from('alunos').select('cpf,nome_mae,nome_pai,necessidades_especiais').eq('id', fixtureStudent),
+    ])
+    expect(teacherGuardianSensitive.error).not.toBeNull()
+    expect(teacherGuardianSensitive.data).toBeNull()
+    expect(teacherStudentSensitive.error).not.toBeNull()
+    expect(teacherStudentSensitive.data).toBeNull()
+
     const rpcArgs = {
       p_start_date: '2026-08-01',
       p_end_date: '2026-08-31',
@@ -340,16 +354,25 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     expect(otherDirectorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolB)).toBe(true)
     expect(teacherRpc.data).toEqual([])
 
-    const [teacherColumn, teacherScalar, secretariatScalar] = await Promise.all([
+    const [teacherColumn, teacherScalar, secretariatScalar, directorProfiles, directorGuardianProfiles, crossSchoolProfiles] = await Promise.all([
       teacherClient.from('alunos').select('bolsa_familia').eq('id', fixtureStudent),
       teacherClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
       secretariatClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
+      directorClient.rpc('get_authorized_student_profiles', { p_student_id: fixtureStudent, p_school_id: schoolA }),
+      directorClient.rpc('get_authorized_guardian_profiles', { p_guardian_id: fixtureGuardian, p_school_id: schoolA }),
+      otherDirectorClient.rpc('get_authorized_student_profiles', { p_student_id: fixtureStudent, p_school_id: schoolA }),
     ])
     expect(teacherColumn.error).not.toBeNull()
     expect(teacherScalar.error).toBeNull()
     expect(teacherScalar.data).toBeNull()
     expect(secretariatScalar.error).toBeNull()
     expect(secretariatScalar.data).toBe(true)
+    expect(directorProfiles.error).toBeNull()
+    expect(directorProfiles.data).toHaveLength(1)
+    expect(directorGuardianProfiles.error).toBeNull()
+    expect(directorGuardianProfiles.data).toHaveLength(1)
+    expect(crossSchoolProfiles.error).toBeNull()
+    expect(crossSchoolProfiles.data).toEqual([])
 
     const disabledForDirection = await directorClient
       .from('configs')
@@ -432,6 +455,8 @@ test.describe.serial('isolated governed pilot security hardening', () => {
 
     const teacherContext = await browser.newContext({ ignoreHTTPSErrors: true })
     const teacherPage = await teacherContext.newPage()
+    const teacherConsoleMessages: string[] = []
+    teacherPage.on('console', message => teacherConsoleMessages.push(message.text()))
     try {
       await loginInBrowser(teacherPage, teacherA)
       await expect(teacherPage.getByRole('link', { name: /relatórios/i })).toHaveCount(0)
@@ -442,7 +467,23 @@ test.describe.serial('isolated governed pilot security hardening', () => {
         fetch('/api/compliance/warnings').then(response => response.text()),
         fetch('/api/dashboard/alerts').then(response => response.text()),
       ]))
-      expect(routePayloads.join('\n')).not.toMatch(/bolsa.família|bolsa-familia|NIS-SYNTHETIC-SECURITY-E2E/i)
+      expect(routePayloads.join('\n')).not.toMatch(/bolsa.família|bolsa-familia|NIS-SYNTHETIC-SECURITY-E2E|CPF-SYNTHETIC-SECURITY-E2E|MAE-SYNTHETIC-SECURITY-E2E|PAI-SYNTHETIC-SECURITY-E2E|NEE-SYNTHETIC-SECURITY-E2E|GUARDIAN-CPF-SYNTHETIC-E2E|GUARDIAN-PHONE-SYNTHETIC-E2E/i)
+
+      const { data: sessionData } = await teacherClient.auth.getSession()
+      const browserSensitiveDenials = await teacherPage.evaluate(async ({ apiUrl, apiKey, accessToken }) => {
+        const headers = { apikey: apiKey, Authorization: `Bearer ${accessToken}` }
+        const responses = await Promise.all([
+          fetch(`${apiUrl}/rest/v1/responsaveis?select=cpf,telefone,renda_familiar&limit=1`, { headers }),
+          fetch(`${apiUrl}/rest/v1/alunos?select=cpf,nome_mae,nome_pai,necessidades_especiais&limit=1`, { headers }),
+        ])
+        return responses.map(response => response.status >= 400)
+      }, {
+        apiUrl: supabaseUrl,
+        apiKey: anonKey,
+        accessToken: sessionData.session?.access_token ?? '',
+      })
+      expect(browserSensitiveDenials).toEqual([true, true])
+      expect(teacherConsoleMessages.join('\n')).not.toMatch(/CPF-SYNTHETIC-SECURITY-E2E|MAE-SYNTHETIC-SECURITY-E2E|PAI-SYNTHETIC-SECURITY-E2E|NEE-SYNTHETIC-SECURITY-E2E|GUARDIAN-CPF-SYNTHETIC-E2E|GUARDIAN-PHONE-SYNTHETIC-E2E/i)
     } finally {
       await teacherContext.close()
     }
