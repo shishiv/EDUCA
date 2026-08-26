@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import type { DashboardAlert } from '@/app/api/dashboard/alerts/route'
+import type { ResolvedAcademicYear } from '@/lib/services/academic-year'
 
 const alertConfig = {
   warning: { icon: AlertCircle, tone: 'warning' },
@@ -21,7 +22,12 @@ const alertConfig = {
   success: { icon: TrendingUp, tone: 'success' },
 } as const
 
-export function AlertasCard() {
+interface AlertasCardProps {
+  escolaId: string
+  academicYear: ResolvedAcademicYear
+}
+
+export function AlertasCard({ escolaId, academicYear }: AlertasCardProps) {
   const t = useTranslations('platform.dashboard')
   const [alerts, setAlerts] = useState<DashboardAlert[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,7 +38,8 @@ export function AlertasCard() {
     setLoadError(false)
 
     try {
-      const response = await fetch('/api/dashboard/alerts')
+      const params = new URLSearchParams({ escolaId, year: String(academicYear.year) })
+      const response = await fetch(`/api/dashboard/alerts?${params}`)
       if (!response.ok) throw new Error(`Dashboard alerts returned ${response.status}`)
       const data = await response.json()
       setAlerts(data.alerts || [])
@@ -41,7 +48,7 @@ export function AlertasCard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [academicYear.year, escolaId])
 
   useEffect(() => {
     void fetchAlerts()

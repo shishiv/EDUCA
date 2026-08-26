@@ -19,6 +19,8 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
+const academicYear = { year: 2027, startDate: '2027-01-01', endDate: '2027-12-31', configured: true }
+
 function renderEnglish(component: React.ReactNode) {
   return render(
     <NextIntlClientProvider locale="en" messages={{ platform: platformMessages }}>
@@ -33,7 +35,10 @@ afterEach(() => {
 
 describe('redesigned dashboard component localization', () => {
   it('renders the teacher dashboard heading and empty state in English', async () => {
-    renderEnglish(<TeacherDashboardEnhanced professorId="teacher-1" />)
+    renderEnglish(<TeacherDashboardEnhanced
+      professorId="teacher-1"
+      academicYear={academicYear}
+    />)
 
     expect(await screen.findByRole('heading', { name: 'Teacher dashboard' })).toBeVisible()
     expect(screen.getByText('No classes have been assigned to this teacher.')).toBeVisible()
@@ -41,11 +46,13 @@ describe('redesigned dashboard component localization', () => {
   })
 
   it('renders the translated empty-alert state in English', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ alerts: [] }) }))
-    renderEnglish(<AlertasCard />)
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ alerts: [] }) })
+    vi.stubGlobal('fetch', fetchMock)
+    renderEnglish(<AlertasCard escolaId="school-1" academicYear={academicYear} />)
 
     expect(await screen.findByText('No alerts at this time.')).toBeVisible()
     expect(screen.getByText('The monitored indicators are up to date.')).toBeVisible()
+    expect(fetchMock).toHaveBeenCalledWith('/api/dashboard/alerts?escolaId=school-1&year=2027')
   })
 
   it('preserves API-provided alert copy and action labels', async () => {
@@ -61,7 +68,7 @@ describe('redesigned dashboard component localization', () => {
         }],
       }),
     }))
-    renderEnglish(<AlertasCard />)
+    renderEnglish(<AlertasCard escolaId="school-1" academicYear={academicYear} />)
 
     expect(await screen.findByText('API supplied title')).toBeVisible()
     expect(screen.getByText('API supplied description')).toBeVisible()

@@ -12,6 +12,13 @@ export interface AcademicYear {
   updated_at: string
 }
 
+export interface ResolvedAcademicYear {
+  year: number
+  startDate: string
+  endDate: string
+  configured: boolean
+}
+
 export interface SetAcademicYearInput {
   schoolId: string
   year: number
@@ -21,6 +28,7 @@ export interface SetAcademicYearInput {
 
 export interface AcademicYearService {
   get(schoolId: string, year: number): Promise<AcademicYear | null>
+  resolveCurrent(schoolId: string, today: string): Promise<ResolvedAcademicYear>
   set(input: SetAcademicYearInput): Promise<AcademicYear>
 }
 
@@ -29,15 +37,39 @@ export function createAcademicYearService(
 ): AcademicYearService {
   const client = asPilotRpcClient(supabase)
 
-  return {
-    async get(schoolId, year) {
-      const { data, error } = await client.rpc<AcademicYear[]>('get_school_academic_year', {
-        p_escola_id: schoolId,
-        p_ano: year,
-      })
+  const get = async (schoolId: string, year: number) => {
+    const { data, error } = await client.rpc<AcademicYear[]>('get_school_academic_year', {
+      p_escola_id: schoolId,
+      p_ano: year,
+    })
 
-      if (error) throw new Error(error.message)
-      return data?.[0] ?? null
+    if (error) throw new Error(error.message)
+    return data?.[0] ?? null
+  }
+
+  return {
+    get,
+
+    async resolveCurrent(schoolId, today) {
+      const year = Number(today.slice(0, 4))
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(today) || !Number.isInteger(year)) {
+        throw new Error('ACADEMIC_YEAR_DATE_INVALID')
+      }
+
+      const configured = await get(schoolId, year)
+      return configured
+        ? {
+            year: configured.ano,
+            startDate: configured.data_inicio,
+            endDate: configured.data_fim,
+            configured: true,
+          }
+        : {
+            year,
+            startDate: `${year}-01-01`,
+            endDate: `${year}-12-31`,
+            configured: false,
+          }
     },
 
     async set(input) {

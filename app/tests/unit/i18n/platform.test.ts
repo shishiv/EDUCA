@@ -20,7 +20,7 @@ describe('platform catalog', () => {
     const pt = createTranslator({ locale: 'pt-BR', messages: getMessagesForLocale('pt-BR') as never }) as unknown as (key: string, values?: Record<string, unknown>) => string
     const en = createTranslator({ locale: 'en', messages: getMessagesForLocale('en') as never }) as unknown as (key: string, values?: Record<string, unknown>) => string
     expect(pt('platform.dashboard.title')).toBe('Dashboard')
-    expect(en('platform.dashboard.averageAttendance')).toBe('Network average attendance')
+    expect(en('platform.dashboard.averageAttendance')).toBe('Average attendance')
     expect(en('platform.reports.title')).toBe('Reports')
     expect(pt('platform.reports.title')).toBe('Relatórios')
   })
