@@ -160,6 +160,20 @@ export class UsersApiService extends BaseApiService {
     }
   }
 
+  async updateManagedTeacher(id: string, values: Pick<User, 'nome' | 'email' | 'tipo_usuario' | 'escola_id'>) {
+    const response = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(values),
+    })
+    const result = await response.json()
+    if (!response.ok) {
+      const message = result.issues?.[0]?.message || result.error || 'TEACHER_UPDATE_FAILED'
+      throw new Error(message)
+    }
+    return result.user as User
+  }
+
   // Bulk operations
   async bulkUpdateStatus(userIds: string[], ativo: boolean, reason?: string) {
     try {

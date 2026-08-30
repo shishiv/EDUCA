@@ -378,8 +378,32 @@ test.describe('synthetic municipal pilot core scope', () => {
     await page.getByRole('button', { name: /entrar/i }).click()
     await expect(page).toHaveURL(/\/dashboard$/)
     await expect(page.getByRole('link', { name: 'Usuários', exact: true })).toHaveCount(0)
+    const directorClient = await signedInClient('diretora.a@synthetic.invalid')
+    const { data: teacher } = await directorClient
+      .from('users')
+      .select('id,nome')
+      .eq('email', 'professora.a@synthetic.invalid')
+      .single()
+    expect(teacher).toBeTruthy()
+    const deniedResponse = await page.request.patch(`/api/users/${teacher!.id}`, {
+      data: {
+        nome: 'Tentativa sem autorização',
+        email: 'professora.a@synthetic.invalid',
+        tipo_usuario: 'professor',
+        escola_id: '10000000-0000-0000-0000-000000000001',
+      },
+    })
+    expect(deniedResponse.status()).toBe(403)
     await page.goto('/dashboard/usuarios')
     await expect(page).toHaveURL(/\/unauthorized$/)
+
+    const { error: directUpdateError } = await directorClient
+      .from('users')
+      .update({ nome: 'Tentativa direta' })
+      .eq('id', teacher!.id)
+    expect(directUpdateError).toBeTruthy()
+    const { data: unchangedTeacher } = await directorClient.from('users').select('nome').eq('id', teacher!.id).single()
+    expect(unchangedTeacher?.nome).toBe('Professora Sintetica A')
 
     await page.context().clearCookies()
     await page.goto('/login')
@@ -409,6 +433,27 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByText('Ativo', { exact: true })).toBeVisible()
     await page.reload()
     await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Editar', exact: true }).click()
+    const editName = page.getByLabel('Nome completo', { exact: true })
+    const editEmail = page.getByLabel('E-mail', { exact: true })
+    await editName.fill('P')
+    await editEmail.fill('email-invalido')
+    await page.getByRole('button', { name: 'Salvar alterações' }).click()
+    expect(await editName.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true)
+    expect(await editEmail.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
+    await editName.fill('Professora Sintetica A Editada')
+    await editEmail.fill('professora.a.editada@synthetic.invalid')
+    await page.getByRole('button', { name: 'Salvar alterações' }).click()
+    await expect(page.getByText('Professor atualizado com sucesso')).toBeVisible()
+    await expect(page.getByText('professora.a.editada@synthetic.invalid', { exact: true })).toBeVisible()
+    await page.reload()
+    await expect(page.getByText('Professora Sintetica A Editada', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Editar', exact: true }).click()
+    await page.getByLabel('Nome completo', { exact: true }).fill('Professora Sintetica A')
+    await page.getByLabel('E-mail', { exact: true }).fill('professora.a@synthetic.invalid')
+    await page.getByRole('button', { name: 'Salvar alterações' }).click()
+    await expect(page.getByText('Professor atualizado com sucesso')).toBeVisible()
 
     await page.goto('/dashboard/usuarios/novo')
     const name = page.getByLabel(/nome completo/i)

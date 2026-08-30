@@ -1,39 +1,33 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usersApi, UserWithSchool } from '@/lib/api/users'
+import { schoolsApi } from '@/lib/api/schools'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ArrowLeft,
   User,
   Mail,
-  Phone,
-  MapPin,
   Calendar,
   Shield,
   School,
   Activity,
-  Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Pencil,
+  Save
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
 
 interface UserActivity {
   id: string
@@ -42,6 +36,11 @@ interface UserActivity {
   timestamp: string
   ip_address: string
   user_agent: string
+}
+
+interface SchoolOption {
+  id: string
+  nome: string
 }
 
 const mockActivities: UserActivity[] = [
@@ -94,38 +93,75 @@ export default function UsuarioDetalhesPage() {
   const [usuario, setUsuario] = useState<UserWithSchool | null>(null)
   const [activities, setActivities] = useState<UserActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [activeTab, setActiveTab] = useState('atividades')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [escolas, setEscolas] = useState<SchoolOption[]>([])
+  const [formData, setFormData] = useState({ nome: '', email: '', tipo_usuario: 'professor', escola_id: '' })
 
-  useEffect(() => {
-    loadUsuario()
-    loadActivities()
-  }, [params.id])
-
-  const loadUsuario = async () => {
+  const loadUsuario = useCallback(async () => {
     try {
       const data = await usersApi.getUserWithSchool(params.id as string)
       if (data) {
         setUsuario(data)
+        setFormData({
+          nome: data.nome,
+          email: data.email || '',
+          tipo_usuario: data.tipo_usuario,
+          escola_id: data.escola_id || '',
+        })
       } else {
         toast.error(t('labels.usuario-nao-encontrado'))
         router.push('/dashboard/usuarios')
       }
-    } catch (error) {
-      // logger.error('Erro ao carregar usuário:', error as any)
+    } catch {
       toast.error(t('ui.erro-ao-carregar-dados-do-usuario'))
     } finally {
       setLoading(false)
     }
+  }, [params.id, router, t])
+
+  useEffect(() => {
+    schoolsApi.getAll<SchoolOption>().then(setEscolas).catch(() => undefined)
+  }, [])
+
+  const handleEdit = () => {
+    setEditing(true)
+    setErrorMessage('')
+    setActiveTab('configuracoes')
   }
 
-  const loadActivities = async () => {
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setSaving(true)
+    setErrorMessage('')
+    try {
+      await usersApi.updateManagedTeacher(params.id as string, formData)
+      await loadUsuario()
+      setEditing(false)
+      toast.success('Professor atualizado com sucesso')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível atualizar o professor'
+      setErrorMessage(message)
+      toast.error(message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const loadActivities = useCallback(async () => {
     try {
       // Simular carregamento de atividades
       await new Promise(resolve => setTimeout(resolve, 500))
       setActivities(mockActivities)
-    } catch (error) {
-      // logger.error('Erro ao carregar atividades:', error)
-    }
-  }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    void loadUsuario()
+    void loadActivities()
+  }, [loadActivities, loadUsuario])
 
   const getInitials = (name: string) => {
     return name
@@ -217,6 +253,12 @@ export default function UsuarioDetalhesPage() {
             {t('ui.informacoes-completas-e-historico-de-atividades')}
           </p>
         </div>
+        {['diretor', 'professor'].includes(usuario.tipo_usuario) && !editing && (
+          <Button type="button" onClick={handleEdit}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Editar
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -302,7 +344,7 @@ export default function UsuarioDetalhesPage() {
 
         {/* Conteúdo Principal */}
         <div className="lg:col-span-2">
-          <Tabs defaultValue="atividades" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="atividades" className="flex items-center space-x-2">
                 <Activity className="h-4 w-4" />
@@ -400,7 +442,73 @@ export default function UsuarioDetalhesPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
+                  {editing ? (
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-nome">Nome completo</Label>
+                          <Input
+                            id="edit-nome"
+                            value={formData.nome}
+                            onChange={event => setFormData(current => ({ ...current, nome: event.target.value }))}
+                            minLength={2}
+                            maxLength={160}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-email">E-mail</Label>
+                          <Input
+                            id="edit-email"
+                            type="email"
+                            value={formData.email}
+                            onChange={event => setFormData(current => ({ ...current, email: event.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-tipo-usuario">Tipo de usuário</Label>
+                          <Select
+                            value={formData.tipo_usuario}
+                            onValueChange={tipo_usuario => setFormData(current => ({ ...current, tipo_usuario }))}
+                          >
+                            <SelectTrigger id="edit-tipo-usuario">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="professor">Professor(a)</SelectItem>
+                              <SelectItem value="diretor">Diretor(a)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-escola">Escola</Label>
+                          <Select
+                            value={formData.escola_id}
+                            onValueChange={escola_id => setFormData(current => ({ ...current, escola_id }))}
+                          >
+                            <SelectTrigger id="edit-escola">
+                              <SelectValue placeholder="Selecione a escola" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {escolas.map(escola => (
+                                <SelectItem key={escola.id} value={escola.id}>{escola.nome}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {errorMessage && <p role="alert" className="text-sm text-red-600">{errorMessage}</p>}
+                      <div className="flex justify-end gap-3">
+                        <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+                        <Button type="submit" disabled={saving}>
+                          <Save className="h-4 w-4 mr-2" />
+                          {saving ? 'Salvando...' : 'Salvar alterações'}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('labels.id-do-usuario')}</label>
@@ -448,7 +556,8 @@ export default function UsuarioDetalhesPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
