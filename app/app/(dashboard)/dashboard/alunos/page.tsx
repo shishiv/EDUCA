@@ -28,7 +28,7 @@ import { formatDateBR } from '@/lib/date-utils'
 import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
 import { EscolaRequiredState } from '@/components/ui/escola-required-state'
-import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
+import { getStudentManagementProfiles } from '@/lib/sensitive-family-access'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,8 +53,8 @@ interface AlunoWithDetails extends Pick<Aluno,
       nome: string
       escolas: {
         nome: string
-      }
-    }
+      } | null
+    } | null
   }[]
 }
 
@@ -92,63 +92,7 @@ export default function AlunosPage() {
     }
 
     try {
-      let alunoIds: string[] | undefined
-      if (escolaIdToUse) {
-        const { data: turmasData, error: turmasError } = await supabase
-          .from('turmas')
-          .select('id')
-          .eq('escola_id', escolaIdToUse)
-
-        if (turmasError) throw turmasError
-
-        const turmaIds = turmasData?.map(t => t.id) || []
-
-        if (turmaIds.length === 0) {
-          setAlunos([])
-          setLoading(false)
-          return
-        }
-
-        const { data: matriculasData, error: matriculasError } = await supabase
-          .from('matriculas')
-          .select('aluno_id')
-          .in('turma_id', turmaIds)
-
-        if (matriculasError) throw matriculasError
-
-        alunoIds = [...new Set(matriculasData?.map(m => m.aluno_id) || [])]
-
-        if (alunoIds.length === 0) {
-          setAlunos([])
-          setLoading(false)
-          return
-        }
-      }
-
-      const profiles = await getAuthorizedStudentProfiles(supabase, { schoolId: escolaIdToUse ?? undefined })
-      const visibleProfiles = alunoIds ? profiles.filter(profile => alunoIds.includes(profile.id)) : profiles
-      const { data: relations, error } = await supabase
-        .from('alunos')
-        .select(`
-          id,
-          responsaveis:responsavel_id (nome),
-          matriculas (
-            situacao,
-            turmas (
-              nome,
-              escolas (nome)
-            )
-          )
-        `)
-        .in('id', visibleProfiles.map(profile => profile.id))
-
-      if (error) throw error
-      const relationsByStudent = new Map((relations ?? []).map(relation => [relation.id, relation]))
-      setAlunos(visibleProfiles.map(profile => ({
-        ...profile,
-        responsaveis: relationsByStudent.get(profile.id)?.responsaveis || undefined,
-        matriculas: relationsByStudent.get(profile.id)?.matriculas || undefined,
-      })))
+      setAlunos(await getStudentManagementProfiles(supabase, { schoolId: escolaIdToUse ?? undefined }))
     } catch (error: any) {
       logger.error('Erro ao carregar alunos:', error)
       toast.error(t('ui.erro-ao-carregar-lista-de-alunos'))

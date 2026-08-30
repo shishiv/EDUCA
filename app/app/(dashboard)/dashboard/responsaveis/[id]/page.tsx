@@ -30,7 +30,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { getAuthorizedGuardianProfiles } from '@/lib/sensitive-family-access'
+import { getGuardianManagementProfiles } from '@/lib/sensitive-family-access'
 
 interface Responsavel {
   id: string
@@ -57,8 +57,8 @@ interface Aluno {
       escola_id: string
       escolas: {
         nome: string
-      }
-    }
+      } | null
+    } | null
   }>
 }
 
@@ -93,7 +93,7 @@ export default function ResponsavelDetalhesPage() {
     try {
       setLoading(true)
 
-      const [respData] = await getAuthorizedGuardianProfiles(supabase, { guardianId: id })
+      const [respData] = await getGuardianManagementProfiles(supabase, { guardianId: id })
       if (!respData) throw new Error('RESPONSAVEL_NOT_FOUND')
 
       setResponsavel(respData)
@@ -107,35 +107,12 @@ export default function ResponsavelDetalhesPage() {
         profissao: respData.profissao || '',
       })
 
-      // Load linked students
-      const { data: alunosData, error: alunosError } = await supabase
-        .from('alunos')
-        .select(`
-          id,
-          nome_completo,
-          data_nascimento,
-          sexo,
-          ativo,
-          matriculas (
-            situacao,
-            turmas (
-              nome,
-              escola_id,
-              escolas (nome)
-            )
-          )
-        `)
-        .eq('responsavel_id', id)
-        .order('nome_completo')
-
-      if (alunosError) throw alunosError
-
-      setAlunos(alunosData || [])
+      setAlunos(respData.alunos)
 
       logger.info('Responsável e alunos carregados:', {
         metadata: {
           responsavelId: respData.id,
-          alunos: alunosData?.length || 0
+          alunos: respData.alunos.length
         }
       })
     } catch (error) {

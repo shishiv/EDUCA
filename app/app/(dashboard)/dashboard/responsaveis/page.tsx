@@ -27,7 +27,7 @@ import {
 import { Plus, Search, Eye, Edit, Phone, Mail, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { getAuthorizedGuardianProfiles } from '@/lib/sensitive-family-access'
+import { getGuardianManagementProfiles } from '@/lib/sensitive-family-access'
 
 interface Responsavel {
   id: string
@@ -70,17 +70,7 @@ export default function ResponsaveisPage() {
     try {
       setLoading(true)
 
-      const responsaveisData = await getAuthorizedGuardianProfiles(supabase)
-      const { data: alunosData, error: alunosError } = await supabase
-        .from('alunos')
-        .select('id,nome_completo,responsavel_id')
-      if (alunosError) throw alunosError
-
-      const responsaveisWithCount = responsaveisData.map(resp => ({
-        ...resp,
-        alunos: (alunosData ?? []).filter(aluno => aluno.responsavel_id === resp.id),
-        alunos_count: (alunosData ?? []).filter(aluno => aluno.responsavel_id === resp.id).length,
-      }))
+      const responsaveisWithCount = await getGuardianManagementProfiles(supabase)
 
       setResponsaveis(responsaveisWithCount)
       logger.info('Responsáveis carregados:', { metadata: { count: responsaveisWithCount.length } })
