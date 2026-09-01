@@ -51,7 +51,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          HTTP_STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+          HTTP_STATUS=$(curl --silent --show-error --proto '=https' --output /dev/null --write-out "%{http_code}" \
             --max-time 30 \
             --retry 2 \
             --retry-delay 5 \
