@@ -1,0 +1,69 @@
+# Cheap daily keepalive to prevent Supabase free-tier auto-pause.
+#
+# Background: Supabase pauses free-tier projects after 7 days of inactivity.
+# This workflow runs an authenticated no-op read against the live DB once a day
+# so the activity clock never reaches the pause threshold.
+#
+# IMPORTANT: A cron trigger alone does NOT unpause an already-paused project.
+# It only prevents the next pause once the project has been manually restored.
+#
+# Required GitHub Actions secrets (Settings, Secrets and variables, Actions):
+#   NEXT_PUBLIC_SUPABASE_URL
+#   SUPABASE_SERVICE_ROLE_KEY
+#
+# The job fails if either secret is missing/empty so a pause surfaces as a failed run.
+
+name: Supabase Keepalive
+
+on:
+  schedule:
+    # 11:00 UTC = 08:00 America/Sao_Paulo (UTC-3)
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keepalive:
+    name: Ping Supabase (escolas read)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Verify required secrets are present
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "${SUPABASE_URL}" ]; then
+            echo "::error::Secret NEXT_PUBLIC_SUPABASE_URL is missing or empty."
+            exit 1
+          fi
+          if [ -z "${SERVICE_ROLE_KEY}" ]; then
+            echo "::error::Secret SUPABASE_SERVICE_ROLE_KEY is missing or empty."
+            exit 1
+          fi
+          echo "Required secrets are present."
+
+      - name: Authenticated no-op read against escolas
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          HTTP_STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 5 \
+            --header "apikey: ${SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
+            "${SUPABASE_URL}/rest/v1/escolas?select=id&limit=1")
+
+          echo "HTTP status: ${HTTP_STATUS}"
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -gt 299 ]; then
+            echo "::error::Supabase keepalive probe returned HTTP ${HTTP_STATUS}."
+            exit 1
+          fi
+
+          echo "Keepalive probe succeeded (HTTP ${HTTP_STATUS})."
