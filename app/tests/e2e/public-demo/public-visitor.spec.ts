@@ -34,7 +34,7 @@ test.describe('J1: public visitor journey', () => {
     await page.getByRole('combobox', { name: 'Idioma da aplicação' }).selectOption('en')
     await expect(page.getByRole('heading', { level: 1, name: 'School management for municipal networks, with open-source code.' })).toBeVisible()
 
-    for (const path of ['/demo', '/login', '/politica-privacidade', '/blog']) {
+    for (const path of ['/demo', '/login', '/politica-privacidade']) {
       await page.goto(path)
       const selector = page.getByTestId('locale-switcher')
       await expect(selector).toBeVisible()
@@ -42,6 +42,18 @@ test.describe('J1: public visitor journey', () => {
     }
   })
 
+
+  test('Portuguese-only blog routes hide the locale selector', async ({ page }) => {
+    for (const path of [
+      '/blog',
+      '/blog/lgpd-em-escola-municipal',
+      '/blog/encarregado-de-dados-em-prefeitura',
+      '/blog/dado-de-crianca-no-educacenso',
+    ]) {
+      await page.goto(path)
+      await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
+    }
+  })
   test('privacy policy remains public', async ({ page }) => {
     const response = await page.goto('/politica-privacidade')
     expect(response?.status()).toBeLessThan(400)
