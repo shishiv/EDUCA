@@ -7,7 +7,7 @@ import { startTransition, useEffect, useState } from 'react'
 import { setUserLocale } from '@/i18n/actions'
 import { isAppLocale } from '@/i18n/config'
 
-export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public' }) {
+export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public' | 'button' }) {
   const locale = useLocale()
   const router = useRouter()
   const t = useTranslations('common.locale')
@@ -38,6 +38,33 @@ export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public'
         setPending(false)
       }
     })
+  }
+
+  const targetLocale = locale === 'pt-BR' ? 'en' : 'pt-BR'
+
+  if (variant === 'button') {
+    return (
+      <div data-testid="locale-switcher" className="locale-switcher locale-switcher--button">
+        <button
+          type="button"
+          onClick={() => changeLocale(targetLocale)}
+          disabled={pending}
+          aria-busy={pending}
+          aria-label={t('switchTo', { locale: targetLocale === 'pt-BR' ? t('portuguese') : t('english') })}
+          className="locale-switcher__button"
+        >
+          {locale === 'pt-BR' ? 'PT' : 'EN'}
+        </button>
+        <span className="sr-only" role="status" aria-live="polite">
+          {pending ? t('changing') : ''}
+        </span>
+        {error && (
+          <span className="locale-switcher__error" role="alert">
+            {t('error')}
+          </span>
+        )}
+      </div>
+    )
   }
 
   const variantClass = variant === 'public' ? 'locale-switcher--public' : 'locale-switcher--app'
