@@ -32,6 +32,7 @@ test.describe('J1: public visitor journey', () => {
   test('public pages keep the language selector in layout flow', async ({ page }) => {
     await page.goto('/')
     await page.getByRole('combobox', { name: 'Idioma da aplicação' }).selectOption('en')
+    await expect.poll(async () => (await page.context().cookies()).find(cookie => cookie.name === 'EDUCA_LOCALE')?.value).toBe('en')
     await expect(page.getByRole('heading', { level: 1, name: 'School management for municipal networks, with open-source code.' })).toBeVisible()
 
     for (const path of ['/demo', '/login', '/politica-privacidade']) {
