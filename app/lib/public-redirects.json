@@ -1,0 +1,11 @@
+[
+  { "source": "/privacidade", "destination": "/politica-privacidade", "permanent": true },
+  { "source": "/funcionalidades", "destination": "/#recursos", "permanent": true },
+  { "source": "/comunidade", "destination": "https://github.com/shishiv/EDUCA/discussions", "permanent": true },
+  { "source": "/contribuidores", "destination": "https://github.com/shishiv/EDUCA", "permanent": true },
+  { "source": "/patrocinadores", "destination": "https://github.com/shishiv/EDUCA/discussions", "permanent": true },
+  { "source": "/piloto-municipal", "destination": "/demo", "permanent": true },
+  { "source": "/roadmap", "destination": "https://github.com/shishiv/EDUCA/issues", "permanent": true },
+  { "source": "/whatsapp", "destination": "https://github.com/shishiv/EDUCA/tree/dev/app/lib/notifications", "permanent": true },
+  { "source": "/blog/bem-vindo", "destination": "/blog", "permanent": true }
+]

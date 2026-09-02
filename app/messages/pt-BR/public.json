@@ -121,19 +121,45 @@
       "copyright": "© 2025-2026 - Sistema EDUCA"
     }
   },
+  "navigation": {
+    "label": "Navegação pública",
+    "home": "Início",
+    "demo": "Demo",
+    "blog": "Blog",
+    "login": "Entrar"
+  },
+  "demo": {
+    "eyebrow": "Antes de entrar",
+    "title": "Este é o sandbox público do EDUCA.",
+    "intro": "É um ambiente de demonstração com dados fictícios, separado de qualquer operação municipal real.",
+    "facts": {
+      "synthetic": "Todos os dados são sintéticos.",
+      "noRealPeople": "Eles não representam um município, escola, estudante, responsável ou trabalhador.",
+      "sharedEnvironment": "Interações limitadas podem alterar o sandbox de demonstração compartilhado; outros visitantes podem ver essas mudanças.",
+      "blockedEffects": "Ações destrutivas e efeitos externos estão bloqueados.",
+      "reset": "No reset, as mudanças são apagadas e o ambiente volta ao estado inicial.",
+      "noRealData": "Não insira dados pessoais ou escolares reais."
+    },
+    "login": "Continuar para o login do demo",
+    "home": "Voltar ao início"
+  },
   "landing": {
     "navLabel": "Navegação principal",
     "mobileNavLabel": "Navegação móvel",
     "openMenu": "Abrir menu",
     "how": "Como funciona",
     "resources": "Recursos",
+    "blog": "Blog",
     "openSource": "Código aberto",
     "login": "Entrar",
     "meet": "Conhecer o EDUCA",
-    "heroTitle": "Uma base comum para a gestão escolar.",
-    "heroEmphasis": "Sem perder o território.",
-    "heroDescription": "O EDUCA conecta escolas, pessoas, turmas, matrículas e frequência em uma base open source.",
-    "explore": "Explorar a base",
+    "heroTitle": "Gestão escolar para redes municipais, com código aberto.",
+    "heroEmphasis": "",
+    "productDescription": "O EDUCA reúne escolas, turmas, estudantes, matrículas e frequência em um só sistema.",
+    "audience": "A Secretaria de Educação acompanha a rede. Cada escola e sala registra o que acontece no dia.",
+    "syntheticState": "A experiência pública atual é uma demonstração sintética, não uma operação municipal ao vivo.",
+    "demo": "Ver a demonstração",
+    "code": "Ler o código",
     "enterSystem": "Entrar no sistema",
     "pilotNote": "Fundação de piloto municipal · demonstração com dados sintéticos",
     "pathLabel": "Caminho da informação no EDUCA",
@@ -157,7 +183,7 @@
     "module3Text": "Tenha uma visão consistente de estudantes, responsáveis e vínculos.",
     "openTitle": "O código fica aberto.",
     "openEmphasis": "O contexto, também.",
-    "openText": "O repositório público usa a licença MIT. Você pode examinar, executar e adaptar o código ao contexto local. O produto segue como fundação de piloto municipal com dados sintéticos, sem alegações de adoção ou impacto medido.",
+    "openText": "O repositório público usa a licença MIT. Você pode examinar, executar e adaptar o código ao contexto local. O produto segue como fundação de piloto municipal com dados sintéticos.",
     "github": "Ver o código no GitHub",
     "proof": "PROVA OPEN SOURCE",
     "licenseTitle": "Licença permissiva e verificável",

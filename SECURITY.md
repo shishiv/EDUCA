@@ -16,7 +16,7 @@ EDUCA is a small, pilot-stage project maintained on a best-effort basis. Respons
 
 - **Acknowledgment:** you will get an acknowledgment within a few business days of a complete report.
 - **Triage:** the maintainer will assess severity and impact and reply with a plan or follow-up questions.
-- **Fix:** fixes land on `main` as fast as the project's capacity allows. There is no committed SLA for a fix release.
+- **Fix:** fixes follow the normal development process. See the repository branch policy in [`CONTEXT.md`](CONTEXT.md). There is no committed SLA for a fix release.
 - **Disclosure:** we practice coordinated disclosure. We will not publish a report publicly before a fix is available, and we ask reporters to give us a reasonable window (90 days by default) before public disclosure.
 
 If a report is found to be out of scope or a false positive, we will close it with an explanation.

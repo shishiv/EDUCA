@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Database, FileText, Lock, Shield, Users } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
+import { PublicHeader } from '@/components/marketing/public-header'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('public.privacy')
@@ -17,17 +18,7 @@ export default async function PoliticaPrivacidadePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-6">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-green-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">EDUCA</h1>
-              <p className="text-sm text-gray-500">{t('brandSubtitle')}</p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="mx-auto max-w-4xl px-4 py-8">
         <div className="rounded-lg border bg-white p-6 sm:p-8">
