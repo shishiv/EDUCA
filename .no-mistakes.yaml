@@ -1,0 +1,8 @@
+no_ci: true
+
+auto_fix:
+  lint: 3
+  test: 3
+  review: 3
+  document: 3
+  rebase: 3
