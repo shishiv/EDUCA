@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { BrandLogo } from '@/components/marketing/brand-logo'
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
 
 export function PublicHeader() {
   const t = useTranslations('public.navigation')
@@ -19,6 +20,7 @@ export function PublicHeader() {
           <Link href="/blog">{t('blog')}</Link>
           <Link href="/login">{t('login')}</Link>
         </nav>
+        <LocaleSwitcher variant="button" />
       </div>
     </header>
   )

@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import { EducaLanding } from '@/components/marketing/educa-landing'
 import { PublicDemoExplainer } from '@/components/marketing/public-demo-explainer'
+import { PublicHeader } from '@/components/marketing/public-header'
 import { getMessagesForLocale } from '@/i18n/messages'
 
 vi.mock('next/navigation', () => ({
@@ -38,7 +39,9 @@ describe('redesign localization contract', () => {
     expect(screen.getByText(publicMessages.public.landing.productDescription)).toBeVisible()
     expect(screen.getByText(publicMessages.public.landing.syntheticState)).toBeVisible()
     expect(screen.getByRole('link', { name: publicMessages.public.landing.demo })).toHaveAttribute('href', '/demo')
-    expect(screen.getAllByRole('link', { name: publicMessages.public.landing.login }).every(link => link.getAttribute('href') === '/login')).toBe(true)
+    expect(screen.getByRole('link', { name: publicMessages.public.landing.meet })).toHaveAttribute('href', '/demo')
+    expect(screen.queryByRole('link', { name: publicMessages.public.landing.login })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /language|idioma/i })).not.toHaveLength(0)
     expect(screen.getByRole('link', { name: publicMessages.public.landing.privacy })).toHaveAttribute('href', '/politica-privacidade')
     expect(screen.getAllByRole('link').some(link => link.getAttribute('href') === 'https://github.com/shishiv/EDUCA')).toBe(true)
 
@@ -62,5 +65,18 @@ describe('redesign localization contract', () => {
     for (const fact of Object.values(demo.facts)) expect(screen.getByText(fact)).toBeVisible()
     expect(screen.getByRole('link', { name: demo.login })).toHaveAttribute('href', '/login')
     expect(screen.getAllByRole('link').some(link => link.getAttribute('href') === '/')).toBe(true)
+  })
+
+  it.each([
+    ['pt-BR', getMessagesForLocale('pt-BR')],
+    ['en', getMessagesForLocale('en')],
+  ] as const)('renders the compact locale button in the public header for %s', (locale, messages) => {
+    render(
+      <NextIntlClientProvider locale={locale} messages={messages}>
+        <PublicHeader />
+      </NextIntlClientProvider>
+    )
+
+    expect(screen.getByRole('button', { name: /language|idioma/i })).toBeVisible()
   })
 })

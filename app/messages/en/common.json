@@ -7,6 +7,7 @@
     "label": "Application language",
     "portuguese": "Português (Brasil)",
     "english": "English",
+    "switchTo": "Switch language to {locale}",
     "changing": "Changing language",
     "error": "Unable to change the language. Try again."
   },
