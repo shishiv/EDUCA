@@ -24,6 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('common.metadata')
 
   return {
+    metadataBase: new URL('https://geteduca.vercel.app'),
     title: t('title'),
     description: t('description'),
   }

@@ -14,6 +14,7 @@ import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { BrandLogo } from '@/components/marketing/brand-logo'
 
 export default function LoginPage() {
   const t = useTranslations('auth.login')
@@ -124,12 +125,8 @@ export default function LoginPage() {
       {/* Right Panel - the credential task remains the visual and semantic focus. */}
       <div className="auth-login__access flex flex-col items-center justify-center p-6 sm:p-8">
         <div className="auth-login__form w-full max-w-[380px]">
-          {/* Logo */}
           <div className="auth-login__brand mb-10 text-center">
-            <svg viewBox="0 0 180 52" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[50px] mx-auto" aria-hidden="true">
-              <text x="5" y="36" fontFamily="Lexend, sans-serif" fontWeight="700" fontSize="40" fill="#047857">EDUCA</text>
-              <path className="auth-login__brand-track" d="M8 46 Q40 51 75 46 Q110 41 146 46" pathLength="1" stroke="#d97706" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-            </svg>
+            <BrandLogo priority />
           </div>
 
           <h2 className="auth-login__title font-display text-2xl font-semibold mb-2">
@@ -138,6 +135,9 @@ export default function LoginPage() {
           <p className="auth-login__subtitle mb-8">
             {t('subtitle')}
           </p>
+          <Link href="/" className="auth-login__back mb-6 inline-flex min-h-11 items-center text-sm font-medium">
+            {t('backToHome')}
+          </Link>
 
           {error && (
             <Alert variant="destructive" className="mb-6">

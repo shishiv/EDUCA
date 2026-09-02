@@ -7,7 +7,7 @@ import { startTransition, useEffect, useState } from 'react'
 import { setUserLocale } from '@/i18n/actions'
 import { isAppLocale } from '@/i18n/config'
 
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public' }) {
   const locale = useLocale()
   const router = useRouter()
   const t = useTranslations('common.locale')
@@ -26,7 +26,11 @@ export function LocaleSwitcher() {
     startTransition(async () => {
       try {
         await setUserLocale(value)
-        router.refresh()
+        if (typeof window !== 'undefined') {
+          window.location.reload()
+        } else {
+          router.refresh()
+        }
       } catch {
         setSelectedLocale(locale)
         setError(true)
@@ -36,8 +40,13 @@ export function LocaleSwitcher() {
     })
   }
 
+  const variantClass = variant === 'public' ? 'locale-switcher--public' : 'locale-switcher--app'
+
   return (
-    <div className="fixed bottom-20 right-3 z-[100] flex items-center gap-2 rounded-lg border border-gray-200 bg-white/95 px-2 py-1.5 shadow-sm backdrop-blur lg:bottom-4 lg:right-4">
+    <div
+      data-testid="locale-switcher"
+      className={`locale-switcher ${variantClass}`}
+    >
       <Languages className="h-4 w-4 text-gray-600" aria-hidden="true" />
       <label htmlFor="application-locale" className="sr-only">
         {t('label')}
