@@ -15,16 +15,10 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react'
+import { BrandLogo } from '@/components/marketing/brand-logo'
 
 function Wordmark() {
-  return (
-    <Link href="/" className="landing-wordmark">
-      <span className="landing-wordmark__mark" aria-hidden="true">
-        E
-      </span>
-      <span>EDUCA</span>
-    </Link>
-  )
+  return <Link href="/" className="landing-wordmark"><BrandLogo /></Link>
 }
 
 function ProductBoard() {
@@ -102,6 +96,7 @@ export function EducaLanding() {
             <a href="#como-funciona">{t('how')}</a>
             <a href="#recursos">{t('resources')}</a>
             <a href="#aberta">{t('openSource')}</a>
+            <Link href="/blog">{t('blog')}</Link>
           </nav>
           <div className="landing-header__actions">
             <Link href="/login" className="landing-login">{t('login')}</Link>
@@ -113,6 +108,7 @@ export function EducaLanding() {
               <a href="#como-funciona">{t('how')}</a>
               <a href="#recursos">{t('resources')}</a>
               <a href="#aberta">{t('openSource')}</a>
+              <Link href="/blog">{t('blog')}</Link>
               <Link href="/login">{t('login')}</Link>
             </nav>
           </details>
@@ -122,13 +118,14 @@ export function EducaLanding() {
       <main>
         <section className="landing-hero landing-container">
           <div className="landing-hero__copy">
-            <h1>{t('heroTitle')} <em>{t('heroEmphasis')}</em></h1>
-            <p className="landing-hero__description">{t('heroDescription')}</p>
+            <h1>{t('heroTitle')}{t('heroEmphasis') && <> <em>{t('heroEmphasis')}</em></>}</h1>
+            <p className="landing-hero__description">{t('productDescription')}</p>
+            <p className="landing-hero__audience">{t('audience')}</p>
             <div className="landing-hero__actions" id="comecar">
-              <a href="#como-funciona" className="landing-button landing-button--primary">{t('explore')} <ArrowRight size={17} /></a>
+              <Link href="/demo" className="landing-button landing-button--primary">{t('demo')} <ArrowRight size={17} /></Link>
               <Link href="/login" className="landing-button landing-button--secondary">{t('enterSystem')}</Link>
             </div>
-            <p className="landing-hero__note"><ShieldCheck size={15} /> {t('pilotNote')}</p>
+            <p className="landing-hero__note"><ShieldCheck size={15} /> {t('syntheticState')}</p>
             <div className="landing-hero__path" aria-label={t('pathLabel')}>
               <span>{t('department')}</span><ArrowRight size={13} aria-hidden="true" /><span>{t('school')}</span><ArrowRight size={13} aria-hidden="true" /><span>{t('classroom')}</span>
             </div>
@@ -173,7 +170,7 @@ export function EducaLanding() {
             <div className="landing-open__statement">
               <h2>{t('openTitle')}<br /><em>{t('openEmphasis')}</em></h2>
               <p>{t('openText')}</p>
-              <a className="landing-button landing-button--light" href="https://github.com/shishiv/EDUCA" target="_blank" rel="noreferrer">{t('github')} <Github size={16} /></a>
+              <a className="landing-button landing-button--light" href="https://github.com/shishiv/EDUCA" target="_blank" rel="noreferrer">{t('code')} <Github size={16} /></a>
             </div>
             <div className="landing-open__proof">
               <div className="landing-open__proof-head"><Github size={20} /><span>{t('proof')}</span></div>

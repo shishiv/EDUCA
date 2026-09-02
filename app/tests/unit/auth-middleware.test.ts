@@ -10,7 +10,7 @@ describe('checkRouteAccess', () => {
     })
   })
 
-  it.each(['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/offline'])(
+  it.each(['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/demo', '/blog', '/blog/lgpd-em-escola-municipal', '/offline'])(
     'keeps %s public',
     route => expect(checkRouteAccess(route).hasAccess).toBe(true)
   )

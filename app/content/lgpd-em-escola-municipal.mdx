@@ -1,0 +1,152 @@
+> **Resposta curta:** em uma adoção municipal do EDUCA, o município define as finalidades, bases legais, compartilhamentos e prazos do tratamento. A EDUCA atua como operadora quando trata dados em nome do município e conforme instruções documentadas. Antes de liberar dados reais, a rede precisa documentar papéis, inventário, bases legais, retenção, canal de direitos e contrato.
+
+Atualizado em 5 de agosto de 2026.
+
+Este é um runbook para o município que vai adotar o EDUCA. Não é parecer jurídico nem selo de conformidade. O município deve validar a aplicação com sua assessoria jurídica, seu encarregado, seu arquivo público e suas normas locais.
+
+## Decisões rápidas
+
+| Pergunta | Decisão do runbook |
+| --- | --- |
+| Quem é o controlador? | O município, por meio da Prefeitura e da Secretaria de Educação conforme sua organização e seus atos locais. |
+| Qual é o papel da EDUCA? | Operadora quando trata dados em nome do município e de acordo com instruções documentadas. |
+| A relação escolar é uma base legal? | Não. É um contexto. A base precisa ser registrada para cada tratamento e finalidade. |
+| O demo pode receber dados reais? | Não. O ambiente público deve continuar com dados sintéticos e sem titular real. |
+| Quem atende os direitos? | O município, com suporte técnico da EDUCA conforme instrução. |
+
+## 1. Separe demo, adoção e dados reais
+
+Antes de importar qualquer cadastro real:
+
+1. Confirme que o ambiente público do EDUCA permanece um demo com dados sintéticos. Não use nomes, CPF, matrícula, frequência, contatos ou qualquer registro de criança real no demo.
+2. Crie ou designe um ambiente municipal separado, com titularidade, acesso, contratos, política de privacidade e responsáveis identificados pelo município.
+3. Registre que o município não liberará dados reais enquanto não houver, no mínimo, controlador definido, encarregado designado, inventário de tratamentos, bases legais, política de retenção, canal de direitos e contrato com a EDUCA.
+4. Trate cada nova integração, exportação, compartilhamento ou uso de dados como uma finalidade nova a ser analisada. A existência de uma tela ou de um campo no software não é, por si só, autorização jurídica.
+
+## 2. Defina controlador, operador e responsabilidades
+
+A LGPD define:
+
+- **Controlador:** quem toma as decisões referentes ao tratamento.
+- **Operador:** quem realiza o tratamento em nome do controlador.
+- **Agentes de tratamento:** controlador e operador.
+
+Para a gestão escolar municipal, o município deve documentar quais órgãos decidem cada tratamento. A EDUCA é operadora dos dados de estudantes, responsáveis, profissionais, escolas, turmas, matrículas e frequência quando executa instruções do município para a prestação do sistema.
+
+A classificação deve ser feita **por tratamento**, e não apenas pelo contrato ou pelo nome do produto. A mesma organização pode ser controladora para uma finalidade própria e operadora para outra. Se a EDUCA começar a decidir uma finalidade própria sobre dados identificáveis, como publicidade, perfil comercial ou produto independente, o município deve reavaliar o papel jurídico daquela operação antes de executá-la.
+
+### Matriz mínima de responsabilidades
+
+| Responsável | Deve fazer | Não deve fazer |
+| --- | --- | --- |
+| Município/controlador | Definir finalidades, bases legais, categorias de dados, transparência, compartilhamentos, retenção, direitos, segurança e resposta a incidentes. | Transferir a decisão ao software ou presumir que o contrato substitui uma análise de finalidade. |
+| Encarregado municipal | Receber reclamações e comunicações, orientar titulares e equipe, interagir com a ANPD e assessorar registros, RIPD, contratos e medidas de segurança. | Assumir sozinho a responsabilidade pela conformidade ou decidir a finalidade no lugar do controlador. |
+| Escolas e gestores | Alimentar registros conforme a fonte, verificar exatidão, cumprir perfis de acesso e encaminhar pedidos ao canal municipal. | Exportar ou compartilhar cadastro por fora do procedimento aprovado. |
+| EDUCA/operadora | Tratar conforme instruções, limitar acesso, manter evidências técnicas e auxiliar localização, exportação, correção, bloqueio e eliminação quando instruída. | Publicar encarregado municipal, decidir base legal dos alunos, usar cadastro para finalidade própria ou enviar dados ao governo sem autorização do controlador. |
+| Titular, pai, mãe ou representante | Usar os canais publicados, fornecer informação suficiente para localizar o pedido e exercer direitos. | Ser obrigado a procurar a EDUCA quando o controlador é o município. |
+
+O contrato e as instruções operacionais devem deixar claro: objeto, duração, categorias de titulares e dados, finalidades, ambientes, perfis de acesso, suboperadores, suporte a direitos, incidentes, exportações, retenção, retorno e eliminação.
+
+## 3. Faça um inventário por finalidade
+
+O município deve criar um registro de operações antes de escolher campos, integrar dados ou publicar um aviso. Use uma linha por finalidade, não uma linha genérica para "sistema escolar".
+
+| Campo do inventário | Pergunta a responder |
+| --- | --- |
+| Tratamento e finalidade | O que será feito e para qual resultado público específico? |
+| Titulares | Alunos, responsáveis, professores, servidores, visitantes ou terceiros? |
+| Dados | Quais campos são realmente necessários? Há dado sensível? |
+| Origem | Escola, matrícula, família, servidor, Censo, integração ou outro órgão? |
+| Controlador e operador | Quem decide? Quem executa em nome de quem? |
+| Base legal | Qual inciso do art. 7º ou art. 11? Por que este inciso é adequado? |
+| Destinatários | Quais órgãos, escolas, fornecedores ou sistemas recebem? Para qual finalidade? |
+| Retenção | Qual evento inicia a contagem, qual prazo ou tabela se aplica e qual destinação final? |
+| Acessos e segurança | Quem pode acessar, com qual perfil, registro, autenticação e justificativa? |
+| Evidência | Qual ato, registro, avaliação de risco, contrato ou log prova a decisão? |
+
+## 4. Escolha a base legal do caso concreto
+
+A expressão **"relação escolar"** descreve o contexto, mas não é um inciso autônomo da LGPD. Uma relação de matrícula, frequência ou atendimento pode apontar para obrigação legal e política pública; a base precisa ser registrada para aquele tratamento e para aqueles dados.
+
+| Contexto ou base | Como avaliar na rede municipal | Limite importante |
+| --- | --- | --- |
+| Obrigação legal ou regulatória, art. 7º, II | Registros necessários para cumprir obrigação de matrícula, escrituração, prestação de contas, controle educacional ou outra norma aplicável. | Aponte a obrigação concreta. Não diga que "é exigido pela LGPD" como se a LGPD criasse a obrigação escolar original. |
+| Execução de política pública, art. 7º, III, e art. 23 | Gestão da educação básica e serviços públicos previstos em lei, regulamento ou instrumento congênere. | A finalidade deve ser pública, legítima, específica e informada. O compartilhamento deve ser específico e compatível. |
+| Dados sensíveis, art. 11, II, a e b | Use sem consentimento somente quando indispensável para obrigação legal ou política pública prevista em lei ou regulamento, conforme o caso. | Dado sensível exige necessidade reforçada, acesso restrito, transparência e justificativa. |
+| Execução de contrato, art. 7º, V | Pode ser relevante quando o titular é parte do contrato ou de procedimento preliminar e o tratamento é necessário para isso. | O contrato entre município e EDUCA não transforma automaticamente dados de alunos em dados tratados com essa base. |
+| Legítimo interesse, art. 7º, IX | Só para dado pessoal não sensível, em finalidade concreta, necessária e proporcional, com legítimas expectativas, transparência e documentação. | A ANPD considera seu uso limitado no Poder Público. Evite essa base para tratamento compulsório ou atribuições legais. |
+| Consentimento, art. 7º, I, e art. 11, I | Pode servir para finalidade opcional, separada, específica e realmente recusável. | Não condicione serviço público a consentimento genérico. O consentimento precisa ser livre, informado, inequívoco e revogável. |
+
+O município deve evitar a escolha automática de legítimo interesse para tudo. Para tratamento compulsório ou necessário às atribuições legais, a análise deve considerar obrigação legal e execução de política pública. Para crianças e adolescentes, a avaliação de melhor interesse prevalece ainda que a base escolhida seja uma hipótese do art. 7º ou do art. 11. Veja o [runbook sobre dados de crianças no Educacenso](/blog/dado-de-crianca-no-educacenso/).
+
+## 5. Atenda os direitos pelo canal do município
+
+O canal público deve ser do município/controlador e aparecer no aviso de privacidade e na página do encarregado. A EDUCA deve encaminhar ao município qualquer pedido que receba diretamente e prestar apoio técnico conforme instrução. O titular não deve ter de descobrir qual fornecedor hospeda o sistema.
+
+| Pedido | O que o município deve verificar |
+| --- | --- |
+| Confirmação e acesso | Localizar o titular nas bases do tratamento e informar existência, origem, finalidade, forma, duração, controlador, compartilhamentos e dados acessíveis. |
+| Correção | Corrigir dado incompleto, inexato ou desatualizado na origem adequada e comunicar a correção aos agentes com quem houve compartilhamento, quando aplicável. |
+| Anonimização, bloqueio ou eliminação | Avaliar necessidade e legalidade e executar a medida ou explicar a razão de fato ou de direito que impede a providência. |
+| Eliminação de dado baseado em consentimento | Avaliar o pedido e as hipóteses de conservação do art. 16. |
+| Portabilidade | Receber a requisição e verificar regulamentação da ANPD, segredo comercial, segurança, formato e se o conjunto pode ser entregue a outro fornecedor. |
+| Informação sobre compartilhamento | Informar entidades públicas e privadas e finalidades do uso compartilhado, respeitando sigilo e segurança. |
+| Revogação do consentimento | Interromper tratamentos futuros baseados no consentimento, sem apagar automaticamente tratamentos mantidos por outra base legal ou obrigação de guarda. |
+| Oposição | Avaliar oposição a tratamento dispensado de consentimento quando houver descumprimento da LGPD. |
+| Revisão de decisão automatizada | Receber pedido de revisão e explicar critérios e procedimentos quando aplicável ao art. 20. |
+
+### Fluxo municipal recomendado
+
+1. **Receber e registrar.** Dê protocolo, data, canal, titular ou representante, escopo e tratamento citado. Não exija dados desnecessários para iniciar a localização.
+2. **Verificar representação e segurança.** Use procedimento proporcional definido pelo município. Para criança, pai, mãe ou representante legal, verifique a representação sem pedir mais dados que o necessário.
+3. **Classificar o direito.** Identifique se é acesso, correção, exclusão, portabilidade, oposição, revogação, compartilhamento ou revisão automatizada.
+4. **Acionar áreas e operadora.** A EDUCA pesquisa, extrai, corrige, bloqueia ou elimina somente com instrução autorizada e deixa evidência técnica.
+5. **Checar exceções.** Verifique obrigação legal, dado de terceiro, segredo, segurança, registro permanente, processo, auditoria, compartilhamento e art. 16 antes de alterar ou eliminar.
+6. **Responder.** A confirmação ou o acesso podem ser fornecidos em formato simplificado imediatamente ou por declaração clara e completa em até 15 dias, conforme art. 19. Não estenda automaticamente esse prazo para todos os outros direitos.
+7. **Propagar a medida.** Quando a lei exigir, informe a correção, eliminação, anonimização ou bloqueio aos agentes com quem houve compartilhamento.
+8. **Fechar com evidência.** Registre resposta, medida, motivo de eventual negativa, destinatários informados, data e retenção do protocolo.
+
+## 6. Defina retenção e eliminação com o arquivo municipal
+
+A LGPD não traz um prazo geral que diga que todo dado escolar fica um número fixo de anos. A análise deve combinar:
+
+- finalidade e necessidade, conforme art. 6º;
+- término do tratamento, conforme art. 15;
+- eliminação após o término, ressalvadas as hipóteses de conservação do art. 16;
+- leis e regulamentos educacionais, fiscais, de prestação de contas, judiciais e administrativos;
+- política de arquivos, classificação e tabela de temporalidade do município;
+- contratos, incidentes, auditorias e obrigações de prova;
+- retenção técnica de backups, logs e cópias de segurança, com acesso limitado e prazo definido.
+
+Não copie uma tabela federal ou uma tabela de outro município sem validação local. A gestão de registros públicos é uma decisão que o fornecedor não pode tomar no lugar do município.
+
+## 7. Checklist antes da entrada em produção
+
+**Bloqueios de entrada:**
+
+- [ ] ato do controlador e escopo do tratamento aprovado;
+- [ ] encarregado e substituto designados, com publicação oficial e contato público;
+- [ ] inventário de operações e bases legais por finalidade;
+- [ ] aviso de privacidade acessível, com controlador, operadores, finalidades, compartilhamentos, duração e direitos;
+- [ ] avaliação de melhor interesse para tratamentos de crianças e adolescentes.
+
+**Evidências operacionais:**
+
+- [ ] procedimento e responsável pelo Educacenso, baseado na portaria anual vigente;
+- [ ] matriz de retenção aprovada pelo município e alinhada à gestão arquivística;
+- [ ] fluxo de direitos testado com acesso, correção, exclusão e portabilidade avaliados;
+- [ ] contrato com instruções de operadora, segurança, incidentes, suboperadores e término;
+- [ ] revisão de acessos, backups, logs, treinamento e testes de restauração.
+
+Revise o pacote após mudança de finalidade, novo campo, nova integração, novo suboperador, incidente, alteração normativa ou mudança de encarregado.
+
+## Fontes primárias
+
+- [LGPD, Lei nº 13.709/2018, texto compilado no Planalto](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/L13709compilado.htm)
+- [Resolução CD/ANPD nº 18/2024, no Diário Oficial da União](https://www.in.gov.br/en/web/dou/-/resolucao-cd/anpd-n-18-de-16-de-julho-de-2024-572632074)
+- [Guia da ANPD sobre tratamento de dados pessoais pelo Poder Público](https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia_tratamento_de_dados_pessoais_pelo_poder_publico___defeso_eleitoral.pdf/@@display-file/file)
+- [Guia da ANPD sobre legítimo interesse](https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia_legitimo_interesse.pdf/@@display-file/file)
+- [Lei nº 8.159/1991, política nacional de arquivos públicos](https://www.planalto.gov.br/ccivil_03/leis/l8159.htm)
+- [Lei nº 12.527/2011, Lei de Acesso à Informação](https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12527.htm)
+
+Para a governança do contato público, leia também [Encarregado de dados em prefeitura](/blog/encarregado-de-dados-em-prefeitura/). Para crianças e Censo Escolar, leia [Dado de criança no Educacenso](/blog/dado-de-crianca-no-educacenso/).
