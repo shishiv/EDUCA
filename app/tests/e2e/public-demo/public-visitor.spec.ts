@@ -16,6 +16,15 @@ test.describe('J1: public visitor journey', () => {
     await expect(page.getByRole('link', { name: /política de privacidade/i })).toBeVisible()
   })
 
+  test('/demo explains the synthetic sandbox before login', async ({ page }) => {
+    const response = await page.goto('/demo')
+    expect(response?.status()).toBeLessThan(400)
+    await expect(page.getByRole('heading', { level: 1, name: /sandbox público do educa/i })).toBeVisible()
+    await expect(page.getByText(/não insira dados pessoais ou escolares reais/i)).toBeVisible()
+    await expect(page.getByRole('link', { name: /continuar para o login do demo/i })).toHaveAttribute('href', '/login')
+    await expect(page.getByTestId('locale-switcher')).toHaveCSS('position', 'relative')
+  })
+
   test('/login renders without errors', async ({ page }) => {
     await page.goto('/login')
     await expect(page.getByLabel('E-mail', { exact: true })).toBeVisible()

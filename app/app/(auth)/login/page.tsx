@@ -138,6 +138,9 @@ export default function LoginPage() {
           <p className="auth-login__subtitle mb-8">
             {t('subtitle')}
           </p>
+          <Link href="/" className="auth-login__back mb-6 inline-flex min-h-11 items-center text-sm font-medium">
+            {t('backToHome')}
+          </Link>
 
           {error && (
             <Alert variant="destructive" className="mb-6">
