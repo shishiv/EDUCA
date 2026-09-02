@@ -1,5 +1,5 @@
 pr:
-  base_branch: dev
+  base_branch: main
 
 no_ci: true
 
