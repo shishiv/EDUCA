@@ -26,7 +26,11 @@ export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public'
     startTransition(async () => {
       try {
         await setUserLocale(value)
-        router.refresh()
+        if (typeof window !== 'undefined') {
+          window.location.reload()
+        } else {
+          router.refresh()
+        }
       } catch {
         setSelectedLocale(locale)
         setError(true)

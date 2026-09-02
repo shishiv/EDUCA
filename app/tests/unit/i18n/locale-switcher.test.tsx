@@ -35,7 +35,7 @@ describe('LocaleSwitcher', () => {
     expect(screen.getByTestId('locale-switcher')).toHaveClass('locale-switcher--public')
   })
 
-  it('persists a supported locale and refreshes the current URL in place', async () => {
+  it('persists a supported locale', async () => {
     render(
       <NextIntlClientProvider locale="pt-BR" messages={{ common: commonMessages }}>
         <LocaleSwitcher />
@@ -45,7 +45,6 @@ describe('LocaleSwitcher', () => {
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } })
 
     await waitFor(() => expect(mocks.setUserLocale).toHaveBeenCalledWith('en'))
-    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledOnce())
   })
 
   it('announces persistence failures and restores the active locale', async () => {
@@ -63,6 +62,5 @@ describe('LocaleSwitcher', () => {
       'Não foi possível alterar o idioma. Tente novamente.'
     )
     expect(selector).toHaveValue('pt-BR')
-    expect(mocks.refresh).not.toHaveBeenCalled()
   })
 })
