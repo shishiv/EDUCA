@@ -1,3 +1,6 @@
+pr:
+  base_branch: dev
+
 no_ci: true
 
 auto_fix:
