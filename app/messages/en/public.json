@@ -121,6 +121,21 @@
       "copyright": "© 2025-2026 - EDUCA System"
     }
   },
+  "demo": {
+    "eyebrow": "Before you enter",
+    "title": "This is EDUCA's public sandbox.",
+    "intro": "It is a demonstration environment with fictional data, separate from any live municipal operation.",
+    "facts": {
+      "synthetic": "All data is synthetic.",
+      "noRealPeople": "It does not represent a municipality, school, student, guardian, or worker.",
+      "sharedEnvironment": "Limited interactions can change the shared demonstration sandbox; other visitors may see those changes.",
+      "blockedEffects": "Destructive actions and external effects are blocked.",
+      "reset": "On reset, changes are deleted and the environment returns to its initial state.",
+      "noRealData": "Do not enter real personal or school data."
+    },
+    "login": "Continue to the demo login",
+    "home": "Back to the landing page"
+  },
   "landing": {
     "navLabel": "Main navigation",
     "mobileNavLabel": "Mobile navigation",
@@ -130,10 +145,13 @@
     "openSource": "Open source",
     "login": "Sign in",
     "meet": "Discover EDUCA",
-    "heroTitle": "A shared foundation for school management.",
-    "heroEmphasis": "Without losing local context.",
-    "heroDescription": "EDUCA connects schools, people, classes, enrolments, and attendance in an open-source foundation.",
-    "explore": "Explore the foundation",
+    "heroTitle": "School management for municipal networks, with open-source code.",
+    "heroEmphasis": "",
+    "productDescription": "EDUCA brings schools, classes, students, enrolments, and attendance into one system.",
+    "audience": "The education department follows the network. Each school and classroom records the day's work.",
+    "syntheticState": "The current public experience is a synthetic demonstration, not a live municipal operation.",
+    "demo": "View the demonstration",
+    "code": "Read the code",
     "enterSystem": "Sign in to the system",
     "pilotNote": "Municipal pilot foundation · demonstration with synthetic data",
     "pathLabel": "Information path in EDUCA",
@@ -157,7 +175,7 @@
     "module3Text": "Maintain a consistent view of students, guardians, and relationships.",
     "openTitle": "The code stays open.",
     "openEmphasis": "So does the context.",
-    "openText": "The public repository uses the MIT license. You can inspect, run, and adapt the code to local needs. The product remains a municipal pilot foundation using synthetic data, without claims of adoption or measured impact.",
+    "openText": "The public repository uses the MIT license. You can inspect, run, and adapt the code to local needs. The product remains a municipal pilot foundation using synthetic data.",
     "github": "View code on GitHub",
     "proof": "OPEN-SOURCE PROOF",
     "licenseTitle": "Permissive, verifiable license",
