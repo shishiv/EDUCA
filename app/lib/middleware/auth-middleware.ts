@@ -128,7 +128,7 @@ interface ProtectedRoute {
 
 // Route protection configuration uses the real Portuguese application routes.
 export const routeProtection = {
-  public: ['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/demo', '/offline', '/'],
+  public: ['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/demo', '/blog', '/offline', '/'],
   protected: [
     // Admin-only system management
     { prefix: '/dashboard/usuarios', roles: ['admin'] },

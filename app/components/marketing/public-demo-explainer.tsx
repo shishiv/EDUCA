@@ -1,24 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ShieldCheck } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { PublicHeader } from '@/components/marketing/public-header'
 
 export function PublicDemoExplainer() {
   const t = useTranslations('public.demo')
 
   return (
     <div className="public-demo">
-      <header className="public-demo__header">
-        <Link className="landing-wordmark" href="/">
-          <span aria-hidden="true" className="landing-wordmark__mark">E</span>
-          <span>EDUCA</span>
-        </Link>
-        <Link className="public-demo__back" href="/">
-          <ArrowLeft aria-hidden="true" size={16} />
-          {t('home')}
-        </Link>
-      </header>
+      <PublicHeader />
 
       <main className="public-demo__main">
         <p className="public-demo__eyebrow"><ShieldCheck aria-hidden="true" size={17} /> {t('eyebrow')}</p>

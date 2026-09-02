@@ -15,16 +15,10 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react'
+import { BrandLogo } from '@/components/marketing/brand-logo'
 
 function Wordmark() {
-  return (
-    <Link href="/" className="landing-wordmark">
-      <span className="landing-wordmark__mark" aria-hidden="true">
-        E
-      </span>
-      <span>EDUCA</span>
-    </Link>
-  )
+  return <Link href="/" className="landing-wordmark"><BrandLogo /></Link>
 }
 
 function ProductBoard() {
@@ -102,6 +96,7 @@ export function EducaLanding() {
             <a href="#como-funciona">{t('how')}</a>
             <a href="#recursos">{t('resources')}</a>
             <a href="#aberta">{t('openSource')}</a>
+            <Link href="/blog">{t('blog')}</Link>
           </nav>
           <div className="landing-header__actions">
             <Link href="/login" className="landing-login">{t('login')}</Link>
@@ -113,6 +108,7 @@ export function EducaLanding() {
               <a href="#como-funciona">{t('how')}</a>
               <a href="#recursos">{t('resources')}</a>
               <a href="#aberta">{t('openSource')}</a>
+              <Link href="/blog">{t('blog')}</Link>
               <Link href="/login">{t('login')}</Link>
             </nav>
           </details>

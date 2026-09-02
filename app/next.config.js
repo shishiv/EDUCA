@@ -2,6 +2,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 })
 const createNextIntlPlugin = require('next-intl/plugin')
+const publicRedirects = require('./lib/public-redirects.json')
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
@@ -79,6 +80,10 @@ const nextConfig = {
       '@radix-ui/react-toast',
       '@radix-ui/react-tooltip',
     ],
+  },
+
+  async redirects() {
+    return publicRedirects
   },
 
   // Headers for performance and security

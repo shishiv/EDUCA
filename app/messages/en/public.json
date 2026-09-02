@@ -121,6 +121,13 @@
       "copyright": "© 2025-2026 - EDUCA System"
     }
   },
+  "navigation": {
+    "label": "Public navigation",
+    "home": "Home",
+    "demo": "Demo",
+    "blog": "Blog",
+    "login": "Sign in"
+  },
   "demo": {
     "eyebrow": "Before you enter",
     "title": "This is EDUCA's public sandbox.",
@@ -142,6 +149,7 @@
     "openMenu": "Open menu",
     "how": "How it works",
     "resources": "Features",
+    "blog": "Blog",
     "openSource": "Open source",
     "login": "Sign in",
     "meet": "Discover EDUCA",

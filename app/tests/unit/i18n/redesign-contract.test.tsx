@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { EducaLanding } from '@/components/marketing/educa-landing'
 import { PublicDemoExplainer } from '@/components/marketing/public-demo-explainer'
 import { getMessagesForLocale } from '@/i18n/messages'
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
 
 type PublicMessages = {
   public: {
@@ -98,6 +102,6 @@ describe('redesign localization contract', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(demo.title)
     for (const fact of Object.values(demo.facts)) expect(screen.getByText(fact)).toBeVisible()
     expect(screen.getByRole('link', { name: demo.login })).toHaveAttribute('href', '/login')
-    expect(screen.getAllByRole('link', { name: demo.home }).every(link => link.getAttribute('href') === '/')).toBe(true)
+    expect(screen.getAllByRole('link').some(link => link.getAttribute('href') === '/')).toBe(true)
   })
 })

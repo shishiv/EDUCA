@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
-  usePathname: () => '/',
 }))
 
 vi.mock('@/i18n/actions', () => ({
@@ -27,13 +26,13 @@ describe('LocaleSwitcher', () => {
   it('exposes a labelled native selector with Portuguese selected by default', () => {
     render(
       <NextIntlClientProvider locale="pt-BR" messages={{ common: commonMessages }}>
-        <LocaleSwitcher />
+        <LocaleSwitcher variant="public" />
       </NextIntlClientProvider>
     )
 
     expect(screen.getByRole('combobox', { name: 'Idioma da aplicação' })).toHaveValue('pt-BR')
     expect(screen.getByRole('option', { name: 'English' })).toBeInTheDocument()
-    expect(screen.getByTestId('locale-switcher')).not.toHaveClass('fixed')
+    expect(screen.getByTestId('locale-switcher')).toHaveClass('locale-switcher--public')
   })
 
   it('persists a supported locale and refreshes the current URL in place', async () => {

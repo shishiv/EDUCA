@@ -121,6 +121,13 @@
       "copyright": "© 2025-2026 - Sistema EDUCA"
     }
   },
+  "navigation": {
+    "label": "Navegação pública",
+    "home": "Início",
+    "demo": "Demo",
+    "blog": "Blog",
+    "login": "Entrar"
+  },
   "demo": {
     "eyebrow": "Antes de entrar",
     "title": "Este é o sandbox público do EDUCA.",
@@ -142,6 +149,7 @@
     "openMenu": "Abrir menu",
     "how": "Como funciona",
     "resources": "Recursos",
+    "blog": "Blog",
     "openSource": "Código aberto",
     "login": "Entrar",
     "meet": "Conhecer o EDUCA",

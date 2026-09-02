@@ -2,15 +2,14 @@
 
 import { Languages } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { startTransition, useEffect, useState } from 'react'
 import { setUserLocale } from '@/i18n/actions'
 import { isAppLocale } from '@/i18n/config'
 
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public' }) {
   const locale = useLocale()
   const router = useRouter()
-  const pathname = usePathname()
   const t = useTranslations('common.locale')
   const [selectedLocale, setSelectedLocale] = useState(locale)
   const [pending, setPending] = useState(false)
@@ -37,10 +36,12 @@ export function LocaleSwitcher() {
     })
   }
 
+  const variantClass = variant === 'public' ? 'locale-switcher--public' : 'locale-switcher--app'
+
   return (
     <div
       data-testid="locale-switcher"
-      className={`locale-switcher ${pathname === '/' || pathname === '/demo' || pathname === '/login' || pathname === '/politica-privacidade' ? 'locale-switcher--public' : 'locale-switcher--app'}`}
+      className={`locale-switcher ${variantClass}`}
     >
       <Languages className="h-4 w-4 text-gray-600" aria-hidden="true" />
       <label htmlFor="application-locale" className="sr-only">
