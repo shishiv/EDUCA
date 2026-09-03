@@ -2466,6 +2466,69 @@ export type Database = {
           },
         ]
       }
+      relatorios_descritivos_vivencias: {
+        Row: {
+          created_at: string
+          created_by: string
+          escola_id: string
+          id: string
+          relatorio_id: string
+          vivencia_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          escola_id: string
+          id?: string
+          relatorio_id: string
+          vivencia_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          escola_id?: string
+          id?: string
+          relatorio_id?: string
+          vivencia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relatorios_descritivos_vivencias_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relatorios_descritivos_vivencias_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: false
+            referencedRelation: "escolas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relatorios_descritivos_vivencias_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: false
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["escola_id"]
+          },
+          {
+            foreignKeyName: "relatorios_descritivos_vivencias_relatorio_id_fkey"
+            columns: ["relatorio_id"]
+            isOneToOne: false
+            referencedRelation: "relatorios_descritivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relatorios_descritivos_vivencias_vivencia_id_fkey"
+            columns: ["vivencia_id"]
+            isOneToOne: false
+            referencedRelation: "vivencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       responsaveis: {
         Row: {
           ativo: boolean | null
@@ -3039,6 +3102,184 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_frequencia_completa"
             referencedColumns: ["escola_id"]
+          },
+        ]
+      }
+      vivencias: {
+        Row: {
+          aluno_id: string
+          campos_experiencia: string[]
+          created_at: string
+          created_by: string
+          data_vivencia: string
+          descricao: string
+          escola_id: string
+          escopo: string
+          id: string
+          matricula_id: string
+          observacoes: string | null
+          professor_id: string
+          turma_id: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          aluno_id: string
+          campos_experiencia: string[]
+          created_at?: string
+          created_by: string
+          data_vivencia: string
+          descricao: string
+          escola_id: string
+          escopo?: string
+          id?: string
+          matricula_id: string
+          observacoes?: string | null
+          professor_id: string
+          turma_id: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          aluno_id?: string
+          campos_experiencia?: string[]
+          created_at?: string
+          created_by?: string
+          data_vivencia?: string
+          descricao?: string
+          escola_id?: string
+          escopo?: string
+          id?: string
+          matricula_id?: string
+          observacoes?: string | null
+          professor_id?: string
+          turma_id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vivencias_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_alunos_risco_bolsa_familia"
+            referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "vivencias_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: false
+            referencedRelation: "escolas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: false
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["escola_id"]
+          },
+          {
+            foreignKeyName: "vivencias_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "vw_alunos_risco_bolsa_familia"
+            referencedColumns: ["matricula_id"]
+          },
+          {
+            foreignKeyName: "vivencias_professor_id_fkey"
+            columns: ["professor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["turma_id"]
+          },
+          {
+            foreignKeyName: "vivencias_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vivencias_campos_experiencia: {
+        Row: {
+          campo: string
+          created_at: string
+          escola_id: string
+          id: string
+          vivencia_id: string
+        }
+        Insert: {
+          campo: string
+          created_at?: string
+          escola_id: string
+          id?: string
+          vivencia_id: string
+        }
+        Update: {
+          campo?: string
+          created_at?: string
+          escola_id?: string
+          id?: string
+          vivencia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vivencias_campos_experiencia_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: false
+            referencedRelation: "escolas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vivencias_campos_experiencia_escola_id_fkey"
+            columns: ["escola_id"]
+            isOneToOne: false
+            referencedRelation: "vw_frequencia_completa"
+            referencedColumns: ["escola_id"]
+          },
+          {
+            foreignKeyName: "vivencias_campos_experiencia_vivencia_id_fkey"
+            columns: ["vivencia_id"]
+            isOneToOne: false
+            referencedRelation: "vivencias"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3876,6 +4117,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      vivencias_valid_campos: {
+        Args: { input_campos: string[] }
+        Returns: boolean
+      }
       whatsapp_delivery_status_rank: {
         Args: { status: string }
         Returns: number

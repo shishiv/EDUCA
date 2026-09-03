@@ -55,6 +55,21 @@ async function deleteDependentRows(studentIds: string[], classIds: string[]) {
     await supabase.from('conteudo_aula').delete().in('sessao_id', sessionIds)
     await supabase.from('sessoes_aula').delete().in('id', sessionIds)
   }
+  if (studentIds.length > 0 || classIds.length > 0) {
+    const vivenciasQuery = supabase
+      .from('vivencias')
+      .select('id')
+      .or(studentIds.length > 0 && classIds.length > 0
+        ? `aluno_id.in.(${studentIds.join(',')}),turma_id.in.(${classIds.join(',')})`
+        : studentIds.length > 0
+          ? `aluno_id.in.(${studentIds.join(',')})`
+          : `turma_id.in.(${classIds.join(',')})`)
+    const vivenciaIds = ids((await vivenciasQuery).data)
+    if (vivenciaIds.length > 0) {
+      await supabase.from('relatorios_descritivos_vivencias').delete().in('vivencia_id', vivenciaIds)
+      await supabase.from('vivencias').delete().in('id', vivenciaIds)
+    }
+  }
   if (enrollmentIds.length > 0) await supabase.from('matriculas').delete().in('id', enrollmentIds)
   if (studentIds.length > 0) {
     await supabase.from('aluno_responsaveis').delete().in('aluno_id', studentIds)
@@ -257,17 +272,33 @@ export async function seedE2E() {
     students.push(await ensureRow('alunos', { nome_completo: name }, {
       nome_completo: name, data_nascimento: birthDate, sexo: sex,
       endereco: address, telefone: '34999990000', nome_mae: mother,
-      nome_pai: 'Pai E2E', ativo: true, responsavel_id: guardian.id,
+      nome_pai: 'Pai E2E', ativo: true, escola_id: school1.id, responsavel_id: guardian.id,
     }))
   }
 
+  const enrollments: any[] = []
   for (let index = 0; index < students.length; index += 1) {
     const turma = index % 2 === 0 ? class1 : class2
-    await ensureRow('matriculas', { aluno_id: students[index].id, ano_letivo: 2026 }, {
+    enrollments.push(await ensureRow('matriculas', { aluno_id: students[index].id, ano_letivo: 2026 }, {
       aluno_id: students[index].id, turma_id: turma.id, ano_letivo: 2026,
       situacao: 'ativa', data_matricula: '2026-02-02', observacoes: 'E2E seed data',
-    })
+    }))
   }
+
+  await ensureRow('vivencias', { descricao: 'Vivência E2E determinística de exploração corporal' }, {
+    escola_id: school1.id,
+    aluno_id: students[0].id,
+    matricula_id: enrollments[0].id,
+    turma_id: class1.id,
+    professor_id: profiles.get('professor').id,
+    data_vivencia: today,
+    campos_experiencia: ['eu', 'corpo'],
+    descricao: 'Vivência E2E determinística de exploração corporal',
+    observacoes: 'Fixture sintético para prova de persistência.',
+    escopo: 'individual',
+    created_by: profiles.get('professor').id,
+    updated_by: profiles.get('professor').id,
+  })
 
   const mathDiscipline = await ensureRow('disciplinas', { codigo: 'MAT', escola_id: school1.id }, {
     codigo: 'MAT', nome: 'Matemática', escola_id: school1.id, ativa: true,

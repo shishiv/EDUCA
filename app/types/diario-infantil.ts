@@ -107,13 +107,18 @@ export function getAllCampos() {
  */
 export interface Vivencia {
   id: string
+  escola_id: string
   aluno_id: string
+  matricula_id: string
   turma_id: string
   professor_id: string
   data_vivencia: string // ISO date (YYYY-MM-DD)
   campos_experiencia: CampoType[] // Multiple campos allowed per vivencia
   descricao: string // Main observation text
   observacoes?: string | null // Additional notes
+  escopo: 'individual' | 'coletiva'
+  created_by: string
+  updated_by: string
   created_at: string
   updated_at: string
 }

@@ -83,7 +83,7 @@ export default function NovaVivenciaPage() {
         .from('matriculas')
         .select('turma_id')
         .eq('aluno_id', alunoId)
-        .eq('status', 'ativo')
+        .eq('situacao', 'ativa')
         .single()
 
       if (matriculaError) {

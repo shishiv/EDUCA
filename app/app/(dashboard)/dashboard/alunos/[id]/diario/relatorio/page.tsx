@@ -162,7 +162,7 @@ export default function RelatorioPage() {
         .from('matriculas')
         .select('id, turma_id')
         .eq('aluno_id', alunoId)
-        .eq('status', 'ativa')
+        .eq('situacao', 'ativa')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
