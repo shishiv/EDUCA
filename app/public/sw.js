@@ -1,7 +1,7 @@
 // Service Worker for Educational Management System
 // Focused on offline attendance marking capability
 
-const CACHE_NAME = 'educa-v2'
+const CACHE_NAME = 'educa-v3'
 const OFFLINE_PAGE = '/offline'
 
 // Critical educational data patterns to cache
