@@ -158,7 +158,22 @@
     "academicYearSaveError": "Não foi possível salvar o período letivo.",
     "academicYearInvalidRange": "A data de término não pode ser anterior à data de início.",
     "academicYearDenied": "Você não tem permissão para alterar o período letivo desta escola.",
-    "retry": "Tentar novamente"
+    "retry": "Tentar novamente",
+    "municipalTitle": "Identidade municipal e Educacenso",
+    "municipalDescription": "Defina a identidade da rede e o prazo anual do Educacenso.",
+    "municipalSchoolDescription": "Defina a identidade e o prazo que substituem o padrão municipal nesta escola.",
+    "municipalReadOnly": "Valores resolvidos para a sua escola.",
+    "municipalLoading": "Carregando configurações municipais...",
+    "municipalityName": "Município",
+    "educationDepartmentName": "Secretaria de educação",
+    "municipalState": "Estado",
+    "municipalPhone": "Telefone de contato",
+    "dpoEmail": "E-mail do encarregado",
+    "dpoAddress": "Endereço do encarregado",
+    "educacensoDeadline": "Prazo Educacenso {year}",
+    "municipalSave": "Salvar configurações municipais",
+    "municipalSaved": "Configurações municipais salvas com sucesso.",
+    "municipalSaveError": "Não foi possível salvar as configurações municipais."
   },
   "flags": {
     "title": "Feature Flags",

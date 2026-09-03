@@ -48,7 +48,6 @@ import {
   User,
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
-import { municipalConfig } from "@/lib/config"
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
   type Bimester,
@@ -125,6 +124,7 @@ export interface StudentReportProps {
   className?: string
   /** Whether to show in print-optimized mode */
   printMode?: boolean
+  municipalityName: string
 }
 
 // ============================================================================
@@ -595,6 +595,7 @@ export function StudentReport({
   onExportPDF,
   className,
   printMode = false,
+  municipalityName,
 }: StudentReportProps) {
   const t = useTranslations('platform')
   const reportRef = useRef<HTMLDivElement>(null)
@@ -696,7 +697,7 @@ export function StudentReport({
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
           <p>{t('components.studentReport.generated', { date: formatDate(reportDate) })}</p>
-          <p>{municipalConfig.nome}</p>
+          <p>{municipalityName}</p>
         </div>
       )}
     </div>

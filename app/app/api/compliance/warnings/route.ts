@@ -9,6 +9,7 @@ import {
   isMunicipalAttendanceRisk,
 } from '@/lib/reports/attendance-conditionality'
 import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
+import { createMunicipalSettingsService } from '@/lib/services/municipal-settings'
 
 export interface ComplianceWarning {
   id: string
@@ -28,14 +29,15 @@ async function getAuthenticatedUser(supabase: Awaited<ReturnType<typeof createCl
   return user
 }
 
-function addEducacensoWarning(warnings: ComplianceWarning[], now: Date, userRole: string) {
-  const educacensoDeadline = new Date('2025-07-31')
+function addEducacensoWarning(warnings: ComplianceWarning[], now: Date, userRole: string, deadline: string | null) {
+  if (!deadline) return
+  const educacensoDeadline = new Date(`${deadline}T00:00:00.000Z`)
   const daysUntilDeadline = Math.floor((educacensoDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
   if (daysUntilDeadline > 0 && daysUntilDeadline <= 30 && userRole !== 'professor') {
     warnings.push({
       id: 'educacenso-deadline',
-      title: 'Prazo Educacenso 2025',
+      title: `Prazo Educacenso ${deadline.slice(0, 4)}`,
       message: `Primeira etapa de coleta termina em ${daysUntilDeadline} dias. Verifique se todos os dados de matrícula estão atualizados.`,
       type: daysUntilDeadline <= 7 ? 'critical' : 'warning',
       icon: 'FileText',
@@ -144,7 +146,13 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    addEducacensoWarning(warnings, now, userProfile.tipo_usuario)
+    if (['admin', 'secretario', 'diretor', 'professor'].includes(userProfile.tipo_usuario)) {
+      const settings = await createMunicipalSettingsService(supabase).get(
+        userProfile.escola_id,
+        Number(today.slice(0, 4))
+      )
+      addEducacensoWarning(warnings, now, userProfile.tipo_usuario, settings.educacenso_deadline)
+    }
 
     // WARNING 5: Incomplete student registrations (missing CPF, responsaveis, etc.)
     if (userProfile.tipo_usuario === 'secretario' || userProfile.tipo_usuario === 'admin') {

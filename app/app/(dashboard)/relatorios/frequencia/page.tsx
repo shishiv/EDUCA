@@ -73,6 +73,7 @@ import {
   generateAttendanceReportExcel,
 } from '@/lib/export'
 import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
+import { useMunicipalSettings } from '@/hooks/use-municipal-settings'
 
 // ============================================================================
 // TYPES
@@ -184,6 +185,7 @@ export default function AttendanceReportsPage() {
   const [isLoadingReport, setIsLoadingReport] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'table' | 'chart'>('table')
+  const [printMode, setPrintMode] = useState(false)
 
   // Current year for bimestre calculations
   const currentYear = new Date().getFullYear()
@@ -296,6 +298,14 @@ export default function AttendanceReportsPage() {
     window.open(`/dashboard/alunos/${row.alunoId}`, '_blank')
   }
 
+  const handlePrint = () => {
+    setPrintMode(true)
+    setTimeout(() => {
+      window.print()
+      setPrintMode(false)
+    }, 100)
+  }
+
   // Handle export PDF
   const handleExportPDF = () => {
     if (!reportData) {
@@ -336,6 +346,7 @@ export default function AttendanceReportsPage() {
   const selectedTurmaInfo = useMemo(() => {
     return turmas.find((t) => t.id === selectedTurma)
   }, [turmas, selectedTurma])
+  const settings = useMunicipalSettings(selectedTurmaInfo?.escola_id)
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -536,20 +547,24 @@ export default function AttendanceReportsPage() {
             </TabsList>
 
             <TabsContent value="table" className="mt-4">
-              <AttendanceReportTable
-                data={tableData}
-                turmaName={
-                  selectedTurmaInfo
-                    ? `${selectedTurmaInfo.serie} - ${selectedTurmaInfo.nome}`
-                    : undefined
-                }
-                periodoLabel={periodoLabel}
-                riskThreshold={CONFORMIDADE}
-                isLoading={isLoadingReport}
-                onRowClick={handleRowClick}
-                onPrint={() => window.print()}
-                onExportPDF={handleExportPDF}
-              />
+              {settings ? (
+                <AttendanceReportTable
+                  data={tableData}
+                  turmaName={
+                    selectedTurmaInfo
+                      ? `${selectedTurmaInfo.serie} - ${selectedTurmaInfo.nome}`
+                      : undefined
+                  }
+                  periodoLabel={periodoLabel}
+                  riskThreshold={CONFORMIDADE}
+                  isLoading={isLoadingReport}
+                  printMode={printMode}
+                  onRowClick={handleRowClick}
+                  onPrint={handlePrint}
+                  onExportPDF={handleExportPDF}
+                  municipalityName={settings.municipality_name}
+                />
+              ) : <p className="text-sm text-muted-foreground">{t('settings.municipalLoading')}</p>}
             </TabsContent>
 
             <TabsContent value="chart" className="mt-4">

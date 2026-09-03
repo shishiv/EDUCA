@@ -46,7 +46,6 @@ import {
   Clock,
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
-import { municipalConfig } from "@/lib/config"
 import {
   EXPERIENCE_FIELDS_CONFIG,
   REPORT_STATUS_CONFIG,
@@ -113,6 +112,7 @@ export interface StudentReportInfantilProps {
   className?: string
   /** Whether to show in print-optimized mode */
   printMode?: boolean
+  municipalityName: string
 }
 
 // ============================================================================
@@ -519,6 +519,7 @@ export function StudentReportInfantil({
   onExportPDF,
   className,
   printMode = false,
+  municipalityName,
 }: StudentReportInfantilProps) {
   const t = useTranslations('platform')
   const reportRef = useRef<HTMLDivElement>(null)
@@ -629,7 +630,7 @@ export function StudentReportInfantil({
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
           <p>{t('components.infantil.generated', { date: formatDate(reportDate) })}</p>
-          <p>{municipalConfig.nome}</p>
+          <p>{municipalityName}</p>
         </div>
       )}
     </div>

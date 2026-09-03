@@ -50,7 +50,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StatusPresenca } from "@/types/diario-classe";
-import { municipalConfig } from "@/lib/config";
 import {
 	ATENCAO,
 	CONFORMIDADE,
@@ -97,6 +96,7 @@ export interface AttendanceReportTableProps {
 	onExportPDF?: () => void;
 	/** CSS class for the container */
 	className?: string;
+	municipalityName: string;
 }
 
 type SortField = "nome" | "presencas" | "faltas" | "atestados" | "percentual";
@@ -332,6 +332,7 @@ export function AttendanceReportTable({
 	onPrint,
 	onExportPDF,
 	className,
+	municipalityName,
 }: AttendanceReportTableProps) {
   const t = useTranslations('platform')
 	const [sortField, setSortField] = useState<SortField>("nome");
@@ -598,7 +599,7 @@ export function AttendanceReportTable({
 							Documento gerado em {new Date().toLocaleDateString("pt-BR")} -
 							Sistema de Gestao Escolar EDUCA
 						</p>
-						<p>{municipalConfig.nome}</p>
+						<p>{municipalityName}</p>
 					</div>
 				)}
 			</CardContent>
