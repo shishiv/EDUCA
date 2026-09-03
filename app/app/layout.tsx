@@ -25,6 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL('https://geteduca.vercel.app'),
+    manifest: '/site.webmanifest',
     title: t('title'),
     description: t('description'),
   }
