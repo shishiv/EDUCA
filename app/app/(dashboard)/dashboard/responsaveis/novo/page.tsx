@@ -21,8 +21,54 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { validateCPF, validatePhone } from '@/lib/validation/brazilian'
 import { OperationalDataNotice, OptionalConsentCheckbox } from '@/components/lgpd'
 import { useEscola } from '@/contexts/escola-context'
+
+type ResponsavelFormData = {
+  nome: string
+  cpf: string
+  telefone: string
+  email: string
+  parentesco: string
+  endereco: string
+  profissao: string
+  lgpd_consentimento: boolean
+}
+
+function getValidationError(formData: ResponsavelFormData) {
+  if (!formData.nome || !formData.cpf || !formData.parentesco) {
+    return 'ui.preencha-todos-os-campos-obrigatorios'
+  }
+
+  if (!validateCPF(formData.cpf.replace(/\D/g, ''))) {
+    return 'ui.cpf-invalido-verifique-os-dados-inseridos'
+  }
+
+  return formData.telefone && !validatePhone(formData.telefone)
+    ? 'ui.telefone-invalido-informe-um-telefone-com-10-ou-11-digitos'
+    : null
+}
+
+function mapResponsavelData(formData: ResponsavelFormData, selectedEscolaId: string | null) {
+  return {
+    nome: formData.nome,
+    cpf: formData.cpf.replace(/\D/g, ''),
+    telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
+    email: formData.email || null,
+    parentesco: formData.parentesco,
+    endereco: formData.endereco || null,
+    profissao: formData.profissao || null,
+    lgpd_consentimento: formData.lgpd_consentimento,
+    lgpd_data_consentimento: formData.lgpd_consentimento ? new Date().toISOString() : null,
+    escola_id: selectedEscolaId,
+  }
+}
+
+function getSubmitErrorMessage(error: { message?: string }) {
+  if (error.message?.includes('duplicate')) return 'CPF já cadastrado no sistema'
+  return error.message ? `Erro: ${error.message}` : 'Erro ao cadastrar responsável'
+}
 
 export default function NovoResponsavelPage() {
   const t = useTranslations('registry')
@@ -30,7 +76,7 @@ export default function NovoResponsavelPage() {
   const router = useRouter()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ResponsavelFormData>({
     nome: '',
     cpf: '',
     telefone: '',
@@ -41,96 +87,20 @@ export default function NovoResponsavelPage() {
     lgpd_consentimento: false,
   })
 
-  const validateCPF = (cpf: string): boolean => {
-    const cleaned = cpf.replace(/\D/g, '')
-
-    if (cleaned.length !== 11) return false
-
-    // Check for known invalid CPFs
-    if (/^(\d)\1{10}$/.test(cleaned)) return false
-
-    // Validate first check digit
-    let sum = 0
-    for (let i = 0; i < 9; i++) {
-      sum += parseInt(cleaned.charAt(i)) * (10 - i)
-    }
-    let checkDigit = 11 - (sum % 11)
-    if (checkDigit >= 10) checkDigit = 0
-    if (checkDigit !== parseInt(cleaned.charAt(9))) return false
-
-    // Validate second check digit
-    sum = 0
-    for (let i = 0; i < 10; i++) {
-      sum += parseInt(cleaned.charAt(i)) * (11 - i)
-    }
-    checkDigit = 11 - (sum % 11)
-    if (checkDigit >= 10) checkDigit = 0
-    if (checkDigit !== parseInt(cleaned.charAt(10))) return false
-
-    return true
-  }
-
-  const validatePhone = (phone: string): boolean => {
-    const cleaned = phone.replace(/\D/g, '')
-    return cleaned.length === 10 || cleaned.length === 11
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // Validate required fields
-      if (!formData.nome || !formData.cpf || !formData.parentesco) {
-        toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
-        setLoading(false)
+      const validationError = getValidationError(formData)
+      if (validationError) {
+        toast.error(t(validationError))
         return
       }
 
-      // NOTE: lgpd_consentimento is NOT required for registration.
-      // Guardian registration is a necessary school routine; consent is only
-      // collected for optional purposes (communications). The operational
-      // notice is displayed but does not gate submission.
-
-      // Validate CPF
-      const cleanedCPF = formData.cpf.replace(/\D/g, '')
-      if (!validateCPF(cleanedCPF)) {
-        toast.error(t('ui.cpf-invalido-verifique-os-dados-inseridos'))
-        setLoading(false)
-        return
-      }
-
-      if (formData.telefone && !validatePhone(formData.telefone)) {
-        toast.error(t('ui.telefone-invalido-informe-um-telefone-com-10-ou-11-digitos'))
-        setLoading(false)
-        return
-      }
-
-      // Prepare data
-      const responsavelData = {
-        nome: formData.nome,
-        cpf: cleanedCPF,
-        telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
-        email: formData.email || null,
-        parentesco: formData.parentesco,
-        endereco: formData.endereco || null,
-        profissao: formData.profissao || null,
-        // lgpd_consentimento tracks OPTIONAL consent for additional
-        // communications, not a gate for the registration itself.
-        lgpd_consentimento: formData.lgpd_consentimento,
-        lgpd_data_consentimento: formData.lgpd_consentimento
-          ? new Date().toISOString()
-          : null,
-        // escola_id scopes the record to the school the admin selected;
-        // school-scoped users (diretor, secretario) have their own escola_id
-        // which RLS enforces at the database seam.
-        escola_id: selectedEscolaId ?? null,
-      }
-
-      // Insert into database
       const { data, error } = await supabase
         .from('responsaveis')
-        .insert([responsavelData])
+        .insert([mapResponsavelData(formData, selectedEscolaId ?? null)])
         .select('id')
         .single()
 
@@ -140,7 +110,6 @@ export default function NovoResponsavelPage() {
         } else {
           throw error
         }
-        setLoading(false)
         return
       }
 
@@ -149,15 +118,7 @@ export default function NovoResponsavelPage() {
       router.push('/dashboard/responsaveis')
     } catch (error: any) {
       logger.error('Erro ao cadastrar responsável:', error)
-
-      let errorMessage = 'Erro ao cadastrar responsável'
-      if (error.message?.includes('duplicate')) {
-        errorMessage = 'CPF já cadastrado no sistema'
-      } else if (error.message) {
-        errorMessage = `Erro: ${error.message}`
-      }
-
-      toast.error(errorMessage)
+      toast.error(getSubmitErrorMessage(error))
     } finally {
       setLoading(false)
     }
