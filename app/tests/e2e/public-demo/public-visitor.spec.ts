@@ -48,7 +48,7 @@ test.describe('J1: public visitor journey', () => {
   })
 
 
-  test('Portuguese-only blog routes use the compact locale button', async ({ page }) => {
+  test('Portuguese-only blog routes hide the locale button', async ({ page }) => {
     for (const path of [
       '/blog',
       '/blog/lgpd-em-escola-municipal',
@@ -56,7 +56,7 @@ test.describe('J1: public visitor journey', () => {
       '/blog/dado-de-crianca-no-educacenso',
     ]) {
       await page.goto(path)
-      await expect(page.getByRole('button', { name: 'Mudar idioma para English' })).toHaveText('PT')
+      await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
     }
   })
   test('privacy policy remains public', async ({ page }) => {
