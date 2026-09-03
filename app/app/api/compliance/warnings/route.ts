@@ -22,17 +22,39 @@ export interface ComplianceWarning {
   count?: number
 }
 
+async function getAuthenticatedUser(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) return null
+  return user
+}
+
+function addEducacensoWarning(warnings: ComplianceWarning[], now: Date, userRole: string) {
+  const educacensoDeadline = new Date('2025-07-31')
+  const daysUntilDeadline = Math.floor((educacensoDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (daysUntilDeadline > 0 && daysUntilDeadline <= 30 && userRole !== 'professor') {
+    warnings.push({
+      id: 'educacenso-deadline',
+      title: 'Prazo Educacenso 2025',
+      message: `Primeira etapa de coleta termina em ${daysUntilDeadline} dias. Verifique se todos os dados de matrícula estão atualizados.`,
+      type: daysUntilDeadline <= 7 ? 'critical' : 'warning',
+      icon: 'FileText',
+      actionUrl: '/dashboard/relatorios/educacenso',
+      actionText: 'Revisar Dados',
+      deadline: educacensoDeadline
+    })
+  }
+}
+
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Verify authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await getAuthenticatedUser(supabase)
+    if (!user) {
       return NextResponse.json({ warnings: [] }, { status: 401 })
     }
 
-    // Get user profile to check role and escola_id
     const { data: userProfile } = await supabase
       .from('users')
       .select('tipo_usuario, escola_id')
@@ -122,22 +144,7 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // WARNING 4: Educacenso deadline approaching (if within 30 days)
-    const educacensoDeadline = new Date('2025-07-31')
-    const daysUntilDeadline = Math.floor((educacensoDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (daysUntilDeadline > 0 && daysUntilDeadline <= 30 && userProfile.tipo_usuario !== 'professor') {
-      warnings.push({
-        id: 'educacenso-deadline',
-        title: 'Prazo Educacenso 2025',
-        message: `Primeira etapa de coleta termina em ${daysUntilDeadline} dias. Verifique se todos os dados de matrícula estão atualizados.`,
-        type: daysUntilDeadline <= 7 ? 'critical' : 'warning',
-        icon: 'FileText',
-        actionUrl: '/dashboard/relatorios/educacenso',
-        actionText: 'Revisar Dados',
-        deadline: educacensoDeadline
-      })
-    }
+    addEducacensoWarning(warnings, now, userProfile.tipo_usuario)
 
     // WARNING 5: Incomplete student registrations (missing CPF, responsaveis, etc.)
     if (userProfile.tipo_usuario === 'secretario' || userProfile.tipo_usuario === 'admin') {

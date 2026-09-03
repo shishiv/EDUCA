@@ -13,6 +13,24 @@ export interface SearchResult {
   status: string
 }
 
+type SearchType = SearchResult['type'] | 'all'
+
+const shouldSearch = (type: SearchType | null, target: SearchResult['type']) =>
+  !type || type === 'all' || type === target
+
+const searchTypeLabel = (type: SearchType | null) => type || 'all'
+
+function applyFuzzySearch(results: SearchResult[], query: string, fuzzy: boolean) {
+  if (!fuzzy || query.length < 2) return
+
+  results.forEach(result => {
+    if (!['student', 'teacher'].includes(result.type) || !result.data.nome_completo) return
+    if (fuzzySearchBrazilianName(query, result.data.nome_completo)) {
+      result.relevanceScore = Math.max(result.relevanceScore, similarityScore(query, result.data.nome_completo) * 0.95)
+    }
+  })
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -37,7 +55,7 @@ export async function GET(request: NextRequest) {
     // Parse search parameters
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('query') || ''
-    const type = searchParams.get('type') as 'student' | 'teacher' | 'school' | 'class' | 'all'
+    const type = searchParams.get('type') as SearchType | null
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
     const fuzzy = searchParams.get('fuzzy') === 'true' // Enable fuzzy search
@@ -53,7 +71,7 @@ export async function GET(request: NextRequest) {
     const results: SearchResult[] = []
 
     // Search students if type is 'student' or 'all'
-    if (!type || type === 'all' || type === 'student') {
+    if (shouldSearch(type, 'student')) {
       let studentQuery = supabase
         .from('alunos')
         .select(`
@@ -123,7 +141,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Search teachers if type is 'teacher' or 'all'
-    if (!type || type === 'all' || type === 'teacher') {
+    if (shouldSearch(type, 'teacher')) {
       const { data: teachers } = await supabase
         .from('users')
         .select(`
@@ -164,7 +182,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Search schools if type is 'school' or 'all'
-    if (!type || type === 'all' || type === 'school') {
+    if (shouldSearch(type, 'school')) {
       const { data: schools } = await supabase
         .from('escolas')
         .select(`
@@ -202,7 +220,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Search classes if type is 'class' or 'all'
-    if (!type || type === 'all' || type === 'class') {
+    if (shouldSearch(type, 'class')) {
       const { data: classes } = await supabase
         .from('turmas')
         .select(`
@@ -244,25 +262,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply fuzzy search post-processing if enabled
-    if (fuzzy && query.length >= 2) {
-      // Enhance relevance scores with fuzzy matching
-      results.forEach(result => {
-        if (result.type === 'student' && result.data.nome_completo) {
-          // Use fuzzy name matching for students
-          if (fuzzySearchBrazilianName(query, result.data.nome_completo)) {
-            const fuzzyScore = similarityScore(query, result.data.nome_completo)
-            // Boost score if fuzzy match is strong
-            result.relevanceScore = Math.max(result.relevanceScore, fuzzyScore * 0.95)
-          }
-        } else if (result.type === 'teacher' && result.data.nome_completo) {
-          // Use fuzzy name matching for teachers
-          if (fuzzySearchBrazilianName(query, result.data.nome_completo)) {
-            const fuzzyScore = similarityScore(query, result.data.nome_completo)
-            result.relevanceScore = Math.max(result.relevanceScore, fuzzyScore * 0.95)
-          }
-        }
-      })
-    }
+    applyFuzzySearch(results, query, fuzzy)
 
     // Sort by relevance score
     results.sort((a, b) => b.relevanceScore - a.relevanceScore)
@@ -272,7 +272,7 @@ export async function GET(request: NextRequest) {
       results,
       totalCount: results.length,
       query,
-      type: type || 'all',
+      type: searchTypeLabel(type),
       fuzzySearch: fuzzy
     })
 
