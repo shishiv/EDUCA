@@ -43,6 +43,91 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
+function getSectionKey(pathname: string) {
+  if (pathname.startsWith('/dashboard/perfil')) return 'myProfile'
+
+  return pathname === '/dashboard'
+    ? 'dashboard'
+    : routeLabels.find(([path]) => pathname.startsWith(path))?.[1] ?? 'dashboard'
+}
+
+function ConnectionIndicator({ connected, label, status, title }: { connected: boolean; label: string; status: string; title: string }) {
+  return (
+    <div className="app-connection" data-status={status} title={title}>
+      {connected ? <Wifi aria-hidden="true" /> : <WifiOff aria-hidden="true" />}
+      <span>{label}</span>
+    </div>
+  )
+}
+
+function SchoolContext({ name, selectSchool }: { name?: string; selectSchool: string }) {
+  return (
+    <div className="app-school-context" data-empty={!name}>
+      <span>{name || selectSchool}</span>
+    </div>
+  )
+}
+
+function ProfileMenu({
+  initials,
+  isDirector,
+  name,
+  onSignOut,
+  openUserMenu,
+  roleLabel,
+  settings,
+  signOut,
+  userFallback,
+  myProfile,
+}: {
+  initials: string
+  isDirector: boolean
+  name?: string
+  onSignOut: () => void
+  openUserMenu: string
+  roleLabel: string
+  settings: string
+  signOut: string
+  userFallback: string
+  myProfile: string
+}) {
+  const displayName = name || userFallback
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="app-profile-trigger" aria-label={openUserMenu}>
+          <span className="app-avatar" aria-hidden="true">{initials}</span>
+          <span className="app-profile-trigger__copy" aria-hidden="true">
+            <strong>{name?.split(' ')[0] || userFallback}</strong>
+            <small>{roleLabel}</small>
+          </span>
+          <ChevronDown aria-hidden="true" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="app-dropdown app-profile-menu" align="end" forceMount>
+        <DropdownMenuLabel className="app-profile-menu__identity">
+          <strong>{displayName}</strong>
+          <small>{roleLabel}</small>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="app-dropdown__item">
+          <Link href="/dashboard/perfil"><User aria-hidden="true" /> {myProfile}</Link>
+        </DropdownMenuItem>
+        {isDirector && (
+          <DropdownMenuItem asChild className="app-dropdown__item">
+            <Link href="/dashboard/configuracoes"><Settings aria-hidden="true" /> {settings}</Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onSignOut} className="app-dropdown__item app-dropdown__item--danger">
+          <LogOut aria-hidden="true" /> {signOut}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function Header() {
   const t = useTranslations('layout')
   const common = useTranslations('common')
@@ -50,9 +135,8 @@ export function Header() {
   const { userProfile, signOut } = useAuth()
   const { connectionStatus } = useSessionRealtime()
   const { selectedEscola, shouldShowSelector } = useEscola()
-  const section = pathname.startsWith('/dashboard/perfil')
-    ? t('header.myProfile')
-    : t(`navigation.items.${pathname === '/dashboard' ? 'dashboard' : routeLabels.find(([path]) => pathname.startsWith(path))?.[1] ?? 'dashboard'}`)
+  const sectionKey = getSectionKey(pathname)
+  const section = sectionKey === 'myProfile' ? t('header.myProfile') : t(`navigation.items.${sectionKey}`)
   const role = userProfile?.tipo_usuario
   const roleLabel = role && ['admin', 'diretor', 'secretario', 'professor', 'responsavel'].includes(role)
     ? common(`roles.${role as 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'}`)
@@ -67,6 +151,9 @@ export function Header() {
     }
   }
 
+  const connected = connectionStatus === 'connected'
+  const connectionLabel = connected ? common('status.online') : common('status.offline')
+
   return (
     <header className="app-header">
       <nav className="app-header__context" aria-label={section}>
@@ -76,54 +163,29 @@ export function Header() {
       </nav>
 
       <div className="app-header__actions">
-        <div
-          className="app-connection"
-          data-status={connectionStatus}
-          title={t('header.connection', { status: connectionStatus === 'connected' ? common('status.online') : common('status.offline') })}
-        >
-          {connectionStatus === 'connected' ? <Wifi aria-hidden="true" /> : <WifiOff aria-hidden="true" />}
-          <span>{connectionStatus === 'connected' ? common('status.online') : common('status.offline')}</span>
-        </div>
+        <ConnectionIndicator
+          connected={connected}
+          label={connectionLabel}
+          status={connectionStatus}
+          title={t('header.connection', { status: connectionLabel })}
+        />
 
         {shouldShowSelector && (
-          <div className="app-school-context" data-empty={!selectedEscola}>
-            <span>{selectedEscola?.nome || t('schoolSelector.select')}</span>
-          </div>
+          <SchoolContext name={selectedEscola?.nome} selectSchool={t('schoolSelector.select')} />
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className="app-profile-trigger" aria-label={t('header.openUserMenu')}>
-              <span className="app-avatar" aria-hidden="true">
-                {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
-              </span>
-              <span className="app-profile-trigger__copy" aria-hidden="true">
-                <strong>{userProfile?.nome?.split(' ')[0] || t('header.userFallback')}</strong>
-                <small>{roleLabel}</small>
-              </span>
-              <ChevronDown aria-hidden="true" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="app-dropdown app-profile-menu" align="end" forceMount>
-            <DropdownMenuLabel className="app-profile-menu__identity">
-              <strong>{userProfile?.nome || t('header.userFallback')}</strong>
-              <small>{roleLabel}</small>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="app-dropdown__item">
-              <Link href="/dashboard/perfil"><User aria-hidden="true" /> {t('header.myProfile')}</Link>
-            </DropdownMenuItem>
-            {role === 'diretor' && (
-              <DropdownMenuItem asChild className="app-dropdown__item">
-                <Link href="/dashboard/configuracoes"><Settings aria-hidden="true" /> {t('header.settings')}</Link>
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="app-dropdown__item app-dropdown__item--danger">
-              <LogOut aria-hidden="true" /> {t('header.signOut')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ProfileMenu
+          initials={userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
+          isDirector={role === 'diretor'}
+          name={userProfile?.nome}
+          onSignOut={handleSignOut}
+          openUserMenu={t('header.openUserMenu')}
+          roleLabel={roleLabel}
+          settings={t('header.settings')}
+          signOut={t('header.signOut')}
+          userFallback={t('header.userFallback')}
+          myProfile={t('header.myProfile')}
+        />
       </div>
     </header>
   )
