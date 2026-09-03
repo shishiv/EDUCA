@@ -74,6 +74,18 @@ interface LessonDetailPanelProps {
   className?: string
 }
 
+function getLessonAttendanceRate(lesson: LessonDetailData | null) {
+  if (!lesson || lesson.total_alunos === 0) return 0
+  return Math.round(((lesson.total_presentes + (lesson.total_atestados || 0)) / lesson.total_alunos) * 100)
+}
+
+function getAttendanceColor(rate: number) {
+  const status = getFrequencyPolicyStatus(rate)
+  if (status === 'CONFORME') return 'bg-green-100 text-green-700'
+  if (status === 'ATENCAO') return 'bg-yellow-100 text-yellow-700'
+  return 'bg-red-100 text-red-700'
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -86,24 +98,7 @@ export function LessonDetailPanel({
   className,
 }: LessonDetailPanelProps) {
   const t = useClassroomTranslations()
-  // Calculate attendance rate
-  const attendanceRate = lesson
-    ? lesson.total_alunos > 0
-      ? Math.round(
-          ((lesson.total_presentes + (lesson.total_atestados || 0)) /
-            lesson.total_alunos) *
-            100
-        )
-      : 0
-    : 0
-
-  // Get attendance rate color
-  const getAttendanceColor = (rate: number) => {
-    const status = getFrequencyPolicyStatus(rate)
-    if (status === 'CONFORME') return 'bg-green-100 text-green-700'
-    if (status === 'ATENCAO') return 'bg-yellow-100 text-yellow-700'
-    return 'bg-red-100 text-red-700'
-  }
+  const attendanceRate = getLessonAttendanceRate(lesson)
 
   // Empty state
   if (!lesson && !loading) {

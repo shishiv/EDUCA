@@ -123,7 +123,31 @@ export function BNNCSelector({
   // Determine validation state
   const showValidation = currentValue.trim().length > 0 && !isFocused
 
-  return (
+  function renderSelectorFeedback() {
+    return (
+      <>
+        {helperText && !error && <p id={`${id}-description`} className="text-sm text-muted-foreground">{helperText}</p>}
+        {!helperText && !error && <p id={`${id}-description`} className="text-sm text-muted-foreground">Exemplo: {exampleCodes}</p>}
+        {error && <p id={`${id}-error`} className="text-sm text-destructive">{error}</p>}
+        {showValidation && hasInvalidCodes && !error && <p className="text-sm text-yellow-600">Codigos invalidos: {validation.invalidCodes.join(', ')}</p>}
+        {isOverLimit && <p className="text-sm text-destructive">Maximo de {maxSkills} habilidades permitidas ({validCount} selecionadas)</p>}
+        {hasValidCodes && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {validation.validCodes.map((code) => (
+              <Badge key={code} variant="secondary" className={cn('text-xs font-mono', code.startsWith('EI') ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200')}>
+                {code}
+                {!disabled && <button type="button" onClick={() => removeCode(code)} className="ml-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus:ring-1 focus:ring-offset-1" aria-label={`Remover ${code}`}><X className="h-3 w-3" /></button>}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {hasValidCodes && <p className="text-xs text-muted-foreground">{validCount} habilidade{validCount !== 1 ? 's' : ''} selecionada{validCount !== 1 ? 's' : ''}</p>}
+      </>
+    )
+  }
+
+  function renderSelectorOutput() {
+    return (
     <div className={cn('space-y-2', className)}>
       {/* Label with help tooltip */}
       <div className="flex items-center justify-between">
@@ -209,84 +233,12 @@ export function BNNCSelector({
         )}
       </div>
 
-      {/* Helper text / Examples */}
-      {helperText && !error && (
-        <p
-          id={`${id}-description`}
-          className="text-sm text-muted-foreground"
-        >
-          {helperText}
-        </p>
-      )}
-
-      {!helperText && !error && (
-        <p
-          id={`${id}-description`}
-          className="text-sm text-muted-foreground"
-        >
-          Exemplo: {exampleCodes}
-        </p>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <p id={`${id}-error`} className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-
-      {/* Validation feedback */}
-      {showValidation && hasInvalidCodes && !error && (
-        <p className="text-sm text-yellow-600">
-          Codigos invalidos: {validation.invalidCodes.join(', ')}
-        </p>
-      )}
-
-      {isOverLimit && (
-        <p className="text-sm text-destructive">
-          Maximo de {maxSkills} habilidades permitidas ({validCount} selecionadas)
-        </p>
-      )}
-
-      {/* Code badges */}
-      {hasValidCodes && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {validation.validCodes.map((code) => (
-            <Badge
-              key={code}
-              variant="secondary"
-              className={cn(
-                'text-xs font-mono',
-                code.startsWith('EI')
-                  ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-              )}
-            >
-              {code}
-              {!disabled && (
-                <button
-                  type="button"
-                  onClick={() => removeCode(code)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus:ring-1 focus:ring-offset-1"
-                  aria-label={`Remover ${code}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      {/* Summary */}
-      {hasValidCodes && (
-        <p className="text-xs text-muted-foreground">
-          {validCount} habilidade{validCount !== 1 ? 's' : ''} selecionada
-          {validCount !== 1 ? 's' : ''}
-        </p>
-      )}
+      {renderSelectorFeedback()}
     </div>
-  )
+    )
+  }
+
+  return renderSelectorOutput()
 }
 
 export default BNNCSelector

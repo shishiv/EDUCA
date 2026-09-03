@@ -110,6 +110,83 @@ function getLessonCreationErrorMessage(error: unknown): string {
   return 'Não foi possível criar a aula. Tente novamente.'
 }
 
+async function getOrCreateLessonSession(
+  turmaId: string,
+  dateStr: string,
+  professorId: string,
+  profileSchoolId: string | null,
+  tema: string
+) {
+  const { data: existingSession, error } = await supabase
+    .from('sessoes_aula')
+    .select('id')
+    .eq('turma_id', turmaId)
+    .eq('data_aula', dateStr)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') throw error
+  if (existingSession) return existingSession.id
+
+  const { data: turmaData } = await supabase
+    .from('turmas')
+    .select('escola_id')
+    .eq('id', turmaId)
+    .single()
+  const escolaId = turmaData?.escola_id || profileSchoolId
+  if (!escolaId) return null
+
+  const { data: newSession, error: createError } = await supabase
+    .from('sessoes_aula')
+    .insert({
+      turma_id: turmaId,
+      data_aula: dateStr,
+      status: 'ABERTA',
+      professor_id: professorId,
+      escola_id: escolaId,
+      conteudo_programatico: tema,
+    })
+    .select('id')
+    .single()
+  if (createError) throw createError
+  return newSession.id
+}
+
+async function saveLessonContent(
+  sessionId: string,
+  formData: LessonContentFormData,
+  turmaId: string,
+  dateStr: string
+) {
+  const { error } = await (supabase as unknown as ConteudoAulaClient)
+    .from('conteudo_aula')
+    .insert({
+      sessao_id: sessionId,
+      tema: formData.tema.trim(),
+      objetivo: formData.objetivo.trim(),
+      habilidades_bncc: formData.habilidades_bncc_input ? parseBNNCCodes(formData.habilidades_bncc_input) : [],
+      metodologia: formData.metodologia?.trim() || null,
+      recursos: formData.recursos?.trim() || null,
+      observacoes: formData.observacoes?.trim() || null,
+    })
+
+  if (!error) {
+    logger.info('Lesson created successfully', {
+      feature: 'diario',
+      action: 'create_lesson',
+      metadata: { sessionId, turmaId, date: dateStr },
+    })
+    return
+  }
+  if (error.code !== '42P01') throw error
+
+  await supabase.from('sessoes_aula').update({ conteudo_programatico: formData.tema }).eq('id', sessionId)
+  logger.info('Lesson content saved to session (table not yet created)', {
+    feature: 'diario',
+    action: 'create_lesson_fallback',
+    metadata: { sessionId, turmaId, date: dateStr },
+  })
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -185,99 +262,19 @@ export function NewLessonModal({
 
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
-      // First, create or get the session for this date
-      let sessionId: string
-
-      // Check if session already exists
-      const { data: existingSession, error: sessionError } = await supabase
-        .from('sessoes_aula')
-        .select('id')
-        .eq('turma_id', turmaId)
-        .eq('data_aula', dateStr)
-        .maybeSingle()
-
-      if (sessionError && sessionError.code !== 'PGRST116') {
-        throw sessionError
+      const sessionId = await getOrCreateLessonSession(
+        turmaId,
+        dateStr,
+        userProfile.id,
+        userProfile.escola_id,
+        formData.tema
+      )
+      if (!sessionId) {
+        toast.error('Escola nao encontrada')
+        return
       }
 
-      if (existingSession) {
-        sessionId = existingSession.id
-      } else {
-        // Create new session
-        const { data: turmaData } = await supabase
-          .from('turmas')
-          .select('escola_id')
-          .eq('id', turmaId)
-          .single()
-
-        const escolaId = turmaData?.escola_id || userProfile.escola_id
-        if (!escolaId) {
-          toast.error('Escola nao encontrada')
-          return
-        }
-
-        const { data: newSession, error: createError } = await supabase
-          .from('sessoes_aula')
-          .insert({
-            turma_id: turmaId,
-            data_aula: dateStr,
-            status: 'ABERTA',
-            professor_id: userProfile.id,
-            escola_id: escolaId,
-            conteudo_programatico: formData.tema,
-          })
-          .select('id')
-          .single()
-
-        if (createError) throw createError
-        sessionId = newSession.id
-      }
-
-      // Parse BNCC codes from input string
-      const habilidadesBncc = formData.habilidades_bncc_input
-        ? parseBNNCCodes(formData.habilidades_bncc_input)
-        : []
-
-      // Create the lesson content using type-cast supabase client
-      // Note: The conteudo_aula table is created by migrations but types aren't regenerated yet
-      const contentInput = {
-        sessao_id: sessionId,
-        tema: formData.tema.trim(),
-        objetivo: formData.objetivo.trim(),
-        habilidades_bncc: habilidadesBncc,
-        metodologia: formData.metodologia?.trim() || null,
-        recursos: formData.recursos?.trim() || null,
-        observacoes: formData.observacoes?.trim() || null,
-      }
-
-      const { error: contentError } = await (supabase as unknown as ConteudoAulaClient)
-        .from('conteudo_aula')
-        .insert(contentInput)
-
-      if (contentError) {
-        // Handle specific errors
-        if (contentError.code === '42P01') {
-          // Table doesn't exist - just update the session with content instead
-          await supabase
-            .from('sessoes_aula')
-            .update({ conteudo_programatico: formData.tema })
-            .eq('id', sessionId)
-
-          logger.info('Lesson content saved to session (table not yet created)', {
-            feature: 'diario',
-            action: 'create_lesson_fallback',
-            metadata: { sessionId, turmaId, date: dateStr },
-          })
-        } else {
-          throw contentError
-        }
-      } else {
-        logger.info('Lesson created successfully', {
-          feature: 'diario',
-          action: 'create_lesson',
-          metadata: { sessionId, turmaId, date: dateStr },
-        })
-      }
+      await saveLessonContent(sessionId, formData, turmaId, dateStr)
 
       onSuccess?.()
     } catch (err) {

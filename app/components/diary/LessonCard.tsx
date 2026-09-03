@@ -21,7 +21,7 @@
 
 'use client'
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Calendar, Users, ChevronRight, BookOpen } from 'lucide-react'
@@ -71,6 +71,23 @@ function getRateColor(rate: number): string {
   return 'text-red-700 bg-red-100 border-red-200'
 }
 
+function getLessonCardDetails(lesson: LessonCardData, isSelected: boolean) {
+  const attendanceRate = lesson.total_alunos > 0
+    ? Math.round(((lesson.total_presentes + (lesson.total_atestados || 0)) / lesson.total_alunos) * 100)
+    : 0
+  const lessonDate = new Date(lesson.data_aula + 'T12:00:00')
+  const formattedDate = format(lessonDate, "dd 'de' MMMM, yyyy", { locale: ptBR })
+  return {
+    attendanceRate,
+    formattedDate,
+    formattedDateShort: format(lessonDate, 'dd/MM/yyyy', { locale: ptBR }),
+    dayOfWeek: format(lessonDate, 'EEEE', { locale: ptBR }),
+    dayOfWeekShort: format(lessonDate, 'EEE', { locale: ptBR }),
+    summary: lesson.resumo || lesson.objetivo || lesson.tema,
+    ariaLabel: `Aula: ${lesson.tema}. Data: ${formattedDate}. Presenca: ${attendanceRate}%. ${isSelected ? 'Selecionada.' : ''}`,
+  }
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -83,29 +100,8 @@ export function LessonCard({
   compact = false,
 }: LessonCardProps) {
   const t = useClassroomTranslations()
-  // State for hover animation
-  const [isHovered, setIsHovered] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
-
-  // Calculate attendance rate
-  const attendanceRate =
-    lesson.total_alunos > 0
-      ? Math.round(
-          ((lesson.total_presentes + (lesson.total_atestados || 0)) /
-            lesson.total_alunos) *
-            100
-        )
-      : 0
-
-  // Format date
-  const lessonDate = new Date(lesson.data_aula + 'T12:00:00')
-  const formattedDate = format(lessonDate, "dd 'de' MMMM, yyyy", { locale: ptBR })
-  const formattedDateShort = format(lessonDate, 'dd/MM/yyyy', { locale: ptBR })
-  const dayOfWeek = format(lessonDate, 'EEEE', { locale: ptBR })
-  const dayOfWeekShort = format(lessonDate, 'EEE', { locale: ptBR })
-
-  // Create summary from objetivo or tema
-  const summary = lesson.resumo || lesson.objetivo || lesson.tema
+  const { attendanceRate, formattedDate, formattedDateShort, dayOfWeek, dayOfWeekShort, summary, ariaLabel } =
+    getLessonCardDetails(lesson, isSelected)
 
   // Handle click with keyboard support
   const handleClick = useCallback(() => {
@@ -122,22 +118,13 @@ export function LessonCard({
     [onClick, lesson]
   )
 
-  // Build accessible label
-  const ariaLabel = `Aula: ${lesson.tema}. Data: ${formattedDate}. Presenca: ${attendanceRate}%. ${
-    isSelected ? 'Selecionada.' : ''
-  }`
-
   return (
     <article
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
       className={cn(
         // Base styles
-        'relative bg-white rounded-xl cursor-pointer',
+        'group relative bg-white rounded-xl cursor-pointer',
         // Padding: smaller on mobile
         compact ? 'p-3' : 'p-3 sm:p-4',
         // Left border accent (blue) - thicker when selected
@@ -148,10 +135,10 @@ export function LessonCard({
         // Smooth transitions for all properties
         'transition-all duration-200 ease-out',
         // Hover state - elevation and shadow
-        (isHovered || isFocused) && !isSelected && 'shadow-lg -translate-y-1',
+        !isSelected && 'hover:shadow-lg hover:-translate-y-1 focus:shadow-lg focus:-translate-y-1',
         // Border for card
         'border border-gray-100',
-        (isHovered || isFocused) && 'border-gray-200',
+        'hover:border-gray-200 focus:border-gray-200',
         // Active/selected state
         isSelected && 'bg-blue-50 shadow-md ring-2 ring-blue-200',
         // Focus visible indicator (Task 5.3.3)
@@ -177,7 +164,7 @@ export function LessonCard({
                 'h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0',
                 // Animated color change on hover
                 'transition-colors duration-200',
-                isHovered || isSelected ? 'text-blue-500' : 'text-gray-400'
+                isSelected ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500 group-focus:text-blue-500'
               )}
               aria-hidden="true"
             />
@@ -264,7 +251,7 @@ export function LessonCard({
             'lg:hidden flex-shrink-0 self-center',
             // Animated movement on hover
             'transition-transform duration-200',
-            isHovered && 'translate-x-1'
+            'group-hover:translate-x-1'
           )}
           aria-hidden="true"
         >
