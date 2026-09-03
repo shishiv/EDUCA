@@ -1,13 +1,13 @@
-/**
- * Attendance Trends API
- * Returns historical attendance data for charting and analysis
- */
-
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
-import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import {
+  loadCanonicalAttendanceFacts,
+  type CanonicalAttendanceFact,
+} from '@/lib/api/canonical-attendance-facts'
 import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
+import type { Database, Tables } from '@/types/database'
 
 interface TrendDataPoint {
   date: string
@@ -18,260 +18,274 @@ interface TrendDataPoint {
   totalStudents: number
 }
 
+interface DailyAttendance {
+  presente: number
+  total: number
+}
+
+type ClassEnrollment = Pick<Tables<'matriculas'>, 'id' | 'aluno_id'>
+type ServerClient = SupabaseClient<Database>
+
+const emptyComplianceStatus = {
+  inep: false,
+  bolsaFamilia: false,
+  atencaoPreventiva: false,
+}
+
+function groupDailyAttendance(records: CanonicalAttendanceFact[]): Record<string, DailyAttendance> {
+  const dailyData: Record<string, DailyAttendance> = {}
+
+  for (const record of records) {
+    const daily = dailyData[record.dataAula] ?? { presente: 0, total: 0 }
+    daily.total++
+    if (record.presente) daily.presente++
+    dailyData[record.dataAula] = daily
+  }
+
+  return dailyData
+}
+
+function getComplianceStatus(overallPercentage: number) {
+  return {
+    inep: overallPercentage >= 75,
+    bolsaFamilia: overallPercentage >= CONFORMIDADE,
+    atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
+  }
+}
+
+function getTrendStatistics(trendData: TrendDataPoint[]) {
+  const totalPresent = trendData.reduce((sum, day) => sum + day.presents, 0)
+  const totalStudents = trendData.reduce((sum, day) => sum + day.totalStudents, 0)
+  const overallPercentage = totalStudents > 0
+    ? Math.round((totalPresent / totalStudents) * 100)
+    : 0
+
+  return {
+    overallPercentage,
+    totalDays: trendData.length,
+    totalPresent,
+    totalAbsent: totalStudents - totalPresent,
+    complianceStatus: getComplianceStatus(overallPercentage),
+  }
+}
+
+async function loadClassAverages(
+  supabase: ServerClient,
+  turmaId: string,
+  startDate: string,
+  endDate: string,
+): Promise<Record<string, number>> {
+  const { data: matriculas } = await supabase
+    .from('matriculas')
+    .select('id')
+    .eq('turma_id', turmaId)
+    .eq('situacao', 'ativa')
+
+  if (!matriculas || matriculas.length === 0) return {}
+
+  const records = await loadCanonicalAttendanceFacts(
+    supabase,
+    matriculas.map(matricula => matricula.id),
+    { startDate, endDate },
+  )
+
+  return Object.fromEntries(
+    Object.entries(groupDailyAttendance(records)).map(([date, daily]) => [
+      date,
+      Math.round((daily.presente / daily.total) * 100),
+    ]),
+  )
+}
+
+function buildStudentTrendData(
+  records: CanonicalAttendanceFact[],
+  classAverages: Record<string, number>,
+): TrendDataPoint[] {
+  return Object.entries(groupDailyAttendance(records)).map(([date, daily]) => ({
+    date,
+    attendancePercentage: Math.round((daily.presente / daily.total) * 100),
+    classAverage: classAverages[date],
+    absences: daily.total - daily.presente,
+    presents: daily.presente,
+    totalStudents: daily.total,
+  }))
+}
+
+async function getStudentTrends(
+  supabase: ServerClient,
+  studentId: string,
+  turmaId: string | null,
+  includeClassAverage: boolean,
+  startDate: string,
+  endDate: string,
+) {
+  const { data: matriculas, error } = await supabase
+    .from('matriculas')
+    .select('id, turma_id')
+    .eq('aluno_id', studentId)
+    .eq('situacao', 'ativa')
+
+  if (error) {
+    logger.error('Error fetching student matriculas', error.message, { metadata: { studentId } })
+    return NextResponse.json({ error: 'Erro ao buscar matrículas do aluno' }, { status: 500 })
+  }
+
+  if (!matriculas || matriculas.length === 0) {
+    return NextResponse.json({
+      success: true,
+      data: [],
+      statistics: {
+        overallPercentage: 0,
+        totalDays: 0,
+        totalPresent: 0,
+        totalAbsent: 0,
+        complianceStatus: emptyComplianceStatus,
+      },
+    })
+  }
+
+  const records = await loadCanonicalAttendanceFacts(
+    supabase,
+    matriculas.map(matricula => matricula.id),
+    { startDate, endDate },
+  )
+  const effectiveTurmaId = turmaId || matriculas[0].turma_id
+  const classAverages = includeClassAverage && effectiveTurmaId
+    ? await loadClassAverages(supabase, effectiveTurmaId, startDate, endDate)
+    : {}
+  const data = buildStudentTrendData(records, classAverages)
+
+  return NextResponse.json({
+    success: true,
+    data,
+    statistics: getTrendStatistics(data),
+  })
+}
+
+function buildClassTrendData(
+  records: CanonicalAttendanceFact[],
+  matriculas: ClassEnrollment[],
+): TrendDataPoint[] {
+  const matriculaToAluno = new Map(matriculas.map(matricula => [matricula.id, matricula.aluno_id]))
+  const dailyData: Record<string, DailyAttendance & { students: Set<string> }> = {}
+
+  for (const record of records) {
+    const daily = dailyData[record.dataAula] ?? { presente: 0, total: 0, students: new Set<string>() }
+    daily.total++
+    const alunoId = matriculaToAluno.get(record.matriculaId)
+    if (alunoId) daily.students.add(alunoId)
+    if (record.presente) daily.presente++
+    dailyData[record.dataAula] = daily
+  }
+
+  return Object.entries(dailyData).map(([date, daily]) => ({
+    date,
+    attendancePercentage: Math.round((daily.presente / daily.total) * 100),
+    absences: daily.total - daily.presente,
+    presents: daily.presente,
+    totalStudents: daily.students.size,
+  }))
+}
+
+async function getClassTrends(
+  supabase: ServerClient,
+  turmaId: string,
+  startDate: string,
+  endDate: string,
+) {
+  const { data: matriculas, error } = await supabase
+    .from('matriculas')
+    .select('id, aluno_id')
+    .eq('turma_id', turmaId)
+    .eq('situacao', 'ativa')
+
+  if (error) {
+    logger.error('Error fetching turma matriculas', error.message, { metadata: { turmaId } })
+    return NextResponse.json({ error: 'Erro ao buscar matrículas da turma' }, { status: 500 })
+  }
+
+  if (!matriculas || matriculas.length === 0) {
+    return NextResponse.json({
+      success: true,
+      data: [],
+      statistics: {
+        overallPercentage: 0,
+        totalDays: 0,
+        totalPresent: 0,
+        totalAbsent: 0,
+        averageStudentsPerDay: 0,
+        complianceStatus: emptyComplianceStatus,
+      },
+    })
+  }
+
+  const records = await loadCanonicalAttendanceFacts(
+    supabase,
+    matriculas.map(matricula => matricula.id),
+    { startDate, endDate },
+  )
+  const data = buildClassTrendData(records, matriculas)
+  const statistics = getTrendStatistics(data)
+
+  return NextResponse.json({
+    success: true,
+    data,
+    statistics: {
+      overallPercentage: statistics.overallPercentage,
+      totalDays: statistics.totalDays,
+      totalPresent: statistics.totalPresent,
+      totalAbsent: statistics.totalAbsent,
+      averageStudentsPerDay: Math.round(
+        data.reduce((sum, day) => sum + day.totalStudents, 0) / data.length,
+      ),
+      complianceStatus: statistics.complianceStatus,
+    },
+  })
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-
-    // Verify authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // Parse parameters
     const { searchParams } = new URL(request.url)
     const studentId = searchParams.get('student_id')
     const turmaId = searchParams.get('turma_id')
-    const days = parseInt(searchParams.get('days') || '30') // Default last 30 days
+    const days = parseInt(searchParams.get('days') || '30')
     const includeClassAverage = searchParams.get('class_average') === 'true'
 
     if (!studentId && !turmaId) {
       return NextResponse.json({
-        error: 'student_id ou turma_id é obrigatório'
+        error: 'student_id ou turma_id é obrigatório',
       }, { status: 400 })
     }
 
-    // Calculate date range
     const endDate = new Date()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
-
     const startDateStr = startDate.toISOString().split('T')[0]
     const endDateStr = endDate.toISOString().split('T')[0]
 
-    // Fetch student attendance data
     if (studentId) {
-      // First get the student's matricula_id(s)
-      const { data: matriculas, error: matriculaError } = await supabase
-        .from('matriculas')
-        .select('id, turma_id')
-        .eq('aluno_id', studentId)
-        .eq('situacao', 'ativa')
-
-      if (matriculaError) {
-        logger.error('Error fetching student matriculas', matriculaError.message, { metadata: { studentId } })
-        return NextResponse.json({ error: 'Erro ao buscar matrículas do aluno' }, { status: 500 })
-      }
-
-      if (!matriculas || matriculas.length === 0) {
-        return NextResponse.json({
-          success: true,
-          data: [],
-          statistics: {
-            overallPercentage: 0,
-            totalDays: 0,
-            totalPresent: 0,
-            totalAbsent: 0,
-            complianceStatus: {
-              inep: false,
-              bolsaFamilia: false,
-              atencaoPreventiva: false,
-            }
-          }
-        })
-      }
-
-      const matriculaIds = matriculas.map(m => m.id)
-      const studentTurmaId = matriculas[0].turma_id
-
-      const attendanceRecords = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
-        startDate: startDateStr,
-        endDate: endDateStr,
-      })
-
-      // Group by date and calculate daily percentages
-      const dailyData: Record<string, { presente: number; total: number; turmaId?: string }> = {}
-
-      attendanceRecords.forEach(record => {
-        const date = record.dataAula
-
-        if (!dailyData[date]) {
-          dailyData[date] = { presente: 0, total: 0, turmaId: studentTurmaId }
-        }
-
-        dailyData[date].total++
-        if (record.presente) {
-          dailyData[date].presente++
-        }
-      })
-
-      // Calculate class averages if requested
-      let classAverages: Record<string, number> = {}
-      const effectiveTurmaId = turmaId || studentTurmaId
-      if (includeClassAverage && effectiveTurmaId) {
-        // Get all matriculas for the turma
-        const { data: turmaMatriculas } = await supabase
-          .from('matriculas')
-          .select('id')
-          .eq('turma_id', effectiveTurmaId)
-          .eq('situacao', 'ativa')
-
-        if (turmaMatriculas && turmaMatriculas.length > 0) {
-          const turmaMatriculaIds = turmaMatriculas.map(m => m.id)
-
-          const classRecords = await loadCanonicalAttendanceFacts(supabase, turmaMatriculaIds, {
-            startDate: startDateStr,
-            endDate: endDateStr,
-          })
-
-          const classDaily: Record<string, { presente: number; total: number }> = {}
-          classRecords.forEach(record => {
-            const date = record.dataAula
-            if (!classDaily[date]) {
-              classDaily[date] = { presente: 0, total: 0 }
-            }
-            classDaily[date].total++
-            if (record.presente) {
-              classDaily[date].presente++
-            }
-          })
-
-          Object.entries(classDaily).forEach(([date, data]) => {
-            classAverages[date] = Math.round((data.presente / data.total) * 100)
-          })
-        }
-      }
-
-      // Format response
-      const trendData: TrendDataPoint[] = Object.entries(dailyData).map(([date, data]) => ({
-        date,
-        attendancePercentage: Math.round((data.presente / data.total) * 100),
-        classAverage: classAverages[date],
-        absences: data.total - data.presente,
-        presents: data.presente,
-        totalStudents: data.total
-      }))
-
-      // Calculate overall statistics
-      const totalPresent = trendData.reduce((sum, d) => sum + d.presents, 0)
-      const totalClasses = trendData.reduce((sum, d) => sum + d.totalStudents, 0)
-      const overallPercentage = totalClasses > 0 ? Math.round((totalPresent / totalClasses) * 100) : 0
-
-      return NextResponse.json({
-        success: true,
-        data: trendData,
-        statistics: {
-          overallPercentage,
-          totalDays: trendData.length,
-          totalPresent,
-          totalAbsent: totalClasses - totalPresent,
-          complianceStatus: {
-            inep: overallPercentage >= 75, // INEP minimum
-            bolsaFamilia: overallPercentage >= CONFORMIDADE,
-            atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
-          }
-        }
-      })
+      return getStudentTrends(
+        supabase,
+        studentId,
+        turmaId,
+        includeClassAverage,
+        startDateStr,
+        endDateStr,
+      )
     }
 
-    // Fetch class attendance data (aggregate for all students)
-    if (turmaId) {
-      // Get all matriculas for the turma to query frequencia
-      const { data: turmaMatriculas, error: turmaMatriculaError } = await supabase
-        .from('matriculas')
-        .select('id, aluno_id')
-        .eq('turma_id', turmaId)
-        .eq('situacao', 'ativa')
-
-      if (turmaMatriculaError) {
-        logger.error('Error fetching turma matriculas', turmaMatriculaError.message, { metadata: { turmaId } })
-        return NextResponse.json({ error: 'Erro ao buscar matrículas da turma' }, { status: 500 })
-      }
-
-      if (!turmaMatriculas || turmaMatriculas.length === 0) {
-        return NextResponse.json({
-          success: true,
-          data: [],
-          statistics: {
-            overallPercentage: 0,
-            totalDays: 0,
-            totalPresent: 0,
-            totalAbsent: 0,
-            averageStudentsPerDay: 0,
-            complianceStatus: {
-              inep: false,
-              bolsaFamilia: false,
-              atencaoPreventiva: false,
-            }
-          }
-        })
-      }
-
-      const turmaMatriculaIds = turmaMatriculas.map(m => m.id)
-      // Create a map from matricula_id to aluno_id for counting unique students
-      const matriculaToAlunoMap = new Map(turmaMatriculas.map(m => [m.id, m.aluno_id]))
-
-      const classRecords = await loadCanonicalAttendanceFacts(supabase, turmaMatriculaIds, {
-        startDate: startDateStr,
-        endDate: endDateStr,
-      })
-
-      // Group by date
-      const dailyData: Record<string, { presente: number; total: number; students: Set<string> }> = {}
-
-      classRecords.forEach(record => {
-        const date = record.dataAula
-
-        if (!dailyData[date]) {
-          dailyData[date] = { presente: 0, total: 0, students: new Set() }
-        }
-
-        dailyData[date].total++
-        // Use the aluno_id from the matricula for unique student count
-        const alunoId = matriculaToAlunoMap.get(record.matriculaId)
-        if (alunoId) {
-          dailyData[date].students.add(alunoId)
-        }
-        if (record.presente) {
-          dailyData[date].presente++
-        }
-      })
-
-      const trendData: TrendDataPoint[] = Object.entries(dailyData).map(([date, data]) => ({
-        date,
-        attendancePercentage: Math.round((data.presente / data.total) * 100),
-        absences: data.total - data.presente,
-        presents: data.presente,
-        totalStudents: data.students.size
-      }))
-
-      const totalPresent = trendData.reduce((sum, d) => sum + d.presents, 0)
-      const totalClasses = trendData.reduce((sum, d) => sum + d.totalStudents, 0)
-      const overallPercentage = totalClasses > 0 ? Math.round((totalPresent / totalClasses) * 100) : 0
-
-      return NextResponse.json({
-        success: true,
-        data: trendData,
-        statistics: {
-          overallPercentage,
-          totalDays: trendData.length,
-          totalPresent,
-          totalAbsent: totalClasses - totalPresent,
-          averageStudentsPerDay: Math.round(totalClasses / trendData.length),
-          complianceStatus: {
-            inep: overallPercentage >= 75,
-            bolsaFamilia: overallPercentage >= CONFORMIDADE,
-            atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
-          }
-        }
-      })
-    }
-
+    return getClassTrends(supabase, turmaId!, startDateStr, endDateStr)
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)
     logger.error('Error in attendance trends API', errorMessage)
     return NextResponse.json({
-      error: 'Erro ao processar solicitação'
+      error: 'Erro ao processar solicitação',
     }, { status: 500 })
   }
 }
