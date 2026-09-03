@@ -30,6 +30,7 @@ import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { createAcademicYearService, type ResolvedAcademicYear } from '@/lib/services/academic-year'
 import { supabase } from '@/lib/supabase'
+import type { UserProfile } from '@/lib/auth'
 
 interface DashboardStats {
   totalAlunos: number
@@ -73,13 +74,16 @@ function DashboardSkeleton() {
   )
 }
 
-export default function DashboardPage() {
+function useDashboardData({
+  escolaId,
+  escolaLoading,
+  userRole,
+}: {
+  escolaId: string | null
+  escolaLoading: boolean
+  userRole: UserProfile['tipo_usuario'] | undefined
+}) {
   const t = useTranslations('platform.dashboard')
-  const locale = useLocale()
-  const { userProfile } = useAuth()
-  const { selectedEscolaId, shouldShowSelector, loading: escolaLoading } = useEscola()
-  const userRole = userProfile?.tipo_usuario
-  const escolaId = shouldShowSelector ? selectedEscolaId : userProfile?.escola_id ?? null
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -180,31 +184,23 @@ export default function DashboardPage() {
     void loadDashboardData()
   }, [escolaId, escolaLoading, loadDashboardData, userRole])
 
-  if (loading || escolaLoading) return <DashboardSkeleton />
+  return { academicYear, loadDashboardData, loadError, loading, stats, turmas }
+}
 
-  if (!escolaId) {
-    return <div className="app-dashboard"><EscolaRequiredState /></div>
-  }
-
-  if (userProfile?.tipo_usuario === 'professor' && academicYear) {
-    return <TeacherDashboardEnhanced professorId={userProfile.id} academicYear={academicYear} />
-  }
-
-  if (loadError) {
-    return (
-      <section className="app-dashboard-error" role="alert">
-        <AlertTriangle aria-hidden="true" />
-        <div>
-          <h1>{t('errorTitle')}</h1>
-          <p>{loadError} {t('errorHelp')}</p>
-          <button type="button" onClick={() => void loadDashboardData()}>{t('retry')}</button>
-        </div>
-      </section>
-    )
-  }
-
-  if (!academicYear) return <DashboardSkeleton />
-
+function DashboardOverview({
+  academicYear,
+  escolaId,
+  stats,
+  turmas,
+}: {
+  academicYear: ResolvedAcademicYear
+  escolaId: string
+  stats: DashboardStats
+  turmas: Turma[]
+}) {
+  const t = useTranslations('platform.dashboard')
+  const locale = useLocale()
+  const { userProfile } = useAuth()
   const pilotMode = isPilotModeEnabled()
   const demoSandbox = isDemoSandboxEnabled()
   const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
@@ -340,4 +336,44 @@ export default function DashboardPage() {
       </div>
     </div>
   )
+}
+
+export default function DashboardPage() {
+  const t = useTranslations('platform.dashboard')
+  const { userProfile } = useAuth()
+  const { selectedEscolaId, shouldShowSelector, loading: escolaLoading } = useEscola()
+  const userRole = userProfile?.tipo_usuario
+  const escolaId = shouldShowSelector ? selectedEscolaId : userProfile?.escola_id ?? null
+  const { academicYear, loadDashboardData, loadError, loading, stats, turmas } = useDashboardData({
+    escolaId,
+    escolaLoading,
+    userRole,
+  })
+
+  if (loading || escolaLoading) return <DashboardSkeleton />
+
+  if (!escolaId) {
+    return <div className="app-dashboard"><EscolaRequiredState /></div>
+  }
+
+  if (userProfile?.tipo_usuario === 'professor' && academicYear) {
+    return <TeacherDashboardEnhanced professorId={userProfile.id} academicYear={academicYear} />
+  }
+
+  if (loadError) {
+    return (
+      <section className="app-dashboard-error" role="alert">
+        <AlertTriangle aria-hidden="true" />
+        <div>
+          <h1>{t('errorTitle')}</h1>
+          <p>{loadError} {t('errorHelp')}</p>
+          <button type="button" onClick={() => void loadDashboardData()}>{t('retry')}</button>
+        </div>
+      </section>
+    )
+  }
+
+  if (!academicYear) return <DashboardSkeleton />
+
+  return <DashboardOverview academicYear={academicYear} escolaId={escolaId} stats={stats} turmas={turmas} />
 }
