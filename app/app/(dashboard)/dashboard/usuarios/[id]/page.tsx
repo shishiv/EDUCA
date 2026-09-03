@@ -215,6 +215,121 @@ export default function UsuarioDetalhesPage() {
     }
   }
 
+  const renderConfiguracoes = (user: UserWithSchool) => (
+    <TabsContent value="configuracoes">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('labels.configuracoes-da-conta')}</CardTitle>
+          <CardDescription>{t('ui.configuracoes-especificas-do-usuario')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {editing ? (
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-nome">Nome completo</Label>
+                  <Input
+                    id="edit-nome"
+                    value={formData.nome}
+                    onChange={event => setFormData(current => ({ ...current, nome: event.target.value }))}
+                    minLength={2}
+                    maxLength={160}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">E-mail</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={event => setFormData(current => ({ ...current, email: event.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-tipo-usuario">Tipo de usuário</Label>
+                  <Select
+                    value={formData.tipo_usuario}
+                    onValueChange={tipo_usuario => setFormData(current => ({ ...current, tipo_usuario }))}
+                  >
+                    <SelectTrigger id="edit-tipo-usuario">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="professor">Professor(a)</SelectItem>
+                      <SelectItem value="diretor">Diretor(a)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-escola">Escola</Label>
+                  <Select
+                    value={formData.escola_id}
+                    onValueChange={escola_id => setFormData(current => ({ ...current, escola_id }))}
+                  >
+                    <SelectTrigger id="edit-escola">
+                      <SelectValue placeholder="Selecione a escola" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {escolas.map(escola => (
+                        <SelectItem key={escola.id} value={escola.id}>{escola.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {errorMessage && <p role="alert" className="text-sm text-red-600">{errorMessage}</p>}
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+                <Button type="submit" disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? 'Salvando...' : 'Salvar alterações'}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">{t('labels.id-do-usuario')}</label>
+                  <div className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">{user.id}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">{t('labels.tipo-de-usuario')}</label>
+                  <div className="text-sm text-gray-600">{getRoleLabel(user.tipo_usuario)}</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">{t('labels.email')}</label>
+                <div className="text-sm text-gray-600">{user.email}</div>
+              </div>
+              {user.escola?.nome && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">{t('labels.escola-vinculada')}</label>
+                  <div className="text-sm text-gray-600">{user.escola?.nome}</div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">{t('labels.data-de-criacao')}</label>
+                <div className="text-sm text-gray-600">{new Date(user.created_at || "").toLocaleString('pt-BR')}</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">{t('labels.status-da-conta')}</label>
+                <div className="flex items-center space-x-2">
+                  <Badge variant={user.ativo === true ? 'default' : 'secondary'}>
+                    {user.ativo === true ? t('labels.ativa') : t('ui.inativa')}
+                  </Badge>
+                  {user.ativo !== true && <span className="text-sm text-gray-500">{t('ui.conta-desativada-pelo-administrador')}</span>}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </TabsContent>
+  )
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -433,134 +548,7 @@ export default function UsuarioDetalhesPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="configuracoes">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('labels.configuracoes-da-conta')}</CardTitle>
-                  <CardDescription>
-                    {t('ui.configuracoes-especificas-do-usuario')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {editing ? (
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="edit-nome">Nome completo</Label>
-                          <Input
-                            id="edit-nome"
-                            value={formData.nome}
-                            onChange={event => setFormData(current => ({ ...current, nome: event.target.value }))}
-                            minLength={2}
-                            maxLength={160}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="edit-email">E-mail</Label>
-                          <Input
-                            id="edit-email"
-                            type="email"
-                            value={formData.email}
-                            onChange={event => setFormData(current => ({ ...current, email: event.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="edit-tipo-usuario">Tipo de usuário</Label>
-                          <Select
-                            value={formData.tipo_usuario}
-                            onValueChange={tipo_usuario => setFormData(current => ({ ...current, tipo_usuario }))}
-                          >
-                            <SelectTrigger id="edit-tipo-usuario">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="professor">Professor(a)</SelectItem>
-                              <SelectItem value="diretor">Diretor(a)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="edit-escola">Escola</Label>
-                          <Select
-                            value={formData.escola_id}
-                            onValueChange={escola_id => setFormData(current => ({ ...current, escola_id }))}
-                          >
-                            <SelectTrigger id="edit-escola">
-                              <SelectValue placeholder="Selecione a escola" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {escolas.map(escola => (
-                                <SelectItem key={escola.id} value={escola.id}>{escola.nome}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      {errorMessage && <p role="alert" className="text-sm text-red-600">{errorMessage}</p>}
-                      <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
-                        <Button type="submit" disabled={saving}>
-                          <Save className="h-4 w-4 mr-2" />
-                          {saving ? 'Salvando...' : 'Salvar alterações'}
-                        </Button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">{t('labels.id-do-usuario')}</label>
-                        <div className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
-                          {usuario.id}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">{t('labels.tipo-de-usuario')}</label>
-                        <div className="text-sm text-gray-600">
-                          {getRoleLabel(usuario.tipo_usuario)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">{t('labels.email')}</label>
-                      <div className="text-sm text-gray-600">{usuario.email}</div>
-                    </div>
-
-                    {usuario.escola?.nome && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">{t('labels.escola-vinculada')}</label>
-                        <div className="text-sm text-gray-600">{usuario.escola?.nome}</div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">{t('labels.data-de-criacao')}</label>
-                      <div className="text-sm text-gray-600">
-                        {new Date(usuario.created_at || "").toLocaleString('pt-BR')}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">{t('labels.status-da-conta')}</label>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={usuario.ativo === true ? 'default' : 'secondary'}>
-                          {usuario.ativo === true ? t('labels.ativa') : t('ui.inativa')}
-                        </Badge>
-                        {usuario.ativo !== true && (
-                          <span className="text-sm text-gray-500">
-                            {t('ui.conta-desativada-pelo-administrador')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {renderConfiguracoes(usuario)}
           </Tabs>
         </div>
       </div>
