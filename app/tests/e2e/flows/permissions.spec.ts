@@ -28,6 +28,13 @@ test.describe('Permissions - Admin', () => {
       await expectAllowed(page, entry.route)
     })
   }
+
+  test('renders links for permitted navigation', async ({ page }) => {
+    await page.goto('/dashboard')
+    for (const route of ['/dashboard/usuarios', '/dashboard/escolas', '/dashboard/configuracoes']) {
+      await expect(page.locator(`a[href="${route}"]`).first()).toBeAttached()
+    }
+  })
 })
 
 test.describe('Permissions - Diretor', () => {
@@ -53,6 +60,14 @@ test.describe('Permissions - Diretor', () => {
       await expectDenied(page, entry.route)
     })
   }
+
+  test('hides denied links and rejects a direct URL', async ({ page }) => {
+    await page.goto('/dashboard')
+    for (const route of ['/dashboard/usuarios', '/dashboard/escolas', '/dashboard/flags']) {
+      await expect(page.locator(`a[href="${route}"]`)).toHaveCount(0)
+    }
+    await expectDenied(page, '/dashboard/usuarios')
+  })
 })
 
 test.describe('Permissions - Secretario', () => {
@@ -80,6 +95,14 @@ test.describe('Permissions - Secretario', () => {
       await expectDenied(page, entry.route)
     })
   }
+
+  test('hides denied links and rejects a direct URL', async ({ page }) => {
+    await page.goto('/dashboard')
+    for (const route of ['/dashboard/usuarios', '/dashboard/escolas', '/dashboard/configuracoes']) {
+      await expect(page.locator(`a[href="${route}"]`)).toHaveCount(0)
+    }
+    await expectDenied(page, '/dashboard/usuarios')
+  })
 })
 
 test.describe('Permissions - Professor', () => {

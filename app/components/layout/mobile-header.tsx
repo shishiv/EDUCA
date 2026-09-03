@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/use-auth'
+import { canAccessRoute } from '@/lib/route-policy'
 
 interface MobileHeaderProps {
   onMenuToggle?: () => void
@@ -125,7 +126,7 @@ export function MobileHeader({
                 <DropdownMenuItem asChild className="app-dropdown__item">
                   <Link href="/dashboard/perfil"><User aria-hidden="true" /> {header('myProfile')}</Link>
                 </DropdownMenuItem>
-                {role === 'diretor' && (
+                {canAccessRoute('/dashboard/configuracoes', role) && (
                   <DropdownMenuItem asChild className="app-dropdown__item">
                     <Link href="/dashboard/configuracoes"><Settings aria-hidden="true" /> {header('settings')}</Link>
                   </DropdownMenuItem>

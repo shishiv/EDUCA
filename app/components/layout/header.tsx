@@ -23,6 +23,7 @@ import {
 import { useEscola } from '@/contexts/escola-context'
 import { useSessionRealtime } from '@/contexts/session-realtime-context'
 import { useAuth } from '@/hooks/use-auth'
+import { canAccessRoute } from '@/lib/route-policy'
 
 const routeLabels = [
   ['/dashboard/alunos', 'students'], ['/dashboard/usuarios', 'users'],
@@ -70,7 +71,7 @@ function SchoolContext({ name, selectSchool }: { name?: string; selectSchool: st
 
 function ProfileMenu({
   initials,
-  isDirector,
+  canAccessSettings,
   name,
   onSignOut,
   openUserMenu,
@@ -81,7 +82,7 @@ function ProfileMenu({
   myProfile,
 }: {
   initials: string
-  isDirector: boolean
+  canAccessSettings: boolean
   name?: string
   onSignOut: () => void
   openUserMenu: string
@@ -114,7 +115,7 @@ function ProfileMenu({
         <DropdownMenuItem asChild className="app-dropdown__item">
           <Link href="/dashboard/perfil"><User aria-hidden="true" /> {myProfile}</Link>
         </DropdownMenuItem>
-        {isDirector && (
+        {canAccessSettings && (
           <DropdownMenuItem asChild className="app-dropdown__item">
             <Link href="/dashboard/configuracoes"><Settings aria-hidden="true" /> {settings}</Link>
           </DropdownMenuItem>
@@ -176,7 +177,7 @@ export function Header() {
 
         <ProfileMenu
           initials={userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
-          isDirector={role === 'diretor'}
+          canAccessSettings={canAccessRoute('/dashboard/configuracoes', role)}
           name={userProfile?.nome}
           onSignOut={handleSignOut}
           openUserMenu={t('header.openUserMenu')}

@@ -11,6 +11,7 @@ import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { EscolaProvider } from '@/contexts/escola-context'
 import { DemoSandboxBanner } from '@/components/demo-sandbox/DemoSandboxBanner'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
+import { dashboardRoles } from '@/lib/route-policy'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { useTranslations } from 'next-intl'
@@ -21,7 +22,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthGuard allowedRoles={['admin', 'diretor', 'secretario', 'professor']}>
+    <AuthGuard allowedRoles={[...dashboardRoles]}>
       <DashboardWithRealtime>
         <DashboardLayoutInner>
           {children}
