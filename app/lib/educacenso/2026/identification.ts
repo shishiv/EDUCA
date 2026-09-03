@@ -268,6 +268,25 @@ function candidateToFields(candidate: IdentificationCandidate2026): readonly str
   ]
 }
 
+function unsupportedCandidateIssues(
+  candidate: Record<string, unknown>,
+  recordIndex: number
+): readonly IdentificationValidationIssue2026[] {
+  return Object.keys(candidate)
+    .filter((key) => !CANDIDATE_KEYS.has(key))
+    .sort()
+    .map((key) => {
+      const field = key === 'birthCertificateNumber' ? 3 : key === 'inepUniqueId' ? 9 : 'record'
+      const message =
+        field === 3
+          ? 'O campo 3 não é suportado: a fonte recuperada exige uma matrícula válida, mas não fornece o algoritmo de validação.'
+          : field === 9
+            ? 'O campo 9 deve permanecer vazio em arquivos enviados; ele é reservado ao retorno do Inep.'
+            : `Campo de entrada não suportado: ${key}.`
+      return issue(field, EDUCA_BOUNDARY, message, recordIndex)
+    })
+}
+
 /**
  * Validates one logical outbound line without normalizing or coercing input.
  */
@@ -289,16 +308,7 @@ export function validateIdentificationCandidate2026(
     ]
   }
 
-  for (const key of Object.keys(input).filter((key) => !CANDIDATE_KEYS.has(key)).sort()) {
-    const field = key === 'birthCertificateNumber' ? 3 : key === 'inepUniqueId' ? 9 : 'record'
-    const message =
-      field === 3
-        ? 'O campo 3 não é suportado: a fonte recuperada exige uma matrícula válida, mas não fornece o algoritmo de validação.'
-        : field === 9
-          ? 'O campo 9 deve permanecer vazio em arquivos enviados; ele é reservado ao retorno do Inep.'
-          : `Campo de entrada não suportado: ${key}.`
-    issues.push(issue(field, EDUCA_BOUNDARY, message, recordIndex))
-  }
+  issues.push(...unsupportedCandidateIssues(input, recordIndex))
 
   const localStudentCode = requiredString(
     input,
