@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Search, Eye, Edit, Trash2, UserCheck, Calendar, School, Download } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, Calendar, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -61,161 +61,157 @@ interface Matricula {
   created_at: string | null
 }
 
-const mockMatriculas: Matricula[] = [
-  {
-    id: '1',
-    aluno: {
-      id: '1',
-      nome_completo: 'Pedro Silva Santos',
-      data_nascimento: '2020-03-15',
-      sexo: 'M'
-    },
-    turma: {
-      id: '1',
-      nome: 'Berçário A',
-      serie: 'Berçário',
-      escola: {
-        nome: 'CEMEI Pequenos Passos',
-        tipo: 'creche'
-      },
-      professor: {
-        nome: 'Lucia Cardoso Oliveira'
-      }
-    },
-    ano_letivo: 2024,
-    data_matricula: '2024-02-01',
-    situacao: 'ativa',
-    created_at: '2024-02-01T08:00:00Z'
-  },
-  {
-    id: '2',
-    aluno: {
-      id: '2',
-      nome_completo: 'Julia Oliveira Costa',
-      data_nascimento: '2019-07-22',
-      sexo: 'F'
-    },
-    turma: {
-      id: '3',
-      nome: 'Pré I A',
-      serie: 'Pré I',
-      escola: {
-        nome: 'EMEI Jardim da Infância',
-        tipo: 'pre_escola'
-      },
-      professor: {
-        nome: 'Fernanda Alves Santos'
-      }
-    },
-    ano_letivo: 2024,
-    data_matricula: '2024-02-01',
-    situacao: 'ativa',
-    created_at: '2024-02-01T09:00:00Z'
-  },
-  {
-    id: '3',
-    aluno: {
-      id: '3',
-      nome_completo: 'Lucas Santos Pereira',
-      data_nascimento: '2015-11-08',
-      cpf: '12345678904',
-      sexo: 'M'
-    },
-    turma: {
-      id: '6',
-      nome: '5º Ano A',
-      serie: '5º Ano',
-      escola: {
-        nome: 'EMEF Professor João Silva',
-        tipo: 'fundamental'
-      },
-      professor: {
-        nome: 'José Roberto Lima'
-      }
-    },
-    ano_letivo: 2024,
-    data_matricula: '2024-02-01',
-    situacao: 'ativa',
-    created_at: '2024-02-01T10:00:00Z'
-  },
-  {
-    id: '4',
-    aluno: {
-      id: '4',
-      nome_completo: 'Ana Carolina Ferreira',
-      data_nascimento: '2018-05-12',
-      sexo: 'F'
-    },
-    turma: {
-      id: '2',
-      nome: 'Maternal B',
-      serie: 'Maternal',
-      escola: {
-        nome: 'CEMEI Pequenos Passos',
-        tipo: 'creche'
-      },
-      professor: {
-        nome: 'Ana Paula Santos'
-      }
-    },
-    ano_letivo: 2024,
-    data_matricula: '2024-02-15',
-    situacao: 'ativa',
-    created_at: '2024-02-15T11:00:00Z'
-  },
-  {
-    id: '5',
-    aluno: {
-      id: '5',
-      nome_completo: 'Gabriel Souza Lima',
-      data_nascimento: '2016-09-30',
-      cpf: '12345678905',
-      sexo: 'M'
-    },
-    turma: {
-      id: '5',
-      nome: '1º Ano A',
-      serie: '1º Ano',
-      escola: {
-        nome: 'EMEF Professor João Silva',
-        tipo: 'fundamental'
-      },
-      professor: {
-        nome: 'Mariana Costa Pereira'
-      }
-    },
-    ano_letivo: 2023,
-    data_matricula: '2023-02-01',
-    situacao: 'transferida',
-    observacoes: 'Transferido para escola particular',
-    created_at: '2023-02-01T08:00:00Z'
-  },
-  {
-    id: '6',
-    aluno: {
-      id: '6',
-      nome_completo: 'Beatriz Almeida Silva',
-      data_nascimento: '2017-12-03',
-      sexo: 'F'
-    },
-    turma: {
-      id: '4',
-      nome: 'Pré II B',
-      serie: 'Pré II',
-      escola: {
-        nome: 'EMEI Jardim da Infância',
-        tipo: 'pre_escola'
-      },
-      professor: {
-        nome: 'Roberto Silva Lima'
-      }
-    },
-    ano_letivo: 2023,
-    data_matricula: '2023-02-01',
-    situacao: 'concluida',
-    created_at: '2023-02-01T09:00:00Z'
+function getInitials(name: string | undefined | null) {
+  if (!name) return '??'
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+function calculateAge(birthDate: string | undefined | null) {
+  if (!birthDate) return null
+  const today = new Date()
+  const birth = new Date(birthDate)
+  if (isNaN(birth.getTime())) return null
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--
+
+  return age
+}
+
+function MatriculaStudentCell({ aluno }: { aluno: Matricula['aluno'] }) {
+  const t = useTranslations('registry')
+  const age = calculateAge(aluno?.data_nascimento)
+
+  return (
+    <TableCell>
+      <div className="flex items-center space-x-3">
+        <Avatar>
+          <AvatarFallback>{getInitials(aluno?.nome_completo)}</AvatarFallback>
+        </Avatar>
+        <div>
+          <div className="font-medium">{aluno?.nome_completo || 'Aluno desconhecido'}</div>
+          <div className="text-sm text-gray-500">
+            {age !== null ? `${age} anos` : t('ui.idade-nao-informada')}
+            {aluno?.sexo && (aluno.sexo === 'M' ? ' • Masculino' : ' • Feminino')}
+            {aluno?.cpf && ` • CPF: ${aluno.cpf}`}
+          </div>
+        </div>
+      </div>
+    </TableCell>
+  )
+}
+
+function MatriculaClassCell({ turma }: { turma: Matricula['turma'] }) {
+  return (
+    <TableCell>
+      <div className="space-y-1">
+        <div className="font-medium">{turma?.nome || 'Turma desconhecida'}</div>
+        <div className="text-sm text-gray-500">
+          {turma?.serie || '-'} • {turma?.escola?.nome || '-'}
+        </div>
+        {turma?.professor && (
+          <div className="text-xs text-gray-400">Prof. {turma.professor.nome}</div>
+        )}
+      </div>
+    </TableCell>
+  )
+}
+
+function MatriculaSituationCell({ matricula }: { matricula: Matricula }) {
+  const t = useTranslations('registry')
+  const situations = {
+    ativa: { variant: 'default' as const, label: t('labels.ativa') },
+    transferida: { variant: 'secondary' as const, label: t('labels.transferida') },
+    concluida: { variant: 'outline' as const, label: t('labels.concluida') },
+    cancelada: { variant: 'destructive' as const, label: t('labels.cancelada') },
   }
-]
+  const situation = situations[matricula.situacao as keyof typeof situations]
+
+  return (
+    <TableCell>
+      <Badge variant={situation?.variant || 'outline'}>
+        {situation?.label || matricula.situacao}
+      </Badge>
+      {matricula.observacoes && (
+        <div className="text-xs text-gray-500 mt-1 max-w-32 truncate">
+          {matricula.observacoes}
+        </div>
+      )}
+    </TableCell>
+  )
+}
+
+function MatriculaActionsCell({
+  matricula,
+  onDelete,
+}: {
+  matricula: Matricula
+  onDelete: (matriculaId: string, alunoNome: string) => void
+}) {
+  const t = useTranslations('registry')
+
+  return (
+    <TableCell className="text-right">
+      <div className="flex items-center justify-end space-x-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/dashboard/matriculas/${matricula.id}`}>
+            <Eye className="h-4 w-4" />
+          </Link>
+        </Button>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/dashboard/matriculas/${matricula.id}`}>
+            <Edit className="h-4 w-4" />
+          </Link>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-600 hover:text-red-700"
+          onClick={() => onDelete(
+            matricula.id,
+            matricula.aluno?.nome_completo || t('labels.aluno')
+          )}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </TableCell>
+  )
+}
+
+function MatriculaTableRow({
+  matricula,
+  onDelete,
+}: {
+  matricula: Matricula
+  onDelete: (matriculaId: string, alunoNome: string) => void
+}) {
+  return (
+    <TableRow>
+      <MatriculaStudentCell aluno={matricula.aluno} />
+      <MatriculaClassCell turma={matricula.turma} />
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Calendar className="h-4 w-4 text-gray-400" />
+          <span className="font-medium">{matricula.ano_letivo}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="text-sm">
+          {new Date(matricula.data_matricula).toLocaleDateString('pt-BR')}
+        </div>
+      </TableCell>
+      <MatriculaSituationCell matricula={matricula} />
+      <MatriculaActionsCell matricula={matricula} onDelete={onDelete} />
+    </TableRow>
+  )
+}
 
 export default function MatriculasPage() {
   const t = useTranslations('registry')
@@ -282,10 +278,10 @@ export default function MatriculasPage() {
   }, [loadMatriculas])
 
   const handleDeleteMatricula = async (matriculaId: string, alunoNome: string) => {
-  if (isDemoSandboxEnabled()) {
-    toast.error(t('ui.acao-bloqueada-no-sandbox-publico-de-demonstracao'))
-    return
-  }
+    if (isDemoSandboxEnabled()) {
+      toast.error(t('ui.acao-bloqueada-no-sandbox-publico-de-demonstracao'))
+      return
+    }
 
     if (!confirm(`Tem certeza que deseja cancelar a matrícula de "${alunoNome}"? Esta ação não pode ser desfeita.`)) {
       return
@@ -322,51 +318,6 @@ export default function MatriculasPage() {
         toast.error(`Erro ao cancelar matrícula: ${error.message || 'Tente novamente.'}`)
       }
     }
-  }
-
-  const getInitials = (name: string | undefined | null) => {
-    if (!name) return '??'
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  const getSituacaoLabel = (situacao: string) => {
-    const situacoes = {
-      ativa: t('labels.ativa'),
-      transferida: t('labels.transferida'),
-      concluida: t('labels.concluida'),
-      cancelada: t('labels.cancelada')
-    }
-    return situacoes[situacao as keyof typeof situacoes] || situacao
-  }
-
-  const getSituacaoBadgeVariant = (situacao: string) => {
-    switch (situacao) {
-      case 'ativa': return 'default'
-      case 'transferida': return 'secondary'
-      case 'concluida': return 'outline'
-      case 'cancelada': return 'destructive'
-      default: return 'outline'
-    }
-  }
-
-  const calculateAge = (birthDate: string | undefined | null) => {
-    if (!birthDate) return null
-    const today = new Date()
-    const birth = new Date(birthDate)
-    if (isNaN(birth.getTime())) return null
-    let age = today.getFullYear() - birth.getFullYear()
-    const monthDiff = today.getMonth() - birth.getMonth()
-
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--
-    }
-
-    return age
   }
 
   const filteredMatriculas = matriculas.filter(matricula => {
@@ -546,83 +497,11 @@ export default function MatriculasPage() {
               </TableHeader>
               <TableBody>
                 {filteredMatriculas.map((matricula) => (
-                  <TableRow key={matricula.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarFallback>
-                            {getInitials(matricula.aluno?.nome_completo)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{matricula.aluno?.nome_completo || 'Aluno desconhecido'}</div>
-                          <div className="text-sm text-gray-500">
-                            {calculateAge(matricula.aluno?.data_nascimento) !== null
-                              ? `${calculateAge(matricula.aluno?.data_nascimento)} anos`
-                              : t('ui.idade-nao-informada')}
-                            {matricula.aluno?.sexo && (matricula.aluno.sexo === 'M' ? ' • Masculino' : ' • Feminino')}
-                            {matricula.aluno?.cpf && ` • CPF: ${matricula.aluno.cpf}`}
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-medium">{matricula.turma?.nome || 'Turma desconhecida'}</div>
-                        <div className="text-sm text-gray-500">
-                          {matricula.turma?.serie || '-'} • {matricula.turma?.escola?.nome || '-'}
-                        </div>
-                        {matricula.turma?.professor && (
-                          <div className="text-xs text-gray-400">
-                            Prof. {matricula.turma.professor.nome}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium">{matricula.ano_letivo}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {new Date(matricula.data_matricula).toLocaleDateString('pt-BR')}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getSituacaoBadgeVariant(matricula.situacao)}>
-                        {getSituacaoLabel(matricula.situacao)}
-                      </Badge>
-                      {matricula.observacoes && (
-                        <div className="text-xs text-gray-500 mt-1 max-w-32 truncate">
-                          {matricula.observacoes}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/matriculas/${matricula.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/matriculas/${matricula.id}`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteMatricula(matricula.id, matricula.aluno?.nome_completo || t('labels.aluno'))}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <MatriculaTableRow
+                    key={matricula.id}
+                    matricula={matricula}
+                    onDelete={handleDeleteMatricula}
+                  />
                 ))}
                 {filteredMatriculas.length === 0 && (
                   <TableRow>
