@@ -272,7 +272,7 @@ export const getAuditLogs = async (options?: {
       record_id: row.record_id,
       old_values: row.old_values as Record<string, unknown> | undefined,
       new_values: row.new_values as Record<string, unknown> | undefined,
-      timestamp: row.timestamp,
+      timestamp: row.timestamp ?? undefined,
       ip_address: row.ip_address ?? undefined,
       user_agent: row.user_agent ?? undefined,
       escola_id: row.escola_id ?? undefined,

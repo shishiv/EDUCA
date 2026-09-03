@@ -85,22 +85,6 @@ interface NewLessonModalProps {
   onSuccess?: () => void
 }
 
-interface ConteudoAulaInsert {
-  sessao_id: string
-  tema: string
-  objetivo: string
-  habilidades_bncc: string[]
-  metodologia: string | null
-  recursos: string | null
-  observacoes: string | null
-}
-
-interface ConteudoAulaClient {
-  from(table: 'conteudo_aula'): {
-    insert(values: ConteudoAulaInsert): Promise<{ error: { code: string } | null }>
-  }
-}
-
 /** Explains why an authorized diary write did not complete. */
 function getLessonCreationErrorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42501') {
@@ -157,7 +141,7 @@ async function saveLessonContent(
   turmaId: string,
   dateStr: string
 ) {
-  const { error } = await (supabase as unknown as ConteudoAulaClient)
+  const { error } = await supabase
     .from('conteudo_aula')
     .insert({
       sessao_id: sessionId,

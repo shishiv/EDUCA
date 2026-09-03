@@ -48,7 +48,7 @@ interface AlunoWithDetails extends Pick<Aluno,
     nome: string
   }
   matriculas?: {
-    situacao: string
+    situacao: string | null
     turmas: {
       nome: string
       escolas: {

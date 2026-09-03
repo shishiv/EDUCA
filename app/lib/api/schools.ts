@@ -21,7 +21,7 @@
  * @module api/schools
  */
 import { BaseApiService } from './base'
-import { supabase, Tables, Escola } from '@/lib/supabase'
+import { supabase, Tables, Inserts, Escola } from '@/lib/supabase'
 import { SchoolFormData } from '@/lib/validation'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
@@ -152,7 +152,8 @@ export class SchoolsApiService extends BaseApiService {
 
       const { data: result, error } = await supabase
         .from('escolas')
-        .insert(insertData)
+        // assign_school_municipality fills the generated-required field before insert.
+        .insert(insertData as unknown as Inserts<'escolas'>)
         .select()
         .single()
 

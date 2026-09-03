@@ -99,7 +99,11 @@ export default function TurmaDetalhesPage() {
         .single()
 
       if (turmaError) throw turmaError
-      setTurma(turmaData)
+      const normalizedTurma = {
+        ...turmaData,
+        capacidade: turmaData.capacidade ?? 0,
+      }
+      setTurma(normalizedTurma)
 
       // Load matriculas (students enrolled)
       const { data: matriculasData, error: matriculasError } = await supabase
@@ -120,7 +124,10 @@ export default function TurmaDetalhesPage() {
         .order('alunos(nome_completo)')
 
       if (matriculasError) throw matriculasError
-      setMatriculas(matriculasData || [])
+      setMatriculas((matriculasData || []).map(matricula => ({
+        ...matricula,
+        situacao: matricula.situacao ?? '',
+      })))
 
       // Load the recent canonical sessions for this turma.
       const { data: sessoesData, error: sessoesError } = await supabase
@@ -153,6 +160,7 @@ export default function TurmaDetalhesPage() {
         const attendance = attendanceBySession.get(sessao.id) ?? { presentes: 0, ausentes: 0 }
         return {
           ...sessao,
+          inicio_aula: sessao.inicio_aula ?? '',
           presentes: attendance.presentes,
           ausentes: attendance.ausentes,
         }
@@ -165,7 +173,7 @@ export default function TurmaDetalhesPage() {
       const stats = {
         totalAlunos: matriculasData?.length || 0,
         matriculados: matriculasAtivas.length,
-        vagasDisponiveis: turmaData.capacidade - matriculasAtivas.length,
+        vagasDisponiveis: normalizedTurma.capacidade - matriculasAtivas.length,
         frequenciaMedia: attendanceRate,
       }
       setFrequenciaStats(stats)

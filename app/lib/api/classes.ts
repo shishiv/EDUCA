@@ -10,14 +10,14 @@ import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
 
 export type ClassWithDetails = Turma & {
-  escola?: Tables<'escolas'>
-  professor?: Tables<'users'>
+  escola?: Pick<Tables<'escolas'>, 'id' | 'nome' | 'codigo' | 'tipo'> | null
+  professor?: Pick<Tables<'users'>, 'id' | 'nome' | 'email'> | null
   _count?: {
     students: number
     matriculas: number
   }
-  matriculas?: (Tables<'matriculas'> & {
-    aluno?: Tables<'alunos'>
+  matriculas?: (Pick<Tables<'matriculas'>, 'id' | 'situacao' | 'data_matricula'> & {
+    aluno?: Pick<Tables<'alunos'>, 'id' | 'nome_completo' | 'data_nascimento'> | null
   })[]
 }
 
@@ -42,7 +42,7 @@ export class ClassesApiService extends BaseApiService {
 
     if (error) throw error
 
-    return (data as ClassWithDetails[]).map((classData) => this.withEnrollmentCounts(classData))
+    return data.map((classData) => this.withEnrollmentCounts(classData))
   }
 
   private buildClassesWithDetailsQuery(options?: {
@@ -441,7 +441,7 @@ export class ClassesApiService extends BaseApiService {
 
         const enrolled = classData._count?.students || 0
         stats.totalStudents += enrolled
-        totalCapacity += classData.capacidade
+        totalCapacity += classData.capacidade ?? 0
         totalEnrolled += enrolled
       })
 

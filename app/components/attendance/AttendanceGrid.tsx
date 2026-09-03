@@ -176,7 +176,13 @@ export function AttendanceGrid({
         .order('nome_completo')
 
       if (studentsError) throw studentsError
-      setStudents(studentsData || [])
+      setStudents((studentsData || []).map(student => ({
+        ...student,
+        matriculas: student.matriculas.map(matricula => ({
+          ...matricula,
+          situacao: matricula.situacao ?? '',
+        })),
+      })))
 
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('frequencia')
@@ -201,7 +207,7 @@ export function AttendanceGrid({
           status_presenca: uiStatusToDB(status),
           observacoes: record.observacoes_frequencia ?? undefined,
           horario_marcacao: record.marcado_em || record.created_at || new Date().toISOString(),
-          is_locked: record.bloqueado,
+          is_locked: record.bloqueado ?? false,
           created_by: record.marcado_por ?? undefined,
           updated_by: record.marcado_por ?? undefined
         })

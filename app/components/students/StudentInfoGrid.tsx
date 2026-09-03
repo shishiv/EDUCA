@@ -27,7 +27,7 @@ import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendanc
 interface Matricula {
   id: string
   ano_letivo: number
-  situacao: string
+  situacao: string | null
   turma: {
     nome: string
     serie: string
@@ -35,7 +35,7 @@ interface Matricula {
       nome: string
     }
   }
-  data_matricula: string
+  data_matricula: string | null
 }
 
 interface Frequencia {
@@ -91,7 +91,7 @@ export function StudentInfoGrid({
     return 'text-red-600'
   }
 
-  const getSituacaoMatriculaBadge = (situacao: string) => {
+  const getSituacaoMatriculaBadge = (situacao: string | null) => {
     switch (situacao) {
       case 'ativa':
         return <Badge variant="success">{t('labels.ativa')}</Badge>
@@ -315,7 +315,9 @@ export function StudentInfoGrid({
                       </p>
                       <p className="text-xs text-gray-500">
                         Matricula:{' '}
-                        {new Date(matricula.data_matricula).toLocaleDateString('pt-BR')}
+                        {matricula.data_matricula
+                          ? new Date(matricula.data_matricula).toLocaleDateString('pt-BR')
+                          : '-'}
                       </p>
                     </div>
                     <div className="text-right space-y-1 shrink-0 ml-3">

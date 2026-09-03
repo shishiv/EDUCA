@@ -13,7 +13,7 @@ export interface Config {
   valor: string
   descricao: string
   categoria: string
-  tipo_valor: string
+  tipo_valor: string | null
   valor_padrao: string | null
   ativo: boolean | null
   escola_id?: string | null

@@ -174,18 +174,8 @@ export default function StudentReportsPage() {
         throw new Error('Aluno não encontrado ou sem matrícula ativa')
       }
 
-      // Type assertion for nested data
-      const aluno = matriculaData.aluno as unknown as {
-        id: string
-        nome_completo: string
-        data_nascimento: string
-      }
-      const turma = matriculaData.turma as unknown as {
-        id: string
-        nome: string
-        serie: string
-        escola: { nome: string }
-      }
+      const aluno = matriculaData.aluno
+      const turma = matriculaData.turma
 
       setStudentInfo({
         id: aluno.id,
@@ -198,25 +188,11 @@ export default function StudentReportsPage() {
         escola_nome: turma.escola.nome,
       })
 
-      // Fetch reports for this student - using any cast since table may not be in types yet
-      const { data: reportsData, error: reportsError } = await (supabase as unknown as {
-        from: (table: string) => {
-          select: (cols: string) => {
-            eq: (col: string, val: string) => {
-              order: (col: string, opts: { ascending: boolean }) => {
-                order: (col: string, opts: { ascending: boolean }) => Promise<{
-                  data: unknown[] | null
-                  error: Error | null
-                }>
-              }
-            }
-          }
-        }
-      })
+      const { data: reportsData, error: reportsError } = await supabase
         .from('relatorios_descritivos')
         .select(`
           *,
-          professor:users!professor_id(nome)
+          professor:users!relatorios_descritivos_professor_id_fkey(nome)
         `)
         .eq('matricula_id', matriculaData.id)
         .order('ano_letivo', { ascending: false })

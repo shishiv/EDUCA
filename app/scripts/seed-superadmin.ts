@@ -179,6 +179,7 @@ async function main() {
     for (const escolaData of escolasData) {
       const { data: escola, error: escolaError } = await supabase
         .from('escolas')
+        // assign_school_municipality fills the generated-required field before insert.
         .insert({
           nome: escolaData.nome,
           codigo: escolaData.codigo,
@@ -188,7 +189,7 @@ async function main() {
           email: escolaData.email,
           ativo: true,
           diretor_id: null  // Será atualizado depois
-        })
+        } as unknown as Database['public']['Tables']['escolas']['Insert'])
         .select()
         .single()
 

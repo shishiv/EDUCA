@@ -1,8 +1,7 @@
 /**
  * Typed seam for the canonical attendance conditionality RPC.
  *
- * The committed generated Supabase type surface intentionally lags migrations.
- * This module owns the narrow RPC contract until the next local type generation.
+ * This module keeps a narrow contract for the sensitive conditionality RPC.
  */
 
 /** Filters for the canonical attendance conditionality read model. */
@@ -78,7 +77,7 @@ interface StudentBolsaFamiliaRpcClient {
   }>
 }
 
-/** Bridges the stale generated client into this migration-owned RPC contract. */
+/** Narrows a real client to the conditionality RPC contract. */
 export function asAttendanceConditionalityClient(client: unknown): AttendanceConditionalityRpcClient {
   return client as AttendanceConditionalityRpcClient
 }

@@ -61,7 +61,7 @@ interface AlunoDetalhado {
   matriculas: {
     id: string
     ano_letivo: number
-    situacao: string
+    situacao: string | null
     turma: {
       nome: string
       serie: string
@@ -70,7 +70,7 @@ interface AlunoDetalhado {
         nome: string
       }
     }
-    data_matricula: string
+    data_matricula: string | null
   }[]
   frequencia: {
     percentual: number
@@ -165,7 +165,7 @@ async function loadStudentRecord(studentId: string) {
   if (!profiles[0] || !relations) return null
   return {
     profile: profiles[0],
-    matriculas: (relations.matriculas ?? []) as StudentEnrollment[],
+    matriculas: relations.matriculas ?? [],
     bolsaFamilia,
   }
 }

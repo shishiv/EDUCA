@@ -374,7 +374,7 @@ export async function getAttendanceHistory(
         data: record.data_aula,
         aluno_id: record.matriculas?.alunos?.id || '',
         aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
-        presente: record.presente,
+        presente: record.presente ?? false,
         observacoes: record.observacoes,
         turma_nome: record.sessoes_aula?.turmas?.nome || 'N/A',
         is_locked: true,
@@ -490,7 +490,7 @@ function buildClassDetailAttendance(
       data: record.data_aula,
       aluno_id: record.matriculas?.alunos?.id || '',
       aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
-      presente: record.presente,
+      presente: record.presente ?? false,
       observacoes: record.observacoes,
       turma_nome: turmaNome,
       is_locked: isLocked,
@@ -696,21 +696,6 @@ export async function updateSession(
 }
 
 /**
- * Minimal client shape for the optional conteudo_aula cleanup.
- *
- * The table is not part of the generated schema (it belongs to a future
- * migration), so the typed client cannot reach it. This narrow interface keeps
- * the delete scoped to exactly one table and one column instead of an any cast.
- */
-interface ConteudoAulaCleanupClient {
-  from(table: 'conteudo_aula'): {
-    delete(): {
-      eq(column: 'sessao_id', value: string): Promise<unknown>
-    }
-  }
-}
-
-/**
  * Delete a class session and associated data
  *
  * @param supabase - Supabase client instance
@@ -724,7 +709,7 @@ export async function deleteSession(
   try {
     // First try to delete associated conteudo_aula (if table exists)
     try {
-      await (supabase as unknown as ConteudoAulaCleanupClient)
+      await supabase
         .from('conteudo_aula')
         .delete()
         .eq('sessao_id', sessionId)

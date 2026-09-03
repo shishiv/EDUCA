@@ -1,8 +1,7 @@
 /**
  * Typed data surface for the WhatsApp notification module.
  *
- * app/types/database.ts intentionally lags the live schema (see CONTEXT.md),
- * so this module owns the types for the tables and RPCs it touches. The
+ * This module deliberately exposes only the tables and RPCs it touches. The
  * read-only tables (responsaveis, alunos, aluno_responsaveis, escolas) are
  * typed with Insert/Update = never: the module can read them but only write
  * through its own notification tables. Callers bridge real clients with
@@ -198,7 +197,7 @@ export type WhatsAppDatabase = {
 
 export type WhatsAppSupabase = SupabaseClient<WhatsAppDatabase>
 
-/** Bridges a real (stale-typed) client into the module's typed surface. */
+/** Narrows a real client to the module's database capabilities. */
 export function asWhatsAppClient(client: unknown): WhatsAppSupabase {
   return client as WhatsAppSupabase
 }
