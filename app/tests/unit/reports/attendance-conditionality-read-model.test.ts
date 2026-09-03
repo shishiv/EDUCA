@@ -11,7 +11,6 @@ function readAppFile(relativePath: string): string {
 describe('canonical attendance conditionality consumers', () => {
   const rpcConsumers = [
     'lib/reports/bolsa-familia-reports.ts',
-    'hooks/use-compliance-warnings.ts',
     'app/api/dashboard/alerts/route.ts',
     'app/api/compliance/warnings/route.ts',
   ]

@@ -4,10 +4,6 @@
  * Educational Management System - Attendance Module
  */
 
-// Main workflow components
-export { FrequenciaWorkflow } from './FrequenciaWorkflow'
-export { AbrirAulaWorkflow } from './AbrirAulaWorkflow'
-
 // The canonical pilot flow starts at a turma and does not select a discipline.
 
 // Attendance marking and session management
@@ -28,7 +24,6 @@ export { JustificationModal } from './JustificationModal'
 export { ViewOnlyNotice } from './ViewOnlyNotice'
 
 // Type exports
-export type { AbrirAulaWorkflowProps } from './AbrirAulaWorkflow'
 export type { AttendanceGridProps, AttendanceStats, SessionLockInfo } from './AttendanceGridTypes'
 export type { AttendanceGridHeaderProps } from './AttendanceGridHeader'
 export type { AttendanceGridRowProps } from './AttendanceGridRow'

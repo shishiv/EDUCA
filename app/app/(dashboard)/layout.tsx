@@ -14,8 +14,6 @@ import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { useTranslations } from 'next-intl'
-import { ModalProvider } from '@/components/ui/modal-manager'
-import { ModalRenderer } from '@/components/ui/modal-renderer'
 
 export default function DashboardLayout({
   children,
@@ -24,15 +22,12 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard allowedRoles={['admin', 'diretor', 'secretario', 'professor']}>
-      <ModalProvider>
-        <DashboardWithRealtime>
-          <DashboardLayoutInner>
-            {children}
-          </DashboardLayoutInner>
-          <Toaster />
-        </DashboardWithRealtime>
-        <ModalRenderer />
-      </ModalProvider>
+      <DashboardWithRealtime>
+        <DashboardLayoutInner>
+          {children}
+        </DashboardLayoutInner>
+        <Toaster />
+      </DashboardWithRealtime>
     </AuthGuard>
   )
 }
