@@ -162,7 +162,6 @@ export default function NovaVivenciaPage() {
       toast.error(t('ui.erro-ao-salvar-vivencia'), {
         description: errorMessage,
       })
-      throw err // Re-throw to keep form in submitting state
     }
   }, [alunoId, student, matricula, router, t])
 

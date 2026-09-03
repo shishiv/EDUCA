@@ -48,7 +48,7 @@ implemented. Tests assert the denial boundary until a parent portal is defined.
 | `/dashboard/alunos/[id]/editar` | admin, diretor, secretario | desktop + mobile | validated demographic/contact update, save/cancel, persisted values | `alunos/detail.spec.ts` | covered |
 | `/dashboard/alunos/[id]/boletim` | admin, diretor, secretario, professor | desktop | grades/frequency summary and PDF export | `grades/report-card.spec.ts` | covered |
 | `/dashboard/alunos/[id]/diario` | admin, diretor, secretario, professor | desktop | entries, filters, new-entry and report navigation | `diary/list.spec.ts` | covered |
-| `/dashboard/alunos/[id]/diario/novo` | admin, diretor, secretario, professor | desktop | date, lesson content, BNCC, validation, save/cancel | `diary/create.spec.ts`, `diary/lesson-form.spec.ts` | covered |
+| `/dashboard/alunos/[id]/diario/novo` | professor | desktop + mobile | date, narrative, BNCC Campos, validation, save/cancel | `diary/vivencias-persistence.spec.ts` | covered |
 | `/dashboard/alunos/[id]/diario/relatorio` | admin, diretor, secretario, professor | desktop | report range and export | `diary/list.spec.ts` | covered |
 | `/dashboard/usuarios` | admin | desktop + mobile | search, role/status filters, open/create user | `users/crud.spec.ts` | covered |
 | `/dashboard/usuarios/novo` | admin | desktop | required validation, role/school dependency, create | `users/crud.spec.ts`, `users/roles.spec.ts` | covered |

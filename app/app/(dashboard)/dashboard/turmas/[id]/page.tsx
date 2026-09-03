@@ -23,6 +23,8 @@ import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-fac
 import { logger } from '@/lib/logger'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import { useClassroomTranslations } from '@/i18n/classroom'
+import { useAuth } from '@/hooks/use-auth'
+import { canAccessRoute } from '@/lib/route-policy'
 
 interface Turma {
   id: string
@@ -70,7 +72,12 @@ export default function TurmaDetalhesPage() {
   const t = useClassroomTranslations()
   const router = useRouter()
   const params = useParams()
+  const { userProfile } = useAuth()
   const id = params?.id as string
+  const role = userProfile?.tipo_usuario
+  const attendancePath = `/dashboard/turmas/${id}/chamada`
+  const editPath = `/dashboard/turmas/${id}/editar`
+  const canAccessAttendance = canAccessRoute(attendancePath, role)
 
   const [loading, setLoading] = useState(true)
   const [turma, setTurma] = useState<Turma | null>(null)
@@ -321,18 +328,22 @@ export default function TurmaDetalhesPage() {
           </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link href={`/dashboard/turmas/${id}/chamada`}>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              {t('actions.openAttendance')}
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={`/dashboard/turmas/${id}/editar`}>
-              <Edit className="mr-2 h-4 w-4" />
-              {t('actions.edit')}
-            </Link>
-          </Button>
+          {canAccessAttendance && (
+            <Button variant="outline" asChild>
+              <Link href={attendancePath}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {t('actions.openAttendance')}
+              </Link>
+            </Button>
+          )}
+          {canAccessRoute(editPath, role) && (
+            <Button asChild>
+              <Link href={editPath}>
+                <Edit className="mr-2 h-4 w-4" />
+                {t('actions.edit')}
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -468,8 +479,16 @@ export default function TurmaDetalhesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {matriculas.map((matricula) => (
-                  <TableRow key={matricula.id}>
+                {matriculas.map((matricula) => {
+                  const profilePath = `/dashboard/alunos/${matricula.alunos.id}`
+                  const diaryPath = `${profilePath}/diario`
+                  const studentPath = canAccessRoute(profilePath, role)
+                    ? profilePath
+                    : canAccessRoute(diaryPath, role)
+                      ? diaryPath
+                      : null
+
+                  return <TableRow key={matricula.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar>
@@ -484,14 +503,16 @@ export default function TurmaDetalhesPage() {
                     <TableCell>{matricula.alunos.sexo === 'M' ? 'Masculino' : 'Feminino'}</TableCell>
                     <TableCell>{getStatusBadge(matricula.situacao)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/alunos/${matricula.alunos.id}`}>
-                          {t('actions.viewProfile')}
-                        </Link>
-                      </Button>
+                      {studentPath && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={studentPath}>
+                            {studentPath === profilePath ? t('actions.viewProfile') : t('diary.title')}
+                          </Link>
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
-                ))}
+                })}
               </TableBody>
             </Table>
           )}
@@ -506,11 +527,13 @@ export default function TurmaDetalhesPage() {
               <BookOpen className="h-5 w-5 text-purple-600" />
               <CardTitle>{t('classes.recentSessions')}</CardTitle>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/turmas/${id}/chamada`}>
-                {t('actions.viewAttendances')}
-              </Link>
-            </Button>
+            {canAccessAttendance && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={attendancePath}>
+                  {t('actions.viewAttendances')}
+                </Link>
+              </Button>
+            )}
           </div>
           <CardDescription>
             {t('classes.recentSessionsHint')}
@@ -549,11 +572,13 @@ export default function TurmaDetalhesPage() {
                       {sessao.conteudo_programatico || '-'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/turmas/${id}/chamada?sessao=${sessao.id}`}>
-                          {t('actions.viewAttendance')}
-                        </Link>
-                      </Button>
+                      {canAccessAttendance && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`${attendancePath}?sessao=${sessao.id}`}>
+                            {t('actions.viewAttendance')}
+                          </Link>
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

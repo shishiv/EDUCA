@@ -27,6 +27,7 @@ vi.mock('@/lib/api/vivencias', () => ({ VivenciasApiService: serviceConstructorM
 
 import { GET, POST } from '@/app/api/vivencias/route'
 import { DELETE, GET as GET_BY_ID, PUT } from '@/app/api/vivencias/[id]/route'
+import { AttendanceAuthError } from '@/lib/services/attendance-auth'
 
 const SCHOOL_ID = '10000000-0000-0000-0000-000000000001'
 const TURMA_ID = '20000000-0000-0000-0000-000000000001'
@@ -63,6 +64,7 @@ function request(url: string, body?: unknown) {
 describe('Vivências route handlers', () => {
   const create = vi.fn()
   const getByTurma = vi.fn()
+  const getByAluno = vi.fn()
   const getById = vi.fn()
   const update = vi.fn()
   const remove = vi.fn()
@@ -75,6 +77,7 @@ describe('Vivências route handlers', () => {
     createClientMock.mockReset()
     create.mockReset()
     getByTurma.mockReset()
+    getByAluno.mockReset()
     getById.mockReset()
     update.mockReset()
     remove.mockReset()
@@ -84,6 +87,7 @@ describe('Vivências route handlers', () => {
     enrollmentMock.mockResolvedValue({ id: ENROLLMENT_ID, aluno_id: STUDENT_ID, turma_id: TURMA_ID, situacao: 'ativa' })
     create.mockResolvedValue(vivencia)
     getByTurma.mockResolvedValue([vivencia])
+    getByAluno.mockResolvedValue([vivencia])
     getById.mockResolvedValue(vivencia)
     update.mockResolvedValue(vivencia)
     remove.mockResolvedValue(undefined)
@@ -91,7 +95,7 @@ describe('Vivências route handlers', () => {
       return {
         create,
         getByTurma,
-        getByAluno: vi.fn().mockResolvedValue([]),
+        getByAluno,
         getById,
         update,
         delete: remove,
@@ -128,6 +132,43 @@ describe('Vivências route handlers', () => {
     expect(getByTurma).toHaveBeenCalledWith(TURMA_ID, undefined, undefined)
   })
 
+  it('passes student date bounds to the database query before limiting results', async () => {
+    const response = await GET(new NextRequest(
+      `http://test/api/vivencias?aluno_id=${STUDENT_ID}&data_inicio=2026-08-01&data_fim=2026-08-01&limit=50`,
+    ))
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ data: [vivencia] })
+    expect(getByAluno).toHaveBeenCalledWith(STUDENT_ID, '2026-08-01', '2026-08-01', 50)
+  })
+
+  it('rejects reversed date ranges', async () => {
+    const response = await GET(new NextRequest(
+      `http://test/api/vivencias?aluno_id=${STUDENT_ID}&data_inicio=2026-08-02&data_fim=2026-08-01`,
+    ))
+
+    expect(response.status).toBe(400)
+    expect((await response.json()).code).toBe('VALIDATION_ERROR')
+    expect(getByAluno).not.toHaveBeenCalled()
+  })
+
+  it('returns Vivências-specific authentication errors', async () => {
+    actorMock.mockRejectedValue(new AttendanceAuthError(
+      'UNAUTHENTICATED',
+      'Autenticação obrigatória para acessar vivências',
+    ))
+
+    const response = await GET(new NextRequest(
+      `http://test/api/vivencias?aluno_id=${STUDENT_ID}`,
+    ))
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({
+      error: 'Autenticação obrigatória para acessar vivências',
+      code: 'UNAUTHENTICATED',
+    })
+  })
+
   it('fails closed when the actor has no approved role', async () => {
     actorMock.mockResolvedValue({ userId: 'other', tipo_usuario: 'responsavel', escola_id: SCHOOL_ID })
 
@@ -147,6 +188,7 @@ describe('Vivências route handlers', () => {
     )
     const updateResponse = await PUT(
       request(`http://test/api/vivencias/${id}`, {
+        data_vivencia: '2026-08-19',
         descricao: 'A criança ampliou sua narrativa com os colegas.',
         professor_id: '99999999-9999-4999-8999-999999999999',
       }),
@@ -159,8 +201,22 @@ describe('Vivências route handlers', () => {
 
     expect(getResponse.status).toBe(200)
     expect(updateResponse.status).toBe(200)
-    expect(update).toHaveBeenCalledWith(id, expect.objectContaining({ updated_by: TEACHER_ID }))
+    expect(update).toHaveBeenCalledWith(id, expect.objectContaining({
+      data_vivencia: '2026-08-19',
+      updated_by: TEACHER_ID,
+    }))
     expect(deleteResponse.status).toBe(204)
     expect(remove).toHaveBeenCalledWith(id)
+  })
+
+  it('rejects future dates when editing', async () => {
+    const futureDate = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
+    const response = await PUT(
+      request(`http://test/api/vivencias/${vivencia.id}`, { data_vivencia: futureDate }),
+      { params: Promise.resolve({ id: vivencia.id }) },
+    )
+
+    expect(response.status).toBe(400)
+    expect(update).not.toHaveBeenCalled()
   })
 })

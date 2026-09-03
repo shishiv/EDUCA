@@ -24,7 +24,14 @@ export type VivenciaEnrollment = {
 export async function requireVivenciaActor(
   supabase: Pick<SupabaseClient<Database>, 'auth' | 'from'>,
 ): Promise<AttendanceActor> {
-  return requireAttendanceActor(supabase)
+  try {
+    return await requireAttendanceActor(supabase)
+  } catch (error) {
+    if (error instanceof AttendanceAuthError && error.code === 'UNAUTHENTICATED') {
+      throw new AttendanceAuthError('UNAUTHENTICATED', 'Autenticação obrigatória para acessar vivências')
+    }
+    throw error
+  }
 }
 
 export async function getVivenciaTurma(

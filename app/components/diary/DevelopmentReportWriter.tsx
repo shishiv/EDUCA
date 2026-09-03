@@ -315,7 +315,7 @@ export function DevelopmentReportWriter({
       </Card>
 
       {/* Finalization Warning */}
-      {!canFinalize.canFinalize && (
+      {!disabled && !canFinalize.canFinalize && (
         <Alert className="border-yellow-200 bg-yellow-50">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertTitle className="text-yellow-800">
@@ -333,51 +333,53 @@ export function DevelopmentReportWriter({
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleSaveDraft}
-          disabled={isSaving || isFinalizing || isFormDisabled}
-          className="min-w-[140px]"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              {t('actions.saving')}
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              {t('diary.saveDraft')}
-            </>
-          )}
-        </Button>
+      {!disabled && (
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSaving || isFinalizing || isFormDisabled}
+            className="min-w-[140px]"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {t('actions.saving')}
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                {t('diary.saveDraft')}
+              </>
+            )}
+          </Button>
 
-        <Button
-          type="button"
-          onClick={handleFinalize}
-          disabled={
-            isSaving ||
-            isFinalizing ||
-            !canFinalize.canFinalize ||
-            isFormDisabled
-          }
-          className="min-w-[140px] bg-green-600 hover:bg-green-700"
-        >
-          {isFinalizing ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Finalizando...
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {t('diary.finalize')}
-            </>
-          )}
-        </Button>
-      </div>
+          <Button
+            type="button"
+            onClick={handleFinalize}
+            disabled={
+              isSaving ||
+              isFinalizing ||
+              !canFinalize.canFinalize ||
+              isFormDisabled
+            }
+            className="min-w-[140px] bg-green-600 hover:bg-green-700"
+          >
+            {isFinalizing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Finalizando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {t('diary.finalize')}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

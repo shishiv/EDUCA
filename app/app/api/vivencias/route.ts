@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
-import { VIVENCIA_ERROR_MESSAGES, VIVENCIA_VALIDATION } from '@/types/diario-infantil'
+import {
+  isValidVivenciaDate,
+  isVivenciaDateNotFuture,
+  VIVENCIA_ERROR_MESSAGES,
+  VIVENCIA_VALIDATION,
+} from '@/types/diario-infantil'
 import { VivenciasApiService } from '@/lib/api/vivencias'
 import {
   assertVivenciaReadAccess,
@@ -15,20 +20,17 @@ import { AttendanceAuthError } from '@/lib/services/attendance-auth'
 
 const campoSchema = z.enum(['eu', 'corpo', 'tracos', 'escuta', 'espacos'])
 
-const isIsoDate = (value: string) => {
-  const date = new Date(`${value}T00:00:00.000Z`)
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
-}
-
 const querySchema = z.object({
   aluno_id: z.string().uuid().optional(),
   turma_id: z.string().uuid().optional(),
   report_id: z.string().uuid().optional(),
-  data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isIsoDate).optional(),
-  data_fim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isIsoDate).optional(),
+  data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidVivenciaDate).optional(),
+  data_fim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidVivenciaDate).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 }).refine((value) => Boolean(value.aluno_id || value.turma_id || value.report_id), {
   message: 'aluno_id, turma_id ou report_id é obrigatório',
+}).refine((value) => !value.data_inicio || !value.data_fim || value.data_inicio <= value.data_fim, {
+  message: 'data_inicio não pode ser posterior a data_fim',
 })
 
 const createSchema = z.object({
@@ -36,8 +38,8 @@ const createSchema = z.object({
   turma_id: z.string().uuid('ID da turma inválido'),
   data_vivencia: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de data inválido')
-    .refine(isIsoDate, 'Data inválida')
-    .refine((value) => value <= new Date().toISOString().slice(0, 10), 'A data não pode ser futura'),
+    .refine(isValidVivenciaDate, 'Data inválida')
+    .refine(isVivenciaDateNotFuture, 'A data não pode ser futura'),
   campos_experiencia: z.array(campoSchema)
     .min(VIVENCIA_VALIDATION.minCamposSelected, VIVENCIA_ERROR_MESSAGES.noCampoSelected)
     .refine((values) => new Set(values).size === values.length, 'Campos de experiência duplicados'),
@@ -114,9 +116,7 @@ export async function GET(request: NextRequest) {
       throw new AttendanceAuthError('FORBIDDEN_ROLE', 'Usuário sem permissão para consultar vivências')
     }
 
-    let data = await service.getByAluno(query.aluno_id!, query.limit)
-    if (query.data_inicio) data = data.filter((vivencia) => vivencia.data_vivencia >= query.data_inicio!)
-    if (query.data_fim) data = data.filter((vivencia) => vivencia.data_vivencia <= query.data_fim!)
+    const data = await service.getByAluno(query.aluno_id!, query.data_inicio, query.data_fim, query.limit)
     return NextResponse.json({ data })
   } catch (error) {
     return errorResponse(error, 'vivencias_list_failed')

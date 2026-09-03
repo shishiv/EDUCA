@@ -61,6 +61,7 @@ import { DevelopmentReportWriter, type ReportFormValues } from '@/components/dia
 import { VivenciasReference } from '@/components/diary/VivenciasReference'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { canAccessRoute } from '@/lib/route-policy'
 
 // Types
 import { type Vivencia, type CampoType } from '@/types/diario-infantil'
@@ -121,6 +122,8 @@ export default function RelatorioPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
   const alunoId = params?.id as string
+  const newVivenciaPath = `/dashboard/alunos/${alunoId}/diario/novo`
+  const canWriteReport = userProfile?.tipo_usuario === 'professor'
 
   // State
   const [student, setStudent] = useState<Student | null>(null)
@@ -595,12 +598,14 @@ export default function RelatorioPage() {
             <p className="text-sm text-muted-foreground mt-2">
               {t('ui.registre-vivencias-no-diario-infantil-para-construir-o-relatorio-de-dese')}
             </p>
-            <Button asChild className="mt-4">
-              <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
-                <Plus className="h-4 w-4 mr-2" />
-                Registrar primeira vivencia
-              </Link>
-            </Button>
+            {canAccessRoute(newVivenciaPath, userProfile?.tipo_usuario) && (
+              <Button asChild className="mt-4">
+                <Link href={newVivenciaPath}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Registrar primeira vivencia
+                </Link>
+              </Button>
+            )}
           </div>
         )}
 
@@ -623,12 +628,12 @@ export default function RelatorioPage() {
                 studentName={student.nome_completo}
                 semesterLabel={semesterLabel}
                 initialValues={initialValues}
-                onSave={handleSaveDraft}
-                onFinalize={handleFinalizeRequest}
+                onSave={canWriteReport ? handleSaveDraft : undefined}
+                onFinalize={canWriteReport ? handleFinalizeRequest : undefined}
                 onCampoFocus={handleCampoFocus}
                 vivencias={vivencias}
                 isLoading={isSaving}
-                disabled={isReportFinalized}
+                disabled={isReportFinalized || !canWriteReport}
               />
             </main>
 
