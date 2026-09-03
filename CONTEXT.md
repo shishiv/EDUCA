@@ -126,7 +126,7 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
 | `DEMO.md` | Demo sandbox runbook, local reset command, environment contract and safety boundaries. |
 | `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |
-| `app/content/`, `app/lib/blog-posts.ts`, `app/public/brand/`, `app/app/icon.png`, `app/app/apple-icon.png`, `app/app/favicon.ico`, `app/app/opengraph-image.jpg` | Canonical public articles, social images, and raster brand assets preserved or derived from the former marketing repository. |
+| `app/content/`, `app/lib/blog-posts.ts`, `app/public/brand/`, `app/public/site.webmanifest`, `app/app/icon.png`, `app/app/apple-icon.png`, `app/app/favicon.ico`, `app/app/opengraph-image.png` | Canonical public articles, social, PWA, and brand assets preserved or derived from the former marketing repository. |
 
 ## Demo sandbox (issue #23)
 
