@@ -3930,6 +3930,18 @@ export type Database = {
           zona_residencial: string
         }[]
       }
+      get_municipal_settings: {
+        Args: { p_ano: number; p_escola_id: string }
+        Returns: {
+          contact_phone: string
+          dpo_address: string
+          dpo_email: string
+          educacenso_deadline: string
+          education_department_name: string
+          municipality_name: string
+          state: string
+        }[]
+      }
       get_school_academic_year: {
         Args: { p_ano: number; p_escola_id: string }
         Returns: {
@@ -4090,6 +4102,28 @@ export type Database = {
           threshold_id: string
           valid_from: string
           valid_until: string
+        }[]
+      }
+      set_municipal_settings: {
+        Args: {
+          p_contact_phone: string
+          p_dpo_address: string
+          p_dpo_email: string
+          p_educacenso_deadline: string
+          p_educacenso_year: number
+          p_education_department_name: string
+          p_escola_id: string
+          p_municipality_name: string
+          p_state: string
+        }
+        Returns: {
+          contact_phone: string
+          dpo_address: string
+          dpo_email: string
+          educacenso_deadline: string
+          education_department_name: string
+          municipality_name: string
+          state: string
         }[]
       }
       set_school_academic_year: {

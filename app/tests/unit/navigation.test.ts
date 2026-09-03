@@ -27,14 +27,14 @@ describe('authenticated navigation', () => {
 
     expect(secretaryLinks).not.toContain('/dashboard/usuarios')
     expect(secretaryLinks).not.toContain('/dashboard/escolas')
-    expect(secretaryLinks).not.toContain('/dashboard/configuracoes')
+    expect(secretaryLinks).toContain('/dashboard/configuracoes')
     expect(professorLinks).not.toContain('/dashboard/alunos')
     expect(professorLinks).not.toContain('/dashboard/matriculas')
     expect(professorLinks).not.toContain('/dashboard/relatorios')
   })
 
   it('shows settings to both roles authorized for its route', () => {
-    for (const role of ['admin', 'diretor']) {
+    for (const role of ['admin', 'secretario', 'diretor']) {
       const links = getNavigationForRole(role).flatMap(group => group.items).map(item => item.href)
       expect(links).toContain('/dashboard/configuracoes')
     }

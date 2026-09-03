@@ -59,6 +59,7 @@ import {
 
 import { type EducationLevel } from '@/types/lesson-content'
 import { type SemestreType, type ReportStatus } from '@/types/descriptive-report'
+import { useMunicipalSettings } from '@/hooks/use-municipal-settings'
 
 // ============================================================================
 // TYPES
@@ -77,6 +78,7 @@ interface StudentData {
       serie: string
       etapa_ensino?: string | null
       escola: {
+        id: string
         nome: string
       }
     }
@@ -123,7 +125,7 @@ interface StudentEnrollmentData {
     nome: string
     serie: string
     etapa_ensino: string | null
-    escolas: { nome: string }
+    escolas: { id: string; nome: string }
   }
 }
 
@@ -281,7 +283,7 @@ function mapStudentData(data: StudentQueryData): ReportCardLoadData {
               nome: turma?.nome || '',
               serie: turma?.serie || '',
               etapa_ensino: turma?.etapa_ensino,
-              escola: { nome: escola?.nome || '' },
+              escola: { id: escola?.id || '', nome: escola?.nome || '' },
             },
           }
         : undefined,
@@ -307,6 +309,7 @@ async function loadStudentData(studentId: string): Promise<ReportCardLoadData | 
           serie,
           etapa_ensino,
           escolas!inner (
+            id,
             nome
           )
         )
@@ -680,6 +683,9 @@ function ReportCardContent({
   onPrint: () => void
   onExportPDF: () => void
 }) {
+  const settings = useMunicipalSettings(student.matricula?.turma.escola.id)
+  if (!settings) return null
+
   return (
     <div className={cn('space-y-6', printMode && 'print:space-y-4')}>
       <ReportCardHeader studentId={studentId} educationLevel={educationLevel} />
@@ -691,6 +697,7 @@ function ReportCardContent({
           onPrint={onPrint}
           onExportPDF={onExportPDF}
           printMode={printMode}
+          municipalityName={settings.municipality_name}
         />
       ) : (
         <StudentReportInfantil
@@ -699,6 +706,7 @@ function ReportCardContent({
           onPrint={onPrint}
           onExportPDF={onExportPDF}
           printMode={printMode}
+          municipalityName={settings.municipality_name}
         />
       )}
     </div>

@@ -7,7 +7,7 @@ const routePolicy: Array<{ pathname: string; roles: RouteRole[] }> = [
   { pathname: '/dashboard/escolas/example', roles: ['admin'] },
   { pathname: '/dashboard/flags', roles: ['admin'] },
   { pathname: '/dashboard/atribuicoes', roles: ['admin', 'diretor'] },
-  { pathname: '/dashboard/configuracoes', roles: ['admin', 'diretor'] },
+  { pathname: '/dashboard/configuracoes', roles: ['admin', 'secretario', 'diretor'] },
   { pathname: '/dashboard/alunos/example/diario/novo', roles: ['admin', 'diretor', 'secretario', 'professor'] },
   { pathname: '/dashboard/alunos/example', roles: ['admin', 'diretor', 'secretario'] },
   { pathname: '/dashboard/turmas/nova', roles: ['admin', 'diretor', 'secretario'] },

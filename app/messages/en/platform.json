@@ -158,7 +158,22 @@
     "academicYearSaveError": "Unable to save the academic period.",
     "academicYearInvalidRange": "The end date cannot be earlier than the start date.",
     "academicYearDenied": "You do not have permission to change this school's academic period.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "municipalTitle": "Municipal identity and Educacenso",
+    "municipalDescription": "Set the network identity and annual Educacenso deadline.",
+    "municipalSchoolDescription": "Set the identity and deadline that replace the municipal default for this school.",
+    "municipalReadOnly": "Values resolved for your school.",
+    "municipalLoading": "Loading municipal settings...",
+    "municipalityName": "Municipality",
+    "educationDepartmentName": "Department of education",
+    "municipalState": "State",
+    "municipalPhone": "Contact phone",
+    "dpoEmail": "Data protection officer email",
+    "dpoAddress": "Data protection officer address",
+    "educacensoDeadline": "Educacenso deadline {year}",
+    "municipalSave": "Save municipal settings",
+    "municipalSaved": "Municipal settings saved successfully.",
+    "municipalSaveError": "Unable to save municipal settings."
   },
   "flags": {
     "title": "Feature Flags",
