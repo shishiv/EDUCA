@@ -52,12 +52,6 @@ export {
   OverlayLoading,
 } from './loading-states'
 
-// Mobile-First Responsive Components
-export {
-  ResponsiveDataTable,
-  StudentDataTable
-} from './responsive-data-table'
-
 // Sonner Toast Integration
 export { Toaster as SonnerToaster } from './sonner'
 

@@ -22,10 +22,6 @@ export type { } from './use-toast'
 export { useServiceWorker } from './use-service-worker'
 export type { } from './use-service-worker'
 
-// Compliance & Warnings
-export { useComplianceWarnings } from './use-compliance-warnings'
-export type { } from './use-compliance-warnings'
-
 // User Data Management
 export {
   useUsersWithSchool,

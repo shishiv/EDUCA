@@ -11,7 +11,6 @@ import { calculateFaltasParaCritico } from '@/lib/reports/bolsa-familia-reports'
 
 const POLICY_SURFACES = [
   'lib/reports/bolsa-familia-reports.ts',
-  'hooks/use-compliance-warnings.ts',
   'app/api/compliance/warnings/route.ts',
   'app/api/dashboard/alerts/route.ts',
   'lib/reports/attendance-reports.ts',
@@ -21,7 +20,6 @@ const POLICY_SURFACES = [
   'app/(dashboard)/relatorios/bolsa-familia/page.tsx',
   'components/reports/AttendanceReportTable.tsx',
   'app/(dashboard)/relatorios/frequencia/page.tsx',
-  'components/diary/RiskAlert.tsx',
   'components/diary/LessonCard.tsx',
   'components/diary/LessonDetailPanel.tsx',
   'components/diary/ClassDiaryDetail.tsx',
