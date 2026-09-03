@@ -16,13 +16,14 @@ import {
 } from 'lucide-react'
 import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
+import { canAccessRoute, type RouteRole } from '@/lib/route-policy'
 
 export interface AppNavigationItem {
   id: NavigationItemKey
   labelKey: NavigationItemKey
   href: string
   icon: LucideIcon
-  roles: string[]
+  hiddenForRoles?: RouteRole[]
 }
 
 export interface AppNavigationGroup {
@@ -40,38 +41,38 @@ export const appNavigationGroups: AppNavigationGroup[] = [
     id: 'main', labelKey: 'main',
     defaultOpen: true,
     items: [
-      { id: 'dashboard', labelKey: 'dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'diretor', 'secretario', 'professor'] },
+      { id: 'dashboard', labelKey: 'dashboard', href: '/dashboard', icon: Home },
     ],
   },
   {
     id: 'registrations', labelKey: 'registrations',
     defaultOpen: true,
     items: [
-      { id: 'students', labelKey: 'students', href: '/dashboard/alunos', icon: Users, roles: ['admin', 'diretor', 'secretario'] },
-      { id: 'users', labelKey: 'users', href: '/dashboard/usuarios', icon: User, roles: ['admin'] },
-      { id: 'schools', labelKey: 'schools', href: '/dashboard/escolas', icon: School, roles: ['admin'] },
-      { id: 'classes', labelKey: 'classes', href: '/dashboard/turmas', icon: BookOpen, roles: ['admin', 'diretor', 'secretario'] },
-      { id: 'enrolments', labelKey: 'enrolments', href: '/dashboard/matriculas', icon: UserCheck, roles: ['admin', 'diretor', 'secretario'] },
-      { id: 'assignments', labelKey: 'assignments', href: '/dashboard/atribuicoes', icon: UserCog, roles: ['admin', 'diretor'] },
-      { id: 'guardians', labelKey: 'guardians', href: '/dashboard/responsaveis', icon: Users, roles: ['admin', 'diretor', 'secretario'] },
+      { id: 'students', labelKey: 'students', href: '/dashboard/alunos', icon: Users },
+      { id: 'users', labelKey: 'users', href: '/dashboard/usuarios', icon: User },
+      { id: 'schools', labelKey: 'schools', href: '/dashboard/escolas', icon: School },
+      { id: 'classes', labelKey: 'classes', href: '/dashboard/turmas', icon: BookOpen, hiddenForRoles: ['professor'] },
+      { id: 'enrolments', labelKey: 'enrolments', href: '/dashboard/matriculas', icon: UserCheck },
+      { id: 'assignments', labelKey: 'assignments', href: '/dashboard/atribuicoes', icon: UserCog },
+      { id: 'guardians', labelKey: 'guardians', href: '/dashboard/responsaveis', icon: Users },
     ],
   },
   {
     id: 'academic', labelKey: 'academic',
     defaultOpen: true,
     items: [
-      { id: 'attendance', labelKey: 'attendance', href: '/dashboard/turmas', icon: CheckSquare, roles: ['admin', 'diretor', 'secretario', 'professor'] },
-      { id: 'classDiary', labelKey: 'classDiary', href: '/diario', icon: BookText, roles: ['admin', 'diretor', 'secretario', 'professor'] },
-      { id: 'grades', labelKey: 'grades', href: '/dashboard/notas', icon: ClipboardList, roles: ['admin', 'diretor', 'secretario', 'professor'] },
-      { id: 'calendar', labelKey: 'calendar', href: '/dashboard/calendario', icon: Calendar, roles: ['admin', 'diretor', 'secretario', 'professor'] },
+      { id: 'attendance', labelKey: 'attendance', href: '/dashboard/turmas', icon: CheckSquare },
+      { id: 'classDiary', labelKey: 'classDiary', href: '/diario', icon: BookText },
+      { id: 'grades', labelKey: 'grades', href: '/dashboard/notas', icon: ClipboardList },
+      { id: 'calendar', labelKey: 'calendar', href: '/dashboard/calendario', icon: Calendar },
     ],
   },
   {
     id: 'management', labelKey: 'management',
     defaultOpen: false,
     items: [
-      { id: 'reports', labelKey: 'reports', href: '/dashboard/relatorios', icon: FileText, roles: ['admin', 'diretor', 'secretario'] },
-      { id: 'settings', labelKey: 'settings', href: '/dashboard/configuracoes', icon: Settings, roles: ['diretor'] },
+      { id: 'reports', labelKey: 'reports', href: '/dashboard/relatorios', icon: FileText },
+      { id: 'settings', labelKey: 'settings', href: '/dashboard/configuracoes', icon: Settings },
     ],
   },
 ]
@@ -81,7 +82,8 @@ export function getNavigationForRole(userRole: string): AppNavigationGroup[] {
     .map(group => ({
       ...group,
       items: group.items.filter(item =>
-        item.roles.includes(userRole) &&
+        canAccessRoute(item.href, userRole) &&
+        !item.hiddenForRoles?.includes(userRole as RouteRole) &&
         (!isPilotModeEnabled() ||
           !isPilotDisabledPath(item.href) ||
           isDemoSandboxPilotPathAllowed(item.href))

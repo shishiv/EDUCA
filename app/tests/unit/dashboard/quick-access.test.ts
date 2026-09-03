@@ -6,6 +6,7 @@ import {
   resolveVisibleQuickActionCards,
   type QuickAccessRole,
 } from '@/lib/dashboard/quick-access'
+import { canAccessRoute } from '@/lib/route-policy'
 
 const attendanceItem = quickAccessItems.find((item) => item.name === 'Frequência')!
 
@@ -42,6 +43,18 @@ describe('dashboard quick access routes', () => {
     expect(
       resolveVisibleQuickAccess(quickAccessItems, { role: null, pilotMode: false, canManageSchool: true })
     ).toHaveLength(0)
+  })
+
+  it.each(['admin', 'diretor', 'secretario', 'professor', 'responsavel'] as const)('only exposes %s to routes they can open', role => {
+    const visible = resolveVisibleQuickAccess(quickAccessItems, {
+      role,
+      pilotMode: false,
+      canManageSchool: true,
+    })
+
+    for (const item of visible) {
+      expect(canAccessRoute(item.href, role)).toBe(true)
+    }
   })
 
   it('applies pilot role narrowing for Novo Aluno', () => {

@@ -3,7 +3,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
-import { logger } from '@/lib/logger'
+import { checkRouteAccess } from '@/lib/route-policy'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import {
   demoSandboxGuardResponse,
@@ -13,6 +13,8 @@ import {
   isDemoSandboxPilotPathAllowed,
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { isInvalidRefreshTokenError, isSupabaseAuthCookieName } from '@/lib/auth-session-recovery'
+
+export { checkRouteAccess } from '@/lib/route-policy'
 
 export async function createSupabaseServerClient(request: NextRequest) {
   let response = NextResponse.next({
@@ -114,50 +116,6 @@ function clearInvalidSupabaseCookies(request: NextRequest, response: NextRespons
   }
 }
 
-// gestor_sme: deferred per pilot decision E1=B; add here when the pilot expands.
-// The database keeps gestor_sme as a valid role, but this interface must not
-// name a role it does not enforce, and must not map English names onto
-// Portuguese tipo_usuario values. gestor_sme users are denied on protected
-// routes until the deferral is lifted.
-type UserRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
-
-interface ProtectedRoute {
-  prefix: string
-  roles: UserRole[]
-}
-
-// Route protection configuration uses the real Portuguese application routes.
-export const routeProtection = {
-  public: ['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/demo', '/blog', '/offline', '/'],
-  protected: [
-    // Admin-only system management
-    { prefix: '/dashboard/usuarios', roles: ['admin'] },
-    { prefix: '/dashboard/escolas', roles: ['admin'] },
-    { prefix: '/dashboard/flags', roles: ['admin'] },
-
-    // Municipal and school management
-    { prefix: '/dashboard/atribuicoes', roles: ['admin', 'diretor'] },
-    { prefix: '/dashboard/configuracoes', roles: ['admin', 'diretor'] },
-    { prefix: '/dashboard/alunos', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/turmas/nova', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/turmas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/dashboard/matriculas', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/responsaveis', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/relatorios', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/relatorios', roles: ['admin', 'diretor', 'secretario'] },
-
-    // Academic operations
-    { prefix: '/dashboard/notas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/dashboard/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/dashboard/sessoes', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  ] satisfies ProtectedRoute[],
-  authenticated: ['/dashboard'],
-}
-
-const matchesRoute = (pathname: string, route: string) =>
-  route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`)
-
 const isStaticOrApiPath = (pathname: string) =>
   pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.') || pathname.startsWith('/favicon.ico')
 
@@ -177,41 +135,6 @@ function loginRedirect(request: NextRequest, pathname: string, reason?: string) 
   if (reason) loginUrl.searchParams.set('reason', reason)
   loginUrl.searchParams.set('returnUrl', pathname)
   return NextResponse.redirect(loginUrl)
-}
-
-export function checkRouteAccess(
-  pathname: string,
-  userRole?: string
-): { hasAccess: boolean; redirectTo?: string } {
-  if (routeProtection.public.some(route => matchesRoute(pathname, route))) {
-    return { hasAccess: true }
-  }
-
-  if (!userRole) {
-    return { hasAccess: false, redirectTo: '/login' }
-  }
-
-  const infantilDiaryRoute: ProtectedRoute | undefined =
-    /^\/dashboard\/alunos\/[^/]+\/diario(?:\/.*)?$/.test(pathname)
-      ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario', 'professor'] }
-      : undefined
-  const classEditRoute: ProtectedRoute | undefined =
-    /^\/dashboard\/turmas\/[^/]+\/editar$/.test(pathname)
-      ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario'] }
-      : undefined
-  const protectedRoute = infantilDiaryRoute || classEditRoute || routeProtection.protected.find(route =>
-    matchesRoute(pathname, route.prefix)
-  )
-  if (protectedRoute && !(protectedRoute.roles as UserRole[]).includes(userRole as UserRole)) {
-    return { hasAccess: false, redirectTo: '/unauthorized' }
-  }
-
-  if (routeProtection.authenticated.some(route => matchesRoute(pathname, route))) {
-    return { hasAccess: true }
-  }
-
-  // Authenticated users may access public-adjacent routes unless explicitly restricted.
-  return { hasAccess: true }
 }
 
 export async function authMiddleware(request: NextRequest) {

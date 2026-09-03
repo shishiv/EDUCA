@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { canAccessRoute } from '@/lib/route-policy'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import { useAuth } from '@/hooks/use-auth'
@@ -28,7 +29,6 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>
   /** Match pattern for active state (supports partial path matching) */
   matchPath?: string
-  roles: string[]
 }
 
 // ============================================================================
@@ -41,35 +41,30 @@ const navigationItems: NavItem[] = [
     href: '/dashboard',
     icon: Home,
     matchPath: '/dashboard',
-    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
     labelKey: 'students',
     href: '/dashboard/alunos',
     icon: Users,
     matchPath: '/dashboard/alunos',
-    roles: ['admin', 'diretor', 'secretario'],
   },
   {
     labelKey: 'attendance',
     href: '/dashboard/turmas',
     icon: CheckSquare,
     matchPath: '/dashboard/turmas',
-    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
     labelKey: 'diary',
     href: '/diario',
     icon: BookText,
     matchPath: '/diario',
-    roles: ['admin', 'diretor', 'secretario', 'professor'],
   },
   {
     labelKey: 'reports',
     href: '/dashboard/relatorios',
     icon: FileText,
     matchPath: '/dashboard/relatorios',
-    roles: ['admin', 'diretor', 'secretario'],
   },
 ]
 
@@ -83,7 +78,7 @@ export function MobileNav() {
   const { userProfile } = useAuth()
   const visibleNavigationItems = navigationItems.filter(item =>
     !!userProfile &&
-    item.roles.includes(userProfile.tipo_usuario) &&
+    canAccessRoute(item.href, userProfile.tipo_usuario) &&
     (
       !isPilotModeEnabled() ||
       !isPilotDisabledPath(item.href) ||
