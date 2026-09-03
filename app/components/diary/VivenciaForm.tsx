@@ -123,6 +123,47 @@ export function VivenciaForm({
   const isDisabled = disabled || isLoading || isSubmitting
   const descricaoLength = descricao?.length || 0
 
+  const renderDateField = () => (
+    <div className="space-y-2">
+      <Label htmlFor="data_vivencia">Data da Vivencia <span className="text-red-500">*</span></Label>
+      <Input id="data_vivencia" type="date" {...register('data_vivencia')} disabled={isDisabled} error={!!errors.data_vivencia} max={format(new Date(), 'yyyy-MM-dd')} />
+      {errors.data_vivencia && <p className="text-sm text-red-500">{errors.data_vivencia.message}</p>}
+    </div>
+  )
+
+  const renderCamposField = () => (
+    <div className="space-y-3">
+      <Label>Campos de Experiencia <span className="text-red-500">*</span></Label>
+      <p className="text-sm text-muted-foreground">Selecione os campos trabalhados nesta vivencia (pode selecionar varios)</p>
+      <CampoExperienciaSelector selectedCampos={selectedCampos || []} onSelectionChange={handleCamposChange} disabled={isDisabled} />
+      {errors.campos_experiencia && <p className="text-sm text-red-500">{errors.campos_experiencia.message}</p>}
+    </div>
+  )
+
+  const renderDescriptionField = () => (
+    <div className="space-y-2">
+      <Label htmlFor="descricao">Descricao da Vivencia <span className="text-red-500">*</span></Label>
+      <p className="text-sm text-muted-foreground">Descreva o que foi observado, as interacoes e descobertas da crianca</p>
+      <Textarea id="descricao" {...register('descricao')} disabled={isDisabled} placeholder="Descreva detalhadamente a vivencia observada..." rows={5} className={cn(errors.descricao && 'border-red-500 focus:ring-red-500/30 focus:border-red-500')} />
+      <div className="flex justify-between text-xs">
+        <span className={cn(errors.descricao ? 'text-red-500' : 'text-muted-foreground')}>
+          {errors.descricao?.message || `Minimo ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`}
+        </span>
+        <span className={cn('tabular-nums', descricaoLength < VIVENCIA_VALIDATION.minDescricaoLength && 'text-amber-600', descricaoLength >= VIVENCIA_VALIDATION.minDescricaoLength && 'text-green-600', descricaoLength > VIVENCIA_VALIDATION.maxDescricaoLength && 'text-red-500')}>
+          {descricaoLength}/{VIVENCIA_VALIDATION.maxDescricaoLength}
+        </span>
+      </div>
+    </div>
+  )
+
+  const renderObservationsField = () => (
+    <div className="space-y-2">
+      <Label htmlFor="observacoes">Observacoes Adicionais<span className="text-muted-foreground font-normal ml-2">(opcional)</span></Label>
+      <Textarea id="observacoes" {...register('observacoes')} disabled={isDisabled} placeholder="Anotações adicionais, contexto ou observações para acompanhamento..." rows={3} className={cn(errors.observacoes && 'border-red-500 focus:ring-red-500/30 focus:border-red-500')} />
+      {errors.observacoes && <p className="text-sm text-red-500">{errors.observacoes.message}</p>}
+    </div>
+  )
+
   return (
     <form
       onSubmit={onFormSubmit}
@@ -134,97 +175,10 @@ export function VivenciaForm({
         <p className="font-medium text-foreground">{studentName}</p>
       </div>
 
-      {/* Date field */}
-      <div className="space-y-2">
-        <Label htmlFor="data_vivencia">
-          Data da Vivencia <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="data_vivencia"
-          type="date"
-          {...register('data_vivencia')}
-          disabled={isDisabled}
-          error={!!errors.data_vivencia}
-          max={format(new Date(), 'yyyy-MM-dd')} // Can't select future dates
-        />
-        {errors.data_vivencia && (
-          <p className="text-sm text-red-500">{errors.data_vivencia.message}</p>
-        )}
-      </div>
-
-      {/* Campo de Experiencia selector */}
-      <div className="space-y-3">
-        <Label>
-          Campos de Experiencia <span className="text-red-500">*</span>
-        </Label>
-        <p className="text-sm text-muted-foreground">
-          Selecione os campos trabalhados nesta vivencia (pode selecionar varios)
-        </p>
-        <CampoExperienciaSelector
-          selectedCampos={selectedCampos || []}
-          onSelectionChange={handleCamposChange}
-          disabled={isDisabled}
-        />
-        {errors.campos_experiencia && (
-          <p className="text-sm text-red-500">{errors.campos_experiencia.message}</p>
-        )}
-      </div>
-
-      {/* Description field */}
-      <div className="space-y-2">
-        <Label htmlFor="descricao">
-          Descricao da Vivencia <span className="text-red-500">*</span>
-        </Label>
-        <p className="text-sm text-muted-foreground">
-          Descreva o que foi observado, as interacoes e descobertas da crianca
-        </p>
-        <Textarea
-          id="descricao"
-          {...register('descricao')}
-          disabled={isDisabled}
-          placeholder="Descreva detalhadamente a vivencia observada..."
-          rows={5}
-          className={cn(
-            errors.descricao && 'border-red-500 focus:ring-red-500/30 focus:border-red-500'
-          )}
-        />
-        <div className="flex justify-between text-xs">
-          <span className={cn(
-            errors.descricao ? 'text-red-500' : 'text-muted-foreground'
-          )}>
-            {errors.descricao?.message || `Minimo ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`}
-          </span>
-          <span className={cn(
-            'tabular-nums',
-            descricaoLength < VIVENCIA_VALIDATION.minDescricaoLength && 'text-amber-600',
-            descricaoLength >= VIVENCIA_VALIDATION.minDescricaoLength && 'text-green-600',
-            descricaoLength > VIVENCIA_VALIDATION.maxDescricaoLength && 'text-red-500'
-          )}>
-            {descricaoLength}/{VIVENCIA_VALIDATION.maxDescricaoLength}
-          </span>
-        </div>
-      </div>
-
-      {/* Observations field (optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="observacoes">
-          Observacoes Adicionais
-          <span className="text-muted-foreground font-normal ml-2">(opcional)</span>
-        </Label>
-        <Textarea
-          id="observacoes"
-          {...register('observacoes')}
-          disabled={isDisabled}
-          placeholder="Anotações adicionais, contexto ou observações para acompanhamento..."
-          rows={3}
-          className={cn(
-            errors.observacoes && 'border-red-500 focus:ring-red-500/30 focus:border-red-500'
-          )}
-        />
-        {errors.observacoes && (
-          <p className="text-sm text-red-500">{errors.observacoes.message}</p>
-        )}
-      </div>
+      {renderDateField()}
+      {renderCamposField()}
+      {renderDescriptionField()}
+      {renderObservationsField()}
 
       {/* Action buttons */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">

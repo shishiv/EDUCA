@@ -158,6 +158,27 @@ export const routeProtection = {
 const matchesRoute = (pathname: string, route: string) =>
   route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`)
 
+const isStaticOrApiPath = (pathname: string) =>
+  pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.') || pathname.startsWith('/favicon.ico')
+
+function pilotDisabledResponse(request: NextRequest, pathname: string) {
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
+  }
+  const redirectUrl = request.nextUrl.clone()
+  redirectUrl.pathname = '/dashboard'
+  redirectUrl.searchParams.set('pilotScope', 'disabled')
+  return NextResponse.redirect(redirectUrl)
+}
+
+function loginRedirect(request: NextRequest, pathname: string, reason?: string) {
+  const loginUrl = request.nextUrl.clone()
+  loginUrl.pathname = '/login'
+  if (reason) loginUrl.searchParams.set('reason', reason)
+  loginUrl.searchParams.set('returnUrl', pathname)
+  return NextResponse.redirect(loginUrl)
+}
+
 export function checkRouteAccess(
   pathname: string,
   userRole?: string
@@ -207,22 +228,11 @@ export async function authMiddleware(request: NextRequest) {
     !isDemoSandboxPilotPathAllowed(pathname) &&
     !(isDemoSandboxEnabled() && demoSandboxBlockReason && !pathname.startsWith('/api/'))
   ) {
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
-    }
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    redirectUrl.searchParams.set('pilotScope', 'disabled')
-    return NextResponse.redirect(redirectUrl)
+    return pilotDisabledResponse(request, pathname)
   }
 
   // Skip middleware for static files and API routes
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('.') ||
-    pathname.startsWith('/favicon.ico')
-  ) {
+  if (isStaticOrApiPath(pathname)) {
     return response
   }
 
@@ -236,11 +246,7 @@ export async function authMiddleware(request: NextRequest) {
         clearInvalidSupabaseCookies(request, response)
         return response
       }
-      const loginUrl = request.nextUrl.clone()
-      loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('reason', 'session_expired')
-      loginUrl.searchParams.set('returnUrl', pathname)
-      const invalidSessionRedirect = NextResponse.redirect(loginUrl)
+      const invalidSessionRedirect = loginRedirect(request, pathname, 'session_expired')
       clearInvalidSupabaseCookies(request, invalidSessionRedirect)
       return invalidSessionRedirect
     }
@@ -249,15 +255,9 @@ export async function authMiddleware(request: NextRequest) {
     const { hasAccess, redirectTo } = checkRouteAccess(pathname, userRole)
 
     if (!hasAccess && redirectTo) {
-      const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = redirectTo
-
-      // Add return URL for login redirect
-      if (redirectTo === '/login') {
-        redirectUrl.searchParams.set('returnUrl', pathname)
-      }
-
-      return NextResponse.redirect(redirectUrl)
+      return redirectTo === '/login'
+        ? loginRedirect(request, pathname)
+        : NextResponse.redirect(new URL(redirectTo, request.url))
     }
 
     return response

@@ -24,6 +24,26 @@ export interface Config {
 
 const demoConfigOverrides = new Map<string, string>()
 
+const configValidators: Record<string, (valor: string) => boolean> = {
+  ano_letivo_atual: valor => inRange(parseInt(valor), 2020, 2030),
+  frequencia_minima: valor => inRange(parseInt(valor), 50, 100),
+  nota_minima_aprovacao: valor => inRange(parseFloat(valor), 0, 10),
+  sessao_timeout: valor => inRange(parseInt(valor), 5, 120),
+  max_alunos_turma: valor => inRange(parseInt(valor), 10, 50),
+  notificacoes_email: isBooleanValue,
+  backup_automatico: isBooleanValue,
+  bolsa_familia_visible_roles: valor => /^(none|admin(,diretor)?(,secretario)?|diretor(,secretario)?|secretario)$/.test(valor),
+  sistema_nome: valor => valor.length >= 5 && valor.length <= 100,
+}
+
+function inRange(value: number, minimum: number, maximum: number) {
+  return !isNaN(value) && value >= minimum && value <= maximum
+}
+
+function isBooleanValue(valor: string) {
+  return valor === 'true' || valor === 'false'
+}
+
 export class ConfigsApiService {
   // Get all system configurations
   async getAll(): Promise<Config[]> {
@@ -211,40 +231,7 @@ export class ConfigsApiService {
 
   // Validate configuration value
   validateConfigValue(chave: string, valor: string): boolean {
-    switch (chave) {
-      case 'ano_letivo_atual':
-        const ano = parseInt(valor)
-        return !isNaN(ano) && ano >= 2020 && ano <= 2030
-
-      case 'frequencia_minima':
-        const freq = parseInt(valor)
-        return !isNaN(freq) && freq >= 50 && freq <= 100
-
-      case 'nota_minima_aprovacao':
-        const nota = parseFloat(valor)
-        return !isNaN(nota) && nota >= 0 && nota <= 10
-
-      case 'sessao_timeout':
-        const timeout = parseInt(valor)
-        return !isNaN(timeout) && timeout >= 5 && timeout <= 120
-
-      case 'max_alunos_turma':
-        const max = parseInt(valor)
-        return !isNaN(max) && max >= 10 && max <= 50
-
-      case 'notificacoes_email':
-      case 'backup_automatico':
-        return valor === 'true' || valor === 'false'
-
-      case 'bolsa_familia_visible_roles':
-        return /^(none|admin(,diretor)?(,secretario)?|diretor(,secretario)?|secretario)$/.test(valor)
-
-      case 'sistema_nome':
-        return valor.length >= 5 && valor.length <= 100
-
-      default:
-        return true // Allow any value for unknown configs
-    }
+    return configValidators[chave]?.(valor) ?? true
   }
 
   // Get validation message for invalid values
