@@ -4,9 +4,8 @@
 /**
  * Typed data surface for the attendance reopen feature.
  *
- * The committed app/types/database.ts intentionally lags the live pilot
- * schema. This feature owns its new table and RPC contract, then bridges the
- * real Supabase client at one explicit seam.
+ * This feature keeps a narrow table and RPC contract, then bridges the real
+ * Supabase client at one explicit seam.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -66,7 +65,7 @@ export type AttendanceReopenDatabase = {
 
 export type AttendanceReopenSupabase = SupabaseClient<AttendanceReopenDatabase>
 
-/** Bridges a real stale-typed client into the feature's SQL surface. */
+/** Narrows a real client to the attendance-reopen SQL surface. */
 export function asAttendanceReopenClient(client: unknown): AttendanceReopenSupabase {
   return client as AttendanceReopenSupabase
 }

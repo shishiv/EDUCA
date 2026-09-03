@@ -134,14 +134,14 @@ export class StudentsApiService extends BaseApiService {
         p_data_nascimento: aluno.data_nascimento,
         p_sexo: aluno.sexo,
         p_escola_id: resolvedEscolaId,
-        p_cpf: aluno.cpf ?? null,
-        p_rg: aluno.rg ?? null,
-        p_email: aluno.email ?? null,
-        p_telefone: aluno.telefone ?? null,
-        p_endereco: aluno.endereco ?? null,
-        p_nome_mae: aluno.nome_mae ?? null,
-        p_nome_pai: aluno.nome_pai ?? null,
-        p_necessidades_especiais: aluno.necessidades_especiais ?? null,
+        p_cpf: aluno.cpf ?? undefined,
+        p_rg: aluno.rg ?? undefined,
+        p_email: aluno.email ?? undefined,
+        p_telefone: aluno.telefone ?? undefined,
+        p_endereco: aluno.endereco ?? undefined,
+        p_nome_mae: aluno.nome_mae ?? undefined,
+        p_nome_pai: aluno.nome_pai ?? undefined,
+        p_necessidades_especiais: aluno.necessidades_especiais ?? undefined,
         p_responsavel: responsavel
           ? {
               nome: responsavel.nome,
@@ -149,7 +149,7 @@ export class StudentsApiService extends BaseApiService {
               email: responsavel.email,
               grau_parentesco: responsavel.grau_parentesco,
             }
-          : null,
+          : undefined,
       })
     } catch (error) {
       throw error

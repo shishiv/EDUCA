@@ -46,8 +46,8 @@ interface Responsavel {
   rg: string | null
   orgao_emissor_rg: string | null
   renda_familiar: number | null
-  ativo: boolean
-  lgpd_consentimento: boolean
+  ativo: boolean | null
+  lgpd_consentimento: boolean | null
   lgpd_data_consentimento: string | null
 }
 

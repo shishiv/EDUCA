@@ -75,7 +75,7 @@ interface StudentData {
       id: string
       nome: string
       serie: string
-      etapa_ensino?: string
+      etapa_ensino?: string | null
       escola: {
         nome: string
       }
@@ -118,12 +118,12 @@ interface StudentEnrollmentData {
   id: string
   turma_id: string
   ano_letivo: number
-  turmas?: {
-    id?: string
-    nome?: string
-    serie?: string
-    etapa_ensino?: string
-    escolas?: { nome?: string }
+  turmas: {
+    id: string
+    nome: string
+    serie: string
+    etapa_ensino: string | null
+    escolas: { nome: string }
   }
 }
 
@@ -131,7 +131,7 @@ interface StudentQueryData {
   id: string
   nome_completo: string
   data_nascimento: string
-  matriculas?: StudentEnrollmentData | StudentEnrollmentData[]
+  matriculas: StudentEnrollmentData[]
 }
 
 interface ReportCardLoadData {
@@ -151,7 +151,7 @@ interface EducationRecords {
 /**
  * Detect education level from turma serie
  */
-function detectEducationLevel(serie: string | undefined): EducationLevel {
+function detectEducationLevel(serie: string | null | undefined): EducationLevel {
   if (!serie) return 'fundamental'
 
   const serieLower = serie.toLowerCase()
@@ -263,7 +263,7 @@ function calculateAttendanceSummary(attendance: AttendanceData): AttendanceSumma
 }
 
 function mapStudentData(data: StudentQueryData): ReportCardLoadData {
-  const matricula = Array.isArray(data.matriculas) ? data.matriculas[0] : data.matriculas
+  const matricula = data.matriculas[0]
   const turma = matricula?.turmas
   const escola = turma?.escolas
   return {
@@ -305,6 +305,7 @@ async function loadStudentData(studentId: string): Promise<ReportCardLoadData | 
           id,
           nome,
           serie,
+          etapa_ensino,
           escolas!inner (
             nome
           )
@@ -317,7 +318,7 @@ async function loadStudentData(studentId: string): Promise<ReportCardLoadData | 
 
   if (error?.code === 'PGRST116') return null
   if (error) throw error
-  return mapStudentData(data as unknown as StudentQueryData)
+  return mapStudentData(data)
 }
 
 async function loadGrades(matriculaId: string): Promise<DisciplineGrade[] | undefined> {
@@ -336,13 +337,13 @@ async function loadGrades(matriculaId: string): Promise<DisciplineGrade[] | unde
     })
     return undefined
   }
-  return data ? transformGradesToDisciplineGrades(data as GradeData[]) : undefined
+  return data ? transformGradesToDisciplineGrades(data) : undefined
 }
 
 async function loadDescriptiveReports(matriculaId: string): Promise<ReportSummary[] | undefined> {
   try {
     const { data, error } = await supabase
-      .from('relatorios_descritivos' as any)
+      .from('relatorios_descritivos')
       .select(`
         id,
         semestre,
@@ -355,7 +356,7 @@ async function loadDescriptiveReports(matriculaId: string): Promise<ReportSummar
         campo_espacos_tempos,
         observacoes_gerais,
         finalizado_em,
-        users:professor_id (
+        professor:users!relatorios_descritivos_professor_id_fkey (
           nome
         )
       `)
@@ -365,10 +366,15 @@ async function loadDescriptiveReports(matriculaId: string): Promise<ReportSummar
 
     if (error || !data) return undefined
     return transformDescriptiveReports(
-      (data as any[]).map((report: any) => ({ ...report, professor: report.users })) as DescriptiveReportData[],
+      data.map((report) => ({
+        ...report,
+        semestre: report.semestre as SemestreType,
+        status: report.status as ReportStatus,
+        professor: report.professor ?? undefined,
+      })),
     )
   } catch {
-    logger.warn('Descriptive reports table may not exist', {
+    logger.warn('Unable to load descriptive reports', {
       feature: 'boletim',
       action: 'fetch_reports_skipped',
     })

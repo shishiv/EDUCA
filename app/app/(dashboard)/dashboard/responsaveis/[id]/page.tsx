@@ -51,7 +51,7 @@ interface Aluno {
   sexo: string
   ativo: boolean | null
   matriculas?: Array<{
-    situacao: string
+    situacao: string | null
     turmas: {
       nome: string
       escola_id: string

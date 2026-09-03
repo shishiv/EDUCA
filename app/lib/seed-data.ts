@@ -2,7 +2,7 @@
  * Seed data for SRE Educational Management System
  * This file contains development seed data for all 5 user roles and educational entities
  */
-import { Aluno, Escola, Responsavel, supabase, Turma, User } from './supabase'
+import { Aluno, Escola, Inserts, Responsavel, supabase, Turma, User } from './supabase'
 
 export interface SeedData {
   users: Array<{
@@ -313,7 +313,8 @@ export const seedData: SeedData = {
 }
 
 async function insertEscolas() {
-  const result = await supabase.from('escolas').insert(seedData.escolas).select()
+  // assign_school_municipality fills the generated-required field before insert.
+  const result = await supabase.from('escolas').insert(seedData.escolas as Inserts<'escolas'>[]).select()
 
   if (result.error) {
     throw new Error(`Failed to insert schools: ${result.error.message}`)

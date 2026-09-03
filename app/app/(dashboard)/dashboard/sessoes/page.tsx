@@ -127,8 +127,12 @@ export default function SessoesPage() {
 
       if (error) throw error
 
-      setSessoes(sessoesData || [])
-      calculateStats(sessoesData || [])
+      const sessions = (sessoesData || []).map(session => ({
+        ...session,
+        inicio_aula: session.inicio_aula ?? '',
+      }))
+      setSessoes(sessions)
+      calculateStats(sessions)
     } catch (error: any) {
       logger.error('Erro ao carregar sessões:', error)
       toast.error('Erro ao carregar sessões de aula')

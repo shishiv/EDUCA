@@ -15,7 +15,7 @@ export type AuthorizedGuardianProfile = Omit<Responsavel, 'cpf'> & {
 export type StudentManagementProfile = AuthorizedStudentProfile & {
   responsaveis?: { nome: string }
   matriculas?: Array<{
-    situacao: string
+    situacao: string | null
     turmas: {
       nome: string
       escolas: { nome: string } | null
@@ -31,7 +31,7 @@ export type GuardianManagementProfile = AuthorizedGuardianProfile & {
     sexo: string
     ativo: boolean | null
     matriculas: Array<{
-      situacao: string
+      situacao: string | null
       turmas: {
         nome: string
         escola_id: string

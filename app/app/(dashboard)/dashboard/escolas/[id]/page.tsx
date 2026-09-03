@@ -50,7 +50,7 @@ interface Escola {
   created_at: string | null
   diretor?: {
     nome: string
-    email: string
+    email: string | null
   } | null
 }
 
@@ -121,7 +121,7 @@ export default function EscolaDetailsPage() {
         return
       }
 
-      setEscola(escolaData as any)
+      setEscola(escolaData)
 
       // Load turmas
       const { data: turmasData, error: turmasError } = await supabase
@@ -143,7 +143,10 @@ export default function EscolaDetailsPage() {
       if (turmasError) {
         logger.error('Erro ao carregar turmas:', turmasError)
       } else {
-        setTurmas(turmasData || [])
+        setTurmas((turmasData || []).map(turma => ({
+          ...turma,
+          capacidade: turma.capacidade ?? 0,
+        })))
       }
 
       // Calculate statistics

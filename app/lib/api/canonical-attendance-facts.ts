@@ -103,7 +103,7 @@ export async function loadCanonicalAttendanceFacts(
         matriculaId: record.matricula_id,
         sessaoId: record.sessao_id,
         dataAula: record.data_aula,
-        presente: record.presente,
+        presente: record.presente ?? false,
         statusPresenca: record.status_presenca,
         justificativa: record.justificativa,
       })

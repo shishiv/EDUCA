@@ -664,9 +664,13 @@ export default function MatriculaDetailsPage() {
         return
       }
 
-      setMatricula(matriculaData)
+      setMatricula({
+        ...matriculaData,
+        data_matricula: matriculaData.data_matricula ?? '',
+        situacao: matriculaData.situacao ?? '',
+      })
       setFormData({
-        situacao: matriculaData.situacao,
+        situacao: matriculaData.situacao ?? '',
         observacoes: matriculaData.observacoes || ''
       })
 

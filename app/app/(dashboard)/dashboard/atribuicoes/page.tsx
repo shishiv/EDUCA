@@ -52,7 +52,7 @@ interface TurmaWithTeacher {
   professor: {
     id: string
     nome: string
-    email: string
+    email: string | null
   } | null
 }
 
@@ -106,9 +106,9 @@ export default function AtribuicoesPage() {
       const transformed = (data || []).map(turma => ({
         ...turma,
         professor: turma.professor ? {
-          id: (turma.professor as unknown as { id: string }).id,
-          nome: (turma.professor as unknown as { nome: string }).nome,
-          email: (turma.professor as unknown as { email: string }).email,
+          id: turma.professor.id,
+          nome: turma.professor.nome,
+          email: turma.professor.email,
         } : null
       }))
 

@@ -91,6 +91,7 @@ export default function CalendarioPage() {
         ...evento,
         tipo: evento.tipo as CalendarioEvento['tipo'],
         afeta_frequencia: evento.afeta_frequencia ?? false,
+        ano_letivo: evento.ano_letivo ?? new Date(evento.data_inicio).getFullYear(),
       }))
       setEventos(typedData)
     } catch (error) {
