@@ -1,0 +1,9 @@
+{
+  "plugins": ["eslint"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "complexity": ["error", { "max": 20 }]
+  }
+}
