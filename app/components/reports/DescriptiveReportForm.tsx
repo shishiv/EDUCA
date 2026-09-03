@@ -28,10 +28,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -97,12 +95,113 @@ export interface DescriptiveReportFormProps {
   className?: string
 }
 
+interface DescriptiveReportFormHeaderProps {
+  studentName: string
+  semesterLabel: string
+  isFinalized: boolean
+  progress: ReturnType<typeof calculateFormProgress>
+  hasUnsavedChanges: boolean
+  lastSaved: Date | null
+}
+
+function formatLastSaved(date: Date) {
+  return date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function DescriptiveReportFormHeader({
+  studentName,
+  semesterLabel,
+  isFinalized,
+  progress,
+  hasUnsavedChanges,
+  lastSaved,
+}: DescriptiveReportFormHeaderProps) {
+  const t = useTranslations('platform')
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5 text-purple-600" />
+              Relatorio Descritivo
+            </CardTitle>
+            <CardDescription className="mt-1">
+              <span className="font-medium text-foreground">{studentName}</span>
+              {' - '}
+              {semesterLabel}
+            </CardDescription>
+          </div>
+          <Badge
+            variant="outline"
+            className={cn(
+              'flex items-center gap-1.5',
+              isFinalized
+                ? 'border-green-300 bg-green-50 text-green-700'
+                : 'border-yellow-300 bg-yellow-50 text-yellow-700'
+            )}
+          >
+            {isFinalized ? (
+              <>
+                <Lock className="h-3 w-3" />
+                {REPORT_STATUS_CONFIG.finalizado.label}
+              </>
+            ) : (
+              <>
+                <PenLine className="h-3 w-3" />
+                {REPORT_STATUS_CONFIG.rascunho.label}
+              </>
+            )}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              Progresso: {progress.filledFields} de {progress.totalFields} campos
+            </span>
+            <span className="font-medium text-purple-600">{progress.percentage}%</span>
+          </div>
+          <Progress value={progress.percentage} className="h-2" />
+        </div>
+
+        {!isFinalized && (
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              {hasUnsavedChanges ? (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
+                  <span>{t('components.descriptive.unsaved')}</span>
+                </>
+              ) : (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span>{t('components.descriptive.saved')}</span>
+                </>
+              )}
+            </div>
+            {lastSaved && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{t('components.descriptive.lastSaved', { time: formatLastSaved(lastSaved) })}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
 export function DescriptiveReportForm({
-  reportId,
   studentName,
   semesterLabel,
   initialValues,
@@ -133,7 +232,7 @@ export function DescriptiveReportForm({
     control,
     handleSubmit,
     watch,
-    formState: { errors, isDirty },
+    formState: { isDirty },
     reset,
     getValues,
   } = form
@@ -260,96 +359,20 @@ export function DescriptiveReportForm({
     }
   }
 
-  // Format last saved time
-  const formatLastSaved = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
   return (
     <Form {...form}>
       <form
         onSubmit={handleSubmit(handleSaveDraft)}
         className={cn('space-y-6', className)}
       >
-        {/* Header */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-purple-600" />
-                  Relatorio Descritivo
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  <span className="font-medium text-foreground">{studentName}</span>
-                  {' - '}
-                  {semesterLabel}
-                </CardDescription>
-              </div>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'flex items-center gap-1.5',
-                  isFinalized
-                    ? 'border-green-300 bg-green-50 text-green-700'
-                    : 'border-yellow-300 bg-yellow-50 text-yellow-700'
-                )}
-              >
-                {isFinalized ? (
-                  <>
-                    <Lock className="h-3 w-3" />
-                    {REPORT_STATUS_CONFIG.finalizado.label}
-                  </>
-                ) : (
-                  <>
-                    <PenLine className="h-3 w-3" />
-                    {REPORT_STATUS_CONFIG.rascunho.label}
-                  </>
-                )}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Progress Section */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Progresso: {progress.filledFields} de {progress.totalFields} campos
-                </span>
-                <span className="font-medium text-purple-600">{progress.percentage}%</span>
-              </div>
-              <Progress value={progress.percentage} className="h-2" />
-            </div>
-
-            {/* Auto-save status */}
-            {!isFinalized && (
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  {hasUnsavedChanges ? (
-                    <>
-                      <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
-                      <span>{t('components.descriptive.unsaved')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-2 w-2 rounded-full bg-green-500" />
-                      <span>{t('components.descriptive.saved')}</span>
-                    </>
-                  )}
-                </div>
-                {lastSaved && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{t('components.descriptive.lastSaved', { time: formatLastSaved(lastSaved) })}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <DescriptiveReportFormHeader
+          studentName={studentName}
+          semesterLabel={semesterLabel}
+          isFinalized={isFinalized}
+          progress={progress}
+          hasUnsavedChanges={hasUnsavedChanges}
+          lastSaved={lastSaved}
+        />
 
         {/* Finalized Warning */}
         {isFinalized && (
