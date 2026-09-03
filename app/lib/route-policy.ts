@@ -34,6 +34,7 @@ const protectedRoutes: RouteRule[] = [
   { matcher: '/dashboard/flags', roles: ['admin'] },
   { matcher: '/dashboard/atribuicoes', roles: ['admin', 'diretor'] },
   { matcher: '/dashboard/configuracoes', roles: ['admin', 'secretario', 'diretor'] },
+  { matcher: /^\/dashboard\/alunos\/[^/]+\/diario\/novo\/?$/, roles: ['professor'] },
   { matcher: /^\/dashboard\/alunos\/[^/]+\/diario(?:\/.*)?$/, roles: dashboardRoles },
   { matcher: '/dashboard/alunos', roles: ['admin', 'diretor', 'secretario'] },
   { matcher: '/dashboard/turmas/nova', roles: ['admin', 'diretor', 'secretario'] },

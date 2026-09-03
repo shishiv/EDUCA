@@ -25,6 +25,7 @@ export interface CreateVivenciaInput {
 }
 
 export interface UpdateVivenciaInput {
+  data_vivencia?: string
   campos_experiencia?: CampoType[]
   descricao?: string
   observacoes?: string | null
@@ -60,14 +61,18 @@ function toVivencia(row: VivenciaRow): Vivencia {
 export class VivenciasApiService {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
-  async getByAluno(alunoId: string, limit = 50): Promise<Vivencia[]> {
-    const { data, error } = await this.supabase
+  async getByAluno(alunoId: string, startDate?: string, endDate?: string, limit = 50): Promise<Vivencia[]> {
+    let query = this.supabase
       .from('vivencias')
       .select(VIVENCIA_COLUMNS)
       .eq('aluno_id', alunoId)
       .order('data_vivencia', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(limit)
+
+    if (startDate) query = query.gte('data_vivencia', startDate)
+    if (endDate) query = query.lte('data_vivencia', endDate)
+
+    const { data, error } = await query.limit(limit)
 
     if (error) {
       logger.error('Error fetching vivencias by student', error, { feature: 'vivencias', action: 'list_by_aluno' })
@@ -177,6 +182,7 @@ export class VivenciasApiService {
       updated_at: new Date().toISOString(),
     }
 
+    if (input.data_vivencia !== undefined) payload.data_vivencia = input.data_vivencia
     if (input.campos_experiencia !== undefined) payload.campos_experiencia = input.campos_experiencia
     if (input.descricao !== undefined) payload.descricao = input.descricao
     if (input.observacoes !== undefined) payload.observacoes = input.observacoes

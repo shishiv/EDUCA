@@ -22,6 +22,8 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { ArrowLeft, Plus, FileText, Loader2 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
+import { canAccessRoute } from '@/lib/route-policy'
 
 // Components
 import { Button } from '@/components/ui/button'
@@ -31,6 +33,7 @@ import { VivenciaForm } from '@/components/diary/VivenciaForm'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -58,6 +61,12 @@ interface Student {
   data_nascimento: string
 }
 
+function getDiaryBackLink(profilePath: string, role?: string) {
+  return canAccessRoute(profilePath, role)
+    ? { href: profilePath, label: 'profile' as const }
+    : { href: '/diario', label: 'diary' as const }
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -66,7 +75,14 @@ export default function DiarioInfantilPage() {
   const t = useTranslations('registry')
   const params = useParams()
   const router = useRouter()
+  const { userProfile } = useAuth()
   const alunoId = params?.id as string
+  const profilePath = `/dashboard/alunos/${alunoId}`
+  const newVivenciaPath = `${profilePath}/diario/novo`
+  const reportPath = `${profilePath}/diario/relatorio`
+  const role = userProfile?.tipo_usuario
+  const canWriteVivencias = canAccessRoute(newVivenciaPath, role)
+  const backLink = getDiaryBackLink(profilePath, role)
 
   // State
   const [student, setStudent] = useState<Student | null>(null)
@@ -155,6 +171,7 @@ export default function DiarioInfantilPage() {
       setIsEditLoading(true)
 
       const updateData = {
+        data_vivencia: data.data_vivencia,
         campos_experiencia: data.campos_experiencia,
         descricao: data.descricao,
         observacoes: data.observacoes || null,
@@ -231,6 +248,10 @@ export default function DiarioInfantilPage() {
     setDeletingVivencia(null)
   }, [])
 
+  const timelineActions = canWriteVivencias
+    ? { onEditVivencia: handleEditVivencia, onDeleteVivencia: handleDeleteVivencia }
+    : {}
+
   // Loading state
   if (loading) {
     return (
@@ -281,9 +302,9 @@ export default function DiarioInfantilPage() {
       {/* Back navigation */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/dashboard/alunos/${alunoId}`}>
+          <Link href={backLink.href}>
             <ArrowLeft className="h-4 w-4 mr-1" />
-            {t('ui.perfil-do-aluno')}
+            {backLink.label === 'profile' ? t('ui.perfil-do-aluno') : 'Diario'}
           </Link>
         </Button>
       </div>
@@ -301,18 +322,22 @@ export default function DiarioInfantilPage() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/dashboard/alunos/${alunoId}/diario/relatorio`}>
-              <FileText className="h-4 w-4 mr-2" />
-              Relatorio
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('ui.nova-vivencia')}
-            </Link>
-          </Button>
+          {canAccessRoute(reportPath, role) && (
+            <Button variant="outline" asChild>
+              <Link href={reportPath}>
+                <FileText className="h-4 w-4 mr-2" />
+                Relatorio
+              </Link>
+            </Button>
+          )}
+          {canWriteVivencias && (
+            <Button asChild>
+              <Link href={newVivenciaPath}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('ui.nova-vivencia')}
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -322,12 +347,14 @@ export default function DiarioInfantilPage() {
           <p className="text-muted-foreground">
             {t('ui.nenhuma-vivencia-registrada-ainda')}
           </p>
-          <Button asChild className="mt-4">
-            <Link href={`/dashboard/alunos/${alunoId}/diario/novo`}>
-              <Plus className="h-4 w-4 mr-2" />
-              Registrar primeira vivencia
-            </Link>
-          </Button>
+          {canWriteVivencias && (
+            <Button asChild className="mt-4">
+              <Link href={newVivenciaPath}>
+                <Plus className="h-4 w-4 mr-2" />
+                Registrar primeira vivencia
+              </Link>
+            </Button>
+          )}
         </div>
       )}
 
@@ -336,8 +363,7 @@ export default function DiarioInfantilPage() {
         <VivenciasTimeline
           vivencias={vivencias}
           groupBy="day"
-          onEditVivencia={handleEditVivencia}
-          onDeleteVivencia={handleDeleteVivencia}
+          {...timelineActions}
         />
       )}
 
@@ -346,6 +372,9 @@ export default function DiarioInfantilPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('labels.editar-vivencia')}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Edite os dados da vivencia selecionada.
+            </DialogDescription>
           </DialogHeader>
           {editingVivencia && student && (
             <VivenciaForm

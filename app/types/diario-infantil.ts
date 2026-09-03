@@ -173,6 +173,15 @@ export const VIVENCIA_VALIDATION = {
   minCamposSelected: 1,
 } as const
 
+export function isValidVivenciaDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
+export function isVivenciaDateNotFuture(value: string): boolean {
+  return value <= new Date().toISOString().slice(0, 10)
+}
+
 /**
  * Error messages for validation
  */

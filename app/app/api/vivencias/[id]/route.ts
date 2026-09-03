@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
-import { VIVENCIA_ERROR_MESSAGES, VIVENCIA_VALIDATION } from '@/types/diario-infantil'
+import {
+  isValidVivenciaDate,
+  isVivenciaDateNotFuture,
+  VIVENCIA_ERROR_MESSAGES,
+  VIVENCIA_VALIDATION,
+} from '@/types/diario-infantil'
 import { VivenciasApiService } from '@/lib/api/vivencias'
 import {
   assertVivenciaReadAccess,
@@ -16,6 +21,11 @@ import { AttendanceAuthError } from '@/lib/services/attendance-auth'
 const paramsSchema = z.object({ id: z.string().uuid('ID da vivência inválido') })
 
 const updateSchema = z.object({
+  data_vivencia: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de data inválido')
+    .refine(isValidVivenciaDate, 'Data inválida')
+    .refine(isVivenciaDateNotFuture, 'A data não pode ser futura')
+    .optional(),
   campos_experiencia: z.array(z.enum(['eu', 'corpo', 'tracos', 'escuta', 'espacos']))
     .min(VIVENCIA_VALIDATION.minCamposSelected, VIVENCIA_ERROR_MESSAGES.noCampoSelected)
     .refine((values) => new Set(values).size === values.length, 'Campos de experiência duplicados')
