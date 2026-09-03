@@ -14,6 +14,16 @@
   },
   "header": {
     "searchPlaceholder": "Buscar alunos, turmas...",
+    "searchLabel": "Busca global",
+    "searchResults": "Resultados da busca",
+    "searchLoading": "Buscando...",
+    "searchNoResults": "Nenhum resultado encontrado",
+    "searchTypes": {
+      "student": "Aluno",
+      "teacher": "Professor",
+      "school": "Escola",
+      "class": "Turma"
+    },
     "connection": "Conexão: {status}",
     "openNotifications": "Abrir notificações",
     "notifications": "Notificações do Sistema",

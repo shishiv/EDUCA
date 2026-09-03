@@ -1654,6 +1654,25 @@
   .app-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--app-ink); font-size: .78rem; }
   .app-search input::placeholder { color: #647a79; opacity: 1; }
 
+  .app-global-search { position: relative; width: 15.5rem; min-width: 0; }
+  .app-global-search .app-search { width: 100%; }
+  .app-global-search__spinner { animation: app-search-spin 700ms linear infinite; }
+  .app-global-search__results { position: absolute; top: calc(100% + .4rem); right: 0; z-index: 60; width: min(28rem, calc(100vw - 2rem)); overflow: hidden; border: 1px solid var(--app-line); border-radius: 9px; background: var(--app-surface); box-shadow: var(--app-shadow); }
+  .app-global-search__result { display: flex; width: 100%; min-width: 0; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .8rem; color: var(--app-ink); text-align: left; }
+  .app-global-search__result:hover,
+  .app-global-search__result:focus-visible { background: var(--app-panel-soft); outline: 0; }
+  .app-global-search__result-copy { display: grid; min-width: 0; gap: .2rem; }
+  .app-global-search__result-copy strong,
+  .app-global-search__result-copy small { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .app-global-search__result-copy strong { font-size: .76rem; }
+  .app-global-search__result-copy small { color: var(--app-ink-soft); font-size: .67rem; }
+  .app-global-search__result-type { flex: 0 0 auto; color: var(--app-teal-dark); font-size: .62rem; font-weight: 800; }
+  .app-global-search__empty { margin: 0; padding: .9rem; color: var(--app-ink-soft); font-size: .72rem; }
+
+  @keyframes app-search-spin {
+    to { transform: rotate(360deg); }
+  }
+
   .app-connection,
   .app-school-context {
     display: flex;
@@ -1811,6 +1830,8 @@
   .app-mobile-header .app-wordmark__mark { width: 1.8rem; height: 1.8rem; background: var(--app-ink); color: var(--app-lime); font-size: .8rem; }
   .app-mobile-header__menu { border-color: transparent; background: transparent; }
   .app-mobile-header__actions { display: flex; min-width: 0; align-items: center; gap: .35rem; margin-left: auto; }
+  .app-mobile-header__search { padding: 0 .85rem .65rem; }
+  .app-mobile-header__search .app-global-search { width: 100%; }
   .app-mobile-clock { display: flex; align-items: center; gap: .35rem; padding-right: .25rem; color: var(--app-ink-soft); font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .app-mobile-clock span { display: grid; color: var(--app-success); }
   .app-mobile-clock svg { width: .8rem; height: .8rem; }
@@ -2072,6 +2093,7 @@
 
   @media (max-width: 1279px) {
     .app-search { width: 12rem; }
+    .app-global-search { width: 12rem; }
     .app-school-context span,
     .app-profile-trigger__copy { display: none; }
     .app-school-context { width: 2.65rem; justify-content: center; padding: 0; }
@@ -2088,6 +2110,7 @@
   }
 
   @media (max-width: 767px) {
+    .app-mobile-header__search { padding-inline: .65rem; }
     .app-main {
       padding: 1rem;
       padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom)));

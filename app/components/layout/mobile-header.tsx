@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/use-auth'
 import { canAccessRoute } from '@/lib/route-policy'
+import { GlobalSearch } from '@/components/layout/global-search'
 
 interface MobileHeaderProps {
   onMenuToggle?: () => void
@@ -138,6 +139,10 @@ export function MobileHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+
+        <div className="app-mobile-header__search">
+          <GlobalSearch />
         </div>
 
         {currentSession && !isMenuOpen && (

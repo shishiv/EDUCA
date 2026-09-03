@@ -24,6 +24,7 @@ import { useEscola } from '@/contexts/escola-context'
 import { useSessionRealtime } from '@/contexts/session-realtime-context'
 import { useAuth } from '@/hooks/use-auth'
 import { canAccessRoute } from '@/lib/route-policy'
+import { GlobalSearch } from '@/components/layout/global-search'
 
 const routeLabels = [
   ['/dashboard/alunos', 'students'], ['/dashboard/usuarios', 'users'],
@@ -164,6 +165,7 @@ export function Header() {
       </nav>
 
       <div className="app-header__actions">
+        <GlobalSearch />
         <ConnectionIndicator
           connected={connected}
           label={connectionLabel}
