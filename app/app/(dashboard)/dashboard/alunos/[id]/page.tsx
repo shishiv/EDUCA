@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -19,7 +18,6 @@ import {
 import {
   ArrowLeft,
   Edit,
-  User,
   GraduationCap,
   BookOpen,
 } from 'lucide-react'
@@ -36,7 +34,10 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
 import { getStudentBolsaFamilia } from '@/lib/reports/attendance-conditionality'
-import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
+import {
+  getAuthorizedStudentProfiles,
+  type AuthorizedStudentProfile,
+} from '@/lib/sensitive-family-access'
 
 interface AlunoDetalhado {
   id: string
@@ -93,6 +94,117 @@ interface AlunoDetalhado {
   vivencias_count?: number
 }
 
+type StudentEnrollment = AlunoDetalhado['matriculas'][number]
+type StudentAttendance = AlunoDetalhado['frequencia']
+
+function emptyAttendance(): StudentAttendance {
+  return {
+    percentual: 0,
+    total_aulas: 0,
+    presencas: 0,
+    faltas: 0,
+    faltas_justificadas: 0,
+    formatted: '0% (0/0 dias)',
+  }
+}
+
+async function loadCurrentAttendance(matriculas: StudentEnrollment[]): Promise<StudentAttendance> {
+  const today = new Date()
+  const activeMatricula = matriculas.find(
+    (matricula) => matricula.situacao === 'ativa' && matricula.ano_letivo === today.getFullYear(),
+  )
+  if (!activeMatricula) return emptyAttendance()
+
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
+  const summary = (await loadCanonicalAttendanceSummaries(
+    supabase,
+    [activeMatricula.id],
+    { startDate: monthStart, endDate: monthEnd },
+  )).get(activeMatricula.id)
+
+  if (!summary || summary.total <= 0) return emptyAttendance()
+
+  const presencas = summary.presencas + summary.atestados
+  return {
+    percentual: summary.percentual,
+    total_aulas: summary.total,
+    presencas,
+    faltas: summary.faltas,
+    faltas_justificadas: summary.atestados,
+    formatted: `${summary.percentual}% (${presencas}/${summary.total} dias)`,
+  }
+}
+
+async function loadStudentRecord(studentId: string) {
+  const [profiles, { data: relations, error }, bolsaFamilia] = await Promise.all([
+    getAuthorizedStudentProfiles(supabase, { studentId }),
+    supabase
+      .from('alunos')
+      .select(`
+        id,
+        matriculas:matriculas(
+          id,
+          ano_letivo,
+          situacao,
+          data_matricula,
+          turma:turmas(
+            nome,
+            serie,
+            turno,
+            escola:escolas(nome)
+          )
+        )
+      `)
+      .eq('id', studentId)
+      .single(),
+    getStudentBolsaFamilia(supabase, studentId),
+  ])
+
+  if (error) throw error
+  if (!profiles[0] || !relations) return null
+  return {
+    profile: profiles[0],
+    matriculas: (relations.matriculas ?? []) as StudentEnrollment[],
+    bolsaFamilia,
+  }
+}
+
+function mapStudentDetails(
+  profile: AuthorizedStudentProfile,
+  matriculas: StudentEnrollment[],
+  frequencia: StudentAttendance,
+  bolsaFamilia: boolean | null,
+  motherLabel: string,
+  fatherLabel: string,
+): AlunoDetalhado {
+  return {
+    id: profile.id,
+    nome_completo: profile.nome_completo,
+    data_nascimento: profile.data_nascimento,
+    cpf: profile.cpf || undefined,
+    sexo: profile.sexo as 'M' | 'F',
+    endereco: profile.endereco || undefined,
+    telefone: profile.telefone || undefined,
+    nome_mae: profile.nome_mae || undefined,
+    nome_pai: profile.nome_pai || undefined,
+    necessidades_especiais: profile.necessidades_especiais || undefined,
+    ativo: profile.ativo ?? true,
+    created_at: profile.created_at ?? new Date().toISOString(),
+    responsavel: {
+      nome: profile.nome_mae || profile.nome_pai || 'Não informado',
+      telefone: profile.telefone || 'Não informado',
+      email: undefined,
+      parentesco: profile.nome_mae ? motherLabel : fatherLabel,
+    },
+    matriculas,
+    frequencia,
+    notas: [],
+    bolsa_familia: bolsaFamilia ?? false,
+    vivencias_count: 0,
+  }
+}
+
 export default function AlunoDetalhesPage() {
   const t = useTranslations('registry')
   const params = useParams()
@@ -108,113 +220,20 @@ export default function AlunoDetalhesPage() {
         setLoading(true)
         setError(null)
 
-        // Fetch student with matriculas
-        const [profiles, { data: studentRelations, error: alunoError }, bolsaFamilia] = await Promise.all([
-          getAuthorizedStudentProfiles(supabase, { studentId: params.id as string }),
-          supabase
-          .from('alunos')
-          .select(`
-            id,
-            matriculas:matriculas(
-              id,
-              ano_letivo,
-              situacao,
-              data_matricula,
-              turma:turmas(
-                nome,
-                serie,
-                turno,
-                escola:escolas(nome)
-              )
-            )
-          `)
-          .eq('id', params.id as string)
-          .single(),
-          getStudentBolsaFamilia(supabase, params.id as string),
-        ])
-
-        const alunoData = profiles[0]
-        if (alunoError) throw alunoError
-        if (!alunoData || !studentRelations) {
+        const record = await loadStudentRecord(params.id as string)
+        if (!record) {
           setError(t('ui.aluno-nao-encontrado'))
           return
         }
-        const matriculas = studentRelations.matriculas ?? []
-
-        // Get active matricula for current year
-        const currentYear = new Date().getFullYear()
-        const activeMatricula = matriculas.find(
-          (m: { situacao: string; ano_letivo: number }) => m.situacao === 'ativa' && m.ano_letivo === currentYear
-        )
-
-        // Calculate attendance for current month
-        let frequencia = {
-          percentual: 0,
-          total_aulas: 0,
-          presencas: 0,
-          faltas: 0,
-          faltas_justificadas: 0,
-          formatted: '0% (0/0 dias)'
-        }
-
-        if (activeMatricula) {
-          const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-            .toISOString().split('T')[0]
-          const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
-            .toISOString().split('T')[0]
-
-          const attendanceSummary = (await loadCanonicalAttendanceSummaries(
-            supabase,
-            [activeMatricula.id],
-            { startDate: monthStart, endDate: monthEnd }
-          )).get(activeMatricula.id)
-
-          if (attendanceSummary && attendanceSummary.total > 0) {
-            const total = attendanceSummary.total
-            const presentes = attendanceSummary.presencas + attendanceSummary.atestados
-            const faltas = attendanceSummary.faltas
-            const justificadas = attendanceSummary.atestados
-            const percentual = attendanceSummary.percentual
-
-            frequencia = {
-              percentual,
-              total_aulas: total,
-              presencas: presentes,
-              faltas,
-              faltas_justificadas: justificadas,
-              formatted: `${percentual}% (${presentes}/${total} dias)`
-            }
-          }
-        }
-
-        // Build student object matching AlunoDetalhado interface
-        const studentData: AlunoDetalhado = {
-          id: alunoData.id,
-          nome_completo: alunoData.nome_completo,
-          data_nascimento: alunoData.data_nascimento,
-          cpf: alunoData.cpf || undefined,
-          sexo: alunoData.sexo as 'M' | 'F',
-          endereco: alunoData.endereco || undefined,
-          telefone: alunoData.telefone || undefined,
-          nome_mae: alunoData.nome_mae || undefined,
-          nome_pai: alunoData.nome_pai || undefined,
-          necessidades_especiais: alunoData.necessidades_especiais || undefined,
-          ativo: alunoData.ativo ?? true,
-          created_at: alunoData.created_at ?? new Date().toISOString(),
-          responsavel: {
-            nome: alunoData.nome_mae || alunoData.nome_pai || 'Não informado',
-            telefone: alunoData.telefone || 'Não informado',
-            email: undefined,
-            parentesco: alunoData.nome_mae ? t('labels.mae') : t('labels.pai')
-          },
-          matriculas,
+        const frequencia = await loadCurrentAttendance(record.matriculas)
+        setAluno(mapStudentDetails(
+          record.profile,
+          record.matriculas,
           frequencia,
-          notas: [], // Notas not implemented yet
-          bolsa_familia: bolsaFamilia ?? false,
-          vivencias_count: 0 // Will be populated when vivencias API exists
-        }
-
-        setAluno(studentData)
+          record.bolsaFamilia,
+          t('labels.mae'),
+          t('labels.pai'),
+        ))
       } catch (err) {
         logger.error('Error loading student', err as Error, {
           feature: 'alunos',

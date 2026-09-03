@@ -28,6 +28,125 @@ import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { useEscola } from '@/contexts/escola-context'
 
+const INITIAL_STUDENT_FORM = {
+  nome_completo: '',
+  data_nascimento: '',
+  cpf: '',
+  rg: '',
+  sexo: '',
+  endereco: '',
+  telefone: '',
+  email: '',
+  nome_mae: '',
+  nome_pai: '',
+  responsavel_principal: '',
+  necessidades_especiais: '',
+  alergias: '',
+  medicamentos: '',
+  observacoes_medicas: '',
+  escola_anterior: '',
+  serie_pretendida: '',
+  turno_preferencia: '',
+  ativo: true,
+}
+
+const INITIAL_GUARDIAN_FORM = {
+  nome: '',
+  cpf: '',
+  telefone: '',
+  email: '',
+  parentesco: '',
+  endereco: '',
+  profissao: '',
+  renda_familiar: '',
+}
+
+type StudentFormState = typeof INITIAL_STUDENT_FORM
+type GuardianFormState = typeof INITIAL_GUARDIAN_FORM
+
+function getFieldErrors(issues: Array<{ path: PropertyKey[]; message: string }>) {
+  const errors: Record<string, string> = {}
+  for (const issue of issues) {
+    const field = String(issue.path[0] || 'form')
+    if (!errors[field]) errors[field] = issue.message
+  }
+  return errors
+}
+
+function getGuardianPayload(guardian: GuardianFormState, defaultRelationship: string) {
+  if (!guardian.nome) return undefined
+  return {
+    nome: guardian.nome,
+    telefone: guardian.telefone.replace(/\D/g, '') || undefined,
+    email: guardian.email || undefined,
+    grau_parentesco: guardian.parentesco || defaultRelationship,
+  }
+}
+
+function getCreateErrorMessage(error: unknown) {
+  const message = typeof error === 'object' && error !== null && 'message' in error
+    ? String(error.message)
+    : ''
+
+  if (message.includes('duplicate') || message.includes('unique')) {
+    if (message.includes('cpf')) return 'CPF já cadastrado no sistema'
+    if (message.includes('email')) return 'E-mail já cadastrado no sistema'
+    return 'Dados já existem no sistema'
+  }
+  if (message.includes('violates check constraint')) {
+    return 'Dados inválidos. Verifique as informações inseridas'
+  }
+  return message ? `Erro ao cadastrar aluno: ${message}` : 'Erro ao cadastrar aluno'
+}
+
+function SchoolSelectionAlert({ visible }: { visible: boolean }) {
+  const t = useTranslations('registry')
+  if (!visible) return null
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>
+        {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-aluno')}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
+function FormValidationAlert({ visible }: { visible: boolean }) {
+  const t = useTranslations('registry')
+  if (!visible) return null
+  return (
+    <Alert variant="destructive" className="mb-6" role="alert">
+      <AlertDescription>
+        {t('ui.corrija-os-campos-obrigatorios-destacados-antes-de-continuar')}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
+function StudentTabsList({ pilotMode }: { pilotMode: boolean }) {
+  const t = useTranslations('registry')
+  return (
+    <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
+      <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+        <User className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.dados-pessoais')}</span>
+      </TabsTrigger>
+      <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+        <Users className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.responsavel')}</span>
+      </TabsTrigger>
+      <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
+        <FileText className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.dados-medicos')}</span>
+      </TabsTrigger>
+      <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
+        <Upload className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.documentos')}</span>
+      </TabsTrigger>
+    </TabsList>
+  )
+}
+
 export default function NovoAlunoPage() {
   const t = useTranslations('registry')
   const router = useRouter()
@@ -38,47 +157,8 @@ export default function NovoAlunoPage() {
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [formData, setFormData] = useState({
-    // Dados pessoais
-    nome_completo: '',
-    data_nascimento: '',
-    cpf: '',
-    rg: '',
-    sexo: '',
-    endereco: '',
-    telefone: '',
-    email: '',
-
-    // Dados familiares
-    nome_mae: '',
-    nome_pai: '',
-    responsavel_principal: '',
-
-    // Dados médicos/especiais
-    necessidades_especiais: '',
-    alergias: '',
-    medicamentos: '',
-    observacoes_medicas: '',
-
-    // Dados escolares
-    escola_anterior: '',
-    serie_pretendida: '',
-    turno_preferencia: '',
-
-    // Status
-    ativo: true
-  })
-
-  const [responsavelData, setResponsavelData] = useState({
-    nome: '',
-    cpf: '',
-    telefone: '',
-    email: '',
-    parentesco: '',
-    endereco: '',
-    profissao: '',
-    renda_familiar: ''
-  })
+  const [formData, setFormData] = useState<StudentFormState>(INITIAL_STUDENT_FORM)
+  const [responsavelData, setResponsavelData] = useState<GuardianFormState>(INITIAL_GUARDIAN_FORM)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,12 +179,7 @@ export default function NovoAlunoPage() {
     })
 
     if (!validationResult.success) {
-      const nextErrors: Record<string, string> = {}
-      for (const issue of validationResult.error.issues) {
-        const field = String(issue.path[0] || 'form')
-        if (!nextErrors[field]) nextErrors[field] = issue.message
-      }
-      setFieldErrors(nextErrors)
+      setFieldErrors(getFieldErrors(validationResult.error.issues))
       toast.error(t('ui.corrija-os-campos-obrigatorios-antes-de-continuar'))
       return
     }
@@ -112,7 +187,6 @@ export default function NovoAlunoPage() {
     setLoading(true)
 
     try {
-      // Prepare normalized student data in API format
       const studentData = {
         ...validationResult.data,
         cpf: validationResult.data.cpf?.replace(/\D/g, ''),
@@ -121,56 +195,23 @@ export default function NovoAlunoPage() {
         sexo: validationResult.data.sexo as 'M' | 'F',
         necessidades_especiais: pilotMode ? undefined : validationResult.data.necessidades_especiais || undefined,
       }
-
-      // Prepare guardian data if provided
-      let guardianData = undefined
-      if (responsavelData.nome) {
-        guardianData = {
-          nome: responsavelData.nome,
-          telefone: responsavelData.telefone?.replace(/\D/g, '') || undefined,
-          email: responsavelData.email || undefined,
-          grau_parentesco: responsavelData.parentesco || t('labels.responsavel'),
-        }
-      }
-
-      // Create student via API.
-      // escola_id_override is needed when the actor is a secretariat-level admin
-      // (escola_id IS NULL on their profile). The selected escola from the UI
-      // context is passed through so the student is scoped to the right school.
-      const createdStudent = await studentsApi.createStudent({
+      await studentsApi.createStudent({
         ...studentData,
-        responsavel: guardianData,
+        responsavel: getGuardianPayload(responsavelData, t('labels.responsavel')),
         escola_id_override: selectedEscolaId ?? undefined,
       })
 
       toast.success(t('ui.aluno-cadastrado-com-sucesso'))
       router.push('/dashboard/alunos')
-    } catch (error: any) {
-      logger.error('Erro ao cadastrar aluno:', error)
-
-      // Enhanced error handling with Brazilian context
-      let errorMessage = 'Erro ao cadastrar aluno'
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-        if (error.message.includes('cpf')) {
-          errorMessage = 'CPF já cadastrado no sistema'
-        } else if (error.message.includes('email')) {
-          errorMessage = 'E-mail já cadastrado no sistema'
-        } else {
-          errorMessage = 'Dados já existem no sistema'
-        }
-      } else if (error.message?.includes('violates check constraint')) {
-        errorMessage = 'Dados inválidos. Verifique as informações inseridas'
-      } else if (error.message) {
-        errorMessage = `Erro ao cadastrar aluno: ${error.message}`
-      }
-
-      toast.error(errorMessage)
+    } catch (error) {
+      logger.error('Erro ao cadastrar aluno:', error instanceof Error ? error : String(error))
+      toast.error(getCreateErrorMessage(error))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <K extends keyof StudentFormState>(field: K, value: StudentFormState[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setFieldErrors(prev => {
       if (!prev[field]) return prev
@@ -180,7 +221,7 @@ export default function NovoAlunoPage() {
     })
   }
 
-  const handleResponsavelChange = (field: string, value: any) => {
+  const handleResponsavelChange = <K extends keyof GuardianFormState>(field: K, value: GuardianFormState[K]) => {
     setResponsavelData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -219,42 +260,12 @@ export default function NovoAlunoPage() {
         </div>
       </div>
 
-      {/* Admin must select a school before creating a student */}
-      {shouldShowSelector && !selectedEscolaId && (
-        <Alert variant="destructive">
-          <AlertDescription>
-            {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-aluno')}
-          </AlertDescription>
-        </Alert>
-      )}
+      <SchoolSelectionAlert visible={shouldShowSelector && !selectedEscolaId} />
 
       <form onSubmit={handleSubmit} noValidate>
-        {Object.keys(fieldErrors).length > 0 && (
-          <Alert variant="destructive" className="mb-6" role="alert">
-            <AlertDescription>
-              {t('ui.corrija-os-campos-obrigatorios-destacados-antes-de-continuar')}
-            </AlertDescription>
-          </Alert>
-        )}
+        <FormValidationAlert visible={Object.keys(fieldErrors).length > 0} />
         <Tabs defaultValue="pessoais" className="space-y-6">
- <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
-            <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
-              <User className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.dados-pessoais')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
-              <Users className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.responsavel')}</span>
-            </TabsTrigger>
- <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
-              <FileText className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.dados-medicos')}</span>
-            </TabsTrigger>
- <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
-              <Upload className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.documentos')}</span>
-            </TabsTrigger>
-          </TabsList>
+          <StudentTabsList pilotMode={pilotMode} />
 
           <TabsContent value="pessoais">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
