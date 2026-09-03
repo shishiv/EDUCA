@@ -339,6 +339,37 @@ function hasSpreadsheetFormula(value: string): boolean {
   return /^[=+\-@]/.test(value)
 }
 
+function validateGovernedPilotStudentRow(
+  candidate: GovernedPilotStudentCsvRow,
+  values: string[],
+  seenSourceIds: Set<string>,
+  row: number,
+  dataMode: GovernedPilotImportDataMode
+): GovernedCsvValidationIssue[] {
+  const issues: GovernedCsvValidationIssue[] = []
+  const formulaField = GOVERNED_PILOT_STUDENT_CSV_HEADERS.find((header, index) =>
+    header !== 'guardian_phone' && hasSpreadsheetFormula(values[index])
+  )
+  if (formulaField) issues.push({ row, field: formulaField, code: 'spreadsheet_formula_rejected' })
+  if (dataMode === 'synthetic' && candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER) {
+    issues.push({ row, field: 'synthetic_marker', code: 'synthetic_marker_required' })
+  }
+  if (dataMode === 'real' && candidate.synthetic_marker !== '') {
+    issues.push({ row, field: 'synthetic_marker', code: 'real_mode_marker_must_be_empty' })
+  }
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)) issues.push({ row, field: 'source_id', code: 'invalid' })
+  if (seenSourceIds.has(candidate.source_id)) issues.push({ row, field: 'source_id', code: 'duplicate' })
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.school_code)) issues.push({ row, field: 'school_code', code: 'invalid' })
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.class_code)) issues.push({ row, field: 'class_code', code: 'invalid' })
+  if (candidate.student_name.length < 2 || candidate.student_name.length > 160) issues.push({ row, field: 'student_name', code: 'invalid_length' })
+  if (!isValidIsoDate(candidate.birth_date)) issues.push({ row, field: 'birth_date', code: 'invalid' })
+  if (!['M', 'F'].includes(candidate.sex)) issues.push({ row, field: 'sex', code: 'invalid' })
+  if (candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160) issues.push({ row, field: 'guardian_name', code: 'invalid_length' })
+  if (!/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)) issues.push({ row, field: 'guardian_phone', code: 'invalid' })
+  if (candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40) issues.push({ row, field: 'guardian_relationship', code: 'invalid_length' })
+  return issues
+}
+
 function normalizeGovernancePerson(person: PilotImportPerson): PilotImportPerson {
   return { name: person.name.trim(), email: person.email.trim().toLowerCase() }
 }
@@ -589,25 +620,7 @@ export function validateGovernedPilotStudentCsv(
       continue
     }
     const candidate = Object.fromEntries(expectedHeaders.map((header, valueIndex) => [header, values[valueIndex]])) as unknown as GovernedPilotStudentCsvRow
-    const rowIssues: GovernedCsvValidationIssue[] = []
-    const formulaField = expectedHeaders.find((header, valueIndex) => header !== 'guardian_phone' && hasSpreadsheetFormula(values[valueIndex]))
-    if (formulaField) rowIssues.push({ row: rowNumber, field: formulaField, code: 'spreadsheet_formula_rejected' })
-    if (dataMode === 'synthetic' && candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER) {
-      rowIssues.push({ row: rowNumber, field: 'synthetic_marker', code: 'synthetic_marker_required' })
-    }
-    if (dataMode === 'real' && candidate.synthetic_marker !== '') {
-      rowIssues.push({ row: rowNumber, field: 'synthetic_marker', code: 'real_mode_marker_must_be_empty' })
-    }
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)) rowIssues.push({ row: rowNumber, field: 'source_id', code: 'invalid' })
-    if (seenSourceIds.has(candidate.source_id)) rowIssues.push({ row: rowNumber, field: 'source_id', code: 'duplicate' })
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.school_code)) rowIssues.push({ row: rowNumber, field: 'school_code', code: 'invalid' })
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.class_code)) rowIssues.push({ row: rowNumber, field: 'class_code', code: 'invalid' })
-    if (candidate.student_name.length < 2 || candidate.student_name.length > 160) rowIssues.push({ row: rowNumber, field: 'student_name', code: 'invalid_length' })
-    if (!isValidIsoDate(candidate.birth_date)) rowIssues.push({ row: rowNumber, field: 'birth_date', code: 'invalid' })
-    if (!['M', 'F'].includes(candidate.sex)) rowIssues.push({ row: rowNumber, field: 'sex', code: 'invalid' })
-    if (candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160) rowIssues.push({ row: rowNumber, field: 'guardian_name', code: 'invalid_length' })
-    if (!/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)) rowIssues.push({ row: rowNumber, field: 'guardian_phone', code: 'invalid' })
-    if (candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40) rowIssues.push({ row: rowNumber, field: 'guardian_relationship', code: 'invalid_length' })
+    const rowIssues = validateGovernedPilotStudentRow(candidate, values, seenSourceIds, rowNumber, dataMode)
     issues.push(...rowIssues)
     if (rowIssues.length === 0) {
       rows.push(candidate)
