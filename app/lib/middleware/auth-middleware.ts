@@ -170,11 +170,15 @@ export function checkRouteAccess(
     return { hasAccess: false, redirectTo: '/login' }
   }
 
+  const infantilDiaryRoute: ProtectedRoute | undefined =
+    /^\/dashboard\/alunos\/[^/]+\/diario(?:\/.*)?$/.test(pathname)
+      ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario', 'professor'] }
+      : undefined
   const classEditRoute: ProtectedRoute | undefined =
     /^\/dashboard\/turmas\/[^/]+\/editar$/.test(pathname)
       ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario'] }
       : undefined
-  const protectedRoute = classEditRoute || routeProtection.protected.find(route =>
+  const protectedRoute = infantilDiaryRoute || classEditRoute || routeProtection.protected.find(route =>
     matchesRoute(pathname, route.prefix)
   )
   if (protectedRoute && !(protectedRoute.roles as UserRole[]).includes(userRole as UserRole)) {

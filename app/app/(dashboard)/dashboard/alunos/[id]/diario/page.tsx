@@ -21,7 +21,6 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { vivenciasApi, type UpdateVivenciaInput } from '@/lib/api/vivencias'
 import { ArrowLeft, Plus, FileText, Loader2 } from 'lucide-react'
 
 // Components
@@ -155,13 +154,21 @@ export default function DiarioInfantilPage() {
     try {
       setIsEditLoading(true)
 
-      const updateData: UpdateVivenciaInput = {
+      const updateData = {
         campos_experiencia: data.campos_experiencia,
         descricao: data.descricao,
-        observacoes: data.observacoes || undefined,
+        observacoes: data.observacoes || null,
       }
 
-      await vivenciasApi.update(editingVivencia.id, updateData)
+      const response = await fetch(`/api/vivencias/${editingVivencia.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      })
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error || 'Erro ao atualizar vivência')
+      }
 
       toast.success(t('ui.vivencia-atualizada-com-sucesso'))
       setIsEditModalOpen(false)
@@ -195,7 +202,13 @@ export default function DiarioInfantilPage() {
     try {
       setIsDeleteLoading(true)
 
-      await vivenciasApi.delete(deletingVivencia.id)
+      const response = await fetch(`/api/vivencias/${deletingVivencia.id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error || 'Erro ao excluir vivência')
+      }
 
       toast.success(t('ui.vivencia-excluida-com-sucesso'))
       setIsDeleteDialogOpen(false)

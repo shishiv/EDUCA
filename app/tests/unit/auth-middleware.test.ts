@@ -63,6 +63,15 @@ describe('checkRouteAccess', () => {
     })
   })
 
+  it('allows professors to access the Educação Infantil diary without opening student cadastro', () => {
+    expect(checkRouteAccess('/dashboard/alunos/student-1/diario', 'professor').hasAccess).toBe(true)
+    expect(checkRouteAccess('/dashboard/alunos/student-1/diario/novo', 'professor').hasAccess).toBe(true)
+    expect(checkRouteAccess('/dashboard/alunos/student-1/editar', 'professor')).toEqual({
+      hasAccess: false,
+      redirectTo: '/unauthorized',
+    })
+  })
+
   it('denies professor class creation and editing', () => {
     expect(checkRouteAccess('/dashboard/turmas/nova', 'professor').hasAccess).toBe(false)
     expect(checkRouteAccess('/dashboard/turmas/fixture/editar', 'professor').hasAccess).toBe(false)

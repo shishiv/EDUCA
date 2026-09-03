@@ -90,7 +90,7 @@ checks, school selection, RLS or audit.
 | Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
 | Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
 | Attendance | `/dashboard/turmas`, `/dashboard/turmas/[id]/chamada` | `/api/sessoes/aula/abrir`, `/api/sessoes/aula/[id]/frequencia/batch` | Professor and diretor write; admin and secretaria view only; server-side role and school checks remain active |
-| Diary | `/dashboard/diario`, `/diario`, `/dashboard/alunos/[id]/diario` | `/api/vivencias` | Class diary is available; the legacy `vivencias` endpoint remains a documented 501 stub |
+| Diary | `/dashboard/diario`, `/diario`, `/dashboard/alunos/[id]/diario` | `/api/vivencias` | Canonical class diary plus authenticated school-scoped Educação Infantil Vivências |
 | Grades and report cards | `/dashboard/notas`, `/dashboard/alunos/[id]/boletim` | `/api/grades/*` and typed Supabase queries | Synthetic grades and averages only |
 | Reports | `/dashboard/relatorios`, `/relatorios/frequencia`, `/relatorios/bolsa-familia`, `/relatorios/conteudo` | `/api/reports/*` and typed Supabase queries | Browser reports use synthetic rows; no government export is enabled |
 | Calendar and internal settings | `/dashboard/calendario`, `/dashboard/configuracoes`, `/dashboard/flags` | `/api/configs/*` | Internal synthetic configuration only |
