@@ -38,10 +38,38 @@ export class ClassesApiService extends BaseApiService {
     limit?: number
     offset?: number
   }): Promise<ClassWithDetails[]> {
-    try {
-      let query = supabase
-        .from('turmas')
-        .select(`
+    const { data, error } = await this.buildClassesWithDetailsQuery(options)
+
+    if (error) throw error
+
+    return (data as ClassWithDetails[]).map((classData) => this.withEnrollmentCounts(classData))
+  }
+
+  private buildClassesWithDetailsQuery(options?: {
+    filter?: Record<string, any>
+    searchTerm?: string
+    schools?: string[]
+    series?: string[]
+    turnos?: ('matutino' | 'vespertino' | 'integral')[]
+    academicYear?: number
+    activeOnly?: boolean
+    limit?: number
+    offset?: number
+  }) {
+    const {
+      activeOnly,
+      filter,
+      schools = [],
+      series = [],
+      turnos = [],
+      academicYear,
+      searchTerm,
+      limit,
+      offset,
+    } = options || {}
+    let query = supabase
+      .from('turmas')
+      .select(`
           *,
           escola:escolas(
             id,
@@ -66,74 +94,55 @@ export class ClassesApiService extends BaseApiService {
           )
         `)
 
-      // Apply filters
-      if (options?.activeOnly !== false) {
-        query = query.eq('ativo', true)
-      }
+    if (activeOnly !== false) {
+      query = query.eq('ativo', true)
+    }
 
-      if (options?.filter) {
-        Object.entries(options.filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value)
-          }
-        })
-      }
-
-      // School filter
-      if (options?.schools && options.schools.length > 0) {
-        query = query.in('escola_id', options.schools)
-      }
-
-      // Series filter
-      if (options?.series && options.series.length > 0) {
-        query = query.in('serie', options.series)
-      }
-
-      // Shift filter
-      if (options?.turnos && options.turnos.length > 0) {
-        query = query.in('turno', options.turnos)
-      }
-
-      // Academic year filter
-      if (options?.academicYear) {
-        query = query.eq('ano_letivo', options.academicYear)
-      }
-
-      // Search filter
-      if (options?.searchTerm) {
-        query = query.or(`nome.ilike.%${options.searchTerm}%,serie.ilike.%${options.searchTerm}%`)
-      }
-
-      // Apply pagination
-      if (options?.limit) {
-        const from = options.offset || 0
-        const to = from + options.limit - 1
-        query = query.range(from, to)
-      }
-
-      // Order by name
-      query = query.order('nome', { ascending: true })
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      // Add counts for each class
-      const classesWithCounts = (data as ClassWithDetails[]).map(classData => {
-        const activeEnrollments = classData.matriculas?.filter(m => m.situacao === 'ativa') || []
-
-        return {
-          ...classData,
-          _count: {
-            students: activeEnrollments.length,
-            matriculas: classData.matriculas?.length || 0
-          }
+    if (filter) {
+      Object.entries(filter).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          query = query.eq(key, value)
         }
       })
+    }
 
-      return classesWithCounts
-    } catch (error) {
-      throw error
+    if (schools.length > 0) {
+      query = query.in('escola_id', schools)
+    }
+
+    if (series.length > 0) {
+      query = query.in('serie', series)
+    }
+
+    if (turnos.length > 0) {
+      query = query.in('turno', turnos)
+    }
+
+    if (academicYear) {
+      query = query.eq('ano_letivo', academicYear)
+    }
+
+    if (searchTerm) {
+      query = query.or(`nome.ilike.%${searchTerm}%,serie.ilike.%${searchTerm}%`)
+    }
+
+    if (limit) {
+      const from = offset || 0
+      query = query.range(from, from + limit - 1)
+    }
+
+    return query.order('nome', { ascending: true })
+  }
+
+  private withEnrollmentCounts(classData: ClassWithDetails): ClassWithDetails {
+    const activeEnrollments = classData.matriculas?.filter((matricula) => matricula.situacao === 'ativa') || []
+
+    return {
+      ...classData,
+      _count: {
+        students: activeEnrollments.length,
+        matriculas: classData.matriculas?.length || 0
+      }
     }
   }
 
