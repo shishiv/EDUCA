@@ -6,8 +6,11 @@ import { PublicDemoExplainer } from '@/components/marketing/public-demo-explaine
 import { PublicHeader } from '@/components/marketing/public-header'
 import { getMessagesForLocale } from '@/i18n/messages'
 
+const { pathname } = vi.hoisted(() => ({ pathname: { current: '/' } }))
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn() }),
+  usePathname: () => pathname.current,
 }))
 
 type PublicMessages = {
@@ -71,6 +74,7 @@ describe('redesign localization contract', () => {
     ['pt-BR', getMessagesForLocale('pt-BR')],
     ['en', getMessagesForLocale('en')],
   ] as const)('renders the compact locale button in the public header for %s', (locale, messages) => {
+    pathname.current = '/demo'
     render(
       <NextIntlClientProvider locale={locale} messages={messages}>
         <PublicHeader />
@@ -78,5 +82,16 @@ describe('redesign localization contract', () => {
     )
 
     expect(screen.getByRole('button', { name: /language|idioma/i })).toBeVisible()
+  })
+
+  it.each(['/blog', '/blog/encarregado-de-dados-em-prefeitura'])('omits the locale button on %s', (route) => {
+    pathname.current = route
+    render(
+      <NextIntlClientProvider locale="pt-BR" messages={getMessagesForLocale('pt-BR')}>
+        <PublicHeader />
+      </NextIntlClientProvider>
+    )
+
+    expect(screen.queryByRole('button', { name: /language|idioma/i })).not.toBeInTheDocument()
   })
 })
