@@ -96,6 +96,101 @@ async function writePilotDescriptiveValidationReceipt(
   )
 }
 
+function recordCountChecks(actual: Record<string, unknown>): void {
+  const expectedCounts: Record<string, number> = {
+    schools: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.schools,
+    classes: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.classes,
+    students: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.students,
+    enrollments: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.enrollments,
+    reports: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.reports,
+    sessions: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.sessions,
+    canonical_content: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.canonicalContent,
+  }
+
+  for (const [name, expectedCount] of Object.entries(expectedCounts)) {
+    const count = asNumber(actual[name])
+    recordPilotDescriptiveCheck(`count_${name}`, count === expectedCount, `${count} == ${expectedCount}`)
+  }
+}
+
+function recordContractChecks(actual: Record<string, unknown>): void {
+  recordPilotDescriptiveCheck(
+    'marker_synthetic',
+    actual.marker === PILOT_DESCRIPTIVE_SEED_MARKER,
+    `${actual.marker ?? '(missing)'} == ${PILOT_DESCRIPTIVE_SEED_MARKER}`
+  )
+  recordPilotDescriptiveCheck(
+    'release_revision',
+    actual.release_revision === RELEASE_REVISION,
+    `${actual.release_revision ?? '(missing)'} == ${RELEASE_REVISION}`
+  )
+  recordPilotDescriptiveCheck(
+    'environment_local_synthetic',
+    actual.rehearsal_environment === PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
+    `${actual.rehearsal_environment ?? '(missing)'} == ${PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT}`
+  )
+  recordPilotDescriptiveCheck(
+    'canonical_source',
+    actual.canonical_source === PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+    `${actual.canonical_source ?? '(missing)'} == ${PILOT_DESCRIPTIVE_CANONICAL_SOURCE}`
+  )
+  recordPilotDescriptiveCheck(
+    'fingerprint_algorithm',
+    PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM === 'MD5',
+    PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM
+  )
+  recordPilotDescriptiveCheck(
+    'fingerprint_canonical_content',
+    actual.canonical_content_fingerprint === PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.canonicalContent,
+    `${actual.canonical_content_fingerprint ?? '(missing)'} == ${PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.canonicalContent}`
+  )
+  recordPilotDescriptiveCheck(
+    'fingerprint_descriptive_report',
+    actual.descriptive_report_fingerprint === PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.descriptiveReport,
+    `${actual.descriptive_report_fingerprint ?? '(missing)'} == ${PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.descriptiveReport}`
+  )
+}
+
+function recordScopeChecks(actual: Record<string, unknown>): void {
+  const schoolScope = asObject(actual.school_scope)
+  recordPilotDescriptiveCheck(
+    'scope_school',
+    schoolScope.id === PILOT_DESCRIPTIVE_SCHOOL_ID && schoolScope.name === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.schoolName,
+    `${schoolScope.name ?? '(missing)'} / ${schoolScope.id ?? '(missing)'}`
+  )
+  const classScope = asObject(actual.class_scope)
+  recordPilotDescriptiveCheck(
+    'scope_class',
+    classScope.id === PILOT_DESCRIPTIVE_CLASS_ID &&
+      classScope.name === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.className &&
+      classScope.serie === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.classSeries &&
+      classScope.schoolId === PILOT_DESCRIPTIVE_SCHOOL_ID,
+    `${classScope.name ?? '(missing)'} / ${classScope.id ?? '(missing)'}`
+  )
+
+  const reportingPeriod = asObject(actual.reporting_period)
+  recordPilotDescriptiveCheck(
+    'reporting_period',
+    reportingPeriod.year === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.year &&
+      reportingPeriod.semester === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.semester &&
+      reportingPeriod.start === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.start &&
+      reportingPeriod.end === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.end,
+    JSON.stringify(reportingPeriod)
+  )
+
+  const issuer = asObject(actual.issuer_context)
+  recordPilotDescriptiveCheck(
+    'issuer_authenticated_synthetic',
+    issuer.reportId === PILOT_DESCRIPTIVE_REPORT_ID &&
+      issuer.actorId === issuer.reportProfessorId &&
+      issuer.name === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.name &&
+      issuer.email === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.email &&
+      issuer.authEmail === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.email &&
+      issuer.role === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.role,
+    JSON.stringify(issuer)
+  )
+}
+
 async function validatePilotDescriptive(): Promise<void> {
   if (!SUPABASE_DB_URL) {
     throw new Error('PILOT_DESCRIPTIVE_VALIDATE_DB_URL_REQUIRED: SUPABASE_DB_URL or DATABASE_URL is required')
@@ -173,94 +268,9 @@ async function validatePilotDescriptive(): Promise<void> {
     )
 
     const actual = normalizeReceipt((rows[0] ?? {}) as Record<string, unknown>)
-    const expectedCounts: Record<string, number> = {
-      schools: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.schools,
-      classes: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.classes,
-      students: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.students,
-      enrollments: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.enrollments,
-      reports: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.reports,
-      sessions: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.sessions,
-      canonical_content: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.canonicalContent,
-    }
-
-    for (const [name, expectedCount] of Object.entries(expectedCounts)) {
-      const count = asNumber(actual[name])
-      recordPilotDescriptiveCheck(`count_${name}`, count === expectedCount, `${count} == ${expectedCount}`)
-    }
-
-    recordPilotDescriptiveCheck(
-      'marker_synthetic',
-      actual.marker === PILOT_DESCRIPTIVE_SEED_MARKER,
-      `${actual.marker ?? '(missing)'} == ${PILOT_DESCRIPTIVE_SEED_MARKER}`
-    )
-    recordPilotDescriptiveCheck(
-      'release_revision',
-      actual.release_revision === RELEASE_REVISION,
-      `${actual.release_revision ?? '(missing)'} == ${RELEASE_REVISION}`
-    )
-    recordPilotDescriptiveCheck(
-      'environment_local_synthetic',
-      actual.rehearsal_environment === PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
-      `${actual.rehearsal_environment ?? '(missing)'} == ${PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT}`
-    )
-    recordPilotDescriptiveCheck(
-      'canonical_source',
-      actual.canonical_source === PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
-      `${actual.canonical_source ?? '(missing)'} == ${PILOT_DESCRIPTIVE_CANONICAL_SOURCE}`
-    )
-    recordPilotDescriptiveCheck(
-      'fingerprint_algorithm',
-      PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM === 'MD5',
-      PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM
-    )
-    recordPilotDescriptiveCheck(
-      'fingerprint_canonical_content',
-      actual.canonical_content_fingerprint === PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.canonicalContent,
-      `${actual.canonical_content_fingerprint ?? '(missing)'} == ${PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.canonicalContent}`
-    )
-    recordPilotDescriptiveCheck(
-      'fingerprint_descriptive_report',
-      actual.descriptive_report_fingerprint === PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.descriptiveReport,
-      `${actual.descriptive_report_fingerprint ?? '(missing)'} == ${PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.descriptiveReport}`
-    )
-
-    const schoolScope = asObject(actual.school_scope)
-    recordPilotDescriptiveCheck(
-      'scope_school',
-      schoolScope.id === PILOT_DESCRIPTIVE_SCHOOL_ID && schoolScope.name === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.schoolName,
-      `${schoolScope.name ?? '(missing)'} / ${schoolScope.id ?? '(missing)'}`
-    )
-    const classScope = asObject(actual.class_scope)
-    recordPilotDescriptiveCheck(
-      'scope_class',
-      classScope.id === PILOT_DESCRIPTIVE_CLASS_ID &&
-        classScope.name === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.className &&
-        classScope.serie === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.classSeries &&
-        classScope.schoolId === PILOT_DESCRIPTIVE_SCHOOL_ID,
-      `${classScope.name ?? '(missing)'} / ${classScope.id ?? '(missing)'}`
-    )
-
-    const reportingPeriod = asObject(actual.reporting_period)
-    recordPilotDescriptiveCheck(
-      'reporting_period',
-      reportingPeriod.year === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.year &&
-        reportingPeriod.semester === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.semester &&
-        reportingPeriod.start === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.start &&
-        reportingPeriod.end === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.end,
-      JSON.stringify(reportingPeriod)
-    )
-
-    const issuer = asObject(actual.issuer_context)
-    recordPilotDescriptiveCheck(
-      'issuer_authenticated_synthetic',
-      issuer.reportId === PILOT_DESCRIPTIVE_REPORT_ID &&
-        issuer.actorId === issuer.reportProfessorId &&
-        issuer.name === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.name &&
-        issuer.email === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.email &&
-        issuer.authEmail === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.email &&
-        issuer.role === PILOT_DESCRIPTIVE_EXPECTED_ISSUER.role,
-      JSON.stringify(issuer)
-    )
+    recordCountChecks(actual)
+    recordContractChecks(actual)
+    recordScopeChecks(actual)
 
     console.info(`PILOT_DESCRIPTIVE_VALIDATION_RECEIPT: ${JSON.stringify(actual)}`)
     for (const check of checks) {

@@ -24,6 +24,92 @@ const invitationSchema = z.object({
   schoolId: z.string().uuid().nullable(),
 })
 
+type InvitationInput = z.infer<typeof invitationSchema>
+
+async function runDemoInvitation(input: InvitationInput): Promise<NextResponse> {
+  const supabase = await createClient()
+  if (input.schoolId) {
+    const { data: school, error: schoolError } = await supabase
+      .from('escolas')
+      .select('id')
+      .eq('id', input.schoolId)
+      .eq('ativo', true)
+      .maybeSingle()
+    if (schoolError) throw schoolError
+    if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
+  }
+
+  const receipt = await writeDemoActionInterceptedAudit(
+    asPilotRpcClient(supabase),
+    {
+      operation: 'demo.auth.invitation',
+      entityId: receiptEntityId(input.email),
+      schoolId: input.schoolId,
+    }
+  )
+  const response = demoSandboxSimulatedSuccessResponse(
+    'demo.auth.invitation',
+    {
+      invitation: {
+        id: receipt.correlationId,
+        email: input.email,
+        invited_role: input.role,
+        escola_id: input.schoolId,
+        simulated: true,
+      },
+    },
+    { status: 201, auditId: receipt.auditId, correlationId: receipt.correlationId },
+  )
+
+  return response ?? NextResponse.json({ error: 'DEMO_INVITATION_NOT_AVAILABLE' }, { status: 404 })
+}
+
+async function runPilotInvitation(input: InvitationInput, actorId: string): Promise<NextResponse> {
+  const service = createServiceRoleClient()
+  if (input.schoolId) {
+    const { data: school } = await service.from('escolas').select('id').eq('id', input.schoolId).eq('ativo', true).maybeSingle()
+    if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
+  }
+
+  const redirectBase = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'
+  let registration
+  try {
+    registration = await startOrResumeUserRegistration(
+      createSupabaseUserLifecyclePorts({ serviceClient: service, sessionClient: service }),
+      {
+        email: input.email,
+        name: input.name,
+        role: input.role,
+        schoolId: input.schoolId,
+        invitedBy: actorId,
+      },
+      `${redirectBase}/primeiro-acesso`,
+    )
+  } catch (error) {
+    if (error instanceof UserLifecycleError) return userLifecycleErrorResponse(error)
+    throw error
+  }
+
+  if (!registration.created) {
+    const invitation = publicInvitation(registration.invitation)
+    if (registration.resumed) {
+      return NextResponse.json({
+        invitation,
+        resumed: true,
+        registration: { status: 'incomplete', resumePath: '/primeiro-acesso' },
+      }, { status: 200 })
+    }
+    return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_PENDING', invitation, emailResent: false }, { status: 409 })
+  }
+
+  const supabase = await createClient()
+  await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
+    p_event_type: 'user_invited', p_entity_type: 'user', p_entity_id: registration.invitation.auth_user_id,
+    p_escola_id: input.schoolId ?? undefined, p_metadata: { role: input.role },
+  })
+  return NextResponse.json({ invitation: publicInvitation(registration.invitation) }, { status: 201 })
+}
+
 export async function POST(request: Request) {
   const demoSandbox = isDemoSandboxEnabled()
 
@@ -47,87 +133,8 @@ export async function POST(request: Request) {
     if (input.role !== 'secretario' && !input.schoolId) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_REQUIRED' }, { status: 400 })
     if (input.role === 'secretario' && input.schoolId) return NextResponse.json({ error: 'PILOT_INVITE_SECRETARIAT_MUST_BE_MUNICIPAL' }, { status: 400 })
 
-    if (demoSandbox) {
-      const supabase = await createClient()
-      if (input.schoolId) {
-        const { data: school, error: schoolError } = await supabase
-          .from('escolas')
-          .select('id')
-          .eq('id', input.schoolId)
-          .eq('ativo', true)
-          .maybeSingle()
-        if (schoolError) throw schoolError
-        if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
-      }
-
-      const receipt = await writeDemoActionInterceptedAudit(
-        asPilotRpcClient(supabase),
-        {
-          operation: 'demo.auth.invitation',
-          entityId: receiptEntityId(input.email),
-          schoolId: input.schoolId,
-        }
-      )
-      const response = demoSandboxSimulatedSuccessResponse(
-        'demo.auth.invitation',
-        {
-          invitation: {
-            id: receipt.correlationId,
-            email: input.email,
-            invited_role: input.role,
-            escola_id: input.schoolId,
-            simulated: true,
-          },
-        },
-        { status: 201, auditId: receipt.auditId, correlationId: receipt.correlationId },
-      )
-
-      return response ?? NextResponse.json({ error: 'DEMO_INVITATION_NOT_AVAILABLE' }, { status: 404 })
-    }
-
-    const service = createServiceRoleClient()
-    if (input.schoolId) {
-      const { data: school } = await service.from('escolas').select('id').eq('id', input.schoolId).eq('ativo', true).maybeSingle()
-      if (!school) return NextResponse.json({ error: 'PILOT_INVITE_SCHOOL_NOT_FOUND' }, { status: 404 })
-    }
-
-    const redirectBase = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000'
-    let registration
-    try {
-      registration = await startOrResumeUserRegistration(
-        createSupabaseUserLifecyclePorts({ serviceClient: service, sessionClient: service }),
-        {
-          email: input.email,
-          name: input.name,
-          role: input.role,
-          schoolId: input.schoolId,
-          invitedBy: actor.id,
-        },
-        `${redirectBase}/primeiro-acesso`,
-      )
-    } catch (error) {
-      if (error instanceof UserLifecycleError) return userLifecycleErrorResponse(error)
-      throw error
-    }
-
-    if (!registration.created) {
-      const invitation = publicInvitation(registration.invitation)
-      if (registration.resumed) {
-        return NextResponse.json({
-          invitation,
-          resumed: true,
-          registration: { status: 'incomplete', resumePath: '/primeiro-acesso' },
-        }, { status: 200 })
-      }
-      return NextResponse.json({ error: 'PILOT_INVITE_ALREADY_PENDING', invitation, emailResent: false }, { status: 409 })
-    }
-
-    const supabase = await createClient()
-    await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
-      p_event_type: 'user_invited', p_entity_type: 'user', p_entity_id: registration.invitation.auth_user_id,
-      p_escola_id: input.schoolId ?? undefined, p_metadata: { role: input.role },
-    })
-    return NextResponse.json({ invitation: publicInvitation(registration.invitation) }, { status: 201 })
+    if (demoSandbox) return await runDemoInvitation(input)
+    return await runPilotInvitation(input, actor.id)
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'PILOT_INVITE_INVALID', issues: error.issues.map(issue => ({ path: issue.path, code: issue.code })) }, { status: 400 })
     return pilotErrorResponse(error, { feature: 'pilot-invitations', fallbackCode: 'PILOT_INVITE_FAILED' })

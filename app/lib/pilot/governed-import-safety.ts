@@ -111,6 +111,62 @@ function rejectProofSafety(
   )
 }
 
+function assertProofDataModeSafety(
+  environment: GovernedImportProofEnvironment,
+  operation: GovernedPilotProofOperation
+): void {
+  if (environment.dataMode === 'real') {
+    if (environment.realDataConfirmation !== REAL_DATA_PROOF_CONFIRMATION) {
+      rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_REAL_DATA_CONFIRMATION_REQUIRED')
+    }
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_REAL_DATA_DENIED')
+  }
+  if (!environment.dataMode) rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATA_MODE_REQUIRED')
+  if (environment.dataMode !== PILOT_PROOF_DATA_MODE) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATA_MODE_INVALID')
+  }
+  if (environment.syntheticOnly !== 'true') {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_SYNTHETIC_ONLY_REQUIRED')
+  }
+  if (!environment.syntheticMarker) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_SYNTHETIC_MARKER_REQUIRED')
+  }
+  if (environment.syntheticMarker !== PILOT_PROOF_SYNTHETIC_MARKER) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_SYNTHETIC_MARKER_INVALID')
+  }
+}
+
+function assertProofDatabaseSafety(
+  environment: GovernedImportProofEnvironment,
+  operation: GovernedPilotProofOperation
+): void {
+  if (!environment.proofDatabaseUrl) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_REQUIRED')
+  }
+
+  let databaseUrl: URL
+  try {
+    databaseUrl = new URL(environment.proofDatabaseUrl)
+  } catch {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_INVALID')
+  }
+  if (!['postgres:', 'postgresql:'].includes(databaseUrl.protocol)) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_PROTOCOL_INVALID')
+  }
+  if (!LOCAL_PROOF_HOSTS.has(databaseUrl.hostname)) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_LOCAL_ONLY')
+  }
+  if (!PROOF_DATABASE_NAME.test(databaseUrl.pathname.replace(/^\//, ''))) {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_NAME_REQUIRED')
+  }
+  if (!environment.encryptionKey) rejectProofSafety(environment, operation, 'PILOT_IMPORT_KEY_MISSING')
+  try {
+    validatePilotImportEncryptionKey(environment.encryptionKey)
+  } catch {
+    rejectProofSafety(environment, operation, 'PILOT_IMPORT_KEY_INVALID')
+  }
+}
+
 /** Hard-fails governed proof operations outside one local synthetic target. */
 export function assertGovernedPilotProofSafety(
   environment: GovernedImportProofEnvironment = readGovernedPilotProofEnvironment(),
@@ -131,55 +187,8 @@ export function assertGovernedPilotProofSafety(
   if (environment.supabaseDemoReferences?.some(reference => Boolean(reference))) {
     return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DEMO_REFERENCE_DENIED')
   }
-  if (environment.dataMode === 'real') {
-    if (environment.realDataConfirmation !== REAL_DATA_PROOF_CONFIRMATION) {
-      return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_REAL_DATA_CONFIRMATION_REQUIRED')
-    }
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_REAL_DATA_DENIED')
-  }
-  if (!environment.dataMode) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATA_MODE_REQUIRED')
-  }
-  if (environment.dataMode !== PILOT_PROOF_DATA_MODE) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATA_MODE_INVALID')
-  }
-  if (environment.syntheticOnly !== 'true') {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_SYNTHETIC_ONLY_REQUIRED')
-  }
-  if (!environment.syntheticMarker) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_SYNTHETIC_MARKER_REQUIRED')
-  }
-  if (environment.syntheticMarker !== PILOT_PROOF_SYNTHETIC_MARKER) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_SYNTHETIC_MARKER_INVALID')
-  }
-  if (!environment.proofDatabaseUrl) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_REQUIRED')
-  }
-
-  let databaseUrl: URL
-  try {
-    databaseUrl = new URL(environment.proofDatabaseUrl)
-  } catch {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_INVALID')
-  }
-  if (!['postgres:', 'postgresql:'].includes(databaseUrl.protocol)) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_PROTOCOL_INVALID')
-  }
-  if (!LOCAL_PROOF_HOSTS.has(databaseUrl.hostname)) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_LOCAL_ONLY')
-  }
-  const databaseName = databaseUrl.pathname.replace(/^\//, '')
-  if (!PROOF_DATABASE_NAME.test(databaseName)) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_PROOF_DATABASE_NAME_REQUIRED')
-  }
-  if (!environment.encryptionKey) {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_KEY_MISSING')
-  }
-  try {
-    validatePilotImportEncryptionKey(environment.encryptionKey)
-  } catch {
-    return rejectProofSafety(environment, operation, 'PILOT_IMPORT_KEY_INVALID')
-  }
+  assertProofDataModeSafety(environment, operation)
+  assertProofDatabaseSafety(environment, operation)
 
   return createSafetyReceipt(environment, operation, true, 'PILOT_IMPORT_PROOF_SAFETY_ACCEPTED')
 }

@@ -15,6 +15,7 @@ import {
   transformGovernedPilotCsvToCanonicalRows,
   validateGovernedPilotImportManifest,
   validateGovernedPilotStudentCsv,
+  type GovernedPilotImportManifest,
   type GovernedPilotImportDataMode,
 } from '../lib/pilot/governed-csv-import'
 import {
@@ -110,6 +111,29 @@ interface RollbackEvidence {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const KEY_ID_PATTERN = /^[A-Za-z0-9._-]{1,80}$/
 
+function assignProofImportArgument(
+  result: ProofImportArguments,
+  argument: string,
+  value: string | undefined
+): void {
+  if (!value) throw new Error(`PILOT_IMPORT_PROOF_ARGUMENT_INVALID: unknown or incomplete argument ${argument}`)
+  if (argument === '--csv') result.csvPath = value
+  else if (argument === '--approval') result.approvalPath = value
+  else if (argument === '--batch') result.batchId = value
+  else if (argument === '--actor-email') result.actorEmail = value
+  else if (argument === '--reason') result.reason = value
+  else throw new Error(`PILOT_IMPORT_PROOF_ARGUMENT_INVALID: unknown or incomplete argument ${argument}`)
+}
+
+function assertProofImportArguments(result: ProofImportArguments): void {
+  if (result.command === 'import' && (!result.csvPath || !result.approvalPath)) {
+    throw new Error('PILOT_IMPORT_PROOF_INPUT_REQUIRED: --csv and --approval are required')
+  }
+  if (result.command === 'rollback' && (!result.batchId || !result.actorEmail || !result.reason)) {
+    throw new Error('PILOT_IMPORT_PROOF_ROLLBACK_INPUT_REQUIRED: --batch, --actor-email, and --reason are required')
+  }
+}
+
 function parseProofImportArguments(argv: string[]): ProofImportArguments {
   const command = argv[0] || 'import'
   if (!['import', 'rollback', 'cleanup'].includes(command)) {
@@ -119,32 +143,11 @@ function parseProofImportArguments(argv: string[]): ProofImportArguments {
   for (let index = 1; index < argv.length; index += 1) {
     const argument = argv[index]
     const next = argv[index + 1]
-    if (argument === '--csv' && next) {
-      result.csvPath = next
-      index += 1
-    } else if (argument === '--approval' && next) {
-      result.approvalPath = next
-      index += 1
-    } else if (argument === '--batch' && next) {
-      result.batchId = next
-      index += 1
-    } else if (argument === '--actor-email' && next) {
-      result.actorEmail = next
-      index += 1
-    } else if (argument === '--reason' && next) {
-      result.reason = next
-      index += 1
-    } else {
-      throw new Error(`PILOT_IMPORT_PROOF_ARGUMENT_INVALID: unknown or incomplete argument ${argument}`)
-    }
+    assignProofImportArgument(result, argument, next)
+    index += 1
   }
 
-  if (result.command === 'import' && (!result.csvPath || !result.approvalPath)) {
-    throw new Error('PILOT_IMPORT_PROOF_INPUT_REQUIRED: --csv and --approval are required')
-  }
-  if (result.command === 'rollback' && (!result.batchId || !result.actorEmail || !result.reason)) {
-    throw new Error('PILOT_IMPORT_PROOF_ROLLBACK_INPUT_REQUIRED: --batch, --actor-email, and --reason are required')
-  }
+  assertProofImportArguments(result)
   return result
 }
 
@@ -421,6 +424,50 @@ async function buildImportReceipt(
   }
 }
 
+async function resolveProofImportGovernance(
+  client: Client,
+  school: SchoolRow,
+  manifest: GovernedPilotImportManifest
+) {
+  const submitter = await findActiveActor(client, manifest.approval.submittedBy.email, 'PILOT_IMPORT_SUBMITTER_REQUIRED')
+  const approver = await findActiveActor(client, manifest.approval.approvedBy.email, 'PILOT_IMPORT_APPROVER_REQUIRED')
+  const agreementRecorder = await findActiveActor(
+    client,
+    manifest.processingAgreement.recordedBy.email,
+    'PILOT_IMPORT_AGREEMENT_RECORDER_REQUIRED'
+  )
+  const owner = await findActiveActor(client, manifest.owner.email, 'PILOT_IMPORT_OWNER_REQUIRED')
+  assertPilotImportOwnerMatchesActor(manifest.owner, {
+    name: owner.nome,
+    email: owner.email,
+    role: owner.tipo_usuario,
+    schoolId: null,
+  })
+  if (owner.id !== submitter.id) throw new Error('PILOT_IMPORT_OWNER_DENIED: owner must authorize the submitted batch')
+  if (submitter.id === approver.id) throw new Error('PILOT_IMPORT_MAKER_CHECKER_REQUIRED: submitter and approver must differ')
+  const agreementResult = await client.query<{
+    id: string
+    confirmed: boolean
+    confirmed_at: string | null
+    confirmed_by: string | null
+    escola_id: string
+  }>(
+    `SELECT id, confirmed, confirmed_at, confirmed_by, escola_id
+     FROM public.pilot_data_treatment_agreements
+     WHERE escola_id = $1 AND reference = $2 AND version = $3 AND confirmed = true
+     LIMIT 1`,
+    [school.id, manifest.processingAgreement.reference, manifest.processingAgreement.version]
+  )
+  const agreement = agreementResult.rows[0]
+  if (!agreement || !agreement.confirmed || !agreement.confirmed_at || !agreement.confirmed_by) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
+  }
+  if (agreement.confirmed_by !== agreementRecorder.id) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_MISMATCH: agreement confirmer does not match the manifest')
+  }
+  return { submitter, approver, agreementRecorder, owner, agreement }
+}
+
 async function runGovernedProofImport(
   client: Client,
   csvPath: string,
@@ -451,43 +498,7 @@ async function runGovernedProofImport(
   await client.query('BEGIN')
   try {
     const school = await findProofSchool(client, report.schoolCodes[0])
-    const submitter = await findActiveActor(client, manifest.approval.submittedBy.email, 'PILOT_IMPORT_SUBMITTER_REQUIRED')
-    const approver = await findActiveActor(client, manifest.approval.approvedBy.email, 'PILOT_IMPORT_APPROVER_REQUIRED')
-    const agreementRecorder = await findActiveActor(
-      client,
-      manifest.processingAgreement.recordedBy.email,
-      'PILOT_IMPORT_AGREEMENT_RECORDER_REQUIRED'
-    )
-    const owner = await findActiveActor(client, manifest.owner.email, 'PILOT_IMPORT_OWNER_REQUIRED')
-    assertPilotImportOwnerMatchesActor(manifest.owner, {
-      name: owner.nome,
-      email: owner.email,
-      role: owner.tipo_usuario,
-      schoolId: null,
-    })
-    if (owner.id !== submitter.id) throw new Error('PILOT_IMPORT_OWNER_DENIED: owner must authorize the submitted batch')
-    if (submitter.id === approver.id) throw new Error('PILOT_IMPORT_MAKER_CHECKER_REQUIRED: submitter and approver must differ')
-    const agreementResult = await client.query<{
-      id: string
-      confirmed: boolean
-      confirmed_at: string | null
-      confirmed_by: string | null
-      escola_id: string
-    }>(
-      `SELECT id, confirmed, confirmed_at, confirmed_by, escola_id
-       FROM public.pilot_data_treatment_agreements
-       WHERE escola_id = $1 AND reference = $2 AND version = $3 AND confirmed = true
-       LIMIT 1`,
-      [school.id, manifest.processingAgreement.reference, manifest.processingAgreement.version]
-    )
-    const agreement = agreementResult.rows[0]
-    if (!agreement || !agreement.confirmed || !agreement.confirmed_at || !agreement.confirmed_by) {
-      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
-    }
-    if (agreement.confirmed_by !== agreementRecorder.id) {
-      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_MISMATCH: agreement confirmer does not match the manifest')
-    }
-    const ownerEmail = owner.email
+    const { submitter, approver, agreementRecorder, owner, agreement } = await resolveProofImportGovernance(client, school, manifest)
     const idempotencyKey = `proof-${report.contentSha256}`
     const existing = await client.query<{ id: string; governance_fingerprint_sha256: string | null }>(
       `SELECT id, governance_fingerprint_sha256
@@ -542,7 +553,7 @@ async function runGovernedProofImport(
         manifest.retention.rawPayloadExpiresAt,
         dataMode,
         owner.nome,
-        ownerEmail,
+        owner.email,
         owner.id,
         manifest.approval.approvedAt,
         submitter.nome,

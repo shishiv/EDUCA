@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const csv = [
   'synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,guardian_name,guardian_phone,guardian_relationship',
@@ -40,17 +40,21 @@ const secretariatEmail = 'secretaria@synthetic.invalid'
 const directorEmail = 'diretora.a@synthetic.invalid'
 const sourceFingerprint = createHash('sha256').update(csv, 'utf8').digest('hex')
 
-test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', async ({ page, browser }) => {
-  await page.goto('/dashboard')
-  const blockedWithoutAgreement = await page.evaluate(async ({ csvPayload, governancePayload }) => {
-    const response = await fetch('/api/pilot/imports', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ csv: csvPayload, dryRun: true, governance: governancePayload }),
+async function postJson(page: Page, url: string, body: unknown) {
+  return page.evaluate(async ({ requestUrl, requestBody }) => {
+    const response = await fetch(requestUrl, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(requestBody),
     })
     return { status: response.status, body: await response.json() }
-  }, {
-    csvPayload: csv,
-    governancePayload: {
+  }, { requestUrl: url, requestBody: body })
+}
+
+test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', async ({ page, browser }) => {
+  await page.goto('/dashboard')
+  const blockedWithoutAgreement = await postJson(page, '/api/pilot/imports', {
+    csv,
+    dryRun: true,
+    governance: {
       ...governance,
       processingAgreement: { ...governance.processingAgreement, status: 'a confirmar', confirmed: false },
     },
@@ -59,15 +63,10 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     status: 409,
     body: { error: 'PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement is required' },
   })
-  const blockedWithoutOwner = await page.evaluate(async ({ csvPayload, governancePayload }) => {
-    const response = await fetch('/api/pilot/imports', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ csv: csvPayload, dryRun: true, governance: governancePayload }),
-    })
-    return { status: response.status, body: await response.json() }
-  }, {
-    csvPayload: csv,
-    governancePayload: {
+  const blockedWithoutOwner = await postJson(page, '/api/pilot/imports', {
+    csv,
+    dryRun: true,
+    governance: {
       ...governance,
       owner: { name: 'Outro Owner Sintetico', email: 'outro-owner@synthetic.invalid' },
     },
@@ -77,26 +76,19 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     body: { error: 'PILOT_IMPORT_OWNER_DENIED: the named owner must be the authenticated authorizer' },
   })
 
-  const dryRun = await page.evaluate(async ({ csvPayload, governancePayload }) => {
-    const response = await fetch('/api/pilot/imports', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ csv: csvPayload, dryRun: true, governance: governancePayload }),
-    })
-    return { status: response.status, body: await response.json() }
-  }, { csvPayload: csv, governancePayload: governance })
+  const dryRun = await postJson(page, '/api/pilot/imports', { csv, dryRun: true, governance })
   expect(dryRun).toEqual(expect.objectContaining({
     status: 200,
     body: expect.objectContaining({ report: expect.objectContaining({ valid: true, validRows: 1 }), validationToken: expect.any(String) }),
   }))
   expect(JSON.stringify(dryRun.body)).not.toContain('Aluno CSV Sintetico')
 
-  const staged = await page.evaluate(async ({ csvPayload, validationToken, governancePayload }) => {
-    const response = await fetch('/api/pilot/imports', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ csv: csvPayload, validationToken, idempotencyKey: 'csv-e2e-batch-001', governance: governancePayload }),
-    })
-    return { status: response.status, body: await response.json() }
-  }, { csvPayload: csv, validationToken: dryRun.body.validationToken, governancePayload: governance })
+  const staged = await postJson(page, '/api/pilot/imports', {
+    csv,
+    validationToken: dryRun.body.validationToken,
+    idempotencyKey: 'csv-e2e-batch-001',
+    governance,
+  })
   expect(staged.status).toBe(201)
   expect(JSON.stringify(staged.body)).not.toContain('Aluno CSV Sintetico')
   const batchId = staged.body.batch.id as string
@@ -108,6 +100,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   ])
   expect(submitterError).toBeNull()
   expect(encryptedBatchError).toBeNull()
+  const submitterId = submitter?.id
   expect(encryptedBatch).toMatchObject({
     id: batchId,
     status: 'pending_approval',
@@ -115,7 +108,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     source_mode: 'synthetic',
     encryption_algorithm: 'aes-256-gcm',
     encryption_key_id: 'synthetic-local-v1',
-    submitted_by: submitter?.id,
+    submitted_by: submitterId,
     approved_by: null,
     content_sha256: sourceFingerprint,
     source_row_count: 1,
@@ -124,7 +117,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     governance_owner_email: 'secretaria@synthetic.invalid',
     processing_agreement_reference: 'DPA-SYN-E2E-001',
     processing_agreement_version: 'v1',
-    processing_agreement_recorded_by: submitter?.id,
+    processing_agreement_recorded_by: submitterId,
     processing_agreement_confirmed: true,
     processing_agreement_id: expect.any(String),
   })
@@ -137,12 +130,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   expect(encryptedBatch?.canonical_expires_at).toEqual(expect.any(String))
   expect(encryptedBatch?.rollback_until).toEqual(expect.any(String))
 
-  const makerAttempt = await page.evaluate(async id => {
-    const response = await fetch(`/api/pilot/imports/${id}/approval`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision: 'approved' }),
-    })
-    return { status: response.status, body: await response.json() }
-  }, batchId)
+  const makerAttempt = await postJson(page, `/api/pilot/imports/${batchId}/approval`, { decision: 'approved' })
   expect(makerAttempt).toEqual({ status: 403, body: { error: 'PILOT_ROLE_DENIED' } })
   const { data: approvalsAfterMaker, error: approvalsAfterMakerError } = await service
     .from('pilot_import_approvals')
@@ -160,12 +148,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   await expect(directorPage).toHaveURL(/dashboard/)
   const { data: approver, error: approverError } = await service.from('users').select('id,email').eq('email', directorEmail).single()
   expect(approverError).toBeNull()
-  const approval = await directorPage.evaluate(async id => {
-    const response = await fetch(`/api/pilot/imports/${id}/approval`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision: 'approved' }),
-    })
-    return { status: response.status, body: await response.json() }
-  }, batchId)
+  const approval = await postJson(directorPage, `/api/pilot/imports/${batchId}/approval`, { decision: 'approved' })
   expect(approval).toEqual(expect.objectContaining({ status: 200, body: expect.objectContaining({ batch: expect.objectContaining({ status: 'published' }) }) }))
   const [
     { data: finalBatch, error: finalBatchError },
@@ -191,6 +174,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   expect(relationshipsError).toBeNull()
   expect(enrollmentsError).toBeNull()
   expect(auditEventsError).toBeNull()
+  const canonicalFingerprint = encryptedBatch?.canonical_fingerprint_sha256
   expect(finalBatch).toMatchObject({
     id: batchId,
     status: 'published',
@@ -198,7 +182,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     source_mode: 'synthetic',
     encryption_algorithm: 'aes-256-gcm',
     encryption_key_id: 'synthetic-local-v1',
-    submitted_by: submitter?.id,
+    submitted_by: submitterId,
     approved_by: approver?.id,
     source_row_count: 1,
     canonical_counts: { sourceRows: 1, students: 1, guardians: 1, relationships: 1, enrollments: 1 },
@@ -208,7 +192,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     published_at: expect.any(String),
     cleaned_at: null,
   })
-  expect(finalBatch?.canonical_fingerprint_sha256).toBe(encryptedBatch?.canonical_fingerprint_sha256)
+  expect(finalBatch?.canonical_fingerprint_sha256).toBe(canonicalFingerprint)
   expect(finalBatch?.governance_fingerprint_sha256).toMatch(/^[a-f0-9]{64}$/)
   expect(approvalRecord).toMatchObject({
     submitted_by: submitter?.id,
@@ -273,13 +257,9 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   expect(retainedBatch).toMatchObject({ status: 'published', encrypted_payload: null, iv: null, auth_tag: null, cleaned_at: expect.any(String) })
   expect(retainedStudents).toHaveLength(1)
 
-  const rollback = await directorPage.evaluate(async id => {
-    const response = await fetch(`/api/pilot/imports/${id}/rollback`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reason: 'synthetic E2E rollback proof' }),
-    })
-    return { status: response.status, body: await response.json() }
-  }, batchId)
+  const rollback = await postJson(directorPage, `/api/pilot/imports/${batchId}/rollback`, {
+    reason: 'synthetic E2E rollback proof',
+  })
   expect(rollback).toEqual(expect.objectContaining({
     status: 200,
     body: expect.objectContaining({
@@ -327,7 +307,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   expect(remainingRelationships).toHaveLength(0)
   expect(remainingEnrollments).toHaveLength(0)
   expect(rollbackAudit).toHaveLength(1)
-  expect(rollbackAudit?.[0]).toMatchObject({
+  expect(rollbackAudit![0]).toMatchObject({
     event_type: 'import_rolled_back',
     entity_id: batchId,
     redacted_metadata: { reason_recorded: true },
