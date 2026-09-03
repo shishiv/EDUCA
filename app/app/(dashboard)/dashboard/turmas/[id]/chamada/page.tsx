@@ -122,6 +122,266 @@ function statusLabel(status: string): string {
   }
 }
 
+function getDisabledReason(
+  isViewOnly: boolean,
+  isFutureDate: boolean,
+  lockInfo: ReturnType<typeof getSessionLockInfo>,
+  sessionStateLocked: boolean
+): string | null {
+  if (isViewOnly) return 'Modo de visualização: secretaria e administração não registram frequência.'
+  if (isFutureDate) return 'Data futura: a chamada só pode ser registrada na data da aula.'
+  if (lockInfo.isLocked) return lockInfo.message
+  if (sessionStateLocked) return 'Esta sessão não está aberta.'
+  return null
+}
+
+function getAttendanceViewState(
+  role: Parameters<typeof canRecordAttendance>[0],
+  selectedSession: AttendanceSession | null,
+  isFutureDate: boolean,
+  lockInfo: ReturnType<typeof getSessionLockInfo>,
+  studentCount: number
+) {
+  const canRecord = canRecordAttendance(role)
+  const isViewOnly = !canRecord
+  const sessionStateLocked = Boolean(selectedSession && selectedSession.status !== 'ABERTA')
+  const isLocked = lockInfo.isLocked || sessionStateLocked
+  return {
+    isTeacher: role === 'professor',
+    isDirector: role === 'diretor',
+    isViewOnly,
+    sessionStateLocked,
+    isLocked,
+    canOpenSession: Boolean(
+      canRecord && !selectedSession && !isFutureDate && !lockInfo.isLocked && studentCount > 0
+    ),
+    canEditSelectedSession: Boolean(
+      selectedSession && canRecord && !isLocked && !isFutureDate
+    ),
+    disabledReason: getDisabledReason(isViewOnly, isFutureDate, lockInfo, sessionStateLocked),
+  }
+}
+
+function ChamadaLoading() {
+  return (
+    <div className="space-y-4 p-4">
+      <Skeleton className="h-8 w-64" />
+      <Skeleton className="h-10 w-full" />
+      <div className="space-y-2">
+        {[1, 2, 3, 4, 5].map(index => <Skeleton key={index} className="h-16 w-full" />)}
+      </div>
+    </div>
+  )
+}
+
+function ChamadaError({ error, onBack }: { error: string | null; onBack: () => void }) {
+  const t = useClassroomTranslations()
+  return (
+    <div className="space-y-4 p-4">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <p className="font-medium">Erro ao carregar a chamada</p>
+        <p className="mt-1 text-sm">{error || t('classes.notFound')}</p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t('actions.back')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function SessionSelector({
+  sessions,
+  selectedSessionId,
+  onSessionChange,
+}: {
+  sessions: AttendanceSession[]
+  selectedSessionId: string | null
+  onSessionChange: (sessionId: string) => void
+}) {
+  if (sessions.length === 0) return null
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <label htmlFor="attendance-session" className="text-sm font-medium">
+            Sessão da data
+          </label>
+          {sessions.length > 1 && (
+            <p className="text-xs text-muted-foreground">
+              Há mais de uma sessão nesta data. Cada sessão mantém seus próprios registros.
+            </p>
+          )}
+        </div>
+        <select
+          id="attendance-session"
+          value={selectedSessionId ?? ''}
+          onChange={event => onSessionChange(event.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          {sessions.map(session => (
+            <option key={session.id} value={session.id}>
+              {statusLabel(session.status)} - {session.created_at ? format(new Date(session.created_at), 'HH:mm') : 'sem horário'}
+            </option>
+          ))}
+        </select>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmptySessionCard({
+  canOpenSession,
+  isSaving,
+  isViewOnly,
+  disabledReason,
+  onOpenSession,
+}: {
+  canOpenSession: boolean
+  isSaving: boolean
+  isViewOnly: boolean
+  disabledReason: string | null
+  onOpenSession: () => void
+}) {
+  const t = useClassroomTranslations()
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+        <CalendarClock className="h-12 w-12 text-muted-foreground" />
+        <div>
+          <h2 className="text-lg font-semibold">{t('attendance.noCall')}</h2>
+          <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            {t('attendance.openHintDate')}
+          </p>
+        </div>
+        {canOpenSession ? (
+          <Button onClick={onOpenSession} disabled={isSaving}>
+            {isSaving ? t('attendance.opening') : t('actions.openAttendance')}
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {isViewOnly ? 'Este perfil pode visualizar chamadas existentes.' : disabledReason || 'Não é possível abrir uma chamada nesta data.'}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function AttendanceSessionContent({
+  loading,
+  selectedSession,
+  students,
+  attendance,
+  canOpenSession,
+  canEditSelectedSession,
+  isSaving,
+  isViewOnly,
+  sessionStateLocked,
+  disabledReason,
+  onOpenSession,
+  onStatusChange,
+  onJustificationNeeded,
+}: {
+  loading: boolean
+  selectedSession: AttendanceSession | null
+  students: Student[]
+  attendance: Map<string, AttendanceRecord>
+  canOpenSession: boolean
+  canEditSelectedSession: boolean
+  isSaving: boolean
+  isViewOnly: boolean
+  sessionStateLocked: boolean
+  disabledReason: string | null
+  onOpenSession: () => void
+  onStatusChange: (matriculaId: string, status: AttendanceStatus, justificativa?: string) => void
+  onJustificationNeeded: (student: Student) => void
+}) {
+  const t = useClassroomTranslations()
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+          <CalendarClock className="h-5 w-5 animate-pulse" />
+          {t('attendance.loading')}
+        </CardContent>
+      </Card>
+    )
+  }
+  if (!selectedSession) {
+    return (
+      <EmptySessionCard
+        canOpenSession={canOpenSession}
+        isSaving={isSaving}
+        isViewOnly={isViewOnly}
+        disabledReason={disabledReason}
+        onOpenSession={onOpenSession}
+      />
+    )
+  }
+  return (
+    <>
+      {isViewOnly && <ViewOnlyNotice message="Secretaria e administração podem revisar a chamada, mas somente professores e diretores registram ou fecham a sessão." />}
+      {sessionStateLocked && (
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          <Lock className="h-4 w-4" />
+          {t('labels.session')} {statusLabel(selectedSession.status).toLowerCase()}. Os registros não podem ser alterados.
+        </div>
+      )}
+      <Card>
+        <CardContent className="p-4">
+          {students.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">{t('attendance.noStudents')}</p>
+          ) : (
+            <div className="space-y-2">
+              {students.map(student => {
+                const record = attendance.get(student.matriculaId)
+                const policyStatus = getFrequencyPolicyStatus(student.frequencia)
+                return (
+                  <div
+                    key={student.matriculaId}
+                    className={cn(
+                      'flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-muted/50',
+                      getFrequencyBgColor(student.frequencia)
+                    )}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-sm text-white">
+                          {getInitials(student.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-medium text-foreground">{student.nome}</p>
+                          {policyStatus !== 'CONFORME' && (
+                            <Badge variant="outline" className="text-xs">
+                              {policyStatus === 'CRITICO' ? 'Não conformidade' : 'Atenção preventiva'}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className={cn('text-sm tabular-nums', getFrequencyColor(student.frequencia))}>
+                          {student.frequencia.toFixed(1)}% de frequência
+                        </p>
+                      </div>
+                    </div>
+                    <ChamadaStatusButtons
+                      status={record?.status ?? null}
+                      onChange={(status, justificativa) => onStatusChange(student.matriculaId, status, justificativa)}
+                      onJustificationNeeded={() => onJustificationNeeded(student)}
+                      disabled={!canEditSelectedSession}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
+  )
+}
+
 export default function ChamadaPage() {
   const t = useClassroomTranslations()
   const params = useParams()
@@ -162,16 +422,26 @@ export default function ChamadaPage() {
   const dateString = format(currentDate, 'yyyy-MM-dd')
   const today = startOfDay(getTodaySaoPauloDate())
   const isFutureDate = isAfter(startOfDay(currentDate), today)
-  const canRecord = canRecordAttendance(userProfile?.tipo_usuario ?? null)
-  const isTeacher = userProfile?.tipo_usuario === 'professor'
-  const isDirector = userProfile?.tipo_usuario === 'diretor'
-  const isViewOnly = !canRecord
   const lockInfo = useMemo(
     () => getSessionLockInfo(selectedSession?.data_aula ?? dateString, selectedSession?.status),
     [dateString, selectedSession]
   )
-  const sessionStateLocked = Boolean(selectedSession && selectedSession.status !== 'ABERTA')
-  const isLocked = lockInfo.isLocked || sessionStateLocked
+  const {
+    isTeacher,
+    isDirector,
+    isViewOnly,
+    sessionStateLocked,
+    isLocked,
+    canOpenSession,
+    canEditSelectedSession,
+    disabledReason,
+  } = getAttendanceViewState(
+    userProfile?.tipo_usuario ?? null,
+    selectedSession,
+    isFutureDate,
+    lockInfo,
+    students.length
+  )
   const hasUnsavedChanges = useMemo(() => {
     if (attendance.size !== originalAttendance.size) return true
 
@@ -186,12 +456,6 @@ export default function ChamadaPage() {
   const presentCount = useMemo(
     () => Array.from(attendance.values()).filter(record => record.status === 'P' || record.status === 'J').length,
     [attendance]
-  )
-  const canOpenSession = Boolean(
-    canRecord && !selectedSession && !isFutureDate && !lockInfo.isLocked && students.length > 0
-  )
-  const canEditSelectedSession = Boolean(
-    selectedSession && canRecord && !isLocked && !isFutureDate
   )
 
   const loadTurma = useCallback(async () => {
@@ -509,42 +773,8 @@ export default function ChamadaPage() {
     setJustificationModal(null)
   }, [handleStatusChange, justificationModal])
 
-  if (loading) {
-    return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-10 w-full" />
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map(index => <Skeleton key={index} className="h-16 w-full" />)}
-        </div>
-      </div>
-    )
-  }
-
-  if (error || !turma) {
-    return (
-      <div className="space-y-4 p-4">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-          <p className="font-medium">Erro ao carregar a chamada</p>
-          <p className="mt-1 text-sm">{error || t('classes.notFound')}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t('actions.back')}
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  const disabledReason = isViewOnly
-    ? 'Modo de visualização: secretaria e administração não registram frequência.'
-    : isFutureDate
-      ? 'Data futura: a chamada só pode ser registrada na data da aula.'
-      : lockInfo.isLocked
-        ? lockInfo.message
-        : sessionStateLocked
-          ? 'Esta sessão não está aberta.'
-          : null
+  if (loading) return <ChamadaLoading />
+  if (error || !turma) return <ChamadaError error={error} onBack={() => router.back()} />
 
   return (
     <div className="space-y-4 p-4">
@@ -588,129 +818,26 @@ export default function ChamadaPage() {
       )}
 
       <ChamadaDateNav currentDate={currentDate} onDateChange={handleDateChange} />
-
-      {sessions.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <label htmlFor="attendance-session" className="text-sm font-medium">
-                Sessão da data
-              </label>
-              {sessions.length > 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Há mais de uma sessão nesta data. Cada sessão mantém seus próprios registros.
-                </p>
-              )}
-            </div>
-            <select
-              id="attendance-session"
-              value={selectedSessionId ?? ''}
-              onChange={event => handleSessionChange(event.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              {sessions.map(session => (
-                <option key={session.id} value={session.id}>
-                  {statusLabel(session.status)} - {session.created_at ? format(new Date(session.created_at), 'HH:mm') : 'sem horário'}
-                </option>
-              ))}
-            </select>
-          </CardContent>
-        </Card>
-      )}
-
-      {loadingSessions || loadingAttendance ? (
-        <Card>
-          <CardContent className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
-            <CalendarClock className="h-5 w-5 animate-pulse" />
-            {t('attendance.loading')}
-          </CardContent>
-        </Card>
-      ) : !selectedSession ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-            <CalendarClock className="h-12 w-12 text-muted-foreground" />
-            <div>
-              <h2 className="text-lg font-semibold">{t('attendance.noCall')}</h2>
-              <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                {t('attendance.openHintDate')}
-              </p>
-            </div>
-            {canOpenSession ? (
-              <Button onClick={handleOpenSession} disabled={isSaving}>
-                {isSaving ? t('attendance.opening') : t('actions.openAttendance')}
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {isViewOnly ? 'Este perfil pode visualizar chamadas existentes.' : disabledReason || 'Não é possível abrir uma chamada nesta data.'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {isViewOnly && <ViewOnlyNotice message="Secretaria e administração podem revisar a chamada, mas somente professores e diretores registram ou fecham a sessão." />}
-          {sessionStateLocked && (
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-              <Lock className="h-4 w-4" />
-              {t('labels.session')} {statusLabel(selectedSession.status).toLowerCase()}. Os registros não podem ser alterados.
-            </div>
-          )}
-
-          <Card>
-            <CardContent className="p-4">
-              {students.length === 0 ? (
-                <p className="py-8 text-center text-muted-foreground">{t('attendance.noStudents')}</p>
-              ) : (
-                <div className="space-y-2">
-                  {students.map(student => {
-                    const record = attendance.get(student.matriculaId)
-                    const isAtRisk = getFrequencyPolicyStatus(student.frequencia) !== 'CONFORME'
-
-                    return (
-                      <div
-                        key={student.matriculaId}
-                        className={cn(
-                          'flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-muted/50',
-                          getFrequencyBgColor(student.frequencia)
-                        )}
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <Avatar className="h-10 w-10 shrink-0">
-                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-sm text-white">
-                              {getInitials(student.nome)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate font-medium text-foreground">{student.nome}</p>
-                              {isAtRisk && (
-                                <Badge variant="outline" className="text-xs">
-                                  {getFrequencyPolicyStatus(student.frequencia) === 'CRITICO'
-                                    ? 'Não conformidade'
-                                    : 'Atenção preventiva'}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className={cn('text-sm tabular-nums', getFrequencyColor(student.frequencia))}>
-                              {student.frequencia.toFixed(1)}% de frequência
-                            </p>
-                          </div>
-                        </div>
-                        <ChamadaStatusButtons
-                          status={record?.status ?? null}
-                          onChange={(status, justificativa) => handleStatusChange(student.matriculaId, status, justificativa)}
-                          onJustificationNeeded={() => handleJustificationNeeded(student)}
-                          disabled={!canEditSelectedSession}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+      <SessionSelector
+        sessions={sessions}
+        selectedSessionId={selectedSessionId}
+        onSessionChange={handleSessionChange}
+      />
+      <AttendanceSessionContent
+        loading={loadingSessions || loadingAttendance}
+        selectedSession={selectedSession}
+        students={students}
+        attendance={attendance}
+        canOpenSession={canOpenSession}
+        canEditSelectedSession={canEditSelectedSession}
+        isSaving={isSaving}
+        isViewOnly={isViewOnly}
+        sessionStateLocked={sessionStateLocked}
+        disabledReason={disabledReason}
+        onOpenSession={handleOpenSession}
+        onStatusChange={handleStatusChange}
+        onJustificationNeeded={handleJustificationNeeded}
+      />
 
       <FecharAulaDialog
         open={closeDialogOpen}
@@ -718,7 +845,6 @@ export default function ChamadaPage() {
         onConfirm={handleClose}
         sessaoId={selectedSession?.id ?? ''}
       />
-
       <JustificationModal
         isOpen={justificationModal !== null}
         onClose={() => setJustificationModal(null)}

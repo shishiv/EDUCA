@@ -104,6 +104,59 @@ function getRowClassName(status: AttendanceStatus, isSelected: boolean, isLocked
   )
 }
 
+function AttendanceControl({
+  student,
+  attendanceStatus,
+  isEffectivelyReadonly,
+  isRecordLocked,
+  saving,
+  onStatusChange,
+}: Pick<
+  AttendanceGridRowProps,
+  | 'student'
+  | 'attendanceStatus'
+  | 'isEffectivelyReadonly'
+  | 'isRecordLocked'
+  | 'saving'
+  | 'onStatusChange'
+>) {
+  const t = useClassroomTranslations()
+  if (!isEffectivelyReadonly && !isRecordLocked) {
+    return (
+      <div className="ml-3">
+        <AttendanceCell
+          status={attendanceStatus}
+          onChange={newStatus => onStatusChange(student.id, newStatus)}
+          disabled={saving}
+          studentName={student.nome_completo}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="ml-3 flex items-center space-x-2">
+      <Badge
+        variant={
+          attendanceStatus === 'P' ? 'default' :
+          attendanceStatus === 'F' ? 'destructive' :
+          attendanceStatus === 'A' ? 'default' : 'secondary'
+        }
+        className={cn(
+          attendanceStatus === 'P' && 'bg-green-600',
+          attendanceStatus === 'A' && 'bg-yellow-500'
+        )}
+      >
+        {attendanceStatus === 'P' && t('attendance.present')}
+        {attendanceStatus === 'F' && 'Ausente'}
+        {attendanceStatus === 'A' && 'Atestado'}
+        {attendanceStatus === null && 'Não marcado'}
+      </Badge>
+      {isRecordLocked && <Lock className="h-4 w-4 text-orange-500" />}
+    </div>
+  )
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -120,27 +173,19 @@ export function AttendanceGridRow({
   onSelectionChange,
   onStatusChange,
 }: AttendanceGridRowProps) {
-  const t = useClassroomTranslations()
   return (
     <div className={getRowClassName(attendanceStatus, isSelected, isRecordLocked)}>
       <div className="flex items-center space-x-3 flex-1">
-        {/* Selection checkbox - Only show if not locked */}
         {!isEffectivelyReadonly && !isRecordLocked && (
           <Checkbox
             checked={isSelected}
-            onCheckedChange={(checked) => {
-              onSelectionChange(student.id, !!checked)
-            }}
+            onCheckedChange={checked => onSelectionChange(student.id, !!checked)}
             className="h-5 w-5"
           />
         )}
-
-        {/* Lock icon for locked records */}
         {isRecordLocked && (
           <Lock className="h-4 w-4 text-orange-500 flex-shrink-0" />
         )}
-
-        {/* Student avatar */}
         {showPhotos && (
           <Avatar className="h-10 w-10">
             <AvatarImage src={student.foto_url} alt={student.nome_completo} />
@@ -149,12 +194,8 @@ export function AttendanceGridRow({
             </AvatarFallback>
           </Avatar>
         )}
-
-        {/* Student info */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">
-            {student.nome_completo}
-          </p>
+          <p className="font-medium text-sm truncate">{student.nome_completo}</p>
           <p className="text-xs text-muted-foreground">
             {calculateAge(student.data_nascimento)} anos
             {record?.horario_marcacao && (
@@ -170,60 +211,21 @@ export function AttendanceGridRow({
             )}
           </p>
         </div>
-
-        {/* Status indicator dot - using DB status values ('P'|'F'|'A'|null) */}
         <div className="flex items-center">
-          {attendanceStatus === 'P' && (
-            <div className="h-3 w-3 bg-green-600 rounded-full" />
-          )}
-          {attendanceStatus === 'F' && (
-            <div className="h-3 w-3 bg-red-600 rounded-full" />
-          )}
-          {attendanceStatus === 'A' && (
-            <div className="h-3 w-3 bg-yellow-500 rounded-full" />
-          )}
-          {attendanceStatus === null && (
-            <div className="h-3 w-3 bg-gray-400 rounded-full" />
-          )}
+          {attendanceStatus === 'P' && <div className="h-3 w-3 bg-green-600 rounded-full" />}
+          {attendanceStatus === 'F' && <div className="h-3 w-3 bg-red-600 rounded-full" />}
+          {attendanceStatus === 'A' && <div className="h-3 w-3 bg-yellow-500 rounded-full" />}
+          {attendanceStatus === null && <div className="h-3 w-3 bg-gray-400 rounded-full" />}
         </div>
       </div>
-
-      {/* AttendanceCell - 3-state button - Only if not locked */}
-      {!isEffectivelyReadonly && !isRecordLocked && (
-        <div className="ml-3">
-          <AttendanceCell
-            status={attendanceStatus}
-            onChange={(newStatus) => onStatusChange(student.id, newStatus)}
-            disabled={saving}
-            studentName={student.nome_completo}
-          />
-        </div>
-      )}
-
-      {/* Readonly badge (when locked or readonly) - using DB status ('P'|'F'|'A'|null) */}
-      {(isEffectivelyReadonly || isRecordLocked) && (
-        <div className="ml-3 flex items-center space-x-2">
-          <Badge
-            variant={
-              attendanceStatus === 'P' ? 'default' :
-              attendanceStatus === 'F' ? 'destructive' :
-              attendanceStatus === 'A' ? 'default' : 'secondary'
-            }
-            className={cn(
-              attendanceStatus === 'P' && 'bg-green-600',
-              attendanceStatus === 'A' && 'bg-yellow-500'
-            )}
-          >
-            {attendanceStatus === 'P' && t('attendance.present')}
-            {attendanceStatus === 'F' && 'Ausente'}
-            {attendanceStatus === 'A' && 'Atestado'}
-            {attendanceStatus === null && 'Não marcado'}
-          </Badge>
-          {isRecordLocked && (
-            <Lock className="h-4 w-4 text-orange-500" />
-          )}
-        </div>
-      )}
+      <AttendanceControl
+        student={student}
+        attendanceStatus={attendanceStatus}
+        isEffectivelyReadonly={isEffectivelyReadonly}
+        isRecordLocked={isRecordLocked}
+        saving={saving}
+        onStatusChange={onStatusChange}
+      />
     </div>
   )
 }

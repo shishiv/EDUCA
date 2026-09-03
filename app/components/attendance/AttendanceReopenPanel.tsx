@@ -39,6 +39,135 @@ function formatTimestamp(value: string): string {
   }).format(new Date(value))
 }
 
+function ReopenPanelIntro({
+  request,
+  canDecide,
+  isPending,
+  isRejected,
+  pendingLabel,
+  rejectedLabel,
+  pendingTitle,
+}: {
+  request: AttendanceReopenRequest | null
+  canDecide: boolean
+  isPending: boolean
+  isRejected: boolean
+  pendingLabel: string
+  rejectedLabel: string
+  pendingTitle: string
+}) {
+  const Icon = canDecide ? FileText : RotateCcw
+  return (
+    <div className="flex gap-3">
+      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+      <div className="space-y-1">
+        <h2 id="attendance-reopen-title" className="font-semibold text-amber-950">
+          {canDecide ? pendingTitle : 'Solicitar reabertura da chamada'}
+        </h2>
+        <p className="text-sm text-amber-900">
+          {canDecide
+            ? 'Revise o motivo e registre uma decisão. A aprovação reabre somente esta sessão canônica.'
+            : isRejected
+              ? 'A solicitação anterior foi rejeitada. Envie um novo pedido com o motivo da correção.'
+              : 'A sessão está fechada. O diretor precisa aprovar qualquer correção nos registros.'}
+        </p>
+        {request && (
+          <div className="mt-3 space-y-2 rounded-md border border-amber-200 bg-white/70 p-3 text-sm text-amber-950">
+            <div className="flex items-center gap-2">
+              <Clock3 className="h-4 w-4" aria-hidden="true" />
+              <span>Solicitada em {formatTimestamp(request.requested_at)}</span>
+              {isPending && <Badge variant="outline">{pendingLabel}</Badge>}
+              {isRejected && <Badge variant="destructive">{rejectedLabel}</Badge>}
+            </div>
+            <p><strong>Motivo:</strong> {request.request_reason}</p>
+            {isRejected && request.decision_reason && (
+              <p><strong>Decisão:</strong> {request.decision_reason}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ReopenDialog({
+  dialogMode,
+  reason,
+  error,
+  isSubmitting,
+  cancelLabel,
+  reopenLabel,
+  onReasonChange,
+  onClose,
+  onRequest,
+  onReject,
+}: {
+  dialogMode: DialogMode
+  reason: string
+  error: string | null
+  isSubmitting: boolean
+  cancelLabel: string
+  reopenLabel: string
+  onReasonChange: (reason: string) => void
+  onClose: () => void
+  onRequest: () => void
+  onReject: () => void
+}) {
+  const isReject = dialogMode === 'reject'
+  return (
+    <Dialog open={dialogMode !== null} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>{isReject ? 'Rejeitar reabertura' : reopenLabel}</DialogTitle>
+          <DialogDescription>
+            {isReject
+              ? 'O motivo da rejeição ficará registrado na decisão da solicitação.'
+              : 'Descreva o motivo da correção. O pedido será enviado ao diretor da escola.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2 py-4">
+          <Label htmlFor="attendance-reopen-reason">
+            {isReject ? 'Motivo da rejeição' : 'Motivo da reabertura'}
+          </Label>
+          <Textarea
+            id="attendance-reopen-reason"
+            value={reason}
+            onChange={event => onReasonChange(event.target.value)}
+            placeholder={isReject
+              ? 'Explique por que a solicitação não foi aprovada...'
+              : 'Explique qual correção precisa ser feita...'}
+            aria-invalid={error ? 'true' : undefined}
+            aria-describedby={error ? 'attendance-reopen-reason-error' : undefined}
+            rows={5}
+            autoFocus
+          />
+          {error && (
+            <p id="attendance-reopen-reason-error" role="alert" className="text-sm text-red-700">
+              <AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden="true" />
+              {error}
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            onClick={isReject ? onReject : onRequest}
+            disabled={isSubmitting}
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+            {isReject ? 'Confirmar rejeição' : 'Enviar solicitação'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function AttendanceReopenPanel({
   sessionId,
   sessionStatus,
@@ -143,40 +272,15 @@ export function AttendanceReopenPanel({
       className="rounded-lg border border-amber-200 bg-amber-50 p-4"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex gap-3">
-          {canDecide ? (
-            <FileText className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-          ) : (
-            <RotateCcw className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-          )}
-          <div className="space-y-1">
-            <h2 id="attendance-reopen-title" className="font-semibold text-amber-950">
-              {canDecide ? t('attendance.reopenPending') : 'Solicitar reabertura da chamada'}
-            </h2>
-            <p className="text-sm text-amber-900">
-              {canDecide
-                ? 'Revise o motivo e registre uma decisão. A aprovação reabre somente esta sessão canônica.'
-                : isRejected
-                  ? 'A solicitação anterior foi rejeitada. Envie um novo pedido com o motivo da correção.'
-                  : 'A sessão está fechada. O diretor precisa aprovar qualquer correção nos registros.'}
-            </p>
-            {request && (
-              <div className="mt-3 space-y-2 rounded-md border border-amber-200 bg-white/70 p-3 text-sm text-amber-950">
-                <div className="flex items-center gap-2">
-                  <Clock3 className="h-4 w-4" aria-hidden="true" />
-                  <span>Solicitada em {formatTimestamp(request.requested_at)}</span>
-                  {isPending && <Badge variant="outline">{t('status.pending')}</Badge>}
-                  {isRejected && <Badge variant="destructive">{t('status.rejected')}</Badge>}
-                </div>
-                <p><strong>Motivo:</strong> {request.request_reason}</p>
-                {isRejected && request.decision_reason && (
-                  <p><strong>Decisão:</strong> {request.decision_reason}</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
+        <ReopenPanelIntro
+          request={request}
+          canDecide={canDecide}
+          isPending={isPending}
+          isRejected={isRejected}
+          pendingLabel={t('status.pending')}
+          rejectedLabel={t('status.rejected')}
+          pendingTitle={t('attendance.reopenPending')}
+        />
         <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
           {canRequest && (
             <Button type="button" onClick={() => setDialogMode('request')}>
@@ -212,59 +316,18 @@ export function AttendanceReopenPanel({
           </div>
         </div>
       )}
-
-      <Dialog open={dialogMode !== null} onOpenChange={open => !open && closeDialog()}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>
-              {dialogMode === 'reject' ? 'Rejeitar reabertura' : t('attendance.reopen')}
-            </DialogTitle>
-            <DialogDescription>
-              {dialogMode === 'reject'
-                ? 'O motivo da rejeição ficará registrado na decisão da solicitação.'
-                : 'Descreva o motivo da correção. O pedido será enviado ao diretor da escola.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2 py-4">
-            <Label htmlFor="attendance-reopen-reason">
-              {dialogMode === 'reject' ? 'Motivo da rejeição' : 'Motivo da reabertura'}
-            </Label>
-            <Textarea
-              id="attendance-reopen-reason"
-              value={reason}
-              onChange={event => setReason(event.target.value)}
-              placeholder={dialogMode === 'reject'
-                ? 'Explique por que a solicitação não foi aprovada...'
-                : 'Explique qual correção precisa ser feita...'}
-              aria-invalid={error ? 'true' : undefined}
-              aria-describedby={error ? 'attendance-reopen-reason-error' : undefined}
-              rows={5}
-              autoFocus
-            />
-            {error && (
-              <p id="attendance-reopen-reason-error" role="alert" className="text-sm text-red-700">
-                <AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden="true" />
-                {error}
-              </p>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
-              {t('actions.cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => dialogMode === 'reject' ? void handleDecision('REJEITADA') : void handleRequest()}
-              disabled={isSubmitting}
-            >
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-              {dialogMode === 'reject' ? 'Confirmar rejeição' : 'Enviar solicitação'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ReopenDialog
+        dialogMode={dialogMode}
+        reason={reason}
+        error={error}
+        isSubmitting={isSubmitting}
+        cancelLabel={t('actions.cancel')}
+        reopenLabel={t('attendance.reopen')}
+        onReasonChange={setReason}
+        onClose={closeDialog}
+        onRequest={() => void handleRequest()}
+        onReject={() => void handleDecision('REJEITADA')}
+      />
     </section>
   )
 }

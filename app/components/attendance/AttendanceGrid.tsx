@@ -45,6 +45,57 @@ import { useClassroomTranslations } from '@/i18n/classroom'
 // Re-export types for consumers
 export type { AttendanceStats, AttendanceGridProps } from './AttendanceGridTypes'
 
+const attendanceStatusFields: Record<AttendanceStatusUI, { presente: boolean; status_presenca: string }> = {
+  presente: { presente: true, status_presenca: 'P' },
+  falta: { presente: false, status_presenca: 'F' },
+  attestado: { presente: true, status_presenca: 'A' },
+  empty: { presente: false, status_presenca: '' },
+}
+
+const canonicalStatusByUI: Record<AttendanceStatusUI, 'P' | 'F' | 'J' | null> = {
+  presente: 'P',
+  falta: 'F',
+  attestado: 'J',
+  empty: null,
+}
+
+const attendanceStatusLabels: Record<AttendanceStatusUI, string> = {
+  presente: 'presente',
+  falta: 'ausente',
+  attestado: 'com atestado',
+  empty: 'desmarcado',
+}
+
+function withOptimisticAttendance(
+  previous: Map<string, AttendanceRecord>,
+  studentId: string,
+  status: AttendanceStatusUI
+): Map<string, AttendanceRecord> {
+  const next = new Map(previous)
+  if (status === 'empty') {
+    next.delete(studentId)
+  } else {
+    next.set(studentId, {
+      student_id: studentId,
+      presente: attendanceStatusFields[status].presente,
+      status_presenca: uiStatusToDB(status),
+      horario_marcacao: new Date().toISOString()
+    })
+  }
+  return next
+}
+
+function getActiveMatriculaId(students: Student[], studentId: string): string {
+  const matriculaId = students.find(student => student.id === studentId)?.matriculas[0]?.id
+  if (!matriculaId) throw new Error('Matrícula ativa não encontrada para o aluno')
+  return matriculaId
+}
+
+function isAttendanceLockError(error: unknown): boolean {
+  if (typeof error !== 'string') return false
+  return error.includes('18:00') || error.includes('bloqueado') || error.includes('locked')
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -259,44 +310,9 @@ export function AttendanceGrid({
     try {
       setSyncStatus('pending')
 
-      const statusMap: Record<AttendanceStatusUI, { presente: boolean; status_presenca: string }> = {
-        'presente': { presente: true, status_presenca: 'P' },
-        'falta': { presente: false, status_presenca: 'F' },
-        'attestado': { presente: true, status_presenca: 'A' },
-        'empty': { presente: false, status_presenca: '' }
-      }
+      setAttendance(previous => withOptimisticAttendance(previous, studentId, status))
 
-      const statusFields = statusMap[status]
-
-      // Optimistic update
-      setAttendance(prev => {
-        const newMap = new Map(prev)
-        if (status === 'empty') {
-          newMap.delete(studentId)
-        } else {
-          newMap.set(studentId, {
-            student_id: studentId,
-            presente: statusFields.presente,
-            status_presenca: uiStatusToDB(status),
-            horario_marcacao: new Date().toISOString()
-          })
-        }
-        return newMap
-      })
-
-      const student = students.find(currentStudent => currentStudent.id === studentId)
-      const matriculaId = student?.matriculas[0]?.id
-      if (!matriculaId) {
-        throw new Error('Matrícula ativa não encontrada para o aluno')
-      }
-
-      const canonicalStatus = status === 'presente'
-        ? 'P'
-        : status === 'falta'
-          ? 'F'
-          : status === 'attestado'
-            ? 'J'
-            : null
+      const matriculaId = getActiveMatriculaId(students, studentId)
 
       const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
         method: 'POST',
@@ -304,7 +320,7 @@ export function AttendanceGrid({
         body: JSON.stringify({
           attendance: [{
             matricula_id: matriculaId,
-            status: canonicalStatus,
+            status: canonicalStatusByUI[status],
             justificativa: status === 'attestado' ? 'Atestado apresentado' : null,
           }]
         })
@@ -313,7 +329,7 @@ export function AttendanceGrid({
       const result = await response.json()
 
       if (!response.ok) {
-        if (result.error?.includes('18:00') || result.error?.includes('bloqueado') || result.error?.includes('locked')) {
+        if (isAttendanceLockError(result.error)) {
           setLockInfo(getSessionLockInfo(sessionDate, sessionStatus))
           toast.error('Frequencia bloqueada. Atualizando status...')
         }
@@ -321,15 +337,8 @@ export function AttendanceGrid({
       }
 
       setSyncStatus('synced')
-
-      const statusLabels: Record<AttendanceStatusUI, string> = {
-        'presente': 'presente',
-        'falta': 'ausente',
-        'attestado': 'com atestado',
-        'empty': 'desmarcado'
-      }
       const studentName = students.find(s => s.id === studentId)?.nome_completo || 'Aluno'
-      toast.success(`${studentName} marcado como ${statusLabels[status]}`, { duration: 2000 })
+      toast.success(`${studentName} marcado como ${attendanceStatusLabels[status]}`, { duration: 2000 })
 
     } catch (error) {
       logger.error('Erro ao marcar presenca:', error instanceof Error ? error : new Error(String(error)))

@@ -87,6 +87,39 @@ function getAttendanceRateBadgeClass(rate: number): string {
   return 'bg-red-100 border-red-600 text-red-700'
 }
 
+const syncStatusClassName = {
+  synced: 'bg-green-600',
+  pending: 'bg-yellow-600 animate-pulse',
+  error: 'bg-red-600',
+}
+
+const syncStatusLabel = {
+  synced: 'Sincronizado',
+  pending: 'Sincronizando...',
+  error: 'Erro na sincronizacao',
+}
+
+function GridConnectionStatus({
+  isOnline,
+  syncStatus,
+}: Pick<AttendanceGridHeaderProps, 'isOnline' | 'syncStatus'>) {
+  const ConnectionIcon = isOnline ? Wifi : WifiOff
+  return (
+    <>
+      <div className="flex items-center space-x-1 text-xs">
+        <ConnectionIcon className={cn('h-3 w-3', isOnline ? 'text-green-600' : 'text-red-600')} />
+        <span className={isOnline ? 'text-green-600' : 'text-red-600'}>
+          {isOnline ? 'Online' : 'Offline'}
+        </span>
+      </div>
+      <div className="flex items-center space-x-1 text-xs">
+        <div className={cn('h-2 w-2 rounded-full', syncStatusClassName[syncStatus])} />
+        <span className="text-muted-foreground">{syncStatusLabel[syncStatus]}</span>
+      </div>
+    </>
+  )
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -164,29 +197,7 @@ export function AttendanceGridHeader({
             )}
           </div>
 
-          {/* Connection status */}
-          <div className="flex items-center space-x-1 text-xs">
-            {isOnline ? (
-              <Wifi className="h-3 w-3 text-green-600" />
-            ) : (
-              <WifiOff className="h-3 w-3 text-red-600" />
-            )}
-            <span className={isOnline ? 'text-green-600' : 'text-red-600'}>
-              {isOnline ? 'Online' : 'Offline'}
-            </span>
-          </div>
-
-          {/* Sync status */}
-          <div className="flex items-center space-x-1 text-xs">
-            {syncStatus === 'synced' && <div className="h-2 w-2 bg-green-600 rounded-full" />}
-            {syncStatus === 'pending' && <div className="h-2 w-2 bg-yellow-600 rounded-full animate-pulse" />}
-            {syncStatus === 'error' && <div className="h-2 w-2 bg-red-600 rounded-full" />}
-            <span className="text-muted-foreground">
-              {syncStatus === 'synced' && 'Sincronizado'}
-              {syncStatus === 'pending' && 'Sincronizando...'}
-              {syncStatus === 'error' && 'Erro na sincronizacao'}
-            </span>
-          </div>
+          <GridConnectionStatus isOnline={isOnline} syncStatus={syncStatus} />
         </div>
 
         {/* Search */}
