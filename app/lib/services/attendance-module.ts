@@ -413,6 +413,156 @@ function statusFromMarkParams(
   return normalizeWriteStatus(params.status, params.presente)
 }
 
+function validateOpenSessionInput(
+  params: OpenSessionParams | null | undefined,
+  now: () => Date
+): { content: string } | { result: OpenSessionResult } {
+  if (!params || !params.turma_id) {
+    return { result: { success: false, code: 'TURMA_REQUIRED', error: 'ID da turma é obrigatório' } }
+  }
+  if (!isIsoDate(params.data_aula)) {
+    return { result: { success: false, code: 'DATE_INVALID', error: 'Data da aula inválida' } }
+  }
+  if (!isCurrentSaoPauloDate(params.data_aula, now())) {
+    return {
+      result: {
+        success: false,
+        code: 'DATE_NOT_CURRENT',
+        error: 'A chamada só pode ser aberta na data atual de São Paulo',
+      },
+    }
+  }
+
+  const content = params.conteudo_programatico?.trim() || 'Chamada'
+  if (content.length > 500) {
+    return { result: { success: false, code: 'CONTENT_TOO_LONG', error: 'Conteúdo da aula muito longo' } }
+  }
+  return { content }
+}
+
+function validateMarkAttendanceInput(
+  params: MarkAttendanceParams | null | undefined
+): { status: CanonicalAttendanceStatus } | { result: MarkAttendanceResult } {
+  if (!params || !params.sessao_id || !params.matricula_id) {
+    return { result: { success: false, code: 'INPUT_REQUIRED', error: 'Sessão e matrícula são obrigatórias' } }
+  }
+
+  const status = statusFromMarkParams(params)
+  if (status === 'INVALID') {
+    return { result: { success: false, code: 'STATUS_REQUIRED', error: 'Status da presença é obrigatório' } }
+  }
+  if (status === 'J' && !params.justificativa?.trim()) {
+    return {
+      result: {
+        success: false,
+        code: 'JUSTIFICATION_REQUIRED',
+        error: 'A presença justificada exige um motivo',
+      },
+    }
+  }
+  if (params.data_aula !== undefined && !isIsoDate(params.data_aula)) {
+    return { result: { success: false, code: 'DATE_INVALID', error: 'Data da frequência inválida' } }
+  }
+  return { status }
+}
+
+type NormalizedBatchAttendanceRecord = {
+  matricula_id: string
+  status: CanonicalAttendanceStatus
+  justificativa?: string | null
+}
+
+function validateBatchAttendanceInput(
+  params: MarkAttendanceBatchParams | null | undefined
+): { records: NormalizedBatchAttendanceRecord[] } | { result: MarkAttendanceBatchResult } {
+  if (!params || !params.sessao_id || !Array.isArray(params.records) || params.records.length === 0) {
+    return {
+      result: {
+        success: false,
+        processed_count: 0,
+        code: 'INPUT_REQUIRED',
+        error: 'Sessão e pelo menos uma matrícula são obrigatórias',
+      },
+    }
+  }
+
+  const records: NormalizedBatchAttendanceRecord[] = []
+  for (const record of params.records) {
+    if (!record || typeof record.matricula_id !== 'string') {
+      return {
+        result: {
+          success: false,
+          processed_count: 0,
+          code: 'STATUS_INVALID',
+          error: 'Status de presença inválido',
+        },
+      }
+    }
+
+    const status = normalizeWriteStatus(record.status)
+    if (status === 'INVALID') {
+      return {
+        result: {
+          success: false,
+          processed_count: 0,
+          code: 'STATUS_INVALID',
+          error: 'Status de presença inválido',
+        },
+      }
+    }
+    if (status === 'J' && !record.justificativa?.trim()) {
+      return {
+        result: {
+          success: false,
+          processed_count: 0,
+          code: 'JUSTIFICATION_REQUIRED',
+          error: 'A presença justificada exige um motivo',
+        },
+      }
+    }
+
+    records.push({
+      matricula_id: record.matricula_id,
+      status,
+      justificativa: record.justificativa,
+    })
+  }
+
+  const matriculaIds = records.map(record => record.matricula_id)
+  if (new Set(matriculaIds).size !== matriculaIds.length) {
+    return {
+      result: {
+        success: false,
+        processed_count: 0,
+        code: 'DUPLICATE_ENROLLMENT',
+        error: 'Cada matrícula pode aparecer uma vez por lote',
+      },
+    }
+  }
+  return { records }
+}
+
+function prepareAttendanceInsert(
+  session: AttendanceSessionReadRow,
+  record: NormalizedBatchAttendanceRecord,
+  actorId: string,
+  timestamp: string
+): AttendanceRecordInsert {
+  return {
+    sessao_id: session.id,
+    matricula_id: record.matricula_id,
+    data_aula: session.data_aula,
+    status_presenca: record.status,
+    presente: presenceFromStatus(record.status),
+    justificativa: record.status === 'J' || record.status === 'A'
+      ? record.justificativa?.trim() || null
+      : null,
+    professor_id: session.professor_id,
+    marcado_por: actorId,
+    marcado_em: timestamp,
+  }
+}
+
 function isCurrentSaoPauloDate(dateAula: string, now: Date): boolean {
   return dateAula === getSaoPauloDate(now)
 }
@@ -523,26 +673,8 @@ export function createAttendanceModule(
 
   async function openSession(params: OpenSessionParams): Promise<OpenSessionResult> {
     try {
-      if (!params || !params.turma_id) {
-        return { success: false, code: 'TURMA_REQUIRED', error: 'ID da turma é obrigatório' }
-      }
-
-      if (!isIsoDate(params.data_aula)) {
-        return { success: false, code: 'DATE_INVALID', error: 'Data da aula inválida' }
-      }
-
-      if (!isCurrentSaoPauloDate(params.data_aula, now())) {
-        return {
-          success: false,
-          code: 'DATE_NOT_CURRENT',
-          error: 'A chamada só pode ser aberta na data atual de São Paulo',
-        }
-      }
-
-      const content = params.conteudo_programatico?.trim() || 'Chamada'
-      if (content.length > 500) {
-        return { success: false, code: 'CONTENT_TOO_LONG', error: 'Conteúdo da aula muito longo' }
-      }
+      const input = validateOpenSessionInput(params, now)
+      if ('result' in input) return input.result
 
       const actor = await requireAttendanceActor(supabase)
       assertCanRecordAttendance(actor)
@@ -600,7 +732,7 @@ export function createAttendanceModule(
         status: 'ABERTA',
         aberta_em: now().toISOString(),
         auto_fechamento_agendado: calculateSaoPauloCutoff(params.data_aula),
-        conteudo_programatico: content,
+        conteudo_programatico: input.content,
       }
 
       const { data: session, error: insertError } = await supabase
@@ -649,26 +781,8 @@ export function createAttendanceModule(
 
   async function markAttendance(params: MarkAttendanceParams): Promise<MarkAttendanceResult> {
     try {
-      if (!params || !params.sessao_id || !params.matricula_id) {
-        return { success: false, code: 'INPUT_REQUIRED', error: 'Sessão e matrícula são obrigatórias' }
-      }
-
-      const status = statusFromMarkParams(params)
-      if (status === 'INVALID') {
-        return { success: false, code: 'STATUS_REQUIRED', error: 'Status da presença é obrigatório' }
-      }
-
-      if (status === 'J' && !params.justificativa?.trim()) {
-        return {
-          success: false,
-          code: 'JUSTIFICATION_REQUIRED',
-          error: 'A presença justificada exige um motivo',
-        }
-      }
-
-      if (params.data_aula !== undefined && !isIsoDate(params.data_aula)) {
-        return { success: false, code: 'DATE_INVALID', error: 'Data da frequência inválida' }
-      }
+      const input = validateMarkAttendanceInput(params)
+      if ('result' in input) return input.result
 
       const actor = await requireAttendanceActor(supabase)
       assertCanRecordAttendance(actor)
@@ -704,21 +818,12 @@ export function createAttendanceModule(
         return { success: false, code: editable.code, error: editable.error }
       }
 
-      const canonicalStatus = status
       const timestamp = now().toISOString()
-      const attendanceInsert: AttendanceRecordInsert = {
-        sessao_id: session.id,
+      const attendanceInsert = prepareAttendanceInsert(session, {
         matricula_id: matricula.id,
-        data_aula: session.data_aula,
-        status_presenca: canonicalStatus,
-        presente: presenceFromStatus(canonicalStatus),
-        justificativa: canonicalStatus === 'J' || canonicalStatus === 'A'
-          ? params.justificativa?.trim() || null
-          : null,
-        professor_id: session.professor_id,
-        marcado_por: actor.userId,
-        marcado_em: timestamp,
-      }
+        status: input.status,
+        justificativa: params.justificativa,
+      }, actor.userId, timestamp)
 
       const { data: attendanceRecord, error: upsertError } = await supabase
         .from('frequencia')
@@ -763,66 +868,8 @@ export function createAttendanceModule(
     params: MarkAttendanceBatchParams
   ): Promise<MarkAttendanceBatchResult> {
     try {
-      if (!params || !params.sessao_id || !Array.isArray(params.records) || params.records.length === 0) {
-        return {
-          success: false,
-          processed_count: 0,
-          code: 'INPUT_REQUIRED',
-          error: 'Sessão e pelo menos uma matrícula são obrigatórias',
-        }
-      }
-
-      const normalizedRecords: Array<{
-        matricula_id: string
-        status: CanonicalAttendanceStatus
-        justificativa?: string | null
-      }> = []
-
-      for (const record of params.records) {
-        if (!record || typeof record.matricula_id !== 'string') {
-          return {
-            success: false,
-            processed_count: 0,
-            code: 'STATUS_INVALID',
-            error: 'Status de presença inválido',
-          }
-        }
-
-        const status = normalizeWriteStatus(record.status)
-        if (status === 'INVALID') {
-          return {
-            success: false,
-            processed_count: 0,
-            code: 'STATUS_INVALID',
-            error: 'Status de presença inválido',
-          }
-        }
-
-        if (status === 'J' && !record.justificativa?.trim()) {
-          return {
-            success: false,
-            processed_count: 0,
-            code: 'JUSTIFICATION_REQUIRED',
-            error: 'A presença justificada exige um motivo',
-          }
-        }
-
-        normalizedRecords.push({
-          matricula_id: record.matricula_id,
-          status,
-          justificativa: record.justificativa,
-        })
-      }
-
-      const matriculaIds = normalizedRecords.map(record => record.matricula_id)
-      if (new Set(matriculaIds).size !== matriculaIds.length) {
-        return {
-          success: false,
-          processed_count: 0,
-          code: 'DUPLICATE_ENROLLMENT',
-          error: 'Cada matrícula pode aparecer uma vez por lote',
-        }
-      }
+      const input = validateBatchAttendanceInput(params)
+      if ('result' in input) return input.result
 
       const actor = await requireAttendanceActor(supabase)
       assertCanRecordAttendance(actor)
@@ -846,7 +893,7 @@ export function createAttendanceModule(
       const timestamp = now().toISOString()
       const upsertRecords: AttendanceRecordInsert[] = []
 
-      for (const record of normalizedRecords) {
+      for (const record of input.records) {
         const { data: matricula } = await supabase
           .from('matriculas')
           .select('id, turma_id, situacao')
@@ -863,20 +910,12 @@ export function createAttendanceModule(
         }
 
         assertMatriculaInTurma(matricula, session.turma_id)
-
-        upsertRecords.push({
-          sessao_id: session.id,
-          matricula_id: matricula.id,
-          data_aula: session.data_aula,
-          status_presenca: record.status,
-          presente: presenceFromStatus(record.status),
-          justificativa: record.status === 'J' || record.status === 'A'
-            ? record.justificativa?.trim() || null
-            : null,
-          professor_id: session.professor_id,
-          marcado_por: actor.userId,
-          marcado_em: timestamp,
-        })
+        upsertRecords.push(prepareAttendanceInsert(
+          session,
+          { ...record, matricula_id: matricula.id },
+          actor.userId,
+          timestamp
+        ))
       }
 
       const { error: upsertError } = await supabase
