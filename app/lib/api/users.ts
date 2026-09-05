@@ -50,10 +50,9 @@ export class UsersApiService extends BaseApiService {
     limit?: number
     offset?: number
   }): Promise<UserWithSchool[]> {
-    try {
-      let query = supabase
-        .from('users')
-        .select(`
+    let query = supabase
+      .from('users')
+      .select(`
           *,
           escola:escolas!fk_users_escola(
             id,
@@ -63,51 +62,48 @@ export class UsersApiService extends BaseApiService {
           )
         `)
 
-      // Apply filters
-      if (options?.activeOnly !== false) {
-        query = query.eq('ativo', true)
-      }
-
-      if (options?.filter) {
-        Object.entries(options.filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value)
-          }
-        })
-      }
-
-      // Role filter
-      if (options?.roles && options.roles.length > 0) {
-        query = query.in('tipo_usuario', options.roles)
-      }
-
-      // School filter
-      if (options?.schools && options.schools.length > 0) {
-        query = query.in('escola_id', options.schools)
-      }
-
-      // Search filter
-      if (options?.searchTerm) {
-        query = query.or(`nome.ilike.%${options.searchTerm}%,email.ilike.%${options.searchTerm}%`)
-      }
-
-      // Apply pagination
-      if (options?.limit) {
-        const from = options.offset || 0
-        const to = from + options.limit - 1
-        query = query.range(from, to)
-      }
-
-      // Order by creation date
-      query = query.order('created_at', { ascending: false })
-
-      const { data, error } = await query
-
-      if (error) throw error
-      return data as UserWithSchool[]
-    } catch (error) {
-      throw error
+    // Apply filters
+    if (options?.activeOnly !== false) {
+      query = query.eq('ativo', true)
     }
+
+    if (options?.filter) {
+      Object.entries(options.filter).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          query = query.eq(key, value)
+        }
+      })
+    }
+
+    // Role filter
+    if (options?.roles && options.roles.length > 0) {
+      query = query.in('tipo_usuario', options.roles)
+    }
+
+    // School filter
+    if (options?.schools && options.schools.length > 0) {
+      query = query.in('escola_id', options.schools)
+    }
+
+    // Search filter
+    if (options?.searchTerm) {
+      query = query.or(`nome.ilike.%${options.searchTerm}%,email.ilike.%${options.searchTerm}%`)
+    }
+
+    // Apply pagination
+    if (options?.limit) {
+      const from = options.offset || 0
+      const to = from + options.limit - 1
+      query = query.range(from, to)
+    }
+
+    // Order by creation date
+    query = query.order('created_at', { ascending: false })
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data as UserWithSchool[]
   }
 
   async getUserWithSchool(id: string): Promise<UserWithSchool | null> {
@@ -123,41 +119,33 @@ export class UsersApiService extends BaseApiService {
     tipo_usuario: 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
     escola_id?: string
   }) {
-    try {
-      const result = await this.create({
-        ...userData,
-        ativo: true,
-        created_at: new Date().toISOString()
-      })
+    const result = await this.create({
+      ...userData,
+      ativo: true,
+      created_at: new Date().toISOString()
+    })
 
-      // Log user creation
-      await logAuthEvent('login', userData.id, {
-        action: 'user_created',
-        created_by: 'admin',
-        user_type: userData.tipo_usuario
-      })
+    // Log user creation
+    await logAuthEvent('login', userData.id, {
+      action: 'user_created',
+      created_by: 'admin',
+      user_type: userData.tipo_usuario
+    })
 
-      return result
-    } catch (error) {
-      throw error
-    }
+    return result
   }
 
   // Update user status
   async updateUserStatus(id: string, ativo: boolean, _reason?: string) {
-    try {
-      const response = await fetch(`/api/users/${encodeURIComponent(id)}/status`, {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ativo }),
-      })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'USER_STATUS_UPDATE_FAILED')
+    const response = await fetch(`/api/users/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ativo }),
+    })
+    const result = await response.json()
+    if (!response.ok) throw new Error(result.error || 'USER_STATUS_UPDATE_FAILED')
 
-      return result.user
-    } catch (error) {
-      throw error
-    }
+    return result.user
   }
 
   async updateManagedTeacher(id: string, values: Pick<User, 'nome' | 'email' | 'tipo_usuario' | 'escola_id'>) {
@@ -176,49 +164,41 @@ export class UsersApiService extends BaseApiService {
 
   // Bulk operations
   async bulkUpdateStatus(userIds: string[], ativo: boolean, reason?: string) {
-    try {
-      const results = []
-      for (const id of userIds) {
-        const result = await this.update(id, { ativo })
-        results.push(result)
-      }
-
-      // Log bulk status change
-      for (const id of userIds) {
-        await logAuthEvent('session_expired', id, {
-          action: ativo ? 'bulk_user_activated' : 'bulk_user_deactivated',
-          reason,
-          bulk_count: userIds.length
-        })
-      }
-
-      return results
-    } catch (error) {
-      throw error
+    const results = []
+    for (const id of userIds) {
+      const result = await this.update(id, { ativo })
+      results.push(result)
     }
+
+    // Log bulk status change
+    for (const id of userIds) {
+      await logAuthEvent('session_expired', id, {
+        action: ativo ? 'bulk_user_activated' : 'bulk_user_deactivated',
+        reason,
+        bulk_count: userIds.length
+      })
+    }
+
+    return results
   }
 
   async bulkAssignSchool(userIds: string[], escolaId: string) {
-    try {
-      const results = []
-      for (const id of userIds) {
-        const result = await this.update(id, { escola_id: escolaId })
-        results.push(result)
-      }
-
-      // Log bulk school assignment
-      for (const id of userIds) {
-        await logAuthEvent('login', id, {
-          action: 'bulk_school_assigned',
-          escola_id: escolaId,
-          bulk_count: userIds.length
-        })
-      }
-
-      return results
-    } catch (error) {
-      throw error
+    const results = []
+    for (const id of userIds) {
+      const result = await this.update(id, { escola_id: escolaId })
+      results.push(result)
     }
+
+    // Log bulk school assignment
+    for (const id of userIds) {
+      await logAuthEvent('login', id, {
+        action: 'bulk_school_assigned',
+        escola_id: escolaId,
+        bulk_count: userIds.length
+      })
+    }
+
+    return results
   }
 
   // Get user statistics
