@@ -22,7 +22,7 @@
  */
 import { BaseApiService } from './base'
 import { supabase, Tables, Inserts, Escola } from '@/lib/supabase'
-import { SchoolFormData } from '@/lib/validation'
+import type { SchoolFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
 import { auditApi } from './audit'

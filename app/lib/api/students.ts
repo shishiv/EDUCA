@@ -6,7 +6,7 @@
 import { BaseApiService } from './base'
 import { createStudentAdmission } from './student-admission'
 import { supabase, Tables, Aluno } from '@/lib/supabase'
-import { StudentFormData } from '@/lib/validation'
+import type { StudentFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
