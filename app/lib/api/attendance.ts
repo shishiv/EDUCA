@@ -30,7 +30,7 @@
  */
 'use client'
 
-import { supabase, type Inserts } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
@@ -85,26 +85,6 @@ export interface AttendanceWithDetails extends AttendanceRecord {
     data_nascimento?: string
   }
   sessao?: AttendanceSession
-}
-
-/**
- * @deprecated Use openSessionAction. This helper does not authorize a write.
- * It remains only for the compile-time payload regression test.
- */
-export function buildChamadaSessionInsert(params: {
-  turmaId: string
-  dateStr: string
-  professorId: string
-  escolaId: string
-}): Inserts<'sessoes_aula'> {
-  return {
-    turma_id: params.turmaId,
-    data_aula: params.dateStr,
-    status: 'ABERTA',
-    professor_id: params.professorId,
-    escola_id: params.escolaId,
-    conteudo_programatico: 'Chamada',
-  }
 }
 
 export class AttendanceApiService {

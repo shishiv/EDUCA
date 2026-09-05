@@ -9,7 +9,6 @@
     "lib/api/classes.ts",
     "lib/api/configs.ts",
     "lib/api/dashboard-stats.ts",
-    "lib/api/enhanced-attendance.ts",
     "lib/api/feature-flags.ts",
     "lib/api/grades.ts",
     "lib/api/reports.ts",
