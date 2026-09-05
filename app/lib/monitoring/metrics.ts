@@ -65,50 +65,10 @@ class MetricsCollector {
   }
 
   /**
-   * Increment a counter by 1
-   */
-  increment(name: string, labels?: Record<string, string>) {
-    this.record(name, 1, labels)
-  }
-
-  /**
-   * Decrement a counter by 1
-   */
-  decrement(name: string, labels?: Record<string, string>) {
-    this.record(name, -1, labels)
-  }
-
-  /**
    * Record timing/duration in milliseconds
    */
   timing(name: string, durationMs: number, labels?: Record<string, string>) {
     this.record(`${name}_duration_ms`, durationMs, labels)
-  }
-
-  /**
-   * Record a gauge value (current state)
-   */
-  gauge(name: string, value: number, labels?: Record<string, string>) {
-    this.record(`${name}_gauge`, value, labels)
-  }
-
-  /**
-   * Time a function execution
-   */
-  async timeAsync<T>(
-    name: string,
-    fn: () => Promise<T>,
-    labels?: Record<string, string>
-  ): Promise<T> {
-    const start = Date.now()
-    try {
-      const result = await fn()
-      this.timing(name, Date.now() - start, { ...labels, status: 'success' })
-      return result
-    } catch (error) {
-      this.timing(name, Date.now() - start, { ...labels, status: 'error' })
-      throw error
-    }
   }
 
   /**
@@ -214,44 +174,5 @@ export const metrics = metricsCollector
 export const recordMetric = (name: string, value: number, labels?: Record<string, string>) =>
   metrics.record(name, value, labels)
 
-export const incrementCounter = (name: string, labels?: Record<string, string>) =>
-  metrics.increment(name, labels)
-
-export const decrementCounter = (name: string, labels?: Record<string, string>) =>
-  metrics.decrement(name, labels)
-
 export const recordTiming = (name: string, durationMs: number, labels?: Record<string, string>) =>
   metrics.timing(name, durationMs, labels)
-
-export const recordGauge = (name: string, value: number, labels?: Record<string, string>) =>
-  metrics.gauge(name, value, labels)
-
-export const timeAsync = <T>(
-  name: string,
-  fn: () => Promise<T>,
-  labels?: Record<string, string>
-) => metrics.timeAsync(name, fn, labels)
-
-/**
- * Higher-order function to automatically track API endpoint metrics
- */
-export function withMetrics<T extends (...args: any[]) => Promise<any>>(
-  endpoint: string,
-  handler: T
-): T {
-  return (async (...args: any[]) => {
-    const start = Date.now()
-    const labels = { endpoint }
-
-    try {
-      incrementCounter('api_requests_total', labels)
-      const result = await handler(...args)
-      recordTiming('api_request', Date.now() - start, { ...labels, status: '2xx' })
-      return result
-    } catch (error) {
-      recordTiming('api_request', Date.now() - start, { ...labels, status: 'error' })
-      incrementCounter('api_errors_total', labels)
-      throw error
-    }
-  }) as T
-}
