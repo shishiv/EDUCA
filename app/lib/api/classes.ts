@@ -5,7 +5,7 @@
 
 import { BaseApiService } from './base'
 import { supabase, Tables, Turma } from '@/lib/supabase'
-import { ClassFormData } from '@/lib/validation'
+import type { ClassFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
 

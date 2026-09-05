@@ -19,11 +19,11 @@ Catalogs are feature-scoped under `messages/<locale>/`. Both locale files for a 
 | `auth` | Foundation (login, first access, password reset) |
 | `public` | Foundation (privacy, offline, unauthorized, loading, not found) |
 | `layout` | Foundation/integration only (shared chrome and navigation) |
-| `registry` | `campaign/leaf-i18n-registry`: schools, users, students, guardians, enrolments, assignments |
-| `classroom` | `campaign/leaf-i18n-classroom`: classes, attendance, diary, sessions, calendar, grades |
-| `platform` | `campaign/leaf-i18n-platform`: dashboard content, reports, settings, feature flags |
+| `registry` | Schools, users, students, guardians, enrolments, assignments |
+| `classroom` | Classes, attendance, diary, sessions, calendar, grades |
+| `platform` | Dashboard content, reports, settings, feature flags |
 
-The three reserved namespace files are intentionally empty but already registered by `i18n/messages.ts`. Domain lanes add keys only to their two reserved files and translate only their owned UI. A later integrator resolves genuinely cross-cutting additions to `common` or `layout`.
+`i18n/messages.ts` registers the populated catalogs. Keep feature copy in its namespace and shared navigation or feedback copy in `common` or `layout`.
 
 ## Adding a locale
 
