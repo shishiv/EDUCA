@@ -38,7 +38,7 @@ import { Search, GraduationCap, Download, Save, BookOpen, AlertCircle, Plus } fr
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
-import { getTurmasForNotas, createGrade, updateGrade, type TurmaNotasData } from '@/lib/api/grades'
+import { getTurmasForNotas, createGrade, updateGrade, type Bimester, type TurmaNotasData } from '@/lib/api/grades'
 import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -71,6 +71,275 @@ interface TurmaNotas {
   ano_letivo: number
   disciplinas: string[]
   alunos: NotaAluno[]
+}
+
+type BimestreKey = 'bimestre1' | 'bimestre2' | 'bimestre3' | 'bimestre4'
+type DisciplinaNota = NotaAluno['disciplinas'][string]
+type SituacaoNota = NonNullable<DisciplinaNota['situacao']>
+
+interface EditingNote {
+  open: boolean
+  turmaId: string
+  alunoId: string
+  alunoNome: string
+  matriculaId: string
+  disciplina: string
+  bimestre: Bimester | null
+  nota: string
+  observacoes: string
+}
+
+interface SituationLabels {
+  readonly approved: string
+  readonly failed: string
+  readonly recovery: string
+  readonly enrolled: string
+}
+
+type ClassroomTranslations = ReturnType<typeof useClassroomTranslations>
+
+const EMPTY_EDITING_NOTE: EditingNote = {
+  open: false,
+  turmaId: '',
+  alunoId: '',
+  alunoNome: '',
+  matriculaId: '',
+  disciplina: '',
+  bimestre: null,
+  nota: '',
+  observacoes: '',
+}
+
+const BIMESTERS: Bimester[] = [1, 2, 3, 4]
+
+function parseBimester(value: string): Bimester | null {
+  switch (value) {
+    case '1': return 1
+    case '2': return 2
+    case '3': return 3
+    case '4': return 4
+    default: return null
+  }
+}
+
+function bimestreKey(bimestre: Bimester): BimestreKey {
+  switch (bimestre) {
+    case 1: return 'bimestre1'
+    case 2: return 'bimestre2'
+    case 3: return 'bimestre3'
+    case 4: return 'bimestre4'
+  }
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+function getNotaColor(nota: number): string {
+  if (nota >= 8) return 'text-green-600 font-semibold'
+  if (nota >= 6) return 'text-blue-600'
+  if (nota >= 4) return 'text-orange-600'
+  return 'text-red-600 font-semibold'
+}
+
+function SituationBadge({ situacao, labels }: { situacao: SituacaoNota | undefined; labels: SituationLabels }) {
+  switch (situacao) {
+    case 'aprovado': return <Badge className="bg-green-100 text-green-800">{labels.approved}</Badge>
+    case 'reprovado': return <Badge variant="destructive">{labels.failed}</Badge>
+    case 'recuperacao': return <Badge className="bg-orange-100 text-orange-800">{labels.recovery}</Badge>
+    case 'cursando': return <Badge variant="outline">{labels.enrolled}</Badge>
+    default: return <Badge variant="secondary">-</Badge>
+  }
+}
+
+function findEditingNote(
+  turmas: TurmaNotas[],
+  turmaId: string,
+  alunoId: string,
+  disciplina: string,
+  bimestreValue: string
+): EditingNote | null {
+  const bimestre = parseBimester(bimestreValue)
+  const aluno = turmas.find((turma) => turma.id === turmaId)?.alunos.find((student) => student.id === alunoId)
+  if (!aluno || !bimestre) return null
+
+  return {
+    open: true,
+    turmaId,
+    alunoId,
+    alunoNome: aluno.aluno.nome_completo,
+    matriculaId: aluno.matricula_id,
+    disciplina,
+    bimestre,
+    nota: aluno.disciplinas[disciplina]?.[bimestreKey(bimestre)]?.toString() ?? '',
+    observacoes: '',
+  }
+}
+
+function subjectValues(subject: DisciplinaNota): number[] {
+  return BIMESTERS.flatMap((bimestre) => {
+    const nota = subject[bimestreKey(bimestre)]
+    return nota === undefined ? [] : [nota]
+  })
+}
+
+function subjectSituation(notas: number[], media: number): SituacaoNota {
+  if (notas.length < 4) return 'cursando'
+  if (media >= 6) return 'aprovado'
+  return media >= 4 ? 'recuperacao' : 'reprovado'
+}
+
+function updateSubjectGrade(subject: DisciplinaNota | undefined, bimestre: Bimester, nota: number): DisciplinaNota {
+  const updated: DisciplinaNota = { ...subject }
+  updated[bimestreKey(bimestre)] = nota
+  const notas = subjectValues(updated)
+  const media = notas.reduce((sum, current) => sum + current, 0) / notas.length
+  updated.media = Math.round(media * 100) / 100
+  updated.situacao = subjectSituation(notas, media)
+  return updated
+}
+
+function updateTurmasWithGrade(turmas: TurmaNotas[], editing: EditingNote, nota: number, bimestre: Bimester): TurmaNotas[] {
+  return turmas.map((turma) => {
+    if (turma.id !== editing.turmaId) return turma
+    return {
+      ...turma,
+      alunos: turma.alunos.map((aluno) => aluno.id === editing.alunoId
+        ? {
+            ...aluno,
+            disciplinas: {
+              ...aluno.disciplinas,
+              [editing.disciplina]: updateSubjectGrade(aluno.disciplinas[editing.disciplina], bimestre, nota),
+            },
+          }
+        : aluno),
+    }
+  })
+}
+
+function filterTurmas(turmas: TurmaNotas[], search: string, turmaFilter: string): TurmaNotas[] {
+  const normalizedSearch = search.toLowerCase()
+  return turmas.filter((turma) => {
+    const matchesSearch = [turma.nome, turma.escola, turma.professor]
+      .some((value) => value.toLowerCase().includes(normalizedSearch))
+    return matchesSearch && (turmaFilter === 'todas' || turma.id === turmaFilter)
+  })
+}
+
+function averageDisplay(turmas: TurmaNotas[]): string {
+  const medias = turmas
+    .flatMap((turma) => turma.alunos)
+    .flatMap((aluno) => Object.values(aluno.disciplinas))
+    .flatMap((disciplina) => disciplina.media === undefined ? [] : [disciplina.media])
+  return medias.length > 0
+    ? (Math.round(medias.reduce((sum, media) => sum + media, 0) / medias.length * 100) / 100).toFixed(1)
+    : '-'
+}
+
+function overallSituation(aluno: NotaAluno): SituacaoNota {
+  const situacoes = Object.values(aluno.disciplinas).map((disciplina) => disciplina.situacao)
+  if (situacoes.includes('reprovado')) return 'reprovado'
+  if (situacoes.includes('recuperacao')) return 'recuperacao'
+  return situacoes.every((situacao) => situacao === 'aprovado') ? 'aprovado' : 'cursando'
+}
+
+async function persistGrade(editing: EditingNote, bimestre: Bimester, nota: number): Promise<string | null> {
+  const { data: existingGrade } = await supabase
+    .from('notas')
+    .select('id')
+    .eq('matricula_id', editing.matriculaId)
+    .eq('disciplina', editing.disciplina)
+    .eq('bimestre', bimestre)
+    .single()
+
+  if (existingGrade) {
+    const result = await updateGrade(supabase, existingGrade.id, {
+      nota,
+      observacoes: editing.observacoes || undefined,
+    })
+    return result.error
+  }
+
+  const result = await createGrade(supabase, {
+    matricula_id: editing.matriculaId,
+    disciplina: editing.disciplina,
+    bimestre,
+    nota,
+    tipo_avaliacao: 'bimestral',
+    data_avaliacao: new Date().toISOString().split('T')[0],
+    observacoes: editing.observacoes || undefined,
+  })
+  return result.error
+}
+
+function EmptyGradesState({
+  t,
+  shouldShowSelector,
+  selectedEscolaId,
+}: {
+  t: ClassroomTranslations
+  shouldShowSelector: boolean
+  selectedEscolaId: string | null
+}) {
+  const needsSchool = shouldShowSelector && !selectedEscolaId
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">{t('grades.title')}</h1>
+        <p className="text-gray-600 mt-1">{t('grades.subtitle')}</p>
+      </div>
+      <Card>
+        <CardContent className="text-center py-12">
+          <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('classes.noClasses')}</h3>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            {needsSchool
+              ? 'Selecione uma escola no menu superior para visualizar as turmas e notas.'
+              : 'Ainda nao ha turmas cadastradas. Crie uma turma para comecar a lancar notas.'}
+          </p>
+          {!needsSchool && (
+            <Button asChild>
+              <Link href="/dashboard/turmas/nova">
+                <Plus className="h-4 w-4 mr-2" />
+                {t('actions.newClass')}
+              </Link>
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function SaveAllGradesButton({ saving, onSave, t }: { saving: boolean; onSave: () => Promise<void>; t: ClassroomTranslations }) {
+  return (
+    <Button onClick={onSave} disabled={saving} className="gap-2">
+      {saving ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          {t('actions.saving')}
+        </>
+      ) : (
+        <>
+          <Save className="h-4 w-4" />
+          {t('grades.saveAll')}
+        </>
+      )}
+    </Button>
+  )
+}
+
+function SaveEditedGradeButton({ saving, onSave, t }: { saving: boolean; onSave: () => Promise<void>; t: ClassroomTranslations }) {
+  return (
+    <Button onClick={onSave} disabled={saving}>
+      {saving ? t('actions.saving') : `${t('actions.save')} ${t('grades.edit').replace('Edit', 'Grade')}`}
+    </Button>
+  )
 }
 
 // Convert TurmaNotasData to TurmaNotas for component compatibility
@@ -108,27 +377,7 @@ export default function NotasPage() {
   const [turmaFilter, setTurmaFilter] = useState('todas')
   const [disciplinaFilter, setDisciplinaFilter] = useState('todas')
   const [bimestreFilter, setBimestreFilter] = useState('todos')
-  const [editingNote, setEditingNote] = useState<{
-    open: boolean
-    turmaId: string
-    alunoId: string
-    alunoNome: string
-    matriculaId: string
-    disciplina: string
-    bimestre: string
-    nota: string
-    observacoes: string
-  }>({
-    open: false,
-    turmaId: '',
-    alunoId: '',
-    alunoNome: '',
-    matriculaId: '',
-    disciplina: '',
-    bimestre: '',
-    nota: '',
-    observacoes: ''
-  })
+  const [editingNote, setEditingNote] = useState<EditingNote>(EMPTY_EDITING_NOTE)
 
   // Determine which escola to filter by
   const escolaIdToUse = shouldShowSelector
@@ -154,7 +403,7 @@ export default function NotasPage() {
         return
       }
 
-      const transformedTurmas = (result.data || []).map(transformTurmaData)
+      const transformedTurmas = (result.data ?? []).map(transformTurmaData)
       setTurmas(transformedTurmas)
 
       logger.info('Notas loaded successfully', {
@@ -164,7 +413,7 @@ export default function NotasPage() {
       })
     } catch (err) {
       const errorMessage = 'Erro ao carregar dados de notas'
-      logger.error('Error loading notas', err as Error, {
+      logger.error('Error loading notas', err instanceof Error ? err : String(err), {
         feature: 'grades',
         action: 'load_notas_error',
       })
@@ -179,56 +428,16 @@ export default function NotasPage() {
     loadNotas()
   }, [loadNotas])
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  const getSituacaoBadge = (situacao: string) => {
-    switch (situacao) {
-      case 'aprovado': return <Badge className="bg-green-100 text-green-800">{t('status.approved')}</Badge>
-      case 'reprovado': return <Badge variant="destructive">{t('status.failed')}</Badge>
-      case 'recuperacao': return <Badge className="bg-orange-100 text-orange-800">Recuperacao</Badge>
-      case 'cursando': return <Badge variant="outline">{t('status.enrolled')}</Badge>
-      default: return <Badge variant="secondary">-</Badge>
-    }
-  }
-
-  const getNotaColor = (nota: number) => {
-    if (nota >= 8) return 'text-green-600 font-semibold'
-    if (nota >= 6) return 'text-blue-600'
-    if (nota >= 4) return 'text-orange-600'
-    return 'text-red-600 font-semibold'
-  }
-
   const openEditNote = (turmaId: string, alunoId: string, disciplina: string, bimestre: string) => {
-    const turma = turmas.find(t => t.id === turmaId)
-    const aluno = turma?.alunos.find(a => a.id === alunoId)
-    const notaAtual = aluno?.disciplinas[disciplina]?.[`bimestre${bimestre}` as keyof (typeof aluno.disciplinas)[string]]
-
-    if (aluno) {
-      setEditingNote({
-        open: true,
-        turmaId,
-        alunoId,
-        alunoNome: aluno.aluno.nome_completo,
-        matriculaId: aluno.matricula_id,
-        disciplina,
-        bimestre,
-        nota: notaAtual?.toString() || '',
-        observacoes: ''
-      })
-    }
+    const note = findEditingNote(turmas, turmaId, alunoId, disciplina, bimestre)
+    if (note) setEditingNote(note)
   }
 
   const saveNote = async () => {
-    const nota = parseFloat(editingNote.nota)
+    const nota = Number(editingNote.nota)
+    const bimestre = editingNote.bimestre
 
-    if (isNaN(nota) || nota < 0 || nota > 10) {
+    if (!bimestre || !Number.isFinite(nota) || nota < 0 || nota > 10) {
       toast.error('Nota deve ser um número entre 0 e 10')
       return
     }
@@ -236,109 +445,18 @@ export default function NotasPage() {
     setSaving(true)
 
     try {
-      // Check if grade exists for this matricula/disciplina/bimestre
-      const { data: existingGrade } = await supabase
-        .from('notas')
-        .select('id')
-        .eq('matricula_id', editingNote.matriculaId)
-        .eq('disciplina', editingNote.disciplina)
-        .eq('bimestre', parseInt(editingNote.bimestre))
-        .single()
-
-      if (existingGrade) {
-        // Update existing grade
-        const result = await updateGrade(supabase, existingGrade.id, {
-          nota,
-          observacoes: editingNote.observacoes || undefined,
-        })
-
-        if (result.error) {
-          toast.error(result.error)
-          return
-        }
-      } else {
-        // Create new grade
-        const result = await createGrade(supabase, {
-          matricula_id: editingNote.matriculaId,
-          disciplina: editingNote.disciplina,
-          bimestre: parseInt(editingNote.bimestre) as 1 | 2 | 3 | 4,
-          nota,
-          tipo_avaliacao: 'bimestral',
-          data_avaliacao: new Date().toISOString().split('T')[0],
-          observacoes: editingNote.observacoes || undefined,
-        })
-
-        if (result.error) {
-          toast.error(result.error)
-          return
-        }
+      const resultError = await persistGrade(editingNote, bimestre, nota)
+      if (resultError) {
+        toast.error(resultError)
+        return
       }
 
-      // Update local state
-      setTurmas(turmas.map(turma => {
-        if (turma.id === editingNote.turmaId) {
-          return {
-            ...turma,
-            alunos: turma.alunos.map(aluno => {
-              if (aluno.id === editingNote.alunoId) {
-                const disciplinaAtual = aluno.disciplinas[editingNote.disciplina] || {}
-                const novasDisciplinas = {
-                  ...aluno.disciplinas,
-                  [editingNote.disciplina]: {
-                    ...disciplinaAtual,
-                    [`bimestre${editingNote.bimestre}`]: nota
-                  }
-                }
-
-                // Recalculate media
-                const notas = Object.keys(novasDisciplinas[editingNote.disciplina])
-                  .filter(key => key.startsWith('bimestre'))
-                  .map(key => novasDisciplinas[editingNote.disciplina][key as keyof (typeof novasDisciplinas)[string]])
-                  .filter(n => typeof n === 'number') as number[]
-
-                const media = notas.length > 0 ? notas.reduce((sum, n) => sum + n, 0) / notas.length : 0
-                novasDisciplinas[editingNote.disciplina].media = Math.round(media * 100) / 100
-
-                // Determine situacao
-                if (notas.length >= 4) {
-                  if (media >= 6) {
-                    novasDisciplinas[editingNote.disciplina].situacao = 'aprovado'
-                  } else if (media >= 4) {
-                    novasDisciplinas[editingNote.disciplina].situacao = 'recuperacao'
-                  } else {
-                    novasDisciplinas[editingNote.disciplina].situacao = 'reprovado'
-                  }
-                } else {
-                  novasDisciplinas[editingNote.disciplina].situacao = 'cursando'
-                }
-
-                return {
-                  ...aluno,
-                  disciplinas: novasDisciplinas
-                }
-              }
-              return aluno
-            })
-          }
-        }
-        return turma
-      }))
-
-      setEditingNote({
-        open: false,
-        turmaId: '',
-        alunoId: '',
-        alunoNome: '',
-        matriculaId: '',
-        disciplina: '',
-        bimestre: '',
-        nota: '',
-        observacoes: ''
-      })
+      setTurmas((current) => updateTurmasWithGrade(current, editingNote, nota, bimestre))
+      setEditingNote(EMPTY_EDITING_NOTE)
 
       toast.success('Nota salva com sucesso!')
     } catch (err) {
-      logger.error('Error saving grade', err as Error, {
+      logger.error('Error saving grade', err instanceof Error ? err : String(err), {
         feature: 'grades',
         action: 'save_grade_error',
       })
@@ -353,17 +471,16 @@ export default function NotasPage() {
     toast.info('Todas as notas já estão salvas no banco de dados')
   }
 
-  const filteredTurmas = turmas.filter(turma => {
-    const matchesSearch = turma.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         turma.escola.toLowerCase().includes(search.toLowerCase()) ||
-                         turma.professor.toLowerCase().includes(search.toLowerCase())
+  const filteredTurmas = filterTurmas(turmas, search, turmaFilter)
 
-    const matchesTurma = turmaFilter === 'todas' || turma.id === turmaFilter
-
-    return matchesSearch && matchesTurma
-  })
-
-  const todasDisciplinas = Array.from(new Set(turmas.flatMap(t => t.disciplinas)))
+  const todasDisciplinas = Array.from(new Set(turmas.flatMap((turma) => turma.disciplinas)))
+  const situationLabels: SituationLabels = {
+    approved: t('status.approved'),
+    failed: t('status.failed'),
+    recovery: 'Recuperacao',
+    enrolled: t('status.enrolled'),
+  }
+  const turmaAverage = averageDisplay(turmas)
 
   // Loading skeleton
   if (loading) {
@@ -404,39 +521,8 @@ export default function NotasPage() {
     )
   }
 
-  // Empty state - no turmas
   if (turmas.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('grades.title')}</h1>
-          <p className="text-gray-600 mt-1">
-            {t('grades.subtitle')}
-          </p>
-        </div>
-        <Card>
-          <CardContent className="text-center py-12">
-            <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {t('classes.noClasses')}
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              {shouldShowSelector && !selectedEscolaId
-                ? 'Selecione uma escola no menu superior para visualizar as turmas e notas.'
-                : 'Ainda nao ha turmas cadastradas. Crie uma turma para comecar a lancar notas.'}
-            </p>
-            {!shouldShowSelector || selectedEscolaId ? (
-              <Button asChild>
-                <Link href="/dashboard/turmas/nova">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('actions.newClass')}
-                </Link>
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <EmptyGradesState t={t} shouldShowSelector={shouldShowSelector} selectedEscolaId={selectedEscolaId} />
   }
 
   return (
@@ -454,19 +540,7 @@ export default function NotasPage() {
             <Download className="h-4 w-4" />
             {t('grades.reports')}
           </Button>
-          <Button onClick={saveAllNotas} disabled={saving} className="gap-2">
-            {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                {t('actions.saving')}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                {t('grades.saveAll')}
-              </>
-            )}
-          </Button>
+          <SaveAllGradesButton saving={saving} onSave={saveAllNotas} t={t} />
         </div>
       </div>
 
@@ -501,15 +575,7 @@ export default function NotasPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-purple-600">
-              {(() => {
-                const allMedias = turmas.flatMap(t => t.alunos)
-                  .flatMap(a => Object.values(a.disciplinas))
-                  .filter(d => d.media !== undefined)
-                  .map(d => d.media!)
-                return allMedias.length > 0
-                  ? (Math.round(allMedias.reduce((sum, m) => sum + m, 0) / allMedias.length * 100) / 100).toFixed(1)
-                  : '-'
-              })()}
+              {turmaAverage}
             </div>
             <div className="text-sm text-gray-600">{t('grades.average')}</div>
           </CardContent>
@@ -569,10 +635,9 @@ export default function NotasPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">{t('labels.all')}</SelectItem>
-                <SelectItem value="1">1 Bim</SelectItem>
-                <SelectItem value="2">2 Bim</SelectItem>
-                <SelectItem value="3">3 Bim</SelectItem>
-                <SelectItem value="4">4 Bim</SelectItem>
+                {BIMESTERS.map((bimestre) => (
+                  <SelectItem key={bimestre} value={String(bimestre)}>{bimestre} Bim</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -655,31 +720,32 @@ export default function NotasPage() {
                               <TableCell key={disciplina} className="text-center">
                                 <div className="space-y-1">
                                   <div className="grid grid-cols-2 gap-1 text-xs">
-                                    {['1', '2', '3', '4'].filter(b =>
-                                      bimestreFilter === 'todos' || b === bimestreFilter
+                                    {BIMESTERS.filter((bimestre) =>
+                                      bimestreFilter === 'todos' || String(bimestre) === bimestreFilter
                                     ).map((bimestre) => {
-                                      const nota = notasDisciplina?.[`bimestre${bimestre}` as keyof typeof notasDisciplina] as number
+                                      const nota = notasDisciplina?.[bimestreKey(bimestre)]
                                       return (
                                         <button
                                           key={bimestre}
-                                          onClick={() => openEditNote(turma.id, aluno.id, disciplina, bimestre)}
+                                          onClick={() => openEditNote(turma.id, aluno.id, disciplina, String(bimestre))}
+                                          aria-label={`Editar nota de ${aluno.aluno.nome_completo} em ${disciplina}, ${bimestre}º bimestre`}
                                           className={`p-1 rounded border hover:bg-gray-50 ${
-                                            nota ? getNotaColor(nota) : 'text-gray-400'
+                                            nota === undefined ? 'text-gray-400' : getNotaColor(nota)
                                           }`}
                                         >
-                                          {nota ? nota.toFixed(1) : '-'}
+                                          {nota === undefined ? '-' : nota.toFixed(1)}
                                         </button>
                                       )
                                     })}
                                   </div>
-                                  {notasDisciplina?.media && (
+                                  {notasDisciplina?.media !== undefined && (
                                     <div className={`text-sm font-semibold ${getNotaColor(notasDisciplina.media)}`}>
                                       Media: {notasDisciplina.media.toFixed(1)}
                                     </div>
                                   )}
                                   {notasDisciplina?.situacao && (
                                     <div className="mt-1">
-                                      {getSituacaoBadge(notasDisciplina.situacao)}
+                                      <SituationBadge situacao={notasDisciplina.situacao} labels={situationLabels} />
                                     </div>
                                   )}
                                 </div>
@@ -687,16 +753,7 @@ export default function NotasPage() {
                             )
                           })}
                           <TableCell className="text-center">
-                            {(() => {
-                              const situacoes = Object.values(aluno.disciplinas).map(d => d.situacao)
-                              const temRecuperacao = situacoes.includes('recuperacao')
-                              const temReprovacao = situacoes.includes('reprovado')
-
-                              if (temReprovacao) return getSituacaoBadge('reprovado')
-                              if (temRecuperacao) return getSituacaoBadge('recuperacao')
-                              if (situacoes.every(s => s === 'aprovado')) return getSituacaoBadge('aprovado')
-                              return getSituacaoBadge('cursando')
-                            })()}
+                            <SituationBadge situacao={overallSituation(aluno)} labels={situationLabels} />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -768,9 +825,7 @@ export default function NotasPage() {
             }>
               {t('actions.cancel')}
             </Button>
-            <Button onClick={saveNote} disabled={saving}>
-              {saving ? t('actions.saving') : `${t('actions.save')} ${t('grades.edit').replace('Edit', 'Grade')}`}
-            </Button>
+            <SaveEditedGradeButton saving={saving} onSave={saveNote} t={t} />
           </DialogFooter>
         </DialogContent>
       </Dialog>

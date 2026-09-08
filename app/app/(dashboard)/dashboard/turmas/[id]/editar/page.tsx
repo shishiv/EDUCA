@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { writeGovernedClass } from '@/lib/api/governed-management'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -31,11 +32,15 @@ interface ClassForm {
   ativo: boolean
 }
 
+function isClassShift(value: string): value is ClassForm['turno'] {
+  return value === 'matutino' || value === 'vespertino' || value === 'integral'
+}
+
 const initialForm: ClassForm = {
   nome: '',
   serie: '',
   turno: 'matutino',
-  capacidade: '30',
+  capacidade: '',
   ano_letivo: String(new Date().getFullYear()),
   escola_id: '',
   professor_id: 'none',
@@ -71,7 +76,7 @@ export default function EditarTurmaPage() {
       setForm({
         nome: turma.nome,
         serie: turma.serie,
-        turno: turma.turno as ClassForm['turno'],
+        turno: isClassShift(turma.turno) ? turma.turno : 'matutino',
         capacidade: String(turma.capacidade),
         ano_letivo: String(turma.ano_letivo),
         escola_id: turma.escola_id,
@@ -94,22 +99,18 @@ export default function EditarTurmaPage() {
     event.preventDefault()
     setSaving(true)
 
-    const { error } = await supabase
-      .from('turmas')
-      .update({
+    try {
+      await writeGovernedClass(supabase, id, {
         nome: form.nome.trim(),
         serie: form.serie.trim(),
         turno: form.turno,
         capacidade: Number(form.capacidade),
         ano_letivo: Number(form.ano_letivo),
-        escola_id: form.escola_id,
         professor_id: form.professor_id === 'none' ? null : form.professor_id,
         ativo: form.ativo,
       })
-      .eq('id', id)
-
-    if (error) {
-      toast.error(`Erro ao atualizar turma: ${error.message}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? `Erro ao atualizar turma: ${error.message}` : 'Erro ao atualizar turma')
       setSaving(false)
       return
     }
@@ -163,7 +164,9 @@ export default function EditarTurmaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-turno">{t('forms.shift')} *</Label>
-                <Select value={form.turno} onValueChange={value => update('turno', value as ClassForm['turno'])}>
+                <Select value={form.turno} onValueChange={value => {
+                  if (isClassShift(value)) update('turno', value)
+                }}>
                   <SelectTrigger id="edit-turno" aria-label={t('labels.shift')}>
                     <SelectValue />
                   </SelectTrigger>
@@ -180,7 +183,7 @@ export default function EditarTurmaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-escola">{t('forms.school')} *</Label>
-                <Select value={form.escola_id} onValueChange={value => update('escola_id', value)}>
+                <Select value={form.escola_id} disabled>
                   <SelectTrigger id="edit-escola" aria-label={t('labels.school')}>
                     <SelectValue />
                   </SelectTrigger>

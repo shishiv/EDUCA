@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -15,30 +15,129 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save, School, MapPin, Phone, Users, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { schoolsApi } from '@/lib/api/schools'
+import { updateGovernedSchool } from '@/lib/api/governed-management'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
+import type { Escola } from '@/lib/supabase'
+
+type SchoolType = 'creche' | 'pre_escola' | 'fundamental'
+
+type SchoolFormData = {
+  nome: string
+  codigo: string
+  tipo: '' | SchoolType
+  endereco: string
+  bairro: string
+  cep: string
+  cidade: string
+  estado: string
+  telefone: string
+  email: string
+  diretor_id: string
+  ativo: boolean
+  observacoes: string
+}
+
+type DirectorOption = {
+  id: string
+  nome: string
+  email: string | null
+}
+
+type SchoolUpdateInput = {
+  nome: string
+  codigo: string
+  tipo: SchoolType
+  endereco: string
+  telefone: string
+  email: string | null
+  ativo: boolean
+}
+
+function isSchoolType(value: string): value is SchoolType {
+  return value === 'creche' || value === 'pre_escola' || value === 'fundamental'
+}
+
+function formatTelefone(value: string) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/g, '($1) $2')
+    .replace(/(\d)(\d{4})$/, '$1-$2')
+    .slice(0, 15)
+}
+
+function optionalText(value: string | null) {
+  return value ?? ''
+}
+
+function addressFields(address: string | null) {
+  const [streetAndDistrict = ''] = optionalText(address).split(',')
+  const [endereco = '', bairro = ''] = streetAndDistrict.split(' - ')
+  const cep = optionalText(address).match(/CEP:\s*(\d{5}-?\d{3})/)?.[1] ?? ''
+  return { endereco, bairro: bairro.trim(), cep }
+}
+
+function schoolFormFromRecord(data: Escola, city: string): SchoolFormData {
+  const { endereco, bairro, cep } = addressFields(data.endereco)
+
+  return {
+    nome: optionalText(data.nome),
+    codigo: optionalText(data.codigo),
+    tipo: isSchoolType(data.tipo) ? data.tipo : '',
+    endereco,
+    bairro,
+    cep,
+    cidade: city,
+    estado: 'MG',
+    telefone: formatTelefone(optionalText(data.telefone)),
+    email: optionalText(data.email),
+    diretor_id: optionalText(data.diretor_id),
+    ativo: data.ativo ?? true,
+    observacoes: '',
+  }
+}
+
+function schoolUpdateFromForm(formData: SchoolFormData): SchoolUpdateInput | null {
+  const codigo = formData.codigo.replace(/\D/g, '')
+  if (codigo.length !== 8 || !formData.tipo) return null
+
+  const address = `${formData.endereco}${formData.bairro ? ` - ${formData.bairro}` : ''}, ${formData.cidade} - ${formData.estado}${formData.cep ? `, CEP: ${formData.cep}` : ''}`
+  return {
+    nome: formData.nome,
+    codigo,
+    tipo: formData.tipo,
+    endereco: address,
+    telefone: formData.telefone.replace(/\D/g, ''),
+    email: formData.email || null,
+    ativo: formData.ativo,
+  }
+}
+
+function schoolSaveErrorMessage(errorMessage: string): string {
+  if (!errorMessage) return 'Erro ao atualizar escola'
+  if (!errorMessage.includes('duplicate') && !errorMessage.includes('unique')) return `Erro: ${errorMessage}`
+  return errorMessage.includes('codigo')
+    ? 'Código da escola já existe no sistema'
+    : 'Erro ao atualizar escola'
+}
 
 export default function EditarEscolaPage() {
   const t = useTranslations('registry')
   const router = useRouter()
-  const params = useParams()
-  const escolaId = params.id as string
+  const params = useParams<{ id: string }>()
+  const escolaId = params.id
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [escola, setEscola] = useState<any>(null)
-  const [diretoresDisponiveis, setDiretoresDisponiveis] = useState<Array<{
-    id: string
-    nome: string
-    email: string
-  }>>([])
+  const [escola, setEscola] = useState<Escola | null>(null)
+  const [diretoresDisponiveis, setDiretoresDisponiveis] = useState<DirectorOption[]>([])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SchoolFormData>({
     // Informações Básicas
     nome: '',
     codigo: '', // Código INEP (8 dígitos)
@@ -63,121 +162,74 @@ export default function EditarEscolaPage() {
     observacoes: ''
   })
 
-  useEffect(() => {
-    loadEscola()
-    loadDiretores()
-  }, [escolaId])
-
-  const loadEscola = async () => {
+  const loadEscola = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await schoolsApi.getById(escolaId) as any
-
-      // Parse endereco
-      const enderecoPartes = data.endereco?.split(',') || []
-      const logradouro = enderecoPartes[0]?.split(' - ')[0] || ''
-      const bairro = enderecoPartes[0]?.split(' - ')[1] || ''
-      const cep = data.endereco?.match(/CEP:\s*(\d{5}-?\d{3})/)?.[1] || ''
+      const data = await schoolsApi.getById(escolaId)
+      if (!data) throw new Error('SCHOOL_NOT_FOUND')
 
       setEscola(data)
-      setFormData({
-        nome: data.nome || '',
-        codigo: data.codigo || '',
-        tipo: data.tipo || '',
-        endereco: logradouro,
-        bairro: bairro.trim(),
-        cep: cep,
-        cidade: t('labels.cidade'),
-        estado: 'MG',
-        telefone: formatTelefone(data.telefone || ''),
-        email: data.email || '',
-        diretor_id: data.diretor_id || '',
-        ativo: data.ativo ?? true,
-        observacoes: ''
-      })
+      setFormData(schoolFormFromRecord(data, t('labels.cidade')))
     } catch (error) {
-      logger.error('Erro ao carregar escola:', error as any)
+      logger.error('Erro ao carregar escola:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-carregar-dados-da-escola'))
       router.push('/dashboard/escolas')
     } finally {
       setLoading(false)
     }
-  }
+  }, [escolaId, router, t])
 
-  const loadDiretores = async () => {
+  const loadDiretores = useCallback(async () => {
     try {
-      const diretores = await schoolsApi.getAvailableDirectors() as any
-      setDiretoresDisponiveis(diretores || [])
+      const diretores = await schoolsApi.getAvailableDirectors()
+      setDiretoresDisponiveis((diretores ?? []).map(diretor => ({
+        id: diretor.id,
+        nome: diretor.nome,
+        email: diretor.email,
+      })))
     } catch (error) {
-      logger.error('Erro ao carregar diretores:', error as any)
+      logger.error('Erro ao carregar diretores:', error instanceof Error ? error : String(error))
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void loadEscola()
+    void loadDiretores()
+  }, [loadDiretores, loadEscola])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
 
     try {
-      // Validar código INEP (8 dígitos)
-      const codigoLimpo = formData.codigo.replace(/\D/g, '')
-      if (codigoLimpo.length !== 8) {
+      if (!escola) {
+        throw new Error('SCHOOL_NOT_FOUND')
+      }
+      const updateData = schoolUpdateFromForm(formData)
+      if (!updateData) {
         toast.error(t('ui.codigo-inep-deve-ter-exatamente-8-digitos'))
-        setSaving(false)
         return
       }
 
-      // Preparar dados para a API
-      const enderecoCompleto = `${formData.endereco}${formData.bairro ? ' - ' + formData.bairro : ''}, ${formData.cidade} - ${formData.estado}${formData.cep ? ', CEP: ' + formData.cep : ''}`
-
-      const updateData = {
-        nome: formData.nome,
-        codigo: codigoLimpo, // Código INEP padronizado (8 dígitos)
-        tipo: formData.tipo as 'creche' | 'pre_escola' | 'fundamental',
-        endereco: enderecoCompleto,
-        telefone: formData.telefone.replace(/\D/g, ''),
-        email: formData.email || undefined,
+      await updateGovernedSchool(supabase, escolaId, {
+        ...updateData,
         diretor_id: formData.diretor_id || null,
-        ativo: formData.ativo,
-      }
-
-      // Atualizar escola via API
-      await schoolsApi.update(escolaId, updateData)
-
-      // Se o diretor mudou, atualizar atribuição
-      if (formData.diretor_id && formData.diretor_id !== escola.diretor_id) {
-        await schoolsApi.assignDirector(escolaId, formData.diretor_id)
-      }
+      })
 
       toast.success(t('ui.escola-atualizada-com-sucesso'))
       router.push('/dashboard/escolas')
-    } catch (error: any) {
-      logger.error('Erro ao atualizar escola:', error)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error('Erro ao atualizar escola:', error instanceof Error ? error : String(error))
 
-      let errorMessage = 'Erro ao atualizar escola'
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-        if (error.message.includes('codigo')) {
-          errorMessage = 'Código da escola já existe no sistema'
-        }
-      } else if (error.message) {
-        errorMessage = `Erro: ${error.message}`
-      }
-
-      toast.error(errorMessage)
+      toast.error(schoolSaveErrorMessage(errorMessage))
     } finally {
       setSaving(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <Field extends keyof SchoolFormData>(field: Field, value: SchoolFormData[Field]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const formatTelefone = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/^(\d{2})(\d)/g, '($1) $2')
-      .replace(/(\d)(\d{4})$/, '$1-$2')
-      .slice(0, 15)
   }
 
   const formatCEP = (value: string) => {
@@ -195,12 +247,16 @@ export default function EditarEscolaPage() {
   }
 
   const getTipoLabel = (tipo: string) => {
-    const tipos = {
-      creche: 'Creche (0-3 anos)',
-      pre_escola: 'Pré-Escola (4-5 anos)',
-      fundamental: 'Ensino Fundamental (6-14 anos)'
+    switch (tipo) {
+      case 'creche':
+        return 'Creche (0-3 anos)'
+      case 'pre_escola':
+        return 'Pré-Escola (4-5 anos)'
+      case 'fundamental':
+        return 'Ensino Fundamental (6-14 anos)'
+      default:
+        return tipo
     }
-    return tipos[tipo as keyof typeof tipos] || tipo
   }
 
   if (loading) {
@@ -295,7 +351,9 @@ export default function EditarEscolaPage() {
                   <Label htmlFor="tipo">{t('labels.tipo-de-ensino')}</Label>
                   <Select
                     value={formData.tipo}
-                    onValueChange={(value) => handleInputChange('tipo', value)}
+                    onValueChange={(value) => {
+                      if (isSchoolType(value)) handleInputChange('tipo', value)
+                    }}
                     required
                   >
                     <SelectTrigger id="tipo">
@@ -468,9 +526,9 @@ export default function EditarEscolaPage() {
                       <SelectValue placeholder={t('labels.selecione-um-diretor')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {escola?.diretor && (
-                        <SelectItem value={escola.diretor_id}>
-                          {escola.diretor.nome} (Atual)
+                      {formData.diretor_id && !diretoresDisponiveis.some(diretor => diretor.id === formData.diretor_id) && (
+                        <SelectItem value={formData.diretor_id}>
+                          Diretor atual
                         </SelectItem>
                       )}
                       {diretoresDisponiveis.map((diretor) => (
@@ -481,7 +539,7 @@ export default function EditarEscolaPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500">
-                    {diretoresDisponiveis.length === 0 && !escola?.diretor
+                    {diretoresDisponiveis.length === 0 && !formData.diretor_id
                       ? t('ui.nenhum-diretor-disponivel-para-atribuicao')
                       : `Diretor atual ou ${diretoresDisponiveis.length} disponíveis`}
                   </p>

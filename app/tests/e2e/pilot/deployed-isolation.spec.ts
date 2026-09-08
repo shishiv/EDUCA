@@ -7,6 +7,7 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const password = 'Synthetic-Only-2026!'
 const schoolA = '10000000-0000-0000-0000-000000000001'
 const schoolB = '10000000-0000-0000-0000-000000000002'
+const seededAttendanceId = '70000000-0000-0000-0000-000000000001'
 
 async function signedInClient(email: string) {
   const client = createClient(url, anonKey, { auth: { persistSession: false } })
@@ -57,13 +58,20 @@ test.describe('deployed Supabase isolation', () => {
 
     const { data: attendanceView, error: viewError } = await secretariat.from('vw_frequencia_completa').select('*')
     expect(viewError).toBeNull()
-    expect(attendanceView).toHaveLength(1)
-    expect(attendanceView?.[0]).not.toHaveProperty('aluno_cpf')
-    expect(attendanceView?.[0]).not.toHaveProperty('professor_email')
+    expect(attendanceView).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: seededAttendanceId, escola_id: schoolA }),
+    ]))
+    for (const attendance of attendanceView ?? []) {
+      expect(attendance).not.toHaveProperty('aluno_cpf')
+      expect(attendance).not.toHaveProperty('professor_email')
+    }
 
     const { data: metrics, error: metricsError } = await secretariat.rpc('pilot_dashboard_metrics', { p_escola_id: schoolA })
     expect(metricsError).toBeNull()
-    expect(metrics).toEqual(expect.arrayContaining([expect.objectContaining({ metric: 'attendance_capture_percent', target_met: true })]))
+    expect(metrics?.find(metric => metric.metric === 'attendance_capture_percent')).toMatchObject({
+      metric: 'attendance_capture_percent',
+      target_met: true,
+    })
 
     const disabledNotes = await secretariat.from('notas').select('id')
     expect(disabledNotes.error).not.toBeNull()

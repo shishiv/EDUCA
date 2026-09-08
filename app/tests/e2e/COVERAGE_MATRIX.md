@@ -1,8 +1,39 @@
 # EDUCA E2E coverage matrix
 
-This matrix is the tracked contract for Playwright coverage under `tests/e2e`.
+This matrix is the tracked catalog for Playwright cases under `tests/e2e`.
 Routes are derived from `app/**/page.tsx`, the desktop/mobile navigation components,
-`auth-middleware.ts`, feature-flag access checks, and observed runtime redirects.
+and `lib/route-policy.ts`, which is the authority for route roles and redirects.
+
+`Catalogado` means that a route and intended assertion are represented by a spec.
+It does not mean that the current source passed a recent browser run. Runtime
+results are recorded separately below.
+
+## Current execution receipts
+
+| Scope | State | Receipt and limit |
+|---|---|---|
+| General Playwright suite | **RED, diagnostic only** | General9 selected 239 cases: 234 passed, 3 failed, and 2 dependent serial cases were not executed. Cleanup passed. This is not an accepted general-suite result. |
+| Current R3 aggregate | **PASS for the Aggregate9 snapshot: 36/36** | Legacy 26, capacity 3, descriptive 4 and security 3 passed; cleanup passed. A later shared manifest-helper extraction still awaits validation after the test-safe pressure hold. |
+| Canonical R1 | **PASS, bounded** | Two canonical browser tests and cleanup passed in the preserved R1 receipt. |
+| Database contracts | **PASS, bounded** | The full SQL chain passed, including C04 finalization and both concurrent source-link orderings. |
+| Reports hub | **PASS, bounded** | Four hub cases plus authenticated setup passed. They prove only the three destination cards and navigation. |
+| Public and service worker | **PASS, bounded: 20/20** | `public-sw-lifecycle-final-20260908` passed 20 cases. A later hook-memoization change has focal verification only, so this receipt does not prove an identical current source snapshot. |
+| Unit suite | **PASS: 124 files / 1316 tests** | The ordinary unit selection passed. Twenty live tests remain a separate opt-in contract and are not included in this count. |
+| Code census | **PASS: 623 files, 16 rules, 0 diagnostics** | Includes the custom plugin rule and its executable tests. Only 22 byte-identical vendor files are excluded; one thread. |
+
+General9 remains diagnostic evidence only. Two failures are the grade-entry and
+report-card checks for the seeded `8.4` grade; the missing authenticated read is
+awaiting the governance decision for the canonical `notas` policies. Their two
+serial dependents did not execute. The third failure was a strict-locator ambiguity
+between the class-series placeholder and its identically worded toast. That test
+was corrected after the frozen General9 snapshot, but has not yet received a browser
+rerun. No failure, dependent case, or source-only correction is treated as approval.
+
+| General run date | Result | Passed | Failed | Evidence |
+|---|---|---:|---:|---|
+| 2026-09-08 | diagnostic RED; not accepted | 234 | 3 | General9 selected 239; 2 dependent serial cases did not run; cleanup passed. |
+
+Current validation hold: test-safe returned PRESSURE_PERSISTENT before static10 started. No final-source PASS is claimed for the later shared manifest helper, and the corrected general class-validation toast still needs a browser rerun. Canonical run3 stopped before proxy/database startup because Portless was absent from PATH; the existing runtime was located, with rerun pending.
 
 ## Test environment contract
 
@@ -21,10 +52,10 @@ Routes are derived from `app/**/page.tsx`, the desktop/mobile navigation compone
 
 | Role | Reachable surfaces | Explicitly denied |
 |---|---|---|
-| `admin` | all dashboard, cadastro, academic, reports, flags, settings | none |
-| `diretor` | dashboard, students, classes, enrollment, guardians, assignments, academic, reports, settings | users, schools, flags |
-| `secretario` | dashboard, students, classes, enrollment, guardians, academic, reports | users, schools, flags, assignments, settings |
-| `professor` | dashboard, assigned classes, attendance, diary, grades | student creation, enrollment, guardians, users, schools, reports, settings |
+| `admin` | dashboard, cadastro, active academic surfaces, reports, settings | calendar, flags |
+| `diretor` | dashboard, students, classes, enrollment, guardians, assignments, active academic surfaces, reports, settings | users, schools, calendar, flags |
+| `secretario` | dashboard, students, classes, enrollment, guardians, active academic surfaces, reports, settings, sessions | users, schools, calendar, flags, assignments |
+| `professor` | dashboard, assigned classes, attendance, diary, grades, sessions | student creation, enrollment, guardians, users, schools, reports, settings, calendar, flags |
 | `responsavel` | authentication only | dashboard shell redirects to `/unauthorized` because no parent-specific UI or ownership mapping exists yet |
 
 `responsavel` is intentionally recorded as a product gap, not silently skipped. The
@@ -35,56 +66,55 @@ implemented. Tests assert the denial boundary until a parent portal is defined.
 
 | Route | Role | Viewport | Meaningful interactions and expected result | Playwright spec | Status |
 |---|---|---|---|---|---|
-| `/` | public | desktop | landing heading and login path render without auth; `/favicon.ico` resolves through the Next.js app-icon convention | `auth/login.spec.ts` | covered |
-| `/login` | public | desktop + mobile | fields, remember checkbox, native validation, invalid credentials, reset link | `auth/login.spec.ts` | covered |
-| `/reset-password` | public | desktop + mobile | required email, submit, success state, back link | `auth/login.spec.ts` | covered |
-| `/politica-privacidade` | public | desktop + mobile | heading and policy content render without auth | `auth/login.spec.ts` | covered |
-| `/offline` | public | mobile | offline explanation and retry link | `auth/login.spec.ts` | covered |
-| `/unauthorized` | authenticated | desktop + mobile | denial message and return-to-dashboard link | `flows/permissions.spec.ts` | covered |
-| `/dashboard` | admin, diretor, secretario, professor | desktop + mobile | role greeting, stat cards, quick actions, mobile drawer, bottom nav, sidebar collapse/group toggle | `flows/dashboard-metrics.spec.ts`, `flows/permissions.spec.ts` | covered |
-| `/dashboard/alunos` | admin, diretor, secretario | desktop + mobile | search, status/sex filters, empty/clear states, detail/edit/deactivate actions; no pagination control is implemented because the page currently loads all rows | `alunos/list.spec.ts` | covered |
-| `/dashboard/alunos/novo` | admin, diretor, secretario | desktop + mobile | tabs, required/native validation, CPF validation, save, cancel | `alunos/create.spec.ts` | covered |
-| `/dashboard/alunos/[id]` | admin, diretor, secretario | desktop + mobile | profile data, status, guardian, enrollment and edit/diary links | `alunos/detail.spec.ts` | covered |
-| `/dashboard/alunos/[id]/editar` | admin, diretor, secretario | desktop + mobile | validated demographic/contact update, save/cancel, persisted values | `alunos/detail.spec.ts` | covered |
-| `/dashboard/alunos/[id]/boletim` | admin, diretor, secretario, professor | desktop | grades/frequency summary and PDF export | `grades/report-card.spec.ts` | covered |
-| `/dashboard/alunos/[id]/diario` | admin, diretor, secretario, professor | desktop | entries, filters, new-entry and report navigation | `diary/list.spec.ts` | covered |
-| `/dashboard/alunos/[id]/diario/novo` | professor | desktop + mobile | date, narrative, BNCC Campos, validation, save/cancel | `diary/vivencias-persistence.spec.ts` | covered |
-| `/dashboard/alunos/[id]/diario/relatorio` | admin, diretor, secretario, professor | desktop | report range and export | `diary/list.spec.ts` | covered |
-| `/dashboard/usuarios` | admin | desktop + mobile | search, role/status filters, open/create user | `users/crud.spec.ts` | covered |
-| `/dashboard/usuarios/novo` | admin | desktop | required validation, role/school dependency, create | `users/crud.spec.ts`, `users/roles.spec.ts` | covered |
-| `/dashboard/usuarios/[id]` | admin | desktop | tabs, status, role permissions preview | `users/crud.spec.ts`, `users/roles.spec.ts` | covered |
-| `/dashboard/usuarios/[id]/editar` | admin | desktop + mobile | validated profile/role/school/status update and cancel | `users/crud.spec.ts`, `users/roles.spec.ts` | covered |
-| `/dashboard/escolas` | admin | desktop + mobile | search, status filters, open/create school | `schools/crud.spec.ts` | covered |
-| `/dashboard/escolas/nova` | admin | desktop | required validation, INEP/contact fields, create/cancel | `schools/crud.spec.ts` | covered |
-| `/dashboard/escolas/[id]` | admin | desktop | edit, deactivate, class links, aggregate cards | `schools/crud.spec.ts` | covered |
-| `/dashboard/escolas/[id]/editar` | admin | desktop | update fields, save/cancel, persisted values | `schools/crud.spec.ts` | covered |
-| `/dashboard/turmas` | admin, diretor, secretario, professor | desktop + mobile | search, school/shift/series/status filters, empty/clear states, detail, attendance/diary actions; no pagination control is implemented because the page currently loads all rows | `turmas/list.spec.ts` | covered |
-| `/dashboard/turmas/nova` | admin, diretor, secretario | desktop | required validation, school/teacher selection, save/cancel | `turmas/create.spec.ts` | covered |
-| `/dashboard/turmas/[id]` | admin, diretor, secretario, professor | desktop | tabs, students, edit/status, attendance and diary links | `turmas/detail.spec.ts` | covered |
-| `/dashboard/turmas/[id]/editar` | admin, diretor, secretario | desktop + mobile | update class, teacher, capacity, shift and active state; save/cancel | `turmas/detail.spec.ts` | covered |
-| `/dashboard/turmas/[id]/chamada` | admin, diretor, secretario, professor | desktop + mobile | date/session selection, P/F/J toggles, save, review, close, immutable state | `attendance/grid.spec.ts`, `attendance/workflow.spec.ts` | covered |
-| `/dashboard/matriculas` | admin, diretor, secretario | desktop + mobile | search/filter/sort/pagination, detail, create | `matriculas/enrollment.spec.ts` | covered |
-| `/dashboard/matriculas/nova` | admin, diretor, secretario | desktop | student/class selection, capacity validation, create/cancel | `matriculas/enrollment.spec.ts` | covered |
-| `/dashboard/matriculas/[id]` | admin, diretor, secretario | desktop | transfer, cancel/reactivate confirmation, linked student/class | `matriculas/enrollment.spec.ts` | covered |
-| `/dashboard/responsaveis` | admin, diretor, secretario | desktop + mobile | search/filter/pagination, detail, create | `responsaveis/crud.spec.ts` | covered |
-| `/dashboard/responsaveis/novo` | admin, diretor, secretario | desktop | required validation, CPF/phone, child linking, save/cancel | `responsaveis/crud.spec.ts` | covered |
-| `/dashboard/responsaveis/[id]` | admin, diretor, secretario | desktop | contact edit, linked students, unlink confirmation | `responsaveis/crud.spec.ts` | covered |
-| `/dashboard/atribuicoes` | admin, diretor | desktop + mobile | school/class/teacher filters, single titular assignment action | `assignments/teacher.spec.ts` | covered |
-| `/dashboard/calendario` | admin, secretario | desktop + mobile | month navigation, add/edit event, day selection | `config/settings.spec.ts` | covered |
-| `/diario` | admin, diretor, secretario, professor | desktop + mobile | class filters, student diary navigation, role-scoped results | `diary/list.spec.ts` | covered |
-| `/dashboard/diario` | authenticated diary roles | desktop + mobile | compatibility redirect to `/diario` | `diary/canonical-route.spec.ts` | covered |
-| `/diario/frequencia` | authenticated users | desktop + mobile | deprecated redirect to `/dashboard/turmas` | no new writes | compatibility redirect |
-| `/diario/relatorios/[alunoId]` | admin, diretor, secretario, professor | desktop | range, attendance summary, export | `reports/frequency.spec.ts` | covered |
-| `/dashboard/notas` | admin, diretor, secretario, professor | desktop + mobile | class/period/subject filters, grade entry, validation, calculated averages, save | `grades/entry.spec.ts`, `flows/notas-boletim.spec.ts` | covered |
-| `/dashboard/notas/[turmaId]/boletim` | admin, diretor, secretario, professor | desktop + mobile | class roster and navigation to each student's report card | `grades/report-card.spec.ts` | covered |
-| `/dashboard/relatorios` | admin, diretor, secretario | desktop + mobile | report cards, generation, preview, status, download/delete | `flows/relatorios.spec.ts` | covered |
-| `/relatorios/frequencia` | admin, diretor, secretario | desktop + mobile | filters, tabs/table, summary, PDF/Excel export | `reports/frequency.spec.ts` | covered |
-| `/relatorios/bolsa-familia` | admin, diretor, secretario | desktop + mobile | school/class/period filters, tabs/table, thresholds, Excel/PDF | `reports/bolsa-familia.spec.ts` | covered |
-| `/relatorios/conteudo` | admin, diretor, secretario | desktop + mobile | class/subject/period filters, tabs, table, BNCC/PDF export | `reports/content.spec.ts` | covered |
-| `/dashboard/configuracoes` | admin, diretor | desktop + mobile | settings sections, switches/selects, save/reset, theme | `config/settings.spec.ts` | covered |
-| `/dashboard/flags` | admin | desktop | flag create/edit/toggle, per-school override, denial for non-admin | `config/settings.spec.ts`, `flows/permissions.spec.ts` | covered |
-| `/dashboard/perfil` | admin, diretor, secretario, professor | desktop + mobile | profile fields, edit/save, password and theme controls | `profile/user.spec.ts` | covered |
-| `/dashboard/sessoes` | admin, diretor, professor | desktop + mobile | status/date/class filters, open/close session, attendance navigation | `attendance/workflow.spec.ts` | covered |
+| `/` | public | desktop | landing heading and login path render without auth; `/favicon.ico` resolves through the Next.js app-icon convention | `auth/login.spec.ts` | catalogado |
+| `/login` | public | desktop + mobile | fields, remember checkbox, native validation, invalid credentials, reset link | `auth/login.spec.ts` | catalogado |
+| `/reset-password` | public | desktop + mobile | required email, submit, success state, back link | `auth/login.spec.ts` | catalogado |
+| `/politica-privacidade` | public | desktop + mobile | heading and policy content render without auth | `auth/login.spec.ts` | catalogado |
+| `/offline` | public | mobile | offline explanation and retry link | `auth/login.spec.ts` | catalogado |
+| `/unauthorized` | authenticated | desktop + mobile | denial message and return-to-dashboard link | `flows/permissions.spec.ts` | catalogado |
+| `/dashboard` | admin, diretor, secretario, professor | desktop + mobile | role greeting, stat cards, quick actions, mobile drawer, bottom nav, sidebar collapse/group toggle | `flows/dashboard-metrics.spec.ts`, `flows/permissions.spec.ts` | catalogado |
+| `/dashboard/alunos` | admin, diretor, secretario | desktop + mobile | search, status/sex filters, empty/clear states, detail/edit/deactivate actions; no pagination control is implemented because the page currently loads all rows | `alunos/list.spec.ts` | catalogado |
+| `/dashboard/alunos/novo` | admin, diretor, secretario | desktop + mobile | tabs, required/native validation, CPF validation, save, cancel | `alunos/create.spec.ts` | catalogado |
+| `/dashboard/alunos/[id]` | admin, diretor, secretario | desktop + mobile | profile data, status, guardian, enrollment and edit/diary links | `alunos/detail.spec.ts` | catalogado |
+| `/dashboard/alunos/[id]/editar` | admin, diretor, secretario | desktop + mobile | validated demographic/contact update, save/cancel, persisted values | `alunos/detail.spec.ts` | catalogado |
+| `/dashboard/alunos/[id]/boletim` | admin, diretor, secretario, professor | desktop | grades/frequency summary and PDF export | `grades/report-card.spec.ts` | catalogado |
+| `/dashboard/alunos/[id]/diario` | admin, diretor, secretario, professor | desktop | entries, filters, new-entry and report navigation | `diary/list.spec.ts` | catalogado |
+| `/dashboard/alunos/[id]/diario/novo` | professor | desktop + mobile | date, narrative, BNCC Campos, validation, save/cancel | `diary/vivencias-persistence.spec.ts` | catalogado |
+| `/dashboard/alunos/[id]/diario/relatorio` | admin, diretor, secretario, professor | desktop | report range and export | `diary/list.spec.ts` | catalogado |
+| `/dashboard/usuarios` | admin | desktop + mobile | search, role/status filters, open/create user | `users/crud.spec.ts` | catalogado |
+| `/dashboard/usuarios/novo` | admin | desktop | required validation, role/school dependency, create | `users/crud.spec.ts`, `users/roles.spec.ts` | catalogado |
+| `/dashboard/usuarios/[id]` | admin | desktop | tabs, status, role permissions preview | `users/crud.spec.ts`, `users/roles.spec.ts` | catalogado |
+| `/dashboard/usuarios/[id]/editar` | admin | desktop + mobile | validated profile/role/school/status update and cancel | `users/crud.spec.ts`, `users/roles.spec.ts` | catalogado |
+| `/dashboard/escolas` | admin | desktop + mobile | search, status filters, open/create school | `schools/crud.spec.ts` | catalogado |
+| `/dashboard/escolas/nova` | admin | desktop | required validation, INEP/contact fields, create/cancel | `schools/crud.spec.ts` | catalogado |
+| `/dashboard/escolas/[id]` | admin | desktop | edit, deactivate, class links, aggregate cards | `schools/crud.spec.ts` | catalogado |
+| `/dashboard/escolas/[id]/editar` | admin | desktop | update fields, save/cancel, persisted values | `schools/crud.spec.ts` | catalogado |
+| `/dashboard/turmas` | admin, diretor, secretario, professor | desktop + mobile | search, school/shift/series/status filters, empty/clear states, detail, attendance/diary actions; no pagination control is implemented because the page currently loads all rows | `turmas/list.spec.ts` | catalogado |
+| `/dashboard/turmas/nova` | admin, diretor, secretario | desktop | required validation, school/teacher selection, save/cancel | `turmas/create.spec.ts` | catalogado |
+| `/dashboard/turmas/[id]` | admin, diretor, secretario, professor | desktop | tabs, students, edit/status, attendance and diary links | `turmas/detail.spec.ts` | catalogado |
+| `/dashboard/turmas/[id]/editar` | admin, diretor, secretario | desktop + mobile | update class, teacher, capacity, shift and active state; save/cancel | `turmas/detail.spec.ts` | catalogado |
+| `/dashboard/turmas/[id]/chamada` | admin, diretor, secretario, professor | desktop + mobile | date/session selection, P/F/J toggles, save, review, close, immutable state | `attendance/grid.spec.ts`, `attendance/workflow.spec.ts` | catalogado |
+| `/dashboard/matriculas` | admin, diretor, secretario | desktop + mobile | search/filter/sort/pagination, detail, create | `matriculas/enrollment.spec.ts` | catalogado |
+| `/dashboard/matriculas/nova` | admin, diretor, secretario | desktop | student/class selection, capacity validation, create/cancel | `matriculas/enrollment.spec.ts` | catalogado |
+| `/dashboard/matriculas/[id]` | admin, diretor, secretario | desktop | transfer, cancel/reactivate confirmation, linked student/class | `matriculas/enrollment.spec.ts` | catalogado |
+| `/dashboard/responsaveis` | admin, diretor, secretario | desktop + mobile | search/filter/pagination, detail, create | `responsaveis/crud.spec.ts` | catalogado |
+| `/dashboard/responsaveis/novo` | admin, diretor, secretario | desktop | required validation, CPF/phone, child linking, save/cancel | `responsaveis/crud.spec.ts` | catalogado |
+| `/dashboard/responsaveis/[id]` | admin, diretor, secretario | desktop | contact edit, linked students, unlink confirmation | `responsaveis/crud.spec.ts` | catalogado |
+| `/dashboard/atribuicoes` | admin, diretor | desktop + mobile | school/class/teacher filters, single titular assignment action | `assignments/teacher.spec.ts` | catalogado |
+| `/dashboard/calendario` | blocked for all roles | desktop + mobile | dormant source retained; route and navigation must remain unavailable until governed persistence is approved | `flows/permissions.spec.ts`, `../unit/auth-middleware.test.ts`, `../unit/navigation.test.ts` | bloqueado |
+| `/diario` | admin, diretor, secretario, professor | desktop + mobile | class filters, student diary navigation, role-scoped results | `diary/list.spec.ts` | catalogado |
+| `/dashboard/diario` | authenticated diary roles | desktop + mobile | compatibility redirect to `/diario` | `diary/canonical-route.spec.ts` | catalogado |
+| `/diario/frequencia` | authenticated users | desktop + mobile | deprecated redirect to `/dashboard/turmas` | no new writes | catálogo de compatibilidade |
+| `/diario/relatorios/[alunoId]` | admin, diretor, secretario, professor | desktop | range, attendance summary, export | `reports/frequency.spec.ts` | catalogado |
+| `/dashboard/notas` | admin, diretor, secretario, professor | desktop + mobile | authorized class projection, exact first-bimester filtering, invalid-grade no-write, and persisted/reloaded/restored grade | `grades/entry.spec.ts` | catalogado |
+| `/dashboard/relatorios` | admin, diretor, secretario | desktop + mobile | three canonical destination cards and navigation to frequency, content, and Bolsa Família reports | `flows/relatorios.spec.ts` | catalogado |
+| `/relatorios/frequencia` | admin, diretor, secretario | desktop + mobile | filters, tabs/table, summary, PDF/Excel export | `reports/frequency.spec.ts` | catalogado |
+| `/relatorios/bolsa-familia` | admin, diretor, secretario | desktop + mobile | school/class/period filters, tabs/table, thresholds, Excel/PDF | `reports/bolsa-familia.spec.ts` | catalogado |
+| `/relatorios/conteudo` | admin, diretor, secretario | desktop + mobile | class/subject/period filters, tabs, table, BNCC/PDF export | `reports/content.spec.ts` | catalogado |
+| `/dashboard/configuracoes` | admin, diretor, secretario | desktop + mobile | governed municipal identity; director-scoped academic-year persistence; role-specific read/write authority | `config/settings.spec.ts`, `flows/permissions.spec.ts` | catalogado |
+| `/dashboard/flags` | blocked for all roles | desktop | dormant source retained; direct access must remain denied until a governed API is approved | `flows/permissions.spec.ts`, `../unit/auth-middleware.test.ts`, `../unit/navigation.test.ts` | bloqueado |
+| `/dashboard/perfil` | admin, diretor, secretario, professor | desktop + mobile | persisted identity and last access, own-name update with audit and reload, password validation/change, and mobile layout | `profile/user.spec.ts` | catalogado |
+| `/dashboard/sessoes` | admin, diretor, professor | desktop + mobile | status/date/class filters, open/close session, attendance navigation | `attendance/workflow.spec.ts` | catalogado |
 
 ## Broken-link reconciliation
 

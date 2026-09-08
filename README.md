@@ -38,6 +38,10 @@
 
 **EN:** To be direct: the repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. If you need that today, it's not ready yet — but it's being built in the open, right here.
 
+**PT:** As telas de calendário escolar e feature flags permanecem dormentes e bloqueadas para todos os papéis. A rota de configurações expõe somente a identidade municipal governada e, para diretores, o período do ano letivo da própria escola.
+
+**EN:** The school-calendar and feature-flag screens remain dormant and blocked for every role. The settings route exposes only governed municipal identity and, for directors, their own school's academic-year period.
+
 ## Dúvidas comuns · Common questions
 
 **PT:**

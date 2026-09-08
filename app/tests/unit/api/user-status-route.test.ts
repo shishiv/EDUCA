@@ -1,96 +1,115 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const { actorMock, serviceRoleMock } = vi.hoisted(() => ({
-  actorMock: vi.fn(),
-  serviceRoleMock: vi.fn(),
-}))
-
-vi.mock('@/lib/pilot/pilot-server-auth', () => ({ requirePilotActor: actorMock }))
-vi.mock('@/lib/supabase/service-role', () => ({ createServiceRoleClient: serviceRoleMock }))
-
-import { PATCH } from '@/app/api/users/[userId]/status/route'
+import { describe, expect, it } from 'vitest'
+import { createStatusHandler, type UserStatusStore } from '@/app/api/users/[userId]/status/handler'
+import type { PilotActor, PilotUserRole } from '@/lib/pilot/pilot-server-auth'
 
 const USER_ID = '20000000-0000-0000-0000-000000000004'
 const SCHOOL_A = '10000000-0000-0000-0000-000000000001'
 const SCHOOL_B = '10000000-0000-0000-0000-000000000002'
+const ADMIN: PilotActor = {
+  id: 'admin-id',
+  name: 'Admin',
+  email: 'admin@synthetic.invalid',
+  role: 'admin',
+  schoolId: null,
+}
 
-function request(body: unknown = { ativo: false }, userId = USER_ID) {
-  return PATCH(new Request(`http://test/api/users/${userId}/status`, {
+type StatusTarget = { id: string; escola_id: string | null }
+type StatusBody = { ativo: boolean; schoolId?: string }
+
+class MemoryUserStatusStore implements UserStatusStore {
+  auditCalls = 0
+  findCalls = 0
+  updateCalls = 0
+
+  constructor(
+    private target: StatusTarget | null,
+    private readonly auditReceipt: string | null = 'audit-id',
+  ) {}
+
+  async find(): Promise<StatusTarget | null> {
+    this.findCalls += 1
+    return this.target
+  }
+
+  async update(userId: string, ativo: boolean): Promise<{ id: string; ativo: boolean } | null> {
+    this.updateCalls += 1
+    if (!this.target || this.target.id !== userId) return null
+    return { id: userId, ativo }
+  }
+
+  async audit(): Promise<string | null> {
+    this.auditCalls += 1
+    return this.auditReceipt
+  }
+}
+
+function request(body: StatusBody = { ativo: false }, userId = USER_ID): Request {
+  return new Request(`http://test/api/users/${userId}/status`, {
     method: 'PATCH',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
-  }), { params: Promise.resolve({ userId }) })
+  })
 }
 
-function service(target: { id: string; escola_id: string | null } | null) {
-  let ativo = true
-  const targetQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(async () => ({ data: target, error: null })),
+function createActorResolver(actor: PilotActor): (roles: PilotUserRole[]) => Promise<PilotActor> {
+  return async roles => {
+    if (!roles.includes(actor.role)) throw new Error('PILOT_ROLE_DENIED')
+    return actor
   }
-  const updateQuery = {
-    eq: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(async () => ({ data: target ? { id: target.id, ativo } : null, error: null })),
-  }
-  const client = {
-    from: vi.fn()
-      .mockReturnValueOnce(targetQuery)
-      .mockImplementation(() => ({
-        update: vi.fn((values: { ativo: boolean }) => {
-          ativo = values.ativo
-          return updateQuery
-        }),
-      })),
-  }
-  serviceRoleMock.mockReturnValue(client)
-  return { client, updateQuery }
+}
+
+function createRoute(store: MemoryUserStatusStore, actor: PilotActor = ADMIN) {
+  return createStatusHandler({
+    requireActor: createActorResolver(actor),
+    store: () => store,
+  })
 }
 
 describe('user status route', () => {
-  beforeEach(() => {
-    actorMock.mockReset()
-    serviceRoleMock.mockReset()
-    actorMock.mockResolvedValue({ id: 'admin-id', role: 'admin', schoolId: null })
-  })
-
   it('updates an authorized target and returns its persisted status', async () => {
-    service({ id: USER_ID, escola_id: SCHOOL_A })
-
-    const response = await request()
+    const store = new MemoryUserStatusStore({ id: USER_ID, escola_id: SCHOOL_A })
+    const response = await createRoute(store)(request(), { params: Promise.resolve({ userId: USER_ID }) })
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ user: { id: USER_ID, ativo: false } })
+    expect(await response.json()).toEqual({ user: { id: USER_ID, ativo: false }, receipt: 'audit-id' })
+    expect(store).toMatchObject({ findCalls: 1, updateCalls: 1, auditCalls: 1 })
   })
 
-  it('denies non-admin actors before opening the service boundary', async () => {
-    actorMock.mockRejectedValue(new Error('PILOT_ROLE_DENIED'))
+  it('does not report success when the audit receipt fails', async () => {
+    const store = new MemoryUserStatusStore({ id: USER_ID, escola_id: SCHOOL_A }, null)
+    const response = await createRoute(store)(request(), { params: Promise.resolve({ userId: USER_ID }) })
 
-    const response = await request()
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({ error: 'USER_STATUS_AUDIT_INCOMPLETE', completed: false })
+    expect(store).toMatchObject({ updateCalls: 1, auditCalls: 1 })
+  })
+
+  it('denies non-admin actors before opening the store seam', async () => {
+    const store = new MemoryUserStatusStore({ id: USER_ID, escola_id: SCHOOL_A })
+    const director: PilotActor = { ...ADMIN, role: 'diretor' }
+    const response = await createRoute(store, director)(request(), { params: Promise.resolve({ userId: USER_ID }) })
 
     expect(response.status).toBe(403)
-    expect(serviceRoleMock).not.toHaveBeenCalled()
+    expect(store).toMatchObject({ findCalls: 0, updateCalls: 0, auditCalls: 0 })
   })
 
   it('denies a school-scoped admin targeting another school', async () => {
-    actorMock.mockResolvedValue({ id: 'admin-id', role: 'admin', schoolId: SCHOOL_A })
-    const { client } = service({ id: USER_ID, escola_id: SCHOOL_B })
-
-    const response = await request()
+    const store = new MemoryUserStatusStore({ id: USER_ID, escola_id: SCHOOL_B })
+    const scopedAdmin: PilotActor = { ...ADMIN, schoolId: SCHOOL_A }
+    const response = await createRoute(store, scopedAdmin)(request(), { params: Promise.resolve({ userId: USER_ID }) })
 
     expect(response.status).toBe(403)
     expect(await response.json()).toEqual({ error: 'USER_STATUS_SCHOOL_DENIED' })
-    expect(client.from).toHaveBeenCalledTimes(1)
+    expect(store).toMatchObject({ findCalls: 1, updateCalls: 0, auditCalls: 0 })
   })
 
   it('rejects malformed and unknown targets without updating users', async () => {
-    expect((await request({ ativo: false, schoolId: SCHOOL_A })).status).toBe(400)
-    expect((await request({ ativo: false }, 'forged-user')).status).toBe(400)
+    const store = new MemoryUserStatusStore(null)
+    const route = createRoute(store)
 
-    service(null)
-    const missing = await request()
-    expect(missing.status).toBe(404)
-    expect(await missing.json()).toEqual({ error: 'USER_STATUS_TARGET_NOT_FOUND' })
+    expect((await route(request({ ativo: false, schoolId: SCHOOL_A }), { params: Promise.resolve({ userId: USER_ID }) })).status).toBe(400)
+    expect((await route(request({ ativo: false }), { params: Promise.resolve({ userId: 'forged-user' }) })).status).toBe(400)
+    expect((await route(request(), { params: Promise.resolve({ userId: USER_ID }) })).status).toBe(404)
+    expect(store).toMatchObject({ findCalls: 1, updateCalls: 0, auditCalls: 0 })
   })
 })

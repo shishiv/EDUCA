@@ -9,9 +9,8 @@
  *
  * ## Audit
  *
- * Status changes (activate/deactivate) are logged to the audit trail via
- * {@link SchoolsApiService.updateSchoolStatus}.  Audit writes are async and
- * non-blocking - a failed audit log does not roll back the status change.
+ * Mutations use governed RPCs that resolve the actor and commit the school
+ * change together with its audit receipt; a failed audit rolls back the change.
  *
  * ## Mode availability
  *
@@ -21,38 +20,31 @@
  * @module api/schools
  */
 import { BaseApiService } from './base'
-import { supabase, Tables, Inserts, Escola } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { SchoolFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
+import { getCurrentUtcMonthRange } from '@/lib/date-utils'
 import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
-import { auditApi } from './audit'
+import {
+  assignGovernedSchoolDirector,
+  createGovernedSchool,
+  updateGovernedSchool,
+} from './governed-management'
 
-export type SchoolWithDetails = Escola & {
-  diretor?: Tables<'users'>
-  turmas?: (Tables<'turmas'> & {
-    professor?: Tables<'users'>
-  })[]
-  _count?: {
-    students: number
-    teachers: number
-    classes: number
-  }
-}
-
-export class SchoolsApiService extends BaseApiService {
+export class SchoolsApiService extends BaseApiService<'escolas'> {
   constructor() {
     super('escolas')
   }
 
   // Get schools with related data
   async getSchoolsWithDetails(options?: {
-    filter?: Record<string, any>
+    filter?: Record<string, string | number | boolean | null | undefined>
     searchTerm?: string
     types?: ('creche' | 'pre_escola' | 'fundamental')[]
     activeOnly?: boolean
     limit?: number
     offset?: number
-  }): Promise<SchoolWithDetails[]> {
+  }) {
     try {
       let query = supabase
         .from('escolas')
@@ -78,35 +70,24 @@ export class SchoolsApiService extends BaseApiService {
           )
         `)
 
-      // Apply filters
-      if (options?.activeOnly !== false) {
-        query = query.eq('ativo', true)
-      }
-
-      if (options?.filter) {
-        Object.entries(options.filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value)
-          }
+      const applyBaseFilters = () => {
+        if (options?.activeOnly !== false) query = query.eq('ativo', true)
+        Object.entries(options?.filter ?? {}).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) query = query.eq(key, value)
         })
       }
 
-      // Type filter
-      if (options?.types && options.types.length > 0) {
-        query = query.in('tipo', options.types)
+      const applySearchAndPagination = () => {
+        if (options?.types?.length) query = query.in('tipo', options.types)
+        if (options?.searchTerm) query = query.or(`nome.ilike.%${options.searchTerm}%,codigo.ilike.%${options.searchTerm}%`)
+        if (options?.limit) {
+          const from = options.offset || 0
+          query = query.range(from, from + options.limit - 1)
+        }
       }
 
-      // Search filter
-      if (options?.searchTerm) {
-        query = query.or(`nome.ilike.%${options.searchTerm}%,codigo.ilike.%${options.searchTerm}%`)
-      }
-
-      // Apply pagination
-      if (options?.limit) {
-        const from = options.offset || 0
-        const to = from + options.limit - 1
-        query = query.range(from, to)
-      }
+      applyBaseFilters()
+      applySearchAndPagination()
 
       // Order by name
       query = query.order('nome', { ascending: true })
@@ -117,7 +98,7 @@ export class SchoolsApiService extends BaseApiService {
 
       // Add counts for each school
       const schoolsWithCounts = await Promise.all(
-        (data as SchoolWithDetails[]).map(async (school) => {
+        data.map(async (school) => {
           const counts = await this.getSchoolCounts(school.id)
           return {
             ...school,
@@ -128,7 +109,7 @@ export class SchoolsApiService extends BaseApiService {
 
       return schoolsWithCounts
     } catch (error) {
-      logger.error('Error fetching schools with details', error as Error, { feature: 'schools', action: 'fetch_schools_with_details' })
+      logger.error('Error fetching schools with details', error instanceof Error ? error : String(error), { feature: 'schools', action: 'fetch_schools_with_details' })
       throw error
     }
   }
@@ -136,40 +117,20 @@ export class SchoolsApiService extends BaseApiService {
   // Create school with initial setup
   async createSchool(schoolData: SchoolFormData & {
     diretor_id?: string
+    email?: string
   }) {
     try {
-      // Extract only the fields that exist in escolas table
-      const insertData = {
+      return createGovernedSchool(supabase, {
         nome: schoolData.nome,
         codigo: schoolData.codigo,
-        codigo_inep: schoolData.codigo_inep,
         tipo: schoolData.tipo,
+        diretorId: schoolData.diretor_id ?? null,
+        email: schoolData.email ?? null,
         endereco: schoolData.endereco,
         telefone: schoolData.telefone,
-        diretor_id: schoolData.diretor_id,
-        ativo: true,
-      }
-
-      const { data: result, error } = await supabase
-        .from('escolas')
-        // assign_school_municipality fills the generated-required field before insert.
-        .insert(insertData as unknown as Inserts<'escolas'>)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // If director assigned, update their escola_id
-      if (schoolData.diretor_id && result) {
-        await supabase
-          .from('users')
-          .update({ escola_id: result.id })
-          .eq('id', schoolData.diretor_id)
-      }
-
-      return result
+      })
     } catch (error) {
-      logger.error('Error creating school', error as Error, { feature: 'schools', action: 'create_school' })
+      logger.error('Error creating school', error instanceof Error ? error : String(error), { feature: 'schools', action: 'create_school' })
       throw error
     }
   }
@@ -177,25 +138,9 @@ export class SchoolsApiService extends BaseApiService {
   // Assign director to school
   async assignDirector(schoolId: string, directorId: string) {
     try {
-      // Update school's director
-      const schoolResult = await supabase
-        .from('escolas')
-        .update({ diretor_id: directorId })
-        .eq('id', schoolId)
-        .select()
-        .single()
-
-      // Update director's school assignment
-      const userResult = await supabase
-        .from('users')
-        .update({ escola_id: schoolId })
-        .eq('id', directorId)
-        .select()
-        .single()
-
-      return { school: schoolResult.data, director: userResult.data }
+      return assignGovernedSchoolDirector(supabase, schoolId, directorId)
     } catch (error) {
-      logger.error('Error assigning director', error as Error, { feature: 'schools', action: 'assign_director' })
+      logger.error('Error assigning director', error instanceof Error ? error : String(error), { feature: 'schools', action: 'assign_director' })
       throw error
     }
   }
@@ -240,7 +185,7 @@ export class SchoolsApiService extends BaseApiService {
         classes: classesCount || 0
       }
     } catch (error) {
-      logger.error('Error getting school counts', error as Error, { feature: 'schools', action: 'get_school_counts', schoolId })
+      logger.error('Error getting school counts', error instanceof Error ? error : String(error), { feature: 'schools', action: 'get_school_counts', schoolId })
       return {
         students: 0,
         teachers: 0,
@@ -276,7 +221,7 @@ export class SchoolsApiService extends BaseApiService {
         .limit(10)
 
       // Get attendance summary for current month
-      const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
+      const currentMonth = getCurrentUtcMonthRange()
 
       // Get matricula IDs for these turmas
       const { data: matriculasData } = await supabase
@@ -288,10 +233,11 @@ export class SchoolsApiService extends BaseApiService {
       const matriculaIds = matriculasData?.map((m) => m.id) ?? []
 
       const attendanceData = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
-        startDate: `${currentMonth}-01`,
-        endDate: `${currentMonth}-31`,
+        startDate: currentMonth.startDate,
+        endDate: currentMonth.endDate,
       })
 
+      // SAFETY: Attendance status values are string keys and the accumulator starts empty.
       const attendanceSummary = attendanceData.reduce((acc, record) => {
         const status = record.statusPresenca || (record.presente ? 'presente' : 'falta')
         acc[status] = (acc[status] || 0) + 1
@@ -305,7 +251,7 @@ export class SchoolsApiService extends BaseApiService {
         attendanceSummary
       }
     } catch (error) {
-      logger.error('Error fetching school dashboard', error as Error, { feature: 'schools', action: 'get_school_dashboard', schoolId })
+      logger.error('Error fetching school dashboard', error instanceof Error ? error : String(error), { feature: 'schools', action: 'get_school_dashboard', schoolId })
       throw error
     }
   }
@@ -328,7 +274,7 @@ export class SchoolsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      logger.error('Error fetching available teachers', error as Error, { feature: 'schools', action: 'get_available_teachers' })
+      logger.error('Error fetching available teachers', error instanceof Error ? error : String(error), { feature: 'schools', action: 'get_available_teachers' })
       throw error
     }
   }
@@ -346,7 +292,7 @@ export class SchoolsApiService extends BaseApiService {
       if (error) throw error
       return data
     } catch (error) {
-      logger.error('Error fetching available directors', error as Error, { feature: 'schools', action: 'get_available_directors' })
+      logger.error('Error fetching available directors', error instanceof Error ? error : String(error), { feature: 'schools', action: 'get_available_directors' })
       throw error
     }
   }
@@ -362,26 +308,7 @@ export class SchoolsApiService extends BaseApiService {
    */
   async updateSchoolStatus(id: string, ativo: boolean, reason?: string) {
     try {
-      // Get current status before update
-      const { data: currentSchool, error: fetchError } = await supabase
-        .from('escolas')
-        .select('ativo, nome')
-        .eq('id', id)
-        .single()
-
-      if (fetchError) {
-        logger.error('Error fetching current school status', fetchError, {
-          feature: 'schools',
-          action: 'update_school_status_fetch',
-          schoolId: id
-        })
-        throw fetchError
-      }
-
-      const previousStatus = currentSchool?.ativo
-
-      // Update the status
-      const result = await this.update(id, { ativo })
+      const result = await updateGovernedSchool(supabase, id, { ativo })
 
       // Log to structured logger
       logger.info(`School status updated to ${ativo ? 'active' : 'inactive'}`, {
@@ -391,63 +318,13 @@ export class SchoolsApiService extends BaseApiService {
         metadata: { ativo, reason }
       })
 
-      // Log to audit trail (async, don't block on failure)
-      this.logStatusChangeAudit(id, currentSchool?.nome || '', previousStatus ?? undefined, ativo, reason)
-        .catch((auditError) => {
-          // Audit logging should not fail the main operation
-          logger.warn('Failed to log school status change to audit', {
-            feature: 'schools',
-            action: 'audit_log_failed',
-            schoolId: id,
-            metadata: { error: auditError instanceof Error ? auditError.message : String(auditError) }
-          })
-        })
-
       return result
     } catch (error) {
-      logger.error('Error updating school status', error as Error, {
+      logger.error('Error updating school status', error instanceof Error ? error : String(error), {
         feature: 'schools',
         action: 'update_school_status',
         schoolId: id
       })
-      throw error
-    }
-  }
-
-  /**
-   * Log school status change to audit trail
-   * Called internally by updateSchoolStatus
-   */
-  private async logStatusChangeAudit(
-    schoolId: string,
-    schoolName: string,
-    previousStatus: boolean | undefined,
-    newStatus: boolean,
-    reason?: string
-  ): Promise<void> {
-    try {
-      // Get current user for audit
-      const { data: { user } } = await supabase.auth.getUser()
-      const userId = user?.id || 'system'
-
-      await auditApi.logAudit({
-        user_id: userId,
-        action: 'status_change',
-        resource_type: 'escolas',
-        resource_id: schoolId,
-        old_values: { ativo: previousStatus },
-        new_values: { ativo: newStatus },
-        timestamp: new Date().toISOString(),
-      })
-
-      logger.info('School status change logged to audit', {
-        feature: 'schools',
-        action: 'audit_log_success',
-        schoolId,
-        metadata: { previousStatus, newStatus }
-      })
-    } catch (error) {
-      // Re-throw so the caller can handle it
       throw error
     }
   }
@@ -467,7 +344,8 @@ export class SchoolsApiService extends BaseApiService {
 
       const stats = {
         total: schools.length,
-        active: schools.filter((s: any) => s.ativo).length,
+        active: schools.filter(s => s.ativo).length,
+        // SAFETY: The type distribution starts empty and receives only school-type keys below.
         byType: {} as Record<string, number>,
         totalStudents: 0,
         totalTeachers: 0,
@@ -475,7 +353,7 @@ export class SchoolsApiService extends BaseApiService {
       }
 
       // Calculate type distribution
-      schools.forEach((school: any) => {
+      schools.forEach(school => {
         stats.byType[school.tipo] = (stats.byType[school.tipo] || 0) + 1
       })
 
@@ -502,7 +380,7 @@ export class SchoolsApiService extends BaseApiService {
 
       return stats
     } catch (error) {
-      logger.error('Error fetching system stats', error as Error, { feature: 'schools', action: 'get_system_stats' })
+      logger.error('Error fetching system stats', error instanceof Error ? error : String(error), { feature: 'schools', action: 'get_system_stats' })
       return {
         total: 0,
         active: 0,

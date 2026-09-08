@@ -15,14 +15,38 @@ pilot_port_lease_root() {
   printf '%s' "$root"
 }
 
+pilot_port_lease_ephemeral_range() {
+  local start
+  local end
+
+  if ! read -r start end < /proc/sys/net/ipv4/ip_local_port_range \
+    || [[ ! "$start" =~ ^[0-9]+$ || ! "$end" =~ ^[0-9]+$ ]] \
+    || (( start > end || end > 65535 )); then
+    echo 'PILOT_PORT_LEASE_EPHEMERAL_RANGE_UNAVAILABLE: could not read a valid Linux ephemeral port range' >&2
+    return 2
+  fi
+  printf '%s %s\n' "$start" "$end"
+}
+
+pilot_port_range_overlaps_ephemeral() {
+  local base="$1"
+  local ephemeral_start
+  local ephemeral_end
+
+  if ! read -r ephemeral_start ephemeral_end < <(pilot_port_lease_ephemeral_range); then
+    return 2
+  fi
+  (( base <= ephemeral_end && base + 9 >= ephemeral_start ))
+}
+
 pilot_port_range_probe() {
   local base="$1"
-  local listeners
+  local tcp_sockets
   local docker_ports
   local port
 
-  listeners=$(ss -ltn 2>/dev/null) || {
-    echo 'PILOT_PORT_LEASE_LISTENER_PROBE_FAILED: ss could not inspect host listeners' >&2
+  tcp_sockets=$(ss -tanH 2>/dev/null) || {
+    echo 'PILOT_PORT_LEASE_TCP_PROBE_FAILED: ss could not inspect host TCP sockets' >&2
     return 2
   }
   docker_ports=$(docker ps -a --format '{{.Ports}}' 2>/dev/null) || {
@@ -31,7 +55,10 @@ pilot_port_range_probe() {
   }
 
   for ((port = base; port <= base + 9; port += 1)); do
-    if grep -Eq ":${port}[[:space:]]" <<<"$listeners"; then
+    # Docker cannot publish a host port that is already a local endpoint of
+    # an established connection. Inspect every TCP state and only the local
+    # address column, so a matching remote peer port does not reserve a slot.
+    if awk -v port="$port" '$4 ~ (":" port "$") { found = 1 } END { exit !found }' <<<"$tcp_sockets"; then
       return 0
     fi
     if grep -Eq "(^|[[:space:],])[^[:space:],]*:${port}->" <<<"$docker_ports"; then
@@ -67,6 +94,8 @@ pilot_port_range_lease_acquire() {
   local base
   local lease_dir
   local probe_status
+  local ephemeral_status
+  local range_is_explicit=false
 
   if [[ "$PILOT_E2E_PORT_LEASE_EXTERNAL" == true ]]; then
     echo 'PILOT_PORT_LEASE_EXTERNAL_REQUIRED: an external lease must provide base and lease directory' >&2
@@ -74,9 +103,12 @@ pilot_port_range_lease_acquire() {
   fi
 
   root=$(pilot_port_lease_root)
+  if [[ -n "${PILOT_E2E_PORT_LEASE_START:-}" || -n "${PILOT_E2E_PORT_LEASE_END:-}" ]]; then
+    range_is_explicit=true
+  fi
   start="${PILOT_E2E_PORT_LEASE_START:-55000}"
   end="${PILOT_E2E_PORT_LEASE_END:-64000}"
-  if [[ ! "$start" =~ ^[0-9]+$ || ! "$end" =~ ^[0-9]+$ || "$start" -lt 1024 || "$end" -gt 65527 || "$end" -le "$start" ]]; then
+  if [[ ! "$start" =~ ^[0-9]+$ || ! "$end" =~ ^[0-9]+$ || "$start" -lt 1024 || "$end" -gt 65530 || "$end" -le "$start" ]]; then
     echo "PILOT_PORT_LEASE_RANGE_INVALID: start=$start end=$end" >&2
     return 1
   fi
@@ -98,6 +130,19 @@ pilot_port_range_lease_acquire() {
     pilot_port_lease_reclaim_stale "$lease_dir"
     if ! mkdir "$lease_dir" 2>/dev/null; then
       continue
+    fi
+
+    if [[ "$range_is_explicit" == false ]]; then
+      ephemeral_status=0
+      pilot_port_range_overlaps_ephemeral "$base" || ephemeral_status=$?
+      if [[ "$ephemeral_status" -eq 2 ]]; then
+        rmdir "$lease_dir" 2>/dev/null || true
+        return 1
+      fi
+      if [[ "$ephemeral_status" -eq 0 ]]; then
+        rmdir "$lease_dir" 2>/dev/null || true
+        continue
+      fi
     fi
 
     probe_status=0

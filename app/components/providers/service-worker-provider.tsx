@@ -78,9 +78,6 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
 
   // Show update notification
   useEffect(() => {
-    // Skip during initial render to avoid ForwardRef warning
-    if (isInitialRender.current) return
-
     if (needsUpdate) {
       toast(t('update'), {
         description: t('updateDescription'),

@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
+import { createClient } from '@supabase/supabase-js'
 import {
   assembleContentReport,
   buildContentReportQuery,
-  type ContentReportClient,
   type ContentReportRow,
 } from '@/lib/reports/content-report-data'
+import type { Database } from '@/types/database'
 
 const rows = [
   {
@@ -166,39 +167,39 @@ describe('content report data', () => {
     })
   })
 
-  it('builds the canonical filtered query with school scope and database ordering', () => {
-    const query = {
-      select: vi.fn((_columns: string) => query),
-      gte: vi.fn((_column: string, _value: string) => query),
-      lte: vi.fn((_column: string, _value: string) => query),
-      eq: vi.fn((_column: string, _value: string) => query),
-      in: vi.fn((_column: string, _values: string[]) => query),
-      order: vi.fn((_column: string, _options: { ascending: boolean }) => query),
-    }
-    const client = { from: vi.fn((_table: string) => query) }
+  it('builds the canonical filtered query with school scope and database ordering', async () => {
+    const requests: URL[] = []
+    const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      requests.push(new URL(new Request(input, init).url))
+      return new Response('[]', { headers: { 'Content-Type': 'application/json' } })
+    })
+    const client = createClient<Database>('http://127.0.0.1:54321', 'test-anon-key', {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { fetch },
+    })
 
-    expect(buildContentReportQuery(client as unknown as ContentReportClient, {
+    const result = await buildContentReportQuery(client, {
       startDate: '2026-02-01',
       endDate: '2026-07-31',
       turmaId: 'class-1',
       professorId: 'teacher-1',
       escolaId: 'school-1',
       disciplina: 'LP',
-    })).toBe(query)
+    })
 
-    expect(client.from).toHaveBeenCalledWith('conteudo_aula')
-    expect(query.select.mock.calls[0][0]).toContain('disciplinas!inner')
-    expect(query.gte).toHaveBeenCalledWith('sessoes_aula.data_aula', '2026-02-01')
-    expect(query.lte).toHaveBeenCalledWith('sessoes_aula.data_aula', '2026-07-31')
-    expect(query.order).toHaveBeenCalledWith('sessoes_aula(data_aula)', { ascending: false })
-    expect(query.eq.mock.calls).toEqual([
-      ['sessoes_aula.turma_id', 'class-1'],
-      ['sessoes_aula.professor_id', 'teacher-1'],
-      ['sessoes_aula.turmas.escola_id', 'school-1'],
+    expect(result.error).toBeNull()
+    expect(fetch).toHaveBeenCalledOnce()
+    const request = requests[0]
+    expect(request.pathname).toBe('/rest/v1/conteudo_aula')
+    expect(request.searchParams.get('select')).toContain('disciplinas!inner')
+    expect(request.searchParams.getAll('sessoes_aula.data_aula')).toEqual([
+      'gte.2026-02-01',
+      'lte.2026-07-31',
     ])
-    expect(query.in).toHaveBeenCalledWith(
-      'sessoes_aula.disciplinas.codigo',
-      ['LP', 'POR', 'PORT'],
-    )
+    expect(request.searchParams.get('sessoes_aula.turma_id')).toBe('eq.class-1')
+    expect(request.searchParams.get('sessoes_aula.professor_id')).toBe('eq.teacher-1')
+    expect(request.searchParams.get('sessoes_aula.turmas.escola_id')).toBe('eq.school-1')
+    expect(request.searchParams.get('sessoes_aula.disciplinas.codigo')).toBe('in.(LP,POR,PORT)')
+    expect(request.searchParams.get('order')).toBe('sessoes_aula(data_aula).desc')
   })
 })

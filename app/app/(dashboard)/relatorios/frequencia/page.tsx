@@ -64,7 +64,6 @@ import { logger } from '@/lib/logger'
 import { AttendanceReportTable, type AttendanceTableRow } from '@/components/reports/AttendanceReportTable'
 import {
   generateClassAttendanceReport,
-  getStudentsAtRisk,
   type ClassAttendanceReport,
   type AttendanceReportFilters,
 } from '@/lib/reports/attendance-reports'
@@ -90,17 +89,6 @@ interface DateRange {
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
-// Quick period options
-const PERIOD_OPTIONS = [
-  { value: 'current_month', label: 'bolsa.currentMonth' },
-  { value: 'last_month', label: 'bolsa.lastMonth' },
-  { value: 'bimestre_1', label: 'reports.firstBimester' },
-  { value: 'bimestre_2', label: 'reports.secondBimester' },
-  { value: 'bimestre_3', label: 'reports.thirdBimester' },
-  { value: 'bimestre_4', label: 'reports.fourthBimester' },
-  { value: 'custom', label: 'bolsa.custom' },
-]
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -227,7 +215,7 @@ export default function AttendanceReportsPage() {
           setSelectedTurma(turmasData[0].id)
         }
       } catch (err) {
-        logger.error('Error fetching turmas', err as Error, {
+        logger.error('Error fetching turmas', err instanceof Error ? err : new Error(String(err)), {
           feature: 'reports',
           action: 'load_frequencia_turmas'
         })
@@ -273,7 +261,7 @@ export default function AttendanceReportsPage() {
       setReportData(result.data)
       toast.success('Relatorio gerado com sucesso')
     } catch (err) {
-      logger.error('Error generating report', err as Error, {
+      logger.error('Error generating report', err instanceof Error ? err : new Error(String(err)), {
         feature: 'reports',
         action: 'generate_frequencia_report',
         metadata: { turmaId: selectedTurma }
@@ -316,7 +304,7 @@ export default function AttendanceReportsPage() {
       generateAttendanceReportPDF(reportData, selectedTurmaInfo?.escola?.nome)
       toast.success('PDF gerado com sucesso')
     } catch (err) {
-      logger.error('Error generating PDF', err as Error, {
+      logger.error('Error generating PDF', err instanceof Error ? err : new Error(String(err)), {
         feature: 'reports',
         action: 'export_frequencia_pdf'
       })
@@ -334,7 +322,7 @@ export default function AttendanceReportsPage() {
       await generateAttendanceReportExcel(reportData, selectedTurmaInfo?.escola?.nome)
       toast.success('Excel gerado com sucesso')
     } catch (err) {
-      logger.error('Error generating Excel', err as Error, {
+      logger.error('Error generating Excel', err instanceof Error ? err : new Error(String(err)), {
         feature: 'reports',
         action: 'export_frequencia_excel'
       })
@@ -350,12 +338,13 @@ export default function AttendanceReportsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Mobile optimized */}
+      {(() => (
+      /* Header - Mobile optimized */
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-            <span className="hidden xs:inline">Relatorios de </span>Frequencia
+            {t('attendance.title')}
           </h1>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
             <span className="hidden sm:inline">{t('attendance.subtitle')}</span>
@@ -388,8 +377,10 @@ export default function AttendanceReportsPage() {
           </Button>
         </div>
       </div>
+      ))()}
 
-      {/* Filters - Mobile optimized grid */}
+      {(() => (
+      /* Filters - Mobile optimized grid */
       <Card>
         <CardHeader className="pb-3 px-3 sm:px-6">
           <CardTitle className="text-sm sm:text-base flex items-center gap-2">
@@ -429,11 +420,13 @@ export default function AttendanceReportsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PERIOD_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="py-3">
-                      {t(opt.label as never)}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="current_month" className="py-3">{t('bolsa.currentMonth')}</SelectItem>
+                  <SelectItem value="last_month" className="py-3">{t('bolsa.lastMonth')}</SelectItem>
+                  <SelectItem value="bimestre_1" className="py-3">{t('reports.firstBimester')}</SelectItem>
+                  <SelectItem value="bimestre_2" className="py-3">{t('reports.secondBimester')}</SelectItem>
+                  <SelectItem value="bimestre_3" className="py-3">{t('reports.thirdBimester')}</SelectItem>
+                  <SelectItem value="bimestre_4" className="py-3">{t('reports.fourthBimester')}</SelectItem>
+                  <SelectItem value="custom" className="py-3">{t('bolsa.custom')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -521,26 +514,40 @@ export default function AttendanceReportsPage() {
           </div>
         </CardContent>
       </Card>
+      ))()}
 
-      {/* Error Alert */}
-      {error && (
+      {(() => (
+      /* Error Alert */
+      error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
+      )
+      ))()}
 
-      {/* Report Content */}
-      {reportData && (
+      {(() => (
+      /* Report Content */
+      reportData && (
         <>
           {/* View Mode Tabs - Full width on mobile */}
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'table' | 'chart')}>
+          <Tabs value={viewMode} onValueChange={(value) => {
+            if (value === 'table' || value === 'chart') setViewMode(value)
+          }}>
             <TabsList className="grid w-full sm:w-auto sm:max-w-[200px] grid-cols-2">
-              <TabsTrigger value="table" className="flex items-center gap-1 min-h-[44px]">
+              <TabsTrigger
+                value="table"
+                aria-label={t('attendance.table')}
+                className="flex items-center gap-1 min-h-[44px]"
+              >
                 <TableIcon className="h-4 w-4" />
                 <span className="hidden xs:inline">{t('attendance.table')}</span>
               </TabsTrigger>
-              <TabsTrigger value="chart" className="flex items-center gap-1 min-h-[44px]">
+              <TabsTrigger
+                value="chart"
+                aria-label={t('attendance.chart')}
+                className="flex items-center gap-1 min-h-[44px]"
+              >
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden xs:inline">{t('attendance.chart')}</span>
               </TabsTrigger>
@@ -583,10 +590,12 @@ export default function AttendanceReportsPage() {
             </TabsContent>
           </Tabs>
         </>
-      )}
+      )
+      ))()}
 
-      {/* Empty State */}
-      {!reportData && !isLoadingReport && !error && (
+      {(() => (
+      /* Empty State */
+      !reportData && !isLoadingReport && !error && (
         <Card>
           <CardContent className="text-center py-8 sm:py-12">
             <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
@@ -596,7 +605,8 @@ export default function AttendanceReportsPage() {
             </p>
           </CardContent>
         </Card>
-      )}
+      )
+      ))()}
     </div>
   )
 }

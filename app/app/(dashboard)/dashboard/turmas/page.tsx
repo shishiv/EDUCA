@@ -2,7 +2,7 @@
 
 import { useClassroomTranslations } from '@/i18n/classroom'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Users, Download, BookOpen, CheckCircle, TrendingUp, Search as SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { classFormSchema } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatsBar } from '@/components/dashboard'
@@ -41,172 +42,76 @@ interface Turma {
   created_at: string
 }
 
-const mockTurmas: Turma[] = [
-  {
-    id: '1',
-    nome: 'Bercario A',
-    serie: 'Bercario',
-    ano_letivo: 2024,
-    escola: {
-      id: '1',
-      nome: 'CEMEI Pequenos Passos',
-      tipo: 'creche'
-    },
-    professor: {
-      id: '1',
-      nome: 'Lucia Cardoso Oliveira',
-      email: 'lucia.cardoso@municipio.edu.br'
-    },
-    capacidade: 15,
-    alunos_matriculados: 12,
-    turno: 'integral',
-    ativo: true,
-    created_at: '2024-01-15T08:00:00Z'
-  },
-  {
-    id: '2',
-    nome: 'Maternal B',
-    serie: 'Maternal',
-    ano_letivo: 2024,
-    escola: {
-      id: '1',
-      nome: 'CEMEI Pequenos Passos',
-      tipo: 'creche'
-    },
-    professor: {
-      id: '2',
-      nome: 'Ana Paula Santos',
-      email: 'ana.paula@municipio.edu.br'
-    },
-    capacidade: 20,
-    alunos_matriculados: 18,
-    turno: 'matutino',
-    ativo: true,
-    created_at: '2024-01-15T08:00:00Z'
-  },
-  {
-    id: '3',
-    nome: 'Pre I A',
-    serie: 'Pre I',
-    ano_letivo: 2024,
-    escola: {
-      id: '2',
-      nome: 'EMEI Jardim da Infancia',
-      tipo: 'pre_escola'
-    },
-    professor: {
-      id: '3',
-      nome: 'Fernanda Alves Santos',
-      email: 'fernanda.alves@municipio.edu.br'
-    },
-    capacidade: 25,
-    alunos_matriculados: 23,
-    turno: 'matutino',
-    ativo: true,
-    created_at: '2024-01-10T09:00:00Z'
-  },
-  {
-    id: '4',
-    nome: 'Pre II B',
-    serie: 'Pre II',
-    ano_letivo: 2024,
-    escola: {
-      id: '2',
-      nome: 'EMEI Jardim da Infancia',
-      tipo: 'pre_escola'
-    },
-    professor: {
-      id: '4',
-      nome: 'Roberto Silva Lima',
-      email: 'roberto.lima@municipio.edu.br'
-    },
-    capacidade: 25,
-    alunos_matriculados: 20,
-    turno: 'vespertino',
-    ativo: true,
-    created_at: '2024-01-10T09:00:00Z'
-  },
-  {
-    id: '5',
-    nome: '1 Ano A',
-    serie: '1 Ano',
-    ano_letivo: 2024,
-    escola: {
-      id: '3',
-      nome: 'EMEF Professor Joao Silva',
-      tipo: 'fundamental'
-    },
-    professor: {
-      id: '5',
-      nome: 'Mariana Costa Pereira',
-      email: 'mariana.costa@municipio.edu.br'
-    },
-    capacidade: 30,
-    alunos_matriculados: 28,
-    turno: 'matutino',
-    ativo: true,
-    created_at: '2024-01-08T14:15:00Z'
-  },
-  {
-    id: '6',
-    nome: '5 Ano A',
-    serie: '5 Ano',
-    ano_letivo: 2024,
-    escola: {
-      id: '3',
-      nome: 'EMEF Professor Joao Silva',
-      tipo: 'fundamental'
-    },
-    professor: {
-      id: '6',
-      nome: 'Jose Roberto Lima',
-      email: 'jose.lima@municipio.edu.br'
-    },
-    capacidade: 30,
-    alunos_matriculados: 25,
-    turno: 'matutino',
-    ativo: true,
-    created_at: '2024-01-08T14:15:00Z'
-  },
-  {
-    id: '7',
-    nome: '9 Ano B',
-    serie: '9 Ano',
-    ano_letivo: 2024,
-    escola: {
-      id: '3',
-      nome: 'EMEF Professor Joao Silva',
-      tipo: 'fundamental'
-    },
-    professor: null,
-    capacidade: 30,
-    alunos_matriculados: 0,
-    turno: 'vespertino',
-    ativo: false,
-    created_at: '2024-01-20T11:00:00Z'
-  },
-  {
-    id: '8',
-    nome: 'Maternal C',
-    serie: 'Maternal',
-    ano_letivo: 2024,
-    escola: {
-      id: '1',
-      nome: 'CEMEI Pequenos Passos',
-      tipo: 'creche'
-    },
-    professor: {
-      id: '7',
-      nome: 'Patricia Souza Oliveira',
-      email: 'patricia.souza@municipio.edu.br'
-    },
-    capacidade: 20,
-    alunos_matriculados: 15,
-    turno: 'vespertino',
-    ativo: true,
-    created_at: '2024-01-15T08:00:00Z'
+function matchesTurma(turma: Turma, search: string, escola: string, serie: string, turno: string, status: string) {
+  const needle = search.toLowerCase()
+  const matchesSearch = [turma.nome, turma.serie, turma.escola.nome, turma.professor?.nome || '']
+    .some(value => value.toLowerCase().includes(needle))
+  return matchesSearch && matchesSchool(turma, escola) && matchesSerie(turma, serie) && matchesTurno(turma, turno) && matchesStatus(turma, status)
+}
+
+function matchesSchool(turma: Turma, filter: string) { return filter === 'todas' || turma.escola.id === filter }
+function matchesSerie(turma: Turma, filter: string) { return filter === 'todas' || turma.serie === filter }
+function matchesTurno(turma: Turma, filter: string) { return filter === 'todos' || turma.turno === filter }
+function matchesStatus(turma: Turma, filter: string) { return filter === 'todos' || (filter === 'ativo' && turma.ativo) || (filter === 'inativo' && !turma.ativo) }
+
+function resolveSchoolScope(showSelector: boolean, selected: string | null, assigned: string | null | undefined) {
+  return showSelector ? selected : assigned ?? null
+}
+
+function uniqueSchools(turmas: Turma[]) {
+  return Array.from(new Map(turmas.map(turma => [turma.escola.id, turma.escola])).values())
+}
+
+function uniqueSeries(turmas: Turma[]) {
+  return Array.from(new Set(turmas.map(turma => turma.serie)))
+}
+
+async function fetchTurmas(escolaId: string | null, shouldShowSelector: boolean) {
+  if (shouldShowSelector && !escolaId) return []
+  let query = supabase.from('turmas').select(`*, escola:escolas(id, nome, tipo), professor:users!professor_id(id, nome, email)`).order('created_at', { ascending: false })
+  if (escolaId) query = query.eq('escola_id', escolaId)
+  const { data, error } = await query
+  if (error) throw error
+  const counts = await enrollmentCounts(data?.map(turma => turma.id) || [])
+  return formatTurmas(data || [], counts)
+}
+
+function formatTurmas(data: Array<{ id: string; nome: string; ano_letivo: number; serie: string | null; turno: string; capacidade: number | null; ativo: boolean | null; created_at: string | null; escola: { id: string; nome: string; tipo: string } | null; professor: { id: string; nome: string; email: string | null } | null }>, counts: Map<string, number>) {
+  return data.map(turma => formatTurma(turma, counts))
+}
+
+function formatTurma(turma: { id: string; nome: string; ano_letivo: number; serie: string | null; turno: string; capacidade: number | null; ativo: boolean | null; created_at: string | null; escola: { id: string; nome: string; tipo: string } | null; professor: { id: string; nome: string; email: string | null } | null }, counts: Map<string, number>): Turma {
+  return {
+    id: turma.id, nome: turma.nome, ano_letivo: turma.ano_letivo, serie: turma.serie || '', turno: classFormSchema.shape.turno.parse(turma.turno),
+    capacidade: turma.capacidade || 0, alunos_matriculados: counts.get(turma.id) || 0, ativo: turma.ativo ?? true,
+    created_at: turma.created_at || new Date().toISOString(), escola: formatSchool(turma.escola),
+    professor: formatProfessor(turma.professor),
   }
-]
+}
+
+function formatSchool(school: { id: string; nome: string; tipo: string } | null) { return { id: school?.id || '', nome: school?.nome || 'Sem escola', tipo: school?.tipo || 'escola' } }
+function formatProfessor(professor: { id: string; nome: string; email: string | null } | null) { return professor ? { id: professor.id, nome: professor.nome, email: professor.email || '' } : null }
+
+function TurmasLoadingState() {
+  return <div className="space-y-6"><div className="animate-pulse"><div className="h-8 bg-gray-200 rounded w-1/4 mb-4" /><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[...Array(6)].map((_, i) => <div key={i} className="h-48 bg-gray-200 rounded-lg" />)}</div></div></div>
+}
+
+function TurmasSchoolRequiredState({ t }: { t: ReturnType<typeof useClassroomTranslations> }) {
+  return <div className="space-y-6"><PageHeader title={t('classes.title')} description={t('classes.subtitle')} actions={<><Button variant="outline" className="gap-2"><Download className="h-4 w-4" />{t('actions.export')}</Button><Button asChild className="gap-2"><Link href="/dashboard/turmas/nova"><Plus className="h-4 w-4" />{t('actions.newClass')}</Link></Button></>} /><EscolaRequiredState title={t('classes.selectSchool')} description={t('classes.selectSchoolHint')} /></div>
+}
+
+function TurmasResults({ turmas, hasActiveFilters, t, onClearFilters, onChamada, onDiario }: { turmas: Turma[]; hasActiveFilters: boolean; t: ReturnType<typeof useClassroomTranslations>; onClearFilters: () => void; onChamada: (id: string) => void; onDiario: (id: string) => void }) {
+  return <CardContent className="pt-4">{turmas.length > 0 ? <TurmaCardGrid>{turmas.map(turma => <TurmaCard key={turma.id} turma={turma} onChamada={onChamada} onDiario={onDiario} />)}</TurmaCardGrid> : <div className="flex flex-col items-center justify-center py-12 text-center">{hasActiveFilters ? <><SearchIcon className="h-12 w-12 text-gray-300 mb-4" /><h3 className="text-lg font-medium text-gray-900 mb-1">{t('classes.noClasses')}</h3><p className="text-sm text-gray-500 mb-4">{t('classes.noClassesHint')}</p><Button variant="outline" onClick={onClearFilters}>{t('actions.clear')}</Button></> : <><BookOpen className="h-12 w-12 text-gray-300 mb-4" /><h3 className="text-lg font-medium text-gray-900 mb-1">{t('classes.empty')}</h3><p className="text-sm text-gray-500 mb-4">{t('classes.emptyHint')}</p><Button asChild><Link href="/dashboard/turmas/nova"><Plus className="h-4 w-4 mr-2" />{t('actions.newClass')}</Link></Button></>}</div>}</CardContent>
+}
+
+async function enrollmentCounts(ids: string[]) {
+  const counts = new Map<string, number>()
+  if (!ids.length) return counts
+  const { data: enrollments, error } = await supabase.from('matriculas').select('turma_id').in('turma_id', ids).eq('situacao', 'ativa')
+  if (error) throw error
+  enrollments?.forEach(({ turma_id }) => counts.set(turma_id, (counts.get(turma_id) || 0) + 1))
+  return counts
+}
 
 export default function TurmasPage() {
   const t = useClassroomTranslations()
@@ -222,124 +127,33 @@ export default function TurmasPage() {
   const [turnoFilter, setTurnoFilter] = useState('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
 
-  // Determine which escola_id to use for filtering
-  const escolaIdToUse = useMemo(() => {
-    // Admin users with selector: use selected escola (may be null)
-    if (shouldShowSelector) {
-      return selectedEscolaId
-    }
-    // Non-admin users: use their assigned escola
-    return userProfile?.escola_id || null
-  }, [shouldShowSelector, selectedEscolaId, userProfile?.escola_id])
+  const escolaIdToUse = resolveSchoolScope(shouldShowSelector, selectedEscolaId, userProfile?.escola_id)
 
-  useEffect(() => {
-    loadTurmas()
-  }, [escolaIdToUse])
-
-  const loadTurmas = async () => {
-    // If admin needs escola selected but hasn't selected one, don't fetch
-    if (shouldShowSelector && !escolaIdToUse) {
-      setTurmas([])
-      setLoading(false)
-      return
-    }
-
+  const loadTurmas = useCallback(async () => {
     try {
-      let query = supabase
-        .from('turmas')
-        .select(`
-          *,
-          escola:escolas(id, nome, tipo),
-          professor:users!professor_id(id, nome, email)
-        `)
-        .order('created_at', { ascending: false })
-
-      // Filter by escola if we have one
-      if (escolaIdToUse) {
-        query = query.eq('escola_id', escolaIdToUse)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      // Get enrollment counts for each turma
-      const turmaIds = data?.map(t => t.id) || []
-      const enrollmentCounts = new Map<string, number>()
-
-      if (turmaIds.length > 0) {
-        const { data: enrollments } = await supabase
-          .from('matriculas')
-          .select('turma_id')
-          .in('turma_id', turmaIds)
-          .eq('situacao', 'ativa')
-
-        enrollments?.forEach(enrollment => {
-          const count = enrollmentCounts.get(enrollment.turma_id) || 0
-          enrollmentCounts.set(enrollment.turma_id, count + 1)
-        })
-      }
-
-      // Transform data to match component interface
-      const formattedTurmas = data?.map(turma => ({
-        id: turma.id,
-        nome: turma.nome,
-        ano_letivo: turma.ano_letivo,
-        serie: turma.serie || '',
-        turno: turma.turno,
-        capacidade: turma.capacidade || 0,
-        alunos_matriculados: enrollmentCounts.get(turma.id) || 0,
-        ativo: turma.ativo ?? true,
-        created_at: turma.created_at || new Date().toISOString(),
-        escola: {
-          id: turma.escola?.id || '',
-          nome: turma.escola?.nome || 'Sem escola',
-          tipo: turma.escola?.tipo || 'escola'
-        },
-        professor: turma.professor ? {
-          id: turma.professor.id,
-          nome: turma.professor.nome,
-          email: turma.professor.email || ''
-        } : null
-      })) || []
-
-      setTurmas(formattedTurmas as Turma[])
-    } catch (error: unknown) {
-      logger.error('Error loading turmas', error as Error)
+      setTurmas(await fetchTurmas(escolaIdToUse, shouldShowSelector))
+    } catch (error) {
+      logger.error('Error loading turmas', error instanceof Error ? error : String(error))
       toast.error('Erro ao carregar lista de turmas')
       setTurmas([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [escolaIdToUse, shouldShowSelector])
 
-  const filteredTurmas = turmas.filter(turma => {
-    const matchesSearch = turma.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         turma.serie.toLowerCase().includes(search.toLowerCase()) ||
-                         turma.escola.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         turma.professor?.nome.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    void loadTurmas()
+  }, [loadTurmas])
 
-    const matchesEscola = escolaFilter === 'todas' || turma.escola.id === escolaFilter
-    const matchesSerie = serieFilter === 'todas' || turma.serie === serieFilter
-    const matchesTurno = turnoFilter === 'todos' || turma.turno === turnoFilter
-    const matchesStatus = statusFilter === 'todos' ||
-                         (statusFilter === 'ativo' && turma.ativo) ||
-                         (statusFilter === 'inativo' && !turma.ativo)
-
-    return matchesSearch && matchesEscola && matchesSerie && matchesTurno && matchesStatus
-  })
+  const filteredTurmas = turmas.filter(turma => matchesTurma(turma, search, escolaFilter, serieFilter, turnoFilter, statusFilter))
 
   const totalTurmas = turmas.length
   const turmasAtivas = turmas.filter(t => t.ativo).length
   const totalAlunos = turmas.reduce((sum, t) => sum + t.alunos_matriculados, 0)
   const capacidadeTotal = turmas.reduce((sum, t) => sum + t.capacidade, 0)
 
-  const escolas = Array.from(new Set(turmas.map(t => t.escola.nome))).map(nome => {
-    const escola = turmas.find(t => t.escola.nome === nome)?.escola
-    return escola
-  }).filter(Boolean)
-
-  const series = Array.from(new Set(turmas.map(t => t.serie)))
+  const escolas = uniqueSchools(turmas)
+  const series = uniqueSeries(turmas)
 
   const clearFilters = () => {
     setSearch('')
@@ -352,48 +166,12 @@ export default function TurmasPage() {
   const hasActiveFilters = search || escolaFilter !== 'todas' || serieFilter !== 'todas' || turnoFilter !== 'todos' || statusFilter !== 'todos'
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
+    return <TurmasLoadingState />
   }
 
   // Show escola required state for admin users without selection
   if (shouldShowSelector && !selectedEscolaId) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title={t('classes.title')}
-          description={t('classes.subtitle')}
-          actions={
-            <>
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                {t('actions.export')}
-              </Button>
-              <Button asChild className="gap-2">
-                <Link href="/dashboard/turmas/nova">
-                  <Plus className="h-4 w-4" />
-                  {t('actions.newClass')}
-                </Link>
-              </Button>
-            </>
-          }
-        />
-        <EscolaRequiredState
-          title={t('classes.selectSchool')}
-          description={t('classes.selectSchoolHint')}
-        />
-      </div>
-    )
+    return <TurmasSchoolRequiredState t={t} />
   }
 
   return (
@@ -495,45 +273,7 @@ export default function TurmasPage() {
             onClearAll={clearFilters}
           />
         </CardHeader>
-        <CardContent className="pt-4">
-          {filteredTurmas.length > 0 ? (
-            <TurmaCardGrid>
-              {filteredTurmas.map((turma) => (
-                <TurmaCard
-                  key={turma.id}
-                  turma={turma}
-                  onChamada={(id) => router.push(`/dashboard/turmas/${id}/chamada`)}
-                  onDiario={(id) => router.push(`/diario?turma=${encodeURIComponent(id)}`)}
-                />
-              ))}
-            </TurmaCardGrid>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              {hasActiveFilters ? (
-                <>
-                  <SearchIcon className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t('classes.noClasses')}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{t('classes.noClassesHint')}</p>
-                  <Button variant="outline" onClick={clearFilters}>
-                    {t('actions.clear')}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <BookOpen className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t('classes.empty')}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{t('classes.emptyHint')}</p>
-                  <Button asChild>
-                    <Link href="/dashboard/turmas/nova">
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t('actions.newClass')}
-                    </Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        </CardContent>
+        <TurmasResults turmas={filteredTurmas} hasActiveFilters={Boolean(hasActiveFilters)} t={t} onClearFilters={clearFilters} onChamada={id => router.push(`/dashboard/turmas/${id}/chamada`)} onDiario={id => router.push(`/diario?turma=${encodeURIComponent(id)}`)} />
       </Card>
     </div>
   )

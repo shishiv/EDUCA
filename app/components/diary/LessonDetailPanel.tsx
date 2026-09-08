@@ -39,7 +39,6 @@ import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
-import type { LessonContent } from '@/types/lesson-content'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
@@ -156,8 +155,6 @@ export function LessonDetailPanel({
 
   if (!lesson) return null
 
-  const attendanceStatus = getFrequencyPolicyStatus(attendanceRate)
-
   // Format date
   const lessonDate = new Date(lesson.data_aula + 'T12:00:00')
   const formattedDate = format(lessonDate, "dd 'de' MMMM, yyyy", { locale: ptBR })
@@ -195,7 +192,56 @@ export function LessonDetailPanel({
             )}
           </div>
 
-          {/* Content Section */}
+          <LessonContentDetails lesson={lesson} />
+
+          <Separator />
+
+          <LessonAttendanceDetails lesson={lesson} attendanceRate={attendanceRate} />
+
+          {/* Observations Section */}
+          {lesson.observacoes && (
+            <>
+              <Separator />
+              <div className="space-y-1.5 sm:space-y-2">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
+                  Observacoes
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-5 sm:pl-6 bg-gray-50 p-2 sm:p-3 rounded-lg">
+                  {lesson.observacoes}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Action Buttons */}
+          <div className="pt-3 sm:pt-4 space-y-2">
+            <Button
+              variant="default"
+              className="w-full bg-blue-600 hover:bg-blue-700 h-9 sm:h-10 text-sm"
+              onClick={() => onEdit?.(lesson)}
+            >
+              <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+              Editar Aula
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 h-9 sm:h-10 text-sm"
+              onClick={() => onDelete?.(lesson)}
+            >
+              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+              Excluir Aula
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
+
+function LessonContentDetails({ lesson }: { lesson: LessonDetailData }) {
+  const t = useClassroomTranslations()
+  return (
           <div className="space-y-3 sm:space-y-4">
             {/* Objetivo */}
             {lesson.objetivo && (
@@ -268,10 +314,13 @@ export function LessonDetailPanel({
               </div>
             )}
           </div>
+  )
+}
 
-          <Separator />
-
-          {/* Attendance Section */}
+function LessonAttendanceDetails({ lesson, attendanceRate }: { lesson: LessonDetailData; attendanceRate: number }) {
+  const t = useClassroomTranslations()
+  const attendanceStatus = getFrequencyPolicyStatus(attendanceRate)
+  return (
           <div className="space-y-2 sm:space-y-3">
             <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
               <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
@@ -325,49 +374,10 @@ export function LessonDetailPanel({
                 attendanceStatus === 'CRITICO' ? 'text-red-600 bg-red-50' : 'text-yellow-700 bg-yellow-50'
               )}>
                 <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
-                <span>{attendanceStatus === 'CRITICO' ? `Não conformidade Bolsa Família: frequência abaixo de ${CONFORMIDADE}%.` : `Atenção preventiva: frequência abaixo de ${ATENCAO}%; a condicionalidade é atendida a partir de ${CONFORMIDADE}%.`}</span>
+                <span>{attendanceStatus === 'CRITICO' ? `Frequência abaixo da referência municipal de ${CONFORMIDADE}%.` : `Atenção preventiva: frequência abaixo de ${ATENCAO}%.`}</span>
               </div>
             )}
           </div>
-
-          {/* Observations Section */}
-          {lesson.observacoes && (
-            <>
-              <Separator />
-              <div className="space-y-1.5 sm:space-y-2">
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
-                  Observacoes
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-5 sm:pl-6 bg-gray-50 p-2 sm:p-3 rounded-lg">
-                  {lesson.observacoes}
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* Action Buttons */}
-          <div className="pt-3 sm:pt-4 space-y-2">
-            <Button
-              variant="default"
-              className="w-full bg-blue-600 hover:bg-blue-700 h-9 sm:h-10 text-sm"
-              onClick={() => onEdit?.(lesson)}
-            >
-              <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-              Editar Aula
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 h-9 sm:h-10 text-sm"
-              onClick={() => onDelete?.(lesson)}
-            >
-              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-              Excluir Aula
-            </Button>
-          </div>
-        </div>
-      </ScrollArea>
-    </div>
   )
 }
 

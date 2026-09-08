@@ -20,7 +20,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import type { Database, Tables, TablesInsert, TablesUpdate } from '@/types/database'
 import { logger } from '@/lib/logger'
 import {
   type Grade,
@@ -35,8 +35,6 @@ import {
   isValidBimester,
   roundGrade,
   GRADE_ERROR_MESSAGES,
-  GRADE_RANGE,
-  BIMESTER_RANGE,
 } from '@/types/grades'
 
 // Re-export types for convenience
@@ -51,6 +49,83 @@ export type {
   Bimester,
 }
 
+type GradeRow = Tables<'notas'>
+type GradeInsert = TablesInsert<'notas'>
+type GradeUpdatePayload = TablesUpdate<'notas'>
+type TurmaRow = Tables<'turmas'>
+type MatriculaRow = Tables<'matriculas'>
+type AlunoRow = Tables<'alunos'>
+type GradeStudentRow = Pick<AlunoRow, 'id' | 'nome_completo'>
+type EscolaRow = Tables<'escolas'>
+type UserRow = Tables<'users'>
+
+interface GradeValidation {
+  readonly valid: boolean
+  readonly errors: string[]
+}
+
+interface TurmaNotasResponse {
+  readonly data: TurmaNotasData[] | null
+  readonly error: string | null
+}
+
+interface TurmaNotasFilter {
+  readonly activeOnly: boolean
+  readonly escolaId?: string
+  readonly turmaId?: string
+}
+
+interface GradeContext {
+  readonly disciplinas: Tables<'disciplinas'>[]
+  readonly matriculas: MatriculaRow[]
+  readonly escolas: EscolaRow[]
+  readonly professores: UserRow[]
+  readonly error: Error | null
+}
+
+interface GradeDetails {
+  readonly alunos: GradeStudentRow[]
+  readonly notas: GradeRow[]
+  readonly error: Error | null
+}
+
+type DisciplinaNotas = TurmaNotasData['alunos'][number]['disciplinas']
+type SituacaoNota = NonNullable<DisciplinaNotas[string]['situacao']>
+
+function toGrade(row: GradeRow): Grade | null {
+  if (!isValidBimester(row.bimestre) || row.created_at === null) {
+    return null
+  }
+
+  return {
+    id: row.id,
+    matricula_id: row.matricula_id,
+    disciplina: row.disciplina,
+    bimestre: row.bimestre,
+    nota: row.nota,
+    tipo_avaliacao: row.tipo_avaliacao,
+    data_avaliacao: row.data_avaliacao,
+    observacoes: row.observacoes,
+    created_at: row.created_at,
+  }
+}
+
+function toGrades(rows: GradeRow[] | null): Grade[] {
+  return (rows ?? []).flatMap((row) => {
+    const grade = toGrade(row)
+    return grade ? [grade] : []
+  })
+}
+
+function validationResult(errors: Array<string | null>): GradeValidation {
+  const messages = errors.filter((error): error is string => error !== null)
+  return { valid: messages.length === 0, errors: messages }
+}
+
+function requiredValueError(value: string, message: string): string | null {
+  return value.trim() === '' ? message : null
+}
+
 // ============================================================================
 // VALIDATION HELPERS
 // ============================================================================
@@ -58,72 +133,46 @@ export type {
 /**
  * Validate grade input data
  */
-function validateGradeInput(input: GradeInput): {
-  valid: boolean
-  errors: string[]
-} {
-  const errors: string[] = []
-
-  // Validate nota (grade value)
-  if (input.nota === undefined || input.nota === null) {
-    errors.push(GRADE_ERROR_MESSAGES.notaRequired)
-  } else if (!isValidGrade(input.nota)) {
-    errors.push(GRADE_ERROR_MESSAGES.notaInvalid)
-  }
-
-  // Validate bimestre
-  if (!input.bimestre) {
-    errors.push(GRADE_ERROR_MESSAGES.bimestreRequired)
-  } else if (!isValidBimester(input.bimestre)) {
-    errors.push(GRADE_ERROR_MESSAGES.bimestreInvalid)
-  }
-
-  // Validate disciplina
-  if (!input.disciplina || input.disciplina.trim() === '') {
-    errors.push(GRADE_ERROR_MESSAGES.disciplinaRequired)
-  }
-
-  // Validate matricula_id
-  if (!input.matricula_id || input.matricula_id.trim() === '') {
-    errors.push(GRADE_ERROR_MESSAGES.matriculaRequired)
-  }
-
-  // Validate tipo_avaliacao
-  if (!input.tipo_avaliacao || input.tipo_avaliacao.trim() === '') {
-    errors.push(GRADE_ERROR_MESSAGES.tipoAvaliacaoRequired)
-  }
-
-  // Validate data_avaliacao
-  if (!input.data_avaliacao || input.data_avaliacao.trim() === '') {
-    errors.push(GRADE_ERROR_MESSAGES.dataAvaliacaoRequired)
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  }
+function validateGradeInput(input: GradeInput): GradeValidation {
+  return validationResult([
+    isValidGrade(input.nota) ? null : GRADE_ERROR_MESSAGES.notaInvalid,
+    isValidBimester(input.bimestre) ? null : GRADE_ERROR_MESSAGES.bimestreInvalid,
+    requiredValueError(input.disciplina, GRADE_ERROR_MESSAGES.disciplinaRequired),
+    requiredValueError(input.matricula_id, GRADE_ERROR_MESSAGES.matriculaRequired),
+    requiredValueError(input.tipo_avaliacao, GRADE_ERROR_MESSAGES.tipoAvaliacaoRequired),
+    requiredValueError(input.data_avaliacao, GRADE_ERROR_MESSAGES.dataAvaliacaoRequired),
+  ])
 }
 
 /**
  * Validate grade update data
  */
-function validateGradeUpdate(update: GradeUpdate): {
-  valid: boolean
-  errors: string[]
-} {
-  const errors: string[] = []
+function validateGradeUpdate(update: GradeUpdate): GradeValidation {
+  const notaError = update.nota !== undefined && !isValidGrade(update.nota)
+    ? GRADE_ERROR_MESSAGES.notaInvalid
+    : null
+  return validationResult([notaError])
+}
 
-  // Validate nota if provided
-  if (update.nota !== undefined && update.nota !== null) {
-    if (!isValidGrade(update.nota)) {
-      errors.push(GRADE_ERROR_MESSAGES.notaInvalid)
-    }
-  }
-
+function toGradeInsert(input: GradeInput): GradeInsert {
   return {
-    valid: errors.length === 0,
-    errors,
+    matricula_id: input.matricula_id,
+    disciplina: input.disciplina.trim(),
+    bimestre: input.bimestre,
+    nota: roundGrade(input.nota),
+    tipo_avaliacao: input.tipo_avaliacao.trim(),
+    data_avaliacao: input.data_avaliacao,
+    observacoes: input.observacoes?.trim() || null,
   }
+}
+
+function toGradeUpdate(update: GradeUpdate): GradeUpdatePayload {
+  const payload: GradeUpdatePayload = {}
+  if (update.nota !== undefined) payload.nota = roundGrade(update.nota)
+  if (update.tipo_avaliacao !== undefined) payload.tipo_avaliacao = update.tipo_avaliacao.trim()
+  if (update.data_avaliacao !== undefined) payload.data_avaliacao = update.data_avaliacao
+  if (update.observacoes !== undefined) payload.observacoes = update.observacoes.trim() || null
+  return payload
 }
 
 // ============================================================================
@@ -169,19 +218,7 @@ export async function createGrade(
       }
     }
 
-    // Round grade to one decimal place
-    const roundedNota = roundGrade(input.nota)
-
-    // Prepare data for insertion
-    const insertData = {
-      matricula_id: input.matricula_id,
-      disciplina: input.disciplina.trim(),
-      bimestre: input.bimestre,
-      nota: roundedNota,
-      tipo_avaliacao: input.tipo_avaliacao.trim(),
-      data_avaliacao: input.data_avaliacao,
-      observacoes: input.observacoes?.trim() || null,
-    }
+    const insertData = toGradeInsert(input)
 
     // Insert grade
     const { data, error } = await supabase
@@ -225,16 +262,16 @@ export async function createGrade(
         matriculaId: input.matricula_id,
         disciplina: input.disciplina,
         bimestre: input.bimestre,
-        nota: roundedNota,
+        nota: insertData.nota,
       },
     })
 
-    return {
-      data: data as Grade,
-      error: null,
-    }
+    const grade = data ? toGrade(data) : null
+    return grade
+      ? { data: grade, error: null }
+      : { data: null, error: 'Dados de nota inválidos' }
   } catch (error) {
-    logger.error('Exception in createGrade', error as Error, {
+    logger.error('Exception in createGrade', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'create_exception',
     })
@@ -282,21 +319,7 @@ export async function updateGrade(
       }
     }
 
-    // Prepare update data (only include non-undefined fields)
-    const updateData: Record<string, any> = {}
-
-    if (update.nota !== undefined) {
-      updateData.nota = roundGrade(update.nota)
-    }
-    if (update.tipo_avaliacao !== undefined) {
-      updateData.tipo_avaliacao = update.tipo_avaliacao.trim()
-    }
-    if (update.data_avaliacao !== undefined) {
-      updateData.data_avaliacao = update.data_avaliacao
-    }
-    if (update.observacoes !== undefined) {
-      updateData.observacoes = update.observacoes?.trim() || null
-    }
+    const updateData = toGradeUpdate(update)
 
     // Update grade
     const { data, error } = await supabase
@@ -332,12 +355,12 @@ export async function updateGrade(
       metadata: { gradeId },
     })
 
-    return {
-      data: data as Grade,
-      error: null,
-    }
+    const grade = data ? toGrade(data) : null
+    return grade
+      ? { data: grade, error: null }
+      : { data: null, error: 'Dados de nota inválidos' }
   } catch (error) {
-    logger.error('Exception in updateGrade', error as Error, {
+    logger.error('Exception in updateGrade', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'update_exception',
     })
@@ -393,11 +416,11 @@ export async function getGradesByStudent(
     }
 
     return {
-      data: (data as Grade[]) || [],
+      data: toGrades(data),
       error: null,
     }
   } catch (error) {
-    logger.error('Exception in getGradesByStudent', error as Error, {
+    logger.error('Exception in getGradesByStudent', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'get_by_student_exception',
     })
@@ -467,19 +490,12 @@ export async function getGradesByClass(
     }
 
     // Transform data to include student info at top level
-    const transformedData = (data || []).map((record) => ({
-      ...record,
-      aluno_id: record.matriculas?.alunos?.id,
-      aluno_nome: record.matriculas?.alunos?.nome_completo,
-      matriculas: undefined, // Remove nested structure
-    }))
-
     return {
-      data: transformedData as Grade[],
+      data: toGrades(data),
       error: null,
     }
   } catch (error) {
-    logger.error('Exception in getGradesByClass', error as Error, {
+    logger.error('Exception in getGradesByClass', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'get_by_class_exception',
     })
@@ -533,7 +549,7 @@ export async function calculateAverage(
       }
     }
 
-    const gradeList = (grades || []) as Grade[]
+    const gradeList = toGrades(grades)
 
     // Handle empty grades
     if (gradeList.length === 0) {
@@ -582,7 +598,7 @@ export async function calculateAverage(
       error: null,
     }
   } catch (error) {
-    logger.error('Exception in calculateAverage', error as Error, {
+    logger.error('Exception in calculateAverage', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'calculate_average_exception',
     })
@@ -646,7 +662,7 @@ export async function deleteGrade(
       error: null,
     }
   } catch (error) {
-    logger.error('Exception in deleteGrade', error as Error, {
+    logger.error('Exception in deleteGrade', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'delete_exception',
     })
@@ -696,12 +712,12 @@ export async function getGradeById(
       }
     }
 
-    return {
-      data: data as Grade,
-      error: null,
-    }
+    const grade = data ? toGrade(data) : null
+    return grade
+      ? { data: grade, error: null }
+      : { data: null, error: 'Dados de nota inválidos' }
   } catch (error) {
-    logger.error('Exception in getGradeById', error as Error, {
+    logger.error('Exception in getGradeById', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'get_by_id_exception',
     })
@@ -740,10 +756,10 @@ export async function getOrCreateGrade(
       .single()
 
     if (!fetchError && existingGrade) {
-      return {
-        data: existingGrade as Grade,
-        error: null,
-      }
+      const grade = toGrade(existingGrade)
+      return grade
+        ? { data: grade, error: null }
+        : { data: null, error: 'Dados de nota inválidos' }
     }
 
     // Not found - this is expected for new grades
@@ -772,7 +788,7 @@ export async function getOrCreateGrade(
       error: null,
     }
   } catch (error) {
-    logger.error('Exception in getOrCreateGrade', error as Error, {
+    logger.error('Exception in getOrCreateGrade', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'get_or_create_exception',
     })
@@ -818,362 +834,234 @@ export interface TurmaNotasData {
   }[]
 }
 
-/**
- * Get turmas for the Notas page grid
- *
- * Lists all active turmas with basic info for selection.
- * Optionally filtered by escola.
- *
- * @param supabase - Supabase client instance
- * @param escolaId - Optional escola filter
- * @returns List of turmas with basic info
- */
-export async function getTurmasForNotas(
-  supabase: SupabaseClient<Database>,
-  escolaId?: string
-): Promise<{ data: TurmaNotasData[] | null; error: string | null }> {
-  try {
-    let query = supabase
-      .from('turmas')
-      .select(`
-        id,
-        nome,
-        serie,
-        ano_letivo,
-        escola_id,
-        professor_id,
-        escola:escolas(id, nome),
-        professor:users!professor_id(id, nome),
-        matriculas(
-          id,
-          situacao,
-          aluno:alunos(id, nome_completo)
-        )
-      `)
-      .eq('ativo', true)
-      .order('nome', { ascending: true })
+function subjectSituation(grades: number[], media: number | undefined): SituacaoNota {
+  if (grades.length !== 4 || media === undefined) return 'cursando'
+  if (media >= 6) return 'aprovado'
+  return media >= 4 ? 'recuperacao' : 'reprovado'
+}
 
-    if (escolaId) {
-      query = query.eq('escola_id', escolaId)
-    }
+function subjectGrades(grades: Grade[]): DisciplinaNotas[string] {
+  const notas = [1, 2, 3, 4].map((bimestre) => grades.find((grade) => grade.bimestre === bimestre)?.nota)
+  const avaliadas = notas.filter((nota): nota is number => nota !== undefined)
+  const media = avaliadas.length > 0
+    ? roundGrade(avaliadas.reduce((sum, nota) => sum + nota, 0) / avaliadas.length)
+    : undefined
 
-    const { data: turmas, error: turmasError } = await query
-
-    if (turmasError) {
-      logger.error('Error fetching turmas for notas', turmasError, {
-        feature: 'grades',
-        action: 'get_turmas_for_notas_failed',
-        metadata: { escolaId },
-      })
-      return {
-        data: null,
-        error: 'Erro ao buscar turmas',
-      }
-    }
-
-    if (!turmas || turmas.length === 0) {
-      return {
-        data: [],
-        error: null,
-      }
-    }
-
-    // Get all disciplinas from the database
-    const { data: disciplinas } = await supabase
-      .from('disciplinas')
-      .select('codigo, nome')
-      .eq('ativa', true)
-
-    // Default disciplines if none in database
-    const defaultDisciplinas = ['Portugues', 'Matematica', 'Historia', 'Geografia', 'Ciencias']
-    const disciplinaList = disciplinas && disciplinas.length > 0
-      ? disciplinas.map(d => d.nome)
-      : defaultDisciplinas
-
-    // Get all matriculas for these turmas
-    const turmaIds = turmas.map(t => t.id)
-    const { data: matriculasForGrades } = await supabase
-      .from('matriculas')
-      .select('id')
-      .in('turma_id', turmaIds)
-
-    const matriculaIdsForGrades = matriculasForGrades?.map((m) => m.id) ?? []
-
-    // Get grades for these matriculas
-    const { data: allGrades } = matriculaIdsForGrades.length > 0
-      ? await supabase
-        .from('notas')
-        .select('id, matricula_id, disciplina, bimestre, nota')
-        .in('matricula_id', matriculaIdsForGrades)
-      : { data: [] }
-
-    // Create a map of grades by matricula_id
-    const gradesByMatricula: Record<string, Grade[]> = {}
-    if (allGrades) {
-      for (const grade of allGrades) {
-        const matriculaId = grade.matricula_id
-        if (!gradesByMatricula[matriculaId]) {
-          gradesByMatricula[matriculaId] = []
-        }
-        gradesByMatricula[matriculaId].push(grade as unknown as Grade)
-      }
-    }
-
-    // Transform turmas data
-    const transformedTurmas: TurmaNotasData[] = turmas.map((turma) => {
-      const activeMatriculas = turma.matriculas?.filter((m) => m.situacao === 'ativa') || []
-
-      const alunos = activeMatriculas.map((matricula) => {
-        const grades = gradesByMatricula[matricula.id] || []
-
-        // Build disciplinas object
-        const disciplinasObj: TurmaNotasData['alunos'][0]['disciplinas'] = {}
-
-        for (const disciplina of disciplinaList) {
-          const disciplinaGrades = grades.filter(g => g.disciplina === disciplina)
-
-          if (disciplinaGrades.length > 0 || true) {
-            const bimestre1 = disciplinaGrades.find(g => g.bimestre === 1)?.nota
-            const bimestre2 = disciplinaGrades.find(g => g.bimestre === 2)?.nota
-            const bimestre3 = disciplinaGrades.find(g => g.bimestre === 3)?.nota
-            const bimestre4 = disciplinaGrades.find(g => g.bimestre === 4)?.nota
-
-            // Calculate media
-            const gradedBimesters = [bimestre1, bimestre2, bimestre3, bimestre4].filter(
-              (n): n is number => n !== undefined
-            )
-            const media = gradedBimesters.length > 0
-              ? roundGrade(gradedBimesters.reduce((sum, n) => sum + n, 0) / gradedBimesters.length)
-              : undefined
-
-            // Determine situacao
-            let situacao: 'aprovado' | 'reprovado' | 'recuperacao' | 'cursando' = 'cursando'
-            if (gradedBimesters.length === 4 && media !== undefined) {
-              if (media >= 6) situacao = 'aprovado'
-              else if (media >= 4) situacao = 'recuperacao'
-              else situacao = 'reprovado'
-            }
-
-            disciplinasObj[disciplina] = {
-              bimestre1,
-              bimestre2,
-              bimestre3,
-              bimestre4,
-              media,
-              situacao,
-            }
-          }
-        }
-
-        return {
-          id: matricula.aluno?.id || matricula.id,
-          aluno_id: matricula.aluno?.id || '',
-          nome_completo: matricula.aluno?.nome_completo || 'Aluno',
-          matricula_id: matricula.id,
-          disciplinas: disciplinasObj,
-        }
-      })
-
-      return {
-        id: turma.id,
-        nome: turma.nome,
-        serie: turma.serie,
-        escola: turma.escola?.nome || 'Escola',
-        escola_id: turma.escola_id,
-        professor: turma.professor?.nome || 'Sem professor',
-        professor_id: turma.professor_id,
-        ano_letivo: turma.ano_letivo,
-        disciplinas: disciplinaList,
-        alunos: alunos.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo)),
-      }
-    })
-
-    logger.info('Turmas for notas fetched successfully', {
-      feature: 'grades',
-      action: 'get_turmas_for_notas',
-      metadata: { count: transformedTurmas.length, escolaId },
-    })
-
-    return {
-      data: transformedTurmas,
-      error: null,
-    }
-  } catch (error) {
-    logger.error('Exception in getTurmasForNotas', error as Error, {
-      feature: 'grades',
-      action: 'get_turmas_for_notas_exception',
-    })
-    return {
-      data: null,
-      error: 'Erro inesperado ao buscar turmas',
-    }
+  return {
+    bimestre1: notas[0],
+    bimestre2: notas[1],
+    bimestre3: notas[2],
+    bimestre4: notas[3],
+    media,
+    situacao: subjectSituation(avaliadas, media),
   }
 }
 
-/**
- * Get grades for a specific turma with student details
- *
- * Fetches all grades for students in a turma, organized by discipline and bimester.
- *
- * @param supabase - Supabase client instance
- * @param turmaId - UUID of the turma
- * @returns TurmaNotasData with all student grades
- */
+function disciplinasNotas(grades: Grade[], disciplinas: string[]): DisciplinaNotas {
+  const result: DisciplinaNotas = {}
+  for (const disciplina of disciplinas) {
+    result[disciplina] = subjectGrades(grades.filter((grade) => grade.disciplina === disciplina))
+  }
+  return result
+}
+
+function gradesByMatricula(grades: Grade[]): Map<string, Grade[]> {
+  const result = new Map<string, Grade[]>()
+  for (const grade of grades) {
+    const matriculaGrades = result.get(grade.matricula_id) ?? []
+    matriculaGrades.push(grade)
+    result.set(grade.matricula_id, matriculaGrades)
+  }
+  return result
+}
+
+function buildAlunoNotas(
+  matricula: MatriculaRow,
+  aluno: GradeStudentRow | undefined,
+  disciplinas: string[],
+  notas: Map<string, Grade[]>
+): TurmaNotasData['alunos'][number] {
+  return {
+    id: aluno?.id ?? matricula.id,
+    aluno_id: matricula.aluno_id,
+    nome_completo: aluno?.nome_completo ?? 'Aluno',
+    matricula_id: matricula.id,
+    disciplinas: disciplinasNotas(notas.get(matricula.id) ?? [], disciplinas),
+  }
+}
+
+function buildTurmaNotas(
+  turma: TurmaRow,
+  matriculas: MatriculaRow[],
+  disciplinas: string[],
+  alunos: Map<string, GradeStudentRow>,
+  escolas: Map<string, EscolaRow>,
+  professores: Map<string, UserRow>,
+  notas: Map<string, Grade[]>
+): TurmaNotasData {
+  const turmaAlunos = matriculas
+    .filter((matricula) => matricula.turma_id === turma.id)
+    .map((matricula) => buildAlunoNotas(matricula, alunos.get(matricula.aluno_id), disciplinas, notas))
+    .sort((first, second) => first.nome_completo.localeCompare(second.nome_completo))
+
+  return {
+    id: turma.id,
+    nome: turma.nome,
+    serie: turma.serie,
+    escola: escolas.get(turma.escola_id)?.nome ?? 'Escola',
+    escola_id: turma.escola_id,
+    professor: turma.professor_id ? professores.get(turma.professor_id)?.nome ?? 'Sem professor' : 'Sem professor',
+    professor_id: turma.professor_id,
+    ano_letivo: turma.ano_letivo,
+    disciplinas,
+    alunos: turmaAlunos,
+  }
+}
+
+function firstError(errors: Array<{ readonly error: Error | null }>): Error | null {
+  return errors.find((result) => result.error !== null)?.error ?? null
+}
+
+async function fetchTurmaRows(
+  supabase: SupabaseClient<Database>,
+  filter: TurmaNotasFilter
+) {
+  let query = supabase.from('turmas').select('*')
+  if (filter.activeOnly) query = query.eq('ativo', true)
+  if (filter.escolaId) query = query.eq('escola_id', filter.escolaId)
+  if (filter.turmaId) query = query.eq('id', filter.turmaId)
+  return query.order('nome', { ascending: true })
+}
+
+async function fetchGradeContext(
+  supabase: SupabaseClient<Database>,
+  turmas: TurmaRow[]
+): Promise<GradeContext> {
+  const turmaIds = turmas.map((turma) => turma.id)
+  const escolaIds = turmas.map((turma) => turma.escola_id)
+  const professorIds = turmas.flatMap((turma) => turma.professor_id ? [turma.professor_id] : [])
+  const [disciplinasResult, matriculasResult, escolasResult, professoresResult] = await Promise.all([
+    supabase.from('disciplinas').select('*').eq('ativa', true),
+    supabase.from('matriculas').select('*').in('turma_id', turmaIds).eq('situacao', 'ativa'),
+    supabase.from('escolas').select('*').in('id', escolaIds),
+    supabase.from('users').select('*').in('id', professorIds),
+  ])
+
+  return {
+    disciplinas: disciplinasResult.data ?? [],
+    matriculas: matriculasResult.data ?? [],
+    escolas: escolasResult.data ?? [],
+    professores: professoresResult.data ?? [],
+    error: firstError([disciplinasResult, matriculasResult, escolasResult, professoresResult]),
+  }
+}
+
+async function fetchGradeDetails(
+  supabase: SupabaseClient<Database>,
+  matriculas: MatriculaRow[]
+): Promise<GradeDetails> {
+  const matriculaIds = matriculas.map((matricula) => matricula.id)
+  const [alunosResult, notasResult] = await Promise.all([
+    supabase.from('alunos').select('id, nome_completo').in('id', matriculas.map((matricula) => matricula.aluno_id)),
+    supabase.from('notas').select('*').in('matricula_id', matriculaIds),
+  ])
+
+  return {
+    alunos: alunosResult.data ?? [],
+    notas: notasResult.data ?? [],
+    error: firstError([alunosResult, notasResult]),
+  }
+}
+
+async function fetchTurmasNotas(
+  supabase: SupabaseClient<Database>,
+  filter: TurmaNotasFilter
+): Promise<TurmaNotasResponse> {
+  const { data: turmas, error: turmasError } = await fetchTurmaRows(supabase, filter)
+  if (turmasError) {
+    logger.error('Error fetching turmas for notas', turmasError, {
+      feature: 'grades',
+      action: 'get_turmas_for_notas_failed',
+      metadata: { escolaId: filter.escolaId, turmaId: filter.turmaId },
+    })
+    return { data: null, error: 'Erro ao buscar turmas' }
+  }
+
+  const turmaRows = turmas ?? []
+  if (turmaRows.length === 0) return { data: [], error: null }
+
+  const context = await fetchGradeContext(supabase, turmaRows)
+  if (context.error) {
+    logger.error('Error fetching grade context', context.error, {
+      feature: 'grades',
+      action: 'get_turmas_for_notas_context_failed',
+      metadata: { escolaId: filter.escolaId, turmaId: filter.turmaId },
+    })
+    return { data: null, error: 'Erro ao buscar dados das turmas' }
+  }
+
+  const details = await fetchGradeDetails(supabase, context.matriculas)
+  if (details.error) {
+    logger.error('Error fetching grade details', details.error, {
+      feature: 'grades',
+      action: 'get_turmas_for_notas_details_failed',
+      metadata: { escolaId: filter.escolaId, turmaId: filter.turmaId },
+    })
+    return { data: null, error: 'Erro ao buscar dados das turmas' }
+  }
+
+  const alunos = new Map(details.alunos.map((aluno) => [aluno.id, aluno]))
+  const escolas = new Map(context.escolas.map((escola) => [escola.id, escola]))
+  const professores = new Map(context.professores.map((professor) => [professor.id, professor]))
+  const disciplinas = context.disciplinas.map((disciplina) => disciplina.nome)
+  const notas = gradesByMatricula(toGrades(details.notas))
+  const data = turmaRows.map((turma) => buildTurmaNotas(turma, context.matriculas, disciplinas, alunos, escolas, professores, notas))
+
+  return { data, error: null }
+}
+
+/** Lists active classes and their grade-grid data, optionally for one school. */
+export async function getTurmasForNotas(
+  supabase: SupabaseClient<Database>,
+  escolaId?: string
+): Promise<TurmaNotasResponse> {
+  try {
+    const result = await fetchTurmasNotas(supabase, { activeOnly: true, escolaId })
+    if (result.data) {
+      logger.info('Turmas for notas fetched successfully', {
+        feature: 'grades',
+        action: 'get_turmas_for_notas',
+        metadata: { count: result.data.length, escolaId },
+      })
+    }
+    return result
+  } catch (error) {
+    logger.error('Exception in getTurmasForNotas', error instanceof Error ? error : String(error), {
+      feature: 'grades',
+      action: 'get_turmas_for_notas_exception',
+    })
+    return { data: null, error: 'Erro inesperado ao buscar turmas' }
+  }
+}
+
+/** Gets the grade-grid data for one active class. */
 export async function getGradesByTurmaWithStudents(
   supabase: SupabaseClient<Database>,
   turmaId: string
 ): Promise<{ data: TurmaNotasData | null; error: string | null }> {
   try {
-    // Fetch turma with escola and professor info
-    const { data: turma, error: turmaError } = await supabase
-      .from('turmas')
-      .select(`
-        id,
-        nome,
-        serie,
-        ano_letivo,
-        escola_id,
-        professor_id,
-        escola:escolas(id, nome),
-        professor:users!professor_id(id, nome)
-      `)
-      .eq('id', turmaId)
-      .single()
-
-    if (turmaError) {
-      if (turmaError.code === 'PGRST116') {
-        return { data: null, error: null }
-      }
-      logger.error('Error fetching turma for grades', turmaError, {
+    const result = await fetchTurmasNotas(supabase, { activeOnly: false, turmaId })
+    const turma = result.data?.[0] ?? null
+    if (turma) {
+      logger.info('Grades by turma fetched successfully', {
         feature: 'grades',
-        action: 'get_grades_by_turma_failed',
-        metadata: { turmaId },
+        action: 'get_grades_by_turma',
+        metadata: { turmaId, studentCount: turma.alunos.length },
       })
-      return { data: null, error: 'Erro ao buscar turma' }
     }
-
-    // Fetch active matriculas for this turma
-    const { data: matriculas, error: matriculasError } = await supabase
-      .from('matriculas')
-      .select(`
-        id,
-        aluno_id,
-        aluno:alunos(id, nome_completo)
-      `)
-      .eq('turma_id', turmaId)
-      .eq('situacao', 'ativa')
-
-    if (matriculasError) {
-      logger.error('Error fetching matriculas for grades', matriculasError, {
-        feature: 'grades',
-        action: 'get_grades_by_turma_matriculas_failed',
-        metadata: { turmaId },
-      })
-      return { data: null, error: 'Erro ao buscar matriculas' }
-    }
-
-    // Get all disciplinas
-    const { data: disciplinas } = await supabase
-      .from('disciplinas')
-      .select('codigo, nome')
-      .eq('ativa', true)
-
-    const defaultDisciplinas = ['Portugues', 'Matematica', 'Historia', 'Geografia', 'Ciencias']
-    const disciplinaList = disciplinas && disciplinas.length > 0
-      ? disciplinas.map(d => d.nome)
-      : defaultDisciplinas
-
-    // Get grades for all matriculas
-    const matriculaIds = (matriculas || []).map(m => m.id)
-    let grades: Grade[] = []
-
-    if (matriculaIds.length > 0) {
-      const { data: gradesData } = await supabase
-        .from('notas')
-        .select('*')
-        .in('matricula_id', matriculaIds)
-
-      grades = (gradesData || []) as Grade[]
-    }
-
-    // Group grades by matricula
-    const gradesByMatricula: Record<string, Grade[]> = {}
-    for (const grade of grades) {
-      if (!gradesByMatricula[grade.matricula_id]) {
-        gradesByMatricula[grade.matricula_id] = []
-      }
-      gradesByMatricula[grade.matricula_id].push(grade)
-    }
-
-    // Transform matriculas to alunos with grades
-    const alunos = (matriculas || []).map((matricula) => {
-      const studentGrades = gradesByMatricula[matricula.id] || []
-
-      const disciplinasObj: TurmaNotasData['alunos'][0]['disciplinas'] = {}
-
-      for (const disciplina of disciplinaList) {
-        const disciplinaGrades = studentGrades.filter(g => g.disciplina === disciplina)
-
-        const bimestre1 = disciplinaGrades.find(g => g.bimestre === 1)?.nota
-        const bimestre2 = disciplinaGrades.find(g => g.bimestre === 2)?.nota
-        const bimestre3 = disciplinaGrades.find(g => g.bimestre === 3)?.nota
-        const bimestre4 = disciplinaGrades.find(g => g.bimestre === 4)?.nota
-
-        const gradedBimesters = [bimestre1, bimestre2, bimestre3, bimestre4].filter(
-          (n): n is number => n !== undefined
-        )
-        const media = gradedBimesters.length > 0
-          ? roundGrade(gradedBimesters.reduce((sum, n) => sum + n, 0) / gradedBimesters.length)
-          : undefined
-
-        let situacao: 'aprovado' | 'reprovado' | 'recuperacao' | 'cursando' = 'cursando'
-        if (gradedBimesters.length === 4 && media !== undefined) {
-          if (media >= 6) situacao = 'aprovado'
-          else if (media >= 4) situacao = 'recuperacao'
-          else situacao = 'reprovado'
-        }
-
-        disciplinasObj[disciplina] = {
-          bimestre1,
-          bimestre2,
-          bimestre3,
-          bimestre4,
-          media,
-          situacao,
-        }
-      }
-
-      return {
-        id: matricula.aluno?.id || matricula.id,
-        aluno_id: matricula.aluno_id,
-        nome_completo: matricula.aluno?.nome_completo || 'Aluno',
-        matricula_id: matricula.id,
-        disciplinas: disciplinasObj,
-      }
-    })
-
-    const result: TurmaNotasData = {
-      id: turma.id,
-      nome: turma.nome,
-      serie: turma.serie,
-      escola: turma.escola?.nome || 'Escola',
-      escola_id: turma.escola_id,
-      professor: turma.professor?.nome || 'Sem professor',
-      professor_id: turma.professor_id,
-      ano_letivo: turma.ano_letivo,
-      disciplinas: disciplinaList,
-      alunos: alunos.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo)),
-    }
-
-    logger.info('Grades by turma fetched successfully', {
-      feature: 'grades',
-      action: 'get_grades_by_turma',
-      metadata: { turmaId, studentCount: alunos.length },
-    })
-
-    return { data: result, error: null }
+    return { data: turma, error: result.error }
   } catch (error) {
-    logger.error('Exception in getGradesByTurmaWithStudents', error as Error, {
+    logger.error('Exception in getGradesByTurmaWithStudents', error instanceof Error ? error : String(error), {
       feature: 'grades',
       action: 'get_grades_by_turma_exception',
     })

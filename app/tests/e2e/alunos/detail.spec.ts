@@ -81,7 +81,15 @@ test.describe('Student detail', () => {
 })
 
 test('invalid student id shows an explicit error and recovery action', async ({ page }) => {
+  const invalidStudentRequests: string[] = []
+  page.on('request', request => {
+    if (request.url().includes('/rest/v1/') &&
+      `${request.url()}${request.postData() ?? ''}`.includes('invalid-uuid-12345')) {
+      invalidStudentRequests.push(request.url())
+    }
+  })
   await page.goto('/dashboard/alunos/invalid-uuid-12345')
   await expect(page.getByRole('main').getByText(/não encontrado|erro|inválido/i).first()).toBeVisible({ timeout: 10000 })
   await expect(page.getByRole('link', { name: /voltar para lista/i })).toBeVisible()
+  expect(invalidStudentRequests).toEqual([])
 })

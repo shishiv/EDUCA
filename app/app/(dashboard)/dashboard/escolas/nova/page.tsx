@@ -22,17 +22,74 @@ import { toast } from 'sonner'
 import { schoolsApi } from '@/lib/api/schools'
 import { logger } from '@/lib/logger'
 
+type SchoolType = 'creche' | 'pre_escola' | 'fundamental'
+
+interface SchoolFormData {
+  nome: string
+  codigo: string
+  tipo: '' | SchoolType
+  endereco: string
+  bairro: string
+  cep: string
+  cidade: string
+  estado: string
+  telefone: string
+  email: string
+  diretor_id: string
+  observacoes: string
+}
+
+interface DirectorOption {
+  id: string
+  nome: string
+  email: string | null
+}
+
+type NewSchoolPayload = {
+  nome: string
+  codigo: string
+  tipo: SchoolType
+  endereco: string
+  telefone: string
+  email?: string
+  diretor_id?: string
+}
+
+function isSchoolType(value: string): value is SchoolType {
+  return value === 'creche' || value === 'pre_escola' || value === 'fundamental'
+}
+
+function schoolPayloadFromForm(formData: SchoolFormData): NewSchoolPayload | null {
+  const schoolType = formData.tipo
+  const codigo = formData.codigo.replace(/\D/g, '')
+  if (!formData.nome || !codigo || !schoolType || codigo.length !== 8) return null
+
+  return {
+    nome: formData.nome,
+    codigo,
+    tipo: schoolType,
+    endereco: `${formData.endereco}${formData.bairro ? ` - ${formData.bairro}` : ''}, ${formData.cidade} - ${formData.estado}${formData.cep ? `, CEP: ${formData.cep}` : ''}`,
+    telefone: formData.telefone.replace(/\D/g, ''),
+    email: formData.email || undefined,
+    diretor_id: formData.diretor_id || undefined,
+  }
+}
+
+function schoolCreationErrorMessage(errorMessage: string): string {
+  if (!errorMessage) return 'Erro ao cadastrar escola'
+  if (!errorMessage.includes('duplicate') && !errorMessage.includes('unique')) return `Erro ao cadastrar escola: ${errorMessage}`
+  return errorMessage.includes('codigo')
+    ? 'Código da escola já existe no sistema'
+    : 'Dados duplicados no sistema'
+}
+
 export default function NovaEscolaPage() {
   const t = useTranslations('registry')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [diretoresDisponiveis, setDiretoresDisponiveis] = useState<Array<{
-    id: string
-    nome: string
-    email: string | null
-  }>>([])
+  const [diretoresDisponiveis, setDiretoresDisponiveis] = useState<DirectorOption[]>([])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SchoolFormData>({
     // Informações Básicas
     nome: '',
     codigo: '', // Código INEP (8 dígitos)
@@ -58,10 +115,9 @@ export default function NovaEscolaPage() {
 
   const loadDiretores = useCallback(async () => {
     try {
-      const diretores = await schoolsApi.getAvailableDirectors() as any
-      setDiretoresDisponiveis(diretores || [])
+      setDiretoresDisponiveis(await schoolsApi.getAvailableDirectors() ?? [])
     } catch (error) {
-      logger.error('Erro ao carregar diretores:', error as any)
+      logger.error('Erro ao carregar diretores:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-carregar-lista-de-diretores-disponiveis'))
     }
   }, [t])
@@ -75,32 +131,10 @@ export default function NovaEscolaPage() {
     setLoading(true)
 
     try {
-      // Validações básicas
-      if (!formData.nome || !formData.codigo || !formData.tipo) {
-        toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
-        setLoading(false)
-        return
-      }
-
-      // Validar código INEP (8 dígitos)
-      const codigoLimpo = formData.codigo.replace(/\D/g, '')
-      if (codigoLimpo.length !== 8) {
+      const schoolData = schoolPayloadFromForm(formData)
+      if (!schoolData) {
         toast.error(t('ui.codigo-inep-deve-ter-exatamente-8-digitos'))
-        setLoading(false)
         return
-      }
-
-      // Preparar dados para a API
-      const enderecoCompleto = `${formData.endereco}${formData.bairro ? ' - ' + formData.bairro : ''}, ${formData.cidade} - ${formData.estado}${formData.cep ? ', CEP: ' + formData.cep : ''}`
-
-      const schoolData = {
-        nome: formData.nome,
-        codigo: codigoLimpo, // Código INEP padronizado (8 dígitos)
-        tipo: formData.tipo as 'creche' | 'pre_escola' | 'fundamental',
-        endereco: enderecoCompleto,
-        telefone: formData.telefone.replace(/\D/g, ''), // Remove formatação
-        email: formData.email || undefined,
-        diretor_id: formData.diretor_id || undefined,
       }
 
       // Criar escola via API
@@ -108,28 +142,17 @@ export default function NovaEscolaPage() {
 
       toast.success(t('ui.escola-cadastrada-com-sucesso'))
       router.push('/dashboard/escolas')
-    } catch (error: any) {
-      logger.error('Erro ao cadastrar escola:', error)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logger.error('Erro ao cadastrar escola:', error instanceof Error ? error : errorMessage)
 
-      // Mensagens de erro contextualizadas
-      let errorMessage = 'Erro ao cadastrar escola'
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-        if (error.message.includes('codigo')) {
-          errorMessage = 'Código da escola já existe no sistema'
-        } else {
-          errorMessage = 'Dados duplicados no sistema'
-        }
-      } else if (error.message) {
-        errorMessage = `Erro ao cadastrar escola: ${error.message}`
-      }
-
-      toast.error(errorMessage)
+      toast.error(schoolCreationErrorMessage(errorMessage))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <Field extends keyof SchoolFormData>(field: Field, value: SchoolFormData[Field]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -156,12 +179,16 @@ export default function NovaEscolaPage() {
   }
 
   const getTipoLabel = (tipo: string) => {
-    const tipos = {
-      creche: 'Creche (0-3 anos)',
-      pre_escola: 'Pré-Escola (4-5 anos)',
-      fundamental: 'Ensino Fundamental (6-14 anos)'
+    switch (tipo) {
+      case 'creche':
+        return 'Creche (0-3 anos)'
+      case 'pre_escola':
+        return 'Pré-Escola (4-5 anos)'
+      case 'fundamental':
+        return 'Ensino Fundamental (6-14 anos)'
+      default:
+        return tipo
     }
-    return tipos[tipo as keyof typeof tipos] || tipo
   }
 
   return (
@@ -242,7 +269,9 @@ export default function NovaEscolaPage() {
                   <Label htmlFor="tipo">{t('labels.tipo-de-ensino')}</Label>
                   <Select
                     value={formData.tipo}
-                    onValueChange={(value) => handleInputChange('tipo', value)}
+                    onValueChange={(value) => {
+                      if (isSchoolType(value)) handleInputChange('tipo', value)
+                    }}
                     required
                   >
                     <SelectTrigger id="tipo">

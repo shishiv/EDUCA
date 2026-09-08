@@ -1,4 +1,5 @@
 {
+  "realtime": { "sessionLocked": "The lesson session was closed." },
   "dashboard": {
     "loading": "Loading overview",
     "preparing": "Preparing your workspace..."

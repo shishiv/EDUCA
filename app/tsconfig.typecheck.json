@@ -23,8 +23,6 @@
   ],
   "exclude": [
     "node_modules",
-    ".next",
-    "tests/unit/components/diary/**",
-    "tests/unit/components/reports/**"
+    ".next"
   ]
 }

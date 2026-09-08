@@ -1,14 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { BrandLogo } from '@/components/marketing/brand-logo'
 import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
 
-export function PublicHeader() {
+export function PublicHeader({ pathname }: { pathname: string }) {
   const t = useTranslations('public.navigation')
-  const pathname = usePathname()
 
   return (
     <header className="public-header">

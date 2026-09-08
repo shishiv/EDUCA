@@ -22,7 +22,6 @@ import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { recordDemoClientAction } from '@/lib/demo-sandbox/demo-audit-client'
 import type {
   FeatureFlag,
-  EscolaFeatureFlag,
   FlagWithEscolaStatus,
 } from '@/types/feature-flags'
 
@@ -30,7 +29,7 @@ import type {
 // FEATURE FLAGS API SERVICE
 // ============================================================================
 
-export class FeatureFlagsApiService extends BaseApiService {
+export class FeatureFlagsApiService extends BaseApiService<'feature_flags'> {
   constructor() {
     super('feature_flags')
   }
@@ -72,20 +71,8 @@ export class FeatureFlagsApiService extends BaseApiService {
         return false // Safe default on error
       }
 
-      if (isDemoSandboxEnabled()) {
-        let flagId = data?.feature_flags?.id
-        if (!flagId) {
-          const { data: flag } = await supabase
-            .from('feature_flags')
-            .select('id')
-            .eq('flag_name', flagName)
-            .eq('is_active', true)
-            .maybeSingle()
-          flagId = flag?.id
-        }
-        const override = flagId ? demoFlagOverrides.get(demoFlagOverrideKey(escolaId, flagId)) : undefined
-        if (override !== undefined) return override
-      }
+      const override = await resolveDemoFlagOverride(flagName, escolaId, data?.feature_flags?.id)
+      if (override !== undefined) return override
 
       // If no record found, flag is not enabled
       if (!data) {
@@ -132,6 +119,8 @@ export class FeatureFlagsApiService extends BaseApiService {
         metadata: { count: data?.length || 0 },
       })
 
+      // SAFETY: this query selects complete rows from the feature_flags table;
+      // the domain type mirrors the generated row with normalized required fields.
       return (data || []) as FeatureFlag[]
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
@@ -201,12 +190,13 @@ export class FeatureFlagsApiService extends BaseApiService {
           (ef) => ef.flag_id === flag.id
         )
 
+        // SAFETY: the object combines a complete feature flag with the normalized
+        // escola status fields required by the matrix view.
         return {
           ...flag,
           escola_flags: flagEscolaRecords.map((ef) => ({
             escola_id: ef.escola_id,
-            escola_nome:
-              (ef.escolas as { nome: string } | null)?.nome || 'Escola',
+            escola_nome: ef.escolas?.nome || 'Escola',
             enabled: ef.enabled,
             updated_at: ef.updated_at,
           })),
@@ -378,6 +368,7 @@ export class FeatureFlagsApiService extends BaseApiService {
         throw error
       }
 
+      // SAFETY: this query selects one complete feature_flags row or null.
       return data as FeatureFlag | null
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
@@ -398,6 +389,22 @@ const demoFlagOverrides = new Map<string, boolean>()
 
 function demoFlagOverrideKey(escolaId: string, flagId: string): string {
   return `${escolaId}:${flagId}`
+}
+
+/** Resolve the demo overlay only after a successful persisted lookup. */
+async function resolveDemoFlagOverride(flagName: string, escolaId: string, storedFlagId?: string): Promise<boolean | undefined> {
+  if (!isDemoSandboxEnabled()) return undefined
+  let flagId = storedFlagId
+  if (!flagId) {
+    const { data: flag } = await supabase
+      .from('feature_flags')
+      .select('id')
+      .eq('flag_name', flagName)
+      .eq('is_active', true)
+      .maybeSingle()
+    flagId = flag?.id
+  }
+  return flagId ? demoFlagOverrides.get(demoFlagOverrideKey(escolaId, flagId)) : undefined
 }
 
 /** Clears client-only feature-flag overlays between isolated tests. */

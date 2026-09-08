@@ -36,41 +36,19 @@ interface EscolaSelectorProps {
  * - Shows placeholder with yellow highlight when no escola selected
  * - In collapsed sidebar, shows only School icon with tooltip
  */
-export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
-  const t = useTranslations('layout.schoolSelector')
-  const [open, setOpen] = React.useState(false)
-  const {
-    escolas,
-    selectedEscolaId,
-    selectedEscola,
-    selectEscola,
-    shouldShowSelector,
-    loading,
-  } = useEscola()
 
-  // Don't render if user shouldn't see selector
-  if (!shouldShowSelector) {
-    return null
-  }
+interface SelectorParts {
+  open: boolean
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>
+  escolas: ReturnType<typeof useEscola>["escolas"]
+  selectedEscolaId: string | null
+  selectedEscola: ReturnType<typeof useEscola>["selectedEscola"]
+  selectEscola: ReturnType<typeof useEscola>["selectEscola"]
+  t: ReturnType<typeof useTranslations>
+}
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className={cn('w-full', className)}>
-        <Button
-          variant="outline"
-          disabled
-          className="app-school-selector w-full"
-        >
-          <span>{t('select')}</span>
-        </Button>
-      </div>
-    )
-  }
-
-  // Collapsed sidebar: show icon only
-  if (collapsed) {
-    return (
+function CollapsedSchoolSelector({ open, setOpen, escolas, selectedEscolaId, selectedEscola, selectEscola, t }: SelectorParts) {
+  return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -119,6 +97,42 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
         </PopoverContent>
       </Popover>
     )
+}
+
+export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
+  const t = useTranslations('layout.schoolSelector')
+  const [open, setOpen] = React.useState(false)
+  const {
+    escolas,
+    selectedEscolaId,
+    selectedEscola,
+    selectEscola,
+    shouldShowSelector,
+    loading,
+  } = useEscola()
+
+  // Don't render if user shouldn't see selector
+  if (!shouldShowSelector) {
+    return null
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className={cn('w-full', className)}>
+        <Button
+          variant="outline"
+          disabled
+          className="app-school-selector w-full"
+        >
+          <span>{t('select')}</span>
+        </Button>
+      </div>
+    )
+  }
+
+  if (collapsed) {
+    return <CollapsedSchoolSelector open={open} setOpen={setOpen} escolas={escolas} selectedEscolaId={selectedEscolaId} selectedEscola={selectedEscola} selectEscola={selectEscola} t={t} />
   }
 
   // Expanded sidebar: full combobox

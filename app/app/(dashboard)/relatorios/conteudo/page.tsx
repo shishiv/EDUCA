@@ -103,16 +103,6 @@ interface DateRange {
 // CONSTANTS
 // ============================================================================
 
-const PERIOD_OPTIONS = [
-  { value: 'current_month', label: 'bolsa.currentMonth' },
-  { value: 'last_month', label: 'bolsa.lastMonth' },
-  { value: 'bimestre_1', label: 'reports.firstBimester' },
-  { value: 'bimestre_2', label: 'reports.secondBimester' },
-  { value: 'bimestre_3', label: 'reports.thirdBimester' },
-  { value: 'bimestre_4', label: 'reports.fourthBimester' },
-  { value: 'custom', label: 'bolsa.custom' },
-]
-
 const DISCIPLINE_OPTIONS = [
   { value: 'todas', label: 'content.allSubjects' },
   ...Object.values(BNCC_SUBJECTS).map((s) => ({
@@ -120,6 +110,10 @@ const DISCIPLINE_OPTIONS = [
     label: s.fullName,
   })),
 ]
+
+function isBNCCSubjectCode(value: string): value is BNNCSubjectCode {
+  return Object.values(BNCC_SUBJECTS).some((subject) => subject.code === value)
+}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -461,7 +455,7 @@ export default function ContentReportsPage() {
         const turmasData = await reportsApi.getTurmasForFilters()
         setTurmas(turmasData)
       } catch (err) {
-        logger.error('Error fetching turmas', err as Error, {
+        logger.error('Error fetching turmas', err instanceof Error ? err : new Error(String(err)), {
           feature: 'reports',
           action: 'load_conteudo_turmas'
         })
@@ -496,8 +490,8 @@ export default function ContentReportsPage() {
         filters.turmaId = selectedTurma
       }
 
-      if (selectedDisciplina !== 'todas') {
-        filters.disciplina = selectedDisciplina as BNNCSubjectCode
+      if (isBNCCSubjectCode(selectedDisciplina)) {
+        filters.disciplina = selectedDisciplina
       }
 
       const result = await generateContentReport(supabase, filters)
@@ -509,7 +503,7 @@ export default function ContentReportsPage() {
       setReportData(result.data)
       toast.success('Relatorio gerado com sucesso')
     } catch (err) {
-      logger.error('Error generating report', err as Error, {
+      logger.error('Error generating report', err instanceof Error ? err : new Error(String(err)), {
         feature: 'reports',
         action: 'generate_conteudo_report',
         metadata: { turmaId: selectedTurma, disciplina: selectedDisciplina }
@@ -538,7 +532,7 @@ export default function ContentReportsPage() {
       generateContentReportPDF(reportData, selectedTurmaInfo?.escola?.nome)
       toast.success('PDF gerado com sucesso')
     } catch (err) {
-      logger.error('Error generating PDF', err as Error, {
+      logger.error('Error generating PDF', err instanceof Error ? err : new Error(String(err)), {
         feature: 'reports',
         action: 'export_conteudo_pdf'
       })
@@ -561,7 +555,7 @@ export default function ContentReportsPage() {
       })
       toast.success('PDF de habilidades gerado com sucesso')
     } catch (err) {
-      logger.error('Error generating BNCC PDF', err as Error, {
+      logger.error('Error generating BNCC PDF', err instanceof Error ? err : new Error(String(err)), {
         feature: 'reports',
         action: 'export_bncc_pdf'
       })
@@ -576,12 +570,13 @@ export default function ContentReportsPage() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
+      {(() => (
+      /* Header */
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-blue-600" />
-            Relatorio de Conteudo Ministrado
+            {t('content.title')}
           </h1>
           <p className="text-gray-600 mt-1">
             Visualize o conteudo das aulas e habilidades BNCC trabalhadas
@@ -596,8 +591,10 @@ export default function ContentReportsPage() {
         >
           <FileText className="h-4 w-4 mr-2" />{t('content.export')}</Button>
       </div>
+      ))()}
 
-      {/* Filters */}
+      {(() => (
+      /* Filters */
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -638,7 +635,7 @@ export default function ContentReportsPage() {
                 <SelectContent>
                   {DISCIPLINE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {t(opt.label as never)}
+                      {opt.value === 'todas' ? t('content.allSubjects') : opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -653,11 +650,13 @@ export default function ContentReportsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PERIOD_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {t(opt.label as never)}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="current_month">{t('bolsa.currentMonth')}</SelectItem>
+                  <SelectItem value="last_month">{t('bolsa.lastMonth')}</SelectItem>
+                  <SelectItem value="bimestre_1">{t('reports.firstBimester')}</SelectItem>
+                  <SelectItem value="bimestre_2">{t('reports.secondBimester')}</SelectItem>
+                  <SelectItem value="bimestre_3">{t('reports.thirdBimester')}</SelectItem>
+                  <SelectItem value="bimestre_4">{t('reports.fourthBimester')}</SelectItem>
+                  <SelectItem value="custom">{t('bolsa.custom')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -744,17 +743,21 @@ export default function ContentReportsPage() {
           </div>
         </CardContent>
       </Card>
+      ))()}
 
-      {/* Error Alert */}
-      {error && (
+      {(() => (
+      /* Error Alert */
+      error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
+      )
+      ))()}
 
-      {/* Report Content */}
-      {reportData && (
+      {(() => (
+      /* Report Content */
+      reportData && (
         reportData.aulas.length === 0 ? (
           <Card data-testid="content-report-empty-state" role="status">
             <CardContent className="text-center py-12">
@@ -888,10 +891,12 @@ export default function ContentReportsPage() {
           </Tabs>
         </>
         )
-      )}
+      )
+      ))()}
 
-      {/* Empty State */}
-      {!reportData && !isLoadingReport && !error && (
+      {(() => (
+      /* Empty State */
+      !reportData && !isLoadingReport && !error && (
         <Card>
           <CardContent className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -903,7 +908,8 @@ export default function ContentReportsPage() {
             </p>
           </CardContent>
         </Card>
-      )}
+      )
+      ))()}
     </div>
   )
 }

@@ -10,11 +10,36 @@ import {
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 
-const demoConfigMutationSchema = z.object({
-  operation: z.enum(['demo.config.update', 'demo.config.reset']),
-  configId: z.string().uuid(),
-  value: z.string().max(1000).optional(),
-})
+const demoConfigMutationSchema = z.discriminatedUnion('operation', [
+  z.object({
+    operation: z.literal('demo.config.update'),
+    configId: z.string().uuid(),
+    value: z.string().max(1000),
+  }),
+  z.object({
+    operation: z.literal('demo.config.reset'),
+    configId: z.string().uuid(),
+  }),
+])
+
+type DemoConfigMutation = z.infer<typeof demoConfigMutationSchema>
+type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>
+
+async function loadActiveConfig(supabase: ServerSupabaseClient, configId: string) {
+  const { data, error } = await supabase
+    .from('configs')
+    .select('id,chave,valor,descricao,categoria,tipo_valor,valor_padrao,ativo,escola_id,criado_por,created_at,updated_at')
+    .eq('id', configId)
+    .eq('ativo', true)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+function resolveDemoValue(input: DemoConfigMutation, fallback: string | null, current: string) {
+  return input.operation === 'demo.config.update' ? input.value : fallback || current
+}
 
 export async function POST(request: Request) {
   if (!isDemoSandboxEnabled()) {
@@ -24,27 +49,15 @@ export async function POST(request: Request) {
   try {
     const actor = await requirePilotActor(['admin', 'diretor'])
     const input = demoConfigMutationSchema.parse(await request.json())
-    if (input.operation === 'demo.config.update' && input.value === undefined) {
-      return NextResponse.json({ error: 'DEMO_CONFIG_VALUE_REQUIRED' }, { status: 400 })
-    }
 
     const supabase = await createClient()
-    const { data: config, error: configError } = await supabase
-      .from('configs')
-      .select('id,chave,valor,descricao,categoria,tipo_valor,valor_padrao,ativo,escola_id,criado_por,created_at,updated_at')
-      .eq('id', input.configId)
-      .eq('ativo', true)
-      .single()
-
-    if (configError) throw configError
+    const config = await loadActiveConfig(supabase, input.configId)
     if (!config) return NextResponse.json({ error: 'DEMO_CONFIG_NOT_FOUND' }, { status: 404 })
     if (config.escola_id && actor.schoolId !== null && config.escola_id !== actor.schoolId) {
       return NextResponse.json({ error: 'DEMO_CONFIG_SCHOOL_DENIED' }, { status: 403 })
     }
 
-    const value = input.operation === 'demo.config.reset'
-      ? config.valor_padrao || config.valor
-      : input.value!
+    const value = resolveDemoValue(input, config.valor_padrao, config.valor)
     const receipt = await writeDemoActionInterceptedAudit(
       asPilotRpcClient(supabase),
       {

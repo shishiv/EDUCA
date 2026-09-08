@@ -1,521 +1,195 @@
-import { test, expect } from '../support/diagnostics'
-import { 
-  waitForPageLoad,
-  expectFormSuccess
-} from '../utils/test-helpers'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Page } from '@playwright/test'
+import { expect, test } from '../support/diagnostics'
+import { waitForPageLoad } from '../utils/test-helpers'
+import type { Database, Tables } from '@/types/database'
+import { z } from 'zod'
 
-/**
- * E2E Tests: Escolas - Complete CRUD
- * Tests for schools listing, creation, viewing, editing, and deletion
- */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const SEEDED_SCHOOL = 'CEMEI Pequenos Passos'
 
-test.describe('Escolas - List View', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas')
-    await waitForPageLoad(page)
+type School = Tables<'escolas'>
+const schoolMutationReceipt = z.array(z.object({
+  school_id: z.string().uuid(),
+  audit_id: z.string().uuid(),
+})).length(1)
+
+function localServiceClient(): SupabaseClient<Database> {
+  if (!['127.0.0.1', 'localhost'].includes(new URL(SUPABASE_URL).hostname)) {
+    throw new Error('Schools E2E requires a loopback Supabase URL')
+  }
+  if (!SUPABASE_SERVICE_KEY.startsWith('sb_secret_')) {
+    throw new Error('Schools E2E requires the local Supabase service key')
+  }
+  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
   })
+}
 
-  test('should display page header and title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Escolas', exact: true })).toBeVisible()
-  })
+async function seededSchool(): Promise<School> {
+  const { data, error } = await localServiceClient()
+    .from('escolas')
+    .select('*')
+    .eq('nome', SEEDED_SCHOOL)
+    .single()
+  if (error || !data) throw new Error(`School fixture is unavailable: ${error?.message || SEEDED_SCHOOL}`)
+  return data
+}
 
-  test('should display "Nova Escola" button', async ({ page }) => {
-    const newButton = page.getByRole('link', { name: /nova escola|adicionar escola/i })
-    await expect(newButton).toBeVisible()
-    await expect(newButton).toHaveAttribute('href', /\/escolas\/nova/)
-  })
+async function temporarySchool(codigo: string): Promise<School | null> {
+  const { data, error } = await localServiceClient()
+    .from('escolas')
+    .select('*')
+    .eq('codigo', codigo)
+    .maybeSingle()
+  if (error) throw new Error(`Temporary school lookup failed: ${error.message}`)
+  return data
+}
 
-  test('should display schools table or grid', async ({ page }) => {
-    // Check for table or grid layout
+async function retireTemporarySchool(codigo: string) {
+  const school = await temporarySchool(codigo)
+  if (!school) return
+  const service = localServiceClient()
+  // Audit/configuration records retain the school until the disposable stack is removed.
+  const { error } = await service.from('escolas').update({ ativo: false }).eq('id', school.id)
+  if (error) throw new Error(`Temporary school cleanup failed: ${error.message}`)
+  expect(await temporarySchool(codigo), 'temporary school retirement must be exact')
+    .toMatchObject({ id: school.id, ativo: false })
+}
+
+async function verifySchoolAudit(auditId: string, schoolId: string, eventType: string) {
+  const { data, error } = await localServiceClient().from('pilot_audit_log')
+    .select('escola_id,entity_id,entity_type,event_type')
+    .eq('id', auditId).single()
+  expect(error).toBeNull()
+  expect(data).toEqual({ escola_id: schoolId, entity_id: schoolId, entity_type: 'school', event_type: eventType })
+}
+
+async function openSchools(page: Page) {
+  await page.goto('/dashboard/escolas')
+  await waitForPageLoad(page)
+  await expect(page.getByRole('heading', { name: 'Escolas', exact: true })).toBeVisible()
+}
+
+function schoolDetailLink(page: Page, schoolId: string) {
+  return page.locator(`a[href="/dashboard/escolas/${schoolId}"]`).first()
+}
+
+function schoolCode(workerIndex: number) {
+  return `9${String(Date.now()).slice(-6)}${workerIndex % 10}`
+}
+
+test.describe.serial('Escolas - contrato atual', () => {
+  test('lista a escola sintética, combina busca e tipo, e abre seus detalhes', async ({ page }) => {
+    const school = await seededSchool()
+    await openSchools(page)
+
     const table = page.getByRole('table')
-    const grid = page.locator('[class*="grid"]')
-    
-    await expect(table.or(grid)).toBeVisible()
+    await expect(table).toBeVisible()
+    await expect(table.getByRole('columnheader')).toHaveText([
+      'Escola',
+      'Diretor',
+      'Tipo',
+      'Ocupação',
+      'Contato',
+      'Status',
+      'Ações',
+    ])
+
+    const search = page.getByPlaceholder('Buscar por nome, código ou diretor...')
+    await search.fill(school.codigo)
+    await expect(table.locator('tbody tr')).toHaveCount(1)
+    await expect(table.locator('tbody tr').first()).toContainText(SEEDED_SCHOOL)
+
+    await page.getByRole('combobox', { name: 'Tipo', exact: true }).click()
+    await page.getByRole('option', { name: 'Creche', exact: true }).click()
+    await expect(table.locator('tbody tr')).toHaveCount(1)
+
+    await schoolDetailLink(page, school.id).click()
+    await expect(page).toHaveURL(`/dashboard/escolas/${school.id}`)
+    await expect(page.getByRole('heading', { name: SEEDED_SCHOOL, exact: true })).toBeVisible()
+    await expect(page.getByText(school.codigo, { exact: true })).toBeVisible()
   })
 
-  test('should have search functionality', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Buscar por nome, código ou diretor...')
-    await expect(searchInput).toBeVisible()
-    await expect(searchInput).toBeEditable()
-  })
+  test('cria, edita e desativa uma escola temporária com recibos de auditoria', async ({ page }) => {
+    const suffix = `${Date.now()}-${test.info().workerIndex}`
+    const codigo = schoolCode(test.info().workerIndex)
+    const name = `Escola Contrato ${suffix}`
+    const editedName = `${name} Inativa`
 
-  test('should filter schools by search term', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Buscar por nome, código ou diretor...')
-    
-    await searchInput.fill('Escola')
-    await page.waitForTimeout(500)
-    
-    // Results should be visible
-    const table = page.getByRole('table')
-    const grid = page.locator('[class*="grid"]')
-    await expect(table.or(grid)).toBeVisible()
-  })
+    await retireTemporarySchool(codigo)
 
-  test('should display school names', async ({ page }) => {
-    // Schools should be listed with names
-    const schoolNames = page.locator('text=/escola|E\\.M\\.|E\\.E\\./i').first()
-    if (await schoolNames.isVisible()) {
-      await expect(schoolNames).toBeVisible()
-    }
-  })
-
-  test('should display school codes', async ({ page }) => {
-    // Schools should show INEP codes or internal codes
-    const codePattern = page.locator('text=/\\d{6,}/').first()
-    if (await codePattern.isVisible()) {
-      await expect(codePattern).toBeVisible()
-    }
-  })
-})
-
-test.describe('Escolas - Create Form', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas/nova')
-    await waitForPageLoad(page)
-  })
-
-  test('should display create form header', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /nova escola|cadastrar escola/i })).toBeVisible()
-  })
-
-  test('should have back button', async ({ page }) => {
-    const backButton = page.getByRole('link', { name: /voltar/i })
-    await expect(backButton).toBeVisible()
-    await expect(backButton).toHaveAttribute('href', /\/escolas$/)
-  })
-
-  test('should display all required fields', async ({ page }) => {
-    await expect(page.getByLabel(/nome/i)).toBeVisible()
-    
-    // INEP code
-    const inepField = page.getByLabel(/inep|código/i)
-    if (await inepField.isVisible()) {
-      await expect(inepField).toBeVisible()
-    }
-  })
-
-  test('should have tipo/nivel field', async ({ page }) => {
-    const tipoLabel = page.locator('label').filter({ hasText: /tipo|nível|modalidade/i })
-    if (await tipoLabel.isVisible()) {
-      await expect(tipoLabel).toBeVisible()
-    }
-  })
-
-  test('should validate required nome field', async ({ page }) => {
-    const nome = page.getByLabel(/nome/i)
-    await expect(nome).toHaveAttribute('required', '')
-    await page.getByRole('button', { name: /salvar|criar|cadastrar/i }).click()
-    expect(await nome.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
-  })
-
-  test('should validate INEP code format', async ({ page }) => {
-    const inepField = page.getByLabel(/inep|código/i)
-    
-    if (await inepField.isVisible()) {
-      await inepField.fill('123') // Invalid - too short
-      await inepField.blur()
-      
-      await page.getByLabel(/nome/i).fill('Test INEP Validation')
-      
-      const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-      await saveButton.click()
-      
-      // Might show INEP validation error
-      const inepError = page.getByText(/inep.*inválido|código.*inválido/i)
-      if (await inepError.isVisible()) {
-        await expect(inepError).toBeVisible()
-      }
-    }
-  })
-
-  test('should create escola successfully', async ({ page }) => {
-    const timestamp = Date.now()
-    const escolaName = `E2E Test Escola ${timestamp}`
-    
-    // Fill required fields
-    await page.getByLabel(/nome/i).fill(escolaName)
-    
-    // INEP code (8 digits)
-    const inepField = page.getByLabel(/inep|código/i)
-    if (await inepField.isVisible()) {
-      await inepField.fill(`${timestamp.toString().slice(-8)}`)
-    }
-    
-    // Select tipo/nivel
-    const tipoSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /tipo|nível|modalidade|selecione/i 
-    }).first()
-    
-    if (await tipoSelect.isVisible()) {
-      await tipoSelect.click()
-      await page.getByRole('option').first().click()
-    }
-    
-    // Optional: endereço
-    const enderecoField = page.getByLabel(/endereço/i)
-    if (await enderecoField.isVisible()) {
-      await enderecoField.fill('Rua Teste, 123')
-    }
-    
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    await expectFormSuccess(page)
-    
-    // Should redirect
-    await expect(page).not.toHaveURL(/\/nova/)
-  })
-
-  test('should create escola with all fields', async ({ page }) => {
-    const timestamp = Date.now()
-    
-    await page.getByLabel(/nome/i).fill(`Escola Completa ${timestamp}`)
-    
-    const inepField = page.getByLabel(/inep/i)
-    if (await inepField.isVisible()) {
-      await inepField.fill(`${timestamp.toString().slice(-8)}`)
-    }
-    
-    const enderecoField = page.getByLabel(/endereço/i)
-    if (await enderecoField.isVisible()) {
-      await enderecoField.fill('Av. Principal, 456')
-    }
-    
-    const telefoneField = page.getByLabel(/telefone/i)
-    if (await telefoneField.isVisible()) {
-      await telefoneField.fill('17 3333-4444')
-    }
-    
-    const emailField = page.getByLabel(/email/i)
-    if (await emailField.isVisible()) {
-      await emailField.fill(`escola${timestamp}@teste.com`)
-    }
-    
-    const tipoSelect = page.getByRole('combobox', { name: 'Tipo de Ensino *' })
-    if (await tipoSelect.isVisible()) {
-      await tipoSelect.click()
-      await page.getByRole('option').first().click()
-    }
-    
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    await expectFormSuccess(page)
-  })
-
-  test('should show loading state during submission', async ({ page }) => {
-    const timestamp = Date.now()
-    let releaseInsert = () => {}
-    const insertPaused = new Promise<void>(resolve => { releaseInsert = resolve })
-    await page.route(/\/rest\/v1\/escolas(?:\?|$)/, async route => {
-      await insertPaused
-      await route.continue()
-    })
-    
-    await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
-    await page.getByLabel(/inep|código/i).fill(timestamp.toString().slice(-8))
-    const tipoSelect = page.getByRole('combobox', { name: 'Tipo de Ensino *' })
-    await tipoSelect.click()
-    await page.getByRole('option', { name: /creche/i }).click()
-    
-    const saveButton = page.locator('button[type="submit"]')
-    const insertionResponse = page.waitForResponse(response =>
-      response.request().method() === 'POST' && response.url().includes('/rest/v1/escolas')
-    )
-    const submission = saveButton.click()
     try {
-      await expect(saveButton).toBeDisabled()
-      await expect(saveButton).toContainText(/salvando|cadastrando/i)
-      releaseInsert()
-      const response = await insertionResponse
-      expect(response.ok()).toBe(true)
-      await submission
+      await page.goto('/dashboard/escolas/nova')
+      await waitForPageLoad(page)
+      await expect(page.getByRole('heading', { name: 'Nova Escola', exact: true })).toBeVisible()
+
+      await page.getByLabel('Nome da Escola *', { exact: true }).fill(name)
+      await page.getByLabel('Código INEP *', { exact: true }).fill(codigo)
+      await page.locator('#tipo').click()
+      await page.getByRole('option', { name: 'Creche (0-3 anos)', exact: true }).click()
+      await page.getByRole('tab', { name: 'Endereço', exact: true }).click()
+      await page.getByLabel('Logradouro *', { exact: true }).fill('Rua da Escola E2E, 100')
+      await page.getByRole('tab', { name: 'Contato', exact: true }).click()
+      await page.getByLabel('Telefone', { exact: true }).fill('34999990001')
+
+      const createResponse = page.waitForResponse(response =>
+        response.request().method() === 'POST' && response.url().includes('/rest/v1/rpc/create_governed_school'),
+      )
+      await page.getByRole('button', { name: 'Cadastrar Escola', exact: true }).click()
+      const creation = await createResponse
+      expect(creation.ok()).toBe(true)
+      const [createdReceipt] = schoolMutationReceipt.parse(await creation.json())
+      await expect(page.getByText('Escola cadastrada com sucesso!', { exact: true })).toBeVisible()
+      await expect(page).toHaveURL('/dashboard/escolas')
+
+      await expect.poll(() => temporarySchool(codigo)).not.toBeNull()
+      const created = await temporarySchool(codigo)
+      if (!created) throw new Error('Governed school creation returned no persisted record')
+      expect(created).toMatchObject({ nome: name, codigo, tipo: 'creche', ativo: true })
+      expect(created.id).toBe(createdReceipt.school_id)
+      await verifySchoolAudit(createdReceipt.audit_id, created.id, 'school_created')
+
+      const search = page.getByPlaceholder('Buscar por nome, código ou diretor...')
+      await search.fill(name)
+      await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(1)
+      await schoolDetailLink(page, created.id).click()
+      await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
+
+      await page.getByRole('button', { name: 'Editar', exact: true }).click()
+      await expect(page).toHaveURL(`/dashboard/escolas/${created.id}/editar`)
+      await page.getByLabel('Nome da Escola *', { exact: true }).fill(editedName)
+      await page.locator('#ativo').click()
+      await expect(page.getByText('Escola inativa no sistema', { exact: true })).toBeVisible()
+
+      const updateResponse = page.waitForResponse(response =>
+        response.request().method() === 'POST' && response.url().includes('/rest/v1/rpc/update_governed_school'),
+      )
+      await page.getByRole('button', { name: /salvar alterações/i }).click()
+      const update = await updateResponse
+      expect(update.ok()).toBe(true)
+      const [updatedReceipt] = schoolMutationReceipt.parse(await update.json())
+      expect(updatedReceipt.school_id).toBe(created.id)
+      await verifySchoolAudit(updatedReceipt.audit_id, created.id, 'school_updated')
+      await expect(page.getByText('Escola atualizada com sucesso!', { exact: true })).toBeVisible()
+      await expect(page).toHaveURL('/dashboard/escolas')
+
+      const updated = await temporarySchool(codigo)
+      expect(updated).toMatchObject({ id: created.id, nome: editedName, ativo: false })
+
+      await page.reload()
+      await waitForPageLoad(page)
+      await expect(page.getByRole('heading', { name: 'Escolas', exact: true })).toBeVisible()
+      await page.getByRole('combobox', { name: 'Status', exact: true }).click()
+      await page.getByRole('option', { name: 'Inativas', exact: true }).click()
+      const inactiveSearch = page.getByPlaceholder('Buscar por nome, código ou diretor...')
+      await inactiveSearch.fill(editedName)
+      // Canonical RLS hides inactive schools even from the municipal browser session.
+      await expect(page.getByText('Nenhuma escola encontrada', { exact: true })).toBeVisible()
+      await expect(schoolDetailLink(page, created.id)).toHaveCount(0)
     } finally {
-      releaseInsert()
-      await insertionResponse.catch(() => undefined)
-    }
-  })
-})
-
-test.describe('Escolas - View Details', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas')
-    await waitForPageLoad(page)
-  })
-
-  test('should navigate to detail page', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar|detalhes/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      
-      await expect(page).toHaveURL(/\/escolas\/[a-f0-9-]+/)
-      await waitForPageLoad(page)
-    }
-  })
-
-  test('should display escola information', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      // Should show school name
-      const heading = page.getByRole('heading').first()
-      await expect(heading).toBeVisible()
-      
-      const headingText = await heading.textContent()
-      expect(headingText).toBeTruthy()
-    }
-  })
-
-  test('should display INEP code', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      const inepLabel = page.getByText(/inep|código/i)
-      if (await inepLabel.isVisible()) {
-        await expect(inepLabel).toBeVisible()
-      }
-    }
-  })
-
-  test('should display linked turmas', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      // Should show turmas section
-      const turmasSection = page.getByText(/turmas|classes/i)
-      if (await turmasSection.first().isVisible()) {
-        await expect(turmasSection.first()).toBeVisible()
-      }
-    }
-  })
-
-  test('should have edit button on detail page', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      const editButton = page.getByRole('link', { name: /editar/i })
-      if (await editButton.isVisible()) {
-        await expect(editButton).toBeVisible()
-      }
-    }
-  })
-})
-
-test.describe('Escolas - Edit Form', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas')
-    await waitForPageLoad(page)
-  })
-
-  test('should navigate to edit page', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      
-      await expect(page).toHaveURL(/\/escolas\/[a-f0-9-]+\/editar/)
-      await waitForPageLoad(page)
-    }
-  })
-
-  test('should load existing data in form', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      // Name field should have value
-      const nameField = page.getByLabel(/nome/i)
-      const nameValue = await nameField.inputValue()
-      
-      expect(nameValue).toBeTruthy()
-      expect(nameValue.length).toBeGreaterThan(0)
-    }
-  })
-
-  test('should update escola name', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const nameField = page.getByLabel(/nome/i)
-      const currentName = await nameField.inputValue()
-      
-      // Append timestamp to make it unique
-      const updatedName = `${currentName} ${Date.now()}`
-      await nameField.clear()
-      await nameField.fill(updatedName)
-      
-      const saveButton = page.getByRole('button', { name: /salvar|atualizar/i })
-      await saveButton.click()
-      
-      await expectFormSuccess(page)
-    }
-  })
-
-  test('should update contact information', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const phoneField = page.getByLabel(/telefone/i)
-      if (await phoneField.isVisible()) {
-        await phoneField.clear()
-        await phoneField.fill('17 3444-5555')
-        
-        const saveButton = page.getByRole('button', { name: /salvar|atualizar/i })
-        await saveButton.click()
-        
-        await expectFormSuccess(page)
-      }
-    }
-  })
-
-  test('should cancel edit and return to list', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const nameField = page.getByLabel(/nome/i)
-      await nameField.fill('This will be cancelled')
-      
-      const cancelButton = page.getByRole('link', { name: /voltar|cancelar/i })
-      await cancelButton.click()
-      
-      await expect(page).toHaveURL(/\/escolas$/)
-    }
-  })
-})
-
-test.describe('Escolas - Delete', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas')
-    await waitForPageLoad(page)
-  })
-
-  test('should display delete button', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar|remover/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      await expect(deleteButton).toBeVisible()
-    }
-  })
-
-  test('should show confirmation dialog on delete', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar|remover/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click()
-      
-      // Should show alert dialog
-      const confirmDialog = page.getByRole('alertdialog')
-      if (await confirmDialog.isVisible()) {
-        await expect(confirmDialog).toBeVisible()
-        
-        // Should have confirm and cancel buttons
-        await expect(page.getByRole('button', { name: /confirmar|sim|excluir/i })).toBeVisible()
-        await expect(page.getByRole('button', { name: /cancelar|não/i })).toBeVisible()
-      }
-    }
-  })
-
-  test('should cancel deletion', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click()
-      
-      const confirmDialog = page.getByRole('alertdialog')
-      if (await confirmDialog.isVisible()) {
-        const cancelButton = page.getByRole('button', { name: /cancelar|não/i })
-        await cancelButton.click()
-        
-        // Dialog should close
-        await expect(confirmDialog).not.toBeVisible()
-      }
-    }
-  })
-
-  test('should prevent deletion if escola has linked turmas', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      const isDisabled = await deleteButton.isDisabled()
-      
-      if (!isDisabled) {
-        await deleteButton.click()
-        
-        // Might show warning message
-        const warningMessage = page.getByText(/possui.*turmas|não.*pode.*excluir|vinculado/i)
-        if (await warningMessage.isVisible()) {
-          await expect(warningMessage).toBeVisible()
-        }
-      }
-    }
-  })
-})
-
-test.describe('Escolas - Stats and Metrics', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas')
-    await waitForPageLoad(page)
-  })
-
-  test('should display total escolas count', async ({ page }) => {
-    const statsContainer = page.locator('.grid').first()
-    
-    if (await statsContainer.isVisible()) {
-      const totalStat = page.getByText(/total|todas.*escolas/i)
-      if (await totalStat.isVisible()) {
-        await expect(totalStat).toBeVisible()
-      }
-    }
-  })
-
-  test('should show student count per escola', async ({ page }) => {
-    // Look for indicators showing number of students per school
-    const countBadge = page.locator('text=/\\d+\\s*(aluno|estudante)/i').first()
-    
-    if (await countBadge.isVisible()) {
-      await expect(countBadge).toBeVisible()
-    }
-  })
-})
-
-test.describe('Escolas - Navigation', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/escolas')
-    await waitForPageLoad(page)
-  })
-
-  test('should navigate from escola to turmas list', async ({ page }) => {
-    const turmasLink = page.getByRole('link', { name: /turmas/i }).first()
-    
-    if (await turmasLink.isVisible()) {
-      await turmasLink.click()
-      
-      await expect(page).toHaveURL(/\/turmas/)
-      await waitForPageLoad(page)
+      await retireTemporarySchool(codigo)
     }
   })
 })

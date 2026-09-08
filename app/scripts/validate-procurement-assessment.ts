@@ -6,11 +6,13 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateProcurementAssessment } from '../lib/wayfinder/procurement-assessment'
+import type { JsonValue } from '../lib/validation/external-values'
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const assessmentPath = path.join(repositoryRoot, 'data', 'wayfinder', 'educa', 'procurement-assessment', 'assessment.json')
 
-const assessment = JSON.parse(readFileSync(assessmentPath, 'utf8')) as unknown
+// SAFETY: the adjacent fixture/parser boundary establishes the asserted contract.
+const assessment = JSON.parse(readFileSync(assessmentPath, 'utf8')) as JsonValue
 const report = validateProcurementAssessment(assessment)
 
 console.info(`PROCUREMENT_ASSESSMENT_VALIDATION_RECEIPT: ${JSON.stringify(report)}`)

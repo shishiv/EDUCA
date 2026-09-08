@@ -1,643 +1,103 @@
+import { createClient } from '@supabase/supabase-js'
 import { test, expect } from '../support/diagnostics'
-import type { Page } from '@playwright/test'
-import { waitForPageLoad } from '../utils/test-helpers'
+import { loginAs } from '../utils/test-helpers'
+import type { Database } from '@/types/database'
 
-/**
- * E2E Tests: Diário de Classe - Create Entry
- * Tests for creating new class diary entries/registrations
- * 
- * @see app/(dashboard)/dashboard/alunos/[id]/diario/novo/page.tsx
- */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-test.describe('Diário - Create Access', () => {
+function getLocalServiceClient() {
+  if (!new URL(SUPABASE_URL).hostname.match(/^(127\.0\.0\.1|localhost)$/)) {
+    throw new Error('Diary creation E2E requires a loopback Supabase URL')
+  }
+  if (!SUPABASE_SERVICE_KEY.startsWith('sb_secret_')) {
+    throw new Error('Diary creation E2E requires the local Supabase service key')
+  }
+  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+let studentId = ''
+
+test.beforeAll(async () => {
+  const service = getLocalServiceClient()
+  const { data, error } = await service
+    .from('alunos')
+    .select('id')
+    .eq('nome_completo', 'Pedro Silva E2E')
+    .single()
+  if (error || !data) throw error || new Error('VIVENCIA_E2E_STUDENT_MISSING')
+  studentId = data.id
+})
+
+test.describe('Diário Infantil - criação disponível ao professor titular', () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/alunos')
-    await waitForPageLoad(page)
+    await loginAs(page, 'professor@test.com')
+    await expect(page.getByText('Painel do Professor')).toBeVisible()
   })
 
-  test('should access diary creation from student profile', async ({ page }) => {
-    await page.waitForTimeout(1000)
-    
-    // Click on first student
-    const firstStudent = page.getByRole('row').nth(1)
-    const viewButton = firstStudent.getByRole('link').first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await page.waitForTimeout(1000)
-      
-      // Look for diary tab/link
-      const diarioLink = page.getByRole('link', { name: /diário|vivências/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(1000)
-        
-        // Look for "New" button
-        const newButton = page.getByRole('button', { name: /nova.*vivência|novo.*registro|adicionar/i })
-        if (await newButton.isVisible()) {
-          await expect(newButton).toBeVisible()
-        }
+  test('opens the implemented form from the student diary and cancels without writing', async ({ page }) => {
+    const createRequests: string[] = []
+    page.on('request', request => {
+      if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/vivencias') {
+        createRequests.push(request.url())
       }
-    }
+    })
+
+    await page.goto(`/dashboard/alunos/${studentId}/diario`)
+    await expect(page.getByRole('heading', { name: 'Diario Infantil', exact: true })).toBeVisible()
+
+    const newVivencia = page.getByRole('link', { name: 'Nova Vivencia', exact: true })
+    await expect(newVivencia).toHaveAttribute('href', `/dashboard/alunos/${studentId}/diario/novo`)
+    await newVivencia.click()
+    await expect(page).toHaveURL(new RegExp(`/dashboard/alunos/${studentId}/diario/novo$`))
+
+    const form = page.getByRole('form', { name: 'Registrar vivência de Pedro Silva E2E' })
+    await expect(form).toBeVisible()
+    await expect(form.getByText('Pedro Silva E2E', { exact: true })).toBeVisible()
+
+    const date = form.getByLabel('Data da Vivência *', { exact: true })
+    await expect(date).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
+    await expect(date).toHaveAttribute('max', new Date().toISOString().slice(0, 10))
+
+    const campos = form.getByRole('checkbox')
+    await expect(campos).toHaveCount(5)
+    await campos.nth(0).press('Space')
+    await campos.nth(1).click()
+    await expect(campos.nth(0)).toHaveAttribute('aria-checked', 'true')
+    await expect(campos.nth(1)).toHaveAttribute('aria-checked', 'true')
+
+    await expect(form.getByLabel('Descrição da Vivência *', { exact: true })).toBeEditable()
+    await expect(form.getByLabel(/Observações Adicionais/)).toBeEditable()
+    await expect(form.getByRole('button', { name: 'Salvar Vivência', exact: true })).toBeEnabled()
+
+    await form.getByLabel('Descrição da Vivência *', { exact: true }).fill('Alteração local que será descartada ao cancelar.')
+    await form.getByRole('button', { name: 'Cancelar', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/dashboard/alunos/${studentId}/diario$`))
+    expect(createRequests).toEqual([])
   })
 
-  test('should display "New Diary Entry" button', async ({ page }) => {
-    await page.waitForTimeout(1000)
-    
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    
-    if (await firstStudent.isVisible()) {
-      await firstStudent.click()
-      await page.waitForTimeout(1000)
-      
-      const diarioLink = page.getByRole('link', { name: /diário/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(1000)
-        
-        const newButton = page.getByRole('button', { name: /nov[ao]/i })
-        if (await newButton.isVisible()) {
-          await expect(newButton).toBeVisible()
-        }
-      }
-    }
-  })
+  test('requires the implemented date, experience-field, and narrative constraints', async ({ page }) => {
+    await page.goto(`/dashboard/alunos/${studentId}/diario/novo`)
+    const form = page.getByRole('form', { name: 'Registrar vivência de Pedro Silva E2E' })
+    await expect(form).toBeVisible()
 
-  test('should navigate to creation page', async ({ page }) => {
-    // Direct navigation to diary new page (requires student ID)
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    
-    if (await firstStudent.isVisible()) {
-      await firstStudent.click()
-      await page.waitForTimeout(500)
-      
-      const diarioLink = page.getByRole('link', { name: /diário/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(500)
-        
-        const newButton = page.getByRole('button', { name: /nov[ao]/i })
-        if (await newButton.isVisible()) {
-          await newButton.click()
-          await page.waitForTimeout(500)
-          
-          // Should show form
-          await expect(page.getByText(/registrando.*vivência|nova.*vivência/i)).toBeVisible()
-        }
-      }
-    }
-  })
-})
+    await form.getByLabel('Data da Vivência *', { exact: true }).clear()
+    await form.getByLabel('Descrição da Vivência *', { exact: true }).fill('Curta')
+    await form.getByRole('button', { name: 'Salvar Vivência', exact: true }).click()
 
-test.describe('Diário - Creation Form', () => {
-  // Helper to navigate to form
-  async function navigateToForm(page: Page) {
-    await page.goto('/dashboard/alunos')
-    await waitForPageLoad(page)
-    await page.waitForTimeout(1000)
-    
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    if (await firstStudent.isVisible()) {
-      await firstStudent.click()
-      await page.waitForTimeout(1000)
-      
-      const diarioLink = page.getByRole('link', { name: /diário/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(1000)
-        
-        const newButton = page.getByRole('button', { name: /nov[ao]/i })
-        if (await newButton.isVisible()) {
-          await newButton.click()
-          await page.waitForTimeout(500)
-          return true
-        }
-      }
-    }
-    return false
-  }
-
-  test('should display student name in form header', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const studentInfo = page.getByText(/registrando.*para|aluno/i)
-      if (await studentInfo.isVisible()) {
-        await expect(studentInfo).toBeVisible()
-      }
-    }
-  })
-
-  test('should display date picker with default today', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const dateInput = page.locator('input[type="date"]').first()
-      
-      if (await dateInput.isVisible()) {
-        await expect(dateInput).toBeVisible()
-        
-        const value = await dateInput.inputValue()
-        expect(value).toBeTruthy()
-      }
-    }
-  })
-
-  test('should have date field labeled correctly', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const dateLabel = page.getByText(/data.*vivência|data.*registro/i)
-      if (await dateLabel.isVisible()) {
-        await expect(dateLabel).toBeVisible()
-      }
-    }
-  })
-
-  test('should display campo de experiencia selector', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const campoLabel = page.getByText(/campos.*experiência/i)
-      if (await campoLabel.isVisible()) {
-        await expect(campoLabel).toBeVisible()
-      }
-    }
-  })
-
-  test('should display description textarea', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const descriptionLabel = page.getByText(/descrição.*vivência/i)
-      if (await descriptionLabel.isVisible()) {
-        await expect(descriptionLabel).toBeVisible()
-        
-        const textarea = page.locator('textarea').first()
-        await expect(textarea).toBeVisible()
-      }
-    }
-  })
-
-  test('should display observations field (optional)', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const obsLabel = page.getByText(/observações.*adicionais/i)
-      if (await obsLabel.isVisible()) {
-        await expect(obsLabel).toBeVisible()
-      }
-    }
-  })
-
-  test('should have save and cancel buttons', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const saveButton = page.getByRole('button', { name: /salvar/i })
-      const cancelButton = page.getByRole('button', { name: /cancelar/i })
-      
-      if (await saveButton.isVisible()) {
-        await expect(saveButton).toBeVisible()
-      }
-      
-      if (await cancelButton.isVisible()) {
-        await expect(cancelButton).toBeVisible()
-      }
-    }
-  })
-})
-
-test.describe('Diário - Form Validation', () => {
-  async function navigateToForm(page: Page) {
-    await page.goto('/dashboard/alunos')
-    await waitForPageLoad(page)
-    await page.waitForTimeout(1000)
-    
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    if (await firstStudent.isVisible()) {
-      await firstStudent.click()
-      await page.waitForTimeout(1000)
-      
-      const diarioLink = page.getByRole('link', { name: /diário/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(1000)
-        
-        const newButton = page.getByRole('button', { name: /nov[ao]/i })
-        if (await newButton.isVisible()) {
-          await newButton.click()
-          await page.waitForTimeout(500)
-          return true
-        }
-      }
-    }
-    return false
-  }
-
-  test('should require date field', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const dateInput = page.locator('input[type="date"]').first()
-      
-      if (await dateInput.isVisible()) {
-        await dateInput.clear()
-        await dateInput.blur()
-        
-        // Should show validation error
-        const error = page.getByText(/data.*obrigatória|campo.*obrigatório/i)
-        if (await error.isVisible({ timeout: 2000 })) {
-          await expect(error).toBeVisible()
-        }
-      }
-    }
-  })
-
-  test('should require at least one campo de experiencia', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const textarea = page.locator('textarea').first()
-      
-      if (await textarea.isVisible()) {
-        await textarea.fill('Test description with enough characters to pass validation')
-        
-        const saveButton = page.getByRole('button', { name: /salvar/i })
-        if (await saveButton.isVisible()) {
-          await saveButton.click()
-          await page.waitForTimeout(500)
-          
-          // Should show validation error
-          const error = page.getByText(/selecione.*campo|campo.*obrigatório/i)
-          if (await error.isVisible()) {
-            await expect(error).toBeVisible()
-          }
-        }
-      }
-    }
-  })
-
-  test('should validate description minimum length', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const textarea = page.locator('textarea').first()
-      
-      if (await textarea.isVisible()) {
-        await textarea.fill('abc')
-        await textarea.blur()
-        await page.waitForTimeout(300)
-        
-        // Should show character count or error
-        const charInfo = page.getByText(/\d+\/\d+|mínimo.*\d+.*caracteres/i)
-        if (await charInfo.isVisible()) {
-          await expect(charInfo).toBeVisible()
-        }
-      }
-    }
-  })
-
-  test('should validate description maximum length', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const textarea = page.locator('textarea').first()
-      
-      if (await textarea.isVisible()) {
-        // Try to fill with very long text
-        const longText = 'a'.repeat(2000)
-        await textarea.fill(longText)
-        await page.waitForTimeout(300)
-        
-        // Should show character count warning
-        const charCount = page.getByText(/\d+\/\d+/)
-        if (await charCount.isVisible()) {
-          await expect(charCount).toBeVisible()
-        }
-      }
-    }
-  })
-
-  test('should prevent future dates', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const dateInput = page.locator('input[type="date"]').first()
-      
-      if (await dateInput.isVisible()) {
-        const futureDate = new Date()
-        futureDate.setDate(futureDate.getDate() + 7)
-        const futureDateStr = futureDate.toISOString().split('T')[0]
-        
-        await dateInput.fill(futureDateStr)
-        await dateInput.blur()
-        await page.waitForTimeout(300)
-        
-        // HTML5 max attribute should prevent future dates
-        const maxAttr = await dateInput.getAttribute('max')
-        expect(maxAttr).toBeTruthy()
-      }
-    }
-  })
-})
-
-test.describe('Diário - Form Interaction', () => {
-  async function navigateToForm(page: Page) {
-    await page.goto('/dashboard/alunos')
-    await waitForPageLoad(page)
-    await page.waitForTimeout(1000)
-    
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    if (await firstStudent.isVisible()) {
-      await firstStudent.click()
-      await page.waitForTimeout(1000)
-      
-      const diarioLink = page.getByRole('link', { name: /diário/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(1000)
-        
-        const newButton = page.getByRole('button', { name: /nov[ao]/i })
-        if (await newButton.isVisible()) {
-          await newButton.click()
-          await page.waitForTimeout(500)
-          return true
-        }
-      }
-    }
-    return false
-  }
-
-  test('should allow selecting multiple campos de experiencia', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      // Look for campo buttons/checkboxes
-      const campoButtons = page.locator('[role="button"], button, [type="checkbox"]').filter({ hasText: /eu|corpo|traços|escuta|espaços/i })
-      
-      if (await campoButtons.first().isVisible()) {
-        const count = await campoButtons.count()
-        
-        if (count >= 2) {
-          await campoButtons.first().click()
-          await page.waitForTimeout(200)
-          await campoButtons.nth(1).click()
-          await page.waitForTimeout(200)
-          
-          // Both should be selected
-          expect(count).toBeGreaterThanOrEqual(2)
-        }
-      }
-    }
-  })
-
-  test('should update character count as typing', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const textarea = page.locator('textarea').first()
-      
-      if (await textarea.isVisible()) {
-        await textarea.fill('Testing character count update')
-        await page.waitForTimeout(300)
-        
-        const charCount = page.getByText(/\d+\/\d+/)
-        if (await charCount.isVisible()) {
-          const text = await charCount.textContent()
-          expect(text).toMatch(/\d+/)
-        }
-      }
-    }
-  })
-
-  test('should allow filling observations field', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const textareas = page.locator('textarea')
-      
-      if (await textareas.count() >= 2) {
-        const obsTextarea = textareas.last()
-        await obsTextarea.fill('Additional observations for this entry')
-        
-        const value = await obsTextarea.inputValue()
-        expect(value).toBe('Additional observations for this entry')
-      }
-    }
-  })
-
-  test('should cancel form and return to list', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const cancelButton = page.getByRole('button', { name: /cancelar/i })
-      
-      if (await cancelButton.isVisible()) {
-        await cancelButton.click()
-        await page.waitForTimeout(500)
-        
-        // Form should close or navigate back
-        const form = page.getByText(/registrando.*vivência/i)
-        await expect(form).not.toBeVisible({ timeout: 2000 })
-      }
-    }
-  })
-
-  test('should disable save button while submitting', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      // Fill form completely
-      const textarea = page.locator('textarea').first()
-      if (await textarea.isVisible()) {
-        await textarea.fill('This is a complete description with enough characters to pass validation requirements')
-      }
-      
-      // Select a campo
-      const campoButton = page.locator('button, [role="button"]').filter({ hasText: /eu|corpo/i }).first()
-      if (await campoButton.isVisible()) {
-        await campoButton.click()
-        await page.waitForTimeout(200)
-      }
-      
-      const saveButton = page.getByRole('button', { name: /salvar/i })
-      if (await saveButton.isVisible()) {
-        // Click save
-        await saveButton.click()
-        
-        // Button should show loading state
-        const savingButton = page.getByRole('button', { name: /salvando/i })
-        if (await savingButton.isVisible({ timeout: 1000 })) {
-          await expect(savingButton).toBeVisible()
-        }
-      }
-    }
-  })
-})
-
-test.describe('Diário - Successful Creation', () => {
-  async function fillAndSubmitForm(page: Page) {
-    await page.goto('/dashboard/alunos')
-    await waitForPageLoad(page)
-    await page.waitForTimeout(1000)
-    
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    if (!(await firstStudent.isVisible())) return false
-    
-    await firstStudent.click()
-    await page.waitForTimeout(1000)
-    
-    const diarioLink = page.getByRole('link', { name: /diário/i })
-    if (!(await diarioLink.isVisible())) return false
-    
-    await diarioLink.click()
-    await page.waitForTimeout(1000)
-    
-    const newButton = page.getByRole('button', { name: /nov[ao]/i })
-    if (!(await newButton.isVisible())) return false
-    
-    await newButton.click()
-    await page.waitForTimeout(500)
-    
-    // Fill form
-    const textarea = page.locator('textarea').first()
-    if (!(await textarea.isVisible())) return false
-    
-    await textarea.fill('Esta é uma descrição completa de uma vivência observada com a criança. A interação demonstrou desenvolvimento em múltiplas áreas.')
-    
-    // Select campo
-    const campoButton = page.locator('button, [role="button"]').filter({ hasText: /eu|corpo|traços/i }).first()
-    if (await campoButton.isVisible()) {
-      await campoButton.click()
-      await page.waitForTimeout(200)
-    }
-    
-    // Submit
-    const saveButton = page.getByRole('button', { name: /salvar/i })
-    if (await saveButton.isVisible()) {
-      await saveButton.click()
-      return true
-    }
-    
-    return false
-  }
-
-  test('should submit form successfully', async ({ page }) => {
-    const success = await fillAndSubmitForm(page)
-    
-    if (success) {
-      // Wait for success message
-      await page.waitForTimeout(2000)
-      
-      const successMessage = page.getByText(/sucesso|salv[oa]|criado|registrado/i)
-      if (await successMessage.isVisible({ timeout: 5000 })) {
-        await expect(successMessage).toBeVisible()
-      }
-    }
-  })
-
-  test('should redirect to diary list after creation', async ({ page }) => {
-    const success = await fillAndSubmitForm(page)
-    
-    if (success) {
-      await page.waitForTimeout(3000)
-      
-      // Should be back on diary list
-      const list = page.getByText(/vivências|registros|histórico/i)
-      if (await list.isVisible()) {
-        await expect(list).toBeVisible()
-      }
-    }
-  })
-
-  test('should display new entry in list', async ({ page }) => {
-    const success = await fillAndSubmitForm(page)
-    
-    if (success) {
-      await page.waitForTimeout(3000)
-      
-      // New entry should appear in list
-      const entries = page.locator('[class*="vivencia"], [data-testid*="entry"]')
-      if (await entries.first().isVisible()) {
-        const count = await entries.count()
-        expect(count).toBeGreaterThan(0)
-      }
-    }
-  })
-})
-
-test.describe('Diário - Form Accessibility', () => {
-  async function navigateToForm(page: Page) {
-    await page.goto('/dashboard/alunos')
-    await waitForPageLoad(page)
-    await page.waitForTimeout(1000)
-    
-    const firstStudent = page.getByRole('row').nth(1).getByRole('link').first()
-    if (await firstStudent.isVisible()) {
-      await firstStudent.click()
-      await page.waitForTimeout(1000)
-      
-      const diarioLink = page.getByRole('link', { name: /diário/i })
-      if (await diarioLink.isVisible()) {
-        await diarioLink.click()
-        await page.waitForTimeout(1000)
-        
-        const newButton = page.getByRole('button', { name: /nov[ao]/i })
-        if (await newButton.isVisible()) {
-          await newButton.click()
-          await page.waitForTimeout(500)
-          return true
-        }
-      }
-    }
-    return false
-  }
-
-  test('should have proper labels for all fields', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      const dateLabel = page.getByLabel(/data/i)
-      const descriptionLabel = page.getByLabel(/descrição/i)
-      
-      if (await dateLabel.isVisible()) {
-        await expect(dateLabel).toBeVisible()
-      }
-      
-      if (await descriptionLabel.isVisible()) {
-        await expect(descriptionLabel).toBeVisible()
-      }
-    }
-  })
-
-  test('should indicate required fields', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      // Look for asterisks or "required" indicators
-      const requiredIndicators = page.locator('[class*="text-red"], .text-destructive').filter({ hasText: /\*/ })
-      
-      if (await requiredIndicators.first().isVisible()) {
-        const count = await requiredIndicators.count()
-        expect(count).toBeGreaterThan(0)
-      }
-    }
-  })
-
-  test('should allow keyboard navigation', async ({ page }) => {
-    const success = await navigateToForm(page)
-    
-    if (success) {
-      // Tab through form fields
-      await page.keyboard.press('Tab')
-      await page.waitForTimeout(100)
-      await page.keyboard.press('Tab')
-      await page.waitForTimeout(100)
-      
-      // Focus should move through fields
-      const focusedElement = page.locator(':focus')
-      await expect(focusedElement).toBeVisible()
-    }
+    await expect(form.getByRole('alert').filter({
+      hasText: 'A data da vivência é obrigatória',
+    })).toBeVisible()
+    await expect(form.getByRole('alert').filter({
+      hasText: 'Selecione pelo menos um Campo de Experiência',
+    })).toBeVisible()
+    await expect(form.getByRole('alert').filter({
+      hasText: 'A descrição deve ter no mínimo 20 caracteres',
+    })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`/dashboard/alunos/${studentId}/diario/novo$`))
   })
 })

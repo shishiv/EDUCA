@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { Client as PostgresClient } from 'pg'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Page } from '@playwright/test'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -43,6 +43,13 @@ interface SchoolScopedRow {
 interface ConditionalityRow {
   aluno_id: string
   escola_id: string
+}
+
+interface SecurityClients {
+  secretariatClient: SupabaseClient
+  directorClient: SupabaseClient
+  otherDirectorClient: SupabaseClient
+  teacherClient: SupabaseClient
 }
 
 function createServiceClient() {
@@ -105,13 +112,11 @@ async function removeFixtureRows() {
   const optInDelete = await service
     .from('whatsapp_notification_optins')
     .delete()
-    .eq('id', fixtureOptIn)
+    .eq('responsavel_id', fixtureGuardian)
   if (optInDelete.error) throw optInDelete.error
 }
 
-async function prepareFixture() {
-  await removeFixtureRows()
-  const service = createServiceClient()
+async function loadFixtureActorIds(service: SupabaseClient) {
   const profiles = await service
     .from('users')
     .select('id,email')
@@ -120,7 +125,9 @@ async function prepareFixture() {
   teacherUserId = profiles.data?.find(profile => profile.email === teacherA)?.id || ''
   directorAUserId = profiles.data?.find(profile => profile.email === directorA)?.id || ''
   if (!teacherUserId || !directorAUserId) throw new Error('SECURITY_E2E_PROFILE_FIXTURE_MISSING')
+}
 
+async function insertFixtureClasses(service: SupabaseClient) {
   const classes = await service.from('turmas').insert([
     {
       id: fixtureClass,
@@ -146,7 +153,9 @@ async function prepareFixture() {
     },
   ])
   if (classes.error) throw classes.error
+}
 
+async function insertFixtureStudents(service: SupabaseClient) {
   const students = await service.from('alunos').insert([
     {
       id: fixtureStudent,
@@ -168,7 +177,9 @@ async function prepareFixture() {
     },
   ])
   if (students.error) throw students.error
+}
 
+async function writeSensitiveFixtureValues() {
   const database = new PostgresClient({ connectionString: databaseUrl })
   await database.connect()
   try {
@@ -185,7 +196,9 @@ async function prepareFixture() {
     await database.query('ALTER TABLE public.alunos ENABLE TRIGGER pilot_high_risk_student_guard')
     await database.end()
   }
+}
 
+async function insertFixtureEnrollments(service: SupabaseClient) {
   const enrollments = await service.from('matriculas').insert([
     {
       id: fixtureEnrollment,
@@ -203,7 +216,9 @@ async function prepareFixture() {
     },
   ])
   if (enrollments.error) throw enrollments.error
+}
 
+async function insertFixtureSessions(service: SupabaseClient) {
   const sessions = await service.from('sessoes_aula').insert([
     {
       id: fixtureSession,
@@ -237,7 +252,9 @@ async function prepareFixture() {
     },
   ])
   if (sessions.error) throw sessions.error
+}
 
+async function insertFixtureContentAndReport(service: SupabaseClient) {
   const content = await service.from('conteudo_aula').insert([
     {
       id: fixtureContent,
@@ -276,10 +293,221 @@ async function prepareFixture() {
   if (report.error) throw report.error
 }
 
+async function prepareFixture() {
+  await removeFixtureRows()
+  const service = createServiceClient()
+  await loadFixtureActorIds(service)
+  await insertFixtureClasses(service)
+  await insertFixtureStudents(service)
+  await writeSensitiveFixtureValues()
+  await insertFixtureEnrollments(service)
+  await insertFixtureSessions(service)
+  await insertFixtureContentAndReport(service)
+}
+
 async function getUserId(client: SupabaseClient) {
   const { data, error } = await client.auth.getUser()
   if (error || !data.user) throw error || new Error('SECURITY_E2E_USER_MISSING')
   return data.user.id
+}
+
+async function createSecurityClients(): Promise<SecurityClients> {
+  const [secretariatClient, directorClient, otherDirectorClient, teacherClient] = await Promise.all([
+    signedInClient(secretariat),
+    signedInClient(directorA),
+    signedInClient(directorB),
+    signedInClient(teacherA),
+  ])
+  return { secretariatClient, directorClient, otherDirectorClient, teacherClient }
+}
+
+async function assertRoleScopedReads(clients: SecurityClients) {
+  const { secretariatClient, directorClient, otherDirectorClient, teacherClient } = clients
+  const [secretariatStudents, directorStudents, otherDirectorStudents, teacherClasses] = await Promise.all([
+    secretariatClient.from('alunos').select('id,escola_id'),
+    directorClient.from('alunos').select('id,escola_id'),
+    otherDirectorClient.from('alunos').select('id,escola_id'),
+    teacherClient.from('turmas').select('id,escola_id'),
+  ])
+  expect(secretariatStudents.error).toBeNull()
+  expect(directorStudents.error).toBeNull()
+  expect(otherDirectorStudents.error).toBeNull()
+  expect(teacherClasses.error).toBeNull()
+  expect(secretariatStudents.data?.some((row: SchoolScopedRow) => row.id === fixtureStudent)).toBe(true)
+  expect(directorStudents.data?.every((row: SchoolScopedRow) => row.escola_id === schoolA)).toBe(true)
+  expect(otherDirectorStudents.data?.every((row: SchoolScopedRow) => row.escola_id === schoolB)).toBe(true)
+  expect(teacherClasses.data?.map((row: SchoolScopedRow) => row.id)).toEqual(expect.arrayContaining([
+    '30000000-0000-0000-0000-000000000001',
+    fixtureClass,
+  ]))
+  expect(teacherClasses.data?.some((row: SchoolScopedRow) => row.id === fixtureNonTitularClass)).toBe(false)
+}
+
+async function assertSensitiveColumnDenials(teacherClient: SupabaseClient) {
+  const [teacherGuardianSensitive, teacherStudentSensitive] = await Promise.all([
+    teacherClient.from('responsaveis').select('cpf,telefone,renda_familiar').eq('escola_id', schoolA).limit(1),
+    teacherClient.from('alunos').select('cpf,nome_mae,nome_pai,necessidades_especiais').eq('id', fixtureStudent),
+  ])
+  expect(teacherGuardianSensitive.error).not.toBeNull()
+  expect(teacherGuardianSensitive.data).toBeNull()
+  expect(teacherStudentSensitive.error).not.toBeNull()
+  expect(teacherStudentSensitive.data).toBeNull()
+}
+
+async function assertConditionalityAccess(clients: SecurityClients) {
+  const { secretariatClient, directorClient, otherDirectorClient, teacherClient } = clients
+  const rpcArgs = { p_start_date: '2026-08-01', p_end_date: '2026-08-31' }
+  const [secretariatRpc, directorRpc, otherDirectorRpc, teacherRpc] = await Promise.all([
+    secretariatClient.rpc('get_attendance_conditionality', rpcArgs),
+    directorClient.rpc('get_attendance_conditionality', rpcArgs),
+    otherDirectorClient.rpc('get_attendance_conditionality', rpcArgs),
+    teacherClient.rpc('get_attendance_conditionality', rpcArgs),
+  ])
+  expect(secretariatRpc.error).toBeNull()
+  expect(directorRpc.error).toBeNull()
+  expect(otherDirectorRpc.error).toBeNull()
+  expect(teacherRpc.error).toBeNull()
+  expect(secretariatRpc.data?.some((row: ConditionalityRow) => row.aluno_id === fixtureStudent)).toBe(true)
+  expect(directorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolA)).toBe(true)
+  expect(otherDirectorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolB)).toBe(true)
+  expect(teacherRpc.data).toEqual([])
+}
+
+async function assertSensitiveProfileAccess(clients: SecurityClients) {
+  const { secretariatClient, directorClient, otherDirectorClient, teacherClient } = clients
+  const [teacherColumn, teacherScalar, secretariatScalar, directorProfiles, directorGuardianProfiles, crossSchoolProfiles] = await Promise.all([
+    teacherClient.from('alunos').select('bolsa_familia').eq('id', fixtureStudent),
+    teacherClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
+    secretariatClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
+    directorClient.rpc('get_authorized_student_profiles', { p_student_id: fixtureStudent, p_school_id: schoolA }),
+    directorClient.rpc('get_authorized_guardian_profiles', { p_guardian_id: fixtureGuardian, p_school_id: schoolA }),
+    otherDirectorClient.rpc('get_authorized_student_profiles', { p_student_id: fixtureStudent, p_school_id: schoolA }),
+  ])
+  expect(teacherColumn.error).not.toBeNull()
+  expect(teacherScalar.error).toBeNull()
+  expect(teacherScalar.data).toBeNull()
+  expect(secretariatScalar.error).toBeNull()
+  expect(secretariatScalar.data).toBe(true)
+  expect(directorProfiles.error).toBeNull()
+  expect(directorProfiles.data).toHaveLength(1)
+  expect(directorGuardianProfiles.error).toBeNull()
+  expect(directorGuardianProfiles.data).toHaveLength(1)
+  expect(crossSchoolProfiles.error).toBeNull()
+  expect(crossSchoolProfiles.data).toEqual([])
+}
+
+async function assertConfiguredVisibility(directorClient: SupabaseClient) {
+  const disabledForDirection = await directorClient
+    .from('configs')
+    .update({ valor: 'admin,secretario', updated_at: new Date().toISOString() })
+    .eq('escola_id', schoolA)
+    .eq('chave', 'bolsa_familia_visible_roles')
+    .select('valor')
+    .single()
+  expect(disabledForDirection.error).toBeNull()
+  const configuredDirectorScalar = await directorClient.rpc('get_student_bolsa_familia', {
+    p_student_id: fixtureStudent,
+  })
+  expect(configuredDirectorScalar.error).toBeNull()
+  expect(configuredDirectorScalar.data).toBeNull()
+  const restoreVisibility = await createServiceClient()
+    .from('configs')
+    .update({ valor: 'admin,diretor,secretario', updated_at: new Date().toISOString() })
+    .eq('escola_id', schoolA)
+    .eq('chave', 'bolsa_familia_visible_roles')
+  expect(restoreVisibility.error).toBeNull()
+}
+
+async function assertScopedViews(clients: SecurityClients) {
+  const { secretariatClient, directorClient, otherDirectorClient, teacherClient } = clients
+  const [conditionalityView, teacherConditionalityView, legacyView, secretariatReports, otherDirectorReports] = await Promise.all([
+    directorClient.from('vw_frequencia_condicionalidade').select('aluno_id,escola_id'),
+    teacherClient.from('vw_frequencia_condicionalidade').select('aluno_id,escola_id'),
+    secretariatClient.from('vw_alunos_risco_bolsa_familia').select('aluno_id'),
+    secretariatClient.from('relatorios_descritivos').select('id').eq('id', fixtureReport),
+    otherDirectorClient.from('relatorios_descritivos').select('id').eq('id', fixtureReport),
+  ])
+  expect(conditionalityView.error).toBeNull()
+  expect(conditionalityView.data?.every(row => row.escola_id === schoolA)).toBe(true)
+  expect(teacherConditionalityView.error).toBeNull()
+  expect(teacherConditionalityView.data).toEqual([])
+  expect(legacyView.error).not.toBeNull()
+  expect(secretariatReports.error).toBeNull()
+  expect(secretariatReports.data).toHaveLength(1)
+  expect(otherDirectorReports.error).toBeNull()
+  expect(otherDirectorReports.data).toHaveLength(0)
+}
+
+async function assertWriteBoundaries(clients: SecurityClients) {
+  const { secretariatClient, directorClient, teacherClient } = clients
+  const secretaryWrite = await secretariatClient.from('alunos').insert({
+    id: '40000000-0000-0000-0000-000000000090', escola_id: schoolA,
+    nome_completo: 'Escrita Secretaria Security E2E', data_nascimento: '2018-04-01', sexo: 'F',
+  })
+  expect(secretaryWrite.error).not.toBeNull()
+  const crossSchoolDirectorWrite = await directorClient.from('alunos').insert({
+    id: '40000000-0000-0000-0000-000000000091', escola_id: schoolB,
+    nome_completo: 'Escrita Cruzada Security E2E', data_nascimento: '2018-04-02', sexo: 'M',
+  })
+  expect(crossSchoolDirectorWrite.error).not.toBeNull()
+  const teacherNonTitularWrite = await teacherClient.from('conteudo_aula').insert({
+    id: fixtureRejectedContent, sessao_id: fixtureNonTitularSession,
+    tema: 'Escrita fora da titularidade Security E2E', objetivo: 'Deve falhar',
+    habilidades_bncc: ['SEC-E2E-BREAK'], created_by: await getUserId(teacherClient),
+  })
+  expect(teacherNonTitularWrite.error).not.toBeNull()
+  const teacherTitularWrite = await teacherClient.from('conteudo_aula').insert({
+    id: fixtureTeacherCreatedContent, sessao_id: fixturePositiveSession,
+    tema: 'Escrita titular Security E2E', objetivo: 'Deve passar',
+    habilidades_bncc: ['SEC-E2E-PASS'], created_by: await getUserId(teacherClient),
+  })
+  expect(teacherTitularWrite.error).toBeNull()
+}
+
+async function assertDirectorReportPage(page: Page) {
+  await page.goto('/relatorios/bolsa-familia')
+  await expect(page.getByRole('heading', { level: 1, name: 'Relatório Bolsa Família', exact: true })).toBeVisible()
+  await page.getByRole('tab', { name: 'Tabela Completa', exact: true }).click()
+  await expect(page.getByRole('cell', { name: 'Aluno Security E2E', exact: true })).toBeVisible()
+}
+
+async function assertTeacherBrowserBoundary(browser: Browser, teacherClient: SupabaseClient) {
+  const teacherContext = await browser.newContext({ ignoreHTTPSErrors: true })
+  const teacherPage = await teacherContext.newPage()
+  const teacherConsoleMessages: string[] = []
+  teacherPage.on('console', message => teacherConsoleMessages.push(message.text()))
+  try {
+    await loginInBrowser(teacherPage, teacherA)
+    await expect(teacherPage.getByRole('link', { name: /relatórios/i })).toHaveCount(0)
+    await teacherPage.goto('/relatorios/bolsa-familia')
+    await expect(teacherPage).toHaveURL(/\/unauthorized/)
+    const routePayloads = await teacherPage.evaluate(async () => Promise.all([
+      fetch('/api/compliance/warnings').then(response => response.text()),
+      fetch('/api/dashboard/alerts').then(response => response.text()),
+    ]))
+    expect(routePayloads.join('\n')).not.toMatch(/bolsa.família|bolsa-familia|NIS-SYNTHETIC-SECURITY-E2E|CPF-SYNTHETIC-SECURITY-E2E|MAE-SYNTHETIC-SECURITY-E2E|PAI-SYNTHETIC-SECURITY-E2E|NEE-SYNTHETIC-SECURITY-E2E|GUARDIAN-CPF-SYNTHETIC-E2E|GUARDIAN-PHONE-SYNTHETIC-E2E/i)
+    const { data: sessionData } = await teacherClient.auth.getSession()
+    const browserSensitiveDenials = await teacherPage.evaluate(async ({ apiUrl, apiKey, accessToken }) => {
+      const headers = { apikey: apiKey, Authorization: `Bearer ${accessToken}` }
+      const responses = await Promise.all([
+        fetch(`${apiUrl}/rest/v1/responsaveis?select=cpf,telefone,renda_familiar&limit=1`, { headers }),
+        fetch(`${apiUrl}/rest/v1/alunos?select=cpf,nome_mae,nome_pai,necessidades_especiais&limit=1`, { headers }),
+      ])
+      return responses.map(response => response.status >= 400)
+    }, { apiUrl: supabaseUrl, apiKey: anonKey, accessToken: sessionData.session?.access_token ?? '' })
+    expect(browserSensitiveDenials).toEqual([true, true])
+    expect(teacherConsoleMessages.join('\n')).not.toMatch(/CPF-SYNTHETIC-SECURITY-E2E|MAE-SYNTHETIC-SECURITY-E2E|PAI-SYNTHETIC-SECURITY-E2E|NEE-SYNTHETIC-SECURITY-E2E|GUARDIAN-CPF-SYNTHETIC-E2E|GUARDIAN-PHONE-SYNTHETIC-E2E/i)
+  } finally {
+    await teacherContext.close()
+  }
+}
+
+async function assertTeacherCannotDeleteCreatedContent(teacherClient: SupabaseClient) {
+  const teacherDelete = await teacherClient
+    .from('conteudo_aula')
+    .delete()
+    .eq('id', fixtureTeacherCreatedContent)
+  expect(teacherDelete.error).not.toBeNull()
 }
 
 test.describe.serial('isolated governed pilot security hardening', () => {
@@ -299,200 +527,17 @@ test.describe.serial('isolated governed pilot security hardening', () => {
   test('proves the three roles, conditionality release, and negative writes at PostgREST', async ({ page, browser }) => {
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/dashboard/)
-
-    const [secretariatClient, directorClient, otherDirectorClient, teacherClient] = await Promise.all([
-      signedInClient(secretariat),
-      signedInClient(directorA),
-      signedInClient(directorB),
-      signedInClient(teacherA),
-    ])
-
-    const [secretariatStudents, directorStudents, otherDirectorStudents, teacherClasses] = await Promise.all([
-      secretariatClient.from('alunos').select('id,escola_id'),
-      directorClient.from('alunos').select('id,escola_id'),
-      otherDirectorClient.from('alunos').select('id,escola_id'),
-      teacherClient.from('turmas').select('id,escola_id'),
-    ])
-    expect(secretariatStudents.error).toBeNull()
-    expect(directorStudents.error).toBeNull()
-    expect(otherDirectorStudents.error).toBeNull()
-    expect(teacherClasses.error).toBeNull()
-    expect(secretariatStudents.data?.some((row: SchoolScopedRow) => row.id === fixtureStudent)).toBe(true)
-    expect(directorStudents.data?.every((row: SchoolScopedRow) => row.escola_id === schoolA)).toBe(true)
-    expect(otherDirectorStudents.data?.every((row: SchoolScopedRow) => row.escola_id === schoolB)).toBe(true)
-    expect(teacherClasses.data?.map((row: SchoolScopedRow) => row.id)).toEqual(expect.arrayContaining([
-      '30000000-0000-0000-0000-000000000001',
-      fixtureClass,
-    ]))
-    expect(teacherClasses.data?.some((row: SchoolScopedRow) => row.id === fixtureNonTitularClass)).toBe(false)
-
-    const [teacherGuardianSensitive, teacherStudentSensitive] = await Promise.all([
-      teacherClient.from('responsaveis').select('cpf,telefone,renda_familiar').eq('escola_id', schoolA).limit(1),
-      teacherClient.from('alunos').select('cpf,nome_mae,nome_pai,necessidades_especiais').eq('id', fixtureStudent),
-    ])
-    expect(teacherGuardianSensitive.error).not.toBeNull()
-    expect(teacherGuardianSensitive.data).toBeNull()
-    expect(teacherStudentSensitive.error).not.toBeNull()
-    expect(teacherStudentSensitive.data).toBeNull()
-
-    const rpcArgs = {
-      p_start_date: '2026-08-01',
-      p_end_date: '2026-08-31',
-    }
-    const [secretariatRpc, directorRpc, otherDirectorRpc, teacherRpc] = await Promise.all([
-      secretariatClient.rpc('get_attendance_conditionality', rpcArgs),
-      directorClient.rpc('get_attendance_conditionality', rpcArgs),
-      otherDirectorClient.rpc('get_attendance_conditionality', rpcArgs),
-      teacherClient.rpc('get_attendance_conditionality', rpcArgs),
-    ])
-    expect(secretariatRpc.error).toBeNull()
-    expect(directorRpc.error).toBeNull()
-    expect(otherDirectorRpc.error).toBeNull()
-    expect(teacherRpc.error).toBeNull()
-    expect(secretariatRpc.data?.some((row: ConditionalityRow) => row.aluno_id === fixtureStudent)).toBe(true)
-    expect(directorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolA)).toBe(true)
-    expect(otherDirectorRpc.data?.every((row: ConditionalityRow) => row.escola_id === schoolB)).toBe(true)
-    expect(teacherRpc.data).toEqual([])
-
-    const [teacherColumn, teacherScalar, secretariatScalar, directorProfiles, directorGuardianProfiles, crossSchoolProfiles] = await Promise.all([
-      teacherClient.from('alunos').select('bolsa_familia').eq('id', fixtureStudent),
-      teacherClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
-      secretariatClient.rpc('get_student_bolsa_familia', { p_student_id: fixtureStudent }),
-      directorClient.rpc('get_authorized_student_profiles', { p_student_id: fixtureStudent, p_school_id: schoolA }),
-      directorClient.rpc('get_authorized_guardian_profiles', { p_guardian_id: fixtureGuardian, p_school_id: schoolA }),
-      otherDirectorClient.rpc('get_authorized_student_profiles', { p_student_id: fixtureStudent, p_school_id: schoolA }),
-    ])
-    expect(teacherColumn.error).not.toBeNull()
-    expect(teacherScalar.error).toBeNull()
-    expect(teacherScalar.data).toBeNull()
-    expect(secretariatScalar.error).toBeNull()
-    expect(secretariatScalar.data).toBe(true)
-    expect(directorProfiles.error).toBeNull()
-    expect(directorProfiles.data).toHaveLength(1)
-    expect(directorGuardianProfiles.error).toBeNull()
-    expect(directorGuardianProfiles.data).toHaveLength(1)
-    expect(crossSchoolProfiles.error).toBeNull()
-    expect(crossSchoolProfiles.data).toEqual([])
-
-    const disabledForDirection = await directorClient
-      .from('configs')
-      .update({ valor: 'admin,secretario', updated_at: new Date().toISOString() })
-      .eq('escola_id', schoolA)
-      .eq('chave', 'bolsa_familia_visible_roles')
-      .select('valor')
-      .single()
-    expect(disabledForDirection.error).toBeNull()
-    const configuredDirectorScalar = await directorClient.rpc('get_student_bolsa_familia', {
-      p_student_id: fixtureStudent,
-    })
-    expect(configuredDirectorScalar.error).toBeNull()
-    expect(configuredDirectorScalar.data).toBeNull()
-    const restoreVisibility = await createServiceClient()
-      .from('configs')
-      .update({ valor: 'admin,diretor,secretario', updated_at: new Date().toISOString() })
-      .eq('escola_id', schoolA)
-      .eq('chave', 'bolsa_familia_visible_roles')
-    expect(restoreVisibility.error).toBeNull()
-
-    const [conditionalityView, teacherConditionalityView, legacyView, secretariatReports, otherDirectorReports] = await Promise.all([
-      directorClient.from('vw_frequencia_condicionalidade').select('aluno_id,escola_id'),
-      teacherClient.from('vw_frequencia_condicionalidade').select('aluno_id,escola_id'),
-      secretariatClient.from('vw_alunos_risco_bolsa_familia').select('aluno_id'),
-      secretariatClient.from('relatorios_descritivos').select('id').eq('id', fixtureReport),
-      otherDirectorClient.from('relatorios_descritivos').select('id').eq('id', fixtureReport),
-    ])
-    expect(conditionalityView.error).toBeNull()
-    expect(conditionalityView.data?.every(row => row.escola_id === schoolA)).toBe(true)
-    expect(teacherConditionalityView.error).toBeNull()
-    expect(teacherConditionalityView.data).toEqual([])
-    expect(legacyView.error).not.toBeNull()
-    expect(secretariatReports.error).toBeNull()
-    expect(secretariatReports.data).toHaveLength(1)
-    expect(otherDirectorReports.error).toBeNull()
-    expect(otherDirectorReports.data).toHaveLength(0)
-
-    const secretaryWrite = await secretariatClient.from('alunos').insert({
-      id: '40000000-0000-0000-0000-000000000090',
-      escola_id: schoolA,
-      nome_completo: 'Escrita Secretaria Security E2E',
-      data_nascimento: '2018-04-01',
-      sexo: 'F',
-    })
-    expect(secretaryWrite.error).not.toBeNull()
-
-    const crossSchoolDirectorWrite = await directorClient.from('alunos').insert({
-      id: '40000000-0000-0000-0000-000000000091',
-      escola_id: schoolB,
-      nome_completo: 'Escrita Cruzada Security E2E',
-      data_nascimento: '2018-04-02',
-      sexo: 'M',
-    })
-    expect(crossSchoolDirectorWrite.error).not.toBeNull()
-
-    const teacherNonTitularWrite = await teacherClient.from('conteudo_aula').insert({
-      id: '71000000-0000-0000-0000-000000000091',
-      sessao_id: fixtureNonTitularSession,
-      tema: 'Escrita fora da titularidade Security E2E',
-      objetivo: 'Deve falhar',
-      habilidades_bncc: ['SEC-E2E-BREAK'],
-      created_by: await getUserId(teacherClient),
-    })
-    expect(teacherNonTitularWrite.error).not.toBeNull()
-
-    const teacherTitularWrite = await teacherClient.from('conteudo_aula').insert({
-      id: '71000000-0000-0000-0000-000000000092',
-      sessao_id: fixturePositiveSession,
-      tema: 'Escrita titular Security E2E',
-      objetivo: 'Deve passar',
-      habilidades_bncc: ['SEC-E2E-PASS'],
-      created_by: await getUserId(teacherClient),
-    })
-    expect(teacherTitularWrite.error).toBeNull()
-
-    await page.goto('/relatorios/bolsa-familia')
-    await expect(page.getByRole('heading', { name: /Bolsa Família/ })).toBeVisible()
-    await expect(page.getByText('Aluno Security E2E', { exact: true })).toBeVisible()
-
-    const teacherContext = await browser.newContext({ ignoreHTTPSErrors: true })
-    const teacherPage = await teacherContext.newPage()
-    const teacherConsoleMessages: string[] = []
-    teacherPage.on('console', message => teacherConsoleMessages.push(message.text()))
-    try {
-      await loginInBrowser(teacherPage, teacherA)
-      await expect(teacherPage.getByRole('link', { name: /relatórios/i })).toHaveCount(0)
-      await teacherPage.goto('/relatorios/bolsa-familia')
-      await expect(teacherPage).toHaveURL(/\/unauthorized/)
-
-      const routePayloads = await teacherPage.evaluate(async () => Promise.all([
-        fetch('/api/compliance/warnings').then(response => response.text()),
-        fetch('/api/dashboard/alerts').then(response => response.text()),
-      ]))
-      expect(routePayloads.join('\n')).not.toMatch(/bolsa.família|bolsa-familia|NIS-SYNTHETIC-SECURITY-E2E|CPF-SYNTHETIC-SECURITY-E2E|MAE-SYNTHETIC-SECURITY-E2E|PAI-SYNTHETIC-SECURITY-E2E|NEE-SYNTHETIC-SECURITY-E2E|GUARDIAN-CPF-SYNTHETIC-E2E|GUARDIAN-PHONE-SYNTHETIC-E2E/i)
-
-      const { data: sessionData } = await teacherClient.auth.getSession()
-      const browserSensitiveDenials = await teacherPage.evaluate(async ({ apiUrl, apiKey, accessToken }) => {
-        const headers = { apikey: apiKey, Authorization: `Bearer ${accessToken}` }
-        const responses = await Promise.all([
-          fetch(`${apiUrl}/rest/v1/responsaveis?select=cpf,telefone,renda_familiar&limit=1`, { headers }),
-          fetch(`${apiUrl}/rest/v1/alunos?select=cpf,nome_mae,nome_pai,necessidades_especiais&limit=1`, { headers }),
-        ])
-        return responses.map(response => response.status >= 400)
-      }, {
-        apiUrl: supabaseUrl,
-        apiKey: anonKey,
-        accessToken: sessionData.session?.access_token ?? '',
-      })
-      expect(browserSensitiveDenials).toEqual([true, true])
-      expect(teacherConsoleMessages.join('\n')).not.toMatch(/CPF-SYNTHETIC-SECURITY-E2E|MAE-SYNTHETIC-SECURITY-E2E|PAI-SYNTHETIC-SECURITY-E2E|NEE-SYNTHETIC-SECURITY-E2E|GUARDIAN-CPF-SYNTHETIC-E2E|GUARDIAN-PHONE-SYNTHETIC-E2E/i)
-    } finally {
-      await teacherContext.close()
-    }
-
-    const teacherDelete = await teacherClient
-      .from('conteudo_aula')
-      .delete()
-      .eq('id', '71000000-0000-0000-0000-000000000092')
-    expect(teacherDelete.error).not.toBeNull()
+    const clients = await createSecurityClients()
+    await assertRoleScopedReads(clients)
+    await assertSensitiveColumnDenials(clients.teacherClient)
+    await assertConditionalityAccess(clients)
+    await assertSensitiveProfileAccess(clients)
+    await assertConfiguredVisibility(clients.directorClient)
+    await assertScopedViews(clients)
+    await assertWriteBoundaries(clients)
+    await assertDirectorReportPage(page)
+    await assertTeacherBrowserBoundary(browser, clients.teacherClient)
+    await assertTeacherCannotDeleteCreatedContent(clients.teacherClient)
   })
 
   test('keeps audit and cleanup boundaries, and proves the deliberate DELETE break', async () => {
@@ -502,16 +547,41 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     const secretaryClient = await signedInClient(secretariat)
 
     const directorId = await getUserId(directorClient)
-    const optIn = await directorClient.from('whatsapp_notification_optins').upsert({
+    const directOptIn = await directorClient.from('whatsapp_notification_optins').insert({
       id: fixtureOptIn,
-      responsavel_id: '60000000-0000-0000-0000-000000000001',
+      responsavel_id: fixtureGuardian,
       escola_id: schoolA,
       canal: 'whatsapp',
       opt_in: true,
       consentido_em: new Date().toISOString(),
       registrado_por: directorId,
-    }, { onConflict: 'responsavel_id,canal' }).select('id').single()
+    })
+    expect(directOptIn.error).not.toBeNull()
+
+    const optIn = await directorClient.rpc('set_guardian_whatsapp_opt_in', {
+      p_responsavel_id: fixtureGuardian,
+      p_opt_in: true,
+      p_registrado_por: directorId,
+    })
     expect(optIn.error).toBeNull()
+    expect(optIn.data).toHaveLength(1)
+    expect(optIn.data?.[0]).toMatchObject({
+      responsavel_id: fixtureGuardian,
+      opt_in: true,
+    })
+    expect(optIn.data?.[0].audit_id).toBeTruthy()
+
+    const persistedOptIn = await directorClient
+      .from('whatsapp_notification_optins')
+      .select('id,escola_id,registrado_por,opt_in')
+      .eq('responsavel_id', fixtureGuardian)
+      .single()
+    expect(persistedOptIn.error).toBeNull()
+    expect(persistedOptIn.data).toMatchObject({
+      escola_id: schoolA,
+      registrado_por: directorId,
+      opt_in: true,
+    })
 
     const validAudit = await directorClient.rpc('write_pilot_audit_event', {
       p_event_type: 'whatsapp_optin_changed',
@@ -530,21 +600,28 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     })
     expect(arbitraryAudit.error?.message).toContain('PILOT_AUDIT_EVENT_NOT_ALLOWED')
 
+    const secretaryId = await getUserId(secretaryClient)
     const secretaryConsentUpdate = await secretaryClient
       .from('whatsapp_notification_optins')
-      .update({ opt_in: false, cancelado_em: new Date().toISOString(), registrado_por: await getUserId(secretaryClient) })
-      .eq('id', fixtureOptIn)
+      .update({ opt_in: false, cancelado_em: new Date().toISOString(), registrado_por: secretaryId })
+      .eq('responsavel_id', fixtureGuardian)
       .select('id')
-    expect(secretaryConsentUpdate.error).toBeNull()
-    expect(secretaryConsentUpdate.data).toHaveLength(0)
+    expect(secretaryConsentUpdate.error).not.toBeNull()
+
+    const secretaryConsentRpc = await secretaryClient.rpc('set_guardian_whatsapp_opt_in', {
+      p_responsavel_id: fixtureGuardian,
+      p_opt_in: false,
+      p_registrado_por: secretaryId,
+    })
+    expect(secretaryConsentRpc.error).not.toBeNull()
 
     const secretaryConsentDelete = await secretaryClient
       .from('whatsapp_notification_optins')
       .delete()
-      .eq('id', fixtureOptIn)
+      .eq('responsavel_id', fixtureGuardian)
     expect(secretaryConsentDelete.error).not.toBeNull()
 
-    const secretaryCleanup = await secretaryClient.rpc('pilot_cleanup_import_staging')
+    const secretaryCleanup = await secretaryClient.rpc('pilot_cleanup_import_retention')
     expect(secretaryCleanup.error).not.toBeNull()
     const secretaryRollback = await secretaryClient.rpc('pilot_rollback_import_batch', {
       p_batch_id: fixtureReport,
@@ -553,7 +630,7 @@ test.describe.serial('isolated governed pilot security hardening', () => {
     })
     expect(secretaryRollback.error).not.toBeNull()
 
-    const serviceCleanup = await service.rpc('pilot_cleanup_import_staging')
+    const serviceCleanup = await service.rpc('pilot_cleanup_import_retention')
     expect(serviceCleanup.error).toBeNull()
 
     const { data: contentSnapshot, error: snapshotError } = await service

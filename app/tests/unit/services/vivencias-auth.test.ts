@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
+import { describe, expect, it } from 'vitest'
 import type { Database } from '@/types/database'
 import {
   assertVivenciaWriteAccess,
@@ -8,14 +8,16 @@ import {
 
 describe('requireVivenciaActor', () => {
   it('maps unauthenticated attendance wording to the Vivências domain', async () => {
-    const client = {
+    const client = createClient<Database>('http://127.0.0.1:54321', 'synthetic-anon-key', {
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: null },
-          error: new Error('missing session'),
-        }),
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
       },
-    } as unknown as Pick<SupabaseClient<Database>, 'auth' | 'from'>
+      global: {
+        fetch: async () => Response.json({ message: 'missing session' }, { status: 401 }),
+      },
+    })
 
     await expect(requireVivenciaActor(client)).rejects.toMatchObject({
       code: 'UNAUTHENTICATED',

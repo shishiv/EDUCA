@@ -1,14 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { TurmaCard } from '@/components/turmas/TurmaCard'
+import { TurmaCardView } from '@/components/turmas/TurmaCard'
 import '@testing-library/jest-dom'
-
-// Mock next/navigation
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-}))
 
 describe('TurmaCard', () => {
   const mockTurma = {
@@ -24,67 +17,67 @@ describe('TurmaCard', () => {
   }
 
   it('should render turma name', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByText('5º Ano A')).toBeInTheDocument()
   })
 
   it('should render escola name', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByText('EMEF Professor João Silva')).toBeInTheDocument()
   })
 
   it('should render student count', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByText(/25\/30/)).toBeInTheDocument()
   })
 
   it('should render turno badge', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByText('Matutino')).toBeInTheDocument()
   })
 
   it('should render professor name', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByText(/Prof\. Maria Silva/)).toBeInTheDocument()
   })
 
   it('should render chamada button', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByRole('button', { name: /fazer chamada/i })).toBeInTheDocument()
   })
 
   it('should render diario button', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     expect(screen.getByRole('button', { name: /ver diario|ver diário/i })).toBeInTheDocument()
   })
 
   it('should show occupation percentage', () => {
-    render(<TurmaCard turma={mockTurma} />)
+    render(<TurmaCardView turma={mockTurma} />)
     // 25/30 = 83%
     expect(screen.getByText(/83%/)).toBeInTheDocument()
   })
 
   it('should render inactive badge when turma is inactive', () => {
     const inactiveTurma = { ...mockTurma, ativo: false }
-    render(<TurmaCard turma={inactiveTurma} />)
+    render(<TurmaCardView turma={inactiveTurma} />)
     expect(screen.getByText('Inativa')).toBeInTheDocument()
   })
 
   it('should not render professor section when professor is null', () => {
     const turmaWithoutProfessor = { ...mockTurma, professor: null }
-    render(<TurmaCard turma={turmaWithoutProfessor} />)
+    render(<TurmaCardView turma={turmaWithoutProfessor} />)
     expect(screen.queryByText(/Prof\./)).not.toBeInTheDocument()
   })
 
   it('should render turno vespertino correctly', () => {
     const vespertinoTurma = { ...mockTurma, turno: 'vespertino' as const }
-    render(<TurmaCard turma={vespertinoTurma} />)
+    render(<TurmaCardView turma={vespertinoTurma} />)
     expect(screen.getByText('Vespertino')).toBeInTheDocument()
   })
 
   it('should render turno integral correctly', () => {
     const integralTurma = { ...mockTurma, turno: 'integral' as const }
-    render(<TurmaCard turma={integralTurma} />)
+    render(<TurmaCardView turma={integralTurma} />)
     expect(screen.getByText('Integral')).toBeInTheDocument()
   })
 
@@ -94,7 +87,7 @@ describe('TurmaCard', () => {
       alunos_matriculados: 28,
       capacidade: 30,
     }
-    const { container } = render(<TurmaCard turma={fullTurma} />)
+    const { container } = render(<TurmaCardView turma={fullTurma} />)
     // 28/30 = 93%
     expect(screen.getByText(/93%/)).toBeInTheDocument()
     
@@ -109,7 +102,7 @@ describe('TurmaCard', () => {
       alunos_matriculados: 24,
       capacidade: 30,
     }
-    const { container } = render(<TurmaCard turma={mediumTurma} />)
+    const { container } = render(<TurmaCardView turma={mediumTurma} />)
     // 24/30 = 80%
     expect(screen.getByText(/80%/)).toBeInTheDocument()
     
@@ -124,7 +117,7 @@ describe('TurmaCard', () => {
       alunos_matriculados: 15,
       capacidade: 30,
     }
-    const { container } = render(<TurmaCard turma={lowTurma} />)
+    const { container } = render(<TurmaCardView turma={lowTurma} />)
     // 15/30 = 50%
     expect(screen.getByText(/50%/)).toBeInTheDocument()
     
@@ -138,13 +131,13 @@ describe('TurmaCard', () => {
       ...mockTurma,
       capacidade: 0,
     }
-    render(<TurmaCard turma={zeroCapacityTurma} />)
+    render(<TurmaCardView turma={zeroCapacityTurma} />)
     expect(screen.getByText(/25\/0/)).toBeInTheDocument()
     expect(screen.getByText(/0%/)).toBeInTheDocument()
   })
 
   it('should apply correct gradient for serie', () => {
-    const { container } = render(<TurmaCard turma={mockTurma} />)
+    const { container } = render(<TurmaCardView turma={mockTurma} />)
     
     // Should have a gradient color band
     const colorBand = container.querySelector('.h-2.bg-gradient-to-r')
@@ -157,7 +150,7 @@ describe('TurmaCard', () => {
       nome: 'Berçário A',
       serie: 'Berçário',
     }
-    const { container } = render(<TurmaCard turma={bercarioTurma} />)
+    const { container } = render(<TurmaCardView turma={bercarioTurma} />)
     
     const colorBand = container.querySelector('.from-pink-400')
     expect(colorBand).toBeInTheDocument()
@@ -169,7 +162,7 @@ describe('TurmaCard', () => {
       nome: 'Maternal B',
       serie: 'Maternal',
     }
-    const { container } = render(<TurmaCard turma={maternalTurma} />)
+    const { container } = render(<TurmaCardView turma={maternalTurma} />)
     
     const colorBand = container.querySelector('.from-pink-400')
     expect(colorBand).toBeInTheDocument()
@@ -181,14 +174,14 @@ describe('TurmaCard', () => {
       nome: 'Pré I',
       serie: 'Pré I',
     }
-    const { container } = render(<TurmaCard turma={preTurma} />)
+    const { container } = render(<TurmaCardView turma={preTurma} />)
     
     const colorBand = container.querySelector('.from-pink-400')
     expect(colorBand).toBeInTheDocument()
   })
 
   it('should apply orange gradient for fundamental I (1-5 ano)', () => {
-    const { container } = render(<TurmaCard turma={mockTurma} />)
+    const { container } = render(<TurmaCardView turma={mockTurma} />)
     
     // 5º Ano should get orange
     const colorBand = container.querySelector('.from-orange-400')
@@ -201,7 +194,7 @@ describe('TurmaCard', () => {
       nome: '9º Ano B',
       serie: '9º Ano',
     }
-    const { container } = render(<TurmaCard turma={fundIITurma} />)
+    const { container } = render(<TurmaCardView turma={fundIITurma} />)
     
     const colorBand = container.querySelector('.from-violet-400')
     expect(colorBand).toBeInTheDocument()
@@ -212,21 +205,21 @@ describe('TurmaCard', () => {
       ...mockTurma,
       serie: 'Unknown',
     }
-    const { container } = render(<TurmaCard turma={unknownTurma} />)
+    const { container } = render(<TurmaCardView turma={unknownTurma} />)
     
     const colorBand = container.querySelector('.from-gray-400')
     expect(colorBand).toBeInTheDocument()
   })
 
   it('should be wrapped in a link', () => {
-    const { container } = render(<TurmaCard turma={mockTurma} />)
+    const { container } = render(<TurmaCardView turma={mockTurma} />)
     
     const link = container.querySelector('a[href="/dashboard/turmas/1"]')
     expect(link).toBeInTheDocument()
   })
 
   it('should have hover effects', () => {
-    const { container } = render(<TurmaCard turma={mockTurma} />)
+    const { container } = render(<TurmaCardView turma={mockTurma} />)
     
     const card = container.querySelector('.hover\\:shadow-md')
     expect(card).toBeInTheDocument()
@@ -234,7 +227,7 @@ describe('TurmaCard', () => {
 
   it('should apply opacity when inactive', () => {
     const inactiveTurma = { ...mockTurma, ativo: false }
-    const { container } = render(<TurmaCard turma={inactiveTurma} />)
+    const { container } = render(<TurmaCardView turma={inactiveTurma} />)
     
     const card = container.querySelector('.opacity-60')
     expect(card).toBeInTheDocument()
@@ -242,7 +235,7 @@ describe('TurmaCard', () => {
 
   it('should call onChamada when chamada button clicked', () => {
     const onChamada = vi.fn()
-    render(<TurmaCard turma={mockTurma} onChamada={onChamada} />)
+    render(<TurmaCardView turma={mockTurma} onChamada={onChamada} />)
     
     const chamadaButton = screen.getByRole('button', { name: /fazer chamada/i })
     chamadaButton.click()
@@ -252,7 +245,7 @@ describe('TurmaCard', () => {
 
   it('should call onDiario when diario button clicked', () => {
     const onDiario = vi.fn()
-    render(<TurmaCard turma={mockTurma} onDiario={onDiario} />)
+    render(<TurmaCardView turma={mockTurma} onDiario={onDiario} />)
     
     const diarioButton = screen.getByRole('button', { name: /ver diario|ver diário/i })
     diarioButton.click()
@@ -273,7 +266,7 @@ describe('TurmaCard', () => {
       ativo: true,
     }
     
-    render(<TurmaCard turma={minimalTurma} />)
+    render(<TurmaCardView turma={minimalTurma} />)
     expect(screen.getByText('Test Turma')).toBeInTheDocument()
     expect(screen.getByText('Test Escola')).toBeInTheDocument()
   })
@@ -283,21 +276,21 @@ describe('TurmaCard', () => {
       ...mockTurma,
       nome: 'This is a very long turma name that should be truncated',
     }
-    const { container } = render(<TurmaCard turma={longNameTurma} />)
+    const { container } = render(<TurmaCardView turma={longNameTurma} />)
     
     const titleElement = container.querySelector('.truncate')
     expect(titleElement).toBeInTheDocument()
   })
 
   it('should display users icon', () => {
-    const { container } = render(<TurmaCard turma={mockTurma} />)
+    const { container } = render(<TurmaCardView turma={mockTurma} />)
     
     // Users icon should be present (from lucide-react)
     expect(container.querySelector('svg')).toBeInTheDocument()
   })
 
   it('should display clock icon for turno', () => {
-    const { container } = render(<TurmaCard turma={mockTurma} />)
+    const { container } = render(<TurmaCardView turma={mockTurma} />)
     
     // Multiple icons should be present
     const icons = container.querySelectorAll('svg')

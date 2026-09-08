@@ -10,6 +10,10 @@ export interface PilotActor {
   email: string | null
 }
 
+function isPilotUserRole(role: string): role is PilotUserRole {
+  return role === 'admin' || role === 'secretario' || role === 'diretor' || role === 'professor'
+}
+
 /** Resolves the active pilot actor from the verified Supabase session. */
 export async function requirePilotActor(allowedRoles: PilotUserRole[]): Promise<PilotActor> {
   const supabase = await createClient()
@@ -23,14 +27,14 @@ export async function requirePilotActor(allowedRoles: PilotUserRole[]): Promise<
     .eq('ativo', true)
     .single()
 
-  if (profileError || !profile || !allowedRoles.includes(profile.tipo_usuario as PilotUserRole)) {
+  if (profileError || !profile || !isPilotUserRole(profile.tipo_usuario) || !allowedRoles.includes(profile.tipo_usuario)) {
     throw new Error('PILOT_ROLE_DENIED')
   }
 
   return {
     id: profile.id,
     name: profile.nome,
-    role: profile.tipo_usuario as PilotUserRole,
+    role: profile.tipo_usuario,
     schoolId: profile.escola_id,
     email: profile.email,
   }

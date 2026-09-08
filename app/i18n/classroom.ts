@@ -1,19 +1,20 @@
 'use client'
 
 import { createTranslator, useTranslations } from 'next-intl'
-import ptBrMessages from '@/messages/pt-BR/classroom.json'
+import { getMessagesForLocale } from './messages'
 
-type Translator = (key: string, values?: Record<string, unknown>) => string
+type Translator = ReturnType<typeof useTranslations<'classroom'>>
 
-const fallbackTranslate = createTranslator({
+const fallbackTranslate: Translator = createTranslator({
   locale: 'pt-BR',
-  messages: ptBrMessages,
-}) as Translator
+  messages: getMessagesForLocale('pt-BR'),
+  namespace: 'classroom',
+})
 
 /** Keeps isolated component consumers usable without a provider. */
 export function useClassroomTranslations(): Translator {
   try {
-    return useTranslations('classroom') as Translator
+    return useTranslations('classroom')
   } catch {
     return fallbackTranslate
   }

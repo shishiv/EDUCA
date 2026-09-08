@@ -1,19 +1,22 @@
 /**
  * J1 - Visitante público (non-destructive smoke)
  *
- * This spec runs only against an explicitly configured public demo origin.
+ * Dedicated configs run this spec against a local app or an explicitly
+ * configured public demo origin.
  * It performs NO mutations - read-only assertions only.
  * Safe to run against the shared sandbox.
  */
 import { expect, test } from '@playwright/test'
 
 test.describe('J1: public visitor journey', () => {
-  test('visitor can move from landing to demo, login, and home', async ({ page }) => {
+  test('visitor can move from landing to demo, login, and home', async ({ page, isMobile }) => {
     const response = await page.goto('/')
     expect(response?.status()).toBeLessThan(400)
     await expect(page.getByRole('heading', { level: 1, name: 'Gestão escolar para redes municipais, com código aberto.' })).toBeVisible()
     await expect(page.getByRole('img', { name: 'EDUCA' }).first()).toBeVisible()
+    if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
     await expect(page.getByRole('button', { name: 'Mudar idioma para English' }).first()).toHaveText('PT')
+    if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
 
     await page.getByRole('link', { name: 'Ver a demonstração' }).click()
     await expect(page).toHaveURL(/\/demo\/?$/)
@@ -32,8 +35,9 @@ test.describe('J1: public visitor journey', () => {
     await expect(page).toHaveURL(/\/$/)
   })
 
-  test('public headers use the compact locale button and login has no locale control', async ({ page }) => {
+  test('public headers use the compact locale button and login has no locale control', async ({ page, isMobile }) => {
     await page.goto('/')
+    if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
     await page.getByRole('button', { name: 'Mudar idioma para English' }).first().click()
     await expect.poll(async () => (await page.context().cookies()).find(cookie => cookie.name === 'EDUCA_LOCALE')?.value).toBe('en')
     await expect(page.getByRole('heading', { level: 1, name: 'School management for municipal networks, with open-source code.' })).toBeVisible()

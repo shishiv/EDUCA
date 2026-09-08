@@ -1,7 +1,7 @@
 import { Settings, UserPlus, FileText, CheckSquare, Building2, BarChart3, GraduationCap, BookText, LucideIcon } from 'lucide-react'
 import { isPilotDisabledPath } from '@/lib/pilot/pilot-scope'
 import { resolveDemoSandboxCapability } from '@/lib/demo-sandbox/demo-sandbox'
-import { canAccessRoute, type RouteRole } from '@/lib/route-policy'
+import { canAccessRoute, routeRoles, type RouteRole } from '@/lib/route-policy'
 
 // Generic attendance entry. A class-specific call lives at /dashboard/turmas/[id]/chamada.
 export const ATTENDANCE_ROUTE = '/dashboard/turmas'
@@ -59,24 +59,47 @@ export interface QuickAccessContext {
   demoSandbox?: boolean
 }
 
+export function isQuickAccessRole(role: string | null | undefined): role is QuickAccessRole {
+  return routeRoles.some((routeRole) => routeRole === role)
+}
+
+function resolveQuickAccessHref(
+  item: QuickAccessItem,
+  { pilotMode, demoSandbox }: Pick<QuickAccessContext, 'pilotMode' | 'demoSandbox'>,
+): QuickAccessItem {
+  return {
+    ...item,
+    href: pilotMode && !demoSandbox && item.pilotHref ? item.pilotHref : item.href,
+  }
+}
+
+function hasPilotAccess(
+  item: QuickAccessItem,
+  { role, pilotMode, demoSandbox }: Pick<QuickAccessContext, 'role' | 'pilotMode' | 'demoSandbox'>,
+): boolean {
+  if (!pilotMode || demoSandbox) return true
+  if (item.pilotRoles && (!role || !item.pilotRoles.includes(role))) return false
+  return !isPilotDisabledPath(item.href)
+}
+
+function canUseQuickAccessItem(item: QuickAccessItem, context: QuickAccessContext): boolean {
+  const { role, canManageSchool, demoSandbox = false } = context
+
+  if (!role || !canAccessRoute(item.href, role)) return false
+  if (!hasPilotAccess(item, { role, pilotMode: context.pilotMode, demoSandbox })) return false
+
+  const pilotPathIsAllowed = demoSandbox && resolveDemoSandboxCapability(item.href) !== null
+  if (context.pilotMode && isPilotDisabledPath(item.href) && !pilotPathIsAllowed) return false
+  return !item.schoolWrite || canManageSchool
+}
+
 export function resolveVisibleQuickAccess(
   items: QuickAccessItem[],
   { role, pilotMode, canManageSchool, demoSandbox = false }: QuickAccessContext
 ): QuickAccessItem[] {
   return items
-    .map((item) => ({
-      ...item,
-      href: pilotMode && !demoSandbox && item.pilotHref ? item.pilotHref : item.href,
-    }))
-    .filter((item) => {
-      if (!role) return false
-      if (!canAccessRoute(item.href, role)) return false
-      if (pilotMode && !demoSandbox && item.pilotRoles && !item.pilotRoles.includes(role)) return false
-
-      const pilotPathIsAllowed = demoSandbox && resolveDemoSandboxCapability(item.href) !== null
-      if (pilotMode && isPilotDisabledPath(item.href) && !pilotPathIsAllowed) return false
-      return !item.schoolWrite || canManageSchool
-    })
+    .map((item) => resolveQuickAccessHref(item, { pilotMode, demoSandbox }))
+    .filter((item) => canUseQuickAccessItem(item, { role, pilotMode, canManageSchool, demoSandbox }))
 }
 
 export function resolveVisibleQuickActionCards(

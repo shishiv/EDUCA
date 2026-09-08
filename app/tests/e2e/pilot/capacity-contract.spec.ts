@@ -21,8 +21,6 @@ const PROBE_SCHOOL_ID = PILOT_CAPACITY_SCHOOL_ID
 const PROBE_CLASS_ID = '99000000-0000-0000-0000-000000000011'
 const PROBE_STUDENT_ONE_ID = '99000000-0000-0000-0000-000000000021'
 const PROBE_STUDENT_TWO_ID = '99000000-0000-0000-0000-000000000022'
-const PROBE_ENROLLMENT_ONE_ID = '99000000-0000-0000-0000-000000000031'
-const PROBE_ENROLLMENT_TWO_ID = '99000000-0000-0000-0000-000000000032'
 
 function createServiceClient() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -44,7 +42,7 @@ async function createDirectorClient() {
 
 async function removeProbeRows() {
   const service = createServiceClient()
-  const enrollmentDelete = await service.from('matriculas').delete().in('id', [PROBE_ENROLLMENT_ONE_ID, PROBE_ENROLLMENT_TWO_ID])
+  const enrollmentDelete = await service.from('matriculas').delete().eq('turma_id', PROBE_CLASS_ID)
   if (enrollmentDelete.error) throw enrollmentDelete.error
   const studentDelete = await service.from('alunos').delete().in('id', [PROBE_STUDENT_ONE_ID, PROBE_STUDENT_TWO_ID])
   if (studentDelete.error) throw studentDelete.error
@@ -106,28 +104,26 @@ test.describe('isolated pilot capacity contract', () => {
     await expect(page.getByText('Turma Capacidade 01 - 1 ano', { exact: true })).toBeVisible()
   })
 
-  test('rejects concurrent active enrollments at the real PostgREST boundary', async () => {
+  test('rejects concurrent active enrollments through the governed PostgREST RPC', async () => {
     expect(SUPABASE_SERVICE_ROLE_KEY).toMatch(/^sb_secret_/)
     expect(SUPABASE_ANON_KEY).toMatch(/^sb_publishable_/)
     try {
       await prepareProbeClass()
       const director = await createDirectorClient()
       const attempts = await Promise.all([
-        director.from('matriculas').insert({
-          id: PROBE_ENROLLMENT_ONE_ID,
-          aluno_id: PROBE_STUDENT_ONE_ID,
-          turma_id: PROBE_CLASS_ID,
-          ano_letivo: 2026,
-          situacao: 'ativa',
-          observacoes: 'E2E concurrent capacity attempt',
+        director.rpc('create_governed_enrollment', {
+          p_aluno_id: PROBE_STUDENT_ONE_ID,
+          p_turma_id: PROBE_CLASS_ID,
+          p_ano_letivo: 2026,
+          p_data_matricula: '2026-01-01',
+          p_observacoes: 'E2E concurrent capacity attempt',
         }),
-        director.from('matriculas').insert({
-          id: PROBE_ENROLLMENT_TWO_ID,
-          aluno_id: PROBE_STUDENT_TWO_ID,
-          turma_id: PROBE_CLASS_ID,
-          ano_letivo: 2026,
-          situacao: 'ativa',
-          observacoes: 'E2E concurrent capacity attempt',
+        director.rpc('create_governed_enrollment', {
+          p_aluno_id: PROBE_STUDENT_TWO_ID,
+          p_turma_id: PROBE_CLASS_ID,
+          p_ano_letivo: 2026,
+          p_data_matricula: '2026-01-01',
+          p_observacoes: 'E2E concurrent capacity attempt',
         }),
       ])
 
@@ -150,7 +146,7 @@ test.describe('isolated pilot capacity contract', () => {
         mkdirSync(path.dirname(concurrencyReceiptPath), { recursive: true })
         writeFileSync(concurrencyReceiptPath, `${JSON.stringify({
           result: 'pass',
-          boundary: 'real-postgrest',
+          boundary: 'real-postgrest-governed-rpc',
           successCount,
           capacityErrors,
           activeEnrollments: data?.length ?? 0,

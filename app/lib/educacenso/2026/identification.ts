@@ -1,3 +1,4 @@
+import { parseJsonBoolean, parseJsonRecord, parseJsonString, type JsonRecord, type JsonValue } from '@/lib/validation/external-values'
 export const EDUCACENSO_IDENTIFICATION_LAYOUT_2026 = Object.freeze({
   year: 2026,
   version: 1,
@@ -14,8 +15,7 @@ export type IdentificationLineEnding2026 = 'LF' | 'CRLF'
  */
 export interface IdentificationReferenceData2026 {
   readonly municipalityCodes: readonly string[]
-  readonly municipalityTableSha256:
-    | 'cea115117f79a697f3402eb67133976788544399b15c9789bcd9fe2ad08d80a3'
+  readonly municipalityTableSha256: string
   readonly coverage: 'complete-official-table' | 'synthetic-fixture-subset'
 }
 
@@ -107,27 +107,23 @@ const REQUEST_KEYS = new Set([
   'endWithLineBreak',
 ])
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function parseRecord(value: JsonValue): JsonRecord | undefined {
+  return parseJsonRecord(value)
+}
+
+function hasValidMunicipalityReference(referenceData: IdentificationReferenceData2026): boolean {
+  const codes = referenceData.municipalityCodes
+  return referenceData.municipalityTableSha256 === 'cea115117f79a697f3402eb67133976788544399b15c9789bcd9fe2ad08d80a3' &&
+    (referenceData.coverage === 'complete-official-table' || referenceData.coverage === 'synthetic-fixture-subset') &&
+    codes.length > 0 && codes.every((code) => /^\d{7}$/.test(code))
 }
 
 function validateReferenceData(
   referenceData: IdentificationReferenceData2026
 ): readonly IdentificationValidationIssue2026[] {
-  const expectedSha256 =
-    'cea115117f79a697f3402eb67133976788544399b15c9789bcd9fe2ad08d80a3'
-  const validCoverage =
-    referenceData?.coverage === 'complete-official-table' ||
-    referenceData?.coverage === 'synthetic-fixture-subset'
   const codes = referenceData?.municipalityCodes
 
-  if (
-    referenceData?.municipalityTableSha256 !== expectedSha256 ||
-    !validCoverage ||
-    !Array.isArray(codes) ||
-    codes.length === 0 ||
-    codes.some((code) => typeof code !== 'string' || !/^\d{7}$/.test(code))
-  ) {
+  if (!hasValidMunicipalityReference(referenceData)) {
     return [
       issue(
         'file',
@@ -172,7 +168,7 @@ function issue(
 }
 
 function requiredString(
-  candidate: Record<string, unknown>,
+  candidate: JsonRecord,
   key: keyof IdentificationCandidate2026,
   field: IdentificationField2026,
   source: string,
@@ -181,15 +177,16 @@ function requiredString(
   recordIndex: number
 ): string | undefined {
   const value = candidate[key]
-  if (typeof value !== 'string' || value.length === 0) {
+  const string = parseJsonString(value)
+  if (!string || string.length === 0) {
     issues.push(issue(field, source, message, recordIndex))
     return undefined
   }
-  return value
+  return string
 }
 
 function optionalString(
-  candidate: Record<string, unknown>,
+  candidate: JsonRecord,
   key: keyof IdentificationCandidate2026,
   field: IdentificationField2026,
   issues: IdentificationValidationIssue2026[],
@@ -197,7 +194,8 @@ function optionalString(
 ): string | undefined {
   const value = candidate[key]
   if (value === undefined || value === '') return undefined
-  if (typeof value !== 'string') {
+  const string = parseJsonString(value)
+  if (string === undefined) {
     issues.push(
       issue(
         field,
@@ -208,7 +206,7 @@ function optionalString(
     )
     return undefined
   }
-  return value
+  return string
 }
 
 function isValidDate(value: string): boolean {
@@ -269,7 +267,7 @@ function candidateToFields(candidate: IdentificationCandidate2026): readonly str
 }
 
 function unsupportedCandidateIssues(
-  candidate: Record<string, unknown>,
+  candidate: JsonRecord,
   recordIndex: number
 ): readonly IdentificationValidationIssue2026[] {
   return Object.keys(candidate)
@@ -291,13 +289,14 @@ function unsupportedCandidateIssues(
  * Validates one logical outbound line without normalizing or coercing input.
  */
 export function validateIdentificationCandidate2026(
-  input: unknown,
+  input: JsonValue,
   referenceData: IdentificationReferenceData2026,
   recordIndex = 0
 ): readonly IdentificationValidationIssue2026[] {
   const issues: IdentificationValidationIssue2026[] = [...validateReferenceData(referenceData)]
   if (issues.length > 0) return issues
-  if (!isRecord(input)) {
+  const candidate = parseRecord(input)
+  if (!candidate) {
     return [
       issue(
         'record',
@@ -308,8 +307,16 @@ export function validateIdentificationCandidate2026(
     ]
   }
 
-  issues.push(...unsupportedCandidateIssues(input, recordIndex))
+  issues.push(...unsupportedCandidateIssues(candidate, recordIndex))
 
+  validateCandidateIdentityFields(candidate, issues, recordIndex)
+  validateCandidateProfileFields(candidate, issues, recordIndex)
+  validateCandidateMunicipalityField(candidate, referenceData, issues, recordIndex)
+
+  return issues
+}
+
+function validateCandidateIdentityFields(input: JsonRecord, issues: IdentificationValidationIssue2026[], recordIndex: number): void {
   const localStudentCode = requiredString(
     input,
     'localStudentCode',
@@ -354,6 +361,10 @@ export function validateIdentificationCandidate2026(
     )
   }
 
+
+}
+
+function validateCandidateProfileFields(input: JsonRecord, issues: IdentificationValidationIssue2026[], recordIndex: number): void {
   const fullName = requiredString(
     input,
     'fullName',
@@ -391,6 +402,10 @@ export function validateIdentificationCandidate2026(
   const affiliation2 = optionalString(input, 'affiliation2', 7, issues, recordIndex)
   if (affiliation2 !== undefined) validatePersonName(affiliation2, 7, issues, recordIndex)
 
+
+}
+
+function validateCandidateMunicipalityField(input: JsonRecord, referenceData: IdentificationReferenceData2026, issues: IdentificationValidationIssue2026[], recordIndex: number): void {
   const birthMunicipalityCode = requiredString(
     input,
     'birthMunicipalityCode',
@@ -415,20 +430,23 @@ export function validateIdentificationCandidate2026(
     )
   }
 
-  return issues
+
 }
+
+
 
 /** Serializes one valid candidate as the nine pipe-separated official fields. */
 export function serializeIdentificationCandidate2026(
-  input: unknown,
+  input: JsonValue,
   referenceData: IdentificationReferenceData2026
 ): IdentificationLineResult2026 {
   const issues = validateIdentificationCandidate2026(input, referenceData)
   if (issues.length > 0) return { ok: false, issues }
 
+  // SAFETY: validation above established every required candidate field before serialization.
   return {
     ok: true,
-    line: candidateToFields(input as IdentificationCandidate2026).join('|'),
+    line: candidateToFields(input as JsonRecord & IdentificationCandidate2026).join('|'),
   }
 }
 
@@ -444,26 +462,27 @@ function encodeIso88591(text: string): Uint8Array {
  * Produces an offline artifact only. This function does not transmit, persist,
  * log, or claim that Educacenso accepted the resulting bytes.
  */
-export function exportIdentificationFile2026(
-  input: unknown,
-  referenceData: IdentificationReferenceData2026
-): IdentificationFileResult2026 {
-  const referenceIssues = validateReferenceData(referenceData)
-  const issues: IdentificationValidationIssue2026[] = [...referenceIssues]
-  if (!isRecord(input)) {
-    return {
-      ok: false,
-      issues: [issue('file', EDUCA_BOUNDARY, 'A solicitação de arquivo deve ser um objeto.')],
-    }
+function validateIdentificationRecords(input: JsonRecord, referenceData: IdentificationReferenceData2026, referenceIssues: readonly IdentificationValidationIssue2026[], issues: IdentificationValidationIssue2026[]): void {
+  if (!Array.isArray(input.records) || input.records.length === 0) {
+    issues.push(issue('file', EDUCA_BOUNDARY, 'O EDUCA não gera um arquivo de identificação vazio.'))
+    return
   }
+  if (referenceIssues.length === 0) {
+    input.records.forEach((candidate, recordIndex) => {
+      issues.push(...validateIdentificationCandidate2026(candidate, referenceData, recordIndex))
+    })
+  }
+}
 
+function validateIdentificationFileRequest(input: JsonRecord, referenceData: IdentificationReferenceData2026, referenceIssues: readonly IdentificationValidationIssue2026[]): IdentificationValidationIssue2026[] {
+  const issues: IdentificationValidationIssue2026[] = []
   for (const key of Object.keys(input).filter((key) => !REQUEST_KEYS.has(key)).sort()) {
     issues.push(issue('file', EDUCA_BOUNDARY, `Opção de arquivo não suportada: ${key}.`))
   }
 
-  const fileName = input.fileName
+  const fileName = parseJsonString(input.fileName)
   if (
-    typeof fileName !== 'string' ||
+    !fileName ||
     fileName.length > 20 ||
     !/^[A-Za-z0-9_]+\.txt$/.test(fileName)
   ) {
@@ -487,7 +506,7 @@ export function exportIdentificationFile2026(
     )
   }
 
-  if (typeof input.endWithLineBreak !== 'boolean') {
+  if (parseJsonBoolean(input.endWithLineBreak) === undefined) {
     issues.push(
       issue(
         'file',
@@ -497,26 +516,34 @@ export function exportIdentificationFile2026(
     )
   }
 
-  if (!Array.isArray(input.records) || input.records.length === 0) {
-    issues.push(
-      issue(
-        'file',
-        EDUCA_BOUNDARY,
-        'O EDUCA não gera um arquivo de identificação vazio.'
-      )
-    )
-  } else if (referenceIssues.length === 0) {
-    input.records.forEach((candidate, recordIndex) => {
-      issues.push(...validateIdentificationCandidate2026(candidate, referenceData, recordIndex))
-    })
+  validateIdentificationRecords(input, referenceData, referenceIssues, issues)
+
+  return issues
+}
+
+export function exportIdentificationFile2026(
+  input: JsonValue,
+  referenceData: IdentificationReferenceData2026
+): IdentificationFileResult2026 {
+  const referenceIssues = validateReferenceData(referenceData)
+  const issues: IdentificationValidationIssue2026[] = [...referenceIssues]
+  const request = parseRecord(input)
+  if (!request) {
+    return {
+      ok: false,
+      issues: [issue('file', EDUCA_BOUNDARY, 'A solicitação de arquivo deve ser um objeto.')],
+    }
   }
+
+  issues.push(...validateIdentificationFileRequest(request, referenceData, referenceIssues))
 
   if (issues.length > 0) return { ok: false, issues }
 
-  const request = input as unknown as IdentificationFileRequest2026
-  const separator = request.lineEnding === 'CRLF' ? '\r\n' : '\n'
-  const lines = request.records.map((candidate) => candidateToFields(candidate).join('|'))
-  const text = `${lines.join(separator)}${request.endWithLineBreak ? separator : ''}`
+  // SAFETY: request validation above established the complete outbound file contract.
+  const validatedRequest = request as JsonRecord & IdentificationFileRequest2026
+  const separator = validatedRequest.lineEnding === 'CRLF' ? '\r\n' : '\n'
+  const lines = validatedRequest.records.map((candidate) => candidateToFields(candidate).join('|'))
+  const text = `${lines.join(separator)}${validatedRequest.endWithLineBreak ? separator : ''}`
   const bytes = encodeIso88591(text)
 
   if (bytes.byteLength > EDUCACENSO_IDENTIFICATION_LAYOUT_2026.maximumFileBytes) {
@@ -535,7 +562,7 @@ export function exportIdentificationFile2026(
   return {
     ok: true,
     artifact: {
-      fileName: request.fileName,
+      fileName: validatedRequest.fileName,
       text,
       bytes,
       encoding: EDUCACENSO_IDENTIFICATION_LAYOUT_2026.encoding,

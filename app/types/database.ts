@@ -351,7 +351,10 @@ export type Database = {
       attendance_reopen_requests: {
         Row: {
           after_state: Json | null
+          approved_at: string | null
           before_state: Json
+          correction_deadline_at: string | null
+          correction_window_hours: number | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -367,7 +370,10 @@ export type Database = {
         }
         Insert: {
           after_state?: Json | null
+          approved_at?: string | null
           before_state: Json
+          correction_deadline_at?: string | null
+          correction_window_hours?: number | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -383,7 +389,10 @@ export type Database = {
         }
         Update: {
           after_state?: Json | null
+          approved_at?: string | null
           before_state?: Json
+          correction_deadline_at?: string | null
+          correction_window_hours?: number | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -3288,6 +3297,8 @@ export type Database = {
           aluno_id: string
           bloqueado_em: string | null
           bloqueado_motivo: string | null
+          claim_expires_at: string | null
+          claim_token: string | null
           created_at: string
           criado_por: string | null
           data_aula: string
@@ -3299,6 +3310,7 @@ export type Database = {
           idempotency_key: string
           lido_em: string | null
           proxima_tentativa: string
+          reconciliation_required_at: string | null
           responsavel_id: string
           status: string
           tentativas: number
@@ -3311,6 +3323,8 @@ export type Database = {
           aluno_id: string
           bloqueado_em?: string | null
           bloqueado_motivo?: string | null
+          claim_expires_at?: string | null
+          claim_token?: string | null
           created_at?: string
           criado_por?: string | null
           data_aula: string
@@ -3322,6 +3336,7 @@ export type Database = {
           idempotency_key: string
           lido_em?: string | null
           proxima_tentativa?: string
+          reconciliation_required_at?: string | null
           responsavel_id: string
           status?: string
           tentativas?: number
@@ -3334,6 +3349,8 @@ export type Database = {
           aluno_id?: string
           bloqueado_em?: string | null
           bloqueado_motivo?: string | null
+          claim_expires_at?: string | null
+          claim_token?: string | null
           created_at?: string
           criado_por?: string | null
           data_aula?: string
@@ -3345,6 +3362,7 @@ export type Database = {
           idempotency_key?: string
           lido_em?: string | null
           proxima_tentativa?: string
+          reconciliation_required_at?: string | null
           responsavel_id?: string
           status?: string
           tentativas?: number
@@ -3665,15 +3683,35 @@ export type Database = {
         }
         Returns: boolean
       }
+      assign_governed_school_director: {
+        Args: { p_diretor_id?: string; p_school_id: string }
+        Returns: {
+          audit_id: string
+          diretor_id: string
+          school_id: string
+        }[]
+      }
       attendance_can_access_class: {
         Args: { target_class_id: string }
         Returns: boolean
       }
       attendance_current_role: { Args: never; Returns: string }
       attendance_current_school_id: { Args: never; Returns: string }
+      attendance_daily_cutoff: {
+        Args: { p_school_id: string }
+        Returns: string
+      }
       attendance_reopen_session_state: {
         Args: { p_session_id: string }
         Returns: Json
+      }
+      attendance_reopen_window_hours: {
+        Args: { p_school_id: string }
+        Returns: number
+      }
+      attendance_session_within_window: {
+        Args: { p_session_id: string }
+        Returns: boolean
       }
       auth_get_user_escola: { Args: never; Returns: string }
       auth_get_user_role: { Args: never; Returns: string }
@@ -3711,6 +3749,89 @@ export type Database = {
       certificado_verificar_fonte: {
         Args: { p_certificado_id: string }
         Returns: boolean
+      }
+      claim_whatsapp_notifications: {
+        Args: {
+          p_claim_token: string
+          p_lease_seconds?: number
+          p_limit?: number
+          p_max_attempts: number
+          p_message_id?: string
+        }
+        Returns: {
+          aluno_id: string
+          bloqueado_em: string | null
+          bloqueado_motivo: string | null
+          claim_expires_at: string | null
+          claim_token: string | null
+          created_at: string
+          criado_por: string | null
+          data_aula: string
+          entregue_em: string | null
+          escola_id: string
+          external_message_id: string | null
+          falhou_em: string | null
+          id: string
+          idempotency_key: string
+          lido_em: string | null
+          proxima_tentativa: string
+          reconciliation_required_at: string | null
+          responsavel_id: string
+          status: string
+          tentativas: number
+          tipo: string
+          ultimo_erro_codigo: string | null
+          ultimo_status_em: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_notification_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      complete_whatsapp_notification_delivery: {
+        Args: {
+          p_block_reason?: string
+          p_claim_token: string
+          p_external_message_id?: string
+          p_failure_code?: string
+          p_message_id: string
+          p_outcome: string
+          p_retry_delay_seconds?: number
+        }
+        Returns: boolean
+      }
+      create_governed_enrollment: {
+        Args: {
+          p_aluno_id: string
+          p_ano_letivo: number
+          p_data_matricula?: string
+          p_observacoes?: string
+          p_turma_id: string
+        }
+        Returns: {
+          audit_id: string
+          escola_id: string
+          matricula_id: string
+        }[]
+      }
+      create_governed_school: {
+        Args: {
+          p_codigo: string
+          p_diretor_id?: string
+          p_email?: string
+          p_endereco?: string
+          p_nome: string
+          p_telefone?: string
+          p_tipo: string
+        }
+        Returns: {
+          audit_id: string
+          diretor_id: string
+          school_id: string
+        }[]
       }
       create_student_admission: {
         Args: {
@@ -3767,7 +3888,10 @@ export type Database = {
         Args: { p_decision: string; p_reason?: string; p_request_id: string }
         Returns: {
           after_state: Json | null
+          approved_at: string | null
           before_state: Json
+          correction_deadline_at: string | null
+          correction_window_hours: number | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -3787,6 +3911,25 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      enqueue_guardian_whatsapp_attendance_notification: {
+        Args: {
+          p_aluno_id: string
+          p_criado_por: string
+          p_data_aula: string
+          p_responsavel_id: string
+          p_tipo: string
+        }
+        Returns: {
+          audit_id: string
+          duplicated: boolean
+          message_id: string
+          status: string
+        }[]
+      }
+      ensure_pilot_invitation_audit: {
+        Args: { p_invitation_id: string }
+        Returns: string
       }
       get_attendance_conditionality: {
         Args: {
@@ -3930,6 +4073,10 @@ export type Database = {
           zona_residencial: string
         }[]
       }
+      get_class_default_capacity: {
+        Args: { p_school_id: string }
+        Returns: number
+      }
       get_municipal_settings: {
         Args: { p_ano: number; p_escola_id: string }
         Returns: {
@@ -3975,6 +4122,10 @@ export type Database = {
         Args: { target_school_id: string }
         Returns: boolean
       }
+      pilot_can_admit_students_to_school: {
+        Args: { target_school_id: string }
+        Returns: boolean
+      }
       pilot_can_insert_matricula: {
         Args: { target_aluno_id: string; target_turma_id: string }
         Returns: boolean
@@ -3992,7 +4143,6 @@ export type Database = {
         Returns: boolean
       }
       pilot_cleanup_import_retention: { Args: never; Returns: number }
-      pilot_cleanup_import_staging: { Args: never; Returns: number }
       pilot_current_role: { Args: never; Returns: string }
       pilot_current_school_id: { Args: never; Returns: string }
       pilot_dashboard_metrics: {
@@ -4020,6 +4170,23 @@ export type Database = {
           batch_id: string
           cleaned_at: string
           published_at: string
+          raw_expires_at: string
+          status: string
+        }[]
+      }
+      pilot_reject_synthetic_import_batch: {
+        Args: {
+          p_approver_user_id: string
+          p_batch_id: string
+          p_governance_fingerprint_sha256: string
+          p_governance_metadata: Json
+          p_report_sha256: string
+        }
+        Returns: {
+          approved_at: string
+          audit_id: string
+          batch_id: string
+          cleaned_at: string
           raw_expires_at: string
           status: string
         }[]
@@ -4052,6 +4219,15 @@ export type Database = {
         Args: { target_class_id: string }
         Returns: boolean
       }
+      record_governed_management_audit: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_escola_id: string
+          p_event_type: string
+        }
+        Returns: string
+      }
       record_pilot_metric_event: {
         Args: {
           p_dimensions?: Json
@@ -4065,7 +4241,10 @@ export type Database = {
         Args: { p_reason: string; p_session_id: string }
         Returns: {
           after_state: Json | null
+          approved_at: string | null
           before_state: Json
+          correction_deadline_at: string | null
+          correction_window_hours: number | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -4102,6 +4281,32 @@ export type Database = {
           threshold_id: string
           valid_from: string
           valid_until: string
+        }[]
+      }
+      set_attendance_daily_cutoff: {
+        Args: { p_cutoff: string; p_school_id: string }
+        Returns: string
+      }
+      set_attendance_reopen_window_hours: {
+        Args: { p_hours: number; p_school_id: string }
+        Returns: number
+      }
+      set_class_default_capacity: {
+        Args: { p_capacity: number; p_school_id: string }
+        Returns: number
+      }
+      set_guardian_whatsapp_opt_in: {
+        Args: {
+          p_opt_in: boolean
+          p_registrado_por: string
+          p_responsavel_id: string
+        }
+        Returns: {
+          audit_id: string
+          cancelado_em: string
+          consentido_em: string
+          opt_in: boolean
+          responsavel_id: string
         }[]
       }
       set_municipal_settings: {
@@ -4151,6 +4356,37 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      update_current_pilot_profile_name: {
+        Args: { p_nome: string }
+        Returns: {
+          ativo: boolean
+          audit_id: string
+          email: string
+          escola_id: string
+          id: string
+          nome: string
+          tipo_usuario: string
+        }[]
+      }
+      update_governed_enrollment: {
+        Args: {
+          p_matricula_id: string
+          p_observacoes?: string
+          p_situacao: string
+        }
+        Returns: {
+          audit_id: string
+          escola_id: string
+          matricula_id: string
+        }[]
+      }
+      update_governed_school: {
+        Args: { p_changes: Json; p_school_id: string }
+        Returns: {
+          audit_id: string
+          school_id: string
+        }[]
+      }
       vivencias_valid_campos: {
         Args: { input_campos: string[] }
         Returns: boolean
@@ -4168,6 +4404,14 @@ export type Database = {
           p_session_id: string
         }
         Returns: undefined
+      }
+      write_governed_turma: {
+        Args: { p_changes?: Json; p_turma_id?: string }
+        Returns: {
+          audit_id: string
+          escola_id: string
+          turma_id: string
+        }[]
       }
       write_pilot_audit_event: {
         Args: {

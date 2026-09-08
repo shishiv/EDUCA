@@ -186,11 +186,11 @@ export function isVivenciaDateNotFuture(value: string): boolean {
  * Error messages for validation
  */
 export const VIVENCIA_ERROR_MESSAGES = {
-  descricaoTooShort: `A descricao deve ter pelo menos ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`,
-  descricaoTooLong: `A descricao deve ter no maximo ${VIVENCIA_VALIDATION.maxDescricaoLength} caracteres`,
-  noCampoSelected: 'Selecione pelo menos um Campo de Experiencia',
-  observacoesTooLong: `As observacoes devem ter no maximo ${VIVENCIA_VALIDATION.maxObservacoesLength} caracteres`,
-  dataRequired: 'A data da vivencia e obrigatoria',
+  descricaoTooShort: `A descrição deve ter no mínimo ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`,
+  descricaoTooLong: `A descrição deve ter no máximo ${VIVENCIA_VALIDATION.maxDescricaoLength} caracteres`,
+  noCampoSelected: 'Selecione pelo menos um Campo de Experiência',
+  observacoesTooLong: `As observações devem ter no máximo ${VIVENCIA_VALIDATION.maxObservacoesLength} caracteres`,
+  dataRequired: 'A data da vivência é obrigatória',
 } as const
 
 // ============================================================================

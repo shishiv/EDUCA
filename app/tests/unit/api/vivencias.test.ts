@@ -1,33 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest } from 'next/server'
-
-const {
-  actorMock,
-  turmaMock,
-  enrollmentMock,
-  serviceConstructorMock,
-  createClientMock,
-} = vi.hoisted(() => ({
-  actorMock: vi.fn(),
-  turmaMock: vi.fn(),
-  enrollmentMock: vi.fn(),
-  serviceConstructorMock: vi.fn(),
-  createClientMock: vi.fn(),
-}))
-
-vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }))
-vi.mock('@/lib/services/vivencias-auth', () => ({
-  requireVivenciaActor: actorMock,
-  getVivenciaTurma: turmaMock,
-  getVivenciaEnrollment: enrollmentMock,
-  assertVivenciaReadAccess: vi.fn(),
-  assertVivenciaWriteAccess: vi.fn(),
-}))
-vi.mock('@/lib/api/vivencias', () => ({ VivenciasApiService: serviceConstructorMock }))
-
-import { GET, POST } from '@/app/api/vivencias/route'
-import { DELETE, GET as GET_BY_ID, PUT } from '@/app/api/vivencias/[id]/route'
-import { AttendanceAuthError } from '@/lib/services/attendance-auth'
+import type { Vivencia } from '@/types/diario-infantil'
+import { AttendanceAuthError, type AttendanceActor } from '@/lib/services/attendance-auth'
+import type { VivenciaEnrollment, VivenciaScope, VivenciaTurma } from '@/lib/services/vivencias-auth'
+import {
+  createVivenciaByIdRouteHandlers,
+  createVivenciasRouteHandlers,
+  type VivenciasRouteContext,
+} from '@/app/api/vivencias/handler'
 
 const SCHOOL_ID = '10000000-0000-0000-0000-000000000001'
 const TURMA_ID = '20000000-0000-0000-0000-000000000001'
@@ -35,7 +14,27 @@ const STUDENT_ID = '30000000-0000-0000-0000-000000000001'
 const ENROLLMENT_ID = '40000000-0000-0000-0000-000000000001'
 const TEACHER_ID = '50000000-0000-0000-0000-000000000001'
 
-const vivencia = {
+const teacher: AttendanceActor = {
+  userId: TEACHER_ID,
+  tipo_usuario: 'professor',
+  escola_id: SCHOOL_ID,
+}
+
+const turma: VivenciaTurma = {
+  turma_id: TURMA_ID,
+  escola_id: SCHOOL_ID,
+  professor_id: TEACHER_ID,
+  ativo: true,
+}
+
+const enrollment: VivenciaEnrollment = {
+  id: ENROLLMENT_ID,
+  aluno_id: STUDENT_ID,
+  turma_id: TURMA_ID,
+  situacao: 'ativa',
+}
+
+const vivencia: Vivencia = {
   id: '60000000-0000-0000-0000-000000000001',
   escola_id: SCHOOL_ID,
   aluno_id: STUDENT_ID,
@@ -53,58 +52,83 @@ const vivencia = {
   updated_at: '2026-08-20T12:00:00.000Z',
 }
 
-function request(url: string, body?: unknown) {
-  return new NextRequest(url, body === undefined ? undefined : {
-    method: 'POST',
+interface VivenciaRequestBody {
+  aluno_id?: string
+  turma_id?: string
+  professor_id?: string
+  data_vivencia?: string
+  campos_experiencia?: string[]
+  descricao?: string
+}
+
+function jsonRequest(url: string, method: 'POST' | 'PUT', body: VivenciaRequestBody) {
+  return new Request(url, {
+    method,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
 }
 
 describe('Vivências route handlers', () => {
-  const create = vi.fn()
-  const getByTurma = vi.fn()
-  const getByAluno = vi.fn()
-  const getById = vi.fn()
-  const update = vi.fn()
-  const remove = vi.fn()
+  const create = vi.fn<VivenciasRouteContext['service']['create']>()
+  const getByTurma = vi.fn<VivenciasRouteContext['service']['getByTurma']>()
+  const getByAluno = vi.fn<VivenciasRouteContext['service']['getByAluno']>()
+  const getByReport = vi.fn<VivenciasRouteContext['service']['getByReport']>()
+  const getById = vi.fn<VivenciasRouteContext['service']['getById']>()
+  const update = vi.fn<VivenciasRouteContext['service']['update']>()
+  const remove = vi.fn<VivenciasRouteContext['service']['delete']>()
+  const getTurma = vi.fn<(turmaId: string) => Promise<VivenciaTurma>>()
+  const getEnrollment = vi.fn<(
+    alunoId: string,
+    turmaId: string,
+  ) => Promise<VivenciaEnrollment>>()
+  const assertReadAccess = vi.fn<(scope: VivenciaScope) => void>()
+  const assertWriteAccess = vi.fn<(
+    turmaScope: VivenciaTurma,
+    scope: VivenciaScope,
+    enrollmentScope: VivenciaEnrollment,
+  ) => void>()
+  const openContext = vi.fn<() => Promise<VivenciasRouteContext>>()
+
+  const dependencies = { openContext }
+  const collectionHandlers = createVivenciasRouteHandlers(dependencies)
+  const itemHandlers = createVivenciaByIdRouteHandlers(dependencies)
+
+  function contextFor(actor: AttendanceActor = teacher): VivenciasRouteContext {
+    return {
+      actor,
+      service: {
+        create,
+        delete: remove,
+        getByAluno,
+        getById,
+        getByReport,
+        getByTurma,
+        update,
+      },
+      getTurma,
+      getEnrollment,
+      assertReadAccess,
+      assertWriteAccess,
+    }
+  }
 
   beforeEach(() => {
-    actorMock.mockReset()
-    turmaMock.mockReset()
-    enrollmentMock.mockReset()
-    serviceConstructorMock.mockReset()
-    createClientMock.mockReset()
-    create.mockReset()
-    getByTurma.mockReset()
-    getByAluno.mockReset()
-    getById.mockReset()
-    update.mockReset()
-    remove.mockReset()
-    createClientMock.mockResolvedValue({})
-    actorMock.mockResolvedValue({ userId: TEACHER_ID, tipo_usuario: 'professor', escola_id: SCHOOL_ID })
-    turmaMock.mockResolvedValue({ turma_id: TURMA_ID, escola_id: SCHOOL_ID, professor_id: TEACHER_ID, ativo: true })
-    enrollmentMock.mockResolvedValue({ id: ENROLLMENT_ID, aluno_id: STUDENT_ID, turma_id: TURMA_ID, situacao: 'ativa' })
+    vi.clearAllMocks()
     create.mockResolvedValue(vivencia)
     getByTurma.mockResolvedValue([vivencia])
     getByAluno.mockResolvedValue([vivencia])
+    getByReport.mockResolvedValue([vivencia])
     getById.mockResolvedValue(vivencia)
     update.mockResolvedValue(vivencia)
     remove.mockResolvedValue(undefined)
-    serviceConstructorMock.mockImplementation(function () {
-      return {
-        create,
-        getByTurma,
-        getByAluno,
-        getById,
-        update,
-        delete: remove,
-      }
-    })
+    getTurma.mockResolvedValue(turma)
+    getEnrollment.mockResolvedValue(enrollment)
+    openContext.mockResolvedValue(contextFor())
   })
 
   it('derives school and teacher ownership from the authenticated actor', async () => {
-    const response = await POST(request('http://test/api/vivencias', {
+    const response = await collectionHandlers.POST(jsonRequest('http://test/api/vivencias', 'POST', {
       aluno_id: STUDENT_ID,
       turma_id: TURMA_ID,
       professor_id: '99999999-9999-4999-8999-999999999999',
@@ -120,20 +144,22 @@ describe('Vivências route handlers', () => {
       professor_id: TEACHER_ID,
       created_by: TEACHER_ID,
     }))
+    expect(assertWriteAccess).toHaveBeenCalledWith(turma, turma, enrollment)
   })
 
   it('reads class narratives only after the class scope is authorized', async () => {
-    const response = await GET(new NextRequest(
+    const response = await collectionHandlers.GET(new Request(
       `http://test/api/vivencias?turma_id=${TURMA_ID}&limit=10`,
     ))
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ data: [vivencia] })
+    expect(assertReadAccess).toHaveBeenCalledWith(turma)
     expect(getByTurma).toHaveBeenCalledWith(TURMA_ID, undefined, undefined)
   })
 
   it('passes student date bounds to the database query before limiting results', async () => {
-    const response = await GET(new NextRequest(
+    const response = await collectionHandlers.GET(new Request(
       `http://test/api/vivencias?aluno_id=${STUDENT_ID}&data_inicio=2026-08-01&data_fim=2026-08-01&limit=50`,
     ))
 
@@ -143,7 +169,7 @@ describe('Vivências route handlers', () => {
   })
 
   it('rejects reversed date ranges', async () => {
-    const response = await GET(new NextRequest(
+    const response = await collectionHandlers.GET(new Request(
       `http://test/api/vivencias?aluno_id=${STUDENT_ID}&data_inicio=2026-08-02&data_fim=2026-08-01`,
     ))
 
@@ -153,12 +179,12 @@ describe('Vivências route handlers', () => {
   })
 
   it('returns Vivências-specific authentication errors', async () => {
-    actorMock.mockRejectedValue(new AttendanceAuthError(
+    openContext.mockRejectedValue(new AttendanceAuthError(
       'UNAUTHENTICATED',
       'Autenticação obrigatória para acessar vivências',
     ))
 
-    const response = await GET(new NextRequest(
+    const response = await collectionHandlers.GET(new Request(
       `http://test/api/vivencias?aluno_id=${STUDENT_ID}`,
     ))
 
@@ -170,9 +196,13 @@ describe('Vivências route handlers', () => {
   })
 
   it('fails closed when the actor has no approved role', async () => {
-    actorMock.mockResolvedValue({ userId: 'other', tipo_usuario: 'responsavel', escola_id: SCHOOL_ID })
+    openContext.mockResolvedValue(contextFor({
+      userId: 'other',
+      tipo_usuario: 'responsavel',
+      escola_id: SCHOOL_ID,
+    }))
 
-    const response = await GET(new NextRequest(
+    const response = await collectionHandlers.GET(new Request(
       `http://test/api/vivencias?aluno_id=${STUDENT_ID}`,
     ))
 
@@ -180,23 +210,21 @@ describe('Vivências route handlers', () => {
     expect((await response.json()).code).toBe('FORBIDDEN_ROLE')
   })
 
-  it('uses the authenticated actor for edits and deletes', async () => {
+  it('uses the authenticated actor for edits and deletes after ownership checks', async () => {
     const id = vivencia.id
-    const getResponse = await GET_BY_ID(
-      new NextRequest(`http://test/api/vivencias/${id}`),
-      { params: Promise.resolve({ id }) },
-    )
-    const updateResponse = await PUT(
-      request(`http://test/api/vivencias/${id}`, {
+    const route = { params: Promise.resolve({ id }) }
+    const getResponse = await itemHandlers.GET(new Request(`http://test/api/vivencias/${id}`), route)
+    const updateResponse = await itemHandlers.PUT(
+      jsonRequest(`http://test/api/vivencias/${id}`, 'PUT', {
         data_vivencia: '2026-08-19',
         descricao: 'A criança ampliou sua narrativa com os colegas.',
         professor_id: '99999999-9999-4999-8999-999999999999',
       }),
-      { params: Promise.resolve({ id }) },
+      route,
     )
-    const deleteResponse = await DELETE(
-      new NextRequest(`http://test/api/vivencias/${id}`),
-      { params: Promise.resolve({ id }) },
+    const deleteResponse = await itemHandlers.DELETE(
+      new Request(`http://test/api/vivencias/${id}`),
+      route,
     )
 
     expect(getResponse.status).toBe(200)
@@ -205,18 +233,37 @@ describe('Vivências route handlers', () => {
       data_vivencia: '2026-08-19',
       updated_by: TEACHER_ID,
     }))
+    expect(assertReadAccess).toHaveBeenCalledWith(vivencia)
+    expect(assertWriteAccess).toHaveBeenCalledWith(turma, vivencia, enrollment)
     expect(deleteResponse.status).toBe(204)
     expect(remove).toHaveBeenCalledWith(id)
   })
 
   it('rejects future dates when editing', async () => {
     const futureDate = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
-    const response = await PUT(
-      request(`http://test/api/vivencias/${vivencia.id}`, { data_vivencia: futureDate }),
+    const response = await itemHandlers.PUT(
+      jsonRequest(`http://test/api/vivencias/${vivencia.id}`, 'PUT', {
+        data_vivencia: futureDate,
+      }),
       { params: Promise.resolve({ id: vivencia.id }) },
     )
 
     expect(response.status).toBe(400)
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('maps database business rules to conflict responses', async () => {
+    create.mockRejectedValue({ code: '23514', message: 'constraint failed' })
+
+    const response = await collectionHandlers.POST(jsonRequest('http://test/api/vivencias', 'POST', {
+      aluno_id: STUDENT_ID,
+      turma_id: TURMA_ID,
+      data_vivencia: '2026-08-20',
+      campos_experiencia: ['eu'],
+      descricao: 'A criança explorou movimentos com os colegas.',
+    }))
+
+    expect(response.status).toBe(409)
+    expect((await response.json()).code).toBe('BUSINESS_RULE_VIOLATION')
   })
 })

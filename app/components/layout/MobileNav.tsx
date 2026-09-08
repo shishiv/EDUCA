@@ -7,101 +7,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
-import { canAccessRoute } from '@/lib/route-policy'
-import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
-import { isDemoSandboxPilotPathAllowed } from '@/lib/demo-sandbox/demo-sandbox'
 import { useAuth } from '@/hooks/use-auth'
-import {
-  Home,
-  CheckSquare,
-  BookText,
-  FileText,
-  Users,
-} from 'lucide-react'
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface NavItem {
-  labelKey: 'dashboard' | 'students' | 'attendance' | 'diary' | 'reports'
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  /** Match pattern for active state (supports partial path matching) */
-  matchPath?: string
-}
-
-// ============================================================================
-// Navigation Items Configuration
-// ============================================================================
-
-const navigationItems: NavItem[] = [
-  {
-    labelKey: 'dashboard',
-    href: '/dashboard',
-    icon: Home,
-    matchPath: '/dashboard',
-  },
-  {
-    labelKey: 'students',
-    href: '/dashboard/alunos',
-    icon: Users,
-    matchPath: '/dashboard/alunos',
-  },
-  {
-    labelKey: 'attendance',
-    href: '/dashboard/turmas',
-    icon: CheckSquare,
-    matchPath: '/dashboard/turmas',
-  },
-  {
-    labelKey: 'diary',
-    href: '/diario',
-    icon: BookText,
-    matchPath: '/diario',
-  },
-  {
-    labelKey: 'reports',
-    href: '/dashboard/relatorios',
-    icon: FileText,
-    matchPath: '/dashboard/relatorios',
-  },
-]
-
-// ============================================================================
-// Component
-// ============================================================================
+import { getMobileNavigationForRole, isNavigationItemActive } from './navigation'
 
 export function MobileNav() {
   const t = useTranslations('layout.navigation')
   const pathname = usePathname()
   const { userProfile } = useAuth()
-  const visibleNavigationItems = navigationItems.filter(item =>
-    !!userProfile &&
-    canAccessRoute(item.href, userProfile.tipo_usuario) &&
-    (
-      !isPilotModeEnabled() ||
-      !isPilotDisabledPath(item.href) ||
-      isDemoSandboxPilotPathAllowed(item.href)
-    )
-  )
-
-  /**
-   * Check if a nav item is active
-   * Handles exact match for dashboard, partial match for others
-   */
-  const isActive = (item: NavItem): boolean => {
-    if (!pathname) return false
-
-    // Exact match for dashboard (to avoid matching all dashboard/* routes)
-    if (item.href === '/dashboard') {
-      return pathname === '/dashboard'
-    }
-
-    // For other items, check if pathname starts with the item's matchPath or href
-    const matchPath = item.matchPath || item.href
-    return pathname.startsWith(matchPath)
-  }
+  const visibleNavigationItems = getMobileNavigationForRole(userProfile?.tipo_usuario ?? '')
 
   return (
     <nav
@@ -110,7 +23,7 @@ export function MobileNav() {
     >
       <div className="app-mobile-nav__inner">
         {visibleNavigationItems.map((item) => {
-          const active = isActive(item)
+          const active = isNavigationItemActive(pathname, item)
           const Icon = item.icon
 
           return (
@@ -121,7 +34,7 @@ export function MobileNav() {
               aria-current={active ? 'page' : undefined}
             >
               <Icon aria-hidden="true" />
-              <span>{t(`items.${item.labelKey}`)}</span>
+              <span>{t(`items.${item.labelKey === 'classDiary' ? 'diary' : item.labelKey}`)}</span>
             </Link>
           )
         })}

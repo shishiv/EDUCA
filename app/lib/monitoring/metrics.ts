@@ -111,7 +111,7 @@ class MetricsCollector {
         })
       }
     } catch (error) {
-      logger.error('Metrics flush error', error as Error, {
+      logger.error('Metrics flush error', error instanceof Error ? error : new Error(String(error)), {
         feature: 'monitoring',
         action: 'flush_metrics',
         metadata: { metricsCount: metricsToSend.length }

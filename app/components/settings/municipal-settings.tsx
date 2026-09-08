@@ -11,6 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+function municipalDescriptionKey(canEdit: boolean, schoolId: string | null) {
+  if (!canEdit) return 'municipalReadOnly'
+  return schoolId ? 'municipalSchoolDescription' : 'municipalDescription'
+}
+
 export function MunicipalSettings() {
   const t = useTranslations('platform.settings')
   const { userProfile } = useAuth()
@@ -68,7 +73,7 @@ export function MunicipalSettings() {
           <Building2 className="h-5 w-5" aria-hidden="true" />
           {t('municipalTitle')}
         </CardTitle>
-        <CardDescription>{t(canEdit ? selectedEscolaId ? 'municipalSchoolDescription' : 'municipalDescription' : 'municipalReadOnly')}</CardDescription>
+        <CardDescription>{t(municipalDescriptionKey(canEdit, selectedEscolaId))}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!settings ? <p className="text-sm text-muted-foreground">{t('municipalLoading')}</p> : (

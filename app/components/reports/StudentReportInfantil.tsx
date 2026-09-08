@@ -41,20 +41,17 @@ import {
   Heart,
   Music,
   MessageCircle,
-  Shapes,
+  Shapes as ExperienceFieldIcon,
   Info,
   Clock,
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import {
   EXPERIENCE_FIELDS_CONFIG,
-  REPORT_STATUS_CONFIG,
   SEMESTER_CONFIG,
   type SemestreType,
   type ReportStatus,
   type ExperienceFieldKey,
-  type DescriptiveReport,
-  calculateReportCompletion,
 } from '@/types/descriptive-report'
 
 // ============================================================================
@@ -127,7 +124,7 @@ const EXPERIENCE_FIELD_ICONS: Record<ExperienceFieldKey, React.ComponentType<{ c
   campo_corpo_gestos: User,
   campo_tracos_sons: Music,
   campo_escuta_fala: MessageCircle,
-  campo_espacos_tempos: Shapes,
+  campo_espacos_tempos: ExperienceFieldIcon,
 }
 
 /**
@@ -169,7 +166,7 @@ const EXPERIENCE_FIELD_COLORS: Record<ExperienceFieldKey, { bg: string; text: st
  * Format date for display
  */
 function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = date instanceof Date ? date : new Date(date)
   return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -299,11 +296,9 @@ function ReportHeader({
 function ExperienceFieldCard({
   fieldKey,
   content,
-  printMode,
 }: {
   fieldKey: ExperienceFieldKey
   content: string | null
-  printMode?: boolean
 }) {
   const fieldConfig = EXPERIENCE_FIELDS_CONFIG.find((f) => f.key === fieldKey)
   const colors = EXPERIENCE_FIELD_COLORS[fieldKey]
@@ -363,7 +358,6 @@ function SemesterReportCard({
 }) {
   const t = useTranslations('platform')
   const semesterConfig = SEMESTER_CONFIG[report.semestre]
-  const statusConfig = REPORT_STATUS_CONFIG[report.status]
   const completion = calculateCompletion(report)
   const isFinalized = report.status === 'finalizado'
 
@@ -439,7 +433,6 @@ function SemesterReportCard({
             key={field.key}
             fieldKey={field.key}
             content={getReportFieldValue(report, field.key)}
-            printMode={printMode}
           />
         ))}
 

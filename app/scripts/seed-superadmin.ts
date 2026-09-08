@@ -14,6 +14,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { resolveSeedMunicipalityId } from '../lib/pilot/seed-municipality'
 import { Database } from '../types/database'
 
 // Configuração do Supabase com service role (bypass RLS)
@@ -35,25 +36,14 @@ interface Escola {
   id?: string
   nome: string
   codigo: string
-  tipo: 'creche' | 'pre_escola' | 'fundamental'
-  endereco: string
-  telefone: string
-  email: string
+  tipo: string
+  endereco: string | null
+  telefone: string | null
+  email: string | null
 }
 
-async function main() {
-  console.log('\n' + '='.repeat(70))
-  console.log('🎓 SEED: Sistema Educacional Municipal')
-  console.log('='.repeat(70))
-
-  try {
-    // ========================================================================
-    // PARTE 1: CRIAR SUPERADMIN
-    // ========================================================================
-    console.log('\n📌 PARTE 1: Criando Superadmin...')
-    console.log('-'.repeat(70))
-
-    const { data: authAdmin, error: authAdminError } = await supabase.auth.admin.createUser({
+async function createSuperadmin() {
+const { data: authAdmin, error: authAdminError } = await supabase.auth.admin.createUser({
       email: 'admin@municipio.edu.br',
       password: SENHA_SUPERADMIN,
       email_confirm: true,
@@ -65,7 +55,7 @@ async function main() {
 
     if (authAdminError) {
       if (authAdminError.message.includes('already registered')) {
-        console.log('⚠️  Superadmin já existe, pulando criação...')
+        console.info('⚠️  Superadmin já existe, pulando criação...')
       } else {
         throw new Error(`Erro ao criar auth superadmin: ${authAdminError.message}`)
       }
@@ -86,18 +76,15 @@ async function main() {
         throw new Error(`Erro ao criar perfil superadmin: ${profileAdminError.message}`)
       }
 
-      console.log('✅ Superadmin criado com sucesso!')
-      console.log(`   Email: admin@municipio.edu.br`)
-      console.log(`   Senha: ${SENHA_SUPERADMIN}`)
+      console.info('✅ Superadmin criado com sucesso!')
+      console.info(`   Email: admin@municipio.edu.br`)
+      console.info(`   Senha: ${SENHA_SUPERADMIN}`)
     }
+}
 
-    // ========================================================================
-    // PARTE 2: CRIAR ESCOLAS MUNICIPAIS
-    // ========================================================================
-    console.log('\n📌 PARTE 2: Criando Escolas Municipais...')
-    console.log('-'.repeat(70))
-
-    // Seed schools — replace with real school data for your municipality
+async function createSchools() {
+  const municipioId = await resolveSeedMunicipalityId(supabase)
+// Seed schools: replace with real school data for your municipality
     // INEP codes and addresses below are placeholders
     const escolasData: Escola[] = [
       {
@@ -181,6 +168,7 @@ async function main() {
         .from('escolas')
         // assign_school_municipality fills the generated-required field before insert.
         .insert({
+          municipio_id: municipioId,
           nome: escolaData.nome,
           codigo: escolaData.codigo,
           tipo: escolaData.tipo,
@@ -189,71 +177,93 @@ async function main() {
           email: escolaData.email,
           ativo: true,
           diretor_id: null  // Será atualizado depois
-        } as unknown as Database['public']['Tables']['escolas']['Insert'])
+        })
         .select()
         .single()
 
       if (escolaError) {
         if (escolaError.message.includes('duplicate key')) {
-          console.log(`⚠️  Escola "${escolaData.nome}" já existe, recuperando...`)
+          console.info(`⚠️  Escola "${escolaData.nome}" já existe, recuperando...`)
           const { data: existingEscola } = await supabase
             .from('escolas')
             .select('*')
             .eq('codigo', escolaData.codigo)
             .single()
           if (existingEscola) {
-            escolasCriadas.push(existingEscola as Escola)
+            escolasCriadas.push(existingEscola)
           }
         } else {
           throw new Error(`Erro ao criar escola ${escolaData.nome}: ${escolaError.message}`)
         }
       } else {
-        escolasCriadas.push(escolaData as Escola & { id: string })
-        console.log(`✅ Escola criada: ${escolaData.nome}`)
-        console.log(`   Código INEP: ${escolaData.codigo}`)
-        console.log(`   Tipo: ${escolaData.tipo}`)
+        escolasCriadas.push(escola)
+        console.info(`✅ Escola criada: ${escolaData.nome}`)
+        console.info(`   Código INEP: ${escolaData.codigo}`)
+        console.info(`   Tipo: ${escolaData.tipo}`)
       }
     }
 
     if (escolasCriadas.length === 0) {
       throw new Error('Nenhuma escola foi criada ou recuperada')
     }
+  return escolasCriadas
+}
+
+async function main() {
+  console.info('\n' + '='.repeat(70))
+  console.info('🎓 SEED: Sistema Educacional Municipal')
+  console.info('='.repeat(70))
+
+  try {
+    // ========================================================================
+    // PARTE 1: CRIAR SUPERADMIN
+    // ========================================================================
+    console.info('\n📌 PARTE 1: Criando Superadmin...')
+    console.info('-'.repeat(70))
+
+    await createSuperadmin()
+
+    // ========================================================================
+    // PARTE 2: CRIAR ESCOLAS MUNICIPAIS
+    // ========================================================================
+    console.info('\n📌 PARTE 2: Criando Escolas Municipais...')
+    console.info('-'.repeat(70))
+
+    const escolasCriadas = await createSchools()
 
     // ========================================================================
     // RESUMO FINAL
     // ========================================================================
-    console.log('\n' + '='.repeat(70))
-    console.log('🎉 SEED MINIMALISTA COMPLETO!')
-    console.log('='.repeat(70))
-    console.log('\n📊 Resumo:')
-    console.log(`   ✅ Superadmin criado: 1`)
-    console.log(`   ✅ Escolas criadas: ${escolasCriadas.length}`)
-    console.log('\n📋 Credenciais de Acesso:')
-    console.log('┌─────────────────────────────────────────────────────────────────┐')
-    console.log('│ SUPERADMIN                                                      │')
-    console.log('│ Email: admin@municipio.edu.br                                │')
-    console.log('│ Senha: Admin@Municipio2025                                      │')
-    console.log('│                                                                 │')
-    console.log('│ ⚠️  ACESSO COMPLETO AO SISTEMA:                                  │')
-    console.log('│ - Gerenciar escolas, usuários e configurações                 │')
-    console.log('│ - Criar e gerenciar turmas e matrículas                       │')
-    console.log('│ - Acessar todos os módulos administrativos                    │')
-    console.log('└─────────────────────────────────────────────────────────────────┘')
-    console.log('\n🏫 Escolas Cadastradas:')
+    console.info('\n' + '='.repeat(70))
+    console.info('🎉 SEED MINIMALISTA COMPLETO!')
+    console.info('='.repeat(70))
+    console.info('\n📊 Resumo:')
+    console.info(`   ✅ Superadmin criado: 1`)
+    console.info(`   ✅ Escolas criadas: ${escolasCriadas.length}`)
+    console.info('\n📋 Credenciais de Acesso:')
+    console.info('┌─────────────────────────────────────────────────────────────────┐')
+    console.info('│ SUPERADMIN                                                      │')
+    console.info('│ Email: admin@municipio.edu.br                                │')
+    console.info('│ Senha: Admin@Municipio2025                                      │')
+    console.info('│                                                                 │')
+    console.info('│ ⚠️  ACESSO COMPLETO AO SISTEMA:                                  │')
+    console.info('│ - Gerenciar escolas, usuários e configurações                 │')
+    console.info('│ - Criar e gerenciar turmas e matrículas                       │')
+    console.info('│ - Acessar todos os módulos administrativos                    │')
+    console.info('└─────────────────────────────────────────────────────────────────┘')
+    console.info('\n🏫 Escolas Cadastradas:')
     escolasCriadas.forEach((escola, idx) => {
-      console.log(`   ${idx + 1}. ${escola.nome} (INEP: ${escola.codigo})`)
+      console.info(`   ${idx + 1}. ${escola.nome} (INEP: ${escola.codigo})`)
     })
-    console.log('\n🚀 Próximos Passos:')
-    console.log('   1. Acesse: http://localhost:3000/login')
-    console.log('   2. Login: admin@municipio.edu.br / Admin@Municipio2025')
-    console.log('   3. Gerencie usuários, escolas e configurações do sistema')
-    console.log('\n')
+    console.info('\n🚀 Próximos Passos:')
+    console.info('   1. Acesse: http://localhost:3000/login')
+    console.info('   2. Login: admin@municipio.edu.br / Admin@Municipio2025')
+    console.info('   3. Gerencie usuários, escolas e configurações do sistema')
+    console.info('\n')
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('\n💥 ERRO AO EXECUTAR SEED:')
-    console.error(error.message)
-    console.error('\nStack trace:')
-    console.error(error.stack)
+    console.error(error instanceof Error ? error.message : String(error))
     process.exit(1)
   }
 }

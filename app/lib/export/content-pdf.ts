@@ -45,6 +45,148 @@ const BNCC_STYLES: PDFStyles = {
 // CONTENT REPORT PDF
 // ============================================================================
 
+type ContentPdfDocument = ReturnType<typeof createPDFDocument>;
+
+function addContentTeacher(
+  doc: ContentPdfDocument,
+  report: ContentReport,
+  startY: number,
+): number {
+  if (!report.professor) return startY;
+
+  const finalY = addPDFText(
+    doc,
+    `Professor(a): ${report.professor.nome}`,
+    startY,
+    { fontSize: 10, fontStyle: 'italic', color: [100, 100, 100] }
+  );
+  return finalY + 3;
+}
+
+function addDisciplineSummary(
+  doc: ContentPdfDocument,
+  report: ContentReport,
+  startY: number,
+  includeSummary: boolean,
+): number {
+  if (!includeSummary || report.resumo.disciplinasMaisTrabalhadas.length === 0) {
+    return startY;
+  }
+
+  let currentY = addPDFText(
+    doc,
+    'Disciplinas/Campos Mais Trabalhados:',
+    startY,
+    { fontSize: 11, fontStyle: 'bold' }
+  );
+  currentY += 3;
+
+  const disciplineText = report.resumo.disciplinasMaisTrabalhadas
+    .map((discipline, index) => `${index + 1}. ${discipline.disciplina} (${discipline.quantidade}x)`)
+    .join('  |  ');
+
+  currentY = addPDFText(
+    doc,
+    disciplineText,
+    currentY,
+    { fontSize: 9, color: [100, 100, 100] }
+  );
+  return currentY + 8;
+}
+
+function addSkillsSummary(
+  doc: ContentPdfDocument,
+  report: ContentReport,
+  startY: number,
+  includeSummary: boolean,
+): number {
+  if (!includeSummary || report.habilidadesBncc.length === 0) return startY;
+
+  let currentY = startY;
+  if (currentY > 200) {
+    doc.addPage();
+    currentY = 20;
+  }
+
+  const skillColumns: PDFTableColumn[] = [
+    { header: 'Codigo', dataKey: 'codigo', halign: 'center', width: 25 },
+    { header: 'Area/Campo', dataKey: 'descricao', halign: 'left' },
+    { header: 'Vezes', dataKey: 'vezes', halign: 'center', width: 18 },
+    { header: 'Nivel', dataKey: 'nivel', halign: 'center', width: 25 },
+  ];
+
+  const skillRows = report.habilidadesBncc.slice(0, 15).map((skill) => ({
+    codigo: skill.codigo,
+    descricao: skill.descricao.length > 40
+      ? skill.descricao.substring(0, 37) + '...'
+      : skill.descricao,
+    vezes: skill.vezesTrabalhado,
+    nivel: skill.nivel === 'fundamental' ? 'Fund.' : 'Infantil',
+  }));
+
+  const finalY = addPDFTable(
+    doc,
+    {
+      columns: skillColumns,
+      rows: skillRows,
+      title: 'Habilidades BNCC Trabalhadas',
+      summary: report.habilidadesBncc.length > 15
+        ? `Exibindo 15 de ${report.habilidadesBncc.length} habilidades (ordenadas por frequência)`
+        : `Total: ${report.habilidadesBncc.length} habilidades trabalhadas no período`,
+    },
+    currentY,
+    BNCC_STYLES
+  );
+
+  return finalY + 8;
+}
+
+function addDetailedLessons(
+  doc: ContentPdfDocument,
+  report: ContentReport,
+  startY: number,
+  includeDetails: boolean,
+): number {
+  if (!includeDetails || report.aulas.length === 0) return startY;
+
+  let currentY = startY;
+  if (currentY > 180) {
+    doc.addPage();
+    currentY = 20;
+  }
+
+  const lessonColumns: PDFTableColumn[] = [
+    { header: 'Data', dataKey: 'data', halign: 'center', width: 22 },
+    { header: 'Tema/Conteudo', dataKey: 'tema', halign: 'left' },
+    { header: 'Objetivo', dataKey: 'objetivo', halign: 'left' },
+    { header: 'Habilidades', dataKey: 'habilidades', halign: 'center', width: 25 },
+  ];
+
+  const lessonRows = report.aulas.map((lesson) => ({
+    data: formatShortDateBR(lesson.dataAula),
+    tema: lesson.tema.length > 35 ? lesson.tema.substring(0, 32) + '...' : lesson.tema,
+    objetivo: lesson.objetivo.length > 40
+      ? lesson.objetivo.substring(0, 37) + '...'
+      : lesson.objetivo,
+    habilidades: lesson.habilidadesBncc.length > 0
+      ? lesson.habilidadesBncc.slice(0, 2).join(', ') +
+        (lesson.habilidadesBncc.length > 2 ? ` (+${lesson.habilidadesBncc.length - 2})` : '')
+      : '-',
+  }));
+
+  return addPDFTable(
+    doc,
+    {
+      columns: lessonColumns,
+      rows: lessonRows,
+      title: 'Detalhamento das Aulas',
+      summary: `Total: ${report.aulas.length} aulas registradas no período`,
+    },
+    currentY,
+    CONTENT_STYLES
+  );
+}
+
 /**
  * Generate PDF for content report with all lessons and BNCC skills
  */
@@ -82,16 +224,7 @@ export function generateContentReportPDF(
     },
   }, CONTENT_STYLES);
 
-  // Teacher info if available
-  if (report.professor) {
-    currentY = addPDFText(
-      doc,
-      `Professor(a): ${report.professor.nome}`,
-      currentY,
-      { fontSize: 10, fontStyle: 'italic', color: [100, 100, 100] }
-    );
-    currentY += 3;
-  }
+  currentY = addContentTeacher(doc, report, currentY);
 
   // Summary metrics
   currentY = addPDFSummary(
@@ -109,107 +242,9 @@ export function generateContentReportPDF(
 
   currentY += 5;
 
-  // Discipline summary section
-  if (includeDisciplineSummary && report.resumo.disciplinasMaisTrabalhadas.length > 0) {
-    currentY = addPDFText(
-      doc,
-      'Disciplinas/Campos Mais Trabalhados:',
-      currentY,
-      { fontSize: 11, fontStyle: 'bold' }
-    );
-    currentY += 3;
-
-    const disciplineText = report.resumo.disciplinasMaisTrabalhadas
-      .map((d, i) => `${i + 1}. ${d.disciplina} (${d.quantidade}x)`)
-      .join('  |  ');
-
-    currentY = addPDFText(
-      doc,
-      disciplineText,
-      currentY,
-      { fontSize: 9, color: [100, 100, 100] }
-    );
-    currentY += 8;
-  }
-
-  // BNCC Skills Summary Table
-  if (includeSkillsSummary && report.habilidadesBncc.length > 0) {
-    // Check if we need a new page
-    if (currentY > 200) {
-      doc.addPage();
-      currentY = 20;
-    }
-
-    const skillColumns: PDFTableColumn[] = [
-      { header: 'Codigo', dataKey: 'codigo', halign: 'center', width: 25 },
-      { header: 'Area/Campo', dataKey: 'descricao', halign: 'left' },
-      { header: 'Vezes', dataKey: 'vezes', halign: 'center', width: 18 },
-      { header: 'Nivel', dataKey: 'nivel', halign: 'center', width: 25 },
-    ];
-
-    const skillRows = report.habilidadesBncc.slice(0, 15).map((skill) => ({
-      codigo: skill.codigo,
-      descricao: skill.descricao.length > 40
-        ? skill.descricao.substring(0, 37) + '...'
-        : skill.descricao,
-      vezes: skill.vezesTrabalhado,
-      nivel: skill.nivel === 'fundamental' ? 'Fund.' : 'Infantil',
-    }));
-
-    currentY = addPDFTable(
-      doc,
-      {
-        columns: skillColumns,
-        rows: skillRows,
-        title: 'Habilidades BNCC Trabalhadas',
-        summary: report.habilidadesBncc.length > 15
-          ? `Exibindo 15 de ${report.habilidadesBncc.length} habilidades (ordenadas por frequência)`
-          : `Total: ${report.habilidadesBncc.length} habilidades trabalhadas no período`,
-      },
-      currentY,
-      BNCC_STYLES
-    );
-
-    currentY += 8;
-  }
-
-  // Detailed lessons table
-  if (includeDetailedLessons && report.aulas.length > 0) {
-    // Check if we need a new page
-    if (currentY > 180) {
-      doc.addPage();
-      currentY = 20;
-    }
-
-    const lessonColumns: PDFTableColumn[] = [
-      { header: 'Data', dataKey: 'data', halign: 'center', width: 22 },
-      { header: 'Tema/Conteudo', dataKey: 'tema', halign: 'left' },
-      { header: 'Objetivo', dataKey: 'objetivo', halign: 'left' },
-      { header: 'Habilidades', dataKey: 'habilidades', halign: 'center', width: 25 },
-    ];
-
-    const lessonRows = report.aulas.map((aula) => ({
-      data: formatShortDateBR(aula.dataAula),
-      tema: aula.tema.length > 35 ? aula.tema.substring(0, 32) + '...' : aula.tema,
-      objetivo: aula.objetivo.length > 40 ? aula.objetivo.substring(0, 37) + '...' : aula.objetivo,
-      habilidades: aula.habilidadesBncc.length > 0
-        ? aula.habilidadesBncc.slice(0, 2).join(', ') +
-          (aula.habilidadesBncc.length > 2 ? ` (+${aula.habilidadesBncc.length - 2})` : '')
-        : '-',
-    }));
-
-    currentY = addPDFTable(
-      doc,
-      {
-        columns: lessonColumns,
-        rows: lessonRows,
-        title: 'Detalhamento das Aulas',
-        summary: `Total: ${report.aulas.length} aulas registradas no período`,
-      },
-      currentY,
-      CONTENT_STYLES
-    );
-  }
+  currentY = addDisciplineSummary(doc, report, currentY, includeDisciplineSummary);
+  currentY = addSkillsSummary(doc, report, currentY, includeSkillsSummary);
+  currentY = addDetailedLessons(doc, report, currentY, includeDetailedLessons);
 
   // Compliance note
   currentY += 10;
@@ -437,7 +472,7 @@ export function generateLessonDetailPDF(
       currentY,
       { fontSize: 10, fontStyle: 'bold', color: [30, 64, 175] }
     );
-    currentY = addPDFText(doc, lesson.observacoes, currentY, { fontSize: 10 });
+    addPDFText(doc, lesson.observacoes, currentY, { fontSize: 10 });
   }
 
   // Footer

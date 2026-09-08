@@ -8,6 +8,8 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const CANONICAL_DATE = process.env.PILOT_CANONICAL_DATE || ''
 const BROWSER_RECEIPT_PATH = process.env.PILOT_CANONICAL_BROWSER_RECEIPT_PATH
+const AUTH_STATE_PATH = process.env.PILOT_CANONICAL_AUTH_STATE_PATH
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://educa-r1-canonical.localhost'
 
 const SCHOOL_A = '10000000-0000-0000-0000-000000000001'
 const CLASS_A = '30000000-0000-0000-0000-000000000001'
@@ -32,11 +34,15 @@ async function signedInClient(email: string) {
   return client
 }
 
-test('canonical synthetic pilot path proves read, write, and school isolation', async ({ page }) => {
+test('canonical synthetic pilot path proves read, write, school isolation, and realtime lock propagation', async ({ browser, page }) => {
+  test.setTimeout(45_000)
   // Deliberate-break contract: the gate, identity, route, or RLS boundary must
   // make this single real browser session fail when it is weakened.
   expect(CANONICAL_DATE).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   expect(new URL(SUPABASE_URL).hostname).toMatch(/^(127\.0\.0\.1|localhost)$/)
+  if (!AUTH_STATE_PATH) {
+    throw new Error('PILOT_CANONICAL_AUTH_STATE_PATH_REQUIRED: observer context needs the isolated teacher auth state')
+  }
 
   await page.goto('/dashboard')
   await expect(page).toHaveURL(/\/dashboard/)
@@ -131,24 +137,57 @@ test('canonical synthetic pilot path proves read, write, and school isolation', 
   })
   expect(crossSchoolWrite.error).not.toBeNull()
 
-  const browserReceipt = {
-    result: 'pass',
-    identity: TEACHER_EMAIL,
-    role: 'professor',
-    school: '00000001',
-    route: CANONICAL_ROUTE,
-    date: CANONICAL_DATE,
-    read: 'class, school, and student rendered through authenticated browser reads',
-    write: 'attendance F saved and persisted after reload',
-    security: 'school B cannot read or write school A attendance',
-  }
-  if (BROWSER_RECEIPT_PATH) {
-    mkdirSync(dirname(BROWSER_RECEIPT_PATH), { recursive: true })
-    writeFileSync(BROWSER_RECEIPT_PATH, `${JSON.stringify(browserReceipt, null, 2)}\n`, 'utf8')
-  }
-  await test.info().attach('canonical-pilot-browser-result.json', {
-    body: Buffer.from(`${JSON.stringify(browserReceipt, null, 2)}\n`),
-    contentType: 'application/json',
+  const observerContext = await browser.newContext({
+    baseURL: BASE_URL,
+    storageState: AUTH_STATE_PATH,
+    ignoreHTTPSErrors: true,
+    serviceWorkers: 'block',
   })
-  console.info(`PILOT_CANONICAL_BROWSER_RECEIPT: result=pass identity=${TEACHER_EMAIL} school=00000001 route=${CANONICAL_ROUTE} read=pass write=pass rls=pass`)
+  try {
+    const observerPage = await observerContext.newPage()
+    await observerPage.goto('/dashboard')
+    await expect(observerPage.getByTitle('Conexão: Online')).toBeVisible({ timeout: 15_000 })
+
+    const realtimeMessage = 'A sessão de aula foi encerrada.'
+    const observerRealtimeToasts = observerPage
+      .locator('[data-sonner-toast]')
+      .filter({ hasText: realtimeMessage })
+    await expect(observerRealtimeToasts).toHaveCount(0)
+    const observerUrl = observerPage.url()
+
+    await page.getByRole('button', { name: 'Fechar chamada', exact: true }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await Promise.all([
+      expect(observerRealtimeToasts.first()).toBeVisible({ timeout: 10_000 }),
+      (async () => {
+        await page.getByRole('button', { name: 'Confirmar Encerramento', exact: true }).click()
+        await expect(page.getByText('Chamada fechada. Os registros agora são imutáveis.', { exact: true })).toBeVisible()
+      })(),
+    ])
+    expect(observerPage.url()).toBe(observerUrl)
+
+    const browserReceipt = {
+      result: 'pass',
+      identity: TEACHER_EMAIL,
+      role: 'professor',
+      school: '00000001',
+      route: CANONICAL_ROUTE,
+      date: CANONICAL_DATE,
+      read: 'class, school, and student rendered through authenticated browser reads',
+      write: 'attendance F saved and persisted after reload',
+      security: 'school B cannot read or write school A attendance',
+      realtime: 'independent authenticated dashboard context received the session-lock toast without navigation or refetch',
+    }
+    if (BROWSER_RECEIPT_PATH) {
+      mkdirSync(dirname(BROWSER_RECEIPT_PATH), { recursive: true })
+      writeFileSync(BROWSER_RECEIPT_PATH, `${JSON.stringify(browserReceipt, null, 2)}\n`, 'utf8')
+    }
+    await test.info().attach('canonical-pilot-browser-result.json', {
+      body: Buffer.from(`${JSON.stringify(browserReceipt, null, 2)}\n`),
+      contentType: 'application/json',
+    })
+    console.info(`PILOT_CANONICAL_BROWSER_RECEIPT: result=pass identity=${TEACHER_EMAIL} school=00000001 route=${CANONICAL_ROUTE} read=pass write=pass rls=pass realtime=pass`)
+  } finally {
+    await observerContext.close()
+  }
 })

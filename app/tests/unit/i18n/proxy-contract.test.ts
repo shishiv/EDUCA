@@ -1,29 +1,25 @@
-import type { NextRequest } from 'next/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => ({
-  authMiddleware: vi.fn(),
-}))
-
-vi.mock('@/lib/middleware/auth-middleware', () => ({
-  authMiddleware: mocks.authMiddleware,
-}))
+import { NextRequest } from 'next/server'
+import { describe, expect, it } from 'vitest'
 
 import { config, proxy } from '@/proxy'
 
 describe('Next.js 16 proxy contract', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+  it('executes the real auth boundary for an API request', async () => {
+    const previousUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const previousKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:54321'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'synthetic-anon-key'
 
-  it('delegates the unchanged request to the auth and Pilot Gate boundary', async () => {
-    const request = { nextUrl: { pathname: '/dashboard' } } as NextRequest
-    const expectedResponse = new Response(null, { status: 204 })
-    mocks.authMiddleware.mockResolvedValue(expectedResponse)
+    try {
+      const response = await proxy(new NextRequest('http://test.local/api/health'))
 
-    await expect(proxy(request)).resolves.toBe(expectedResponse)
-    expect(mocks.authMiddleware).toHaveBeenCalledOnce()
-    expect(mocks.authMiddleware).toHaveBeenCalledWith(request)
+      expect(response.status).toBe(200)
+    } finally {
+      if (previousUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL
+      else process.env.NEXT_PUBLIC_SUPABASE_URL = previousUrl
+      if (previousKey === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = previousKey
+    }
   })
 
   it('retains the existing broad matcher', () => {

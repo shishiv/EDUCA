@@ -1,9 +1,10 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   BNCC_EXPERIENCE_FIELDS,
   BNCC_SUBJECTS,
-  type BNNCExperienceFieldCode,
   type BNNCSubjectCode,
 } from '@/types/lesson-content'
+import type { Database } from '@/types/database'
 
 export interface ContentReportFilters {
   startDate: string
@@ -43,27 +44,7 @@ export interface ContentReportRow {
   } | null
 }
 
-interface ContentReportQueryResult {
-  data: ContentReportRow[] | null
-  error: { message: string } | null
-}
-
-export interface ContentReportQueryBuilder {
-  select(columns: string): ContentReportQueryBuilder
-  gte(column: string, value: string): ContentReportQueryBuilder
-  lte(column: string, value: string): ContentReportQueryBuilder
-  eq(column: string, value: string): ContentReportQueryBuilder
-  in(column: string, values: string[]): ContentReportQueryBuilder
-  order(column: string, options: { ascending: boolean }): ContentReportQueryBuilder
-  then<TResult1 = ContentReportQueryResult, TResult2 = never>(
-    onfulfilled?: ((value: ContentReportQueryResult) => TResult1 | PromiseLike<TResult1>) | null,
-    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2>
-}
-
-export interface ContentReportClient {
-  from(table: 'conteudo_aula'): ContentReportQueryBuilder
-}
+export type ContentReportClient = SupabaseClient<Database>
 
 export interface LessonContentReportItem {
   id: string
@@ -138,9 +119,7 @@ const DISCIPLINE_DATABASE_CODES: Record<BNNCSubjectCode, readonly string[]> = {
   LI: ['LI', 'ING'],
 }
 
-function contentReportSelect(disciplineFilter: boolean): string {
-  const disciplineRelation = disciplineFilter ? 'disciplinas!inner' : 'disciplinas'
-  return `
+const CONTENT_REPORT_SELECT = `
     id,
     sessao_id,
     tema,
@@ -171,19 +150,61 @@ function contentReportSelect(disciplineFilter: boolean): string {
         id,
         nome
       ),
-      ${disciplineRelation} (
+      disciplinas (
         id,
         codigo,
         nome
       )
     )
   `
+
+const FILTERED_CONTENT_REPORT_SELECT = `
+    id,
+    sessao_id,
+    tema,
+    objetivo,
+    habilidades_bncc,
+    metodologia,
+    recursos,
+    observacoes,
+    created_at,
+    sessoes_aula!inner (
+      id,
+      data_aula,
+      inicio_aula,
+      fim_aula,
+      turma_id,
+      professor_id,
+      turmas!inner (
+        id,
+        nome,
+        serie,
+        escola_id,
+        escolas (
+          id,
+          nome
+        )
+      ),
+      users (
+        id,
+        nome
+      ),
+      disciplinas!inner (
+        id,
+        codigo,
+        nome
+      )
+    )
+  `
+
+function contentReportSelect(disciplineFilter: boolean) {
+  return disciplineFilter ? FILTERED_CONTENT_REPORT_SELECT : CONTENT_REPORT_SELECT
 }
 
 export function buildContentReportQuery(
   client: ContentReportClient,
   filters: ContentReportFilters,
-): ContentReportQueryBuilder {
+) {
   let query = client
     .from('conteudo_aula')
     .select(contentReportSelect(Boolean(filters.disciplina)))
@@ -205,12 +226,32 @@ export function buildContentReportQuery(
 
 function getDisciplineName(code: string): string {
   if (code.startsWith('EF') && code.length >= 6) {
-    return BNCC_SUBJECTS[code.substring(4, 6) as BNNCSubjectCode]?.fullName ?? 'Outros'
+    const subject = Object.entries(BNCC_SUBJECTS)
+      .find(([subjectCode]) => subjectCode === code.substring(4, 6))
+    return subject?.[1].fullName ?? 'Outros'
   }
   if (code.startsWith('EI') && code.length >= 6) {
-    return BNCC_EXPERIENCE_FIELDS[code.substring(4, 6) as BNNCExperienceFieldCode]?.name ?? 'Outros'
+    const field = Object.entries(BNCC_EXPERIENCE_FIELDS)
+      .find(([fieldCode]) => fieldCode === code.substring(4, 6))
+    return field?.[1].name ?? 'Outros'
   }
   return 'Outros'
+}
+
+function getClassContext(turma: NonNullable<ContentReportRow['sessoes_aula']>['turmas']) {
+  return {
+    turmaNome: turma?.nome || '',
+    turmaSerie: turma?.serie || '',
+    escolaNome: turma?.escolas?.nome || '',
+  }
+}
+
+function getTeacherAndDisciplineContext(session: NonNullable<ContentReportRow['sessoes_aula']>) {
+  return {
+    professorNome: session.users?.nome || '',
+    disciplinaCodigo: session.disciplinas?.codigo || null,
+    disciplinaNome: session.disciplinas?.nome || null,
+  }
 }
 
 function getLessonContext(session: ContentReportRow['sessoes_aula']) {
@@ -227,12 +268,8 @@ function getLessonContext(session: ContentReportRow['sessoes_aula']) {
   }
   return {
     dataAula: session.data_aula || '',
-    turmaNome: session.turmas?.nome || '',
-    turmaSerie: session.turmas?.serie || '',
-    professorNome: session.users?.nome || '',
-    escolaNome: session.turmas?.escolas?.nome || '',
-    disciplinaCodigo: session.disciplinas?.codigo || null,
-    disciplinaNome: session.disciplinas?.nome || null,
+    ...getClassContext(session.turmas),
+    ...getTeacherAndDisciplineContext(session),
   }
 }
 
@@ -251,13 +288,23 @@ function toLessonItem(record: ContentReportRow): LessonContentReportItem {
   }
 }
 
+function findFirstRelated<T>(
+  content: ContentReportRow[],
+  select: (record: ContentReportRow) => T | null | undefined,
+): T | undefined {
+  for (const record of content) {
+    const related = select(record)
+    if (related) return related
+  }
+  return undefined
+}
+
 function getReportHeader(content: ContentReportRow[], includeTurma: boolean) {
   const turma = includeTurma
-    ? content.find(record => record.sessoes_aula?.turmas)?.sessoes_aula?.turmas
+    ? findFirstRelated(content, record => record.sessoes_aula?.turmas)
     : undefined
-  const escola = content.find(record => record.sessoes_aula?.turmas?.escolas)
-    ?.sessoes_aula?.turmas?.escolas
-  const professor = content.find(record => record.sessoes_aula?.users)?.sessoes_aula?.users
+  const escola = findFirstRelated(content, record => record.sessoes_aula?.turmas?.escolas)
+  const professor = findFirstRelated(content, record => record.sessoes_aula?.users)
   return {
     turma: turma ? { id: turma.id, nome: turma.nome, serie: turma.serie } : undefined,
     escola: escola ? { id: escola.id, nome: escola.nome } : undefined,
@@ -315,9 +362,8 @@ export function assembleContentReport(
   const aulas = content.map(toLessonItem)
   const { usage, allSkills } = summarizeSkills(content)
   const totalSkills = allSkills.length
-  return {
+  const report: ContentReport = {
     periodo: { inicio: filters.startDate, fim: filters.endDate },
-    ...(content.length > 0 ? getReportHeader(content, Boolean(filters.turmaId)) : {}),
     resumo: {
       totalAulas: aulas.length,
       totalHabilidadesBncc: totalSkills,
@@ -331,4 +377,8 @@ export function assembleContentReport(
     habilidadesBncc: buildSkillUsage(usage),
     geradoEm: generatedAt,
   }
+  if (content.length > 0) {
+    Object.assign(report, getReportHeader(content, Boolean(filters.turmaId)))
+  }
+  return report
 }

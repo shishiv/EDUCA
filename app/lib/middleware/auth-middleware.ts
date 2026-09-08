@@ -137,59 +137,80 @@ function loginRedirect(request: NextRequest, pathname: string, reason?: string) 
   return NextResponse.redirect(loginUrl)
 }
 
-export async function authMiddleware(request: NextRequest) {
-  const { supabase, response } = await createSupabaseServerClient(request)
-  const pathname = request.nextUrl.pathname
-
+function demoGuard(pathname: string): NextResponse | null {
   const demoSandboxBlockReason = getDemoSandboxBlockedReason(pathname)
   if (isDemoSandboxHardBlockedPath(pathname)) {
-    return demoSandboxGuardResponse(demoSandboxBlockReason ?? 'external_effect') ?? response
+    return demoSandboxGuardResponse(demoSandboxBlockReason ?? 'external_effect')
   }
+  return null
+}
 
-  // The synthetic demo may expose a named product capability that the
-  // narrower pilot hides. The allowlist is path-scoped: it never skips auth,
-  // role checks, school isolation, RLS or audit in the route itself.
-  if (
-    isPilotModeEnabled() &&
-    isPilotDisabledPath(pathname) &&
-    !isDemoSandboxPilotPathAllowed(pathname) &&
-    !(isDemoSandboxEnabled() && demoSandboxBlockReason && !pathname.startsWith('/api/'))
-  ) {
-    return pilotDisabledResponse(request, pathname)
-  }
+function pilotScopeGuard(request: NextRequest, pathname: string): NextResponse | null {
+  const demoBlockReason = getDemoSandboxBlockedReason(pathname)
+  const isDemoException = isDemoSandboxEnabled() && Boolean(demoBlockReason) && !pathname.startsWith('/api/')
+  const isDisabled = isPilotModeEnabled() && isPilotDisabledPath(pathname)
+  if (!isDisabled || isPilotDisabledPathAllowed(pathname, isDemoException)) return null
+  return pilotDisabledResponse(request, pathname)
+}
 
-  // Skip middleware for static files and API routes
-  if (isStaticOrApiPath(pathname)) {
+function isPilotDisabledPathAllowed(pathname: string, isDemoException: boolean): boolean {
+  return isDemoSandboxPilotPathAllowed(pathname) || isDemoException
+}
+
+function invalidSessionResponse(request: NextRequest, pathname: string, response: NextResponse): NextResponse {
+  if (pathname === '/login') {
+    clearInvalidSupabaseCookies(request, response)
     return response
   }
+  const redirect = loginRedirect(request, pathname, 'session_expired')
+  clearInvalidSupabaseCookies(request, redirect)
+  return redirect
+}
 
-  try {
-    // NOTE: Session validation is done via cookies, not network calls
-    // The client-side code (hooks/use-auth.ts) handles token refresh
-    // Middleware only validates existing session from cookies
-    const serverUser = await getServerUser(request)
-    if (serverUser.invalidSession) {
-      if (pathname === '/login') {
-        clearInvalidSupabaseCookies(request, response)
-        return response
-      }
-      const invalidSessionRedirect = loginRedirect(request, pathname, 'session_expired')
-      clearInvalidSupabaseCookies(request, invalidSessionRedirect)
-      return invalidSessionRedirect
-    }
-    const userRole = serverUser?.userProfile?.tipo_usuario
+function unavailableSessionResponse(request: NextRequest, pathname: string, response: NextResponse): NextResponse {
+  const access = checkRouteAccess(pathname)
+  if (access.hasAccess) return response
+  return access.redirectTo === '/login'
+    ? loginRedirect(request, pathname, 'session_unavailable')
+    : NextResponse.redirect(new URL('/unauthorized', request.url))
+}
 
-    const { hasAccess, redirectTo } = checkRouteAccess(pathname, userRole)
+type AuthMiddlewareRuntime = {
+  initialize(request: NextRequest): Promise<{ response: NextResponse }>
+  getServerUser(request: NextRequest): ReturnType<typeof getServerUser>
+}
 
-    if (!hasAccess && redirectTo) {
-      return redirectTo === '/login'
+const productionAuthMiddlewareRuntime: AuthMiddlewareRuntime = {
+  async initialize(request) {
+    const { response } = await createSupabaseServerClient(request)
+    return { response }
+  },
+  getServerUser,
+}
+
+/** Creates the request guard with an explicit runtime seam for deterministic security tests. */
+export function createAuthMiddleware(runtime: AuthMiddlewareRuntime = productionAuthMiddlewareRuntime) {
+  return async function runAuthMiddleware(request: NextRequest): Promise<NextResponse> {
+    const { response } = await runtime.initialize(request)
+    const pathname = request.nextUrl.pathname
+    const responseFromDemo = demoGuard(pathname)
+    if (responseFromDemo) return responseFromDemo
+    const responseFromPilotScope = pilotScopeGuard(request, pathname)
+    if (responseFromPilotScope) return responseFromPilotScope
+    if (isStaticOrApiPath(pathname)) return response
+
+    try {
+      const serverUser = await runtime.getServerUser(request)
+      if (serverUser.invalidSession) return invalidSessionResponse(request, pathname, response)
+      const access = checkRouteAccess(pathname, serverUser.userProfile?.tipo_usuario)
+      if (access.hasAccess || !access.redirectTo) return response
+      return access.redirectTo === '/login'
         ? loginRedirect(request, pathname)
-        : NextResponse.redirect(new URL(redirectTo, request.url))
+        : NextResponse.redirect(new URL(access.redirectTo, request.url))
+    } catch {
+      return unavailableSessionResponse(request, pathname, response)
     }
-
-    return response
-  } catch (error) {
-    // logger.error('Auth middleware error:', { error: error })
-    return response
   }
 }
+
+export const authMiddleware = createAuthMiddleware()

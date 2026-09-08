@@ -1,345 +1,62 @@
 'use client'
 
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-
-import { useCallback, useEffect, useState } from 'react'
-import { reportsApi, Report } from '@/lib/api/reports'
-import { Button } from '@/components/ui/button'
+import { BookOpenText, CalendarDays, FileWarning, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import {
-  FileText,
-  Download,
-  Plus,
-  Calendar,
-  Users,
-  GraduationCap,
-  ClipboardList,
-  BarChart3,
-  AlertCircle,
-  CheckCircle,
-  Clock
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
+import { useAuth } from '@/hooks/use-auth'
+import { canAccessRoute } from '@/lib/route-policy'
+
+const reportDestinations = [
+  {
+    href: '/relatorios/frequencia',
+    title: 'Frequência',
+    description: 'Acompanhe a presença por turma e período.',
+    icon: CalendarDays,
+  },
+  {
+    href: '/relatorios/conteudo',
+    title: 'Conteúdo',
+    description: 'Consulte os conteúdos registrados nas aulas.',
+    icon: BookOpenText,
+  },
+  {
+    href: '/relatorios/bolsa-familia',
+    title: 'Bolsa Família',
+    description: 'Monitore as condicionalidades de frequência.',
+    icon: FileWarning,
+  },
+] as const
 
 export default function RelatoriosPage() {
   const t = useTranslations('platform')
-  const [relatorios, setRelatorios] = useState<Report[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [newReport, setNewReport] = useState({
-    tipo: '',
-    parametros: {}
-  })
-
-  const loadRelatorios = useCallback(async () => {
-    try {
-      const data = await reportsApi.getAll()
-      setRelatorios(data)
-    } catch (error) {
-      // logger.error('Erro ao carregar relatórios:', error)
-      toast.error(t('reports.loadError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    void loadRelatorios()
-  }, [loadRelatorios])
-
-  const handleGenerateReport = async () => {
-    if (!newReport.tipo) {
-      toast.error(t('reports.selectError'))
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      const report = await reportsApi.generateReport(newReport.tipo as any, newReport.parametros); setRelatorios(prev => [report, ...prev])
-      toast.success(t('reports.generated'))
-      loadRelatorios()
-    } catch (error) {
-      toast.error(t('reports.generateError'))
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'concluido':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'processando':
-        return <Clock className="h-4 w-4 text-orange-600" />
-      case 'erro':
-        return <AlertCircle className="h-4 w-4 text-red-600" />
-      default:
-        return <Clock className="h-4 w-4 text-gray-600" />
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'concluido':
-        return <Badge variant="default" className="bg-green-100 text-green-800">{t('reports.completed')}</Badge>
-      case 'processando':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">{t('reports.processing')}</Badge>
-      case 'erro':
-        return <Badge variant="destructive">{t('reports.error')}</Badge>
-      default:
-        return <Badge variant="outline">{t('reports.unknown')}</Badge>
-    }
-  }
-
-  const getTipoIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'alunos':
-        return <Users className="h-4 w-4" />
-      case 'frequencia':
-        return <Calendar className="h-4 w-4" />
-      case 'notas':
-        return <GraduationCap className="h-4 w-4" />
-      case 'censo':
-        return <BarChart3 className="h-4 w-4" />
-      default:
-        return <FileText className="h-4 w-4" />
-    }
-  }
-
-  const tiposRelatorio = [
-    { value: "usuarios", label: t('reports.users'), icon: Users },
-    { value: "escolas", label: t('reports.schools'), icon: GraduationCap },
-    { value: "alunos", label: t('reports.students'), icon: Users },
-    { value: "frequencia", label: t('reports.attendance'), icon: Calendar }
-  ]
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const { userProfile } = useAuth()
+  const role = userProfile?.tipo_usuario
+  const visibleDestinations = reportDestinations.filter((report) => canAccessRoute(report.href, role))
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('reports.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('reports.subtitle')}</p>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />{t('reports.generate')}</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('reports.new')}</DialogTitle>
-              <DialogDescription>{t('reports.selectType')}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipo">{t('reports.type')}</Label>
-                <Select value={newReport.tipo} onValueChange={(value) => setNewReport({...newReport, tipo: value})}>
-                  <SelectTrigger id="tipo">
-                    <SelectValue placeholder={t('reports.select')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposRelatorio.map((tipo) => (
-                      <SelectItem key={tipo.value} value={tipo.value}>
-                        <div className="flex items-center space-x-2">
-                          <tipo.icon className="h-4 w-4" />
-                          <span>{tipo.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline">{t('flags.cancel')}</Button>
-              <Button onClick={handleGenerateReport} disabled={isGenerating}>
-                {isGenerating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {t('reports.generating')}
-                  </>
-                ) : (
-                  t('reports.generate')
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <header>
+        <h1 className="text-3xl font-bold text-gray-900">{t('reports.title')}</h1>
+        <p className="mt-1 text-gray-600">{t('reports.subtitle')}</p>
+      </header>
 
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{relatorios.length}</div>
-            <div className="text-sm text-gray-600">{t('reports.total')}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {relatorios.filter(r => r.status === 'concluido').length}
-            </div>
-            <div className="text-sm text-gray-600">{t('reports.completedCount')}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {relatorios.filter(r => r.status === 'processando').length}
-            </div>
-            <div className="text-sm text-gray-600">{t('reports.processingCount')}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">
-              {relatorios.filter(r => r.status === 'erro').length}
-            </div>
-            <div className="text-sm text-gray-600">{t('reports.errorCount')}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Relatórios Rápidos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('reports.quick')}</CardTitle>
-          <CardDescription>{t('reports.quickDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {tiposRelatorio.map((tipo) => (
-              <Button
-                key={tipo.value}
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2"
-                onClick={() => {
-                  setNewReport({ tipo: tipo.value, parametros: {} })
-                  handleGenerateReport()
-                }}
-              >
-                <tipo.icon className="h-6 w-6" />
-                <span className="text-sm">{tipo.label}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de Relatórios */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <ClipboardList className="h-5 w-5" />
-            <span>{t('reports.history')}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table className="responsive-stack-table">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('reports.report')}</TableHead>
-                  <TableHead>{t('reports.typeColumn')}</TableHead>
-                  <TableHead>{t('reports.generatedAt')}</TableHead>
-                  <TableHead>{t('components.attendance.status')}</TableHead>
-                  <TableHead className="text-right">{t('reports.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {relatorios.map((relatorio) => (
-                  <TableRow key={relatorio.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{relatorio.titulo}</div>
-                        <div className="text-sm text-gray-500">{relatorio.descricao}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {getTipoIcon(relatorio.tipo)}
-                        <span className="capitalize">{relatorio.tipo}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {new Date(relatorio.data_geracao).toLocaleString('pt-BR')}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(relatorio.status)}
-                        {getStatusBadge(relatorio.status)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        {relatorio.status === 'concluido' && relatorio.arquivo_url && (
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-700">
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {relatorios.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">{t('reports.none')}</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <section aria-label={t('reports.title')} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {visibleDestinations.map(({ href, title, description, icon: Icon }) => (
+          <Link key={href} href={href} className="group">
+            <Card className="h-full transition-shadow group-hover:shadow-md">
+              <CardHeader>
+                <Icon className="h-6 w-6 text-blue-600" aria-hidden="true" />
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center gap-2 text-sm font-medium text-blue-700">
+                Acessar relatório <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </section>
     </div>
   )
 }

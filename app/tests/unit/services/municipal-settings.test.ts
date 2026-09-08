@@ -14,7 +14,7 @@ const settings: MunicipalSettings = {
 describe('municipal settings service', () => {
   it('resolves the database-backed values for a school and year', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: [settings], error: null })
-    const service = createMunicipalSettingsService({ rpc } as never)
+    const service = createMunicipalSettingsService({ rpc })
 
     await expect(service.get('00000000-0000-0000-0000-000000000001', 2026)).resolves.toEqual(settings)
     expect(rpc).toHaveBeenCalledWith('get_municipal_settings', {
@@ -25,7 +25,7 @@ describe('municipal settings service', () => {
 
   it('writes a municipal override through the governed interface', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: [settings], error: null })
-    const service = createMunicipalSettingsService({ rpc } as never)
+    const service = createMunicipalSettingsService({ rpc })
 
     await expect(service.set({ ...settings, schoolId: null, educacensoYear: 2026 })).resolves.toEqual(settings)
     expect(rpc).toHaveBeenCalledWith('set_municipal_settings', {
@@ -43,7 +43,7 @@ describe('municipal settings service', () => {
 
   it('propagates database authorization failures', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: 'PILOT_MUNICIPAL_SETTINGS_WRITE_DENIED' } })
-    const service = createMunicipalSettingsService({ rpc } as never)
+    const service = createMunicipalSettingsService({ rpc })
 
     await expect(service.set({ ...settings, schoolId: null, educacensoYear: 2026 })).rejects.toThrow('PILOT_MUNICIPAL_SETTINGS_WRITE_DENIED')
   })

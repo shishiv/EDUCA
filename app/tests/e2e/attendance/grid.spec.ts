@@ -74,14 +74,14 @@ test.describe('Attendance grid', () => {
     await expect(page.getByText(/\d+% frequencia/i)).toBeVisible()
     // Canonical attendance opens with no saved marks; saving becomes available after an edit.
     await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toBeDisabled()
-    await expect(page.getByText(/alteracoes nao salvas/i)).toHaveCount(0)
+    await expect(page.getByText('Alterações não salvas', { exact: true })).toHaveCount(0)
   })
 
   test('marks a student present and exposes unsaved changes', async ({ page }) => {
     const present = page.getByRole('button', { name: 'Presente' }).first()
     await setPressed(present, false)
     await setPressed(present, true)
-    await expect(page.getByText(/alteracoes nao salvas/i)).toBeVisible()
+    await expect(page.getByText('Alterações não salvas', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toBeEnabled()
   })
 
@@ -111,7 +111,7 @@ test.describe('Attendance grid', () => {
     await present.focus()
     await expect(present).toBeFocused()
     await page.keyboard.press('Space')
-    await expect(page.getByText(/alteracoes nao salvas/i)).toBeVisible()
+    await expect(page.getByText('Alterações não salvas', { exact: true })).toBeVisible()
   })
 
   test('saves and persists attendance after reload', async ({ page, browser }) => {
@@ -165,7 +165,7 @@ test.describe('Attendance grid', () => {
   })
 
   test('does not offer an open session for a future date', async ({ page }) => {
-    await page.getByRole('button', { name: /proximo dia/i }).click()
+    await page.getByRole('button', { name: 'Próximo dia', exact: true }).click()
     await expect(page.getByText(/nenhuma chamada nesta data/i)).toBeVisible()
     await expect(page.getByRole('button', { name: /abrir chamada/i })).toHaveCount(0)
   })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, startOfDay } from 'date-fns'
 import { ArrowLeft, CalendarClock, Lock } from 'lucide-react'
@@ -11,7 +11,7 @@ import { attendanceApi } from '@/lib/api/attendance'
 import { useAuth } from '@/hooks/use-auth'
 import { canRecordAttendance } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { getSessionLockInfo } from '@/components/attendance/AttendanceGridUtils'
+import { getSessionLockInfo, useSessionLockInfo } from '@/components/attendance/AttendanceGridUtils'
 import { getTodaySaoPauloDate } from '@/lib/date-utils'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
@@ -63,7 +63,9 @@ interface AttendanceSession {
   professor_id: string
   escola_id: string
   aberta_em: string | null
+  auto_fechamento_agendado: string | null
   fechada_em: string | null
+  travada_em?: string | null
   created_at: string | null
 }
 
@@ -88,23 +90,11 @@ function getFrequencyBgColor(percentage: number): string {
 }
 
 function mapDatabaseStatus(status: string | null, presente: boolean): AttendanceStatus {
-  switch (status?.toUpperCase()) {
-    case 'P':
-    case 'PRESENTE':
-      return 'P'
-    case 'F':
-    case 'FALTA':
-    case 'AUSENTE':
-      return 'F'
-    case 'J':
-    case 'JUSTIFICADA':
-    case 'A':
-    case 'ATESTADO':
-    case 'ATESTADO_MEDICO':
-      return 'J'
-    default:
-      return presente ? 'P' : null
-  }
+  const statusMap = new Map<string, AttendanceStatus>([
+    ['P', 'P'], ['PRESENTE', 'P'], ['F', 'F'], ['FALTA', 'F'], ['AUSENTE', 'F'],
+    ['J', 'J'], ['JUSTIFICADA', 'J'], ['A', 'J'], ['ATESTADO', 'J'], ['ATESTADO_MEDICO', 'J'],
+  ])
+  return status ? statusMap.get(status.toUpperCase()) ?? (presente ? 'P' : null) : (presente ? 'P' : null)
 }
 
 function statusLabel(status: string): string {
@@ -144,7 +134,7 @@ function getAttendanceViewState(
 ) {
   const canRecord = canRecordAttendance(role)
   const isViewOnly = !canRecord
-  const sessionStateLocked = Boolean(selectedSession && selectedSession.status !== 'ABERTA')
+  const sessionStateLocked = Boolean(selectedSession && sessionStatusForLock(selectedSession) !== 'ABERTA')
   const isLocked = lockInfo.isLocked || sessionStateLocked
   return {
     isTeacher: role === 'professor',
@@ -382,13 +372,73 @@ function AttendanceSessionContent({
   )
 }
 
+function selectLoadedSession(sessions: AttendanceSession[], requestedSessionId: string | null) {
+  const requested = sessions.find(session => session.id === requestedSessionId)
+  const openSession = sessions.find(session => session.status === 'ABERTA')
+  return { requested, nextSession: requested ?? openSession ?? sessions[sessions.length - 1] ?? null }
+}
+
+function sessionStatusForLock(session: AttendanceSession | null): string | undefined {
+  if (session?.fechada_em || session?.travada_em) return 'FECHADA'
+  return session?.status
+}
+
+function useChamadaLock(
+  session: AttendanceSession | null,
+  request: AttendanceReopenRequest | null,
+  fallbackDate: string
+) {
+  const matchingReopenRequest = request?.sessao_id === session?.id ? request : null
+  const deadline = matchingReopenRequest?.status === 'APROVADA'
+    ? matchingReopenRequest.correction_deadline_at : null
+  const lockInfo = useSessionLockInfo(
+    session?.data_aula ?? fallbackDate, sessionStatusForLock(session), deadline, session?.auto_fechamento_agendado
+  )
+  return { matchingReopenRequest, lockInfo }
+}
+
+function CorrectionWindowNotice({ request, isLocked }: {
+  request: AttendanceReopenRequest | null
+  isLocked: boolean
+}) {
+  const deadline = request?.status === 'APROVADA' ? request.correction_deadline_at : null
+  if (!deadline) return null
+  const formatted = new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo',
+  }).format(new Date(deadline))
+  return <p role="status" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+    {isLocked ? 'Prazo da janela de correção: ' : 'Correção autorizada até '}
+    <time dateTime={deadline}>{formatted}</time> (horário de São Paulo).
+    {isLocked && ' A edição está bloqueada.'}
+  </p>
+}
+
+function ChamadaSessionControls({ session, header, reopen, isClosing, loadingReopenRequest }: {
+  session: AttendanceSession | null
+  header: Omit<ComponentProps<typeof ChamadaHeader>, 'closeDisabled'>
+  reopen: Omit<ComponentProps<typeof AttendanceReopenPanel>, 'sessionId' | 'sessionStatus'>
+  isClosing: boolean
+  loadingReopenRequest: boolean
+}) {
+  if (!session) return null
+  return <>
+    <ChamadaHeader
+      {...header}
+      closeDisabled={Boolean(header.lockReason) || header.hasUnsavedChanges || isClosing}
+    />
+    <CorrectionWindowNotice request={reopen.request} isLocked={header.isLocked} />
+    {!loadingReopenRequest && <AttendanceReopenPanel {...reopen} sessionId={session.id} sessionStatus={session.status} />}
+  </>
+}
+
 export default function ChamadaPage() {
   const t = useClassroomTranslations()
-  const params = useParams()
+  const params = useParams<{ id: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { userProfile, loading: authLoading } = useAuth()
-  const turmaId = params?.id as string
+  const turmaId = params.id
+  const { id: profileId, tipo_usuario: role } = userProfile ?? { id: '', tipo_usuario: null }
   const requestedSessionId = searchParams.get('sessao')
 
   const [turma, setTurma] = useState<Turma | null>(null)
@@ -413,6 +463,7 @@ export default function ChamadaPage() {
   } | null>(null)
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
   const sessionLoadRequestId = useRef(0)
+  const reopenLoadRequestId = useRef(0)
 
   const selectedSession = useMemo(
     () => sessions.find(session => session.id === selectedSessionId) ?? null,
@@ -422,10 +473,7 @@ export default function ChamadaPage() {
   const dateString = format(currentDate, 'yyyy-MM-dd')
   const today = startOfDay(getTodaySaoPauloDate())
   const isFutureDate = isAfter(startOfDay(currentDate), today)
-  const lockInfo = useMemo(
-    () => getSessionLockInfo(selectedSession?.data_aula ?? dateString, selectedSession?.status),
-    [dateString, selectedSession]
-  )
+  const { matchingReopenRequest, lockInfo } = useChamadaLock(selectedSession, reopenRequest, dateString)
   const {
     isTeacher,
     isDirector,
@@ -436,7 +484,7 @@ export default function ChamadaPage() {
     canEditSelectedSession,
     disabledReason,
   } = getAttendanceViewState(
-    userProfile?.tipo_usuario ?? null,
+    role,
     selectedSession,
     isFutureDate,
     lockInfo,
@@ -490,9 +538,7 @@ export default function ChamadaPage() {
 
       setSessions(loadedSessions)
 
-      const requested = loadedSessions.find(session => session.id === requestedSessionId)
-      const openSession = loadedSessions.find(session => session.status === 'ABERTA')
-      const nextSession = requested ?? openSession ?? loadedSessions[loadedSessions.length - 1] ?? null
+      const { requested, nextSession } = selectLoadedSession(loadedSessions, requestedSessionId)
       setSelectedSessionId(nextSession?.id ?? null)
 
       // A deep link may point to a session on another date. The canonical
@@ -502,7 +548,7 @@ export default function ChamadaPage() {
       }
     } catch (loadError) {
       if (requestId !== sessionLoadRequestId.current) return
-      logger.error('ATTENDANCE_SESSION_READ_FAILED', loadError as Error, {
+      logger.error('ATTENDANCE_SESSION_READ_FAILED', loadError instanceof Error ? loadError : new Error('Erro desconhecido'), {
         metadata: { turmaId, date: dateString },
       })
       setError('Erro ao carregar as sessões da chamada')
@@ -514,22 +560,25 @@ export default function ChamadaPage() {
   }, [dateString, requestedSessionId, turmaId])
 
   const loadReopenRequest = useCallback(async (sessionId: string | null) => {
+    const requestId = ++reopenLoadRequestId.current
+    setReopenRequest(null)
     if (!sessionId) {
-      setReopenRequest(null)
+      setLoadingReopenRequest(false)
       return
     }
 
     setLoadingReopenRequest(true)
     try {
       const request = await attendanceApi.getAttendanceReopenRequest(sessionId)
-      setReopenRequest(request)
+      if (requestId === reopenLoadRequestId.current) setReopenRequest(request)
     } catch (loadError) {
-      logger.error('ATTENDANCE_REOPEN_REQUEST_READ_FAILED', loadError as Error, {
+      if (requestId !== reopenLoadRequestId.current) return
+      logger.error('ATTENDANCE_REOPEN_REQUEST_READ_FAILED', loadError instanceof Error ? loadError : new Error('Erro desconhecido'), {
         metadata: { sessionId },
       })
       setReopenRequest(null)
     } finally {
-      setLoadingReopenRequest(false)
+      if (requestId === reopenLoadRequestId.current) setLoadingReopenRequest(false)
     }
   }, [])
 
@@ -561,7 +610,7 @@ export default function ChamadaPage() {
       setAttendance(loadedAttendance)
       setOriginalAttendance(new Map(loadedAttendance))
     } catch (loadError) {
-      logger.error('ATTENDANCE_RECORD_READ_FAILED', loadError as Error, {
+      logger.error('ATTENDANCE_RECORD_READ_FAILED', loadError instanceof Error ? loadError : new Error('Erro desconhecido'), {
         metadata: { sessionId },
       })
       toast.error('Erro ao carregar a frequência da sessão')
@@ -573,7 +622,7 @@ export default function ChamadaPage() {
   }, [draftSessionId])
 
   useEffect(() => {
-    if (authLoading || !userProfile?.id) return
+    if (authLoading || !profileId) return
 
     let active = true
     setLoading(true)
@@ -582,7 +631,7 @@ export default function ChamadaPage() {
     Promise.all([loadTurma(), loadStudents()])
       .catch(loadError => {
         if (!active) return
-        logger.error('ATTENDANCE_CLASS_READ_FAILED', loadError as Error, {
+        logger.error('ATTENDANCE_CLASS_READ_FAILED', loadError instanceof Error ? loadError : new Error('Erro desconhecido'), {
           metadata: { turmaId },
         })
         setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar a turma')
@@ -594,18 +643,18 @@ export default function ChamadaPage() {
     return () => {
       active = false
     }
-  }, [authLoading, loadStudents, loadTurma, turmaId, userProfile?.id])
+  }, [authLoading, loadStudents, loadTurma, turmaId, profileId])
 
   useEffect(() => {
-    if (authLoading || !userProfile?.id) return
+    if (authLoading || !profileId) return
     void loadSessions()
-  }, [authLoading, loadSessions, userProfile?.id])
+  }, [authLoading, loadSessions, profileId])
 
   useEffect(() => {
-    if (authLoading || !userProfile?.id) return
+    if (authLoading || !profileId) return
     void loadAttendance(selectedSessionId)
     void loadReopenRequest(selectedSessionId)
-  }, [authLoading, loadAttendance, loadReopenRequest, selectedSessionId, userProfile?.id])
+  }, [authLoading, loadAttendance, loadReopenRequest, selectedSessionId, profileId])
 
   const initializeAllPresent = useCallback(() => {
     const initial = new Map<string, AttendanceRecord>()
@@ -668,6 +717,7 @@ export default function ChamadaPage() {
         professor_id: result.session.professor_id,
         escola_id: result.session.escola_id,
         aberta_em: result.session.aberta_em,
+        auto_fechamento_agendado: result.session.auto_fechamento_agendado,
         fechada_em: result.session.fechada_em,
         created_at: result.session.created_at,
       }
@@ -683,7 +733,7 @@ export default function ChamadaPage() {
       router.replace(`/dashboard/turmas/${turmaId}/chamada?sessao=${openedSession.id}`)
       toast.success('Chamada aberta. Marque a presença e salve os registros.')
     } catch (openError) {
-      logger.error('ATTENDANCE_SESSION_OPEN_UI_FAILED', openError as Error, { metadata: { turmaId } })
+      logger.error('ATTENDANCE_SESSION_OPEN_UI_FAILED', openError instanceof Error ? openError : new Error('Erro desconhecido'), { metadata: { turmaId } })
       toast.error('Erro ao abrir a chamada. Tente novamente.')
     } finally {
       setIsSaving(false)
@@ -716,7 +766,7 @@ export default function ChamadaPage() {
       setDraftSessionId(null)
       toast.success('Chamada salva com sucesso!')
     } catch (saveError) {
-      logger.error('ATTENDANCE_BATCH_UI_FAILED', saveError as Error, { metadata: { sessionId: selectedSession.id } })
+      logger.error('ATTENDANCE_BATCH_UI_FAILED', saveError instanceof Error ? saveError : new Error('Erro desconhecido'), { metadata: { sessionId: selectedSession.id } })
       toast.error('Erro ao salvar a chamada. Tente novamente.')
     } finally {
       setIsSaving(false)
@@ -747,7 +797,7 @@ export default function ChamadaPage() {
       setReopenRequest(null)
       toast.success('Chamada fechada. Os registros agora são imutáveis.')
     } catch (closeError) {
-      logger.error('ATTENDANCE_SESSION_CLOSE_UI_FAILED', closeError as Error, { metadata: { sessionId: selectedSession.id } })
+      logger.error('ATTENDANCE_SESSION_CLOSE_UI_FAILED', closeError instanceof Error ? closeError : new Error('Erro desconhecido'), { metadata: { sessionId: selectedSession.id } })
       toast.error(closeError instanceof Error ? closeError.message : 'Erro ao fechar a chamada. Tente novamente.')
       throw closeError
     } finally {
@@ -787,35 +837,22 @@ export default function ChamadaPage() {
         </Button>
       </div>
 
-      {selectedSession && (
-        <ChamadaHeader
-          turma={turma}
-          date={currentDate}
-          studentCount={students.length}
-          presentCount={presentCount}
-          hasUnsavedChanges={hasUnsavedChanges}
-          isLocked={isLocked}
-          lockReason={disabledReason}
-          onSave={handleSave}
-          isSaving={isSaving}
-          onClose={() => setCloseDialogOpen(true)}
-          closeDisabled={Boolean(disabledReason) || hasUnsavedChanges || isClosing}
-          canEdit={canEditSelectedSession}
-        />
-      )}
-
-      {selectedSession && !loadingReopenRequest && (
-        <AttendanceReopenPanel
-          sessionId={selectedSession.id}
-          sessionStatus={selectedSession.status}
-          request={reopenRequest}
-          isTeacher={isTeacher}
-          isDirector={isDirector}
-          onRequestChanged={setReopenRequest}
-          onRequestCompleted={handleReopenRequestCompleted}
-          onDecisionCompleted={handleReopenDecisionCompleted}
-        />
-      )}
+      <ChamadaSessionControls
+        session={selectedSession}
+        isClosing={isClosing}
+        loadingReopenRequest={loadingReopenRequest}
+        header={{
+          turma, date: currentDate, studentCount: students.length, presentCount,
+          hasUnsavedChanges, isLocked, lockReason: disabledReason,
+          onSave: handleSave, isSaving, onClose: () => setCloseDialogOpen(true),
+          canEdit: canEditSelectedSession,
+        }}
+        reopen={{
+          request: matchingReopenRequest, isTeacher, isDirector, onRequestChanged: setReopenRequest,
+          onRequestCompleted: handleReopenRequestCompleted,
+          onDecisionCompleted: handleReopenDecisionCompleted,
+        }}
+      />
 
       <ChamadaDateNav currentDate={currentDate} onDateChange={handleDateChange} />
       <SessionSelector

@@ -56,6 +56,35 @@ interface TurmaWithTeacher {
   } | null
 }
 
+function AssignmentDialog({ turma, schoolId, open, onOpenChange, onAssignmentChange }: {
+  turma: TurmaWithTeacher | null
+  schoolId: string | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onAssignmentChange: () => void
+}) {
+  const t = useTranslations('registry')
+  return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {turma?.professor ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
+            </DialogTitle>
+          </DialogHeader>
+          {turma && schoolId && (
+            <TeacherAssignment
+              classId={turma.id}
+              currentTeacherId={turma.professor?.id}
+              schoolId={schoolId}
+              onAssignmentChange={onAssignmentChange}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+  )
+}
+
 export default function AtribuicoesPage() {
   const t = useTranslations('registry')
   const { selectedEscolaId, selectedEscola, shouldShowSelector } = useEscola()
@@ -114,7 +143,7 @@ export default function AtribuicoesPage() {
 
       setTurmas(transformed)
     } catch (err) {
-      logger.error('[Atribuicoes] Error loading turmas', err as Error, {
+      logger.error('[Atribuicoes] Error loading turmas', err instanceof Error ? err : String(err), {
         feature: 'atribuicoes',
         action: 'load_turmas',
         metadata: { escolaId: selectedEscolaId }
@@ -336,23 +365,8 @@ export default function AtribuicoesPage() {
       )}
 
       {/* Assignment Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedTurma?.professor ? t('ui.alterar-professor-titular') : t('ui.definir-professor-titular')}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedTurma && selectedEscolaId && (
-            <TeacherAssignment
-              classId={selectedTurma.id}
-              currentTeacherId={selectedTurma.professor?.id}
-              schoolId={selectedEscolaId}
-              onAssignmentChange={handleAssignmentChange}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <AssignmentDialog turma={selectedTurma} schoolId={selectedEscolaId} open={isDialogOpen}
+        onOpenChange={setIsDialogOpen} onAssignmentChange={handleAssignmentChange} />
     </div>
   )
 }

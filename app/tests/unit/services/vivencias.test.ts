@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import { describe, expect, it } from 'vitest'
+import { createClient } from '@supabase/supabase-js'
+import type { Database, Tables } from '@/types/database'
 import { VivenciasApiService } from '@/lib/api/vivencias'
 
-const ROW = {
+const ROW: Tables<'vivencias'> = {
   id: '00000000-0000-0000-0000-000000000001',
   escola_id: '00000000-0000-0000-0000-000000000011',
   aluno_id: '00000000-0000-0000-0000-000000000021',
@@ -21,81 +21,56 @@ const ROW = {
   updated_at: '2026-08-20T12:00:00.000Z',
 }
 
-function query(result: unknown) {
-  const chain = {
-    select: vi.fn(() => chain),
-    eq: vi.fn(() => chain),
-    gte: vi.fn(() => chain),
-    lte: vi.fn(() => chain),
-    in: vi.fn(() => chain),
-    order: vi.fn(() => chain),
-    limit: vi.fn(() => chain),
-    insert: vi.fn(() => chain),
-    update: vi.fn(() => chain),
-    delete: vi.fn(() => chain),
-    single: vi.fn(async () => result),
-    maybeSingle: vi.fn(async () => result),
-    then: (resolve: (value: unknown) => unknown) => Promise.resolve(resolve(result)),
-  }
-  return chain
+interface ServiceFixture {
+  service: VivenciasApiService
+  requests: Request[]
 }
 
-function filteringQuery(rows: typeof ROW[]) {
-  let data = [...rows]
-  const chain = {
-    select: vi.fn(() => chain),
-    eq: vi.fn((column: keyof typeof ROW, value: string) => {
-      data = data.filter(row => row[column] === value)
-      return chain
-    }),
-    order: vi.fn((column: keyof typeof ROW, { ascending }: { ascending: boolean }) => {
-      data.sort((left, right) => String(left[column]).localeCompare(String(right[column])))
-      if (!ascending) data.reverse()
-      return chain
-    }),
-    gte: vi.fn((column: keyof typeof ROW, value: string) => {
-      data = data.filter(row => String(row[column]) >= value)
-      return chain
-    }),
-    lte: vi.fn((column: keyof typeof ROW, value: string) => {
-      data = data.filter(row => String(row[column]) <= value)
-      return chain
-    }),
-    limit: vi.fn((limit: number) => {
-      data = data.slice(0, limit)
-      return chain
-    }),
-    then: (resolve: (value: unknown) => unknown) => Promise.resolve(resolve({ data, error: null })),
-  }
-  return chain
+type ResponseBody = Tables<'vivencias'> | Tables<'vivencias'>[]
+
+function serviceFixture(responseBody: ResponseBody): ServiceFixture {
+  const requests: Request[] = []
+  const client = createClient<Database>('http://127.0.0.1:54321', 'synthetic-session-key', {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: {
+      fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request = new Request(input, init)
+        requests.push(request.clone())
+        return Response.json(responseBody)
+      },
+    },
+  })
+
+  return { service: new VivenciasApiService(client), requests }
 }
 
 describe('VivenciasApiService', () => {
   it('maps persisted rows to the canonical narrative shape', async () => {
-    const client = {
-      from: vi.fn(() => query({ data: [ROW], error: null })),
-    } as unknown as SupabaseClient<Database>
+    const fixture = serviceFixture([ROW])
 
-    const data = await new VivenciasApiService(client).getByAluno(ROW.aluno_id)
+    const data = await fixture.service.getByAluno(ROW.aluno_id)
 
     expect(data).toEqual([{
       ...ROW,
       campos_experiencia: ['eu', 'corpo'],
     }])
+    expect(fixture.requests).toHaveLength(1)
+    expect(new URL(fixture.requests[0].url).pathname).toBe('/rest/v1/vivencias')
   })
 
-  it('applies date bounds before the limit so older matching rows are retained', async () => {
-    const olderRow = { ...ROW, data_vivencia: '2026-08-01' }
-    const newerRows = Array.from({ length: 50 }, (_, index) => ({
-      ...ROW,
-      id: `00000000-0000-0000-0001-${String(index).padStart(12, '0')}`,
-      data_vivencia: '2026-09-01',
-      created_at: `2026-09-01T12:${String(index).padStart(2, '0')}:00.000Z`,
-    }))
-    const chain = filteringQuery([...newerRows, olderRow])
-    const client = { from: vi.fn(() => chain) } as unknown as SupabaseClient<Database>
+  it('rejects a database row with an unknown experience field', async () => {
+    const fixture = serviceFixture([{ ...ROW, campos_experiencia: ['eu', 'desconhecido'] }])
 
-    const data = await new VivenciasApiService(client).getByAluno(
+    await expect(fixture.service.getByAluno(ROW.aluno_id)).rejects.toThrow(
+      'VIVENCIA_INVALID_CAMPO',
+    )
+  })
+
+  it('sends date bounds and the limit in the student query', async () => {
+    const olderRow = { ...ROW, data_vivencia: '2026-08-01' }
+    const fixture = serviceFixture([olderRow])
+
+    const data = await fixture.service.getByAluno(
       ROW.aluno_id,
       '2026-08-01',
       '2026-08-01',
@@ -103,18 +78,19 @@ describe('VivenciasApiService', () => {
     )
 
     expect(data).toEqual([expect.objectContaining({ id: olderRow.id })])
-    expect(chain.gte).toHaveBeenCalledWith('data_vivencia', '2026-08-01')
-    expect(chain.lte).toHaveBeenCalledWith('data_vivencia', '2026-08-01')
-    expect(chain.limit).toHaveBeenCalledWith(50)
-    expect(chain.lte.mock.invocationCallOrder[0]).toBeLessThan(chain.limit.mock.invocationCallOrder[0])
+    const url = new URL(fixture.requests[0].url)
+    expect(url.searchParams.get('aluno_id')).toBe(`eq.${ROW.aluno_id}`)
+    expect(url.searchParams.getAll('data_vivencia')).toEqual([
+      'gte.2026-08-01',
+      'lte.2026-08-01',
+    ])
+    expect(url.searchParams.get('limit')).toBe('50')
   })
 
   it('stamps actor-owned fields through the database service payload', async () => {
-    const chain = query({ data: ROW, error: null })
-    const client = { from: vi.fn(() => chain) } as unknown as SupabaseClient<Database>
-    const service = new VivenciasApiService(client)
+    const fixture = serviceFixture(ROW)
 
-    await service.create({
+    await fixture.service.create({
       escola_id: ROW.escola_id,
       aluno_id: ROW.aluno_id,
       matricula_id: ROW.matricula_id,
@@ -126,7 +102,11 @@ describe('VivenciasApiService', () => {
       created_by: ROW.professor_id,
     })
 
-    expect(chain.insert).toHaveBeenCalledWith(expect.objectContaining({
+    expect(fixture.requests).toHaveLength(1)
+    const request = fixture.requests[0]
+    expect(request.method).toBe('POST')
+    expect(new URL(request.url).pathname).toBe('/rest/v1/vivencias')
+    await expect(request.json()).resolves.toEqual(expect.objectContaining({
       professor_id: ROW.professor_id,
       created_by: ROW.professor_id,
       updated_by: ROW.professor_id,
@@ -135,15 +115,20 @@ describe('VivenciasApiService', () => {
   })
 
   it('persists an edited narrative date', async () => {
-    const chain = query({ data: { ...ROW, data_vivencia: '2026-08-19' }, error: null })
-    const client = { from: vi.fn(() => chain) } as unknown as SupabaseClient<Database>
+    const fixture = serviceFixture({ ...ROW, data_vivencia: '2026-08-19' })
 
-    await new VivenciasApiService(client).update(ROW.id, {
+    await fixture.service.update(ROW.id, {
       data_vivencia: '2026-08-19',
       updated_by: ROW.professor_id,
     })
 
-    expect(chain.update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(fixture.requests).toHaveLength(1)
+    const request = fixture.requests[0]
+    const url = new URL(request.url)
+    expect(request.method).toBe('PATCH')
+    expect(url.pathname).toBe('/rest/v1/vivencias')
+    expect(url.searchParams.get('id')).toBe(`eq.${ROW.id}`)
+    await expect(request.json()).resolves.toEqual(expect.objectContaining({
       data_vivencia: '2026-08-19',
       updated_by: ROW.professor_id,
     }))

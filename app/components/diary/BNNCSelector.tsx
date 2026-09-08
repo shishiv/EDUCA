@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
-  isValidBNNCCode,
   parseBNNCCodes,
   validateBNNCCodes,
 } from '@/lib/validation/lesson-content'
@@ -61,6 +60,34 @@ export interface BNNCSelectorProps {
   className?: string
   /** Input ID for accessibility */
   id?: string
+}
+
+function SelectedSkills({ codes, disabled, onRemove }: {
+  codes: string[]
+  disabled: boolean
+  onRemove: (code: string) => void
+}) {
+  if (codes.length === 0) return null
+  return (
+    <>
+      <div className="flex flex-wrap gap-1.5 pt-1">
+        {codes.map((code) => (
+          <Badge key={code} variant="secondary" className={cn('text-xs font-mono', code.startsWith('EI') ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200')}>
+            {code}
+            {!disabled && <button type="button" onClick={() => onRemove(code)} className="ml-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus:ring-1 focus:ring-offset-1" aria-label={`Remover ${code}`}><X className="h-3 w-3" /></button>}
+          </Badge>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">{codes.length} {codes.length === 1 ? 'habilidade selecionada' : 'habilidades selecionadas'}</p>
+    </>
+  )
+}
+
+function validationClasses(show: boolean, hasInvalid: boolean, hasValid: boolean) {
+  if (!show) return undefined
+  if (hasInvalid) return 'border-yellow-500 focus-visible:ring-yellow-500'
+  if (hasValid) return 'border-green-500 focus-visible:ring-green-500'
+  return undefined
 }
 
 export function BNNCSelector({
@@ -129,19 +156,9 @@ export function BNNCSelector({
         {helperText && !error && <p id={`${id}-description`} className="text-sm text-muted-foreground">{helperText}</p>}
         {!helperText && !error && <p id={`${id}-description`} className="text-sm text-muted-foreground">Exemplo: {exampleCodes}</p>}
         {error && <p id={`${id}-error`} className="text-sm text-destructive">{error}</p>}
-        {showValidation && hasInvalidCodes && !error && <p className="text-sm text-yellow-600">Codigos invalidos: {validation.invalidCodes.join(', ')}</p>}
-        {isOverLimit && <p className="text-sm text-destructive">Maximo de {maxSkills} habilidades permitidas ({validCount} selecionadas)</p>}
-        {hasValidCodes && (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {validation.validCodes.map((code) => (
-              <Badge key={code} variant="secondary" className={cn('text-xs font-mono', code.startsWith('EI') ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200')}>
-                {code}
-                {!disabled && <button type="button" onClick={() => removeCode(code)} className="ml-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus:ring-1 focus:ring-offset-1" aria-label={`Remover ${code}`}><X className="h-3 w-3" /></button>}
-              </Badge>
-            ))}
-          </div>
-        )}
-        {hasValidCodes && <p className="text-xs text-muted-foreground">{validCount} habilidade{validCount !== 1 ? 's' : ''} selecionada{validCount !== 1 ? 's' : ''}</p>}
+        {showValidation && hasInvalidCodes && !error && <p id={`${id}-validation`} className="text-sm text-yellow-600">Códigos inválidos: {validation.invalidCodes.join(', ')}</p>}
+        {isOverLimit && <p id={`${id}-limit`} className="text-sm text-destructive">Máximo de {maxSkills} habilidades permitidas ({validCount} selecionadas)</p>}
+        <SelectedSkills codes={validation.validCodes} disabled={disabled} onRemove={removeCode} />
       </>
     )
   }
@@ -209,25 +226,19 @@ export function BNNCSelector({
           className={cn(
             'pr-10',
             error && 'border-destructive focus-visible:ring-destructive',
-            hasInvalidCodes &&
-              showValidation &&
-              'border-yellow-500 focus-visible:ring-yellow-500',
-            hasValidCodes &&
-              !hasInvalidCodes &&
-              showValidation &&
-              'border-green-500 focus-visible:ring-green-500'
+            validationClasses(showValidation, hasInvalidCodes, hasValidCodes)
           )}
-          aria-describedby={`${id}-description ${id}-error`}
-          aria-invalid={!!error || hasInvalidCodes}
+          aria-describedby={`${id}-description ${id}-error ${id}-validation ${id}-limit`}
+          aria-invalid={!!error || hasInvalidCodes || isOverLimit}
         />
 
         {/* Validation indicator */}
         {showValidation && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             {hasInvalidCodes ? (
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <AlertCircle role="img" aria-label="Códigos inválidos" className="h-4 w-4 text-yellow-500" />
             ) : hasValidCodes ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle role="img" aria-label="Códigos válidos" className="h-4 w-4 text-green-500" />
             ) : null}
           </div>
         )}

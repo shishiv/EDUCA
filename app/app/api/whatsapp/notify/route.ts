@@ -1,7 +1,7 @@
 /**
  * POST /api/whatsapp/notify - trigger an attendance notification.
  *
- * Pilot staff (admin, secretario, diretor, professor) send one attendance
+ * Active school directors send one attendance
  * alert for a guardian/student/date. The caller speaks only domain
  * identifiers; the service resolves opt-in, phone, school scope, and returns
  * a masked receipt. In PILOT_MODE the local fake answers and the receipt
@@ -28,7 +28,7 @@ const notifyRouteSchema = notifyGuardianAttendanceAlertSchema.extend({
 
 export async function POST(request: NextRequest) {
   try {
-    const actor = await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
+    const actor = await requirePilotActor(['diretor'])
     const input = notifyRouteSchema.parse(await request.json())
     const supabase = asWhatsAppClient(await createClient())
     const gateway = createWhatsAppNotificationGateway()

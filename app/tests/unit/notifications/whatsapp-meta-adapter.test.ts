@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { WhatsAppMetaAdapter } from '@/lib/notifications/whatsapp-meta-adapter'
 import type { AttendanceNotificationPayload } from '@/lib/notifications/whatsapp-notification-payload'
 
@@ -13,24 +14,35 @@ const payload: AttendanceNotificationPayload = {
 
 interface CapturedRequest {
   url: string
-  headers: Record<string, string>
-  body: unknown
+  headers: Headers
+  body: z.infer<typeof metaRequestSchema>
 }
 
-function adapterWith(fetchImpl: (request: CapturedRequest) => Response): {
+interface AdapterHarness {
   adapter: WhatsAppMetaAdapter
   requests: CapturedRequest[]
-} {
+}
+
+const metaRequestSchema = z.object({
+  messaging_product: z.literal('whatsapp'),
+  recipient_type: z.literal('individual'),
+  to: z.string(),
+  type: z.literal('text'),
+  text: z.object({ body: z.string() }),
+})
+
+function adapterWith(fetchImpl: (request: CapturedRequest) => Response): AdapterHarness {
   const requests: CapturedRequest[] = []
-  const fetchFn = (async (url: string, init: RequestInit) => {
+  const fetchFn: typeof fetch = async (input, init) => {
+    const outbound = new Request(input, init)
     const request: CapturedRequest = {
-      url,
-      headers: init.headers as Record<string, string>,
-      body: JSON.parse(String(init.body)),
+      url: outbound.url,
+      headers: outbound.headers,
+      body: metaRequestSchema.parse(await outbound.json()),
     }
     requests.push(request)
     return fetchImpl(request)
-  }) as typeof fetch
+  }
   const adapter = new WhatsAppMetaAdapter({
     phoneNumberId: '106540352242922',
     accessToken: 'access-token-test',
@@ -60,15 +72,14 @@ describe('whatsapp Meta adapter', () => {
     expect(requests[0].url).toBe(
       'https://graph.facebook.com/v23.0/106540352242922/messages'
     )
-    expect(requests[0].headers.authorization).toBe('Bearer access-token-test')
+    expect(requests[0].headers.get('authorization')).toBe('Bearer access-token-test')
     expect(requests[0].body).toMatchObject({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to: '5531999998888',
       type: 'text',
     })
-    const body = requests[0].body as { text: { body: string } }
-    expect(body.text.body).toContain('Aluno Sintetico')
+    expect(requests[0].body.text.body).toContain('Aluno Sintetico')
     expect(result.outcome).toBe('accepted')
     expect(result.externalMessageId).toBe('wamid.HBgLMTY1MDM4Nzk0MzkVAgARGBI3MTE5MjVBOTE3MDk5QUVFM0YA')
   })
@@ -85,6 +96,52 @@ describe('whatsapp Meta adapter', () => {
     const result = await adapter.sendAttendanceNotification(payload)
     expect(result.outcome).toBe('failed')
     expect(result.failureCode).toBe('template_pending')
+  })
+
+  it('classifies Meta rate limits as transient for the retry owner', async () => {
+    const { adapter } = adapterWith(() =>
+      new Response(
+        JSON.stringify({ error: { message: 'Rate limit', code: 130429 } }),
+        { status: 429, headers: { 'content-type': 'application/json' } }
+      )
+    )
+
+    await expect(adapter.sendAttendanceNotification(payload)).rejects.toMatchObject({
+      name: 'WhatsAppTransientDeliveryError',
+      retrySafe: true,
+    })
+  })
+
+  it('classifies provider outages as transient without exposing the response body', async () => {
+    const { adapter } = adapterWith(() =>
+      new Response(
+        JSON.stringify({ error: { message: 'telefone 5531999998888 indisponivel' } }),
+        { status: 503, headers: { 'content-type': 'application/json' } }
+      )
+    )
+
+    await expect(adapter.sendAttendanceNotification(payload)).rejects.toMatchObject({
+      message: 'WhatsAppMetaAdapter indeterminate response: 503',
+      retrySafe: false,
+    })
+  })
+
+  it('treats a lost network response as indeterminate', async () => {
+    const fetchFn: typeof fetch = async () => {
+      throw new Error('connection reset')
+    }
+    const adapter = new WhatsAppMetaAdapter({
+      phoneNumberId: '106540352242922',
+      accessToken: 'access-token-test',
+      appSecret: 'app-secret-test',
+      verifyToken: 'verify-token-test',
+      fetchFn,
+    })
+
+    await expect(adapter.sendAttendanceNotification(payload)).rejects.toMatchObject({
+      name: 'WhatsAppTransientDeliveryError',
+      retrySafe: false,
+    })
   })
 
   it('maps unknown error codes numerically without leaking the error message', async () => {

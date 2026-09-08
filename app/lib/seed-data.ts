@@ -2,7 +2,8 @@
  * Seed data for SRE Educational Management System
  * This file contains development seed data for all 5 user roles and educational entities
  */
-import { Aluno, Escola, Inserts, Responsavel, supabase, Turma, User } from './supabase'
+import { Aluno, Escola, Responsavel, supabase, Turma, User } from './supabase'
+import { resolveSeedMunicipalityId } from './pilot/seed-municipality'
 
 export interface SeedData {
   users: Array<{
@@ -94,7 +95,7 @@ export const seedData: SeedData = {
     }
   ],
 
-  // Seed schools — replace with real school names
+  // Seed schools: replace with real school names
   escolas: [
     {
       nome: 'CEMEI Pequenos Passos',
@@ -313,8 +314,8 @@ export const seedData: SeedData = {
 }
 
 async function insertEscolas() {
-  // assign_school_municipality fills the generated-required field before insert.
-  const result = await supabase.from('escolas').insert(seedData.escolas as Inserts<'escolas'>[]).select()
+  const municipioId = await resolveSeedMunicipalityId(supabase)
+  const result = await supabase.from('escolas').insert(seedData.escolas.map(school => ({ ...school, municipio_id: municipioId }))).select()
 
   if (result.error) {
     throw new Error(`Failed to insert schools: ${result.error.message}`)
@@ -419,12 +420,12 @@ export async function insertSeedData() {
     return {
       success: true,
       data: {
-        escolas: escolas?.length || 0,
-        users: users?.length || 0,
-        responsaveis: responsaveis?.length || 0,
-        alunos: alunos?.length || 0,
-        turmas: turmas?.length || 0
-      }
+        escolas: escolas.length,
+        users: users.length,
+        responsaveis: responsaveis.length,
+        alunos: alunos.length,
+        turmas: turmas.length,
+      },
     }
 
   } catch (error) {

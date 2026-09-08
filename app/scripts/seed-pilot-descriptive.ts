@@ -4,7 +4,7 @@
  * Every row is synthetic and the two conteudo_aula records are the only source
  * that the emitted report may use as taught-content evidence.
  */
-import { Client } from 'pg'
+import { Client, type QueryResultRow } from 'pg'
 import { createClient } from '@supabase/supabase-js'
 import { assertPilotDescriptiveReportDemoSafety } from '../lib/pilot/descriptive-report-demo-safety'
 import {
@@ -48,6 +48,53 @@ const RELEASE_REVISION = requirePilotDescriptiveReleaseRevision()
 const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
+
+interface DescriptiveSeedReceiptRow extends QueryResultRow {
+  readonly schools: string
+  readonly classes: string
+  readonly students: string
+  readonly enrollments: string
+  readonly reports: string
+  readonly sessions: string
+  readonly canonical_content: string
+  readonly canonical_content_fingerprint: string | null
+  readonly descriptive_report_fingerprint: string | null
+  readonly release_revision: string | null
+  readonly rehearsal_environment: string | null
+  readonly canonical_source: string | null
+}
+
+interface DescriptiveSeedReceipt {
+  readonly schools: number
+  readonly classes: number
+  readonly students: number
+  readonly enrollments: number
+  readonly reports: number
+  readonly sessions: number
+  readonly canonical_content: number
+  readonly canonical_content_fingerprint: string | null
+  readonly descriptive_report_fingerprint: string | null
+  readonly release_revision: string | null
+  readonly rehearsal_environment: string | null
+  readonly canonical_source: string | null
+}
+
+function descriptiveSeedReceiptFromRow(row: DescriptiveSeedReceiptRow): DescriptiveSeedReceipt {
+  return {
+    schools: Number(row.schools),
+    classes: Number(row.classes),
+    students: Number(row.students),
+    enrollments: Number(row.enrollments),
+    reports: Number(row.reports),
+    sessions: Number(row.sessions),
+    canonical_content: Number(row.canonical_content),
+    canonical_content_fingerprint: row.canonical_content_fingerprint,
+    descriptive_report_fingerprint: row.descriptive_report_fingerprint,
+    release_revision: row.release_revision,
+    rehearsal_environment: row.rehearsal_environment,
+    canonical_source: row.canonical_source,
+  }
+}
 
 function assertDescriptiveSeedEnvironment(): void {
   if (!SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_secret_')) {
@@ -212,8 +259,8 @@ async function writeDescriptiveSeed(client: Client, professorId: string): Promis
   }
 }
 
-async function readDescriptiveSeedReceipt(client: Client): Promise<Record<string, unknown>> {
-  const { rows } = await client.query(
+async function readDescriptiveSeedReceipt(client: Client): Promise<DescriptiveSeedReceipt> {
+  const { rows } = await client.query<DescriptiveSeedReceiptRow>(
     `SELECT
       (SELECT count(*) FROM public.escolas WHERE id = $1) AS schools,
       (SELECT count(*) FROM public.turmas WHERE id = $2) AS classes,
@@ -257,7 +304,9 @@ async function readDescriptiveSeedReceipt(client: Client): Promise<Record<string
       PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.end,
     ]
   )
-  return rows[0] ?? {}
+  const row = rows[0]
+  if (!row) throw new Error('PILOT_DESCRIPTIVE_SEED_RECEIPT_ROW_MISSING')
+  return descriptiveSeedReceiptFromRow(row)
 }
 
 export async function seedPilotDescriptive(): Promise<void> {
@@ -280,7 +329,7 @@ export async function seedPilotDescriptive(): Promise<void> {
         counts: PILOT_DESCRIPTIVE_EXPECTED_COUNTS,
         fingerprints: PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS,
       },
-      actual: Object.fromEntries(Object.entries(receipt).map(([key, value]) => [key, typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value])),
+      actual: receipt,
     })}`)
   } finally {
     await client.end()

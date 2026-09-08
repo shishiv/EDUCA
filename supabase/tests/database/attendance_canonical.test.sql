@@ -43,6 +43,10 @@ INSERT INTO matriculas(id, aluno_id, turma_id, ano_letivo, situacao) VALUES
   ('51000000-0000-0000-0000-000000000002','41000000-0000-0000-0000-000000000002','31000000-0000-0000-0000-000000000002',2026,'ativa');
 
 SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','21000000-0000-0000-0000-000000000003',true);
+-- Persist an explicit same-day fixture policy; the opening-cutoff contract
+-- separately proves denial when the configured time has passed.
+SELECT public.set_attendance_daily_cutoff('11000000-0000-0000-0000-000000000001','24:00:00');
 SELECT set_config('request.jwt.claim.sub','21000000-0000-0000-0000-000000000001',true);
 
 -- A professor sees and opens only the titular class. The session date and
@@ -173,17 +177,12 @@ SELECT pg_temp.assert_true(
   (SELECT count(*) = 2 FROM sessoes_aula WHERE turma_id = '31000000-0000-0000-0000-000000000001'),
   'secretariat can view attendance sessions across schools'
 );
-DO $$
-BEGIN
-  BEGIN
-    UPDATE sessoes_aula SET status = 'ABERTA'
-    WHERE id = '61000000-0000-0000-0000-000000000002';
-    RAISE EXCEPTION 'secretariat session update unexpectedly succeeded';
-  EXCEPTION WHEN OTHERS THEN
-    NULL;
-  END;
-END;
-$$;
+WITH changed AS (
+  UPDATE sessoes_aula SET status = 'ABERTA'
+  WHERE id = '61000000-0000-0000-0000-000000000002'
+  RETURNING id
+)
+SELECT pg_temp.assert_true((SELECT count(*)=0 FROM changed), 'secretariat cannot update attendance state');
 
 SELECT set_config('request.jwt.claim.sub','21000000-0000-0000-0000-000000000006',true);
 SELECT pg_temp.assert_true(
@@ -202,7 +201,7 @@ BEGIN
       current_setting('educa.attendance_test_date')::date, 'ABERTA', 'Chamada'
     );
     RAISE EXCEPTION 'admin session insert unexpectedly succeeded';
-  EXCEPTION WHEN OTHERS THEN
+  EXCEPTION WHEN insufficient_privilege THEN
     NULL;
   END;
 END;

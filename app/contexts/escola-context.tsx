@@ -10,9 +10,13 @@ import * as React from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
-
-// Storage key for sessionStorage
-const STORAGE_KEY = 'educa-selected-escola'
+import type { UserProfile } from '@/lib/auth'
+import {
+  readStoredSchoolSelection,
+  schoolSelectionMode,
+  shouldShowSchoolSelector,
+  writeStoredSchoolSelection,
+} from '@/contexts/escola-selection'
 
 // Types
 interface Escola {
@@ -44,6 +48,51 @@ interface EscolaProviderProps {
   children: React.ReactNode
 }
 
+interface EscolaLoadResult {
+  escolas: Escola[]
+  selectedEscolaId: string | null
+}
+
+async function loadMultiSchoolSelection(userId: string): Promise<EscolaLoadResult> {
+  const { data, error } = await supabase
+    .from('escolas')
+    .select('id, nome')
+    .eq('ativo', true)
+    .order('nome')
+
+  if (error) {
+    logger.error('[EscolaContext] Failed to fetch escolas', error)
+    return { escolas: [], selectedEscolaId: null }
+  }
+
+  const escolas = data ?? []
+  const selectedEscolaId = readStoredSchoolSelection(userId, escolas, sessionStorage)
+  return { escolas, selectedEscolaId }
+}
+
+async function loadSingleSchool(escolaId: string): Promise<EscolaLoadResult> {
+  const { data, error } = await supabase
+    .from('escolas')
+    .select('id, nome')
+    .eq('id', escolaId)
+    .single()
+
+  if (error) {
+    logger.error('[EscolaContext] Failed to fetch user escola', error)
+    return { escolas: [], selectedEscolaId: null }
+  }
+  return data
+    ? { escolas: [data], selectedEscolaId: data.id }
+    : { escolas: [], selectedEscolaId: null }
+}
+
+async function loadAccessibleSchools(userProfile: UserProfile): Promise<EscolaLoadResult> {
+  const mode = schoolSelectionMode(userProfile)
+  if (mode === 'multi') return loadMultiSchoolSelection(userProfile.id)
+  if (mode === 'single' && userProfile.escola_id) return loadSingleSchool(userProfile.escola_id)
+  return { escolas: [], selectedEscolaId: null }
+}
+
 export function EscolaProvider({ children }: EscolaProviderProps) {
   const { userProfile, loading: authLoading } = useAuth()
 
@@ -56,10 +105,6 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
   // Hydrate from sessionStorage after mount (avoid SSR mismatch)
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        setSelectedEscolaId(stored)
-      }
       setHydrated(true)
     }
   }, [])
@@ -67,6 +112,7 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
   // Fetch escolas when userProfile is available
   React.useEffect(() => {
     if (authLoading || !hydrated) return
+    let active = true
 
     const fetchEscolas = async () => {
       setLoading(true)
@@ -75,80 +121,45 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
         if (!userProfile) {
           setEscolas([])
           setSelectedEscolaId(null)
-          setLoading(false)
           return
         }
-
-        const tipoUsuario = userProfile.tipo_usuario
-
-        // Multi-school users: fetch all escolas
-        if (tipoUsuario === 'admin' || tipoUsuario === 'gestor_sme') {
-          const { data, error } = await supabase
-            .from('escolas')
-            .select('id, nome')
-            .eq('ativo', true)
-            .order('nome')
-
-          if (error) {
-            logger.error('[EscolaContext] Failed to fetch escolas', error)
-            setEscolas([])
-          } else {
-            setEscolas(data || [])
-          }
-        }
-        // Single-school users: use their escola_id
-        else if (userProfile.escola_id) {
-          const { data, error } = await supabase
-            .from('escolas')
-            .select('id, nome')
-            .eq('id', userProfile.escola_id)
-            .single()
-
-          if (error) {
-            logger.error('[EscolaContext] Failed to fetch user escola', error)
-            setEscolas([])
-          } else if (data) {
-            setEscolas([data])
-            // Auto-select for single-school users
-            setSelectedEscolaId(data.id)
-          }
-        }
-        // Users without escola_id (edge case)
-        else {
-          setEscolas([])
-        }
+        const result = await loadAccessibleSchools(userProfile)
+        if (!active) return
+        setEscolas(result.escolas)
+        setSelectedEscolaId(result.selectedEscolaId)
       } catch (error) {
+        if (!active) return
         logger.error('[EscolaContext] Error fetching escolas', error instanceof Error ? error : String(error))
         setEscolas([])
+        setSelectedEscolaId(null)
       } finally {
-        setLoading(false)
+        if (active) setLoading(false)
       }
     }
 
-    fetchEscolas()
+    void fetchEscolas()
+    return () => { active = false }
   }, [userProfile, authLoading, hydrated])
 
-  // Persist selection to sessionStorage
+  // The UI selection is scoped to the authenticated identity. It narrows
+  // presentation only; every data read remains protected by server/RLS scope.
   const selectEscola = React.useCallback((id: string | null) => {
+    if (id && !escolas.some(escola => escola.id === id)) return
     setSelectedEscolaId(id)
 
-    if (typeof window !== 'undefined') {
-      if (id) {
-        sessionStorage.setItem(STORAGE_KEY, id)
-      } else {
-        sessionStorage.removeItem(STORAGE_KEY)
-      }
+    if (typeof window !== 'undefined' && userProfile) {
+      writeStoredSchoolSelection(userProfile.id, id, sessionStorage)
     }
-  }, [])
+  }, [escolas, userProfile])
 
   // Clear selection
   const clearSelection = React.useCallback(() => {
     setSelectedEscolaId(null)
 
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem(STORAGE_KEY)
+    if (typeof window !== 'undefined' && userProfile) {
+      writeStoredSchoolSelection(userProfile.id, null, sessionStorage)
     }
-  }, [])
+  }, [userProfile])
 
   // Derived: selected escola object
   const selectedEscola = React.useMemo(
@@ -159,27 +170,7 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
   // Computed: should show selector based on user role
   const shouldShowSelector = React.useMemo(() => {
     if (!userProfile) return false
-
-    const tipoUsuario = userProfile.tipo_usuario
-
-    // Admin and Gestor SME: always show selector (multi-school access)
-    if (tipoUsuario === 'admin' || tipoUsuario === 'gestor_sme') {
-      return true
-    }
-
-    // Diretor and Secretario: never show (single escola bound)
-    if (tipoUsuario === 'diretor' || tipoUsuario === 'secretario') {
-      return false
-    }
-
-    // Coordenador and Professor: show only if multiple escolas
-    // (future support for multi-escola coordinators/teachers)
-    if (tipoUsuario === 'coordenador' || tipoUsuario === 'professor') {
-      return escolas.length > 1
-    }
-
-    // Responsavel and others: never show
-    return false
+    return shouldShowSchoolSelector(userProfile, escolas.length)
   }, [userProfile, escolas.length])
 
   const contextValue: EscolaContextType = {

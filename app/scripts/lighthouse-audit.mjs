@@ -27,7 +27,7 @@ const SCORE_THRESHOLDS = {
 }
 
 async function runLighthouseAudit(url, name) {
-  console.log(`\n🔍 Running Lighthouse audit for: ${url}`)
+  console.info(`\n🔍 Running Lighthouse audit for: ${url}`)
 
   // Launch Chrome
   const chrome = await chromeLauncher.launch({
@@ -59,12 +59,12 @@ async function runLighthouseAudit(url, name) {
     fs.mkdirSync(path.dirname(reportPath), { recursive: true })
     fs.writeFileSync(reportPath, runnerResult.report)
 
-    console.log(`\n📊 Lighthouse Scores for ${name}:`)
-    console.log(`   Accessibility: ${scores.accessibility}/100 ${scores.accessibility >= SCORE_THRESHOLDS.accessibility ? '✅' : '❌'}`)
-    console.log(`   Performance:   ${scores.performance}/100 ${scores.performance >= SCORE_THRESHOLDS.performance ? '✅' : '❌'}`)
-    console.log(`   Best Practices: ${scores['best-practices']}/100 ${scores['best-practices'] >= SCORE_THRESHOLDS['best-practices'] ? '✅' : '❌'}`)
-    console.log(`   SEO:           ${scores.seo}/100 ${scores.seo >= SCORE_THRESHOLDS.seo ? '✅' : '❌'}`)
-    console.log(`\n📄 Report saved: ${reportPath}`)
+    console.info(`\n📊 Lighthouse Scores for ${name}:`)
+    console.info(`   Accessibility: ${scores.accessibility}/100 ${scores.accessibility >= SCORE_THRESHOLDS.accessibility ? '✅' : '❌'}`)
+    console.info(`   Performance:   ${scores.performance}/100 ${scores.performance >= SCORE_THRESHOLDS.performance ? '✅' : '❌'}`)
+    console.info(`   Best Practices: ${scores['best-practices']}/100 ${scores['best-practices'] >= SCORE_THRESHOLDS['best-practices'] ? '✅' : '❌'}`)
+    console.info(`   SEO:           ${scores.seo}/100 ${scores.seo >= SCORE_THRESHOLDS.seo ? '✅' : '❌'}`)
+    console.info(`\n📄 Report saved: ${reportPath}`)
 
     // Extract accessibility issues
     const a11yAudits = lhr.categories.accessibility.auditRefs
@@ -72,11 +72,11 @@ async function runLighthouseAudit(url, name) {
       .filter(audit => audit.score !== null && audit.score < 1)
 
     if (a11yAudits.length > 0) {
-      console.log(`\n⚠️  Accessibility Issues Found (${a11yAudits.length}):`)
+      console.info(`\n⚠️  Accessibility Issues Found (${a11yAudits.length}):`)
       a11yAudits.forEach(audit => {
-        console.log(`   - ${audit.title}`)
+        console.info(`   - ${audit.title}`)
         if (audit.description) {
-          console.log(`     ${audit.description.substring(0, 100)}...`)
+          console.info(`     ${audit.description.substring(0, 100)}...`)
         }
       })
     }
@@ -99,8 +99,8 @@ async function runLighthouseAudit(url, name) {
 }
 
 async function main() {
-  console.log('🚀 Starting Lighthouse Audit for Task 4')
-  console.log('=' .repeat(60))
+  console.info('🚀 Starting Lighthouse Audit for Task 4')
+  console.info('=' .repeat(60))
 
   const results = []
 
@@ -120,30 +120,30 @@ async function main() {
   }
 
   // Summary
-  console.log('\n' + '='.repeat(60))
-  console.log('📋 Audit Summary:')
-  console.log('='.repeat(60))
+  console.info('\n' + '='.repeat(60))
+  console.info('📋 Audit Summary:')
+  console.info('='.repeat(60))
 
   const allPassed = results.every(r => r.passed)
 
   results.forEach(result => {
     const status = result.passed ? '✅ PASSED' : '❌ FAILED'
-    console.log(`\n${status} - ${result.name}`)
+    console.info(`\n${status} - ${result.name}`)
     if (result.scores) {
-      console.log(`   URL: ${result.url}`)
-      console.log(`   Scores: A11y ${result.scores.accessibility}, Perf ${result.scores.performance}, BP ${result.scores['best-practices']}, SEO ${result.scores.seo}`)
+      console.info(`   URL: ${result.url}`)
+      console.info(`   Scores: A11y ${result.scores.accessibility}, Perf ${result.scores.performance}, BP ${result.scores['best-practices']}, SEO ${result.scores.seo}`)
     }
     if (result.error) {
-      console.log(`   Error: ${result.error}`)
+      console.info(`   Error: ${result.error}`)
     }
   })
 
-  console.log('\n' + '='.repeat(60))
+  console.info('\n' + '='.repeat(60))
   if (allPassed) {
-    console.log('✅ All audits passed! Task 4.7 complete.')
+    console.info('✅ All audits passed! Task 4.7 complete.')
     process.exit(0)
   } else {
-    console.log('❌ Some audits failed. Review reports and fix issues.')
+    console.info('❌ Some audits failed. Review reports and fix issues.')
     process.exit(1)
   }
 }

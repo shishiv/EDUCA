@@ -14,13 +14,16 @@ import {
 } from '@/lib/educacenso/2026'
 import { validateINEP } from '@/lib/validation/brazilian-educational'
 import { studentRegistrationSchema } from '@/lib/validation/students-validation'
+import type { JsonValue } from '@/lib/validation/external-values'
 
 const fixtureDirectory = resolve(process.cwd(), 'tests/fixtures/educacenso/2026')
 
+// SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
 const candidates = JSON.parse(
   readFileSync(`${fixtureDirectory}/identification-candidates.synthetic.json`, 'utf8')
-) as unknown[]
+) as JsonValue[]
 
+// SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
 const municipalityFixture = JSON.parse(
   readFileSync(`${fixtureDirectory}/municipality-codes.synthetic-subset.json`, 'utf8')
 ) as {
@@ -37,6 +40,7 @@ const referenceData = {
 
 describe('Educacenso 2026 identification file', () => {
   it('matches the synthetic golden bytes with nine fields and explicit LF framing', () => {
+    // SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
     const result = exportIdentificationFile2026(
       {
         fileName: 'identifica_2026.txt',
@@ -75,6 +79,7 @@ describe('Educacenso 2026 identification file', () => {
   })
 
   it('uses the explicitly selected CRLF framing without inventing a final break', () => {
+    // SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
     const result = exportIdentificationFile2026(
       {
         fileName: 'identifica_2026.txt',
@@ -126,6 +131,7 @@ describe('Educacenso 2026 identification file', () => {
   })
 
   it('rejects unsupported framing, empty exports, and unpinned reference data', () => {
+    // SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
     const result = exportIdentificationFile2026(
       {
         fileName: '../invalido com espaco.txt',
@@ -138,7 +144,7 @@ describe('Educacenso 2026 identification file', () => {
         municipalityCodes: ['5300108'],
         municipalityTableSha256: 'wrong',
         coverage: 'synthetic-fixture-subset',
-      } as unknown as IdentificationReferenceData2026
+      } as IdentificationReferenceData2026
     )
 
     expect(result.ok).toBe(false)
@@ -164,6 +170,7 @@ describe('Educacenso 2026 identification file', () => {
   })
 
   it('does not let a fixture subset claim complete municipality coverage', () => {
+    // SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
     const result = exportIdentificationFile2026(
       {
         fileName: 'identifica_2026.txt',

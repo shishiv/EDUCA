@@ -36,7 +36,7 @@ export default defineConfig({
     // ─── Setup ───────────────────────────────────────────────────────────────
     {
       name: 'setup',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: '**/auth.setup.ts',
     },
 
     // ─── Unauthenticated tests (login page, route-protection checks) ─────────
@@ -58,32 +58,12 @@ export default defineConfig({
         storageState: syntheticAuthStateFile,
       },
       // Pilot-only specs require the explicit pilot provisioner and are run by
-      // scripts/run-pilot-e2e.sh with PILOT_MODE=true.
-      testIgnore: process.env.PILOT_MODE === 'true'
-        ? /.*\/(auth)\/.*/
-        : /.*\/(auth|pilot)\/.*/,
+      // their specialized runners. Public visitor coverage has separate local
+      // and public-origin runners as well.
+      testIgnore: /.*\/(auth|pilot|pilot-descriptive|public-demo)\/.*/,
       dependencies: ['setup'],
     },
 
-    // ─── Role-specific projects (opt-in via grep or explicit run) ────────────
-    {
-      name: 'diretor',
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: path.join(AUTH_DIR, 'diretor.json'),
-      },
-      testMatch: /.*roles\.spec\.ts/,
-      dependencies: ['setup'],
-    },
-    {
-      name: 'professor',
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: path.join(AUTH_DIR, 'professor.json'),
-      },
-      testMatch: /.*roles\.spec\.ts/,
-      dependencies: ['setup'],
-    },
   ],
 
   webServer: {

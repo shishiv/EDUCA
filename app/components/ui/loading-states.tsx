@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Skeleton } from './skeleton'
@@ -142,11 +142,10 @@ export function ListLoading({ items = 5 }: ListLoadingProps) {
 }
 
 // Button loading state
-interface LoadingButtonProps {
+interface LoadingButtonProps extends ComponentProps<typeof Button> {
   loading?: boolean
   children: ReactNode
   className?: string
-  [key: string]: any
 }
 
 export function LoadingButton({
@@ -208,7 +207,8 @@ export function RefreshButton({ onRefresh, loading = false, className }: Refresh
   const handleRefresh = async () => {
     try {
       await onRefresh()
-    } catch (error) {
+    } catch {
+      // The owner of the refresh operation presents its error state.
     }
   }
 

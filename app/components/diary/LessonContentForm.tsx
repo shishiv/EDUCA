@@ -21,7 +21,7 @@
 'use client'
 
 import React, { useCallback, useMemo, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -73,19 +73,15 @@ export interface LessonContentFormProps {
 }
 
 function getLessonFormValues(
-  initialValues: Partial<LessonContentFormData> | undefined,
+  initialValues: Partial<LessonContentFormData> = {},
   educationLevel: EducationLevel
 ): LessonContentFormData {
-  return {
-    tema: initialValues?.tema || '',
-    objetivo: initialValues?.objetivo || '',
-    habilidades_bncc_input: initialValues?.habilidades_bncc_input || '',
-    metodologia: initialValues?.metodologia || '',
-    recursos: initialValues?.recursos || '',
-    observacoes: initialValues?.observacoes || '',
-    campos_experiencia: initialValues?.campos_experiencia || [],
-    education_level: educationLevel,
-  }
+  const {
+    tema = '', objetivo = '', habilidades_bncc_input = '', metodologia = '',
+    recursos = '', observacoes = '', campos_experiencia = [],
+  } = initialValues
+  return { tema, objetivo, habilidades_bncc_input, metodologia, recursos, observacoes,
+    campos_experiencia, education_level: educationLevel }
 }
 
 function LessonExperienceFields({
@@ -123,7 +119,7 @@ function LessonExperienceFields({
               <Checkbox
                 id={`experience-${field.code}`}
                 checked={selectedFields?.includes(field.code)}
-                onCheckedChange={(checked) => onToggle(field.code, checked as boolean)}
+                onCheckedChange={(checked) => onToggle(field.code, checked === true)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -161,13 +157,12 @@ export function LessonContentForm({
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { errors, isSubmitting },
     reset,
-    watch,
   } = form
 
   // Watch selected experience fields for Ed. Infantil
-  const selectedExperienceFields = watch('campos_experiencia')
+  const selectedExperienceFields = useWatch({ control, name: 'campos_experiencia' })
 
   // Reset form when initialValues change
   useEffect(() => {

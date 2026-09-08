@@ -1,446 +1,285 @@
+import { execFile as execFileCallback } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
+import ExcelJS from 'exceljs'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Page } from '@playwright/test'
+import type { Database } from '@/types/database'
 import { test, expect } from '../support/diagnostics'
 
-/**
- * E2E Tests: Frequency Report (Relatorio de Frequencia)
- * Task Group 4.1.4: Attendance Report Page
- * OpenSpec Change: 2025-12-04-diario-de-classe
- *
- * Tests the frequency report page with:
- * - Class filter
- * - Period selector
- * - Table visualization
- * - Export functionality
- */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-test.describe('Frequency Report - Page Access', () => {
-  test('should access frequency report page', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    await expect(page.getByRole('heading', { name: /frequência|frequencia/i })).toBeVisible()
+const CLASS_NAME = '1º Ano A E2E'
+const SCHOOL_NAME = 'CEMEI Pequenos Passos'
+const FIXTURE_RUN_ID = randomUUID()
+const STUDENT_ID = randomUUID()
+const ENROLLMENT_ID = randomUUID()
+const STUDENT_NAME = `Frequência C14 E2E ${FIXTURE_RUN_ID.slice(0, 8)}`
+const FIXTURE_DATES = ['2026-09-02', '2026-09-03', '2026-09-04'] as const
+const SESSION_IDS = [
+  randomUUID(),
+  randomUUID(),
+  randomUUID(),
+] as const
+const ATTENDANCE_IDS = [
+  randomUUID(),
+  randomUUID(),
+  randomUUID(),
+] as const
+
+const execFile = promisify(execFileCallback)
+
+function exportedRowValues(row: ExcelJS.Row) {
+  if (!Array.isArray(row.values)) throw new Error('FREQUENCY_EXPORT_ROW_VALUES_INVALID')
+  return row.values.slice(1)
+}
+
+let admin: SupabaseClient<Database>
+let classId = ''
+
+function getLocalAdminClient(): SupabaseClient<Database> {
+  if (!new URL(SUPABASE_URL).hostname.match(/^(127\.0\.0\.1|localhost)$/)) {
+    throw new Error('Frequency report E2E requires a loopback Supabase URL')
+  }
+  if (!SERVICE_ROLE_KEY.startsWith('sb_secret_')) {
+    throw new Error('Frequency report E2E requires the local Supabase service key')
+  }
+  return createClient<Database>(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
   })
+}
 
-  test('should display filters section', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
+function requireDatabaseSuccess(label: string, error: { message: string } | null): void {
+  if (error) throw new Error(`${label}: ${error.message}`)
+}
+
+async function cleanupFixture(client: SupabaseClient<Database>): Promise<void> {
+  const attendance = await client.from('frequencia').delete().in('id', [...ATTENDANCE_IDS])
+  requireDatabaseSuccess('frequency fixture attendance cleanup failed', attendance.error)
+  const sessions = await client.from('sessoes_aula').delete().in('id', [...SESSION_IDS])
+  requireDatabaseSuccess('frequency fixture session cleanup failed', sessions.error)
+  const enrollment = await client.from('matriculas').delete().eq('id', ENROLLMENT_ID)
+  requireDatabaseSuccess('frequency fixture enrollment cleanup failed', enrollment.error)
+  const student = await client.from('alunos').delete().eq('id', STUDENT_ID)
+  requireDatabaseSuccess('frequency fixture student cleanup failed', student.error)
+}
+
+async function seedFixture(client: SupabaseClient<Database>): Promise<void> {
+  // Reports consume marked canonical facts without requiring finalization. Keep
+  // this disposable fixture open so cleanup honors closed-session immutability.
+  await cleanupFixture(client)
+  const [turmaResult, teacherResult] = await Promise.all([
+    client.from('turmas').select('id, escola_id').eq('nome', CLASS_NAME).single(),
+    client.from('users').select('id').eq('email', 'professor@test.com').single(),
+  ])
+  requireDatabaseSuccess('frequency fixture class lookup failed', turmaResult.error)
+  requireDatabaseSuccess('frequency fixture teacher lookup failed', teacherResult.error)
+  if (!turmaResult.data || !teacherResult.data) throw new Error('FREQUENCY_FIXTURE_SCOPE_MISSING')
+  classId = turmaResult.data.id
+
+  const student = await client.from('alunos').insert({
+    id: STUDENT_ID,
+    escola_id: turmaResult.data.escola_id,
+    nome_completo: STUDENT_NAME,
+    data_nascimento: '2018-04-10',
+    sexo: 'F',
+    ativo: true,
+    bolsa_familia: false,
+  })
+  requireDatabaseSuccess('frequency fixture student insert failed', student.error)
+
+  const enrollment = await client.from('matriculas').insert({
+    id: ENROLLMENT_ID,
+    aluno_id: STUDENT_ID,
+    turma_id: classId,
+    ano_letivo: 2026,
+    situacao: 'ativa',
+    data_matricula: '2026-02-02',
+    observacoes: `Fixture persistida do relatório de frequência C14 ${FIXTURE_RUN_ID}`,
+  })
+  requireDatabaseSuccess('frequency fixture enrollment insert failed', enrollment.error)
+
+  const sessions = await client.from('sessoes_aula').insert(SESSION_IDS.map((id, index) => ({
+    id,
+    turma_id: classId,
+    escola_id: turmaResult.data.escola_id,
+    professor_id: teacherResult.data.id,
+    data_aula: FIXTURE_DATES[index],
+    conteudo_programatico: `Frequência C14 ${FIXTURE_RUN_ID} ${index + 1}`,
+    status: 'ABERTA',
+    aberta_em: `${FIXTURE_DATES[index]}T08:00:00-03:00`,
+  })))
+  requireDatabaseSuccess('frequency fixture sessions insert failed', sessions.error)
+
+  const statuses = ['P', 'F', 'A'] as const
+  const attendance = await client.from('frequencia').insert(ATTENDANCE_IDS.map((id, index) => ({
+    id,
+    matricula_id: ENROLLMENT_ID,
+    sessao_id: SESSION_IDS[index],
+    data_aula: FIXTURE_DATES[index],
+    presente: statuses[index] !== 'F',
+    status_presenca: statuses[index],
+    professor_id: teacherResult.data.id,
+    marcado_por: teacherResult.data.id,
+    marcado_em: `${FIXTURE_DATES[index]}T08:15:00-03:00`,
+  })))
+  requireDatabaseSuccess('frequency fixture attendance insert failed', attendance.error)
+}
+
+async function openReport(page: Page): Promise<void> {
+  await page.goto('/relatorios/frequencia')
+  await expect(page.getByRole('heading', { name: 'Relatórios de Frequência', exact: true })).toBeVisible()
+  await expect(page.getByLabel('Turma', { exact: true })).toBeVisible()
+}
+
+async function generateFixtureReport(page: Page): Promise<void> {
+  const classSelect = page.getByLabel('Turma', { exact: true })
+  await classSelect.click()
+  await page.getByRole('option', { name: new RegExp(`1º Ano - ${CLASS_NAME}`) }).click()
+
+  await page.getByLabel('Período', { exact: true }).click()
+  await page.getByRole('option', { name: '3º Bimestre', exact: true }).click()
+  await page.getByRole('button', { name: 'Gerar Relatorio', exact: true }).click()
+  await expect(page.getByRole('row').filter({ hasText: STUDENT_NAME })).toBeVisible()
+}
+
+test.beforeAll(async () => {
+  admin = getLocalAdminClient()
+  await seedFixture(admin)
+})
+
+test.afterAll(async () => {
+  if (admin) await cleanupFixture(admin)
+})
+
+test.describe('Relatório de frequência', () => {
+  test('shows the implemented filters, custom dates, and pre-generation export guard', async ({ page }) => {
+    await openReport(page)
+
+    await expect(page.getByText('Visualize e exporte relatórios de frequência por turma e período', { exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Filtros', exact: true })).toBeVisible()
+    await expect(page.getByLabel('Período', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Gerar Relatorio', exact: true })).toBeDisabled()
+    await expect(page.getByRole('button', { name: 'Excel', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'PDF', exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Excel', exact: true }).click()
+    await expect(page.getByText('Gere um relatorio primeiro', { exact: true })).toBeVisible()
+
+    await page.getByLabel('Período', { exact: true }).click()
+    await page.getByRole('option', { name: 'Personalizado', exact: true }).click()
+    await expect(page.getByText('Data Início', { exact: true }).locator('..').getByRole('button')).toBeVisible()
+    await expect(page.getByText('Data Fim', { exact: true }).locator('..').getByRole('button')).toBeVisible()
   })
 
-  test('should display turma filter', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    const turmaSelect = page.getByLabel(/turma/i)
-    await expect(turmaSelect).toBeVisible()
-  })
+  test('renders persisted canonical attendance and the implemented table and chart states', async ({ page }) => {
+    await openReport(page)
+    await generateFixtureReport(page)
 
-  test('should display period selector', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    await expect(periodSelect).toBeVisible()
-  })
-
-  test('should have export buttons', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    await expect(page.getByRole('button', { name: /excel/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /pdf/i })).toBeVisible()
-  })
-})
-
-test.describe('Frequency Report - Filter Functionality', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-  })
-
-  test('should select turma from dropdown', async ({ page }) => {
-    const turmaSelect = page.getByLabel(/turma/i)
-    
-    await turmaSelect.click()
-    
-    // Check if options are visible
-    const firstOption = page.getByRole('option').first()
-    if (await firstOption.isVisible()) {
-      await firstOption.click()
-      
-      // Verify selection
-      await expect(turmaSelect).not.toHaveText(/selecione/i)
-    }
-  })
-
-  test('should change period option', async ({ page }) => {
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    
-    await periodSelect.click()
-    
-    // Select "Mes Atual"
-    const currentMonthOption = page.getByRole('option', { name: /mes atual|mês atual/i })
-    if (await currentMonthOption.isVisible()) {
-      await currentMonthOption.click()
-    }
-  })
-
-  test('should allow custom date range selection', async ({ page }) => {
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    
-    await periodSelect.click()
-    
-    // Select "Personalizado"
-    const customOption = page.getByRole('option', { name: /personalizado/i })
-    if (await customOption.isVisible()) {
-      await customOption.click()
-      
-      // Date pickers should appear
-      await expect(page.getByText(/data inicio|data início/i)).toBeVisible()
-      await expect(page.getByText(/data fim/i)).toBeVisible()
-    }
-  })
-
-  test('should display bimestre options', async ({ page }) => {
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    
-    await periodSelect.click()
-    
-    // Check for bimestre options
-    await expect(page.getByRole('option', { name: /1.*bimestre/i })).toBeVisible()
-    await expect(page.getByRole('option', { name: /2.*bimestre/i })).toBeVisible()
-    await expect(page.getByRole('option', { name: /3.*bimestre/i })).toBeVisible()
-    await expect(page.getByRole('option', { name: /4.*bimestre/i })).toBeVisible()
-  })
-})
-
-test.describe('Frequency Report - Report Generation', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-  })
-
-  test('should generate report for selected turma', async ({ page }) => {
-    // Select turma
-    const turmaSelect = page.getByLabel(/turma/i)
-    await turmaSelect.click()
-    await page.getByRole('option').first().click()
-    
-    // Generate report
-    const generateButton = page.getByRole('button', { name: /gerar.*relatório|gerar.*relatorio/i })
-    await generateButton.click()
-    
-    // Wait for report to load (using timeout to handle API delay)
-    await page.waitForTimeout(2000)
-    
-    // Report table or message should appear
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    const hasMessage = await page.getByText(/selecione|nenhum/i).isVisible().catch(() => false)
-    
-    expect(hasTable || hasMessage).toBeTruthy()
-  })
-
-  test('should show empty state when no turma selected', async ({ page }) => {
-    const generateButton = page.getByRole('button', { name: /gerar.*relatório|gerar.*relatorio/i })
-    
-    if (await generateButton.isEnabled()) {
-      await generateButton.click()
-      
-      // Should show error or message
-      await expect(page.getByText(/selecione.*turma/i)).toBeVisible({ timeout: 5000 })
-    }
-  })
-
-  test('should display loading state during generation', async ({ page }) => {
-    const turmaSelect = page.getByLabel(/turma/i)
-    await turmaSelect.click()
-    await page.getByRole('option').first().click()
-    
-    const generateButton = page.getByRole('button', { name: /gerar/i })
-    await generateButton.click()
-    
-    // Check for loading indicator (spinner or disabled button)
-    const hasSpinner = await page.locator('[class*="animate-spin"]').isVisible().catch(() => false)
-    
-    // Loading state should appear briefly
-    if (!hasSpinner) {
-      // Report might load too fast, that's OK
-      expect(true).toBeTruthy()
-    }
-  })
-})
-
-test.describe('Frequency Report - Table Display', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    // Generate a report
-    const turmaSelect = page.getByLabel(/turma/i)
-    if (await turmaSelect.isVisible()) {
-      await turmaSelect.click()
-      await page.getByRole('option').first().click()
-      
-      const generateButton = page.getByRole('button', { name: /gerar/i })
-      await generateButton.click()
-      
-      await page.waitForTimeout(2000)
-    }
-  })
-
-  test('should display attendance table', async ({ page }) => {
     const table = page.getByRole('table')
-    const hasTable = await table.isVisible().catch(() => false)
-    
-    if (hasTable) {
-      await expect(table).toBeVisible()
-    }
+    await expect(table.getByRole('columnheader', { name: 'Aluno', exact: true })).toBeVisible()
+    await expect(table.getByRole('columnheader', { name: 'Presencas', exact: true })).toBeVisible()
+    await expect(table.getByRole('columnheader', { name: 'Faltas', exact: true })).toBeVisible()
+    await expect(table.getByRole('columnheader', { name: 'Atestados', exact: true })).toBeVisible()
+
+    const row = table.getByRole('row').filter({ hasText: STUDENT_NAME })
+    const cells = row.getByRole('cell')
+    await expect(cells.nth(2)).toHaveText('1')
+    await expect(cells.nth(3)).toHaveText('1')
+    await expect(cells.nth(4)).toHaveText('1')
+    await expect(cells.nth(5)).toHaveText('3')
+    await expect(cells.nth(6)).toHaveText('67,0%')
+    await expect(page.getByRole('region', { name: 'Resumo da frequência' })).toBeVisible()
+    await expect(page.getByText(`1º Ano - ${CLASS_NAME}`, { exact: true })).toBeVisible()
+
+    await page.getByRole('tab', { name: 'Gráfico', exact: true }).click()
+    await expect(page.getByText('Gráfico em desenvolvimento', { exact: true })).toBeVisible()
+    await page.getByRole('tab', { name: 'Tabela', exact: true }).click()
+    await expect(table).toBeVisible()
   })
 
-  test('should show student columns', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      // Check for key columns
-      await expect(page.getByRole('columnheader', { name: /aluno|nome/i })).toBeVisible()
-      await expect(page.getByRole('columnheader', { name: /presenças|presencas/i })).toBeVisible()
-      await expect(page.getByRole('columnheader', { name: /faltas/i })).toBeVisible()
-      await expect(page.getByRole('columnheader', { name: /atestados/i })).toBeVisible()
-      await expect(page.getByRole('columnheader', { name: /percentual|frequência|frequencia/i })).toBeVisible()
-    }
+  test('downloads Excel and PDF exports with the generated attendance row', async ({ page }, testInfo) => {
+    await openReport(page)
+    await generateFixtureReport(page)
+
+    const excelDownloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Excel', exact: true }).click()
+    const excelDownload = await excelDownloadPromise
+    expect(excelDownload.suggestedFilename()).toMatch(/^frequencia_.*\.xlsx$/)
+    const excelPath = testInfo.outputPath(excelDownload.suggestedFilename())
+    await excelDownload.saveAs(excelPath)
+    const excelBytes = await readFile(excelPath)
+    expect(excelBytes.subarray(0, 2).toString('ascii')).toBe('PK')
+    expect(excelBytes.length).toBeGreaterThan(1000)
+
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.readFile(excelPath)
+    expect(workbook.worksheets.map((worksheet) => worksheet.name)).toEqual(['Frequência'])
+    const worksheet = workbook.getWorksheet('Frequência')
+    if (!worksheet) throw new Error('FREQUENCY_EXPORT_WORKSHEET_MISSING')
+    expect(worksheet.getCell('A1').text).toBe('Relatório de Frequência')
+    expect(worksheet.getCell('A2').text).toBe(`${CLASS_NAME} - 1º Ano`)
+    expect(worksheet.getCell('A4').text).toBe(`Escola: ${SCHOOL_NAME}`)
+    expect(exportedRowValues(worksheet.getRow(8))).toEqual(['Nome', 'P', 'F', 'A', 'Total', '%', 'Status'])
+
+    let excelStudentRow: ExcelJS.Row | undefined
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber >= 9 && row.getCell(1).text === STUDENT_NAME) excelStudentRow = row
+    })
+    if (!excelStudentRow) throw new Error('FREQUENCY_EXPORT_STUDENT_ROW_MISSING')
+    expect(exportedRowValues(excelStudentRow)).toEqual([
+      STUDENT_NAME,
+      1,
+      1,
+      1,
+      3,
+      67,
+      'Abaixo da referência municipal',
+    ])
+
+    const pdfDownloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'PDF', exact: true }).first().click()
+    const pdfDownload = await pdfDownloadPromise
+    expect(pdfDownload.suggestedFilename()).toMatch(/^frequencia_.*\.pdf$/)
+    const pdfPath = testInfo.outputPath(pdfDownload.suggestedFilename())
+    await pdfDownload.saveAs(pdfPath)
+    const pdfBytes = await readFile(pdfPath)
+    const { stdout } = await execFile('pdftotext', [pdfPath, '-'])
+    const pdfText = stdout.toString()
+    const compactPdfText = pdfText.replace(/\s+/g, ' ')
+    expect(pdfBytes.subarray(0, 4).toString('ascii')).toBe('%PDF')
+    expect(pdfBytes.length).toBeGreaterThan(1000)
+    expect(compactPdfText).toContain('Relatório de Frequência')
+    expect(compactPdfText).toContain(`${CLASS_NAME} - 1º Ano`)
+    expect(compactPdfText).toContain(SCHOOL_NAME)
+    expect(compactPdfText).toContain('Nome P F A Total % Status')
+    expect(compactPdfText).toContain(
+      `${STUDENT_NAME} 1 1 1 3 67% Abaixo da referência municipal`,
+    )
   })
 
-  test('should highlight at-risk students', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      // Look for red/yellow highlighting (rows with low attendance)
-      const highlightedRows = page.locator('[class*="bg-red"], [class*="bg-yellow"]')
-      const count = await highlightedRows.count()
-      
-      // Highlighted rows may or may not exist depending on data
-      expect(count).toBeGreaterThanOrEqual(0)
-    }
-  })
+  test('keeps filters and the real report usable at 390px', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await openReport(page)
+    await generateFixtureReport(page)
 
-  test('should show summary statistics', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      // Check for summary cards/stats
-      const hasSummary = await page.getByText(/total.*alunos|média|media/i).isVisible().catch(() => false)
-      
-      if (hasSummary) {
-        expect(hasSummary).toBeTruthy()
-      }
-    }
-  })
-})
-
-test.describe('Frequency Report - View Modes', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-  })
-
-  test('should have table/chart view toggle', async ({ page }) => {
-    // Look for tabs or toggle buttons
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    const hasViewToggle = await tableTab.isVisible().catch(() => false)
-    
-    if (hasViewToggle) {
-      await expect(tableTab).toBeVisible()
-      
-      const chartTab = page.getByRole('tab', { name: /gráfico|grafico/i })
-      await expect(chartTab).toBeVisible()
-    }
-  })
-
-  test('should switch between table and chart views', async ({ page }) => {
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    const hasViewToggle = await tableTab.isVisible().catch(() => false)
-    
-    if (hasViewToggle) {
-      const chartTab = page.getByRole('tab', { name: /gráfico|grafico/i })
-      
-      await chartTab.click()
-      await page.waitForTimeout(500)
-      
-      // Chart view should be active
-      await expect(chartTab).toHaveAttribute('data-state', 'active')
-      
-      // Switch back
-      await tableTab.click()
-      await expect(tableTab).toHaveAttribute('data-state', 'active')
-    }
-  })
-})
-
-test.describe('Frequency Report - Export Functionality', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-  })
-
-  test('should export to Excel', async ({ page }) => {
-    const excelButton = page.getByRole('button', { name: /excel/i })
-    
-    // Button should be visible
-    await expect(excelButton).toBeVisible()
-    
-    // Click may trigger download - we just test button works
-    await excelButton.click()
-    
-    // No error toast
-    const errorToast = page.getByText(/erro/i)
-    const hasError = await errorToast.isVisible().catch(() => false)
-    
-    if (hasError) {
-      // Expected if no report generated yet
-      expect(true).toBeTruthy()
-    }
-  })
-
-  test('should export to PDF', async ({ page }) => {
-    const pdfButton = page.getByRole('button', { name: /pdf/i })
-    
-    await expect(pdfButton).toBeVisible()
-    
-    await pdfButton.click()
-    
-    // Check for error or success
-    await page.waitForTimeout(1000)
-  })
-
-  test('should show error when exporting without report', async ({ page }) => {
-    const excelButton = page.getByRole('button', { name: /excel/i })
-    await excelButton.click()
-    
-    // Should show error message
-    const errorMessage = page.getByText(/gere.*relatório|gere.*relatorio|erro/i)
-    const hasError = await errorMessage.isVisible({ timeout: 3000 }).catch(() => false)
-    
-    // Error expected when no report generated
-    expect(true).toBeTruthy()
-  })
-})
-
-test.describe('Frequency Report - Mobile Responsiveness', () => {
-  test.use({ viewport: { width: 375, height: 667 } }) // iPhone SE size
-
-  test('should display mobile-optimized layout', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    await expect(page.getByRole('heading', { name: /frequência|frequencia/i })).toBeVisible()
-  })
-
-  test('should stack filters vertically on mobile', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    const turmaSelect = page.getByLabel(/turma/i)
-    await expect(turmaSelect).toBeVisible()
-    
-    // Filters should be stacked (full width)
-    const selectBox = await turmaSelect.boundingBox()
-    if (selectBox) {
-      // On mobile, select should be near full width
-      expect(selectBox.width).toBeGreaterThan(300)
-    }
-  })
-
-  test('should have touch-friendly button sizes', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    const generateButton = page.getByRole('button', { name: /gerar/i })
+    const generateButton = page.getByRole('button', { name: 'Gerar Relatorio', exact: true })
     const buttonBox = await generateButton.boundingBox()
-    
-    if (buttonBox) {
-      // Minimum touch target: 44x44 (Apple HIG)
-      expect(buttonBox.height).toBeGreaterThanOrEqual(44)
-    }
-  })
+    expect(buttonBox).not.toBeNull()
+    expect(buttonBox?.height).toBeGreaterThanOrEqual(44)
 
-  test('should display horizontal scroll for table on mobile', async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-    
-    // Generate report
-    const turmaSelect = page.getByLabel(/turma/i)
-    if (await turmaSelect.isVisible()) {
-      await turmaSelect.click()
-      await page.getByRole('option').first().click()
-      
-      const generateButton = page.getByRole('button', { name: /gerar/i })
-      await generateButton.click()
-      
-      await page.waitForTimeout(2000)
-      
-      const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-      
-      if (hasTable) {
-        // Table should be in a scrollable container
-        const tableContainer = page.locator('.overflow-x-auto, [class*="overflow"]').first()
-        await expect(tableContainer).toBeVisible()
-      }
-    }
-  })
-})
-
-test.describe('Frequency Report - Data Accuracy', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/frequencia')
-  })
-
-  test('should display correct period label', async ({ page }) => {
-    const turmaSelect = page.getByLabel(/turma/i)
-    await turmaSelect.click()
-    await page.getByRole('option').first().click()
-    
-    const generateButton = page.getByRole('button', { name: /gerar/i })
-    await generateButton.click()
-    
-    await page.waitForTimeout(2000)
-    
-    // Period label should be displayed (format: DD/MM/YYYY a DD/MM/YYYY)
-    const periodLabel = page.getByText(/\d{2}\/\d{2}\/\d{4}.*\d{2}\/\d{2}\/\d{4}/)
-    const hasLabel = await periodLabel.isVisible().catch(() => false)
-    
-    if (hasLabel) {
-      await expect(periodLabel).toBeVisible()
-    }
-  })
-
-  test('should show turma name in report', async ({ page }) => {
-    const turmaSelect = page.getByLabel(/turma/i)
-    await turmaSelect.click()
-    
-    const firstOption = page.getByRole('option').first()
-    const turmaText = await firstOption.textContent()
-    
-    await firstOption.click()
-    
-    const generateButton = page.getByRole('button', { name: /gerar/i })
-    await generateButton.click()
-    
-    await page.waitForTimeout(2000)
-    
-    // Report should contain turma name/info
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable && turmaText) {
-      // Turma info should be visible somewhere in the report
-      expect(true).toBeTruthy()
-    }
-  })
-
-  test('should calculate percentages correctly', async ({ page }) => {
-    const turmaSelect = page.getByLabel(/turma/i)
-    await turmaSelect.click()
-    await page.getByRole('option').first().click()
-    
-    const generateButton = page.getByRole('button', { name: /gerar/i })
-    await generateButton.click()
-    
-    await page.waitForTimeout(2000)
-    
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      // Percentages should be in format: 00.0% or 100.0%
-      const percentagePattern = /\d{1,3}[.,]\d%|\d{1,3}%/
-      const percentageCell = page.locator('td, div').filter({ hasText: percentagePattern }).first()
-      
-      const hasPercentage = await percentageCell.isVisible().catch(() => false)
-      expect(hasPercentage || !hasTable).toBeTruthy()
-    }
+    const table = page.getByRole('table')
+    const scrollContainer = table.locator('..')
+    await expect(scrollContainer).toHaveCSS('overflow-x', 'auto')
+    const tableScrollsInsideContainer = await scrollContainer.evaluate(
+      element => element.scrollWidth > element.clientWidth,
+    )
+    expect(tableScrollsInsideContainer).toBe(true)
+    const documentOverflows = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    )
+    expect(documentOverflows).toBe(false)
   })
 })

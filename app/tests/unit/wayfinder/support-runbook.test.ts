@@ -6,20 +6,23 @@ import {
   SUPPORT_RUNBOOK_REQUIRED_SURFACES,
   validateSupportRunbook,
 } from '@/lib/wayfinder/support-runbook'
+import { parseJsonRecord, type JsonRecord, type JsonValue } from '@/lib/validation/external-values'
 
+// SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
 const runbook = JSON.parse(
   readFileSync(new URL('../../../../data/wayfinder/educa/support-runbook/runbook.json', import.meta.url), 'utf8'),
-) as unknown
+) as JsonValue
 
-function cloneRunbook(): Record<string, unknown> {
-  return JSON.parse(JSON.stringify(runbook)) as Record<string, unknown>
+function cloneRunbook(): JsonRecord {
+  return JSON.parse(JSON.stringify(runbook))
 }
 
-function recordAt(value: unknown, path: string): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+function recordAt(value: JsonValue, path: string): JsonRecord {
+  const record = parseJsonRecord(value)
+  if (!record) {
     throw new Error(`${path} must be an object`)
   }
-  return value as Record<string, unknown>
+  return record
 }
 
 describe('synthetic support runbook contract', () => {
@@ -46,6 +49,7 @@ describe('synthetic support runbook contract', () => {
     const broken = cloneRunbook()
     const binding = recordAt(broken.humanBinding, '$.humanBinding')
     delete binding.owner
+    broken.humanBinding = binding
 
     const report = validateSupportRunbook(broken)
 
@@ -60,6 +64,7 @@ describe('synthetic support runbook contract', () => {
     const broken = cloneRunbook()
     const incident = recordAt(broken.incident, '$.incident')
     delete incident.severity
+    broken.incident = incident
 
     const report = validateSupportRunbook(broken)
 
@@ -72,7 +77,10 @@ describe('synthetic support runbook contract', () => {
   it('rejects correlation, surface and critical-reason breaks', () => {
     const correlationBroken = cloneRunbook()
     const incident = recordAt(correlationBroken.incident, '$.incident')
-    recordAt(incident.correlation, '$.incident.correlation').key = 'SYN-CORR-002'
+    const correlation = recordAt(incident.correlation, '$.incident.correlation')
+    correlation.key = 'SYN-CORR-002'
+    incident.correlation = correlation
+    correlationBroken.incident = incident
 
     expect(validateSupportRunbook(correlationBroken).issues).toContainEqual(expect.objectContaining({
       code: 'correlation_key_mismatch',
@@ -83,6 +91,7 @@ describe('synthetic support runbook contract', () => {
     const classificationIncident = recordAt(classificationBroken.incident, '$.incident')
     classificationIncident.surfaces = []
     classificationIncident.severityReason = 'synthetic observation'
+    classificationBroken.incident = classificationIncident
 
     expect(validateSupportRunbook(classificationBroken).issues).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'incident_surface_missing', path: 'incident.surfaces' }),
@@ -104,6 +113,10 @@ describe('synthetic support runbook contract', () => {
     rollback.available = false
     rollback.mode = 'remote fixture'
     rollback.deploymentUsed = true
+    incident.scope = scope
+    incident.escalation = escalation
+    incident.rollback = rollback
+    broken.incident = incident
 
     expect(validateSupportRunbook(broken).issues).toEqual([
       { code: 'scope_must_remain_unconfirmed', path: 'incident.scope.confirmed', detail: 'synthetic scope must remain unconfirmed' },
@@ -119,11 +132,14 @@ describe('synthetic support runbook contract', () => {
 
   it('rejects closure state, checks and owner-confirmation breaks', () => {
     const broken = cloneRunbook()
-    const closure = recordAt(recordAt(broken.incident, '$.incident').closure, '$.incident.closure')
+    const incident = recordAt(broken.incident, '$.incident')
+    const closure = recordAt(incident.closure, '$.incident.closure')
     closure.state = 'closed in production'
     closure.productionState = 'completed'
     closure.checks = []
     closure.ownerConfirmation = 'confirmed'
+    incident.closure = closure
+    broken.incident = incident
 
     expect(validateSupportRunbook(broken).issues).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'closure_state_invalid', path: 'incident.closure.state' }),
@@ -137,6 +153,7 @@ describe('synthetic support runbook contract', () => {
     const broken = cloneRunbook()
     const incident = recordAt(broken.incident, '$.incident')
     incident.rawContent = '[REDACTED]'
+    broken.incident = incident
 
     const report = validateSupportRunbook(broken)
 
