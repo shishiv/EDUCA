@@ -18,10 +18,9 @@ import {
   Shield,
   Clock,
   Mail,
-  Phone,
-  MapPin
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 export default function PerfilPage() {
   const t = useTranslations('platform')
@@ -30,8 +29,6 @@ export default function PerfilPage() {
   const [profileData, setProfileData] = useState({
     nome: userProfile?.nome || '',
     email: userProfile?.email || '',
-    telefone: '(34) 99999-0000',
-    endereco: 'Rua da Educação, 123 - Centro - Cidade/UF'
   })
   const [passwordData, setPasswordData] = useState({
     senhaAtual: '',
@@ -64,10 +61,14 @@ export default function PerfilPage() {
     setLoading(true)
 
     try {
-      // Simular atualização do perfil
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ nome: profileData.nome }),
+      })
+      if (!response.ok) throw new Error('PROFILE_UPDATE_FAILED')
       toast.success(t('profile.updated'))
-    } catch (error) {
+    } catch {
       toast.error(t('profile.updateError'))
     } finally {
       setLoading(false)
@@ -90,11 +91,11 @@ export default function PerfilPage() {
     setLoading(true)
 
     try {
-      // Simular alteração de senha
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const { error } = await supabase.auth.updateUser({ password: passwordData.novaSenha })
+      if (error) throw error
       toast.success(t('profile.passwordChanged'))
       setPasswordData({ senhaAtual: '', novaSenha: '', confirmarSenha: '' })
-    } catch (error) {
+    } catch {
       toast.error(t('profile.passwordError'))
     } finally {
       setLoading(false)
@@ -140,14 +141,6 @@ export default function PerfilPage() {
               <div className="flex items-center space-x-3 text-sm">
                 <Mail className="h-4 w-4 text-gray-500" />
                 <span>{userProfile?.email}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <Phone className="h-4 w-4 text-gray-500" />
-                <span>{profileData.telefone}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span>{profileData.endereco}</span>
               </div>
               <div className="flex items-center space-x-3 text-sm">
                 <Clock className="h-4 w-4 text-gray-500" />
@@ -198,27 +191,10 @@ export default function PerfilPage() {
                           id="email"
                           type="email"
                           value={profileData.email}
-                          onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                          disabled
+                          aria-describedby="email-help"
                         />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="telefone">{t('profile.phone')}</Label>
-                        <Input
-                          id="telefone"
-                          value={profileData.telefone}
-                          onChange={(e) => setProfileData({...profileData, telefone: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endereco">{t('profile.address')}</Label>
-                        <Input
-                          id="endereco"
-                          value={profileData.endereco}
-                          onChange={(e) => setProfileData({...profileData, endereco: e.target.value})}
-                        />
+                        <p id="email-help" className="text-sm text-muted-foreground">{t('profile.email')}</p>
                       </div>
                     </div>
 

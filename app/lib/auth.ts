@@ -14,13 +14,14 @@ export interface AuthUser extends Omit<User, 'user_metadata'> {
 }
 
 export type UserProfile = Tables<'users'>
+type AuditDetail = string | number | boolean | null | undefined | AuditDetail[] | { [key: string]: AuditDetail }
 
 // Audit log types
 export interface AuditLog {
   id?: string
   user_id: string
   action: 'login' | 'logout' | 'login_failed' | 'session_expired' | 'password_changed'
-  details?: Record<string, any>
+  details?: Record<string, AuditDetail>
   ip_address?: string
   user_agent?: string
   created_at?: string
@@ -30,7 +31,7 @@ export interface AuditLog {
 export const logAuthEvent = async (
   action: AuditLog['action'],
   userId?: string,
-  _details?: Record<string, any>,
+  _details?: Record<string, AuditDetail>,
   _headers?: Headers
 ) => {
   if (!userId || typeof window === 'undefined') return
@@ -42,7 +43,7 @@ export const logAuthEvent = async (
     })
     if (!response.ok) logger.error('PILOT_AUDIT_WRITE_FAILED', new Error(`status ${response.status}`), { feature: 'auth', action })
   } catch (error) {
-    logger.error('PILOT_AUDIT_WRITE_FAILED', error as Error, { feature: 'auth', action })
+    logger.error('PILOT_AUDIT_WRITE_FAILED', toError(error), { feature: 'auth', action })
   }
 }
 
@@ -64,7 +65,7 @@ export const signIn = async (email: string, password: string) => {
 
     return data
   } catch (error) {
-    await logAuthEvent('login_failed', undefined, { email, error: (error as Error).message })
+    await logAuthEvent('login_failed', undefined, { email, error: toError(error).message })
     throw error
   }
 }
@@ -76,7 +77,10 @@ export const signOut = async () => {
 
     // Clear escola selection on logout
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('educa-selected-escola')
+      for (let index = sessionStorage.length - 1; index >= 0; index--) {
+        const key = sessionStorage.key(index)
+        if (key?.startsWith('educa-selected-escola:')) sessionStorage.removeItem(key)
+      }
     }
 
     if (userId) {
@@ -94,6 +98,8 @@ export const signOut = async () => {
 export const getCurrentUser = async (): Promise<AuthUser | null> => {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error) throw error
+  // SAFETY: AuthUser only narrows optional metadata used for display; Supabase
+  // authenticated the User and no authorization decision reads this cast.
   return user as AuthUser
 }
 
@@ -121,13 +127,13 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     }
 
     return data
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Ignore AbortError - this is expected during auth state transitions
-    if (error?.name === 'AbortError' || error?.message?.includes('abort')) {
+    if (isAbortError(error)) {
       logger.info('[AUTH] Profile fetch aborted (expected during auth transitions)')
       return null
     }
-    logger.error('[AUTH] Error fetching user profile', error as Error)
+    logger.error('[AUTH] Error fetching user profile', toError(error))
     return null
   }
 }
@@ -166,7 +172,7 @@ export const createUserProfile = async (userData: {
 
     return data
   } catch (error) {
-    logger.error('[AUTH] Error creating user profile', error as Error)
+    logger.error('[AUTH] Error creating user profile', toError(error))
     throw error
   }
 }
@@ -195,7 +201,7 @@ export const roleHierarchy = {
 } as const
 
 export const hasHigherRole = (userRole: UserProfile['tipo_usuario'], targetRole: UserProfile['tipo_usuario']): boolean => {
-  return roleHierarchy[userRole as keyof typeof roleHierarchy] > roleHierarchy[targetRole as keyof typeof roleHierarchy]
+  return roleRank(userRole) > roleRank(targetRole)
 }
 
 /**
@@ -217,4 +223,22 @@ export const canRecordAttendance = (tipoUsuario: UserProfile['tipo_usuario'] | n
 
   // All other roles (admin, secretario, gestor_sme, coordenador) are view-only
   return false
+}
+
+function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value))
+}
+
+function isAbortError(value: unknown): boolean {
+  const error = toError(value)
+  return error.name === 'AbortError' || error.message.includes('abort')
+}
+
+function roleRank(role: UserProfile['tipo_usuario']): number {
+  if (role === 'responsavel') return roleHierarchy.responsavel
+  if (role === 'professor') return roleHierarchy.professor
+  if (role === 'secretario') return roleHierarchy.secretario
+  if (role === 'diretor') return roleHierarchy.diretor
+  if (role === 'admin') return roleHierarchy.admin
+  return 0
 }

@@ -11,8 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
 
-// Storage key for sessionStorage
-const STORAGE_KEY = 'educa-selected-escola'
+const storageKeyFor = (userId: string) => `educa-selected-escola:${userId}`
 
 // Types
 interface Escola {
@@ -56,10 +55,6 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
   // Hydrate from sessionStorage after mount (avoid SSR mismatch)
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        setSelectedEscolaId(stored)
-      }
       setHydrated(true)
     }
   }, [])
@@ -93,7 +88,10 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
             logger.error('[EscolaContext] Failed to fetch escolas', error)
             setEscolas([])
           } else {
-            setEscolas(data || [])
+            const accessibleSchools = data || []
+            setEscolas(accessibleSchools)
+            const stored = sessionStorage.getItem(storageKeyFor(userProfile.id))
+            setSelectedEscolaId(stored && accessibleSchools.some(school => school.id === stored) ? stored : null)
           }
         }
         // Single-school users: use their escola_id
@@ -128,27 +126,30 @@ export function EscolaProvider({ children }: EscolaProviderProps) {
     fetchEscolas()
   }, [userProfile, authLoading, hydrated])
 
-  // Persist selection to sessionStorage
+  // The UI selection is scoped to the authenticated identity. It narrows
+  // presentation only; every data read remains protected by server/RLS scope.
   const selectEscola = React.useCallback((id: string | null) => {
+    if (id && !escolas.some(escola => escola.id === id)) return
     setSelectedEscolaId(id)
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && userProfile) {
+      const key = storageKeyFor(userProfile.id)
       if (id) {
-        sessionStorage.setItem(STORAGE_KEY, id)
+        sessionStorage.setItem(key, id)
       } else {
-        sessionStorage.removeItem(STORAGE_KEY)
+        sessionStorage.removeItem(key)
       }
     }
-  }, [])
+  }, [escolas, userProfile])
 
   // Clear selection
   const clearSelection = React.useCallback(() => {
     setSelectedEscolaId(null)
 
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem(STORAGE_KEY)
+    if (typeof window !== 'undefined' && userProfile) {
+      sessionStorage.removeItem(storageKeyFor(userProfile.id))
     }
-  }, [])
+  }, [userProfile])
 
   // Derived: selected escola object
   const selectedEscola = React.useMemo(

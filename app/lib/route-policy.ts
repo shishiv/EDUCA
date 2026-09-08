@@ -66,7 +66,7 @@ export function checkRouteAccess(pathname: string, userRole?: string | null): Ro
 
   const protectedRoute = protectedRoutes.find(route => matchesRoute(pathname, route.matcher, route.exact))
   if (protectedRoute) {
-    return protectedRoute.roles?.includes(userRole as RouteRole)
+    return protectedRoute.roles?.some(role => role === userRole)
       ? { hasAccess: true }
       : { hasAccess: false, redirectTo: '/unauthorized' }
   }
@@ -80,4 +80,20 @@ export function checkRouteAccess(pathname: string, userRole?: string | null): Ro
 
 export function canAccessRoute(pathname: string, userRole?: string | null): boolean {
   return checkRouteAccess(pathname, userRole).hasAccess
+}
+
+/**
+ * Returns an internal, role-authorized post-login location.
+ *
+ * Authentication redirects only need the pathname. Query strings and absolute
+ * URLs are deliberately discarded so an untrusted returnUrl cannot become an
+ * open redirect or cross a route-policy seam.
+ */
+export function postLoginDestination(returnUrl: string | null | undefined, userRole?: string | null): string {
+  if (!returnUrl || !returnUrl.startsWith('/') || returnUrl.startsWith('//') || returnUrl.includes('://')) {
+    return '/dashboard'
+  }
+
+  const pathname = returnUrl.split('?')[0]?.split('#')[0] || '/dashboard'
+  return canAccessRoute(pathname, userRole) ? pathname : '/dashboard'
 }

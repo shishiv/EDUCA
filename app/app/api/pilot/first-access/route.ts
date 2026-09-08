@@ -83,10 +83,13 @@ export async function POST(request: Request) {
       throw error
     }
 
-    await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
+    const { data: auditReceipt, error: auditError } = await asPilotRpcClient(supabase).rpc<string>('write_pilot_audit_event', {
       p_event_type: 'first_access_completed', p_entity_type: 'user', p_entity_id: user.id,
       p_metadata: {},
     })
+    if (auditError || !auditReceipt) {
+      return NextResponse.json({ error: 'PILOT_FIRST_ACCESS_AUDIT_INCOMPLETE', completed: false }, { status: 503 })
+    }
     return NextResponse.json({
       completed: true,
       resumedProfile: completion.resumedProfile,

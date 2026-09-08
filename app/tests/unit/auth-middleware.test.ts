@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { checkRouteAccess } from '../../lib/middleware/auth-middleware'
-import { routeRoles, type RouteRole } from '../../lib/route-policy'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkRouteAccess, createAuthMiddleware } from '../../lib/middleware/auth-middleware'
+import { postLoginDestination, routeRoles, type RouteRole } from '../../lib/route-policy'
 
 const routePolicy: Array<{ pathname: string; roles: RouteRole[] }> = [
   { pathname: '/dashboard/usuarios/example', roles: ['admin'] },
@@ -48,5 +49,25 @@ describe('route policy', () => {
     expect(checkRouteAccess('/unauthorized')).toEqual({ hasAccess: false, redirectTo: '/login' })
     expect(checkRouteAccess('/dashboard/future', 'admin')).toEqual({ hasAccess: false, redirectTo: '/unauthorized' })
     expect(checkRouteAccess('/dashboard/future')).toEqual({ hasAccess: false, redirectTo: '/login' })
+  })
+
+  it('accepts only internal, role-authorized post-login destinations', () => {
+    expect(postLoginDestination('/dashboard/turmas/example', 'professor')).toBe('/dashboard/turmas/example')
+    expect(postLoginDestination('/dashboard/usuarios/example', 'professor')).toBe('/dashboard')
+    expect(postLoginDestination('https://attacker.invalid/dashboard', 'admin')).toBe('/dashboard')
+    expect(postLoginDestination('//attacker.invalid/dashboard', 'admin')).toBe('/dashboard')
+    expect(postLoginDestination('/dashboard?returnUrl=https://attacker.invalid', 'admin')).toBe('/dashboard')
+  })
+
+  it('fails closed when identity resolution throws on a protected path', async () => {
+    const middleware = createAuthMiddleware({
+      initialize: async () => ({ response: NextResponse.next() }),
+      getServerUser: async () => { throw new Error('session store unavailable') },
+    })
+
+    const response = await middleware(new NextRequest('http://educa.test/dashboard/usuarios'))
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe('http://educa.test/login?reason=session_unavailable&returnUrl=%2Fdashboard%2Fusuarios')
   })
 })
