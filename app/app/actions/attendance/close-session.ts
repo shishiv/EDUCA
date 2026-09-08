@@ -33,7 +33,7 @@ export async function closeSessionAction(
 
     return result
   } catch (error) {
-    logger.error('ATTENDANCE_SESSION_CLOSE_ADAPTER_FAILED', error as Error, {
+    logger.error('ATTENDANCE_SESSION_CLOSE_ADAPTER_FAILED', error instanceof Error ? error : new Error('Erro desconhecido'), {
       metadata: { sessionId: params?.session_id },
     })
     return {

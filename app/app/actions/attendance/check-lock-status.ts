@@ -27,7 +27,7 @@ export async function checkLockStatusAction(
       date,
     })
   } catch (error) {
-    logger.error('ATTENDANCE_SESSION_LOCK_ADAPTER_FAILED', error as Error, {
+    logger.error('ATTENDANCE_SESSION_LOCK_ADAPTER_FAILED', error instanceof Error ? error : new Error('Erro desconhecido'), {
       metadata: { sessionIdOrTurmaId, date },
     })
     return {

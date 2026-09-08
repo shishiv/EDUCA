@@ -137,7 +137,7 @@ function ReopenDialog({
             placeholder={isReject
               ? 'Explique por que a solicitação não foi aprovada...'
               : 'Explique qual correção precisa ser feita...'}
-            aria-invalid={error ? 'true' : undefined}
+            aria-invalid={Boolean(error)}
             aria-describedby={error ? 'attendance-reopen-reason-error' : undefined}
             rows={5}
             autoFocus
@@ -168,6 +168,23 @@ function ReopenDialog({
   )
 }
 
+function reopenPanelPermissions(
+  sessionStatus: string,
+  request: AttendanceReopenRequest | null,
+  isTeacher: boolean,
+  isDirector: boolean
+) {
+  const isPending = request?.status === 'PENDENTE'
+  const isRejected = request?.status === 'REJEITADA'
+  const canRequest = isTeacher && !isPending
+  const canSeeTeacherStatus = isTeacher && request?.status !== 'APROVADA'
+  const canDecide = isDirector && isPending && request !== null
+  return {
+    isPending, isRejected, canRequest, canDecide,
+    visible: sessionStatus === 'FECHADA' && (canSeeTeacherStatus || canDecide),
+  }
+}
+
 export function AttendanceReopenPanel({
   sessionId,
   sessionStatus,
@@ -185,15 +202,10 @@ export function AttendanceReopenPanel({
   const [decisionError, setDecisionError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  if (sessionStatus !== 'FECHADA') return null
-
-  const isPending = request?.status === 'PENDENTE'
-  const isRejected = request?.status === 'REJEITADA'
-  const canRequest = isTeacher && !isPending
-  const canSeeTeacherStatus = isTeacher && request?.status !== 'APROVADA'
-  const canDecide = isDirector && isPending && request !== null
-
-  if (!canSeeTeacherStatus && !canDecide) return null
+  const { isPending, isRejected, canRequest, canDecide, visible } = reopenPanelPermissions(
+    sessionStatus, request, isTeacher, isDirector
+  )
+  if (!visible) return null
 
   const closeDialog = () => {
     if (isSubmitting) return

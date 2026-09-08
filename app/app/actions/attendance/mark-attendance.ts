@@ -42,7 +42,7 @@ export async function markAttendanceAction(
       code: result.code,
     }
   } catch (error) {
-    logger.error('ATTENDANCE_RECORD_ADAPTER_FAILED', error as Error, {
+    logger.error('ATTENDANCE_RECORD_ADAPTER_FAILED', error instanceof Error ? error : new Error('Erro desconhecido'), {
       metadata: { sessionId: params?.sessao_id, matriculaId: params?.matricula_id },
     })
     return {

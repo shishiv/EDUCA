@@ -36,13 +36,116 @@ export interface AttendanceCellProps {
 // Constants
 // ============================================================================
 
-const STATUS_LABELS: Record<NonNullable<AttendanceStatus>, string> = {
+const STATUS_LABELS = {
   P: 'Presente',
   F: 'Falta',
   A: 'Atestado',
+} satisfies Record<NonNullable<AttendanceStatus>, string>
+
+const STATUS_CYCLE: readonly AttendanceStatus[] = ['P', 'F', 'A', null]
+
+const STATUS_CLASSES = {
+  P: 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200',
+  F: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200',
+  A: 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200',
+  empty: 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100',
+} satisfies Record<NonNullable<AttendanceStatus> | 'empty', string>
+
+const SIZE_CLASSES = {
+  sm: 'w-8 h-8 text-xs',
+  md: 'w-11 h-11 text-sm min-w-[44px] min-h-[44px]',
+  lg: 'w-14 h-14 text-base',
+} satisfies Record<NonNullable<AttendanceCellProps['size']>, string>
+
+const KEYBOARD_STATUS = new Map<string, NonNullable<AttendanceStatus>>([
+  ['p', 'P'],
+  ['f', 'F'],
+  ['a', 'A'],
+])
+
+const ROW_STATUSES: readonly NonNullable<AttendanceStatus>[] = ['P', 'F', 'A']
+
+function cellIcon(status: AttendanceStatus, locked: boolean) {
+  if (locked) return <Lock className="w-4 h-4 opacity-50" />
+  if (status === 'P') return <Check className="w-4 h-4" />
+  if (status === 'F') return <X className="w-4 h-4" />
+  if (status === 'A') return <FileText className="w-4 h-4" />
+  return null
 }
 
-const STATUS_CYCLE: Array<AttendanceStatus> = ['P', 'F', 'A', null]
+function cellAriaLabel(status: AttendanceStatus, locked: boolean, studentName?: string): string {
+  const student = studentName ? ` para ${studentName}` : ''
+  const statusLabel = status ? STATUS_LABELS[status] : 'Não marcado'
+  return locked
+    ? `Frequência bloqueada${student}: ${statusLabel}`
+    : `Marcar frequência${student}: ${statusLabel}. Clique para alterar.`
+}
+
+function cellTitle(status: AttendanceStatus, locked: boolean): string {
+  if (locked) return 'Sessão bloqueada após 18:00'
+  return status ? STATUS_LABELS[status] : 'Clique para marcar'
+}
+
+function rowStatusClass(status: NonNullable<AttendanceStatus>, selected: boolean): string {
+  if (!selected) return 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+  if (status === 'P') return 'bg-green-500 text-white border-green-600'
+  if (status === 'F') return 'bg-red-500 text-white border-red-600'
+  return 'bg-yellow-500 text-white border-yellow-600'
+}
+
+type AttendanceCellButtonProps = Omit<AttendanceCellProps, 'onChange'> & {
+  icon: React.ReactNode
+  onClick: () => void
+  onKeyDown: (event: React.KeyboardEvent) => void
+}
+
+function AttendanceCellButtonContent({
+  icon,
+  size,
+}: Pick<AttendanceCellButtonProps, 'icon' | 'size'>) {
+  if (icon || size === 'sm') return icon
+  return <span className="opacity-50">-</span>
+}
+
+function AttendanceCellButton({
+  status,
+  disabled = false,
+  locked = false,
+  studentName,
+  size = 'md',
+  className,
+  icon,
+  onClick,
+  onKeyDown,
+}: AttendanceCellButtonProps) {
+  const disabledState = disabled || locked
+  return (
+    <button
+      type="button"
+      role="button"
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      disabled={disabledState}
+      aria-label={cellAriaLabel(status, locked, studentName)}
+      aria-pressed={status !== null}
+      title={cellTitle(status, locked)}
+      className={cn(
+        'flex items-center justify-center',
+        'border-2 rounded-lg font-semibold',
+        'transition-all duration-150 ease-in-out',
+        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+        'select-none touch-manipulation',
+        SIZE_CLASSES[size],
+        STATUS_CLASSES[status ?? 'empty'],
+        disabledState && 'opacity-50 cursor-not-allowed',
+        !disabledState && 'cursor-pointer active:scale-95',
+        className
+      )}
+    >
+      <AttendanceCellButtonContent icon={icon} size={size} />
+    </button>
+  )
+}
 
 // ============================================================================
 // Component
@@ -66,88 +169,40 @@ export function AttendanceCell({
     onChange(STATUS_CYCLE[nextIndex])
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
     if (disabled || locked) return
 
-    // Allow keyboard navigation
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
       handleClick()
-    } else if (e.key === 'p' || e.key === 'P') {
-      e.preventDefault()
-      onChange('P')
-    } else if (e.key === 'f' || e.key === 'F') {
-      e.preventDefault()
-      onChange('F')
-    } else if (e.key === 'a' || e.key === 'A') {
-      e.preventDefault()
-      onChange('A')
-    } else if (e.key === 'Escape' || e.key === 'Delete' || e.key === 'Backspace') {
-      e.preventDefault()
+      return
+    }
+    const keyboardStatus = KEYBOARD_STATUS.get(event.key.toLowerCase())
+    if (keyboardStatus) {
+      event.preventDefault()
+      onChange(keyboardStatus)
+      return
+    }
+    if (['Escape', 'Delete', 'Backspace'].includes(event.key)) {
+      event.preventDefault()
       onChange(null)
     }
   }
 
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-11 h-11 text-sm min-w-[44px] min-h-[44px]', // WCAG 44px touch target
-    lg: 'w-14 h-14 text-base',
-  }
-
-  const statusClasses: Record<string, string> = {
-    P: 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200',
-    F: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200',
-    A: 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200',
-    null: 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100',
-  }
-
-  const getIcon = () => {
-    if (locked) return <Lock className="w-4 h-4 opacity-50" />
-
-    switch (status) {
-      case 'P':
-        return <Check className="w-4 h-4" />
-      case 'F':
-        return <X className="w-4 h-4" />
-      case 'A':
-        return <FileText className="w-4 h-4" />
-      default:
-        return null
-    }
-  }
-
-  const ariaLabel = locked
-    ? `Frequência bloqueada${studentName ? ` para ${studentName}` : ''}: ${status ? STATUS_LABELS[status] : 'Não marcado'}`
-    : `Marcar frequência${studentName ? ` para ${studentName}` : ''}: ${status ? STATUS_LABELS[status] : 'Não marcado'}. Clique para alterar.`
+  const icon = cellIcon(status, locked)
 
   return (
-    <button
-      type="button"
-      role="button"
+    <AttendanceCellButton
+      status={status}
+      disabled={disabled}
+      locked={locked}
+      studentName={studentName}
+      size={size}
+      className={className}
+      icon={icon}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      disabled={disabled || locked}
-      aria-label={ariaLabel}
-      aria-pressed={status !== null}
-      title={locked ? 'Sessão bloqueada após 18:00' : status ? STATUS_LABELS[status] : 'Clique para marcar'}
-      className={cn(
-        'flex items-center justify-center',
-        'border-2 rounded-lg font-semibold',
-        'transition-all duration-150 ease-in-out',
-        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-        'select-none touch-manipulation',
-        sizeClasses[size],
-        statusClasses[status ?? 'null'],
-        (disabled || locked) && 'opacity-50 cursor-not-allowed',
-        !disabled && !locked && 'cursor-pointer active:scale-95',
-        className
-      )}
-    >
-      {getIcon()}
-      {!getIcon() && size !== 'sm' && (
-        <span className="opacity-50">-</span>
-      )}
-    </button>
+    />
   )
 }
 
@@ -195,13 +250,13 @@ export function AttendanceCellRow({
       </div>
 
       <div className="flex items-center gap-2">
-        {['P', 'F', 'A'].map((s) => (
+        {ROW_STATUSES.map((s) => (
           <button
             key={s}
             type="button"
-            onClick={() => !disabled && !locked && onChange(status === s ? null : (s as AttendanceStatus))}
+            onClick={() => !disabled && !locked && onChange(status === s ? null : s)}
             disabled={disabled || locked}
-            aria-label={`Marcar ${STATUS_LABELS[s as keyof typeof STATUS_LABELS]} para ${studentName}`}
+            aria-label={`Marcar ${STATUS_LABELS[s]} para ${studentName}`}
             aria-pressed={status === s}
             className={cn(
               'w-10 h-10 min-w-[40px] min-h-[40px]',
@@ -210,13 +265,7 @@ export function AttendanceCellRow({
               'transition-all duration-150 ease-in-out',
               'focus:outline-none focus:ring-2 focus:ring-blue-500',
               'select-none touch-manipulation',
-              status === s
-                ? s === 'P'
-                  ? 'bg-green-500 text-white border-green-600'
-                  : s === 'F'
-                  ? 'bg-red-500 text-white border-red-600'
-                  : 'bg-yellow-500 text-white border-yellow-600'
-                : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200',
+              rowStatusClass(s, status === s),
               (disabled || locked) && 'opacity-50 cursor-not-allowed',
               !disabled && !locked && 'cursor-pointer active:scale-95'
             )}

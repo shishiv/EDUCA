@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { test, expect } from '@playwright/test'
+import { z } from 'zod'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -8,6 +9,19 @@ const TURMA_A = '30000000-0000-0000-0000-000000000001'
 const SESSION_ID = randomUUID()
 const CONFLICT_SESSION_ID = randomUUID()
 const PASSWORD = 'Synthetic-Only-2026!'
+
+const UserRowSchema = z.object({ id: z.string().uuid() })
+const ReopenRequestRowSchema = z.object({
+  id: z.string().uuid(),
+  status: z.string(),
+  decided_by: z.string().uuid().nullable(),
+  decided_at: z.string().nullable(),
+  after_state: z.unknown(),
+})
+const DecisionAuditRowSchema = z.object({
+  event_type: z.string(),
+  redacted_metadata: z.object({ request_id: z.string().uuid().optional() }),
+})
 
 function serviceHeaders() {
   if (!SERVICE_KEY) throw new Error('attendance reopen E2E requires the local service key')
@@ -18,13 +32,13 @@ function serviceHeaders() {
   }
 }
 
-function todayInSaoPaulo(): string {
+function yesterdayInSaoPaulo(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date())
+  }).format(new Date(Date.now() - 86400000))
 }
 
 async function serviceRequest(
@@ -47,7 +61,7 @@ async function userId(
   email: string
 ): Promise<string> {
   const response = await serviceRequest(request, `/rest/v1/users?select=id&email=eq.${encodeURIComponent(email)}`)
-  const rows = await response.json() as Array<{ id: string }>
+  const rows = z.array(UserRowSchema).parse(await response.json())
   if (rows.length !== 1) throw new Error(`Expected one synthetic user for ${email}`)
   return rows[0].id
 }
@@ -86,7 +100,7 @@ async function prepareClosedSession(
       turma_id: TURMA_A,
       escola_id: SCHOOL_A,
       professor_id: professorId,
-      data_aula: todayInSaoPaulo(),
+      data_aula: yesterdayInSaoPaulo(),
       status: 'FECHADA',
       aberta_em: now,
       fechada_em: now,
@@ -105,7 +119,7 @@ async function prepareClosedSession(
         turma_id: TURMA_A,
         escola_id: SCHOOL_A,
         professor_id: professorId,
-        data_aula: todayInSaoPaulo(),
+        data_aula: yesterdayInSaoPaulo(),
         status: 'ABERTA',
         aberta_em: now,
         conteudo_programatico: 'Sessão aberta que bloqueia a reabertura',
@@ -177,6 +191,22 @@ test.describe('Attendance reopen workflow', () => {
     const sessionResponse = await serviceRequest(request, `/rest/v1/sessoes_aula?id=eq.${SESSION_ID}&select=id,status`)
     await expect(sessionResponse).toBeOK()
     await expect(await sessionResponse.json()).toEqual([{ id: SESSION_ID, status: 'ABERTA' }])
+
+    // The teacher can now correct a past-day session, with the captured
+    // deadline visible. This would stay locked under the ordinary date rule.
+    await page.reload()
+    await expect(page.getByRole('status').filter({ hasText: 'Correção autorizada até' })).toBeVisible()
+    const absentButton = page.getByRole('button', { name: 'Falta', exact: true }).first()
+    await expect(absentButton).toBeEnabled()
+    await absentButton.click()
+    const saveButton = page.getByRole('button', { name: 'Salvar', exact: true })
+    await expect(saveButton).toBeEnabled()
+    await saveButton.click()
+    await expect(saveButton).toBeDisabled()
+    const correctionResponse = await serviceRequest(request, `/rest/v1/frequencia?sessao_id=eq.${SESSION_ID}&select=data_aula,status_presenca`)
+    expect(await correctionResponse.json()).toEqual(expect.arrayContaining([
+      { data_aula: yesterdayInSaoPaulo(), status_presenca: 'F' },
+    ]))
   })
 
   test('director sees an actionable conflict and preserves the pending request', async ({ page, browser, request }) => {
@@ -218,13 +248,7 @@ test.describe('Attendance reopen workflow', () => {
       `/rest/v1/attendance_reopen_requests?sessao_id=eq.${SESSION_ID}&select=id,status,decided_by,decided_at,after_state`
     )
     await expect(requestResponse).toBeOK()
-    const requestRows = await requestResponse.json() as Array<{
-      id: string
-      status: string
-      decided_by: string | null
-      decided_at: string | null
-      after_state: unknown
-    }>
+    const requestRows = z.array(ReopenRequestRowSchema).parse(await requestResponse.json())
     await expect(requestRows).toEqual([{
       id: expect.any(String),
       status: 'PENDENTE',
@@ -245,10 +269,7 @@ test.describe('Attendance reopen workflow', () => {
       `/rest/v1/pilot_audit_log?event_type=eq.attendance_reopen_decided&entity_id=eq.${SESSION_ID}&select=event_type,redacted_metadata`
     )
     await expect(decisionAuditResponse).toBeOK()
-    const decisionAuditRows = await decisionAuditResponse.json() as Array<{
-      event_type: string
-      redacted_metadata: { request_id?: string }
-    }>
+    const decisionAuditRows = z.array(DecisionAuditRowSchema).parse(await decisionAuditResponse.json())
     await expect(decisionAuditRows.filter(row => row.redacted_metadata.request_id === requestRows[0].id)).toEqual([])
   })
 })

@@ -25,7 +25,6 @@ import { Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AttendanceCell, type AttendanceStatus } from './AttendanceCell'
 import type { Student, AttendanceRecord } from './AttendanceGridTypes'
-import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
 // Types
@@ -104,6 +103,56 @@ function getRowClassName(status: AttendanceStatus, isSelected: boolean, isLocked
   )
 }
 
+const READONLY_VARIANT_BY_STATUS = {
+  P: 'default',
+  F: 'destructive',
+  A: 'default',
+  empty: 'secondary',
+} as const
+
+const READONLY_LABEL_BY_STATUS = {
+  P: 'Presente',
+  F: 'Ausente',
+  A: 'Atestado',
+  empty: 'Não marcado',
+} satisfies Record<NonNullable<AttendanceStatus> | 'empty', string>
+
+function ReadonlyAttendanceControl({
+  attendanceStatus,
+  isRecordLocked,
+}: Pick<AttendanceGridRowProps, 'attendanceStatus' | 'isRecordLocked'>) {
+  const status = attendanceStatus ?? 'empty'
+  return (
+    <div className="ml-3 flex items-center space-x-2">
+      <Badge
+        variant={READONLY_VARIANT_BY_STATUS[status]}
+        className={cn(status === 'P' && 'bg-green-600', status === 'A' && 'bg-yellow-500')}
+      >
+        {READONLY_LABEL_BY_STATUS[status]}
+      </Badge>
+      {isRecordLocked ? <Lock className="h-4 w-4 text-orange-500" /> : null}
+    </div>
+  )
+}
+
+function EditableAttendanceControl({
+  student,
+  attendanceStatus,
+  saving,
+  onStatusChange,
+}: Pick<AttendanceGridRowProps, 'student' | 'attendanceStatus' | 'saving' | 'onStatusChange'>) {
+  return (
+    <div className="ml-3">
+      <AttendanceCell
+        status={attendanceStatus}
+        onChange={newStatus => onStatusChange(student.id, newStatus)}
+        disabled={saving}
+        studentName={student.nome_completo}
+      />
+    </div>
+  )
+}
+
 function AttendanceControl({
   student,
   attendanceStatus,
@@ -120,46 +169,21 @@ function AttendanceControl({
   | 'saving'
   | 'onStatusChange'
 >) {
-  const t = useClassroomTranslations()
   if (!isEffectivelyReadonly && !isRecordLocked) {
-    return (
-      <div className="ml-3">
-        <AttendanceCell
-          status={attendanceStatus}
-          onChange={newStatus => onStatusChange(student.id, newStatus)}
-          disabled={saving}
-          studentName={student.nome_completo}
-        />
-      </div>
-    )
+    return <EditableAttendanceControl {...{ student, attendanceStatus, saving, onStatusChange }} />
   }
-
-  return (
-    <div className="ml-3 flex items-center space-x-2">
-      <Badge
-        variant={
-          attendanceStatus === 'P' ? 'default' :
-          attendanceStatus === 'F' ? 'destructive' :
-          attendanceStatus === 'A' ? 'default' : 'secondary'
-        }
-        className={cn(
-          attendanceStatus === 'P' && 'bg-green-600',
-          attendanceStatus === 'A' && 'bg-yellow-500'
-        )}
-      >
-        {attendanceStatus === 'P' && t('attendance.present')}
-        {attendanceStatus === 'F' && 'Ausente'}
-        {attendanceStatus === 'A' && 'Atestado'}
-        {attendanceStatus === null && 'Não marcado'}
-      </Badge>
-      {isRecordLocked && <Lock className="h-4 w-4 text-orange-500" />}
-    </div>
-  )
+  return <ReadonlyAttendanceControl {...{ attendanceStatus, isRecordLocked }} />
 }
 
 // ============================================================================
 // Component
 // ============================================================================
+
+function AttendanceStatusMarker({ status }: { status: AttendanceGridRowProps['attendanceStatus'] }) {
+  const colors = { P: 'bg-green-600', F: 'bg-red-600', A: 'bg-yellow-500' }
+  const color = status === null ? 'bg-gray-400' : colors[status]
+  return <div className="flex items-center"><div className={`h-3 w-3 ${color} rounded-full`} /></div>
+}
 
 export function AttendanceGridRow({
   student,
@@ -211,12 +235,7 @@ export function AttendanceGridRow({
             )}
           </p>
         </div>
-        <div className="flex items-center">
-          {attendanceStatus === 'P' && <div className="h-3 w-3 bg-green-600 rounded-full" />}
-          {attendanceStatus === 'F' && <div className="h-3 w-3 bg-red-600 rounded-full" />}
-          {attendanceStatus === 'A' && <div className="h-3 w-3 bg-yellow-500 rounded-full" />}
-          {attendanceStatus === null && <div className="h-3 w-3 bg-gray-400 rounded-full" />}
-        </div>
+        <AttendanceStatusMarker status={attendanceStatus} />
       </div>
       <AttendanceControl
         student={student}

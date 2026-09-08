@@ -73,7 +73,7 @@ export interface AttendanceStats {
  */
 export interface SessionLockInfo {
   isLocked: boolean
-  lockReason: 'time_18h' | 'session_closed' | 'past_date' | 'date_not_current' | null
+  lockReason: 'time_18h' | 'session_closed' | 'past_date' | 'date_not_current' | 'correction_expired' | null
   canEdit: boolean
   message: string
   timeUntilLockMinutes: number | null
@@ -92,6 +92,8 @@ export interface AttendanceGridProps {
   sessionDate?: string
   /** Session status (PLANEJADA, ABERTA, FECHADA, CANCELADA) */
   sessionStatus?: 'PLANEJADA' | 'ABERTA' | 'FECHADA' | 'CANCELADA'
+  /** Captured database deadline, only for this session's approved request. */
+  correctionDeadlineAt?: string | null
   /** Whether the grid is readonly (locked session) */
   readonly?: boolean
   /** Show student photos */

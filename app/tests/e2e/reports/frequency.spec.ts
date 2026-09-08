@@ -283,9 +283,7 @@ test.describe('Frequency Report - Export Functionality', () => {
     
     // No error toast
     const errorToast = page.getByText(/erro/i)
-    const hasError = await errorToast.isVisible().catch(() => false)
-    
-    if (hasError) {
+    if (await errorToast.isVisible().catch(() => false)) {
       // Expected if no report generated yet
       expect(true).toBeTruthy()
     }
@@ -308,10 +306,7 @@ test.describe('Frequency Report - Export Functionality', () => {
     
     // Should show error message
     const errorMessage = page.getByText(/gere.*relatório|gere.*relatorio|erro/i)
-    const hasError = await errorMessage.isVisible({ timeout: 3000 }).catch(() => false)
-    
-    // Error expected when no report generated
-    expect(true).toBeTruthy()
+    await expect(errorMessage).toBeVisible({ timeout: 3000 })
   })
 })
 

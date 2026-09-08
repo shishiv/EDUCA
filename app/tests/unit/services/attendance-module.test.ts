@@ -73,6 +73,8 @@ function baseState(): FakeAttendanceDbState {
 
 function createSubject(state = baseState()) {
   const fake = createFakeSupabase(state)
+  // SAFETY: createFakeSupabase implements the narrow query/RPC surface crossed
+  // by the canonical module; this test never uses the production client beyond it.
   const subject = createAttendanceModule(fake as never, { now: () => TEST_NOW })
   return { fake, subject }
 }
@@ -203,7 +205,7 @@ describe('canonical Attendance session module', () => {
       }),
     ])
     expect(batch.fake.writes.upserts[0]).toEqual([
-      expect.objectContaining(individual.fake.writes.upserts[0] as Record<string, unknown>),
+      individual.fake.writes.upserts[0],
     ])
   })
 
@@ -230,7 +232,7 @@ describe('canonical Attendance session module', () => {
       }),
     ])
     expect(batch.fake.writes.upserts[0]).toEqual([
-      expect.objectContaining(individual.fake.writes.upserts[0] as Record<string, unknown>),
+      individual.fake.writes.upserts[0],
     ])
   })
 
@@ -281,15 +283,53 @@ describe('canonical Attendance session module', () => {
     expect(fake.writes.upserts).toHaveLength(0)
   })
 
-  it('rejects a session date that is not the current São Paulo date', async () => {
+  it('rejects a past session without a database-authorized correction window', async () => {
     const state = baseState()
     state.sessions[0].data_aula = '2026-08-04'
+    state.isEditable = false
     const { fake, subject } = createSubject(state)
 
     const result = await subject.closeSession({ session_id: SESSION_A })
 
     expect(result).toEqual(expect.objectContaining({ success: false, code: 'SESSION_DATE_NOT_CURRENT' }))
     expect(fake.writes.updates).toHaveLength(0)
+  })
+
+  it('allows marking, batching and closing a past session authorized by the database window', async () => {
+    const state = baseState()
+    state.sessions[0].data_aula = '2026-08-04'
+    state.sessions[0].auto_fechamento_agendado = '2026-08-04T21:00:00Z'
+    state.isEditable = true
+    const { fake, subject } = createSubject(state)
+
+    expect(await subject.checkLockStatus({ sessionIdOrTurmaId: SESSION_A })).toMatchObject({ success: true, isLocked: false })
+    expect(await subject.markAttendance({ sessao_id: SESSION_A, matricula_id: MATRICULA_A, status: 'P' })).toMatchObject({ success: true })
+    expect(await subject.markAttendanceBatch({ sessao_id: SESSION_A, records: [{ matricula_id: MATRICULA_A, status: 'J', justificativa: 'Conferência' }] })).toMatchObject({ success: true, processed_count: 1 })
+    expect(fake.writes.upserts[0]).toMatchObject({ data_aula: '2026-08-04', professor_id: PROF_A, marcado_por: PROF_A })
+    expect(await subject.closeSession({ session_id: SESSION_A })).toMatchObject({ success: true })
+  })
+
+  it('blocks batching and closure when a correction expires even on the current day', async () => {
+    const state = baseState()
+    state.sessions[0].auto_fechamento_agendado = '2026-08-05T21:00:00Z'
+    state.isEditable = false
+    const { fake, subject } = createSubject(state)
+
+    expect(await subject.checkLockStatus({ sessionIdOrTurmaId: SESSION_A })).toMatchObject({ success: true, isLocked: true })
+    expect(await subject.markAttendanceBatch({ sessao_id: SESSION_A, records: [{ matricula_id: MATRICULA_A, status: 'P' }] })).toMatchObject({ success: false, processed_count: 0 })
+    expect(await subject.closeSession({ session_id: SESSION_A })).toMatchObject({ success: false })
+    expect(fake.writes.upserts).toHaveLength(0)
+    expect(fake.writes.updates).toHaveLength(0)
+  })
+
+  it('keeps manual closure guards even if a stale RPC response reports editability', async () => {
+    const state = baseState()
+    state.sessions[0].travada_em = TEST_NOW.toISOString()
+    state.isEditable = true
+    const { fake, subject } = createSubject(state)
+    expect(await subject.markAttendance({ sessao_id: SESSION_A, matricula_id: MATRICULA_A, status: 'P' })).toMatchObject({ success: false })
+    expect(await subject.closeSession({ session_id: SESSION_A })).toMatchObject({ success: false })
+    expect(fake.writes.upserts).toHaveLength(0)
   })
 
   it('closes an open session through the one-way canonical transition', async () => {

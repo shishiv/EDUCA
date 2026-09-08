@@ -32,7 +32,7 @@ export async function openSessionAction(
 
     return result
   } catch (error) {
-    logger.error('ATTENDANCE_SESSION_OPEN_ADAPTER_FAILED', error as Error, {
+    logger.error('ATTENDANCE_SESSION_OPEN_ADAPTER_FAILED', error instanceof Error ? error : new Error('Erro desconhecido'), {
       metadata: { turmaId: params?.turma_id, date: params?.data_aula },
     })
     return {

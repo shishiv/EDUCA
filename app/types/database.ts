@@ -351,7 +351,10 @@ export type Database = {
       attendance_reopen_requests: {
         Row: {
           after_state: Json | null
+          approved_at: string | null
           before_state: Json
+          correction_deadline_at: string | null
+          correction_window_hours: number | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -367,7 +370,10 @@ export type Database = {
         }
         Insert: {
           after_state?: Json | null
+          approved_at?: string | null
           before_state: Json
+          correction_deadline_at?: string | null
+          correction_window_hours?: number | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -383,7 +389,10 @@ export type Database = {
         }
         Update: {
           after_state?: Json | null
+          approved_at?: string | null
           before_state?: Json
+          correction_deadline_at?: string | null
+          correction_window_hours?: number | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -3675,6 +3684,14 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: Json
       }
+      attendance_reopen_window_hours: {
+        Args: { p_school_id: string }
+        Returns: number
+      }
+      attendance_session_within_window: {
+        Args: { p_session_id: string }
+        Returns: boolean
+      }
       auth_get_user_escola: { Args: never; Returns: string }
       auth_get_user_role: { Args: never; Returns: string }
       auth_has_role_or_higher: {
@@ -3767,7 +3784,10 @@ export type Database = {
         Args: { p_decision: string; p_reason?: string; p_request_id: string }
         Returns: {
           after_state: Json | null
+          approved_at: string | null
           before_state: Json
+          correction_deadline_at: string | null
+          correction_window_hours: number | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -4065,7 +4085,10 @@ export type Database = {
         Args: { p_reason: string; p_session_id: string }
         Returns: {
           after_state: Json | null
+          approved_at: string | null
           before_state: Json
+          correction_deadline_at: string | null
+          correction_window_hours: number | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -4103,6 +4126,10 @@ export type Database = {
           valid_from: string
           valid_until: string
         }[]
+      }
+      set_attendance_reopen_window_hours: {
+        Args: { p_hours: number; p_school_id: string }
+        Returns: number
       }
       set_municipal_settings: {
         Args: {

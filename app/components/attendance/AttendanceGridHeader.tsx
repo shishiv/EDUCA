@@ -120,6 +120,42 @@ function GridConnectionStatus({
   )
 }
 
+function AttendanceLockNotices({ lockInfo }: Pick<AttendanceGridHeaderProps, 'lockInfo'>) {
+  const showWarning = !lockInfo.isLocked
+    && lockInfo.timeUntilLockMinutes !== null
+    && lockInfo.timeUntilLockMinutes <= 60
+  return (
+    <>
+      {lockInfo.isLocked ? (
+        <Alert variant="destructive" className="mb-4 border-orange-500 bg-orange-50">
+          <Lock className="h-5 w-5 text-orange-600" />
+          <AlertTitle className="text-orange-800 font-semibold">Frequencia Bloqueada</AlertTitle>
+          <AlertDescription className="text-orange-700">
+            {lockInfo.message}
+            {lockInfo.lockReason === 'time_18h' ? (
+              <p className="mt-1 text-sm">
+                Conforme legislacao educacional brasileira, os registros de frequencia sao imutaveis apos as 18:00.
+              </p>
+            ) : null}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {showWarning ? (
+        <Alert className="mb-4 border-yellow-500 bg-yellow-50">
+          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <AlertTitle className="text-yellow-800 font-semibold">Atencao: Bloqueio Proximo</AlertTitle>
+          <AlertDescription className="text-yellow-700">
+            {lockInfo.message}
+            <p className="mt-1 text-sm">
+              Finalize as marcacoes de frequencia antes do bloqueio automatico as 18:00.
+            </p>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+    </>
+  )
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -140,39 +176,7 @@ export function AttendanceGridHeader({
   const t = useClassroomTranslations()
   return (
     <CardHeader className="pb-4">
-      {/* Lock Status Banner */}
-      {lockInfo.isLocked && (
-        <Alert variant="destructive" className="mb-4 border-orange-500 bg-orange-50">
-          <Lock className="h-5 w-5 text-orange-600" />
-          <AlertTitle className="text-orange-800 font-semibold">
-            Frequencia Bloqueada
-          </AlertTitle>
-          <AlertDescription className="text-orange-700">
-            {lockInfo.message}
-            {lockInfo.lockReason === 'time_18h' && (
-              <p className="mt-1 text-sm">
-                Conforme legislacao educacional brasileira, os registros de frequencia sao imutaveis apos as 18:00.
-              </p>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Warning Banner - Approaching Lock Time */}
-      {!lockInfo.isLocked && lockInfo.timeUntilLockMinutes !== null && lockInfo.timeUntilLockMinutes <= 60 && (
-        <Alert className="mb-4 border-yellow-500 bg-yellow-50">
-          <AlertTriangle className="h-5 w-5 text-yellow-600" />
-          <AlertTitle className="text-yellow-800 font-semibold">
-            Atencao: Bloqueio Proximo
-          </AlertTitle>
-          <AlertDescription className="text-yellow-700">
-            {lockInfo.message}
-            <p className="mt-1 text-sm">
-              Finalize as marcacoes de frequencia antes do bloqueio automatico as 18:00.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
+      <AttendanceLockNotices lockInfo={lockInfo} />
 
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">

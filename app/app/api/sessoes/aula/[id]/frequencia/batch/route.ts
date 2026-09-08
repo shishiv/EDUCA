@@ -19,12 +19,22 @@ const BatchAttendanceSchema = z.object({
   })).min(1, 'Pelo menos um registro de frequência é necessário'),
 })
 
+const HTTP_STATUS_BY_ATTENDANCE_CODE = new Map<string, number>([
+  ['UNAUTHENTICATED', 401],
+  ['SESSION_NOT_FOUND', 404],
+  ['TURMA_NOT_FOUND', 404],
+  ['MATRICULA_NOT_FOUND', 404],
+  ['FORBIDDEN_ROLE', 403],
+  ['SESSION_NOT_OWNED', 403],
+  ['SCHOOL_MISMATCH', 403],
+  ['TURMA_NOT_OWNED', 403],
+  ['SESSION_CLOSED', 409],
+  ['SESSION_DATE_NOT_CURRENT', 409],
+  ['ATTENDANCE_WRITE_FAILED', 409],
+])
+
 function statusForCode(code?: string): number {
-  if (code === 'UNAUTHENTICATED') return 401
-  if (code === 'SESSION_NOT_FOUND' || code === 'TURMA_NOT_FOUND' || code === 'MATRICULA_NOT_FOUND') return 404
-  if (code === 'FORBIDDEN_ROLE' || code === 'SESSION_NOT_OWNED' || code === 'SCHOOL_MISMATCH' || code === 'TURMA_NOT_OWNED') return 403
-  if (code === 'SESSION_CLOSED' || code === 'SESSION_DATE_NOT_CURRENT' || code === 'ATTENDANCE_WRITE_FAILED') return 409
-  return 400
+  return code ? HTTP_STATUS_BY_ATTENDANCE_CODE.get(code) ?? 400 : 400
 }
 
 export async function POST(
