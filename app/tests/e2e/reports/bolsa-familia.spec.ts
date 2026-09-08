@@ -362,10 +362,9 @@ test.describe('Bolsa Familia Report - Export', () => {
     
     await page.waitForTimeout(1000)
     
-    // Should show success or error toast
     const hasToast = await page.getByText(/sucesso|erro|gerado/i).isVisible({ timeout: 3000 }).catch(() => false)
-    
-    expect(true).toBeTruthy()
+
+    expect(hasToast).toBe(true)
   })
 
   test('should export to PDF', async ({ page }) => {
@@ -375,7 +374,9 @@ test.describe('Bolsa Familia Report - Export', () => {
     
     await page.waitForTimeout(1000)
     
-    expect(true).toBeTruthy()
+    const hasToast = await page.getByText(/sucesso|erro|gerado/i).isVisible({ timeout: 3000 }).catch(() => false)
+
+    expect(hasToast).toBe(true)
   })
 
   test('should handle export error gracefully', async ({ page }) => {
@@ -383,12 +384,9 @@ test.describe('Bolsa Familia Report - Export', () => {
     
     await excelButton.click()
     
-    // If no data, should show error
-    const errorToast = page.getByText(/erro/i)
-    const hasError = await errorToast.isVisible({ timeout: 3000 }).catch(() => false)
-    
-    // Error or success both OK
-    expect(true).toBeTruthy()
+    const hasFeedback = await page.getByText(/sucesso|erro|gerado/i).isVisible({ timeout: 3000 }).catch(() => false)
+
+    expect(hasFeedback).toBe(true)
   })
 })
 

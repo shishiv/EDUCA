@@ -18,8 +18,8 @@
 
 import { useTranslations } from 'next-intl'
 
-import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import React, { useCallback, useEffect, useState, useMemo } from 'react'
+import { useForm, type Control } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -197,6 +197,200 @@ function DescriptiveReportFormHeader({
   )
 }
 
+function ExperienceFields({
+  control,
+  progress,
+  isFormDisabled,
+  isFinalized,
+}: {
+  control: Control<DescriptiveReportDraftFormData>
+  progress: ReturnType<typeof calculateFormProgress>
+  isFormDisabled: boolean
+  isFinalized: boolean
+}) {
+  const getFieldStatusIcon = (key: ExperienceFieldKey) => {
+    switch (progress.fieldStatus[key]) {
+      case 'complete':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'partial':
+        return <PenLine className="h-4 w-4 text-yellow-600" />
+      default:
+        return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {EXPERIENCE_FIELDS_CONFIG.map((field, index) => (
+        <Card key={field.key} className={cn('transition-all', progress.fieldStatus[field.key] === 'complete' && 'border-green-200 bg-green-50/30')}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-medium text-sm">{index + 1}</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2"><span>{field.label}</span>{getFieldStatusIcon(field.key)}</div>
+                <p className="text-xs text-muted-foreground font-normal mt-0.5">{field.description}</p>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={control}
+              name={field.key}
+              render={({ field: formField }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea {...formField} id={field.key} placeholder={field.placeholder} disabled={isFormDisabled} className={cn('min-h-[150px] resize-y', isFinalized && 'bg-gray-50')} />
+                  </FormControl>
+                  <div className="flex items-center justify-between mt-2">
+                    <FormMessage />
+                    <span className={cn('text-xs', (formField.value?.length || 0) < field.minLength ? 'text-muted-foreground' : 'text-green-600')}>
+                      {formField.value?.length || 0} / {field.minLength} caracteres minimos
+                    </span>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+function GeneralObservations({ control, isFormDisabled, isFinalized }: {
+  control: Control<DescriptiveReportDraftFormData>
+  isFormDisabled: boolean
+  isFinalized: boolean
+}) {
+  const t = useTranslations('platform')
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2"><Info className="h-5 w-5 text-blue-600" />Observacoes Gerais</CardTitle>
+        <CardDescription>Observacoes adicionais sobre o desenvolvimento da crianca (opcional)</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <FormField control={control} name="observacoes_gerais" render={({ field }) => (
+          <FormItem>
+            <FormControl><Textarea {...field} id="observacoes_gerais" placeholder={t('components.descriptive.complementary')} disabled={isFormDisabled} className={cn('min-h-[100px] resize-y', isFinalized && 'bg-gray-50')} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+      </CardContent>
+    </Card>
+  )
+}
+
+function FinalizationWarning({ missingFields }: { missingFields: string[] }) {
+  return (
+    <Alert className="border-yellow-200 bg-yellow-50">
+      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      <AlertTitle className="text-yellow-800">Campos Incompletos</AlertTitle>
+      <AlertDescription className="text-yellow-700">Para finalizar o relatorio, preencha todos os 5 Campos de Experiencia com pelo menos 50 caracteres cada.<br /><span className="font-medium">Faltam: {missingFields.join(', ')}</span></AlertDescription>
+    </Alert>
+  )
+}
+
+function FormActions({
+  isSaving,
+  isFinalizing,
+  hasUnsavedChanges,
+  canFinalizeReport,
+  onCancel,
+  onFinalize,
+}: {
+  isSaving: boolean
+  isFinalizing: boolean
+  hasUnsavedChanges: boolean
+  canFinalizeReport: boolean
+  onCancel?: () => void
+  onFinalize: () => void
+}) {
+  const t = useTranslations('platform')
+  const isBusy = isSaving || isFinalizing
+  return (
+    <><Separator /><div className="flex items-center justify-between gap-3">
+      <Button type="button" variant="outline" onClick={onCancel} disabled={isBusy}>Voltar</Button>
+      <div className="flex items-center gap-3">
+        <Button type="submit" variant="outline" disabled={isBusy || !hasUnsavedChanges} className="min-w-[140px]">
+          {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('profile.saving')}</> : <><Save className="h-4 w-4 mr-2" />{t('components.descriptive.saveDraft')}</>}
+        </Button>
+        <Button type="button" onClick={onFinalize} disabled={isBusy || !canFinalizeReport} className="min-w-[140px] bg-green-600 hover:bg-green-700">
+          {isFinalizing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Finalizando...</> : <><CheckCircle className="h-4 w-4 mr-2" />Finalizar</>}
+        </Button>
+      </div>
+    </div></>
+  )
+}
+
+function useResetFormWhenInitialValuesChange(
+  initialValues: Partial<DescriptiveReport> | undefined,
+  reset: ReturnType<typeof useForm<DescriptiveReportDraftFormData>>['reset'],
+  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  useEffect(() => {
+    if (initialValues) {
+      reset(transformApiDataToForm(initialValues))
+      setHasUnsavedChanges(false)
+    }
+  }, [initialValues, reset, setHasUnsavedChanges])
+}
+
+function useUnsavedChangesIndicator(
+  isDirty: boolean,
+  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  useEffect(() => {
+    if (isDirty) {
+      setHasUnsavedChanges(true)
+    }
+  }, [isDirty, setHasUnsavedChanges])
+}
+
+function useAutoSaveDraft({
+  autoSaveInterval,
+  isFinalized,
+  hasUnsavedChanges,
+  onSaveDraft,
+  getValues,
+  setLastSaved,
+  setHasUnsavedChanges,
+}: {
+  autoSaveInterval: number
+  isFinalized: boolean
+  hasUnsavedChanges: boolean
+  onSaveDraft?: (data: ReturnType<typeof transformFormDataToInput>) => Promise<void>
+  getValues: () => DescriptiveReportDraftFormData
+  setLastSaved: React.Dispatch<React.SetStateAction<Date | null>>
+  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>
+}) {
+  useEffect(() => {
+    if (autoSaveInterval <= 0 || isFinalized || !hasUnsavedChanges) return
+
+    const timer = setInterval(async () => {
+      if (!hasUnsavedChanges || !onSaveDraft) return
+
+      try {
+        await onSaveDraft(transformFormDataToInput(getValues()))
+        setLastSaved(new Date())
+        setHasUnsavedChanges(false)
+      } catch {
+        console.warn('Auto-save failed')
+      }
+    }, autoSaveInterval)
+
+    return () => clearInterval(timer)
+  }, [autoSaveInterval, getValues, hasUnsavedChanges, isFinalized, onSaveDraft, setHasUnsavedChanges, setLastSaved])
+}
+
+function getDefaultFormValues(initialValues?: Partial<DescriptiveReport>) {
+  return transformApiDataToForm(initialValues ?? null)
+}
+
+function isFormUnavailable(disabled: boolean, isLoading: boolean, isFinalized: boolean) {
+  return disabled || isLoading || isFinalized
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -220,12 +414,11 @@ export function DescriptiveReportForm({
   const [isFinalizing, setIsFinalizing] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Form setup
   const form = useForm<DescriptiveReportDraftFormData>({
     resolver: zodResolver(descriptiveReportDraftSchema),
-    defaultValues: transformApiDataToForm(initialValues || null),
+    defaultValues: getDefaultFormValues(initialValues),
   })
 
   const {
@@ -254,50 +447,20 @@ export function DescriptiveReportForm({
   const isFinalized = status === 'finalizado'
 
   // Is form disabled?
-  const isFormDisabled = disabled || isLoading || isFinalized
+  const isFormDisabled = isFormUnavailable(disabled, isLoading, isFinalized)
 
-  // Reset form when initialValues change
-  useEffect(() => {
-    if (initialValues) {
-      reset(transformApiDataToForm(initialValues))
-      setHasUnsavedChanges(false)
-    }
-  }, [initialValues, reset])
+  useResetFormWhenInitialValuesChange(initialValues, reset, setHasUnsavedChanges)
+  useUnsavedChangesIndicator(isDirty, setHasUnsavedChanges)
 
-  // Track unsaved changes
-  useEffect(() => {
-    if (isDirty) {
-      setHasUnsavedChanges(true)
-    }
-  }, [isDirty])
-
-  // Auto-save functionality
-  useEffect(() => {
-    if (autoSaveInterval <= 0 || isFinalized || !hasUnsavedChanges) {
-      return
-    }
-
-    autoSaveTimerRef.current = setInterval(async () => {
-      if (hasUnsavedChanges && onSaveDraft) {
-        try {
-          const data = getValues()
-          const transformedData = transformFormDataToInput(data)
-          await onSaveDraft(transformedData)
-          setLastSaved(new Date())
-          setHasUnsavedChanges(false)
-        } catch {
-          // Silent fail for auto-save
-          console.warn('Auto-save failed')
-        }
-      }
-    }, autoSaveInterval)
-
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current)
-      }
-    }
-  }, [autoSaveInterval, hasUnsavedChanges, isFinalized, onSaveDraft, getValues])
+  useAutoSaveDraft({
+    autoSaveInterval,
+    isFinalized,
+    hasUnsavedChanges,
+    onSaveDraft,
+    getValues,
+    setLastSaved,
+    setHasUnsavedChanges,
+  })
 
   // Handle save draft
   const handleSaveDraft = useCallback(
@@ -346,20 +509,7 @@ export function DescriptiveReportForm({
     }
   }, [isFinalized, getValues, onFinalize, t])
 
-  // Get field status indicator
-  const getFieldStatusIcon = (key: ExperienceFieldKey) => {
-    const fieldStatus = progress.fieldStatus[key]
-    switch (fieldStatus) {
-      case 'complete':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'partial':
-        return <PenLine className="h-4 w-4 text-yellow-600" />
-      default:
-        return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
-    }
-  }
-
-  return (
+  return (() => (
     <Form {...form}>
       <form
         onSubmit={handleSubmit(handleSaveDraft)}
@@ -385,182 +535,17 @@ export function DescriptiveReportForm({
           </Alert>
         )}
 
-        {/* Experience Fields */}
-        <div className="space-y-6">
-          {EXPERIENCE_FIELDS_CONFIG.map((field, index) => (
-            <Card
-              key={field.key}
-              className={cn(
-                'transition-all',
-                progress.fieldStatus[field.key] === 'complete' && 'border-green-200 bg-green-50/30'
-              )}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-medium text-sm">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span>{field.label}</span>
-                      {getFieldStatusIcon(field.key)}
-                    </div>
-                    <p className="text-xs text-muted-foreground font-normal mt-0.5">
-                      {field.description}
-                    </p>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={control}
-                  name={field.key}
-                  render={({ field: formField }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Textarea
-                          {...formField}
-                          id={field.key}
-                          placeholder={field.placeholder}
-                          disabled={isFormDisabled}
-                          className={cn(
-                            'min-h-[150px] resize-y',
-                            isFinalized && 'bg-gray-50'
-                          )}
-                        />
-                      </FormControl>
-                      <div className="flex items-center justify-between mt-2">
-                        <FormMessage />
-                        <span
-                          className={cn(
-                            'text-xs',
-                            (formField.value?.length || 0) < field.minLength
-                              ? 'text-muted-foreground'
-                              : 'text-green-600'
-                          )}
-                        >
-                          {formField.value?.length || 0} / {field.minLength} caracteres minimos
-                        </span>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* General Observations */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Info className="h-5 w-5 text-blue-600" />
-              Observacoes Gerais
-            </CardTitle>
-            <CardDescription>
-              Observacoes adicionais sobre o desenvolvimento da crianca (opcional)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={control}
-              name="observacoes_gerais"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      id="observacoes_gerais"
-                      placeholder={t('components.descriptive.complementary')}
-                      disabled={isFormDisabled}
-                      className={cn(
-                        'min-h-[100px] resize-y',
-                        isFinalized && 'bg-gray-50'
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+        <ExperienceFields control={control} progress={progress} isFormDisabled={isFormDisabled} isFinalized={isFinalized} />
+        <GeneralObservations control={control} isFormDisabled={isFormDisabled} isFinalized={isFinalized} />
 
         {/* Finalization Warning */}
-        {!isFinalized && !finalizationStatus.canFinalize && (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertTitle className="text-yellow-800">Campos Incompletos</AlertTitle>
-            <AlertDescription className="text-yellow-700">
-              Para finalizar o relatorio, preencha todos os 5 Campos de Experiencia
-              com pelo menos 50 caracteres cada.
-              <br />
-              <span className="font-medium">
-                Faltam: {finalizationStatus.missingFields.join(', ')}
-              </span>
-            </AlertDescription>
-          </Alert>
-        )}
+        {!isFinalized && !finalizationStatus.canFinalize && <FinalizationWarning missingFields={finalizationStatus.missingFields} />}
 
         {/* Action Buttons */}
-        {!isFinalized && (
-          <>
-            <Separator />
-            <div className="flex items-center justify-between gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={isSaving || isFinalizing}
-              >
-                Voltar
-              </Button>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  type="submit"
-                  variant="outline"
-                  disabled={isSaving || isFinalizing || !hasUnsavedChanges}
-                  className="min-w-[140px]"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t('profile.saving')}
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      {t('components.descriptive.saveDraft')}
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  type="button"
-                  onClick={handleFinalizeReport}
-                  disabled={isSaving || isFinalizing || !finalizationStatus.canFinalize}
-                  className="min-w-[140px] bg-green-600 hover:bg-green-700"
-                >
-                  {isFinalizing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Finalizando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Finalizar
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+        {!isFinalized && <FormActions isSaving={isSaving} isFinalizing={isFinalizing} hasUnsavedChanges={hasUnsavedChanges} canFinalizeReport={finalizationStatus.canFinalize} onCancel={onCancel} onFinalize={handleFinalizeReport} />}
       </form>
     </Form>
-  )
+  ))()
 }
 
 export default DescriptiveReportForm

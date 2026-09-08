@@ -71,14 +71,20 @@ test.describe('Dashboard - Navigation', () => {
     await expect(page).toHaveURL(/\/dashboard\/turmas\/nova/)
   })
 
-  test('Relatórios page loads', async ({ page }) => {
+  test('Relatórios hub links to the implemented report routes', async ({ page }) => {
     await navigateToDashboard(page)
     await page
       .getByRole('navigation', { name: 'Acessos rápidos' })
       .getByRole('link', { name: 'Relatórios', exact: true })
       .click()
     await expect(page).toHaveURL(/\/dashboard\/relatorios/)
-    await expect(page.getByText(/relatório/i).first()).toBeVisible({ timeout: 20000 })
+    const reports = page.getByRole('region', { name: 'Relatórios' })
+    await expect(reports.getByRole('link', { name: /Frequência/i })).toHaveAttribute('href', '/relatorios/frequencia')
+    await expect(reports.getByRole('link', { name: /Conteúdo/i })).toHaveAttribute('href', '/relatorios/conteudo')
+    await expect(reports.getByRole('link', { name: /Bolsa Família/i })).toHaveAttribute('href', '/relatorios/bolsa-familia')
+
+    await reports.getByRole('link', { name: /Frequência/i }).click()
+    await expect(page).toHaveURL(/\/relatorios\/frequencia/)
   })
 
   test('Diário page loads from the shared navigation', async ({ page }) => {

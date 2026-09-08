@@ -27,12 +27,11 @@ type ClassEnrollment = Pick<Tables<'matriculas'>, 'id' | 'aluno_id'>
 type ServerClient = SupabaseClient<Database>
 
 const emptyComplianceStatus = {
-  inep: false,
-  bolsaFamilia: false,
+  conformePoliticaGeral: false,
   atencaoPreventiva: false,
 }
 
-function groupDailyAttendance(records: CanonicalAttendanceFact[]): Record<string, DailyAttendance> {
+function groupDailyAttendance(records: CanonicalAttendanceFact[]) {
   const dailyData: Record<string, DailyAttendance> = {}
 
   for (const record of records) {
@@ -47,24 +46,24 @@ function groupDailyAttendance(records: CanonicalAttendanceFact[]): Record<string
 
 function getComplianceStatus(overallPercentage: number) {
   return {
-    inep: overallPercentage >= 75,
-    bolsaFamilia: overallPercentage >= CONFORMIDADE,
+    conformePoliticaGeral: overallPercentage >= CONFORMIDADE,
     atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
   }
 }
 
 function getTrendStatistics(trendData: TrendDataPoint[]) {
   const totalPresent = trendData.reduce((sum, day) => sum + day.presents, 0)
-  const totalStudents = trendData.reduce((sum, day) => sum + day.totalStudents, 0)
-  const overallPercentage = totalStudents > 0
-    ? Math.round((totalPresent / totalStudents) * 100)
+  const totalAbsent = trendData.reduce((sum, day) => sum + day.absences, 0)
+  const totalAttendanceRecords = totalPresent + totalAbsent
+  const overallPercentage = totalAttendanceRecords > 0
+    ? Math.round((totalPresent / totalAttendanceRecords) * 100)
     : 0
 
   return {
     overallPercentage,
     totalDays: trendData.length,
     totalPresent,
-    totalAbsent: totalStudents - totalPresent,
+    totalAbsent,
     complianceStatus: getComplianceStatus(overallPercentage),
   }
 }
@@ -101,7 +100,9 @@ function buildStudentTrendData(
   records: CanonicalAttendanceFact[],
   classAverages: Record<string, number>,
 ): TrendDataPoint[] {
-  return Object.entries(groupDailyAttendance(records)).map(([date, daily]) => ({
+  return Object.entries(groupDailyAttendance(records)).sort(([left], [right]) => (
+    left.localeCompare(right)
+  )).map(([date, daily]) => ({
     date,
     attendancePercentage: Math.round((daily.presente / daily.total) * 100),
     classAverage: classAverages[date],
@@ -178,7 +179,9 @@ function buildClassTrendData(
     dailyData[record.dataAula] = daily
   }
 
-  return Object.entries(dailyData).map(([date, daily]) => ({
+  return Object.entries(dailyData).sort(([left], [right]) => (
+    left.localeCompare(right)
+  )).map(([date, daily]) => ({
     date,
     attendancePercentage: Math.round((daily.presente / daily.total) * 100),
     absences: daily.total - daily.presente,
@@ -280,7 +283,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return getClassTrends(supabase, turmaId!, startDateStr, endDateStr)
+    if (turmaId) {
+      return getClassTrends(supabase, turmaId, startDateStr, endDateStr)
+    }
+
+    return NextResponse.json({
+      error: 'student_id ou turma_id é obrigatório',
+    }, { status: 400 })
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)
     logger.error('Error in attendance trends API', errorMessage)

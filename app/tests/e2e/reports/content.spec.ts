@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { test, expect } from '../support/diagnostics'
+import type { Database } from '@/types/database'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const MATH_CONTENT_TITLE = 'Adição com números naturais'
 const PORTUGUESE_CONTENT_TITLE = 'Leitura de textos informativos'
 
-type ContentSnapshot = Record<string, unknown> & { id: string }
+type ContentSnapshot = Database['public']['Tables']['conteudo_aula']['Row']
 
 async function openReport(page: import('@playwright/test').Page, path = '/relatorios/conteudo') {
   const backgroundResponses = Promise.all([
@@ -43,7 +44,7 @@ function getLocalAdminClient() {
   if (!SUPABASE_SERVICE_KEY.startsWith('sb_secret_')) {
     throw new Error('Content report E2E requires the local Supabase service key')
   }
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }
@@ -56,7 +57,7 @@ async function readContentSnapshot(title = MATH_CONTENT_TITLE): Promise<ContentS
     .eq('tema', title)
     .single()
   if (error || !data) throw new Error(`Failed to load canonical content snapshot: ${error?.message || 'missing row'}`)
-  return data as ContentSnapshot
+  return data
 }
 
 async function readDownloadBytes(download: import('@playwright/test').Download): Promise<Buffer> {

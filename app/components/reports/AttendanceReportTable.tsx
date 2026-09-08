@@ -49,7 +49,6 @@ import {
 	Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { StatusPresenca } from "@/types/diario-classe";
 import {
 	ATENCAO,
 	CONFORMIDADE,
@@ -396,6 +395,7 @@ export function AttendanceReportTable({
 				printMode && "print:border print:shadow-none",
 			)}
 		>
+			{(() => (
 			<CardHeader className="pb-4">
 				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 					<div>
@@ -432,7 +432,9 @@ export function AttendanceReportTable({
 					)}
 				</div>
 			</CardHeader>
+			))()}
 
+			{(() => (
 			<CardContent>
 				{/* Summary Statistics */}
 				<SummaryBar data={data} riskThreshold={riskThreshold} />
@@ -603,6 +605,7 @@ export function AttendanceReportTable({
 					</div>
 				)}
 			</CardContent>
+			))()}
 		</Card>
 	);
 }

@@ -21,7 +21,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import React, { useMemo, useRef } from 'react'
+import React, { useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -50,7 +50,6 @@ import {
 import { cn } from "@/lib/utils"
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
-  type Bimester,
   formatGrade,
   getGradeColor,
   roundGrade,
@@ -224,7 +223,7 @@ function getStatusConfig(status: 'aprovado' | 'reprovado' | 'em_curso') {
  * Format date for display
  */
 function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = date instanceof Date ? date : new Date(date)
   return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -328,13 +327,7 @@ function ReportHeader({
 /**
  * Grades table component
  */
-function GradesTable({
-  grades,
-  printMode,
-}: {
-  grades: DisciplineGrade[]
-  printMode?: boolean
-}) {
+function GradesTable({ grades }: { grades: DisciplineGrade[] }) {
   const t = useTranslations('platform')
   return (
     <div className="overflow-x-auto">
@@ -600,10 +593,6 @@ export function StudentReport({
   const t = useTranslations('platform')
   const reportRef = useRef<HTMLDivElement>(null)
 
-  // Calculate status
-  const status = useMemo(() => calculateStatus(grades, attendance), [grades, attendance])
-  const statusConfig = getStatusConfig(status)
-
   // Handle print
   const handlePrint = () => {
     if (onPrint) {
@@ -660,7 +649,7 @@ export function StudentReport({
             <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
               Desempenho Academico
             </h3>
-            <GradesTable grades={grades} printMode={printMode} />
+            <GradesTable grades={grades} />
           </div>
 
           {/* Legend */}

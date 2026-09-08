@@ -6,6 +6,8 @@
  */
 
 import { logger } from '@/lib/logger'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
   filterBolsaFamiliaConditionality,
@@ -123,21 +125,38 @@ export function calculateBolsaFamiliaStatus(
  * The threshold is a database value, never a universal application constant.
  */
 export function calculateFaltasParaCritico(
-  presencas: number,
+  presencasSemAtestados: number,
   faltas: number,
   atestados: number,
   criticalPercent: number = CONFORMIDADE,
 ): number {
-  const presentDays = presencas + atestados
-  const total = presencas + faltas + atestados
+  const presencasComAtestados = presencasSemAtestados + atestados
+  const total = presencasComAtestados + faltas
 
   if (total === 0 || criticalPercent <= 0 || criticalPercent >= 100) return 0
-  if ((presentDays / total) * 100 < criticalPercent) return 0
+  if ((presencasComAtestados / total) * 100 < criticalPercent) return 0
 
   return Math.max(
     0,
-    Math.floor((presentDays * 100) / criticalPercent - total) + 1,
+    Math.floor((presencasComAtestados * 100) / criticalPercent - total) + 1,
   )
+}
+
+/**
+ * The SQL read model includes A in presencas and reports atestados separately.
+ * Keep the auxiliary display buckets disjoint without altering SQL totals or
+ * the legal and municipal statuses resolved by PostgreSQL.
+ */
+export function calculatePresencasSemAtestados(presencas: number, atestados: number): number {
+  return Math.max(0, presencas - atestados)
+}
+
+function nullable<T>(value: T | null | undefined): T | null {
+  return value ?? null
+}
+
+function stringOrEmpty(value: string | null): string {
+  return value ?? ''
 }
 
 function resolveDisplayStatus(row: AttendanceConditionalityRow): BolsaFamiliaStatus {
@@ -150,62 +169,68 @@ function toMunicipalMarginResolution(
   row: AttendanceConditionalityRow,
 ): MunicipalMarginResolution {
   return {
-    id: row.margem_municipal_id ?? null,
+    id: nullable(row.margem_municipal_id),
     municipalityId: row.municipio_id,
-    criticalPercent: row.margem_municipal_critica_percent ?? null,
-    warningPercent: row.margem_municipal_alerta_percent ?? null,
-    precedence: row.margem_municipal_precedencia ?? null,
-    source: row.margem_municipal_origem ?? null,
-    definedBy: row.margem_municipal_definida_por ?? null,
-    definedAt: row.margem_municipal_definida_em ?? null,
-    fallback: row.margem_municipal_fallback ?? false,
-    fallbackReason: row.margem_municipal_fallback_motivo ?? null,
-    validFrom: row.margem_municipal_vigencia_inicio ?? null,
-    validUntil: row.margem_municipal_vigencia_fim ?? null,
+    criticalPercent: nullable(row.margem_municipal_critica_percent),
+    warningPercent: nullable(row.margem_municipal_alerta_percent),
+    precedence: nullable(row.margem_municipal_precedencia),
+    source: nullable(row.margem_municipal_origem),
+    definedBy: nullable(row.margem_municipal_definida_por),
+    definedAt: nullable(row.margem_municipal_definida_em),
+    fallback: row.margem_municipal_fallback === true,
+    fallbackReason: nullable(row.margem_municipal_fallback_motivo),
+    validFrom: nullable(row.margem_municipal_vigencia_inicio),
+    validUntil: nullable(row.margem_municipal_vigencia_fim),
   }
 }
 
 function toBolsaFamiliaStudent(row: AttendanceConditionalityRow): BolsaFamiliaStudent {
   const percentual = Math.round(Number(row.percentual_frequencia))
-  const criticalPercent = row.margem_municipal_critica_percent ?? null
+  const criticalPercent = nullable(row.margem_municipal_critica_percent)
   const status = resolveDisplayStatus(row)
+  const presencasSemAtestados = calculatePresencasSemAtestados(row.presencas, row.atestados)
 
   return {
     matriculaId: row.matricula_id,
     alunoId: row.aluno_id,
     nome: row.aluno_nome,
-    nis: row.nis ?? '',
+    nis: stringOrEmpty(row.nis),
     bolsaFamilia: row.is_bolsa_familia,
     idadeAnos: row.idade_anos,
     educacaoBasicaConcluida: row.educacao_basica_concluida,
-    condicionalidadeLegal: row.condicionalidade_legal ?? null,
-    pisoLegalPercent: row.piso_legal_percent ?? null,
+    condicionalidadeLegal: nullable(row.condicionalidade_legal),
+    pisoLegalPercent: nullable(row.piso_legal_percent),
     statusLegal: row.condicionalidade_legal_status,
-    margemMunicipalId: row.margem_municipal_id ?? null,
+    margemMunicipalId: nullable(row.margem_municipal_id),
     margemMunicipalCriticaPercent: criticalPercent,
-    margemMunicipalAlertaPercent: row.margem_municipal_alerta_percent ?? null,
+    margemMunicipalAlertaPercent: nullable(row.margem_municipal_alerta_percent),
     margemMunicipalStatus: row.margem_municipal_status,
-    margemMunicipalPrecedencia: row.margem_municipal_precedencia ?? null,
-    margemMunicipalOrigem: row.margem_municipal_origem ?? null,
-    margemMunicipalDefinidaPor: row.margem_municipal_definida_por ?? null,
-    margemMunicipalDefinidaEm: row.margem_municipal_definida_em ?? null,
-    margemMunicipalFallback: row.margem_municipal_fallback ?? false,
-    margemMunicipalFallbackMotivo: row.margem_municipal_fallback_motivo ?? null,
-    margemMunicipalVigenciaInicio: row.margem_municipal_vigencia_inicio ?? null,
-    margemMunicipalVigenciaFim: row.margem_municipal_vigencia_fim ?? null,
+    margemMunicipalPrecedencia: nullable(row.margem_municipal_precedencia),
+    margemMunicipalOrigem: nullable(row.margem_municipal_origem),
+    margemMunicipalDefinidaPor: nullable(row.margem_municipal_definida_por),
+    margemMunicipalDefinidaEm: nullable(row.margem_municipal_definida_em),
+    margemMunicipalFallback: row.margem_municipal_fallback === true,
+    margemMunicipalFallbackMotivo: nullable(row.margem_municipal_fallback_motivo),
+    margemMunicipalVigenciaInicio: nullable(row.margem_municipal_vigencia_inicio),
+    margemMunicipalVigenciaFim: nullable(row.margem_municipal_vigencia_fim),
     turmaId: row.turma_id,
     turmaNome: row.turma_nome,
     turmaSerie: row.turma_serie,
     escolaId: row.escola_id,
     escolaNome: row.escola_nome,
-    presencas: row.presencas,
+    presencas: presencasSemAtestados,
     faltas: row.faltas,
     atestados: row.atestados,
     totalAulas: row.total_aulas,
     percentual,
     status,
     faltasParaCritico: criticalPercent
-      ? calculateFaltasParaCritico(row.presencas, row.faltas, row.atestados, criticalPercent)
+      ? calculateFaltasParaCritico(
+        presencasSemAtestados,
+        row.faltas,
+        row.atestados,
+        criticalPercent,
+      )
       : 0,
   }
 }
@@ -219,7 +244,7 @@ function toBolsaFamiliaStudent(row: AttendanceConditionalityRow): BolsaFamiliaSt
  * Legal status and municipality early-warning status remain separate fields.
  */
 export async function getBolsaFamiliaStudents(
-  supabase: unknown,
+  supabase: SupabaseClient<Database>,
   filters: BolsaFamiliaFilters,
 ): Promise<BolsaFamiliaReportResult> {
   try {
@@ -293,7 +318,7 @@ export async function getBolsaFamiliaStudents(
 
 /** Gets only students with a legal or municipal conditionality risk. */
 export async function getBolsaFamiliaStudentsAtRisk(
-  supabase: unknown,
+  supabase: SupabaseClient<Database>,
   filters: Omit<BolsaFamiliaFilters, 'onlyAtRisk'>,
 ): Promise<BolsaFamiliaReportResult> {
   return getBolsaFamiliaStudents(supabase, { ...filters, onlyAtRisk: true })
@@ -301,7 +326,7 @@ export async function getBolsaFamiliaStudentsAtRisk(
 
 /** Generates school and overall summaries from the canonical report rows. */
 export async function getBolsaFamiliaSummary(
-  supabase: unknown,
+  supabase: SupabaseClient<Database>,
   filters: BolsaFamiliaFilters,
 ): Promise<{
   data: {

@@ -105,6 +105,38 @@ VALUES (
   'ativa'
 );
 
+ALTER TABLE public.alunos DISABLE TRIGGER pilot_high_risk_student_guard;
+INSERT INTO public.alunos(
+  id,
+  escola_id,
+  nome_completo,
+  data_nascimento,
+  sexo,
+  nis,
+  bolsa_familia,
+  ativo
+)
+VALUES (
+  'a1300000-0000-0000-0000-000000000002',
+  'a1000000-0000-0000-0000-000000000001',
+  'Aluna Bolsa Inativa Sintetica',
+  DATE '2018-01-01',
+  'F',
+  'NIS-SYNTHETIC-INACTIVE',
+  true,
+  true
+);
+ALTER TABLE public.alunos ENABLE TRIGGER pilot_high_risk_student_guard;
+
+INSERT INTO public.matriculas(id, aluno_id, turma_id, ano_letivo, situacao)
+VALUES (
+  'a1400000-0000-0000-0000-000000000002',
+  'a1300000-0000-0000-0000-000000000002',
+  'a1200000-0000-0000-0000-000000000001',
+  2026,
+  'transferida'
+);
+
 SELECT pg_temp.assert_true(
   NOT has_column_privilege('authenticated', 'public.alunos', 'bolsa_familia', 'SELECT')
     AND NOT has_column_privilege('authenticated', 'public.alunos', 'nis', 'SELECT')
@@ -198,7 +230,20 @@ SELECT pg_temp.assert_true(
      NULL,
      NULL
    )),
-  'the authorized coordination and social-assistance journey reads the conditionality value'
+  'the authorized journey reads only the active Bolsa Familia enrollment'
+);
+SELECT pg_temp.assert_true(
+  NOT EXISTS (
+    SELECT 1
+    FROM public.get_attendance_conditionality(
+      DATE '2026-08-01',
+      DATE '2026-08-31',
+      NULL,
+      NULL
+    )
+    WHERE matricula_id = 'a1400000-0000-0000-0000-000000000002'
+  ),
+  'the conditionality RPC excludes inactive enrollments'
 );
 
 SELECT set_config('request.jwt.claim.sub', 'a1100000-0000-0000-0000-000000000002', true);
