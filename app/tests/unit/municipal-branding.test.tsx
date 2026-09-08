@@ -1,14 +1,15 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { NextIntlClientProvider } from 'next-intl'
+import { describe, expect, it } from 'vitest'
 import { StudentReport } from '@/components/reports/StudentReport'
 import { StudentReportInfantil } from '@/components/reports/StudentReportInfantil'
 import { AttendanceReportTable } from '@/components/reports/AttendanceReportTable'
 
-vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
+import { getMessagesForLocale } from '@/i18n/messages'
 
 describe('municipal report branding', () => {
   it('renders the resolved municipality in every printable report footer', () => {
-    render(<>
+    render(<NextIntlClientProvider locale="pt-BR" messages={getMessagesForLocale('pt-BR')}><>
       <StudentReport
         student={{ id: 'student-1', nome: 'Aluno Sintético', turma: 'Turma A', serie: '1º ano', escola: 'Escola Sintética', anoLetivo: 2026 }}
         grades={[]}
@@ -22,7 +23,7 @@ describe('municipal report branding', () => {
         printMode
       />
       <AttendanceReportTable data={[]} municipalityName="Município de Prova" printMode />
-    </>)
+    </></NextIntlClientProvider>)
 
     expect(screen.getAllByText('Município de Prova')).toHaveLength(3)
   })

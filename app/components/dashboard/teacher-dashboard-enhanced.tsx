@@ -12,6 +12,7 @@ import type { ResolvedAcademicYear } from '@/lib/services/academic-year'
 export interface TeacherDashboardEnhancedProps {
   professorId: string
   academicYear: ResolvedAcademicYear
+  initialTurmas?: TeacherClassSummary[]
 }
 
 interface TeacherClassSession {
@@ -28,15 +29,25 @@ interface TeacherClassSummary {
   sessaoHoje: TeacherClassSession | null
 }
 
+function normalizeError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error))
+}
+
 /** Shows a professor only the assigned classes, active enrollments, and today's calls. */
-export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherDashboardEnhancedProps) {
+export function TeacherDashboardEnhanced({ professorId, academicYear, initialTurmas }: TeacherDashboardEnhancedProps) {
   const t = useTranslations('platform.dashboard')
   const locale = useLocale()
-  const [turmas, setTurmas] = useState<TeacherClassSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const [turmas, setTurmas] = useState<TeacherClassSummary[]>(initialTurmas ?? [])
+  const [loading, setLoading] = useState(initialTurmas === undefined)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialTurmas !== undefined) {
+      setTurmas(initialTurmas)
+      setLoading(false)
+      return
+    }
+
     async function loadTeacherDashboard() {
       try {
         setLoading(true)
@@ -101,7 +112,7 @@ export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherD
           sessaoHoje: sessoesPorTurma.get(turma.id) ?? null,
         })))
       } catch (loadError) {
-        logger.error('TEACHER_DASHBOARD_LOAD_FAILED', loadError as Error, {
+        logger.error('TEACHER_DASHBOARD_LOAD_FAILED', normalizeError(loadError), {
           feature: 'teacher-dashboard',
           action: 'load_assigned_classes',
           metadata: { professorId },
@@ -113,7 +124,7 @@ export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherD
     }
 
     void loadTeacherDashboard()
-  }, [academicYear.year, professorId, t])
+  }, [academicYear.year, initialTurmas, professorId, t])
 
   if (loading) {
     return (

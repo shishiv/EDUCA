@@ -53,6 +53,18 @@ function getSectionKey(pathname: string) {
     : routeLabels.find(([path]) => pathname.startsWith(path))?.[1] ?? 'dashboard'
 }
 
+type AppRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+type RoleTranslationKey = `roles.${AppRole}`
+const APP_ROLES: AppRole[] = ['admin', 'diretor', 'secretario', 'professor', 'responsavel']
+function isAppRole(role: string): role is AppRole {
+  // SAFETY: the cast is checked against the complete allowlist immediately below.
+  return APP_ROLES.includes(role as AppRole)
+}
+function getRoleLabel(role: string | undefined, translate: (key: RoleTranslationKey) => string) {
+  if (!role || !isAppRole(role)) return role ?? ''
+  return translate(`roles.${role}`)
+}
+
 function ConnectionIndicator({ connected, label, status, title }: { connected: boolean; label: string; status: string; title: string }) {
   return (
     <div className="app-connection" data-status={status} title={title}>
@@ -140,9 +152,7 @@ export function Header() {
   const sectionKey = getSectionKey(pathname)
   const section = sectionKey === 'myProfile' ? t('header.myProfile') : t(`navigation.items.${sectionKey}`)
   const role = userProfile?.tipo_usuario
-  const roleLabel = role && ['admin', 'diretor', 'secretario', 'professor', 'responsavel'].includes(role)
-    ? common(`roles.${role as 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'}`)
-    : role ?? ''
+  const roleLabel = getRoleLabel(role, common)
 
   const handleSignOut = async () => {
     try {

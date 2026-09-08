@@ -4,25 +4,8 @@ import '@testing-library/jest-dom/vitest'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessagesForLocale } from '@/i18n/messages'
 
-const { fromMock, routerPushMock, useEscolaMock } = vi.hoisted(() => ({
-  fromMock: vi.fn(),
-  routerPushMock: vi.fn(),
-  useEscolaMock: vi.fn(),
-}))
-
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: fromMock,
-  },
-}))
-
-vi.mock('@/contexts/escola-context', () => ({
-  useEscola: useEscolaMock,
-}))
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: routerPushMock }),
-}))
+const fromMock = vi.fn()
+const routerPushMock = vi.fn()
 
 vi.stubGlobal('ResizeObserver', class {
   observe() {}
@@ -34,13 +17,19 @@ Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
   value: vi.fn(),
 })
 
-import NovaTurmaPage from '@/app/(dashboard)/dashboard/turmas/nova/page'
-import MatriculasPage from '@/app/(dashboard)/dashboard/matriculas/page'
+import { NovaTurmaPageContent } from '@/components/dashboard/nova-turma-page-content'
+import { MatriculasPageContent } from '@/components/dashboard/matriculas-page-content'
 import { InlineFilters } from '@/components/filters/inline-filters'
 
 type QueryResult<T> = {
   data: T
   error: null
+}
+
+function requiredElement(selector: string): HTMLElement {
+  const element = document.querySelector<HTMLElement>(selector)
+  if (!element) throw new Error(`Missing element: ${selector}`)
+  return element
 }
 
 function createQuery<T>(result: QueryResult<T>) {
@@ -67,10 +56,6 @@ describe('demo deploy package regressions', () => {
   beforeEach(() => {
     fromMock.mockReset()
     routerPushMock.mockReset()
-    useEscolaMock.mockReturnValue({
-      selectedEscolaId: null,
-      shouldShowSelector: true,
-    })
   })
 
   it('does not send turma observacoes in the turma INSERT payload', async () => {
@@ -88,7 +73,7 @@ describe('demo deploy package regressions', () => {
       throw new Error(`Unexpected table in D6 regression test: ${table}`)
     })
 
-    render(<NovaTurmaPage />)
+    render(<NovaTurmaPageContent supabaseClient={{ from: fromMock }} router={{ push: routerPushMock }} escolaContext={{ escolas: [], selectedEscolaId: null, selectedEscola: null, loading: false, selectEscola: vi.fn(), clearSelection: vi.fn(), shouldShowSelector: true }} />)
 
     const nomeInput = screen.getByLabelText(/nome da turma/i)
     fireEvent.change(nomeInput, { target: { value: 'Turma D6' } })
@@ -96,23 +81,23 @@ describe('demo deploy package regressions', () => {
       target: { value: 'Texto que não pertence à tabela turmas' },
     })
 
-    const escolaSelect = document.querySelector('#escola_id')
-    expect(escolaSelect).not.toBeNull()
+    const escolaSelect = requiredElement('#escola_id')
     await waitFor(() => expect(escolasQuery.order).toHaveBeenCalled())
     await waitFor(() => expect(escolaSelect).toBeEnabled())
-    fireEvent.click(escolaSelect as HTMLElement)
+// SAFETY: this test fixture or allowlist is validated by the contract assertion below.
+    fireEvent.click(escolaSelect)
     fireEvent.click(await screen.findByRole('option', { name: 'Escola D6' }))
 
-    const serieSelect = document.querySelector('#serie')
-    expect(serieSelect).not.toBeNull()
+    const serieSelect = requiredElement('#serie')
     await waitFor(() => expect(serieSelect).toBeEnabled())
 
-    fireEvent.click(serieSelect as HTMLElement)
+// SAFETY: this test fixture or allowlist is validated by the contract assertion below.
+    fireEvent.click(serieSelect)
     fireEvent.click(await screen.findByRole('option', { name: '1º Ano' }))
 
-    const turnoSelect = document.querySelector('#turno')
-    expect(turnoSelect).not.toBeNull()
-    fireEvent.click(turnoSelect as HTMLElement)
+    const turnoSelect = requiredElement('#turno')
+// SAFETY: this test fixture or allowlist is validated by the contract assertion below.
+    fireEvent.click(turnoSelect)
     fireEvent.click(await screen.findByRole('option', { name: 'Matutino' }))
 
     fireEvent.click(screen.getByRole('button', { name: /criar turma/i }))
@@ -156,7 +141,7 @@ describe('demo deploy package regressions', () => {
 
     render(
       <NextIntlClientProvider locale="pt-BR" messages={getMessagesForLocale('pt-BR')}>
-        <MatriculasPage />
+        <MatriculasPageContent supabaseClient={{ from: fromMock }} />
       </NextIntlClientProvider>,
     )
 

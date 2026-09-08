@@ -7,14 +7,27 @@ import { ServiceWorkerProvider } from '@/components/providers/service-worker-pro
 import { AuthProvider } from '@/contexts/auth-context'
 import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
 
-const PUBLIC_PATHS = ['/', '/demo', '/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/blog']
+const PUBLIC_PATHS = ['/', '/demo', '/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/blog', '/offline']
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(path => path === '/' ? pathname === path : pathname === path || pathname.startsWith(`${path}/`))
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+type ProviderComponent = React.ComponentType<{ children: React.ReactNode }>
+
+export function Providers({
+  children,
+  pathname: pathnameOverride,
+  Auth = AuthProvider,
+  ServiceWorker = ServiceWorkerProvider,
+}: {
+  children: React.ReactNode
+  pathname?: string
+  Auth?: ProviderComponent
+  ServiceWorker?: ProviderComponent
+}) {
+  const currentPathname = usePathname()
+  const pathname = pathnameOverride ?? currentPathname
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -29,12 +42,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ServiceWorkerProvider>
+      <Auth>
+        <ServiceWorker>
           {!isPublicPath(pathname) && <LocaleSwitcher />}
           {children}
-        </ServiceWorkerProvider>
-      </AuthProvider>
+        </ServiceWorker>
+      </Auth>
     </QueryClientProvider>
   )
 }

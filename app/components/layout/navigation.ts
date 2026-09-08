@@ -83,6 +83,7 @@ export function getNavigationForRole(userRole: string): AppNavigationGroup[] {
       ...group,
       items: group.items.filter(item =>
         canAccessRoute(item.href, userRole) &&
+        // SAFETY: route policy roles are the allowlisted role strings used by navigation.
         !item.hiddenForRoles?.includes(userRole as RouteRole) &&
         (!isPilotModeEnabled() ||
           !isPilotDisabledPath(item.href) ||

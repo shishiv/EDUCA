@@ -1,0 +1,512 @@
+'use client'
+
+import { useClassroomTranslations } from '@/i18n/classroom'
+
+import { useState, useEffect } from 'react'
+import type { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ArrowLeft, Save, GraduationCap, Users, School } from 'lucide-react'
+import { toast } from 'sonner'
+import Link from 'next/link'
+import type { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import type { useEscola } from '@/contexts/escola-context'
+
+interface EscolaOption {
+  id: string
+  nome: string
+  tipo: string | null
+}
+
+interface ProfessorOption {
+  id: string
+  nome: string
+}
+
+const SERIES_BY_TIPO = {
+  creche: ['Berçário I', 'Berçário II', 'Maternal I', 'Maternal II'],
+  pre_escola: ['Pré I', 'Pré II'],
+  fundamental: [
+    '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano',
+    '6º Ano', '7º Ano', '8º Ano', '9º Ano',
+  ],
+} as const satisfies Record<'creche' | 'pre_escola' | 'fundamental', readonly string[]>
+
+type SchoolType = keyof typeof SERIES_BY_TIPO
+
+function isSchoolType(tipo: string | null): tipo is SchoolType {
+  return tipo !== null && Object.hasOwn(SERIES_BY_TIPO, tipo)
+}
+
+function getSeriesForSchoolType(tipo: string | null): readonly string[] {
+  return isSchoolType(tipo) ? SERIES_BY_TIPO[tipo] : []
+}
+
+type NovaTurmaDependencies = {
+  supabaseClient: Pick<typeof supabase, 'from'>
+  router: Pick<ReturnType<typeof useRouter>, 'push'>
+  escolaContext: ReturnType<typeof useEscola>
+}
+
+function SchoolSelectionAlert({
+  shouldShowSelector,
+  schoolId,
+}: {
+  shouldShowSelector: boolean
+  schoolId: string
+}) {
+  const t = useClassroomTranslations()
+  if (!shouldShowSelector || schoolId) return null
+
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>
+        {t('forms.selectSchool')} no menu lateral ou no formulário abaixo antes de criar uma turma.
+      </AlertDescription>
+    </Alert>
+  )
+}
+
+function SchoolInfoCard({
+  schoolId,
+  schools,
+  professors,
+}: {
+  schoolId: string
+  schools: EscolaOption[]
+  professors: ProfessorOption[]
+}) {
+  const t = useClassroomTranslations()
+  const school = schools.find(candidate => candidate.id === schoolId)
+  const series = getSeriesForSchoolType(school?.tipo ?? null)
+
+  if (!school) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <School className="h-5 w-5" />
+            <span>{t('forms.schoolInfo')}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500">
+            {t('forms.selectSchool')} para ver as informações
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <School className="h-5 w-5" />
+          <span>{t('forms.schoolInfo')}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 text-sm text-gray-700">
+          <p className="font-medium">{school.nome}</p>
+          {school.tipo && <p className="capitalize text-gray-500">{school.tipo.replace('_', ' ')}</p>}
+          <p>
+            <span className="text-gray-500">{t('forms.availableTeachers')} </span>
+            {professors.length}
+          </p>
+          <p>
+            <span className="text-gray-500">{t('forms.availableSeries')} </span>
+            {series.length}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function NovaTurmaPageContent({
+  supabaseClient,
+  router,
+  escolaContext,
+}: NovaTurmaDependencies) {
+  const t = useClassroomTranslations()
+  const { selectedEscolaId, shouldShowSelector } = escolaContext
+
+  const [loading, setLoading] = useState(false)
+  const [loadingData, setLoadingData] = useState(true)
+  const [escolas, setEscolas] = useState<EscolaOption[]>([])
+  const [professores, setProfessores] = useState<ProfessorOption[]>([])
+
+  const [formData, setFormData] = useState({
+    nome: '',
+    serie: '',
+    ano_letivo: new Date().getFullYear(),
+    escola_id: '',
+    professor_id: '',
+    capacidade: 25,
+    turno: '',
+    observacoes: '',
+    ativo: true,
+  })
+
+  // Load schools on mount
+  useEffect(() => {
+    async function loadEscolas() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('escolas')
+          .select('id, nome, tipo')
+          .eq('ativo', true)
+          .order('nome')
+        if (error) throw error
+        setEscolas(data || [])
+        // Pre-select escola from context when the admin already picked one
+        if (selectedEscolaId) {
+          setFormData(previous => previous.escola_id
+            ? previous
+            : { ...previous, escola_id: selectedEscolaId }
+          )
+        }
+      } catch (err) {
+        logger.error('Error loading escolas for nova turma', err instanceof Error ? err : new Error(String(err)), {
+          feature: 'turmas',
+          action: 'load_escolas',
+        })
+        toast.error(t('classes.loadError'))
+      } finally {
+        setLoadingData(false)
+      }
+    }
+    void loadEscolas()
+  }, [selectedEscolaId, supabaseClient, t])
+
+  // Load teachers whenever the selected school changes
+  useEffect(() => {
+    if (!formData.escola_id) {
+      setProfessores([])
+      return
+    }
+    async function loadProfessores() {
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('id, nome')
+        .eq('tipo_usuario', 'professor')
+        .eq('escola_id', formData.escola_id)
+        .eq('ativo', true)
+        .order('nome')
+      if (error) {
+        logger.error('Error loading professores', error, {
+          feature: 'turmas',
+          action: 'load_professores',
+        })
+        return
+      }
+      setProfessores(data || [])
+    }
+    void loadProfessores()
+  }, [formData.escola_id, supabaseClient])
+
+  const handleInputChange = (field: string, value: string | number | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const selectedEscola = escolas.find(escola => escola.id === formData.escola_id)
+  const series = getSeriesForSchoolType(selectedEscola?.tipo ?? null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formData.escola_id) {
+      toast.error(t('forms.selectSchool'))
+      return
+    }
+    if (!formData.nome.trim()) {
+      toast.error(t('forms.className'))
+      return
+    }
+    if (!formData.serie) {
+      toast.error(t('forms.selectSeries'))
+      return
+    }
+    if (!formData.turno) {
+      toast.error(t('forms.selectShift'))
+      return
+    }
+
+    setLoading(true)
+    try {
+      const { error } = await supabaseClient.from('turmas').insert({
+        nome: formData.nome.trim(),
+        serie: formData.serie,
+        ano_letivo: formData.ano_letivo,
+        escola_id: formData.escola_id,
+        professor_id: formData.professor_id || null,
+        capacidade: formData.capacidade,
+        turno: formData.turno,
+        ativo: formData.ativo,
+      })
+
+      if (error) throw error
+
+      toast.success(t('classes.createSuccess'))
+      router.push('/dashboard/turmas')
+    } catch (err) {
+      logger.error('Error creating turma', err instanceof Error ? err : new Error(String(err)), {
+        feature: 'turmas',
+        action: 'create_turma',
+      })
+      toast.error(t('classes.createError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/dashboard/turmas">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('actions.back')}
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t('classes.newTitle')}</h1>
+          <p className="text-gray-600 mt-1">{t('classes.newSubtitle')}</p>
+        </div>
+      </div>
+
+      <SchoolSelectionAlert
+        shouldShowSelector={shouldShowSelector}
+        schoolId={formData.escola_id}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <GraduationCap className="h-5 w-5" />
+                <span>{t('classes.data')}</span>
+              </CardTitle>
+              <CardDescription>
+                {t('classes.dataHint')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">{t('forms.className')} *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => handleInputChange('nome', e.target.value)}
+                      placeholder="Ex: 5º Ano A"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="ano_letivo">{t('forms.schoolYear')} *</Label>
+                    <Input
+                      id="ano_letivo"
+                      type="number"
+                      value={formData.ano_letivo}
+                      onChange={(e) => handleInputChange('ano_letivo', parseInt(e.target.value))}
+                      min="2020"
+                      max="2030"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="escola_id">{t('forms.school')} *</Label>
+                  <Select
+                    value={formData.escola_id}
+                    onValueChange={(value) => {
+                      handleInputChange('escola_id', value)
+                      handleInputChange('professor_id', '')
+                      handleInputChange('serie', '')
+                    }}
+                    disabled={loadingData}
+                  >
+                    <SelectTrigger id="escola_id">
+                      <SelectValue placeholder={loadingData ? 'Carregando…' : t('forms.selectSchool')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {escolas.map((escola) => (
+                        <SelectItem key={escola.id} value={escola.id}>
+                          {escola.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="serie">{t('forms.series')} *</Label>
+                    <Select
+                      value={formData.serie}
+                      onValueChange={(value) => handleInputChange('serie', value)}
+                      disabled={!formData.escola_id}
+                    >
+                      <SelectTrigger id="serie">
+                        <SelectValue placeholder={t('forms.selectSeries')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {series.map((serie) => (
+                          <SelectItem key={serie} value={serie}>
+                            {serie}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="turno">{t('forms.shift')} *</Label>
+                    <Select
+                      value={formData.turno}
+                      onValueChange={(value) => handleInputChange('turno', value)}
+                    >
+                      <SelectTrigger id="turno">
+                        <SelectValue placeholder={t('forms.selectShift')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="matutino">Matutino</SelectItem>
+                        <SelectItem value="vespertino">Vespertino</SelectItem>
+                        <SelectItem value="integral">Integral</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="professor_id">{t('forms.teacher')}</Label>
+                    <Select
+                      value={formData.professor_id}
+                      onValueChange={(value) => handleInputChange('professor_id', value)}
+                      disabled={!formData.escola_id}
+                    >
+                      <SelectTrigger id="professor_id">
+                        <SelectValue placeholder={t('forms.selectTeacher')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {professores.map((prof) => (
+                          <SelectItem key={prof.id} value={prof.id}>
+                            {prof.nome}
+                          </SelectItem>
+                        ))}
+                        {professores.length === 0 && formData.escola_id && (
+                          <SelectItem value="__none" disabled>
+                            {t('forms.noTeacher')}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="capacidade">{t('forms.capacity')} *</Label>
+                    <Input
+                      id="capacidade"
+                      type="number"
+                      value={formData.capacidade}
+                      onChange={(e) => handleInputChange('capacidade', parseInt(e.target.value))}
+                      min="1"
+                      max="50"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="observacoes">{t('forms.notes')}</Label>
+                  <Textarea
+                    id="observacoes"
+                    value={formData.observacoes}
+                    onChange={(e) => handleInputChange('observacoes', e.target.value)}
+                    placeholder={t('forms.additionalNotes')}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="ativo"
+                    checked={formData.ativo}
+                    onCheckedChange={(checked) => handleInputChange('ativo', checked)}
+                  />
+                  <Label htmlFor="ativo">{t('forms.active')}</Label>
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Button type="button" variant="outline" asChild>
+                    <Link href="/dashboard/turmas">{t('actions.cancel')}</Link>
+                  </Button>
+                  <Button type="submit" disabled={loading || loadingData}>
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Salvando…
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        {t('actions.create')} {t('labels.class')}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <SchoolInfoCard
+            schoolId={formData.escola_id}
+            schools={escolas}
+            professors={professores}
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="h-5 w-5" />
+                <span>{t('labels.capacity')}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-2xl font-bold text-blue-600">{formData.capacidade} alunos</p>
+              <p className="text-sm text-gray-600">{t('forms.capacityInfo')}</p>
+              <p className="text-sm font-medium text-gray-700">{t('forms.recommendations')}</p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>{t('forms.recommendationNursery')}</li>
+                <li>{t('forms.recommendationPreschool')}</li>
+                <li>{t('forms.recommendationElementary')}</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

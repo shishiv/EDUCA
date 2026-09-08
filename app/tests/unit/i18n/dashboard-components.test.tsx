@@ -5,20 +5,6 @@ import { AlertasCard } from '@/components/dashboard/alertas-card'
 import { TeacherDashboardEnhanced } from '@/components/dashboard/teacher-dashboard-enhanced'
 import platformMessages from '@/messages/en/platform.json'
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => {
-      const result = { data: [], error: null }
-      const query: Record<string, unknown> = {}
-      for (const method of ['select', 'eq', 'in', 'order']) {
-        query[method] = () => query
-      }
-      query.then = (resolve: (value: typeof result) => void) => Promise.resolve(result).then(resolve)
-      return query
-    },
-  },
-}))
-
 const academicYear = { year: 2027, startDate: '2027-01-01', endDate: '2027-12-31', configured: true }
 
 function renderEnglish(component: React.ReactNode) {
@@ -38,6 +24,7 @@ describe('redesigned dashboard component localization', () => {
     renderEnglish(<TeacherDashboardEnhanced
       professorId="teacher-1"
       academicYear={academicYear}
+      initialTurmas={[]}
     />)
 
     expect(await screen.findByRole('heading', { name: 'Teacher dashboard' })).toBeVisible()

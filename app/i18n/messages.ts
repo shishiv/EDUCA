@@ -16,7 +16,7 @@ import platformPtBr from '@/messages/pt-BR/platform.json'
 import publicPtBr from '@/messages/pt-BR/public.json'
 import registryPtBr from '@/messages/pt-BR/registry.json'
 
-const messagesByLocale = {
+export const messagesByLocale = {
   'pt-BR': {
     common: commonPtBr,
     auth: authPtBr,
@@ -37,6 +37,8 @@ const messagesByLocale = {
   },
 } satisfies Record<AppLocale, AbstractIntlMessages>
 
-export function getMessagesForLocale(locale: AppLocale): AbstractIntlMessages {
+export type AppMessages = (typeof messagesByLocale)[AppLocale]
+
+export function getMessagesForLocale(locale: AppLocale): AppMessages {
   return messagesByLocale[locale]
 }

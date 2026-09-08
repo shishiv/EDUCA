@@ -26,7 +26,7 @@ describe('createStudent escola_id resolution', () => {
 
 describe('nova turma page series map', () => {
   it('has series for all supported escola types', () => {
-    const SERIES_BY_TIPO: Record<string, string[]> = {
+    const SERIES_BY_TIPO = {
       creche: ['Berçário I', 'Berçário II', 'Maternal I', 'Maternal II'],
       pre_escola: ['Pré I', 'Pré II'],
       fundamental: [
@@ -41,12 +41,13 @@ describe('nova turma page series map', () => {
   })
 
   it('returns empty array for unknown escola type', () => {
-    const SERIES_BY_TIPO: Record<string, string[]> = {
+    const SERIES_BY_TIPO = {
       creche: ['Berçário I'],
       pre_escola: ['Pré I'],
       fundamental: ['1º Ano'],
     }
-    expect(SERIES_BY_TIPO.unknown_type ?? []).toEqual([])
+    // SAFETY: this deliberately exercises an unsupported runtime key.
+    expect(SERIES_BY_TIPO['unknown_type' as keyof typeof SERIES_BY_TIPO] ?? []).toEqual([])
   })
 })
 
