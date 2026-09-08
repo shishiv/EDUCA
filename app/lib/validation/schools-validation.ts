@@ -1,3 +1,4 @@
+import type { JsonValue } from '@/lib/validation/external-values'
 /**
  * School/Institution Validation Schema
  *
@@ -342,7 +343,7 @@ export type SchoolUpdateData = z.infer<typeof schoolUpdateSchema>
  * @param data - School data to validate
  * @returns Validation result with errors if invalid
  */
-export function validateSchoolRegistration(data: unknown) {
+export function validateSchoolRegistration(data: JsonValue) {
   try {
     const result = schoolRegistrationSchema.parse(data)
     return {
@@ -372,7 +373,7 @@ export function validateSchoolRegistration(data: unknown) {
  * @param data - Partial school data to validate
  * @returns Validation result with errors if invalid
  */
-export function validateSchoolUpdate(data: unknown) {
+export function validateSchoolUpdate(data: JsonValue) {
   try {
     const result = schoolUpdateSchema.parse(data)
     return {

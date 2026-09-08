@@ -14,7 +14,7 @@ import { ptBR } from 'date-fns/locale'
 export function formatDateBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'dd/MM/yyyy', { locale: ptBR })
@@ -26,7 +26,7 @@ export function formatDateBR(date: string | Date | null | undefined): string {
 export function formatDateTimeBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
@@ -38,7 +38,7 @@ export function formatDateTimeBR(date: string | Date | null | undefined): string
 export function formatDateShortBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'dd/MM', { locale: ptBR })
@@ -50,7 +50,7 @@ export function formatDateShortBR(date: string | Date | null | undefined): strin
 export function formatDateWithWeekdayBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, "EEEE, dd/MM/yyyy", { locale: ptBR })
@@ -62,7 +62,7 @@ export function formatDateWithWeekdayBR(date: string | Date | null | undefined):
 export function formatMonthYearBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'MMMM yyyy', { locale: ptBR })
@@ -74,7 +74,7 @@ export function formatMonthYearBR(date: string | Date | null | undefined): strin
 export function formatRelativeTimeBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return formatDistanceToNow(parsed, { addSuffix: true, locale: ptBR })
@@ -86,7 +86,7 @@ export function formatRelativeTimeBR(date: string | Date | null | undefined): st
 export function formatTimeBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'HH:mm', { locale: ptBR })

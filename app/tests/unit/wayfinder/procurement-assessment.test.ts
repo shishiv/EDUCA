@@ -1,3 +1,4 @@
+import { type JsonRecord, type JsonValue } from '@/lib/validation/external-values'
 // @vitest-environment node
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
@@ -5,12 +6,13 @@ import {
   validateProcurementAssessment,
 } from '@/lib/wayfinder/procurement-assessment'
 
+// SAFETY: the fixture is parsed at this I/O boundary and its shape is validated by the called contract.
 const assessment = JSON.parse(
   readFileSync(new URL('../../../../data/wayfinder/educa/procurement-assessment/assessment.json', import.meta.url), 'utf8'),
-) as unknown
+) as JsonValue
 
-function cloneAssessment(): Record<string, unknown> {
-  return JSON.parse(JSON.stringify(assessment)) as Record<string, unknown>
+function cloneAssessment(): JsonRecord {
+  return JSON.parse(JSON.stringify(assessment))
 }
 
 describe('private procurement assessment contract', () => {
@@ -34,7 +36,8 @@ describe('private procurement assessment contract', () => {
 
   it('rejects a deliberate break that removes mandatory source metadata', () => {
     const broken = cloneAssessment()
-    const fields = broken.discoveryFields as Array<Record<string, unknown>>
+    // SAFETY: the fixture contract defines discoveryFields as mutable records for this deliberate break.
+    const fields = broken.discoveryFields as Array<JsonRecord>
     delete fields[0].source
 
     const report = validateProcurementAssessment(broken)
@@ -48,7 +51,8 @@ describe('private procurement assessment contract', () => {
 
   it('rejects a deliberate break with an identity outside the synthetic boundary', () => {
     const broken = cloneAssessment()
-    const actors = broken.actors as Array<Record<string, unknown>>
+    // SAFETY: the fixture contract defines actors as mutable records for this deliberate break.
+    const actors = broken.actors as Array<JsonRecord>
     actors[0] = { ...actors[0], identity: 'secretaria@not-allowed.example' }
 
     const report = validateProcurementAssessment(broken)
