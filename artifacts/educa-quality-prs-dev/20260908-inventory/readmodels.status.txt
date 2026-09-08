@@ -1,0 +1,45 @@
+ M app/app/(dashboard)/dashboard/page.tsx
+ M app/app/(dashboard)/dashboard/relatorios/loading.tsx
+ M app/app/(dashboard)/dashboard/relatorios/page.tsx
+ M app/app/(dashboard)/relatorios/bolsa-familia/page.tsx
+ M app/app/(dashboard)/relatorios/conteudo/page.tsx
+ M app/app/(dashboard)/relatorios/frequencia/page.tsx
+ M app/app/api/attendance/trends/route.ts
+ M app/app/api/compliance/warnings/route.ts
+ M app/app/api/dashboard/alerts/route.ts
+ M app/components/dashboard/stats-card.tsx
+ M app/components/dashboard/teacher-dashboard-enhanced.tsx
+ M app/components/reports/AttendanceReportTable.tsx
+ M app/components/reports/BolsaFamiliaAlert.tsx
+ M app/components/reports/DescriptiveReportForm.tsx
+ M app/components/reports/StudentReport.tsx
+ M app/components/reports/StudentReportInfantil.tsx
+ M app/lib/api/attendance.ts
+ M app/lib/api/canonical-attendance-facts.ts
+ M app/lib/api/dashboard-stats.ts
+ M app/lib/api/reports.ts
+ M app/lib/dashboard/quick-access.ts
+ M app/lib/export/attendance-excel.ts
+ M app/lib/export/attendance-pdf.ts
+ M app/lib/export/content-pdf.ts
+ M app/lib/export/descriptive-report-pdf.ts
+ M app/lib/export/pdf-utils.ts
+ M app/lib/reports/attendance-conditionality.ts
+ M app/lib/reports/attendance-reports.ts
+ M app/lib/reports/bolsa-familia-reports.ts
+ M app/lib/reports/content-report-data.ts
+ M app/lib/reports/content-reports.ts
+ M app/lib/reports/descriptive-report-emission.ts
+ M app/tests/e2e/flows/dashboard-metrics.spec.ts
+ M app/tests/e2e/reports/bolsa-familia.spec.ts
+ M app/tests/e2e/reports/content.spec.ts
+ M app/tests/unit/api/dashboard-stats.test.ts
+ M app/tests/unit/dashboard/quick-access.test.ts
+ M app/tests/unit/export/pdf-utils.test.ts
+ A app/tests/unit/reports/bolsa-familia-display-projection.test.ts
+ M app/tests/unit/reports/content-report-data.test.ts
+ M supabase/tests/database/bolsa_familia_visibility.test.sql
+?? .pi/semantic-grep.sqlite
+?? .pi/semantic-grep.sqlite-shm
+?? .pi/semantic-grep.sqlite-wal
+?? VENT.md

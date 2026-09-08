@@ -1,0 +1,12 @@
+0	10	VENT.md
+867	867	app/app/(dashboard)/relatorios/conteudo/page.tsx
+537	529	app/app/(dashboard)/relatorios/frequencia/page.tsx
+5	4	app/app/api/dashboard/alerts/route.ts
+10	4	app/components/dashboard/teacher-dashboard-enhanced.tsx
+11	17	app/components/reports/AttendanceReportTable.tsx
+277	276	app/components/reports/DescriptiveReportForm.tsx
+1	1	app/components/reports/StudentReport.tsx
+3	1	app/lib/export/attendance-pdf.ts
+26	31	app/tests/e2e/flows/dashboard-metrics.spec.ts
+372	513	app/tests/e2e/reports/bolsa-familia.spec.ts
+19	34	app/tests/e2e/reports/content.spec.ts

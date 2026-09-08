@@ -1,0 +1,2 @@
+ ERROR  Unknown options: 'maxWorkers', 'file-parallelism'
+For help, run: pnpm help test

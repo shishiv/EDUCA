@@ -1,0 +1,112 @@
+{
+  "verified_at": "2026-09-08T22:29:25.742625+00:00",
+  "worktrees": [
+    {
+      "name": "integration",
+      "branch": "refactor/educa-zero-slop-20260907",
+      "commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+      "remote_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+      "inventory_entries_verified": 561,
+      "git_diff_files": 559,
+      "already_absent_paths": [
+        "app/app/api/demo/audit/handler.ts",
+        "app/tests/e2e/diary/canonical-lesson.spec.ts"
+      ],
+      "remaining_noise_files": 0,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "auth",
+      "branch": "salvar/educa-quality-auth-20260908",
+      "commit": "a8c143eab185d4459ce1cf7740c8a841f1e014b9",
+      "remote_commit": "a8c143eab185d4459ce1cf7740c8a841f1e014b9",
+      "inventory_entries_verified": 29,
+      "git_diff_files": 29,
+      "already_absent_paths": [],
+      "remaining_noise_files": 1,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "contracts",
+      "branch": "salvar/educa-quality-contracts-20260908",
+      "commit": "9732efeaee2edbf2455d01905bfb26ef48d40615",
+      "remote_commit": "9732efeaee2edbf2455d01905bfb26ef48d40615",
+      "inventory_entries_verified": 25,
+      "git_diff_files": 25,
+      "already_absent_paths": [],
+      "remaining_noise_files": 1,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "frequency",
+      "branch": "salvar/educa-quality-frequency-20260908",
+      "commit": "d8e884b3135edc24aba2a27df764c1a7224d7cb8",
+      "remote_commit": "d8e884b3135edc24aba2a27df764c1a7224d7cb8",
+      "inventory_entries_verified": 39,
+      "git_diff_files": 39,
+      "already_absent_paths": [],
+      "remaining_noise_files": 1,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "public",
+      "branch": "salvar/educa-quality-public-20260908",
+      "commit": "c0b0d4c63da6f2081f47a69000c7db654745c5aa",
+      "remote_commit": "c0b0d4c63da6f2081f47a69000c7db654745c5aa",
+      "inventory_entries_verified": 51,
+      "git_diff_files": 50,
+      "already_absent_paths": [
+        "app/lib/middleware/proxy-boundary.ts"
+      ],
+      "remaining_noise_files": 1,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "readmodels",
+      "branch": "salvar/educa-quality-readmodels-20260908",
+      "commit": "8393a99dbc1f800a64753c7d737fb71ea43b20eb",
+      "remote_commit": "8393a99dbc1f800a64753c7d737fb71ea43b20eb",
+      "inventory_entries_verified": 42,
+      "git_diff_files": 42,
+      "already_absent_paths": [],
+      "remaining_noise_files": 3,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "toolchain",
+      "branch": "salvar/educa-quality-toolchain-20260908",
+      "commit": "1fb7874e082ca05f867b72991b3a384e81468af2",
+      "remote_commit": "1fb7874e082ca05f867b72991b3a384e81468af2",
+      "inventory_entries_verified": 33,
+      "git_diff_files": 33,
+      "already_absent_paths": [],
+      "remaining_noise_files": 1,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    },
+    {
+      "name": "validation",
+      "branch": "salvar/educa-quality-validation-20260908",
+      "commit": "5d1bb89a78218a5abb0f82c29b275fa5f23ffab5",
+      "remote_commit": "5d1bb89a78218a5abb0f82c29b275fa5f23ffab5",
+      "inventory_entries_verified": 21,
+      "git_diff_files": 21,
+      "already_absent_paths": [],
+      "remaining_noise_files": 3,
+      "unpreserved_changes": 0,
+      "content_modes_and_absences_verified": true
+    }
+  ],
+  "inventory_total": 801,
+  "diff_files_total": 798,
+  "already_absent_total": 3,
+  "remaining_noise_total": 11,
+  "unpreserved_changes": 0,
+  "dev_main_unchanged": true
+}

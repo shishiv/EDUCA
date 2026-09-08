@@ -1,0 +1,8 @@
+[salvar/educa-quality-public-20260908 c0b0d4c6] chore(quality): preserve public worktree from 2026-09-07
+ 50 files changed, 2211 insertions(+), 2057 deletions(-)
+ create mode 100644 app/components/dashboard/matriculas-page-content.tsx
+ create mode 100644 app/components/dashboard/nova-turma-page-content.tsx
+ create mode 100644 app/i18n/locale-persistence.ts
+ create mode 100644 app/i18n/next-intl.d.ts
+ create mode 100644 app/lib/demo-sandbox/demo-audit-route-handler.ts
+ create mode 100644 app/tests/unit/i18n/message-test-helpers.ts

@@ -1,0 +1,39 @@
+[
+  {
+    "name": "integration",
+    "absent_in_worktree_and_base": [
+      "app/app/api/demo/audit/handler.ts",
+      "app/tests/e2e/diary/canonical-lesson.spec.ts"
+    ]
+  },
+  {
+    "name": "auth",
+    "absent_in_worktree_and_base": []
+  },
+  {
+    "name": "contracts",
+    "absent_in_worktree_and_base": []
+  },
+  {
+    "name": "frequency",
+    "absent_in_worktree_and_base": []
+  },
+  {
+    "name": "public",
+    "absent_in_worktree_and_base": [
+      "app/lib/middleware/proxy-boundary.ts"
+    ]
+  },
+  {
+    "name": "readmodels",
+    "absent_in_worktree_and_base": []
+  },
+  {
+    "name": "toolchain",
+    "absent_in_worktree_and_base": []
+  },
+  {
+    "name": "validation",
+    "absent_in_worktree_and_base": []
+  }
+]

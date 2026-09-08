@@ -1,0 +1,4 @@
+[salvar/educa-quality-readmodels-20260908 8393a99d] chore(quality): preserve readmodels worktree from 2026-09-07
+ 42 files changed, 2930 insertions(+), 2879 deletions(-)
+ create mode 100644 VENT.md
+ create mode 100644 app/tests/unit/reports/bolsa-familia-display-projection.test.ts
