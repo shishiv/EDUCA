@@ -67,10 +67,12 @@ export function isValidBNNCSkillCode(code: string): boolean {
 /**
  * Validate an array of BNCC skill codes
  */
-export function validateBNNCSkillCodes(codes: string[]): {
+export interface BNNCSkillCodeValidation {
   valid: boolean
   invalidCodes: string[]
-} {
+}
+
+export function validateBNNCSkillCodes(codes: string[]): BNNCSkillCodeValidation {
   const invalidCodes = codes.filter((code) => !isValidBNNCSkillCode(code))
   return {
     valid: invalidCodes.length === 0,
@@ -204,9 +206,7 @@ export function getAllSubjects(): BNNCSubject[] {
 export function getSubjectFromCode(code: string): BNNCSubjectCode | null {
   if (!isValidBNNCSkillCode(code)) return null
   const subjectPart = code.substring(4, 6)
-  return BNCC_SUBJECTS[subjectPart as BNNCSubjectCode]
-    ? (subjectPart as BNNCSubjectCode)
-    : null
+  return Object.values(BNCC_SUBJECTS).find((subject) => subject.code === subjectPart)?.code ?? null
 }
 
 // ============================================================================

@@ -35,7 +35,7 @@ export type UserWithSchool = User & {
   escola?: Tables<'escolas'>
 }
 
-export class UsersApiService extends BaseApiService {
+export class UsersApiService extends BaseApiService<'users'> {
   constructor() {
     super('users')
   }

@@ -27,6 +27,7 @@ export interface TurmaCardProps {
 }
 
 type SerieColorKey = 'pink' | 'orange' | 'violet' | 'gray'
+type TurmaTurno = TurmaCardProps['turma']['turno']
 
 /**
  * Maps serie name to color category:
@@ -72,16 +73,13 @@ const serieColorClasses: Record<SerieColorKey, string> = {
   gray: 'from-gray-400 to-gray-600'
 }
 
-const getTurnoLabel = (turno: string): string => {
-  const turnos: Record<string, string> = {
-    matutino: 'Matutino',
-    vespertino: 'Vespertino',
-    integral: 'Integral'
-  }
-  return turnos[turno] || turno
-}
+const turnoLabels = {
+  matutino: 'Matutino',
+  vespertino: 'Vespertino',
+  integral: 'Integral',
+} satisfies Record<TurmaTurno, string>
 
-const getTurnoBadgeVariant = (turno: string): 'default' | 'secondary' | 'outline' => {
+const getTurnoBadgeVariant = (turno: TurmaTurno): 'default' | 'secondary' | 'outline' => {
   switch (turno) {
     case 'matutino': return 'default'
     case 'vespertino': return 'secondary'
@@ -161,7 +159,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4 text-gray-400" />
               <Badge variant={getTurnoBadgeVariant(turma.turno)} className="text-xs">
-                {getTurnoLabel(turma.turno)}
+                {turnoLabels[turma.turno]}
               </Badge>
             </div>
           </div>

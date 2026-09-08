@@ -23,7 +23,7 @@ export type StudentWithDetails = Omit<Aluno, 'bolsa_familia' | 'nis'> & {
   })[]
 }
 
-export class StudentsApiService extends BaseApiService {
+export class StudentsApiService extends BaseApiService<'alunos'> {
   constructor() {
     super('alunos')
   }

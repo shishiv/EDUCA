@@ -14,7 +14,7 @@
  * - Vermelho (red): < 5 (failing)
  */
 
-import { BNNCSubjectCode, BNCC_SUBJECTS } from './lesson-content'
+import { BNCC_SUBJECTS } from './lesson-content'
 
 // ============================================================================
 // GRADE CONSTANTS
@@ -334,7 +334,7 @@ export function getAvailableDisciplines(): { code: string; name: string }[] {
  * Get discipline name from code
  */
 export function getDisciplineName(code: string): string {
-  const subject = BNCC_SUBJECTS[code as BNNCSubjectCode]
+  const subject = Object.values(BNCC_SUBJECTS).find((candidate) => candidate.code === code)
   return subject?.fullName || code
 }
 

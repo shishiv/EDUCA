@@ -201,9 +201,6 @@ export interface DescriptiveReport {
   campo_espacos_tempos: string | null
   // General
   observacoes_gerais: string | null
-  // Draft
-  draft_data: Record<string, unknown> | null
-  last_draft_saved_at: string | null
   // Finalization
   finalizado_em: string | null
   finalizado_por: string | null
@@ -261,7 +258,6 @@ export interface DescriptiveReportUpdate {
   campo_espacos_tempos?: string | null
   observacoes_gerais?: string | null
   status?: ReportStatus
-  draft_data?: Record<string, unknown> | null
 }
 
 /**
@@ -378,10 +374,12 @@ export function calculateReportCompletion(report: DescriptiveReport): number {
 /**
  * Check if report can be finalized
  */
-export function canFinalizeReport(report: DescriptiveReport): {
+export interface CanFinalizeReportResult {
   canFinalize: boolean
   missingFields: ExperienceFieldKey[]
-} {
+}
+
+export function canFinalizeReport(report: DescriptiveReport): CanFinalizeReportResult {
   const missingFields: ExperienceFieldKey[] = []
 
   const fieldsToCheck: { key: ExperienceFieldKey; value: string | null }[] = [

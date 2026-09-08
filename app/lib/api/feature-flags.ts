@@ -30,7 +30,7 @@ import type {
 // FEATURE FLAGS API SERVICE
 // ============================================================================
 
-export class FeatureFlagsApiService extends BaseApiService {
+export class FeatureFlagsApiService extends BaseApiService<'feature_flags'> {
   constructor() {
     super('feature_flags')
   }

@@ -39,7 +39,7 @@ export type SchoolWithDetails = Escola & {
   }
 }
 
-export class SchoolsApiService extends BaseApiService {
+export class SchoolsApiService extends BaseApiService<'escolas'> {
   constructor() {
     super('escolas')
   }

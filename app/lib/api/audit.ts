@@ -6,6 +6,17 @@
  * Handles user activity logs and audit trail functionality
  */
 
+import { z } from 'zod'
+import type { Json } from '@/types/database'
+
+export interface AuditFields {
+  readonly [key: string]: Json | undefined
+}
+
+const auditWriteResponseSchema = z.object({
+  auditId: z.string().min(1),
+})
+
 export interface UserActivity {
   id: string
   user_id: string
@@ -16,7 +27,7 @@ export interface UserActivity {
   user_agent?: string
   resource_type?: string
   resource_id?: string
-  metadata?: Record<string, any>
+  metadata?: AuditFields
   created_at: string
 }
 
@@ -26,8 +37,8 @@ export interface AuditLog {
   action: string
   resource_type: string
   resource_id: string
-  old_values?: Record<string, any>
-  new_values?: Record<string, any>
+  old_values?: AuditFields
+  new_values?: AuditFields
   ip_address?: string
   user_agent?: string
   timestamp: string
@@ -39,43 +50,31 @@ class AuditApi {
    * Get user activities for a specific user
    */
   async getUserActivities(userId: string, limit: number = 50): Promise<UserActivity[]> {
-    try {
-      // For now, return mock data until the audit_logs table is created
-      // This will be replaced when the database schema is updated
-      return this.generateMockActivities(userId, limit)
-    } catch (error) {
-      throw error
-    }
+    // For now, return mock data until the audit_logs table is created
+    // This will be replaced when the database schema is updated
+    return this.generateMockActivities(userId, limit)
   }
 
   /**
    * Log a user activity
    */
   async logActivity(activity: Omit<UserActivity, 'id' | 'created_at'>): Promise<UserActivity> {
-    try {
-      // For now, return mock data until the audit_logs table is created
-      const mockActivity: UserActivity = {
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        ...activity
-      }
-
-      return mockActivity
-    } catch (error) {
-      throw error
+    // For now, return mock data until the audit_logs table is created
+    const mockActivity: UserActivity = {
+      id: crypto.randomUUID(),
+      created_at: new Date().toISOString(),
+      ...activity
     }
+
+    return mockActivity
   }
 
   /**
    * Get audit logs for a specific resource
    */
   async getAuditLogs(resourceType: string, resourceId: string): Promise<AuditLog[]> {
-    try {
-      // For now, return mock data until the audit_logs table is created
-      return this.generateMockAuditLogs(resourceType, resourceId)
-    } catch (error) {
-      throw error
-    }
+    // For now, return mock data until the audit_logs table is created
+    return this.generateMockAuditLogs(resourceType, resourceId)
   }
 
   /**
@@ -97,7 +96,7 @@ class AuditApi {
       }),
     })
     if (!response.ok) throw new Error(`PILOT_AUDIT_WRITE_FAILED: status ${response.status}`)
-    const result = await response.json() as { auditId: string }
+    const result = auditWriteResponseSchema.parse(await response.json())
     const timestamp = new Date().toISOString()
     return { ...audit, id: result.auditId, timestamp, created_at: timestamp, old_values: undefined, new_values: undefined }
   }
@@ -105,35 +104,31 @@ class AuditApi {
   /**
    * Get system-wide activity summary
    */
-  async getActivitySummary(startDate?: Date, endDate?: Date): Promise<{
+  async getActivitySummary(_startDate?: Date, _endDate?: Date): Promise<{
     totalActivities: number
     activitiesByType: Record<string, number>
     activitiesByUser: Record<string, number>
     recentActivities: UserActivity[]
   }> {
-    try {
-      // Mock summary data
-      return {
-        totalActivities: 1250,
-        activitiesByType: {
-          login: 580,
-          logout: 520,
-          create: 85,
-          update: 45,
-          delete: 12,
-          view: 8
-        },
-        activitiesByUser: {
-          'admin': 300,
-          'diretor': 250,
-          'professor': 400,
-          'secretario': 200,
-          'responsavel': 100
-        },
-        recentActivities: this.generateMockActivities('recent', 10)
-      }
-    } catch (error) {
-      throw error
+    // Mock summary data
+    return {
+      totalActivities: 1250,
+      activitiesByType: {
+        login: 580,
+        logout: 520,
+        create: 85,
+        update: 45,
+        delete: 12,
+        view: 8
+      },
+      activitiesByUser: {
+        'admin': 300,
+        'diretor': 250,
+        'professor': 400,
+        'secretario': 200,
+        'responsavel': 100
+      },
+      recentActivities: this.generateMockActivities('recent', 10)
     }
   }
 

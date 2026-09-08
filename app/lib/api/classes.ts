@@ -21,7 +21,7 @@ export type ClassWithDetails = Turma & {
   })[]
 }
 
-export class ClassesApiService extends BaseApiService {
+export class ClassesApiService extends BaseApiService<'turmas'> {
   constructor() {
     super('turmas')
   }
