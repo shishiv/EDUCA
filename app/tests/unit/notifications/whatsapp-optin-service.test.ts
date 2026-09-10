@@ -26,6 +26,7 @@ describe('whatsapp opt-in service', () => {
     expect(state.optIn).toBe(true)
     expect(state.consentidoEm).toBeTruthy()
     expect(state.canceladoEm).toBeNull()
+    expect(state.auditReceiptId).toMatch(/^[0-9a-f-]{36}$/)
     expect(tables.whatsapp_notification_optins.rows[0].escola_id).toBe(SCHOOL_ID)
     expect(auditEvents).toHaveLength(1)
     expect(auditEvents[0].p_event_type).toBe('whatsapp_optin_changed')
@@ -69,5 +70,16 @@ describe('whatsapp opt-in service', () => {
     await setGuardianWhatsAppOptIn(supabase, { id: 'actor-1' }, { responsavelId: GUARDIAN_ID, optIn: true })
     await setGuardianWhatsAppOptIn(supabase, { id: 'actor-1' }, { responsavelId: GUARDIAN_ID, optIn: false })
     expect(await getGuardianWhatsAppOptIn(supabase, GUARDIAN_ID)).toBe(false)
+  })
+
+  it('does not persist consent when the audit receipt transaction fails', async () => {
+    const { supabase, tables, auditEvents } = createFakeWhatsAppSupabase({ failOptInAudit: true })
+    seedGuardian(tables)
+
+    await expect(
+      setGuardianWhatsAppOptIn(supabase, { id: 'actor-1' }, { responsavelId: GUARDIAN_ID, optIn: true }),
+    ).rejects.toThrow('PILOT_AUDIT_WRITE_FAILED')
+    expect(tables.whatsapp_notification_optins.rows).toEqual([])
+    expect(auditEvents).toEqual([])
   })
 })

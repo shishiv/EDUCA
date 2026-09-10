@@ -1,0 +1,6 @@
+created:
+  number: 214
+  url: "https://github.com/shishiv/EDUCA/pull/214"
+help[2]:
+  Run `gh-axi pr view 214 -R shishiv/EDUCA` to see the full PR
+  Run `gh-axi pr checks 214 -R shishiv/EDUCA` to monitor CI

@@ -104,11 +104,7 @@ export function getDescriptiveReportContentPeriod(
     throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_PERIOD_INVALID', 422)
   }
 
-  if (semestre !== 'primeiro' && semestre !== 'segundo') {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_PERIOD_INVALID', 422)
-  }
-
-  const semester = semestre as SemestreType
+  const semester = requireSemester(semestre)
   const config = SEMESTER_CONFIG[semester]
   const lastDay = new Date(Date.UTC(anoLetivo, config.endMonth, 0))
 
@@ -117,6 +113,11 @@ export function getDescriptiveReportContentPeriod(
     fim: lastDay.toISOString().slice(0, 10),
     label: formatSemester(semester, anoLetivo),
   }
+}
+
+function requireSemester(semester: string): SemestreType {
+  if (semester === 'primeiro' || semester === 'segundo') return semester
+  throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_PERIOD_INVALID', 422)
 }
 
 function resolveFinalizedDescriptiveReportFields(
@@ -170,7 +171,7 @@ export function buildDescriptiveReportEmissionData(
     report: {
       id: source.report.id,
       anoLetivo: source.report.ano_letivo,
-      semestre: source.report.semestre as SemestreType,
+      semestre: requireSemester(source.report.semestre),
       observacoesGerais: source.report.observacoes_gerais?.trim() || null,
       fields: source.fields,
     },
@@ -270,21 +271,76 @@ interface DescriptiveReportContext {
   content: ContentReport
 }
 
-async function loadDescriptiveReportContext(
+interface ContextQueryError {
+  message: string
+}
+
+async function loadReportEnrollment(
   supabase: SupabaseClient<Database>,
   report: DescriptiveReportRow,
-  periodo: DescriptiveReportEmissionData['periodo']
-): Promise<DescriptiveReportContext> {
-  const { data: matricula, error: matriculaError } = await supabase
+) {
+  const { data, error } = await supabase
     .from('matriculas')
     .select('id,aluno_id,turma_id')
     .eq('id', report.matricula_id)
     .maybeSingle()
 
-  if (matriculaError) throw matriculaError
-  if (!matricula || matricula.turma_id !== report.turma_id) {
+  if (error) throw error
+  if (!data || data.turma_id !== report.turma_id) {
     throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
   }
+  return data
+}
+
+function throwFirstContextQueryError(errors: Array<ContextQueryError | null>): void {
+  for (const error of errors) {
+    if (error) throw error
+  }
+}
+
+function requireContextValue<T>(value: T | null): T {
+  if (!value) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
+  }
+  return value
+}
+
+function requireContentReport(
+  result: Awaited<ReturnType<typeof generateContentReport>>,
+  turmaId: string,
+): ContentReport {
+  if (result.error || !result.data) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_QUERY_FAILED', 502)
+  }
+  if (result.data.aulas.length === 0) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_EMPTY', 422)
+  }
+  if (result.data.turma?.id !== turmaId) {
+    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_SCOPE_MISMATCH', 422)
+  }
+  return result.data
+}
+
+async function loadReportSchool(
+  supabase: SupabaseClient<Database>,
+  schoolId: string,
+): Promise<EmissionSchool> {
+  const { data, error } = await supabase
+    .from('escolas')
+    .select('id,nome,codigo')
+    .eq('id', schoolId)
+    .maybeSingle()
+
+  if (error) throw error
+  return requireContextValue(data)
+}
+
+async function loadDescriptiveReportContext(
+  supabase: SupabaseClient<Database>,
+  report: DescriptiveReportRow,
+  periodo: DescriptiveReportEmissionData['periodo']
+): Promise<DescriptiveReportContext> {
+  const matricula = await loadReportEnrollment(supabase, report)
 
   const [studentResult, turmaResult, professorResult, contentResult] = await Promise.all([
     supabase.from('alunos').select('id,nome_completo,data_nascimento').eq('id', matricula.aluno_id).maybeSingle(),
@@ -297,36 +353,22 @@ async function loadDescriptiveReportContext(
     }),
   ])
 
-  if (studentResult.error) throw studentResult.error
-  if (turmaResult.error) throw turmaResult.error
-  if (professorResult.error) throw professorResult.error
-  if (!studentResult.data || !turmaResult.data || !professorResult.data) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
-  }
-  if (contentResult.error || !contentResult.data) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_QUERY_FAILED', 502)
-  }
-  if (contentResult.data.aulas.length === 0) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_EMPTY', 422)
-  }
-  if (contentResult.data.turma?.id !== report.turma_id) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_SCOPE_MISMATCH', 422)
-  }
-
-  const { data: escola, error: escolaError } = await supabase
-    .from('escolas')
-    .select('id,nome,codigo')
-    .eq('id', turmaResult.data.escola_id)
-    .maybeSingle()
-
-  if (escolaError) throw escolaError
-  if (!escola) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
+  throwFirstContextQueryError([
+    studentResult.error,
+    turmaResult.error,
+    professorResult.error,
+  ])
+  const student = requireContextValue(studentResult.data)
+  const turma = requireContextValue(turmaResult.data)
+  const professor = requireContextValue(professorResult.data)
+  const content = requireContentReport(contentResult, report.turma_id)
+  const escola = await loadReportSchool(supabase, turma.escola_id)
   return {
-    student: studentResult.data,
-    turma: turmaResult.data,
-    professor: professorResult.data,
+    student,
+    turma,
+    professor,
     escola,
-    content: contentResult.data,
+    content,
   }
 }
 

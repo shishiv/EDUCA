@@ -28,7 +28,7 @@ export function FecharAulaDialog({ open, onOpenChange, onConfirm, sessaoId }: Fe
       onOpenChange(false)
       setObservacoes('')
     } catch (error) {
-      logger.error('Erro ao fechar aula', error as Error, {
+      logger.error('Erro ao fechar aula', error instanceof Error ? error : new Error('Erro desconhecido'), {
         feature: 'attendance',
         action: 'close_session',
         metadata: { sessaoId, hasObservacoes: !!observacoes }

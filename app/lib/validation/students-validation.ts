@@ -1,3 +1,4 @@
+import type { JsonValue } from '@/lib/validation/external-values'
 /**
  * Student Registration Validation Schema
  *
@@ -36,11 +37,11 @@ export const baseStudentSchema = z.object({
   data_nascimento: z
     .union([z.date(), z.string()])
     .refine((value) => {
-      const date = typeof value === 'string' ? new Date(value) : value
+      const date = value instanceof Date ? value : new Date(value)
       return !isNaN(date.getTime())
     }, 'Data de nascimento inválida')
     .transform((value) => {
-      return typeof value === 'string' ? new Date(value) : value
+      return value instanceof Date ? value : new Date(value)
     })
     .refine(
       (date) => date <= new Date(),
@@ -256,7 +257,7 @@ export const studentRegistrationSchema = z.object({
   data_matricula: z
     .union([z.date(), z.string()])
     .transform((value) => {
-      return typeof value === 'string' ? new Date(value) : value
+      return value instanceof Date ? value : new Date(value)
     })
     .optional(),
 
@@ -320,7 +321,7 @@ export type StudentUpdateData = z.infer<typeof studentUpdateSchema>
  * @param data - Student data to validate
  * @returns Validation result with errors if invalid
  */
-export function validateStudentRegistration(data: unknown) {
+export function validateStudentRegistration(data: JsonValue) {
   try {
     const result = studentRegistrationSchema.parse(data)
     return {
@@ -350,7 +351,7 @@ export function validateStudentRegistration(data: unknown) {
  * @param data - Partial student data to validate
  * @returns Validation result with errors if invalid
  */
-export function validateStudentUpdate(data: unknown) {
+export function validateStudentUpdate(data: JsonValue) {
   try {
     const result = studentUpdateSchema.parse(data)
     return {

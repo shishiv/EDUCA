@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
     const input = metricSchema.parse(await request.json())
     const supabase = await createClient()
-    const { data, error } = await asPilotRpcClient(supabase).rpc<string>('record_pilot_metric_event', {
+    const { data, error } = await asPilotRpcClient(supabase).rpc('record_pilot_metric_event', {
       p_event_name: input.eventName, p_escola_id: input.schoolId ?? undefined, p_metric_value: input.value, p_dimensions: input.dimensions,
     })
     if (error) throw error

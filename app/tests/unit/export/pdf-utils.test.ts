@@ -66,11 +66,8 @@ describe('PDF export utilities (jsPDF 4.x)', () => {
       startY
     )
     // jspdf-autotable 5.x keeps doc.lastAutoTable.finalY on jsPDF 4.x
-    const lastAutoTable = doc as unknown as {
-      lastAutoTable?: { finalY: number }
-    }
     expect(finalY).toBeGreaterThan(startY)
-    expect(lastAutoTable.lastAutoTable?.finalY).toBeGreaterThan(0)
+    expect(doc.lastAutoTable?.finalY).toBeGreaterThan(0)
   })
 
   it('adds a summary with metric boxes', () => {

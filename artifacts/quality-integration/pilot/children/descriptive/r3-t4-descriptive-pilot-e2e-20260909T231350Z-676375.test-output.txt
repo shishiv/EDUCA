@@ -1,0 +1,30 @@
+
+Running 4 tests using 1 worker
+
+[1A[2K(node:711757) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:711757) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/4] [setup] › tests/e2e/pilot-descriptive/descriptive-auth.setup.ts:11:6 › authenticate the synthetic descriptive-report teacher
+[1A[2K(node:712293) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:712293) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/4] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:60:7 › bounded descriptive-report PDF emission › renders the seeded finalized report in the authenticated browser DOM
+[1A[2K[3/4] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:71:7 › bounded descriptive-report PDF emission › emits a real PDF artifact from canonical taught content
+[1A[2K[chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:71:7 › bounded descriptive-report PDF emission › emits a real PDF artifact from canonical taught content
+PILOT_DESCRIPTIVE_PDF_RECEIPT: filename=relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf bytes=1612560 artifact=/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app/.pilot-evidence/relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf
+
+[1A[2K[4/4] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:128:7 › bounded descriptive-report PDF emission › deliberate break: removing canonical content blocks emission in the browser
+[1A[2K[chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:128:7 › bounded descriptive-report PDF emission › deliberate break: removing canonical content blocks emission in the browser
+PILOT_DESCRIPTIVE_DELIBERATE_BREAK_RECEIPT: removed_content_blocked_pdf=true restored=true status=422
+
+[1A[2K  4 passed (4.9s)

@@ -2,54 +2,65 @@
 
 Testes End-to-End para o sistema EDUCA usando Playwright.
 
-## Quick Start
+## Estado de execução em 2026-09-08
+
+Este documento mantém o catálogo de casos. Marcas `[x]` abaixo significam que o
+caso está representado no inventário ou em uma spec; não significam `PASS` de uma
+execução recente.
+
+| Escopo | Estado | Recibo e limite |
+|---|---|---|
+| Suíte geral | **RED diagnóstica; não aceita** | General9 selecionou 239 casos: 234 passaram, 3 falharam e 2 casos seriais dependentes não foram executados. O cleanup passou. |
+| Piloto agregado atual | **PASS no snapshot de Aggregate9: 36/36** | Legacy 26, capacity 3, descriptive 4 e security 3 passaram; cleanup aprovado. Extração posterior do helper de manifesto aguarda validação após o bloqueio de pressão do test-safe. |
+| R1 canônico | **PASS delimitado** | Duas provas browser canônicas e cleanup aprovados no recibo preservado; não representa a suíte geral. |
+| SQL | **PASS delimitado** | Cadeia completa e contratos passaram, incluindo finalização C04 e as duas ordens concorrentes dos vínculos de Vivências. |
+| Hub de relatórios | **PASS delimitado** | A prova do hub verifica somente os três cartões e sua navegação para destinos canônicos. |
+| Público/service worker | **PASS delimitado: 20/20** | `public-sw-lifecycle-final-20260908` passou 20 casos. Uma memoização posterior do hook tem apenas verificação focal; este recibo não prova snapshot de fonte idêntico ao atual. |
+| Unitários | **PASS: 124 arquivos / 1.316 testes** | A seleção unitária comum passou. Vinte testes live permanecem em contrato opt-in separado e não entram nessa contagem. |
+| Censo de código | **PASS: 623 arquivos, 16 regras, 0 diagnósticos** | Inclui a regra customizada do plugin e seus testes executáveis. Somente 22 arquivos idênticos ao vendor ficam excluídos; uma thread. |
+
+General9 permanece evidência diagnóstica. Duas falhas são dos contratos de entrada
+de notas e boletim para a nota sintética `8.4`; a leitura autenticada aguarda a
+decisão de governança sobre as políticas canônicas de `notas`. Os dois casos
+seriais dependentes não foram executados. A terceira falha foi uma ambiguidade de
+locator entre o placeholder de série e um toast com o mesmo texto. O teste foi
+corrigido após o snapshot congelado de General9, mas ainda não recebeu nova
+execução em navegador. Nenhuma dessas condições aprova a suíte geral.
+
+Pausa de validação atual: o test-safe retornou PRESSURE_PERSISTENT antes de iniciar static10. O helper compartilhado de manifesto extraído depois do snapshot e a correção do toast de turma ainda aguardam validação. R1 run3 parou antes do proxy/banco por Portless ausente no PATH; o runtime existente foi localizado e a repetição está pendente.
+
+## Execução local
+
+Use somente os comandos locais e o contrato de ambiente documentados em
+[`../../../CONTEXT.md`](../../../CONTEXT.md). Não aponte estes testes para um
+Supabase externo nem carregue dados reais.
 
 ```bash
-# Na raiz do repositório: iniciar Supabase local
-pnpm --dir app exec supabase start
-
-# Em app/: configurar as chaves locais exibidas por `supabase status -o env`
-# NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=<PUBLISHABLE_KEY, começa com sb_publishable_>
-# SUPABASE_SERVICE_ROLE_KEY=<SECRET_KEY, começa com sb_secret_>
-
 cd app
-pnpm install
-pnpm seed:e2e
 pnpm test:e2e
-
-# Relatório HTML
-pnpm exec playwright show-report
+pnpm test:e2e:pilot
+pnpm test:e2e:pilot:canonical
 ```
 
-`global-setup.ts` executa `seed:e2e` novamente antes da suíte. O seed recusa
-hosts não locais e remove apenas registros descartáveis com prefixo E2E.
+Os runners provisionam somente dados sintéticos e recursos locais descartáveis.
+Consulte `CONTEXT.md` antes de executar um filho isolado ou abrir um relatório
+Playwright preservado.
 
 ## Estrutura
 
 ```
 tests/e2e/
-├── auth/
-│   └── login.spec.ts             # Login e autenticação
-├── alunos/                       # CRUD Alunos (com CPF, Bolsa Família)
-├── schools/                      # CRUD Escolas
-├── matriculas/                   # Matrículas
-├── users/                        # Gestão de Usuários e papéis
-├── responsaveis/                 # Responsáveis/Tutores
-├── turmas/                       # CRUD Turmas
-├── flows/
-│   ├── chamada.spec.ts           # Fluxo completo de frequência
-│   ├── dashboard-metrics.spec.ts # Dashboard, estatísticas e alertas
-│   ├── relatorios.spec.ts        # Geração e download de relatórios
-│   ├── permissions.spec.ts       # RBAC e controle de acesso
-│   └── notas-boletim.spec.ts     # Sistema de notas e boletins
-├── utils/
-│   └── test-helpers.ts           # Utilitários de teste
-├── auth.setup.ts                 # Setup de autenticação
-└── README.md                     # Este arquivo
+├── auth/, alunos/, schools/, turmas/, matriculas/, responsaveis/, users/
+├── assignments/, attendance/, diary/, grades/, reports/, config/, profile/
+├── flows/                        # Jornadas transversais e contratos de navegação
+├── public-demo/                  # Visitante público e ciclo do service worker
+├── pilot/                        # Piloto legacy, R1, capacity e security
+├── pilot-descriptive/            # Emissão descritiva isolada
+├── support/, utils/              # Diagnósticos, autenticação e helpers
+└── auth.setup.ts                 # Setup sintético por papel
 ```
 
-## Cobertura de Testes
+## Catálogo de casos
 
 ### Autenticação
 - [x] Login form display
@@ -81,7 +92,6 @@ tests/e2e/
 - [x] Campos obrigatórios
 - [x] Validação de CPF (formato e checksum)
 - [x] Sexo/gênero select
-- [x] Bolsa Família + NIS
 - [x] Necessidades especiais
 - [x] Criação com sucesso
 - [x] Acesso ao boletim
@@ -99,7 +109,7 @@ tests/e2e/
 - [x] Marcar presença
 - [x] Marcar falta
 - [x] Salvar frequência
-- [x] Regras de lock (18h)
+- [x] Prazo de edição capturado por sessão a partir da configuração da escola
 - [x] Destaque Bolsa Família
 - [x] Alerta frequência baixa
 
@@ -131,19 +141,17 @@ tests/e2e/
 
 ### Relatórios
 - [x] Acesso à página de relatórios
-- [x] Listagem de relatórios disponíveis
-- [x] Tipos de relatórios (frequência, matrículas, desempenho, Bolsa Família, resumo por escola)
-- [x] Geração de relatórios com filtros (tipo, data, escola, turma)
-- [x] Status de geração (processando, completo, erro)
-- [x] Download em PDF
-- [x] Download em Excel/CSV
-- [x] Visualização prévia de relatórios
-- [x] Exclusão de relatórios antigos
-- [x] Agendamento de relatórios recorrentes
+- [x] Hub com três destinos canônicos: frequência, conteúdo e Bolsa Família
+- [x] Navegação do hub para cada destino
+- [x] Filtros e tabelas nas páginas canônicas de relatório
+- [x] Exportação PDF/Excel nas páginas de destino que implementam esses artefatos
 - [x] Tratamento de erros
 
+O hub não gera, agenda, mantém histórico, mostra progresso nem simula downloads.
+Esses comportamentos não fazem parte do contrato de `flows/relatorios.spec.ts`.
+
 ### Permissões & RBAC
-- [x] **Admin**: Acesso completo a todas as seções
+- [x] **Admin**: Acesso às superfícies ativas de cadastro, acadêmico, relatórios e configurações
 - [x] **Admin**: Criação de escolas
 - [x] **Admin**: Gestão de usuários
 - [x] **Admin**: Configurações do sistema
@@ -155,17 +163,18 @@ tests/e2e/
 - [x] **Professor**: Acesso a turmas atribuídas
 - [x] **Professor**: Registro de frequência
 - [x] **Professor**: Visualização de alunos das turmas
+- [x] **Professor**: Acesso a sessões
 - [x] **Professor**: Bloqueio de criação de alunos
 - [x] **Professor**: Bloqueio de gestão de matrículas
-- [x] **Professor**: Respeito ao lock de 18h para frequência
+- [x] **Professor**: Respeito ao prazo capturado da sessão e à janela de correção
 - [x] **Secretario**: Gestão de alunos
 - [x] **Secretario**: Gestão de matrículas
 - [x] **Secretario**: Visualização de relatórios
+- [x] **Secretario**: Acesso a configurações e sessões
 - [x] **Secretario**: Sem edição de frequência
-- [x] **Responsavel**: Visualização apenas dos filhos
-- [x] **Responsavel**: Acesso ao boletim do filho
-- [x] **Responsavel**: Acesso à frequência do filho
-- [x] **Responsavel**: Sem acesso a outros alunos
+- [x] **Responsavel**: Autenticação reconhecida, seguida de negação do dashboard em `/unauthorized`
+- [x] **Responsavel**: Sem portal, rota de filhos ou mapeamento de posse implementados
+- [x] **Todos os papéis autenticados**: calendário e flags permanecem bloqueados
 - [x] Proteção de rotas não autenticadas
 - [x] Redirecionamento pós-login
 - [x] Isolamento de dados por escola/turma/aluno
@@ -173,78 +182,54 @@ tests/e2e/
 
 ### Notas & Boletim
 - [x] Acesso à página de notas
-- [x] Filtros por turma e período/bimestre
-- [x] Listagem de alunos da turma
-- [x] Colunas por disciplina
-- [x] Entrada de notas numéricas
-- [x] Validação de intervalo de notas (0-10)
-- [x] Suporte a notas decimais
-- [x] Salvamento de notas
-- [x] Cálculo de média por aluno
-- [x] Destaque para alunos em reprovação
-- [x] Cálculo de média da turma
-- [x] Acesso ao boletim individual do aluno
-- [x] Exibição de identificação do aluno
-- [x] Notas por disciplina e período
-- [x] Percentual de frequência no boletim
-- [x] Média final
-- [x] Status de aprovação (aprovado/reprovado/recuperação)
-- [x] Exportação do boletim em PDF
-- [x] Branding da escola no PDF
-- [x] Tratamento de notas faltantes
-- [x] Bloqueio de edição de períodos encerrados
-- [x] Alertas para alunos em risco de reprovação
-- [x] Validação de caracteres especiais
+- [x] Projeção autorizada da turma e filtro exato do primeiro bimestre
+- [x] Nota inválida rejeitada sem escrita
+- [x] Nota persistida, recarregada e restaurada
+- [x] Boletim individual e artefato PDF para o aluno sintético
 
-## Comandos Úteis
+## Comandos locais úteis
 
 ```bash
-# Rodar testes específicos
-npx playwright test tests/e2e/users/crud.spec.ts
+# Rodar um arquivo específico no ambiente local já preparado
+pnpm exec playwright test tests/e2e/users/crud.spec.ts
 
 # Rodar com UI interativo
-npx playwright test --ui
+pnpm exec playwright test --ui
 
 # Rodar em modo headed (ver browser)
-npx playwright test --headed
+pnpm exec playwright test --headed
 
 # Rodar apenas login tests
-npx playwright test -g "Login"
+pnpm exec playwright test -g "Login"
 
 # Debug mode
-npx playwright test --debug
+pnpm exec playwright test --debug
 
 # Gerar trace para debug
-npx playwright test --trace on
+pnpm exec playwright test --trace on
 ```
 
-## Credenciais de Teste
+## Identidades de teste
 
-Após rodar `pnpm seed:dev`:
-
-| Usuário | Email | Senha |
-|---------|-------|-------|
-| Admin | admin@test.com | test123456 |
-| Diretor | diretor@test.com | test123456 |
-| Secretário | secretario@test.com | test123456 |
-| Professor | professor@test.com | test123456 |
-| Responsável | responsavel@test.com | test123456 |
+`auth.setup.ts` e os runners isolados usam apenas identidades sintéticas locais.
+As credenciais pertencem aos seeds de teste e não devem ser reutilizadas em um
+ambiente externo.
 
 ## Brazilian Compliance
 
 Testes incluem validações brasileiras:
 - CPF com algoritmo de verificação
 - Formato de telefone brasileiro
-- NIS para Bolsa Família (11 dígitos)
-- Regra de lock de frequência às 18h (fuso São Paulo)
+- Prazo de frequência governado no banco: default semeado `18:00` em São Paulo,
+  com override por escola e valor capturado na sessão
 - Alerta de frequência < 80%
 
 ## Troubleshooting
 
-### Playwright não instalado
-```bash
-npx playwright install
-```
+### Ambiente incompleto
+
+Use o workspace provisionado e os pré-requisitos de `CONTEXT.md`; não instale
+dependências ad hoc durante uma rodada de evidência.
 
 ### Erro de autenticação
 ```bash
@@ -258,21 +243,22 @@ usa a chave `sb_publishable_...`, não a chave JWT legada `ANON_KEY`.
 ### Testes flaky
 ```bash
 # Rodar com retries
-npx playwright test --retries=3
+pnpm exec playwright test --retries=3
 ```
 
 ### Debug visual
 ```bash
-npx playwright test --headed --slowmo=1000
+pnpm exec playwright test --headed --slowmo=1000
 ```
 
 ---
 
 ## Resumo de Cobertura
 
-A cobertura autoritativa, incluindo rota, papel, viewport, interação, resultado
-e spec, está em [`COVERAGE_MATRIX.md`](COVERAGE_MATRIX.md). Use
-`pnpm exec playwright test --list` para a contagem atual, evitando números
-manuais que ficam desatualizados.
+A matriz autoritativa de catálogo, incluindo rota, papel, viewport, interação e
+spec, está em [`COVERAGE_MATRIX.md`](COVERAGE_MATRIX.md). Contagem de catálogo e
+resultado de execução são campos separados. General6 permanece uma evidência RED
+diagnóstica; uma futura rodada só deve ser registrada como `PASS` quando houver um
+recibo geral completo e aceito.
 
-*Última atualização: 2026-07-21*
+*Última atualização: 2026-09-08*

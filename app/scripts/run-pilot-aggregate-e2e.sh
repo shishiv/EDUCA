@@ -8,6 +8,7 @@ cd "$APP_DIR"
 # shellcheck source=pilot-port-range-lease.sh
 source "$APP_DIR/scripts/pilot-port-range-lease.sh"
 source "$APP_DIR/scripts/pilot-app-server.sh"
+source "$APP_DIR/scripts/pilot-local-runtime.sh"
 
 RECEIPT_ROOT="${PILOT_E2E_RECEIPT_DIR:-$ROOT_DIR/.pilot-evidence}"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -20,20 +21,6 @@ AGGREGATE_DELIBERATE_BREAK="${PILOT_AGGREGATE_DELIBERATE_BREAK:-none}"
 PORT_LEASE_RELEASE_FAILED=false
 
 mkdir -p "$CHILD_DIR" "$SUMMARY_DIR"
-
-redact_file() {
-  local source_file="$1"
-  local destination_file="$2"
-  if [[ ! -f "$source_file" ]]; then
-    return 0
-  fi
-  sed -E \
-    -e 's/sb_(publishable|secret)_[A-Za-z0-9_-]+/[REDACTED_SUPABASE_KEY]/g' \
-    -e 's/eyJ[A-Za-z0-9._-]+/[REDACTED_TOKEN]/g' \
-    -e 's#(postgresql://[^:@/]+):[^@]+@#\1:[REDACTED]@#g' \
-    -e 's#(https?://[^:/[:space:]]+):[0-9]+#\1#g' \
-    "$source_file" > "$destination_file"
-}
 
 write_child_summary() {
   local name="$1"

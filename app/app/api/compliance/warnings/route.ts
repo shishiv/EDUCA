@@ -1,7 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/logger'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
+import { logger } from '@/lib/logger'
 import {
   filterBolsaFamiliaConditionality,
   getAttendanceConditionality,
@@ -10,6 +9,7 @@ import {
 } from '@/lib/reports/attendance-conditionality'
 import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 import { createMunicipalSettingsService } from '@/lib/services/municipal-settings'
+import { createClient } from '@/lib/supabase/server'
 
 export interface ComplianceWarning {
   id: string
@@ -23,18 +23,47 @@ export interface ComplianceWarning {
   count?: number
 }
 
+interface ComplianceProfile {
+  tipo_usuario: string
+  escola_id: string | null
+}
+
+const bolsaFamiliaRoles = ['admin', 'diretor', 'secretario']
+const municipalSettingsRoles = ['admin', 'secretario', 'diretor', 'professor']
+const registrationRoles = ['admin', 'secretario']
+
 async function getAuthenticatedUser(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return null
   return user
 }
 
-function addEducacensoWarning(warnings: ComplianceWarning[], now: Date, userRole: string, deadline: string | null) {
+async function getComplianceProfile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<ComplianceProfile | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('tipo_usuario, escola_id')
+    .eq('id', userId)
+    .single()
+
+  return data
+}
+
+function addEducacensoWarning(
+  warnings: ComplianceWarning[],
+  now: Date,
+  userRole: string,
+  deadline: string | null,
+) {
   if (!deadline) return
+
   const educacensoDeadline = new Date(`${deadline}T00:00:00.000Z`)
   const daysUntilDeadline = Math.floor((educacensoDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const isRelevantDeadline = daysUntilDeadline > 0 && daysUntilDeadline <= 30
 
-  if (daysUntilDeadline > 0 && daysUntilDeadline <= 30 && userRole !== 'professor') {
+  if (isRelevantDeadline && userRole !== 'professor') {
     warnings.push({
       id: 'educacenso-deadline',
       title: `Prazo Educacenso ${deadline.slice(0, 4)}`,
@@ -43,160 +72,180 @@ function addEducacensoWarning(warnings: ComplianceWarning[], now: Date, userRole
       icon: 'FileText',
       actionUrl: '/dashboard/relatorios/educacenso',
       actionText: 'Revisar Dados',
-      deadline: educacensoDeadline
+      deadline: educacensoDeadline,
     })
   }
+}
+
+async function addOpenAttendanceWarning(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  warnings: ComplianceWarning[],
+  now: Date,
+  today: string,
+) {
+  const { data: openSessions } = await supabase
+    .from('sessoes_aula')
+    .select('id, turma_id, aberta_em')
+    .eq('status', 'ABERTA')
+    .gte('aberta_em', `${today}T00:00:00`)
+    .lte('aberta_em', `${today}T23:59:59`)
+
+  if (!openSessions || openSessions.length === 0) return
+
+  const lockTime = new Date()
+  lockTime.setHours(18, 0, 0, 0)
+  if (now >= lockTime) return
+
+  const hoursRemaining = Math.floor((lockTime.getTime() - now.getTime()) / (1000 * 60 * 60))
+  warnings.push({
+    id: 'attendance-lock-pending',
+    title: 'Bloqueio Automático de Frequência',
+    message: `${openSessions.length} sessão(ões) aberta(s) será(ão) bloqueada(s) automaticamente em ${hoursRemaining}h. Confirme toda a frequência antes deste horário.`,
+    type: hoursRemaining <= 2 ? 'critical' : 'warning',
+    icon: 'Clock',
+    actionUrl: '/dashboard/turmas',
+    actionText: 'Verificar Frequência',
+    deadline: lockTime,
+    count: openSessions.length,
+  })
+}
+
+async function addBolsaFamiliaWarnings(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  warnings: ComplianceWarning[],
+  profile: ComplianceProfile,
+  today: string,
+) {
+  if (!bolsaFamiliaRoles.includes(profile.tipo_usuario)) return
+
+  const conditionality = await getAttendanceConditionality(supabase, {
+    startDate: `${today.slice(0, 7)}-01`,
+    endDate: today,
+    escolaId: profile.escola_id ?? undefined,
+  })
+  if (conditionality.error) {
+    logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
+      feature: 'compliance-warnings',
+      action: 'resolve_attendance_conditionality',
+    })
+    return
+  }
+
+  const rows = filterBolsaFamiliaConditionality(conditionality.data)
+  const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
+  const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
+
+  if (legalRiskCount > 0) {
+    warnings.push({
+      id: 'bolsa-familia-legal-conditionality',
+      title: 'Condicionalidade legal Bolsa Família',
+      message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
+      type: 'critical',
+      icon: 'AlertTriangle',
+      actionUrl: '/relatorios/bolsa-familia',
+      actionText: 'Ver relatório',
+      count: legalRiskCount,
+    })
+  }
+  if (municipalRiskCount > 0) {
+    warnings.push({
+      id: 'bolsa-familia-municipal-margin',
+      title: 'Margem municipal de alerta precoce',
+      message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
+      type: 'warning',
+      icon: 'AlertCircle',
+      actionUrl: '/relatorios/bolsa-familia',
+      actionText: 'Ver relatório',
+      count: municipalRiskCount,
+    })
+  }
+}
+
+async function addEducacensoDeadlineWarning(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  warnings: ComplianceWarning[],
+  profile: ComplianceProfile,
+  now: Date,
+  today: string,
+) {
+  if (!municipalSettingsRoles.includes(profile.tipo_usuario)) return
+
+  const settings = await createMunicipalSettingsService(supabase).get(
+    profile.escola_id,
+    Number(today.slice(0, 4)),
+  )
+  addEducacensoWarning(warnings, now, profile.tipo_usuario, settings.educacenso_deadline)
+}
+
+async function addIncompleteRegistrationWarning(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  warnings: ComplianceWarning[],
+  userRole: string,
+) {
+  if (!registrationRoles.includes(userRole)) return
+
+  const incompleteRegistrations = (await getAuthorizedStudentProfiles(supabase))
+    .filter((student) => student.ativo && !student.cpf)
+
+  if (incompleteRegistrations.length > 0) {
+    warnings.push({
+      id: 'incomplete-registrations',
+      title: 'Cadastros Incompletos',
+      message: `${incompleteRegistrations.length} aluno(s) sem CPF cadastrado. Necessário para conformidade INEP.`,
+      type: 'warning',
+      icon: 'AlertCircle',
+      actionUrl: '/dashboard/alunos?filter=incomplete',
+      actionText: 'Completar Cadastros',
+      count: incompleteRegistrations.length,
+    })
+  }
+}
+
+function sortWarnings(warnings: ComplianceWarning[]) {
+  warnings.sort((a, b) => {
+    if (a.type === 'critical' && b.type !== 'critical') return -1
+    if (a.type !== 'critical' && b.type === 'critical') return 1
+    if (a.deadline && b.deadline) return a.deadline.getTime() - b.deadline.getTime()
+    return 0
+  })
 }
 
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
-
     const user = await getAuthenticatedUser(supabase)
-    if (!user) {
-      return NextResponse.json({ warnings: [] }, { status: 401 })
-    }
+    if (!user) return NextResponse.json({ warnings: [] }, { status: 401 })
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('tipo_usuario, escola_id')
-      .eq('id', user.id)
-      .single()
-
-    if (!userProfile) {
-      return NextResponse.json({ warnings: [] }, { status: 403 })
-    }
+    const profile = await getComplianceProfile(supabase, user.id)
+    if (!profile) return NextResponse.json({ warnings: [] }, { status: 403 })
 
     const warnings: ComplianceWarning[] = []
     const now = new Date()
     const today = getTodaySaoPaulo()
-
-    // WARNING 1: Check for open attendance sessions nearing auto-lock time
-    const { data: openSessions } = await supabase
-      .from('sessoes_aula')
-      .select('id, turma_id, aberta_em')
-      .eq('status', 'ABERTA')
-      .gte('aberta_em', `${today}T00:00:00`)
-      .lte('aberta_em', `${today}T23:59:59`)
-
-    if (openSessions && openSessions.length > 0) {
-      const lockTime = new Date()
-      lockTime.setHours(18, 0, 0, 0) // 18:00 lock time
-
-      if (now < lockTime) {
-        const hoursRemaining = Math.floor((lockTime.getTime() - now.getTime()) / (1000 * 60 * 60))
-
-        warnings.push({
-          id: 'attendance-lock-pending',
-          title: 'Bloqueio Automático de Frequência',
-          message: `${openSessions.length} sessão(ões) aberta(s) será(ão) bloqueada(s) automaticamente em ${hoursRemaining}h. Confirme toda a frequência antes deste horário.`,
-          type: hoursRemaining <= 2 ? 'critical' : 'warning',
-          icon: 'Clock',
-          actionUrl: '/dashboard/turmas',
-          actionText: 'Verificar Frequência',
-          deadline: lockTime,
-          count: openSessions.length
-        })
-      }
-    }
-
-    if (['admin', 'diretor', 'secretario'].includes(userProfile.tipo_usuario)) {
-      const monthStart = `${today.slice(0, 7)}-01`
-      const conditionality = await getAttendanceConditionality(supabase, {
-        startDate: monthStart,
-        endDate: today,
-        escolaId: userProfile.escola_id ?? undefined,
-      })
-
-      if (!conditionality.error) {
-        const rows = filterBolsaFamiliaConditionality(conditionality.data)
-        const legalRiskCount = rows.filter(isLegalAttendanceRisk).length
-        const municipalRiskCount = rows.filter(isMunicipalAttendanceRisk).length
-
-        if (legalRiskCount > 0) {
-          warnings.push({
-            id: 'bolsa-familia-legal-conditionality',
-            title: 'Condicionalidade legal Bolsa Família',
-            message: `${legalRiskCount} aluno(s) abaixo do piso legal resolvido por faixa etária.`,
-            type: 'critical',
-            icon: 'AlertTriangle',
-            actionUrl: '/relatorios/bolsa-familia',
-            actionText: 'Ver relatório',
-            count: legalRiskCount,
-          })
-        }
-
-        if (municipalRiskCount > 0) {
-          warnings.push({
-            id: 'bolsa-familia-municipal-margin',
-            title: 'Margem municipal de alerta precoce',
-            message: `${municipalRiskCount} aluno(s) abaixo da margem municipal resolvida.`,
-            type: 'warning',
-            icon: 'AlertCircle',
-            actionUrl: '/relatorios/bolsa-familia',
-            actionText: 'Ver relatório',
-            count: municipalRiskCount,
-          })
-        }
-      } else {
-        logger.error('Error resolving compliance attendance conditionality', new Error(conditionality.error), {
-          feature: 'compliance-warnings',
-          action: 'resolve_attendance_conditionality',
-        })
-      }
-    }
-
-    if (['admin', 'secretario', 'diretor', 'professor'].includes(userProfile.tipo_usuario)) {
-      const settings = await createMunicipalSettingsService(supabase).get(
-        userProfile.escola_id,
-        Number(today.slice(0, 4))
-      )
-      addEducacensoWarning(warnings, now, userProfile.tipo_usuario, settings.educacenso_deadline)
-    }
-
-    // WARNING 5: Incomplete student registrations (missing CPF, responsaveis, etc.)
-    if (userProfile.tipo_usuario === 'secretario' || userProfile.tipo_usuario === 'admin') {
-      const incompleteRegistrations = (await getAuthorizedStudentProfiles(supabase))
-        .filter(student => student.ativo && !student.cpf)
-
-      if (incompleteRegistrations.length > 0) {
-        warnings.push({
-          id: 'incomplete-registrations',
-          title: 'Cadastros Incompletos',
-          message: `${incompleteRegistrations.length} aluno(s) sem CPF cadastrado. Necessário para conformidade INEP.`,
-          type: 'warning',
-          icon: 'AlertCircle',
-          actionUrl: '/dashboard/alunos?filter=incomplete',
-          actionText: 'Completar Cadastros',
-          count: incompleteRegistrations.length
-        })
-      }
-    }
-
-    // Sort by priority: critical first, then by deadline
-    warnings.sort((a, b) => {
-      if (a.type === 'critical' && b.type !== 'critical') return -1
-      if (a.type !== 'critical' && b.type === 'critical') return 1
-      if (a.deadline && b.deadline) return a.deadline.getTime() - b.deadline.getTime()
-      return 0
-    })
+    await addOpenAttendanceWarning(supabase, warnings, now, today)
+    await addBolsaFamiliaWarnings(supabase, warnings, profile, today)
+    await addEducacensoDeadlineWarning(supabase, warnings, profile, now, today)
+    await addIncompleteRegistrationWarning(supabase, warnings, profile.tipo_usuario)
+    sortWarnings(warnings)
 
     return NextResponse.json({
       success: true,
       warnings,
       total: warnings.length,
-      timestamp: now.toISOString()
+      timestamp: now.toISOString(),
     })
-
   } catch (error) {
-    logger.error('Error fetching compliance warnings', error instanceof Error ? error : new Error(String(error)))
+    logger.error(
+      'Error fetching compliance warnings',
+      error instanceof Error ? error : new Error(String(error)),
+    )
     return NextResponse.json(
       {
         success: false,
         warnings: [],
-        error: 'Failed to fetch compliance warnings'
+        error: 'Failed to fetch compliance warnings',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

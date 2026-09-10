@@ -4,6 +4,7 @@ import { Inter, Lexend } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Providers } from './providers'
+import { createRootMetadata } from '@/lib/root-metadata'
 
 // Body text font
 const inter = Inter({
@@ -23,12 +24,10 @@ const lexend = Lexend({
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('common.metadata')
 
-  return {
-    metadataBase: new URL('https://geteduca.vercel.app'),
-    manifest: '/site.webmanifest',
+  return createRootMetadata({
     title: t('title'),
     description: t('description'),
-  }
+  })
 }
 
 export default async function RootLayout({

@@ -1,12 +1,14 @@
 #!/usr/bin/env tsx
 import { createClient } from '@supabase/supabase-js'
 import { assertSyntheticPilotSafety } from '../lib/pilot/pilot-safety-gate'
+import { resolveSeedMunicipalityId } from '../lib/pilot/seed-municipality'
+import type { Database } from '../types/database'
 
 assertSyntheticPilotSafety('seed')
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const service = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+const service = createClient<Database>(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
 const password = 'Synthetic-Only-2026!'
 const syntheticAdminEmail = 'admin@synthetic.invalid'
 const syntheticAdminId = '20000000-0000-0000-0000-000000000001'
@@ -25,7 +27,7 @@ const accounts = [
 
 async function createSyntheticAuthUser(account: typeof accounts[number]): Promise<string> {
   const { data, error } = await service.auth.admin.createUser({
-    ...(account.email === syntheticAdminEmail ? { id: syntheticAdminId } : {}),
+    id: account.email === syntheticAdminEmail ? syntheticAdminId : undefined,
     email: account.email,
     password,
     email_confirm: true,
@@ -35,12 +37,74 @@ async function createSyntheticAuthUser(account: typeof accounts[number]): Promis
   return data.user.id
 }
 
-async function seed() {
+async function seedAttendanceCutoffs() {
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!anonKey) throw new Error('SYNTHETIC_SEED_ANON_KEY_REQUIRED')
+  for (const account of accounts) {
+    if (account.role !== 'diretor') continue
+    const director = createClient<Database>(url, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+    const login = await director.auth.signInWithPassword({ email: account.email, password })
+    if (login.error) throw login.error
+    // Same-day fixture policy is persisted and audited through the real
+    // director boundary; application code has no E2E clock bypass.
+    const result = await director.rpc('set_attendance_daily_cutoff', {
+      p_school_id: account.schoolId, p_cutoff: '24:00:00',
+    })
+    if (result.error) throw result.error
+    await director.auth.signOut()
+  }
+}
+
+async function seedGovernanceEvidence(secretariatId: string) {
+  const { error: agreementError } = await service.from('pilot_data_treatment_agreements').upsert([
+    {
+      escola_id: schoolA,
+      reference: 'DPA-SYN-E2E-001',
+      version: 'v1',
+      confirmed: true,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: secretariatId,
+    },
+    {
+      escola_id: schoolB,
+      reference: 'DPA-SYN-E2E-001',
+      version: 'v1',
+      confirmed: true,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: secretariatId,
+    },
+  ], { onConflict: 'escola_id,reference,version' })
+  if (agreementError) throw agreementError
+  const { error: metricsError } = await service.from('pilot_metric_events').insert([
+    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'weekly_school_active', metric_value: 1, dimensions: { synthetic: true } },
+    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'expected_attendance', metric_value: 1, dimensions: { synthetic: true } },
+    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'attendance_recorded', metric_value: 1, dimensions: { synthetic: true } },
+    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'satisfaction_submitted', metric_value: 5, dimensions: { synthetic: true } },
+  ])
+  if (metricsError) throw metricsError
+  const { error: tombstoneError } = await service.from('pilot_data_tombstones').upsert({
+    entity_type: 'technical_copy', source_fingerprint: 'synthetic-deleted-copy-sha256', reason_code: 'synthetic_restore_test', created_by: secretariatId,
+  }, { onConflict: 'entity_type,source_fingerprint' })
+  if (tombstoneError) throw tombstoneError
+
+  const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  const { error: storageError } = await service.storage.from('student-photos').upload(`${schoolA}/synthetic-student/avatar.png`, pixel, { contentType: 'image/png', upsert: true })
+  if (storageError) throw storageError
+}
+
+async function seedSchools() {
+  const municipioId = await resolveSeedMunicipalityId(service)
   const { error: schoolsError } = await service.from('escolas').upsert([
-    { id: schoolA, codigo: '00000001', nome: 'Escola Sintetica A', tipo: 'fundamental', ativo: true },
-    { id: schoolB, codigo: '00000002', nome: 'Escola Sintetica B', tipo: 'fundamental', ativo: true },
+    { municipio_id: municipioId, id: schoolA, codigo: '00000001', nome: 'Escola Sintetica A', tipo: 'fundamental', ativo: true },
+    { municipio_id: municipioId, id: schoolB, codigo: '00000002', nome: 'Escola Sintetica B', tipo: 'fundamental', ativo: true },
   ], { onConflict: 'id' })
   if (schoolsError) throw schoolsError
+}
+
+async function seed() {
+  await seedSchools()
 
   const accountIds = new Map<string, string>()
   for (const account of accounts) accountIds.set(account.email, await createSyntheticAuthUser(account))
@@ -49,6 +113,7 @@ async function seed() {
     tipo_usuario: account.role, escola_id: account.schoolId, ativo: true, primeiro_login: false, senha_padrao: false,
   })), { onConflict: 'id' })
   if (profilesError) throw profilesError
+  await seedAttendanceCutoffs()
 
   const professorA = accountIds.get('professora.a@synthetic.invalid')!
   const { error: classesError } = await service.from('turmas').upsert([
@@ -108,41 +173,7 @@ async function seed() {
   }, { onConflict: 'id' })
   if (attendanceError) throw attendanceError
 
-  const secretariatId = accountIds.get('secretaria@synthetic.invalid')!
-  const { error: agreementError } = await service.from('pilot_data_treatment_agreements').upsert([
-    {
-      escola_id: schoolA,
-      reference: 'DPA-SYN-E2E-001',
-      version: 'v1',
-      confirmed: true,
-      confirmed_at: new Date().toISOString(),
-      confirmed_by: secretariatId,
-    },
-    {
-      escola_id: schoolB,
-      reference: 'DPA-SYN-E2E-001',
-      version: 'v1',
-      confirmed: true,
-      confirmed_at: new Date().toISOString(),
-      confirmed_by: secretariatId,
-    },
-  ], { onConflict: 'escola_id,reference,version' })
-  if (agreementError) throw agreementError
-  const { error: metricsError } = await service.from('pilot_metric_events').insert([
-    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'weekly_school_active', metric_value: 1, dimensions: { synthetic: true } },
-    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'expected_attendance', metric_value: 1, dimensions: { synthetic: true } },
-    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'attendance_recorded', metric_value: 1, dimensions: { synthetic: true } },
-    { escola_id: schoolA, actor_user_id: secretariatId, event_name: 'satisfaction_submitted', metric_value: 5, dimensions: { synthetic: true } },
-  ])
-  if (metricsError) throw metricsError
-  const { error: tombstoneError } = await service.from('pilot_data_tombstones').upsert({
-    entity_type: 'technical_copy', source_fingerprint: 'synthetic-deleted-copy-sha256', reason_code: 'synthetic_restore_test', created_by: secretariatId,
-  }, { onConflict: 'entity_type,source_fingerprint' })
-  if (tombstoneError) throw tombstoneError
-
-  const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
-  const { error: storageError } = await service.storage.from('student-photos').upload(`${schoolA}/synthetic-student/avatar.png`, pixel, { contentType: 'image/png', upsert: true })
-  if (storageError) throw storageError
+  await seedGovernanceEvidence(accountIds.get('secretaria@synthetic.invalid')!)
   process.stdout.write('Synthetic pilot seed complete\n')
 }
 

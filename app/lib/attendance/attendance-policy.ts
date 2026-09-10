@@ -1,8 +1,8 @@
 /**
- * Canonical frequency alert policy for every attendance surface.
+ * General municipal frequency alert bands.
  *
- * CONFORMIDADE is the Bolsa Família conditionality threshold. ATENCAO is a
- * preventive municipal margin and must never replace the conditionality.
+ * These bands classify the general attendance projection. Benefit-specific
+ * eligibility uses the separately authorized conditionality read model.
  */
 export const CONFORMIDADE = 80
 export const ATENCAO = 85
@@ -14,14 +14,14 @@ export const FREQUENCIA_THRESHOLDS = {
 
 export type FrequencyPolicyStatus = 'CONFORME' | 'ATENCAO' | 'CRITICO'
 
-/** Classifies a percentage using the canonical compliance and attention bands. */
+/** Classifies a percentage using the municipal reference and attention bands. */
 export function getFrequencyPolicyStatus(percentual: number): FrequencyPolicyStatus {
   if (percentual < CONFORMIDADE) return 'CRITICO'
   if (percentual < ATENCAO) return 'ATENCAO'
   return 'CONFORME'
 }
 
-/** Returns whether the Bolsa Família conditionality is met. */
+/** Returns whether the general municipal attendance reference is met. */
 export function isAttendanceCompliant(percentual: number): boolean {
   return percentual >= CONFORMIDADE
 }
@@ -35,10 +35,10 @@ export function needsPreventiveAttendanceAttention(percentual: number): boolean 
 export function getFrequencyPolicyLabel(status: FrequencyPolicyStatus): string {
   switch (status) {
     case 'CRITICO':
-      return 'Não conformidade Bolsa Família'
+      return 'Abaixo da referência municipal'
     case 'ATENCAO':
       return 'Atenção preventiva'
     case 'CONFORME':
-      return 'Conformidade Bolsa Família'
+      return 'Referência municipal atendida'
   }
 }

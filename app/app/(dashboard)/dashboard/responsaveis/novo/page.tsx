@@ -21,49 +21,9 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { validateCPF, validatePhone } from '@/lib/validation/brazilian'
+import { prepareGuardianRegistration, type GuardianRegistrationForm } from '@/lib/services/guardian-registration'
 import { OperationalDataNotice, OptionalConsentCheckbox } from '@/components/lgpd'
 import { useEscola } from '@/contexts/escola-context'
-
-type ResponsavelFormData = {
-  nome: string
-  cpf: string
-  telefone: string
-  email: string
-  parentesco: string
-  endereco: string
-  profissao: string
-  lgpd_consentimento: boolean
-}
-
-function getValidationError(formData: ResponsavelFormData) {
-  if (!formData.nome || !formData.cpf || !formData.parentesco) {
-    return 'ui.preencha-todos-os-campos-obrigatorios'
-  }
-
-  if (!validateCPF(formData.cpf.replace(/\D/g, ''))) {
-    return 'ui.cpf-invalido-verifique-os-dados-inseridos'
-  }
-
-  return formData.telefone && !validatePhone(formData.telefone)
-    ? 'ui.telefone-invalido-informe-um-telefone-com-10-ou-11-digitos'
-    : null
-}
-
-function mapResponsavelData(formData: ResponsavelFormData, selectedEscolaId: string | null) {
-  return {
-    nome: formData.nome,
-    cpf: formData.cpf.replace(/\D/g, ''),
-    telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
-    email: formData.email || null,
-    parentesco: formData.parentesco,
-    endereco: formData.endereco || null,
-    profissao: formData.profissao || null,
-    lgpd_consentimento: formData.lgpd_consentimento,
-    lgpd_data_consentimento: formData.lgpd_consentimento ? new Date().toISOString() : null,
-    escola_id: selectedEscolaId,
-  }
-}
 
 function getSubmitErrorMessage(error: { message?: string }) {
   if (error.message?.includes('duplicate')) return 'CPF já cadastrado no sistema'
@@ -76,7 +36,7 @@ export default function NovoResponsavelPage() {
   const router = useRouter()
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<ResponsavelFormData>({
+  const [formData, setFormData] = useState<GuardianRegistrationForm>({
     nome: '',
     cpf: '',
     telefone: '',
@@ -92,15 +52,15 @@ export default function NovoResponsavelPage() {
     setLoading(true)
 
     try {
-      const validationError = getValidationError(formData)
-      if (validationError) {
-        toast.error(t(validationError))
+      const registration = prepareGuardianRegistration(formData, selectedEscolaId)
+      if (!registration.valid) {
+        toast.error(t(registration.error))
         return
       }
 
       const { data, error } = await supabase
         .from('responsaveis')
-        .insert([mapResponsavelData(formData, selectedEscolaId ?? null)])
+        .insert([registration.data])
         .select('id')
         .single()
 
@@ -116,15 +76,16 @@ export default function NovoResponsavelPage() {
       logger.info('Responsável cadastrado:', { metadata: { responsavelId: data?.id } })
       toast.success(t('ui.responsavel-cadastrado-com-sucesso'))
       router.push('/dashboard/responsaveis')
-    } catch (error: any) {
-      logger.error('Erro ao cadastrar responsável:', error)
-      toast.error(getSubmitErrorMessage(error))
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error('Erro ao cadastrar responsável')
+      logger.error('Erro ao cadastrar responsável:', failure)
+      toast.error(getSubmitErrorMessage(failure))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <Field extends keyof GuardianRegistrationForm>(field: Field, value: GuardianRegistrationForm[Field]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 

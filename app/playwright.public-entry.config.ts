@@ -5,7 +5,7 @@ const port = new URL(baseURL).port || '3000'
 
 export default defineConfig({
   testDir: './tests/e2e/public-demo',
-  testMatch: /public-visitor\.spec\.ts/,
+  testMatch: /(?:public-visitor|service-worker-lifecycle)\.spec\.ts/,
   fullyParallel: false,
   workers: 1,
   timeout: 30_000,

@@ -21,7 +21,7 @@ export async function decideAttendanceReopenAction(
 
     return result
   } catch (error) {
-    logger.error('ATTENDANCE_REOPEN_DECISION_ADAPTER_FAILED', error as Error, {
+    logger.error('ATTENDANCE_REOPEN_DECISION_ADAPTER_FAILED', error instanceof Error ? error : new Error('Erro desconhecido'), {
       metadata: { requestId: params?.request_id, decision: params?.decision },
     })
     return {

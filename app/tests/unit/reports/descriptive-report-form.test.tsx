@@ -1,17 +1,7 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { screen } from '@testing-library/react'
+import { renderWithMessages as render } from '../components/render-with-messages'
+import { describe, expect, it } from 'vitest'
 import { DescriptiveReportForm } from '@/components/reports/DescriptiveReportForm'
-
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => ({
-    'components.descriptive.unsaved': 'Alterações não salvas',
-    'components.descriptive.saved': 'Todas as alterações salvas',
-    'components.descriptive.finalTitle': 'Relatório finalizado',
-    'components.descriptive.finalizedReadOnly': 'Este relatório não pode ser alterado',
-    'components.descriptive.complementary': 'Observações complementares',
-    'components.descriptive.saveDraft': 'Salvar rascunho',
-  })[key] ?? key,
-}))
 
 describe('DescriptiveReportForm', () => {
   it('renders the draft header, progress and actions', () => {
@@ -26,7 +16,7 @@ describe('DescriptiveReportForm', () => {
     expect(screen.getByText('Criança Sintética').parentElement).toHaveTextContent('1 Semestre de 2026')
     expect(screen.getByText('0%')).toBeInTheDocument()
     expect(screen.getByText('Rascunho')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Salvar rascunho' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Salvar Rascunho' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Finalizar' })).toBeDisabled()
   })
 
@@ -40,9 +30,9 @@ describe('DescriptiveReportForm', () => {
     )
 
     expect(screen.getByText('Finalizado')).toBeInTheDocument()
-    expect(screen.getByText('Relatório finalizado')).toBeInTheDocument()
+    expect(screen.getByText('Relatório Finalizado')).toBeInTheDocument()
     for (const textbox of screen.getAllByRole('textbox')) expect(textbox).toBeDisabled()
-    expect(screen.queryByRole('button', { name: 'Salvar rascunho' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Salvar Rascunho' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Finalizar' })).not.toBeInTheDocument()
   })
 })

@@ -28,9 +28,38 @@ export interface DashboardAlert {
   createdAt: string
 }
 
-type UserProfile = Pick<Tables<'users'>, 'id' | 'tipo_usuario' | 'escola_id'>
+type UserProfile = Pick<Tables<'users'>, 'id' | 'tipo_usuario' | 'escola_id' | 'ativo'>
 type VisibleTurma = Pick<Tables<'turmas'>, 'id' | 'nome'>
 type ServerClient = SupabaseClient<Database>
+
+interface AlertsRequestParams {
+  escolaId: string
+  requestedYear: number
+}
+
+function getAlertsRequestParams(request: NextRequest): AlertsRequestParams | null {
+  const escolaId = request.nextUrl.searchParams.get('escolaId')
+  const requestedYearParam = request.nextUrl.searchParams.get('year')
+
+  if (!escolaId || !requestedYearParam || !/^\d{4}$/.test(requestedYearParam)) return null
+
+  return { escolaId, requestedYear: Number(requestedYearParam) }
+}
+
+function canAccessRequestedSchool(userProfile: UserProfile, escolaId: string): boolean {
+  const municipalRole = ['admin', 'secretario', 'gestor_sme'].includes(userProfile.tipo_usuario)
+  return userProfile.escola_id === escolaId || (userProfile.escola_id === null && municipalRole)
+}
+
+async function loadAlertsProfile(supabase: ServerClient, userId: string): Promise<UserProfile | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('id, tipo_usuario, escola_id, ativo')
+    .eq('id', userId)
+    .single()
+
+  return data
+}
 
 async function loadVisibleTurmas(
   supabase: ServerClient,
@@ -223,37 +252,33 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
+    if (authError || !user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('id, tipo_usuario, escola_id')
-      .eq('id', user.id)
-      .single()
+    const userProfile = await loadAlertsProfile(supabase, user.id)
+    if (!userProfile || !userProfile.ativo) return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 403 })
 
-    if (!userProfile) {
-      return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 403 })
-    }
-
-    const escolaId = request.nextUrl.searchParams.get('escolaId')
-    const requestedYearParam = request.nextUrl.searchParams.get('year')
-    if (!escolaId || !requestedYearParam || !/^\d{4}$/.test(requestedYearParam)) {
+    const requestParams = getAlertsRequestParams(request)
+    if (!requestParams) {
       return NextResponse.json({ error: 'Escola e ano letivo são obrigatórios' }, { status: 400 })
     }
 
-    if (userProfile.escola_id && userProfile.escola_id !== escolaId) {
+    if (!canAccessRequestedSchool(userProfile, requestParams.escolaId)) {
       return NextResponse.json({ error: 'Acesso negado para esta escola' }, { status: 403 })
     }
 
     const today = getTodaySaoPaulo()
-    const academicYear = await createAcademicYearService(supabase).resolveCurrent(escolaId, today)
-    if (academicYear.year !== Number(requestedYearParam)) {
+    const academicYear = await createAcademicYearService(supabase).resolveCurrent(requestParams.escolaId, today)
+    if (academicYear.year !== requestParams.requestedYear) {
       return NextResponse.json({ error: 'Ano letivo desatualizado' }, { status: 409 })
     }
 
-    const alerts = await loadDashboardAlerts(supabase, userProfile, escolaId, academicYear, today)
+    const alerts = await loadDashboardAlerts(
+      supabase,
+      userProfile,
+      requestParams.escolaId,
+      academicYear,
+      today,
+    )
 
     return NextResponse.json({
       success: true,
@@ -261,7 +286,10 @@ export async function GET(request: NextRequest) {
       total: alerts.length,
     })
   } catch (error) {
-    logger.error('Error in dashboard alerts API', error as Error)
+    logger.error(
+      'Error in dashboard alerts API',
+      error instanceof Error ? error : new Error(String(error)),
+    )
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

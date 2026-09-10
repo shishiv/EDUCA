@@ -1,0 +1,6 @@
+[salvar/educa-quality-contracts-20260908 9732efea] chore(quality): preserve contracts worktree from 2026-09-07
+ 25 files changed, 668 insertions(+), 322 deletions(-)
+ create mode 100644 VENT.md
+ create mode 100644 app/tests/unit/contracts/demo-audit-route-contract.test.ts
+ create mode 100644 app/tests/unit/contracts/logger-contract.test.ts
+ create mode 100644 app/tests/unit/contracts/shared-contracts.test.ts

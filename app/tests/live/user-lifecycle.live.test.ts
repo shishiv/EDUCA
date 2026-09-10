@@ -34,49 +34,65 @@ const run = LIVE ? describe : describe.skip
 let service: SupabaseClient | null = null
 const fixtureIds: string[] = []
 
-async function createFixture(): Promise<Fixture> {
+function requireLiveFixtureConfig() {
   if (!service || !URL || !ANON_KEY || !SERVICE_ROLE_KEY) {
     throw new Error('C09 live test requires local Supabase credentials')
   }
+  return { service, url: URL, anonKey: ANON_KEY }
+}
 
-  const email = `c09-${process.pid}-${Date.now()}-${fixtureIds.length}@synthetic.invalid`
-  const { data, error } = await service.auth.admin.createUser({
+async function createAuthFixtureUser(admin: SupabaseClient, email: string) {
+  const { data, error } = await admin.auth.admin.createUser({
     email,
     password: PASSWORD,
     email_confirm: true,
     user_metadata: { synthetic: true, nome: 'Usuário C09 Sintético' },
   })
   if (error || !data.user) throw error || new Error('C09 live Auth fixture was not created')
+  return data.user
+}
 
-  fixtureIds.push(data.user.id)
-  const { data: adminUser, error: adminUserError } = await service
+async function findMunicipalAdminId(admin: SupabaseClient): Promise<string> {
+  const { data, error } = await admin
     .from('users')
     .select('id')
     .eq('tipo_usuario', 'admin')
     .limit(1)
     .maybeSingle()
-  if (adminUserError || !adminUser) throw adminUserError || new Error('C09 live actor fixture was not found')
+  if (error || !data) throw error || new Error('C09 live actor fixture was not found')
+  return data.id
+}
 
-  const { error: invitationError } = await service.from('pilot_user_invitations').insert({
-    auth_user_id: data.user.id,
+async function createPendingInvitation(admin: SupabaseClient, authUserId: string, email: string, invitedBy: string) {
+  const { error } = await admin.from('pilot_user_invitations').insert({
+    auth_user_id: authUserId,
     email,
     invited_role: 'secretario',
     escola_id: null,
-    invited_by: adminUser.id,
+    invited_by: invitedBy,
   })
-  if (invitationError) throw invitationError
+  if (error) throw error
+}
 
-  const client = createClient(URL, ANON_KEY, {
+async function createFixture(): Promise<Fixture> {
+  const { service: admin, url, anonKey } = requireLiveFixtureConfig()
+  const email = `c09-${process.pid}-${Date.now()}-${fixtureIds.length}@synthetic.invalid`
+  const authUser = await createAuthFixtureUser(admin, email)
+  fixtureIds.push(authUser.id)
+  const invitedBy = await findMunicipalAdminId(admin)
+  await createPendingInvitation(admin, authUser.id, email, invitedBy)
+
+  const client = createClient(url, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   })
   return {
-    id: data.user.id,
+    id: authUser.id,
     email,
-    invitedBy: adminUser.id,
+    invitedBy,
     authUser: {
-      id: data.user.id,
-      email: data.user.email,
-      user_metadata: data.user.user_metadata,
+      id: authUser.id,
+      email: authUser.email,
+      user_metadata: authUser.user_metadata,
     },
     client,
   }

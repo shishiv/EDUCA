@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { tmpdir } from 'node:os'
@@ -18,7 +18,7 @@ afterAll(() => {
   rmSync(stubDir, { recursive: true, force: true })
 })
 
-function writeStubs(opts: {
+interface CleanupOptions {
   supabaseStopExitCode?: number
   runningContainers?: string[]
   stoppedContainers?: string[]
@@ -28,18 +28,25 @@ function writeStubs(opts: {
   probeFails?: boolean
   neighborContainers?: string[]
   neighborProject?: string
-}) {
+}
+
+function writeStubs(opts: CleanupOptions) {
   const {
-    supabaseStopExitCode = 0,
-    runningContainers = [],
-    stoppedContainers = [],
-    volumes = [],
-    networks = [],
-    stopFails = false,
-    probeFails = false,
-    neighborContainers = [],
-    neighborProject = 'neighbor-project',
-  } = opts
+    supabaseStopExitCode,
+    runningContainers,
+    stoppedContainers,
+    volumes,
+    networks,
+    stopFails,
+    probeFails,
+    neighborContainers,
+    neighborProject,
+  } = {
+    supabaseStopExitCode: 0,
+    runningContainers: [], stoppedContainers: [], volumes: [], networks: [],
+    stopFails: false, probeFails: false, neighborContainers: [], neighborProject: 'neighbor-project',
+    ...opts,
+  }
 
   const callLog = path.join(stubDir, 'calls.log')
   const stateFile = path.join(stubDir, 'stopped_called')
@@ -113,35 +120,20 @@ exit 0
   writeFileSync(path.join(stubBin, 'docker'), dockerStub, { mode: 0o755 })
 }
 
-function runCleanup(projectDir: string, projectId: string): { exitCode: number; output: string; callLog: string } {
+function runCleanup(projectDir: string, projectId: string) {
   const callLog = path.join(stubDir, 'calls.log')
   const stderrFile = path.join(stubDir, 'stderr.log')
   writeFileSync(stderrFile, '')
-  try {
-    const stdout = execFileSync('bash', [
-      '-c',
-      `export PATH="${stubBin}:$PATH"; source "$1"; pilot_supabase_stop_project "$2" "$3" 2>"$4"`,
-      '--',
-      cleanupScript,
-      projectDir,
-      projectId,
-      stderrFile,
-    ], { encoding: 'utf8' })
-    const stderr = readFileSync(stderrFile, 'utf8')
-    return { exitCode: 0, output: stdout + stderr, callLog: readFileSync(callLog, 'utf8') }
-  } catch (error: unknown) {
-    const failure = error as {
-      status?: number
-      stdout?: string
-      stderr?: string
-    }
-    let stderrContent = ''
-    try { stderrContent = readFileSync(stderrFile, 'utf8') } catch { /* */ }
-    return {
-      exitCode: failure.status ?? 1,
-      output: (failure.stdout ?? '') + stderrContent + (failure.stderr ?? ''),
-      callLog: readFileSync(callLog, 'utf8'),
-    }
+  const result = spawnSync('bash', [
+    '-c',
+    'source "$1"; pilot_supabase_stop_project "$2" "$3" 2>"$4"',
+    '--', cleanupScript, projectDir, projectId, stderrFile,
+  ], { encoding: 'utf8', env: { ...process.env, PATH: `${stubBin}:${process.env.PATH}` } })
+  if (result.error) throw result.error
+  return {
+    exitCode: result.status ?? 1,
+    output: result.stdout + readFileSync(stderrFile, 'utf8') + result.stderr,
+    callLog: readFileSync(callLog, 'utf8'),
   }
 }
 

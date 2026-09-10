@@ -17,6 +17,7 @@
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { z } from 'zod'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -63,12 +64,11 @@ import {
   lessonContentFormSchema,
   type LessonContentFormData,
   EXPERIENCE_FIELD_OPTIONS,
-  parseBNNCCodes,
 } from '@/lib/validation/lesson-content'
 import { useAuth } from '@/hooks/use-auth'
-import { supabase } from '@/lib/supabase'
+import { createDiaryLessonAction } from '@/app/actions/diary/create-lesson'
 import { logger } from '@/lib/logger'
-import { cn } from '@/lib/utils'
+import { getTodaySaoPauloDate } from '@/lib/date-utils'
 import type { EducationLevel } from '@/types/lesson-content'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
@@ -85,92 +85,6 @@ interface NewLessonModalProps {
   onSuccess?: () => void
 }
 
-/** Explains why an authorized diary write did not complete. */
-function getLessonCreationErrorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42501') {
-    return 'Seu perfil pode apenas visualizar o diário. Professores e diretores registram aulas.'
-  }
-
-  return 'Não foi possível criar a aula. Tente novamente.'
-}
-
-async function getOrCreateLessonSession(
-  turmaId: string,
-  dateStr: string,
-  professorId: string,
-  profileSchoolId: string | null,
-  tema: string
-) {
-  const { data: existingSession, error } = await supabase
-    .from('sessoes_aula')
-    .select('id')
-    .eq('turma_id', turmaId)
-    .eq('data_aula', dateStr)
-    .maybeSingle()
-
-  if (error && error.code !== 'PGRST116') throw error
-  if (existingSession) return existingSession.id
-
-  const { data: turmaData } = await supabase
-    .from('turmas')
-    .select('escola_id')
-    .eq('id', turmaId)
-    .single()
-  const escolaId = turmaData?.escola_id || profileSchoolId
-  if (!escolaId) return null
-
-  const { data: newSession, error: createError } = await supabase
-    .from('sessoes_aula')
-    .insert({
-      turma_id: turmaId,
-      data_aula: dateStr,
-      status: 'ABERTA',
-      professor_id: professorId,
-      escola_id: escolaId,
-      conteudo_programatico: tema,
-    })
-    .select('id')
-    .single()
-  if (createError) throw createError
-  return newSession.id
-}
-
-async function saveLessonContent(
-  sessionId: string,
-  formData: LessonContentFormData,
-  turmaId: string,
-  dateStr: string
-) {
-  const { error } = await supabase
-    .from('conteudo_aula')
-    .insert({
-      sessao_id: sessionId,
-      tema: formData.tema.trim(),
-      objetivo: formData.objetivo.trim(),
-      habilidades_bncc: formData.habilidades_bncc_input ? parseBNNCCodes(formData.habilidades_bncc_input) : [],
-      metodologia: formData.metodologia?.trim() || null,
-      recursos: formData.recursos?.trim() || null,
-      observacoes: formData.observacoes?.trim() || null,
-    })
-
-  if (!error) {
-    logger.info('Lesson created successfully', {
-      feature: 'diario',
-      action: 'create_lesson',
-      metadata: { sessionId, turmaId, date: dateStr },
-    })
-    return
-  }
-  if (error.code !== '42P01') throw error
-
-  await supabase.from('sessoes_aula').update({ conteudo_programatico: formData.tema }).eq('id', sessionId)
-  logger.info('Lesson content saved to session (table not yet created)', {
-    feature: 'diario',
-    action: 'create_lesson_fallback',
-    metadata: { sessionId, turmaId, date: dateStr },
-  })
-}
-
 // ============================================================================
 // Component
 // ============================================================================
@@ -185,14 +99,14 @@ export function NewLessonModal({
 }: NewLessonModalProps) {
   const t = useClassroomTranslations()
   const { userProfile } = useAuth()
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(getTodaySaoPauloDate)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const canCreateLesson = userProfile?.tipo_usuario === 'professor' || userProfile?.tipo_usuario === 'diretor'
+  const canCreateLesson = ['professor', 'diretor'].includes(userProfile?.tipo_usuario ?? '')
 
   // Form setup
-  const form = useForm({
+  const form = useForm<z.input<typeof lessonContentFormSchema>, undefined, LessonContentFormData>({
     resolver: zodResolver(lessonContentFormSchema),
     defaultValues: {
       tema: '',
@@ -203,7 +117,7 @@ export function NewLessonModal({
       observacoes: '',
       campos_experiencia: [],
       education_level: educationLevel,
-    } as LessonContentFormData,
+    },
   })
 
   // Reset form when modal opens
@@ -218,8 +132,8 @@ export function NewLessonModal({
         observacoes: '',
         campos_experiencia: [],
         education_level: educationLevel,
-      } as LessonContentFormData)
-      setSelectedDate(new Date())
+      })
+      setSelectedDate(getTodaySaoPauloDate())
       setSubmissionError(null)
     }
   }, [open, form, educationLevel])
@@ -228,8 +142,7 @@ export function NewLessonModal({
   // Form Submission
   // =========================================================================
 
-  const onSubmit = async (data: Record<string, unknown>) => {
-    const formData = data as LessonContentFormData
+  const onSubmit = async (formData: LessonContentFormData) => {
     if (!turmaId || !userProfile) {
       toast.error('Turma nao selecionada')
       return
@@ -246,24 +159,23 @@ export function NewLessonModal({
 
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
-      const sessionId = await getOrCreateLessonSession(
+      const result = await createDiaryLessonAction({
         turmaId,
-        dateStr,
-        userProfile.id,
-        userProfile.escola_id,
-        formData.tema
-      )
-      if (!sessionId) {
-        toast.error('Escola nao encontrada')
+        date: dateStr,
+        content: formData,
+      })
+      if (!result.success) {
+        setSubmissionError(result.error)
+        toast.error(result.error)
         return
       }
-
-      await saveLessonContent(sessionId, formData, turmaId, dateStr)
+      toast.success('Aula registrada com sucesso.')
+      onOpenChange(false)
 
       onSuccess?.()
     } catch (err) {
-      const message = getLessonCreationErrorMessage(err)
-      logger.error('Error creating lesson:', err as Error, {
+      const message = 'Não foi possível criar a aula. Tente novamente.'
+      logger.error('Error creating lesson:', err instanceof Error ? err : new Error(message), {
         feature: 'diario',
         action: 'create_lesson_error',
       })
@@ -317,15 +229,10 @@ export function NewLessonModal({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !selectedDate && 'text-muted-foreground'
-                      )}
+                      className="w-full justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate
-                        ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : 'Selecione a data'}
+                      {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">

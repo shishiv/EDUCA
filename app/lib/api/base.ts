@@ -25,13 +25,26 @@
 
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 /** Union of all table names in the `public` schema. */
 export type TableName = keyof Database['public']['Tables']
-type TableInsert = Database['public']['Tables'][TableName]['Insert']
-type TableUpdate = Database['public']['Tables'][TableName]['Update']
-type TableRow = Database['public']['Tables'][TableName]['Row']
+type PublicTables = Database['public']['Tables']
+export type TableInsert<Name extends TableName> = PublicTables[Name]['Insert']
+export type TableUpdate<Name extends TableName> = PublicTables[Name]['Update']
+export type TableRow<Name extends TableName> = PublicTables[Name]['Row']
+
+export type ApiErrorDetails = PostgrestError['details']
+
+type FilterScalar = string | number | boolean
+type FilterableColumn<Row> = {
+  [Column in keyof Row]-?: Exclude<Row[Column], null> extends FilterScalar ? Column : never
+}[keyof Row]
+
+export type CountFilter<Name extends TableName> = Readonly<
+  Partial<Pick<TableRow<Name>, FilterableColumn<TableRow<Name>>>>
+>
 
 /** Standard pagination input accepted by {@link BaseApiService.getPaginated}. */
 export interface PaginationParams {
@@ -65,7 +78,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public code?: string,
-    public details?: unknown
+    public details?: ApiErrorDetails
   ) {
     super(message)
     this.name = 'ApiError'
@@ -83,29 +96,31 @@ export class ApiError extends Error {
  *   constructor() { super('escolas') }
  * }
  */
-export abstract class BaseApiService {
-  protected tableName: TableName
+export abstract class BaseApiService<Name extends TableName = TableName> {
+  protected tableName: Name
 
-  constructor(tableName: TableName) {
+  constructor(tableName: Name) {
     this.tableName = tableName
   }
 
   /**
    * Get all records from the table
    */
-  async getAll<T extends object = TableRow>(): Promise<T[]> {
+  async getAll<_Projection extends Partial<TableRow<Name>> = TableRow<Name>>(): Promise<TableRow<Name>[]> {
     try {
+      const tableName: TableName = this.tableName
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from(tableName)
         .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {
-        logger.error(`Error fetching all from ${this.tableName}:`, error.message, { feature: this.tableName, action: 'getAll' })
         throw error
       }
 
-      return (data || []) as T[]
+      // SAFETY: tableName is widened only to satisfy supabase-js dynamic-table
+      // overloads; the constructor binds it to Name for this service instance.
+      return (data ?? []) as TableRow<Name>[]
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       logger.error(`Error in getAll for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'getAll' })
@@ -116,23 +131,27 @@ export abstract class BaseApiService {
   /**
    * Get a single record by ID
    */
-  async getById<T extends object = TableRow>(id: string): Promise<T | null> {
+  async getById<_Projection extends Partial<TableRow<Name>> = TableRow<Name>>(
+    id: string,
+  ): Promise<TableRow<Name> | null> {
     try {
+      const tableName: TableName = this.tableName
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from(tableName)
         .select('*')
-        .eq('id', id)
+        .filter('id', 'eq', id)
         .single()
 
       if (error) {
         if (error.code === 'PGRST116') {
           return null // Not found
         }
-        logger.error(`Error fetching ${this.tableName} by id ${id}:`, error.message, { feature: this.tableName, action: 'getById' })
         throw error
       }
 
-      return data as T | null
+      // SAFETY: tableName is widened only to satisfy supabase-js dynamic-table
+      // overloads; the constructor binds it to Name for this service instance.
+      return data as TableRow<Name>
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       logger.error(`Error in getById for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'getById' })
@@ -147,20 +166,22 @@ export abstract class BaseApiService {
    * table passed to the constructor, so wrong or missing columns fail typecheck
    * instead of failing at runtime.
    */
-  async create<T extends TableInsert>(data: T): Promise<T> {
+  async create(data: TableInsert<Name>): Promise<TableRow<Name>> {
     try {
+      const tableName: TableName = this.tableName
       const { data: created, error } = await supabase
-        .from(this.tableName)
+        .from(tableName)
         .insert(data)
         .select()
         .single()
 
       if (error) {
-        logger.error(`Error creating ${this.tableName}:`, error.message, { feature: this.tableName, action: 'create' })
         throw error
       }
 
-      return created as T
+      // SAFETY: tableName and data share Name; the selected row is therefore
+      // the generated Row contract for that same table.
+      return created as TableRow<Name>
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       logger.error(`Error in create for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'create' })
@@ -174,21 +195,23 @@ export abstract class BaseApiService {
    * The payload is checked at the call site against the real Update type of the
    * table passed to the constructor, so unknown columns fail typecheck.
    */
-  async update<T extends TableUpdate>(id: string, data: T): Promise<T> {
+  async update(id: string, data: TableUpdate<Name>): Promise<TableRow<Name>> {
     try {
+      const tableName: TableName = this.tableName
       const { data: updated, error } = await supabase
-        .from(this.tableName)
+        .from(tableName)
         .update(data)
-        .eq('id', id)
+        .filter('id', 'eq', id)
         .select()
         .single()
 
       if (error) {
-        logger.error(`Error updating ${this.tableName} id ${id}:`, error.message, { feature: this.tableName, action: 'update' })
         throw error
       }
 
-      return updated as T
+      // SAFETY: tableName and data share Name; the selected row is therefore
+      // the generated Row contract for that same table.
+      return updated as TableRow<Name>
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       logger.error(`Error in update for ${this.tableName}:`, errorMessage, { feature: this.tableName, action: 'update' })
@@ -201,13 +224,13 @@ export abstract class BaseApiService {
    */
   async delete(id: string): Promise<void> {
     try {
+      const tableName: TableName = this.tableName
       const { error } = await supabase
-        .from(this.tableName)
+        .from(tableName)
         .delete()
-        .eq('id', id)
+        .filter('id', 'eq', id)
 
       if (error) {
-        logger.error(`Error deleting ${this.tableName} id ${id}:`, error.message, { feature: this.tableName, action: 'delete' })
         throw error
       }
     } catch (error) {
@@ -220,25 +243,27 @@ export abstract class BaseApiService {
   /**
    * Get paginated records
    */
-  async getPaginated<T extends object = TableRow>(params: PaginationParams = {}): Promise<PaginatedResult<T>> {
+  async getPaginated(params: PaginationParams = {}): Promise<PaginatedResult<TableRow<Name>>> {
     const { page = 1, limit = 20 } = params
     const start = (page - 1) * limit
     const end = start + limit - 1
 
     try {
+      const tableName: TableName = this.tableName
       const { data, error, count } = await supabase
-        .from(this.tableName)
+        .from(tableName)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(start, end)
 
       if (error) {
-        logger.error(`Error fetching paginated from ${this.tableName}:`, error.message, { feature: this.tableName, action: 'getPaginated' })
         throw error
       }
 
       return {
-        data: (data || []) as T[],
+        // SAFETY: tableName is widened only to satisfy supabase-js dynamic-table
+        // overloads; the constructor binds it to Name for this service instance.
+        data: (data ?? []) as TableRow<Name>[],
         total: count || 0,
         page,
         limit,
@@ -254,24 +279,20 @@ export abstract class BaseApiService {
   /**
    * Count records with optional filter
    */
-  async count(filter?: Record<string, unknown>): Promise<number> {
+  async count(filter?: CountFilter<Name>): Promise<number> {
     try {
+      const tableName: TableName = this.tableName
       let query = supabase
-        .from(this.tableName)
+        .from(tableName)
         .select('*', { count: 'exact', head: true })
 
       if (filter) {
-        Object.entries(filter).forEach(([key, value]) => {
-          // The filter keys are dynamic by design; cast the value to the
-          // narrowest scalar set supabase accepts for eq()
-          query = query.eq(key, value as string | number | boolean)
-        })
+        query = query.match(filter)
       }
 
       const { count, error } = await query
 
       if (error) {
-        logger.error(`Error counting ${this.tableName}:`, error.message, { feature: this.tableName, action: 'count' })
         throw error
       }
 

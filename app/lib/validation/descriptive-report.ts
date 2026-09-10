@@ -1,3 +1,4 @@
+import type { JsonValue } from '@/lib/validation/external-values'
 /**
  * Descriptive Report Form Validation Schema
  * Task Group 3.2: Relatorios Descritivos (Ed. Infantil)
@@ -15,10 +16,8 @@ import { z } from 'zod'
 import {
   DESCRIPTIVE_REPORT_VALIDATION,
   EXPERIENCE_FIELDS_CONFIG,
-  type DescriptiveReportFormData,
   type ExperienceFieldKey,
   type ReportStatus,
-  type SemestreType,
 } from '@/types/descriptive-report'
 
 // ============================================================================
@@ -134,11 +133,7 @@ export type DescriptiveReportFinalFormData = z.infer<typeof descriptiveReportFin
 /**
  * Validate form data for draft
  */
-export function validateDraftForm(data: unknown): {
-  success: boolean
-  data: DescriptiveReportDraftFormData | null
-  errors: { path: string; message: string }[] | null
-} {
+export function validateDraftForm(data: JsonValue) {
   try {
     const result = descriptiveReportDraftSchema.parse(data)
     return {
@@ -164,11 +159,7 @@ export function validateDraftForm(data: unknown): {
 /**
  * Validate form data for finalization
  */
-export function validateFinalForm(data: unknown): {
-  success: boolean
-  data: DescriptiveReportFinalFormData | null
-  errors: { path: string; message: string }[] | null
-} {
+export function validateFinalForm(data: JsonValue) {
   try {
     const result = descriptiveReportFinalSchema.parse(data)
     return {
@@ -201,11 +192,7 @@ export function getValidationSchema(status: ReportStatus = 'rascunho') {
 /**
  * Validate and check if can finalize
  */
-export function canFinalize(formData: DescriptiveReportDraftFormData): {
-  canFinalize: boolean
-  missingFields: string[]
-  fieldErrors: { field: string; message: string }[]
-} {
+export function canFinalize(formData: DescriptiveReportDraftFormData) {
   const missingFields: string[] = []
   const fieldErrors: { field: string; message: string }[] = []
 
@@ -246,22 +233,16 @@ export function canFinalize(formData: DescriptiveReportDraftFormData): {
  */
 export function transformFormDataToInput(
   formData: DescriptiveReportDraftFormData,
-  reportId?: string
-): {
-  campo_eu_outro_nos: string | null
-  campo_corpo_gestos: string | null
-  campo_tracos_sons: string | null
-  campo_escuta_fala: string | null
-  campo_espacos_tempos: string | null
-  observacoes_gerais: string | null
-} {
+  _reportId?: string
+) {
+  const normalize = (value?: string): string | null => value?.trim() || null
   return {
-    campo_eu_outro_nos: formData.campo_eu_outro_nos?.trim() || null,
-    campo_corpo_gestos: formData.campo_corpo_gestos?.trim() || null,
-    campo_tracos_sons: formData.campo_tracos_sons?.trim() || null,
-    campo_escuta_fala: formData.campo_escuta_fala?.trim() || null,
-    campo_espacos_tempos: formData.campo_espacos_tempos?.trim() || null,
-    observacoes_gerais: formData.observacoes_gerais?.trim() || null,
+    campo_eu_outro_nos: normalize(formData.campo_eu_outro_nos),
+    campo_corpo_gestos: normalize(formData.campo_corpo_gestos),
+    campo_tracos_sons: normalize(formData.campo_tracos_sons),
+    campo_escuta_fala: normalize(formData.campo_escuta_fala),
+    campo_espacos_tempos: normalize(formData.campo_espacos_tempos),
+    observacoes_gerais: normalize(formData.observacoes_gerais),
   }
 }
 
@@ -306,12 +287,7 @@ export function transformApiDataToForm(
 /**
  * Calculate form completion progress
  */
-export function calculateFormProgress(formData: DescriptiveReportDraftFormData): {
-  filledFields: number
-  totalFields: number
-  percentage: number
-  fieldStatus: Record<ExperienceFieldKey, 'empty' | 'partial' | 'complete'>
-} {
+export function calculateFormProgress(formData: DescriptiveReportDraftFormData) {
   const fields: { key: ExperienceFieldKey; value: string | undefined }[] = [
     { key: 'campo_eu_outro_nos', value: formData.campo_eu_outro_nos },
     { key: 'campo_corpo_gestos', value: formData.campo_corpo_gestos },

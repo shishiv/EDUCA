@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
+import type { Database } from '@/types/database'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -7,9 +8,10 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const password = 'Synthetic-Only-2026!'
 const schoolA = '10000000-0000-0000-0000-000000000001'
 const schoolB = '10000000-0000-0000-0000-000000000002'
+const seededAttendanceId = '70000000-0000-0000-0000-000000000001'
 
 async function signedInClient(email: string) {
-  const client = createClient(url, anonKey, { auth: { persistSession: false } })
+  const client = createClient<Database>(url, anonKey, { auth: { persistSession: false } })
   const { error } = await client.auth.signInWithPassword({ email, password })
   if (error) throw error
   return client
@@ -57,13 +59,20 @@ test.describe('deployed Supabase isolation', () => {
 
     const { data: attendanceView, error: viewError } = await secretariat.from('vw_frequencia_completa').select('*')
     expect(viewError).toBeNull()
-    expect(attendanceView).toHaveLength(1)
-    expect(attendanceView?.[0]).not.toHaveProperty('aluno_cpf')
-    expect(attendanceView?.[0]).not.toHaveProperty('professor_email')
+    expect(attendanceView).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: seededAttendanceId, escola_id: schoolA }),
+    ]))
+    for (const attendance of attendanceView ?? []) {
+      expect(attendance).not.toHaveProperty('aluno_cpf')
+      expect(attendance).not.toHaveProperty('professor_email')
+    }
 
     const { data: metrics, error: metricsError } = await secretariat.rpc('pilot_dashboard_metrics', { p_escola_id: schoolA })
     expect(metricsError).toBeNull()
-    expect(metrics).toEqual(expect.arrayContaining([expect.objectContaining({ metric: 'attendance_capture_percent', target_met: true })]))
+    expect(metrics?.find(metric => metric.metric === 'attendance_capture_percent')).toMatchObject({
+      metric: 'attendance_capture_percent',
+      target_met: true,
+    })
 
     const disabledNotes = await secretariat.from('notas').select('id')
     expect(disabledNotes.error).not.toBeNull()
@@ -76,12 +85,12 @@ test.describe('deployed Supabase isolation', () => {
     const otherSchoolUpload = await directorA.storage.from('student-photos').upload(`${schoolB}/rls-test/avatar.png`, new Uint8Array([1, 2, 3]), { contentType: 'image/png', upsert: true })
     expect(otherSchoolUpload.error).not.toBeNull()
 
-    const service = createClient(url, serviceKey, { auth: { persistSession: false } })
+    const service = createClient<Database>(url, serviceKey, { auth: { persistSession: false } })
     await service.storage.from('student-photos').remove([`${schoolA}/rls-test/avatar.png`])
   })
 
   test('keeps audit append-only and redacted even for service role', async () => {
-    const service = createClient(url, serviceKey, { auth: { persistSession: false } })
+    const service = createClient<Database>(url, serviceKey, { auth: { persistSession: false } })
     const { data: event, error: readError } = await service.from('pilot_audit_log').select('id,redacted_metadata').limit(1).single()
     expect(readError).toBeNull()
     expect(event?.redacted_metadata).not.toHaveProperty('cpf')

@@ -74,7 +74,7 @@ test.describe('Authentication Flows', () => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/$/)
     await expect(
-      page.getByRole('heading', { name: /uma base comum para a gestão escolar/i })
+      page.getByRole('heading', { name: /gestão escolar para redes municipais, com código aberto/i })
     ).toBeVisible()
     await expect(
       page.getByRole('link', { name: 'Entrar no sistema', exact: true }).first()

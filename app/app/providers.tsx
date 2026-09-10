@@ -1,20 +1,22 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider'
 import { AuthProvider } from '@/contexts/auth-context'
-import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
+import { Toaster } from '@/components/ui/sonner'
 
-const PUBLIC_PATHS = ['/', '/demo', '/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/blog']
+type ProviderComponent = React.ComponentType<{ children: React.ReactNode }>
 
-function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.some(path => path === '/' ? pathname === path : pathname === path || pathname.startsWith(`${path}/`))
-}
-
-export function Providers({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+export function Providers({
+  children,
+  Auth = AuthProvider,
+  ServiceWorker = ServiceWorkerProvider,
+}: {
+  children: React.ReactNode
+  Auth?: ProviderComponent
+  ServiceWorker?: ProviderComponent
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -29,12 +31,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ServiceWorkerProvider>
-          {!isPublicPath(pathname) && <LocaleSwitcher />}
+      <Auth>
+        <ServiceWorker>
           {children}
-        </ServiceWorkerProvider>
-      </AuthProvider>
+          <Toaster />
+        </ServiceWorker>
+      </Auth>
     </QueryClientProvider>
   )
 }

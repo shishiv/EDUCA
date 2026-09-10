@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowLeft, Save, Edit, User, Phone, Mail, Briefcase, Users } from 'lucide-react'
+import { ArrowLeft, Save, Edit, User, Phone, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -62,18 +62,85 @@ interface Aluno {
   }>
 }
 
+type ResponsavelFormData = {
+  nome: string
+  cpf: string
+  telefone: string
+  email: string
+  parentesco: string
+  endereco: string
+  profissao: string
+}
+
+function buildGuardianUpdate(formData: ResponsavelFormData) {
+  return {
+    nome: formData.nome,
+    telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
+    email: formData.email || null,
+    parentesco: formData.parentesco,
+    endereco: formData.endereco || null,
+    profissao: formData.profissao || null,
+  }
+}
+
+function hasRequiredGuardianFields(formData: ResponsavelFormData): boolean {
+  return Boolean(formData.nome && formData.cpf && formData.parentesco)
+}
+
+function guardianFormData(responsavel: Responsavel | null): ResponsavelFormData {
+  if (!responsavel) {
+    return { nome: '', cpf: '', telefone: '', email: '', parentesco: '', endereco: '', profissao: '' }
+  }
+  return {
+    nome: responsavel.nome,
+    cpf: responsavel.cpf ?? '',
+    telefone: responsavel.telefone ?? '',
+    email: responsavel.email ?? '',
+    parentesco: responsavel.parentesco,
+    endereco: responsavel.endereco ?? '',
+    profissao: responsavel.profissao ?? '',
+  }
+}
+
+function GuardianActions({
+  editing,
+  saving,
+  onEdit,
+  onCancel,
+  onSave,
+}: {
+  editing: boolean
+  saving: boolean
+  onEdit: () => void
+  onCancel: () => void
+  onSave: () => void
+}) {
+  const t = useTranslations('registry')
+  if (!editing) {
+    return <Button onClick={onEdit}><Edit className="mr-2 h-4 w-4" />{t('ui.editar')}</Button>
+  }
+  return (
+    <div className="flex space-x-2">
+      <Button variant="outline" onClick={onCancel} disabled={saving}>{t('labels.cancelar')}</Button>
+      <Button onClick={onSave} disabled={saving}>
+        <Save className="mr-2 h-4 w-4" />{saving ? 'Salvando...' : t('ui.salvar')}
+      </Button>
+    </div>
+  )
+}
+
 export default function ResponsavelDetalhesPage() {
   const t = useTranslations('registry')
   const router = useRouter()
-  const params = useParams()
-  const id = params?.id as string
+  const params = useParams<{ id: string }>()
+  const id = params.id
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [responsavel, setResponsavel] = useState<Responsavel | null>(null)
   const [alunos, setAlunos] = useState<Aluno[]>([])
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ResponsavelFormData>({
     nome: '',
     cpf: '',
     telefone: '',
@@ -83,13 +150,7 @@ export default function ResponsavelDetalhesPage() {
     profissao: '',
   })
 
-  useEffect(() => {
-    if (id) {
-      loadResponsavel()
-    }
-  }, [id])
-
-  const loadResponsavel = async () => {
+  const loadResponsavel = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -116,39 +177,33 @@ export default function ResponsavelDetalhesPage() {
         }
       })
     } catch (error) {
-      logger.error('Erro ao carregar responsável:', error as any)
+      logger.error('Erro ao carregar responsável:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-carregar-dados-do-responsavel'))
       router.push('/dashboard/responsaveis')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, router, t])
+
+  useEffect(() => {
+    void loadResponsavel()
+  }, [loadResponsavel])
 
   const handleSave = async () => {
     try {
       setSaving(true)
 
       // Validate required fields
-      if (!formData.nome || !formData.cpf || !formData.parentesco) {
+      if (!hasRequiredGuardianFields(formData)) {
         toast.error(t('ui.preencha-todos-os-campos-obrigatorios'))
         setSaving(false)
         return
       }
 
-      // Prepare update data
-      const updateData = {
-        nome: formData.nome,
-        telefone: formData.telefone ? formData.telefone.replace(/\D/g, '') : null,
-        email: formData.email || null,
-        parentesco: formData.parentesco,
-        endereco: formData.endereco || null,
-        profissao: formData.profissao || null,
-      }
-
       // Update in database
       const { error } = await supabase
         .from('responsaveis')
-        .update(updateData)
+        .update(buildGuardianUpdate(formData))
         .eq('id', id)
 
       if (error) throw error
@@ -156,15 +211,15 @@ export default function ResponsavelDetalhesPage() {
       toast.success(t('ui.responsavel-atualizado-com-sucesso'))
       setEditMode(false)
       await loadResponsavel() // Reload data
-    } catch (error: any) {
-      logger.error('Erro ao atualizar responsável:', error)
+    } catch (error) {
+      logger.error('Erro ao atualizar responsável:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-atualizar-responsavel'))
     } finally {
       setSaving(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <Field extends keyof ResponsavelFormData>(field: Field, value: ResponsavelFormData[Field]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -217,14 +272,18 @@ export default function ResponsavelDetalhesPage() {
   }
 
   const getParentescoBadgeColor = (parentesco: string) => {
-    const colors: Record<string, string> = {
-      'mae': 'bg-pink-100 text-pink-800',
-      'pai': 'bg-blue-100 text-blue-800',
-      'avo': 'bg-purple-100 text-purple-800',
-      'tio': 'bg-green-100 text-green-800',
-      'outro': 'bg-gray-100 text-gray-800'
+    switch (parentesco.toLowerCase()) {
+      case 'mae': return 'bg-pink-100 text-pink-800'
+      case 'pai': return 'bg-blue-100 text-blue-800'
+      case 'avo': return 'bg-purple-100 text-purple-800'
+      case 'tio': return 'bg-green-100 text-green-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
-    return colors[parentesco.toLowerCase()] || 'bg-gray-100 text-gray-800'
+  }
+
+  const cancelEditing = () => {
+    setEditMode(false)
+    setFormData(guardianFormData(responsavel))
   }
 
   if (loading) {
@@ -270,37 +329,13 @@ export default function ResponsavelDetalhesPage() {
             </p>
           </div>
         </div>
-        {!editMode ? (
-          <Button onClick={() => setEditMode(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            {t('ui.editar')}
-          </Button>
-        ) : (
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditMode(false)
-                setFormData({
-                  nome: responsavel.nome,
-                  cpf: responsavel.cpf || '',
-                  telefone: responsavel.telefone || '',
-                  email: responsavel.email || '',
-                  parentesco: responsavel.parentesco,
-                  endereco: responsavel.endereco || '',
-                  profissao: responsavel.profissao || '',
-                })
-              }}
-              disabled={saving}
-            >
-              {t('labels.cancelar')}
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              <Save className="mr-2 h-4 w-4" />
-              {saving ? 'Salvando...' : t('ui.salvar')}
-            </Button>
-          </div>
-        )}
+        <GuardianActions
+          editing={editMode}
+          saving={saving}
+          onEdit={() => setEditMode(true)}
+          onCancel={cancelEditing}
+          onSave={() => { void handleSave() }}
+        />
       </div>
 
       {/* Personal Data */}

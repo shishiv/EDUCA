@@ -48,9 +48,12 @@ export interface WhatsAppGatewayIdentity {
  * retry with backoff. Permanent failures return outcome 'failed' instead.
  */
 export class WhatsAppTransientDeliveryError extends Error {
-  constructor(message: string) {
+  readonly retrySafe: boolean
+
+  constructor(message: string, options: { retrySafe?: boolean } = {}) {
     super(message)
     this.name = 'WhatsAppTransientDeliveryError'
+    this.retrySafe = options.retrySafe ?? false
   }
 }
 

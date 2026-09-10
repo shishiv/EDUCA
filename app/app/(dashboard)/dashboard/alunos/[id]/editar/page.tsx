@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import { studentFormSchema } from '@/lib/validation/brazilian'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
+import type { StudentFormData } from '@/lib/validation/brazilian'
 
 interface FormState {
   nome_completo: string
@@ -44,13 +46,70 @@ const initialForm: FormState = {
   necessidades_especiais: '',
 }
 
+type FormField = keyof FormState | 'form'
+type FieldErrors = Partial<Record<FormField, string>>
+const formFieldSchema = z.enum([
+  'nome_completo', 'data_nascimento', 'sexo', 'cpf', 'rg', 'endereco',
+  'telefone', 'email', 'nome_mae', 'nome_pai', 'necessidades_especiais',
+])
+
+function normalizeSex(value: string): FormState['sexo'] {
+  return value === 'F' ? 'F' : 'M'
+}
+
+function optionalValue(value: string): string | undefined {
+  return value || undefined
+}
+
+function validationInput(form: FormState) {
+  return {
+    ...form,
+    cpf: optionalValue(form.cpf),
+    rg: optionalValue(form.rg),
+    telefone: optionalValue(form.telefone),
+    email: optionalValue(form.email),
+    nome_pai: optionalValue(form.nome_pai),
+    necessidades_especiais: optionalValue(form.necessidades_especiais),
+  }
+}
+
+function parseFormField(value: PropertyKey | undefined): FormField {
+  const result = formFieldSchema.safeParse(value)
+  return result.success ? result.data : 'form'
+}
+
+function collectFieldErrors(issues: Array<{ path: PropertyKey[]; message: string }>): FieldErrors {
+  const errors: FieldErrors = {}
+  for (const issue of issues) {
+    const field = parseFormField(issue.path[0])
+    if (!errors[field]) errors[field] = issue.message
+  }
+  return errors
+}
+
+function studentUpdate(value: StudentFormData, originalBirthDate: string) {
+  return {
+    nome_completo: value.nome_completo,
+    data_nascimento: originalBirthDate,
+    sexo: value.sexo,
+    cpf: value.cpf?.replace(/\D/g, '') || null,
+    rg: value.rg || null,
+    endereco: value.endereco,
+    telefone: value.telefone?.replace(/\D/g, '') || null,
+    email: value.email || null,
+    nome_mae: value.nome_mae,
+    nome_pai: value.nome_pai || null,
+    necessidades_especiais: value.necessidades_especiais || null,
+  }
+}
+
 export default function EditarAlunoPage() {
   const t = useTranslations('registry')
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const id = params.id
   const [form, setForm] = useState(initialForm)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<FieldErrors>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -65,7 +124,7 @@ export default function EditarAlunoPage() {
       setForm({
         nome_completo: data.nome_completo,
         data_nascimento: data.data_nascimento,
-        sexo: data.sexo as 'M' | 'F',
+        sexo: normalizeSex(data.sexo),
         cpf: data.cpf || '',
         rg: data.rg || '',
         endereco: data.endereco || '',
@@ -92,23 +151,10 @@ export default function EditarAlunoPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const validation = studentFormSchema.safeParse({
-      ...form,
-      cpf: form.cpf || undefined,
-      rg: form.rg || undefined,
-      telefone: form.telefone || undefined,
-      email: form.email || undefined,
-      nome_pai: form.nome_pai || undefined,
-      necessidades_especiais: form.necessidades_especiais || undefined,
-    })
+    const validation = studentFormSchema.safeParse(validationInput(form))
 
     if (!validation.success) {
-      const next: Record<string, string> = {}
-      for (const issue of validation.error.issues) {
-        const field = String(issue.path[0] || 'form')
-        if (!next[field]) next[field] = issue.message
-      }
-      setErrors(next)
+      setErrors(collectFieldErrors(validation.error.issues))
       toast.error('Corrija os campos destacados')
       return
     }
@@ -117,19 +163,7 @@ export default function EditarAlunoPage() {
     const value = validation.data
     const { error } = await supabase
       .from('alunos')
-      .update({
-        nome_completo: value.nome_completo,
-        data_nascimento: form.data_nascimento,
-        sexo: value.sexo,
-        cpf: value.cpf?.replace(/\D/g, '') || null,
-        rg: value.rg || null,
-        endereco: value.endereco,
-        telefone: value.telefone?.replace(/\D/g, '') || null,
-        email: value.email || null,
-        nome_mae: value.nome_mae,
-        nome_pai: value.nome_pai || null,
-        necessidades_especiais: value.necessidades_especiais || null,
-      })
+      .update(studentUpdate(value, form.data_nascimento))
       .eq('id', id)
 
     if (error) {
@@ -189,7 +223,7 @@ export default function EditarAlunoPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-aluno-sexo">{t('labels.sexo-2')}</Label>
-                <Select value={form.sexo} onValueChange={value => update('sexo', value as 'M' | 'F')}>
+                <Select value={form.sexo} onValueChange={value => update('sexo', normalizeSex(value))}>
                   <SelectTrigger id="edit-aluno-sexo" aria-label={t('labels.sexo')}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="M">{t('labels.masculino')}</SelectItem>

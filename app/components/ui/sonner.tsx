@@ -22,11 +22,12 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
  * Enhanced Sonner Toaster with Diario de Classe styling
  */
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme()
+  const { theme } = useTheme()
+  const toastTheme = theme === 'light' || theme === 'dark' ? theme : 'system'
 
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
+      theme={toastTheme}
       className="toaster group"
       // Position: bottom-right on desktop, bottom-center on mobile
       position="bottom-right"

@@ -1,0 +1,3 @@
+app/tools/oxlint/anti-slop/tests/fixtures/local-symbol.ts:1:7: error anti-slop(no-shape-in-symbol-names): Rename symbol "shapeModel" for its domain role; "shape" describes structure rather than ownership.
+app/tools/oxlint/anti-slop/tests/fixtures/import-specifiers.ts:1:10: error anti-slop(no-shape-in-symbol-names): Rename symbol "Shapes" for its domain role; "shape" describes structure rather than ownership.
+app/tools/oxlint/anti-slop/tests/fixtures/import-specifiers.ts:2:20: error anti-slop(no-shape-in-symbol-names): Rename symbol "ShapeIcon" for its domain role; "shape" describes structure rather than ownership.

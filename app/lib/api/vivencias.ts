@@ -8,8 +8,6 @@ type VivenciaUpdate = Database['public']['Tables']['vivencias']['Update']
 
 const VIVENCIA_COLUMNS = 'id, escola_id, aluno_id, matricula_id, turma_id, professor_id, data_vivencia, campos_experiencia, descricao, observacoes, escopo, created_by, updated_by, created_at, updated_at'
 
-const CAMPOS = new Set<CampoType>(['eu', 'corpo', 'tracos', 'escuta', 'espacos'])
-
 export interface CreateVivenciaInput {
   escola_id: string
   aluno_id: string
@@ -32,8 +30,16 @@ export interface UpdateVivenciaInput {
   updated_by: string
 }
 
+function isCampo(value: string): value is CampoType {
+  return value === 'eu'
+    || value === 'corpo'
+    || value === 'tracos'
+    || value === 'escuta'
+    || value === 'espacos'
+}
+
 function toCampos(values: string[]): CampoType[] {
-  const campos = values.filter((value): value is CampoType => CAMPOS.has(value as CampoType))
+  const campos = values.filter(isCampo)
   if (campos.length !== values.length) throw new Error('VIVENCIA_INVALID_CAMPO')
   return campos
 }

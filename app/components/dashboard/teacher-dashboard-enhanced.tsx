@@ -3,15 +3,25 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { AlertTriangle, ArrowRight, BookOpenCheck, CalendarDays, CheckCircle2, Clock3, GraduationCap, Users } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpenCheck,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  GraduationCap,
+  Users,
+} from 'lucide-react'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
 import type { ResolvedAcademicYear } from '@/lib/services/academic-year'
 
 export interface TeacherDashboardEnhancedProps {
   professorId: string
   academicYear: ResolvedAcademicYear
+  initialTurmas?: TeacherClassSummary[]
 }
 
 interface TeacherClassSession {
@@ -28,99 +38,170 @@ interface TeacherClassSummary {
   sessaoHoje: TeacherClassSession | null
 }
 
+interface TeacherClassRow {
+  id: string
+  nome: string
+  serie: string
+  turno: string
+}
+
+interface TeacherEnrollmentRow {
+  turma_id: string
+}
+
+interface TeacherSessionRow {
+  id: string
+  turma_id: string
+  status: string
+}
+
+function countEnrollmentsByClass(enrollments: TeacherEnrollmentRow[]): Map<string, number> {
+  const counts = new Map<string, number>()
+
+  for (const enrollment of enrollments) {
+    counts.set(enrollment.turma_id, (counts.get(enrollment.turma_id) ?? 0) + 1)
+  }
+
+  return counts
+}
+
+function getTodaySessionsByClass(sessions: TeacherSessionRow[]): Map<string, TeacherClassSession> {
+  const sessionsByClass = new Map<string, TeacherClassSession>()
+
+  for (const session of sessions) {
+    const existing = sessionsByClass.get(session.turma_id)
+    if (!existing || session.status === 'ABERTA') {
+      sessionsByClass.set(session.turma_id, { id: session.id, status: session.status })
+    }
+  }
+
+  return sessionsByClass
+}
+
+function buildTeacherClassSummaries(
+  classes: TeacherClassRow[],
+  enrollments: TeacherEnrollmentRow[],
+  sessions: TeacherSessionRow[],
+): TeacherClassSummary[] {
+  const enrollmentCounts = countEnrollmentsByClass(enrollments)
+  const sessionsByClass = getTodaySessionsByClass(sessions)
+
+  return classes.map((turma) => ({
+    id: turma.id,
+    nome: turma.nome,
+    serie: turma.serie,
+    turno: turma.turno,
+    alunosAtivos: enrollmentCounts.get(turma.id) ?? 0,
+    sessaoHoje: sessionsByClass.get(turma.id) ?? null,
+  }))
+}
+
+async function loadTeacherDashboardData(
+  professorId: string,
+  academicYear: number,
+): Promise<TeacherClassSummary[]> {
+  const { data: turmaRows, error: turmasError } = await supabase
+    .from('turmas')
+    .select('id, nome, serie, turno')
+    .eq('professor_id', professorId)
+    .eq('ano_letivo', academicYear)
+    .eq('ativo', true)
+    .order('nome')
+
+  if (turmasError) throw turmasError
+
+  const classes = turmaRows ?? []
+  const classIds = classes.map((turma) => turma.id)
+  if (classIds.length === 0) return []
+
+  const [matriculasResult, sessoesResult] = await Promise.all([
+    supabase
+      .from('matriculas')
+      .select('turma_id')
+      .in('turma_id', classIds)
+      .eq('ano_letivo', academicYear)
+      .eq('situacao', 'ativa'),
+    supabase
+      .from('sessoes_aula')
+      .select('id, turma_id, status')
+      .in('turma_id', classIds)
+      .eq('data_aula', getTodaySaoPaulo())
+      .order('created_at', { ascending: false }),
+  ])
+
+  if (matriculasResult.error) throw matriculasResult.error
+  if (sessoesResult.error) throw sessoesResult.error
+
+  return buildTeacherClassSummaries(
+    classes,
+    matriculasResult.data ?? [],
+    sessoesResult.data ?? [],
+  )
+}
+
+function getTeacherSessionStatus(
+  session: TeacherClassSession | null,
+  labels: {
+    pending: string
+    opened: string
+    completed: string
+    cancelled: string
+    openAction: string
+    continueAction: string
+    viewAction: string
+    classAction: string
+  },
+) {
+  if (!session) return { label: labels.pending, tone: 'warning' as const, actionLabel: labels.openAction }
+  if (session.status === 'ABERTA') return { label: labels.opened, tone: 'info' as const, actionLabel: labels.continueAction }
+  if (session.status === 'FECHADA') return { label: labels.completed, tone: 'success' as const, actionLabel: labels.viewAction }
+  return { label: labels.cancelled, tone: 'neutral' as const, actionLabel: labels.classAction }
+}
+
 /** Shows a professor only the assigned classes, active enrollments, and today's calls. */
-export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherDashboardEnhancedProps) {
+export function TeacherDashboardEnhanced({ professorId, academicYear, initialTurmas }: TeacherDashboardEnhancedProps) {
   const t = useTranslations('platform.dashboard')
   const locale = useLocale()
-  const [turmas, setTurmas] = useState<TeacherClassSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const [turmas, setTurmas] = useState<TeacherClassSummary[]>(initialTurmas ?? [])
+  const [loading, setLoading] = useState(initialTurmas === undefined)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function loadTeacherDashboard() {
+    if (initialTurmas !== undefined) {
+      setTurmas(initialTurmas)
+      setLoading(false)
+      return
+    }
+    async function load() {
       try {
         setLoading(true)
         setError(null)
-
-        const { data: turmaRows, error: turmasError } = await supabase
-          .from('turmas')
-          .select('id, nome, serie, turno')
-          .eq('professor_id', professorId)
-          .eq('ano_letivo', academicYear.year)
-          .eq('ativo', true)
-          .order('nome')
-
-        if (turmasError) throw turmasError
-
-        const turmaIds = (turmaRows ?? []).map(turma => turma.id)
-        if (turmaIds.length === 0) {
-          setTurmas([])
-          return
-        }
-
-        const [matriculasResult, sessoesResult] = await Promise.all([
-          supabase
-            .from('matriculas')
-            .select('turma_id')
-            .in('turma_id', turmaIds)
-            .eq('ano_letivo', academicYear.year)
-            .eq('situacao', 'ativa'),
-          supabase
-            .from('sessoes_aula')
-            .select('id, turma_id, status')
-            .in('turma_id', turmaIds)
-            .eq('data_aula', getTodaySaoPaulo())
-            .order('created_at', { ascending: false }),
-        ])
-
-        if (matriculasResult.error) throw matriculasResult.error
-        if (sessoesResult.error) throw sessoesResult.error
-
-        const alunosPorTurma = new Map<string, number>()
-        for (const matricula of matriculasResult.data ?? []) {
-          alunosPorTurma.set(
-            matricula.turma_id,
-            (alunosPorTurma.get(matricula.turma_id) ?? 0) + 1
-          )
-        }
-
-        const sessoesPorTurma = new Map<string, TeacherClassSession>()
-        for (const sessao of sessoesResult.data ?? []) {
-          const existing = sessoesPorTurma.get(sessao.turma_id)
-          if (!existing || sessao.status === 'ABERTA') {
-            sessoesPorTurma.set(sessao.turma_id, { id: sessao.id, status: sessao.status })
-          }
-        }
-
-        setTurmas((turmaRows ?? []).map(turma => ({
-          id: turma.id,
-          nome: turma.nome,
-          serie: turma.serie,
-          turno: turma.turno,
-          alunosAtivos: alunosPorTurma.get(turma.id) ?? 0,
-          sessaoHoje: sessoesPorTurma.get(turma.id) ?? null,
-        })))
+        setTurmas(await loadTeacherDashboardData(professorId, academicYear.year))
       } catch (loadError) {
-        logger.error('TEACHER_DASHBOARD_LOAD_FAILED', loadError as Error, {
-          feature: 'teacher-dashboard',
-          action: 'load_assigned_classes',
-          metadata: { professorId },
-        })
+        logger.error(
+          'TEACHER_DASHBOARD_LOAD_FAILED',
+          loadError instanceof Error ? loadError : new Error(String(loadError)),
+          {
+            feature: 'teacher-dashboard',
+            action: 'load_assigned_classes',
+            metadata: { professorId },
+          },
+        )
         setError(t('teacherLoadError'))
       } finally {
         setLoading(false)
       }
     }
 
-    void loadTeacherDashboard()
-  }, [academicYear.year, professorId, t])
+    void load()
+  }, [academicYear.year, initialTurmas, professorId, t])
 
   if (loading) {
     return (
       <div className="app-dashboard app-dashboard-skeleton" aria-busy="true" aria-label={t('teacherLoading')}>
         <div className="app-skeleton h-20" />
         <div className="grid grid-cols-3 gap-3">
-          {[0, 1, 2].map(index => <div key={index} className="app-skeleton h-28" />)}
+          {[0, 1, 2].map((index) => <div key={index} className="app-skeleton h-28" />)}
         </div>
         <div className="app-skeleton h-72" />
       </div>
@@ -137,17 +218,25 @@ export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherD
   }
 
   const totalAlunos = turmas.reduce((total, turma) => total + turma.alunosAtivos, 0)
-  const chamadasRegistradas = turmas.filter(turma => turma.sessaoHoje).length
+  const chamadasRegistradas = turmas.filter((turma) => turma.sessaoHoje).length
   const number = new Intl.NumberFormat(locale)
   const now = new Date()
-  const formattedDate = new Intl.DateTimeFormat(locale, { weekday: 'long', day: '2-digit', month: 'long' }).format(now)
-
-  const getTeacherSessionStatus = (session: TeacherClassSession | null) => {
-    if (!session) return { label: t('pendingCall'), tone: 'warning' as const, actionLabel: t('openCall') }
-    if (session.status === 'ABERTA') return { label: t('openedCall'), tone: 'info' as const, actionLabel: t('continueCall') }
-    if (session.status === 'FECHADA') return { label: t('completedCall'), tone: 'success' as const, actionLabel: t('viewCall') }
-    return { label: t('cancelledSession'), tone: 'neutral' as const, actionLabel: t('viewClass') }
+  const formattedDate = new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  }).format(now)
+  const sessionLabels = {
+    pending: t('pendingCall'),
+    opened: t('openedCall'),
+    completed: t('completedCall'),
+    cancelled: t('cancelledSession'),
+    openAction: t('openCall'),
+    continueAction: t('continueCall'),
+    viewAction: t('viewCall'),
+    classAction: t('viewClass'),
   }
+  const allCallsCompleted = chamadasRegistradas === turmas.length
 
   return (
     <div className="app-dashboard app-teacher-dashboard">
@@ -196,9 +285,9 @@ export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherD
             <p>{t('openOrReview')}</p>
           </div>
           {turmas.length > 0 ? (
-            <span className="app-teacher-summary" data-complete={chamadasRegistradas === turmas.length}>
-              {chamadasRegistradas === turmas.length ? <CheckCircle2 aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
-              {chamadasRegistradas === turmas.length ? t('allCalls') : t('teacherPendingCount', { count: turmas.length - chamadasRegistradas })}
+            <span className="app-teacher-summary" data-complete={allCallsCompleted}>
+              {allCallsCompleted ? <CheckCircle2 aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
+              {allCallsCompleted ? t('allCalls') : t('teacherPendingCount', { count: turmas.length - chamadasRegistradas })}
             </span>
           ) : null}
         </header>
@@ -210,8 +299,8 @@ export function TeacherDashboardEnhanced({ professorId, academicYear }: TeacherD
           </div>
         ) : (
           <ul className="app-teacher-class-list">
-            {turmas.map(turma => {
-              const session = getTeacherSessionStatus(turma.sessaoHoje)
+            {turmas.map((turma) => {
+              const session = getTeacherSessionStatus(turma.sessaoHoje, sessionLabels)
               const chamadaHref = turma.sessaoHoje
                 ? `/dashboard/turmas/${turma.id}/chamada?sessao=${turma.sessaoHoje.id}`
                 : `/dashboard/turmas/${turma.id}/chamada`

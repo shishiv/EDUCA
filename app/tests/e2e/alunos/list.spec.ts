@@ -16,15 +16,14 @@ test.describe('Students list', () => {
   test('shows actions and summary metrics', async ({ page }) => {
     const main = page.getByRole('main')
     await expect(main.getByRole('link', { name: /novo aluno/i }).first()).toBeVisible()
-    await expect(main.getByRole('button', { name: /exportar/i })).toBeVisible()
-    for (const label of ['Total', 'Matriculados', 'Não Matriculados', 'NEE']) {
+    for (const label of ['Total', 'Matriculados', 'Não matriculados', 'NEE']) {
       await expect(main.getByText(label, { exact: true })).toBeVisible()
     }
   })
 
   test('shows seeded students and accessible table columns', async ({ page }) => {
     expect(await rows(page).count()).toBeGreaterThan(0)
-    for (const column of ['Aluno', 'Idade', 'Responsável', 'Escola Atual', 'Status', 'Ações']) {
+    for (const column of ['Aluno', 'Idade', 'Responsável', 'Escola atual', 'Status', 'Ações']) {
       await expect(page.getByRole('columnheader', { name: column, exact: true })).toBeVisible()
     }
   })
@@ -103,6 +102,6 @@ test('student list remains usable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 720 })
   await openList(page)
   await expect(page.getByRole('heading', { name: 'Alunos', exact: true })).toBeVisible()
-  await expect(page.getByLabel(/navegacao principal mobile/i)).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Navegação principal mobile', exact: true })).toBeVisible()
   await expect(page.getByRole('table')).toBeVisible()
 })

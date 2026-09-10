@@ -1067,12 +1067,7 @@
     box-shadow: none;
   }
   .locale-switcher--public select { max-width: calc(100vw - 4rem); }
-  .locale-switcher--app {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 100;
-  }
+  .locale-switcher--app { width: fit-content; }
   .locale-switcher--button {
     padding: 0;
     border: 0;
@@ -1106,6 +1101,11 @@
     color: #b91c1c;
     font-size: .75rem;
     box-shadow: 0 1px 3px rgb(17 44 59 / .1);
+  }
+  .app-header .locale-switcher__error,
+  .app-mobile-header .locale-switcher__error {
+    top: calc(100% + .5rem);
+    bottom: auto;
   }
   .locale-switcher select { min-height: 2.25rem; }
 
@@ -1830,8 +1830,8 @@
   .app-mobile-header .app-wordmark__mark { width: 1.8rem; height: 1.8rem; background: var(--app-ink); color: var(--app-lime); font-size: .8rem; }
   .app-mobile-header__menu { border-color: transparent; background: transparent; }
   .app-mobile-header__actions { display: flex; min-width: 0; align-items: center; gap: .35rem; margin-left: auto; }
-  .app-mobile-header__search { padding: 0 .85rem .65rem; }
-  .app-mobile-header__search .app-global-search { width: 100%; }
+  .app-mobile-header__search { display: flex; align-items: center; gap: .65rem; padding: 0 .85rem .65rem; }
+  .app-mobile-header__search .app-global-search { flex: 1; min-width: 0; }
   .app-mobile-clock { display: flex; align-items: center; gap: .35rem; padding-right: .25rem; color: var(--app-ink-soft); font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .app-mobile-clock span { display: grid; color: var(--app-success); }
   .app-mobile-clock svg { width: .8rem; height: .8rem; }

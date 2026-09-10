@@ -1,3 +1,4 @@
+import type { JsonValue } from '@/lib/validation/external-values'
 /**
  * Lesson Content Form Validation Schema
  * Task Group 2.2: Formulario de Conteudo Estruturado
@@ -47,11 +48,7 @@ export function parseBNNCCodes(input: string): string[] {
 /**
  * Validate an array of BNCC skill codes
  */
-export function validateBNNCCodes(codes: string[]): {
-  valid: boolean
-  invalidCodes: string[]
-  validCodes: string[]
-} {
+export function validateBNNCCodes(codes: string[]) {
   const validCodes: string[] = []
   const invalidCodes: string[] = []
 
@@ -277,18 +274,15 @@ export function getValidationSchema(educationLevel: EducationLevel = 'fundamenta
  * Validate form data and return errors
  */
 export function validateLessonContentForm(
-  data: unknown,
+  data: JsonValue,
   educationLevel: EducationLevel = 'fundamental'
-): {
-  success: boolean
-  data: LessonContentFormData | null
-  errors: { path: string; message: string }[] | null
-} {
+) {
   try {
     const schema = getValidationSchema(educationLevel)
     const result = schema.parse(data)
     return {
       success: true,
+      // SAFETY: the adjacent fixture/parser boundary establishes the asserted contract.
       data: result as LessonContentFormData,
       errors: null,
     }

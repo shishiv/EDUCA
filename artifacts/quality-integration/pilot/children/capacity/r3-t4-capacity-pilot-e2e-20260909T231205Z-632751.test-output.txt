@@ -1,0 +1,26 @@
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:672375) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:672375) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/3] [setup] › tests/e2e/pilot/capacity-auth.setup.ts:11:6 › authenticate isolated capacity director
+[1A[2K(node:672951) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:672951) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/3] [chromium-capacity] › tests/e2e/pilot/capacity-contract.spec.ts:94:7 › isolated pilot capacity contract › renders the seeded school and five classes through the real UI
+[1A[2K[3/3] [chromium-capacity] › tests/e2e/pilot/capacity-contract.spec.ts:107:7 › isolated pilot capacity contract › rejects concurrent active enrollments through the governed PostgREST RPC
+[1A[2K[chromium-capacity] › tests/e2e/pilot/capacity-contract.spec.ts:107:7 › isolated pilot capacity contract › rejects concurrent active enrollments through the governed PostgREST RPC
+PILOT_CAPACITY_CONCURRENCY_RECEIPT: success_count=1 capacity_errors=1 active_enrollments=1
+
+[1A[2K  3 passed (3.4s)

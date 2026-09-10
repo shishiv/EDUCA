@@ -46,6 +46,15 @@ async function createTargetFixture(): Promise<void> {
   const admin = requireService()
   const suffix = `${process.pid}-${Date.now()}-${randomUUID().slice(0, 8)}`
   targetEmail = `t07-target-${suffix}@synthetic.invalid`
+  targetId = await createTargetAuthIdentity(admin)
+  actorId = await findActiveActorId(admin)
+  await createTargetProfile(admin)
+  await createTargetInvitation(admin)
+  targetClient = await signInTarget(targetEmail)
+  await createTargetStudent(admin, suffix)
+}
+
+async function createTargetAuthIdentity(admin: SupabaseClient): Promise<string> {
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email: targetEmail,
     password: TARGET_PASSWORD,
@@ -53,8 +62,10 @@ async function createTargetFixture(): Promise<void> {
     user_metadata: { synthetic: true, pilot_role: 'diretor' },
   })
   if (authError || !authData.user) throw authError || new Error('T07 target Auth fixture was not created')
-  targetId = authData.user.id
+  return authData.user.id
+}
 
+async function findActiveActorId(admin: SupabaseClient): Promise<string> {
   const { data: actor, error: actorError } = await admin
     .from('users')
     .select('id')
@@ -62,8 +73,10 @@ async function createTargetFixture(): Promise<void> {
     .eq('ativo', true)
     .single()
   if (actorError || !actor) throw actorError || new Error('T07 actor fixture was not found')
-  actorId = actor.id
+  return actor.id
+}
 
+async function createTargetProfile(admin: SupabaseClient): Promise<void> {
   const { error: profileError } = await admin.from('users').insert({
     id: targetId,
     email: targetEmail,
@@ -75,7 +88,9 @@ async function createTargetFixture(): Promise<void> {
     senha_padrao: false,
   })
   if (profileError) throw profileError
+}
 
+async function createTargetInvitation(admin: SupabaseClient): Promise<void> {
   const { error: invitationError } = await admin.from('pilot_user_invitations').insert({
     auth_user_id: targetId,
     email: targetEmail,
@@ -84,13 +99,18 @@ async function createTargetFixture(): Promise<void> {
     invited_by: actorId,
   })
   if (invitationError) throw invitationError
+}
 
-  targetClient = createClient(URL!, ANON_KEY!, {
+async function signInTarget(email: string): Promise<SupabaseClient> {
+  const client = createClient(URL!, ANON_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   })
-  const { error: signInError } = await targetClient.auth.signInWithPassword({ email: targetEmail, password: TARGET_PASSWORD })
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password: TARGET_PASSWORD })
   if (signInError) throw signInError
+  return client
+}
 
+async function createTargetStudent(admin: SupabaseClient, suffix: string): Promise<void> {
   studentId = randomUUID()
   writeStudentId = randomUUID()
   storagePath = `${SCHOOL_ID}/t07-revocation-${suffix}/avatar.png`
@@ -221,7 +241,7 @@ run('T07 synthetic auth revocation against local Supabase', () => {
     })
     const { error: actorSignInError } = await actorClient.auth.signInWithPassword({ email: ACTOR_EMAIL, password: ACTOR_PASSWORD })
     if (actorSignInError) throw actorSignInError
-    const { data: auditId, error: auditError } = await asPilotRpcClient(actorClient).rpc<string>('write_pilot_user_revocation_audit', {
+    const { data: auditId, error: auditError } = await asPilotRpcClient(actorClient).rpc('write_pilot_user_revocation_audit', {
       p_user_id: targetId,
       p_role: revocation.role,
       p_escola_id: SCHOOL_ID,

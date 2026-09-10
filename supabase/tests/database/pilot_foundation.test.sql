@@ -66,18 +66,50 @@ SELECT pg_temp.assert_true(
   'secretariat is read-only for enrollments'
 );
 
+RESET ROLE;
+SET LOCAL ROLE service_role;
+INSERT INTO alunos(id,nome_completo,data_nascimento,sexo,escola_id) VALUES
+  ('40000000-0000-0000-0000-000000000003','Aluno Sintetico C','2018-01-01','M','10000000-0000-0000-0000-000000000001');
+
+RESET ROLE;
+SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000002',true);
-INSERT INTO matriculas(id, aluno_id, turma_id, ano_letivo, situacao)
-VALUES (
-  '50000000-0000-0000-0000-000000000003',
-  '40000000-0000-0000-0000-000000000001',
-  '30000000-0000-0000-0000-000000000001',
-  2027,
-  'ativa'
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO matriculas(id, aluno_id, turma_id, ano_letivo, situacao)
+    VALUES (
+      '50000000-0000-0000-0000-000000000003',
+      '40000000-0000-0000-0000-000000000001',
+      '30000000-0000-0000-0000-000000000001',
+      2027,
+      'ativa'
+    );
+    RAISE EXCEPTION 'director direct enrollment write unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END $$;
+SELECT pg_temp.assert_true(
+  (
+    SELECT matricula_id IS NOT NULL
+    FROM create_governed_enrollment(
+      '40000000-0000-0000-0000-000000000003',
+      '30000000-0000-0000-0000-000000000001',
+      2026,
+      CURRENT_DATE,
+      'pilot foundation governed enrollment'
+    )
+  ),
+  'director can create an enrollment through the governed RPC in the own school'
 );
 SELECT pg_temp.assert_true(
-  (SELECT count(*) = 1 FROM matriculas WHERE id = '50000000-0000-0000-0000-000000000003'),
-  'director can insert an enrollment in the own school'
+  (SELECT count(*) = 1 FROM matriculas
+   WHERE aluno_id = '40000000-0000-0000-0000-000000000003'
+     AND turma_id = '30000000-0000-0000-0000-000000000001'
+     AND ano_letivo = 2026
+     AND situacao = 'ativa'),
+  'governed enrollment write persists exactly one active enrollment'
 );
 SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
 

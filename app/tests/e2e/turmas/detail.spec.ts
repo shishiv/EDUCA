@@ -99,6 +99,6 @@ test.describe('Class detail', () => {
     await page.setViewportSize({ width: 375, height: 720 })
     await openFirstClass(page)
     await expect(page.getByText('Informações da Turma', { exact: true })).toBeVisible({ timeout: 15000 })
-    await expect(page.getByLabel(/navegacao principal mobile/i)).toBeVisible()
+    await expect(page.getByLabel('Navegação principal mobile', { exact: true })).toBeVisible()
   })
 })

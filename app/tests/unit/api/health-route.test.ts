@@ -10,60 +10,35 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
-}))
+import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+import type { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import { createHealthChecks } from '@/lib/health/health-checks'
+import { createHealthRouteHandlers } from '@/lib/health/health-route-handlers'
 
-vi.mock('@/lib/pilot/pilot-server-auth', () => ({
-  requirePilotActor: vi.fn(),
-}))
-
-vi.mock('@/lib/logger', () => ({
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    critical: vi.fn(),
-  },
-}))
-
-import { createClient } from '@/lib/supabase/server'
-import { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
-import { GET as publicGET, HEAD as publicHEAD } from '@/app/api/health/route'
-import { GET as detailGET } from '@/app/api/health/detail/route'
+const createClient = vi.fn<() => Promise<SupabaseClient<Database>>>()
+const authorize = vi.fn<typeof requirePilotActor>()
+const checks = createHealthChecks(createClient)
+const { GET: publicGET, HEAD: publicHEAD, detailGET } = createHealthRouteHandlers(checks, authorize)
 
 type QueryResult = {
-  data: unknown[] | null
+  data: never[] | null
   error: { message: string } | null
   count?: number
 }
 
-interface QueryBuilder extends PromiseLike<QueryResult> {
-  select: (...args: unknown[]) => QueryBuilder
-  limit: (...args: unknown[]) => QueryBuilder
-  eq: (...args: unknown[]) => QueryBuilder
-  in: (...args: unknown[]) => QueryBuilder
-}
-
-/** Chainable fake that resolves every query with the same result. */
-function queryChain(result: QueryResult): QueryBuilder {
-  const builder: QueryBuilder = {
-    select: () => builder,
-    limit: () => builder,
-    eq: () => builder,
-    in: () => builder,
-    then: <TResult1 = QueryResult, TResult2 = never>(
-      onfulfilled?: ((value: QueryResult) => TResult1 | PromiseLike<TResult1>) | null | undefined
-    ): PromiseLike<TResult1 | TResult2> =>
-      Promise.resolve(onfulfilled ? onfulfilled(result) : (result as TResult1)),
-  }
-  return builder
-}
-
-/** Minimal fake supabase client surface used by the health probes. */
 function fakeSupabase(result: QueryResult) {
-  return { from: () => queryChain(result) } as unknown as Awaited<ReturnType<typeof createClient>>
+  return createSupabaseClient<Database>('http://127.0.0.1:54321', 'synthetic-anon', {
+    auth: {
+      persistSession: false, autoRefreshToken: false,
+      detectSessionInUrl: false, storageKey: crypto.randomUUID(),
+    },
+    global: {
+      fetch: async () => result.error
+        ? Response.json(result.error, { status: 403 })
+        : Response.json(result.data, { headers: { 'content-range': `0-6/${result.count ?? 0}` } }),
+    },
+  })
 }
 
 const healthyResult: QueryResult = { data: [], error: null, count: 7 }
@@ -77,16 +52,16 @@ const adminActor = {
   name: 'Admin de Teste',
   role: 'admin' as const,
   schoolId: null,
-  email: 'admin@example.com',
+  email: 'admin@synthetic.invalid',
 }
 
 describe('public GET /api/health (liveness)', () => {
   beforeEach(() => {
-    vi.mocked(createClient).mockReset()
+    createClient.mockReset()
   })
 
   it('returns only status and timestamp when healthy', async () => {
-    vi.mocked(createClient).mockResolvedValue(fakeSupabase(healthyResult))
+    createClient.mockResolvedValue(fakeSupabase(healthyResult))
 
     const res = await publicGET()
     expect(res.status).toBe(200)
@@ -100,7 +75,7 @@ describe('public GET /api/health (liveness)', () => {
   })
 
   it('returns a stable unhealthy body with no internal error text', async () => {
-    vi.mocked(createClient).mockResolvedValue(fakeSupabase(failingResult))
+    createClient.mockResolvedValue(fakeSupabase(failingResult))
 
     const res = await publicGET()
     expect(res.status).toBe(503)
@@ -113,7 +88,7 @@ describe('public GET /api/health (liveness)', () => {
   })
 
   it('redacts raw exceptions and never leaks env, version, or metrics', async () => {
-    vi.mocked(createClient).mockRejectedValue(new Error('boom: connection refused'))
+    createClient.mockRejectedValue(new Error('boom: connection refused'))
 
     const res = await publicGET()
     expect(res.status).toBe(503)
@@ -127,33 +102,33 @@ describe('public GET /api/health (liveness)', () => {
 
 describe('HEAD /api/health (unchanged contract)', () => {
   beforeEach(() => {
-    vi.mocked(createClient).mockReset()
+    createClient.mockReset()
   })
 
   it('returns 200 when the database answers', async () => {
-    vi.mocked(createClient).mockResolvedValue(fakeSupabase(healthyResult))
+    createClient.mockResolvedValue(fakeSupabase(healthyResult))
 
     const res = await publicHEAD()
     expect(res.status).toBe(200)
   })
 
   it('returns 503 when the database errors or throws', async () => {
-    vi.mocked(createClient).mockResolvedValue(fakeSupabase(failingResult))
+    createClient.mockResolvedValue(fakeSupabase(failingResult))
     expect((await publicHEAD()).status).toBe(503)
 
-    vi.mocked(createClient).mockRejectedValue(new Error('unreachable'))
+    createClient.mockRejectedValue(new Error('unreachable'))
     expect((await publicHEAD()).status).toBe(503)
   })
 })
 
 describe('diagnostic GET /api/health/detail (operator gated)', () => {
   beforeEach(() => {
-    vi.mocked(createClient).mockReset()
-    vi.mocked(requirePilotActor).mockReset()
+    createClient.mockReset()
+    authorize.mockReset()
   })
 
   it('denies unauthenticated callers with 401 and no report detail', async () => {
-    vi.mocked(requirePilotActor).mockRejectedValue(new Error('PILOT_AUTH_REQUIRED'))
+    authorize.mockRejectedValue(new Error('PILOT_AUTH_REQUIRED'))
 
     const res = await detailGET()
     expect(res.status).toBe(401)
@@ -165,7 +140,7 @@ describe('diagnostic GET /api/health/detail (operator gated)', () => {
   })
 
   it('denies non-admin sessions with 403', async () => {
-    vi.mocked(requirePilotActor).mockRejectedValue(new Error('PILOT_ROLE_DENIED'))
+    authorize.mockRejectedValue(new Error('PILOT_ROLE_DENIED'))
 
     const res = await detailGET()
     expect(res.status).toBe(403)
@@ -173,8 +148,8 @@ describe('diagnostic GET /api/health/detail (operator gated)', () => {
   })
 
   it('returns the full report to an authenticated admin', async () => {
-    vi.mocked(requirePilotActor).mockResolvedValue(adminActor)
-    vi.mocked(createClient).mockResolvedValue(fakeSupabase(healthyResult))
+    authorize.mockResolvedValue(adminActor)
+    createClient.mockResolvedValue(fakeSupabase(healthyResult))
 
     const res = await detailGET()
     expect(res.status).toBe(200)
@@ -196,8 +171,8 @@ describe('diagnostic GET /api/health/detail (operator gated)', () => {
   })
 
   it('surfaces check-level failure detail only to the authenticated operator', async () => {
-    vi.mocked(requirePilotActor).mockResolvedValue(adminActor)
-    vi.mocked(createClient).mockResolvedValue(fakeSupabase(failingResult))
+    authorize.mockResolvedValue(adminActor)
+    createClient.mockResolvedValue(fakeSupabase(failingResult))
 
     const res = await detailGET()
     expect(res.status).toBe(503)

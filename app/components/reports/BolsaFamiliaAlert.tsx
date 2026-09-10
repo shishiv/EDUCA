@@ -206,6 +206,196 @@ function BolsaFamiliaAlertCompact({
   );
 }
 
+function getResolvedMargins(students: BolsaFamiliaStudent[]): string[] {
+  return Array.from(new Set(
+    students
+      .filter((student) => student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null)
+      .map((student) => `${student.margemMunicipalCriticaPercent}:${student.margemMunicipalAlertaPercent}`),
+  ));
+}
+
+function StudentAlertDetails({ student }: { student: BolsaFamiliaStudent }) {
+  const t = useTranslations('platform')
+  const municipalMargin = student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null
+    ? ` (${student.margemMunicipalCriticaPercent}/${student.margemMunicipalAlertaPercent}%)`
+    : ''
+
+  return (
+    <div className="mt-1 text-sm text-gray-600 space-y-0.5">
+      <div>NIS: {student.nis || t('components.bolsa.notInformed')}</div>
+      <div>{t('components.studentReport.class')} {student.turmaNome} ({student.turmaSerie})</div>
+      {student.escolaNome && <div>Escola: {student.escolaNome}</div>}
+      <div>
+        Condicionalidade legal: {student.statusLegal}
+        {student.pisoLegalPercent !== null ? ` (${student.pisoLegalPercent}%)` : ''}
+      </div>
+      <div>Margem municipal: {student.margemMunicipalStatus}{municipalMargin}</div>
+    </div>
+  )
+}
+
+function StudentAttendanceDetails({
+  student,
+  showDetails,
+  status,
+}: {
+  student: BolsaFamiliaStudent
+  showDetails: boolean
+  status: BolsaFamiliaStatus
+}) {
+  const t = useTranslations('platform')
+  const isCritical = status === 'CRITICO'
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-gray-600">{t('components.bolsa.frequency')}</span>
+        <span className={`font-bold ${isCritical ? 'text-red-600' : 'text-amber-600'}`}>
+          {student.percentual}%
+        </span>
+      </div>
+      <AttendanceBar
+        percentual={student.percentual}
+        criticalPercent={student.margemMunicipalCriticaPercent}
+        warningPercent={student.margemMunicipalAlertaPercent}
+      />
+      {showDetails && (
+        <div className="flex justify-between text-xs text-gray-500 pt-1">
+          <span>P: {student.presencas} | F: {student.faltas} | A: {student.atestados}</span>
+          {!isCritical && student.faltasParaCritico > 0 && (
+            <span className="text-amber-600">
+              {student.faltasParaCritico} falta{student.faltasParaCritico > 1 ? 's' : ''}{' '}
+              {t('components.bolsa.toCritical')}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BolsaFamiliaStudentCard({
+  student,
+  showDetails,
+}: {
+  student: BolsaFamiliaStudent
+  showDetails: boolean
+}) {
+  const status = getOverallStatus(student)
+  const isCritical = status === 'CRITICO'
+
+  return (
+    <div className={`p-3 border rounded-lg ${isCritical ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+            <span className="font-medium text-gray-900 truncate">{student.nome}</span>
+          </div>
+          {showDetails && <StudentAlertDetails student={student} />}
+        </div>
+        <StatusBadge status={status} />
+      </div>
+      <StudentAttendanceDetails student={student} showDetails={showDetails} status={status} />
+      <div className="mt-3 pt-2 border-t border-gray-200">
+        <Link href={`/dashboard/alunos/${student.alunoId}`}>
+          <Button variant="ghost" size="sm" className="w-full gap-1 text-gray-600">
+            Ver detalhes do aluno
+            <ExternalLink className="h-3 w-3" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function AlertLegend({ resolvedMargins }: { resolvedMargins: string[] }) {
+  const t = useTranslations('platform')
+  const marginLabel = resolvedMargins.length === 1
+    ? (() => {
+      const [critical, warning] = resolvedMargins[0].split(':')
+      return t('components.bolsa.marginSummary', { critical, warning })
+    })()
+    : t('components.bolsa.margins')
+  const marginParts = marginLabel.split(' | ')
+
+  return (
+    <div className="mt-4 pt-4 border-t">
+      <div className="text-xs text-gray-500 space-y-1">
+        {resolvedMargins.length === 1 ? (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-red-500" /><span>{marginParts[0]}</span></div>
+            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-amber-500" /><span>{marginParts[1]}</span></div>
+            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500" /><span>{marginParts[2]}</span></div>
+          </div>
+        ) : <p>{marginLabel}</p>}
+        <p className="text-gray-400">* Atestados médicos (A) contam como presença para o Bolsa Família</p>
+      </div>
+    </div>
+  )
+}
+
+function BolsaFamiliaAlertCard({
+  atRisk,
+  criticos,
+  emAlerta,
+  displayStudents,
+  resolvedMargins,
+  showDetails,
+  maxItems,
+  onViewAll,
+}: {
+  atRisk: BolsaFamiliaStudent[]
+  criticos: BolsaFamiliaStudent[]
+  emAlerta: BolsaFamiliaStudent[]
+  displayStudents: BolsaFamiliaStudent[]
+  resolvedMargins: string[]
+  showDetails: boolean
+  maxItems: number
+  onViewAll?: () => void
+}) {
+  const t = useTranslations('platform')
+  const hasCriticalStudents = criticos.length > 0
+
+  if (atRisk.length === 0) {
+    return (
+      <Card className="border-green-200 bg-green-50">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-600" /><CardTitle className="text-green-800">{t('components.bolsa.noAlerts')}</CardTitle></div>
+          <CardDescription className="text-green-700">{t('components.bolsa.aboveMargin')}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className={hasCriticalStudents ? 'border-red-200' : 'border-amber-200'}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className={`h-5 w-5 ${hasCriticalStudents ? 'text-red-600' : 'text-amber-600'}`} />
+            <CardTitle className={hasCriticalStudents ? 'text-red-800' : 'text-amber-800'}>{t('components.bolsa.alertTitle')}</CardTitle>
+          </div>
+          <div className="flex gap-2">
+            {hasCriticalStudents && <Badge variant="destructive">{t('components.bolsa.criticalSummary', { count: criticos.length })}</Badge>}
+            {emAlerta.length > 0 && <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">{t('components.bolsa.alertSummary', { count: emAlerta.length })}</Badge>}
+          </div>
+        </div>
+        <CardDescription className={hasCriticalStudents ? 'text-red-700' : 'text-amber-700'}>
+          {t('components.bolsa.legalAlert', { count: atRisk.length })} {t('components.bolsa.separate')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {displayStudents.map((student) => <BolsaFamiliaStudentCard key={student.matriculaId} student={student} showDetails={showDetails} />)}
+        </div>
+        {atRisk.length > maxItems && onViewAll && <Button variant="outline" className="w-full mt-4" onClick={onViewAll}>Ver todos os {atRisk.length} alunos em risco</Button>}
+        <AlertLegend resolvedMargins={resolvedMargins} />
+      </CardContent>
+    </Card>
+  )
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -218,7 +408,6 @@ export function BolsaFamiliaAlert({
   loading = false,
   compact = false,
 }: BolsaFamiliaAlertProps) {
-  const t = useTranslations('platform')
   if (loading) {
     return <BolsaFamiliaAlertSkeleton compact={compact} />;
   }
@@ -237,185 +426,20 @@ export function BolsaFamiliaAlert({
   const criticos = atRisk.filter((student) => getOverallStatus(student) === 'CRITICO');
   const emAlerta = atRisk.filter((student) => getOverallStatus(student) === 'ALERTA');
   const displayStudents = atRisk.slice(0, maxItems);
-  const resolvedMargins = Array.from(new Set(
-    students
-      .filter((student) => student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null)
-      .map((student) => `${student.margemMunicipalCriticaPercent}:${student.margemMunicipalAlertaPercent}`),
-  ));
-  const marginLabel = resolvedMargins.length === 1
-    ? (() => {
-      const [critical, warning] = resolvedMargins[0].split(':');
-      return t('components.bolsa.marginSummary', { critical, warning });
-    })()
-    : t('components.bolsa.margins');
-
-  if (atRisk.length === 0) {
-    return (
-      <Card className="border-green-200 bg-green-50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <CardTitle className="text-green-800">{t('components.bolsa.noAlerts')}</CardTitle>
-          </div>
-          <CardDescription className="text-green-700">{t('components.bolsa.aboveMargin')}</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+  const resolvedMargins = getResolvedMargins(students)
 
   return (
-    <Card className={criticos.length > 0 ? 'border-red-200' : 'border-amber-200'}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle
-              className={`h-5 w-5 ${criticos.length > 0 ? 'text-red-600' : 'text-amber-600'}`}
-            />
-            <CardTitle className={criticos.length > 0 ? 'text-red-800' : 'text-amber-800'}>
-              {t('components.bolsa.alertTitle')}
-            </CardTitle>
-          </div>
-          <div className="flex gap-2">
-            {criticos.length > 0 && (
-              <Badge variant="destructive">
-                {t('components.bolsa.criticalSummary', { count: criticos.length })}
-              </Badge>
-            )}
-            {emAlerta.length > 0 && (
-              <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                {t('components.bolsa.alertSummary', { count: emAlerta.length })}
-              </Badge>
-            )}
-          </div>
-        </div>
-        <CardDescription className={criticos.length > 0 ? 'text-red-700' : 'text-amber-700'}>
-          {t('components.bolsa.legalAlert', { count: atRisk.length })} {t('components.bolsa.separate')}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
-        <div className="space-y-3">
-          {displayStudents.map((student) => (
-            <div
-              key={student.matriculaId}
-              className={`p-3 border rounded-lg ${
-                getOverallStatus(student) === 'CRITICO'
-                  ? 'border-red-200 bg-red-50'
-                  : 'border-amber-200 bg-amber-50'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                    <span className="font-medium text-gray-900 truncate">{student.nome}</span>
-                  </div>
-                  {showDetails && (
-                    <div className="mt-1 text-sm text-gray-600 space-y-0.5">
-                      <div>NIS: {student.nis || t('components.bolsa.notInformed')}</div>
-                      <div>{t('components.studentReport.class')} {student.turmaNome} ({student.turmaSerie})</div>
-                      {student.escolaNome && <div>Escola: {student.escolaNome}</div>}
-                      <div>
-                        Condicionalidade legal: {student.statusLegal}
-                        {student.pisoLegalPercent !== null ? ` (${student.pisoLegalPercent}%)` : ''}
-                      </div>
-                      <div>
-                        Margem municipal: {student.margemMunicipalStatus}
-                        {student.margemMunicipalCriticaPercent !== null && student.margemMunicipalAlertaPercent !== null
-                          ? ` (${student.margemMunicipalCriticaPercent}/${student.margemMunicipalAlertaPercent}%)`
-                          : ''}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <StatusBadge status={getOverallStatus(student)} />
-              </div>
-
-              {/* Attendance details */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">{t('components.bolsa.frequency')}</span>
-                  <span
-                    className={`font-bold ${
-                      getOverallStatus(student) === 'CRITICO' ? 'text-red-600' : 'text-amber-600'
-                    }`}
-                  >
-                    {student.percentual}%
-                  </span>
-                </div>
-                <AttendanceBar
-                  percentual={student.percentual}
-                  criticalPercent={student.margemMunicipalCriticaPercent}
-                  warningPercent={student.margemMunicipalAlertaPercent}
-                />
-
-                {showDetails && (
-                  <div className="flex justify-between text-xs text-gray-500 pt-1">
-                    <span>
-                      P: {student.presencas} | F: {student.faltas} | A: {student.atestados}
-                    </span>
-                    {getOverallStatus(student) !== 'CRITICO' && student.faltasParaCritico > 0 && (
-                      <span className="text-amber-600">
-                        {student.faltasParaCritico} falta{student.faltasParaCritico > 1 ? 's' : ''}{' '}
-                        {t('components.bolsa.toCritical')}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Link to student details */}
-              <div className="mt-3 pt-2 border-t border-gray-200">
-                <Link href={`/dashboard/alunos/${student.alunoId}`}>
-                  <Button variant="ghost" size="sm" className="w-full gap-1 text-gray-600">
-                    Ver detalhes do aluno
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {atRisk.length > maxItems && onViewAll && (
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={onViewAll}
-          >
-            Ver todos os {atRisk.length} alunos em risco
-          </Button>
-        )}
-
-        {/* Legend */}
-        <div className="mt-4 pt-4 border-t">
-          <div className="text-xs text-gray-500 space-y-1">
-            {resolvedMargins.length === 1 ? (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <span>{marginLabel.split(' | ')[0]}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-amber-500" />
-                  <span>{marginLabel.split(' | ')[1]}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span>{marginLabel.split(' | ')[2]}</span>
-                </div>
-              </div>
-            ) : (
-              <p>{marginLabel}</p>
-            )}
-            <p className="text-gray-400">
-              * Atestados médicos (A) contam como presença para o Bolsa Família
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+    <BolsaFamiliaAlertCard
+      atRisk={atRisk}
+      criticos={criticos}
+      emAlerta={emAlerta}
+      displayStudents={displayStudents}
+      resolvedMargins={resolvedMargins}
+      showDetails={showDetails}
+      maxItems={maxItems}
+      onViewAll={onViewAll}
+    />
+  )
 }
 
 export default BolsaFamiliaAlert;

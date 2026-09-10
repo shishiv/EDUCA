@@ -5,6 +5,8 @@ set -euo pipefail
 APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 cd "$APP_DIR"
+source "$APP_DIR/scripts/pilot-local-runtime.sh"
+PILOT_RUNTIME_FAILURE_PREFIX=PILOT_LEGACY_E2E_FAILED
 # shellcheck source=pilot-port-range-lease.sh
 # shellcheck source=pilot-supabase-cleanup.sh
 source "$APP_DIR/scripts/pilot-port-range-lease.sh"
@@ -35,9 +37,14 @@ TEST_EXIT=1
 SKIPPED=false
 DELIBERATE_BREAK="${PILOT_LEGACY_DELIBERATE_BREAK:-none}"
 APP_NAME="educa-r3-legacy-pilot-${RUN_SLUG}"
-EXPECTED_TEST_COUNT=20
-SELECTED_TEST_COUNT=20
-EXPECTED_RUN_TEST_COUNT=21
+EXPECTED_TEST_COUNT=0
+EXPECTED_SETUP_TEST_COUNT=0
+SELECTED_TEST_COUNT=0
+EXPECTED_RUN_TEST_COUNT=0
+LEGACY_MANIFEST_SPEC_FILES='[]'
+LEGACY_MANIFEST_EXCLUDED_FILES='[]'
+LEGACY_MANIFEST_RECEIPT_SPEC_FILES='[]'
+LEGACY_MANIFEST_RECEIPT_EXCLUDED_FILES='[]'
 SECURITY_EXPECTED_SPEC_TEST_COUNT=2
 SECURITY_EXPECTED_SETUP_TEST_COUNT=1
 SECURITY_EXPECTED_RUN_TEST_COUNT=3
@@ -45,19 +52,46 @@ PLAYWRIGHT_CONFIG='playwright.pilot-legacy.config.ts'
 LEGACY_MANIFEST_MODE=true
 SECURITY_CHILD=false
 
+load_legacy_manifest() {
+  local manifest
+  manifest=$(pnpm exec tsx -e "import { LEGACY_PILOT_EXCLUDED_FILES, LEGACY_PILOT_EXPECTED_RUN_TEST_COUNT, LEGACY_PILOT_EXPECTED_SETUP_TEST_COUNT, LEGACY_PILOT_EXPECTED_TEST_COUNT, LEGACY_PILOT_SPEC_FILES, legacyPilotManifestReceiptPath } from './tests/e2e/pilot/legacy-pilot-manifest'; console.log(JSON.stringify({ expectedTestCount: LEGACY_PILOT_EXPECTED_TEST_COUNT, expectedSetupTestCount: LEGACY_PILOT_EXPECTED_SETUP_TEST_COUNT, expectedRunTestCount: LEGACY_PILOT_EXPECTED_RUN_TEST_COUNT, specFiles: LEGACY_PILOT_SPEC_FILES, excludedFiles: LEGACY_PILOT_EXCLUDED_FILES, receiptSpecFiles: LEGACY_PILOT_SPEC_FILES.map(legacyPilotManifestReceiptPath), receiptExcludedFiles: LEGACY_PILOT_EXCLUDED_FILES.map(legacyPilotManifestReceiptPath) }))") || {
+    echo 'PILOT_LEGACY_MANIFEST_UNAVAILABLE' >&2
+    return 1
+  }
+  read -r EXPECTED_TEST_COUNT EXPECTED_SETUP_TEST_COUNT EXPECTED_RUN_TEST_COUNT <<<"$(node -e "const manifest = JSON.parse(process.argv[1]); console.log([manifest.expectedTestCount, manifest.expectedSetupTestCount, manifest.expectedRunTestCount].join(' '))" "$manifest")"
+  LEGACY_MANIFEST_SPEC_FILES=$(node -e "const manifest = JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(manifest.specFiles))" "$manifest")
+  LEGACY_MANIFEST_EXCLUDED_FILES=$(node -e "const manifest = JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(manifest.excludedFiles))" "$manifest")
+  LEGACY_MANIFEST_RECEIPT_SPEC_FILES=$(node -e "const manifest = JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(manifest.receiptSpecFiles))" "$manifest")
+  LEGACY_MANIFEST_RECEIPT_EXCLUDED_FILES=$(node -e "const manifest = JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(manifest.receiptExcludedFiles))" "$manifest")
+  if [[ ! "$EXPECTED_TEST_COUNT" =~ ^[0-9]+$ || ! "$EXPECTED_SETUP_TEST_COUNT" =~ ^[0-9]+$ || ! "$EXPECTED_RUN_TEST_COUNT" =~ ^[0-9]+$ || "$EXPECTED_RUN_TEST_COUNT" -ne "$((EXPECTED_TEST_COUNT + EXPECTED_SETUP_TEST_COUNT))" ]] || ! node -e "const manifest = JSON.parse(process.argv[1]); if (!Array.isArray(manifest.specFiles) || manifest.specFiles.length === 0 || !Array.isArray(manifest.excludedFiles)) process.exit(1)" "$manifest"; then
+    echo 'PILOT_LEGACY_MANIFEST_INVALID' >&2
+    return 1
+  fi
+  SELECTED_TEST_COUNT="$EXPECTED_TEST_COUNT"
+}
+
 if [[ -n "${PILOT_PLAYWRIGHT_CONFIG:-}" ]]; then
   case "$PILOT_PLAYWRIGHT_CONFIG" in
     playwright.pilot-security.config.ts)
       PLAYWRIGHT_CONFIG="$PILOT_PLAYWRIGHT_CONFIG"
       LEGACY_MANIFEST_MODE=false
       SECURITY_CHILD=true
-      APP_NAME='educa-r3-security-pilot'
+      APP_NAME="educa-r3-security-pilot-${RUN_SLUG}"
       ;;
     *)
       echo 'PILOT_LEGACY_CONFIG_REJECTED: only the shared legacy manifest or existing security slice is allowed' >&2
       exit 1
       ;;
   esac
+fi
+
+if [[ "$LEGACY_MANIFEST_MODE" == true ]]; then
+  load_legacy_manifest || exit 1
+else
+  EXPECTED_TEST_COUNT="$SECURITY_EXPECTED_SPEC_TEST_COUNT"
+  EXPECTED_SETUP_TEST_COUNT="$SECURITY_EXPECTED_SETUP_TEST_COUNT"
+  SELECTED_TEST_COUNT="$EXPECTED_TEST_COUNT"
+  EXPECTED_RUN_TEST_COUNT="$SECURITY_EXPECTED_RUN_TEST_COUNT"
 fi
 
 SETUP_RECEIPT_TMP=''
@@ -77,40 +111,6 @@ AUTH_STATE_PATH=''
 APP_LOG=''
 
 mkdir -p "$RECEIPT_DIR"
-
-redact_file() {
-  local source_file="$1"
-  local destination_file="$2"
-  if [[ ! -f "$source_file" ]]; then
-    return 0
-  fi
-  sed -E \
-    -e 's/sb_(publishable|secret)_[A-Za-z0-9_-]+/[REDACTED_SUPABASE_KEY]/g' \
-    -e 's/eyJ[A-Za-z0-9._-]+/[REDACTED_TOKEN]/g' \
-    -e 's#(postgresql://[^:@/]+):[^@]+@#\1:[REDACTED]@#g' \
-    -e 's#(https?://[^:/[:space:]]+):[0-9]+#\1#g' \
-    "$source_file" > "$destination_file"
-}
-
-show_log_on_failure() {
-  local log_file="$1"
-  local redacted_log="${log_file}.redacted"
-  redact_file "$log_file" "$redacted_log"
-  if [[ -s "$redacted_log" ]]; then
-    cat "$redacted_log" >&2
-  fi
-}
-
-run_captured() {
-  local phase="$1"
-  local log_file="$2"
-  shift 2
-  if ! "$@" >"$log_file" 2>&1; then
-    echo "PILOT_LEGACY_E2E_FAILED: phase=$phase" >&2
-    show_log_on_failure "$log_file"
-    return 1
-  fi
-}
 
 choose_port_base() {
   local candidate="${PILOT_E2E_PORT_BASE:-}"
@@ -217,67 +217,12 @@ fs.writeFileSync(outputPath, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8')
 NODE
 }
 
-app_process_group_alive() {
-  ps -eo sid= | awk -v session_id="$APP_PID" '$1 == session_id { found=1 } END { exit found ? 0 : 1 }'
-}
-
-app_named_route_removed() {
-  ! portless list 2>/dev/null | grep -Fq "$APP_NAME"
-}
-
-stop_app_process_group() {
-  if [[ -z "$APP_PID" ]]; then
-    APP_STOPPED=true
-    return
-  fi
-
-  kill -TERM -- "-$APP_PID" 2>/dev/null || kill -TERM "$APP_PID" 2>/dev/null || true
-  wait "$APP_PID" 2>/dev/null || true
-  for _ in $(seq 1 10); do
-    if ! app_process_group_alive; then
-      APP_STOPPED=true
-      return
-    fi
-    sleep 1
-  done
-  APP_STOPPED=false
-  CLEANUP_FAILED=true
-}
-
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
   set +e
 
-  stop_app_process_group
-  if app_named_route_removed; then
-    APP_ROUTE_REMOVED=true
-  else
-    APP_ROUTE_REMOVED=false
-    CLEANUP_FAILED=true
-  fi
-
-  if [[ "$SUPABASE_STARTED" == true && -d "$ISOLATED_PROJECT_DIR" ]]; then
-    if pilot_supabase_stop_project "$ISOLATED_PROJECT_DIR" "$SUPABASE_PROJECT_ID" >"$ISOLATED_PROJECT_DIR/stop.log" 2>&1; then
-      DATABASE_STOPPED=true
-    else
-      DATABASE_STOPPED=false
-      CLEANUP_FAILED=true
-      show_log_on_failure "$ISOLATED_PROJECT_DIR/stop.log"
-    fi
-  else
-    DATABASE_STOPPED=true
-  fi
-
-  if [[ -n "$AUTH_STATE_PATH" && -e "$AUTH_STATE_PATH" ]]; then
-    rm -f "$AUTH_STATE_PATH"
-  fi
-  if [[ -n "$AUTH_DIR" && -d "$AUTH_DIR" ]]; then
-    rmdir "$AUTH_DIR" 2>/dev/null || true
-  fi
-  if [[ -n "$AUTH_STATE_PATH" && ! -e "$AUTH_STATE_PATH" ]]; then
-    AUTH_STATE_REMOVED=true
-  fi
+  pilot_cleanup_services
 
   redact_file "$SETUP_RECEIPT_TMP" "$SETUP_RECEIPT"
   redact_file "$DATABASE_RECEIPT_TMP" "$DATABASE_RECEIPT"
@@ -288,20 +233,7 @@ cleanup() {
     redact_file "$APP_LOG" "${RECEIPT_STEM}.app-log.txt"
   fi
 
-  if [[ -n "$ISOLATED_PROJECT_DIR" && -e "$ISOLATED_PROJECT_DIR" ]]; then
-    rm -rf "$ISOLATED_PROJECT_DIR"
-  fi
-  if [[ -n "$ISOLATED_PROJECT_DIR" && ! -e "$ISOLATED_PROJECT_DIR" ]]; then
-    TEMP_REMOVED=true
-  else
-    TEMP_REMOVED=false
-    CLEANUP_FAILED=true
-  fi
-
-  if ! pilot_port_range_lease_release; then
-    PORT_LEASE_RELEASE_FAILED=true
-    CLEANUP_FAILED=true
-  fi
+  pilot_cleanup_project
 
   if [[ ! -f "$SETUP_RECEIPT" ]]; then
     printf '%s\n' '{"result":"unavailable","redacted":true}' > "$SETUP_RECEIPT"
@@ -346,26 +278,18 @@ const relative = file => path.relative(process.cwd(), file)
 const isLegacyManifest = process.env.PILOT_LEGACY_MANIFEST_MODE === 'true'
 const securityChild = process.env.PILOT_LEGACY_SECURITY_CHILD === 'true'
 const skipped = process.env.PILOT_LEGACY_SKIPPED === 'true'
+const legacyManifestReceiptSpecFiles = JSON.parse(process.env.PILOT_LEGACY_MANIFEST_RECEIPT_SPEC_FILES || '[]')
+const legacyManifestReceiptExcludedFiles = JSON.parse(process.env.PILOT_LEGACY_MANIFEST_RECEIPT_EXCLUDED_FILES || '[]')
 const selectedManifest = isLegacyManifest
   ? {
       config: process.env.PILOT_LEGACY_PLAYWRIGHT_CONFIG,
       setup: 'tests/e2e/auth.setup.ts',
-      specs: [
-        'tests/e2e/pilot/core-scope.spec.ts',
-        'tests/e2e/pilot/csv-import.spec.ts',
-        'tests/e2e/pilot/deployed-isolation.spec.ts',
-        'tests/e2e/pilot/invalid-refresh-token.spec.ts',
-        'tests/e2e/pilot/invitation-first-access.spec.ts',
-        'tests/e2e/pilot/security-hardening.spec.ts',
-      ],
-      expectedTests: 19,
-      expectedRunTests: 20,
+      specs: legacyManifestReceiptSpecFiles,
+      expectedTests: Number(process.env.PILOT_LEGACY_EXPECTED_TEST_COUNT),
+      expectedSetupTests: Number(process.env.PILOT_LEGACY_EXPECTED_SETUP_TEST_COUNT),
+      expectedRunTests: Number(process.env.PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT),
       selectionIsExact: true,
-      excluded: [
-        'tests/e2e/pilot/capacity-contract.spec.ts',
-        'tests/e2e/pilot-descriptive/descriptive-emission.spec.ts',
-        'tests/e2e/pilot/canonical-pilot.spec.ts',
-      ],
+      excluded: legacyManifestReceiptExcludedFiles,
     }
   : {
       config: process.env.PILOT_LEGACY_PLAYWRIGHT_CONFIG,
@@ -494,25 +418,7 @@ MANIFEST_LIST_LOG="$ISOLATED_PROJECT_DIR/manifest-list.log"
 BUILD_LOG="$ISOLATED_PROJECT_DIR/build.log"
 APP_LOG="$ISOLATED_PROJECT_DIR/next.log"
 
-mkdir -p "$SUPABASE_CONFIG_DIR"
-cp "$ROOT_DIR/supabase/config.toml" "$SUPABASE_CONFIG_DIR/config.toml"
-ln -s "$ROOT_DIR/supabase/migrations" "$SUPABASE_CONFIG_DIR/migrations"
-sed -i \
-  -e "0,/port = 54321/s//port = $API_PORT/" \
-  -e "0,/port = 54322/s//port = $DB_PORT/" \
-  -e "0,/port = 54323/s//port = $STUDIO_PORT/" \
-  -e "0,/port = 54324/s//port = $MAILPIT_PORT/" \
-  -e "0,/port = 54327/s//port = $ANALYTICS_PORT/" \
-  -e "0,/vector_port = 54328/s//vector_port = $VECTOR_PORT/" \
-  -e "0,/port = 54329/s//port = $POOLER_PORT/" \
-  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"$APP_ORIGIN\"#" \
-  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"$APP_ORIGIN\"]#" \
-  "$SUPABASE_CONFIG_DIR/config.toml"
-
-# The fixed R3-T1 template is rewritten per run so concurrent runners never share a host.
-if [[ "$APP_SERVER_MODE" == portless ]]; then
-  sed -i "s#https://educa-r3-legacy-pilot.localhost#$APP_ORIGIN#g" "$SUPABASE_CONFIG_DIR/config.toml"
-fi
+pilot_local_project_init "$ROOT_DIR" "$ISOLATED_PROJECT_DIR" "$PORT_BASE" "$APP_ORIGIN"
 
 # Do not let inherited remote project settings or credentials influence this run.
 unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL
@@ -562,7 +468,13 @@ export PILOT_LEGACY_APP_NAME="$APP_NAME"
 export PILOT_LEGACY_SERVER_MANAGED=true
 export PILOT_LEGACY_PLAYWRIGHT_CONFIG="$PLAYWRIGHT_CONFIG"
 export PILOT_LEGACY_MANIFEST_MODE="$LEGACY_MANIFEST_MODE"
+export PILOT_LEGACY_EXPECTED_TEST_COUNT="$EXPECTED_TEST_COUNT"
+export PILOT_LEGACY_EXPECTED_SETUP_TEST_COUNT="$EXPECTED_SETUP_TEST_COUNT"
 export PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$EXPECTED_RUN_TEST_COUNT"
+export PILOT_LEGACY_MANIFEST_SPEC_FILES="$LEGACY_MANIFEST_SPEC_FILES"
+export PILOT_LEGACY_MANIFEST_EXCLUDED_FILES="$LEGACY_MANIFEST_EXCLUDED_FILES"
+export PILOT_LEGACY_MANIFEST_RECEIPT_SPEC_FILES="$LEGACY_MANIFEST_RECEIPT_SPEC_FILES"
+export PILOT_LEGACY_MANIFEST_RECEIPT_EXCLUDED_FILES="$LEGACY_MANIFEST_RECEIPT_EXCLUDED_FILES"
 export PILOT_LEGACY_SECURITY_CHILD="$SECURITY_CHILD"
 PILOT_IMPORT_ENCRYPTION_KEY="$(printf 'synthetic-pilot-encryption-key!!' | base64 -w0)"
 export PILOT_IMPORT_ENCRYPTION_KEY
@@ -599,21 +511,14 @@ run_captured 'manifest_list' "$MANIFEST_LIST_LOG" pnpm exec playwright test --co
 if [[ "$LEGACY_MANIFEST_MODE" == true ]]; then
   selected_test_count=$(grep -Ec '^[[:space:]]+\[chromium-legacy\] ' "$MANIFEST_LIST_LOG" || true)
   setup_test_count=$(grep -Ec '^[[:space:]]+\[legacy-setup\] ' "$MANIFEST_LIST_LOG" || true)
-  if [[ "$selected_test_count" -ne "$EXPECTED_TEST_COUNT" || "$setup_test_count" -ne 1 ]]; then
-    echo "PILOT_LEGACY_MANIFEST_RED: expected_tests=$EXPECTED_TEST_COUNT observed_tests=$selected_test_count observed_setup=$setup_test_count" >&2
+  observed_test_count=$((selected_test_count + setup_test_count))
+  if [[ "$selected_test_count" -ne "$EXPECTED_TEST_COUNT" || "$setup_test_count" -ne "$EXPECTED_SETUP_TEST_COUNT" || "$observed_test_count" -ne "$EXPECTED_RUN_TEST_COUNT" ]] || ! PILOT_LEGACY_MANIFEST_LIST_PATH="$MANIFEST_LIST_LOG" pnpm exec tsx -e "import { readFileSync } from 'node:fs'; import { assertLegacyPilotManifestListing } from './tests/e2e/pilot/legacy-pilot-manifest'; const listPath = process.env.PILOT_LEGACY_MANIFEST_LIST_PATH; if (!listPath) throw new Error('PILOT_LEGACY_MANIFEST_LIST_PATH_REQUIRED'); assertLegacyPilotManifestListing(readFileSync(listPath, 'utf8'))"; then
+    echo "PILOT_LEGACY_MANIFEST_RED: expected_specs=$EXPECTED_TEST_COUNT expected_setup=$EXPECTED_SETUP_TEST_COUNT expected_tests=$EXPECTED_RUN_TEST_COUNT observed_specs=$selected_test_count observed_setup=$setup_test_count observed_tests=$observed_test_count" >&2
     exit 1
   fi
-  for excluded_file in \
-    'pilot/capacity-contract.spec.ts' \
-    'pilot-descriptive/descriptive-emission.spec.ts' \
-    'pilot/canonical-pilot.spec.ts' \
-    'pilot/canonical-auth.setup.ts'; do
-    if grep -Fq "$excluded_file" "$MANIFEST_LIST_LOG"; then
-      echo "PILOT_LEGACY_MANIFEST_RED: excluded_file_selected=$excluded_file" >&2
-      exit 1
-    fi
-  done
-  printf 'PILOT_LEGACY_MANIFEST_RECEIPT: setup=1 shared_specs=6 tests=%s capacity=false descriptive=false r1_canonical=false\n' "$selected_test_count"
+  SELECTED_TEST_COUNT="$selected_test_count"
+  shared_spec_count=$(node -e "process.stdout.write(String(JSON.parse(process.argv[1]).length))" "$LEGACY_MANIFEST_SPEC_FILES")
+  printf 'PILOT_LEGACY_MANIFEST_RECEIPT: setup=%s shared_specs=%s tests=%s run_tests=%s capacity=false descriptive=false r1_canonical=false\n' "$setup_test_count" "$shared_spec_count" "$selected_test_count" "$observed_test_count"
 else
   selected_test_count=$(grep -Ec '^[[:space:]]+\[chromium-pilot-security\] ' "$MANIFEST_LIST_LOG" || true)
   setup_test_count=$(grep -Ec '^[[:space:]]+\[setup\] ' "$MANIFEST_LIST_LOG" || true)
@@ -645,8 +550,11 @@ else
   done
   EXPECTED_RUN_TEST_COUNT="$SECURITY_EXPECTED_RUN_TEST_COUNT"
   SELECTED_TEST_COUNT="$selected_test_count"
+  EXPECTED_SETUP_TEST_COUNT="$setup_test_count"
+  PILOT_LEGACY_EXPECTED_TEST_COUNT="$EXPECTED_TEST_COUNT"
+  PILOT_LEGACY_EXPECTED_SETUP_TEST_COUNT="$EXPECTED_SETUP_TEST_COUNT"
   PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT="$EXPECTED_RUN_TEST_COUNT"
-  export EXPECTED_RUN_TEST_COUNT PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT
+  export EXPECTED_RUN_TEST_COUNT PILOT_LEGACY_EXPECTED_TEST_COUNT PILOT_LEGACY_EXPECTED_SETUP_TEST_COUNT PILOT_LEGACY_EXPECTED_RUN_TEST_COUNT
   printf 'PILOT_LEGACY_SECURITY_RECEIPT: setup=1 focused_spec=1 tests=%s csv=false invitation=false capacity=false descriptive=false r1_canonical=false\n' "$EXPECTED_RUN_TEST_COUNT"
 fi
 
@@ -665,7 +573,7 @@ run_captured 'build' "$BUILD_LOG" pnpm build
 printf 'PILOT_LEGACY_BUILD_RECEIPT: status=pass\n'
 
 if [[ "$APP_SERVER_MODE" == direct ]]; then
-  PORT="$APP_PORT" HOSTNAME=127.0.0.1 pnpm start >"$APP_LOG" 2>&1 &
+  setsid pnpm run start --hostname 127.0.0.1 --port "$APP_PORT" >"$APP_LOG" 2>&1 &
   APP_PID=$!
   BASE_URL="$APP_ORIGIN"
 else

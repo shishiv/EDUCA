@@ -1,0 +1,12 @@
+{
+  "result": "pass",
+  "appStopped": true,
+  "namedRouteRemoved": true,
+  "databaseStopped": true,
+  "syntheticAuthStateRemoved": true,
+  "isolatedDirectoryRemoved": true,
+  "portRangeLeaseExternal": true,
+  "portRangeLeaseReleased": false,
+  "portRangeLeaseReleaseFailed": false,
+  "redacted": true
+}

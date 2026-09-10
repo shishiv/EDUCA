@@ -1,3 +1,4 @@
+import { parseJsonBoolean, parseJsonRecord, parseJsonString, type JsonValue } from '@/lib/validation/external-values'
 /** Schema identifier for the internal synthetic-only support runbook. */
 export const SUPPORT_RUNBOOK_SCHEMA = 'educa.support-runbook/v1'
 /** Placeholder used when a human support binding is not known. */
@@ -88,7 +89,7 @@ const FORBIDDEN_KEYS = new Set([
 ])
 
 interface SupportRunbookRecord {
-  [key: string]: unknown
+  [key: string]: JsonValue
 }
 
 export interface SupportRunbookValidationIssue {
@@ -113,8 +114,8 @@ export interface SupportRunbookValidationReport {
   promisesDetected: boolean
 }
 
-function isRecord(value: unknown): value is SupportRunbookRecord {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function parseRecord(value: JsonValue): SupportRunbookRecord | undefined {
+  return parseJsonRecord(value)
 }
 
 function addIssue(
@@ -127,15 +128,16 @@ function addIssue(
 }
 
 function requireRecord(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: SupportRunbookValidationIssue[],
 ): SupportRunbookRecord | undefined {
-  if (!isRecord(value)) {
+  const record = parseRecord(value)
+  if (!record) {
     addIssue(issues, 'record_required', path, 'record is required')
     return undefined
   }
-  return value
+  return record
 }
 
 function requireString(
@@ -145,11 +147,12 @@ function requireString(
   issues: SupportRunbookValidationIssue[],
 ): string | undefined {
   const value = record[key]
-  if (typeof value !== 'string' || value.trim() === '') {
+  const string = parseJsonString(value)
+  if (!string || string.trim() === '') {
     addIssue(issues, 'string_required', `${path}.${key}`, 'non-empty string is required')
     return undefined
   }
-  return value
+  return string
 }
 
 function requireBoolean(
@@ -159,15 +162,16 @@ function requireBoolean(
   issues: SupportRunbookValidationIssue[],
 ): boolean | undefined {
   const value = record[key]
-  if (typeof value !== 'boolean') {
+  const boolean = parseJsonBoolean(value)
+  if (boolean === undefined) {
     addIssue(issues, 'boolean_required', `${path}.${key}`, 'boolean is required')
     return undefined
   }
-  return value
+  return boolean
 }
 
 function readRecords(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: SupportRunbookValidationIssue[],
 ): SupportRunbookRecord[] {
@@ -183,7 +187,7 @@ function readRecords(
 }
 
 function readStrings(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: SupportRunbookValidationIssue[],
 ): string[] {
@@ -193,11 +197,12 @@ function readStrings(
   }
 
   return value.flatMap((item, index) => {
-    if (typeof item !== 'string' || item.trim() === '') {
+    const string = parseJsonString(item)
+    if (!string || string.trim() === '') {
       addIssue(issues, 'string_required', `${path}[${index}]`, 'non-empty string is required')
       return []
     }
-    return [item]
+    return [string]
   })
 }
 
@@ -232,19 +237,20 @@ function requireRedactedString(
 }
 
 function requireReceiptReference(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: SupportRunbookValidationIssue[],
 ): string | undefined {
-  if (typeof value !== 'string' || !value.startsWith('receipt-redacted-')) {
+  const string = parseJsonString(value)
+  if (!string || !string.startsWith('receipt-redacted-')) {
     addIssue(issues, 'redacted_receipt_reference_required', path, 'reference must use the redacted receipt namespace')
     return undefined
   }
-  return value
+  return string
 }
 
 function checkSupportScope(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
 ): SupportRunbookRecord[] {
   const entries = readRecords(value, 'supportScope', issues)
@@ -273,7 +279,7 @@ function checkSupportScope(
 }
 
 function checkExclusions(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
 ): string[] {
   const exclusions = readStrings(value, 'exclusions', issues)
@@ -292,7 +298,7 @@ function checkExclusions(
 }
 
 function checkCriteria(
-  value: unknown,
+  value: JsonValue,
   path: string,
   requiredIds: readonly string[],
   issues: SupportRunbookValidationIssue[],
@@ -314,7 +320,7 @@ function checkCriteria(
 }
 
 function checkClassificationRules(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
 ): void {
   const rules = requireRecord(value, 'classificationRules', issues)
@@ -332,62 +338,47 @@ function checkClassificationRules(
   requireString(rules, 'classificationRule', 'classificationRules', issues)
 }
 
+function validateHumanBindingPromises(binding: SupportRunbookRecord, issues: SupportRunbookValidationIssue[]): boolean {
+  const technicalTargets = requireRecord(binding.existingTechnicalTargets, 'humanBinding.existingTechnicalTargets', issues)
+  const technicalPromise = technicalTargets && requireBoolean(technicalTargets, 'arePromises', 'humanBinding.existingTechnicalTargets', issues) !== false
+  if (technicalTargets) {
+    requireString(technicalTargets, 'status', 'humanBinding.existingTechnicalTargets', issues)
+    if (technicalPromise) addIssue(issues, 'technical_targets_are_promises', 'humanBinding.existingTechnicalTargets.arePromises', 'technical targets cannot be promises')
+    requireString(technicalTargets, 'statement', 'humanBinding.existingTechnicalTargets', issues)
+  }
+  const noSlaPromise = requireBoolean(binding, 'noSlaPromise', 'humanBinding', issues) !== true
+  const noRolloutPromise = requireBoolean(binding, 'noRolloutPromise', 'humanBinding', issues) !== true
+  if (noSlaPromise) addIssue(issues, 'sla_promise_forbidden', 'humanBinding.noSlaPromise', 'SLA promises are forbidden')
+  if (noRolloutPromise) addIssue(issues, 'rollout_promise_forbidden', 'humanBinding.noRolloutPromise', 'rollout promises are forbidden')
+  return Boolean(technicalPromise || noSlaPromise || noRolloutPromise)
+}
+
+function validateHumanBindingDetails(binding: SupportRunbookRecord, issues: SupportRunbookValidationIssue[]) {
+  if (binding.gate !== SUPPORT_RUNBOOK_HUMAN_GATE) addIssue(issues, 'human_gate_invalid', 'humanBinding.gate', 'human binding gate must be T12')
+  requireString(binding, 'status', 'humanBinding', issues)
+  const placeholderCount = ['owner', 'substitute', 'channel', 'calendar']
+    .filter((key) => requirePlaceholder(binding, key, 'humanBinding', issues)).length
+  if (binding.known !== false) addIssue(issues, 'human_binding_must_be_unknown', 'humanBinding.known', 'human binding must remain unknown')
+  if (binding.requiresHumanConfirmation !== true) addIssue(issues, 'human_confirmation_required', 'humanBinding.requiresHumanConfirmation', 'human confirmation is required')
+  const statement = requireString(binding, 't12Statement', 'humanBinding', issues)
+  if (statement && !statement.includes(SUPPORT_RUNBOOK_HUMAN_GATE)) addIssue(issues, 'human_gate_not_named', 'humanBinding.t12Statement', 'T12 must be named as the human binding gate')
+  return { placeholderCount, promisesDetected: validateHumanBindingPromises(binding, issues) }
+}
+
 function checkHumanBinding(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
-): { placeholderCount: number; promisesDetected: boolean } {
+) {
   const binding = requireRecord(value, 'humanBinding', issues)
   if (!binding) return { placeholderCount: 0, promisesDetected: false }
 
-  if (binding.gate !== SUPPORT_RUNBOOK_HUMAN_GATE) {
-    addIssue(issues, 'human_gate_invalid', 'humanBinding.gate', 'human binding gate must be T12')
-  }
-  requireString(binding, 'status', 'humanBinding', issues)
-
-  const placeholderFields = ['owner', 'substitute', 'channel', 'calendar']
-  let placeholderCount = 0
-  for (const key of placeholderFields) {
-    if (requirePlaceholder(binding, key, 'humanBinding', issues)) placeholderCount += 1
-  }
-
-  if (binding.known !== false) {
-    addIssue(issues, 'human_binding_must_be_unknown', 'humanBinding.known', 'human binding must remain unknown')
-  }
-  if (binding.requiresHumanConfirmation !== true) {
-    addIssue(issues, 'human_confirmation_required', 'humanBinding.requiresHumanConfirmation', 'human confirmation is required')
-  }
-
-  const technicalTargets = requireRecord(binding.existingTechnicalTargets, 'humanBinding.existingTechnicalTargets', issues)
-  let promisesDetected = false
-  if (technicalTargets) {
-    requireString(technicalTargets, 'status', 'humanBinding.existingTechnicalTargets', issues)
-    if (requireBoolean(technicalTargets, 'arePromises', 'humanBinding.existingTechnicalTargets', issues) !== false) {
-      promisesDetected = true
-      addIssue(issues, 'technical_targets_are_promises', 'humanBinding.existingTechnicalTargets.arePromises', 'technical targets cannot be promises')
-    }
-    requireString(technicalTargets, 'statement', 'humanBinding.existingTechnicalTargets', issues)
-  }
-
-  if (requireBoolean(binding, 'noSlaPromise', 'humanBinding', issues) !== true) {
-    promisesDetected = true
-    addIssue(issues, 'sla_promise_forbidden', 'humanBinding.noSlaPromise', 'SLA promises are forbidden')
-  }
-  if (requireBoolean(binding, 'noRolloutPromise', 'humanBinding', issues) !== true) {
-    promisesDetected = true
-    addIssue(issues, 'rollout_promise_forbidden', 'humanBinding.noRolloutPromise', 'rollout promises are forbidden')
-  }
-  const statement = requireString(binding, 't12Statement', 'humanBinding', issues)
-  if (statement && !statement.includes(SUPPORT_RUNBOOK_HUMAN_GATE)) {
-    addIssue(issues, 'human_gate_not_named', 'humanBinding.t12Statement', 'T12 must be named as the human binding gate')
-  }
-
-  return { placeholderCount, promisesDetected }
+  return validateHumanBindingDetails(binding, issues)
 }
 
 function checkRehearsal(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
-): { externalActions: boolean } {
+) {
   const rehearsal = requireRecord(value, 'rehearsal', issues)
   if (!rehearsal) return { externalActions: false }
 
@@ -550,11 +541,37 @@ function checkIncidentRollback(
   if (rollbackReceipt) receiptReferences.push(rollbackReceipt)
 }
 
+function validateClosureChecks(closure: SupportRunbookRecord, issues: SupportRunbookValidationIssue[]): number {
+  const checks = readRecords(closure.checks, 'incident.closure.checks', issues)
+  const checkIds = new Set(checks.flatMap((check, index) => {
+    const path = `incident.closure.checks[${index}]`
+    const id = requireString(check, 'id', path, issues)
+    requireString(check, 'result', path, issues)
+    return id ? [id] : []
+  }))
+  for (const checkId of REQUIRED_CLOSURE_CHECKS) {
+    if (!checkIds.has(checkId)) addIssue(issues, 'closure_check_missing', 'incident.closure.checks', `missing closure check ${checkId}`)
+  }
+  return checks.length
+}
+
+function validateClosureOwner(closure: SupportRunbookRecord, receiptReferences: string[], issues: SupportRunbookValidationIssue[]): number {
+  const ownerConfirmation = requireString(closure, 'ownerConfirmation', 'incident.closure', issues)
+  if (ownerConfirmation && (!ownerConfirmation.includes(SUPPORT_RUNBOOK_UNKNOWN) || !ownerConfirmation.includes(SUPPORT_RUNBOOK_HUMAN_GATE))) {
+    addIssue(issues, 'closure_owner_gate_invalid', 'incident.closure.ownerConfirmation', 'closure owner confirmation must remain a T12 placeholder')
+  }
+  const ownerPlaceholderCount = requirePlaceholder(closure, 'closedBy', 'incident.closure', issues) ? 1 : 0
+  const closureReceipt = requireReceiptReference(closure.receiptReference, 'incident.closure.receiptReference', issues)
+  if (closureReceipt) receiptReferences.push(closureReceipt)
+  requireString(closure, 'closureRule', 'incident.closure', issues)
+  return ownerPlaceholderCount
+}
+
 function checkIncidentClosure(
   incident: SupportRunbookRecord,
   receiptReferences: string[],
   issues: SupportRunbookValidationIssue[],
-): { closureCheckCount: number; ownerPlaceholderCount: number } {
+) {
   const closure = requireRecord(incident.closure, 'incident.closure', issues)
   if (!closure) return { closureCheckCount: 0, ownerPlaceholderCount: 0 }
 
@@ -566,33 +583,13 @@ function checkIncidentClosure(
     addIssue(issues, 'production_closure_gate_missing', 'incident.closure.productionState', 'production closure must remain blocked pending T12')
   }
 
-  const checks = readRecords(closure.checks, 'incident.closure.checks', issues)
-  const checkIds = new Set<string>()
-  checks.forEach((check, index) => {
-    const path = `incident.closure.checks[${index}]`
-    const id = requireString(check, 'id', path, issues)
-    requireString(check, 'result', path, issues)
-    if (id) checkIds.add(id)
-  })
-  for (const checkId of REQUIRED_CLOSURE_CHECKS) {
-    if (!checkIds.has(checkId)) {
-      addIssue(issues, 'closure_check_missing', 'incident.closure.checks', `missing closure check ${checkId}`)
-    }
-  }
-
-  const ownerConfirmation = requireString(closure, 'ownerConfirmation', 'incident.closure', issues)
-  if (ownerConfirmation && (!ownerConfirmation.includes(SUPPORT_RUNBOOK_UNKNOWN) || !ownerConfirmation.includes(SUPPORT_RUNBOOK_HUMAN_GATE))) {
-    addIssue(issues, 'closure_owner_gate_invalid', 'incident.closure.ownerConfirmation', 'closure owner confirmation must remain a T12 placeholder')
-  }
-  const ownerPlaceholderCount = requirePlaceholder(closure, 'closedBy', 'incident.closure', issues) ? 1 : 0
-  const closureReceipt = requireReceiptReference(closure.receiptReference, 'incident.closure.receiptReference', issues)
-  if (closureReceipt) receiptReferences.push(closureReceipt)
-  requireString(closure, 'closureRule', 'incident.closure', issues)
-  return { closureCheckCount: checks.length, ownerPlaceholderCount }
+  const closureCheckCount = validateClosureChecks(closure, issues)
+  const ownerPlaceholderCount = validateClosureOwner(closure, receiptReferences, issues)
+  return { closureCheckCount, ownerPlaceholderCount }
 }
 
 function checkIncident(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
 ): IncidentCheckResult {
   const incident = requireRecord(value, 'incident', issues)
@@ -641,7 +638,7 @@ function checkIncident(
 }
 
 function checkReceipts(
-  value: unknown,
+  value: JsonValue,
   requiredReferences: string[],
   issues: SupportRunbookValidationIssue[],
 ): number {
@@ -681,7 +678,7 @@ function checkReceipts(
 }
 
 function checkServicePromises(
-  value: unknown,
+  value: JsonValue,
   issues: SupportRunbookValidationIssue[],
 ): boolean {
   const promises = requireRecord(value, 'servicePromises', issues)
@@ -699,19 +696,20 @@ function checkServicePromises(
 }
 
 function scanSyntheticOnlyBoundary(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: SupportRunbookValidationIssue[],
 ): void {
-  if (typeof value === 'string') {
+  const string = parseJsonString(value)
+  if (string !== undefined) {
     const emailPattern = /\b[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})\b/gi
-    if (emailPattern.test(value)) {
+    if (emailPattern.test(string)) {
       addIssue(issues, 'email_rejected', path, 'email values are not allowed in the support fixture')
     }
-    if (/\b\d{3}[.\s-]\d{3}[.\s-]\d{3}[.\s-]\d{2}\b/.test(value)) {
+    if (/\b\d{3}[.\s-]\d{3}[.\s-]\d{3}[.\s-]\d{2}\b/.test(string)) {
       addIssue(issues, 'cpf_rejected', path, 'CPF-like values are not allowed in the support fixture')
     }
-    if (/\b\d{11}\b/.test(value) || /(?:\+?55[\s-]*)?\b\d{10}\b/.test(value)) {
+    if (/\b\d{11}\b/.test(string) || /(?:\+?55[\s-]*)?\b\d{10}\b/.test(string)) {
       addIssue(issues, 'phone_or_nis_rejected', path, 'phone or NIS-like values are not allowed in the support fixture')
     }
     return
@@ -720,8 +718,9 @@ function scanSyntheticOnlyBoundary(
     value.forEach((item, index) => scanSyntheticOnlyBoundary(item, `${path}[${index}]`, issues))
     return
   }
-  if (isRecord(value)) {
-    Object.entries(value).forEach(([key, item]) => {
+  const record = parseRecord(value)
+  if (record) {
+    Object.entries(record).forEach(([key, item]) => {
       if (FORBIDDEN_KEYS.has(key)) {
         addIssue(issues, 'forbidden_field_rejected', `${path}.${key}`, 'PII or raw content fields are not allowed')
       }
@@ -749,7 +748,7 @@ function emptyReport(issues: SupportRunbookValidationIssue[]): SupportRunbookVal
 }
 
 /** Validates the local, redacted support runbook and its synthetic incident lifecycle. */
-export function validateSupportRunbook(candidate: unknown): SupportRunbookValidationReport {
+export function validateSupportRunbook(candidate: JsonValue): SupportRunbookValidationReport {
   const issues: SupportRunbookValidationIssue[] = []
   const runbook = requireRecord(candidate, '$', issues)
   if (!runbook) return emptyReport(issues)

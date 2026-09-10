@@ -1,0 +1,10 @@
+{
+  "result": "pass",
+  "boundary": "real-postgresql",
+  "seedMarker": "SYNTHETIC-EDUCA-PILOT-CAPACITY",
+  "seedCommand": "pnpm exec tsx scripts/seed-pilot-capacity.ts",
+  "validationCommand": "pnpm exec tsx scripts/validate-pilot-capacity.ts",
+  "localDatabase": true,
+  "syntheticOnly": true,
+  "concurrencyContract": "real PostgREST insert boundary is exercised by Playwright"
+}

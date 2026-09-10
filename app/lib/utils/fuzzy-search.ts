@@ -228,17 +228,19 @@ export interface FuzzySearchResult<T> {
   matchedField: string
 }
 
+interface FuzzySearchStudent {
+  nome_completo: string
+  cpf?: string
+  matricula?: string
+}
+
 /**
  * Perform comprehensive fuzzy search on student records
  */
 export function fuzzySearchStudent(
   query: string,
-  student: {
-    nome_completo: string
-    cpf?: string
-    matricula?: string
-  }
-): FuzzySearchResult<any> | null {
+  student: FuzzySearchStudent
+): FuzzySearchResult<FuzzySearchStudent> | null {
   const normalizedQuery = normalizeForFuzzy(query)
 
   // Try exact match first (highest priority)

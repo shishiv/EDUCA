@@ -14,7 +14,7 @@
 'use client'
 
 import * as React from 'react'
-import { format, parseISO, startOfWeek, isSameWeek, getWeek } from 'date-fns'
+import { format, parseISO, startOfWeek, getWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { FileText } from 'lucide-react'

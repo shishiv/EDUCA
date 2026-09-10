@@ -183,7 +183,7 @@ export function validateAcademicYear(year: number): boolean {
  * @returns Age in years
  */
 export function calculateAge(birthDate: Date | string): number {
-  const birth = typeof birthDate === 'string' ? new Date(birthDate) : birthDate
+  const birth = birthDate instanceof Date ? birthDate : new Date(birthDate)
   const today = new Date()
 
   let age = today.getFullYear() - birth.getFullYear()

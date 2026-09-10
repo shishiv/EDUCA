@@ -1,0 +1,5 @@
+
+> educa@1.0.0 check:diff-typography /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app
+> node scripts/check-no-new-em-dash.mjs
+
+NO_NEW_EM_DASH: base=origin/main result=pass

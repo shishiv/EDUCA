@@ -25,6 +25,7 @@ import { useSessionRealtime } from '@/contexts/session-realtime-context'
 import { useAuth } from '@/hooks/use-auth'
 import { canAccessRoute } from '@/lib/route-policy'
 import { GlobalSearch } from '@/components/layout/global-search'
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
 
 const routeLabels = [
   ['/dashboard/alunos', 'students'], ['/dashboard/usuarios', 'users'],
@@ -51,6 +52,18 @@ function getSectionKey(pathname: string) {
   return pathname === '/dashboard'
     ? 'dashboard'
     : routeLabels.find(([path]) => pathname.startsWith(path))?.[1] ?? 'dashboard'
+}
+
+type AppRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+type RoleTranslationKey = `roles.${AppRole}`
+const APP_ROLES: AppRole[] = ['admin', 'diretor', 'secretario', 'professor', 'responsavel']
+function isAppRole(role: string): role is AppRole {
+  // SAFETY: the cast is checked against the complete allowlist immediately below.
+  return APP_ROLES.includes(role as AppRole)
+}
+function getRoleLabel(role: string | undefined, translate: (key: RoleTranslationKey) => string) {
+  if (!role || !isAppRole(role)) return role ?? ''
+  return translate(`roles.${role}`)
 }
 
 function ConnectionIndicator({ connected, label, status, title }: { connected: boolean; label: string; status: string; title: string }) {
@@ -140,9 +153,7 @@ export function Header() {
   const sectionKey = getSectionKey(pathname)
   const section = sectionKey === 'myProfile' ? t('header.myProfile') : t(`navigation.items.${sectionKey}`)
   const role = userProfile?.tipo_usuario
-  const roleLabel = role && ['admin', 'diretor', 'secretario', 'professor', 'responsavel'].includes(role)
-    ? common(`roles.${role as 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'}`)
-    : role ?? ''
+  const roleLabel = getRoleLabel(role, common)
 
   const handleSignOut = async () => {
     try {
@@ -166,6 +177,7 @@ export function Header() {
 
       <div className="app-header__actions">
         <GlobalSearch />
+        <LocaleSwitcher variant="button" />
         <ConnectionIndicator
           connected={connected}
           label={connectionLabel}

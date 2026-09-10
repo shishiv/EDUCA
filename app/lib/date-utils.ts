@@ -14,7 +14,7 @@ import { ptBR } from 'date-fns/locale'
 export function formatDateBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'dd/MM/yyyy', { locale: ptBR })
@@ -26,7 +26,7 @@ export function formatDateBR(date: string | Date | null | undefined): string {
 export function formatDateTimeBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
@@ -38,7 +38,7 @@ export function formatDateTimeBR(date: string | Date | null | undefined): string
 export function formatDateShortBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'dd/MM', { locale: ptBR })
@@ -50,7 +50,7 @@ export function formatDateShortBR(date: string | Date | null | undefined): strin
 export function formatDateWithWeekdayBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, "EEEE, dd/MM/yyyy", { locale: ptBR })
@@ -62,7 +62,7 @@ export function formatDateWithWeekdayBR(date: string | Date | null | undefined):
 export function formatMonthYearBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'MMMM yyyy', { locale: ptBR })
@@ -74,7 +74,7 @@ export function formatMonthYearBR(date: string | Date | null | undefined): strin
 export function formatRelativeTimeBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return formatDistanceToNow(parsed, { addSuffix: true, locale: ptBR })
@@ -86,7 +86,7 @@ export function formatRelativeTimeBR(date: string | Date | null | undefined): st
 export function formatTimeBR(date: string | Date | null | undefined): string {
   if (!date) return '-'
 
-  const parsed = typeof date === 'string' ? parseISO(date) : date
+  const parsed = date instanceof Date ? date : parseISO(date)
   if (!isValid(parsed)) return '-'
 
   return format(parsed, 'HH:mm', { locale: ptBR })
@@ -97,6 +97,16 @@ export function formatTimeBR(date: string | Date | null | undefined): string {
  */
 export function getTodayISO(): string {
   return format(new Date(), 'yyyy-MM-dd')
+}
+
+/** Return inclusive ISO-date bounds for the UTC calendar month containing now. */
+export function getCurrentUtcMonthRange(now: Date = new Date()) {
+  const year = now.getUTCFullYear()
+  const month = now.getUTCMonth()
+  return {
+    startDate: new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10),
+    endDate: new Date(Date.UTC(year, month + 1, 0)).toISOString().slice(0, 10),
+  }
 }
 
 /**
@@ -119,41 +129,4 @@ export function getTodaySaoPaulo(): string {
 export function getTodaySaoPauloDate(): Date {
   const [year, month, day] = getTodaySaoPaulo().split('-').map(Number)
   return new Date(year, month - 1, day)
-}
-
-/**
- * Get current São Paulo time (Brazil/East timezone)
- */
-export function getSaoPauloTime(): Date {
-  const now = new Date()
-  const saoPauloFormatter = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  })
-
-  const parts = saoPauloFormatter.formatToParts(now)
-  const get = (type: string) => parts.find(p => p.type === type)?.value || '0'
-
-  return new Date(
-    parseInt(get('year')),
-    parseInt(get('month')) - 1,
-    parseInt(get('day')),
-    parseInt(get('hour')),
-    parseInt(get('minute')),
-    parseInt(get('second'))
-  )
-}
-
-/**
- * Check if current São Paulo time is past 18:00 (attendance lock rule)
- */
-export function isPast18hSaoPaulo(): boolean {
-  const spTime = getSaoPauloTime()
-  return spTime.getHours() >= 18
 }

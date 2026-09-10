@@ -89,8 +89,8 @@ export const STATUS_CELL_TO_UI: Record<NonNullable<AttendanceCellStatus> | 'null
  * Convert database status string to UI status
  */
 export function dbStatusToUI(dbStatus: string | null | undefined): AttendanceStatusUI {
-  if (!dbStatus) return 'empty';
-  return STATUS_DB_TO_UI[dbStatus as AttendanceStatusDB] ?? 'empty';
+  if (dbStatus !== 'P' && dbStatus !== 'F' && dbStatus !== 'A') return 'empty';
+  return STATUS_DB_TO_UI[dbStatus];
 }
 
 /**

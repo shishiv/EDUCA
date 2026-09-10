@@ -1,0 +1,51 @@
+[
+  {
+    "name": "integration",
+    "url": "https://github.com/shishiv/EDUCA/pull/211",
+    "base": "dev",
+    "head": "refactor/educa-zero-slop-20260907",
+    "draft": true
+  },
+  {
+    "name": "auth",
+    "url": "https://github.com/shishiv/EDUCA/pull/212",
+    "base": "dev",
+    "head": "salvar/educa-quality-auth-20260908",
+    "draft": true
+  },
+  {
+    "name": "contracts",
+    "url": "https://github.com/shishiv/EDUCA/pull/213",
+    "base": "dev",
+    "head": "salvar/educa-quality-contracts-20260908",
+    "draft": true
+  },
+  {
+    "name": "frequency",
+    "url": "https://github.com/shishiv/EDUCA/pull/214",
+    "base": "dev",
+    "head": "salvar/educa-quality-frequency-20260908",
+    "draft": true
+  },
+  {
+    "name": "public",
+    "url": "https://github.com/shishiv/EDUCA/pull/215",
+    "base": "dev",
+    "head": "salvar/educa-quality-public-20260908",
+    "draft": true
+  },
+  {
+    "name": "readmodels",
+    "url": "https://github.com/shishiv/EDUCA/pull/216",
+    "base": "dev",
+    "head": "salvar/educa-quality-readmodels-20260908",
+    "draft": true
+  },
+  {
+    "name": "toolchain",
+    "url": "https://github.com/shishiv/EDUCA/pull/217",
+    "base": "dev",
+    "head": "salvar/educa-quality-toolchain-20260908",
+    "draft": true
+  }
+]

@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod'
-import type { WhatsAppNotificationOptInInsert, WhatsAppSupabase } from './whatsapp-database'
+import type { WhatsAppSupabase } from './whatsapp-database'
 
 export const whatsappOptInInputSchema = z.object({
   responsavelId: z.string().uuid(),
@@ -23,6 +23,7 @@ export interface GuardianWhatsAppOptInState {
   optIn: boolean
   consentidoEm: string | null
   canceladoEm: string | null
+  auditReceiptId: string
 }
 
 export interface WhatsAppOptInActor {
@@ -40,48 +41,21 @@ export async function setGuardianWhatsAppOptIn(
   input: WhatsAppOptInInput
 ): Promise<GuardianWhatsAppOptInState> {
   const parsed = whatsappOptInInputSchema.parse(input)
-  const now = new Date().toISOString()
-
-  const { data: guardian, error: guardianError } = await supabase
-    .from('responsaveis')
-    .select('id, escola_id')
-    .eq('id', parsed.responsavelId)
-    .maybeSingle()
-  if (guardianError) throw guardianError
-  if (!guardian?.escola_id) {
-    throw new Error('PILOT_NOTIFICATION_SCHOOL_DENIED: guardian not visible to actor')
-  }
-
-  const row: WhatsAppNotificationOptInInsert = {
-    responsavel_id: parsed.responsavelId,
-    canal: 'whatsapp',
-    opt_in: parsed.optIn,
-    consentido_em: parsed.optIn ? now : null,
-    cancelado_em: parsed.optIn ? null : now,
-    registrado_por: actor.id,
-    updated_at: now,
-  }
-
-  const { data, error } = await supabase
-    .from('whatsapp_notification_optins')
-    .upsert(row, { onConflict: 'responsavel_id,canal' })
-    .select('responsavel_id, opt_in, consentido_em, cancelado_em')
-    .single()
-  if (error) throw error
-
-  await supabase.rpc('write_pilot_audit_event', {
-    p_event_type: 'whatsapp_optin_changed',
-    p_entity_type: 'responsavel',
-    p_entity_id: parsed.responsavelId,
-    p_escola_id: guardian.escola_id,
-    p_metadata: { canal: 'whatsapp', opt_in: parsed.optIn },
+  const { data, error } = await supabase.rpc('set_guardian_whatsapp_opt_in', {
+    p_responsavel_id: parsed.responsavelId,
+    p_opt_in: parsed.optIn,
+    p_registrado_por: actor.id,
   })
+  if (error) throw error
+  const state = data?.[0]
+  if (!state?.audit_id) throw new Error('WHATSAPP_OPTIN_AUDIT_RECEIPT_MISSING')
 
   return {
-    responsavelId: data.responsavel_id,
-    optIn: data.opt_in,
-    consentidoEm: data.consentido_em,
-    canceladoEm: data.cancelado_em,
+    responsavelId: state.responsavel_id,
+    optIn: state.opt_in,
+    consentidoEm: state.consentido_em,
+    canceladoEm: state.cancelado_em,
+    auditReceiptId: state.audit_id,
   }
 }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Loader2, Search } from 'lucide-react'
 import type { GlobalSearchResponse, GlobalSearchResult } from '@/lib/global-search'
+import { z } from 'zod'
 
 const resultTypeKeys = {
   student: 'student',
@@ -12,6 +13,48 @@ const resultTypeKeys = {
   school: 'school',
   class: 'class',
 } as const
+
+const nullableStringSchema = z.string().nullable()
+const globalSearchDataSchema = z.union([
+  z.object({
+    nome_completo: z.string(),
+    escola: nullableStringSchema,
+    turma: nullableStringSchema,
+    serie: nullableStringSchema,
+    turno: nullableStringSchema,
+    cpf: nullableStringSchema.optional(),
+    endereco: nullableStringSchema.optional(),
+    telefone: nullableStringSchema.optional(),
+  }),
+  z.object({ nome_completo: z.string(), email: nullableStringSchema, escola: nullableStringSchema }),
+  z.object({ nome: z.string(), codigo: z.string() }),
+  z.object({
+    nome: z.string(),
+    serie: z.string(),
+    turno: z.string(),
+    escola: nullableStringSchema,
+    professor: nullableStringSchema,
+  }),
+])
+const globalSearchResponseSchema: z.ZodType<GlobalSearchResponse> = z.object({
+  success: z.literal(true),
+  results: z.array(z.object({
+    id: z.string(),
+    type: z.enum(['student', 'teacher', 'school', 'class']),
+    data: globalSearchDataSchema,
+    title: z.string(),
+    subtitle: z.string(),
+    href: z.string(),
+    relevanceScore: z.number(),
+    matchedFields: z.array(z.string()),
+    lastUpdated: nullableStringSchema,
+    status: z.enum(['active', 'inactive']),
+  })),
+  totalCount: z.number(),
+  query: z.string(),
+  type: z.enum(['student', 'teacher', 'school', 'class', 'all']),
+  fuzzySearch: z.literal(true),
+})
 
 export function GlobalSearch() {
   const t = useTranslations('layout.header')
@@ -26,7 +69,7 @@ export function GlobalSearch() {
   useEffect(() => {
     if (!open) return
     const onPointerDown = (event: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false)
+      if (rootRef.current && !event.composedPath().includes(rootRef.current)) setOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
@@ -50,7 +93,7 @@ export function GlobalSearch() {
           setResults([])
           return
         }
-        const body = await response.json() as GlobalSearchResponse
+        const body = globalSearchResponseSchema.parse(await response.json())
         setResults(body.results)
       } catch {
         if (!controller.signal.aborted) setResults([])

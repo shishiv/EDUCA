@@ -1,0 +1,1947 @@
+[
+  {
+    "name": "auth",
+    "commit": "a8c143eab185d4459ce1cf7740c8a841f1e014b9",
+    "branch": "salvar/educa-quality-auth-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "com conteudo exclusivo",
+    "counts": {
+      "identical": 14,
+      "worker_only_path": 1,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 14
+    },
+    "needs_pr": true,
+    "files": [
+      {
+        "path": "VENT.md",
+        "state": "worker_only_path",
+        "worker_tree": "100644 blob 751442bcecb48cf7961291610899b7906c469e33\tVENT.md",
+        "integration_tree": "",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/(auth)/login/page.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 94ee2617de237471db5a6749328b61a86bc15ae0\tapp/app/(auth)/login/page.tsx",
+        "integration_tree": "100644 blob ce3107783f414201f05297030d54fb907d0ca3be\tapp/app/(auth)/login/page.tsx",
+        "base_tree": "100644 blob 90f6af9cf1cf9f6aeab2617e9e7526c50f2d4b74\tapp/app/(auth)/login/page.tsx",
+        "normalized_base_edits": 7,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/(auth)/primeiro-acesso/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 7663b499811fb6c0da9bc912c4701478f8b875af\tapp/app/(auth)/primeiro-acesso/page.tsx",
+        "integration_tree": "100644 blob 7663b499811fb6c0da9bc912c4701478f8b875af\tapp/app/(auth)/primeiro-acesso/page.tsx",
+        "base_tree": "100644 blob 103d5162b4fac2a0af52fee77eccf04561876289\tapp/app/(auth)/primeiro-acesso/page.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/perfil/page.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 96202d180edc8081d1be086e129dd1ea5e74d2ec\tapp/app/(dashboard)/dashboard/perfil/page.tsx",
+        "integration_tree": "100644 blob 2df04b09a4076fd4dd42d66b487c5119747ce226\tapp/app/(dashboard)/dashboard/perfil/page.tsx",
+        "base_tree": "100644 blob 1520650dc8f630cd5dec338374541cd302f499ab\tapp/app/(dashboard)/dashboard/perfil/page.tsx",
+        "normalized_base_edits": 10,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/pilot/first-access/route.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 5ba98bb07ab951a351b0e04c400622adfca0e813\tapp/app/api/pilot/first-access/route.ts",
+        "integration_tree": "100644 blob 348123d28ab2b0e56ae7e4447a2f9e56af7bb976\tapp/app/api/pilot/first-access/route.ts",
+        "base_tree": "100644 blob 62d0b48feac6dcc6bae2439d13295055afcc236b\tapp/app/api/pilot/first-access/route.ts",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/pilot/invitations/handler.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob fb727aa2a9ca97a29f07043716dbd854c9531f3b\tapp/app/api/pilot/invitations/handler.ts",
+        "integration_tree": "100644 blob c10c38161ec8c5bbecece2cfbf9d8b7cb50a1f6a\tapp/app/api/pilot/invitations/handler.ts",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/pilot/invitations/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 7b0c9507fcc8201a485ce861b239197a0f808cc8\tapp/app/api/pilot/invitations/route.ts",
+        "integration_tree": "100644 blob 7b0c9507fcc8201a485ce861b239197a0f808cc8\tapp/app/api/pilot/invitations/route.ts",
+        "base_tree": "100644 blob c3d51200dbecc66e0f17e735d0704ed12b299ce6\tapp/app/api/pilot/invitations/route.ts"
+      },
+      {
+        "path": "app/app/api/pilot/users/[userId]/revoke/handler.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 0e0e220344abaaaf07b092e1c52003a13e9dbe43\tapp/app/api/pilot/users/[userId]/revoke/handler.ts",
+        "integration_tree": "100644 blob 0e0e220344abaaaf07b092e1c52003a13e9dbe43\tapp/app/api/pilot/users/[userId]/revoke/handler.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/app/api/pilot/users/[userId]/revoke/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob c254e9ff63e067208bdcbb828089a0896df74e7d\tapp/app/api/pilot/users/[userId]/revoke/route.ts",
+        "integration_tree": "100644 blob c254e9ff63e067208bdcbb828089a0896df74e7d\tapp/app/api/pilot/users/[userId]/revoke/route.ts",
+        "base_tree": "100644 blob 348558d612a66325d628f65541209b90efbc2abd\tapp/app/api/pilot/users/[userId]/revoke/route.ts"
+      },
+      {
+        "path": "app/app/api/search/handler.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob be9ea286753b051850cfc92672a2c9abf558bea5\tapp/app/api/search/handler.ts",
+        "integration_tree": "100644 blob be9ea286753b051850cfc92672a2c9abf558bea5\tapp/app/api/search/handler.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/app/api/search/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob c023b665bacfd06211204feb14a4b67b64825ed2\tapp/app/api/search/route.ts",
+        "integration_tree": "100644 blob c023b665bacfd06211204feb14a4b67b64825ed2\tapp/app/api/search/route.ts",
+        "base_tree": "100644 blob 81309858f3e772b4ff5e8340b0b34a8b01065d1a\tapp/app/api/search/route.ts"
+      },
+      {
+        "path": "app/app/api/users/[userId]/route.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 98ff7db86d17aeff3455b10c3097140fe08bf893\tapp/app/api/users/[userId]/route.ts",
+        "integration_tree": "100644 blob 9ee08fc24fa77f077d4405de104d4c55139a21e0\tapp/app/api/users/[userId]/route.ts",
+        "base_tree": "100644 blob a2c9470ec563091f7311f1be3f8aa129bd8aa4c4\tapp/app/api/users/[userId]/route.ts",
+        "normalized_base_edits": 5,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/users/[userId]/status/handler.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob a9178f57e5f86e8f8c1c98aee904dbd9f3ef3874\tapp/app/api/users/[userId]/status/handler.ts",
+        "integration_tree": "100644 blob c3b3ebc6e0a127ae11ce4f933c697590337bcf01\tapp/app/api/users/[userId]/status/handler.ts",
+        "base_tree": "",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/users/[userId]/status/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e0990c4cd1b73e6441c7c7113494bb84e37cd9f9\tapp/app/api/users/[userId]/status/route.ts",
+        "integration_tree": "100644 blob e0990c4cd1b73e6441c7c7113494bb84e37cd9f9\tapp/app/api/users/[userId]/status/route.ts",
+        "base_tree": "100644 blob bddf59d6a03614475cee25ff2a0a3511480e08cf\tapp/app/api/users/[userId]/status/route.ts"
+      },
+      {
+        "path": "app/app/api/users/me/route.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 9fb9e0878ccfd8301f8aa311c235b9d414b02444\tapp/app/api/users/me/route.ts",
+        "integration_tree": "100644 blob 8b3e563c19e0ff68592745fda05252d6ef5d3b20\tapp/app/api/users/me/route.ts",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/contexts/escola-context.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 32cf7e07bcaf6ee069ea59e604e635b8aa2464a1\tapp/contexts/escola-context.tsx",
+        "integration_tree": "100644 blob bb23cb5c8c4a396ef4d8ff4452a8c052fde80f8a\tapp/contexts/escola-context.tsx",
+        "base_tree": "100644 blob 3893f74a1081832912132c59dbac650cbfbff347\tapp/contexts/escola-context.tsx",
+        "normalized_base_edits": 11,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/auth.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 04f7bf90b58888212dfd489c69f0ac2ab870c386\tapp/lib/auth.ts",
+        "integration_tree": "100644 blob 1504db0663b7bd80d990f5a55aeb1052d9119623\tapp/lib/auth.ts",
+        "base_tree": "100644 blob 213d2523ced77a9bad37e8b4d67248e3f783f9c6\tapp/lib/auth.ts",
+        "normalized_base_edits": 13,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/global-search.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 81bed008db55f9eb8fc33386bf4feb068b45c63e\tapp/lib/global-search.ts",
+        "integration_tree": "100644 blob 81bed008db55f9eb8fc33386bf4feb068b45c63e\tapp/lib/global-search.ts",
+        "base_tree": "100644 blob 0d930277f6f1243575c6a359cf756635fd44bce5\tapp/lib/global-search.ts"
+      },
+      {
+        "path": "app/lib/middleware/auth-middleware.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 9bb08235a3a5c234e7b4cf6ec90c3148697416c3\tapp/lib/middleware/auth-middleware.ts",
+        "integration_tree": "100644 blob 9bb08235a3a5c234e7b4cf6ec90c3148697416c3\tapp/lib/middleware/auth-middleware.ts",
+        "base_tree": "100644 blob 632ec246b29196a9666a50f1c1740d811d97c10c\tapp/lib/middleware/auth-middleware.ts"
+      },
+      {
+        "path": "app/lib/pilot/pilot-server-auth.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 52f0389712031096d659daf808f508e54a84c1af\tapp/lib/pilot/pilot-server-auth.ts",
+        "integration_tree": "100644 blob 52f0389712031096d659daf808f508e54a84c1af\tapp/lib/pilot/pilot-server-auth.ts",
+        "base_tree": "100644 blob 9ec91ae85ad21407cac990ed73049478c4cf7a50\tapp/lib/pilot/pilot-server-auth.ts"
+      },
+      {
+        "path": "app/lib/route-policy.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 8ccffda81e1e8a891d67467df8e7f1ed513d38e2\tapp/lib/route-policy.ts",
+        "integration_tree": "100644 blob 39e19d7936352c7b2a918e846547fc6c322690c1\tapp/lib/route-policy.ts",
+        "base_tree": "100644 blob 49b2af4bbd3bfabdeca7633d3fa3587f1e538dd1\tapp/lib/route-policy.ts",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/lib/services/user-lifecycle.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob b569c1f4512353613ce2fc86259204efae2b0223\tapp/lib/services/user-lifecycle.ts",
+        "integration_tree": "100644 blob 19aadf5021774a011ddfee409928299f401d698a\tapp/lib/services/user-lifecycle.ts",
+        "base_tree": "100644 blob 87f0a484a88b990d8a9ff67ede1cc9cd720c7589\tapp/lib/services/user-lifecycle.ts",
+        "normalized_base_edits": 30,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/api/search-route.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 732dae394feeea4f28344ff1bb9b4700ec5569dc\tapp/tests/unit/api/search-route.test.ts",
+        "integration_tree": "100644 blob 732dae394feeea4f28344ff1bb9b4700ec5569dc\tapp/tests/unit/api/search-route.test.ts",
+        "base_tree": "100644 blob c22573d2eae18b55094974e54ba6644333b4c485\tapp/tests/unit/api/search-route.test.ts"
+      },
+      {
+        "path": "app/tests/unit/api/user-lifecycle-fixtures.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 2e0ecf1686377fd4b1a6a491601fb711ca9ac4a1\tapp/tests/unit/api/user-lifecycle-fixtures.ts",
+        "integration_tree": "100644 blob 2e0ecf1686377fd4b1a6a491601fb711ca9ac4a1\tapp/tests/unit/api/user-lifecycle-fixtures.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tests/unit/api/user-lifecycle-revocation-route.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 283708fd442b0c7b1ae2c6e1d8983892dd61e923\tapp/tests/unit/api/user-lifecycle-revocation-route.test.ts",
+        "integration_tree": "100644 blob 283708fd442b0c7b1ae2c6e1d8983892dd61e923\tapp/tests/unit/api/user-lifecycle-revocation-route.test.ts",
+        "base_tree": "100644 blob cdddfd636b3b3b9852c47a0b726cc70642a1be0c\tapp/tests/unit/api/user-lifecycle-revocation-route.test.ts"
+      },
+      {
+        "path": "app/tests/unit/api/user-lifecycle-routes.test.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 41c82a8f05dea62eb6669a65b42e530b122d20e3\tapp/tests/unit/api/user-lifecycle-routes.test.ts",
+        "integration_tree": "100644 blob bc687d54fdc382e293cca42e9a9f45efeb4f01f5\tapp/tests/unit/api/user-lifecycle-routes.test.ts",
+        "base_tree": "100644 blob cdb76f7c22ef3155e2a77e3e955a3298234b35c9\tapp/tests/unit/api/user-lifecycle-routes.test.ts",
+        "normalized_base_edits": 13,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/api/user-status-route.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 328f603fe4c3dfc4bd8b17b6ec65c3f8d868a7ac\tapp/tests/unit/api/user-status-route.test.ts",
+        "integration_tree": "100644 blob 328f603fe4c3dfc4bd8b17b6ec65c3f8d868a7ac\tapp/tests/unit/api/user-status-route.test.ts",
+        "base_tree": "100644 blob a41b9ec3c7ba700667cdc054fa60098bf1fb63b1\tapp/tests/unit/api/user-status-route.test.ts"
+      },
+      {
+        "path": "app/tests/unit/auth-middleware.test.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 5e45bea03f9603d41e3292032916e46327474684\tapp/tests/unit/auth-middleware.test.ts",
+        "integration_tree": "100644 blob 0a422ec0ca0022c61dbe84037cb30dd489c82d44\tapp/tests/unit/auth-middleware.test.ts",
+        "base_tree": "100644 blob 130a15f4ec12baba8a5324626d915cc3322fa647\tapp/tests/unit/auth-middleware.test.ts",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "supabase/migrations/20260907000000_auth_mutation_audit_receipts.sql",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 28b33be9a5346d44d2860d1ea0eae86b83105f93\tsupabase/migrations/20260907000000_auth_mutation_audit_receipts.sql",
+        "integration_tree": "100644 blob 78488a86843643642e02ba1f2e713683c90e9444\tsupabase/migrations/20260907000000_auth_mutation_audit_receipts.sql",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      }
+    ]
+  },
+  {
+    "name": "contracts",
+    "commit": "9732efeaee2edbf2455d01905bfb26ef48d40615",
+    "branch": "salvar/educa-quality-contracts-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "com conteudo exclusivo",
+    "counts": {
+      "identical": 15,
+      "worker_only_path": 1,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 9
+    },
+    "needs_pr": true,
+    "files": [
+      {
+        "path": "VENT.md",
+        "state": "worker_only_path",
+        "worker_tree": "100644 blob ed0a7cc29b3bd44e559831031aa6ed77e34344f5\tVENT.md",
+        "integration_tree": "",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/demo/audit/route.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 41b8b57fe72503cc3c42f038458f592579bd6cae\tapp/app/api/demo/audit/route.ts",
+        "integration_tree": "100644 blob 0873e5660a90eea903b4638527f19761cb7e3b23\tapp/app/api/demo/audit/route.ts",
+        "base_tree": "100644 blob 06f4229a81ffc84da05db4f86c127ecfa2338db3\tapp/app/api/demo/audit/route.ts",
+        "normalized_base_edits": 14,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/turmas/TurmaCard.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 4abcbf5012da950e5f2c33f2da9f8ea61b6fcbf5\tapp/components/turmas/TurmaCard.tsx",
+        "integration_tree": "100644 blob 3ff9e2b155d5bac9c7058d3db6b0c110c81c4806\tapp/components/turmas/TurmaCard.tsx",
+        "base_tree": "100644 blob b3227e4ae4832630a0a29f5540e8173cf928ff8d\tapp/components/turmas/TurmaCard.tsx",
+        "normalized_base_edits": 4,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/lib/api/audit.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 1817cfe5916bade62af4b9d960e9d32cc41e3be9\tapp/lib/api/audit.ts",
+        "integration_tree": "100644 blob 1817cfe5916bade62af4b9d960e9d32cc41e3be9\tapp/lib/api/audit.ts",
+        "base_tree": "100644 blob 80c031abab4b6920cc9b1d1108cd3ca3a789dfd2\tapp/lib/api/audit.ts"
+      },
+      {
+        "path": "app/lib/api/base.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob cc4602b0daad559d71bed0e4c7ff19afee0ed46e\tapp/lib/api/base.ts",
+        "integration_tree": "100644 blob cc4602b0daad559d71bed0e4c7ff19afee0ed46e\tapp/lib/api/base.ts",
+        "base_tree": "100644 blob 5cb298565c31be3708fd800bd150d16cd30e8032\tapp/lib/api/base.ts"
+      },
+      {
+        "path": "app/lib/api/classes.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 04430f3af1f9f68138273d1868207ef9951d62bd\tapp/lib/api/classes.ts",
+        "integration_tree": "100644 blob 9cfff8ae5f887afc5c1a92ce68f57b4d6e8e79c0\tapp/lib/api/classes.ts",
+        "base_tree": "100644 blob 87ed91cbc2df09b6747feef846379caeb6f2d2f1\tapp/lib/api/classes.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/lib/api/feature-flags.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 5b8da5cef1cbb5a4e106fd7c7890938a7f07c896\tapp/lib/api/feature-flags.ts",
+        "integration_tree": "100644 blob 64ceedd0c5fa54238518efa04e8def2233286fbc\tapp/lib/api/feature-flags.ts",
+        "base_tree": "100644 blob 600d7007dff4c43a2f798348d6029348729eb230\tapp/lib/api/feature-flags.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/lib/api/schools.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 1da08b44e58a291326f372df5e6beefb6adf2b33\tapp/lib/api/schools.ts",
+        "integration_tree": "100644 blob 30791a99e8d189d21dcc356366dea4541a31b0a5\tapp/lib/api/schools.ts",
+        "base_tree": "100644 blob bcf08b3954307a3ed10a55634d76ca9fb2d2bff1\tapp/lib/api/schools.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/api/students.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 85e1a7bc1a11aee14d06dd14a18fabdb35cf069e\tapp/lib/api/students.ts",
+        "integration_tree": "100644 blob a88048ba48c680fc3d1738db0a7111e188017a2a\tapp/lib/api/students.ts",
+        "base_tree": "100644 blob 1cbe7ba268e8fdfa9b0cdbafc1d4c91a4cb02200\tapp/lib/api/students.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/api/users.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 4f131b8abceb6af4532c43f41fa43ab9824f0ef8\tapp/lib/api/users.ts",
+        "integration_tree": "100644 blob 7e8fdd92470c5a3c8c3cf7612beee9f3e6d790ba\tapp/lib/api/users.ts",
+        "base_tree": "100644 blob a8a58301d9e804554d5bfdc79c40dcefbbbc6cfb\tapp/lib/api/users.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/audit.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 512f81b02cc4a675970785a4642283d27e4c122c\tapp/lib/audit.ts",
+        "integration_tree": "100644 blob 512f81b02cc4a675970785a4642283d27e4c122c\tapp/lib/audit.ts",
+        "base_tree": "100644 blob 8786d2f58225ebe379f54ebf864288adc1640be9\tapp/lib/audit.ts"
+      },
+      {
+        "path": "app/lib/auth-session-recovery.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d8867b58a382e38d73943fa845e876e9cadb0a4f\tapp/lib/auth-session-recovery.ts",
+        "integration_tree": "100644 blob d8867b58a382e38d73943fa845e876e9cadb0a4f\tapp/lib/auth-session-recovery.ts",
+        "base_tree": "100644 blob 79cdb9720f9a53702b0b8c978ea0ac608f44cf8c\tapp/lib/auth-session-recovery.ts"
+      },
+      {
+        "path": "app/lib/logger.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 4fe322f20ec5640443e24a2a130d8b79b63042b1\tapp/lib/logger.ts",
+        "integration_tree": "100644 blob 4fe322f20ec5640443e24a2a130d8b79b63042b1\tapp/lib/logger.ts",
+        "base_tree": "100644 blob 292d48febfc8ceac3fdf2f0df1dde691faeb584d\tapp/lib/logger.ts"
+      },
+      {
+        "path": "app/lib/supabase.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 373a84f3bc893bfe6936f1bd178b70a64e8804f6\tapp/lib/supabase.ts",
+        "integration_tree": "100644 blob 373a84f3bc893bfe6936f1bd178b70a64e8804f6\tapp/lib/supabase.ts",
+        "base_tree": "100644 blob dc0fd184c8076e632fa2eec298ff45e424d0cea0\tapp/lib/supabase.ts"
+      },
+      {
+        "path": "app/lib/supabase/server.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e1b76ef468fe7fa024e8587e897733a7653bccaa\tapp/lib/supabase/server.ts",
+        "integration_tree": "100644 blob e1b76ef468fe7fa024e8587e897733a7653bccaa\tapp/lib/supabase/server.ts",
+        "base_tree": "100644 blob 1645401a1dd70fa5c9daa24d285fc08f237e13ec\tapp/lib/supabase/server.ts"
+      },
+      {
+        "path": "app/lib/utils/faixa-etaria.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob b36d9c0fc7471305a674c187ef298f5f0c2b0246\tapp/lib/utils/faixa-etaria.ts",
+        "integration_tree": "100644 blob b36d9c0fc7471305a674c187ef298f5f0c2b0246\tapp/lib/utils/faixa-etaria.ts",
+        "base_tree": "100644 blob 89a15c249b514e25b5e55a88ec59d517d6d04ef2\tapp/lib/utils/faixa-etaria.ts"
+      },
+      {
+        "path": "app/lib/utils/fuzzy-search.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob af6d66411d0c1392d6739afa6244a11a52e671d3\tapp/lib/utils/fuzzy-search.ts",
+        "integration_tree": "100644 blob af6d66411d0c1392d6739afa6244a11a52e671d3\tapp/lib/utils/fuzzy-search.ts",
+        "base_tree": "100644 blob a02a26b73c7f75ff5bd43599c6b5219b1cebb8ef\tapp/lib/utils/fuzzy-search.ts"
+      },
+      {
+        "path": "app/tests/unit/contracts/demo-audit-route-contract.test.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 625eb390230c6a12cb622c3c5ddeb10340f44061\tapp/tests/unit/contracts/demo-audit-route-contract.test.ts",
+        "integration_tree": "100644 blob 9c156a0980b1320b8c24562e7de54008aed9d3f9\tapp/tests/unit/contracts/demo-audit-route-contract.test.ts",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/contracts/logger-contract.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 391647710d201e2af59d2331cd91362ba2da6619\tapp/tests/unit/contracts/logger-contract.test.ts",
+        "integration_tree": "100644 blob 391647710d201e2af59d2331cd91362ba2da6619\tapp/tests/unit/contracts/logger-contract.test.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tests/unit/contracts/shared-contracts.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d211417c79f3ef080e266823bc4791788a09d560\tapp/tests/unit/contracts/shared-contracts.test.ts",
+        "integration_tree": "100644 blob d211417c79f3ef080e266823bc4791788a09d560\tapp/tests/unit/contracts/shared-contracts.test.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/types/attendance.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob df477419c0d9d228c1198d2dfa02edcb81c9abf7\tapp/types/attendance.ts",
+        "integration_tree": "100644 blob df477419c0d9d228c1198d2dfa02edcb81c9abf7\tapp/types/attendance.ts",
+        "base_tree": "100644 blob 85263f3919872113dc9149d72eb75a4dd93d12b8\tapp/types/attendance.ts"
+      },
+      {
+        "path": "app/types/descriptive-report.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob c2cfe76cc4f39fd488c57ef46842ae0e401c2f8e\tapp/types/descriptive-report.ts",
+        "integration_tree": "100644 blob 3f3ee4864149cb62825a794bba854c140db7d43f\tapp/types/descriptive-report.ts",
+        "base_tree": "100644 blob 8dad01f6a2c6836cab2c2094febbd99e03a2d7c2\tapp/types/descriptive-report.ts",
+        "normalized_base_edits": 4,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/types/diario-classe.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 969158bf55aa0f78c82667ce4cc086333bf17d47\tapp/types/diario-classe.ts",
+        "integration_tree": "100644 blob 969158bf55aa0f78c82667ce4cc086333bf17d47\tapp/types/diario-classe.ts",
+        "base_tree": "100644 blob f104f6593be9f23ab14fd5d7b9a760feb11c5d50\tapp/types/diario-classe.ts"
+      },
+      {
+        "path": "app/types/grades.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e09b9ae3bf351ca400cadff6fc397ad1998aa67c\tapp/types/grades.ts",
+        "integration_tree": "100644 blob e09b9ae3bf351ca400cadff6fc397ad1998aa67c\tapp/types/grades.ts",
+        "base_tree": "100644 blob 20364ddb230f3414dd7490fef30c54a69cbc0d44\tapp/types/grades.ts"
+      },
+      {
+        "path": "app/types/lesson-content.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 3e2e7b178f7a861f10f35bd63184d51d77f6262b\tapp/types/lesson-content.ts",
+        "integration_tree": "100644 blob 3e2e7b178f7a861f10f35bd63184d51d77f6262b\tapp/types/lesson-content.ts",
+        "base_tree": "100644 blob 5c44a4d663e82b80a711c43f96db5055ff8ae086\tapp/types/lesson-content.ts"
+      }
+    ]
+  },
+  {
+    "name": "frequency",
+    "commit": "d8e884b3135edc24aba2a27df764c1a7224d7cb8",
+    "branch": "salvar/educa-quality-frequency-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "parcialmente contido",
+    "counts": {
+      "identical": 21,
+      "worker_only_path": 0,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 17,
+      "identical_at_new_path": 1
+    },
+    "needs_pr": true,
+    "files": [
+      {
+        "path": "CONTEXT.md",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 59aa6dbe6ed8f88f47a11824e278be4020a83d9c\tCONTEXT.md",
+        "integration_tree": "100644 blob 5ec96877e1888005d1669c92fc1de6dd146986a9\tCONTEXT.md",
+        "base_tree": "100644 blob 7368c422b6d28909de57cedf617bcdaf2a9f6229\tCONTEXT.md",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/sessoes/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob cefb42c2f73a807880997aa01a3d21378029cac3\tapp/app/(dashboard)/dashboard/sessoes/page.tsx",
+        "integration_tree": "100644 blob cefb42c2f73a807880997aa01a3d21378029cac3\tapp/app/(dashboard)/dashboard/sessoes/page.tsx",
+        "base_tree": "100644 blob 086b170aed3873ec7e1196bb6738e1c9386f04e8\tapp/app/(dashboard)/dashboard/sessoes/page.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/turmas/[id]/chamada/page.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob c643a6cce1c069262d6e7484e04351290ce93e98\tapp/app/(dashboard)/dashboard/turmas/[id]/chamada/page.tsx",
+        "integration_tree": "100644 blob 0eadfb2f149e9e1751d4a20204163fcc7dfc47ce\tapp/app/(dashboard)/dashboard/turmas/[id]/chamada/page.tsx",
+        "base_tree": "100644 blob 0ccf185f3d88d66afb7a14a167def261a236e28f\tapp/app/(dashboard)/dashboard/turmas/[id]/chamada/page.tsx",
+        "normalized_base_edits": 30,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/actions/attendance/check-lock-status.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 072a1f79ea32b9dfe0caa76c808edf6c4d926e60\tapp/app/actions/attendance/check-lock-status.ts",
+        "integration_tree": "100644 blob 43439f67888f12be6093c2048c61f76e2f0cd612\tapp/app/actions/attendance/check-lock-status.ts",
+        "base_tree": "100644 blob 4215d1312f5c04d6d74b16a645ee5387bb5a6381\tapp/app/actions/attendance/check-lock-status.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/actions/attendance/close-session.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob d240d1a636e2cc54ab91f2838a2d030a4cde0bbf\tapp/app/actions/attendance/close-session.ts",
+        "integration_tree": "100644 blob 61fe0dba4011f870a7495e4398eb03554a480bec\tapp/app/actions/attendance/close-session.ts",
+        "base_tree": "100644 blob d3f08fae061e8573286a6f1b76539591eaca3a4e\tapp/app/actions/attendance/close-session.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/actions/attendance/decide-reopen.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 39a52770775e1c096a07e17685e6445844e6fbf8\tapp/app/actions/attendance/decide-reopen.ts",
+        "integration_tree": "100644 blob 39a52770775e1c096a07e17685e6445844e6fbf8\tapp/app/actions/attendance/decide-reopen.ts",
+        "base_tree": "100644 blob 4c87cb7bf1bf81f94c7b11778b0dfba7cacec32f\tapp/app/actions/attendance/decide-reopen.ts"
+      },
+      {
+        "path": "app/app/actions/attendance/mark-attendance-batch.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob fbaabc23db3515e4da5ef83f7ed2bec2b5b6f575\tapp/app/actions/attendance/mark-attendance-batch.ts",
+        "integration_tree": "100644 blob fbaabc23db3515e4da5ef83f7ed2bec2b5b6f575\tapp/app/actions/attendance/mark-attendance-batch.ts",
+        "base_tree": "100644 blob 2996dbd7a7c4e6969be959ba987e07561e1d9063\tapp/app/actions/attendance/mark-attendance-batch.ts"
+      },
+      {
+        "path": "app/app/actions/attendance/mark-attendance.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob c827735808b2be7f0d0ac7308a00852854f58f22\tapp/app/actions/attendance/mark-attendance.ts",
+        "integration_tree": "100644 blob 870572d4105deebcad99607e1b9867562c697cb8\tapp/app/actions/attendance/mark-attendance.ts",
+        "base_tree": "100644 blob 1967e31736f10e3fc1c8a8743223b514eb56fb4e\tapp/app/actions/attendance/mark-attendance.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/actions/attendance/open-session.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob e4a4aa8f33fb46138a7e510d65f4e812c0d32032\tapp/app/actions/attendance/open-session.ts",
+        "integration_tree": "100644 blob a8855bfa4366c954c17081c93388233ca3734bf6\tapp/app/actions/attendance/open-session.ts",
+        "base_tree": "100644 blob ba148632332953a3c69493101fd33a79925b39b6\tapp/app/actions/attendance/open-session.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/actions/attendance/request-reopen.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob b4ae2626dcef2de821d4088a1ef5ee6e764c19e5\tapp/app/actions/attendance/request-reopen.ts",
+        "integration_tree": "100644 blob b4ae2626dcef2de821d4088a1ef5ee6e764c19e5\tapp/app/actions/attendance/request-reopen.ts",
+        "base_tree": "100644 blob 4e57d783f48dbc14f8697ee8e3a916f169509b34\tapp/app/actions/attendance/request-reopen.ts"
+      },
+      {
+        "path": "app/app/api/chamada/pendentes/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob c6e72589c7c69e95facbafe49a541d562953109a\tapp/app/api/chamada/pendentes/route.ts",
+        "integration_tree": "100644 blob c6e72589c7c69e95facbafe49a541d562953109a\tapp/app/api/chamada/pendentes/route.ts",
+        "base_tree": "100644 blob 498c467c793491ef8490749f9fe10b692e4ec63b\tapp/app/api/chamada/pendentes/route.ts"
+      },
+      {
+        "path": "app/app/api/sessoes/aula/[id]/frequencia/batch/route.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob be692bbcc3661a6237561a2e3bd9a8f6346e0d74\tapp/app/api/sessoes/aula/[id]/frequencia/batch/route.ts",
+        "integration_tree": "100644 blob 6a73beb3312e4fced218be4f91126e6767cbf488\tapp/app/api/sessoes/aula/[id]/frequencia/batch/route.ts",
+        "base_tree": "100644 blob f5ca9b4424f0253b59a1f3e3c5748b978c2809a1\tapp/app/api/sessoes/aula/[id]/frequencia/batch/route.ts",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/api/sessoes/aula/abrir/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob a439849e451312cd262e2c2116948ec8a1e3e878\tapp/app/api/sessoes/aula/abrir/route.ts",
+        "integration_tree": "100644 blob a439849e451312cd262e2c2116948ec8a1e3e878\tapp/app/api/sessoes/aula/abrir/route.ts",
+        "base_tree": "100644 blob 9d7b4dbb7d3a9cab29d0e5e1e6d2202f406e75a9\tapp/app/api/sessoes/aula/abrir/route.ts"
+      },
+      {
+        "path": "app/app/api/turmas/minhas/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 120a3e7a95f9ebe19987924e09df116c781b543c\tapp/app/api/turmas/minhas/route.ts",
+        "integration_tree": "100644 blob 120a3e7a95f9ebe19987924e09df116c781b543c\tapp/app/api/turmas/minhas/route.ts",
+        "base_tree": "100644 blob 114f3f7c971ceb1d428ed9b6602e57f3082ad933\tapp/app/api/turmas/minhas/route.ts"
+      },
+      {
+        "path": "app/components/attendance/AttendanceCell.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 43959fcc2d153c0916bb6a94d529436228c5e773\tapp/components/attendance/AttendanceCell.tsx",
+        "integration_tree": "100644 blob 9bb19a9b7a083ea9fd124fe80beb8a664b91dc46\tapp/components/attendance/AttendanceCell.tsx",
+        "base_tree": "100644 blob d8f72eeef5496548f59c222d57303e71c5b874c5\tapp/components/attendance/AttendanceCell.tsx",
+        "normalized_base_edits": 13,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/attendance/AttendanceGrid.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 6a11e806f9890283e11b0d09e8ea3f27c9780f89\tapp/components/attendance/AttendanceGrid.tsx",
+        "integration_tree": "100644 blob f04929cae57ee59455727d3c9cddd9bbace1eb5b\tapp/components/attendance/AttendanceGrid.tsx",
+        "base_tree": "100644 blob 8a4b52fae0501a5e7f5c64f0b380e584de1ef1b1\tapp/components/attendance/AttendanceGrid.tsx",
+        "normalized_base_edits": 12,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/attendance/AttendanceGridHeader.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 3f10b423fd1e53f861e4dd6857b3b76f4c24651e\tapp/components/attendance/AttendanceGridHeader.tsx",
+        "integration_tree": "100644 blob 0436d527979ad3e37fd7990916ad73537551618c\tapp/components/attendance/AttendanceGridHeader.tsx",
+        "base_tree": "100644 blob 867804763fc90dbf79223a52b87537650c6a7ac2\tapp/components/attendance/AttendanceGridHeader.tsx",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/attendance/AttendanceGridRow.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 6b1ac977e551bfa269dac0e787cd7639a23e974c\tapp/components/attendance/AttendanceGridRow.tsx",
+        "integration_tree": "100644 blob 6b1ac977e551bfa269dac0e787cd7639a23e974c\tapp/components/attendance/AttendanceGridRow.tsx",
+        "base_tree": "100644 blob bd6e87563defdc0ab1da85e2c3895dfcec6ea890\tapp/components/attendance/AttendanceGridRow.tsx"
+      },
+      {
+        "path": "app/components/attendance/AttendanceGridTypes.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob ab4ddb4fb1221cd58f442e04932b02b94b356d84\tapp/components/attendance/AttendanceGridTypes.tsx",
+        "integration_tree": "100644 blob c384ab2968ae2ab7aa973c4f7a181d62d9642ade\tapp/components/attendance/AttendanceGridTypes.tsx",
+        "base_tree": "100644 blob 2276889c8791eddc5e8b11ab279c10b6789c49f7\tapp/components/attendance/AttendanceGridTypes.tsx",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/attendance/AttendanceGridUtils.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 99870fe3dce8ce96400b6b7dc4bad8e9c9fe2a4d\tapp/components/attendance/AttendanceGridUtils.tsx",
+        "integration_tree": "100644 blob 5b084ab56d7cc3d07efb924cc04534540cb70fd5\tapp/components/attendance/AttendanceGridUtils.tsx",
+        "base_tree": "100644 blob 7ae900963c611adb07f02503558f195e6aa7bb23\tapp/components/attendance/AttendanceGridUtils.tsx",
+        "normalized_base_edits": 5,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/attendance/AttendanceReopenPanel.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 85e59fbee3b2146089cb1f6d47bb8489b694b764\tapp/components/attendance/AttendanceReopenPanel.tsx",
+        "integration_tree": "100644 blob 85e59fbee3b2146089cb1f6d47bb8489b694b764\tapp/components/attendance/AttendanceReopenPanel.tsx",
+        "base_tree": "100644 blob a9a7fbde0ab27343a3204a60a0a36e0bfe970c91\tapp/components/attendance/AttendanceReopenPanel.tsx"
+      },
+      {
+        "path": "app/components/attendance/ChamadaHeader.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 135622d4062f29487056880b6c4f483ef7510a95\tapp/components/attendance/ChamadaHeader.tsx",
+        "integration_tree": "100644 blob 135622d4062f29487056880b6c4f483ef7510a95\tapp/components/attendance/ChamadaHeader.tsx",
+        "base_tree": "100644 blob d40cf19f624f7ace6bd3753d45421776a2f6b8f5\tapp/components/attendance/ChamadaHeader.tsx"
+      },
+      {
+        "path": "app/components/attendance/FecharAulaDialog.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 2c4d013615e9a8854ce2875ac9c457d30f7ae1ca\tapp/components/attendance/FecharAulaDialog.tsx",
+        "integration_tree": "100644 blob 2c4d013615e9a8854ce2875ac9c457d30f7ae1ca\tapp/components/attendance/FecharAulaDialog.tsx",
+        "base_tree": "100644 blob 90c5d8929c0f20f387986b5a1ea720c145ea9aec\tapp/components/attendance/FecharAulaDialog.tsx"
+      },
+      {
+        "path": "app/lib/services/attendance-auth.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob f36b612fc57f131bc25eadeb4abcebda289e1012\tapp/lib/services/attendance-auth.ts",
+        "integration_tree": "100644 blob f36b612fc57f131bc25eadeb4abcebda289e1012\tapp/lib/services/attendance-auth.ts",
+        "base_tree": "100644 blob 1d35e2d6e8965993cefbb803ab838d3206f0618f\tapp/lib/services/attendance-auth.ts"
+      },
+      {
+        "path": "app/lib/services/attendance-batch-action.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob dd761273975b040f15410c182cfce4fadf478bcb\tapp/lib/services/attendance-batch-action.ts",
+        "integration_tree": "100644 blob dd761273975b040f15410c182cfce4fadf478bcb\tapp/lib/services/attendance-batch-action.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/lib/services/attendance-module.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 5c0a030741155deb4f389456f1fd5c01e00f0480\tapp/lib/services/attendance-module.ts",
+        "integration_tree": "100644 blob cb853f8d126128a4bb0980a6960e7791fd2577c9\tapp/lib/services/attendance-module.ts",
+        "base_tree": "100644 blob bcdc36d2bf8e8e2983044c1ed1a67827b3904d4f\tapp/lib/services/attendance-module.ts",
+        "normalized_base_edits": 58,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/services/attendance-reopen-database.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e1b35ee189ec3b101568416b86e462032bb32cd3\tapp/lib/services/attendance-reopen-database.ts",
+        "integration_tree": "100644 blob e1b35ee189ec3b101568416b86e462032bb32cd3\tapp/lib/services/attendance-reopen-database.ts",
+        "base_tree": "100644 blob ae34561d1b551302e0b344af08669e6efe62090e\tapp/lib/services/attendance-reopen-database.ts"
+      },
+      {
+        "path": "app/lib/services/attendance-reopen.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 79eb93aa494f3eb7760c3dd8af6cdd39e4efc7ff\tapp/lib/services/attendance-reopen.ts",
+        "integration_tree": "100644 blob 79eb93aa494f3eb7760c3dd8af6cdd39e4efc7ff\tapp/lib/services/attendance-reopen.ts",
+        "base_tree": "100644 blob 0b60fab00e1a12f0a025585c57131b481b65f7f3\tapp/lib/services/attendance-reopen.ts"
+      },
+      {
+        "path": "app/tests/e2e/attendance/reopen.spec.ts",
+        "state": "identical_at_new_path",
+        "worker_tree": "100644 blob b4d15564a5ef25b101fb8e4b4d112514f4cdb322\tapp/tests/e2e/attendance/reopen.spec.ts",
+        "integration_tree": "",
+        "base_tree": "100644 blob 98744e169d9c760ecb1f8fa5c8b11056b20e0625\tapp/tests/e2e/attendance/reopen.spec.ts",
+        "integration_path": "app/tests/e2e/pilot/attendance-reopen.spec.ts"
+      },
+      {
+        "path": "app/tests/e2e/reports/frequency.spec.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 6bd01c4aed53a73f954dff55d7f211f42b9273ea\tapp/tests/e2e/reports/frequency.spec.ts",
+        "integration_tree": "100644 blob 0fb0af0923e106e1f04adfa68fb956f87976e939\tapp/tests/e2e/reports/frequency.spec.ts",
+        "base_tree": "100644 blob b35740c34b3a5deacd65937899018e763785263b\tapp/tests/e2e/reports/frequency.spec.ts",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/actions/attendance-batch.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d430411ba548fe74e3930c733062c41864df5046\tapp/tests/unit/actions/attendance-batch.test.ts",
+        "integration_tree": "100644 blob d430411ba548fe74e3930c733062c41864df5046\tapp/tests/unit/actions/attendance-batch.test.ts",
+        "base_tree": "100644 blob 1dce43519e63541aab6b1e284ff8934fcad889ce\tapp/tests/unit/actions/attendance-batch.test.ts"
+      },
+      {
+        "path": "app/tests/unit/api/frequencia/marcar/route.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob c816544064d79ff421e46f4a3d85e23b0e0f04dc\tapp/tests/unit/api/frequencia/marcar/route.test.ts",
+        "integration_tree": "100644 blob c816544064d79ff421e46f4a3d85e23b0e0f04dc\tapp/tests/unit/api/frequencia/marcar/route.test.ts",
+        "base_tree": "100644 blob afb3c09714e7d8ac8de840e92a1774a0325c3fa2\tapp/tests/unit/api/frequencia/marcar/route.test.ts"
+      },
+      {
+        "path": "app/tests/unit/components/attendance/controls.test.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 7c8dfcac6649f03e724820315291d507ef95f83b\tapp/tests/unit/components/attendance/controls.test.tsx",
+        "integration_tree": "100644 blob 7c8dfcac6649f03e724820315291d507ef95f83b\tapp/tests/unit/components/attendance/controls.test.tsx",
+        "base_tree": "100644 blob 19b587266f6255b9d759d534f3c469cd6c59831a\tapp/tests/unit/components/attendance/controls.test.tsx"
+      },
+      {
+        "path": "app/tests/unit/components/attendance/correction-window.test.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 25cb4711d925db250ae1020f02bb1ceccc36a1a6\tapp/tests/unit/components/attendance/correction-window.test.tsx",
+        "integration_tree": "100644 blob e7c40c270a6174651dbe86c6c55ec9f05e8c2956\tapp/tests/unit/components/attendance/correction-window.test.tsx",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/components/attendance/grid.test.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 4fbb1334add68e1b520801bef5a812369d910497\tapp/tests/unit/components/attendance/grid.test.tsx",
+        "integration_tree": "100644 blob 4fbb1334add68e1b520801bef5a812369d910497\tapp/tests/unit/components/attendance/grid.test.tsx",
+        "base_tree": "100644 blob 76fdd27c661e776714d7f5dfe3d2094fe3c41e87\tapp/tests/unit/components/attendance/grid.test.tsx"
+      },
+      {
+        "path": "app/tests/unit/services/attendance-module.test.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 919ee1749970ac7d59491236b2b7eedc3733cabf\tapp/tests/unit/services/attendance-module.test.ts",
+        "integration_tree": "100644 blob 478f7e1eae75a098e87affe762b75757a2b12bf2\tapp/tests/unit/services/attendance-module.test.ts",
+        "base_tree": "100644 blob 7c6facd8bf30dfe280e478025c67fcaf6c24602f\tapp/tests/unit/services/attendance-module.test.ts",
+        "normalized_base_edits": 6,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/types/database.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 5bc30caeb93ddc0b97b32dcb3c0b4e92a7ba7d82\tapp/types/database.ts",
+        "integration_tree": "100644 blob 2af366a031d1b02f86b404a841960cd50ca2af6c\tapp/types/database.ts",
+        "base_tree": "100644 blob 86380bb62eb8ec0341b51512749a15cd32f867e4\tapp/types/database.ts",
+        "normalized_base_edits": 12,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "supabase/migrations/20260908000000_attendance_correction_window.sql",
+        "state": "identical",
+        "worker_tree": "100644 blob bde83f1e8e1e54c4045b6dda6fc97af6e1819b3b\tsupabase/migrations/20260908000000_attendance_correction_window.sql",
+        "integration_tree": "100644 blob bde83f1e8e1e54c4045b6dda6fc97af6e1819b3b\tsupabase/migrations/20260908000000_attendance_correction_window.sql",
+        "base_tree": ""
+      },
+      {
+        "path": "supabase/tests/database/attendance_correction_window.test.sql",
+        "state": "identical",
+        "worker_tree": "100644 blob 551f0489cdff6d7c8f0dba979ec13b23355ea6c0\tsupabase/tests/database/attendance_correction_window.test.sql",
+        "integration_tree": "100644 blob 551f0489cdff6d7c8f0dba979ec13b23355ea6c0\tsupabase/tests/database/attendance_correction_window.test.sql",
+        "base_tree": ""
+      }
+    ],
+    "note": "The attendance reopen E2E is byte-identical at its new pilot path; it is not exclusive content. The other 17 divergent versions need reconciliation."
+  },
+  {
+    "name": "public",
+    "commit": "c0b0d4c63da6f2081f47a69000c7db654745c5aa",
+    "branch": "salvar/educa-quality-public-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "com conteudo exclusivo",
+    "counts": {
+      "identical": 39,
+      "worker_only_path": 1,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 11
+    },
+    "needs_pr": true,
+    "files": [
+      {
+        "path": "app/app/(dashboard)/dashboard/matriculas/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 025b56e9ff0866f476d0c69ba27a46a192d11552\tapp/app/(dashboard)/dashboard/matriculas/page.tsx",
+        "integration_tree": "100644 blob 025b56e9ff0866f476d0c69ba27a46a192d11552\tapp/app/(dashboard)/dashboard/matriculas/page.tsx",
+        "base_tree": "100644 blob ab6cbdea4067830374f50b862c50f909d63138d6\tapp/app/(dashboard)/dashboard/matriculas/page.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/turmas/nova/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob f9ebb7b9ae3636e29bc61d636d22afe5752a6242\tapp/app/(dashboard)/dashboard/turmas/nova/page.tsx",
+        "integration_tree": "100644 blob f9ebb7b9ae3636e29bc61d636d22afe5752a6242\tapp/app/(dashboard)/dashboard/turmas/nova/page.tsx",
+        "base_tree": "100644 blob e0d87c44e9b796785ef09aea6aeea76859969655\tapp/app/(dashboard)/dashboard/turmas/nova/page.tsx"
+      },
+      {
+        "path": "app/app/api/demo/audit/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 0873e5660a90eea903b4638527f19761cb7e3b23\tapp/app/api/demo/audit/route.ts",
+        "integration_tree": "100644 blob 0873e5660a90eea903b4638527f19761cb7e3b23\tapp/app/api/demo/audit/route.ts",
+        "base_tree": "100644 blob 06f4229a81ffc84da05db4f86c127ecfa2338db3\tapp/app/api/demo/audit/route.ts"
+      },
+      {
+        "path": "app/app/blog/[slug]/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 5d286ae31e4a4f773a27f551c27f8e2ff4916111\tapp/app/blog/[slug]/page.tsx",
+        "integration_tree": "100644 blob 5d286ae31e4a4f773a27f551c27f8e2ff4916111\tapp/app/blog/[slug]/page.tsx",
+        "base_tree": "100644 blob 5cbc1358d8e8c4d9690858305d5f1c7f64adf200\tapp/app/blog/[slug]/page.tsx"
+      },
+      {
+        "path": "app/app/blog/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 6efed71583760cfb98394dac6b1c0d447bb3cedb\tapp/app/blog/page.tsx",
+        "integration_tree": "100644 blob 6efed71583760cfb98394dac6b1c0d447bb3cedb\tapp/app/blog/page.tsx",
+        "base_tree": "100644 blob eeb72200a9314af79788a07a4336608786dc96ab\tapp/app/blog/page.tsx"
+      },
+      {
+        "path": "app/app/politica-privacidade/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 1f7b2af9d7736ac42d78b84da472a0e0a5fad2ef\tapp/app/politica-privacidade/page.tsx",
+        "integration_tree": "100644 blob 1f7b2af9d7736ac42d78b84da472a0e0a5fad2ef\tapp/app/politica-privacidade/page.tsx",
+        "base_tree": "100644 blob a5322138b196853f8fcd28dc90d82c3c458fb902\tapp/app/politica-privacidade/page.tsx"
+      },
+      {
+        "path": "app/app/providers.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 9f9c20a82c6e78ce0cf93d1d7652ea028c419342\tapp/app/providers.tsx",
+        "integration_tree": "100644 blob e785c21e9c8eccd724d972a2b52688e7d4cf78d1\tapp/app/providers.tsx",
+        "base_tree": "100644 blob 8b38da0147915f59fd7eba5baabac77a1d3a11f8\tapp/app/providers.tsx",
+        "normalized_base_edits": 4,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/dashboard/matriculas-page-content.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 54590cf426e602433d31ed3bd2a2d5bb6ba1bae7\tapp/components/dashboard/matriculas-page-content.tsx",
+        "integration_tree": "100644 blob 4eb03f03c9d0a4431775124f252fc42e218fe440\tapp/components/dashboard/matriculas-page-content.tsx",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/dashboard/nova-turma-page-content.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 0290a7b95e2e418dee462023bdf4ca3b373a4375\tapp/components/dashboard/nova-turma-page-content.tsx",
+        "integration_tree": "100644 blob 55b5b7c2bc66f7f89f206246110e3ad2031cedd4\tapp/components/dashboard/nova-turma-page-content.tsx",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 86a6fa09bbbe759f89fa1058165601247b661538\tapp/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "integration_tree": "100644 blob 3f41089e3a8451b4214840f0a4ae37a7fe9d00ae\tapp/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "base_tree": "100644 blob b71b89b46750e5b550db8f954138405aa0f223aa\tapp/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "normalized_base_edits": 7,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/i18n/locale-switcher.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 7029811e583c9795e2ff25ae3cc4722122ee039c\tapp/components/i18n/locale-switcher.tsx",
+        "integration_tree": "100644 blob 7029811e583c9795e2ff25ae3cc4722122ee039c\tapp/components/i18n/locale-switcher.tsx",
+        "base_tree": "100644 blob 874091aea5ed9149a27ad9dd3aa7818e8b34f7eb\tapp/components/i18n/locale-switcher.tsx"
+      },
+      {
+        "path": "app/components/layout/escola-selector.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob e22bbf3409b0af33713423157331521734e422cd\tapp/components/layout/escola-selector.tsx",
+        "integration_tree": "100644 blob e22bbf3409b0af33713423157331521734e422cd\tapp/components/layout/escola-selector.tsx",
+        "base_tree": "100644 blob b84da309a59cc536cb0ba852271fe431dab3131d\tapp/components/layout/escola-selector.tsx"
+      },
+      {
+        "path": "app/components/layout/header.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob d16f7ae948cc8ad82b36ec01fe8ae9e3387103ac\tapp/components/layout/header.tsx",
+        "integration_tree": "100644 blob 64df69775e81bfbb73f3f157309201273346d196\tapp/components/layout/header.tsx",
+        "base_tree": "100644 blob e6cd34226dc856c9039fc10b705ca8b5701c549e\tapp/components/layout/header.tsx",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/components/layout/mobile-header.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob c0ff81cfeadcae9f835c01ebd73b512c8e63e1bd\tapp/components/layout/mobile-header.tsx",
+        "integration_tree": "100644 blob 2171edce18f725de724be739eb9d699a3cfb8e7f\tapp/components/layout/mobile-header.tsx",
+        "base_tree": "100644 blob aaa7c0ee0079fc2488446ffb161c24ce6f054ab9\tapp/components/layout/mobile-header.tsx",
+        "normalized_base_edits": 9,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/components/layout/navigation.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob bdf83379864c0383dca64be86edf004bed469d8a\tapp/components/layout/navigation.ts",
+        "integration_tree": "100644 blob cdec52c7f022ece8a03d21fcffa8aeea0fb5d1d0\tapp/components/layout/navigation.ts",
+        "base_tree": "100644 blob 25fa14e9e599e70fab77ef2e6c9ef6b63373f547\tapp/components/layout/navigation.ts",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/marketing/educa-landing.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob ca1c71acce2e57b305e299dddcf13014c22adc20\tapp/components/marketing/educa-landing.tsx",
+        "integration_tree": "100644 blob ca1c71acce2e57b305e299dddcf13014c22adc20\tapp/components/marketing/educa-landing.tsx",
+        "base_tree": "100644 blob abc877d8739965233ff512fd06db0ddfb662a3b8\tapp/components/marketing/educa-landing.tsx"
+      },
+      {
+        "path": "app/components/marketing/public-demo-explainer.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob adbafb02714e613de20fd7e15eb02212532d8c4f\tapp/components/marketing/public-demo-explainer.tsx",
+        "integration_tree": "100644 blob adbafb02714e613de20fd7e15eb02212532d8c4f\tapp/components/marketing/public-demo-explainer.tsx",
+        "base_tree": "100644 blob 54ba328e13b2bf6395b231a61443467f68129eaa\tapp/components/marketing/public-demo-explainer.tsx"
+      },
+      {
+        "path": "app/components/marketing/public-header.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 1f4124ff8f02f2664464f8c82b7f62d256cc2e9c\tapp/components/marketing/public-header.tsx",
+        "integration_tree": "100644 blob 1f4124ff8f02f2664464f8c82b7f62d256cc2e9c\tapp/components/marketing/public-header.tsx",
+        "base_tree": "100644 blob bdeb6606f4d2b611b8aceef28f8f2980afc8a127\tapp/components/marketing/public-header.tsx"
+      },
+      {
+        "path": "app/i18n/actions.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 1ec4a4bae2b30ca3a528e572c1d48776f1e1ca3c\tapp/i18n/actions.ts",
+        "integration_tree": "100644 blob 1ec4a4bae2b30ca3a528e572c1d48776f1e1ca3c\tapp/i18n/actions.ts",
+        "base_tree": "100644 blob 8b2291be676eedc9e57935a866acc24cbc79f110\tapp/i18n/actions.ts"
+      },
+      {
+        "path": "app/i18n/classroom.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 89679cbf3cc5647f1cf892a2ae481f6bd17022f7\tapp/i18n/classroom.ts",
+        "integration_tree": "100644 blob 89679cbf3cc5647f1cf892a2ae481f6bd17022f7\tapp/i18n/classroom.ts",
+        "base_tree": "100644 blob 074e9095dddcf83f66d9e227085b2d06c80ebf6d\tapp/i18n/classroom.ts"
+      },
+      {
+        "path": "app/i18n/config.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 2e553153878fd7fdb841457c2ec68e81da3b059a\tapp/i18n/config.ts",
+        "integration_tree": "100644 blob 2e553153878fd7fdb841457c2ec68e81da3b059a\tapp/i18n/config.ts",
+        "base_tree": "100644 blob 4b349ed24bb48a525194c5a81c97bf8d8dc928aa\tapp/i18n/config.ts"
+      },
+      {
+        "path": "app/i18n/locale-persistence.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 5bb404e69c866190290a3b9793884703573ac957\tapp/i18n/locale-persistence.ts",
+        "integration_tree": "100644 blob 5bb404e69c866190290a3b9793884703573ac957\tapp/i18n/locale-persistence.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/i18n/messages.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob cb3fb9f27d080987077e48bd1aad22c1cdfc75bb\tapp/i18n/messages.ts",
+        "integration_tree": "100644 blob cb3fb9f27d080987077e48bd1aad22c1cdfc75bb\tapp/i18n/messages.ts",
+        "base_tree": "100644 blob 7aa68904ee0b72f8e4cf118941c5975b035e52d0\tapp/i18n/messages.ts"
+      },
+      {
+        "path": "app/i18n/next-intl.d.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 7305100c9f40d8b694a3f9a4d14e5d75e5d325f6\tapp/i18n/next-intl.d.ts",
+        "integration_tree": "100644 blob 7305100c9f40d8b694a3f9a4d14e5d75e5d325f6\tapp/i18n/next-intl.d.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/lib/demo-sandbox/demo-audit-client.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob ff9b5c84035f04be15345efb12443bc9b31ad8d4\tapp/lib/demo-sandbox/demo-audit-client.ts",
+        "integration_tree": "100644 blob ff9b5c84035f04be15345efb12443bc9b31ad8d4\tapp/lib/demo-sandbox/demo-audit-client.ts",
+        "base_tree": "100644 blob b659d2bf2e42abb18761e8fa62986d3abfca452f\tapp/lib/demo-sandbox/demo-audit-client.ts"
+      },
+      {
+        "path": "app/lib/demo-sandbox/demo-audit-route-handler.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 03a7442d0c414684667e4bcce68e6e6702bb9b86\tapp/lib/demo-sandbox/demo-audit-route-handler.ts",
+        "integration_tree": "100644 blob 03a7442d0c414684667e4bcce68e6e6702bb9b86\tapp/lib/demo-sandbox/demo-audit-route-handler.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/lib/demo-sandbox/demo-audit.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 8fe90168ebeb36a6715f53cc2b51798deebdca7e\tapp/lib/demo-sandbox/demo-audit.ts",
+        "integration_tree": "100644 blob 4fd6a09f73859ee48fe92dd6cdbf123a5db53cc4\tapp/lib/demo-sandbox/demo-audit.ts",
+        "base_tree": "100644 blob 8956ff217ec6c2958c003713c9f4716d29732003\tapp/lib/demo-sandbox/demo-audit.ts",
+        "normalized_base_edits": 5,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/lib/demo-sandbox/demo-sandbox.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob a054c301913c5209f01350258912414c7bc1ad15\tapp/lib/demo-sandbox/demo-sandbox.ts",
+        "integration_tree": "100644 blob a054c301913c5209f01350258912414c7bc1ad15\tapp/lib/demo-sandbox/demo-sandbox.ts",
+        "base_tree": "100644 blob 239b92924cfac9d2eb2366fc3e8211323c1a1455\tapp/lib/demo-sandbox/demo-sandbox.ts"
+      },
+      {
+        "path": "app/lib/demo-sandbox/login-demo-credentials.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 450720591b5139f7a067a10bf41770f89015c437\tapp/lib/demo-sandbox/login-demo-credentials.ts",
+        "integration_tree": "100644 blob 450720591b5139f7a067a10bf41770f89015c437\tapp/lib/demo-sandbox/login-demo-credentials.ts",
+        "base_tree": "100644 blob 356de829235b74cb2a6e9c48f2b8c4c74c1b1138\tapp/lib/demo-sandbox/login-demo-credentials.ts"
+      },
+      {
+        "path": "app/lib/middleware/proxy-boundary.ts",
+        "state": "identical",
+        "worker_tree": "",
+        "integration_tree": "",
+        "base_tree": ""
+      },
+      {
+        "path": "app/messages/en/public.json",
+        "state": "identical",
+        "worker_tree": "100644 blob 3737a4f7b42e39919723eaf14f15931c350e304d\tapp/messages/en/public.json",
+        "integration_tree": "100644 blob 3737a4f7b42e39919723eaf14f15931c350e304d\tapp/messages/en/public.json",
+        "base_tree": "100644 blob 20b98b4ebc2a8c1be4a2eb8c0e0a2393d7d3301d\tapp/messages/en/public.json"
+      },
+      {
+        "path": "app/messages/pt-BR/public.json",
+        "state": "identical",
+        "worker_tree": "100644 blob 83b24175419de8257ceb36b285ef0a4845bf76c0\tapp/messages/pt-BR/public.json",
+        "integration_tree": "100644 blob 83b24175419de8257ceb36b285ef0a4845bf76c0\tapp/messages/pt-BR/public.json",
+        "base_tree": "100644 blob 21c9f37c26f133d29eb84c6a7c79c7ed07b84305\tapp/messages/pt-BR/public.json"
+      },
+      {
+        "path": "app/tests/unit/api/demo-audit-route.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 26a187b327cd52ca8df4b0c7d87cbde041965d8c\tapp/tests/unit/api/demo-audit-route.test.ts",
+        "integration_tree": "100644 blob 26a187b327cd52ca8df4b0c7d87cbde041965d8c\tapp/tests/unit/api/demo-audit-route.test.ts",
+        "base_tree": "100644 blob 467330ecd995eff8a2543357e4ed9d42c6879739\tapp/tests/unit/api/demo-audit-route.test.ts"
+      },
+      {
+        "path": "app/tests/unit/api/demo-guard-routes.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 6539a9837bb17eb2fe05b79011ccce208c8223da\tapp/tests/unit/api/demo-guard-routes.test.ts",
+        "integration_tree": "100644 blob 6539a9837bb17eb2fe05b79011ccce208c8223da\tapp/tests/unit/api/demo-guard-routes.test.ts",
+        "base_tree": "100644 blob 69cf0dd6b355dacd6abb9fd327c120181d0caf22\tapp/tests/unit/api/demo-guard-routes.test.ts"
+      },
+      {
+        "path": "app/tests/unit/demo-sandbox/demo-audit.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e782afbde098ac4ddaf643422f8a7f68094111f5\tapp/tests/unit/demo-sandbox/demo-audit.test.ts",
+        "integration_tree": "100644 blob e782afbde098ac4ddaf643422f8a7f68094111f5\tapp/tests/unit/demo-sandbox/demo-audit.test.ts",
+        "base_tree": "100644 blob eee9d664a025168b05c67b43bc95f891062ff2af\tapp/tests/unit/demo-sandbox/demo-audit.test.ts"
+      },
+      {
+        "path": "app/tests/unit/demo-sandbox/demo-client-noops.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob a96cdb256544080fa9aadf919be23ba833143c19\tapp/tests/unit/demo-sandbox/demo-client-noops.test.ts",
+        "integration_tree": "100644 blob a96cdb256544080fa9aadf919be23ba833143c19\tapp/tests/unit/demo-sandbox/demo-client-noops.test.ts",
+        "base_tree": "100644 blob 1264b566e8b7b9d8c6b44d7849c3c87b4573392d\tapp/tests/unit/demo-sandbox/demo-client-noops.test.ts"
+      },
+      {
+        "path": "app/tests/unit/demo-sandbox/demo-demoable-flows.test.ts",
+        "state": "worker_only_path",
+        "worker_tree": "100644 blob 5d1c9a675f6b8056ec3816dd68f35c1c3a703d89\tapp/tests/unit/demo-sandbox/demo-demoable-flows.test.ts",
+        "integration_tree": "",
+        "base_tree": "100644 blob 25676158340c810a0e164c9c91a61578e9492062\tapp/tests/unit/demo-sandbox/demo-demoable-flows.test.ts",
+        "normalized_base_edits": 3,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/demo-sandbox/demo-deploy-package.test.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob e57471be234dcf344282c599c5298eae4280e3e0\tapp/tests/unit/demo-sandbox/demo-deploy-package.test.tsx",
+        "integration_tree": "100644 blob a0414c157e22bb7547ee8f9e60ee6daeee3656fd\tapp/tests/unit/demo-sandbox/demo-deploy-package.test.tsx",
+        "base_tree": "100644 blob 4230c2fde60397f6525f11fea9f16e2e258a2d4e\tapp/tests/unit/demo-sandbox/demo-deploy-package.test.tsx",
+        "normalized_base_edits": 11,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/demo-sandbox/demo-sandbox.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 06243dd071ac0bbc863a5604fbd7c54506e96eda\tapp/tests/unit/demo-sandbox/demo-sandbox.test.ts",
+        "integration_tree": "100644 blob 06243dd071ac0bbc863a5604fbd7c54506e96eda\tapp/tests/unit/demo-sandbox/demo-sandbox.test.ts",
+        "base_tree": "100644 blob 26da3ad41a31018949e782afac763d0260587756\tapp/tests/unit/demo-sandbox/demo-sandbox.test.ts"
+      },
+      {
+        "path": "app/tests/unit/i18n/classroom.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 495dfb60c15099755a68d7c5be0c31d44f733172\tapp/tests/unit/i18n/classroom.test.ts",
+        "integration_tree": "100644 blob 495dfb60c15099755a68d7c5be0c31d44f733172\tapp/tests/unit/i18n/classroom.test.ts",
+        "base_tree": "100644 blob 7e4a1a9c5460b75cd2bfd365c800bd28626d6edd\tapp/tests/unit/i18n/classroom.test.ts"
+      },
+      {
+        "path": "app/tests/unit/i18n/dashboard-components.test.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob be5a0ca3fc15a711cc849955dc2a97e775dd9b50\tapp/tests/unit/i18n/dashboard-components.test.tsx",
+        "integration_tree": "100644 blob be5a0ca3fc15a711cc849955dc2a97e775dd9b50\tapp/tests/unit/i18n/dashboard-components.test.tsx",
+        "base_tree": "100644 blob 15b30df8bd892b228eb7eabc1214e72061664eee\tapp/tests/unit/i18n/dashboard-components.test.tsx"
+      },
+      {
+        "path": "app/tests/unit/i18n/foundation.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d29c8472a31ea07c43fcb4616c99c324e5a3e166\tapp/tests/unit/i18n/foundation.test.ts",
+        "integration_tree": "100644 blob d29c8472a31ea07c43fcb4616c99c324e5a3e166\tapp/tests/unit/i18n/foundation.test.ts",
+        "base_tree": "100644 blob 884a5cd75219d0472cfaa5001397594641f9d507\tapp/tests/unit/i18n/foundation.test.ts"
+      },
+      {
+        "path": "app/tests/unit/i18n/locale-action.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob b7bb8a02682716efba52fd3eb2f54f290cd6908b\tapp/tests/unit/i18n/locale-action.test.ts",
+        "integration_tree": "100644 blob b7bb8a02682716efba52fd3eb2f54f290cd6908b\tapp/tests/unit/i18n/locale-action.test.ts",
+        "base_tree": "100644 blob 8ecfe52d5b5c88508b5dba7f246e4329177733c5\tapp/tests/unit/i18n/locale-action.test.ts"
+      },
+      {
+        "path": "app/tests/unit/i18n/locale-switcher.test.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 19ca7abe3dcdca8f2242f316ec39f335ac58a4b5\tapp/tests/unit/i18n/locale-switcher.test.tsx",
+        "integration_tree": "100644 blob 92540d548e2d7f97ab23af00c3b4c5cd093b3387\tapp/tests/unit/i18n/locale-switcher.test.tsx",
+        "base_tree": "100644 blob d0b63e9ce2983e267e269c57a9cdb733ec2184a6\tapp/tests/unit/i18n/locale-switcher.test.tsx",
+        "normalized_base_edits": 9,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/tests/unit/i18n/message-test-helpers.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob ebe7092d607ff3cbfc1fd6297f0f4cf0889db335\tapp/tests/unit/i18n/message-test-helpers.ts",
+        "integration_tree": "100644 blob ebe7092d607ff3cbfc1fd6297f0f4cf0889db335\tapp/tests/unit/i18n/message-test-helpers.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tests/unit/i18n/platform.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 30f48570e2b659c2e302275bf17faec95e4cf24c\tapp/tests/unit/i18n/platform.test.ts",
+        "integration_tree": "100644 blob 30f48570e2b659c2e302275bf17faec95e4cf24c\tapp/tests/unit/i18n/platform.test.ts",
+        "base_tree": "100644 blob eaeababa9063b21db296ac26ea86ab8fbf5f1920\tapp/tests/unit/i18n/platform.test.ts"
+      },
+      {
+        "path": "app/tests/unit/i18n/providers.test.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob b086a6817c553d59389c5cc83b29af20aadc2b54\tapp/tests/unit/i18n/providers.test.tsx",
+        "integration_tree": "100644 blob f9e1e9b995fb06ccafe9bf0d210f12d8acb2a24a\tapp/tests/unit/i18n/providers.test.tsx",
+        "base_tree": "100644 blob f8cefaeba550ee0f302a3879a7031eb637fd144a\tapp/tests/unit/i18n/providers.test.tsx",
+        "normalized_base_edits": 6,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/i18n/proxy-contract.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob ae9821883ec8d8636393df05ceb503ff3728da74\tapp/tests/unit/i18n/proxy-contract.test.ts",
+        "integration_tree": "100644 blob ae9821883ec8d8636393df05ceb503ff3728da74\tapp/tests/unit/i18n/proxy-contract.test.ts",
+        "base_tree": "100644 blob d838252de20d5ea789553371fb01aff2ae1ac043\tapp/tests/unit/i18n/proxy-contract.test.ts"
+      },
+      {
+        "path": "app/tests/unit/i18n/redesign-contract.test.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 45ab4088105334c574ec323bba630fd583cc1401\tapp/tests/unit/i18n/redesign-contract.test.tsx",
+        "integration_tree": "100644 blob 45ab4088105334c574ec323bba630fd583cc1401\tapp/tests/unit/i18n/redesign-contract.test.tsx",
+        "base_tree": "100644 blob cab3df7a6b0e86e87046d8bd6710e990b971ec2a\tapp/tests/unit/i18n/redesign-contract.test.tsx"
+      },
+      {
+        "path": "app/tests/unit/i18n/registry.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob a87de1aecccc04acaa237b0ba1db581342f76e4a\tapp/tests/unit/i18n/registry.test.ts",
+        "integration_tree": "100644 blob a87de1aecccc04acaa237b0ba1db581342f76e4a\tapp/tests/unit/i18n/registry.test.ts",
+        "base_tree": "100644 blob 8fa4de1aa129bfbfd59dd437714da3653faf8fd6\tapp/tests/unit/i18n/registry.test.ts"
+      },
+      {
+        "path": "app/tests/unit/municipal-branding.test.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 941ce4a34d14de4dc46a107837bc88b3427e94a5\tapp/tests/unit/municipal-branding.test.tsx",
+        "integration_tree": "100644 blob 941ce4a34d14de4dc46a107837bc88b3427e94a5\tapp/tests/unit/municipal-branding.test.tsx",
+        "base_tree": "100644 blob a3f2ac468f01a2b15db3a19f7d2ea71975ff82e9\tapp/tests/unit/municipal-branding.test.tsx"
+      }
+    ]
+  },
+  {
+    "name": "readmodels",
+    "commit": "8393a99dbc1f800a64753c7d737fb71ea43b20eb",
+    "branch": "salvar/educa-quality-readmodels-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "com conteudo exclusivo",
+    "counts": {
+      "identical": 30,
+      "worker_only_path": 1,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 11
+    },
+    "needs_pr": true,
+    "files": [
+      {
+        "path": "VENT.md",
+        "state": "worker_only_path",
+        "worker_tree": "100644 blob 40e879d25f390471c05abd31d389e078bae0d9b2\tVENT.md",
+        "integration_tree": "",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 7037f3fd36730d2fab316a7eb7111c5b89900fc1\tapp/app/(dashboard)/dashboard/page.tsx",
+        "integration_tree": "100644 blob 7037f3fd36730d2fab316a7eb7111c5b89900fc1\tapp/app/(dashboard)/dashboard/page.tsx",
+        "base_tree": "100644 blob 566b7d2596329f16632bc432931b8e480088eb83\tapp/app/(dashboard)/dashboard/page.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/relatorios/loading.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob ef8daeca97d392180482887d3bc1dcbfd1514c76\tapp/app/(dashboard)/dashboard/relatorios/loading.tsx",
+        "integration_tree": "100644 blob ef8daeca97d392180482887d3bc1dcbfd1514c76\tapp/app/(dashboard)/dashboard/relatorios/loading.tsx",
+        "base_tree": "100644 blob 9339c44966d4cdcf05e8c112e0c9ea1157919f80\tapp/app/(dashboard)/dashboard/relatorios/loading.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/dashboard/relatorios/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 2096526f1c2df629c2a41924ff9cbfd6c043cfb6\tapp/app/(dashboard)/dashboard/relatorios/page.tsx",
+        "integration_tree": "100644 blob 2096526f1c2df629c2a41924ff9cbfd6c043cfb6\tapp/app/(dashboard)/dashboard/relatorios/page.tsx",
+        "base_tree": "100644 blob 8fa02a5f632bb5a4055feeb02315db0d3a0dd4a9\tapp/app/(dashboard)/dashboard/relatorios/page.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/relatorios/bolsa-familia/page.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 35384ff9a245672c22671a84361d443d878e7b58\tapp/app/(dashboard)/relatorios/bolsa-familia/page.tsx",
+        "integration_tree": "100644 blob 35384ff9a245672c22671a84361d443d878e7b58\tapp/app/(dashboard)/relatorios/bolsa-familia/page.tsx",
+        "base_tree": "100644 blob 9d82de50a0dd06ed8a5a12ea04bc61df7b0ebc22\tapp/app/(dashboard)/relatorios/bolsa-familia/page.tsx"
+      },
+      {
+        "path": "app/app/(dashboard)/relatorios/conteudo/page.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 54f4cbff36383597f846b6c96a9e1b9200b47fcc\tapp/app/(dashboard)/relatorios/conteudo/page.tsx",
+        "integration_tree": "100644 blob 5e56c850eae337e36910014cc7d07a110181a047\tapp/app/(dashboard)/relatorios/conteudo/page.tsx",
+        "base_tree": "100644 blob 933f2ea5a0c4fe3fe244c5cd8e24403a4194f7f3\tapp/app/(dashboard)/relatorios/conteudo/page.tsx",
+        "normalized_base_edits": 19,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/app/(dashboard)/relatorios/frequencia/page.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 22d8635e2aca9beafe3ea5d603e833592c484c2f\tapp/app/(dashboard)/relatorios/frequencia/page.tsx",
+        "integration_tree": "100644 blob f3fae2e9b7f9859b9017f3ed8f2e659ac1e5d224\tapp/app/(dashboard)/relatorios/frequencia/page.tsx",
+        "base_tree": "100644 blob c1cc058ec3be0cbe5ceabd353b85d4dbed4f669e\tapp/app/(dashboard)/relatorios/frequencia/page.tsx",
+        "normalized_base_edits": 18,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/app/api/attendance/trends/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d9b12fc6f662d401b827dc71d78c0be1ee6a8f59\tapp/app/api/attendance/trends/route.ts",
+        "integration_tree": "100644 blob d9b12fc6f662d401b827dc71d78c0be1ee6a8f59\tapp/app/api/attendance/trends/route.ts",
+        "base_tree": "100644 blob bc8b818e1c5ccf2a8acb0016084941070f3c41b8\tapp/app/api/attendance/trends/route.ts"
+      },
+      {
+        "path": "app/app/api/compliance/warnings/route.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 9dd4e4a9561d7957ddb8bda4bc88d62024d06652\tapp/app/api/compliance/warnings/route.ts",
+        "integration_tree": "100644 blob 9dd4e4a9561d7957ddb8bda4bc88d62024d06652\tapp/app/api/compliance/warnings/route.ts",
+        "base_tree": "100644 blob a11c1ee4e8f3c1c867b80caa3ee71a438923abc9\tapp/app/api/compliance/warnings/route.ts"
+      },
+      {
+        "path": "app/app/api/dashboard/alerts/route.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 16f50ced39d5b490b36735ed975b13d3c82f13f6\tapp/app/api/dashboard/alerts/route.ts",
+        "integration_tree": "100644 blob a12c18fc81ef1e6cea3f2ec915a43c10d0ba5f19\tapp/app/api/dashboard/alerts/route.ts",
+        "base_tree": "100644 blob 6ad4d54e80f690cc0117fe4006921258d6148c19\tapp/app/api/dashboard/alerts/route.ts",
+        "normalized_base_edits": 8,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/dashboard/stats-card.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob dc0790758ee233b61c299dd203203ef274397a60\tapp/components/dashboard/stats-card.tsx",
+        "integration_tree": "100644 blob dc0790758ee233b61c299dd203203ef274397a60\tapp/components/dashboard/stats-card.tsx",
+        "base_tree": "100644 blob 65c90e95c68a0313114761c026c4f5780a65a65c\tapp/components/dashboard/stats-card.tsx"
+      },
+      {
+        "path": "app/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob b5693f0409041391d8768536c5e832798bd7482d\tapp/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "integration_tree": "100644 blob 3f41089e3a8451b4214840f0a4ae37a7fe9d00ae\tapp/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "base_tree": "100644 blob b71b89b46750e5b550db8f954138405aa0f223aa\tapp/components/dashboard/teacher-dashboard-enhanced.tsx",
+        "normalized_base_edits": 13,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/reports/AttendanceReportTable.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob d8ebda7dff9d8ccf81c53f5a15c5eb5e54fbae4a\tapp/components/reports/AttendanceReportTable.tsx",
+        "integration_tree": "100644 blob a4e7d0671205ed1de1e5bda2720a0f52759e6b8c\tapp/components/reports/AttendanceReportTable.tsx",
+        "base_tree": "100644 blob 4f9d535baa0104d5758b073fcb0f244677d223af\tapp/components/reports/AttendanceReportTable.tsx",
+        "normalized_base_edits": 5,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/components/reports/BolsaFamiliaAlert.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 5a827273162a7c2342754763bc171c70e7d9d87d\tapp/components/reports/BolsaFamiliaAlert.tsx",
+        "integration_tree": "100644 blob 5a827273162a7c2342754763bc171c70e7d9d87d\tapp/components/reports/BolsaFamiliaAlert.tsx",
+        "base_tree": "100644 blob 7e8f0a7df02455cdce021577104ca473306d9ab4\tapp/components/reports/BolsaFamiliaAlert.tsx"
+      },
+      {
+        "path": "app/components/reports/DescriptiveReportForm.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 051ab8f76746e25eb69209676316650a9efec248\tapp/components/reports/DescriptiveReportForm.tsx",
+        "integration_tree": "100644 blob 51fd39b9662121e6d2751fbb347f45e839c19ff3\tapp/components/reports/DescriptiveReportForm.tsx",
+        "base_tree": "100644 blob 10f826b1017c0f50768fe7a2461a98a4c166e648\tapp/components/reports/DescriptiveReportForm.tsx",
+        "normalized_base_edits": 12,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/components/reports/StudentReport.tsx",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 864f0ac3435024aea935504f3e0336adffb849e5\tapp/components/reports/StudentReport.tsx",
+        "integration_tree": "100644 blob 1cb63e622ebe80786e02aebeaa90634f30759d23\tapp/components/reports/StudentReport.tsx",
+        "base_tree": "100644 blob 7ecdceb2e3adff7f6aa08e2283cc54e275c1593f\tapp/components/reports/StudentReport.tsx",
+        "normalized_base_edits": 6,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/components/reports/StudentReportInfantil.tsx",
+        "state": "identical",
+        "worker_tree": "100644 blob 7914d28e13135955cd5d233a7d7c5134c271a426\tapp/components/reports/StudentReportInfantil.tsx",
+        "integration_tree": "100644 blob 7914d28e13135955cd5d233a7d7c5134c271a426\tapp/components/reports/StudentReportInfantil.tsx",
+        "base_tree": "100644 blob c5f1749054e4ec1052fe4de9a86b86bd0a56ee75\tapp/components/reports/StudentReportInfantil.tsx"
+      },
+      {
+        "path": "app/lib/api/attendance.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 78b2a1e7ddfb531fdb0be12cc538b52cf9865d17\tapp/lib/api/attendance.ts",
+        "integration_tree": "100644 blob 78b2a1e7ddfb531fdb0be12cc538b52cf9865d17\tapp/lib/api/attendance.ts",
+        "base_tree": "100644 blob 0c4656d985c0f234b2be08387d6c122233f36788\tapp/lib/api/attendance.ts"
+      },
+      {
+        "path": "app/lib/api/canonical-attendance-facts.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 85da011ea31cabf086a87c32333f1cb79629ab81\tapp/lib/api/canonical-attendance-facts.ts",
+        "integration_tree": "100644 blob 85da011ea31cabf086a87c32333f1cb79629ab81\tapp/lib/api/canonical-attendance-facts.ts",
+        "base_tree": "100644 blob e1cfb3a32fe7191eeea7e3bb0125e26c5127724e\tapp/lib/api/canonical-attendance-facts.ts"
+      },
+      {
+        "path": "app/lib/api/dashboard-stats.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 47b958689a7ca27460516d2558e2dc773c676b87\tapp/lib/api/dashboard-stats.ts",
+        "integration_tree": "100644 blob 47b958689a7ca27460516d2558e2dc773c676b87\tapp/lib/api/dashboard-stats.ts",
+        "base_tree": "100644 blob ee0f9cd1e3f5452472c09feaa4583349c50f636e\tapp/lib/api/dashboard-stats.ts"
+      },
+      {
+        "path": "app/lib/api/reports.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 312264aadd87709435b87ea9a276c66b65c7c84f\tapp/lib/api/reports.ts",
+        "integration_tree": "100644 blob 312264aadd87709435b87ea9a276c66b65c7c84f\tapp/lib/api/reports.ts",
+        "base_tree": "100644 blob 30082f48b9399137e8823dd4ad02fda7eadcd10c\tapp/lib/api/reports.ts"
+      },
+      {
+        "path": "app/lib/dashboard/quick-access.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob ead5fb15e18250136c3487433b74ac1b060f5fbc\tapp/lib/dashboard/quick-access.ts",
+        "integration_tree": "100644 blob ead5fb15e18250136c3487433b74ac1b060f5fbc\tapp/lib/dashboard/quick-access.ts",
+        "base_tree": "100644 blob 7d73bc77fba6fdcb477da29757ea724869987444\tapp/lib/dashboard/quick-access.ts"
+      },
+      {
+        "path": "app/lib/export/attendance-excel.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 6f630381a28acb2819f0b5649d63e526090a3552\tapp/lib/export/attendance-excel.ts",
+        "integration_tree": "100644 blob 6f630381a28acb2819f0b5649d63e526090a3552\tapp/lib/export/attendance-excel.ts",
+        "base_tree": "100644 blob e1eb57d4d41ca80555ce949674c7d231f84218c0\tapp/lib/export/attendance-excel.ts"
+      },
+      {
+        "path": "app/lib/export/attendance-pdf.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 47362291a106af992b84995c9ef2594467e04905\tapp/lib/export/attendance-pdf.ts",
+        "integration_tree": "100644 blob 1ae1dece2948fb4c28256bff2d2231c25aed98c4\tapp/lib/export/attendance-pdf.ts",
+        "base_tree": "100644 blob 2046497e18afd1e2c0263e45405b31d5c1aa20cf\tapp/lib/export/attendance-pdf.ts",
+        "normalized_base_edits": 9,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/lib/export/content-pdf.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 76905fed9e048cec3be1c93ae060a576f1a41e5a\tapp/lib/export/content-pdf.ts",
+        "integration_tree": "100644 blob 76905fed9e048cec3be1c93ae060a576f1a41e5a\tapp/lib/export/content-pdf.ts",
+        "base_tree": "100644 blob e804cc7cdccfb945e03a067bb7ac1730c2766b22\tapp/lib/export/content-pdf.ts"
+      },
+      {
+        "path": "app/lib/export/descriptive-report-pdf.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 05acdaa439b0a570bc926c033f797a54a31bfe4e\tapp/lib/export/descriptive-report-pdf.ts",
+        "integration_tree": "100644 blob 05acdaa439b0a570bc926c033f797a54a31bfe4e\tapp/lib/export/descriptive-report-pdf.ts",
+        "base_tree": "100644 blob 4fb9defa26dc023de0124cd9c5fc4018486ae167\tapp/lib/export/descriptive-report-pdf.ts"
+      },
+      {
+        "path": "app/lib/export/pdf-utils.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 25652602c93e918358ebdfd913b367ab6e58a4c8\tapp/lib/export/pdf-utils.ts",
+        "integration_tree": "100644 blob 25652602c93e918358ebdfd913b367ab6e58a4c8\tapp/lib/export/pdf-utils.ts",
+        "base_tree": "100644 blob 014564f879a32771841609c0ed27b2c7ade4fb2e\tapp/lib/export/pdf-utils.ts"
+      },
+      {
+        "path": "app/lib/reports/attendance-conditionality.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e048b7784e87628c0e1b5d346f638554c9a4248f\tapp/lib/reports/attendance-conditionality.ts",
+        "integration_tree": "100644 blob e048b7784e87628c0e1b5d346f638554c9a4248f\tapp/lib/reports/attendance-conditionality.ts",
+        "base_tree": "100644 blob f4d24874fcc84e0519082e36cfe40f905ca0e49a\tapp/lib/reports/attendance-conditionality.ts"
+      },
+      {
+        "path": "app/lib/reports/attendance-reports.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 08b8bbc2528bb0a35b753f850b55ad694ac0c2e8\tapp/lib/reports/attendance-reports.ts",
+        "integration_tree": "100644 blob 08b8bbc2528bb0a35b753f850b55ad694ac0c2e8\tapp/lib/reports/attendance-reports.ts",
+        "base_tree": "100644 blob 7df02ba65c4fed7f6153f6c61e727e0243bf9bdd\tapp/lib/reports/attendance-reports.ts"
+      },
+      {
+        "path": "app/lib/reports/bolsa-familia-reports.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e1b02afb86bc43a32a1934a52f5455d667e5c871\tapp/lib/reports/bolsa-familia-reports.ts",
+        "integration_tree": "100644 blob e1b02afb86bc43a32a1934a52f5455d667e5c871\tapp/lib/reports/bolsa-familia-reports.ts",
+        "base_tree": "100644 blob 982c0bb4ae974c8cf2389d2e315f6ec5c4db2d3f\tapp/lib/reports/bolsa-familia-reports.ts"
+      },
+      {
+        "path": "app/lib/reports/content-report-data.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 35df1b17c22090c3edd76f3249e1e209ae0454d8\tapp/lib/reports/content-report-data.ts",
+        "integration_tree": "100644 blob 35df1b17c22090c3edd76f3249e1e209ae0454d8\tapp/lib/reports/content-report-data.ts",
+        "base_tree": "100644 blob 86ae54f651c948bd2ae8f813b1dd9bb755260344\tapp/lib/reports/content-report-data.ts"
+      },
+      {
+        "path": "app/lib/reports/content-reports.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 5b96316b1e425a479374202868c6c372eecaf5eb\tapp/lib/reports/content-reports.ts",
+        "integration_tree": "100644 blob 5b96316b1e425a479374202868c6c372eecaf5eb\tapp/lib/reports/content-reports.ts",
+        "base_tree": "100644 blob da530deaecc3d12c7551e9a979c5064a74bce314\tapp/lib/reports/content-reports.ts"
+      },
+      {
+        "path": "app/lib/reports/descriptive-report-emission.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 24f76ab124f45abc7565d53530bc6ec218b1b648\tapp/lib/reports/descriptive-report-emission.ts",
+        "integration_tree": "100644 blob 24f76ab124f45abc7565d53530bc6ec218b1b648\tapp/lib/reports/descriptive-report-emission.ts",
+        "base_tree": "100644 blob 7cdb87996d6effec5865602bc46a4293679b7f9e\tapp/lib/reports/descriptive-report-emission.ts"
+      },
+      {
+        "path": "app/tests/e2e/flows/dashboard-metrics.spec.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 929db5bc63543494928a37d4bb7b80ddbffd9d6c\tapp/tests/e2e/flows/dashboard-metrics.spec.ts",
+        "integration_tree": "100644 blob d0cb6fb9649087d60c0004847bb672462d6a23e0\tapp/tests/e2e/flows/dashboard-metrics.spec.ts",
+        "base_tree": "100644 blob 44adf8881aef656621dabf37c8e49980db8189cf\tapp/tests/e2e/flows/dashboard-metrics.spec.ts",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/e2e/reports/bolsa-familia.spec.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 342b92cf2489215d963057d3d2adcff738d593c6\tapp/tests/e2e/reports/bolsa-familia.spec.ts",
+        "integration_tree": "100644 blob 8a99b119439d87e10cf6b8cef6c9f54bee397db5\tapp/tests/e2e/reports/bolsa-familia.spec.ts",
+        "base_tree": "100644 blob 9dfb882720d09d9bf01ff0cfa1a38a5a6a68cc21\tapp/tests/e2e/reports/bolsa-familia.spec.ts",
+        "normalized_base_edits": 4,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/e2e/reports/content.spec.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob 474a5ea90734ca4ca17a62bad690e0d4c5d122b4\tapp/tests/e2e/reports/content.spec.ts",
+        "integration_tree": "100644 blob 6c00b66966bdff9ea629bc5f4b36729752a291ba\tapp/tests/e2e/reports/content.spec.ts",
+        "base_tree": "100644 blob e095c53c964ad000b8f35a3d5a53bcb3bc2451b1\tapp/tests/e2e/reports/content.spec.ts",
+        "normalized_base_edits": 4,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tests/unit/api/dashboard-stats.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob c67dd8a0731598b2c4b8745e84a25f6fc63da799\tapp/tests/unit/api/dashboard-stats.test.ts",
+        "integration_tree": "100644 blob c67dd8a0731598b2c4b8745e84a25f6fc63da799\tapp/tests/unit/api/dashboard-stats.test.ts",
+        "base_tree": "100644 blob ee8586b0a3d455e73deab5208f5cbd22eff48446\tapp/tests/unit/api/dashboard-stats.test.ts"
+      },
+      {
+        "path": "app/tests/unit/dashboard/quick-access.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob bc27ee3408b692b52f73392351ff1c7c17f8a09b\tapp/tests/unit/dashboard/quick-access.test.ts",
+        "integration_tree": "100644 blob bc27ee3408b692b52f73392351ff1c7c17f8a09b\tapp/tests/unit/dashboard/quick-access.test.ts",
+        "base_tree": "100644 blob b845399ed6787254b8759a577e4b4153f1f44b38\tapp/tests/unit/dashboard/quick-access.test.ts"
+      },
+      {
+        "path": "app/tests/unit/export/pdf-utils.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob f3eefb78ae7fe04a84e4bf1b656823ac94544c8a\tapp/tests/unit/export/pdf-utils.test.ts",
+        "integration_tree": "100644 blob f3eefb78ae7fe04a84e4bf1b656823ac94544c8a\tapp/tests/unit/export/pdf-utils.test.ts",
+        "base_tree": "100644 blob 3076cd4145b12331c62c30dc511e0c0a88017f16\tapp/tests/unit/export/pdf-utils.test.ts"
+      },
+      {
+        "path": "app/tests/unit/reports/bolsa-familia-display-projection.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 66a37840a03bc1d725974c6a179633e2fff5a007\tapp/tests/unit/reports/bolsa-familia-display-projection.test.ts",
+        "integration_tree": "100644 blob 66a37840a03bc1d725974c6a179633e2fff5a007\tapp/tests/unit/reports/bolsa-familia-display-projection.test.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tests/unit/reports/content-report-data.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 6e0e3990e94ce4861e01c66c474d431fb6ff3251\tapp/tests/unit/reports/content-report-data.test.ts",
+        "integration_tree": "100644 blob 6e0e3990e94ce4861e01c66c474d431fb6ff3251\tapp/tests/unit/reports/content-report-data.test.ts",
+        "base_tree": "100644 blob 94fa3a3c501e2ecdf0b3f8f3b16c017ea28415d1\tapp/tests/unit/reports/content-report-data.test.ts"
+      },
+      {
+        "path": "supabase/tests/database/bolsa_familia_visibility.test.sql",
+        "state": "identical",
+        "worker_tree": "100644 blob 294e3855dd6375d496016082e489554e34cfed62\tsupabase/tests/database/bolsa_familia_visibility.test.sql",
+        "integration_tree": "100644 blob 294e3855dd6375d496016082e489554e34cfed62\tsupabase/tests/database/bolsa_familia_visibility.test.sql",
+        "base_tree": "100644 blob 3ac8eb0b3c4ac9efae4406239d5039d04feccc52\tsupabase/tests/database/bolsa_familia_visibility.test.sql"
+      }
+    ]
+  },
+  {
+    "name": "toolchain",
+    "commit": "1fb7874e082ca05f867b72991b3a384e81468af2",
+    "branch": "salvar/educa-quality-toolchain-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "com conteudo exclusivo",
+    "counts": {
+      "identical": 29,
+      "worker_only_path": 2,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 2
+    },
+    "needs_pr": true,
+    "files": [
+      {
+        "path": "app/.oxlintrc.json",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob f8370f4520b957e2b627e01afeeb41f34e090815\tapp/.oxlintrc.json",
+        "integration_tree": "100644 blob 0ece3ebaa5b7baf9f10e40ef3a3fd02264b292e1\tapp/.oxlintrc.json",
+        "base_tree": "100644 blob 58c879b7adc25e0fa143a4ff98554d58c29c9eba\tapp/.oxlintrc.json",
+        "normalized_base_edits": 2,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/eslint.config.mjs",
+        "state": "identical",
+        "worker_tree": "100644 blob ce7c94d3fdd536e5fb9a9aa59484369822dc99f6\tapp/eslint.config.mjs",
+        "integration_tree": "100644 blob ce7c94d3fdd536e5fb9a9aa59484369822dc99f6\tapp/eslint.config.mjs",
+        "base_tree": "100644 blob a71c49d87f135bd6dc901d597c1e0d5bec529f9c\tapp/eslint.config.mjs"
+      },
+      {
+        "path": "app/package.json",
+        "state": "identical",
+        "worker_tree": "100644 blob 79989c893b0589630224e1aacc0575bc69784bde\tapp/package.json",
+        "integration_tree": "100644 blob 79989c893b0589630224e1aacc0575bc69784bde\tapp/package.json",
+        "base_tree": "100644 blob d5166556d3877a0e26c063d9066f3c498403fa9b\tapp/package.json"
+      },
+      {
+        "path": "app/pnpm-lock.yaml",
+        "state": "identical",
+        "worker_tree": "100644 blob c2a849bc0bc2e49be5e1566fa0b5dc8abb23be93\tapp/pnpm-lock.yaml",
+        "integration_tree": "100644 blob c2a849bc0bc2e49be5e1566fa0b5dc8abb23be93\tapp/pnpm-lock.yaml",
+        "base_tree": "100644 blob c6460b8f4b732dd395a8078e120095b06155f234\tapp/pnpm-lock.yaml"
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/effect/index.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 37247862ce43dc39066c14e1c143688307eacfe2\tapp/tools/oxlint/anti-slop/effect/index.ts",
+        "integration_tree": "100644 blob 37247862ce43dc39066c14e1c143688307eacfe2\tapp/tools/oxlint/anti-slop/effect/index.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/effect/rules/no-service-constructor-imports.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 55cefb7e7b4c8e0330ccf66ab71096a3976e1f18\tapp/tools/oxlint/anti-slop/effect/rules/no-service-constructor-imports.ts",
+        "integration_tree": "100644 blob 55cefb7e7b4c8e0330ccf66ab71096a3976e1f18\tapp/tools/oxlint/anti-slop/effect/rules/no-service-constructor-imports.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/index.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 2b4ae2223e33e1c44bcdaf5c0424eab135f415d8\tapp/tools/oxlint/anti-slop/index.ts",
+        "integration_tree": "100644 blob 2b4ae2223e33e1c44bcdaf5c0424eab135f415d8\tapp/tools/oxlint/anti-slop/index.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/package.json",
+        "state": "identical",
+        "worker_tree": "100644 blob e986b24bbae58b2e6d308a8186e3347e92314fe4\tapp/tools/oxlint/anti-slop/package.json",
+        "integration_tree": "100644 blob e986b24bbae58b2e6d308a8186e3347e92314fe4\tapp/tools/oxlint/anti-slop/package.json",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-chained-type-assertions.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 0d118527804cfd00fe377af13293f3d2071492bf\tapp/tools/oxlint/anti-slop/rules/no-chained-type-assertions.ts",
+        "integration_tree": "100644 blob 0d118527804cfd00fe377af13293f3d2071492bf\tapp/tools/oxlint/anti-slop/rules/no-chained-type-assertions.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob ae7248d36e54851b67ad1f5d78813bf09ac3dd6a\tapp/tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.ts",
+        "integration_tree": "100644 blob ae7248d36e54851b67ad1f5d78813bf09ac3dd6a\tapp/tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-known-value-widening.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 7defff3a0f29536c0730527e5d5995a47be9f42c\tapp/tools/oxlint/anti-slop/rules/no-known-value-widening.ts",
+        "integration_tree": "100644 blob 7defff3a0f29536c0730527e5d5995a47be9f42c\tapp/tools/oxlint/anti-slop/rules/no-known-value-widening.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-module-mocking.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d6fb5b45c0344add2ea8c1fe296d472eee0e2549\tapp/tools/oxlint/anti-slop/rules/no-module-mocking.ts",
+        "integration_tree": "100644 blob d6fb5b45c0344add2ea8c1fe296d472eee0e2549\tapp/tools/oxlint/anti-slop/rules/no-module-mocking.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-object-parameters.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 6589ebf5f587ecdad1989b9f89886370f0ed5350\tapp/tools/oxlint/anti-slop/rules/no-object-parameters.ts",
+        "integration_tree": "100644 blob 6589ebf5f587ecdad1989b9f89886370f0ed5350\tapp/tools/oxlint/anti-slop/rules/no-object-parameters.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-reflect-apply.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 2cc30451bda68d90d84eb9744034a778ae783b20\tapp/tools/oxlint/anti-slop/rules/no-reflect-apply.ts",
+        "integration_tree": "100644 blob 2cc30451bda68d90d84eb9744034a778ae783b20\tapp/tools/oxlint/anti-slop/rules/no-reflect-apply.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-reflect-get.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob cf630ecc005aa9cef09cdd4a701feea968674b47\tapp/tools/oxlint/anti-slop/rules/no-reflect-get.ts",
+        "integration_tree": "100644 blob cf630ecc005aa9cef09cdd4a701feea968674b47\tapp/tools/oxlint/anti-slop/rules/no-reflect-get.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-runtime-typeof.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 43259eb9e65b480b3b64b03a4de0154511efcb51\tapp/tools/oxlint/anti-slop/rules/no-runtime-typeof.ts",
+        "integration_tree": "100644 blob 43259eb9e65b480b3b64b03a4de0154511efcb51\tapp/tools/oxlint/anti-slop/rules/no-runtime-typeof.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-shape-in-symbol-names.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 2680deed51143c1bc909667302fe4cd751c393ea\tapp/tools/oxlint/anti-slop/rules/no-shape-in-symbol-names.ts",
+        "integration_tree": "100644 blob 2680deed51143c1bc909667302fe4cd751c393ea\tapp/tools/oxlint/anti-slop/rules/no-shape-in-symbol-names.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-unknown-parameters.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob b4a1545a7b2bc54b5eb8d5ce3090bf151d0cd6e0\tapp/tools/oxlint/anti-slop/rules/no-unknown-parameters.ts",
+        "integration_tree": "100644 blob b4a1545a7b2bc54b5eb8d5ce3090bf151d0cd6e0\tapp/tools/oxlint/anti-slop/rules/no-unknown-parameters.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-unknown-returns.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e1f43f8d055f848c61fda84e907d0dea4079c3ba\tapp/tools/oxlint/anti-slop/rules/no-unknown-returns.ts",
+        "integration_tree": "100644 blob e1f43f8d055f848c61fda84e907d0dea4079c3ba\tapp/tools/oxlint/anti-slop/rules/no-unknown-returns.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-unknown-type-aliases.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob af5f08a5002fb26f94414be13f1ad848ae73d522\tapp/tools/oxlint/anti-slop/rules/no-unknown-type-aliases.ts",
+        "integration_tree": "100644 blob af5f08a5002fb26f94414be13f1ad848ae73d522\tapp/tools/oxlint/anti-slop/rules/no-unknown-type-aliases.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 8cb615a14f97769bd8e37465a8334edd338dc839\tapp/tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.ts",
+        "integration_tree": "100644 blob 8cb615a14f97769bd8e37465a8334edd338dc839\tapp/tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/no-widen-then-assert.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob c5e07f7fc55a8ebc1c19db58625552822beb0c1e\tapp/tools/oxlint/anti-slop/rules/no-widen-then-assert.ts",
+        "integration_tree": "100644 blob c5e07f7fc55a8ebc1c19db58625552822beb0c1e\tapp/tools/oxlint/anti-slop/rules/no-widen-then-assert.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob bfea1a23a8358caf125b083452425649c7abe29d\tapp/tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts",
+        "integration_tree": "100644 blob bfea1a23a8358caf125b083452425649c7abe29d\tapp/tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/shared/dictionary-types.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 8db73ffab0fceb26cf6c0c534b3c4da71436396f\tapp/tools/oxlint/anti-slop/shared/dictionary-types.ts",
+        "integration_tree": "100644 blob 8db73ffab0fceb26cf6c0c534b3c4da71436396f\tapp/tools/oxlint/anti-slop/shared/dictionary-types.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/shared/function-parameters.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 80de91d7a75258044257d6e89ba666c29c284609\tapp/tools/oxlint/anti-slop/shared/function-parameters.ts",
+        "integration_tree": "100644 blob 80de91d7a75258044257d6e89ba666c29c284609\tapp/tools/oxlint/anti-slop/shared/function-parameters.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/shared/lexical-type-parameters.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 7cdb18c911c9dd31066ead3beda0a9dfc6554018\tapp/tools/oxlint/anti-slop/shared/lexical-type-parameters.ts",
+        "integration_tree": "100644 blob 7cdb18c911c9dd31066ead3beda0a9dfc6554018\tapp/tools/oxlint/anti-slop/shared/lexical-type-parameters.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/shared/reflect-method.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 39bc218c3bbf1eada15c00b825202e2835771ea7\tapp/tools/oxlint/anti-slop/shared/reflect-method.ts",
+        "integration_tree": "100644 blob 39bc218c3bbf1eada15c00b825202e2835771ea7\tapp/tools/oxlint/anti-slop/shared/reflect-method.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/shared/type-alias-resolution.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 4744222a0a30874037eb8354b1aa744072c50330\tapp/tools/oxlint/anti-slop/shared/type-alias-resolution.ts",
+        "integration_tree": "100644 blob 4744222a0a30874037eb8354b1aa744072c50330\tapp/tools/oxlint/anti-slop/shared/type-alias-resolution.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/tests/fixtures/import-specifiers.ts",
+        "state": "worker_only_path",
+        "worker_tree": "100644 blob b9e00b04d95ed6a6f330b86180f3819ff3f5965f\tapp/tools/oxlint/anti-slop/tests/fixtures/import-specifiers.ts",
+        "integration_tree": "",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/tests/fixtures/local-symbol.ts",
+        "state": "worker_only_path",
+        "worker_tree": "100644 blob dbc7868a0c166424983493253846b0dbe523a3a4\tapp/tools/oxlint/anti-slop/tests/fixtures/local-symbol.ts",
+        "integration_tree": "",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/tests/no-shape-in-symbol-names.test.mjs",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob a01074f45f120655ad0914376c5899a04c28b991\tapp/tools/oxlint/anti-slop/tests/no-shape-in-symbol-names.test.mjs",
+        "integration_tree": "100644 blob 85c1298f9fdda9ec7434ba2ce5644cdc1e11efe3\tapp/tools/oxlint/anti-slop/tests/no-shape-in-symbol-names.test.mjs",
+        "base_tree": "",
+        "normalized_base_edits": 1,
+        "normalized_edits_covered": false
+      },
+      {
+        "path": "app/tools/oxlint/anti-slop/tests/oxlintrc.json",
+        "state": "identical",
+        "worker_tree": "100644 blob 54f0a245d1d7cea689e3da0ae756cb505d6c7618\tapp/tools/oxlint/anti-slop/tests/oxlintrc.json",
+        "integration_tree": "100644 blob 54f0a245d1d7cea689e3da0ae756cb505d6c7618\tapp/tools/oxlint/anti-slop/tests/oxlintrc.json",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tools/oxlint/run-oxlint.mjs",
+        "state": "identical",
+        "worker_tree": "100644 blob 9ba2af32b75bf633415236bbd32e2fd48819a691\tapp/tools/oxlint/run-oxlint.mjs",
+        "integration_tree": "100644 blob 9ba2af32b75bf633415236bbd32e2fd48819a691\tapp/tools/oxlint/run-oxlint.mjs",
+        "base_tree": ""
+      }
+    ]
+  },
+  {
+    "name": "validation",
+    "commit": "5d1bb89a78218a5abb0f82c29b275fa5f23ffab5",
+    "branch": "salvar/educa-quality-validation-20260908",
+    "integration_commit": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "classification": "contido",
+    "counts": {
+      "identical": 20,
+      "worker_only_path": 0,
+      "worker_change_absent_from_integration": 0,
+      "divergent_version": 1
+    },
+    "needs_pr": false,
+    "files": [
+      {
+        "path": "app/lib/date-utils.ts",
+        "state": "divergent_version",
+        "worker_tree": "100644 blob d8f0db187289849b0b74a3f776b15c1a6af64860\tapp/lib/date-utils.ts",
+        "integration_tree": "100644 blob 28f1d817abe80264b96b2e91184682ace9213517\tapp/lib/date-utils.ts",
+        "base_tree": "100644 blob fcccb732e44f69c83553feb80457d05a199d075e\tapp/lib/date-utils.ts",
+        "normalized_base_edits": 7,
+        "normalized_edits_covered": true
+      },
+      {
+        "path": "app/lib/educacenso/2026/identification.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 5d01bdf4d7a73a5aa6c39fde21387fe45dd8ed73\tapp/lib/educacenso/2026/identification.ts",
+        "integration_tree": "100644 blob 5d01bdf4d7a73a5aa6c39fde21387fe45dd8ed73\tapp/lib/educacenso/2026/identification.ts",
+        "base_tree": "100644 blob 503ae882c614cb9e392364d88bff32ceac7b1a51\tapp/lib/educacenso/2026/identification.ts"
+      },
+      {
+        "path": "app/lib/validation/brazilian-educational.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob bd7f4420ff26af4c1c33d2eb8bf2b601a49e5073\tapp/lib/validation/brazilian-educational.ts",
+        "integration_tree": "100644 blob bd7f4420ff26af4c1c33d2eb8bf2b601a49e5073\tapp/lib/validation/brazilian-educational.ts",
+        "base_tree": "100644 blob 89060c7bfa3fd0c740737f4d17ce488ecbcd74f6\tapp/lib/validation/brazilian-educational.ts"
+      },
+      {
+        "path": "app/lib/validation/brazilian.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 72e931fd312456ab4ad1aeb6f80bd53eacce6cdc\tapp/lib/validation/brazilian.ts",
+        "integration_tree": "100644 blob 72e931fd312456ab4ad1aeb6f80bd53eacce6cdc\tapp/lib/validation/brazilian.ts",
+        "base_tree": "100644 blob 5beb8fb53b0a63e3679d41c9439dd0fd136d25c9\tapp/lib/validation/brazilian.ts"
+      },
+      {
+        "path": "app/lib/validation/descriptive-report.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 07e181f7e931e0ece82e57554f226bdcbb7484c9\tapp/lib/validation/descriptive-report.ts",
+        "integration_tree": "100644 blob 07e181f7e931e0ece82e57554f226bdcbb7484c9\tapp/lib/validation/descriptive-report.ts",
+        "base_tree": "100644 blob 2abdc4a6231dc721d338f8065a2108174e678c86\tapp/lib/validation/descriptive-report.ts"
+      },
+      {
+        "path": "app/lib/validation/external-values.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e4baea6e06664a153300b5a874ce3577d68fb526\tapp/lib/validation/external-values.ts",
+        "integration_tree": "100644 blob e4baea6e06664a153300b5a874ce3577d68fb526\tapp/lib/validation/external-values.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/lib/validation/lesson-content.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 38798aa49f6ec9b70031e7387a9db544ead80cf5\tapp/lib/validation/lesson-content.ts",
+        "integration_tree": "100644 blob 38798aa49f6ec9b70031e7387a9db544ead80cf5\tapp/lib/validation/lesson-content.ts",
+        "base_tree": "100644 blob 80996106ddd60d2f122d808acf0b51308f01421c\tapp/lib/validation/lesson-content.ts"
+      },
+      {
+        "path": "app/lib/validation/schools-validation.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 2da230acdc6cd718cd9d7b74772636848b5726b2\tapp/lib/validation/schools-validation.ts",
+        "integration_tree": "100644 blob 2da230acdc6cd718cd9d7b74772636848b5726b2\tapp/lib/validation/schools-validation.ts",
+        "base_tree": "100644 blob bfa72b5e978a3c72866a914045bd4e702bf23ea6\tapp/lib/validation/schools-validation.ts"
+      },
+      {
+        "path": "app/lib/validation/students-validation.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 6c6d18b3eab75bb65f12c83974e61994d83ba6a8\tapp/lib/validation/students-validation.ts",
+        "integration_tree": "100644 blob 6c6d18b3eab75bb65f12c83974e61994d83ba6a8\tapp/lib/validation/students-validation.ts",
+        "base_tree": "100644 blob a3d27be48421ff58c204a8c1568a02be3a2b475f\tapp/lib/validation/students-validation.ts"
+      },
+      {
+        "path": "app/lib/validation/users-validation.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 8c0869d554a0189ab6358a700453d4f149511339\tapp/lib/validation/users-validation.ts",
+        "integration_tree": "100644 blob 8c0869d554a0189ab6358a700453d4f149511339\tapp/lib/validation/users-validation.ts",
+        "base_tree": "100644 blob 57ad74aea748e8706d5f70deb4a77c1feed8c32a\tapp/lib/validation/users-validation.ts"
+      },
+      {
+        "path": "app/lib/wayfinder/procurement-assessment.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 1b7a43b64c97af1ead73f087c40d493890fe7035\tapp/lib/wayfinder/procurement-assessment.ts",
+        "integration_tree": "100644 blob 1b7a43b64c97af1ead73f087c40d493890fe7035\tapp/lib/wayfinder/procurement-assessment.ts",
+        "base_tree": "100644 blob d13f03f5cf0e9905c72162e85410953236d27630\tapp/lib/wayfinder/procurement-assessment.ts"
+      },
+      {
+        "path": "app/lib/wayfinder/support-runbook.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob cf6e53e3a9e1d63021c3f944cc14d644f93aa00f\tapp/lib/wayfinder/support-runbook.ts",
+        "integration_tree": "100644 blob cf6e53e3a9e1d63021c3f944cc14d644f93aa00f\tapp/lib/wayfinder/support-runbook.ts",
+        "base_tree": "100644 blob b614b2b50b7fd725d44d02061e3ac4b33dffc8b1\tapp/lib/wayfinder/support-runbook.ts"
+      },
+      {
+        "path": "app/scripts/inspect-educacenso-2026-municipalities.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob acdc57f4579b6e30755ab8d6fd55425abe3894d3\tapp/scripts/inspect-educacenso-2026-municipalities.ts",
+        "integration_tree": "100644 blob acdc57f4579b6e30755ab8d6fd55425abe3894d3\tapp/scripts/inspect-educacenso-2026-municipalities.ts",
+        "base_tree": "100644 blob 91ec3c5ada100173411d1e4937636b3d8d75b30e\tapp/scripts/inspect-educacenso-2026-municipalities.ts"
+      },
+      {
+        "path": "app/scripts/validate-procurement-assessment.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 510f5d895d170785c6089ba6324148d573b3951e\tapp/scripts/validate-procurement-assessment.ts",
+        "integration_tree": "100644 blob 510f5d895d170785c6089ba6324148d573b3951e\tapp/scripts/validate-procurement-assessment.ts",
+        "base_tree": "100644 blob 2604f939af665c3469e47538ad0efac595bb0b9a\tapp/scripts/validate-procurement-assessment.ts"
+      },
+      {
+        "path": "app/scripts/validate-support-runbook.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 3bc41f206d9b99c15de712da87796419df244e40\tapp/scripts/validate-support-runbook.ts",
+        "integration_tree": "100644 blob 3bc41f206d9b99c15de712da87796419df244e40\tapp/scripts/validate-support-runbook.ts",
+        "base_tree": "100644 blob f9937437591ea61d0899f9d4ae9b9673cd61402a\tapp/scripts/validate-support-runbook.ts"
+      },
+      {
+        "path": "app/tests/unit/educacenso/identification-2026.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob cbd903417f13a3bcc37747251f062cd99e947b25\tapp/tests/unit/educacenso/identification-2026.test.ts",
+        "integration_tree": "100644 blob cbd903417f13a3bcc37747251f062cd99e947b25\tapp/tests/unit/educacenso/identification-2026.test.ts",
+        "base_tree": "100644 blob b32fab6faba99ce45221950a49494f5eec4ef25a\tapp/tests/unit/educacenso/identification-2026.test.ts"
+      },
+      {
+        "path": "app/tests/unit/utils/faixa-etaria.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob da96f696dd0619447db6158c18a1d4ac205d5b60\tapp/tests/unit/utils/faixa-etaria.test.ts",
+        "integration_tree": "100644 blob da96f696dd0619447db6158c18a1d4ac205d5b60\tapp/tests/unit/utils/faixa-etaria.test.ts",
+        "base_tree": "100644 blob a36ca730e18965b24f5a65da99ed67aece78455a\tapp/tests/unit/utils/faixa-etaria.test.ts"
+      },
+      {
+        "path": "app/tests/unit/validation/brazilian.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e829cd1dd5e7a0e418bb5f99fee62dd028e7dea1\tapp/tests/unit/validation/brazilian.test.ts",
+        "integration_tree": "100644 blob e829cd1dd5e7a0e418bb5f99fee62dd028e7dea1\tapp/tests/unit/validation/brazilian.test.ts",
+        "base_tree": "100644 blob acd8a63d28d055bdbdb3c3750835b529fddaa06f\tapp/tests/unit/validation/brazilian.test.ts"
+      },
+      {
+        "path": "app/tests/unit/validation/external-values.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob d80e7a6e55821ea4f7065f0ad19721c61b6b4f84\tapp/tests/unit/validation/external-values.test.ts",
+        "integration_tree": "100644 blob d80e7a6e55821ea4f7065f0ad19721c61b6b4f84\tapp/tests/unit/validation/external-values.test.ts",
+        "base_tree": ""
+      },
+      {
+        "path": "app/tests/unit/wayfinder/procurement-assessment.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob e5fb54a2470b04979c35b911969bb8dcd6ae9494\tapp/tests/unit/wayfinder/procurement-assessment.test.ts",
+        "integration_tree": "100644 blob e5fb54a2470b04979c35b911969bb8dcd6ae9494\tapp/tests/unit/wayfinder/procurement-assessment.test.ts",
+        "base_tree": "100644 blob 0909fdcd55842bd4d8e3333bfbadd1fb2206c776\tapp/tests/unit/wayfinder/procurement-assessment.test.ts"
+      },
+      {
+        "path": "app/tests/unit/wayfinder/support-runbook.test.ts",
+        "state": "identical",
+        "worker_tree": "100644 blob 15eaf465206005b6cf4f285aa4f0e382c9aecb65\tapp/tests/unit/wayfinder/support-runbook.test.ts",
+        "integration_tree": "100644 blob 15eaf465206005b6cf4f285aa4f0e382c9aecb65\tapp/tests/unit/wayfinder/support-runbook.test.ts",
+        "base_tree": "100644 blob 3b04276d291a8342bd81a5db31313c25430efc21\tapp/tests/unit/wayfinder/support-runbook.test.ts"
+      }
+    ],
+    "coverage_proof": {
+      "path": "app/lib/date-utils.ts",
+      "method": "git diff on each worker path; for the sole differing file compare base-anchored line edits after CRLF/LF normalization. All 7 worker replacements are present unchanged in integration. The integration-only additions/removals are separate edits; 20 other paths are byte/mode-identical.",
+      "worker_edits": 7,
+      "integration_edits": 9,
+      "all_worker_edits_present": true,
+      "note": "The retained worker branch preserves the exact old snapshot as well. Integration adds getCurrentUtcMonthRange and removes unchanged legacy helpers getSaoPauloTime/isPast18hSaoPaulo."
+    }
+  }
+]

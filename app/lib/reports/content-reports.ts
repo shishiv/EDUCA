@@ -15,16 +15,14 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import type { Database } from '@/types/database';
 import {
   BNCC_EXPERIENCE_FIELDS,
   BNCC_SUBJECTS,
-  type BNNCSubjectCode,
-  type BNNCExperienceFieldCode,
 } from '@/types/lesson-content';
 import {
   assembleContentReport,
   buildContentReportQuery,
-  type ContentReportClient,
   type ContentReportFilters,
   type ContentReportGrouped,
   type ContentReportResult,
@@ -119,7 +117,7 @@ function getPeriodLabel(key: string, groupBy: 'week' | 'month' | 'bimestre'): st
  * @returns Content report with all lessons and aggregated BNCC skills
  */
 export async function generateContentReport(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   filters: ContentReportFilters
 ): Promise<ContentReportResult> {
   try {
@@ -134,10 +132,7 @@ export async function generateContentReport(
       },
     });
 
-    const { data: contentData, error: contentError } = await buildContentReportQuery(
-      supabase as unknown as ContentReportClient,
-      filters,
-    );
+    const { data: contentData, error: contentError } = await buildContentReportQuery(supabase, filters);
 
     if (contentError) {
       logger.error('Failed to fetch lesson content', contentError.message);
@@ -173,7 +168,7 @@ export async function generateContentReport(
  * @returns Content grouped by the specified period
  */
 export async function getContentByPeriod(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   filters: ContentReportFilters,
   groupBy: 'week' | 'month' | 'bimestre' = 'month'
 ): Promise<ContentGroupedResult> {
@@ -242,6 +237,61 @@ export async function getContentByPeriod(
   }
 }
 
+function countSkillsByLevel(skills: BNNCSkillUsage[]) {
+  let fundamental = 0;
+  let infantil = 0;
+
+  for (const skill of skills) {
+    if (skill.nivel === 'fundamental') {
+      fundamental += skill.vezesTrabalhado;
+    } else {
+      infantil += skill.vezesTrabalhado;
+    }
+  }
+
+  return { fundamental, infantil };
+}
+
+function findSubjectName(code: string): string | undefined {
+  return Object.entries(BNCC_SUBJECTS)
+    .find(([subjectCode]) => subjectCode === code)?.[1].fullName;
+}
+
+function findExperienceFieldName(code: string): string | undefined {
+  return Object.entries(BNCC_EXPERIENCE_FIELDS)
+    .find(([fieldCode]) => fieldCode === code)?.[1].name;
+}
+
+function getSkillDisciplineName(code: string): string {
+  if (code.startsWith('EF') && code.length >= 6) {
+    return findSubjectName(code.substring(4, 6)) ?? 'Outros';
+  }
+  if (code.startsWith('EI') && code.length >= 6) {
+    return findExperienceFieldName(code.substring(4, 6)) ?? 'Outros';
+  }
+  return 'Outros';
+}
+
+function groupSkillsByDiscipline(skills: BNNCSkillUsage[]) {
+  const grouped = new Map<string, { quantidade: number; habilidades: Set<string> }>();
+
+  for (const skill of skills) {
+    const disciplina = getSkillDisciplineName(skill.codigo);
+    const entry = grouped.get(disciplina) ?? { quantidade: 0, habilidades: new Set<string>() };
+    entry.quantidade += skill.vezesTrabalhado;
+    entry.habilidades.add(skill.codigo);
+    grouped.set(disciplina, entry);
+  }
+
+  return Array.from(grouped.entries())
+    .map(([disciplina, data]) => ({
+      disciplina,
+      quantidade: data.quantidade,
+      habilidades: Array.from(data.habilidades).sort(),
+    }))
+    .sort((a, b) => b.quantidade - a.quantidade);
+}
+
 /**
  * Get summary of BNCC skills worked on in a period
  *
@@ -252,7 +302,7 @@ export async function getContentByPeriod(
  * @returns Summary of BNCC skills with usage counts
  */
 export async function getBNNCSkillsSummary(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   turmaId: string,
   startDate: string,
   endDate: string
@@ -284,56 +334,8 @@ export async function getBNNCSkillsSummary(
     }
 
     const report = reportResult.data;
-
-    // Count by education level
-    let fundamentalCount = 0;
-    let infantilCount = 0;
-
-    for (const skill of report.habilidadesBncc) {
-      if (skill.nivel === 'fundamental') {
-        fundamentalCount += skill.vezesTrabalhado;
-      } else {
-        infantilCount += skill.vezesTrabalhado;
-      }
-    }
-
-    // Group by discipline with skills list
-    const disciplinaMap = new Map<string, { quantidade: number; habilidades: Set<string> }>();
-
-    for (const skill of report.habilidadesBncc) {
-      const codigo = skill.codigo;
-      let disciplina = 'Outros';
-
-      if (codigo.startsWith('EF') && codigo.length >= 6) {
-        const subjectCode = codigo.substring(4, 6) as BNNCSubjectCode;
-        const subject = BNCC_SUBJECTS[subjectCode];
-        if (subject) {
-          disciplina = subject.fullName;
-        }
-      } else if (codigo.startsWith('EI') && codigo.length >= 6) {
-        const fieldCode = codigo.substring(4, 6) as BNNCExperienceFieldCode;
-        const field = BNCC_EXPERIENCE_FIELDS[fieldCode];
-        if (field) {
-          disciplina = field.name;
-        }
-      }
-
-      if (!disciplinaMap.has(disciplina)) {
-        disciplinaMap.set(disciplina, { quantidade: 0, habilidades: new Set() });
-      }
-
-      const entry = disciplinaMap.get(disciplina)!;
-      entry.quantidade += skill.vezesTrabalhado;
-      entry.habilidades.add(codigo);
-    }
-
-    const byDisciplina = Array.from(disciplinaMap.entries())
-      .map(([disciplina, data]) => ({
-        disciplina,
-        quantidade: data.quantidade,
-        habilidades: Array.from(data.habilidades).sort(),
-      }))
-      .sort((a, b) => b.quantidade - a.quantidade);
+    const byNivel = countSkillsByLevel(report.habilidadesBncc);
+    const byDisciplina = groupSkillsByDiscipline(report.habilidadesBncc);
 
     return {
       data: {
@@ -341,10 +343,7 @@ export async function getBNNCSkillsSummary(
         totalSkills: report.resumo.totalHabilidadesBncc,
         uniqueSkills: report.resumo.habilidadesUnicas,
         byDisciplina,
-        byNivel: {
-          fundamental: fundamentalCount,
-          infantil: infantilCount,
-        },
+        byNivel,
       },
       error: null,
     };

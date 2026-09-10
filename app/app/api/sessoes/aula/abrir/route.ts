@@ -16,24 +16,28 @@ const OpenSessionSchema = z.object({
   conteudo_programatico: z.string().max(500).optional(),
 })
 
+const HTTP_STATUS_BY_OPEN_SESSION_CODE = new Map<string, number>([
+  ['UNAUTHENTICATED', 401],
+  ['FORBIDDEN_ROLE', 403],
+  ['SCHOOL_MISMATCH', 403],
+  ['TURMA_NOT_OWNED', 403],
+  ['TURMA_NOT_FOUND', 404],
+  ['SESSION_ALREADY_OPEN', 409],
+  ['DATE_NOT_CURRENT', 409],
+  ['SESSION_CUTOFF_PASSED', 409],
+])
+
+function statusForOpenSessionCode(code?: string): number {
+  return code ? HTTP_STATUS_BY_OPEN_SESSION_CODE.get(code) ?? 400 : 400
+}
+
 export async function POST(request: NextRequest) {
   try {
     const payload = OpenSessionSchema.parse(await request.json())
     const result = await openSessionAction(payload)
 
     if (!result.success) {
-      const status = result.code === 'UNAUTHENTICATED'
-        ? 401
-        : result.code === 'FORBIDDEN_ROLE' || result.code === 'SCHOOL_MISMATCH' || result.code === 'TURMA_NOT_OWNED'
-          ? 403
-          : result.code === 'TURMA_NOT_FOUND'
-            ? 404
-            : result.code === 'SESSION_ALREADY_OPEN'
-              ? 409
-              : result.code === 'DATE_NOT_CURRENT'
-                ? 409
-                : 400
-      return NextResponse.json(result, { status })
+      return NextResponse.json(result, { status: statusForOpenSessionCode(result.code) })
     }
 
     return NextResponse.json(result, { status: 201 })

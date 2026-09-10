@@ -1,3 +1,4 @@
+import type { JsonValue } from '@/lib/validation/external-values'
 /**
  * User/Account Validation Schema
  *
@@ -19,6 +20,18 @@ import { validateCPF, formatCPF, validatePhone, formatPhone } from '@/lib/valida
 
 // ===== PASSWORD VALIDATION =====
 
+interface PasswordStrengthResult {
+  isValid: boolean
+  requirements: {
+    minLength: boolean
+    hasUppercase: boolean
+    hasLowercase: boolean
+    hasNumber: boolean
+    hasSpecial: boolean
+  }
+}
+
+
 /**
  * Validates password strength
  * Requirements:
@@ -28,16 +41,7 @@ import { validateCPF, formatCPF, validatePhone, formatPhone } from '@/lib/valida
  * - At least one number
  * - At least one special character
  */
-export function validatePasswordStrength(password: string): {
-  isValid: boolean
-  requirements: {
-    minLength: boolean
-    hasUppercase: boolean
-    hasLowercase: boolean
-    hasNumber: boolean
-    hasSpecial: boolean
-  }
-} {
+export function validatePasswordStrength(password: string): PasswordStrengthResult {
   const requirements = {
     minLength: password.length >= 8,
     hasUppercase: /[A-Z]/.test(password),
@@ -360,7 +364,7 @@ export type LoginData = z.infer<typeof loginSchema>
  * @param data - User registration data
  * @returns Validation result with errors if invalid
  */
-export function validateUserRegistration(data: unknown) {
+export function validateUserRegistration(data: JsonValue) {
   try {
     const result = userRegistrationSchema.parse(data)
     return {
@@ -390,7 +394,7 @@ export function validateUserRegistration(data: unknown) {
  * @param data - Login data
  * @returns Validation result with errors if invalid
  */
-export function validateLogin(data: unknown) {
+export function validateLogin(data: JsonValue) {
   try {
     const result = loginSchema.parse(data)
     return {
@@ -420,7 +424,7 @@ export function validateLogin(data: unknown) {
  * @param data - Password change data
  * @returns Validation result with errors if invalid
  */
-export function validatePasswordChange(data: unknown) {
+export function validatePasswordChange(data: JsonValue) {
   try {
     const result = userPasswordChangeSchema.parse(data)
     return {
@@ -450,7 +454,7 @@ export function validatePasswordChange(data: unknown) {
  * @param data - Profile update data
  * @returns Validation result with errors if invalid
  */
-export function validateProfileUpdate(data: unknown) {
+export function validateProfileUpdate(data: JsonValue) {
   try {
     const result = userProfileUpdateSchema.parse(data)
     return {
@@ -481,12 +485,12 @@ export function validateProfileUpdate(data: unknown) {
  * @returns Portuguese display name
  */
 export function getRoleDisplayName(role: string): string {
-  const roleNames: Record<string, string> = {
-    admin: 'Administrador',
-    diretor: 'Diretor',
-    secretario: 'Secretário',
-    professor: 'Professor',
-    responsavel: 'Responsável'
-  }
-  return roleNames[role] || role
+  const roleNames = new Map([
+    ['admin', 'Administrador'],
+    ['diretor', 'Diretor'],
+    ['secretario', 'Secretário'],
+    ['professor', 'Professor'],
+    ['responsavel', 'Responsável'],
+  ])
+  return roleNames.get(role) ?? role
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,20 +18,104 @@ import {
   Shield,
   Clock,
   Mail,
-  Phone,
-  MapPin
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
+import type { UserProfile } from '@/lib/auth'
+import type { LucideIcon } from 'lucide-react'
+import { z } from 'zod'
+
+const selfProfileResponseSchema = z.object({
+  profile: z.object({
+    id: z.string().uuid(),
+    nome: z.string(),
+    email: z.string().nullable(),
+    tipo_usuario: z.string(),
+    escola_id: z.string().uuid().nullable(),
+    ativo: z.boolean().nullable(),
+  }),
+})
+
+interface ProfileSummaryProps {
+  userProfile: UserProfile | null
+  fallbackName: string
+  roleLabel: string
+  lastSignInAt?: string
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+function ProfileSummary({ userProfile, fallbackName, roleLabel, lastSignInAt }: ProfileSummaryProps) {
+  const name = userProfile?.nome ?? fallbackName
+  return (
+    <Card>
+      <CardHeader className="text-center">
+        <div className="flex justify-center mb-4">
+          <Avatar className="h-24 w-24">
+            <AvatarFallback className="text-2xl bg-primary text-white">{getInitials(name)}</AvatarFallback>
+          </Avatar>
+        </div>
+        <CardTitle>{name}</CardTitle>
+        <div className="flex justify-center mt-2"><Badge variant="secondary">{roleLabel}</Badge></div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center space-x-3 text-sm">
+          <Mail className="h-4 w-4 text-gray-500" />
+          <span>{userProfile?.email}</span>
+        </div>
+        <div className="flex items-center space-x-3 text-sm">
+          <Clock className="h-4 w-4 text-gray-500" />
+          <LastAccess lastSignInAt={lastSignInAt} />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function LastAccess({ lastSignInAt }: { lastSignInAt?: string }) {
+  const t = useTranslations('platform.profile')
+  const locale = useLocale()
+  const timestamp = z.string().datetime().safeParse(lastSignInAt)
+  if (!timestamp.success) return <span>{t('lastAccessUnavailable')}</span>
+
+  const date = new Intl.DateTimeFormat(locale, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(timestamp.data))
+  return <time dateTime={timestamp.data}>{t('lastAccess', { date })}</time>
+}
+
+function SubmitButton({ loading, loadingLabel, readyLabel, icon: Icon }: {
+  loading: boolean
+  loadingLabel: string
+  readyLabel: string
+  icon: LucideIcon
+}) {
+  return (
+    <Button type="submit" disabled={loading}>
+      {loading ? (
+        <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />{loadingLabel}</>
+      ) : (
+        <><Icon className="h-4 w-4 mr-2" />{readyLabel}</>
+      )}
+    </Button>
+  )
+}
 
 export default function PerfilPage() {
   const t = useTranslations('platform')
-  const { userProfile } = useAuth()
+  const { user, userProfile, signIn, applyProfileUpdate } = useAuth()
   const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState({
     nome: userProfile?.nome || '',
     email: userProfile?.email || '',
-    telefone: '(34) 99999-0000',
-    endereco: 'Rua da Educação, 123 - Centro - Cidade/UF'
   })
   const [passwordData, setPasswordData] = useState({
     senhaAtual: '',
@@ -39,24 +123,18 @@ export default function PerfilPage() {
     confirmarSenha: ''
   })
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
+  useEffect(() => {
+    if (!userProfile) return
+    setProfileData({ nome: userProfile.nome, email: userProfile.email ?? '' })
+  }, [userProfile])
 
   const getRoleLabel = (role: string) => {
-    const roles = {
-      admin: t('profile.roleAdmin'),
-      diretor: t('profile.roleDirector'),
-      secretario: t('profile.roleSecretary'),
-      professor: t('profile.roleTeacher'),
-      responsavel: t('profile.roleGuardian')
-    }
-    return roles[role as keyof typeof roles] || role
+    if (role === 'admin') return t('profile.roleAdmin')
+    if (role === 'diretor') return t('profile.roleDirector')
+    if (role === 'secretario') return t('profile.roleSecretary')
+    if (role === 'professor') return t('profile.roleTeacher')
+    if (role === 'responsavel') return t('profile.roleGuardian')
+    return role
   }
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -64,10 +142,16 @@ export default function PerfilPage() {
     setLoading(true)
 
     try {
-      // Simular atualização do perfil
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ nome: profileData.nome }),
+      })
+      if (!response.ok) throw new Error('PROFILE_UPDATE_FAILED')
+      const result = selfProfileResponseSchema.parse(await response.json())
+      applyProfileUpdate(result.profile)
       toast.success(t('profile.updated'))
-    } catch (error) {
+    } catch {
       toast.error(t('profile.updateError'))
     } finally {
       setLoading(false)
@@ -87,27 +171,26 @@ export default function PerfilPage() {
       return
     }
 
+    const email = userProfile?.email ?? profileData.email
+    if (!email || !passwordData.senhaAtual) {
+      toast.error(t('profile.passwordError'))
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Simular alteração de senha
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await signIn(email, passwordData.senhaAtual)
+      const { error } = await supabase.auth.updateUser({ password: passwordData.novaSenha })
+      if (error) throw error
       toast.success(t('profile.passwordChanged'))
       setPasswordData({ senhaAtual: '', novaSenha: '', confirmarSenha: '' })
-    } catch (error) {
+    } catch {
       toast.error(t('profile.passwordError'))
     } finally {
       setLoading(false)
     }
   }
-
-  const acessosRecentes = [
-    { data: '28/01/2024 14:30', ip: '192.168.1.100', dispositivo: 'Chrome - Windows' },
-    { data: '28/01/2024 08:15', ip: '192.168.1.100', dispositivo: 'Chrome - Windows' },
-    { data: '27/01/2024 16:45', ip: '192.168.1.100', dispositivo: 'Chrome - Windows' },
-    { data: '27/01/2024 09:20', ip: '192.168.1.100', dispositivo: 'Chrome - Windows' },
-    { data: '26/01/2024 15:30', ip: '192.168.1.100', dispositivo: 'Chrome - Windows' }
-  ]
 
   return (
     <div className="space-y-6">
@@ -120,41 +203,12 @@ export default function PerfilPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Informações do Usuário */}
         <div className="lg:col-span-1">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarFallback className="text-2xl bg-primary text-white">
-                    {userProfile?.nome ? getInitials(userProfile.nome) : 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <CardTitle>{userProfile?.nome || t('dashboard.user')}</CardTitle>
-              <div className="flex justify-center mt-2">
-                <Badge variant="secondary">
-                  {getRoleLabel(userProfile?.tipo_usuario || '')}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3 text-sm">
-                <Mail className="h-4 w-4 text-gray-500" />
-                <span>{userProfile?.email}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <Phone className="h-4 w-4 text-gray-500" />
-                <span>{profileData.telefone}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span>{profileData.endereco}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span>{t('profile.lastAccess')}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <ProfileSummary
+            userProfile={userProfile}
+            fallbackName={t('dashboard.user')}
+            roleLabel={getRoleLabel(userProfile?.tipo_usuario ?? '')}
+            lastSignInAt={user?.last_sign_in_at}
+          />
         </div>
 
         {/* Configurações */}
@@ -198,44 +252,15 @@ export default function PerfilPage() {
                           id="email"
                           type="email"
                           value={profileData.email}
-                          onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                          disabled
+                          aria-describedby="email-help"
                         />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="telefone">{t('profile.phone')}</Label>
-                        <Input
-                          id="telefone"
-                          value={profileData.telefone}
-                          onChange={(e) => setProfileData({...profileData, telefone: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endereco">{t('profile.address')}</Label>
-                        <Input
-                          id="endereco"
-                          value={profileData.endereco}
-                          onChange={(e) => setProfileData({...profileData, endereco: e.target.value})}
-                        />
+                        <p id="email-help" className="text-sm text-muted-foreground">{t('profile.email')}</p>
                       </div>
                     </div>
 
                     <div className="flex justify-end">
-                      <Button type="submit" disabled={loading}>
-                        {loading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            {t('profile.saving')}
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-2" />
-                            {t('profile.saveChanges')}
-                          </>
-                        )}
-                      </Button>
+                      <SubmitButton loading={loading} loadingLabel={t('profile.saving')} readyLabel={t('profile.saveChanges')} icon={Save} />
                     </div>
                   </form>
                 </CardContent>
@@ -281,19 +306,7 @@ export default function PerfilPage() {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button type="submit" disabled={loading}>
-                        {loading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            {t('profile.changing')}
-                          </>
-                        ) : (
-                          <>
-                            <Key className="h-4 w-4 mr-2" />
-                            {t('profile.changePassword')}
-                          </>
-                        )}
-                      </Button>
+                      <SubmitButton loading={loading} loadingLabel={t('profile.changing')} readyLabel={t('profile.changePassword')} icon={Key} />
                     </div>
                   </form>
                 </CardContent>
@@ -307,19 +320,7 @@ export default function PerfilPage() {
                   <CardDescription>{t('profile.monitorAccess')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {acessosRecentes.map((acesso, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="space-y-1">
-                          <div className="font-medium">{acesso.dispositivo}</div>
-                          <div className="text-sm text-gray-500">IP: {acesso.ip}</div>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {acesso.data}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-sm text-muted-foreground"><LastAccess lastSignInAt={user?.last_sign_in_at} /></p>
                 </CardContent>
               </Card>
             </TabsContent>

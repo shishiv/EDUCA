@@ -45,7 +45,7 @@ const eslintConfig = [
 
   // Additional ignores (next config already ignores .next, out, build, next-env.d.ts)
   {
-    ignores: ['node_modules/**'],
+    ignores: ['node_modules/**', 'tools/oxlint/anti-slop/**'],
   },
 ]
 
