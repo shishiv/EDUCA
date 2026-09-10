@@ -15,7 +15,7 @@
 'use client'
 
 import * as React from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
@@ -79,6 +79,15 @@ export interface VivenciaFormProps {
   className?: string
 }
 
+function initialVivenciaValues({
+  data_vivencia = format(new Date(), 'yyyy-MM-dd'),
+  campos_experiencia = [],
+  descricao = '',
+  observacoes = '',
+}: Partial<VivenciaFormData> = {}): VivenciaFormData {
+  return { data_vivencia, campos_experiencia, descricao, observacoes }
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -96,21 +105,16 @@ export function VivenciaForm({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<VivenciaFormData>({
     resolver: zodResolver(vivenciaSchema),
-    defaultValues: {
-      data_vivencia: initialData?.data_vivencia || format(new Date(), 'yyyy-MM-dd'),
-      campos_experiencia: initialData?.campos_experiencia || [],
-      descricao: initialData?.descricao || '',
-      observacoes: initialData?.observacoes || '',
-    },
+    defaultValues: initialVivenciaValues(initialData),
   })
 
-  const selectedCampos = watch('campos_experiencia')
-  const descricao = watch('descricao')
+  const selectedCampos = useWatch({ control, name: 'campos_experiencia' })
+  const descricao = useWatch({ control, name: 'descricao' })
 
   const handleCamposChange = React.useCallback((campos: CampoType[]) => {
     setValue('campos_experiencia', campos, { shouldValidate: true })
@@ -121,33 +125,33 @@ export function VivenciaForm({
   })
 
   const isDisabled = disabled || isLoading || isSubmitting
-  const descricaoLength = descricao?.length || 0
+  const descricaoLength = descricao.length
 
   const renderDateField = () => (
     <div className="space-y-2">
-      <Label htmlFor="data_vivencia">Data da Vivencia <span className="text-red-500">*</span></Label>
-      <Input id="data_vivencia" type="date" {...register('data_vivencia')} disabled={isDisabled} error={!!errors.data_vivencia} max={format(new Date(), 'yyyy-MM-dd')} />
-      {errors.data_vivencia && <p className="text-sm text-red-500">{errors.data_vivencia.message}</p>}
+      <Label htmlFor="data_vivencia">Data da Vivência <span className="text-red-500">*</span></Label>
+      <Input id="data_vivencia" type="date" {...register('data_vivencia')} disabled={isDisabled} error={!!errors.data_vivencia} aria-invalid={!!errors.data_vivencia} aria-describedby="data_vivencia-error" max={format(new Date(), 'yyyy-MM-dd')} />
+      {errors.data_vivencia && <p id="data_vivencia-error" role="alert" className="text-sm text-red-500">{errors.data_vivencia.message}</p>}
     </div>
   )
 
   const renderCamposField = () => (
     <div className="space-y-3">
-      <Label>Campos de Experiencia <span className="text-red-500">*</span></Label>
-      <p className="text-sm text-muted-foreground">Selecione os campos trabalhados nesta vivencia (pode selecionar varios)</p>
-      <CampoExperienciaSelector selectedCampos={selectedCampos || []} onSelectionChange={handleCamposChange} disabled={isDisabled} />
-      {errors.campos_experiencia && <p className="text-sm text-red-500">{errors.campos_experiencia.message}</p>}
+      <p id="campos_experiencia-label" className="text-sm font-medium">Campos de Experiência <span className="text-red-500">*</span></p>
+      <p id="campos_experiencia-hint" className="text-sm text-muted-foreground">Selecione os campos trabalhados nesta vivência (pode selecionar vários)</p>
+      <CampoExperienciaSelector selectedCampos={selectedCampos} onSelectionChange={handleCamposChange} disabled={isDisabled} labelledBy="campos_experiencia-label" describedBy="campos_experiencia-hint campos_experiencia-error" />
+      {errors.campos_experiencia && <p id="campos_experiencia-error" role="alert" className="text-sm text-red-500">{errors.campos_experiencia.message}</p>}
     </div>
   )
 
   const renderDescriptionField = () => (
     <div className="space-y-2">
-      <Label htmlFor="descricao">Descricao da Vivencia <span className="text-red-500">*</span></Label>
-      <p className="text-sm text-muted-foreground">Descreva o que foi observado, as interacoes e descobertas da crianca</p>
-      <Textarea id="descricao" {...register('descricao')} disabled={isDisabled} placeholder="Descreva detalhadamente a vivencia observada..." rows={5} className={cn(errors.descricao && 'border-red-500 focus:ring-red-500/30 focus:border-red-500')} />
+      <Label htmlFor="descricao">Descrição da Vivência <span className="text-red-500">*</span></Label>
+      <p className="text-sm text-muted-foreground">Descreva o que foi observado, as interações e descobertas da criança</p>
+      <Textarea id="descricao" {...register('descricao')} disabled={isDisabled} aria-invalid={!!errors.descricao} aria-describedby="descricao-help" placeholder="Descreva detalhadamente a vivência observada..." rows={5} className={cn(errors.descricao && 'border-red-500 focus:ring-red-500/30 focus:border-red-500')} />
       <div className="flex justify-between text-xs">
-        <span className={cn(errors.descricao ? 'text-red-500' : 'text-muted-foreground')}>
-          {errors.descricao?.message || `Minimo ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`}
+        <span id="descricao-help" role={errors.descricao ? 'alert' : undefined} className={cn(errors.descricao ? 'text-red-500' : 'text-muted-foreground')}>
+          {errors.descricao?.message || `Mínimo ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`}
         </span>
         <span className={cn('tabular-nums', descricaoLength < VIVENCIA_VALIDATION.minDescricaoLength && 'text-amber-600', descricaoLength >= VIVENCIA_VALIDATION.minDescricaoLength && 'text-green-600', descricaoLength > VIVENCIA_VALIDATION.maxDescricaoLength && 'text-red-500')}>
           {descricaoLength}/{VIVENCIA_VALIDATION.maxDescricaoLength}
@@ -158,20 +162,21 @@ export function VivenciaForm({
 
   const renderObservationsField = () => (
     <div className="space-y-2">
-      <Label htmlFor="observacoes">Observacoes Adicionais<span className="text-muted-foreground font-normal ml-2">(opcional)</span></Label>
-      <Textarea id="observacoes" {...register('observacoes')} disabled={isDisabled} placeholder="Anotações adicionais, contexto ou observações para acompanhamento..." rows={3} className={cn(errors.observacoes && 'border-red-500 focus:ring-red-500/30 focus:border-red-500')} />
-      {errors.observacoes && <p className="text-sm text-red-500">{errors.observacoes.message}</p>}
+      <Label htmlFor="observacoes">Observações Adicionais<span className="text-muted-foreground font-normal ml-2">(opcional)</span></Label>
+      <Textarea id="observacoes" {...register('observacoes')} disabled={isDisabled} aria-invalid={!!errors.observacoes} aria-describedby="observacoes-error" placeholder="Anotações adicionais, contexto ou observações para acompanhamento..." rows={3} className={cn(errors.observacoes && 'border-red-500 focus:ring-red-500/30 focus:border-red-500')} />
+      {errors.observacoes && <p id="observacoes-error" role="alert" className="text-sm text-red-500">{errors.observacoes.message}</p>}
     </div>
   )
 
   return (
     <form
+      aria-label={`Registrar vivência de ${studentName}`}
       onSubmit={onFormSubmit}
       className={cn('space-y-6', className)}
     >
       {/* Student info */}
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-        <p className="text-sm text-muted-foreground">Registrando vivencia para:</p>
+        <p className="text-sm text-muted-foreground">Registrando vivência para:</p>
         <p className="font-medium text-foreground">{studentName}</p>
       </div>
 
@@ -205,7 +210,7 @@ export function VivenciaForm({
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              Salvar Vivencia
+              Salvar Vivência
             </>
           )}
         </Button>

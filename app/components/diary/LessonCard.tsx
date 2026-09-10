@@ -84,45 +84,13 @@ function getLessonCardDetails(lesson: LessonCardData, isSelected: boolean) {
     dayOfWeek: format(lessonDate, 'EEEE', { locale: ptBR }),
     dayOfWeekShort: format(lessonDate, 'EEE', { locale: ptBR }),
     summary: lesson.resumo || lesson.objetivo || lesson.tema,
-    ariaLabel: `Aula: ${lesson.tema}. Data: ${formattedDate}. Presenca: ${attendanceRate}%. ${isSelected ? 'Selecionada.' : ''}`,
+    ariaLabel: `Aula: ${lesson.tema}. Data: ${formattedDate}. Presença: ${attendanceRate}%. ${isSelected ? 'Selecionada.' : ''}`,
   }
 }
 
-// ============================================================================
-// Component
-// ============================================================================
 
-export function LessonCard({
-  lesson,
-  isSelected = false,
-  onClick,
-  className,
-  compact = false,
-}: LessonCardProps) {
-  const t = useClassroomTranslations()
-  const { attendanceRate, formattedDate, formattedDateShort, dayOfWeek, dayOfWeekShort, summary, ariaLabel } =
-    getLessonCardDetails(lesson, isSelected)
-
-  // Handle click with keyboard support
-  const handleClick = useCallback(() => {
-    onClick?.(lesson)
-  }, [onClick, lesson])
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onClick?.(lesson)
-      }
-    },
-    [onClick, lesson]
-  )
-
-  return (
-    <article
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      className={cn(
+function lessonCardClassName({ compact, isSelected, className }: Pick<LessonCardProps, 'compact' | 'isSelected' | 'className'>) {
+  return cn(
         // Base styles
         'group relative bg-white rounded-xl cursor-pointer',
         // Padding: smaller on mobile
@@ -146,7 +114,43 @@ export function LessonCard({
         // Touch-friendly: min height for mobile
         'min-h-[44px]',
         className
-      )}
+      )
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
+export function LessonCard({
+  lesson,
+  isSelected = false,
+  onClick,
+  className,
+  compact = false,
+}: LessonCardProps) {
+  const { attendanceRate, formattedDate, formattedDateShort, dayOfWeek, dayOfWeekShort, summary, ariaLabel } =
+    getLessonCardDetails(lesson, isSelected)
+
+  // Handle click with keyboard support
+  const handleClick = useCallback(() => {
+    onClick?.(lesson)
+  }, [onClick, lesson])
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onClick?.(lesson)
+      }
+    },
+    [onClick, lesson]
+  )
+
+  return (
+    <article
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className={lessonCardClassName({ compact, isSelected, className })}
       role="button"
       tabIndex={0}
       aria-pressed={isSelected}
@@ -205,7 +209,34 @@ export function LessonCard({
             </p>
           )}
 
-          {/* Footer - Attendance Stats - Responsive */}
+          <LessonAttendanceSummary lesson={lesson} attendanceRate={attendanceRate} />
+        </div>
+
+        {/* Mobile chevron indicator with animation */}
+        <div
+          className={cn(
+            'lg:hidden flex-shrink-0 self-center',
+            // Animated movement on hover
+            'transition-transform duration-200',
+            'group-hover:translate-x-1'
+          )}
+          aria-hidden="true"
+        >
+          <ChevronRight className="h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      {/* Screen reader only: additional context */}
+      <span className="sr-only">
+        Clique para ver detalhes da aula
+      </span>
+    </article>
+  )
+}
+
+function LessonAttendanceSummary({ lesson, attendanceRate }: { lesson: LessonCardData; attendanceRate: number }) {
+  const t = useClassroomTranslations()
+  return (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-500">
               <span className="flex items-center gap-1">
@@ -243,27 +274,6 @@ export function LessonCard({
               {attendanceRate}%
             </Badge>
           </div>
-        </div>
-
-        {/* Mobile chevron indicator with animation */}
-        <div
-          className={cn(
-            'lg:hidden flex-shrink-0 self-center',
-            // Animated movement on hover
-            'transition-transform duration-200',
-            'group-hover:translate-x-1'
-          )}
-          aria-hidden="true"
-        >
-          <ChevronRight className="h-5 w-5 text-gray-400" />
-        </div>
-      </div>
-
-      {/* Screen reader only: additional context */}
-      <span className="sr-only">
-        Clique para ver detalhes da aula
-      </span>
-    </article>
   )
 }
 

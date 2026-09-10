@@ -34,6 +34,8 @@ export interface CampoExperienciaSelectorProps {
   className?: string
   /** Show compact version (smaller cards) */
   compact?: boolean
+  labelledBy?: string
+  describedBy?: string
 }
 
 // ============================================================================
@@ -46,6 +48,8 @@ export function CampoExperienciaSelector({
   disabled = false,
   className,
   compact = false,
+  labelledBy,
+  describedBy,
 }: CampoExperienciaSelectorProps) {
   const campos = getAllCampos()
 
@@ -87,7 +91,9 @@ export function CampoExperienciaSelector({
         className
       )}
       role="group"
-      aria-label="Selecione os Campos de Experiencia"
+      aria-label="Selecione os Campos de Experiência"
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
     >
       {campos.map((campo) => {
         const isSelected = selectedCampos.includes(campo.key)
@@ -158,6 +164,7 @@ function CampoCard({
     <div
       role="checkbox"
       aria-checked={isSelected}
+      aria-disabled={disabled}
       aria-label={`${campo.name} - ${campo.description}`}
       tabIndex={disabled ? -1 : 0}
       onClick={onClick}

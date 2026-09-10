@@ -183,10 +183,10 @@ function detectEducationLevel(serie: string | null | undefined): EducationLevel 
  * Transform grades data to DisciplineGrade format
  */
 function transformGradesToDisciplineGrades(grades: GradeData[]): DisciplineGrade[] {
-  // Group by discipline
-  const byDiscipline = grades.reduce((acc, grade) => {
-    if (!acc[grade.disciplina]) {
-      acc[grade.disciplina] = {
+  const byDiscipline: Record<string, DisciplineGrade> = {}
+  for (const grade of grades) {
+    if (!byDiscipline[grade.disciplina]) {
+      byDiscipline[grade.disciplina] = {
         disciplina: grade.disciplina,
         bimestre1: null,
         bimestre2: null,
@@ -198,21 +198,20 @@ function transformGradesToDisciplineGrades(grades: GradeData[]): DisciplineGrade
 
     switch (grade.bimestre) {
       case 1:
-        acc[grade.disciplina].bimestre1 = grade.nota
+        byDiscipline[grade.disciplina].bimestre1 = grade.nota
         break
       case 2:
-        acc[grade.disciplina].bimestre2 = grade.nota
+        byDiscipline[grade.disciplina].bimestre2 = grade.nota
         break
       case 3:
-        acc[grade.disciplina].bimestre3 = grade.nota
+        byDiscipline[grade.disciplina].bimestre3 = grade.nota
         break
       case 4:
-        acc[grade.disciplina].bimestre4 = grade.nota
+        byDiscipline[grade.disciplina].bimestre4 = grade.nota
         break
     }
 
-    return acc
-  }, {} as Record<string, DisciplineGrade>)
+  }
 
   // Calculate averages
   return Object.values(byDiscipline).map((dg) => {
@@ -226,6 +225,16 @@ function transformGradesToDisciplineGrades(grades: GradeData[]): DisciplineGrade
 
     return dg
   })
+}
+
+function parseSemester(value: string): SemestreType | null {
+  if (value === 'primeiro' || value === 'segundo') return value
+  return null
+}
+
+function parseReportStatus(value: string): ReportStatus | null {
+  if (value === 'rascunho' || value === 'finalizado') return value
+  return null
 }
 
 /**
@@ -264,31 +273,34 @@ function calculateAttendanceSummary(attendance: AttendanceData): AttendanceSumma
   }
 }
 
+function mapEnrollment(matricula?: StudentEnrollmentData): StudentData['matricula'] {
+  if (!matricula) return undefined
+  const turma = matricula.turmas
+  return {
+    id: matricula.id,
+    turma_id: matricula.turma_id,
+    ano_letivo: matricula.ano_letivo,
+    turma: {
+      id: turma.id,
+      nome: turma.nome,
+      serie: turma.serie,
+      etapa_ensino: turma.etapa_ensino,
+      escola: turma.escolas,
+    },
+  }
+}
+
 function mapStudentData(data: StudentQueryData): ReportCardLoadData {
   const matricula = data.matriculas[0]
-  const turma = matricula?.turmas
-  const escola = turma?.escolas
+  const enrollment = mapEnrollment(matricula)
   return {
     student: {
       id: data.id,
       nome_completo: data.nome_completo,
       data_nascimento: data.data_nascimento,
-      matricula: matricula
-        ? {
-            id: matricula.id,
-            turma_id: matricula.turma_id,
-            ano_letivo: matricula.ano_letivo,
-            turma: {
-              id: turma?.id || '',
-              nome: turma?.nome || '',
-              serie: turma?.serie || '',
-              etapa_ensino: turma?.etapa_ensino,
-              escola: { id: escola?.id || '', nome: escola?.nome || '' },
-            },
-          }
-        : undefined,
+      matricula: enrollment,
     },
-    educationLevel: detectEducationLevel(turma?.serie || turma?.etapa_ensino),
+    educationLevel: detectEducationLevel(enrollment?.turma.serie || enrollment?.turma.etapa_ensino),
   }
 }
 
@@ -368,14 +380,14 @@ async function loadDescriptiveReports(matriculaId: string): Promise<ReportSummar
       .order('semestre')
 
     if (error || !data) return undefined
-    return transformDescriptiveReports(
-      data.map((report) => ({
-        ...report,
-        semestre: report.semestre as SemestreType,
-        status: report.status as ReportStatus,
-        professor: report.professor ?? undefined,
-      })),
-    )
+    const reports: DescriptiveReportData[] = []
+    for (const report of data) {
+      const semestre = parseSemester(report.semestre)
+      const status = parseReportStatus(report.status)
+      if (!semestre || !status) continue
+      reports.push({ ...report, semestre, status, professor: report.professor ?? undefined })
+    }
+    return transformDescriptiveReports(reports)
   } catch {
     logger.warn('Unable to load descriptive reports', {
       feature: 'boletim',
@@ -635,16 +647,24 @@ function ReportCardHeader({ studentId, educationLevel }: {
 }
 
 function getFundamentalStudentInfo(student: StudentData) {
-  const matricula = student.matricula
-  const turma = matricula?.turma
+  const { className, grade, schoolName, year } = getStudentClassInfo(student)
   return {
     id: student.id,
     nome: student.nome_completo,
     dataNascimento: student.data_nascimento,
-    turma: turma?.nome || '',
-    serie: turma?.serie || '',
-    escola: turma?.escola?.nome || '',
-    anoLetivo: matricula?.ano_letivo || new Date().getFullYear(),
+    turma: className,
+    serie: grade,
+    escola: schoolName,
+    anoLetivo: year,
+  }
+}
+
+function getStudentClassInfo(student: StudentData) {
+  return {
+    className: student.matricula?.turma.nome ?? '',
+    grade: student.matricula?.turma.serie ?? '',
+    schoolName: student.matricula?.turma.escola.nome ?? '',
+    year: student.matricula?.ano_letivo ?? new Date().getFullYear(),
   }
 }
 
@@ -719,8 +739,8 @@ function ReportCardContent({
 
 export default function BoletimPage() {
   const t = useTranslations('registry')
-  const params = useParams()
-  const studentId = params.id as string
+  const params = useParams<{ id: string }>()
+  const studentId = params.id
 
   // State
   const [loading, setLoading] = useState(true)
@@ -753,8 +773,9 @@ export default function BoletimPage() {
 
       const attendanceSummary = await loadStudentAttendance(data.student.matricula)
       if (attendanceSummary) setAttendance(attendanceSummary)
-    } catch (err) {
-      logger.error('Error loading student report', err as Error, {
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error('Error loading student report')
+      logger.error('Error loading student report', failure, {
         feature: 'boletim',
         action: 'fetch_failed',
       })
@@ -767,7 +788,7 @@ export default function BoletimPage() {
 
   // Load data on mount
   useEffect(() => {
-    fetchStudentData()
+    void fetchStudentData()
   }, [fetchStudentData])
 
   // Handle print
@@ -803,7 +824,8 @@ export default function BoletimPage() {
         metadata: { studentId: student.id },
       })
     } catch (error) {
-      logger.error('Error exporting PDF', error as Error, {
+      const failure = error instanceof Error ? error : new Error('Error exporting PDF')
+      logger.error('Error exporting PDF', failure, {
         feature: 'boletim',
         action: 'export_pdf_failed',
       })

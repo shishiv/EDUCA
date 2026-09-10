@@ -17,6 +17,11 @@ export interface WhatsAppGatewayFactoryEnvironment extends WhatsAppSafetyEnviron
   localFakeMode?: string
 }
 
+function parseLocalFakeMode(value: string | undefined): WhatsAppLocalFakeMode {
+  if (value === 'fail' || value === 'reject') return value
+  return 'deliver'
+}
+
 /**
  * Builds the gateway for the current environment. Never throws: every unsafe
  * configuration resolves to the local fake with a named reason.
@@ -44,6 +49,6 @@ export function createWhatsAppNotificationGateway(
     })
   }
 
-  const fakeMode = (environment.localFakeMode ?? 'deliver') as WhatsAppLocalFakeMode
+  const fakeMode = parseLocalFakeMode(environment.localFakeMode)
   return new WhatsAppLocalAdapter({ mode: fakeMode })
 }

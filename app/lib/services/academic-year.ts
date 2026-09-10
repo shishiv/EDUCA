@@ -38,7 +38,7 @@ export function createAcademicYearService(
   const client = asPilotRpcClient(supabase)
 
   const get = async (schoolId: string, year: number) => {
-    const { data, error } = await client.rpc<AcademicYear[]>('get_school_academic_year', {
+    const { data, error } = await client.rpc('get_school_academic_year', {
       p_escola_id: schoolId,
       p_ano: year,
     })
@@ -73,7 +73,7 @@ export function createAcademicYearService(
     },
 
     async set(input) {
-      const { data, error } = await client.rpc<AcademicYear[]>('set_school_academic_year', {
+      const { data, error } = await client.rpc('set_school_academic_year', {
         p_escola_id: input.schoolId,
         p_ano: input.year,
         p_data_inicio: input.startDate,

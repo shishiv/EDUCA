@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -41,6 +41,7 @@ import {
   Info
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { updateGovernedEnrollment } from '@/lib/api/governed-management'
 import { logger } from '@/lib/logger'
 import {
   loadCanonicalAttendanceFacts,
@@ -66,7 +67,6 @@ interface Matricula {
     id: string
     nome_completo: string
     data_nascimento: string
-    cpf: string | null
     sexo: string
     ativo: boolean | null
   }
@@ -99,6 +99,10 @@ interface AttendanceStats {
 interface EnrollmentFormData {
   situacao: Matricula['situacao']
   observacoes: string
+}
+
+function isGovernedEnrollmentSituation(value: string): value is 'ativa' | 'transferida' | 'concluida' | 'cancelada' {
+  return value === 'ativa' || value === 'transferida' || value === 'concluida' || value === 'cancelada'
 }
 
 function deriveEnrollmentAttendance(facts: CanonicalAttendanceFact[], enrollmentId: string) {
@@ -148,7 +152,7 @@ function EnrollmentSituationBadge({ situacao }: { situacao: Matricula['situacao'
     concluida: { variant: 'outline' as const, icon: CheckCircle2, label: t('labels.concluida'), color: 'text-gray-600 bg-gray-50' },
     cancelada: { variant: 'destructive' as const, icon: XCircle, label: t('labels.cancelada'), color: 'text-red-600 bg-red-50' },
   }
-  const situation = situations[situacao as keyof typeof situations] || situations.ativa
+  const situation = isGovernedEnrollmentSituation(situacao) ? situations[situacao] : situations.ativa
   const Icon = situation.icon
 
   return (
@@ -228,6 +232,25 @@ function MatriculaSummary({ matricula }: { matricula: Matricula }) {
   )
 }
 
+function StudentDemographics({ student }: { student: Matricula['alunos'] | null }) {
+  const t = useTranslations('registry')
+  if (!student) return null
+  return (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-gray-600">{t('labels.sexo')}</Label>
+            <p className="font-medium">{student.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}</p>
+          </div>
+          <div>
+            <Label className="text-gray-600">{t('labels.status')}</Label>
+            <Badge variant={student.ativo ? 'default' : 'secondary'}>
+              {student.ativo ? t('ui.ativo') : t('labels.inativo')}
+            </Badge>
+          </div>
+        </div>
+  )
+}
+
 function MatriculaStudentCard({
   matricula,
   onOpenStudent,
@@ -236,6 +259,8 @@ function MatriculaStudentCard({
   onOpenStudent: () => void
 }) {
   const t = useTranslations('registry')
+  const student = matricula.alunos
+  const birthDate = student?.data_nascimento || ''
 
   return (
     <Card>
@@ -248,32 +273,21 @@ function MatriculaStudentCard({
       <CardContent className="space-y-4">
         <div>
           <Label className="text-gray-600">{t('labels.nome-completo')}</Label>
-          <p className="font-medium text-lg">{matricula.alunos?.nome_completo || '-'}</p>
+          <p className="font-medium text-lg">{student?.nome_completo || '-'}</p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-gray-600">{t('labels.data-de-nascimento')}</Label>
-            <p className="font-medium">{formatDate(matricula.alunos?.data_nascimento || '')}</p>
+            <p className="font-medium">{formatDate(birthDate)}</p>
           </div>
           <div>
             <Label className="text-gray-600">{t('labels.idade')}</Label>
             <p className="font-medium">
-              {calculateAge(matricula.alunos?.data_nascimento || '')} {t('ui.anos')}
+              {calculateAge(birthDate)} {t('ui.anos')}
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-gray-600">{t('labels.sexo')}</Label>
-            <p className="font-medium">{matricula.alunos?.sexo === 'M' ? t('labels.masculino') : t('labels.feminino')}</p>
-          </div>
-          <div>
-            <Label className="text-gray-600">{t('labels.status')}</Label>
-            <Badge variant={matricula.alunos?.ativo ? 'default' : 'secondary'}>
-              {matricula.alunos?.ativo ? t('ui.ativo') : t('labels.inativo')}
-            </Badge>
-          </div>
-        </div>
+        <StudentDemographics student={student} />
         <div>
           <Button variant="outline" size="sm" onClick={onOpenStudent}>
             {t('ui.ver-perfil-completo')}
@@ -284,6 +298,38 @@ function MatriculaStudentCard({
   )
 }
 
+function ClassEnrollmentDetails({ turma }: { turma: Matricula['turmas'] | null }) {
+  const t = useTranslations('registry')
+  if (!turma) return null
+  const turnLabels = new Map([['matutino', 'Manhã'], ['vespertino', 'Tarde'], ['integral', t('labels.integral')], ['noturno', 'Noite']])
+  const turn = turma.turno || ''
+  const schoolName = turma.escolas?.nome || '-'
+  return (<>
+        <div>
+          <Label className="text-gray-600">{t('labels.turma')}</Label>
+          <p className="font-medium text-lg">{turma.nome || '-'}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-gray-600">{t('labels.serie')}</Label>
+            <Badge variant="outline">{turma.serie || '-'}</Badge>
+          </div>
+          <div>
+            <Label className="text-gray-600">{t('labels.turno')}</Label>
+            <p className="font-medium">{turnLabels.get(turn) || turn}</p>
+          </div>
+        </div>
+        <div>
+          <Label className="text-gray-600">{t('labels.escola')}</Label>
+          <p className="font-medium">{schoolName}</p>
+        </div>
+        <div>
+          <Label className="text-gray-600">{t('labels.ano-letivo')}</Label>
+          <p className="font-medium">{turma.ano_letivo || '-'}</p>
+        </div>
+  </>)
+}
+
 function MatriculaClassCard({
   matricula,
   onOpenClass,
@@ -292,13 +338,6 @@ function MatriculaClassCard({
   onOpenClass: () => void
 }) {
   const t = useTranslations('registry')
-  const turnLabels: Record<string, string> = {
-    matutino: 'Manhã',
-    vespertino: 'Tarde',
-    integral: t('labels.integral'),
-    noturno: 'Noite',
-  }
-  const turn = matricula.turmas?.turno || ''
 
   return (
     <Card>
@@ -309,28 +348,7 @@ function MatriculaClassCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label className="text-gray-600">{t('labels.turma')}</Label>
-          <p className="font-medium text-lg">{matricula.turmas?.nome || '-'}</p>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-gray-600">{t('labels.serie')}</Label>
-            <Badge variant="outline">{matricula.turmas?.serie || '-'}</Badge>
-          </div>
-          <div>
-            <Label className="text-gray-600">{t('labels.turno')}</Label>
-            <p className="font-medium">{turnLabels[turn] || turn}</p>
-          </div>
-        </div>
-        <div>
-          <Label className="text-gray-600">{t('labels.escola')}</Label>
-          <p className="font-medium">{matricula.turmas?.escolas?.nome || '-'}</p>
-        </div>
-        <div>
-          <Label className="text-gray-600">{t('labels.ano-letivo')}</Label>
-          <p className="font-medium">{matricula.turmas?.ano_letivo || '-'}</p>
-        </div>
+        <ClassEnrollmentDetails turma={matricula.turmas} />
         <div>
           <Button variant="outline" size="sm" onClick={onOpenClass}>
             {t('ui.ver-detalhes-da-turma')}
@@ -602,9 +620,9 @@ function MatriculaDetailsPresentation({
 
 export default function MatriculaDetailsPage() {
   const t = useTranslations('registry')
-  const params = useParams()
+  const params = useParams<{ id: string }>()
   const router = useRouter()
-  const id = params.id as string
+  const id = params.id
 
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
@@ -618,18 +636,12 @@ export default function MatriculaDetailsPage() {
     percentualPresenca: 0
   })
 
-  const [formData, setFormData] = useState({
-    situacao: 'ativa' as Matricula['situacao'],
+  const [formData, setFormData] = useState<EnrollmentFormData>({
+    situacao: 'ativa',
     observacoes: ''
   })
 
-  useEffect(() => {
-    if (id) {
-      loadMatriculaDetails()
-    }
-  }, [id])
-
-  const loadMatriculaDetails = async () => {
+  const loadMatriculaDetails = useCallback(async () => {
     setLoading(true)
     try {
       // Load enrollment data
@@ -641,7 +653,6 @@ export default function MatriculaDetailsPage() {
             id,
             nome_completo,
             data_nascimento,
-            cpf,
             sexo,
             ativo
           ),
@@ -678,35 +689,35 @@ export default function MatriculaDetailsPage() {
       const attendance = deriveEnrollmentAttendance(attendanceFacts, id)
       setFrequencia(attendance.records)
       setAttendanceStats(attendance.stats)
-    } catch (error: any) {
-      logger.error('Erro ao carregar matrícula:', error)
+    } catch (error) {
+      logger.error('Erro ao carregar matrícula:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-carregar-detalhes-da-matricula'))
       router.push('/dashboard/matriculas')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, router, t])
+
+  useEffect(() => {
+    if (id) void loadMatriculaDetails()
+  }, [id, loadMatriculaDetails])
 
   const handleSave = async () => {
     if (!matricula) return
+    if (!isGovernedEnrollmentSituation(formData.situacao)) {
+      toast.error('Situação de matrícula inválida')
+      return
+    }
 
     setSaving(true)
     try {
-      const { error } = await supabase
-        .from('matriculas')
-        .update({
-          situacao: formData.situacao,
-          observacoes: formData.observacoes || null
-        })
-        .eq('id', id)
-
-      if (error) throw error
+      await updateGovernedEnrollment(supabase, id, formData.situacao, formData.observacoes || null)
 
       toast.success(t('ui.matricula-atualizada-com-sucesso'))
       setEditMode(false)
       loadMatriculaDetails()
-    } catch (error: any) {
-      logger.error('Erro ao atualizar matrícula:', error)
+    } catch (error) {
+      logger.error('Erro ao atualizar matrícula:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-atualizar-matricula'))
     } finally {
       setSaving(false)

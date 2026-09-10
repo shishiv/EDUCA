@@ -1,19 +1,18 @@
-import type { Aluno, Responsavel } from '@/lib/supabase'
 import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
+import type { WhatsAppSupabase } from '@/lib/notifications/whatsapp-database'
 
-export type AuthorizedStudentProfile = Omit<Aluno, 'bolsa_familia' | 'nis'> & {
-  escola_id: string
-}
+export type AuthorizedStudentProfile = Database['public']['Functions']['get_authorized_student_profiles']['Returns'][number]
+export type AuthorizedGuardianProfile = Database['public']['Functions']['get_authorized_guardian_profiles']['Returns'][number]
 
-export type AuthorizedGuardianProfile = Omit<Responsavel, 'cpf'> & {
-  cpf: string | null
-  escola_id: string
-}
+type StudentProfileFilters = { studentId?: string; schoolId?: string }
+type GuardianProfileFilters = { guardianId?: string; schoolId?: string }
+type PrimaryGuardianSummary = Pick<AuthorizedGuardianProfile, 'id' | 'nome'>
+type GuardianProfileClient = SupabaseClient<Database> | WhatsAppSupabase
 
 export type StudentManagementProfile = AuthorizedStudentProfile & {
-  responsaveis?: { nome: string }
+  responsavel?: PrimaryGuardianSummary
   matriculas?: Array<{
     situacao: string | null
     turmas: {
@@ -43,10 +42,10 @@ export type GuardianManagementProfile = AuthorizedGuardianProfile & {
 }
 
 export async function getAuthorizedStudentProfiles(
-  client: unknown,
-  filters: { studentId?: string; schoolId?: string } = {},
+  client: SupabaseClient<Database>,
+  filters: StudentProfileFilters = {},
 ): Promise<AuthorizedStudentProfile[]> {
-  const { data, error } = await asPilotRpcClient(client).rpc<AuthorizedStudentProfile[]>(
+  const { data, error } = await asPilotRpcClient(client).rpc(
     'get_authorized_student_profiles',
     {
       p_student_id: filters.studentId ?? null,
@@ -58,10 +57,10 @@ export async function getAuthorizedStudentProfiles(
 }
 
 export async function getAuthorizedGuardianProfiles(
-  client: unknown,
-  filters: { guardianId?: string; schoolId?: string } = {},
+  client: GuardianProfileClient,
+  filters: GuardianProfileFilters = {},
 ): Promise<AuthorizedGuardianProfile[]> {
-  const { data, error } = await asPilotRpcClient(client).rpc<AuthorizedGuardianProfile[]>(
+  const { data, error } = await asPilotRpcClient(client).rpc(
     'get_authorized_guardian_profiles',
     {
       p_guardian_id: filters.guardianId ?? null,
@@ -74,7 +73,7 @@ export async function getAuthorizedGuardianProfiles(
 
 export async function getStudentManagementProfiles(
   client: SupabaseClient<Database>,
-  filters: { schoolId?: string } = {},
+  filters: StudentProfileFilters = {},
 ): Promise<StudentManagementProfile[]> {
   const profiles = await getAuthorizedStudentProfiles(client, filters)
   const studentIds = profiles.map(profile => profile.id)
@@ -96,7 +95,7 @@ export async function getStudentManagementProfiles(
       .in('id', studentIds),
     client
       .from('aluno_responsaveis')
-      .select('aluno_id,prioridade,responsaveis(nome)')
+      .select('aluno_id,responsavel_id,prioridade,responsaveis(id,nome)')
       .in('aluno_id', studentIds)
       .eq('ativo', true)
       .order('prioridade', { ascending: true }),
@@ -105,7 +104,7 @@ export async function getStudentManagementProfiles(
   if (guardianError) throw guardianError
 
   const enrollmentsByStudent = new Map((enrollmentRows ?? []).map(row => [row.id, row.matriculas]))
-  const guardiansByStudent = new Map<string, { nome: string }>()
+  const guardiansByStudent = new Map<string, PrimaryGuardianSummary>()
   for (const link of guardianLinks ?? []) {
     if (link.responsaveis && !guardiansByStudent.has(link.aluno_id)) {
       guardiansByStudent.set(link.aluno_id, link.responsaveis)
@@ -114,9 +113,30 @@ export async function getStudentManagementProfiles(
 
   return profiles.map(profile => ({
     ...profile,
-    responsaveis: guardiansByStudent.get(profile.id),
+    responsavel: guardiansByStudent.get(profile.id),
     matriculas: enrollmentsByStudent.get(profile.id) ?? [],
   }))
+}
+
+export async function getPrimaryGuardianForStudent(
+  client: SupabaseClient<Database>,
+  studentId: string,
+): Promise<AuthorizedGuardianProfile | null> {
+  const { data: link, error } = await client
+    .from('aluno_responsaveis')
+    .select('responsavel_id')
+    .eq('aluno_id', studentId)
+    .eq('ativo', true)
+    .order('prioridade', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  if (!link) return null
+
+  const [guardian] = await getAuthorizedGuardianProfiles(client, {
+    guardianId: link.responsavel_id,
+  })
+  return guardian ?? null
 }
 
 export async function getGuardianManagementProfiles(

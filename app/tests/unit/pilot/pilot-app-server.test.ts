@@ -15,7 +15,7 @@ describe('pilot direct app server contract', () => {
     expect(run('pilot_app_server_mode')).toBe('portless')
     expect(run('pilot_app_server_port 55000 direct')).toBe('55009')
     expect(run('pilot_app_server_origin app direct 55009')).toBe('http://127.0.0.1:55009')
-    expect(run('pilot_app_server_origin app portless')).toBe('https://app.localhost')
+    expect(run('portless() { printf "%s" "https://worktree.app.localhost"; }; pilot_app_server_origin app portless')).toBe('https://worktree.app.localhost')
   })
 
   it('accepts direct loopback and rejects a public or mismatched origin', () => {

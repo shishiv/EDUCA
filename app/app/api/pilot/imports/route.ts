@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
+import { createClient, type Tables } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor, type PilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
+import {
+  requirePilotImportAuditReceipt,
+  writePilotImportStagedAudit,
+} from '@/lib/pilot/pilot-import-audit'
 import {
   demoSandboxSimulatedSuccessResponse,
   isDemoSandboxEnabled,
@@ -30,7 +35,20 @@ import {
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024
 
-function getImportKey(): { key: string; keyId: string } {
+interface ImportKey {
+  key: string
+  keyId: string
+}
+
+const importRequestSchema = z.object({
+  csv: z.string().optional(),
+  dryRun: z.boolean().optional(),
+  validationToken: z.string().optional(),
+  idempotencyKey: z.string().optional(),
+  governance: z.unknown().optional(),
+})
+
+function getImportKey(): ImportKey {
   const key = process.env.PILOT_IMPORT_ENCRYPTION_KEY
   const keyId = process.env.PILOT_IMPORT_ENCRYPTION_KEY_ID || 'synthetic-local-v1'
   if (!key) throw new Error('PILOT_IMPORT_KEY_MISSING')
@@ -46,12 +64,29 @@ interface ConfirmedTreatmentAgreement {
 }
 
 interface ImportRequestBody {
-  csv?: string
+  csv: string
   dryRun?: boolean
   validationToken?: string
   idempotencyKey?: string
   governance?: unknown
 }
+
+type ExistingImportBatch = Pick<
+  Tables<'pilot_import_batches'>,
+  'id' | 'status' | 'validation_report' | 'idempotency_key' | 'content_sha256'
+>
+
+const confirmedAgreementSchema = z.object({
+  id: z.string().uuid(),
+  confirmed: z.literal(true),
+  confirmed_at: z.string().min(1),
+  confirmed_by: z.string().uuid(),
+})
+const activeAgreementRecorderSchema = z.object({
+  nome: z.string().min(1),
+  email: z.string().min(1),
+  ativo: z.literal(true),
+})
 
 async function requireConfirmedTreatmentAgreement(
   service: ReturnType<typeof createServiceRoleClient>,
@@ -68,27 +103,96 @@ async function requireConfirmedTreatmentAgreement(
     .eq('confirmed', true)
     .maybeSingle()
   if (agreementError) throw agreementError
-  if (!agreement?.id || agreement.confirmed !== true || !agreement.confirmed_at || !agreement.confirmed_by) {
+  const confirmedAgreement = confirmedAgreementSchema.safeParse(agreement)
+  if (!confirmedAgreement.success) {
     throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
   }
 
   const { data: recorder, error: recorderError } = await service
     .from('users')
     .select('id,nome,email,ativo')
-    .eq('id', agreement.confirmed_by)
+    .eq('id', confirmedAgreement.data.confirmed_by)
     .eq('ativo', true)
     .single()
-  if (recorderError || !recorder?.nome || !recorder?.email) {
+  if (recorderError) throw recorderError
+  const activeRecorder = activeAgreementRecorderSchema.safeParse(recorder)
+  if (!activeRecorder.success) {
     throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_REQUIRED: agreement confirmer must be active')
   }
 
   return {
-    id: agreement.id,
-    confirmedAt: agreement.confirmed_at,
-    confirmedBy: agreement.confirmed_by,
-    recorderName: recorder.nome,
-    recorderEmail: recorder.email,
+    id: confirmedAgreement.data.id,
+    confirmedAt: confirmedAgreement.data.confirmed_at,
+    confirmedBy: confirmedAgreement.data.confirmed_by,
+    recorderName: activeRecorder.data.nome,
+    recorderEmail: activeRecorder.data.email,
   }
+}
+
+function validateStageMutation(
+  body: ImportRequestBody,
+  report: GovernedCsvValidationReport,
+  key: string,
+): NextResponse | null {
+  if (body.dryRun) {
+    return NextResponse.json({ report, validationToken: createPilotDryRunValidationToken(report.contentSha256, key) })
+  }
+  if (!body.validationToken || !verifyPilotDryRunValidationToken(report.contentSha256, body.validationToken, key)) {
+    return NextResponse.json({ error: 'PILOT_IMPORT_DRY_RUN_REQUIRED' }, { status: 409 })
+  }
+  if (!body.idempotencyKey || !/^[A-Za-z0-9_-]{8,128}$/.test(body.idempotencyKey)) {
+    return NextResponse.json({ error: 'PILOT_IMPORT_IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 })
+  }
+  return null
+}
+
+async function findExistingImportBatch(
+  service: ReturnType<typeof createServiceRoleClient>,
+  schoolId: string,
+  idempotencyKey: string | undefined,
+  contentSha256: string,
+): Promise<ExistingImportBatch | null> {
+  const { data, error } = await service
+    .from('pilot_import_batches')
+    .select('id,status,validation_report,idempotency_key,content_sha256')
+    .eq('escola_id', schoolId)
+    .or(`idempotency_key.eq.${idempotencyKey},content_sha256.eq.${contentSha256}`)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data?.find(batch => batch.idempotency_key === idempotencyKey) ?? data?.[0] ?? null
+}
+
+async function respondToExistingImport(
+  service: ReturnType<typeof createServiceRoleClient>,
+  auditClient: Awaited<ReturnType<typeof createClient>>,
+  batch: ExistingImportBatch,
+  schoolId: string,
+  rows: GovernedPilotStudentCsvRow[],
+  report: GovernedCsvValidationReport,
+): Promise<NextResponse> {
+  const { data: audit, error } = await service
+    .from('pilot_audit_log')
+    .select('id')
+    .eq('event_type', 'import_staged')
+    .eq('entity_type', 'pilot_import_batch')
+    .eq('entity_id', batch.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  const auditId = audit?.id
+    ? requirePilotImportAuditReceipt(audit.id, 'PILOT_IMPORT_STAGE_AUDIT_RECEIPT_MISSING')
+    : await writePilotImportStagedAudit(asPilotRpcClient(auditClient), {
+        batchId: batch.id,
+        schoolId,
+        rowCount: rows.length,
+        sourceFingerprintSha256: report.contentSha256,
+      })
+  return NextResponse.json({
+    batch: { id: batch.id, status: batch.status, validation_report: batch.validation_report },
+    auditId,
+    idempotentReplay: true,
+  })
 }
 
 async function runDemoImport(
@@ -163,34 +267,17 @@ async function stageGovernedImport(
     governance.processingAgreement.version,
   )
 
-  if (body.dryRun) {
-    return NextResponse.json({ report, validationToken: createPilotDryRunValidationToken(report.contentSha256, key) })
-  }
-  if (!body.validationToken || !verifyPilotDryRunValidationToken(report.contentSha256, body.validationToken, key)) {
-    return NextResponse.json({ error: 'PILOT_IMPORT_DRY_RUN_REQUIRED' }, { status: 409 })
-  }
-  if (!body.idempotencyKey || !/^[A-Za-z0-9_-]{8,128}$/.test(body.idempotencyKey)) {
-    return NextResponse.json({ error: 'PILOT_IMPORT_IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 })
-  }
+  const validationResponse = validateStageMutation(body, report, key)
+  if (validationResponse) return validationResponse
 
-  const { data: existingBatches, error: existingError } = await service
-    .from('pilot_import_batches')
-    .select('id,status,validation_report,idempotency_key,content_sha256')
-    .eq('escola_id', school.id)
-    .or(`idempotency_key.eq.${body.idempotencyKey},content_sha256.eq.${report.contentSha256}`)
-    .order('created_at', { ascending: true })
-  if (existingError) throw existingError
-  const matched = existingBatches?.find(batch => batch.idempotency_key === body.idempotencyKey) ?? existingBatches?.[0]
+  const matched = await findExistingImportBatch(service, school.id, body.idempotencyKey, report.contentSha256)
   if (matched) {
-    return NextResponse.json({
-      batch: { id: matched.id, status: matched.status, validation_report: matched.validation_report },
-      idempotentReplay: true,
-    })
+    return respondToExistingImport(service, supabase, matched, school.id, rows, report)
   }
 
   const recordedAt = new Date().toISOString()
   const governanceMetadata = { ...governance, owner }
-  const encrypted = encryptPilotImportPayload(body.csv!, key, keyId)
+  const encrypted = encryptPilotImportPayload(body.csv, key, keyId)
   const { data: batch, error: insertError } = await service
     .from('pilot_import_batches')
     .insert({
@@ -234,18 +321,13 @@ async function stageGovernedImport(
     .single()
   if (insertError) throw insertError
 
-  await asPilotRpcClient(supabase).rpc('write_pilot_audit_event', {
-    p_event_type: 'import_staged', p_entity_type: 'pilot_import_batch', p_entity_id: batch.id,
-    p_escola_id: school.id,
-    p_metadata: {
-      dataset: 'students',
-      row_count: rows.length,
-      source_fingerprint_sha256: report.contentSha256,
-      governance_recorded: true,
-      plaintext_stored: false,
-    },
+  const auditId = await writePilotImportStagedAudit(asPilotRpcClient(supabase), {
+    batchId: batch.id,
+    schoolId: school.id,
+    rowCount: rows.length,
+    sourceFingerprintSha256: report.contentSha256,
   })
-  return NextResponse.json({ batch }, { status: 201 })
+  return NextResponse.json({ batch, auditId }, { status: 201 })
 }
 
 export async function POST(request: Request) {
@@ -256,10 +338,11 @@ export async function POST(request: Request) {
     const actor = await requirePilotActor(['admin', 'secretario'])
     if (actor.schoolId !== null) return NextResponse.json({ error: 'PILOT_IMPORT_SECRETARIAT_REQUIRED' }, { status: 403 })
 
-    const body = await request.json() as ImportRequestBody
-    if (!body.csv || Buffer.byteLength(body.csv, 'utf8') > MAX_CSV_BYTES) {
+    const parsedBody = importRequestSchema.safeParse(await request.json())
+    if (!parsedBody.success || !parsedBody.data.csv || Buffer.byteLength(parsedBody.data.csv, 'utf8') > MAX_CSV_BYTES) {
       return NextResponse.json({ error: 'PILOT_IMPORT_INVALID_SIZE' }, { status: 400 })
     }
+    const body: ImportRequestBody = { ...parsedBody.data, csv: parsedBody.data.csv }
 
     const governance = validatePilotImportGovernanceInput(body.governance)
     const { rows, report } = validateGovernedPilotStudentCsv(body.csv, 'synthetic')

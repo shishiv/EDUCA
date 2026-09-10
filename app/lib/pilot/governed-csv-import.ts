@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
+import type { Json } from '@/types/database'
 import { SYNTHETIC_CSV_MARKER } from './synthetic-csv-import'
 import { PILOT_IMPORT_ENCRYPTION_ALGORITHM } from './pilot-import-crypto'
+import { parseCsvRecords } from './csv-record-parser'
 
 /** Versioned technical contract for the synthetic pilot governance manifest. */
 export const SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION = 'educa-synthetic-pilot-governance-v1' as const
@@ -70,6 +72,16 @@ export interface GovernedCsvValidationReport {
   validRows: number
   contentSha256: string
   schoolCodes: string[]
+  issues: GovernedCsvValidationIssue[]
+}
+
+export interface GovernedCsvValidationResult {
+  rows: GovernedPilotStudentCsvRow[]
+  report: GovernedCsvValidationReport
+}
+
+interface GovernedCsvRowCollection {
+  rows: GovernedPilotStudentCsvRow[]
   issues: GovernedCsvValidationIssue[]
 }
 
@@ -281,39 +293,33 @@ const manifestSchema = z.object({
   }).strict(),
 }).strict()
 
-function parseCsvRecords(csv: string): string[][] {
-  const records: string[][] = []
-  let record: string[] = []
-  let field = ''
-  let quoted = false
+const governedPilotStudentCsvCandidateSchema = z.object({
+  synthetic_marker: z.string(),
+  source_id: z.string(),
+  school_code: z.string(),
+  class_code: z.string(),
+  student_name: z.string(),
+  birth_date: z.string(),
+  sex: z.string(),
+  guardian_name: z.string(),
+  guardian_phone: z.string(),
+  guardian_relationship: z.string(),
+}).strict()
 
-  for (let index = 0; index < csv.length; index += 1) {
-    const character = csv[index]
-    const nextCharacter = csv[index + 1]
-    if (character === '"' && quoted && nextCharacter === '"') {
-      field += '"'
-      index += 1
-    } else if (character === '"') {
-      quoted = !quoted
-    } else if (character === ',' && !quoted) {
-      record.push(field.trim())
-      field = ''
-    } else if ((character === '\n' || character === '\r') && !quoted) {
-      if (character === '\r' && nextCharacter === '\n') index += 1
-      record.push(field.trim())
-      field = ''
-      if (record.some(value => value !== '')) records.push(record)
-      record = []
-    } else {
-      field += character
-    }
-  }
+const governedPilotStudentCsvRowSchema = governedPilotStudentCsvCandidateSchema.extend({
+  sex: z.enum(['M', 'F']),
+})
 
-  if (quoted) throw new Error('PILOT_IMPORT_CSV_INVALID_QUOTING: unclosed quoted field')
-  record.push(field.trim())
-  if (record.some(value => value !== '')) records.push(record)
-  return records
-}
+const pilotImportJsonSchema: z.ZodType<Json> = z.lazy(() => z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  z.array(pilotImportJsonSchema),
+  z.record(pilotImportJsonSchema),
+]))
+
+type GovernedPilotStudentCsvCandidate = z.infer<typeof governedPilotStudentCsvCandidateSchema>
 
 function isValidIsoDate(value: string): boolean {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
@@ -339,35 +345,123 @@ function hasSpreadsheetFormula(value: string): boolean {
   return /^[=+\-@]/.test(value)
 }
 
+function validationIssue(row: number, field: string, code: string): GovernedCsvValidationIssue {
+  return { row, field, code }
+}
+
+function validateGovernedFormula(
+  values: string[],
+  row: number
+): GovernedCsvValidationIssue[] {
+  const field = GOVERNED_PILOT_STUDENT_CSV_HEADERS.find((header, index) =>
+    header !== 'guardian_phone' && hasSpreadsheetFormula(values[index])
+  )
+  return field ? [validationIssue(row, field, 'spreadsheet_formula_rejected')] : []
+}
+
+function validateGovernedDataMode(
+  candidate: GovernedPilotStudentCsvCandidate,
+  row: number,
+  dataMode: GovernedPilotImportDataMode
+): GovernedCsvValidationIssue[] {
+  if (dataMode === 'synthetic' && candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER) {
+    return [validationIssue(row, 'synthetic_marker', 'synthetic_marker_required')]
+  }
+  if (dataMode === 'real' && candidate.synthetic_marker !== '') {
+    return [validationIssue(row, 'synthetic_marker', 'real_mode_marker_must_be_empty')]
+  }
+  return []
+}
+
+function validateGovernedCandidateFields(
+  candidate: GovernedPilotStudentCsvCandidate,
+  seenSourceIds: Set<string>,
+  row: number
+): GovernedCsvValidationIssue[] {
+  const rules = [
+    ['source_id', 'invalid', !/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)],
+    ['source_id', 'duplicate', seenSourceIds.has(candidate.source_id)],
+    ['school_code', 'invalid', !/^[A-Za-z0-9_-]{1,64}$/.test(candidate.school_code)],
+    ['class_code', 'invalid', !/^[A-Za-z0-9_-]{1,64}$/.test(candidate.class_code)],
+    ['student_name', 'invalid_length', candidate.student_name.length < 2 || candidate.student_name.length > 160],
+    ['birth_date', 'invalid', !isValidIsoDate(candidate.birth_date)],
+    ['sex', 'invalid', !['M', 'F'].includes(candidate.sex)],
+    ['guardian_name', 'invalid_length', candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160],
+    ['guardian_phone', 'invalid', !/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)],
+    ['guardian_relationship', 'invalid_length', candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40],
+  ] as const
+  return rules.flatMap(([field, code, invalid]) => invalid ? [validationIssue(row, field, code)] : [])
+}
+
 function validateGovernedPilotStudentRow(
-  candidate: GovernedPilotStudentCsvRow,
+  candidate: GovernedPilotStudentCsvCandidate,
   values: string[],
   seenSourceIds: Set<string>,
   row: number,
   dataMode: GovernedPilotImportDataMode
 ): GovernedCsvValidationIssue[] {
-  const issues: GovernedCsvValidationIssue[] = []
-  const formulaField = GOVERNED_PILOT_STUDENT_CSV_HEADERS.find((header, index) =>
-    header !== 'guardian_phone' && hasSpreadsheetFormula(values[index])
+  return [
+    ...validateGovernedFormula(values, row),
+    ...validateGovernedDataMode(candidate, row, dataMode),
+    ...validateGovernedCandidateFields(candidate, seenSourceIds, row),
+  ]
+}
+
+function createGovernedCsvResult(
+  rows: GovernedPilotStudentCsvRow[],
+  dataMode: GovernedPilotImportDataMode,
+  totalRows: number,
+  contentSha256: string,
+  schoolCodes: string[],
+  issues: GovernedCsvValidationIssue[]
+): GovernedCsvValidationResult {
+  return {
+    rows,
+    report: {
+      valid: issues.length === 0 && rows.length > 0,
+      schemaVersion: GOVERNED_PILOT_IMPORT_SCHEMA_VERSION,
+      dataMode,
+      totalRows,
+      validRows: rows.length,
+      contentSha256,
+      schoolCodes,
+      issues,
+    },
+  }
+}
+
+function hasGovernedCsvHeaders(headers: string[], expectedHeaders: string[]): boolean {
+  return headers.length === expectedHeaders.length && headers.every((header, index) =>
+    header.replace(/^\uFEFF/, '') === expectedHeaders[index]
   )
-  if (formulaField) issues.push({ row, field: formulaField, code: 'spreadsheet_formula_rejected' })
-  if (dataMode === 'synthetic' && candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER) {
-    issues.push({ row, field: 'synthetic_marker', code: 'synthetic_marker_required' })
+}
+
+function collectGovernedCsvRows(
+  records: string[][],
+  expectedHeaders: string[],
+  dataMode: GovernedPilotImportDataMode
+): GovernedCsvRowCollection {
+  const rows: GovernedPilotStudentCsvRow[] = []
+  const issues: GovernedCsvValidationIssue[] = []
+  const seenSourceIds = new Set<string>()
+  for (let index = 1; index < records.length; index += 1) {
+    const values = records[index]
+    const row = index + 1
+    if (values.length !== expectedHeaders.length) {
+      issues.push(validationIssue(row, 'row', 'column_count_mismatch'))
+      continue
+    }
+    const candidate = governedPilotStudentCsvCandidateSchema.parse(
+      Object.fromEntries(expectedHeaders.map((header, valueIndex) => [header, values[valueIndex]]))
+    )
+    const rowIssues = validateGovernedPilotStudentRow(candidate, values, seenSourceIds, row, dataMode)
+    issues.push(...rowIssues)
+    if (rowIssues.length === 0) {
+      rows.push(governedPilotStudentCsvRowSchema.parse(candidate))
+      seenSourceIds.add(candidate.source_id)
+    }
   }
-  if (dataMode === 'real' && candidate.synthetic_marker !== '') {
-    issues.push({ row, field: 'synthetic_marker', code: 'real_mode_marker_must_be_empty' })
-  }
-  if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)) issues.push({ row, field: 'source_id', code: 'invalid' })
-  if (seenSourceIds.has(candidate.source_id)) issues.push({ row, field: 'source_id', code: 'duplicate' })
-  if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.school_code)) issues.push({ row, field: 'school_code', code: 'invalid' })
-  if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.class_code)) issues.push({ row, field: 'class_code', code: 'invalid' })
-  if (candidate.student_name.length < 2 || candidate.student_name.length > 160) issues.push({ row, field: 'student_name', code: 'invalid_length' })
-  if (!isValidIsoDate(candidate.birth_date)) issues.push({ row, field: 'birth_date', code: 'invalid' })
-  if (!['M', 'F'].includes(candidate.sex)) issues.push({ row, field: 'sex', code: 'invalid' })
-  if (candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160) issues.push({ row, field: 'guardian_name', code: 'invalid_length' })
-  if (!/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)) issues.push({ row, field: 'guardian_phone', code: 'invalid' })
-  if (candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40) issues.push({ row, field: 'guardian_relationship', code: 'invalid_length' })
-  return issues
+  return { rows, issues }
 }
 
 function normalizeGovernancePerson(person: PilotImportPerson): PilotImportPerson {
@@ -492,8 +586,8 @@ export function assertPilotImportOwnerMatchesActor(
 }
 
 /** Validates the versioned technical governance fields before a synthetic CSV enters a proof database. */
-export function validatePilotImportGovernanceInput(
-  input: unknown,
+export function validatePilotImportGovernanceInput<Input>(
+  input: Input,
   now: Date = new Date()
 ): PilotImportGovernanceInput {
   const parsed = governanceInputSchema.safeParse(input)
@@ -507,8 +601,8 @@ export function validatePilotImportGovernanceInput(
 }
 
 /** Validates the complete versioned manifest while reusing the existing maker-checker approval shape. */
-export function validateGovernedPilotImportManifest(
-  input: unknown,
+export function validateGovernedPilotImportManifest<Input>(
+  input: Input,
   now: Date = new Date()
 ): GovernedPilotImportManifest {
   const parsed = manifestSchema.safeParse(input)
@@ -569,80 +663,32 @@ export function validateGovernedPilotImportManifest(
 export function validateGovernedPilotStudentCsv(
   csv: string,
   dataMode: GovernedPilotImportDataMode
-): { rows: GovernedPilotStudentCsvRow[]; report: GovernedCsvValidationReport } {
+): GovernedCsvValidationResult {
   const contentSha256 = createHash('sha256').update(csv, 'utf8').digest('hex')
   let records: string[][]
   try {
-    records = parseCsvRecords(csv)
+    records = parseCsvRecords(csv, 'PILOT_IMPORT_CSV_INVALID_QUOTING: unclosed quoted field')
   } catch {
-    return {
-      rows: [],
-      report: {
-        valid: false,
-        schemaVersion: GOVERNED_PILOT_IMPORT_SCHEMA_VERSION,
-        dataMode,
-        totalRows: 0,
-        validRows: 0,
-        contentSha256,
-        schoolCodes: [],
-        issues: [{ row: 1, field: 'csv', code: 'invalid_quoting' }],
-      },
-    }
+    return createGovernedCsvResult([], dataMode, 0, contentSha256, [], [validationIssue(1, 'csv', 'invalid_quoting')])
   }
 
-  const issues: GovernedCsvValidationIssue[] = []
   const headers = records[0] ?? []
   const expectedHeaders = [...GOVERNED_PILOT_STUDENT_CSV_HEADERS]
-  if (headers.length !== expectedHeaders.length || headers.some((header, index) => header.replace(/^\uFEFF/, '') !== expectedHeaders[index])) {
-    issues.push({ row: 1, field: 'headers', code: 'schema_mismatch' })
-    return {
-      rows: [],
-      report: {
-        valid: false,
-        schemaVersion: GOVERNED_PILOT_IMPORT_SCHEMA_VERSION,
-        dataMode,
-        totalRows: Math.max(0, records.length - 1),
-        validRows: 0,
-        contentSha256,
-        schoolCodes: [],
-        issues,
-      },
-    }
+  const totalRows = Math.max(0, records.length - 1)
+  if (!hasGovernedCsvHeaders(headers, expectedHeaders)) {
+    return createGovernedCsvResult([], dataMode, totalRows, contentSha256, [], [validationIssue(1, 'headers', 'schema_mismatch')])
   }
 
-  const rows: GovernedPilotStudentCsvRow[] = []
-  const seenSourceIds = new Set<string>()
-  for (let index = 1; index < records.length; index += 1) {
-    const values = records[index]
-    const rowNumber = index + 1
-    if (values.length !== expectedHeaders.length) {
-      issues.push({ row: rowNumber, field: 'row', code: 'column_count_mismatch' })
-      continue
-    }
-    const candidate = Object.fromEntries(expectedHeaders.map((header, valueIndex) => [header, values[valueIndex]])) as unknown as GovernedPilotStudentCsvRow
-    const rowIssues = validateGovernedPilotStudentRow(candidate, values, seenSourceIds, rowNumber, dataMode)
-    issues.push(...rowIssues)
-    if (rowIssues.length === 0) {
-      rows.push(candidate)
-      seenSourceIds.add(candidate.source_id)
-    }
-  }
+  const { rows, issues } = collectGovernedCsvRows(records, expectedHeaders, dataMode)
 
   const schoolCodes = [...new Set(rows.map(row => row.school_code))].sort()
   if (rows.length > 0 && schoolCodes.length !== 1) issues.push({ row: 1, field: 'school_code', code: 'one_school_per_batch_required' })
-  return {
-    rows,
-    report: {
-      valid: issues.length === 0 && rows.length > 0,
-      schemaVersion: GOVERNED_PILOT_IMPORT_SCHEMA_VERSION,
-      dataMode,
-      totalRows: Math.max(0, records.length - 1),
-      validRows: rows.length,
-      contentSha256,
-      schoolCodes,
-      issues,
-    },
-  }
+  return createGovernedCsvResult(rows, dataMode, totalRows, contentSha256, schoolCodes, issues)
+}
+
+/** Converts validated domain values into the generated JSON contract used by database RPCs. */
+export function toPilotImportJson<Value>(value: Value): Json {
+  return pilotImportJsonSchema.parse(value)
 }
 
 /** Transforms validated CSV rows into the canonical EDUCA write model. */

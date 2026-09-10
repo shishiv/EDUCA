@@ -6,6 +6,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { Client } from 'pg'
+import { z } from 'zod'
 import { assertPilotDescriptiveReportDemoSafety } from '../lib/pilot/descriptive-report-demo-safety'
 import {
   PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
@@ -48,25 +49,36 @@ function recordPilotDescriptiveCheck(name: string, ok: boolean, detail: string):
   checks.push({ name, ok, detail })
 }
 
-function asNumber(value: unknown): number {
-  return Number(value)
-}
-
-function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' ? value as Record<string, unknown> : {}
-}
-
-function normalizeReceipt(receipt: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(receipt).map(([key, value]) => [
-      key,
-      typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value,
-    ])
-  )
-}
+const countSchema = z.union([
+  z.number().int().nonnegative(),
+  z.string().regex(/^\d+$/).transform(Number),
+])
+const descriptiveReceiptSchema = z.object({
+  schools: countSchema,
+  classes: countSchema,
+  students: countSchema,
+  enrollments: countSchema,
+  reports: countSchema,
+  sessions: countSchema,
+  canonical_content: countSchema,
+  marker: z.string().nullable(),
+  release_revision: z.string().nullable(),
+  rehearsal_environment: z.string().nullable(),
+  canonical_source: z.string().nullable(),
+  canonical_content_fingerprint: z.string().nullable(),
+  descriptive_report_fingerprint: z.string().nullable(),
+  school_scope: z.object({ id: z.string(), name: z.string(), code: z.string() }),
+  class_scope: z.object({ id: z.string(), name: z.string(), serie: z.string(), schoolId: z.string() }),
+  reporting_period: z.object({ year: z.number(), semester: z.string(), start: z.string(), end: z.string() }),
+  issuer_context: z.object({
+    reportId: z.string(), reportProfessorId: z.string(), actorId: z.string(),
+    name: z.string(), email: z.string(), role: z.string(), authEmail: z.string(),
+  }),
+})
+type DescriptiveReceipt = z.infer<typeof descriptiveReceiptSchema>
 
 async function writePilotDescriptiveValidationReceipt(
-  actual: Record<string, unknown>
+  actual: DescriptiveReceipt
 ): Promise<void> {
   const evidenceDirectory = path.join(process.cwd(), '.pilot-evidence')
   await mkdir(evidenceDirectory, { recursive: true })
@@ -96,8 +108,8 @@ async function writePilotDescriptiveValidationReceipt(
   )
 }
 
-function recordCountChecks(actual: Record<string, unknown>): void {
-  const expectedCounts: Record<string, number> = {
+function recordCountChecks(actual: DescriptiveReceipt): void {
+  const expectedCounts = {
     schools: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.schools,
     classes: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.classes,
     students: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.students,
@@ -107,13 +119,14 @@ function recordCountChecks(actual: Record<string, unknown>): void {
     canonical_content: PILOT_DESCRIPTIVE_EXPECTED_COUNTS.canonicalContent,
   }
 
+  const counts = new Map(Object.entries(actual))
   for (const [name, expectedCount] of Object.entries(expectedCounts)) {
-    const count = asNumber(actual[name])
+    const count = counts.get(name)
     recordPilotDescriptiveCheck(`count_${name}`, count === expectedCount, `${count} == ${expectedCount}`)
   }
 }
 
-function recordContractChecks(actual: Record<string, unknown>): void {
+function recordContractChecks(actual: DescriptiveReceipt): void {
   recordPilotDescriptiveCheck(
     'marker_synthetic',
     actual.marker === PILOT_DESCRIPTIVE_SEED_MARKER,
@@ -151,14 +164,14 @@ function recordContractChecks(actual: Record<string, unknown>): void {
   )
 }
 
-function recordScopeChecks(actual: Record<string, unknown>): void {
-  const schoolScope = asObject(actual.school_scope)
+function recordScopeChecks(actual: DescriptiveReceipt): void {
+  const schoolScope = actual.school_scope
   recordPilotDescriptiveCheck(
     'scope_school',
     schoolScope.id === PILOT_DESCRIPTIVE_SCHOOL_ID && schoolScope.name === PILOT_DESCRIPTIVE_EXPECTED_SCOPE.schoolName,
     `${schoolScope.name ?? '(missing)'} / ${schoolScope.id ?? '(missing)'}`
   )
-  const classScope = asObject(actual.class_scope)
+  const classScope = actual.class_scope
   recordPilotDescriptiveCheck(
     'scope_class',
     classScope.id === PILOT_DESCRIPTIVE_CLASS_ID &&
@@ -168,7 +181,10 @@ function recordScopeChecks(actual: Record<string, unknown>): void {
     `${classScope.name ?? '(missing)'} / ${classScope.id ?? '(missing)'}`
   )
 
-  const reportingPeriod = asObject(actual.reporting_period)
+}
+
+function recordPeriodAndIssuerChecks(actual: DescriptiveReceipt): void {
+  const reportingPeriod = actual.reporting_period
   recordPilotDescriptiveCheck(
     'reporting_period',
     reportingPeriod.year === PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD.year &&
@@ -178,7 +194,7 @@ function recordScopeChecks(actual: Record<string, unknown>): void {
     JSON.stringify(reportingPeriod)
   )
 
-  const issuer = asObject(actual.issuer_context)
+  const issuer = actual.issuer_context
   recordPilotDescriptiveCheck(
     'issuer_authenticated_synthetic',
     issuer.reportId === PILOT_DESCRIPTIVE_REPORT_ID &&
@@ -267,10 +283,11 @@ async function validatePilotDescriptive(): Promise<void> {
       ]
     )
 
-    const actual = normalizeReceipt((rows[0] ?? {}) as Record<string, unknown>)
+    const actual = descriptiveReceiptSchema.parse(rows[0])
     recordCountChecks(actual)
     recordContractChecks(actual)
     recordScopeChecks(actual)
+    recordPeriodAndIssuerChecks(actual)
 
     console.info(`PILOT_DESCRIPTIVE_VALIDATION_RECEIPT: ${JSON.stringify(actual)}`)
     for (const check of checks) {

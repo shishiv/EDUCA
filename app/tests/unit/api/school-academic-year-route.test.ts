@@ -1,17 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { GET, PATCH } from '@/app/api/school-settings/academic-year/route'
-
-const { actorMock, createClientMock } = vi.hoisted(() => ({
-  actorMock: vi.fn(),
-  createClientMock: vi.fn(),
-}))
-
-vi.mock('@/lib/pilot/pilot-server-auth', () => ({ requirePilotActor: actorMock }))
-vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }))
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+import type { requirePilotActor } from '@/lib/pilot/pilot-server-auth'
+import {
+  createSchoolAcademicYearRouteHandlers,
+  type SchoolAcademicYearHandlerDependencies,
+} from '@/app/api/school-settings/academic-year/handler'
 
 const SCHOOL_ID = '00000000-0000-0000-0000-000000000001'
 const OTHER_SCHOOL_ID = '00000000-0000-0000-0000-000000000002'
-const YEAR = new Date().getUTCFullYear()
+const YEAR = 2026
 const academicYear = {
   id: '00000000-0000-0000-0000-000000000101',
   escola_id: SCHOOL_ID,
@@ -22,48 +20,94 @@ const academicYear = {
   updated_at: '2026-08-26T00:00:00.000Z',
 }
 
-function patch(body: unknown) {
-  return PATCH(new Request('http://test/api/school-settings/academic-year', {
+interface AcademicYearPatchPayload {
+  readonly startDate: string
+  readonly endDate: string
+  readonly schoolId?: string
+}
+
+const actor = vi.fn<typeof requirePilotActor>()
+const transport = vi.fn<typeof fetch>()
+const client = createClient<Database>('http://127.0.0.1:54321', 'synthetic-anon', {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  global: { fetch: transport },
+})
+
+const dependencies: SchoolAcademicYearHandlerDependencies = {
+  createClient: async () => client,
+  currentYear: () => YEAR,
+  requireActor: actor,
+}
+
+const handlers = createSchoolAcademicYearRouteHandlers(dependencies)
+
+function patch(body: AcademicYearPatchPayload): Promise<Response> {
+  return handlers.PATCH(new Request('http://test/api/school-settings/academic-year', {
     method: 'PATCH',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   }))
 }
 
-describe('/api/school-settings/academic-year', () => {
-  const rpc = vi.fn()
+async function sentRpcRequest(): Promise<Request> {
+  const call = transport.mock.calls[0]
+  if (!call) throw new Error('Expected an academic-year RPC request')
+  return new Request(call[0], call[1])
+}
 
+async function expectRpc(name: string, payload: Record<string, string | number>): Promise<void> {
+  const request = await sentRpcRequest()
+  expect(new URL(request.url).pathname).toBe(`/rest/v1/rpc/${name}`)
+  await expect(request.json()).resolves.toEqual(payload)
+}
+
+describe('/api/school-settings/academic-year', () => {
   beforeEach(() => {
-    actorMock.mockReset()
-    createClientMock.mockReset()
-    rpc.mockReset()
-    actorMock.mockResolvedValue({ id: 'director-1', role: 'diretor', schoolId: SCHOOL_ID })
-    createClientMock.mockResolvedValue({ rpc })
+    actor.mockReset()
+    transport.mockReset()
+    actor.mockResolvedValue({
+      id: 'director-1',
+      name: 'Diretor sintético',
+      email: 'director@synthetic.invalid',
+      role: 'diretor',
+      schoolId: SCHOOL_ID,
+    })
   })
 
   it('lets a director read the current academic year for their school', async () => {
-    rpc.mockResolvedValue({ data: [academicYear], error: null })
+    transport.mockResolvedValue(Response.json([academicYear]))
 
-    const response = await GET()
+    const response = await handlers.GET()
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ academicYear })
-    expect(actorMock).toHaveBeenCalledWith(['diretor'])
-    expect(rpc).toHaveBeenCalledWith('get_school_academic_year', {
+    expect(actor).toHaveBeenCalledWith(['diretor'])
+    await expectRpc('get_school_academic_year', {
       p_escola_id: SCHOOL_ID,
       p_ano: YEAR,
     })
   })
 
+  it('returns 404 when the director school has no persisted year for the current year', async () => {
+    transport.mockResolvedValue(Response.json([]))
+
+    const response = await handlers.GET()
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({
+      error: 'O ano letivo atual não está cadastrado para esta escola.',
+    })
+  })
+
   it('lets a director update the dates for their school', async () => {
     const updated = { ...academicYear, data_inicio: `${YEAR}-02-09`, data_fim: `${YEAR}-12-20` }
-    rpc.mockResolvedValue({ data: [updated], error: null })
+    transport.mockResolvedValue(Response.json([updated]))
 
     const response = await patch({ startDate: updated.data_inicio, endDate: updated.data_fim })
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ academicYear: updated })
-    expect(rpc).toHaveBeenCalledWith('set_school_academic_year', {
+    await expectRpc('set_school_academic_year', {
       p_escola_id: SCHOOL_ID,
       p_ano: YEAR,
       p_data_inicio: updated.data_inicio,
@@ -72,14 +116,14 @@ describe('/api/school-settings/academic-year', () => {
   })
 
   it('denies roles outside the school-management boundary', async () => {
-    actorMock.mockRejectedValue(new Error('PILOT_ROLE_DENIED'))
+    actor.mockRejectedValue(new Error('PILOT_ROLE_DENIED'))
 
-    const readResponse = await GET()
+    const readResponse = await handlers.GET()
     const updateResponse = await patch({ startDate: `${YEAR}-02-02`, endDate: `${YEAR}-12-18` })
 
     expect(readResponse.status).toBe(403)
     expect(updateResponse.status).toBe(403)
-    expect(rpc).not.toHaveBeenCalled()
+    expect(transport).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -92,7 +136,7 @@ describe('/api/school-settings/academic-year', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Informe datas válidas. A data de término não pode ser anterior à data de início.',
     })
-    expect(rpc).not.toHaveBeenCalled()
+    expect(transport).not.toHaveBeenCalled()
   })
 
   it('rejects attempts to target another school', async () => {
@@ -103,6 +147,6 @@ describe('/api/school-settings/academic-year', () => {
     })
 
     expect(response.status).toBe(400)
-    expect(rpc).not.toHaveBeenCalled()
+    expect(transport).not.toHaveBeenCalled()
   })
 })

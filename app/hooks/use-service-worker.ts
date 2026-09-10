@@ -12,7 +12,7 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { logger } from '@/lib/logger'
 import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 
@@ -20,16 +20,90 @@ interface ServiceWorkerState {
   isInstalled: boolean
   isOnline: boolean
   needsUpdate: boolean
-  registration: ServiceWorkerRegistration | null
+  registration: ManagedServiceWorkerRegistration | null
 }
 
-export function useServiceWorker() {
+interface ManagedServiceWorker {
+  readonly state: string
+  onStateChange(listener: () => void): () => void
+  postMessage(message: { type: 'SKIP_WAITING' }): void
+}
+
+interface ManagedServiceWorkerRegistration {
+  getInstalling(): ManagedServiceWorker | null
+  getWaiting(): ManagedServiceWorker | null
+  onUpdateFound(listener: () => void): () => void
+  update(): Promise<void>
+  registerAttendanceSync(): Promise<void> | null
+}
+
+export interface ServiceWorkerRuntime {
+  isControlled(): boolean
+  register(): Promise<ManagedServiceWorkerRegistration | null>
+  whenReady(): Promise<void>
+  onControllerChange(listener: () => void): () => void
+}
+
+function createManagedWorker(worker: ServiceWorker): ManagedServiceWorker {
+  return {
+    get state() {
+      return worker.state
+    },
+    onStateChange(listener) {
+      worker.addEventListener('statechange', listener)
+      return () => worker.removeEventListener('statechange', listener)
+    },
+    postMessage(message) {
+      worker.postMessage(message)
+    },
+  }
+}
+
+function createManagedRegistration(registration: ServiceWorkerRegistration): ManagedServiceWorkerRegistration {
+  return {
+    getInstalling: () => registration.installing ? createManagedWorker(registration.installing) : null,
+    getWaiting: () => registration.waiting ? createManagedWorker(registration.waiting) : null,
+    onUpdateFound(listener) {
+      registration.addEventListener('updatefound', listener)
+      return () => registration.removeEventListener('updatefound', listener)
+    },
+    update: async () => {
+      await registration.update()
+    },
+    registerAttendanceSync: () => registration.sync?.register('attendance-sync') ?? null,
+  }
+}
+
+function createBrowserServiceWorkerRuntime(container: ServiceWorkerContainer): ServiceWorkerRuntime {
+  return {
+    isControlled: () => container.controller !== null,
+    async register() {
+      const registration = await container.register('/sw.js', { scope: '/' })
+      return registration ? createManagedRegistration(registration) : null
+    },
+    whenReady: async () => {
+      await container.ready
+    },
+    onControllerChange(listener) {
+      container.addEventListener('controllerchange', listener)
+      return () => container.removeEventListener('controllerchange', listener)
+    },
+  }
+}
+
+export function useServiceWorker(runtime?: ServiceWorkerRuntime) {
+  const hasController = useRef(false)
   const [state, setState] = useState<ServiceWorkerState>({
     isInstalled: false,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     needsUpdate: false,
     registration: null
   })
+  const browserRuntime = useMemo(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return null
+    return createBrowserServiceWorkerRuntime(navigator.serviceWorker)
+  }, [])
+  const serviceWorkerRuntime = runtime ?? browserRuntime
 
   // Register service worker
   useEffect(() => {
@@ -56,17 +130,62 @@ export function useServiceWorker() {
       return
     }
 
-    if (!('serviceWorker' in navigator)) return
+    if (!serviceWorkerRuntime) return
 
-    let registration: ServiceWorkerRegistration | null = null
+    const serviceWorker = serviceWorkerRuntime
+
+    let registration: ManagedServiceWorkerRegistration | null = null
+    let removeInstallingStateChange: (() => void) | null = null
+    let removeUpdateFound: (() => void) | null = null
+    let disposed = false
+    if (serviceWorker.isControlled()) {
+      hasController.current = true
+    }
+
+    const handleInstallingStateChange = () => {
+      if (registration?.getInstalling()?.state === 'installed' && serviceWorker.isControlled()) {
+        logger.info('[SW Hook] New service worker available')
+        setState(prev => ({ ...prev, needsUpdate: true }))
+      }
+    }
+
+    const handleUpdateFound = () => {
+      const newWorker = registration?.getInstalling()
+      if (!newWorker) return
+
+      removeInstallingStateChange?.()
+      removeInstallingStateChange = newWorker.onStateChange(handleInstallingStateChange)
+    }
+
+    const handleControllerChange = () => {
+      logger.info('[SW Hook] Service worker controller changed')
+      setState(prev => ({ ...prev, needsUpdate: false }))
+      if (hasController.current) {
+        window.location.reload()
+      }
+      hasController.current = true
+    }
+
+    const removeControllerChange = serviceWorker.onControllerChange(handleControllerChange)
+    void serviceWorker.whenReady().then(() => {
+      if (!disposed && serviceWorker.isControlled()) {
+        hasController.current = true
+      }
+    })
 
     const registerSW = async () => {
       try {
         logger.info('[SW Hook] Registering service worker...')
 
-        registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/'
-        })
+        const nextRegistration = await serviceWorker.register()
+
+        if (disposed) return
+        if (!nextRegistration) {
+          logger.info('[SW Hook] Service worker registration unavailable in this browser context')
+          return
+        }
+
+        registration = nextRegistration
 
         logger.info('[SW Hook] Service worker registered successfully')
 
@@ -76,28 +195,15 @@ export function useServiceWorker() {
           registration
         }))
 
-        // Check for updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration!.installing
+        removeUpdateFound = registration.onUpdateFound(handleUpdateFound)
 
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                logger.info('[SW Hook] New service worker available')
-                setState(prev => ({ ...prev, needsUpdate: true }))
-              }
-            })
-          }
-        })
-
-        // Listen for controller changes
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          logger.info('[SW Hook] Service worker controller changed')
-          window.location.reload()
-        })
+        if (registration.getWaiting() && serviceWorker.isControlled()) {
+          logger.info('[SW Hook] Existing service worker update available')
+          setState(prev => ({ ...prev, needsUpdate: true }))
+        }
 
       } catch (error) {
-        logger.error('[SW Hook] Service worker registration failed:', error as Error)
+        logger.error('[SW Hook] Service worker registration failed:', error instanceof Error ? error : new Error(String(error)))
       }
     }
 
@@ -105,9 +211,12 @@ export function useServiceWorker() {
 
     // Cleanup
     return () => {
-      registration?.unregister()
+      disposed = true
+      removeControllerChange()
+      removeUpdateFound?.()
+      removeInstallingStateChange?.()
     }
-  }, [])
+  }, [serviceWorkerRuntime])
 
   // Monitor online/offline status
   useEffect(() => {
@@ -118,13 +227,10 @@ export function useServiceWorker() {
       setState(prev => ({ ...prev, isOnline: true }))
 
       // Trigger background sync for offline attendance
-      if (state.registration && 'sync' in state.registration) {
-        // SyncManager is part of Background Sync API - use unknown cast for compatibility
-        const syncManager = (state.registration as ServiceWorkerRegistration & { sync: unknown }).sync as {
-          register(tag: string): Promise<void>
-        }
-        syncManager.register('attendance-sync').catch((err: unknown) => {
-          logger.error('[SW Hook] Background sync registration failed:', err instanceof Error ? err : new Error(String(err)))
+      const sync = state.registration?.registerAttendanceSync()
+      if (sync) {
+        void sync.catch(error => {
+          logger.error('[SW Hook] Background sync registration failed:', error instanceof Error ? error : new Error(String(error)))
         })
       }
     }
@@ -144,49 +250,44 @@ export function useServiceWorker() {
   }, [state.registration])
 
   // Update service worker
-  const update = async () => {
+  const update = useCallback(async () => {
     if (!state.registration) return
 
     try {
       await state.registration.update()
       logger.info('[SW Hook] Service worker update triggered')
     } catch (error) {
-      logger.error('[SW Hook] Service worker update failed:', error as Error)
+      logger.error('[SW Hook] Service worker update failed:', error instanceof Error ? error : new Error(String(error)))
     }
-  }
+  }, [state.registration])
 
   // Skip waiting and activate new service worker
-  const activateUpdate = () => {
+  const activateUpdate = useCallback(() => {
     if (!state.registration) return
 
-    const waiting = state.registration.waiting
+    const waiting = state.registration.getWaiting()
 
     if (waiting) {
       waiting.postMessage({ type: 'SKIP_WAITING' })
       setState(prev => ({ ...prev, needsUpdate: false }))
     }
-  }
+  }, [state.registration])
 
   // Clear all caches
-  const clearCache = async () => {
+  const clearCache = useCallback(async () => {
     if (!state.registration) return
 
     try {
       const cacheNames = await caches.keys()
       await Promise.all(cacheNames.map(name => caches.delete(name)))
       logger.info('[SW Hook] All caches cleared')
-
-      // Notify service worker
-      if (state.registration.active) {
-        state.registration.active.postMessage({ type: 'CLEAR_CACHE' })
-      }
     } catch (error) {
-      logger.error('[SW Hook] Failed to clear caches:', error as Error)
+      logger.error('[SW Hook] Failed to clear caches:', error instanceof Error ? error : new Error(String(error)))
     }
-  }
+  }, [state.registration])
 
   // Get offline attendance count from IndexedDB
-  const getOfflineCount = async (): Promise<number> => {
+  const getOfflineCount = useCallback(async (): Promise<number> => {
     if (isPilotModeEnabled()) return 0
     try {
       const db = await openIndexedDB()
@@ -202,7 +303,7 @@ export function useServiceWorker() {
       logger.error('[SW Hook] Failed to get offline count:', error instanceof Error ? error : new Error(String(error)))
       return 0
     }
-  }
+  }, [])
 
   return {
     isInstalled: state.isInstalled,

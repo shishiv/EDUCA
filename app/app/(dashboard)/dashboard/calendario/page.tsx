@@ -4,6 +4,7 @@ import { useClassroomTranslations } from '@/i18n/classroom'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useEscola } from '@/contexts/escola-context'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,7 +25,17 @@ import { CalendarioEventForm } from '@/components/calendario/evento-form'
 import { CalendarioEventList } from '@/components/calendario/evento-list'
 import { logger } from '@/lib/logger'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
+import type { Tables } from '@/types/database'
 
+export type CalendarioEventoTipo = 'feriado' | 'recesso' | 'dia_letivo' | 'evento' | 'reuniao' | 'conselho'
+const CALENDARIO_EVENTO_TIPOS = [
+  'feriado',
+  'recesso',
+  'dia_letivo',
+  'evento',
+  'reuniao',
+  'conselho',
+] as const satisfies ReadonlyArray<CalendarioEventoTipo>
 export interface CalendarioEvento {
   id: string
   escola_id: string
@@ -32,7 +43,7 @@ export interface CalendarioEvento {
   descricao: string | null
   data_inicio: string
   data_fim: string
-  tipo: 'feriado' | 'recesso' | 'dia_letivo' | 'evento' | 'reuniao' | 'conselho'
+  tipo: CalendarioEventoTipo
   afeta_frequencia: boolean
   cor: string | null
   ano_letivo: number
@@ -41,18 +52,34 @@ export interface CalendarioEvento {
   updated_at: string | null
 }
 
-const TIPO_CORES: Record<string, string> = {
+const TIPO_CORES = {
   feriado: 'bg-red-500',
   recesso: 'bg-orange-500',
   dia_letivo: 'bg-green-500',
   evento: 'bg-blue-500',
   reuniao: 'bg-purple-500',
   conselho: 'bg-amber-500',
+} satisfies Record<CalendarioEventoTipo, string>
+
+type CalendarioEventoRow = Tables<'calendario_escolar'>
+
+function isCalendarioEventoTipo(value: string): value is CalendarioEventoTipo {
+  return value in TIPO_CORES
 }
 
+function normalizeCalendarioEvento(evento: CalendarioEventoRow): CalendarioEvento | null {
+  if (!isCalendarioEventoTipo(evento.tipo)) return null
+  return {
+    ...evento,
+    tipo: evento.tipo,
+    afeta_frequencia: evento.afeta_frequencia ?? false,
+    ano_letivo: evento.ano_letivo ?? new Date(evento.data_inicio).getFullYear(),
+  }
+}
 
 export default function CalendarioPage() {
   const { userProfile } = useAuth()
+  const { selectedEscola } = useEscola()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [eventos, setEventos] = useState<CalendarioEvento[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,10 +88,10 @@ export default function CalendarioPage() {
   const [editingEvento, setEditingEvento] = useState<CalendarioEvento | null>(null)
 
   const t = useClassroomTranslations()
-  const tipoLabels: Record<string, string> = {
+  const tipoLabels = {
     feriado: t('calendar.types.holiday'), recesso: t('calendar.types.break'), dia_letivo: t('calendar.types.schoolDay'),
     evento: t('calendar.types.event'), reuniao: t('calendar.types.meeting'), conselho: t('calendar.types.council'),
-  }
+  } satisfies Record<CalendarioEventoTipo, string>
 
   const isAdmin = userProfile?.tipo_usuario === 'admin' || userProfile?.tipo_usuario === 'secretario'
 
@@ -86,16 +113,13 @@ export default function CalendarioPage() {
 
       if (error) throw error
 
-      // Cast tipo to expected union type
-      const typedData = (data || []).map(evento => ({
-        ...evento,
-        tipo: evento.tipo as CalendarioEvento['tipo'],
-        afeta_frequencia: evento.afeta_frequencia ?? false,
-        ano_letivo: evento.ano_letivo ?? new Date(evento.data_inicio).getFullYear(),
-      }))
+      const typedData = (data ?? []).flatMap(evento => {
+        const normalized = normalizeCalendarioEvento(evento)
+        return normalized ? [normalized] : []
+      })
       setEventos(typedData)
     } catch (error) {
-      logger.error('Erro ao carregar eventos:', error as Error)
+      logger.error('Erro ao carregar eventos:', error instanceof Error ? error : new Error(String(error)))
       toast.error('Erro ao carregar eventos do calendario')
     } finally {
       setLoading(false)
@@ -145,7 +169,7 @@ export default function CalendarioPage() {
       toast.success(t('calendar.deleteSuccess'))
       fetchEventos()
     } catch (error) {
-      logger.error('Erro ao excluir evento:', error as Error)
+      logger.error('Erro ao excluir evento:', error instanceof Error ? error : new Error(String(error)))
       toast.error(t('calendar.deleteError'))
     }
   }
@@ -176,6 +200,54 @@ export default function CalendarioPage() {
   const startPadding = monthStart.getDay()
   const paddingDays = Array(startPadding).fill(null)
 
+  function renderSchoolSummary() {
+    return (
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>{t('labels.school')}:</strong> {selectedEscola?.nome || t('calendar.schoolNotInformed')}
+          {' | '}
+          <strong>{t('calendar.schoolYear')}:</strong> {new Date().getFullYear()}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  function renderEventList() {
+    return (
+      <Card>
+          <CardHeader>
+            <CardTitle>{t('calendar.events')}</CardTitle>
+            <CardDescription>
+              {eventos.length} evento(s) em {format(currentDate, 'MMMM', { locale: ptBR })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CalendarioEventList
+              eventos={eventos}
+              onEdit={isAdmin ? handleEditEvento : undefined}
+              onDelete={isAdmin && !isDemoSandboxEnabled() ? handleDeleteEvento : undefined}
+              tipoLabels={tipoLabels}
+              tipoCores={TIPO_CORES}
+            />
+          </CardContent>
+        </Card>
+    )
+  }
+
+  function renderEventForm() {
+    return (showEventForm && userProfile?.escola_id && (
+        <CalendarioEventForm
+          escolaId={userProfile.escola_id}
+          selectedDate={selectedDate}
+          evento={editingEvento}
+          onClose={handleFormClose}
+          onSuccess={handleFormSuccess}
+          tipoLabels={tipoLabels}
+        />
+      ))
+  }
+
   if (!userProfile) {
     return (
       <div className="space-y-6">
@@ -205,15 +277,7 @@ export default function CalendarioPage() {
         )}
       </div>
 
-      {/* User Info */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>{t('labels.school')}:</strong> {(userProfile as any).escola?.nome || t('calendar.schoolNotInformed')}
-          {' | '}
-          <strong>{t('calendar.schoolYear')}:</strong> {new Date().getFullYear()}
-        </AlertDescription>
-      </Alert>
+      {renderSchoolSummary()}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
@@ -304,24 +368,7 @@ export default function CalendarioPage() {
           </CardContent>
         </Card>
 
-        {/* Event List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('calendar.events')}</CardTitle>
-            <CardDescription>
-              {eventos.length} evento(s) em {format(currentDate, 'MMMM', { locale: ptBR })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CalendarioEventList
-              eventos={eventos}
-              onEdit={isAdmin ? handleEditEvento : undefined}
-              onDelete={isAdmin && !isDemoSandboxEnabled() ? handleDeleteEvento : undefined}
-              tipoLabels={tipoLabels}
-              tipoCores={TIPO_CORES}
-            />
-          </CardContent>
-        </Card>
+        {renderEventList()}
       </div>
 
       {/* Legend */}
@@ -331,10 +378,10 @@ export default function CalendarioPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            {Object.entries(tipoLabels).map(([tipo, label]) => (
+            {CALENDARIO_EVENTO_TIPOS.map(tipo => (
               <div key={tipo} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded ${TIPO_CORES[tipo]}`} />
-                <span className="text-sm">{label}</span>
+                <span className="text-sm">{tipoLabels[tipo]}</span>
                 {(tipo === 'feriado' || tipo === 'recesso') && (
                   <Badge variant="secondary" className="text-xs">
                     {t('calendar.affectsAttendance')}
@@ -346,17 +393,7 @@ export default function CalendarioPage() {
         </CardContent>
       </Card>
 
-      {/* Event Form Modal */}
-      {showEventForm && userProfile?.escola_id && (
-        <CalendarioEventForm
-          escolaId={userProfile.escola_id}
-          selectedDate={selectedDate}
-          evento={editingEvento}
-          onClose={handleFormClose}
-          onSuccess={handleFormSuccess}
-          tipoLabels={tipoLabels}
-        />
-      )}
+      {renderEventForm()}
     </div>
   )
 }

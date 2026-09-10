@@ -1,0 +1,30 @@
+ M app/app/(auth)/login/page.tsx
+ M app/app/(auth)/primeiro-acesso/page.tsx
+ M app/app/(dashboard)/dashboard/perfil/page.tsx
+ M app/app/api/pilot/first-access/route.ts
+ M app/app/api/pilot/invitations/route.ts
+ M app/app/api/pilot/users/[userId]/revoke/route.ts
+ A app/app/api/search/handler.ts
+ M app/app/api/search/route.ts
+ M app/app/api/users/[userId]/route.ts
+ A app/app/api/users/[userId]/status/handler.ts
+ M app/app/api/users/[userId]/status/route.ts
+ A app/app/api/users/me/route.ts
+ M app/contexts/escola-context.tsx
+ M app/lib/auth.ts
+ M app/lib/global-search.ts
+ M app/lib/middleware/auth-middleware.ts
+ M app/lib/pilot/pilot-server-auth.ts
+ M app/lib/route-policy.ts
+ M app/lib/services/user-lifecycle.ts
+ M app/tests/unit/api/search-route.test.ts
+ M app/tests/unit/api/user-lifecycle-revocation-route.test.ts
+ M app/tests/unit/api/user-lifecycle-routes.test.ts
+ M app/tests/unit/api/user-status-route.test.ts
+ M app/tests/unit/auth-middleware.test.ts
+ A supabase/migrations/20260907000000_auth_mutation_audit_receipts.sql
+?? .pi/semantic-grep.sqlite
+?? VENT.md
+?? app/app/api/pilot/invitations/handler.ts
+?? app/app/api/pilot/users/[userId]/revoke/handler.ts
+?? app/tests/unit/api/user-lifecycle-fixtures.ts

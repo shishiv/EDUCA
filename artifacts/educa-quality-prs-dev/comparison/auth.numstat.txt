@@ -1,0 +1,15 @@
+0	10	VENT.md
+5	1	app/app/(auth)/login/page.tsx
+300	275	app/app/(dashboard)/dashboard/perfil/page.tsx
+70	63	app/app/api/pilot/first-access/route.ts
+7	12	app/app/api/pilot/invitations/handler.ts
+2	115	app/app/api/users/[userId]/route.ts
+1	1	app/app/api/users/[userId]/status/handler.ts
+2	40	app/app/api/users/me/route.ts
+93	103	app/contexts/escola-context.tsx
+52	88	app/lib/auth.ts
+0	2	app/lib/route-policy.ts
+0	1	app/lib/services/user-lifecycle.ts
+22	5	app/tests/unit/api/user-lifecycle-routes.test.ts
+4	2	app/tests/unit/auth-middleware.test.ts
+0	1	supabase/migrations/20260907000000_auth_mutation_audit_receipts.sql

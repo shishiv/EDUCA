@@ -11,9 +11,9 @@
  *
  * | Role | Access |
  * |------|--------|
- * | admin | Full read/write across all schools |
- * | diretor | Read/write within own escola |
- * | secretario | Read/write within own escola |
+ * | admin | Reads users across all schools; mutations use governed routes |
+ * | diretor | Reads users within the assigned escola |
+ * | secretario | Reads users within the assigned escola |
  * | professor | Read own profile only |
  *
  * ## Mode availability
@@ -25,114 +25,97 @@
  */
 'use client'
 
-import { BaseApiService } from './base'
-import { supabase, User, Tables } from '@/lib/supabase'
-import { logAuthEvent } from '@/lib/auth'
-import { logUserEvent, logAuditEvent } from '@/lib/audit'
+import { supabase, User } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import type { QueryData } from '@supabase/supabase-js'
+import { z } from 'zod'
 
-export type UserWithSchool = User & {
-  escola?: Tables<'escolas'>
+interface UsersWithSchoolOptions {
+  filter?: Record<string, string | number | boolean | null | undefined>
+  searchTerm?: string
+  roles?: string[]
+  schools?: string[]
+  activeOnly?: boolean
+  limit?: number
+  offset?: number
 }
 
-export class UsersApiService extends BaseApiService {
-  constructor() {
-    super('users')
+const userStatusResponseSchema = z.object({
+  user: z.object({ id: z.string(), ativo: z.boolean() }),
+})
+const managedTeacherResponseSchema = z.object({
+  user: z.object({
+    ativo: z.boolean().nullable(),
+    created_at: z.string().nullable(),
+    email: z.string().nullable(),
+    escola_id: z.string().nullable(),
+    id: z.string(),
+    nome: z.string(),
+    tipo_usuario: z.string(),
+  }),
+})
+const mutationErrorResponseSchema = z.object({
+  error: z.string().optional(),
+  issues: z.array(z.object({ message: z.string() })).optional(),
+})
+
+function createUsersWithSchoolQuery(client: typeof supabase) {
+  return client
+    .from('users')
+    .select(`
+      *,
+      escola:escolas!fk_users_escola(*)
+    `)
+}
+
+type UsersWithSchoolQuery = ReturnType<typeof createUsersWithSchoolQuery>
+export type UserWithSchool = QueryData<UsersWithSchoolQuery>[number]
+
+function applyValueFilters(query: UsersWithSchoolQuery, options?: UsersWithSchoolOptions) {
+  let filteredQuery = query
+  if (options?.activeOnly !== false) filteredQuery = filteredQuery.eq('ativo', true)
+  if (!options?.filter) return filteredQuery
+
+  for (const [key, value] of Object.entries(options.filter)) {
+    if (value !== undefined && value !== null) filteredQuery = filteredQuery.eq(key, value)
   }
+  return filteredQuery
+}
+
+function applyListFilters(query: UsersWithSchoolQuery, options?: UsersWithSchoolOptions) {
+  let filteredQuery = query
+  if (options?.roles?.length) filteredQuery = filteredQuery.in('tipo_usuario', options.roles)
+  if (options?.schools?.length) filteredQuery = filteredQuery.in('escola_id', options.schools)
+  if (options?.searchTerm) {
+    filteredQuery = filteredQuery.or(`nome.ilike.%${options.searchTerm}%,email.ilike.%${options.searchTerm}%`)
+  }
+  return filteredQuery
+}
+
+function applyPagination(query: UsersWithSchoolQuery, options?: UsersWithSchoolOptions) {
+  if (!options?.limit) return query
+  const from = options.offset ?? 0
+  return query.range(from, from + options.limit - 1)
+}
+
+export class UsersApiService {
+  constructor(private readonly client: typeof supabase = supabase) {}
 
   // Get users with school information
-  async getUsersWithSchool(options?: {
-    filter?: Record<string, any>
-    searchTerm?: string
-    roles?: string[]
-    schools?: string[]
-    activeOnly?: boolean
-    limit?: number
-    offset?: number
-  }): Promise<UserWithSchool[]> {
-    let query = supabase
-      .from('users')
-      .select(`
-          *,
-          escola:escolas!fk_users_escola(
-            id,
-            nome,
-            codigo,
-            tipo
-          )
-        `)
-
-    // Apply filters
-    if (options?.activeOnly !== false) {
-      query = query.eq('ativo', true)
-    }
-
-    if (options?.filter) {
-      Object.entries(options.filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          query = query.eq(key, value)
-        }
-      })
-    }
-
-    // Role filter
-    if (options?.roles && options.roles.length > 0) {
-      query = query.in('tipo_usuario', options.roles)
-    }
-
-    // School filter
-    if (options?.schools && options.schools.length > 0) {
-      query = query.in('escola_id', options.schools)
-    }
-
-    // Search filter
-    if (options?.searchTerm) {
-      query = query.or(`nome.ilike.%${options.searchTerm}%,email.ilike.%${options.searchTerm}%`)
-    }
-
-    // Apply pagination
-    if (options?.limit) {
-      const from = options.offset || 0
-      const to = from + options.limit - 1
-      query = query.range(from, to)
-    }
-
-    // Order by creation date
-    query = query.order('created_at', { ascending: false })
+  async getUsersWithSchool(options?: UsersWithSchoolOptions): Promise<UserWithSchool[]> {
+    const valueFilteredQuery = applyValueFilters(createUsersWithSchoolQuery(this.client), options)
+    const listFilteredQuery = applyListFilters(valueFilteredQuery, options)
+    const query = applyPagination(listFilteredQuery, options).order('created_at', { ascending: false })
 
     const { data, error } = await query
 
     if (error) throw error
-    return data as UserWithSchool[]
+    return data
   }
 
   async getUserWithSchool(id: string): Promise<UserWithSchool | null> {
     const [user] = await this.getUsersWithSchool({ filter: { id }, activeOnly: false, limit: 1 })
     return user ?? null
-  }
-
-  // Create user with proper logging
-  async createUser(userData: {
-    id: string
-    email: string
-    nome: string
-    tipo_usuario: 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
-    escola_id?: string
-  }) {
-    const result = await this.create({
-      ...userData,
-      ativo: true,
-      created_at: new Date().toISOString()
-    })
-
-    // Log user creation
-    await logAuthEvent('login', userData.id, {
-      action: 'user_created',
-      created_by: 'admin',
-      user_type: userData.tipo_usuario
-    })
-
-    return result
   }
 
   // Update user status
@@ -142,10 +125,13 @@ export class UsersApiService extends BaseApiService {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ ativo }),
     })
-    const result = await response.json()
-    if (!response.ok) throw new Error(result.error || 'USER_STATUS_UPDATE_FAILED')
+    const payload = await response.json()
+    if (!response.ok) {
+      const result = mutationErrorResponseSchema.safeParse(payload)
+      throw new Error(result.success ? result.data.error ?? 'USER_STATUS_UPDATE_FAILED' : 'USER_STATUS_UPDATE_FAILED')
+    }
 
-    return result.user
+    return userStatusResponseSchema.parse(payload).user
   }
 
   async updateManagedTeacher(id: string, values: Pick<User, 'nome' | 'email' | 'tipo_usuario' | 'escola_id'>) {
@@ -154,51 +140,15 @@ export class UsersApiService extends BaseApiService {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(values),
     })
-    const result = await response.json()
+    const payload = await response.json()
     if (!response.ok) {
-      const message = result.issues?.[0]?.message || result.error || 'TEACHER_UPDATE_FAILED'
+      const result = mutationErrorResponseSchema.safeParse(payload)
+      const message = result.success
+        ? result.data.issues?.[0]?.message ?? result.data.error ?? 'TEACHER_UPDATE_FAILED'
+        : 'TEACHER_UPDATE_FAILED'
       throw new Error(message)
     }
-    return result.user as User
-  }
-
-  // Bulk operations
-  async bulkUpdateStatus(userIds: string[], ativo: boolean, reason?: string) {
-    const results = []
-    for (const id of userIds) {
-      const result = await this.update(id, { ativo })
-      results.push(result)
-    }
-
-    // Log bulk status change
-    for (const id of userIds) {
-      await logAuthEvent('session_expired', id, {
-        action: ativo ? 'bulk_user_activated' : 'bulk_user_deactivated',
-        reason,
-        bulk_count: userIds.length
-      })
-    }
-
-    return results
-  }
-
-  async bulkAssignSchool(userIds: string[], escolaId: string) {
-    const results = []
-    for (const id of userIds) {
-      const result = await this.update(id, { escola_id: escolaId })
-      results.push(result)
-    }
-
-    // Log bulk school assignment
-    for (const id of userIds) {
-      await logAuthEvent('login', id, {
-        action: 'bulk_school_assigned',
-        escola_id: escolaId,
-        bulk_count: userIds.length
-      })
-    }
-
-    return results
+    return managedTeacherResponseSchema.parse(payload).user
   }
 
   // Get user statistics
@@ -210,18 +160,18 @@ export class UsersApiService extends BaseApiService {
   }> {
     try {
       // Total users
-      const { count: total } = await supabase
+      const { count: total } = await this.client
         .from('users')
         .select('*', { count: 'exact', head: true })
 
       // Active users
-      const { count: active } = await supabase
+      const { count: active } = await this.client
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('ativo', true)
 
       // By role
-      const { data: roleData } = await supabase
+      const { data: roleData } = await this.client
         .from('users')
         .select('tipo_usuario')
         .eq('ativo', true)
@@ -232,13 +182,13 @@ export class UsersApiService extends BaseApiService {
       }, {}) || {}
 
       // By school
-      const { data: schoolData } = await supabase
+      const { data: schoolData } = await this.client
         .from('users')
-        .select('escola_id, escolas(nome)')
+        .select('escola_id, escolas!fk_users_escola(nome)')
         .eq('ativo', true)
         .not('escola_id', 'is', null)
 
-      const bySchool = schoolData?.reduce((acc: Record<string, number>, user: any) => {
+      const bySchool = schoolData?.reduce((acc: Record<string, number>, user) => {
         const schoolName = user.escolas?.nome || 'Escola não encontrada'
         acc[schoolName] = (acc[schoolName] || 0) + 1
         return acc
@@ -250,7 +200,7 @@ export class UsersApiService extends BaseApiService {
         byRole,
         bySchool
       }
-    } catch (error) {
+    } catch {
       return {
         total: 0,
         active: 0,
@@ -266,11 +216,11 @@ export class UsersApiService extends BaseApiService {
    */
   async getCurrentUserRole(): Promise<string | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await this.client.auth.getUser()
       if (!user) return null
 
       // Use tipo_usuario instead of role (correct column name)
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await this.client
         .from('users')
         .select('tipo_usuario')
         .eq('id', user.id)
@@ -287,7 +237,8 @@ export class UsersApiService extends BaseApiService {
 
       return profile?.tipo_usuario || null
     } catch (error) {
-      logger.error('Error in getCurrentUserRole', error as Error, {
+      const parsedError = z.instanceof(Error).safeParse(error)
+      logger.error('Error in getCurrentUserRole', parsedError.success ? parsedError.data : new Error('Unexpected role lookup failure'), {
         feature: 'users',
         action: 'get_current_user_role'
       })

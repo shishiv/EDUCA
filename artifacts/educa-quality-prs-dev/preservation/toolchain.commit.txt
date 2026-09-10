@@ -1,0 +1,31 @@
+[salvar/educa-quality-toolchain-20260908 1fb7874e] chore(quality): preserve toolchain worktree from 2026-09-07
+ 33 files changed, 2939 insertions(+), 7 deletions(-)
+ create mode 100644 app/tools/oxlint/anti-slop/effect/index.ts
+ create mode 100644 app/tools/oxlint/anti-slop/effect/rules/no-service-constructor-imports.ts
+ create mode 100644 app/tools/oxlint/anti-slop/index.ts
+ create mode 100644 app/tools/oxlint/anti-slop/package.json
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-chained-type-assertions.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-known-value-widening.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-module-mocking.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-object-parameters.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-reflect-apply.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-reflect-get.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-runtime-typeof.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-shape-in-symbol-names.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-unknown-parameters.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-unknown-returns.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-unknown-type-aliases.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/no-widen-then-assert.ts
+ create mode 100644 app/tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts
+ create mode 100644 app/tools/oxlint/anti-slop/shared/dictionary-types.ts
+ create mode 100644 app/tools/oxlint/anti-slop/shared/function-parameters.ts
+ create mode 100644 app/tools/oxlint/anti-slop/shared/lexical-type-parameters.ts
+ create mode 100644 app/tools/oxlint/anti-slop/shared/reflect-method.ts
+ create mode 100644 app/tools/oxlint/anti-slop/shared/type-alias-resolution.ts
+ create mode 100644 app/tools/oxlint/anti-slop/tests/fixtures/import-specifiers.ts
+ create mode 100644 app/tools/oxlint/anti-slop/tests/fixtures/local-symbol.ts
+ create mode 100644 app/tools/oxlint/anti-slop/tests/no-shape-in-symbol-names.test.mjs
+ create mode 100644 app/tools/oxlint/anti-slop/tests/oxlintrc.json
+ create mode 100644 app/tools/oxlint/run-oxlint.mjs

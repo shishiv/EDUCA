@@ -1,0 +1,15 @@
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 10 tests using 1 worker
+
+[1A[2K[1/10] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/10] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K[3/10] [chromium] › tests/e2e/grades/access-boundary.spec.ts:11:5 › keeps grades hidden and immutable for every browser role in the canonical schema
+[1A[2K[4/10] [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in
+[1A[2K[5/10] [chromium] › tests/e2e/profile/user.spec.ts:66:5 › profile saves its own name with an audit receipt and survives reload
+[1A[2K[6/10] [chromium] › tests/e2e/profile/user.spec.ts:103:7 › profile rejects mismatched confirmation before contacting authentication
+[1A[2K[7/10] [chromium] › tests/e2e/profile/user.spec.ts:103:7 › profile rejects short password before contacting authentication
+[1A[2K[8/10] [chromium] › tests/e2e/profile/user.spec.ts:103:7 › profile rejects missing current password before contacting authentication
+[1A[2K[9/10] [chromium] › tests/e2e/profile/user.spec.ts:121:5 › profile changes the password of an isolated synthetic account
+[1A[2K[10/10] [chromium] › tests/e2e/profile/user.spec.ts:177:5 › profile controls remain usable on mobile
+[1A[2K  10 passed (9.5s)

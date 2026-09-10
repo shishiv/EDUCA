@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils'
 import { Edit2, Trash2, MoreHorizontal } from 'lucide-react'
 
 // Components
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -35,7 +35,6 @@ import {
   type Vivencia,
   type CampoType,
   CAMPOS_EXPERIENCIA,
-  getCampoBadgeVariant,
 } from '@/types/diario-infantil'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
@@ -55,6 +54,14 @@ export interface VivenciaCardProps {
   /** Additional class name */
   className?: string
 }
+
+const CAMPO_BADGE_VARIANTS = {
+  eu: 'campo-eu',
+  corpo: 'campo-corpo',
+  tracos: 'campo-tracos',
+  escuta: 'campo-escuta',
+  espacos: 'campo-espacos',
+} satisfies Record<CampoType, NonNullable<BadgeProps['variant']>>
 
 // ============================================================================
 // Component
@@ -159,15 +166,9 @@ interface CampoBadgeProps {
 
 function CampoBadge({ campo }: CampoBadgeProps) {
   const config = CAMPOS_EXPERIENCIA[campo]
-  const variant = getCampoBadgeVariant(campo) as
-    | 'campo-eu'
-    | 'campo-corpo'
-    | 'campo-tracos'
-    | 'campo-escuta'
-    | 'campo-espacos'
 
   return (
-    <Badge variant={variant} className="text-xs gap-1">
+    <Badge variant={CAMPO_BADGE_VARIANTS[campo]} className="text-xs gap-1">
       <span>{config.emoji}</span>
       <span>{config.shortName}</span>
     </Badge>

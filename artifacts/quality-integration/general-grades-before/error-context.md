@@ -1,0 +1,267 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Pular para o conteúdo principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary "Navegação principal" [ref=e5]:
+      - link "EDUCA Sistema Escolar" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e8]: E
+        - generic [ref=e9]:
+          - strong [ref=e10]: EDUCA
+          - generic [ref=e11]: Sistema Escolar
+      - combobox "CEMEI Pequenos Passos" [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]:
+          - img [ref=e15]
+          - generic [ref=e20]: CEMEI Pequenos Passos
+        - img [ref=e21]
+      - button "Recolher menu lateral" [ref=e24] [cursor=pointer]:
+        - img [ref=e25]
+      - navigation [ref=e30]:
+        - region "Principal" [ref=e31]:
+          - button "Principal" [expanded] [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: Principal
+            - img [ref=e34]
+          - link "Dashboard" [ref=e37] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e38]
+            - generic [ref=e41]: Dashboard
+        - region "Cadastros" [ref=e42]:
+          - button "Cadastros" [expanded] [ref=e43] [cursor=pointer]:
+            - generic [ref=e44]: Cadastros
+            - img [ref=e45]
+          - generic [ref=e47]:
+            - link "Alunos" [ref=e48] [cursor=pointer]:
+              - /url: /dashboard/alunos
+              - img [ref=e49]
+              - generic [ref=e54]: Alunos
+            - link "Usuários" [ref=e55] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+              - img [ref=e56]
+              - generic [ref=e59]: Usuários
+            - link "Escolas" [ref=e60] [cursor=pointer]:
+              - /url: /dashboard/escolas
+              - img [ref=e61]
+              - generic [ref=e66]: Escolas
+            - link "Turmas" [ref=e67] [cursor=pointer]:
+              - /url: /dashboard/turmas
+              - img [ref=e68]
+              - generic [ref=e70]: Turmas
+            - link "Matrículas" [ref=e71] [cursor=pointer]:
+              - /url: /dashboard/matriculas
+              - img [ref=e72]
+              - generic [ref=e76]: Matrículas
+            - link "Atribuições" [ref=e77] [cursor=pointer]:
+              - /url: /dashboard/atribuicoes
+              - img [ref=e78]
+              - generic [ref=e90]: Atribuições
+            - link "Responsáveis" [ref=e91] [cursor=pointer]:
+              - /url: /dashboard/responsaveis
+              - img [ref=e92]
+              - generic [ref=e97]: Responsáveis
+        - region "Acadêmico" [ref=e98]:
+          - button "Acadêmico" [expanded] [ref=e99] [cursor=pointer]:
+            - generic [ref=e100]: Acadêmico
+            - img [ref=e101]
+          - generic [ref=e103]:
+            - link "Frequência" [ref=e104] [cursor=pointer]:
+              - /url: /dashboard/turmas
+              - img [ref=e105]
+              - generic [ref=e108]: Frequência
+            - link "Diário de Classe" [ref=e109] [cursor=pointer]:
+              - /url: /diario
+              - img [ref=e110]
+              - generic [ref=e112]: Diário de Classe
+            - link "Notas" [ref=e113] [cursor=pointer]:
+              - /url: /dashboard/notas
+              - img [ref=e114]
+              - generic [ref=e117]: Notas
+        - region "Gestão" [ref=e118]:
+          - button "Gestão" [ref=e119] [cursor=pointer]:
+            - generic [ref=e120]: Gestão
+            - img [ref=e121]
+      - paragraph [ref=e123]: Rede municipal · ambiente autenticado
+    - generic [ref=e124]:
+      - banner [ref=e126]:
+        - navigation "Notas" [ref=e127]:
+          - generic [ref=e128]: EDUCA
+          - generic [ref=e129]: /
+          - strong [ref=e130]: Notas
+        - generic [ref=e131]:
+          - generic [ref=e133]:
+            - img [ref=e134]
+            - combobox "Busca global" [ref=e137]
+          - generic [ref=e138]:
+            - button "Mudar idioma para English" [ref=e139] [cursor=pointer]: PT
+            - status [ref=e140]
+          - 'generic "Conexão: Online" [ref=e141]':
+            - img [ref=e142]
+            - generic [ref=e146]: Online
+          - generic [ref=e148]: CEMEI Pequenos Passos
+          - button "Abrir menu do usuário" [ref=e149] [cursor=pointer]:
+            - generic [ref=e150]: AT
+            - generic [ref=e151]:
+              - strong [ref=e152]: Admin
+              - generic [ref=e153]: Administrador
+            - img [ref=e154]
+      - main [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - heading "Sistema de Notas" [level=1] [ref=e161]
+              - paragraph [ref=e162]: Gerencie as avaliações e notas dos alunos
+            - generic [ref=e163]:
+              - button "Boletins" [ref=e164] [cursor=pointer]:
+                - img [ref=e165]
+                - text: Boletins
+              - button "Salvar Todas" [ref=e168] [cursor=pointer]:
+                - img [ref=e169]
+                - text: Salvar Todas
+          - generic [ref=e173]:
+            - generic [ref=e175]:
+              - generic [ref=e176]: "5"
+              - generic [ref=e177]: Total de Alunos
+            - generic [ref=e179]:
+              - generic [ref=e180]: "6"
+              - generic [ref=e181]: Disciplinas
+            - generic [ref=e183]:
+              - generic [ref=e184]: "0"
+              - generic [ref=e185]: Em Recuperação
+            - generic [ref=e187]:
+              - generic [ref=e188]: "-"
+              - generic [ref=e189]: Média Geral
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - heading "Filtros" [level=3] [ref=e192]
+              - paragraph [ref=e193]: Use os filtros para encontrar turmas e disciplinas especificas
+            - generic [ref=e195]:
+              - generic [ref=e197]:
+                - img [ref=e198]
+                - textbox "Buscar por turma, escola ou professor..." [ref=e201]
+              - combobox "Turma" [active] [ref=e202] [cursor=pointer]:
+                - generic: 1º Ano A E2E - 1º Ano
+                - img [ref=e203]
+              - combobox "Disciplina" [ref=e205] [cursor=pointer]:
+                - generic: Todas
+                - img [ref=e206]
+              - combobox "Bimestre" [ref=e208] [cursor=pointer]:
+                - generic: Todos
+                - img [ref=e209]
+          - generic [ref=e212]:
+            - generic [ref=e214]:
+              - generic [ref=e215]:
+                - heading "1º Ano A E2E - 1º Ano" [level=3] [ref=e216]:
+                  - img [ref=e217]
+                  - generic [ref=e220]: 1º Ano A E2E - 1º Ano
+                - paragraph [ref=e221]: CEMEI Pequenos Passos - Prof. Professor Teste - 2026
+              - link "Boletim" [ref=e222] [cursor=pointer]:
+                - /url: /dashboard/alunos/68892ff3-982f-4747-8b1a-64e7523abdbb/boletim
+                - img [ref=e223]
+                - text: Boletim
+            - table [ref=e228]:
+              - rowgroup [ref=e229]:
+                - row "Aluno Matemática Português Ciências Situação Geral" [ref=e230]:
+                  - columnheader "Aluno" [ref=e231]
+                  - columnheader "Matemática" [ref=e232]
+                  - columnheader "Português" [ref=e233]
+                  - columnheader "Ciências" [ref=e234]
+                  - columnheader "Situação Geral" [ref=e235]
+              - rowgroup [ref=e236]:
+                - row "GS Gabriel Souza E2E Editar nota de Gabriel Souza E2E em Matemática, 1º bimestre Editar nota de Gabriel Souza E2E em Matemática, 2º bimestre Editar nota de Gabriel Souza E2E em Matemática, 3º bimestre Editar nota de Gabriel Souza E2E em Matemática, 4º bimestre Cursando Editar nota de Gabriel Souza E2E em Português, 1º bimestre Editar nota de Gabriel Souza E2E em Português, 2º bimestre Editar nota de Gabriel Souza E2E em Português, 3º bimestre Editar nota de Gabriel Souza E2E em Português, 4º bimestre Cursando Editar nota de Gabriel Souza E2E em Ciências, 1º bimestre Editar nota de Gabriel Souza E2E em Ciências, 2º bimestre Editar nota de Gabriel Souza E2E em Ciências, 3º bimestre Editar nota de Gabriel Souza E2E em Ciências, 4º bimestre Cursando Cursando" [ref=e237]:
+                  - cell "GS Gabriel Souza E2E" [ref=e238]:
+                    - generic [ref=e239]:
+                      - generic [ref=e241]: GS
+                      - generic [ref=e243]: Gabriel Souza E2E
+                  - cell "Editar nota de Gabriel Souza E2E em Matemática, 1º bimestre Editar nota de Gabriel Souza E2E em Matemática, 2º bimestre Editar nota de Gabriel Souza E2E em Matemática, 3º bimestre Editar nota de Gabriel Souza E2E em Matemática, 4º bimestre Cursando" [ref=e244]:
+                    - generic [ref=e245]:
+                      - generic [ref=e246]:
+                        - button "Editar nota de Gabriel Souza E2E em Matemática, 1º bimestre" [ref=e247] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Matemática, 2º bimestre" [ref=e248] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Matemática, 3º bimestre" [ref=e249] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Matemática, 4º bimestre" [ref=e250] [cursor=pointer]: "-"
+                      - generic [ref=e252]: Cursando
+                  - cell "Editar nota de Gabriel Souza E2E em Português, 1º bimestre Editar nota de Gabriel Souza E2E em Português, 2º bimestre Editar nota de Gabriel Souza E2E em Português, 3º bimestre Editar nota de Gabriel Souza E2E em Português, 4º bimestre Cursando" [ref=e253]:
+                    - generic [ref=e254]:
+                      - generic [ref=e255]:
+                        - button "Editar nota de Gabriel Souza E2E em Português, 1º bimestre" [ref=e256] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Português, 2º bimestre" [ref=e257] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Português, 3º bimestre" [ref=e258] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Português, 4º bimestre" [ref=e259] [cursor=pointer]: "-"
+                      - generic [ref=e261]: Cursando
+                  - cell "Editar nota de Gabriel Souza E2E em Ciências, 1º bimestre Editar nota de Gabriel Souza E2E em Ciências, 2º bimestre Editar nota de Gabriel Souza E2E em Ciências, 3º bimestre Editar nota de Gabriel Souza E2E em Ciências, 4º bimestre Cursando" [ref=e262]:
+                    - generic [ref=e263]:
+                      - generic [ref=e264]:
+                        - button "Editar nota de Gabriel Souza E2E em Ciências, 1º bimestre" [ref=e265] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Ciências, 2º bimestre" [ref=e266] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Ciências, 3º bimestre" [ref=e267] [cursor=pointer]: "-"
+                        - button "Editar nota de Gabriel Souza E2E em Ciências, 4º bimestre" [ref=e268] [cursor=pointer]: "-"
+                      - generic [ref=e270]: Cursando
+                  - cell "Cursando" [ref=e271]:
+                    - generic [ref=e272]: Cursando
+                - row "LS Lucas Santos E2E Editar nota de Lucas Santos E2E em Matemática, 1º bimestre Editar nota de Lucas Santos E2E em Matemática, 2º bimestre Editar nota de Lucas Santos E2E em Matemática, 3º bimestre Editar nota de Lucas Santos E2E em Matemática, 4º bimestre Cursando Editar nota de Lucas Santos E2E em Português, 1º bimestre Editar nota de Lucas Santos E2E em Português, 2º bimestre Editar nota de Lucas Santos E2E em Português, 3º bimestre Editar nota de Lucas Santos E2E em Português, 4º bimestre Cursando Editar nota de Lucas Santos E2E em Ciências, 1º bimestre Editar nota de Lucas Santos E2E em Ciências, 2º bimestre Editar nota de Lucas Santos E2E em Ciências, 3º bimestre Editar nota de Lucas Santos E2E em Ciências, 4º bimestre Cursando Cursando" [ref=e273]:
+                  - cell "LS Lucas Santos E2E" [ref=e274]:
+                    - generic [ref=e275]:
+                      - generic [ref=e277]: LS
+                      - generic [ref=e279]: Lucas Santos E2E
+                  - cell "Editar nota de Lucas Santos E2E em Matemática, 1º bimestre Editar nota de Lucas Santos E2E em Matemática, 2º bimestre Editar nota de Lucas Santos E2E em Matemática, 3º bimestre Editar nota de Lucas Santos E2E em Matemática, 4º bimestre Cursando" [ref=e280]:
+                    - generic [ref=e281]:
+                      - generic [ref=e282]:
+                        - button "Editar nota de Lucas Santos E2E em Matemática, 1º bimestre" [ref=e283] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Matemática, 2º bimestre" [ref=e284] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Matemática, 3º bimestre" [ref=e285] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Matemática, 4º bimestre" [ref=e286] [cursor=pointer]: "-"
+                      - generic [ref=e288]: Cursando
+                  - cell "Editar nota de Lucas Santos E2E em Português, 1º bimestre Editar nota de Lucas Santos E2E em Português, 2º bimestre Editar nota de Lucas Santos E2E em Português, 3º bimestre Editar nota de Lucas Santos E2E em Português, 4º bimestre Cursando" [ref=e289]:
+                    - generic [ref=e290]:
+                      - generic [ref=e291]:
+                        - button "Editar nota de Lucas Santos E2E em Português, 1º bimestre" [ref=e292] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Português, 2º bimestre" [ref=e293] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Português, 3º bimestre" [ref=e294] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Português, 4º bimestre" [ref=e295] [cursor=pointer]: "-"
+                      - generic [ref=e297]: Cursando
+                  - cell "Editar nota de Lucas Santos E2E em Ciências, 1º bimestre Editar nota de Lucas Santos E2E em Ciências, 2º bimestre Editar nota de Lucas Santos E2E em Ciências, 3º bimestre Editar nota de Lucas Santos E2E em Ciências, 4º bimestre Cursando" [ref=e298]:
+                    - generic [ref=e299]:
+                      - generic [ref=e300]:
+                        - button "Editar nota de Lucas Santos E2E em Ciências, 1º bimestre" [ref=e301] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Ciências, 2º bimestre" [ref=e302] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Ciências, 3º bimestre" [ref=e303] [cursor=pointer]: "-"
+                        - button "Editar nota de Lucas Santos E2E em Ciências, 4º bimestre" [ref=e304] [cursor=pointer]: "-"
+                      - generic [ref=e306]: Cursando
+                  - cell "Cursando" [ref=e307]:
+                    - generic [ref=e308]: Cursando
+                - row "PS Pedro Silva E2E Editar nota de Pedro Silva E2E em Matemática, 1º bimestre Editar nota de Pedro Silva E2E em Matemática, 2º bimestre Editar nota de Pedro Silva E2E em Matemática, 3º bimestre Editar nota de Pedro Silva E2E em Matemática, 4º bimestre Cursando Editar nota de Pedro Silva E2E em Português, 1º bimestre Editar nota de Pedro Silva E2E em Português, 2º bimestre Editar nota de Pedro Silva E2E em Português, 3º bimestre Editar nota de Pedro Silva E2E em Português, 4º bimestre Cursando Editar nota de Pedro Silva E2E em Ciências, 1º bimestre Editar nota de Pedro Silva E2E em Ciências, 2º bimestre Editar nota de Pedro Silva E2E em Ciências, 3º bimestre Editar nota de Pedro Silva E2E em Ciências, 4º bimestre Cursando Cursando" [ref=e309]:
+                  - cell "PS Pedro Silva E2E" [ref=e310]:
+                    - generic [ref=e311]:
+                      - generic [ref=e313]: PS
+                      - generic [ref=e315]: Pedro Silva E2E
+                  - cell "Editar nota de Pedro Silva E2E em Matemática, 1º bimestre Editar nota de Pedro Silva E2E em Matemática, 2º bimestre Editar nota de Pedro Silva E2E em Matemática, 3º bimestre Editar nota de Pedro Silva E2E em Matemática, 4º bimestre Cursando" [ref=e316]:
+                    - generic [ref=e317]:
+                      - generic [ref=e318]:
+                        - button "Editar nota de Pedro Silva E2E em Matemática, 1º bimestre" [ref=e319] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Matemática, 2º bimestre" [ref=e320] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Matemática, 3º bimestre" [ref=e321] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Matemática, 4º bimestre" [ref=e322] [cursor=pointer]: "-"
+                      - generic [ref=e324]: Cursando
+                  - cell "Editar nota de Pedro Silva E2E em Português, 1º bimestre Editar nota de Pedro Silva E2E em Português, 2º bimestre Editar nota de Pedro Silva E2E em Português, 3º bimestre Editar nota de Pedro Silva E2E em Português, 4º bimestre Cursando" [ref=e325]:
+                    - generic [ref=e326]:
+                      - generic [ref=e327]:
+                        - button "Editar nota de Pedro Silva E2E em Português, 1º bimestre" [ref=e328] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Português, 2º bimestre" [ref=e329] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Português, 3º bimestre" [ref=e330] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Português, 4º bimestre" [ref=e331] [cursor=pointer]: "-"
+                      - generic [ref=e333]: Cursando
+                  - cell "Editar nota de Pedro Silva E2E em Ciências, 1º bimestre Editar nota de Pedro Silva E2E em Ciências, 2º bimestre Editar nota de Pedro Silva E2E em Ciências, 3º bimestre Editar nota de Pedro Silva E2E em Ciências, 4º bimestre Cursando" [ref=e334]:
+                    - generic [ref=e335]:
+                      - generic [ref=e336]:
+                        - button "Editar nota de Pedro Silva E2E em Ciências, 1º bimestre" [ref=e337] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Ciências, 2º bimestre" [ref=e338] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Ciências, 3º bimestre" [ref=e339] [cursor=pointer]: "-"
+                        - button "Editar nota de Pedro Silva E2E em Ciências, 4º bimestre" [ref=e340] [cursor=pointer]: "-"
+                      - generic [ref=e342]: Cursando
+                  - cell "Cursando" [ref=e343]:
+                    - generic [ref=e344]: Cursando
+  - region "Notifications alt+T"
+  - alert [ref=e345]
+```

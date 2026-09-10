@@ -7,12 +7,14 @@ import { assertSyntheticPilotSafety } from '@/lib/pilot/pilot-safety-gate'
 import { requirePilotActor, type PilotActor } from '@/lib/pilot/pilot-server-auth'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
 import { asPilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
+import { requirePilotImportAuditReceipt } from '@/lib/pilot/pilot-import-audit'
 import {
   completePilotImportGovernance,
   countCanonicalPilotRows,
   fingerprintCanonicalPilotRows,
   fingerprintPilotImportGovernance,
   transformGovernedPilotCsvToCanonicalRows,
+  toPilotImportJson,
   validatePilotImportGovernanceInput,
   validateGovernedPilotStudentCsv,
 } from '@/lib/pilot/governed-csv-import'
@@ -25,6 +27,12 @@ import { writeDemoActionInterceptedAudit } from '@/lib/demo-sandbox/demo-audit'
 
 type ApprovalDecision = 'approved' | 'rejected'
 type ServiceRoleClient = ReturnType<typeof createServiceRoleClient>
+
+const approvalRequestSchema = z.object({ decision: z.enum(['approved', 'rejected']) })
+const submitterSnapshotSchema = z.object({
+  submitted_by_name: z.string().min(1),
+  submitted_by_email: z.string().min(1),
+})
 
 interface PilotImportApprovalBatch {
   id: string
@@ -94,19 +102,17 @@ async function requireConfirmedApprovalAgreement(
 }
 
 function createApprovalGovernance(batch: PilotImportApprovalBatch, actor: PilotActor) {
-  const submittedByName = typeof batch.submitted_by_name === 'string' ? batch.submitted_by_name : ''
-  const submittedByEmail = typeof batch.submitted_by_email === 'string' ? batch.submitted_by_email : ''
+  const submitter = submitterSnapshotSchema.safeParse(batch)
   const governanceInput = validatePilotImportGovernanceInput(batch.governance_metadata)
-  if (!actor.email || !submittedByName || !submittedByEmail) throw new Error('PILOT_IMPORT_GOVERNANCE_ACTOR_SNAPSHOT_MISSING')
+  if (!actor.email || !submitter.success) throw new Error('PILOT_IMPORT_GOVERNANCE_ACTOR_SNAPSHOT_MISSING')
   const now = new Date()
   const completeGovernance = completePilotImportGovernance(
     governanceInput,
-    { name: submittedByName, email: submittedByEmail },
+    { name: submitter.data.submitted_by_name, email: submitter.data.submitted_by_email },
     { name: actor.name, email: actor.email },
     now,
   )
   return {
-    now,
     completeGovernance,
     governanceFingerprint: fingerprintPilotImportGovernance(completeGovernance),
     reportSha256: createHash('sha256').update(JSON.stringify(batch.validation_report)).digest('hex'),
@@ -117,24 +123,54 @@ async function rejectPilotImport(
   service: ServiceRoleClient,
   batch: PilotImportApprovalBatch,
   actor: PilotActor,
-  now: Date,
   reportSha256: string,
   governanceFingerprint: string,
   completeGovernance: ReturnType<typeof completePilotImportGovernance>
 ): Promise<NextResponse> {
-  const { error: approvalError } = await service.from('pilot_import_approvals').upsert({
-    batch_id: batch.id, escola_id: batch.escola_id, submitted_by: batch.submitted_by,
-    approved_by: actor.id, decision: 'rejected', report_sha256: reportSha256, decided_at: now.toISOString(),
-  }, { onConflict: 'batch_id' })
-  if (approvalError) throw approvalError
-  const { data: rejected, error } = await service.from('pilot_import_batches').update({
-    status: 'rejected', approved_by: actor.id, approved_by_name: actor.name, approved_by_email: actor.email,
-    approved_at: now.toISOString(), governance_fingerprint_sha256: governanceFingerprint,
-    governance_metadata: completeGovernance,
-    encrypted_payload: null, iv: null, auth_tag: null, cleaned_at: new Date().toISOString(),
-  }).eq('id', batch.id).select('id,status,cleaned_at').single()
+  const { data: rejectedRows, error } = await asPilotRpcClient(service).rpc('pilot_reject_synthetic_import_batch', {
+    p_batch_id: batch.id,
+    p_approver_user_id: actor.id,
+    p_report_sha256: reportSha256,
+    p_governance_fingerprint_sha256: governanceFingerprint,
+    p_governance_metadata: toPilotImportJson(completeGovernance),
+  })
   if (error) throw error
-  return NextResponse.json({ batch: rejected })
+  const rejected = rejectedRows?.[0]
+  if (!rejected) throw new Error('PILOT_IMPORT_REJECTION_RECEIPT_MISSING')
+  const auditId = requirePilotImportAuditReceipt(
+    rejected.audit_id,
+    'PILOT_IMPORT_REJECTION_AUDIT_RECEIPT_MISSING',
+  )
+  return NextResponse.json({
+    batch: {
+      id: rejected.batch_id,
+      status: rejected.status,
+      approved_at: rejected.approved_at,
+      cleaned_at: rejected.cleaned_at,
+      raw_expires_at: rejected.raw_expires_at,
+    },
+    auditId,
+  })
+}
+
+async function findRejectedAuditReceipt(
+  service: ServiceRoleClient,
+  batchId: string,
+): Promise<string> {
+  const { data, error } = await service
+    .from('pilot_audit_log')
+    .select('id')
+    .eq('event_type', 'import_rejected')
+    .eq('entity_type', 'pilot_import_batch')
+    .eq('entity_id', batchId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return requirePilotImportAuditReceipt(
+    data?.id,
+    'PILOT_IMPORT_REJECTION_AUDIT_RECEIPT_MISSING',
+  )
 }
 
 async function publishPilotImport(
@@ -159,21 +195,15 @@ async function publishPilotImport(
   const canonicalCounts = countCanonicalPilotRows(canonicalRows)
   const canonicalFingerprint = fingerprintCanonicalPilotRows(canonicalRows)
 
-  const { data: publishedRows, error: publishError } = await asPilotRpcClient(service).rpc<{
-    batch_id: string
-    status: string
-    published_at: string
-    cleaned_at: string | null
-    raw_expires_at: string
-  }[]>('pilot_publish_synthetic_import_batch', {
+  const { data: publishedRows, error: publishError } = await asPilotRpcClient(service).rpc('pilot_publish_synthetic_import_batch', {
     p_batch_id: batch.id,
     p_approver_user_id: actor.id,
     p_report_sha256: reportSha256,
-    p_rows: rows,
-    p_canonical_counts: canonicalCounts,
+    p_rows: toPilotImportJson(rows),
+    p_canonical_counts: toPilotImportJson(canonicalCounts),
     p_canonical_fingerprint_sha256: canonicalFingerprint,
     p_governance_fingerprint_sha256: governanceFingerprint,
-    p_governance_metadata: completeGovernance,
+    p_governance_metadata: toPilotImportJson(completeGovernance),
   })
   if (publishError) throw publishError
   const published = publishedRows?.[0]
@@ -190,6 +220,31 @@ async function publishPilotImport(
   })
 }
 
+async function runLiveApproval(
+  actor: PilotActor & { schoolId: string },
+  batchId: string,
+  decision: ApprovalDecision,
+): Promise<NextResponse> {
+  assertSyntheticPilotSafety('import')
+
+  const service = createServiceRoleClient()
+  const { data: batch, error: batchError } = await service.from('pilot_import_batches').select('*').eq('id', batchId).single()
+  if (batchError || !batch) return NextResponse.json({ error: 'PILOT_IMPORT_BATCH_NOT_FOUND' }, { status: 404 })
+  if (batch.escola_id !== actor.schoolId || batch.submitted_by === actor.id) return NextResponse.json({ error: 'PILOT_IMPORT_MAKER_CHECKER_DENIED' }, { status: 403 })
+  if (batch.status === 'published') return NextResponse.json({ batch, idempotentReplay: true })
+  if (batch.status === 'rejected') {
+    const auditId = await findRejectedAuditReceipt(service, batch.id)
+    return NextResponse.json({ batch, auditId, idempotentReplay: true })
+  }
+
+  await requireConfirmedApprovalAgreement(service, batch)
+  const approval = createApprovalGovernance(batch, actor)
+  if (decision === 'rejected') {
+    return rejectPilotImport(service, batch, actor, approval.reportSha256, approval.governanceFingerprint, approval.completeGovernance)
+  }
+  return publishPilotImport(service, batch, actor, approval.reportSha256, approval.governanceFingerprint, approval.completeGovernance)
+}
+
 export async function POST(request: Request, context: { params: Promise<{ batchId: string }> }) {
   const demoSandbox = isDemoSandboxEnabled()
   try {
@@ -199,27 +254,13 @@ export async function POST(request: Request, context: { params: Promise<{ batchI
     if (!z.string().uuid().safeParse(batchId).success) {
       return NextResponse.json({ error: 'PILOT_APPROVAL_INVALID_BATCH' }, { status: 400 })
     }
-    const body = await request.json() as { decision?: 'approved' | 'rejected' }
-    if (!['approved', 'rejected'].includes(body.decision || '')) return NextResponse.json({ error: 'PILOT_APPROVAL_INVALID_DECISION' }, { status: 400 })
-    const decision = body.decision as ApprovalDecision
+    const body = approvalRequestSchema.safeParse(await request.json())
+    if (!body.success) return NextResponse.json({ error: 'PILOT_APPROVAL_INVALID_DECISION' }, { status: 400 })
 
     if (demoSandbox) {
-      return await runDemoApproval(batchId, decision, actor.schoolId)
+      return runDemoApproval(batchId, body.data.decision, actor.schoolId)
     }
-
-    assertSyntheticPilotSafety('import')
-
-    const service = createServiceRoleClient()
-    const { data: batch, error: batchError } = await service.from('pilot_import_batches').select('*').eq('id', batchId).single()
-    if (batchError || !batch) return NextResponse.json({ error: 'PILOT_IMPORT_BATCH_NOT_FOUND' }, { status: 404 })
-    if (batch.escola_id !== actor.schoolId || batch.submitted_by === actor.id) return NextResponse.json({ error: 'PILOT_IMPORT_MAKER_CHECKER_DENIED' }, { status: 403 })
-    if (batch.status === 'published' || batch.status === 'rejected') return NextResponse.json({ batch, idempotentReplay: true })
-    await requireConfirmedApprovalAgreement(service, batch)
-    const approval = createApprovalGovernance(batch, actor)
-    if (decision === 'rejected') {
-      return await rejectPilotImport(service, batch, actor, approval.now, approval.reportSha256, approval.governanceFingerprint, approval.completeGovernance)
-    }
-    return await publishPilotImport(service, batch, actor, approval.reportSha256, approval.governanceFingerprint, approval.completeGovernance)
+    return runLiveApproval({ ...actor, schoolId: actor.schoolId }, batchId, body.data.decision)
   } catch (error) {
     return pilotErrorResponse(error, { feature: 'pilot-import-approval', fallbackCode: 'PILOT_APPROVAL_FAILED' })
   }

@@ -1,3 +1,4 @@
+import { parseJsonRecord, parseJsonString, type JsonValue } from '@/lib/validation/external-values'
 export const PROCUREMENT_ASSESSMENT_SCHEMA = 'educa.procurement-assessment/v1'
 export const PROCUREMENT_ASSESSMENT_UNKNOWN = 'a confirmar'
 export const PROCUREMENT_ASSESSMENT_GATE = 'G0'
@@ -59,7 +60,7 @@ export const PROCUREMENT_ASSESSMENT_REQUIRED_RECEIPTS = [
 ] as const
 
 interface ProcurementAssessmentRecord {
-  [key: string]: unknown
+  [key: string]: JsonValue
 }
 
 /** A precise validation issue for a procurement assessment receipt. */
@@ -85,8 +86,8 @@ export interface ProcurementAssessmentValidationReport {
   externalActions: boolean
 }
 
-function isRecord(value: unknown): value is ProcurementAssessmentRecord {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function parseRecord(value: JsonValue): ProcurementAssessmentRecord | undefined {
+  return parseJsonRecord(value)
 }
 
 function addIssue(
@@ -99,15 +100,16 @@ function addIssue(
 }
 
 function requireRecord(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: ProcurementAssessmentValidationIssue[],
 ): ProcurementAssessmentRecord | undefined {
-  if (!isRecord(value)) {
+  const record = parseRecord(value)
+  if (!record) {
     addIssue(issues, 'record_required', path, 'record is required')
     return undefined
   }
-  return value
+  return record
 }
 
 function requireString(
@@ -117,15 +119,16 @@ function requireString(
   issues: ProcurementAssessmentValidationIssue[],
 ): string | undefined {
   const value = record[key]
-  if (typeof value !== 'string' || value.trim() === '') {
+  const string = parseJsonString(value)
+  if (!string || string.trim() === '') {
     addIssue(issues, 'string_required', `${path}.${key}`, 'non-empty string is required')
     return undefined
   }
-  return value
+  return string
 }
 
 function readRecords(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: ProcurementAssessmentValidationIssue[],
 ): ProcurementAssessmentRecord[] {
@@ -210,8 +213,9 @@ function checkDiscoveryFields(
   return byId
 }
 
-function isSyntheticIdentity(value: unknown): value is string {
-  return typeof value === 'string' && /^[a-z0-9.-]+@synthetic\.invalid$/i.test(value)
+function isSyntheticIdentity(value: JsonValue | undefined): boolean {
+  const identity = value === undefined ? undefined : parseJsonString(value)
+  return identity !== undefined && /^[a-z0-9.-]+@synthetic\.invalid$/i.test(identity)
 }
 
 function checkActors(
@@ -353,7 +357,7 @@ function checkEvidence(
 }
 
 function checkNextGate(
-  nextGateValue: unknown,
+  nextGateValue: JsonValue,
   evidence: Map<string, ProcurementAssessmentRecord>,
   issues: ProcurementAssessmentValidationIssue[],
 ): void {
@@ -377,7 +381,10 @@ function checkNextGate(
     addIssue(issues, 'next_gate_receipts_required', 'nextGate.missingEvidenceIds', 'missing receipt ids are required')
     return
   }
-  const missingEvidenceIds = new Set(nextGate.missingEvidenceIds.filter((id): id is string => typeof id === 'string'))
+  const missingEvidenceIds = new Set(nextGate.missingEvidenceIds.flatMap((id) => {
+    const parsed = parseJsonString(id)
+    return parsed === undefined ? [] : [parsed]
+  }))
   for (const id of PROCUREMENT_ASSESSMENT_REQUIRED_RECEIPTS) {
     if (!missingEvidenceIds.has(id) || !evidence.has(id)) {
       addIssue(issues, 'next_gate_receipt_link_missing', 'nextGate.missingEvidenceIds', `next gate must link missing receipt ${id}`)
@@ -385,8 +392,42 @@ function checkNextGate(
   }
 }
 
+function checkAssessmentBoundary(assessment: ProcurementAssessmentRecord, issues: ProcurementAssessmentValidationIssue[]): void {
+  if (assessment.label !== 'procurement assessment') addIssue(issues, 'assessment_label_invalid', 'boundary.assessment.label', 'assessment must keep the procurement assessment label')
+  requireString(assessment, 'purpose', 'boundary.assessment', issues)
+  if (!Array.isArray(assessment.allowed) || assessment.allowed.length === 0) addIssue(issues, 'assessment_allowed_scope_required', 'boundary.assessment.allowed', 'allowed assessment scope is required')
+  if (!Array.isArray(assessment.mustNotDo) || assessment.mustNotDo.length === 0) {
+    addIssue(issues, 'assessment_exclusions_required', 'boundary.assessment.mustNotDo', 'assessment exclusions are required')
+    return
+  }
+  const exclusions = assessment.mustNotDo.flatMap((item) => {
+    const parsed = parseJsonString(item)
+    return parsed === undefined ? [] : [parsed]
+  }).join(' ').toLowerCase()
+  for (const term of ['crm', 'webhook', 'waitlist']) {
+    if (!exclusions.includes(term)) addIssue(issues, 'assessment_exclusion_missing', 'boundary.assessment.mustNotDo', `missing exclusion ${term}`)
+  }
+}
+
+function checkRehearsalBoundary(rehearsal: ProcurementAssessmentRecord, issues: ProcurementAssessmentValidationIssue[]): void {
+  if (rehearsal.label !== 'rehearsal sintético') addIssue(issues, 'rehearsal_label_invalid', 'boundary.syntheticRehearsal.label', 'synthetic rehearsal label is required')
+  for (const key of ['purpose', 'data', 'source', 'sourceDate', 'uncertainty', 'notEquivalentTo']) requireString(rehearsal, key, 'boundary.syntheticRehearsal', issues)
+  if (!Array.isArray(rehearsal.identities) || rehearsal.identities.length === 0) {
+    addIssue(issues, 'synthetic_rehearsal_identities_required', 'boundary.syntheticRehearsal.identities', 'synthetic identities are required')
+    return
+  }
+  rehearsal.identities.forEach((identity, index) => {
+    if (!isSyntheticIdentity(identity)) addIssue(issues, 'synthetic_rehearsal_identity_invalid', `boundary.syntheticRehearsal.identities[${index}]`, 'identity must use @synthetic.invalid')
+  })
+}
+
+function checkMunicipalDeploymentBoundary(deployment: ProcurementAssessmentRecord, issues: ProcurementAssessmentValidationIssue[]): void {
+  if (deployment.status !== 'não autorizado') addIssue(issues, 'municipal_deployment_must_be_denied', 'boundary.municipalDeployment.status', 'municipal deployment must remain unauthorized')
+  for (const key of ['requires', 'data', 'source', 'sourceDate', 'uncertainty']) requireString(deployment, key, 'boundary.municipalDeployment', issues)
+}
+
 function checkBoundary(
-  boundaryValue: unknown,
+  boundaryValue: JsonValue,
   issues: ProcurementAssessmentValidationIssue[],
 ): void {
   const boundary = requireRecord(boundaryValue, 'boundary', issues)
@@ -395,73 +436,26 @@ function checkBoundary(
   const rehearsal = requireRecord(boundary.syntheticRehearsal, 'boundary.syntheticRehearsal', issues)
   const municipalDeployment = requireRecord(boundary.municipalDeployment, 'boundary.municipalDeployment', issues)
 
-  if (assessment) {
-    if (assessment.label !== 'procurement assessment') {
-      addIssue(issues, 'assessment_label_invalid', 'boundary.assessment.label', 'assessment must keep the procurement assessment label')
-    }
-    requireString(assessment, 'purpose', 'boundary.assessment', issues)
-    if (!Array.isArray(assessment.allowed) || assessment.allowed.length === 0) {
-      addIssue(issues, 'assessment_allowed_scope_required', 'boundary.assessment.allowed', 'allowed assessment scope is required')
-    }
-    if (!Array.isArray(assessment.mustNotDo) || assessment.mustNotDo.length === 0) {
-      addIssue(issues, 'assessment_exclusions_required', 'boundary.assessment.mustNotDo', 'assessment exclusions are required')
-    } else {
-      const exclusions = assessment.mustNotDo.filter((item): item is string => typeof item === 'string').join(' ').toLowerCase()
-      for (const term of ['crm', 'webhook', 'waitlist']) {
-        if (!exclusions.includes(term)) {
-          addIssue(issues, 'assessment_exclusion_missing', 'boundary.assessment.mustNotDo', `missing exclusion ${term}`)
-        }
-      }
-    }
-  }
-
-  if (rehearsal) {
-    if (rehearsal.label !== 'rehearsal sintético') {
-      addIssue(issues, 'rehearsal_label_invalid', 'boundary.syntheticRehearsal.label', 'synthetic rehearsal label is required')
-    }
-    requireString(rehearsal, 'purpose', 'boundary.syntheticRehearsal', issues)
-    requireString(rehearsal, 'data', 'boundary.syntheticRehearsal', issues)
-    requireString(rehearsal, 'source', 'boundary.syntheticRehearsal', issues)
-    requireString(rehearsal, 'sourceDate', 'boundary.syntheticRehearsal', issues)
-    requireString(rehearsal, 'uncertainty', 'boundary.syntheticRehearsal', issues)
-    requireString(rehearsal, 'notEquivalentTo', 'boundary.syntheticRehearsal', issues)
-    if (!Array.isArray(rehearsal.identities) || rehearsal.identities.length === 0) {
-      addIssue(issues, 'synthetic_rehearsal_identities_required', 'boundary.syntheticRehearsal.identities', 'synthetic identities are required')
-    } else {
-      rehearsal.identities.forEach((identity, index) => {
-        if (!isSyntheticIdentity(identity)) {
-          addIssue(issues, 'synthetic_rehearsal_identity_invalid', `boundary.syntheticRehearsal.identities[${index}]`, 'identity must use @synthetic.invalid')
-        }
-      })
-    }
-  }
-
-  if (municipalDeployment) {
-    if (municipalDeployment.status !== 'não autorizado') {
-      addIssue(issues, 'municipal_deployment_must_be_denied', 'boundary.municipalDeployment.status', 'municipal deployment must remain unauthorized')
-    }
-    requireString(municipalDeployment, 'requires', 'boundary.municipalDeployment', issues)
-    requireString(municipalDeployment, 'data', 'boundary.municipalDeployment', issues)
-    requireString(municipalDeployment, 'source', 'boundary.municipalDeployment', issues)
-    requireString(municipalDeployment, 'sourceDate', 'boundary.municipalDeployment', issues)
-    requireString(municipalDeployment, 'uncertainty', 'boundary.municipalDeployment', issues)
-  }
+  if (assessment) checkAssessmentBoundary(assessment, issues)
+  if (rehearsal) checkRehearsalBoundary(rehearsal, issues)
+  if (municipalDeployment) checkMunicipalDeploymentBoundary(municipalDeployment, issues)
 }
 
 function scanSyntheticOnlyStrings(
-  value: unknown,
+  value: JsonValue,
   path: string,
   issues: ProcurementAssessmentValidationIssue[],
 ): void {
-  if (typeof value === 'string') {
+  const string = parseJsonString(value)
+  if (string !== undefined) {
     const emailPattern = /\b[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})\b/gi
-    for (const match of value.matchAll(emailPattern)) {
+    for (const match of string.matchAll(emailPattern)) {
       const domain = match[1].toLowerCase()
       if (!domain.endsWith('.invalid')) {
         addIssue(issues, 'real_identity_rejected', path, 'email identities must use a placeholder or .invalid domain')
       }
     }
-    if (/\b\d{3}[.\s-]\d{3}[.\s-]\d{3}[.\s-]\d{2}\b/.test(value) || /(?:\+?55[\s-]*)?\b\d{10,11}\b/.test(value)) {
+    if (/\b\d{3}[.\s-]\d{3}[.\s-]\d{3}[.\s-]\d{2}\b/.test(string) || /(?:\+?55[\s-]*)?\b\d{10,11}\b/.test(string)) {
       addIssue(issues, 'pii_rejected', path, 'CPF or phone-like values are not allowed')
     }
     return
@@ -470,13 +464,14 @@ function scanSyntheticOnlyStrings(
     value.forEach((item, index) => scanSyntheticOnlyStrings(item, `${path}[${index}]`, issues))
     return
   }
-  if (isRecord(value)) {
-    Object.entries(value).forEach(([key, item]) => scanSyntheticOnlyStrings(item, `${path}.${key}`, issues))
+  const record = parseRecord(value)
+  if (record) {
+    Object.entries(record).forEach(([key, item]) => scanSyntheticOnlyStrings(item, `${path}.${key}`, issues))
   }
 }
 
 /** Validates the private procurement assessment and its synthetic-only boundary. */
-export function validateProcurementAssessment(candidate: unknown): ProcurementAssessmentValidationReport {
+export function validateProcurementAssessment(candidate: JsonValue): ProcurementAssessmentValidationReport {
   const issues: ProcurementAssessmentValidationIssue[] = []
   const assessment = requireRecord(candidate, '$', issues)
   if (!assessment) {

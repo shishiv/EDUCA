@@ -12,7 +12,6 @@ import { EscolaProvider } from '@/contexts/escola-context'
 import { DemoSandboxBanner } from '@/components/demo-sandbox/DemoSandboxBanner'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { dashboardRoles } from '@/lib/route-policy'
-import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { useTranslations } from 'next-intl'
 
@@ -27,7 +26,6 @@ export default function DashboardLayout({
         <DashboardLayoutInner>
           {children}
         </DashboardLayoutInner>
-        <Toaster />
       </DashboardWithRealtime>
     </AuthGuard>
   )
@@ -100,7 +98,7 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
         user={{
           id: userProfile.id,
           tipo_usuario: userProfile.tipo_usuario,
-          escola_id: userProfile.escola_id || '' // Default to empty string if null
+          escola_id: userProfile.escola_id
         }}
       >
         {children}

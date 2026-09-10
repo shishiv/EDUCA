@@ -5,7 +5,7 @@
  * Safety: the shared pilot gate rejects every non-loopback Supabase URL. The
  * database transaction writes only the fixed capacity-contract entity IDs.
  */
-import { Client } from 'pg'
+import { Client, type QueryResultRow } from 'pg'
 import { createClient } from '@supabase/supabase-js'
 import { assertSyntheticPilotSafety } from '../lib/pilot/pilot-safety-gate'
 import {
@@ -47,6 +47,35 @@ const PILOT_CAPACITY_YEAR = 2026
 
 type SeedValue = string | number | boolean | null
 
+interface CapacityInsertQuery {
+  readonly text: string
+  readonly values: SeedValue[]
+}
+
+interface CapacityReceiptRow extends QueryResultRow {
+  readonly schools: string
+  readonly classes: string
+  readonly active_students: string
+  readonly enrollments: string
+  readonly guardians: string
+  readonly teacher_owners: string
+  readonly directors: string
+  readonly sessions: string
+  readonly attendance: string
+}
+
+interface CapacitySeedReceipt {
+  readonly schools: number
+  readonly classes: number
+  readonly active_students: number
+  readonly enrollments: number
+  readonly guardians: number
+  readonly teacher_owners: number
+  readonly directors: number
+  readonly sessions: number
+  readonly attendance: number
+}
+
 type AuthAccount = {
   email: string
   name: string
@@ -55,12 +84,12 @@ type AuthAccount = {
 
 const TEACHER_ACCOUNTS: AuthAccount[] = Array.from(
   { length: PILOT_CAPACITY_CONTRACT.teacherOwnerCount },
-  (_, index) => {
+  (_, index): AuthAccount => {
     const teacherIndex = index + 1
     return {
       email: pilotCapacityTeacherEmail(teacherIndex),
       name: pilotCapacityTeacherName(teacherIndex),
-      role: 'professor' as const,
+      role: 'professor',
     }
   }
 )
@@ -117,7 +146,7 @@ function buildInsertQuery(
   columns: string[],
   rows: SeedValue[][],
   conflictColumns: string[] = ['id']
-): { text: string; values: SeedValue[] } {
+): CapacityInsertQuery {
   if (rows.length === 0) throw new Error(`PILOT_CAPACITY_SEED_EMPTY_ROWS: ${table}`)
   const values = rows.flat()
   const placeholders = rows.map((row, rowIndex) => {
@@ -160,6 +189,243 @@ function accountId(accountIds: Map<string, string>, email: string): string {
   return id
 }
 
+async function writeCapacityIdentityRows(client: Client, directorId: string, accountIds: Map<string, string>, teacherIds: Map<number, string>): Promise<void> {
+  await insertCapacityRows(client, 'escolas', [
+    'id', 'codigo', 'nome', 'tipo', 'ativo', 'diretor_id', 'created_at',
+  ], [[
+    PILOT_CAPACITY_SCHOOL_ID,
+    'PILOT-CAPACITY',
+    'Escola Piloto Capacidade',
+    'fundamental',
+    true,
+    null,
+    PILOT_CAPACITY_SEED_CREATED_AT,
+  ]])
+
+  await insertCapacityRows(client, 'users', [
+    'id', 'nome', 'email', 'tipo_usuario', 'escola_id', 'ativo',
+    'primeiro_login', 'senha_padrao', 'created_at',
+  ], CAPACITY_ACCOUNTS.map(account => [
+    accountId(accountIds, account.email),
+    account.name,
+    account.email,
+    account.role,
+    PILOT_CAPACITY_SCHOOL_ID,
+    true,
+    false,
+    false,
+    PILOT_CAPACITY_SEED_CREATED_AT,
+  ]))
+
+  await client.query(
+    'UPDATE public.escolas SET diretor_id = $1 WHERE id = $2',
+    [directorId, PILOT_CAPACITY_SCHOOL_ID]
+  )
+
+  await insertCapacityRows(client, 'turmas', [
+    'id', 'import_source_id', 'nome', 'serie', 'turno', 'ano_letivo', 'capacidade',
+    'escola_id', 'professor_id', 'ativo', 'created_at',
+  ], Array.from({ length: PILOT_CAPACITY_CONTRACT.classCount }, (_, index) => {
+    const classIndex = index + 1
+    return [
+      pilotCapacityClassId(classIndex),
+      `pilot-capacity:class:${classIndex.toString().padStart(2, '0')}`,
+      `Turma Capacidade ${classIndex.toString().padStart(2, '0')}`,
+      '1 ano',
+      classIndex % 2 === 0 ? 'vespertino' : 'matutino',
+      PILOT_CAPACITY_YEAR,
+      PILOT_CAPACITY_CONTRACT.studentsPerClass,
+      PILOT_CAPACITY_SCHOOL_ID,
+      teacherIds.get(pilotCapacityTeacherIndexForClass(classIndex)) || null,
+      true,
+      PILOT_CAPACITY_CLASS_CREATED_AT,
+    ]
+  }))
+
+  await insertCapacityRows(client, 'responsaveis', [
+    'id', 'escola_id', 'import_source_id', 'nome', 'cpf', 'parentesco',
+    'telefone', 'email', 'ativo', 'created_at',
+  ], Array.from({ length: PILOT_CAPACITY_CONTRACT.guardianCount }, (_, index) => {
+    const guardianIndex = index + 1
+    return [
+      pilotCapacityGuardianId(guardianIndex),
+      PILOT_CAPACITY_SCHOOL_ID,
+      `pilot-capacity:guardian:${guardianIndex.toString().padStart(3, '0')}`,
+      pilotCapacityGuardianName(guardianIndex),
+      null,
+      guardianIndex % 2 === 0 ? 'pai' : 'mae',
+      pilotCapacityGuardianPhone(guardianIndex),
+      pilotCapacityGuardianEmail(guardianIndex),
+      true,
+      PILOT_CAPACITY_SEED_CREATED_AT,
+    ]
+  }))
+
+  await insertCapacityRows(client, 'alunos', [
+    'id', 'escola_id', 'import_source_id', 'nome_completo', 'data_nascimento',
+    'sexo', 'responsavel_id', 'ativo', 'created_at',
+  ], Array.from({ length: PILOT_CAPACITY_CONTRACT.activeStudentCount }, (_, index) => {
+    const studentIndex = index + 1
+    return [
+      pilotCapacityStudentId(studentIndex),
+      PILOT_CAPACITY_SCHOOL_ID,
+      `pilot-capacity:student:${studentIndex.toString().padStart(3, '0')}`,
+      pilotCapacityStudentName(studentIndex),
+      isoDateOffset(studentIndex - 1),
+      studentIndex % 2 === 0 ? 'F' : 'M',
+      pilotCapacityGuardianId(studentIndex),
+      true,
+      PILOT_CAPACITY_SEED_CREATED_AT,
+    ]
+  }))
+
+  await insertCapacityRows(client, 'aluno_responsaveis', [
+    'id', 'aluno_id', 'responsavel_id', 'tipo_responsabilidade', 'prioridade',
+    'pode_autorizar_saida', 'pode_receber_comunicados', 'ativo', 'created_at',
+  ], Array.from({ length: PILOT_CAPACITY_CONTRACT.activeStudentCount }, (_, index) => {
+    const studentIndex = index + 1
+    return [
+      pilotCapacityLinkId(studentIndex),
+      pilotCapacityStudentId(studentIndex),
+      pilotCapacityGuardianId(studentIndex),
+      studentIndex % 2 === 0 ? 'pai' : 'mae',
+      1,
+      true,
+      true,
+      true,
+      PILOT_CAPACITY_SEED_CREATED_AT,
+    ]
+  }))
+
+}
+
+async function writeCapacityEnrollments(client: Client): Promise<void> {
+  for (let classIndex = 1; classIndex <= PILOT_CAPACITY_CONTRACT.classCount; classIndex += 1) {
+    const enrollmentRows = Array.from(
+      { length: PILOT_CAPACITY_CONTRACT.studentsPerClass },
+      (_, offset) => {
+        const studentIndex = (classIndex - 1) * PILOT_CAPACITY_CONTRACT.studentsPerClass + offset + 1
+        return [
+          pilotCapacityEnrollmentId(studentIndex),
+          pilotCapacityStudentId(studentIndex),
+          pilotCapacityClassId(classIndex),
+          PILOT_CAPACITY_YEAR,
+          '2026-02-02',
+          'ativa',
+          'pilot capacity contract',
+          PILOT_CAPACITY_SEED_CREATED_AT,
+        ]
+      }
+    )
+    await insertCapacityRows(client, 'matriculas', [
+      'id', 'aluno_id', 'turma_id', 'ano_letivo', 'data_matricula',
+      'situacao', 'observacoes', 'created_at',
+    ], enrollmentRows)
+  }
+
+}
+
+async function writeCapacitySessionsAndAttendance(client: Client, schoolDays: string[], teacherIds: Map<number, string>): Promise<void> {
+  const sessionRows: SeedValue[][] = []
+  let sessionIndex = 0
+  for (let classIndex = 1; classIndex <= PILOT_CAPACITY_CONTRACT.classCount; classIndex += 1) {
+    for (const schoolDay of schoolDays) {
+      sessionIndex += 1
+      sessionRows.push([
+        pilotCapacitySessionId(sessionIndex),
+        pilotCapacityClassId(classIndex),
+        PILOT_CAPACITY_SCHOOL_ID,
+        teacherIds.get(classIndex) || null,
+        schoolDay,
+        '08:00:00',
+        '08:50:00',
+        50,
+        'Números e operações',
+        'Resolver situações de adição',
+        'Aprendizagem baseada em problemas',
+        'Material dourado',
+        'FECHADA',
+        false,
+        `${schoolDay}T12:00:00.000Z`,
+        `${schoolDay}T13:00:00.000Z`,
+        `${schoolDay}T13:00:00.000Z`,
+        PILOT_CAPACITY_SEED_CREATED_AT,
+        PILOT_CAPACITY_SEED_CREATED_AT,
+      ])
+    }
+  }
+  await insertCapacityRows(client, 'sessoes_aula', [
+    'id', 'turma_id', 'escola_id', 'professor_id', 'data_aula', 'inicio_aula',
+    'fim_aula', 'duracao_minutos', 'conteudo_programatico', 'objetivos_aprendizagem',
+    'metodologia', 'recursos_utilizados', 'status', 'documento_oficial',
+    'aberta_em', 'fechada_em', 'travada_em', 'created_at', 'updated_at',
+  ], sessionRows)
+
+  const attendanceRows: SeedValue[][] = []
+  let attendanceIndex = 0
+  for (let classIndex = 1; classIndex <= PILOT_CAPACITY_CONTRACT.classCount; classIndex += 1) {
+    for (let schoolDayIndex = 0; schoolDayIndex < schoolDays.length; schoolDayIndex += 1) {
+      const sessionIndexForClass = (classIndex - 1) * schoolDays.length + schoolDayIndex + 1
+      for (let studentOffset = 0; studentOffset < PILOT_CAPACITY_CONTRACT.studentsPerClass; studentOffset += 1) {
+        const studentIndex = (classIndex - 1) * PILOT_CAPACITY_CONTRACT.studentsPerClass + studentOffset + 1
+        attendanceIndex += 1
+        const present = pilotCapacityStudentPresent(studentIndex, schoolDayIndex)
+        attendanceRows.push([
+          pilotCapacityAttendanceId(attendanceIndex),
+          pilotCapacityEnrollmentId(studentIndex),
+          schoolDays[schoolDayIndex],
+          present,
+          present ? 'P' : 'F',
+          null,
+          null,
+          pilotCapacitySessionId(sessionIndexForClass),
+          teacherIds.get(classIndex) || null,
+          teacherIds.get(classIndex) || null,
+          `${schoolDays[schoolDayIndex]}T18:00:00.000Z`,
+          PILOT_CAPACITY_SEED_CREATED_AT,
+        ])
+      }
+    }
+  }
+  await insertCapacityRows(client, 'frequencia', [
+    'id', 'matricula_id', 'data_aula', 'presente', 'status_presenca',
+    'justificativa', 'observacoes', 'sessao_id', 'professor_id', 'marcado_por',
+    'marcado_em', 'created_at',
+  ], attendanceRows)
+
+}
+
+async function writeCapacityConfigRows(client: Client): Promise<void> {
+  await insertCapacityRows(client, 'configs', [
+    'id', 'chave', 'valor', 'categoria', 'descricao', 'tipo_valor',
+    'valor_padrao', 'ativo', 'created_at',
+  ], [
+    [
+      PILOT_CAPACITY_CONFIG_MARKER_ID,
+      'pilot_capacity_synthetic_marker',
+      PILOT_CAPACITY_SEED_MARKER,
+      'pilot',
+      'Marker for the isolated synthetic capacity contract',
+      'string',
+      PILOT_CAPACITY_SEED_MARKER,
+      true,
+      PILOT_CAPACITY_SEED_CREATED_AT,
+    ],
+    [
+      PILOT_CAPACITY_CONFIG_ANCHOR_ID,
+      'pilot_capacity_seed_anchor_date',
+      PILOT_CAPACITY_SEED_ANCHOR_DATE,
+      'pilot',
+      'Anchor date for the deterministic school-day window',
+      'string',
+      PILOT_CAPACITY_SEED_ANCHOR_DATE,
+      true,
+      PILOT_CAPACITY_SEED_CREATED_AT,
+    ],
+  ])
+
+}
+
 async function writeCapacityContract(client: Client, accountIds: Map<string, string>): Promise<void> {
   const directorId = accountId(accountIds, PILOT_CAPACITY_DIRECTOR_EMAIL)
   const teacherIds = new Map(
@@ -168,233 +434,11 @@ async function writeCapacityContract(client: Client, accountIds: Map<string, str
   const schoolDays = pilotCapacitySchoolDays()
 
   await client.query('BEGIN')
-
   try {
-    await insertCapacityRows(client, 'escolas', [
-      'id', 'codigo', 'nome', 'tipo', 'ativo', 'diretor_id', 'created_at',
-    ], [[
-      PILOT_CAPACITY_SCHOOL_ID,
-      'PILOT-CAPACITY',
-      'Escola Piloto Capacidade',
-      'fundamental',
-      true,
-      null,
-      PILOT_CAPACITY_SEED_CREATED_AT,
-    ]])
-
-    await insertCapacityRows(client, 'users', [
-      'id', 'nome', 'email', 'tipo_usuario', 'escola_id', 'ativo',
-      'primeiro_login', 'senha_padrao', 'created_at',
-    ], CAPACITY_ACCOUNTS.map(account => [
-      accountId(accountIds, account.email),
-      account.name,
-      account.email,
-      account.role,
-      PILOT_CAPACITY_SCHOOL_ID,
-      true,
-      false,
-      false,
-      PILOT_CAPACITY_SEED_CREATED_AT,
-    ]))
-
-    await client.query(
-      'UPDATE public.escolas SET diretor_id = $1 WHERE id = $2',
-      [directorId, PILOT_CAPACITY_SCHOOL_ID]
-    )
-
-    await insertCapacityRows(client, 'turmas', [
-      'id', 'import_source_id', 'nome', 'serie', 'turno', 'ano_letivo', 'capacidade',
-      'escola_id', 'professor_id', 'ativo', 'created_at',
-    ], Array.from({ length: PILOT_CAPACITY_CONTRACT.classCount }, (_, index) => {
-      const classIndex = index + 1
-      return [
-        pilotCapacityClassId(classIndex),
-        `pilot-capacity:class:${classIndex.toString().padStart(2, '0')}`,
-        `Turma Capacidade ${classIndex.toString().padStart(2, '0')}`,
-        '1 ano',
-        classIndex % 2 === 0 ? 'vespertino' : 'matutino',
-        PILOT_CAPACITY_YEAR,
-        PILOT_CAPACITY_CONTRACT.studentsPerClass,
-        PILOT_CAPACITY_SCHOOL_ID,
-        teacherIds.get(pilotCapacityTeacherIndexForClass(classIndex)) || null,
-        true,
-        PILOT_CAPACITY_CLASS_CREATED_AT,
-      ]
-    }))
-
-    await insertCapacityRows(client, 'responsaveis', [
-      'id', 'escola_id', 'import_source_id', 'nome', 'cpf', 'parentesco',
-      'telefone', 'email', 'ativo', 'created_at',
-    ], Array.from({ length: PILOT_CAPACITY_CONTRACT.guardianCount }, (_, index) => {
-      const guardianIndex = index + 1
-      return [
-        pilotCapacityGuardianId(guardianIndex),
-        PILOT_CAPACITY_SCHOOL_ID,
-        `pilot-capacity:guardian:${guardianIndex.toString().padStart(3, '0')}`,
-        pilotCapacityGuardianName(guardianIndex),
-        null,
-        guardianIndex % 2 === 0 ? 'pai' : 'mae',
-        pilotCapacityGuardianPhone(guardianIndex),
-        pilotCapacityGuardianEmail(guardianIndex),
-        true,
-        PILOT_CAPACITY_SEED_CREATED_AT,
-      ]
-    }))
-
-    await insertCapacityRows(client, 'alunos', [
-      'id', 'escola_id', 'import_source_id', 'nome_completo', 'data_nascimento',
-      'sexo', 'responsavel_id', 'ativo', 'created_at',
-    ], Array.from({ length: PILOT_CAPACITY_CONTRACT.activeStudentCount }, (_, index) => {
-      const studentIndex = index + 1
-      return [
-        pilotCapacityStudentId(studentIndex),
-        PILOT_CAPACITY_SCHOOL_ID,
-        `pilot-capacity:student:${studentIndex.toString().padStart(3, '0')}`,
-        pilotCapacityStudentName(studentIndex),
-        isoDateOffset(studentIndex - 1),
-        studentIndex % 2 === 0 ? 'F' : 'M',
-        pilotCapacityGuardianId(studentIndex),
-        true,
-        PILOT_CAPACITY_SEED_CREATED_AT,
-      ]
-    }))
-
-    await insertCapacityRows(client, 'aluno_responsaveis', [
-      'id', 'aluno_id', 'responsavel_id', 'tipo_responsabilidade', 'prioridade',
-      'pode_autorizar_saida', 'pode_receber_comunicados', 'ativo', 'created_at',
-    ], Array.from({ length: PILOT_CAPACITY_CONTRACT.activeStudentCount }, (_, index) => {
-      const studentIndex = index + 1
-      return [
-        pilotCapacityLinkId(studentIndex),
-        pilotCapacityStudentId(studentIndex),
-        pilotCapacityGuardianId(studentIndex),
-        studentIndex % 2 === 0 ? 'pai' : 'mae',
-        1,
-        true,
-        true,
-        true,
-        PILOT_CAPACITY_SEED_CREATED_AT,
-      ]
-    }))
-
-    for (let classIndex = 1; classIndex <= PILOT_CAPACITY_CONTRACT.classCount; classIndex += 1) {
-      const enrollmentRows = Array.from(
-        { length: PILOT_CAPACITY_CONTRACT.studentsPerClass },
-        (_, offset) => {
-          const studentIndex = (classIndex - 1) * PILOT_CAPACITY_CONTRACT.studentsPerClass + offset + 1
-          return [
-            pilotCapacityEnrollmentId(studentIndex),
-            pilotCapacityStudentId(studentIndex),
-            pilotCapacityClassId(classIndex),
-            PILOT_CAPACITY_YEAR,
-            '2026-02-02',
-            'ativa',
-            'pilot capacity contract',
-            PILOT_CAPACITY_SEED_CREATED_AT,
-          ]
-        }
-      )
-      await insertCapacityRows(client, 'matriculas', [
-        'id', 'aluno_id', 'turma_id', 'ano_letivo', 'data_matricula',
-        'situacao', 'observacoes', 'created_at',
-      ], enrollmentRows)
-    }
-
-    const sessionRows: SeedValue[][] = []
-    let sessionIndex = 0
-    for (let classIndex = 1; classIndex <= PILOT_CAPACITY_CONTRACT.classCount; classIndex += 1) {
-      for (const schoolDay of schoolDays) {
-        sessionIndex += 1
-        sessionRows.push([
-          pilotCapacitySessionId(sessionIndex),
-          pilotCapacityClassId(classIndex),
-          PILOT_CAPACITY_SCHOOL_ID,
-          teacherIds.get(classIndex) || null,
-          schoolDay,
-          '08:00:00',
-          '08:50:00',
-          50,
-          'Números e operações',
-          'Resolver situações de adição',
-          'Aprendizagem baseada em problemas',
-          'Material dourado',
-          'FECHADA',
-          false,
-          `${schoolDay}T12:00:00.000Z`,
-          `${schoolDay}T13:00:00.000Z`,
-          `${schoolDay}T13:00:00.000Z`,
-          PILOT_CAPACITY_SEED_CREATED_AT,
-          PILOT_CAPACITY_SEED_CREATED_AT,
-        ])
-      }
-    }
-    await insertCapacityRows(client, 'sessoes_aula', [
-      'id', 'turma_id', 'escola_id', 'professor_id', 'data_aula', 'inicio_aula',
-      'fim_aula', 'duracao_minutos', 'conteudo_programatico', 'objetivos_aprendizagem',
-      'metodologia', 'recursos_utilizados', 'status', 'documento_oficial',
-      'aberta_em', 'fechada_em', 'travada_em', 'created_at', 'updated_at',
-    ], sessionRows)
-
-    const attendanceRows: SeedValue[][] = []
-    let attendanceIndex = 0
-    for (let classIndex = 1; classIndex <= PILOT_CAPACITY_CONTRACT.classCount; classIndex += 1) {
-      for (let schoolDayIndex = 0; schoolDayIndex < schoolDays.length; schoolDayIndex += 1) {
-        const sessionIndexForClass = (classIndex - 1) * schoolDays.length + schoolDayIndex + 1
-        for (let studentOffset = 0; studentOffset < PILOT_CAPACITY_CONTRACT.studentsPerClass; studentOffset += 1) {
-          const studentIndex = (classIndex - 1) * PILOT_CAPACITY_CONTRACT.studentsPerClass + studentOffset + 1
-          attendanceIndex += 1
-          const present = pilotCapacityStudentPresent(studentIndex, schoolDayIndex)
-          attendanceRows.push([
-            pilotCapacityAttendanceId(attendanceIndex),
-            pilotCapacityEnrollmentId(studentIndex),
-            schoolDays[schoolDayIndex],
-            present,
-            present ? 'P' : 'F',
-            null,
-            null,
-            pilotCapacitySessionId(sessionIndexForClass),
-            teacherIds.get(classIndex) || null,
-            teacherIds.get(classIndex) || null,
-            `${schoolDays[schoolDayIndex]}T18:00:00.000Z`,
-            PILOT_CAPACITY_SEED_CREATED_AT,
-          ])
-        }
-      }
-    }
-    await insertCapacityRows(client, 'frequencia', [
-      'id', 'matricula_id', 'data_aula', 'presente', 'status_presenca',
-      'justificativa', 'observacoes', 'sessao_id', 'professor_id', 'marcado_por',
-      'marcado_em', 'created_at',
-    ], attendanceRows)
-
-    await insertCapacityRows(client, 'configs', [
-      'id', 'chave', 'valor', 'categoria', 'descricao', 'tipo_valor',
-      'valor_padrao', 'ativo', 'created_at',
-    ], [
-      [
-        PILOT_CAPACITY_CONFIG_MARKER_ID,
-        'pilot_capacity_synthetic_marker',
-        PILOT_CAPACITY_SEED_MARKER,
-        'pilot',
-        'Marker for the isolated synthetic capacity contract',
-        'string',
-        PILOT_CAPACITY_SEED_MARKER,
-        true,
-        PILOT_CAPACITY_SEED_CREATED_AT,
-      ],
-      [
-        PILOT_CAPACITY_CONFIG_ANCHOR_ID,
-        'pilot_capacity_seed_anchor_date',
-        PILOT_CAPACITY_SEED_ANCHOR_DATE,
-        'pilot',
-        'Anchor date for the deterministic school-day window',
-        'string',
-        PILOT_CAPACITY_SEED_ANCHOR_DATE,
-        true,
-        PILOT_CAPACITY_SEED_CREATED_AT,
-      ],
-    ])
-
+    await writeCapacityIdentityRows(client, directorId, accountIds, teacherIds)
+    await writeCapacityEnrollments(client)
+    await writeCapacitySessionsAndAttendance(client, schoolDays, teacherIds)
+    await writeCapacityConfigRows(client)
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')
@@ -402,9 +446,9 @@ async function writeCapacityContract(client: Client, accountIds: Map<string, str
   }
 }
 
-async function readCapacitySeedReceipt(client: Client, accountIds: Map<string, string>): Promise<Record<string, number>> {
+async function readCapacitySeedReceipt(client: Client, accountIds: Map<string, string>): Promise<CapacitySeedReceipt> {
   const teacherIds = TEACHER_ACCOUNTS.map(account => accountId(accountIds, account.email))
-  const result = await client.query(`
+  const result = await client.query<CapacityReceiptRow>(`
     SELECT
       (SELECT count(*) FROM public.escolas WHERE id = $1) AS schools,
       (SELECT count(*) FROM public.turmas WHERE escola_id = $1 AND import_source_id LIKE 'pilot-capacity:%') AS classes,
@@ -417,8 +461,19 @@ async function readCapacitySeedReceipt(client: Client, accountIds: Map<string, s
       (SELECT count(*) FROM public.frequencia WHERE sessao_id IN (SELECT id FROM public.sessoes_aula WHERE escola_id = $1 AND turma_id IN (SELECT id FROM public.turmas WHERE import_source_id LIKE 'pilot-capacity:%'))) AS attendance
   `, [PILOT_CAPACITY_SCHOOL_ID, teacherIds, accountId(accountIds, PILOT_CAPACITY_DIRECTOR_EMAIL)])
 
-  const row = result.rows[0] as Record<string, string>
-  return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, Number(value)]))
+  const row = result.rows[0]
+  if (!row) throw new Error('PILOT_CAPACITY_SEED_RECEIPT_ROW_MISSING')
+  return {
+    schools: Number(row.schools),
+    classes: Number(row.classes),
+    active_students: Number(row.active_students),
+    enrollments: Number(row.enrollments),
+    guardians: Number(row.guardians),
+    teacher_owners: Number(row.teacher_owners),
+    directors: Number(row.directors),
+    sessions: Number(row.sessions),
+    attendance: Number(row.attendance),
+  }
 }
 
 export async function seedPilotCapacity(): Promise<void> {

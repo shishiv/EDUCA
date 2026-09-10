@@ -23,7 +23,7 @@ export type WhatsAppDeliveryMode =
   | { kind: 'meta' }
 
 function isNonEmpty(value: string | undefined): boolean {
-  return typeof value === 'string' && value.trim().length > 0
+  return Boolean(value?.trim())
 }
 
 /**

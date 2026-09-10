@@ -1,0 +1,94 @@
+/**
+ * Canonical batch attendance endpoint.
+ * POST /api/sessoes/aula/[id]/frequencia/batch
+ *
+ * The endpoint is an HTTP adapter only. Authorization and all identity
+ * derivation live in markAttendanceBatchAction, the same server action used by
+ * the canonical chamada page.
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
+
+const BatchAttendanceSchema = z.object({
+  attendance: z.array(z.object({
+    matricula_id: z.string().uuid('ID da matrícula inválido'),
+    status: z.enum(['P', 'F', 'J', 'A']).nullable(),
+    justificativa: z.string().max(500, 'Justificativa muito longa').nullable().optional(),
+  })).min(1, 'Pelo menos um registro de frequência é necessário'),
+})
+
+const HTTP_STATUS_BY_ATTENDANCE_CODE = new Map<string, number>([
+  ['UNAUTHENTICATED', 401],
+  ['SESSION_NOT_FOUND', 404],
+  ['TURMA_NOT_FOUND', 404],
+  ['MATRICULA_NOT_FOUND', 404],
+  ['FORBIDDEN_ROLE', 403],
+  ['SESSION_NOT_OWNED', 403],
+  ['SCHOOL_MISMATCH', 403],
+  ['TURMA_NOT_OWNED', 403],
+  ['SESSION_CLOSED', 409],
+  ['SESSION_DATE_NOT_CURRENT', 409],
+  ['ATTENDANCE_WRITE_FAILED', 409],
+])
+
+function statusForCode(code?: string): number {
+  return code ? HTTP_STATUS_BY_ATTENDANCE_CODE.get(code) ?? 400 : 400
+}
+
+export function createAttendanceBatchPostHandler(mark = markAttendanceBatchAction) {
+  return async function POST(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) {
+    const { id } = await params
+
+    if (!z.string().uuid().safeParse(id).success) {
+      return NextResponse.json(
+        { success: false, code: 'VALIDATION_ERROR', error: 'ID da sessão inválido' },
+        { status: 400 }
+      )
+    }
+
+    try {
+      const payload = BatchAttendanceSchema.parse(await request.json())
+      const result = await mark({
+        sessao_id: id,
+        records: payload.attendance,
+      })
+
+      if (!result.success) {
+        return NextResponse.json(result, { status: statusForCode(result.code) })
+      }
+
+      return NextResponse.json({
+        success: true,
+        results: {
+          processed_count: result.processed_count,
+          total_requested: payload.attendance.length,
+        },
+      })
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'VALIDATION_ERROR',
+            error: 'Dados de entrada inválidos',
+            details: error.issues.map(issue => ({
+              field: issue.path.join('.'),
+              message: issue.message,
+            })),
+          },
+          { status: 400 }
+        )
+      }
+
+      return NextResponse.json(
+        { success: false, code: 'INTERNAL_ERROR', error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
+    }
+  }
+}

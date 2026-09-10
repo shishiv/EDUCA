@@ -1,19 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { query, from } = vi.hoisted(() => {
-  const query = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn(),
-  }
-  return { query, from: vi.fn(() => query) }
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+import { UsersApiService } from '@/lib/api/users'
+
+const queryTransport = vi.fn<typeof fetch>()
+const client = createClient<Database>('http://127.0.0.1:54321', 'synthetic-anon', {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  global: { fetch: queryTransport },
 })
-
-vi.mock('@/lib/supabase', () => ({ supabase: { from } }))
-vi.mock('@/lib/auth', () => ({ logAuthEvent: vi.fn() }))
-vi.mock('@/lib/audit', () => ({ logUserEvent: vi.fn(), logAuditEvent: vi.fn() }))
-
-import { usersApi } from '@/lib/api/users'
+const usersApi = new UsersApiService(client)
 
 const userId = '00000000-0000-0000-0000-000000000001'
 
@@ -58,13 +54,14 @@ describe('browser user API contracts', () => {
     const failure = new Error('synthetic transport failure')
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(failure))
 
-    await expect(usersApi.updateUserStatus(userId, false)).rejects.toBe(failure)
+    await expect(usersApi.updateUserStatus(userId, false)).rejects.toMatchObject(failure)
   })
 
   it('preserves structured read errors instead of returning an empty user list', async () => {
     const failure = { code: '42501', message: 'synthetic read denied' }
-    query.order.mockResolvedValue({ data: null, error: failure })
+    queryTransport.mockResolvedValue(Response.json(failure, { status: 403 }))
 
-    await expect(usersApi.getUsersWithSchool()).rejects.toBe(failure)
+    await expect(usersApi.getUsersWithSchool()).rejects.toMatchObject(failure)
+    expect(queryTransport).toHaveBeenCalledTimes(1)
   })
 })

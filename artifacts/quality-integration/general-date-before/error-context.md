@@ -1,0 +1,126 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Pular para o conteúdo principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary "Navegação principal" [ref=e5]:
+      - link "EDUCA Sistema Escolar" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e8]: E
+        - generic [ref=e9]:
+          - strong [ref=e10]: EDUCA
+          - generic [ref=e11]: Sistema Escolar
+      - button "Recolher menu lateral" [ref=e13] [cursor=pointer]:
+        - img [ref=e14]
+      - navigation [ref=e19]:
+        - region "Principal" [ref=e20]:
+          - button "Principal" [expanded] [ref=e21] [cursor=pointer]:
+            - generic [ref=e22]: Principal
+            - img [ref=e23]
+          - link "Dashboard" [ref=e26] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e27]
+            - generic [ref=e30]: Dashboard
+        - region "Acadêmico" [ref=e31]:
+          - button "Acadêmico" [expanded] [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: Acadêmico
+            - img [ref=e34]
+          - generic [ref=e36]:
+            - link "Frequência" [ref=e37] [cursor=pointer]:
+              - /url: /dashboard/turmas
+              - img [ref=e38]
+              - generic [ref=e41]: Frequência
+            - link "Diário de Classe" [ref=e42] [cursor=pointer]:
+              - /url: /diario
+              - img [ref=e43]
+              - generic [ref=e45]: Diário de Classe
+            - link "Notas" [ref=e46] [cursor=pointer]:
+              - /url: /dashboard/notas
+              - img [ref=e47]
+              - generic [ref=e50]: Notas
+      - paragraph [ref=e51]: Rede municipal · ambiente autenticado
+    - generic [ref=e52]:
+      - banner [ref=e54]:
+        - navigation "Alunos" [ref=e55]:
+          - generic [ref=e56]: EDUCA
+          - generic [ref=e57]: /
+          - strong [ref=e58]: Alunos
+        - generic [ref=e59]:
+          - generic [ref=e61]:
+            - img [ref=e62]
+            - combobox "Busca global" [ref=e65]
+          - generic [ref=e66]:
+            - button "Mudar idioma para English" [ref=e67] [cursor=pointer]: PT
+            - status [ref=e68]
+          - 'generic "Conexão: Online" [ref=e69]':
+            - img [ref=e70]
+            - generic [ref=e74]: Online
+          - button "Abrir menu do usuário" [ref=e75] [cursor=pointer]:
+            - generic [ref=e76]: PT
+            - generic [ref=e77]:
+              - strong [ref=e78]: Professor
+              - generic [ref=e79]: Professor(a)
+            - img [ref=e80]
+      - main [ref=e82]:
+        - generic [ref=e84]:
+          - link "Diario" [ref=e86] [cursor=pointer]:
+            - /url: /dashboard/alunos/73ce628b-7901-4fad-9ea7-72248e83f85d/diario
+            - img [ref=e87]
+            - text: Diario
+          - generic [ref=e89]:
+            - heading "Registrar Vivencia" [level=3] [ref=e91]
+            - form "Registrar vivência de Pedro Silva E2E" [ref=e93]:
+              - generic [ref=e94]:
+                - paragraph [ref=e95]: "Registrando vivência para:"
+                - paragraph [ref=e96]: Pedro Silva E2E
+              - generic [ref=e97]:
+                - generic [ref=e98]: Data da Vivência *
+                - textbox "Data da Vivência *" [ref=e99]: 2026-09-09
+              - generic [ref=e100]:
+                - paragraph [ref=e101]: Campos de Experiência *
+                - paragraph [ref=e102]: Selecione os campos trabalhados nesta vivência (pode selecionar vários)
+                - group "Campos de Experiência *" [ref=e103]:
+                  - checkbox "O eu, o outro e o nos - Desenvolvimento da identidade pessoal e social, construcao de autonomia e nocao de coletividade" [ref=e104] [cursor=pointer]:
+                    - generic [ref=e105]: 🤝
+                    - heading "O eu, o outro e o nos" [level=4] [ref=e106]
+                    - paragraph [ref=e107]: Desenvolvimento da identidade pessoal e social, construcao de autonomia e nocao de coletividade
+                  - checkbox "Corpo, gestos e movimentos - Exploracao do corpo, gestos, movimentos, coordenacao motora e expressao corporal" [ref=e108] [cursor=pointer]:
+                    - generic [ref=e109]: 🏃
+                    - heading "Corpo, gestos e movimentos" [level=4] [ref=e110]
+                    - paragraph [ref=e111]: Exploracao do corpo, gestos, movimentos, coordenacao motora e expressao corporal
+                  - checkbox "Tracos, sons, cores e formas - Exploracao artistica atraves de tracos, sons, cores, formas e expressoes culturais" [ref=e112] [cursor=pointer]:
+                    - generic [ref=e113]: 🎵
+                    - heading "Tracos, sons, cores e formas" [level=4] [ref=e114]
+                    - paragraph [ref=e115]: Exploracao artistica atraves de tracos, sons, cores, formas e expressoes culturais
+                  - checkbox "Escuta, fala, pensamento e imaginacao - Desenvolvimento da linguagem oral, escuta ativa, pensamento critico e imaginacao" [ref=e116] [cursor=pointer]:
+                    - generic [ref=e117]: 💬
+                    - heading "Escuta, fala, pensamento e imaginacao" [level=4] [ref=e118]
+                    - paragraph [ref=e119]: Desenvolvimento da linguagem oral, escuta ativa, pensamento critico e imaginacao
+                  - checkbox "Espacos, tempos, quantidades, relacoes e transformacoes - Nocoes espaciais, temporais, quantitativas e relacoes de transformacao do mundo" [ref=e120] [cursor=pointer]:
+                    - generic [ref=e121]: 🌍
+                    - heading "Espacos, tempos, quantidades" [level=4] [ref=e122]
+                    - paragraph [ref=e123]: Nocoes espaciais, temporais, quantitativas e relacoes de transformacao do mundo
+              - generic [ref=e124]:
+                - generic [ref=e125]: Descrição da Vivência *
+                - paragraph [ref=e126]: Descreva o que foi observado, as interações e descobertas da criança
+                - textbox "Descrição da Vivência *" [ref=e127]:
+                  - /placeholder: Descreva detalhadamente a vivência observada...
+                - generic [ref=e128]:
+                  - generic [ref=e129]: Mínimo 20 caracteres
+                  - generic [ref=e130]: 0/2000
+              - generic [ref=e131]:
+                - generic [ref=e132]: Observações Adicionais(opcional)
+                - textbox "Observações Adicionais(opcional)" [ref=e133]:
+                  - /placeholder: Anotações adicionais, contexto ou observações para acompanhamento...
+              - generic [ref=e134]:
+                - button "Cancelar" [ref=e135] [cursor=pointer]:
+                  - img [ref=e136]
+                  - text: Cancelar
+                - button "Salvar Vivência" [ref=e139] [cursor=pointer]:
+                  - img [ref=e140]
+                  - text: Salvar Vivência
+  - region "Notifications alt+T"
+  - alert [ref=e144]
+```

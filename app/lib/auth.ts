@@ -1,26 +1,32 @@
 'use client'
 
 import { supabase, Tables } from './supabase'
-import { User } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { logger } from './logger'
+import type { Database } from '@/types/database'
+import { z } from 'zod'
 
-// AuthUser extends Supabase User with additional typed metadata
+const authUserMetadataSchema = z.object({
+  nome: z.string().optional(),
+  tipo_usuario: z.string().optional(),
+  escola_id: z.string().optional(),
+})
+
+type AuthClient = Pick<SupabaseClient<Database>, 'auth'>
+
 export interface AuthUser extends Omit<User, 'user_metadata'> {
-  user_metadata: {
-    nome?: string
-    tipo_usuario?: string
-    escola_id?: string
-  } & User['user_metadata']
+  user_metadata: z.infer<typeof authUserMetadataSchema>
 }
 
 export type UserProfile = Tables<'users'>
+type AuditDetail = string | number | boolean | null | undefined | AuditDetail[] | { [key: string]: AuditDetail }
 
 // Audit log types
 export interface AuditLog {
   id?: string
   user_id: string
   action: 'login' | 'logout' | 'login_failed' | 'session_expired' | 'password_changed'
-  details?: Record<string, any>
+  details?: Record<string, AuditDetail>
   ip_address?: string
   user_agent?: string
   created_at?: string
@@ -30,7 +36,7 @@ export interface AuditLog {
 export const logAuthEvent = async (
   action: AuditLog['action'],
   userId?: string,
-  _details?: Record<string, any>,
+  _details?: Record<string, AuditDetail>,
   _headers?: Headers
 ) => {
   if (!userId || typeof window === 'undefined') return
@@ -42,21 +48,19 @@ export const logAuthEvent = async (
     })
     if (!response.ok) logger.error('PILOT_AUDIT_WRITE_FAILED', new Error(`status ${response.status}`), { feature: 'auth', action })
   } catch (error) {
-    logger.error('PILOT_AUDIT_WRITE_FAILED', error as Error, { feature: 'auth', action })
+    const parsedError = z.instanceof(Error).safeParse(error)
+    logger.error('PILOT_AUDIT_WRITE_FAILED', parsedError.success ? parsedError.data : new Error('Unexpected audit failure'), { feature: 'auth', action })
   }
 }
 
-export const signIn = async (email: string, password: string) => {
+export const signIn = async (email: string, password: string, client: AuthClient = supabase) => {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await client.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) {
-      await logAuthEvent('login_failed', undefined, { email, error: error.message })
-      throw error
-    }
+    if (error) throw error
 
     if (data.user) {
       await logAuthEvent('login', data.user.id, { email })
@@ -64,7 +68,11 @@ export const signIn = async (email: string, password: string) => {
 
     return data
   } catch (error) {
-    await logAuthEvent('login_failed', undefined, { email, error: (error as Error).message })
+    const parsedError = z.instanceof(Error).safeParse(error)
+    await logAuthEvent('login_failed', undefined, {
+      email,
+      error: parsedError.success ? parsedError.data.message : 'Unexpected sign-in failure',
+    })
     throw error
   }
 }
@@ -76,7 +84,10 @@ export const signOut = async () => {
 
     // Clear escola selection on logout
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('educa-selected-escola')
+      for (let index = sessionStorage.length - 1; index >= 0; index--) {
+        const key = sessionStorage.key(index)
+        if (key?.startsWith('educa-selected-escola:')) sessionStorage.removeItem(key)
+      }
     }
 
     if (userId) {
@@ -91,10 +102,15 @@ export const signOut = async () => {
   }
 }
 
-export const getCurrentUser = async (): Promise<AuthUser | null> => {
-  const { data: { user }, error } = await supabase.auth.getUser()
+export const getCurrentUser = async (client: AuthClient = supabase): Promise<AuthUser | null> => {
+  const { data: { user }, error } = await client.auth.getUser()
   if (error) throw error
-  return user as AuthUser
+  if (!user) return null
+
+  return {
+    ...user,
+    user_metadata: authUserMetadataSchema.parse(user.user_metadata),
+  }
 }
 
 // Alias for API routes compatibility
@@ -121,53 +137,16 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     }
 
     return data
-  } catch (error: any) {
+  } catch (error) {
+    const parsedError = z.instanceof(Error).safeParse(error)
+    const currentError = parsedError.success ? parsedError.data : new Error('Unexpected profile fetch failure')
     // Ignore AbortError - this is expected during auth state transitions
-    if (error?.name === 'AbortError' || error?.message?.includes('abort')) {
+    if (currentError.name === 'AbortError' || currentError.message.includes('abort')) {
       logger.info('[AUTH] Profile fetch aborted (expected during auth transitions)')
       return null
     }
-    logger.error('[AUTH] Error fetching user profile', error as Error)
+    logger.error('[AUTH] Error fetching user profile', currentError)
     return null
-  }
-}
-
-export const createUserProfile = async (userData: {
-  id: string
-  email: string
-  nome: string
-  tipo_usuario: 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
-  escola_id?: string
-}): Promise<UserProfile> => {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
-        id: userData.id,
-        email: userData.email,
-        nome: userData.nome,
-        tipo_usuario: userData.tipo_usuario,
-        escola_id: userData.escola_id || null,
-        ativo: true,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      // SECURITY: Never return mock data - throw error instead
-      logger.error('[AUTH] Failed to create user profile in database', error, {
-        metadata: {
-          userId: userData.id,
-          errorCode: error.code
-        }
-      })
-      throw new Error(`Failed to create user profile: ${error.message}`)
-    }
-
-    return data
-  } catch (error) {
-    logger.error('[AUTH] Error creating user profile', error as Error)
-    throw error
   }
 }
 
@@ -195,7 +174,7 @@ export const roleHierarchy = {
 } as const
 
 export const hasHigherRole = (userRole: UserProfile['tipo_usuario'], targetRole: UserProfile['tipo_usuario']): boolean => {
-  return roleHierarchy[userRole as keyof typeof roleHierarchy] > roleHierarchy[targetRole as keyof typeof roleHierarchy]
+  return roleRank(userRole) > roleRank(targetRole)
 }
 
 /**
@@ -217,4 +196,13 @@ export const canRecordAttendance = (tipoUsuario: UserProfile['tipo_usuario'] | n
 
   // All other roles (admin, secretario, gestor_sme, coordenador) are view-only
   return false
+}
+
+function roleRank(role: UserProfile['tipo_usuario']): number {
+  if (role === 'responsavel') return roleHierarchy.responsavel
+  if (role === 'professor') return roleHierarchy.professor
+  if (role === 'secretario') return roleHierarchy.secretario
+  if (role === 'diretor') return roleHierarchy.diretor
+  if (role === 'admin') return roleHierarchy.admin
+  return 0
 }

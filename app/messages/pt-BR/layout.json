@@ -1,4 +1,5 @@
 {
+  "realtime": { "sessionLocked": "A sessão de aula foi encerrada." },
   "dashboard": {
     "loading": "Carregando visão geral",
     "preparing": "Preparando seu espaço de trabalho..."

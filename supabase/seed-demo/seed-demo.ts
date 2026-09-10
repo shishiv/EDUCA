@@ -44,7 +44,7 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 // Type-only imports keep editor/typecheck context; runtime bindings come from
 // requireFromApp below because the seed scripts live outside app/'s module tree.
-import type { Client as PgClient } from 'pg'
+import type { Client as PgClient, ClientConfig } from 'pg'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { attendanceSql, STATIC_CREATED_AT } from './attendance-generator'
 import { certificateSql } from './certificate-generator'
@@ -56,10 +56,10 @@ const __dirname = dirname(__filename)
 // from this file. Anchor the require at app/ (where pg and supabase-js are
 // dependencies).
 const requireFromApp = createRequire(join(__dirname, '..', '..', 'app', 'package.json'))
-const { Client } = requireFromApp('pg') as { Client: new (opts: { connectionString: string }) => PgClient }
-const { createClient } = requireFromApp('@supabase/supabase-js') as {
-  createClient: (url: string, key: string, opts?: unknown) => SupabaseClient
-}
+const pgRuntime: { readonly Client: new (opts?: ClientConfig) => PgClient } = requireFromApp('pg')
+const supabaseRuntime: Pick<typeof import('@supabase/supabase-js'), 'createClient'> = requireFromApp('@supabase/supabase-js')
+const { Client } = pgRuntime
+const { createClient } = supabaseRuntime
 
 // =============================================================================
 // Config (receipts: issue #23)
@@ -110,7 +110,11 @@ const DEMO_TABLES = [
   'pilot_municipality_config',
 ]
 
-function parseArgs(argv: string[]): { anchorDate: string | null } {
+interface SeedArguments {
+  readonly anchorDate: string | null
+}
+
+function parseArgs(argv: string[]): SeedArguments {
   let anchorDate: string | null = null
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] !== '--date') continue
@@ -158,13 +162,8 @@ function assertDemoSeedEnvironment(): void {
   }
 }
 
-function safeSeedErrorCode(error: unknown): string {
-  if (error instanceof Error && /^DEMO_[A-Z0-9_]+$/.test(error.message)) return error.message
-  if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED'
-  if ('code' in error && typeof error.code === 'string') return error.code
-  if ('status' in error && (typeof error.status === 'number' || typeof error.status === 'string')) {
-    return `HTTP_${error.status}`
-  }
+function safeSeedErrorCode(error: Error): string {
+  if (/^DEMO_[A-Z0-9_]+$/.test(error.message)) return error.message
   return 'UNCLASSIFIED'
 }
 
@@ -210,18 +209,11 @@ async function syncDemoAuthUser(
   usersSyncSql: (authUserId: string) => string,
   runSql: (sql: string) => Promise<void>
 ): Promise<string> {
-  console.log('  - sincronizando usuario demo de auth...')
+  console.info('  - sincronizando usuario demo de auth...')
 
   // Idempotent: remove any pre-existing demo account so the password is the
   // fixed issue #23 credential after every reset.
-  const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
-  if (listError) throw new Error('DEMO_SEED_AUTH_LIST_FAILED')
-  for (const u of existingUsers?.users ?? []) {
-    if (u.email?.toLowerCase() === DEMO_EMAIL.toLowerCase()) {
-      const { error: delError } = await supabase.auth.admin.deleteUser(u.id)
-      if (delError) throw new Error('DEMO_SEED_AUTH_DELETE_FAILED')
-    }
-  }
+  await removeExistingDemoAuthUsers(supabase)
 
   const { data, error } = await supabase.auth.admin.createUser({
     email: DEMO_EMAIL,
@@ -240,6 +232,17 @@ async function syncDemoAuthUser(
   return authUserId
 }
 
+async function removeExistingDemoAuthUsers(supabase: SupabaseClient): Promise<void> {
+  const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  if (listError) throw new Error('DEMO_SEED_AUTH_LIST_FAILED')
+  for (const u of existingUsers?.users ?? []) {
+    if (u.email?.toLowerCase() === DEMO_EMAIL.toLowerCase()) {
+      const { error: delError } = await supabase.auth.admin.deleteUser(u.id)
+      if (delError) throw new Error('DEMO_SEED_AUTH_DELETE_FAILED')
+    }
+  }
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -253,23 +256,23 @@ async function main(): Promise<void> {
     effectiveAnchor = anchorDate || process.env.SEED_ANCHOR_DATE || todayInSaoPaulo()
     assertDemoAnchorDate(effectiveAnchor)
   } catch (error) {
-    console.error(`DEMO_SEED_FAILED: phase=arguments code=${safeSeedErrorCode(error)}`)
+    console.error(`DEMO_SEED_FAILED: phase=arguments code=${error instanceof Error ? safeSeedErrorCode(error) : 'UNCLASSIFIED'}`)
     process.exit(1)
   }
 
-  console.log('')
-  console.log('='.repeat(64))
-  console.log('  EDUCA - Reset + Seed do sandbox publico (issue #23)')
-  console.log('='.repeat(64))
-  console.log('  Target: Supabase demo (endereco omitido)')
-  console.log(`  Anchor date: ${effectiveAnchor}`)
-  console.log('')
+  console.info('')
+  console.info('='.repeat(64))
+  console.info('  EDUCA - Reset + Seed do sandbox publico (issue #23)')
+  console.info('='.repeat(64))
+  console.info('  Target: Supabase demo (endereco omitido)')
+  console.info(`  Anchor date: ${effectiveAnchor}`)
+  console.info('')
 
   const client = new Client({ connectionString: SUPABASE_DB_URL })
   try {
     await client.connect()
   } catch (error) {
-    console.error(`DEMO_SEED_FAILED: phase=database_connect code=${safeSeedErrorCode(error)}`)
+    console.error(`DEMO_SEED_FAILED: phase=database_connect code=${error instanceof Error ? safeSeedErrorCode(error) : 'UNCLASSIFIED'}`)
     process.exit(1)
   }
 
@@ -279,12 +282,12 @@ async function main(): Promise<void> {
 
   let phase = 'database_reset'
   try {
-    console.log('1/4  Reset + seed (transacao unica)...')
+    console.info('1/4  Reset + seed (transacao unica)...')
     await runSql(resetSql(effectiveAnchor))
-    console.log('   OK  dados sinteticos recriados')
+    console.info('   OK  dados sinteticos recriados')
 
     phase = 'auth_sync'
-    console.log('2/4  Usuario de auth demo...')
+    console.info('2/4  Usuario de auth demo...')
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
@@ -303,10 +306,10 @@ async function main(): Promise<void> {
       ].join('\n'),
       runSql
     )
-    console.log('   OK  usuario demo de auth sincronizado')
+    console.info('   OK  usuario demo de auth sincronizado')
 
     phase = 'count_check'
-    console.log('3/4  Verificacao rapida de contagens...')
+    console.info('3/4  Verificacao rapida de contagens...')
     const counts = await client.query(`
       SELECT
         (SELECT count(*) FROM escolas) AS escolas,
@@ -328,15 +331,15 @@ async function main(): Promise<void> {
         (SELECT count(*) FROM calendario_escolar) AS calendario_escolar,
         (SELECT count(*) FROM configs) AS configs
     `)
-    console.log('   contagens agregadas: ' + JSON.stringify(counts.rows[0], null, 0))
-    console.log('   OK  contagens conferem com o contrato do seed (inclui fonte canonica de certificado)')
+    console.info('   contagens agregadas: ' + JSON.stringify(counts.rows[0], null, 0))
+    console.info('   OK  contagens conferem com o contrato do seed (inclui fonte canonica de certificado)')
 
-    console.log('4/4  Concluido.')
-    console.log('  Usuario demo sincronizado; credenciais omitidas dos logs.')
-    console.log('  Valide com: pnpm demo:validate')
-    console.log('')
+    console.info('4/4  Concluido.')
+    console.info('  Usuario demo sincronizado; credenciais omitidas dos logs.')
+    console.info('  Valide com: pnpm demo:validate')
+    console.info('')
   } catch (error) {
-    console.error(`DEMO_SEED_FAILED: phase=${phase} code=${safeSeedErrorCode(error)}`)
+    console.error(`DEMO_SEED_FAILED: phase=${phase} code=${error instanceof Error ? safeSeedErrorCode(error) : 'UNCLASSIFIED'}`)
     try {
       await client.query('ROLLBACK;')
     } catch {

@@ -16,6 +16,7 @@ import {
 export type { AttendanceReopenStatus }
 
 export type AttendanceReopenRequest = AttendanceReopenRequestRow
+type GeneratedAttendanceReopenRequest = Database['public']['Tables']['attendance_reopen_requests']['Row']
 
 export interface RequestAttendanceReopenParams {
   session_id: string
@@ -51,14 +52,18 @@ export interface AttendanceReopenResult {
   code?: AttendanceReopenErrorCode
 }
 
+type DatabaseErrorResult = {
+  code: AttendanceReopenErrorCode
+  error: string
+}
+
 const OPEN_SESSION_UNIQUE_CONSTRAINT = 'idx_sessoes_aula_open_turma_date'
 const OPEN_SESSION_CONFLICT_MESSAGE =
   'Já existe uma sessão aberta para esta turma nesta data. Feche a sessão aberta antes de aprovar a reabertura.'
 
-function mapDatabaseError(error: { code?: string; constraint?: string; message?: string } | null): {
-  code: AttendanceReopenErrorCode
-  error: string
-} {
+function mapDatabaseError(
+  error: { code?: string; constraint?: string; message?: string } | null
+): DatabaseErrorResult {
   const message = error?.message ?? 'Não foi possível processar a reabertura da chamada'
   const isOpenSessionConflict = error?.code === '23505'
     && (
@@ -73,7 +78,7 @@ function mapDatabaseError(error: { code?: string; constraint?: string; message?:
     }
   }
 
-  const knownCodes: Array<[string, AttendanceReopenErrorCode]> = [
+  const knownCodes = [
     ['ATTENDANCE_REOPEN_REASON_REQUIRED', 'REASON_REQUIRED'],
     ['ATTENDANCE_REOPEN_DECISION_REASON_REQUIRED', 'DECISION_REASON_REQUIRED'],
     ['ATTENDANCE_REOPEN_ROLE_DENIED', 'FORBIDDEN_ROLE'],
@@ -88,7 +93,7 @@ function mapDatabaseError(error: { code?: string; constraint?: string; message?:
     ['ATTENDANCE_REOPEN_SESSION_STATE_CHANGED', 'SESSION_STATE_CHANGED'],
     ['ATTENDANCE_REOPEN_SESSION_NOT_CLOSED', 'SESSION_NOT_CLOSED'],
     ['ATTENDANCE_REOPEN_DECISION_INVALID', 'DECISION_INVALID'],
-  ]
+  ] satisfies ReadonlyArray<readonly [string, AttendanceReopenErrorCode]>
 
   const code = knownCodes.find(([prefix]) => message.includes(prefix))?.[1] ?? 'REOPEN_FAILED'
   return { code, error: message }
@@ -98,6 +103,59 @@ export interface AttendanceReopenService {
   getRequestForSession(sessionId: string): Promise<AttendanceReopenRequest | null>
   request(params: RequestAttendanceReopenParams): Promise<AttendanceReopenResult>
   decide(params: DecideAttendanceReopenParams): Promise<AttendanceReopenResult>
+}
+
+function requestValidationResult(
+  params: RequestAttendanceReopenParams
+): AttendanceReopenResult | null {
+  if (!params?.session_id) {
+    return { success: false, code: 'SESSION_REQUIRED', error: 'ID da sessão é obrigatório' }
+  }
+  if (!params.reason?.trim()) {
+    return { success: false, code: 'REASON_REQUIRED', error: 'O motivo da reabertura é obrigatório' }
+  }
+  return null
+}
+
+function decisionValidationResult(
+  params: DecideAttendanceReopenParams
+): AttendanceReopenResult | null {
+  if (!params?.request_id) {
+    return { success: false, code: 'REQUEST_NOT_FOUND', error: 'ID da solicitação é obrigatório' }
+  }
+  if (params.decision !== 'APROVADA' && params.decision !== 'REJEITADA') {
+    return { success: false, code: 'DECISION_INVALID', error: 'Decisão de reabertura inválida' }
+  }
+  if (params.decision === 'REJEITADA' && !params.reason?.trim()) {
+    return {
+      success: false,
+      code: 'DECISION_REASON_REQUIRED',
+      error: 'O motivo da rejeição é obrigatório',
+    }
+  }
+  return null
+}
+
+async function requireReopenRole(
+  supabase: SupabaseClient<Database>,
+  role: 'professor' | 'diretor',
+  message: string
+): Promise<void> {
+  const actor = await requireAttendanceActor(supabase)
+  if (actor.tipo_usuario !== role) throw new AttendanceAuthError('FORBIDDEN_ROLE', message)
+}
+
+function toAttendanceReopenRequest(
+  request: GeneratedAttendanceReopenRequest
+): AttendanceReopenRequest {
+  if (
+    request.status !== 'PENDENTE'
+    && request.status !== 'APROVADA'
+    && request.status !== 'REJEITADA'
+  ) {
+    throw new Error('Status de reabertura inválido retornado pelo banco')
+  }
+  return { ...request, status: request.status }
 }
 
 export function createAttendanceReopenService(
@@ -115,28 +173,16 @@ export function createAttendanceReopenService(
       .maybeSingle()
 
     if (error) throw new Error(error.message)
-    return data
+    return data ? toAttendanceReopenRequest(data) : null
   }
 
   async function request(
     params: RequestAttendanceReopenParams
   ): Promise<AttendanceReopenResult> {
     try {
-      if (!params?.session_id) {
-        return { success: false, code: 'SESSION_REQUIRED', error: 'ID da sessão é obrigatório' }
-      }
-      if (!params.reason?.trim()) {
-        return { success: false, code: 'REASON_REQUIRED', error: 'O motivo da reabertura é obrigatório' }
-      }
-
-      const actor = await requireAttendanceActor(supabase)
-      if (actor.tipo_usuario !== 'professor') {
-        return {
-          success: false,
-          code: 'FORBIDDEN_ROLE',
-          error: 'Apenas o professor da sessão pode solicitar a reabertura',
-        }
-      }
+      const validation = requestValidationResult(params)
+      if (validation) return validation
+      await requireReopenRole(supabase, 'professor', 'Apenas o professor da sessão pode solicitar a reabertura')
 
       const { data, error } = await client.rpc('request_attendance_reopen', {
         p_session_id: params.session_id,
@@ -145,7 +191,7 @@ export function createAttendanceReopenService(
       if (error || !data) {
         return { success: false, ...mapDatabaseError(error) }
       }
-      return { success: true, request: data }
+      return { success: true, request: toAttendanceReopenRequest(data) }
     } catch (error) {
       if (error instanceof AttendanceAuthError) {
         return {
@@ -166,38 +212,19 @@ export function createAttendanceReopenService(
     params: DecideAttendanceReopenParams
   ): Promise<AttendanceReopenResult> {
     try {
-      if (!params?.request_id) {
-        return { success: false, code: 'REQUEST_NOT_FOUND', error: 'ID da solicitação é obrigatório' }
-      }
-      if (params.decision !== 'APROVADA' && params.decision !== 'REJEITADA') {
-        return { success: false, code: 'DECISION_INVALID', error: 'Decisão de reabertura inválida' }
-      }
-      if (params.decision === 'REJEITADA' && !params.reason?.trim()) {
-        return {
-          success: false,
-          code: 'DECISION_REASON_REQUIRED',
-          error: 'O motivo da rejeição é obrigatório',
-        }
-      }
-
-      const actor = await requireAttendanceActor(supabase)
-      if (actor.tipo_usuario !== 'diretor') {
-        return {
-          success: false,
-          code: 'FORBIDDEN_ROLE',
-          error: 'Apenas o diretor da escola pode decidir a reabertura',
-        }
-      }
+      const validation = decisionValidationResult(params)
+      if (validation) return validation
+      await requireReopenRole(supabase, 'diretor', 'Apenas o diretor da escola pode decidir a reabertura')
 
       const { data, error } = await client.rpc('decide_attendance_reopen', {
         p_request_id: params.request_id,
         p_decision: params.decision,
-        p_reason: params.reason?.trim() || null,
+        p_reason: params.reason?.trim() || undefined,
       })
       if (error || !data) {
         return { success: false, ...mapDatabaseError(error) }
       }
-      return { success: true, request: data }
+      return { success: true, request: toAttendanceReopenRequest(data) }
     } catch (error) {
       if (error instanceof AttendanceAuthError) {
         return {

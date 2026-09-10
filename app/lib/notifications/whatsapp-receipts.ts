@@ -20,8 +20,8 @@ import type {
 export interface WhatsAppReceiptFields {
   gateway: WhatsAppGatewayIdentity
   notificationType: string
-  /** Gateway outcomes plus 'duplicate' for idempotent re-triggers. */
-  outcome: WhatsAppDeliveryOutcome | 'duplicate'
+  /** Gateway outcomes plus local queue/idempotency states. */
+  outcome: WhatsAppDeliveryOutcome | 'duplicate' | 'queued' | 'delivery_unknown'
   externalMessageId?: string
   blockReason?: WhatsAppBlockReason
   failureCode?: string

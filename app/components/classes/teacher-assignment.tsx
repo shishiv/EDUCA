@@ -48,6 +48,32 @@ interface TeacherAssignmentProps {
   className?: string
 }
 
+async function loadTeacherAssignmentData(classId: string, schoolId: string, currentTeacherId?: string) {
+  const [teachers, classInfo] = await Promise.all([
+    schoolsApi.getAvailableTeachers(schoolId),
+    classesApi.getById<TeacherClassData>(classId),
+  ])
+  const availableTeachers = teachers ?? []
+  return {
+    availableTeachers,
+    classInfo,
+    currentTeacher: currentTeacherId ? availableTeachers.find(teacher => teacher.id === currentTeacherId) ?? null : null,
+  }
+}
+
+function SelectedTeacherSummary({ teacher }: { teacher: TeacherOption | undefined }) {
+  const t = useTranslations('registry')
+  if (!teacher) return null
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+      <p className="text-sm text-blue-800">
+        <span className="font-medium">{t('labels.professor-selecionado')}</span>{' '}{teacher.nome}
+      </p>
+      <p className="text-sm text-blue-600">{teacher.email}</p>
+    </div>
+  )
+}
+
 export function TeacherAssignment({
   classId,
   currentTeacherId,
@@ -65,27 +91,15 @@ export function TeacherAssignment({
 
   // Load data on mount
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [teachers, classInfo] = await Promise.all([
-          schoolsApi.getAvailableTeachers(schoolId),
-          classesApi.getById<TeacherClassData>(classId)
-        ])
-
+    void loadTeacherAssignmentData(classId, schoolId, currentTeacherId)
+      .then(({ availableTeachers: teachers, classInfo, currentTeacher: teacher }) => {
         setAvailableTeachers(teachers)
         setClassData(classInfo)
-
-        // Find current teacher details
-        if (currentTeacherId) {
-          const teacher = teachers.find(t => t.id === currentTeacherId)
-          setCurrentTeacher(teacher ?? null)
-        }
-      } catch (error) {
+        setCurrentTeacher(teacher)
+      })
+      .catch(() => {
         toast.error(t('ui.erro-ao-carregar-dados'))
-      }
-    }
-
-    loadData()
+      })
   }, [classId, schoolId, currentTeacherId, t])
 
   const handleAssignTeacher = async () => {
@@ -105,7 +119,7 @@ export function TeacherAssignment({
       queryClient.invalidateQueries({ queryKey: ['users'] })
 
       onAssignmentChange?.(selectedTeacherId)
-    } catch (error) {
+    } catch {
       toast.error(t('ui.erro-ao-atribuir-professor'))
     } finally {
       setLoading(false)
@@ -127,16 +141,14 @@ export function TeacherAssignment({
       queryClient.invalidateQueries({ queryKey: ['users'] })
 
       onAssignmentChange?.(null)
-    } catch (error) {
+    } catch {
       toast.error(t('ui.erro-ao-remover-professor'))
     } finally {
       setLoading(false)
     }
   }
 
-  const getSelectedTeacher = () => {
-    return availableTeachers.find(t => t.id === selectedTeacherId)
-  }
+
 
   if (!classData) {
     return (
@@ -161,7 +173,7 @@ export function TeacherAssignment({
           {t('ui.professor-titular-da-turma')}
         </CardTitle>
         <CardDescription>
-          {t('ui.defina-o-professor-titular-da-turma')} {classData?.nome}
+          {t('ui.defina-o-professor-titular-da-turma')} {classData.nome}
         </CardDescription>
       </CardHeader>
 
@@ -279,15 +291,7 @@ export function TeacherAssignment({
                 </SelectContent>
               </Select>
 
-              {selectedTeacherId && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-medium">{t('labels.professor-selecionado')}</span>{' '}
-                    {getSelectedTeacher()?.nome}
-                  </p>
-                  <p className="text-sm text-blue-600">{getSelectedTeacher()?.email}</p>
-                </div>
-              )}
+              <SelectedTeacherSummary teacher={availableTeachers.find(teacher => teacher.id === selectedTeacherId)} />
 
               <div className="flex gap-3">
                 <LoadingButton

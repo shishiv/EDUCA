@@ -1,0 +1,7 @@
+branch 'salvar/educa-quality-public-20260908' set up to track 'origin/salvar/educa-quality-public-20260908'.
+remote: 
+remote: Create a pull request for 'salvar/educa-quality-public-20260908' on GitHub by visiting:        
+remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-public-20260908        
+remote: 
+To https://github.com/shishiv/EDUCA.git
+ * [new branch]        salvar/educa-quality-public-20260908 -> salvar/educa-quality-public-20260908

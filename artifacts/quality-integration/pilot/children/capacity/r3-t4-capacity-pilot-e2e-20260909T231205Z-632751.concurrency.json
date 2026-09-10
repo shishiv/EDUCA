@@ -1,0 +1,8 @@
+{
+  "result": "pass",
+  "boundary": "real-postgrest-governed-rpc",
+  "successCount": 1,
+  "capacityErrors": 1,
+  "activeEnrollments": 1,
+  "errorMarker": "PILOT_CAPACITY_EXCEEDED"
+}

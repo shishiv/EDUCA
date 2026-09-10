@@ -194,7 +194,7 @@
     "footer": "An open-source foundation for municipal school management.",
     "backTop": "Back to top",
     "privacy": "Privacy policy",
-    "boardCaption": "Synthetic preview of the EDUCA dashboard using example municipal-network data.",
+    "boardCaption": "Illustrative synthetic preview of the EDUCA dashboard, without data from a real network.",
     "synthetic": "Synthetic environment",
     "overview": "Overview",
     "schools": "Schools",
@@ -205,7 +205,7 @@
     "settings": "Settings",
     "networkView": "Network overview",
     "boardCrumb": "Municipal network / Overview",
-    "boardDate": "MONDAY, AUGUST 24",
+    "boardDate": "DEMONSTRATION PERIOD",
     "allSchools": "All schools",
     "activeSchools": "Active schools",
     "networkSuffix": "in the network",
@@ -221,7 +221,8 @@
     "upToDate": "Up to date",
     "followUp": "Follow up",
     "classDiary": "Class diary",
-    "pendingReview": "32 records awaiting review.",
+    "pendingReview": "Illustrative records awaiting review.",
+    "exampleSchool": "Example school",
     "openRoutine": "Open routine"
   }
 }

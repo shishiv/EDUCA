@@ -8,16 +8,17 @@
  * real local Supabase stack lives in tests/live/attendance-auth.live.test.ts.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import {
   createFakeSupabase,
   type FakeAttendanceDbState,
+  type FakeSupabase,
 } from './fake-supabase'
-import { markAttendanceAction } from '@/app/actions/attendance/mark-attendance'
+import { createMarkAttendanceAction } from '@/lib/services/attendance-actions'
 import { getSaoPauloDate } from '@/lib/services/attendance-module'
-import { openSessionAction } from '@/app/actions/attendance/open-session'
-import { closeSessionAction } from '@/app/actions/attendance/close-session'
-import { checkLockStatusAction } from '@/app/actions/attendance/check-lock-status'
+import { createOpenSessionAction } from '@/lib/services/attendance-actions'
+import { createCloseSessionAction } from '@/lib/services/attendance-actions'
+import { createCheckLockStatusAction } from '@/lib/services/attendance-actions'
 
 // ---------------------------------------------------------------------------
 // Test fixtures: two escolas, two turmas, two professors, one diretor per
@@ -96,31 +97,22 @@ const baseState = (): FakeAttendanceDbState => ({
   isEditable: true,
 })
 
-// ---------------------------------------------------------------------------
-// Mock the canonical SSR client factory and next/cache for the action imports.
-// ---------------------------------------------------------------------------
+let currentFake: FakeSupabase | null = null
 
-const { fakeState, setFakeSupabase } = vi.hoisted(() => {
-  let current: ReturnType<typeof createFakeSupabase> | null = null
-  return {
-    fakeState: {
-      get current() {
-        return current
-      },
-    },
-    setFakeSupabase(fake: ReturnType<typeof createFakeSupabase> | null) {
-      current = fake
-    },
-  }
-})
+function fake(): FakeSupabase {
+  if (!currentFake) throw new Error('Attendance fake was not initialized')
+  return currentFake
+}
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => Promise.resolve(fakeState.current)),
-}))
+const actionDependencies = {
+  createClient: async () => fake(),
+  revalidatePath: () => undefined,
+}
 
-vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn(),
-}))
+const markAttendanceAction = createMarkAttendanceAction(actionDependencies)
+const openSessionAction = createOpenSessionAction(actionDependencies)
+const closeSessionAction = createCloseSessionAction(actionDependencies)
+const checkLockStatusAction = createCheckLockStatusAction(actionDependencies)
 
 const markParams = {
   sessao_id: SESSION_A,
@@ -136,11 +128,8 @@ const openParams = {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
-  setFakeSupabase(createFakeSupabase(baseState()))
+  currentFake = createFakeSupabase(baseState())
 })
-
-const fake = () => fakeState.current!
 
 describe('markAttendanceAction - authz', () => {
   it('rejects unauthenticated callers before any database write', async () => {

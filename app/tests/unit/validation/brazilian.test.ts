@@ -35,7 +35,8 @@ describe('Brazilian Validation Utils', () => {
 
     it('deve rejeitar CPF vazio ou nulo', () => {
       expect(validateCPF('')).toBe(false)
-      expect(validateCPF(null as any)).toBe(false)
+      // SAFETY: this deliberately exercises the runtime rejection of a non-string boundary value.
+      expect(validateCPF(null as never)).toBe(false)
     })
 
     it('deve formatar CPF corretamente', () => {
@@ -45,7 +46,8 @@ describe('Brazilian Validation Utils', () => {
 
     it('deve retornar vazio ao formatar CPF invalido', () => {
       expect(formatCPF('')).toBe('')
-      expect(formatCPF(null as any)).toBe('')
+      // SAFETY: this deliberately exercises the runtime rejection of a non-string boundary value.
+      expect(formatCPF(null as never)).toBe('')
     })
   })
 
@@ -110,8 +112,7 @@ describe('Brazilian Validation Utils', () => {
   describe('Calculo de Idade', () => {
     it('deve calcular idade corretamente', () => {
       const birthDate = new Date('2018-01-15')
-      const referenceDate = new Date('2024-01-20')
-      
+
       expect(calculateAge(birthDate)).toBeGreaterThanOrEqual(5)
     })
 
@@ -122,12 +123,10 @@ describe('Brazilian Validation Utils', () => {
 
     it('deve considerar mes e dia no calculo', () => {
       const birthDate = new Date('2018-06-15')
-      const beforeBirthday = new Date('2024-06-10')
-      const afterBirthday = new Date('2024-06-20')
 
       // Antes do aniversario
       const ageBefore = calculateAge(birthDate)
-      
+
       // Verificar que idade é consistente
       expect(ageBefore).toBeGreaterThanOrEqual(5)
     })

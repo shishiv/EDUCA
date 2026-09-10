@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Page } from '@playwright/test'
+import { z } from 'zod'
 
 const csv = [
   'synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,guardian_name,guardian_phone,guardian_relationship',
   'SYNTHETIC-EDUCA-PILOT,csv-e2e-student,00000001,CLASS-A,Aluno CSV Sintetico,2018-05-20,M,Responsavel CSV Sintetico,(11) 98888-0000,mae',
+].join('\n')
+const rejectedCsv = [
+  'synthetic_marker,source_id,school_code,class_code,student_name,birth_date,sex,guardian_name,guardian_phone,guardian_relationship',
+  'SYNTHETIC-EDUCA-PILOT,csv-e2e-rejected,00000001,CLASS-A,Aluno CSV Rejeitado,2018-06-12,F,Responsavel CSV Rejeitado,(11) 97777-0000,pai',
 ].join('\n')
 
 const governance = {
@@ -40,7 +45,7 @@ const secretariatEmail = 'secretaria@synthetic.invalid'
 const directorEmail = 'diretora.a@synthetic.invalid'
 const sourceFingerprint = createHash('sha256').update(csv, 'utf8').digest('hex')
 
-async function postJson(page: Page, url: string, body: unknown) {
+async function postJson<RequestBody>(page: Page, url: string, body: RequestBody) {
   return page.evaluate(async ({ requestUrl, requestBody }) => {
     const response = await fetch(requestUrl, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(requestBody),
@@ -49,7 +54,26 @@ async function postJson(page: Page, url: string, body: unknown) {
   }, { requestUrl: url, requestBody: body })
 }
 
-test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', async ({ page, browser }) => {
+function createServiceClient() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  })
+}
+
+type ServiceClient = ReturnType<typeof createServiceClient>
+
+async function loginDirector(browser: Browser) {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  await page.goto('/login')
+  await page.getByLabel('E-mail', { exact: true }).fill(directorEmail)
+  await page.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
+  await page.getByRole('button', { name: /entrar/i }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  return { context, page }
+}
+
+async function stagePublishedImport(page: Page) {
   await page.goto('/dashboard')
   const blockedWithoutAgreement = await postJson(page, '/api/pilot/imports', {
     csv,
@@ -75,14 +99,15 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     status: 403,
     body: { error: 'PILOT_IMPORT_OWNER_DENIED: the named owner must be the authenticated authorizer' },
   })
-
   const dryRun = await postJson(page, '/api/pilot/imports', { csv, dryRun: true, governance })
   expect(dryRun).toEqual(expect.objectContaining({
     status: 200,
-    body: expect.objectContaining({ report: expect.objectContaining({ valid: true, validRows: 1 }), validationToken: expect.any(String) }),
+    body: expect.objectContaining({
+      report: expect.objectContaining({ valid: true, validRows: 1 }),
+      validationToken: expect.any(String),
+    }),
   }))
   expect(JSON.stringify(dryRun.body)).not.toContain('Aluno CSV Sintetico')
-
   const staged = await postJson(page, '/api/pilot/imports', {
     csv,
     validationToken: dryRun.body.validationToken,
@@ -91,16 +116,28 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   })
   expect(staged.status).toBe(201)
   expect(JSON.stringify(staged.body)).not.toContain('Aluno CSV Sintetico')
-  const batchId = staged.body.batch.id as string
+  return z.string().uuid().parse(staged.body.batch.id)
+}
 
-  const service = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
-  const [{ data: submitter, error: submitterError }, { data: encryptedBatch, error: encryptedBatchError }] = await Promise.all([
+async function loadStagedSnapshot(service: ServiceClient, batchId: string) {
+  const [submitterResult, batchResult] = await Promise.all([
     service.from('users').select('id,email').eq('email', secretariatEmail).single(),
-    service.from('pilot_import_batches').select('id,status,import_target,source_mode,encryption_algorithm,encryption_key_id,encrypted_payload,iv,auth_tag,submitted_by,approved_by,content_sha256,source_row_count,canonical_counts,canonical_fingerprint_sha256,governance_owner_name,governance_owner_email,processing_agreement_id,processing_agreement_confirmed,processing_agreement_reference,processing_agreement_version,processing_agreement_recorded_by,raw_expires_at,canonical_expires_at,rollback_until').eq('id', batchId).single(),
+    service
+      .from('pilot_import_batches')
+      .select('id,status,import_target,source_mode,encryption_algorithm,encryption_key_id,encrypted_payload,iv,auth_tag,submitted_by,approved_by,content_sha256,source_row_count,canonical_counts,canonical_fingerprint_sha256,governance_owner_name,governance_owner_email,processing_agreement_id,processing_agreement_confirmed,processing_agreement_reference,processing_agreement_version,processing_agreement_recorded_by,raw_expires_at,canonical_expires_at,rollback_until')
+      .eq('id', batchId)
+      .single(),
   ])
+  return { submitterResult, batchResult }
+}
+
+type StagedSnapshot = Awaited<ReturnType<typeof loadStagedSnapshot>>
+
+function assertStagedGovernance(snapshot: StagedSnapshot, batchId: string) {
+  const { data: submitter, error: submitterError } = snapshot.submitterResult
+  const { data: encryptedBatch, error: encryptedBatchError } = snapshot.batchResult
   expect(submitterError).toBeNull()
   expect(encryptedBatchError).toBeNull()
-  const submitterId = submitter?.id
   expect(encryptedBatch).toMatchObject({
     id: batchId,
     status: 'pending_approval',
@@ -108,7 +145,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     source_mode: 'synthetic',
     encryption_algorithm: 'aes-256-gcm',
     encryption_key_id: 'synthetic-local-v1',
-    submitted_by: submitterId,
+    submitted_by: submitter?.id,
     approved_by: null,
     content_sha256: sourceFingerprint,
     source_row_count: 1,
@@ -117,10 +154,14 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     governance_owner_email: 'secretaria@synthetic.invalid',
     processing_agreement_reference: 'DPA-SYN-E2E-001',
     processing_agreement_version: 'v1',
-    processing_agreement_recorded_by: submitterId,
+    processing_agreement_recorded_by: submitter?.id,
     processing_agreement_confirmed: true,
     processing_agreement_id: expect.any(String),
   })
+}
+
+function assertStagedEncryption(snapshot: StagedSnapshot) {
+  const encryptedBatch = snapshot.batchResult.data
   expect(encryptedBatch?.encrypted_payload).toEqual(expect.any(String))
   expect(encryptedBatch?.iv).toEqual(expect.any(String))
   expect(encryptedBatch?.auth_tag).toEqual(expect.any(String))
@@ -129,7 +170,9 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   expect(encryptedBatch?.raw_expires_at).toEqual(expect.any(String))
   expect(encryptedBatch?.canonical_expires_at).toEqual(expect.any(String))
   expect(encryptedBatch?.rollback_until).toEqual(expect.any(String))
+}
 
+async function assertMakerApprovalDenied(page: Page, service: ServiceClient, batchId: string) {
   const makerAttempt = await postJson(page, `/api/pilot/imports/${batchId}/approval`, { decision: 'approved' })
   expect(makerAttempt).toEqual({ status: 403, body: { error: 'PILOT_ROLE_DENIED' } })
   const { data: approvalsAfterMaker, error: approvalsAfterMakerError } = await service
@@ -138,27 +181,25 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     .eq('batch_id', batchId)
   expect(approvalsAfterMakerError).toBeNull()
   expect(approvalsAfterMaker).toHaveLength(0)
+}
 
-  const directorContext = await browser.newContext()
-  const directorPage = await directorContext.newPage()
-  await directorPage.goto('/login')
-  await directorPage.getByLabel('E-mail', { exact: true }).fill('diretora.a@synthetic.invalid')
-  await directorPage.getByLabel('Senha', { exact: true }).fill('Synthetic-Only-2026!')
-  await directorPage.getByRole('button', { name: /entrar/i }).click()
-  await expect(directorPage).toHaveURL(/dashboard/)
-  const { data: approver, error: approverError } = await service.from('users').select('id,email').eq('email', directorEmail).single()
+async function approveImport(page: Page, service: ServiceClient, batchId: string) {
+  const { data: approver, error: approverError } = await service
+    .from('users')
+    .select('id,email')
+    .eq('email', directorEmail)
+    .single()
   expect(approverError).toBeNull()
-  const approval = await postJson(directorPage, `/api/pilot/imports/${batchId}/approval`, { decision: 'approved' })
-  expect(approval).toEqual(expect.objectContaining({ status: 200, body: expect.objectContaining({ batch: expect.objectContaining({ status: 'published' }) }) }))
-  const [
-    { data: finalBatch, error: finalBatchError },
-    { data: approvalRecord, error: approvalRecordError },
-    { data: students, error: studentsError },
-    { data: guardians, error: guardiansError },
-    { data: relationships, error: relationshipsError },
-    { data: enrollments, error: enrollmentsError },
-    { data: auditEvents, error: auditEventsError },
-  ] = await Promise.all([
+  const approval = await postJson(page, `/api/pilot/imports/${batchId}/approval`, { decision: 'approved' })
+  expect(approval).toEqual(expect.objectContaining({
+    status: 200,
+    body: expect.objectContaining({ batch: expect.objectContaining({ status: 'published' }) }),
+  }))
+  return approver?.id
+}
+
+async function loadPublishedSnapshot(service: ServiceClient, batchId: string) {
+  const [batchResult, approvalResult, studentsResult, guardiansResult, relationshipsResult, enrollmentsResult, auditResult] = await Promise.all([
     service.from('pilot_import_batches').select('id,status,import_target,source_mode,encryption_algorithm,encryption_key_id,encrypted_payload,iv,auth_tag,submitted_by,approved_by,published_at,cleaned_at,source_row_count,canonical_counts,canonical_fingerprint_sha256,governance_fingerprint_sha256').eq('id', batchId).single(),
     service.from('pilot_import_approvals').select('submitted_by,approved_by,decision,report_sha256,decided_at').eq('batch_id', batchId).single(),
     service.from('alunos').select('id,import_source_id,pilot_import_batch_id,nome_completo').eq('pilot_import_batch_id', batchId),
@@ -167,14 +208,14 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     service.from('matriculas').select('id,aluno_id,pilot_import_batch_id').eq('pilot_import_batch_id', batchId),
     service.from('pilot_audit_log').select('event_type,entity_type,entity_id,redacted_metadata').eq('entity_id', batchId).in('event_type', ['import_staged', 'import_published']).order('created_at', { ascending: true }),
   ])
-  expect(finalBatchError).toBeNull()
-  expect(approvalRecordError).toBeNull()
-  expect(studentsError).toBeNull()
-  expect(guardiansError).toBeNull()
-  expect(relationshipsError).toBeNull()
-  expect(enrollmentsError).toBeNull()
-  expect(auditEventsError).toBeNull()
-  const canonicalFingerprint = encryptedBatch?.canonical_fingerprint_sha256
+  return { batchResult, approvalResult, studentsResult, guardiansResult, relationshipsResult, enrollmentsResult, auditResult }
+}
+
+type PublishedSnapshot = Awaited<ReturnType<typeof loadPublishedSnapshot>>
+
+function assertPublishedBatch(snapshot: PublishedSnapshot, batchId: string, submitterId: string | undefined, approverId: string | undefined, canonicalFingerprint: string | null | undefined) {
+  const { data: finalBatch, error } = snapshot.batchResult
+  expect(error).toBeNull()
   expect(finalBatch).toMatchObject({
     id: batchId,
     status: 'published',
@@ -183,7 +224,7 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     encryption_algorithm: 'aes-256-gcm',
     encryption_key_id: 'synthetic-local-v1',
     submitted_by: submitterId,
-    approved_by: approver?.id,
+    approved_by: approverId,
     source_row_count: 1,
     canonical_counts: { sourceRows: 1, students: 1, guardians: 1, relationships: 1, enrollments: 1 },
     encrypted_payload: expect.any(String),
@@ -194,26 +235,40 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   })
   expect(finalBatch?.canonical_fingerprint_sha256).toBe(canonicalFingerprint)
   expect(finalBatch?.governance_fingerprint_sha256).toMatch(/^[a-f0-9]{64}$/)
+}
+
+function assertPublishedCanonicalRows(snapshot: PublishedSnapshot, batchId: string, submitterId: string | undefined, approverId: string | undefined) {
+  const { data: approvalRecord, error: approvalRecordError } = snapshot.approvalResult
+  expect(approvalRecordError).toBeNull()
+  expect(snapshot.studentsResult.error).toBeNull()
+  expect(snapshot.guardiansResult.error).toBeNull()
+  expect(snapshot.relationshipsResult.error).toBeNull()
+  expect(snapshot.enrollmentsResult.error).toBeNull()
   expect(approvalRecord).toMatchObject({
-    submitted_by: submitter?.id,
-    approved_by: approver?.id,
+    submitted_by: submitterId,
+    approved_by: approverId,
     decision: 'approved',
     report_sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
     decided_at: expect.any(String),
   })
   expect(approvalRecord?.submitted_by).not.toBe(approvalRecord?.approved_by)
-  expect(students).toEqual([expect.objectContaining({
+  expect(snapshot.studentsResult.data).toEqual([expect.objectContaining({
     import_source_id: 'csv-e2e-student',
     pilot_import_batch_id: batchId,
     nome_completo: 'Aluno CSV Sintetico',
   })])
-  expect(guardians).toEqual([expect.objectContaining({
+  expect(snapshot.guardiansResult.data).toEqual([expect.objectContaining({
     import_source_id: 'guardian:csv-e2e-student',
     pilot_import_batch_id: batchId,
     nome: 'Responsavel CSV Sintetico',
   })])
-  expect(relationships).toEqual([expect.objectContaining({ pilot_import_batch_id: batchId })])
-  expect(enrollments).toEqual([expect.objectContaining({ pilot_import_batch_id: batchId })])
+  expect(snapshot.relationshipsResult.data).toEqual([expect.objectContaining({ pilot_import_batch_id: batchId })])
+  expect(snapshot.enrollmentsResult.data).toEqual([expect.objectContaining({ pilot_import_batch_id: batchId })])
+}
+
+function assertPublishedAudit(snapshot: PublishedSnapshot, batchId: string) {
+  const { data: auditEvents, error } = snapshot.auditResult
+  expect(error).toBeNull()
   expect(auditEvents).toHaveLength(2)
   const auditByType = new Map((auditEvents ?? []).map(event => [event.event_type, event]))
   expect(auditByType.get('import_staged')).toMatchObject({
@@ -234,12 +289,14 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
       dataset: 'students',
       row_count: 1,
       canonical_counts: { sourceRows: 1, students: 1, guardians: 1, relationships: 1, enrollments: 1 },
-      canonical_fingerprint_sha256: finalBatch?.canonical_fingerprint_sha256,
+      canonical_fingerprint_sha256: snapshot.batchResult.data?.canonical_fingerprint_sha256,
       governance_recorded: true,
       plaintext_stored: false,
     },
   })
+}
 
+async function expireRawSourceAndAssertCanonicalRetention(service: ServiceClient, batchId: string) {
   const { error: rawExpiryError } = await service
     .from('pilot_import_batches')
     .update({ raw_expires_at: new Date(Date.now() - 60_000).toISOString() })
@@ -248,16 +305,20 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
   const { data: cleanedCount, error: cleanupError } = await service.rpc('pilot_cleanup_import_retention')
   expect(cleanupError).toBeNull()
   expect(cleanedCount).toBe(1)
-  const [{ data: retainedBatch, error: retainedBatchError }, { data: retainedStudents, error: retainedStudentsError }] = await Promise.all([
+  const [batchResult, studentsResult] = await Promise.all([
     service.from('pilot_import_batches').select('status,encrypted_payload,iv,auth_tag,cleaned_at').eq('id', batchId).single(),
     service.from('alunos').select('id').eq('pilot_import_batch_id', batchId),
   ])
-  expect(retainedBatchError).toBeNull()
-  expect(retainedStudentsError).toBeNull()
-  expect(retainedBatch).toMatchObject({ status: 'published', encrypted_payload: null, iv: null, auth_tag: null, cleaned_at: expect.any(String) })
-  expect(retainedStudents).toHaveLength(1)
+  expect(batchResult.error).toBeNull()
+  expect(studentsResult.error).toBeNull()
+  expect(batchResult.data).toMatchObject({
+    status: 'published', encrypted_payload: null, iv: null, auth_tag: null, cleaned_at: expect.any(String),
+  })
+  expect(studentsResult.data).toHaveLength(1)
+}
 
-  const rollback = await postJson(directorPage, `/api/pilot/imports/${batchId}/rollback`, {
+async function requestRollback(page: Page, batchId: string) {
+  const rollback = await postJson(page, `/api/pilot/imports/${batchId}/rollback`, {
     reason: 'synthetic E2E rollback proof',
   })
   expect(rollback).toEqual(expect.objectContaining({
@@ -267,17 +328,10 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
       rollback: expect.objectContaining({ deletedStudents: 1, deletedGuardians: 1 }),
     }),
   }))
-  await directorContext.close()
+}
 
-  const [
-    { data: rolledBackBatch, error: rolledBackBatchError },
-    { data: remainingStudents, error: remainingStudentsError },
-    { data: remainingGuardians, error: remainingGuardiansError },
-    { data: remainingRelationships, error: remainingRelationshipsError },
-    { data: remainingEnrollments, error: remainingEnrollmentsError },
-    { data: rollbackAudit, error: rollbackAuditError },
-    { data: tombstones, error: tombstoneError },
-  ] = await Promise.all([
+async function assertRolledBackState(service: ServiceClient, batchId: string) {
+  const [batchResult, studentsResult, guardiansResult, relationshipsResult, enrollmentsResult, auditResult, tombstoneResult] = await Promise.all([
     service.from('pilot_import_batches').select('id,status,encrypted_payload,iv,auth_tag,rolled_back_at,rollback_reason').eq('id', batchId).single(),
     service.from('alunos').select('id').eq('pilot_import_batch_id', batchId),
     service.from('responsaveis').select('id').eq('pilot_import_batch_id', batchId),
@@ -286,14 +340,14 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     service.from('pilot_audit_log').select('event_type,entity_id,redacted_metadata').eq('entity_id', batchId).eq('event_type', 'import_rolled_back'),
     service.from('pilot_data_tombstones').select('entity_type,source_fingerprint').eq('entity_type', 'pilot_import_batch').eq('source_fingerprint', sourceFingerprint),
   ])
-  expect(rolledBackBatchError).toBeNull()
-  expect(remainingStudentsError).toBeNull()
-  expect(remainingGuardiansError).toBeNull()
-  expect(remainingRelationshipsError).toBeNull()
-  expect(remainingEnrollmentsError).toBeNull()
-  expect(rollbackAuditError).toBeNull()
-  expect(tombstoneError).toBeNull()
-  expect(rolledBackBatch).toMatchObject({
+  expect(batchResult.error).toBeNull()
+  expect(studentsResult.error).toBeNull()
+  expect(guardiansResult.error).toBeNull()
+  expect(relationshipsResult.error).toBeNull()
+  expect(enrollmentsResult.error).toBeNull()
+  expect(auditResult.error).toBeNull()
+  expect(tombstoneResult.error).toBeNull()
+  expect(batchResult.data).toMatchObject({
     id: batchId,
     status: 'rolled_back',
     encrypted_payload: null,
@@ -302,15 +356,170 @@ test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', asyn
     rolled_back_at: expect.any(String),
     rollback_reason: 'synthetic E2E rollback proof',
   })
-  expect(remainingStudents).toHaveLength(0)
-  expect(remainingGuardians).toHaveLength(0)
-  expect(remainingRelationships).toHaveLength(0)
-  expect(remainingEnrollments).toHaveLength(0)
-  expect(rollbackAudit).toHaveLength(1)
-  expect(rollbackAudit![0]).toMatchObject({
+  expect(studentsResult.data).toHaveLength(0)
+  expect(guardiansResult.data).toHaveLength(0)
+  expect(relationshipsResult.data).toHaveLength(0)
+  expect(enrollmentsResult.data).toHaveLength(0)
+  expect(auditResult.data).toHaveLength(1)
+  expect(auditResult.data![0]).toMatchObject({
     event_type: 'import_rolled_back',
     entity_id: batchId,
     redacted_metadata: { reason_recorded: true },
   })
-  expect(tombstones).toHaveLength(1)
+  expect(tombstoneResult.data).toHaveLength(1)
+}
+
+async function stageRejectedImport(page: Page) {
+  await page.goto('/dashboard')
+  const dryRun = await postJson(page, '/api/pilot/imports', {
+    csv: rejectedCsv,
+    dryRun: true,
+    governance,
+  })
+  expect(dryRun.status).toBe(200)
+  const staged = await postJson(page, '/api/pilot/imports', {
+    csv: rejectedCsv,
+    validationToken: dryRun.body.validationToken,
+    idempotencyKey: 'csv-e2e-rejection-001',
+    governance,
+  })
+  expect(staged).toEqual(expect.objectContaining({
+    status: 201,
+    body: expect.objectContaining({ auditId: expect.any(String) }),
+  }))
+  return z.string().uuid().parse(staged.body.batch.id)
+}
+
+async function rejectImport(page: Page, batchId: string) {
+  const rejection = await postJson(page, `/api/pilot/imports/${batchId}/approval`, {
+    decision: 'rejected',
+  })
+  expect(rejection).toEqual(expect.objectContaining({
+    status: 200,
+    body: expect.objectContaining({
+      auditId: expect.any(String),
+      batch: expect.objectContaining({
+        id: batchId,
+        status: 'rejected',
+        cleaned_at: null,
+        raw_expires_at: expect.any(String),
+      }),
+    }),
+  }))
+  return rejection.body.auditId
+}
+
+async function assertRejectedState(service: ServiceClient, batchId: string, auditId: string) {
+  const [batchResult, approvalResult, auditResult] = await Promise.all([
+    service.from('pilot_import_batches').select('status,encrypted_payload,iv,auth_tag,cleaned_at,raw_expires_at').eq('id', batchId).single(),
+    service.from('pilot_import_approvals').select('decision,approved_by,decided_at').eq('batch_id', batchId).single(),
+    service.from('pilot_audit_log').select('id,event_type,redacted_metadata').eq('entity_id', batchId).eq('event_type', 'import_rejected').single(),
+  ])
+  expect(batchResult.error).toBeNull()
+  expect(approvalResult.error).toBeNull()
+  expect(auditResult.error).toBeNull()
+  expect(batchResult.data).toMatchObject({
+    status: 'rejected',
+    encrypted_payload: expect.any(String),
+    iv: expect.any(String),
+    auth_tag: expect.any(String),
+    cleaned_at: null,
+    raw_expires_at: expect.any(String),
+  })
+  expect(approvalResult.data).toMatchObject({
+    decision: 'rejected', approved_by: expect.any(String), decided_at: expect.any(String),
+  })
+  expect(auditResult.data).toMatchObject({
+    id: auditId,
+    event_type: 'import_rejected',
+    redacted_metadata: expect.objectContaining({
+      decision: 'rejected',
+      governance_recorded: true,
+      plaintext_stored: false,
+      ciphertext_retained_until: batchResult.data?.raw_expires_at,
+    }),
+  })
+}
+
+async function assertRejectedReplay(page: Page, batchId: string, auditId: string) {
+  const replay = await postJson(page, `/api/pilot/imports/${batchId}/approval`, {
+    decision: 'rejected',
+  })
+  expect(replay).toEqual(expect.objectContaining({
+    status: 200,
+    body: expect.objectContaining({ auditId, idempotentReplay: true }),
+  }))
+}
+
+async function assertRawRetainedBeforeExpiry(service: ServiceClient, batchId: string) {
+  const { error: earlyCleanupError } = await service.rpc('pilot_cleanup_import_retention')
+  expect(earlyCleanupError).toBeNull()
+  const { data, error } = await service
+    .from('pilot_import_batches')
+    .select('encrypted_payload,iv,auth_tag,cleaned_at')
+    .eq('id', batchId)
+    .single()
+  expect(error).toBeNull()
+  expect(data).toMatchObject({
+    encrypted_payload: expect.any(String),
+    iv: expect.any(String),
+    auth_tag: expect.any(String),
+    cleaned_at: null,
+  })
+}
+
+async function expireRejectedRawSource(service: ServiceClient, batchId: string) {
+  const { error: expiryError } = await service
+    .from('pilot_import_batches')
+    .update({ raw_expires_at: new Date(Date.now() - 60_000).toISOString() })
+    .eq('id', batchId)
+  expect(expiryError).toBeNull()
+  const { error: cleanupError } = await service.rpc('pilot_cleanup_import_retention')
+  expect(cleanupError).toBeNull()
+  const { data, error } = await service
+    .from('pilot_import_batches')
+    .select('status,encrypted_payload,iv,auth_tag,cleaned_at')
+    .eq('id', batchId)
+    .single()
+  expect(error).toBeNull()
+  expect(data).toMatchObject({
+    status: 'rejected',
+    encrypted_payload: null,
+    iv: null,
+    auth_tag: null,
+    cleaned_at: expect.any(String),
+  })
+}
+
+test('dry-runs, stages, approves, publishes, and rolls back synthetic CSV', async ({ page, browser }) => {
+  const batchId = await stagePublishedImport(page)
+  const service = createServiceClient()
+  const stagedSnapshot = await loadStagedSnapshot(service, batchId)
+  assertStagedGovernance(stagedSnapshot, batchId)
+  assertStagedEncryption(stagedSnapshot)
+  const submitterId = stagedSnapshot.submitterResult.data?.id
+  const canonicalFingerprint = stagedSnapshot.batchResult.data?.canonical_fingerprint_sha256
+  await assertMakerApprovalDenied(page, service, batchId)
+  const director = await loginDirector(browser)
+  const approverId = await approveImport(director.page, service, batchId)
+  const publishedSnapshot = await loadPublishedSnapshot(service, batchId)
+  assertPublishedBatch(publishedSnapshot, batchId, submitterId, approverId, canonicalFingerprint)
+  assertPublishedCanonicalRows(publishedSnapshot, batchId, submitterId, approverId)
+  assertPublishedAudit(publishedSnapshot, batchId)
+  await expireRawSourceAndAssertCanonicalRetention(service, batchId)
+  await requestRollback(director.page, batchId)
+  await director.context.close()
+  await assertRolledBackState(service, batchId)
+})
+
+test('rejects atomically and retains encrypted source until raw expiry', async ({ page, browser }) => {
+  const batchId = await stageRejectedImport(page)
+  const service = createServiceClient()
+  const director = await loginDirector(browser)
+  const auditId = await rejectImport(director.page, batchId)
+  await assertRejectedState(service, batchId, auditId)
+  await assertRejectedReplay(director.page, batchId, auditId)
+  await assertRawRetainedBeforeExpiry(service, batchId)
+  await expireRejectedRawSource(service, batchId)
+  await director.context.close()
 })

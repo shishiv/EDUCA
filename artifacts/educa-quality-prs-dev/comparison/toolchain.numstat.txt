@@ -1,0 +1,4 @@
+22	1	app/.oxlintrc.json
+0	3	app/tools/oxlint/anti-slop/tests/fixtures/import-specifiers.ts
+0	1	app/tools/oxlint/anti-slop/tests/fixtures/local-symbol.ts
+28	11	app/tools/oxlint/anti-slop/tests/no-shape-in-symbol-names.test.mjs

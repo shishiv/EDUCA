@@ -135,9 +135,18 @@ async function writePilotLegacyDatabaseReceipt(): Promise<void> {
       tombstones: Number(counts.tombstones),
     }
 
-    for (const [name, actual] of Object.entries(countMap) as Array<[keyof typeof EXPECTED_COUNTS, number]>) {
-      assertExpectedCount(name, actual)
-    }
+    assertExpectedCount('schools', countMap.schools)
+    assertExpectedCount('users', countMap.users)
+    assertExpectedCount('syntheticAdmins', countMap.syntheticAdmins)
+    assertExpectedCount('classes', countMap.classes)
+    assertExpectedCount('students', countMap.students)
+    assertExpectedCount('guardians', countMap.guardians)
+    assertExpectedCount('guardianLinks', countMap.guardianLinks)
+    assertExpectedCount('enrollments', countMap.enrollments)
+    assertExpectedCount('sessions', countMap.sessions)
+    assertExpectedCount('attendance', countMap.attendance)
+    assertExpectedCount('metricEvents', countMap.metricEvents)
+    assertExpectedCount('tombstones', countMap.tombstones)
     if (Number(counts.non_synthetic_users) !== 0) {
       throw new Error(`PILOT_LEGACY_DATABASE_NON_SYNTHETIC_USERS: count=${counts.non_synthetic_users}`)
     }

@@ -1,13 +1,9 @@
 import { createTranslator } from 'next-intl'
 import { describe, expect, it } from 'vitest'
 import { getMessagesForLocale } from '@/i18n/messages'
+import { isMessageObject, leafPaths } from './message-test-helpers'
 
-function leafPaths(value: unknown, prefix = ''): string[] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return [prefix]
-  return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
-    leafPaths(child, prefix ? `${prefix}.${key}` : key),
-  )
-}
+const supportedLocales: Array<'pt-BR' | 'en'> = ['pt-BR', 'en']
 
 describe('registry catalog', () => {
   it('keeps every registry message available in Portuguese and English', () => {
@@ -15,14 +11,14 @@ describe('registry catalog', () => {
     const english = getMessagesForLocale('en').registry
 
     expect(leafPaths(portuguese).sort()).toEqual(leafPaths(english).sort())
-    expect(Object.keys(portuguese as object)).not.toHaveLength(0)
+    expect(isMessageObject(portuguese) && Object.keys(portuguese)).not.toHaveLength(0)
   })
 
-  it.each(['pt-BR', 'en'] as const)('translates registry labels for %s', locale => {
+  it.each(supportedLocales)('translates registry labels for %s', locale => {
     const translate = createTranslator({
       locale,
-      messages: getMessagesForLocale(locale) as never,
-    }) as unknown as (key: string) => string
+      messages: getMessagesForLocale(locale),
+    })
 
     expect(translate('registry.labels.responsaveis')).toBe(locale === 'en' ? 'Guardians' : 'Responsáveis')
     expect(translate('registry.labels.novo-usuario')).toBe(locale === 'en' ? 'New User' : 'Novo Usuário')

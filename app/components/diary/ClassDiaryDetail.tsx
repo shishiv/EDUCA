@@ -17,7 +17,7 @@ import { useClassroomTranslations } from '@/i18n/classroom'
  */
 
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Dialog,
@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -44,12 +44,39 @@ import { getClassDetail } from '@/lib/api/class-diary'
 import type { DetailedSession } from '@/lib/api/class-diary'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import {
+  ATENCAO,
+  CONFORMIDADE,
+  getFrequencyPolicyStatus,
+  type FrequencyPolicyStatus,
+} from '@/lib/attendance/attendance-policy'
 
 interface ClassDiaryDetailProps {
   session_id: string | null
   open: boolean
   onClose: () => void
+}
+
+const PHASE_BADGES = {
+  planejamento: { label: 'Planejamento', variant: 'secondary' },
+  chamada: { label: 'Chamada', variant: 'default' },
+  finalizada: { label: 'Finalizada', variant: 'outline' },
+  bloqueada: { label: 'Bloqueada', variant: 'destructive' },
+} satisfies Record<
+  DetailedSession['fase'],
+  { label: string; variant: NonNullable<BadgeProps['variant']> }
+>
+
+const POLICY_TEXT_CLASSES: Record<FrequencyPolicyStatus, string> = {
+  CONFORME: 'text-green-600',
+  ATENCAO: 'text-yellow-600',
+  CRITICO: 'text-red-600',
+}
+
+const POLICY_BAR_CLASSES: Record<FrequencyPolicyStatus, string> = {
+  CONFORME: 'bg-green-600',
+  ATENCAO: 'bg-yellow-600',
+  CRITICO: 'bg-red-600',
 }
 
 export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetailProps) {
@@ -61,15 +88,20 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
   // Fetch session details when dialog opens
   useEffect(() => {
     if (!open || !session_id) return
+    const selectedSessionId = session_id
 
     async function fetchSessionDetail() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await getClassDetail(supabase, session_id!)
+      const { data, error: fetchError } = await getClassDetail(supabase, selectedSessionId)
 
       if (fetchError || !data) {
-        logger.error('Error fetching session detail', fetchError as Error, { feature: 'diary', action: 'fetch_detail' })
+        logger.error(
+          'Error fetching session detail',
+          fetchError instanceof Error ? fetchError : String(fetchError || 'No session detail returned'),
+          { feature: 'diary', action: 'fetch_detail' },
+        )
         setSession(null)
         setError('Erro ao carregar detalhes da aula. Tente novamente.')
         setLoading(false)
@@ -80,20 +112,8 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
       setLoading(false)
     }
 
-    fetchSessionDetail()
+    void fetchSessionDetail()
   }, [session_id, open])
-
-  // Get phase badge
-  const getFaseBadge = (fase: string) => {
-    const badgeMap = {
-      planejamento: { label: 'Planejamento', variant: 'secondary' as const },
-      chamada: { label: 'Chamada', variant: 'default' as const },
-      finalizada: { label: 'Finalizada', variant: 'outline' as const },
-      bloqueada: { label: 'Bloqueada', variant: 'destructive' as const },
-    }
-
-    return badgeMap[fase as keyof typeof badgeMap] || badgeMap.planejamento
-  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -124,211 +144,240 @@ export function ClassDiaryDetail({ session_id, open, onClose }: ClassDiaryDetail
             </div>
           )}
 
-          {session && !loading && (
-            <div className="space-y-6">
-              {/* Session Header */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-lg font-semibold">
-                      {format(new Date(session.data_aula), "dd 'de' MMMM 'de' yyyy", {
-                        locale: ptBR,
-                      })}
-                    </span>
-                  </div>
-                  <Badge variant={getFaseBadge(session.fase).variant}>
-                    {getFaseBadge(session.fase).label}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{session.turma_nome}</p>
-                      <p className="text-xs text-muted-foreground">{session.turma_serie}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{session.professor_nome}</p>
-                      <p className="text-xs text-muted-foreground">{t('diary.teacher')}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Observações/Conteúdo Programático */}
-              {session.observacoes && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    {t('diary.programContent')}
-                  </h3>
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                    {session.observacoes}
-                  </p>
-                </div>
-              )}
-
-              {/* Attendance Statistics */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold">{t('diary.stats')}</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-muted p-4 rounded-lg text-center">
-                    <Users className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-2xl font-bold">{session.total_alunos}</p>
-                    <p className="text-xs text-muted-foreground">{t('grades.totalStudents')}</p>
-                  </div>
-                  <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg text-center">
-                    <CheckCircle2 className="h-5 w-5 mx-auto mb-2 text-green-600" />
-                    <p className="text-2xl font-bold text-green-600">
-                      {session.total_presentes}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{t('labels.present')}</p>
-                  </div>
-                  <div className="bg-red-50 dark:bg-red-950 p-4 rounded-lg text-center">
-                    <XCircle className="h-5 w-5 mx-auto mb-2 text-red-600" />
-                    <p className="text-2xl font-bold text-red-600">
-                      {session.total_ausentes}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{t('labels.absent')}</p>
-                  </div>
-                </div>
-
-                {/* Attendance Percentage */}
-                <div className="bg-primary/10 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">{t('diary.general')}</span>
-                    <span
-                      className={`text-2xl font-bold ${
-                        getFrequencyPolicyStatus(session.attendance_percentage) === 'CONFORME'
-                          ? 'text-green-600'
-                          : getFrequencyPolicyStatus(session.attendance_percentage) === 'ATENCAO'
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
-                      }`}
-                    >
-                      {session.attendance_percentage}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2.5">
-                    <div
-                      className={`h-2.5 rounded-full ${
-                        getFrequencyPolicyStatus(session.attendance_percentage) === 'CONFORME'
-                          ? 'bg-green-600'
-                          : getFrequencyPolicyStatus(session.attendance_percentage) === 'ATENCAO'
-                            ? 'bg-yellow-600'
-                            : 'bg-red-600'
-                      }`}
-                      style={{ width: `${session.attendance_percentage}%` }}
-                    ></div>
-                  </div>
-                  {getFrequencyPolicyStatus(session.attendance_percentage) !== 'CONFORME' && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {getFrequencyPolicyStatus(session.attendance_percentage) === 'CRITICO'
-                        ? `Não conformidade Bolsa Família: abaixo de ${CONFORMIDADE}%.`
-                        : `Atenção preventiva municipal: abaixo de ${ATENCAO}%; condicionalidade atendida a partir de ${CONFORMIDADE}%.`}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Student Attendance List */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold">{t('diary.byStudent')}</h3>
-                {session.attendance_records.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-6">
-                    {t('diary.noAttendance')}
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {session.attendance_records.map((record) => (
-                      <div
-                        key={record.id}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-2 h-2 rounded-full ${
-                              record.presente ? 'bg-green-600' : 'bg-red-600'
-                            }`}
-                          ></div>
-                          <div>
-                            <p className="text-sm font-medium">{record.aluno_nome}</p>
-                            {record.observacoes && (
-                              <p className="text-xs text-muted-foreground">
-                                {record.observacoes}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {record.is_locked && (
-                            <Lock className="h-3 w-3 text-muted-foreground" />
-                          )}
-                          {record.presente ? (
-                            <Badge variant="outline" className="text-green-600">
-                              {t('attendance.present')}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-red-600">
-                              Ausente
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Legal Compliance Info */}
-              {session.bloqueado && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold flex items-center gap-2 text-destructive">
-                      <Lock className="h-4 w-4" />
-                      {t('diary.blocked')}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Este registro foi bloqueado em{' '}
-                      {session.bloqueado_em &&
-                        format(
-                          new Date(session.bloqueado_em),
-                          "dd/MM/yyyy 'às' HH:mm",
-                          { locale: ptBR }
-                        )}
-                      . Conforme legislação educacional brasileira, registros de frequência
-                      são documentos legais imutáveis após o bloqueio.
-                    </p>
-                    {session.hash_integridade && (
-                      <div className="flex items-start gap-2 mt-2 p-2 bg-muted rounded text-xs">
-                        <Hash className="h-3 w-3 mt-0.5 text-muted-foreground" />
-                        <div>
-                          <p className="font-mono text-[10px] break-all">
-                            {session.hash_integridade}
-                          </p>
-                          <p className="text-muted-foreground mt-1">
-                            {t('diary.integrityHash')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+          {session && !loading && <SessionDetails session={session} />}
         </ScrollArea>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function SessionDetails({ session }: { session: DetailedSession }) {
+  return (
+    <div className="space-y-6">
+      <SessionHeader session={session} />
+      <Separator />
+      <ProgramContent session={session} />
+      <AttendanceStatistics session={session} />
+      <Separator />
+      <AttendanceRecords session={session} />
+      <LockedSessionInfo session={session} />
+    </div>
+  )
+}
+
+function SessionHeader({ session }: { session: DetailedSession }) {
+  const t = useClassroomTranslations()
+  const badge = PHASE_BADGES[session.fase]
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-muted-foreground" />
+          <span className="text-lg font-semibold">
+            {format(parseISO(session.data_aula), "dd 'de' MMMM 'de' yyyy", {
+              locale: ptBR,
+            })}
+          </span>
+        </div>
+        <Badge variant={badge.variant}>{badge.label}</Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center gap-2 text-sm">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <p className="font-medium">{session.turma_nome}</p>
+            <p className="text-xs text-muted-foreground">{session.turma_serie}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <p className="font-medium">{session.professor_nome}</p>
+            <p className="text-xs text-muted-foreground">{t('diary.teacher')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ProgramContent({ session }: { session: DetailedSession }) {
+  const t = useClassroomTranslations()
+  if (!session.observacoes) return null
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold flex items-center gap-2">
+        <BookOpen className="h-4 w-4" />
+        {t('diary.programContent')}
+      </h3>
+      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+        {session.observacoes}
+      </p>
+    </div>
+  )
+}
+
+function AttendanceStatistics({ session }: { session: DetailedSession }) {
+  const t = useClassroomTranslations()
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold">{t('diary.stats')}</h3>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-muted p-4 rounded-lg text-center">
+          <Users className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-2xl font-bold">{session.total_alunos}</p>
+          <p className="text-xs text-muted-foreground">{t('grades.totalStudents')}</p>
+        </div>
+        <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg text-center">
+          <CheckCircle2 className="h-5 w-5 mx-auto mb-2 text-green-600" />
+          <p className="text-2xl font-bold text-green-600">
+            {session.total_presentes}
+          </p>
+          <p className="text-xs text-muted-foreground">{t('labels.present')}</p>
+        </div>
+        <div className="bg-red-50 dark:bg-red-950 p-4 rounded-lg text-center">
+          <XCircle className="h-5 w-5 mx-auto mb-2 text-red-600" />
+          <p className="text-2xl font-bold text-red-600">
+            {session.total_ausentes}
+          </p>
+          <p className="text-xs text-muted-foreground">{t('labels.absent')}</p>
+        </div>
+      </div>
+      <AttendancePolicy percentage={session.attendance_percentage} />
+    </div>
+  )
+}
+
+function AttendancePolicy({ percentage }: { percentage: number }) {
+  const t = useClassroomTranslations()
+  const status = getFrequencyPolicyStatus(percentage)
+  const warning = status === 'CRITICO'
+    ? `Não conformidade Bolsa Família: abaixo de ${CONFORMIDADE}%.`
+    : `Atenção preventiva municipal: abaixo de ${ATENCAO}%; condicionalidade atendida a partir de ${CONFORMIDADE}%.`
+
+  return (
+    <div className="bg-primary/10 p-4 rounded-lg">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium">{t('diary.general')}</span>
+        <span className={`text-2xl font-bold ${POLICY_TEXT_CLASSES[status]}`}>
+          {percentage}%
+        </span>
+      </div>
+      <div className="w-full bg-secondary rounded-full h-2.5">
+        <div
+          className={`h-2.5 rounded-full ${POLICY_BAR_CLASSES[status]}`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      {status !== 'CONFORME' && (
+        <p className="text-xs text-muted-foreground mt-2">{warning}</p>
+      )}
+    </div>
+  )
+}
+
+function AttendanceRecords({ session }: { session: DetailedSession }) {
+  const t = useClassroomTranslations()
+
+  if (session.attendance_records.length === 0) {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold">{t('diary.byStudent')}</h3>
+        <p className="text-sm text-muted-foreground text-center py-6">
+          {t('diary.noAttendance')}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold">{t('diary.byStudent')}</h3>
+      <div className="space-y-2">
+        {session.attendance_records.map((record) => (
+          <AttendanceRecord key={record.id} record={record} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AttendanceRecord({
+  record,
+}: {
+  record: DetailedSession['attendance_records'][number]
+}) {
+  const t = useClassroomTranslations()
+
+  return (
+    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+      <div className="flex items-center gap-3">
+        <div
+          className={`w-2 h-2 rounded-full ${record.presente ? 'bg-green-600' : 'bg-red-600'}`}
+        />
+        <div>
+          <p className="text-sm font-medium">{record.aluno_nome}</p>
+          {record.observacoes && (
+            <p className="text-xs text-muted-foreground">{record.observacoes}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {record.is_locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+        {record.presente ? (
+          <Badge variant="outline" className="text-green-600">
+            {t('attendance.present')}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-red-600">
+            Ausente
+          </Badge>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function LockedSessionInfo({ session }: { session: DetailedSession }) {
+  const t = useClassroomTranslations()
+  if (!session.bloqueado) return null
+
+  return (
+    <>
+      <Separator />
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-destructive">
+          <Lock className="h-4 w-4" />
+          {t('diary.blocked')}
+        </h3>
+        <p className="text-xs text-muted-foreground">
+          Este registro foi bloqueado em{' '}
+          {session.bloqueado_em && format(
+            new Date(session.bloqueado_em),
+            "dd/MM/yyyy 'às' HH:mm",
+            { locale: ptBR },
+          )}
+          . Conforme legislação educacional brasileira, registros de frequência
+          são documentos legais imutáveis após o bloqueio.
+        </p>
+        {session.hash_integridade && (
+          <div className="flex items-start gap-2 mt-2 p-2 bg-muted rounded text-xs">
+            <Hash className="h-3 w-3 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="font-mono text-[10px] break-all">
+                {session.hash_integridade}
+              </p>
+              <p className="text-muted-foreground mt-1">
+                {t('diary.integrityHash')}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   )
 }

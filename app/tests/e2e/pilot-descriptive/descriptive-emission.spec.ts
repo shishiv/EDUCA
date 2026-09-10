@@ -2,6 +2,7 @@ import { execFile as execFileCallback } from 'node:child_process'
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
+import type { Database } from '@/types/database'
 import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
 import {
@@ -18,17 +19,19 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const releaseRevision = process.env.EDUCA_RELEASE_REVISION || ''
 const reportRoute = `/api/pilot/descriptive-reports/${PILOT_DESCRIPTIVE_REPORT_ID}/pdf`
 
-interface CommandFailure extends Error {
-  stdout?: string
-  stderr?: string
+interface ValidationReceipt {
+  success: boolean
+  output: string
 }
 
-async function runIndependentValidation(): Promise<string> {
-  const result = await execFile('pnpm', ['exec', 'tsx', 'scripts/validate-pilot-descriptive.ts'], {
-    cwd: process.cwd(),
-    env: process.env,
+function runIndependentValidation(): Promise<ValidationReceipt> {
+  return new Promise(resolve => {
+    execFileCallback('pnpm', ['exec', 'tsx', 'scripts/validate-pilot-descriptive.ts'], {
+      cwd: process.cwd(), env: process.env,
+    }, (error, stdout, stderr) => {
+      resolve({ success: error === null, output: `${stdout}${stderr}` })
+    })
   })
-  return `${result.stdout}${result.stderr}`
 }
 
 function createLocalServiceClient() {
@@ -39,7 +42,7 @@ function createLocalServiceClient() {
   if (!serviceRoleKey.startsWith('sb_secret_')) {
     throw new Error('PILOT_DESCRIPTIVE_E2E_SERVICE_KEY_REQUIRED: local sb_secret key is required')
   }
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }
@@ -140,18 +143,9 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
       if (deleteError) throw deleteError
       expect(deleted).toHaveLength(PILOT_DESCRIPTIVE_CONTENT_IDS.length)
 
-      let validationOutput = ''
-      try {
-        validationOutput = await runIndependentValidation()
-        throw new Error('PILOT_DESCRIPTIVE_E2E_VALIDATION_BREAK_NOT_DETECTED')
-      } catch (error) {
-        if (error instanceof Error && error.message === 'PILOT_DESCRIPTIVE_E2E_VALIDATION_BREAK_NOT_DETECTED') {
-          throw error
-        }
-        const commandError = error as CommandFailure
-        validationOutput = `${commandError.stdout ?? ''}${commandError.stderr ?? ''}`
-      }
-      expect(validationOutput).toContain('[FAIL] count_canonical_content')
+      const validation = await runIndependentValidation()
+      expect(validation.success).toBe(false)
+      expect(validation.output).toContain('[FAIL] count_canonical_content')
 
       await openDescriptiveReport(page)
       const blockedResponse = page.waitForResponse(response => {
@@ -169,8 +163,9 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
     } finally {
       const { error: restoreError } = await service.from('conteudo_aula').insert(snapshot)
       if (restoreError) throw restoreError
-      const restoredValidationOutput = await runIndependentValidation()
-      expect(restoredValidationOutput).toContain('[PASS] count_canonical_content')
+      const restoredValidation = await runIndependentValidation()
+      expect(restoredValidation.success).toBe(true)
+      expect(restoredValidation.output).toContain('[PASS] count_canonical_content')
 
       const deliberateBreakReceiptPath = process.env.PILOT_DESCRIPTIVE_PRODUCT_BREAK_RECEIPT_PATH
       if (deliberateBreakReceiptPath && breakObserved) {

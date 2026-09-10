@@ -1,12 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { GraduationCap, School } from "lucide-react";
 import { useMunicipalSettings } from "@/hooks/use-municipal-settings";
 
 interface MunicipalLogoProps {
 	size?: "sm" | "md" | "lg" | "xl";
-	priority?: boolean;
 	className?: string;
 }
 
@@ -19,7 +17,6 @@ const sizeMap = {
 
 export function MunicipalLogo({
 	size = "md",
-	priority = false,
 	className = "",
 }: MunicipalLogoProps) {
 	const dimensions = sizeMap[size];
@@ -37,7 +34,7 @@ export function MunicipalLogo({
 export function MunicipalBrasao({
 	size = "md",
 	className = "",
-}: Omit<MunicipalLogoProps, "priority">) {
+}: MunicipalLogoProps) {
 	const dimensions = sizeMap[size];
 
 	return (

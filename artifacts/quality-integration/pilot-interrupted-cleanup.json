@@ -1,0 +1,9 @@
+{
+  "result": "pass",
+  "childReceiptsPreserved": true,
+  "childLogsRedacted": true,
+  "serverMode": "direct",
+  "portRangeLeaseDir": null,
+  "portRangeLeaseReleased": true,
+  "aggregateDirectory": "/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/.pilot-evidence/r3-t4-pilot-aggregate-20260909T230530Z-488626"
+}

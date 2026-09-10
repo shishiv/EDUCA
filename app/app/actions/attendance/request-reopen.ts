@@ -21,7 +21,7 @@ export async function requestAttendanceReopenAction(
 
     return result
   } catch (error) {
-    logger.error('ATTENDANCE_REOPEN_REQUEST_ADAPTER_FAILED', error as Error, {
+    logger.error('ATTENDANCE_REOPEN_REQUEST_ADAPTER_FAILED', error instanceof Error ? error : new Error('Erro desconhecido'), {
       metadata: { sessionId: params?.session_id },
     })
     return {

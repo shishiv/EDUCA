@@ -1,7 +1,6 @@
 import {
   BookOpen,
   BookText,
-  Calendar,
   CheckSquare,
   ClipboardList,
   FileText,
@@ -34,7 +33,7 @@ export interface AppNavigationGroup {
 }
 
 export type NavigationGroupKey = 'main' | 'registrations' | 'academic' | 'management'
-export type NavigationItemKey = 'dashboard' | 'students' | 'users' | 'schools' | 'classes' | 'enrolments' | 'assignments' | 'guardians' | 'attendance' | 'classDiary' | 'grades' | 'calendar' | 'reports' | 'settings'
+export type NavigationItemKey = 'dashboard' | 'students' | 'users' | 'schools' | 'classes' | 'enrolments' | 'assignments' | 'guardians' | 'attendance' | 'classDiary' | 'grades' | 'reports' | 'settings'
 
 export const appNavigationGroups: AppNavigationGroup[] = [
   {
@@ -64,7 +63,6 @@ export const appNavigationGroups: AppNavigationGroup[] = [
       { id: 'attendance', labelKey: 'attendance', href: '/dashboard/turmas', icon: CheckSquare },
       { id: 'classDiary', labelKey: 'classDiary', href: '/diario', icon: BookText },
       { id: 'grades', labelKey: 'grades', href: '/dashboard/notas', icon: ClipboardList },
-      { id: 'calendar', labelKey: 'calendar', href: '/dashboard/calendario', icon: Calendar },
     ],
   },
   {
@@ -83,13 +81,23 @@ export function getNavigationForRole(userRole: string): AppNavigationGroup[] {
       ...group,
       items: group.items.filter(item =>
         canAccessRoute(item.href, userRole) &&
-        !item.hiddenForRoles?.includes(userRole as RouteRole) &&
+        !item.hiddenForRoles?.some(role => role === userRole) &&
         (!isPilotModeEnabled() ||
           !isPilotDisabledPath(item.href) ||
           isDemoSandboxPilotPathAllowed(item.href))
       ),
     }))
     .filter(group => group.items.length > 0)
+}
+
+const mobileNavigationIds = ['dashboard', 'students', 'attendance', 'classDiary', 'reports'] as const
+
+export function getMobileNavigationForRole(userRole: string) {
+  const available = getNavigationForRole(userRole).flatMap(group => group.items)
+  return mobileNavigationIds.flatMap(id => {
+    const item = available.find(candidate => candidate.id === id)
+    return item ? [{ ...item, labelKey: id }] : []
+  })
 }
 
 export function isNavigationItemActive(pathname: string, item: AppNavigationItem) {

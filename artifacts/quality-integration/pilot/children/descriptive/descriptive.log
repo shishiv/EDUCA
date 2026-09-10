@@ -1,0 +1,8 @@
+PILOT_PORT_RANGE_LEASE_EXTERNAL: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000
+PILOT_DESCRIPTIVE_SEED_RECEIPT: seed=pass validation=pass marker=SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE canonical_content=2
+PILOT_DESCRIPTIVE_BUILD_RECEIPT: status=pass
+PILOT_DESCRIPTIVE_BROWSER_SETUP_RECEIPT: named_url=true numbered_port=false
+PILOT_DESCRIPTIVE_MANIFEST_RECEIPT: setup=1 specs=1 tests=3 pdf=true deliberate_break=true r1_canonical=false
+PILOT_DESCRIPTIVE_TEST_RECEIPT: status=pass tests=3 pdf_receipt=true deliberate_break_receipt=true output_redacted=true
+PILOT_DESCRIPTIVE_CLEANUP_RECEIPT: app_stopped=true database_stopped=true auth_state_removed=true isolated_removed=true result=pass receipt=/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/.pilot-evidence/r3-t4-pilot-aggregate-20260909T230918Z-575535/children/descriptive/r3-t4-descriptive-pilot-e2e-20260909T231350Z-676375.json
+PILOT_E2E_FINAL_RECEIPT: /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/.pilot-evidence/r3-t4-pilot-aggregate-20260909T230918Z-575535/children/descriptive/r3-t4-descriptive-pilot-e2e-20260909T231350Z-676375.json

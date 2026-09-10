@@ -185,10 +185,22 @@ export function assertCanReadSchool(actor: AttendanceActor, escolaId: string): v
  *
  * @throws AttendanceAuthError SESSION_NOT_OWNED / SCHOOL_MISMATCH
  */
-export function assertSessionWriteAccess(
-  actor: AttendanceActor,
-  session: { id: string; professor_id: string; escola_id: string },
-  turma?: { id: string; professor_id: string | null; escola_id: string; ativo?: boolean | null }
+type AttendanceSessionWriteTarget = {
+  id: string
+  professor_id: string
+  escola_id: string
+}
+
+type AttendanceTurmaWriteTarget = {
+  id: string
+  professor_id: string | null
+  escola_id: string
+  ativo?: boolean | null
+}
+
+function assertSessionMatchesTurma(
+  session: AttendanceSessionWriteTarget,
+  turma?: AttendanceTurmaWriteTarget
 ): void {
   if (turma?.ativo === false) {
     throw new AttendanceAuthError(
@@ -210,7 +222,12 @@ export function assertSessionWriteAccess(
       'A sessão não pertence ao professor titular atual da turma'
     )
   }
+}
 
+function assertActorCanWriteSession(
+  actor: AttendanceActor,
+  session: AttendanceSessionWriteTarget
+): void {
   if (actor.tipo_usuario === 'professor') {
     if (session.professor_id !== actor.userId) {
       throw new AttendanceAuthError(
@@ -237,6 +254,15 @@ export function assertSessionWriteAccess(
     'FORBIDDEN_ROLE',
     'Apenas professores e diretores podem registrar frequência'
   )
+}
+
+export function assertSessionWriteAccess(
+  actor: AttendanceActor,
+  session: AttendanceSessionWriteTarget,
+  turma?: AttendanceTurmaWriteTarget
+): void {
+  assertSessionMatchesTurma(session, turma)
+  assertActorCanWriteSession(actor, session)
 }
 
 /**

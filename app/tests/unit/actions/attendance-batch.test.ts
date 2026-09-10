@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createMarkAttendanceBatchAction } from '@/lib/services/attendance-batch-action'
 import { getSaoPauloDate } from '@/lib/services/attendance-module'
 import { createFakeSupabase, type FakeAttendanceDbState } from './fake-supabase'
 
@@ -16,28 +16,6 @@ const SESSION_B = '31000000-0000-0000-0000-000000000002'
 const MATRICULA_A = '50000000-0000-0000-0000-000000000001'
 const MATRICULA_B = '50000000-0000-0000-0000-000000000002'
 const TEST_DATE = getSaoPauloDate()
-
-const { fakeState, setFakeSupabase } = vi.hoisted(() => {
-  let current: ReturnType<typeof createFakeSupabase> | null = null
-  return {
-    fakeState: {
-      get current() {
-        return current
-      },
-    },
-    setFakeSupabase(fake: ReturnType<typeof createFakeSupabase>) {
-      current = fake
-    },
-  }
-})
-
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => Promise.resolve(fakeState.current)),
-}))
-
-vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn(),
-}))
 
 function baseState(): FakeAttendanceDbState {
   return {
@@ -64,15 +42,23 @@ function baseState(): FakeAttendanceDbState {
   }
 }
 
+let fakeClient: ReturnType<typeof createFakeSupabase>
+let markAttendanceBatchAction: ReturnType<typeof createMarkAttendanceBatchAction>
+
 beforeEach(() => {
-  vi.clearAllMocks()
-  setFakeSupabase(createFakeSupabase(baseState()))
+  fakeClient = createFakeSupabase(baseState())
+  markAttendanceBatchAction = createMarkAttendanceBatchAction({
+    // SAFETY: the deterministic fake implements the same narrow query/RPC
+    // interface consumed by createAttendanceModule.
+    createClient: async () => fakeClient as never,
+    revalidatePath: () => undefined,
+  })
 })
 
 const records = [{ matricula_id: MATRICULA_A, status: 'P' as const, justificativa: null }]
 
 function fake() {
-  return fakeState.current!
+  return fakeClient
 }
 
 describe('markAttendanceBatchAction', () => {

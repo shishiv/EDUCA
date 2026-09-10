@@ -32,6 +32,16 @@ interface DescriptiveReportPdfAssets {
   logoDataUri: string
 }
 
+function getRenderedTableFinalY(
+  doc: ReturnType<typeof createPDFDocument>
+): number {
+  const finalY = doc.lastAutoTable?.finalY
+  if (finalY === undefined) {
+    throw new Error('DESCRIPTIVE_REPORT_PDF_TABLE_POSITION_MISSING')
+  }
+  return finalY
+}
+
 /** Loads the PR14 print-model assets that make PDFs self-contained and portable. */
 async function loadDescriptiveReportPdfAssets(): Promise<DescriptiveReportPdfAssets> {
   try {
@@ -190,7 +200,7 @@ function drawDescriptiveReportTitle(
     margin: { left: REPORT_MARGIN.left, right: REPORT_MARGIN.right },
   })
 
-  return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+  return getRenderedTableFinalY(doc)
 }
 
 function drawDescriptiveReportBoundary(
@@ -286,7 +296,7 @@ function drawDescriptiveReportProvenance(
     },
   })
 
-  return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+  return getRenderedTableFinalY(doc)
 }
 
 function drawDescriptiveReportSectionTitle(
@@ -394,7 +404,7 @@ export async function renderDescriptiveReportPdf(
     },
   })
 
-  currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+  currentY = getRenderedTableFinalY(doc)
 
   if (data.report.observacoesGerais) {
     currentY = drawDescriptiveReportSectionTitle(doc, 'Observações gerais', currentY + 8)
@@ -420,7 +430,7 @@ export async function renderDescriptiveReportPdf(
         }
       },
     })
-    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+    currentY = getRenderedTableFinalY(doc)
   }
 
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -475,9 +485,9 @@ export async function renderDescriptiveReportPdf(
     },
   })
 
-  currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+  currentY = getRenderedTableFinalY(doc)
   drawDescriptiveReportSignatures(doc, data, currentY, assets)
   drawDescriptiveReportFooter(doc)
 
-  return doc.output('arraybuffer') as ArrayBuffer
+  return doc.output('arraybuffer')
 }

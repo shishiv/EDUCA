@@ -1,0 +1,157 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Pular para o conteúdo principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary "Navegação principal" [ref=e5]:
+      - link "EDUCA Sistema Escolar" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e8]: E
+        - generic [ref=e9]:
+          - strong [ref=e10]: EDUCA
+          - generic [ref=e11]: Sistema Escolar
+      - combobox "CEMEI Pequenos Passos" [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]:
+          - img [ref=e15]
+          - generic [ref=e20]: CEMEI Pequenos Passos
+        - img [ref=e21]
+      - button "Recolher menu lateral" [ref=e24] [cursor=pointer]:
+        - img [ref=e25]
+      - navigation [ref=e30]:
+        - region "Principal" [ref=e31]:
+          - button "Principal" [expanded] [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: Principal
+            - img [ref=e34]
+          - link "Dashboard" [ref=e37] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e38]
+            - generic [ref=e41]: Dashboard
+        - region "Cadastros" [ref=e42]:
+          - button "Cadastros" [expanded] [ref=e43] [cursor=pointer]:
+            - generic [ref=e44]: Cadastros
+            - img [ref=e45]
+          - generic [ref=e47]:
+            - link "Alunos" [ref=e48] [cursor=pointer]:
+              - /url: /dashboard/alunos
+              - img [ref=e49]
+              - generic [ref=e54]: Alunos
+            - link "Usuários" [ref=e55] [cursor=pointer]:
+              - /url: /dashboard/usuarios
+              - img [ref=e56]
+              - generic [ref=e59]: Usuários
+            - link "Escolas" [ref=e60] [cursor=pointer]:
+              - /url: /dashboard/escolas
+              - img [ref=e61]
+              - generic [ref=e66]: Escolas
+            - link "Turmas" [ref=e67] [cursor=pointer]:
+              - /url: /dashboard/turmas
+              - img [ref=e68]
+              - generic [ref=e70]: Turmas
+            - link "Matrículas" [ref=e71] [cursor=pointer]:
+              - /url: /dashboard/matriculas
+              - img [ref=e72]
+              - generic [ref=e76]: Matrículas
+            - link "Atribuições" [ref=e77] [cursor=pointer]:
+              - /url: /dashboard/atribuicoes
+              - img [ref=e78]
+              - generic [ref=e90]: Atribuições
+            - link "Responsáveis" [ref=e91] [cursor=pointer]:
+              - /url: /dashboard/responsaveis
+              - img [ref=e92]
+              - generic [ref=e97]: Responsáveis
+        - region "Acadêmico" [ref=e98]:
+          - button "Acadêmico" [expanded] [ref=e99] [cursor=pointer]:
+            - generic [ref=e100]: Acadêmico
+            - img [ref=e101]
+          - generic [ref=e103]:
+            - link "Frequência" [ref=e104] [cursor=pointer]:
+              - /url: /dashboard/turmas
+              - img [ref=e105]
+              - generic [ref=e108]: Frequência
+            - link "Diário de Classe" [ref=e109] [cursor=pointer]:
+              - /url: /diario
+              - img [ref=e110]
+              - generic [ref=e112]: Diário de Classe
+            - link "Notas" [ref=e113] [cursor=pointer]:
+              - /url: /dashboard/notas
+              - img [ref=e114]
+              - generic [ref=e117]: Notas
+        - region "Gestão" [ref=e118]:
+          - button "Gestão" [ref=e119] [cursor=pointer]:
+            - generic [ref=e120]: Gestão
+            - img [ref=e121]
+      - paragraph [ref=e123]: Rede municipal · ambiente autenticado
+    - generic [ref=e124]:
+      - banner [ref=e126]:
+        - navigation "Meu Perfil" [ref=e127]:
+          - generic [ref=e128]: EDUCA
+          - generic [ref=e129]: /
+          - strong [ref=e130]: Meu Perfil
+        - generic [ref=e131]:
+          - generic [ref=e133]:
+            - img [ref=e134]
+            - combobox "Busca global" [ref=e137]
+          - generic [ref=e138]:
+            - button "Mudar idioma para English" [ref=e139] [cursor=pointer]: PT
+            - status [ref=e140]
+          - 'generic "Conexão: Online" [ref=e141]':
+            - img [ref=e142]
+            - generic [ref=e146]: Online
+          - generic [ref=e148]: CEMEI Pequenos Passos
+          - button "Abrir menu do usuário" [ref=e149] [cursor=pointer]:
+            - generic [ref=e150]: AT
+            - generic [ref=e151]:
+              - strong [ref=e152]: Admin
+              - generic [ref=e153]: Administrador
+            - img [ref=e154]
+      - main [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - heading "Meu Perfil" [level=1] [ref=e160]
+            - paragraph [ref=e161]: Gerencie suas informações pessoais e configurações de conta
+          - generic [ref=e162]:
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e168]: AT
+                - heading "Admin Teste" [level=3] [ref=e169]
+                - generic [ref=e171]: Administrador
+              - generic [ref=e172]:
+                - generic [ref=e173]:
+                  - img [ref=e174]
+                  - generic [ref=e177]: admin@test.com
+                - generic [ref=e178]:
+                  - img [ref=e179]
+                  - time [ref=e182]: "Último acesso: 09/09/2026, 20:48"
+            - generic [ref=e184]:
+              - tablist [ref=e185]:
+                - tab "Perfil" [selected] [ref=e186] [cursor=pointer]:
+                  - img [ref=e187]
+                  - generic [ref=e190]: Perfil
+                - tab "Senha" [ref=e191] [cursor=pointer]:
+                  - img [ref=e192]
+                  - generic [ref=e196]: Senha
+                - tab "Segurança" [ref=e197] [cursor=pointer]:
+                  - img [ref=e198]
+                  - generic [ref=e200]: Segurança
+              - tabpanel "Perfil" [ref=e201]:
+                - generic [ref=e202]:
+                  - generic [ref=e203]:
+                    - heading "Informações Pessoais" [level=3] [ref=e204]
+                    - paragraph [ref=e205]: Atualize suas informações pessoais
+                  - generic [ref=e207]:
+                    - generic [ref=e208]:
+                      - generic [ref=e209]:
+                        - text: Nome Completo
+                        - textbox "Nome Completo" [ref=e210]: Admin Teste
+                      - generic [ref=e211]:
+                        - text: Email
+                        - textbox "Email" [disabled] [ref=e212]: admin@test.com
+                        - paragraph [ref=e213]: Email
+                    - button "Salvar Alterações" [ref=e215] [cursor=pointer]:
+                      - img [ref=e216]
+                      - text: Salvar Alterações
+  - region "Notifications alt+T"
+  - alert [ref=e220]
+```

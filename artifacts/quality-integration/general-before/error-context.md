@@ -1,0 +1,88 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Pular para o conteúdo principal" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary "Navegação principal" [ref=e5]:
+      - link "EDUCA Sistema Escolar" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e8]: E
+        - generic [ref=e9]:
+          - strong [ref=e10]: EDUCA
+          - generic [ref=e11]: Sistema Escolar
+      - button "Recolher menu lateral" [ref=e13] [cursor=pointer]:
+        - img [ref=e14]
+      - navigation [ref=e19]:
+        - region "Principal" [ref=e20]:
+          - button "Principal" [expanded] [ref=e21] [cursor=pointer]:
+            - generic [ref=e22]: Principal
+            - img [ref=e23]
+          - link "Dashboard" [ref=e26] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e27]
+            - generic [ref=e30]: Dashboard
+        - region "Acadêmico" [ref=e31]:
+          - button "Acadêmico" [expanded] [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: Acadêmico
+            - img [ref=e34]
+          - generic [ref=e36]:
+            - link "Frequência" [ref=e37] [cursor=pointer]:
+              - /url: /dashboard/turmas
+              - img [ref=e38]
+              - generic [ref=e41]: Frequência
+            - link "Diário de Classe" [ref=e42] [cursor=pointer]:
+              - /url: /diario
+              - img [ref=e43]
+              - generic [ref=e45]: Diário de Classe
+            - link "Notas" [ref=e46] [cursor=pointer]:
+              - /url: /dashboard/notas
+              - img [ref=e47]
+              - generic [ref=e50]: Notas
+      - paragraph [ref=e51]: Rede municipal · ambiente autenticado
+    - generic [ref=e52]:
+      - banner [ref=e54]:
+        - navigation "Turmas" [ref=e55]:
+          - generic [ref=e56]: EDUCA
+          - generic [ref=e57]: /
+          - strong [ref=e58]: Turmas
+        - generic [ref=e59]:
+          - generic [ref=e61]:
+            - img [ref=e62]
+            - combobox "Busca global" [ref=e65]
+          - generic [ref=e66]:
+            - button "Mudar idioma para English" [ref=e67] [cursor=pointer]: PT
+            - status [ref=e68]
+          - 'generic "Conexão: Online" [ref=e69]':
+            - img [ref=e70]
+            - generic [ref=e74]: Online
+          - button "Abrir menu do usuário" [ref=e75] [cursor=pointer]:
+            - generic [ref=e76]: PT
+            - generic [ref=e77]:
+              - strong [ref=e78]: Professor
+              - generic [ref=e79]: Professor(a)
+            - img [ref=e80]
+      - main [ref=e82]:
+        - generic [ref=e84]:
+          - link "Turma" [ref=e86] [cursor=pointer]:
+            - /url: /dashboard/turmas/cb135296-3006-4f86-9a17-5bf8d35879ea
+            - img [ref=e87]
+            - text: Turma
+          - generic [ref=e89]:
+            - button "Dia anterior" [ref=e90] [cursor=pointer]:
+              - img [ref=e91]
+            - button "Selecionar data" [ref=e93] [cursor=pointer]:
+              - img [ref=e94]
+              - generic [ref=e96]: quarta-feira, 09 de setembro
+            - button "Próximo dia" [ref=e97] [cursor=pointer]:
+              - img [ref=e98]
+          - generic [ref=e101]:
+            - img [ref=e102]
+            - generic [ref=e106]:
+              - heading "Nenhuma chamada nesta data" [level=2] [ref=e107]
+              - paragraph [ref=e108]: Abra uma sessão para registrar a presença dos alunos matriculados nesta turma.
+            - button "Abrir chamada" [ref=e109] [cursor=pointer]
+  - region "Notifications alt+T"
+  - alert [ref=e110]
+```

@@ -59,17 +59,17 @@ function ProductBoard() {
               <div className="landing-board__filter">{t('allSchools')} <ArrowDownRight size={14} /></div>
             </div>
             <div className="landing-board__metrics">
-              <div className="landing-board__metric landing-board__metric--teal"><span>{t('activeSchools')}</span><strong>12</strong><small>{t('networkSuffix')}</small></div>
-              <div className="landing-board__metric landing-board__metric--yellow"><span>{t('classesToday')}</span><strong>86</strong><small>{t('underway')}</small></div>
-              <div className="landing-board__metric landing-board__metric--ink"><span>{t('attendanceRecorded')}</span><strong>78%</strong><small>{t('soFar')}</small></div>
+              <div className="landing-board__metric landing-board__metric--teal"><span>{t('activeSchools')}</span><strong>-</strong><small>{t('networkSuffix')}</small></div>
+              <div className="landing-board__metric landing-board__metric--yellow"><span>{t('classesToday')}</span><strong>-</strong><small>{t('underway')}</small></div>
+              <div className="landing-board__metric landing-board__metric--ink"><span>{t('attendanceRecorded')}</span><strong>-</strong><small>{t('soFar')}</small></div>
             </div>
             <div className="landing-board__lower">
               <div className="landing-board__table-wrap">
                 <div className="landing-board__table-title"><strong>{t('networkActivity')}</strong><span>{t('viewAll')} <ArrowRight size={13} /></span></div>
                 <div className="landing-board__table-row landing-board__table-row--header"><span>{t('schoolHeading')}</span><span>{t('attendanceHeading')}</span><span>{t('statusHeading')}</span></div>
-                <div className="landing-board__table-row"><span><b className="landing-avatar">JM</b> E. M. Jardim das Palmeiras</span><span>91%</span><span className="landing-badge landing-badge--ok">{t('upToDate')}</span></div>
-                <div className="landing-board__table-row"><span><b className="landing-avatar landing-avatar--orange">SV</b> E. M. Sabiá Verde</span><span>84%</span><span className="landing-badge landing-badge--watch">{t('followUp')}</span></div>
-                <div className="landing-board__table-row"><span><b className="landing-avatar landing-avatar--blue">CA</b> C. E. Água Clara</span><span>88%</span><span className="landing-badge landing-badge--ok">{t('upToDate')}</span></div>
+                <div className="landing-board__table-row"><span><b className="landing-avatar">A</b> {t('exampleSchool')} A</span><span>-</span><span className="landing-badge landing-badge--ok">{t('upToDate')}</span></div>
+                <div className="landing-board__table-row"><span><b className="landing-avatar landing-avatar--orange">B</b> {t('exampleSchool')} B</span><span>-</span><span className="landing-badge landing-badge--watch">{t('followUp')}</span></div>
+                <div className="landing-board__table-row"><span><b className="landing-avatar landing-avatar--blue">C</b> {t('exampleSchool')} C</span><span>-</span><span className="landing-badge landing-badge--ok">{t('upToDate')}</span></div>
               </div>
               <div className="landing-board__note"><span className="landing-board__note-icon"><BookOpen size={15} /></span><strong>{t('classDiary')}</strong><p>{t('pendingReview')}</p><span className="landing-board__note-link">{t('openRoutine')} <ArrowRight size={13} /></span></div>
             </div>

@@ -355,7 +355,7 @@ export interface SessaoApiResponse {
  * Validation rules for attendance status
  */
 export const ATTENDANCE_VALIDATION = {
-  validStatuses: ['P', 'F', 'A'] as StatusPresenca[],
+  validStatuses: ['P', 'F', 'A'] satisfies StatusPresenca[],
   maxJustificativaLength: 500,
   maxObservacoesLength: 1000,
 } as const;

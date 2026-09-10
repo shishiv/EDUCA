@@ -1,591 +1,170 @@
-import { test, expect } from '../support/diagnostics'
-import { 
-  waitForPageLoad,
-  expectFormSuccess
-} from '../utils/test-helpers'
+import { createClient } from '@supabase/supabase-js'
+import { expect, test } from '../support/diagnostics'
+import { waitForPageLoad } from '../utils/test-helpers'
 
-function generateSyntheticTestEmail(prefix: string): string {
-  return `${prefix}${Date.now()}@synthetic.invalid`
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const seededProfessor = {
+  name: 'Professor Teste',
+  email: 'professor@test.com',
 }
 
-/**
- * E2E Tests: Usuários - Complete CRUD
- * Tests for user listing, creation, viewing, editing, and deletion
- */
-
-test.describe('Usuários - List View', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/usuarios')
-    await waitForPageLoad(page)
+function serviceClient() {
+  expect(serviceRoleKey, 'SUPABASE_SERVICE_ROLE_KEY is required for exact E2E cleanup').not.toBe('')
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
   })
+}
 
-  test('should display page header and title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
-  })
+async function removeInvitedUser(email: string) {
+  const service = serviceClient()
+  const { data: authData, error: authError } = await service.auth.admin.listUsers()
+  if (authError) throw authError
+  const authUserIds = authData.users.filter(user => user.email === email).map(user => user.id)
 
-  test('should display "Novo Usuário" button', async ({ page }) => {
-    const newButton = page.getByRole('link', { name: /novo usuário|adicionar usuário/i })
-    await expect(newButton).toBeVisible()
-    await expect(newButton).toHaveAttribute('href', /\/usuarios\/novo/)
-  })
+  const { error: invitationError } = await service.from('pilot_user_invitations').delete().eq('email', email)
+  if (invitationError) throw invitationError
+  const { error: profileError } = await service.from('users').delete().eq('email', email)
+  if (profileError) throw profileError
+  for (const userId of authUserIds) {
+    const { error } = await service.auth.admin.deleteUser(userId)
+    if (error) throw error
+  }
 
-  test('should display users table', async ({ page }) => {
+  const { data: remainingProfile, error: remainingProfileError } = await service
+    .from('users')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+  if (remainingProfileError) throw remainingProfileError
+  expect(remainingProfile, 'temporary user profile cleanup must be exact').toBeNull()
+}
+
+async function restoreSeededProfessor(id: string) {
+  const { error } = await serviceClient()
+    .from('users')
+    .update({ nome: seededProfessor.name, email: seededProfessor.email })
+    .eq('id', id)
+  if (error) throw error
+}
+
+async function openUsers(page: import('@playwright/test').Page) {
+  await page.goto('/dashboard/usuarios')
+  await waitForPageLoad(page)
+  await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
+}
+
+test.describe('Usuários - contrato atual', () => {
+  test('mostra a tabela e ações de linha com nomes acessíveis', async ({ page }) => {
+    await openUsers(page)
+
     const table = page.getByRole('table')
     await expect(table).toBeVisible()
-    
-    // Check for expected columns
-    await expect(page.getByRole('columnheader', { name: 'Usuário', exact: true })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'Tipo', exact: true })).toBeVisible()
+    await expect(table.getByRole('columnheader')).toHaveText([
+      'Usuário',
+      'Tipo',
+      'Escola',
+      'Último Acesso',
+      'Status',
+      'Ações',
+    ])
+    await expect(page.getByRole('link', { name: 'Ver detalhes de Professor Teste' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Desativar Professor Teste' })).toBeVisible()
   })
 
-  test('should have search functionality', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Buscar por nome ou email...')
-    await expect(searchInput).toBeVisible()
-    await expect(searchInput).toBeEditable()
+  test('pesquisa por usuário, mostra vazio e restaura a lista ao limpar', async ({ page }) => {
+    await openUsers(page)
+    const search = page.getByPlaceholder('Buscar por nome ou email...')
+
+    await search.fill('professor@test.com')
+    const rows = page.getByRole('table').locator('tbody tr')
+    await expect(rows).toHaveCount(1)
+    await expect(rows.first()).toContainText('Professor Teste')
+
+    await search.fill('usuario-inexistente@synthetic.invalid')
+    await expect(page.getByText('Nenhum usuário encontrado', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Limpar filtros', exact: true }).click()
+    await expect(page.getByRole('row').filter({ hasText: seededProfessor.email })).toBeVisible()
   })
 
-  test('should filter users by search term', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Buscar por nome ou email...')
-    
-    await searchInput.fill('admin')
-    await page.waitForTimeout(500)
-    
-    // Table should still be visible
-    await expect(page.getByRole('table')).toBeVisible()
-  })
+  test('abre os detalhes pela ação nomeada e persiste edição de nome e e-mail', async ({ page }) => {
+    const editedName = 'Professor Teste Editado'
+    const editedEmail = 'professor.editado@synthetic.invalid'
+    let professorId = ''
 
-  test('should display role filter', async ({ page }) => {
-    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /papel|função|todos/i }).first()
-    
-    if (await roleFilter.isVisible()) {
-      await expect(roleFilter).toBeVisible()
-    }
-  })
+    await openUsers(page)
+    const detailLink = page.getByRole('link', { name: 'Ver detalhes de Professor Teste' })
+    professorId = new URL(await detailLink.getAttribute('href') || '', 'http://localhost').pathname.split('/').pop() || ''
+    expect(professorId).not.toBe('')
 
-  test('should filter by role', async ({ page }) => {
-    const roleFilter = page.locator('[role="combobox"]').filter({ hasText: /papel|função|todos/i }).first()
-    
-    if (await roleFilter.isVisible()) {
-      await roleFilter.click()
-      
-      const adminOption = page.getByRole('option', { name: /admin|diretor|professor/i })
-      if (await adminOption.first().isVisible()) {
-        await adminOption.first().click()
-        await page.waitForTimeout(500)
-        
-        await expect(page.getByRole('table')).toBeVisible()
-      }
-    }
-  })
-
-  test('should display user roles/badges', async ({ page }) => {
-    // Look for role badges in the table
-    const roleBadge = page.locator('text=/admin|diretor|professor|coordenador/i').first()
-    
-    if (await roleBadge.isVisible()) {
-      await expect(roleBadge).toBeVisible()
-    }
-  })
-
-  test('should display user status (ativo/inativo)', async ({ page }) => {
-    const statusBadge = page.locator('text=/ativo|inativo/i').first()
-    
-    if (await statusBadge.isVisible()) {
-      await expect(statusBadge).toBeVisible()
-    }
-  })
-})
-
-test.describe('Usuários - Create Form', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/usuarios/novo')
-    await waitForPageLoad(page)
-  })
-
-  test('should display create form header', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /novo usuário|cadastrar usuário/i })).toBeVisible()
-  })
-
-  test('should have back button', async ({ page }) => {
-    const backButton = page.getByRole('link', { name: /voltar/i })
-    await expect(backButton).toBeVisible()
-    await expect(backButton).toHaveAttribute('href', /\/usuarios$/)
-  })
-
-  test('should display all required fields', async ({ page }) => {
-    await expect(page.getByLabel(/nome/i)).toBeVisible()
-    await expect(page.getByLabel(/email/i)).toBeVisible()
-    
-    const senhaField = page.getByLabel(/senha/i)
-    if (await senhaField.isVisible()) {
-      await expect(senhaField).toBeVisible()
-    }
-  })
-
-  test('should have papel/role field', async ({ page }) => {
-    await expect(page.getByText('Tipo de Usuário *', { exact: true })).toBeVisible()
-    await expect(page.locator('#tipo_usuario')).toBeVisible()
-  })
-
-  test('should validate required nome field', async ({ page }) => {
-    const nome = page.getByLabel(/nome/i)
-    await expect(nome).toHaveAttribute('required', '')
-    await page.getByRole('button', { name: /salvar|criar|cadastrar/i }).click()
-    expect(await nome.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
-  })
-
-  test('should validate email format', async ({ page }) => {
-    const emailField = page.getByLabel(/email/i)
-    
-    await emailField.fill('invalid-email')
-    await emailField.blur()
-    
-    await page.getByLabel(/nome/i).fill('Test Email Validation')
-    
-    await page.getByRole('button', { name: /salvar|criar|cadastrar/i }).click()
-    expect(await emailField.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
-  })
-
-  test('should validate password strength', async ({ page }) => {
-    const senhaField = page.getByLabel(/senha/i).first()
-    
-    if (await senhaField.isVisible()) {
-      await senhaField.fill('123') // Weak password
-      await senhaField.blur()
-      
-      await page.getByLabel(/nome/i).fill('Test Password')
-      await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('pass'))
-      
-      const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-      await saveButton.click()
-      
-      // Should show password error
-      const passwordError = page.getByText(/senha.*fraca|senha.*curta|mínimo.*caracteres/i)
-      if (await passwordError.isVisible()) {
-        await expect(passwordError).toBeVisible()
-      }
-    }
-  })
-
-  test('should validate password confirmation match', async ({ page }) => {
-    const senhaField = page.getByLabel(/^senha$/i).first()
-    const confirmField = page.getByLabel(/confirmar.*senha|senha.*confirmação/i)
-    
-    if (await senhaField.isVisible() && await confirmField.isVisible()) {
-      await senhaField.fill('TestPass123!')
-      await confirmField.fill('TestPass456!') // Different
-      
-      await page.getByLabel(/nome/i).fill('Test Password Match')
-      await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('match'))
-      
-      const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-      await saveButton.click()
-      
-      await expect(page.getByText(/senhas.*não.*correspondem|senhas.*diferentes/i)).toBeVisible()
-    }
-  })
-
-  test('should create user successfully', async ({ page }) => {
-    const timestamp = Date.now()
-    const userName = `E2E Test User ${timestamp}`
-    
-    // Fill required fields
-    await page.getByLabel(/nome/i).fill(userName)
-    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('user'))
-    
-    // Select papel/role
-    const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-      hasText: /selecione|papel|função/i 
-    }).first()
-    
-    if (await papelSelect.isVisible()) {
-      await papelSelect.click()
-      await page.getByRole('option', { name: /secretário/i }).click()
-    }
-    
-    // Password (if required)
-    const senhaField = page.getByLabel(/^senha$/i).first()
-    if (await senhaField.isVisible()) {
-      const password = 'TestPass123!'
-      await senhaField.fill(password)
-      
-      const confirmField = page.getByLabel(/confirmar.*senha/i)
-      if (await confirmField.isVisible()) {
-        await confirmField.fill(password)
-      }
-    }
-    
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    await expectFormSuccess(page)
-    
-    // Should redirect
-    await expect(page).not.toHaveURL(/\/novo/)
-  })
-
-  test('should create user with escola assignment', async ({ page }) => {
-    const timestamp = Date.now()
-    
-    await page.getByLabel(/nome/i).fill(`User With Escola ${timestamp}`)
-    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('escola'))
-    
-    // Select papel and escola through the form controls, not the global school selector.
-    const papelSelect = page.locator('#tipo_usuario')
-    await papelSelect.click()
-    await page.getByRole('option', { name: /professor/i }).click()
-
-    const escolaSelect = page.locator('#escola')
-    await escolaSelect.click()
-    await page.getByRole('option').first().click()
-    
-    // Password
-    const senhaField = page.getByLabel(/^senha$/i).first()
-    if (await senhaField.isVisible()) {
-      await senhaField.fill('TestPass123!')
-      
-      const confirmField = page.getByLabel(/confirmar/i)
-      if (await confirmField.isVisible()) {
-        await confirmField.fill('TestPass123!')
-      }
-    }
-    
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    await expectFormSuccess(page)
-  })
-
-  test('should show loading state during submission', async ({ page }) => {
-    const timestamp = Date.now()
-    let releaseInvitation = () => {}
-    const invitationPaused = new Promise<void>(resolve => { releaseInvitation = resolve })
-    await page.route(/\/api\/pilot\/invitations(?:\?|$)/, async route => {
-      await invitationPaused
-      await route.continue()
-    })
-
-    await page.getByLabel(/nome/i).fill(`Loading Test ${timestamp}`)
-    await page.getByLabel(/email/i).fill(generateSyntheticTestEmail('loading'))
-    await page.locator('#tipo_usuario').click()
-    await page.getByRole('option', { name: /secretário/i }).click()
-
-    const saveButton = page.locator('button[type="submit"]')
-    const invitationResponse = page.waitForResponse(response =>
-      response.request().method() === 'POST' && response.url().includes('/api/pilot/invitations')
-    )
-    const submission = saveButton.click()
     try {
-      await expect(saveButton).toBeDisabled()
-      await expect(saveButton).toContainText(/salvando/i)
-      releaseInvitation()
-      const response = await invitationResponse
-      expect(response.ok()).toBe(true)
-      await submission
-    } finally {
-      releaseInvitation()
-      await invitationResponse.catch(() => undefined)
-    }
-  })
+      await detailLink.click()
+      await expect(page.getByText(seededProfessor.email, { exact: true }).first()).toBeVisible()
+      await page.getByRole('button', { name: 'Editar', exact: true }).click()
 
-  test('should not allow duplicate email', async ({ page }) => {
-    await page.getByLabel(/nome/i).fill('Duplicate Email Test')
-    await page.getByLabel(/email/i).fill('admin@teste.com') // Known email
-    
-    const papelSelect = page.locator('select, [role="combobox"]').first()
-    if (await papelSelect.isVisible()) {
-      await papelSelect.click()
-      await page.getByRole('option').first().click()
-    }
-    
-    const saveButton = page.getByRole('button', { name: /salvar|criar|cadastrar/i })
-    await saveButton.click()
-    
-    // Might show duplicate error
-    const duplicateError = page.getByText(/email.*já.*existe|email.*cadastrado/i)
-    if (await duplicateError.isVisible()) {
-      await expect(duplicateError).toBeVisible()
-    }
-  })
-})
-
-test.describe('Usuários - View Details', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/usuarios')
-    await waitForPageLoad(page)
-  })
-
-  test('should navigate to detail page', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar|detalhes/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      
-      await expect(page).toHaveURL(/\/usuarios\/[a-f0-9-]+/)
-      await waitForPageLoad(page)
-    }
-  })
-
-  test('should display user information', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      // Should show name
-      const heading = page.getByRole('heading').first()
-      await expect(heading).toBeVisible()
-    }
-  })
-
-  test('should display user role', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      // Should display papel/role
-      const roleLabel = page.getByText(/papel|função/i)
-      if (await roleLabel.isVisible()) {
-        await expect(roleLabel).toBeVisible()
-      }
-    }
-  })
-
-  test('should display linked escola', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      // Should show escola section
-      const escolaSection = page.getByText(/escola/i)
-      if (await escolaSection.first().isVisible()) {
-        await expect(escolaSection.first()).toBeVisible()
-      }
-    }
-  })
-
-  test('should have edit button on detail page', async ({ page }) => {
-    const viewButton = page.getByRole('link', { name: /ver|visualizar/i }).first()
-    
-    if (await viewButton.isVisible()) {
-      await viewButton.click()
-      await waitForPageLoad(page)
-      
-      const editButton = page.getByRole('link', { name: /editar/i })
-      if (await editButton.isVisible()) {
-        await expect(editButton).toBeVisible()
-      }
-    }
-  })
-})
-
-test.describe('Usuários - Edit Form', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/usuarios')
-    await waitForPageLoad(page)
-  })
-
-  test('should navigate to edit page', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      
-      await expect(page).toHaveURL(/\/usuarios\/[a-f0-9-]+\/editar/)
-      await waitForPageLoad(page)
-    }
-  })
-
-  test('should load existing data in form', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      // Name field should have value
-      const nameField = page.getByLabel(/nome/i)
-      const nameValue = await nameField.inputValue()
-      
-      expect(nameValue).toBeTruthy()
-      expect(nameValue.length).toBeGreaterThan(0)
-    }
-  })
-
-  test('should update user name', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const nameField = page.getByLabel(/nome/i)
-      const currentName = await nameField.inputValue()
-      
-      const updatedName = `${currentName} ${Date.now()}`
-      await nameField.clear()
-      await nameField.fill(updatedName)
-      
-      const saveButton = page.getByRole('button', { name: /salvar|atualizar/i })
-      await saveButton.click()
-      
-      await expectFormSuccess(page)
-    }
-  })
-
-  test('should change user role', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const papelSelect = page.locator('select, [role="combobox"]').filter({ 
-        hasText: /papel|função/i 
-      }).first()
-      
-      if (await papelSelect.isVisible()) {
-        await papelSelect.click()
-        await page.getByRole('option').nth(1).click()
-        
-        const saveButton = page.getByRole('button', { name: /salvar|atualizar/i })
-        await saveButton.click()
-        
-        await expectFormSuccess(page)
-      }
-    }
-  })
-
-  test('should toggle user status (ativo/inativo)', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const statusToggle = page.getByLabel(/ativo|status/i)
-      if (await statusToggle.isVisible()) {
-        await statusToggle.click()
-        
-        const saveButton = page.getByRole('button', { name: /salvar|atualizar/i })
-        await saveButton.click()
-        
-        await expectFormSuccess(page)
-      }
-    }
-  })
-
-  test('should cancel edit and return to list', async ({ page }) => {
-    const editButton = page.getByRole('link', { name: /editar/i }).first()
-    
-    if (await editButton.isVisible()) {
-      await editButton.click()
-      await waitForPageLoad(page)
-      
-      const nameField = page.getByLabel(/nome/i)
-      await nameField.fill('This will be cancelled')
-      
-      const cancelButton = page.getByRole('link', { name: /voltar|cancelar/i })
-      await cancelButton.click()
-      
-      await expect(page).toHaveURL(/\/usuarios$/)
-    }
-  })
-})
-
-test.describe('Usuários - Delete', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/usuarios')
-    await waitForPageLoad(page)
-  })
-
-  test('should display delete button', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar|remover/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      await expect(deleteButton).toBeVisible()
-    }
-  })
-
-  test('should show confirmation dialog on delete', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar|remover/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click()
-      
-      const confirmDialog = page.getByRole('alertdialog')
-      if (await confirmDialog.isVisible()) {
-        await expect(confirmDialog).toBeVisible()
-        
-        await expect(page.getByRole('button', { name: /confirmar|sim|excluir/i })).toBeVisible()
-        await expect(page.getByRole('button', { name: /cancelar|não/i })).toBeVisible()
-      }
-    }
-  })
-
-  test('should cancel deletion', async ({ page }) => {
-    const deleteButton = page.getByRole('button', { name: /excluir|deletar/i }).first()
-    
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click()
-      
-      const confirmDialog = page.getByRole('alertdialog')
-      if (await confirmDialog.isVisible()) {
-        const cancelButton = page.getByRole('button', { name: /cancelar|não/i })
-        await cancelButton.click()
-        
-        await expect(confirmDialog).not.toBeVisible()
-      }
-    }
-  })
-
-  test('should prevent deletion of own account', async ({ page }) => {
-    // This test documents expected behavior
-    // Users should not be able to delete their own account
-    
-    const deleteButtons = page.getByRole('button', { name: /excluir|deletar/i })
-    const count = await deleteButtons.count()
-    
-    if (count > 0) {
-      // Some delete buttons should be disabled or show warning
-      const disabledButtons = await deleteButtons.evaluateAll(
-        buttons => buttons.filter(btn => btn.hasAttribute('disabled')).length
+      await expect(page.getByRole('combobox', { name: 'Tipo de usuário' })).toBeDisabled()
+      await expect(page.getByRole('combobox', { name: 'Escola' })).toBeDisabled()
+      await page.getByLabel('Nome completo', { exact: true }).fill(editedName)
+      await page.getByLabel('E-mail', { exact: true }).fill(editedEmail)
+      const updateResponse = page.waitForResponse(response =>
+        response.request().method() === 'PATCH' && response.url().endsWith(`/api/users/${professorId}`),
       )
-      
-      // At least one button should be disabled (current user)
-      expect(disabledButtons).toBeGreaterThanOrEqual(0)
-    }
-  })
-})
+      await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click()
+      expect((await updateResponse).status()).toBe(200)
+      await expect(page.getByText('Professor atualizado com sucesso', { exact: true })).toBeVisible()
 
-test.describe('Usuários - Stats', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/usuarios')
-    await waitForPageLoad(page)
-  })
-
-  test('should display total users count', async ({ page }) => {
-    const statsContainer = page.locator('.grid').first()
-    
-    if (await statsContainer.isVisible()) {
-      const totalStat = page.getByText(/total|todos.*usuários/i)
-      if (await totalStat.isVisible()) {
-        await expect(totalStat).toBeVisible()
-      }
+      await page.reload()
+      await expect(page.getByText(editedName, { exact: true }).first()).toBeVisible()
+      await expect(page.getByText(editedEmail, { exact: true }).first()).toBeVisible()
+    } finally {
+      if (professorId) await restoreSeededProfessor(professorId)
     }
   })
 
-  test('should show counts by role', async ({ page }) => {
-    // Look for stats like "Professores: X", "Diretores: Y"
-    const roleStats = page.locator('text=/\\d+\\s*(professor|diretor|admin|coordenador)/i').first()
-    
-    if (await roleStats.isVisible()) {
-      await expect(roleStats).toBeVisible()
+  test('convida secretário sintético e alterna seu status pela rota governada', async ({ page }) => {
+    const suffix = `${Date.now()}-${test.info().workerIndex}`
+    const name = `Secretário Contrato ${suffix}`
+    const email = `secretario.contrato.${suffix}@synthetic.invalid`
+    await removeInvitedUser(email)
+
+    try {
+      await page.goto('/dashboard/usuarios/novo')
+      await waitForPageLoad(page)
+      await page.getByLabel('Nome Completo *', { exact: true }).fill(name)
+      await page.getByLabel('Email *', { exact: true }).fill(email)
+      await page.getByRole('combobox', { name: 'Tipo de Usuário *' }).click()
+      await page.getByRole('option', { name: 'Secretário', exact: true }).click()
+      await expect(page.getByRole('combobox', { name: 'Escola' })).toBeDisabled()
+
+      const invitationResponse = page.waitForResponse(response =>
+        response.request().method() === 'POST' && response.url().includes('/api/pilot/invitations'),
+      )
+      await page.getByRole('button', { name: 'Criar usuário', exact: true }).click()
+      expect((await invitationResponse).status()).toBe(201)
+      await expect(page).toHaveURL(/\/dashboard\/usuarios$/)
+      await expect(page.getByText('Convite enviado com sucesso!', { exact: true })).toBeVisible()
+
+      const row = page.getByRole('row').filter({ hasText: email })
+      await expect(row).toContainText(name)
+      await expect(row).toContainText('Secretário(a)')
+      await expect(row).toContainText('Todas as escolas')
+      await expect(row).toContainText('Ativo')
+
+      const disableResponse = page.waitForResponse(response =>
+        response.request().method() === 'PATCH' && response.url().includes('/status'),
+      )
+      await row.getByRole('button', { name: `Desativar ${name}` }).click()
+      expect((await disableResponse).status()).toBe(200)
+      await expect(row).toContainText('Inativo')
+
+      const enableResponse = page.waitForResponse(response =>
+        response.request().method() === 'PATCH' && response.url().includes('/status'),
+      )
+      await row.getByRole('button', { name: `Ativar ${name}` }).click()
+      expect((await enableResponse).status()).toBe(200)
+      await expect(row).toContainText('Ativo')
+    } finally {
+      await removeInvitedUser(email)
     }
   })
 })

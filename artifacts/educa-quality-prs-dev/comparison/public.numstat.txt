@@ -1,0 +1,12 @@
+22	33	app/app/providers.tsx
+11	28	app/components/dashboard/matriculas-page-content.tsx
+491	308	app/components/dashboard/nova-turma-page-content.tsx
+163	85	app/components/dashboard/teacher-dashboard-enhanced.tsx
+64	62	app/components/layout/header.tsx
+81	79	app/components/layout/mobile-header.tsx
+12	5	app/components/layout/navigation.ts
+9	5	app/lib/demo-sandbox/demo-audit.ts
+0	90	app/tests/unit/demo-sandbox/demo-demoable-flows.test.ts
+19	111	app/tests/unit/demo-sandbox/demo-deploy-package.test.tsx
+16	0	app/tests/unit/i18n/locale-switcher.test.tsx
+22	11	app/tests/unit/i18n/providers.test.tsx

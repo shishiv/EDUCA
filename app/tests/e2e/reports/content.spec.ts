@@ -1,29 +1,23 @@
+import { execFile as execFileCallback } from 'node:child_process'
+import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
 import { createClient } from '@supabase/supabase-js'
 import { test, expect } from '../support/diagnostics'
+import type { Database } from '@/types/database'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const MATH_CONTENT_TITLE = 'Adição com números naturais'
 const PORTUGUESE_CONTENT_TITLE = 'Leitura de textos informativos'
+const execFile = promisify(execFileCallback)
 
-type ContentSnapshot = Record<string, unknown> & { id: string }
+type ContentSnapshot = Database['public']['Tables']['conteudo_aula']['Row']
 
 async function openReport(page: import('@playwright/test').Page, path = '/relatorios/conteudo') {
-  const backgroundResponses = Promise.all([
-    page.waitForResponse(
-      response => response.url().includes('/rest/v1/matriculas?'),
-      { timeout: 15000 },
-    ).catch(() => null),
-    page.waitForResponse(
-      response => response.url().includes('/rest/v1/frequencia?'),
-      { timeout: 15000 },
-    ).catch(() => null),
-  ])
   await page.goto(path)
   await expect(page.getByRole('heading', { name: /relatório de conteúdo ministrado|relatorio de conteudo ministrado/i })).toBeVisible({ timeout: 15000 })
   await expect(page.getByLabel('Turma', { exact: true })).toBeVisible({ timeout: 15000 })
-  await backgroundResponses
-  await page.waitForLoadState('networkidle')
+  await expect(page.getByLabel('Turma', { exact: true })).toBeEnabled()
 }
 
 async function generateReport(page: import('@playwright/test').Page) {
@@ -43,7 +37,7 @@ function getLocalAdminClient() {
   if (!SUPABASE_SERVICE_KEY.startsWith('sb_secret_')) {
     throw new Error('Content report E2E requires the local Supabase service key')
   }
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }
@@ -56,28 +50,11 @@ async function readContentSnapshot(title = MATH_CONTENT_TITLE): Promise<ContentS
     .eq('tema', title)
     .single()
   if (error || !data) throw new Error(`Failed to load canonical content snapshot: ${error?.message || 'missing row'}`)
-  return data as ContentSnapshot
-}
-
-async function readDownloadBytes(download: import('@playwright/test').Download): Promise<Buffer> {
-  const stream = await download.createReadStream()
-  if (!stream) throw new Error('Generated PDF download stream was unavailable')
-  const chunks: Buffer[] = []
-  for await (const chunk of stream) chunks.push(Buffer.from(chunk))
-  return Buffer.concat(chunks)
+  return data
 }
 
 test.describe('Content report', () => {
   test.beforeEach(async ({ page }) => {
-    // Isolate the report contract from the legacy realtime channel. Report
-    // requests still use the real Supabase API and the isolated test database.
-    await page.addInitScript(() => {
-      try {
-        window.localStorage.setItem('dev_auth_bypass', 'true')
-      } catch {
-        // Non-page navigations do not expose localStorage.
-      }
-    })
     await openReport(page)
   })
 
@@ -96,7 +73,7 @@ test.describe('Content report', () => {
   test('shows custom date controls for a custom period', async ({ page }) => {
     await page.getByLabel('Período', { exact: true }).click()
     await page.getByRole('option', { name: /personalizado/i }).click()
-    await expect(page.getByRole('button', { name: 'Data Inicio', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Data Início', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Data Fim', exact: true })).toBeVisible()
   })
 
@@ -128,7 +105,7 @@ test.describe('Content report', () => {
 
   test('filters report by a specific class', async ({ page }) => {
     await page.getByLabel('Turma', { exact: true }).click()
-    const option = page.getByRole('option').filter({ hasNotText: /todas as turmas/i }).first()
+    const option = page.getByRole('option', { name: /1º Ano A E2E.*CEMEI Pequenos Passos/i })
     await option.click()
     await generateReport(page)
     await expect(page.getByText(MATH_CONTENT_TITLE, { exact: true })).toBeVisible()
@@ -169,7 +146,7 @@ test.describe('Content report', () => {
     await expect(page.getByText(/Professor\(a\): Professor Teste/i).first()).toBeVisible()
   })
 
-  test('enables and downloads PDF after generation', async ({ page }) => {
+  test('enables and downloads PDF with the persisted lesson content', async ({ page }, testInfo) => {
     await generateReport(page)
     const exportButton = page.getByRole('button', { name: /exportar pdf/i })
     await expect(exportButton).toBeEnabled()
@@ -177,9 +154,16 @@ test.describe('Content report', () => {
     await exportButton.click()
     const download = await downloadPromise
     expect(download.suggestedFilename()).toMatch(/\.pdf$/i)
-    const pdf = await readDownloadBytes(download)
+    const artifactPath = testInfo.outputPath(download.suggestedFilename())
+    await download.saveAs(artifactPath)
+    const pdf = await readFile(artifactPath)
+    const { stdout } = await execFile('pdftotext', [artifactPath, '-'])
+    const text = stdout.replace(/\s+/g, ' ')
     expect(pdf.subarray(0, 4).toString('ascii')).toBe('%PDF')
     expect(pdf.length).toBeGreaterThan(1000)
+    expect(text).toContain(MATH_CONTENT_TITLE)
+    expect(text).toContain(PORTUGUESE_CONTENT_TITLE)
+    expect(text).toContain('EF01MA06')
   })
 
   test('remains usable on mobile', async ({ page }) => {
@@ -240,7 +224,9 @@ test.describe('Content report', () => {
       await page.getByRole('button', { name: /gerar relatorio/i }).click()
       await expect(page.getByText(PORTUGUESE_CONTENT_TITLE, { exact: true })).toBeVisible()
     } finally {
-      await admin.from('conteudo_aula').upsert(snapshot, { onConflict: 'id' })
+      const { error } = await admin.from('conteudo_aula').upsert(snapshot, { onConflict: 'id' })
+      if (error) throw error
+      expect(await readContentSnapshot(PORTUGUESE_CONTENT_TITLE)).toEqual(snapshot)
     }
   })
 })

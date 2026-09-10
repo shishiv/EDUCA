@@ -51,8 +51,7 @@ export function readGovernedPilotProofEnvironment(
   environment: Record<string, string | undefined> = process.env
 ): GovernedImportProofEnvironment {
   const supabaseDemoReferences = Object.entries(environment)
-    .filter(([name, value]) => name.startsWith('SUPABASE_DEMO_') && Boolean(value))
-    .map(([, value]) => value as string)
+    .flatMap(([name, value]) => name.startsWith('SUPABASE_DEMO_') && value ? [value] : [])
 
   return {
     pilotMode: environment.PILOT_MODE,

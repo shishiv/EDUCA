@@ -1,0 +1,26 @@
+ M app/app/api/demo/audit/route.ts
+ M app/components/turmas/TurmaCard.tsx
+ M app/lib/api/audit.ts
+ M app/lib/api/base.ts
+ M app/lib/api/classes.ts
+ M app/lib/api/feature-flags.ts
+ M app/lib/api/schools.ts
+ M app/lib/api/students.ts
+ M app/lib/api/users.ts
+ M app/lib/audit.ts
+ M app/lib/auth-session-recovery.ts
+ M app/lib/logger.ts
+ M app/lib/supabase.ts
+ M app/lib/supabase/server.ts
+ M app/lib/utils/faixa-etaria.ts
+ M app/lib/utils/fuzzy-search.ts
+ A app/tests/unit/contracts/demo-audit-route-contract.test.ts
+ A app/tests/unit/contracts/logger-contract.test.ts
+ A app/tests/unit/contracts/shared-contracts.test.ts
+ M app/types/attendance.ts
+ M app/types/descriptive-report.ts
+ M app/types/diario-classe.ts
+ M app/types/grades.ts
+ M app/types/lesson-content.ts
+?? .pi/semantic-grep.sqlite
+?? VENT.md

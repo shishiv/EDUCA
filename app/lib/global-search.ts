@@ -3,6 +3,7 @@ import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 import { fuzzyCPFSearch, fuzzySearchBrazilianName, normalizeForFuzzy, similarityScore } from '@/lib/utils/fuzzy-search'
 import type { PilotUserRole } from '@/lib/pilot/pilot-server-auth'
 import type { Database } from '@/types/database'
+import { canAccessRoute } from '@/lib/route-policy'
 
 export const globalSearchKinds = ['student', 'teacher', 'school', 'class'] as const
 
@@ -78,9 +79,8 @@ export interface GlobalSearchResponse {
   fuzzySearch: true
 }
 
-type SearchClient = SupabaseClient<Database>
 type SearchField = { name: string; value: string | null; kind?: 'name' | 'cpf' }
-type StudentRow = {
+export type GlobalSearchStudentRow = {
   id: string
   nome_completo: string
   escola_id: string | null
@@ -90,21 +90,38 @@ type StudentRow = {
   endereco?: string | null
   telefone?: string | null
 }
-type EnrollmentRow = Pick<Database['public']['Tables']['matriculas']['Row'], 'aluno_id' | 'turma_id' | 'situacao'>
-type ClassRow = Pick<Database['public']['Tables']['turmas']['Row'], 'id' | 'nome' | 'serie' | 'turno' | 'escola_id' | 'professor_id' | 'ativo' | 'created_at'>
-type TeacherRow = Pick<Database['public']['Tables']['users']['Row'], 'id' | 'nome' | 'email' | 'escola_id' | 'ativo' | 'created_at'>
-type SchoolRow = Pick<Database['public']['Tables']['escolas']['Row'], 'id' | 'nome' | 'codigo' | 'ativo'>
+export type GlobalSearchEnrollmentRow = Pick<Database['public']['Tables']['matriculas']['Row'], 'aluno_id' | 'turma_id' | 'situacao'>
+export type GlobalSearchClassRow = Pick<Database['public']['Tables']['turmas']['Row'], 'id' | 'nome' | 'serie' | 'turno' | 'escola_id' | 'professor_id' | 'ativo' | 'created_at'>
+export type GlobalSearchTeacherRow = Pick<Database['public']['Tables']['users']['Row'], 'id' | 'nome' | 'email' | 'escola_id' | 'ativo' | 'created_at'>
+export type GlobalSearchSchoolRow = Pick<Database['public']['Tables']['escolas']['Row'], 'id' | 'nome' | 'codigo' | 'ativo'>
+
+export interface GlobalSearchStore {
+  readStudents(actor: GlobalSearchActor, status: GlobalSearchStatus): Promise<GlobalSearchStudentRow[]>
+  readTeachers(actor: GlobalSearchActor, status: GlobalSearchStatus): Promise<GlobalSearchTeacherRow[]>
+  readSchools(actor: GlobalSearchActor): Promise<GlobalSearchSchoolRow[]>
+  readClasses(actor: GlobalSearchActor, status: GlobalSearchStatus, ids?: string[]): Promise<GlobalSearchClassRow[]>
+  readEnrollments(studentIds: string[]): Promise<GlobalSearchEnrollmentRow[]>
+  readTeacherNames(ids: string[]): Promise<Map<string, string>>
+}
+
+type SearchClient = SupabaseClient<Database>
+type StudentRow = GlobalSearchStudentRow
+type EnrollmentRow = GlobalSearchEnrollmentRow
+type ClassRow = GlobalSearchClassRow
+type TeacherRow = GlobalSearchTeacherRow
+type SchoolRow = GlobalSearchSchoolRow
 
 const canViewSensitiveFamily = (role: PilotUserRole) =>
   role === 'admin' || role === 'diretor' || role === 'secretario'
 
-async function readStudents(
+async function readSupabaseStudents(
   client: SearchClient,
   actor: GlobalSearchActor,
   status: GlobalSearchStatus,
+  getAuthorizedProfiles: (filters: { schoolId?: string }) => Promise<StudentRow[]>,
 ): Promise<StudentRow[]> {
   if (canViewSensitiveFamily(actor.role)) {
-    const profiles = await getAuthorizedStudentProfiles(client, { schoolId: actor.schoolId ?? undefined })
+    const profiles = await getAuthorizedProfiles({ schoolId: actor.schoolId ?? undefined })
     return profiles
       .filter(profile => !actor.schoolId || profile.escola_id === actor.schoolId)
       .filter(profile => status === 'all' || profile.ativo === (status === 'active'))
@@ -132,7 +149,7 @@ async function readStudents(
   return data ?? []
 }
 
-async function readTeachers(
+async function readSupabaseTeachers(
   client: SearchClient,
   actor: GlobalSearchActor,
   status: GlobalSearchStatus,
@@ -154,7 +171,7 @@ async function readTeachers(
   return data ?? []
 }
 
-async function readSchools(
+async function readSupabaseSchools(
   client: SearchClient,
   actor: GlobalSearchActor,
 ): Promise<SchoolRow[]> {
@@ -170,7 +187,7 @@ async function readSchools(
   return data ?? []
 }
 
-async function readClasses(
+async function readSupabaseClasses(
   client: SearchClient,
   actor: GlobalSearchActor,
   status: GlobalSearchStatus,
@@ -196,7 +213,7 @@ async function readClasses(
   return data ?? []
 }
 
-async function readEnrollments(client: SearchClient, studentIds: string[]): Promise<EnrollmentRow[]> {
+async function readSupabaseEnrollments(client: SearchClient, studentIds: string[]): Promise<EnrollmentRow[]> {
   if (studentIds.length === 0) return []
 
   const { data, error } = await client
@@ -209,7 +226,7 @@ async function readEnrollments(client: SearchClient, studentIds: string[]): Prom
   return data ?? []
 }
 
-async function readTeacherNames(client: SearchClient, ids: string[]) {
+async function readSupabaseTeacherNames(client: SearchClient, ids: string[]) {
   if (ids.length === 0) return new Map<string, string>()
 
   const { data, error } = await client
@@ -222,19 +239,65 @@ async function readTeacherNames(client: SearchClient, ids: string[]) {
   return new Map((data ?? []).map(teacher => [teacher.id, teacher.nome]))
 }
 
+/** Builds the production search adapter over the typed Supabase client. */
+export function createSupabaseGlobalSearchStore(client: SearchClient): GlobalSearchStore {
+  return {
+    async readStudents(actor, status) {
+      return readSupabaseStudents(
+        client,
+        actor,
+        status,
+        filters => getAuthorizedStudentProfiles(client, filters),
+      )
+    },
+    async readTeachers(actor, status) {
+      return readSupabaseTeachers(client, actor, status)
+    },
+    async readSchools(actor) {
+      return readSupabaseSchools(client, actor)
+    },
+    async readClasses(actor, status, ids) {
+      return readSupabaseClasses(client, actor, status, ids)
+    },
+    async readEnrollments(studentIds) {
+      return readSupabaseEnrollments(client, studentIds)
+    },
+    async readTeacherNames(ids) {
+      return readSupabaseTeacherNames(client, ids)
+    },
+  }
+}
+
 function scoreField(query: string, field: SearchField) {
   if (!field.value) return 0
   const normalizedQuery = normalizeForFuzzy(query)
   const normalizedValue = normalizeForFuzzy(field.value)
   if (!normalizedValue) return 0
-  if (field.kind === 'cpf' && fuzzyCPFSearch(query, field.value)) return normalizedValue === normalizedQuery ? 1 : 0.88
+  if (field.kind === 'cpf') return scoreCpfField(query, field.value, normalizedQuery, normalizedValue)
+  return scoreTextField(query, field.value, field.kind, normalizedQuery, normalizedValue)
+}
+
+function scoreCpfField(query: string, value: string, normalizedQuery: string, normalizedValue: string) {
+  if (!fuzzyCPFSearch(query, value)) return 0
+  return normalizedValue === normalizedQuery ? 1 : 0.88
+}
+
+function scoreTextField(
+  query: string,
+  value: string,
+  kind: SearchField['kind'],
+  normalizedQuery: string,
+  normalizedValue: string,
+) {
   if (normalizedValue === normalizedQuery) return 1
   if (normalizedValue.startsWith(normalizedQuery)) return 0.94
   if (normalizedValue.includes(normalizedQuery)) return 0.82
-  if (field.kind === 'name' && fuzzySearchBrazilianName(query, field.value)) {
-    return Math.max(0.55, similarityScore(query, field.value) * 0.8)
-  }
-  return 0
+  return scoreBrazilianName(query, value, kind)
+}
+
+function scoreBrazilianName(query: string, value: string, kind: SearchField['kind']) {
+  if (kind !== 'name' || !fuzzySearchBrazilianName(query, value)) return 0
+  return Math.max(0.55, similarityScore(query, value) * 0.8)
 }
 
 function createResult<T extends GlobalSearchData>(input: {
@@ -301,21 +364,13 @@ function classForStudent(studentId: string, context: SearchContext) {
 }
 
 function buildStudentResults(students: StudentRow[], context: SearchContext) {
-  return students.flatMap(student => {
+  return students.flatMap(student => buildStudentResult(student, context))
+}
+
+function buildStudentResult(student: StudentRow, context: SearchContext): GlobalSearchResult[] {
     const turma = classForStudent(student.id, context)
     const schoolName = schoolNameFor(context.schoolNames, student.escola_id)
-    const data: StudentData = {
-      nome_completo: student.nome_completo,
-      escola: schoolName,
-      turma: turma?.nome ?? null,
-      serie: turma?.serie ?? null,
-      turno: turma?.turno ?? null,
-      ...(context.sensitive ? {
-        cpf: student.cpf ?? null,
-        endereco: student.endereco ?? null,
-        telefone: student.telefone ?? null,
-      } : {}),
-    }
+    const data = studentData(student, schoolName, turma, context.sensitive)
     const result = createResult({
       id: student.id,
       type: 'student',
@@ -323,20 +378,30 @@ function buildStudentResults(students: StudentRow[], context: SearchContext) {
       title: student.nome_completo,
       subtitle: [schoolName, turma?.nome].filter(Boolean).join(' · '),
       href: `/dashboard/alunos/${student.id}`,
-      fields: [
-        { name: 'nome_completo', value: student.nome_completo, kind: 'name' },
-        ...(context.sensitive ? [
-          { name: 'cpf', value: student.cpf ?? null, kind: 'cpf' as const },
-          { name: 'endereco', value: student.endereco ?? null },
-          { name: 'telefone', value: student.telefone ?? null },
-        ] : []),
-      ],
+      fields: studentFields(student, context.sensitive),
       lastUpdated: student.created_at,
       status: student.ativo,
       query: context.query,
     })
     return result ? [result] : []
-  })
+}
+
+function studentData(student: StudentRow, schoolName: string | null, turma: ClassRow | undefined, sensitive: boolean): StudentData {
+  const data: StudentData = { nome_completo: student.nome_completo, escola: schoolName, turma: turma?.nome ?? null, serie: turma?.serie ?? null, turno: turma?.turno ?? null }
+  if (sensitive) addSensitiveStudentData(data, student)
+  return data
+}
+
+function addSensitiveStudentData(data: StudentData, student: StudentRow): void {
+  data.cpf = student.cpf ?? null
+  data.endereco = student.endereco ?? null
+  data.telefone = student.telefone ?? null
+}
+
+function studentFields(student: StudentRow, sensitive: boolean): SearchField[] {
+  const fields: SearchField[] = [{ name: 'nome_completo', value: student.nome_completo, kind: 'name' }]
+  if (sensitive) fields.push({ name: 'cpf', value: student.cpf ?? null, kind: 'cpf' }, { name: 'endereco', value: student.endereco ?? null }, { name: 'telefone', value: student.telefone ?? null })
+  return fields
 }
 
 function buildTeacherResults(teachers: TeacherRow[], context: SearchContext) {
@@ -421,7 +486,7 @@ function buildClassResults(classes: ClassRow[], context: SearchContext) {
 }
 
 async function buildTeacherNames(
-  client: SearchClient,
+  store: GlobalSearchStore,
   classRows: ClassRow[],
   teacherRows: TeacherRow[],
 ) {
@@ -431,22 +496,22 @@ async function buildTeacherNames(
   const names = new Map(teacherRows.map(teacher => [teacher.id, teacher.nome]))
   const missingIds = teacherIds.filter(id => !names.has(id))
   if (missingIds.length === 0) return names
-  for (const [id, name] of await readTeacherNames(client, missingIds)) names.set(id, name)
+  for (const [id, name] of await store.readTeacherNames(missingIds)) names.set(id, name)
   return names
 }
 
 async function readStudentContext(
-  client: SearchClient,
+  store: GlobalSearchStore,
   actor: GlobalSearchActor,
   status: GlobalSearchStatus,
   students: StudentRow[],
   classRows: ClassRow[],
 ) {
-  const enrollments = await readEnrollments(client, students.map(student => student.id))
+  const enrollments = await store.readEnrollments(students.map(student => student.id))
   const classIds = Array.from(new Set(enrollments.map(enrollment => enrollment.turma_id)))
   const studentClasses = classRows.length > 0 || classIds.length === 0
     ? []
-    : await readClasses(client, actor, status, classIds)
+    : await store.readClasses(actor, status, classIds)
   const classesById = new Map([...classRows, ...studentClasses].map(turma => [turma.id, turma]))
   const enrollmentsByStudent = new Map<string, EnrollmentRow[]>()
   for (const enrollment of enrollments) {
@@ -473,8 +538,57 @@ function buildResults(
   ]
 }
 
+function resultsReachableByRole(results: GlobalSearchResult[], role: PilotUserRole): GlobalSearchResult[] {
+  return results.filter(result => canAccessRoute(result.href, role))
+}
+
+type SearchRows = {
+  schools: SchoolRow[]
+  students: StudentRow[]
+  teachers: TeacherRow[]
+  classes: ClassRow[]
+}
+
+async function readSearchRows(
+  store: GlobalSearchStore,
+  actor: GlobalSearchActor,
+  options: GlobalSearchOptions,
+): Promise<SearchRows> {
+  const schools = await store.readSchools(actor)
+  const students = includesKind(options.type, 'student')
+    ? await store.readStudents(actor, options.status)
+    : []
+  const teachers = includesKind(options.type, 'teacher')
+    ? await store.readTeachers(actor, options.status)
+    : []
+  const classes = includesKind(options.type, 'class')
+    ? await store.readClasses(actor, options.status)
+    : []
+  return { schools, students, teachers, classes }
+}
+
+async function createSearchContext(
+  store: GlobalSearchStore,
+  actor: GlobalSearchActor,
+  options: GlobalSearchOptions,
+  query: string,
+  rows: SearchRows,
+): Promise<SearchContext> {
+  const studentContext = rows.students.length > 0
+    ? await readStudentContext(store, actor, options.status, rows.students, rows.classes)
+    : { classesById: new Map<string, ClassRow>(), enrollmentsByStudent: new Map<string, EnrollmentRow[]>() }
+  return {
+    query,
+    schoolNames: new Map(rows.schools.map(school => [school.id, school.nome])),
+    classesById: studentContext.classesById,
+    teacherNames: await buildTeacherNames(store, rows.classes, rows.teachers),
+    enrollmentsByStudent: studentContext.enrollmentsByStudent,
+    sensitive: canViewSensitiveFamily(actor.role),
+  }
+}
+
 export async function searchGlobal(
-  client: SearchClient,
+  store: GlobalSearchStore,
   actor: GlobalSearchActor,
   options: GlobalSearchOptions,
 ): Promise<GlobalSearchResponse> {
@@ -490,29 +604,12 @@ export async function searchGlobal(
     }
   }
 
-  const schoolRows = await readSchools(client, actor)
-  const schoolNames = new Map(schoolRows.map(school => [school.id, school.nome]))
-  const studentRows = includesKind(options.type, 'student')
-    ? await readStudents(client, actor, options.status)
-    : []
-  const teacherRows = includesKind(options.type, 'teacher')
-    ? await readTeachers(client, actor, options.status)
-    : []
-  const classRows = includesKind(options.type, 'class')
-    ? await readClasses(client, actor, options.status)
-    : []
-  const studentContext = studentRows.length > 0
-    ? await readStudentContext(client, actor, options.status, studentRows, classRows)
-    : { classesById: new Map<string, ClassRow>(), enrollmentsByStudent: new Map<string, EnrollmentRow[]>() }
-  const context: SearchContext = {
-    query,
-    schoolNames,
-    classesById: studentContext.classesById,
-    teacherNames: await buildTeacherNames(client, classRows, teacherRows),
-    enrollmentsByStudent: studentContext.enrollmentsByStudent,
-    sensitive: canViewSensitiveFamily(actor.role),
-  }
-  const results = buildResults(options.type, studentRows, teacherRows, schoolRows, classRows, context)
+  const rows = await readSearchRows(store, actor, options)
+  const context = await createSearchContext(store, actor, options, query, rows)
+  const results = resultsReachableByRole(
+    buildResults(options.type, rows.students, rows.teachers, rows.schools, rows.classes, context),
+    actor.role,
+  )
   results.sort(compareResults)
   return {
     success: true,

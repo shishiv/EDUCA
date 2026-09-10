@@ -10,7 +10,7 @@ export function PublicDemoExplainer() {
 
   return (
     <div className="public-demo">
-      <PublicHeader />
+      <PublicHeader pathname="/demo" />
 
       <main className="public-demo__main">
         <p className="public-demo__eyebrow"><ShieldCheck aria-hidden="true" size={17} /> {t('eyebrow')}</p>

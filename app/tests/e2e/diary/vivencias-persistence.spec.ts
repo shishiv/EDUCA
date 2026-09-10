@@ -1,18 +1,34 @@
 import { test, expect } from '../support/diagnostics'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { loginAs } from '../utils/test-helpers'
+import type { Database } from '@/types/database'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-})
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
+function getLocalServiceClient() {
+  if (!new URL(SUPABASE_URL).hostname.match(/^(127\.0\.0\.1|localhost)$/)) {
+    throw new Error('Vivencias persistence E2E requires a loopback Supabase URL')
+  }
+  if (!SUPABASE_SERVICE_KEY.startsWith('sb_secret_')) {
+    throw new Error('Vivencias persistence E2E requires the local Supabase service key')
+  }
+  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+let service: SupabaseClient<Database>
 let studentId = ''
 let classId = ''
+let professorId = ''
 const description = 'Vivência E2E criada pelo professor sintético.'
+const observations = 'Observação sintética persistida com a vivência.'
+const editedObservations = 'Observação sintética atualizada após a edição.'
+const baselineDescription = 'Vivência E2E determinística de exploração corporal'
 
 test.beforeAll(async () => {
+  service = getLocalServiceClient()
   const { data: student, error: studentError } = await service
     .from('alunos')
     .select('id')
@@ -28,6 +44,16 @@ test.beforeAll(async () => {
     .single()
   if (turmaError || !turma) throw turmaError || new Error('VIVENCIA_E2E_CLASS_MISSING')
   classId = turma.id
+
+  const { data: professor, error: professorError } = await service
+    .from('users')
+    .select('id')
+    .eq('email', 'professor@test.com')
+    .single()
+  if (professorError || !professor) {
+    throw professorError || new Error('VIVENCIA_E2E_PROFESSOR_MISSING')
+  }
+  professorId = professor.id
 
   await service.from('vivencias').delete().eq('descricao', description)
 })
@@ -65,32 +91,94 @@ test.describe('Educação Infantil Vivências persistence', () => {
   })
 
   test('creates, edits the date, and reloads a narrative on desktop', async ({ page }) => {
-    const editedDate = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
     await page.goto(`/dashboard/alunos/${studentId}/diario/novo`)
-    await expect(page.getByText(/registrando vivencia para/i)).toBeVisible()
-    await page.getByRole('checkbox').first().click()
-    await page.getByLabel(/descri.*viv/i).fill(description)
-    await page.getByRole('button', { name: /salvar/i }).click()
-    await expect(page).toHaveURL(new RegExp(`/dashboard/alunos/${studentId}/diario$`))
-    await expect(page.getByText(description)).toBeVisible()
-    await page.reload()
-    await expect(page.getByText(description)).toBeVisible()
+    const form = page.getByRole('form', { name: 'Registrar vivência de Pedro Silva E2E' })
+    await expect(form).toBeVisible()
+    const createdDate = await form.getByLabel('Data da Vivência *', { exact: true }).inputValue()
+    const editedDate = new Date(Date.parse(createdDate) - 86_400_000).toISOString().slice(0, 10)
+    await form.getByRole('checkbox').nth(0).click()
+    await form.getByRole('checkbox').nth(1).click()
+    await form.getByLabel('Descrição da Vivência *', { exact: true }).fill(description)
+    await form.getByLabel(/Observações Adicionais/).fill(observations)
 
-    const card = page.getByText(description).locator('..')
+    const createResponsePromise = page.waitForResponse(response => {
+      return response.request().method() === 'POST'
+        && new URL(response.url()).pathname === '/api/vivencias'
+    })
+    await form.getByRole('button', { name: 'Salvar Vivência', exact: true }).click()
+    const createResponse = await createResponsePromise
+    expect(createResponse.status()).toBe(201)
+    expect(await createResponse.json()).toMatchObject({
+      data: {
+        aluno_id: studentId,
+        turma_id: classId,
+        professor_id: professorId,
+        created_by: professorId,
+        campos_experiencia: ['eu', 'corpo'],
+        descricao: description,
+        observacoes: observations,
+      },
+    })
+
+    await expect(page).toHaveURL(new RegExp(`/dashboard/alunos/${studentId}/diario$`))
+    const createdCard = page.getByText(description, { exact: true }).locator('..')
+    await expect(createdCard).toContainText(observations)
+    await expect(createdCard).toContainText('O eu, o outro e o nos')
+    await expect(createdCard).toContainText('Corpo, gestos e movimentos')
+    await page.reload()
+    await expect(page.getByText(description, { exact: true })).toBeVisible()
+
+    const { data: storedVivencia, error: storedError } = await service
+      .from('vivencias')
+      .select('aluno_id, turma_id, professor_id, created_by, campos_experiencia, observacoes')
+      .eq('descricao', description)
+      .single()
+    if (storedError || !storedVivencia) {
+      throw storedError || new Error('VIVENCIA_E2E_CREATED_ROW_MISSING')
+    }
+    expect(storedVivencia).toMatchObject({
+      aluno_id: studentId,
+      turma_id: classId,
+      professor_id: professorId,
+      created_by: professorId,
+      campos_experiencia: ['eu', 'corpo'],
+      observacoes: observations,
+    })
+
+    const card = page.getByText(description, { exact: true }).locator('..')
     await card.getByRole('button', { name: /opcoes/i }).click()
     await page.getByRole('menuitem', { name: /editar/i }).click()
-    await page.getByLabel(/data da vivencia/i).fill(editedDate)
-    const updateResponse = page.waitForResponse(response =>
-      response.request().method() === 'PUT' && response.url().includes('/api/vivencias/'),
-    )
-    await page.getByRole('button', { name: /salvar vivencia/i }).click()
-    expect((await updateResponse).status()).toBe(200)
+    const editDialog = page.getByRole('dialog', { name: 'Editar Vivencia' })
+    const editForm = editDialog.getByRole('form', { name: 'Registrar vivência de Pedro Silva E2E' })
+    await editForm.getByLabel('Data da Vivência *', { exact: true }).fill(editedDate)
+    await editForm.getByLabel(/Observações Adicionais/).fill(editedObservations)
+    const updateResponsePromise = page.waitForResponse(response => {
+      return response.request().method() === 'PUT'
+        && new URL(response.url()).pathname.startsWith('/api/vivencias/')
+    })
+    await editForm.getByRole('button', { name: 'Salvar Vivência', exact: true }).click()
+    const updateResponse = await updateResponsePromise
+    expect(updateResponse.status()).toBe(200)
+    expect(await updateResponse.json()).toMatchObject({
+      data: {
+        data_vivencia: editedDate,
+        observacoes: editedObservations,
+        updated_by: professorId,
+      },
+    })
 
     await page.reload()
-    await expect(page.getByText(description)).toBeVisible()
-    await page.getByText(description).locator('..').getByRole('button', { name: /opcoes/i }).click()
+    const reloadedCard = page.getByText(description, { exact: true }).locator('..')
+    await expect(reloadedCard).toContainText(editedObservations)
+    await reloadedCard.getByRole('button', { name: /opcoes/i }).click()
     await page.getByRole('menuitem', { name: /editar/i }).click()
-    await expect(page.getByLabel(/data da vivencia/i)).toHaveValue(editedDate)
+    const reopenedForm = page
+      .getByRole('dialog', { name: 'Editar Vivencia' })
+      .getByRole('form', { name: 'Registrar vivência de Pedro Silva E2E' })
+    await expect(reopenedForm.getByLabel('Data da Vivência *', { exact: true })).toHaveValue(editedDate)
+    await expect(reopenedForm.getByLabel(/Observações Adicionais/)).toHaveValue(editedObservations)
+    await expect(reopenedForm.getByRole('checkbox').nth(0)).toHaveAttribute('aria-checked', 'true')
+    await expect(reopenedForm.getByRole('checkbox').nth(1)).toHaveAttribute('aria-checked', 'true')
   })
 
   test('keeps the form usable at 390px', async ({ page }) => {
@@ -119,7 +207,8 @@ test.describe('Educação Infantil Vivências persistence', () => {
 async function expectReadOnlyDiary(page: import('@playwright/test').Page, mobile: boolean) {
   if (mobile) await page.setViewportSize({ width: 390, height: 844 })
   await page.goto(`/dashboard/alunos/${studentId}/diario`)
-  await expect(page.getByRole('heading', { name: /diario infantil/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Diario Infantil', exact: true })).toBeVisible()
+  await expect(page.getByText(baselineDescription, { exact: true })).toBeVisible()
   await expect(page.locator(`a[href="/dashboard/alunos/${studentId}/diario/novo"]`)).toHaveCount(0)
   await expect(page.getByRole('button', { name: /opcoes/i })).toHaveCount(0)
 

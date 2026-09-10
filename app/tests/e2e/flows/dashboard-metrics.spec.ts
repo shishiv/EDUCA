@@ -13,7 +13,7 @@ import { navigateToDashboard } from '../utils/test-helpers'
 test.describe('Dashboard - Page Loads', () => {
   test('dashboard renders greeting and network heading', async ({ page }) => {
     await navigateToDashboard(page)
-    await expect(page.getByText(/Rede Municipal de Educação/)).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Dashboard', exact: true }).getByText(/Rede Municipal de Educação/)).toBeVisible()
   })
 
   test('dashboard shows quick-access actions for admin', async ({ page }) => {
@@ -42,43 +42,46 @@ test.describe('Dashboard - Stat Cards', () => {
   })
 
   test('should display Professores Ativos stat card', async ({ page }) => {
-    await expect(page.getByText('Professores Ativos')).toBeVisible()
+    await expect(page.locator('.app-metric__label').getByText('Professores Ativos', { exact: true })).toBeVisible()
   })
 
   test('stat cards contain numeric values', async ({ page }) => {
-    // Stat card values rendered as large text
-    const numbers = page.locator('.text-3xl, .text-2xl, [class*="value"]')
-    const count = await numbers.count()
-    expect(count).toBeGreaterThan(0)
+    const values = page.getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')
+    await expect(values).toHaveCount(4)
+    for (const value of await values.all()) {
+      await expect(value).toHaveText(/^\d[\d.,]*%?$/)
+    }
   })
 })
 
-const READY = async (page: import('@playwright/test').Page) => {
-  await navigateToDashboard(page)
-}
-
 test.describe('Dashboard - Navigation', () => {
   test('quick-access Novo Aluno navigates to alunos/novo', async ({ page }) => {
-    await READY(page)
+    await navigateToDashboard(page)
     // Click the quick-access tile (span with text-xs class, not sidebar)
     await page.locator('span:text-is("Novo Aluno")').first().click()
     await expect(page).toHaveURL(/\/dashboard\/alunos\/novo/)
   })
 
   test('quick-access Nova Turma navigates to turmas/nova', async ({ page }) => {
-    await READY(page)
+    await navigateToDashboard(page)
     await page.locator('span:text-is("Nova Turma")').first().click()
     await expect(page).toHaveURL(/\/dashboard\/turmas\/nova/)
   })
 
-  test('Relatórios page loads', async ({ page }) => {
+  test('Relatórios hub links to the implemented report routes', async ({ page }) => {
     await navigateToDashboard(page)
     await page
       .getByRole('navigation', { name: 'Acessos rápidos' })
       .getByRole('link', { name: 'Relatórios', exact: true })
       .click()
     await expect(page).toHaveURL(/\/dashboard\/relatorios/)
-    await expect(page.getByText(/relatório/i).first()).toBeVisible({ timeout: 20000 })
+    const reports = page.getByRole('region', { name: 'Relatórios' })
+    await expect(reports.getByRole('link', { name: /^Frequência\b/i })).toHaveAttribute('href', '/relatorios/frequencia')
+    await expect(reports.getByRole('link', { name: /^Conteúdo\b/i })).toHaveAttribute('href', '/relatorios/conteudo')
+    await expect(reports.getByRole('link', { name: /^Bolsa Família\b/i })).toHaveAttribute('href', '/relatorios/bolsa-familia')
+
+    await reports.getByRole('link', { name: /^Frequência\b/i }).click()
+    await expect(page).toHaveURL(/\/relatorios\/frequencia/)
   })
 
   test('Diário page loads from the shared navigation', async ({ page }) => {
@@ -98,13 +101,13 @@ test.describe('Dashboard - Navigation', () => {
 
 test.describe('Dashboard - Minhas Turmas section', () => {
   test('Minhas Turmas card is visible', async ({ page }) => {
-    await READY(page)
+    await navigateToDashboard(page)
     await expect(page.getByText('Minhas Turmas')).toBeVisible()
   })
 
   test('Turmas ativas description is visible', async ({ page }) => {
-    await READY(page)
-    await expect(page.getByText('Turmas ativas no sistema')).toBeVisible()
+    await navigateToDashboard(page)
+    await expect(page.getByRole('region', { name: 'Minhas Turmas' }).getByText(/Turmas ativas no ano letivo \d{4}/)).toBeVisible()
   })
 })
 
@@ -123,31 +126,29 @@ test.describe('Dashboard - Mobile Navigation', () => {
 
   test('drawer opens, exposes role-allowed links and closes', async ({ page }) => {
     await page.getByRole('button', { name: /abrir menu/i }).click()
-    const studentLink = page.getByRole('link', { name: 'Alunos', exact: true }).last()
-    await expect(studentLink).toBeVisible()
-    await page.getByRole('button', { name: /fechar sidebar/i }).click()
-    await expect(studentLink).toBeHidden()
+    const drawer = page.getByRole('dialog', { name: 'Menu principal' })
+    await expect(drawer.getByRole('link', { name: 'Alunos', exact: true })).toBeVisible()
+    await drawer.getByRole('button', { name: /fechar sidebar/i }).click()
+    await expect(drawer).toBeHidden()
   })
 })
 
 test.describe('Dashboard - Sidebar Navigation', () => {
   test('sidebar nav links are present', async ({ page }) => {
-    await READY(page)
+    await navigateToDashboard(page)
     const sidebar = page.getByRole('complementary', { name: /navegação principal/i })
     await expect(sidebar).toBeVisible()
   })
 
   test('navigate to Alunos via sidebar', async ({ page }) => {
-    await READY(page)
-    const alunosLink = page.getByRole('link', { name: /^alunos$/i }).first()
-    if (await alunosLink.isVisible()) {
-      await alunosLink.click()
-      await expect(page).toHaveURL(/\/dashboard\/alunos/)
-    }
+    await navigateToDashboard(page)
+    const sidebar = page.getByRole('complementary', { name: /navegação principal/i })
+    await sidebar.getByRole('link', { name: 'Alunos', exact: true }).click()
+    await expect(page).toHaveURL(/\/dashboard\/alunos/)
   })
 
   test('shared shell keeps route context on a secondary screen', async ({ page }) => {
-    await READY(page)
+    await navigateToDashboard(page)
 
     const sidebar = page.getByRole('complementary', { name: /navegação principal/i })
     await sidebar.getByRole('link', { name: 'Alunos', exact: true }).click()

@@ -16,8 +16,7 @@ import { useClassroomTranslations } from '@/i18n/classroom'
  */
 
 import { useState } from 'react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { format, parseISO } from 'date-fns'
 import {
   ArrowUpDown,
   BookOpen,
@@ -38,7 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ClassDiaryEntry } from '@/lib/api/class-diary'
 import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
@@ -51,6 +50,16 @@ interface ClassDiaryListProps {
   currentPage?: number
   totalPages?: number
 }
+
+const PHASE_BADGES = {
+  planejamento: { label: 'Planejamento', variant: 'secondary' },
+  chamada: { label: 'Chamada', variant: 'default' },
+  finalizada: { label: 'Finalizada', variant: 'outline' },
+  bloqueada: { label: 'Bloqueada', variant: 'destructive' },
+} satisfies Record<
+  ClassDiaryEntry['fase'],
+  { label: string; variant: NonNullable<BadgeProps['variant']> }
+>
 
 export function ClassDiaryList({
   entries,
@@ -86,27 +95,6 @@ export function ClassDiaryList({
     const comparison = aValue < bValue ? -1 : 1
     return sortDirection === 'asc' ? comparison : -comparison
   })
-
-  // Get phase badge color
-  const getFaseBadge = (fase: string) => {
-    const badgeMap = {
-      planejamento: { label: 'Planejamento', variant: 'secondary' as const },
-      chamada: { label: 'Chamada', variant: 'default' as const },
-      finalizada: { label: 'Finalizada', variant: 'outline' as const },
-      bloqueada: { label: 'Bloqueada', variant: 'destructive' as const },
-    }
-
-    return badgeMap[fase as keyof typeof badgeMap] || badgeMap.planejamento
-  }
-
-  // Format date for display
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(new Date(dateStr), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-    } catch {
-      return dateStr
-    }
-  }
 
   // Calculate attendance percentage
   const getAttendancePercentage = (entry: ClassDiaryEntry) => {
@@ -189,7 +177,7 @@ export function ClassDiaryList({
           </TableHeader>
           <TableBody>
             {sortedEntries.map((entry) => {
-              const badge = getFaseBadge(entry.fase)
+              const badge = PHASE_BADGES[entry.fase]
               const percentage = getAttendancePercentage(entry)
 
               return (
@@ -201,7 +189,7 @@ export function ClassDiaryList({
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {format(new Date(entry.data_aula), 'dd/MM/yyyy')}
+                      {format(parseISO(entry.data_aula), 'dd/MM/yyyy')}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -251,7 +239,7 @@ export function ClassDiaryList({
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {sortedEntries.map((entry) => {
-          const badge = getFaseBadge(entry.fase)
+          const badge = PHASE_BADGES[entry.fase]
           const percentage = getAttendancePercentage(entry)
 
           return (
@@ -267,7 +255,7 @@ export function ClassDiaryList({
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="font-semibold">
-                        {format(new Date(entry.data_aula), 'dd/MM/yyyy')}
+                        {format(parseISO(entry.data_aula), 'dd/MM/yyyy')}
                       </span>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>

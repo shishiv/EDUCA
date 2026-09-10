@@ -12,7 +12,24 @@
  * Note: Analytics integration can be added later.
  */
 
+import type { ErrorInfo } from 'react'
+import type { Json } from '@/types/database'
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical'
+
+export interface LogMetadata {
+  readonly [key: string]: Json | undefined
+}
+
+interface PerformanceMemory {
+  readonly usedJSHeapSize: number
+}
+
+declare global {
+  interface Performance {
+    readonly memory?: PerformanceMemory
+  }
+}
 
 export interface LogContext {
   userId?: string
@@ -21,7 +38,7 @@ export interface LogContext {
   sessionId?: string
   feature?: string
   action?: string
-  metadata?: Record<string, any>
+  metadata?: LogMetadata
 }
 
 export interface PerformanceMetrics {
@@ -111,27 +128,34 @@ class EducationalLogger {
     return currentIndex >= minIndex
   }
 
-  private logToConsole(entry: LogEntry): void {
-    const isServerFailure = !this.isClient && (entry.level === 'error' || entry.level === 'critical')
-    if (!this.isDevelopment && !isServerFailure) return
+  private shouldLogToConsole(entry: LogEntry): boolean {
+    if (this.isDevelopment) return true
+    return !this.isClient && (entry.level === 'error' || entry.level === 'critical')
+  }
 
+  private formatLogEntry(entry: LogEntry): string {
     const prefix = `🎓 [${entry.level.toUpperCase()}]`
     const timestamp = new Date(entry.timestamp).toLocaleTimeString('pt-BR')
+    const context = entry.context
+      ? `\n📍 Context: ${JSON.stringify(entry.context, null, 2)}`
+      : ''
+    const performanceSummary = entry.performance
+      ? `\n⚡ Performance: ${entry.performance.duration}ms`
+      : ''
+    const stack = entry.stack ? `\n${entry.stack}` : ''
+    const error = entry.error ? `\n❌ Error: ${entry.error}${stack}` : ''
 
-    const contextStr = entry.context ?
-      `\n📍 Context: ${JSON.stringify(entry.context, null, 2)}` : ''
+    return `${prefix} [${timestamp}] ${entry.message}${context}${performanceSummary}${error}`
+  }
 
-    const performanceStr = entry.performance ?
-      `\n⚡ Performance: ${entry.performance.duration}ms` : ''
+  private logToConsole(entry: LogEntry): void {
+    if (!this.shouldLogToConsole(entry)) return
 
-    const errorStr = entry.error ?
-      `\n❌ Error: ${entry.error}${entry.stack ? `\n${entry.stack}` : ''}` : ''
-
-    const logMessage = `${prefix} [${timestamp}] ${entry.message}${contextStr}${performanceStr}${errorStr}`
+    const logMessage = this.formatLogEntry(entry)
 
     switch (entry.level) {
       case 'debug':
-        console.debug(logMessage)
+        globalThis.console.debug(logMessage)
         break
       case 'info':
         console.info(logMessage)
@@ -286,8 +310,9 @@ class EducationalLogger {
     metrics.endTime = performance.now()
     metrics.duration = Math.round(metrics.endTime - metrics.startTime)
 
-    if (this.isClient && (performance as any).memory) {
-      metrics.memoryUsage = (performance as any).memory.usedJSHeapSize
+    const memory = this.isClient ? performance.memory : undefined
+    if (memory) {
+      metrics.memoryUsage = memory.usedJSHeapSize
     }
 
     const level = metrics.duration > 3000 ? 'warn' : 'info'
@@ -360,7 +385,7 @@ export const logPerformance = <T>(
 }
 
 // Error boundary logging helper
-export const logErrorBoundary = (error: Error, errorInfo: any, context?: LogContext) => {
+export const logErrorBoundary = (error: Error, errorInfo: ErrorInfo, context?: LogContext) => {
   logger.critical('React Error Boundary triggered', error, {
     ...context,
     action: 'error_boundary',

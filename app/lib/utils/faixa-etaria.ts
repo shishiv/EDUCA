@@ -66,7 +66,7 @@ export function calculateFaixaEtaria(
   birthDate: Date | string,
   referenceDate: Date = new Date()
 ): FaixaEtaria | null {
-  const birth = typeof birthDate === 'string' ? parseISO(birthDate) : birthDate
+  const birth = birthDate instanceof Date ? birthDate : parseISO(birthDate)
   const ageInMonths = differenceInMonths(referenceDate, birth)
 
   if (ageInMonths >= 0 && ageInMonths <= 18) return 'bebes'
