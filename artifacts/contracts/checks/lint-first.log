@@ -1,0 +1,14 @@
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+app/app/(dashboard)/relatorios/frequencia/page.tsx:344:9: error eslint(complexity): function has a complexity of 13. Maximum allowed is 10.
+app/app/(dashboard)/relatorios/conteudo/page.tsx:559:9: error eslint(complexity): function has a complexity of 11. Maximum allowed is 10.
+app/components/reports/StudentNarrativeReports.tsx:63:1: error eslint(complexity): function `ReportEditor` has a complexity of 13. Maximum allowed is 10.
+app/components/settings/academic-year-settings.tsx:69:28: error eslint(complexity): async function has a complexity of 11. Maximum allowed is 10.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.

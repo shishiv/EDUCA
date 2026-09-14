@@ -1,0 +1,31 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /root/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0
+
+
+> educa@1.0.0 test:e2e:pilot:descriptive /root/.treehouse/educa-7c556a/1/educa/app
+> bash scripts/run-pilot-descriptive-e2e.sh
+
+PILOT_PORT_RANGE_LEASE: base=63130 end=63139 lease_dir=/tmp/educa-pilot-port-leases/63130 owner_pid=913413
+(node:914612) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PILOT_DESCRIPTIVE_SEED_RECEIPT: seed=pass validation=pass marker=SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE canonical_content=2
+PILOT_DESCRIPTIVE_BUILD_RECEIPT: status=pass
+PILOT_DESCRIPTIVE_BROWSER_SETUP_RECEIPT: named_url=true numbered_port=false
+PILOT_DESCRIPTIVE_MANIFEST_RECEIPT: setup=1 specs=1 tests=5 pdf=true deliberate_break=true r1_canonical=false
+PILOT_DESCRIPTIVE_TEST_RECEIPT: status=pass tests=5 pdf_receipt=true deliberate_break_receipt=true output_redacted=true
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/tmp/educa-pilot-port-leases/63130
+PILOT_DESCRIPTIVE_CLEANUP_RECEIPT: app_stopped=true database_stopped=true auth_state_removed=true isolated_removed=true result=pass receipt=/root/.treehouse/educa-7c556a/1/educa/artifacts/contracts/pilot/r3-t4-descriptive-pilot-e2e-20260914T074954Z-913413.json
+PILOT_E2E_FINAL_RECEIPT: /root/.treehouse/educa-7c556a/1/educa/artifacts/contracts/pilot/r3-t4-descriptive-pilot-e2e-20260914T074954Z-913413.json

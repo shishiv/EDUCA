@@ -1,0 +1,211 @@
+{
+  "browser": "chromium",
+  "version": "152.0.7977.75",
+  "page": {
+    "url": "http://localhost:61009/relatorios/frequencia",
+    "origin": "http://localhost:61009",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+    "anchorEvents": "[{\"method\":\"click\",\"href\":\"blob:http://localhost:61009/c5f55fe3-5d5a-4137-bb9b-ee7c68a9ee26\",\"download\":\"frequencia_1º_Ano_A_E2E_2026-08-01_2026-10-31.xlsx\",\"connected\":true,\"stack\":\"Error\\n    at record (<anonymous>:10:16)\\n    at HTMLAnchorElement.click (<anonymous>:16:7)\\n    at x (http://localhost:61009/_next/static/chunks/2517-d57e4fb2ef1990f1.js:10:13400)\\n    at async F (http://localhost:61009/_next/static/chunks/2517-d57e4fb2ef1990f1.js:10:15173)\\n    at async ex (http://localhost:61009/_next/static/chunks/app/(dashboard)/relatorios/frequencia/page-4b362a3dd9ce0841.js:1:16816)\"}]"
+  },
+  "scripts": [
+    {
+      "url": "http://localhost:61009/_next/static/chunks/webpack-fdda6c61ac2d5934.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/main-app-5ede1a680da2c92a.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/7980-9619479607bdd2e2.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/6992-1d0e6594ccb7e64e.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/9700-754f2ba02f78d0cd.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/7386-0084d821d9a32bc9.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/3248-40cabca24784a313.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/1a86bb2e-004b9f405c8970ef.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/8965-561aa27626efb3fa.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/8204-d87cf8d3d01b8c16.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/4120-89f0bd22c6de7f4e.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/2647-f0a8dceef1a544c3.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/9495-5e3cecbc2a0366ee.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/2556-04f7b95aae2cbd8f.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/2862-3180b6bc0af6678c.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/1220-be4d5593018163c2.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/6996-e382e3aaf5a7a835.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/7966-e4ce8a3f582501a8.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/1873-4cb7cc089dfb9c88.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/8367-60ac5e5dc53e1d48.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/app/(dashboard)/layout-79498a5be95e526d.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/6717-f82159080b672345.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/1096-945da77502d88a8d.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/2605-1dfc4f5d3ce27fe5.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/273acdc0-a4525a5d3c6fafd6.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/4931-7fd69a6696539b95.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/2711-f79f298db2c7dab3.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/7484-f9881a3c664f800e.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/6425-46c0d1faafc83ab1.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/2517-d57e4fb2ef1990f1.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/app/(dashboard)/relatorios/frequencia/page-4b362a3dd9ce0841.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/4023-1c4b15f2e5066f50.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/9e784b99-abc8d515bea22fc0.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/app/loading-5255f896378bcc2d.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/app/layout-e61c75dae7c2b0e4.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/9853-a2bc0d830e547de5.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/445-30d3fef8a9f06283.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/app/not-found-7cbda8a5885d72b4.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:61009/_next/static/chunks/210f6791-6d6d6ce4b9450481.js",
+      "status": 200
+    }
+  ],
+  "issues": [
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard?_rsc=IXq4LltQOl1TUJi8 net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard/turmas?_rsc=IXq4LltQOl1TUJi8 net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard/matriculas?_rsc=IXq4LltQOl1TUJi8 net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard/responsaveis?_rsc=IXq4LltQOl1TUJi8 net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard?_rsc=NkM_gn59AZWxmeUf net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard/turmas?_rsc=lt5a9ixOsIBqs9h5 net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard/usuarios?_rsc=lt5a9ixOsIBqs9h5 net::ERR_ABORTED"
+    },
+    {
+      "kind": "requestfailed",
+      "detail": "http://localhost:61009/dashboard/responsaveis?_rsc=lt5a9ixOsIBqs9h5 net::ERR_ABORTED"
+    }
+  ],
+  "download": {
+    "url": "blob:http://localhost:61009/c5f55fe3-5d5a-4137-bb9b-ee7c68a9ee26",
+    "suggestedFilename": "download",
+    "failure": null,
+    "saveError": null,
+    "bytes": 7236,
+    "prefixHex": "504b03040a000000080072432e5d91dbc00959010000f0040000130000005b436f6e74656e745f54797065735d2e786d6cad944d6ec2301085f73d45e42d4a0c",
+    "sha256": "f8d1553dceba093b9aa6333337f0f3fc2eceaad4a6f7ddc3acc9796dc1290ca1"
+  }
+}

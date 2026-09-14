@@ -1,0 +1,16 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+components/reports/StudentNarrativeReports.tsx(43,3): error TS2322: Type '{ status: "rascunho" | "finalizado"; semestre: "primeiro" | "segundo"; ano_letivo: number; campo_corpo_gestos: string | null; campo_escuta_fala: string | null; campo_espacos_tempos: string | null; ... 12 more ...; updated_at: string | null; }' is not assignable to type 'DescriptiveReport'.
+  Types of property 'created_at' are incompatible.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+tests/unit/export/descriptive-report-pdf.test.ts(50,7): error TS2322: Type '"MD5"' is not assignable to type '"SHA-256/postgresql-jsonb-v1"'.
+tests/unit/export/descriptive-report-pdf.test.ts(108,13): error TS2339: Property 'conteudoMinistrado' does not exist on type '{ report: { id: string; anoLetivo: number; semestre: string; observacoesGerais: string | null; fields: { label: string; value: string; }[]; }; student: { id: string; nome: string; dataNascimento: string; }; ... 6 more ...; issuer: { ...; }; }'.
+tests/unit/export/descriptive-report-pdf.test.ts(117,72): error TS2339: Property 'conteudoMinistrado' does not exist on type '{ report: { id: string; anoLetivo: number; semestre: string; observacoesGerais: string | null; fields: { label: string; value: string; }[]; }; student: { id: string; nome: string; dataNascimento: string; }; ... 6 more ...; issuer: { ...; }; }'.
+tests/unit/export/descriptive-report-pdf.test.ts(119,13): error TS2339: Property 'conteudoMinistrado' does not exist on type '{ report: { id: string; anoLetivo: number; semestre: string; observacoesGerais: string | null; fields: { label: string; value: string; }[]; }; student: { id: string; nome: string; dataNascimento: string; }; ... 6 more ...; issuer: { ...; }; }'.
+tests/unit/export/descriptive-report-pdf.test.ts(121,52): error TS2339: Property 'conteudoMinistrado' does not exist on type '{ report: { id: string; anoLetivo: number; semestre: string; observacoesGerais: string | null; fields: { label: string; value: string; }[]; }; student: { id: string; nome: string; dataNascimento: string; }; ... 6 more ...; issuer: { ...; }; }'.
+tests/unit/reports/descriptive-report-emission.test.ts(8,3): error TS2740: Type '{ id: string; ano_letivo: number; semestre: string; observacoes_gerais: string; professor_id: string; }' is missing the following properties from type '{ ano_letivo: number; campo_corpo_gestos: string | null; campo_escuta_fala: string | null; campo_espacos_tempos: string | null; campo_eu_outro_nos: string | null; campo_tracos_sons: string | null; ... 12 more ...; updated_at: string | null; }': campo_corpo_gestos, campo_escuta_fala, campo_espacos_tempos, campo_eu_outro_nos, and 10 more.
+tests/unit/reports/descriptive-report-emission.test.ts(101,34): error TS2339: Property 'content' does not exist on type 'DescriptiveReportEmissionSource'.
+ ELIFECYCLE  Command failed with exit code 2.

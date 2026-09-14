@@ -1,0 +1,9 @@
+{
+  "result": "fail",
+  "exitCode": 1,
+  "boundary": "real-playwright-browser-and-pdf-download",
+  "config": "playwright.pilot-descriptive.config.ts",
+  "expectedTestCount": 6,
+  "outputLines": 32,
+  "outputRedacted": true
+}

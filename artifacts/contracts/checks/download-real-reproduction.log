@@ -1,0 +1,46 @@
+(node:2062639) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:2068441) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/3] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/3] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:2074317) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/3] [chromium] › tests/e2e/reports/frequency.spec.ts:230:7 › Relatório de frequência › downloads Excel and PDF exports with the generated attendance row
+[1A[2K  1) [chromium] › tests/e2e/reports/frequency.spec.ts:230:7 › Relatório de frequência › downloads Excel and PDF exports with the generated attendance row
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: [32m/^frequencia_.*\.xlsx$/[39m
+    Received string:  [31m"download"[39m
+
+      237 |     const excelDownload = await excelDownloadPromise
+      238 |     await captureDownload(excelDownload, testInfo)
+    > 239 |     expect(excelDownload.suggestedFilename()).toMatch(/^frequencia_.*\.xlsx$/)
+          |                                               ^
+      240 |     const excelPath = testInfo.outputPath(excelDownload.suggestedFilename())
+      241 |     await excelDownload.saveAs(excelPath)
+      242 |     const excelBytes = await readFile(excelPath)
+        at /root/.treehouse/educa-7c556a/1/educa/app/tests/e2e/reports/frequency.spec.ts:239:47
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reports-frequency-Relatóri-10535-he-generated-attendance-row-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reports-frequency-Relatóri-10535-he-generated-attendance-row-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/reports/frequency.spec.ts:230:7 › Relatório de frequência › downloads Excel and PDF exports with the generated attendance row
+  2 passed (1.0m)
+  1 error was not a part of any test, see above for details

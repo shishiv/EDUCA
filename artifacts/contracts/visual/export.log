@@ -1,0 +1,7 @@
+export:
+  source: /root/.treehouse/educa-7c556a/1/educa/.lavish/contratos.html
+  output: /root/.treehouse/educa-7c556a/1/educa/artifacts/contracts/review.html
+  bytes: 1956645
+  unresolved_local_assets: 0
+  notices: 0
+next_step: "Wrote /root/.treehouse/educa-7c556a/1/educa/artifacts/contracts/review.html. Open it directly or host it anywhere - it needs no Lavish server. Local assets are inlined; remote CDN/font references are left as links, so it needs network to render those."

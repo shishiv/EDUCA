@@ -1,0 +1,105 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /root/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0
+
+
+> educa@1.0.0 test:e2e:pilot:descriptive /root/.treehouse/educa-7c556a/1/educa/app
+> bash scripts/run-pilot-descriptive-e2e.sh
+
+PILOT_PORT_RANGE_LEASE: base=61000 end=61009 lease_dir=/tmp/educa-pilot-port-leases/61000 owner_pid=583351
+(node:589472) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PILOT_DESCRIPTIVE_SEED_RECEIPT: seed=pass validation=pass marker=SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE canonical_content=2
+PILOT_DESCRIPTIVE_BUILD_RECEIPT: status=pass
+PILOT_DESCRIPTIVE_BROWSER_SETUP_RECEIPT: named_url=true numbered_port=false
+PILOT_DESCRIPTIVE_MANIFEST_RECEIPT: setup=1 specs=1 tests=5 pdf=true deliberate_break=true r1_canonical=false
+PILOT_DESCRIPTIVE_E2E_FAILED: phase=browser status=1
+(node:733691) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:734661) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:734661) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+
+[1A[2K(node:734661) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/6] [setup] › tests/e2e/pilot-descriptive/descriptive-auth.setup.ts:11:6 › authenticate the synthetic descriptive-report teacher
+[1A[2K(node:740016) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:740016) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+
+[1A[2K(node:740016) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:61:7 › bounded descriptive-report PDF emission › renders the seeded finalized report in the authenticated browser DOM
+[1A[2K[3/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:72:7 › bounded descriptive-report PDF emission › emits a real PDF artifact from captured Vivências
+[1A[2K[chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:72:7 › bounded descriptive-report PDF emission › emits a real PDF artifact from captured Vivências
+PILOT_DESCRIPTIVE_PDF_RECEIPT: filename=relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf bytes=1613695 artifact=/root/.treehouse/educa-7c556a/1/educa/app/.pilot-evidence/relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf
+
+[1A[2K[4/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:135:7 › bounded descriptive-report PDF emission › keeps narrative emission independent of taught content and rejects capture tampering
+[1A[2K[chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:135:7 › bounded descriptive-report PDF emission › keeps narrative emission independent of taught content and rejects capture tampering
+PILOT_DESCRIPTIVE_DELIBERATE_BREAK_RECEIPT: snapshot_tampering_denied=true taught_content_independent=true restored=true status=200
+
+[1A[2K[5/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:192:7 › bounded descriptive-report PDF emission › saves a draft without calendar and reloads it through the other narrative route
+[1A[2K[6/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:196:7 › bounded descriptive-report PDF emission › configures the school period and freezes the teacher narrative through both routes
+[1A[2K  1) [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:196:7 › bounded descriptive-report PDF emission › configures the school period and freezes the teacher narrative through both routes
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.fill: Test ended.
+    Call log:
+    [2m  - waiting for locator('#period-segundo-name')[22m
+
+
+       at narrative-contract-flow.ts:55
+
+      53 | async function configurePeriod(page: Page) {
+      54 |   await page.goto('/dashboard/configuracoes')
+    > 55 |   await page.locator('#period-segundo-name').fill('Segundo período sintético')
+         |                                              ^
+      56 |   await page.locator('#period-segundo-start').fill('2026-08-01')
+      57 |   await page.locator('#period-segundo-end').fill('2026-12-31')
+      58 |   const saved = page.waitForResponse(response => response.url().includes('/api/school-settings/periods') && response.request().method() === 'PATCH')
+        at configurePeriod (/root/.treehouse/educa-7c556a/1/educa/app/tests/e2e/pilot-descriptive/narrative-contract-flow.ts:55:46)
+        at configureAndFinalizeDraft (/root/.treehouse/educa-7c556a/1/educa/app/tests/e2e/pilot-descriptive/narrative-contract-flow.ts:107:5)
+        at /root/.treehouse/educa-7c556a/1/educa/app/tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:197:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/pilot-descriptive/descriptive-emission-bound-58013-rrative-through-both-routes-chromium-descriptive/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/pilot-descriptive/descriptive-emission-bound-58013-rrative-through-both-routes-chromium-descriptive/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/pilot-descriptive/descriptive-emission-bound-58013-rrative-through-both-routes-chromium-descriptive/error-context.md
+
+
+[1A[2K  1 failed
+    [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:196:7 › bounded descriptive-report PDF emission › configures the school period and freezes the teacher narrative through both routes
+  5 passed (1.0m)
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/tmp/educa-pilot-port-leases/61000
+PILOT_DESCRIPTIVE_CLEANUP_RECEIPT: app_stopped=true database_stopped=true auth_state_removed=true isolated_removed=true result=pass receipt=/root/.treehouse/educa-7c556a/1/educa/artifacts/contracts/pilot/r3-t4-descriptive-pilot-e2e-20260914T073853Z-583351.json
+PILOT_E2E_FINAL_RECEIPT: /root/.treehouse/educa-7c556a/1/educa/artifacts/contracts/pilot/r3-t4-descriptive-pilot-e2e-20260914T073853Z-583351.json
+ ELIFECYCLE  Command failed with exit code 1.

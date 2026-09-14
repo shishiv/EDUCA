@@ -1,0 +1,123 @@
+{
+  "contract": "R3-T4 dedicated descriptive-report pilot E2E",
+  "result": "failed",
+  "exitCode": 1,
+  "command": "cd app && pnpm test:e2e:pilot:descriptive",
+  "selectedManifest": {
+    "config": "playwright.pilot-descriptive.config.ts",
+    "setup": "tests/e2e/pilot-descriptive/descriptive-auth.setup.ts",
+    "specs": [
+      "tests/e2e/pilot-descriptive/descriptive-emission.spec.ts"
+    ],
+    "expectedTests": 3,
+    "expectedSetupTests": 1,
+    "expectedRunTests": 4
+  },
+  "setup": {
+    "result": "ready",
+    "resetBoundary": "safety proof precedes database reset",
+    "localSupabase": {
+      "apiHost": "127.0.0.1",
+      "databaseHost": "127.0.0.1",
+      "apiIsLocal": true,
+      "databaseIsLocal": true,
+      "externalProjectUsed": false
+    },
+    "app": {
+      "url": "http://127.0.0.1",
+      "namedLocalUrl": true,
+      "server": "direct",
+      "serverMode": "direct"
+    },
+    "roleSetup": {
+      "role": "professor",
+      "identity": "professora.descritivo@synthetic.invalid",
+      "authStatePath": "/root/.treehouse/educa-7c556a/1/educa/app/playwright/.pilot-descriptive/20260914T071115Z-3930632/teacher.json"
+    },
+    "seed": {
+      "command": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+      "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts"
+    },
+    "flags": {
+      "nextPublicPilotMode": true,
+      "pilotMode": true,
+      "syntheticDataOnly": true,
+      "descriptiveReportDemo": true,
+      "externalDeployApproved": false,
+      "legalApprovalStatus": "not_approved"
+    },
+    "currentKeyAliases": {
+      "publishableAliasPresent": true,
+      "secretAliasPresent": true
+    },
+    "portRangeLease": {
+      "serverMode": "direct",
+      "external": false,
+      "leaseDir": null
+    },
+    "externalCredentialsUsed": false,
+    "publicDemoUsed": false
+  },
+  "seed": {
+    "result": "pass",
+    "marker": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE",
+    "command": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+    "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts"
+  },
+  "database": {
+    "result": "pass",
+    "boundary": "real-postgresql",
+    "seedMarker": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE",
+    "seedCommand": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+    "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts",
+    "localDatabase": true,
+    "syntheticOnly": true
+  },
+  "roleSetup": {
+    "result": "pass",
+    "boundary": "real-playwright-browser",
+    "identity": "professora.descritivo@synthetic.invalid",
+    "role": "professor",
+    "authStatePath": "/root/.treehouse/educa-7c556a/1/educa/app/playwright/.pilot-descriptive/20260914T071115Z-3930632/teacher.json",
+    "landingRoute": "/dashboard"
+  },
+  "tests": {
+    "receipt": {
+      "result": "fail",
+      "exitCode": 1,
+      "boundary": "real-playwright-browser-and-pdf-download",
+      "config": "playwright.pilot-descriptive.config.ts",
+      "expectedTestCount": 6,
+      "outputLines": 32,
+      "outputRedacted": true
+    },
+    "outputPath": "../artifacts/contracts/pilot/r3-t4-descriptive-pilot-e2e-20260914T071115Z-3930632.test-output.txt",
+    "outputRedacted": true
+  },
+  "pdf": null,
+  "productDeliberateBreak": null,
+  "lifecycleDeliberateBreak": null,
+  "portRangeLease": {
+    "serverMode": "direct",
+    "external": false,
+    "leaseDir": null,
+    "released": true
+  },
+  "cleanup": {
+    "result": "pass",
+    "appStopped": true,
+    "namedRouteRemoved": true,
+    "databaseStopped": true,
+    "syntheticAuthStateRemoved": true,
+    "isolatedDirectoryRemoved": true,
+    "portRangeLeaseExternal": false,
+    "portRangeLeaseReleased": true,
+    "portRangeLeaseReleaseFailed": false,
+    "redacted": true
+  },
+  "namedBaseUrl": "http://127.0.0.1",
+  "deliberateBreak": null,
+  "r1Independent": true,
+  "externalCredentialsUsed": false,
+  "publicDemoUsed": false
+}

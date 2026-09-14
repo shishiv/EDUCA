@@ -1,0 +1,8 @@
+{
+  "result": "pass",
+  "target": "capture-tampering-rejected-and-content-independent",
+  "boundary": "real-browser-and-postgrest",
+  "observedStatus": 200,
+  "snapshotTamperingDenied": true,
+  "restored": true
+}

@@ -1,0 +1,27 @@
+{
+  "node": "v26.8.2",
+  "cli": "/root/.treehouse/educa-7c556a/1/educa/app/node_modules/.pnpm/@playwright+test@1.57.0/node_modules/@playwright/test/cli.js",
+  "records": [
+    {
+      "name": "pnpm9-exec",
+      "milliseconds": 7050,
+      "exitCode": 0,
+      "cases": 235,
+      "error": "(node:3556264) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+    },
+    {
+      "name": "locked-cli-direct",
+      "milliseconds": 3980,
+      "exitCode": 0,
+      "cases": 235,
+      "error": "(node:3558797) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+    },
+    {
+      "name": "system-node-direct",
+      "milliseconds": 5792,
+      "exitCode": 0,
+      "cases": 235,
+      "error": "(node:3560515) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+    }
+  ]
+}

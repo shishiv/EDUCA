@@ -1,0 +1,45 @@
+{
+  "result": "ready",
+  "resetBoundary": "safety proof precedes database reset",
+  "localSupabase": {
+    "apiHost": "127.0.0.1",
+    "databaseHost": "127.0.0.1",
+    "apiIsLocal": true,
+    "databaseIsLocal": true,
+    "externalProjectUsed": false
+  },
+  "app": {
+    "url": "http://127.0.0.1",
+    "namedLocalUrl": true,
+    "server": "direct",
+    "serverMode": "direct"
+  },
+  "roleSetup": {
+    "role": "professor",
+    "identity": "professora.descritivo@synthetic.invalid",
+    "authStatePath": "/root/.treehouse/educa-7c556a/1/educa/app/playwright/.pilot-descriptive/20260914T074954Z-913413/teacher.json"
+  },
+  "seed": {
+    "command": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+    "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts"
+  },
+  "flags": {
+    "nextPublicPilotMode": true,
+    "pilotMode": true,
+    "syntheticDataOnly": true,
+    "descriptiveReportDemo": true,
+    "externalDeployApproved": false,
+    "legalApprovalStatus": "not_approved"
+  },
+  "currentKeyAliases": {
+    "publishableAliasPresent": true,
+    "secretAliasPresent": true
+  },
+  "portRangeLease": {
+    "serverMode": "direct",
+    "external": false,
+    "leaseDir": null
+  },
+  "externalCredentialsUsed": false,
+  "publicDemoUsed": false
+}

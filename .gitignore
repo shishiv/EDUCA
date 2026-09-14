@@ -65,3 +65,8 @@ docs/bugs-analysis.md
 
 # Generated API reference
 docs/api/
+
+# Lavish presentation stays local; only redacted verification receipts are versioned
+.lavish/
+artifacts/contracts/review.html
+artifacts/contracts/visual/*.png
