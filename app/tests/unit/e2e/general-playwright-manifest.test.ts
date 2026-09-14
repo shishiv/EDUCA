@@ -1,12 +1,15 @@
 import { spawnSync } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 
 const appDirectory = process.cwd()
+// Execute the locked local CLI, without a package-manager startup per manifest.
+const playwrightCli = createRequire(import.meta.url).resolve('@playwright/test/cli')
 
 function listManifest(config: string, environment: Record<string, string | undefined> = {}): string {
   const result = spawnSync(
-    'pnpm',
-    ['exec', 'playwright', 'test', '--config', config, '--list', '--reporter=line', '--workers=1'],
+    process.execPath,
+    [playwrightCli, 'test', '--config', config, '--list', '--reporter=line', '--workers=1'],
     {
       cwd: appDirectory,
       encoding: 'utf8',
@@ -26,8 +29,7 @@ function listManifest(config: string, environment: Record<string, string | undef
 }
 
 describe('general Playwright manifest', () => {
-  it('keeps specialized setup, pilot, and public tests out of the general runner', () => {
-    for (const pilotMode of ['false', 'true']) {
+  it.each(['false', 'true'])('keeps specialized tests out of the general runner (pilot=%s)', pilotMode => {
       const manifest = listManifest('playwright.config.ts', { PILOT_MODE: pilotMode })
 
       expect(manifest).toContain('[setup] › auth.setup.ts')
@@ -47,7 +49,6 @@ describe('general Playwright manifest', () => {
       expect(manifest).not.toContain('grades/report-card.spec.ts')
       expect(manifest).not.toContain('[diretor]')
       expect(manifest).not.toContain('[professor]')
-    }
   })
 
   it('preserves the positive grades contracts on an explicit, separate manifest', () => {
@@ -59,35 +60,43 @@ describe('general Playwright manifest', () => {
     expect(manifest).not.toContain('pilot/')
   })
 
-  it('leaves each leaked suite on its specialized real manifest', () => {
+  it('keeps the legacy pilot on its specialized manifest', () => {
     const legacy = listManifest('playwright.pilot-legacy.config.ts', {
       PILOT_MODE: 'true',
       PILOT_LEGACY_SERVER_MANAGED: 'true',
     })
     expect(legacy).toContain('pilot/attendance-reopen.spec.ts')
     expect(legacy).toContain('pilot/canonical-lesson.spec.ts')
+  })
 
+  it('keeps capacity on its specialized manifest', () => {
     const capacity = listManifest('playwright.pilot-capacity.config.ts', {
       PILOT_CAPACITY_SERVER_MANAGED: 'true',
     })
     expect(capacity).toContain('capacity-auth.setup.ts')
     expect(capacity).toContain('capacity-contract.spec.ts')
     expect(capacity).not.toContain('descriptive-emission.spec.ts')
+  })
 
+  it('keeps descriptive reports on their specialized manifest', () => {
     const descriptive = listManifest('playwright.pilot-descriptive.config.ts', {
       PILOT_DESCRIPTIVE_SERVER_MANAGED: 'true',
     })
     expect(descriptive).toContain('descriptive-auth.setup.ts')
     expect(descriptive).toContain('descriptive-emission.spec.ts')
     expect(descriptive).not.toContain('capacity-contract.spec.ts')
+  })
 
+  it('keeps canonical attendance on its specialized manifest', () => {
     const canonical = listManifest('playwright.pilot-canonical.config.ts', {
       PILOT_CANONICAL_SERVER_MANAGED: 'true',
     })
     expect(canonical).toContain('canonical-auth.setup.ts')
     expect(canonical).toContain('canonical-pilot.spec.ts')
     expect(canonical).not.toContain('capacity-contract.spec.ts')
+  })
 
+  it('keeps public entry on its specialized manifest', () => {
     const publicEntry = listManifest('playwright.public-entry.config.ts')
     expect(publicEntry).toContain('public-visitor.spec.ts')
     expect(publicEntry).not.toContain('auth.setup.ts')

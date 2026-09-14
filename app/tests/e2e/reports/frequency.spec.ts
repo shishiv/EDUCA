@@ -2,11 +2,12 @@ import { execFile as execFileCallback } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
-import ExcelJS from 'exceljs'
+import type ExcelJS from 'exceljs'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Page } from '@playwright/test'
-import type { Database } from '@/types/database'
+import type { Database, Json } from '@/types/database'
 import { test, expect } from '../support/diagnostics'
+import { instrumentDownload } from './download-diagnostics'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -38,6 +39,26 @@ function exportedRowValues(row: ExcelJS.Row) {
 
 let admin: SupabaseClient<Database>
 let classId = ''
+let periodDirector: SupabaseClient<Database> | null = null
+let periodSchoolId = ''
+let originalPeriods: Json = []
+
+async function configureFixturePeriod(schoolId: string) {
+  const director = createClient<Database>(SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const login = await director.auth.signInWithPassword({ email: 'diretor@test.com', password: 'test123456' })
+  requireDatabaseSuccess('frequency period director login failed', login.error)
+  const year = await director.rpc('get_school_academic_year', { p_escola_id: schoolId, p_ano: 2026 })
+  requireDatabaseSuccess('frequency period read failed', year.error)
+  if (!year.data?.[0]) throw new Error('FREQUENCY_FIXTURE_YEAR_MISSING')
+  originalPeriods = year.data[0].periodos
+  periodSchoolId = schoolId
+  periodDirector = director
+  const saved = await director.rpc('set_school_periods', { p_escola_id: schoolId, p_ano: 2026,
+    p_periodos: [{ chave: 'bimestre_3', nome: '3º Bimestre', data_inicio: '2026-08-01', data_fim: '2026-10-31' }] })
+  requireDatabaseSuccess('frequency fixture period save failed', saved.error)
+}
 
 function getLocalAdminClient(): SupabaseClient<Database> {
   if (!new URL(SUPABASE_URL).hostname.match(/^(127\.0\.0\.1|localhost)$/)) {
@@ -78,6 +99,7 @@ async function seedFixture(client: SupabaseClient<Database>): Promise<void> {
   requireDatabaseSuccess('frequency fixture teacher lookup failed', teacherResult.error)
   if (!turmaResult.data || !teacherResult.data) throw new Error('FREQUENCY_FIXTURE_SCOPE_MISSING')
   classId = turmaResult.data.id
+  await configureFixturePeriod(turmaResult.data.escola_id)
 
   const student = await client.from('alunos').insert({
     id: STUDENT_ID,
@@ -152,6 +174,11 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   if (admin) await cleanupFixture(admin)
+  if (periodDirector) {
+    const restored = await periodDirector.rpc('set_school_periods', { p_escola_id: periodSchoolId, p_ano: 2026, p_periodos: originalPeriods })
+    requireDatabaseSuccess('frequency fixture period restore failed', restored.error)
+    await periodDirector.auth.signOut({ scope: 'local' })
+  }
 })
 
 test.describe('Relatório de frequência', () => {
@@ -201,12 +228,14 @@ test.describe('Relatório de frequência', () => {
   })
 
   test('downloads Excel and PDF exports with the generated attendance row', async ({ page }, testInfo) => {
+    const captureDownload = await instrumentDownload(page)
     await openReport(page)
     await generateFixtureReport(page)
 
     const excelDownloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: 'Excel', exact: true }).click()
     const excelDownload = await excelDownloadPromise
+    await captureDownload(excelDownload, testInfo)
     expect(excelDownload.suggestedFilename()).toMatch(/^frequencia_.*\.xlsx$/)
     const excelPath = testInfo.outputPath(excelDownload.suggestedFilename())
     await excelDownload.saveAs(excelPath)
@@ -214,6 +243,7 @@ test.describe('Relatório de frequência', () => {
     expect(excelBytes.subarray(0, 2).toString('ascii')).toBe('PK')
     expect(excelBytes.length).toBeGreaterThan(1000)
 
+    const { default: ExcelJS } = await import('exceljs')
     const workbook = new ExcelJS.Workbook()
     await workbook.xlsx.readFile(excelPath)
     expect(workbook.worksheets.map((worksheet) => worksheet.name)).toEqual(['Frequência'])

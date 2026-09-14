@@ -1,0 +1,330 @@
+Applying 00000000000000_baseline.sql
+Applying 20260119_create_feature_flags.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260119_create_feature_flags.sql:129: NOTICE:  trigger "trigger_feature_flags_updated_at" for relation "feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260119_create_feature_flags.sql:135: NOTICE:  trigger "trigger_escola_feature_flags_updated_at" for relation "escola_feature_flags" does not exist, skipping
+Applying 20260124133337_create_relatorios_descritivos.sql
+Applying 20260719031000_add_censo_escolar_fields.sql
+Applying 20260721010000_fix_rls_role_policies.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:123: NOTICE:  policy "users_select_authorized" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:136: NOTICE:  policy "turmas_select_authorized" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:140: NOTICE:  policy "alunos_select_authorized" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:157: NOTICE:  policy "matriculas_select_authorized" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:161: NOTICE:  policy "responsaveis_select_authorized" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:179: NOTICE:  policy "aluno_responsaveis_select_authorized" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:196: NOTICE:  policy "disciplinas_select_authorized" for relation "public.disciplinas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:201: NOTICE:  policy "frequencia_select_authorized" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:205: NOTICE:  policy "notas_select_authorized" for relation "public.notas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:209: NOTICE:  policy "sessoes_aula_select_authorized" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:213: NOTICE:  policy "aulas_abertas_select_authorized" for relation "public.aulas_abertas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:217: NOTICE:  policy "calendario_select_authorized" for relation "public.calendario_escolar" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:221: NOTICE:  policy "configs_select_authorized" for relation "public.configs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.disciplinas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.notas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.aulas_abertas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.calendario_escolar" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.configs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.relatorios_descritivos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:247: NOTICE:  policy "admin_full_access" for relation "public.escola_feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:250: NOTICE:  policy "school_staff_manage_alunos" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:264: NOTICE:  policy "school_staff_manage_responsaveis" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:279: NOTICE:  policy "school_staff_manage_links" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:293: NOTICE:  policy "school_staff_manage_turmas" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:305: NOTICE:  policy "school_staff_manage_matriculas" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:318: NOTICE:  policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:330: NOTICE:  policy "academic_manage_notas" for relation "public.notas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721010000_fix_rls_role_policies.sql:342: NOTICE:  policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+Applying 20260721011000_create_conteudo_aula.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721011000_create_conteudo_aula.sql:26: NOTICE:  policy "conteudo_aula_select_authorized" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721011000_create_conteudo_aula.sql:37: NOTICE:  policy "conteudo_aula_manage_authorized" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260721011000_create_conteudo_aula.sql:57: NOTICE:  policy "conteudo_aula_admin" for relation "public.conteudo_aula" does not exist, skipping
+Applying 20260727050000_pilot_foundation_gate.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:56: NOTICE:  trigger "pilot_single_municipality_guard" for relation "pilot_municipality_config" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:204: NOTICE:  policy "users_select_same_escola" for relation "users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:205: NOTICE:  policy "turmas_select_escola" for relation "turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:206: NOTICE:  policy "alunos_select_via_matricula" for relation "alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:207: NOTICE:  policy "matriculas_select_escola" for relation "matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:208: NOTICE:  policy "frequencia_select_escola" for relation "frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:209: NOTICE:  policy "sessoes_aula_select_escola" for relation "sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:210: NOTICE:  policy "attendance_sessoes_select" for relation "sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:211: NOTICE:  policy "attendance_sessoes_insert" for relation "sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:212: NOTICE:  policy "attendance_sessoes_update" for relation "sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:213: NOTICE:  policy "attendance_frequencia_select" for relation "frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:214: NOTICE:  policy "attendance_frequencia_insert" for relation "frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:215: NOTICE:  policy "attendance_frequencia_update" for relation "frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:478: NOTICE:  trigger "pilot_audit_append_only" for relation "pilot_audit_log" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260727050000_pilot_foundation_gate.sql:558: NOTICE:  trigger "pilot_audit_core_change" for relation "aulas_abertas" does not exist, skipping
+Applying 20260801000000_add_frequencia_student_day_unique.sql
+Applying 20260801000001_whatsapp_notifications.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260801000001_whatsapp_notifications.sql:53: NOTICE:  trigger "whatsapp_optin_school_sync" for relation "whatsapp_notification_optins" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260801000001_whatsapp_notifications.sql:224: NOTICE:  trigger "pilot_audit_core_change" for relation "whatsapp_notification_optins" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260801000001_whatsapp_notifications.sql:228: NOTICE:  trigger "pilot_audit_core_change" for relation "whatsapp_notification_messages" does not exist, skipping
+Applying 20260803095753_educa_attendance_canonical_flow.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:311: NOTICE:  index "idx_sessoes_aula_open_turma_date" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:460: NOTICE:  trigger "attendance_prepare_frequency_record" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:514: NOTICE:  trigger "attendance_protect_session_state" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:561: NOTICE:  trigger "attendance_protect_frequency_state" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:677: NOTICE:  trigger "attendance_audit_session_change" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:682: NOTICE:  trigger "attendance_audit_frequency_change" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:690: NOTICE:  policy "attendance_turmas_select" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:695: NOTICE:  policy "attendance_matriculas_select" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:700: NOTICE:  policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:701: NOTICE:  policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:702: NOTICE:  policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:703: NOTICE:  policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:704: NOTICE:  policy "attendance_sessoes_select" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:705: NOTICE:  policy "attendance_sessoes_insert" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:706: NOTICE:  policy "attendance_sessoes_update" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:707: NOTICE:  policy "attendance_frequencia_select" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:708: NOTICE:  policy "attendance_frequencia_insert" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260803095753_educa_attendance_canonical_flow.sql:709: NOTICE:  policy "attendance_frequencia_update" for relation "public.frequencia" does not exist, skipping
+Applying 20260803143646_attendance_batch_upsert_index.sql
+Applying 20260803235036_fix_pilot_matricula_insert_rls.sql
+Applying 20260805093305_demo_users_browser_write_boundary.sql
+Applying 20260810042648_enforce_pilot_enrollment_capacity.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810042648_enforce_pilot_enrollment_capacity.sql:86: NOTICE:  trigger "pilot_lock_matricula_capacity" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810042648_enforce_pilot_enrollment_capacity.sql:92: NOTICE:  trigger "pilot_validate_matricula_capacity" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810042648_enforce_pilot_enrollment_capacity.sql:93: NOTICE:  trigger "pilot_validate_matricula_capacity_insert" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810042648_enforce_pilot_enrollment_capacity.sql:100: NOTICE:  trigger "pilot_validate_matricula_capacity_update" for relation "public.matriculas" does not exist, skipping
+Applying 20260810120522_certificate_issuance_source_truth.sql
+Applying 20260810120559_attendance_conditionality_read_model.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:97: NOTICE:  trigger "assign_school_municipality" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:172: NOTICE:  trigger "prepare_attendance_municipal_threshold_metadata" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:233: NOTICE:  trigger "audit_attendance_municipal_threshold_insert" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:250: NOTICE:  trigger "prevent_attendance_municipal_threshold_update" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:261: NOTICE:  policy "attendance_municipal_thresholds_select" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:276: NOTICE:  policy "attendance_municipal_thresholds_insert" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810120559_attendance_conditionality_read_model.sql:636: NOTICE:  view "vw_frequencia_condicionalidade" does not exist, skipping
+Applying 20260810192820_governed_pilot_csv_import.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810192820_governed_pilot_csv_import.sql:123: NOTICE:  trigger "pilot_import_batch_immutable" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810192820_governed_pilot_csv_import.sql:123: NOTICE:  trigger "pilot_import_batch_immutable" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810192820_governed_pilot_csv_import.sql:123: NOTICE:  trigger "pilot_import_batch_immutable" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810192820_governed_pilot_csv_import.sql:123: NOTICE:  trigger "pilot_import_batch_immutable" for relation "public.matriculas" does not exist, skipping
+Applying 20260810220000_governed_pilot_security_hardening.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:72: NOTICE:  policy "escolas_select_authenticated" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:73: NOTICE:  policy "users_select_same_escola" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:74: NOTICE:  policy "turmas_select_escola" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:75: NOTICE:  policy "alunos_select_via_matricula" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:76: NOTICE:  policy "matriculas_select_escola" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:77: NOTICE:  policy "frequencia_select_escola" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:78: NOTICE:  policy "sessoes_aula_select_escola" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:79: NOTICE:  policy "audit_logs_admin_only" for relation "public.audit_logs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:82: NOTICE:  policy "escolas_select_authenticated" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:100: NOTICE:  policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:102: NOTICE:  policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:144: NOTICE:  policy "pilot_disciplinas_select" for relation "public.disciplinas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:145: NOTICE:  policy "pilot_configs_select" for relation "public.configs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:146: NOTICE:  policy "governed_conteudo_aula_select" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:147: NOTICE:  policy "governed_conteudo_aula_insert" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:148: NOTICE:  policy "governed_conteudo_aula_update" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:149: NOTICE:  policy "governed_relatorios_descritivos_select" for relation "public.relatorios_descritivos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:150: NOTICE:  policy "governed_relatorios_descritivos_insert" for relation "public.relatorios_descritivos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:151: NOTICE:  policy "governed_relatorios_descritivos_update" for relation "public.relatorios_descritivos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:760: NOTICE:  relation "pilot_audit_log" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:778: NOTICE:  relation "idx_pilot_audit_school_created" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:1070: NOTICE:  trigger "pilot_audit_core_change" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:1070: NOTICE:  trigger "pilot_audit_core_change" for relation "public.relatorios_descritivos" does not exist, skipping
+Applying 20260811040831_student_admission_transaction.sql
+Applying 20260812000000_attendance_reopen_workflow.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812000000_attendance_reopen_workflow.sql:253: NOTICE:  trigger "attendance_reopen_audit_change" for relation "public.attendance_reopen_requests" does not exist, skipping
+Applying 20260812192111_public_security_advisor_error_hardening.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:25: NOTICE:  policy "security_errors_school_browser_denied" for relation "public.School" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:32: NOTICE:  policy "security_errors_user_browser_denied" for relation "public.User" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:39: NOTICE:  policy "security_errors_user_role_browser_denied" for relation "public.UserRole" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:46: NOTICE:  policy "security_errors_role_browser_denied" for relation "public.Role" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:53: NOTICE:  policy "security_errors_role_permission_browser_denied" for relation "public.RolePermission" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:60: NOTICE:  policy "security_errors_permission_browser_denied" for relation "public.Permission" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:70: NOTICE:  policy "security_errors_codigos_inep_browser_denied" for relation "public.codigos_inep" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260812192111_public_security_advisor_error_hardening.sql:77: NOTICE:  policy "security_errors_educacenso_exports_browser_denied" for relation "public.educacenso_exports" does not exist, skipping
+Applying 20260812231418_pilot_import_batch_rollback_storage.sql
+Applying 20260812231541_pilot_auth_revocation_boundary.sql
+Applying 20260813000000_governed_pilot_manifest_retention_order.sql
+Applying 20260814000000_governed_import_owner_agreement.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:176: NOTICE:  trigger "pilot_require_governed_import_batch" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:176: NOTICE:  trigger "pilot_require_governed_import_batch" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:176: NOTICE:  trigger "pilot_require_governed_import_batch" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:176: NOTICE:  trigger "pilot_require_governed_import_batch" for relation "public.matriculas" does not exist, skipping
+Applying 20260815000000_bolsa_familia_visibility_policy.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260815000000_bolsa_familia_visibility_policy.sql:117: NOTICE:  trigger "create_bolsa_familia_visibility_config" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260815000000_bolsa_familia_visibility_policy.sql:123: NOTICE:  policy "bolsa_familia_visibility_config_update" for relation "public.configs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260815000000_bolsa_familia_visibility_policy.sql:155: NOTICE:  constraint "pilot_audit_bolsa_familia_metadata_check" of relation "pilot_audit_log" does not exist, skipping
+Applying 20260826010000_school_academic_years.sql
+Applying 20260827000000_school_schema_canary_control_plane.sql
+Applying 20260828000000_pilot_auth_audit_scope.sql
+Applying 20260829000000_sensitive_family_read_boundary.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260829000000_sensitive_family_read_boundary.sql:220: NOTICE:  constraint "pilot_audit_sensitive_family_metadata_check" of relation "pilot_audit_log" does not exist, skipping
+Applying 20260830000000_canonical_guardian_link_reads.sql
+Applying 20260831000000_vivencias_persistence.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:216: NOTICE:  trigger "vivencias_identity" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:221: NOTICE:  trigger "vivencias_sync_campos" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:226: NOTICE:  trigger "relatorios_descritivos_vivencias_scope" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:231: NOTICE:  trigger "vivencias_audit_trail" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:236: NOTICE:  trigger "vivencias_campos_audit_trail" for relation "public.vivencias_campos_experiencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:241: NOTICE:  trigger "relatorios_descritivos_vivencias_audit_trail" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:246: NOTICE:  trigger "pilot_audit_core_change" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:251: NOTICE:  trigger "pilot_audit_core_change" for relation "public.vivencias_campos_experiencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:256: NOTICE:  trigger "pilot_audit_core_change" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:265: NOTICE:  policy "vivencias_select" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:276: NOTICE:  policy "vivencias_insert" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:288: NOTICE:  policy "vivencias_update" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:304: NOTICE:  policy "vivencias_delete" for relation "public.vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:313: NOTICE:  policy "vivencias_campos_select" for relation "public.vivencias_campos_experiencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:327: NOTICE:  policy "relatorios_descritivos_vivencias_select" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260831000000_vivencias_persistence.sql:343: NOTICE:  policy "relatorios_descritivos_vivencias_insert" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+Applying 20260901000000_municipal_settings.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260901000000_municipal_settings.sql:44: NOTICE:  policy "municipal_settings_select_scoped" for relation "public.configs" does not exist, skipping
+Applying 20260907000000_auth_mutation_audit_receipts.sql
+Applying 20260908000000_attendance_correction_window.sql
+Applying 20260908010000_attendance_opening_cutoff.sql
+Applying 20260908020000_student_admission_guardian_payload.sql
+Applying 20260908030000_user_self_profile_audit.sql
+Applying 20260908040000_governed_management_mutations.sql
+Applying 20260908050000_whatsapp_delivery_ownership.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260908050000_whatsapp_delivery_ownership.sql:9: NOTICE:  constraint "whatsapp_notification_messages_claim_state_check" of relation "whatsapp_notification_messages" does not exist, skipping
+Applying 20260908060000_pilot_import_rejection_receipts.sql
+Applying 20260908070000_governed_management_atomic_updates.sql
+Applying 20260908080000_class_capacity_defaults.sql
+Applying 20260908090000_whatsapp_governed_enqueue.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260908090000_whatsapp_governed_enqueue.sql:13: NOTICE:  constraint "whatsapp_notification_messages_reconciliation_state_check" of relation "whatsapp_notification_messages" does not exist, skipping
+Applying 20260908100000_invitation_audit_recovery.sql
+Applying 20260908110000_session_realtime_publication.sql
+Applying 20260908120000_descriptive_report_finalization.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260908120000_descriptive_report_finalization.sql:104: NOTICE:  trigger "descriptive_report_finalization_guard" for relation "public.relatorios_descritivos" does not exist, skipping
+Applying 20260908130000_student_admission_municipal_authority.sql
+Applying 20260914000000_narrative_sources_and_school_periods.sql
+Running session_realtime_publication.contract.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/tests/database/session_realtime_publication.contract.sql:11: WARNING:  wal_level is insufficient to publish logical changes
+HINT:  Set wal_level to "logical" before creating subscriptions.
+Replaying 20260124133337_create_relatorios_descritivos.sql on an isolated copy
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260124133337_create_relatorios_descritivos.sql:31: NOTICE:  relation "relatorios_descritivos" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260124133337_create_relatorios_descritivos.sql:34: NOTICE:  relation "idx_relatorios_descritivos_matricula" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260124133337_create_relatorios_descritivos.sql:35: NOTICE:  relation "idx_relatorios_descritivos_turma" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260124133337_create_relatorios_descritivos.sql:36: NOTICE:  relation "idx_relatorios_descritivos_professor" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260124133337_create_relatorios_descritivos.sql:37: NOTICE:  relation "idx_relatorios_descritivos_ano_semestre" already exists, skipping
+Reapplying 20260810220000_governed_pilot_security_hardening.sql after legacy replay
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.disciplinas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.notas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.aulas_abertas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.calendario_escolar" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.configs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.relatorios_descritivos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:70: NOTICE:  policy "admin_full_access" for relation "public.escola_feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:72: NOTICE:  policy "escolas_select_authenticated" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:73: NOTICE:  policy "users_select_same_escola" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:74: NOTICE:  policy "turmas_select_escola" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:75: NOTICE:  policy "alunos_select_via_matricula" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:76: NOTICE:  policy "matriculas_select_escola" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:77: NOTICE:  policy "frequencia_select_escola" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:78: NOTICE:  policy "sessoes_aula_select_escola" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:79: NOTICE:  policy "audit_logs_admin_only" for relation "public.audit_logs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:81: NOTICE:  policy "users_select_authorized" for relation "public.users" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:82: NOTICE:  policy "escolas_select_authenticated" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:83: NOTICE:  policy "turmas_select_authorized" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:84: NOTICE:  policy "alunos_select_authorized" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:85: NOTICE:  policy "matriculas_select_authorized" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:86: NOTICE:  policy "responsaveis_select_authorized" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:87: NOTICE:  policy "aluno_responsaveis_select_authorized" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:88: NOTICE:  policy "disciplinas_select_authorized" for relation "public.disciplinas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:89: NOTICE:  policy "frequencia_select_authorized" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:90: NOTICE:  policy "notas_select_authorized" for relation "public.notas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:91: NOTICE:  policy "sessoes_aula_select_authorized" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:92: NOTICE:  policy "aulas_abertas_select_authorized" for relation "public.aulas_abertas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:93: NOTICE:  policy "calendario_select_authorized" for relation "public.calendario_escolar" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:94: NOTICE:  policy "configs_select_authorized" for relation "public.configs" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:95: NOTICE:  policy "school_staff_manage_alunos" for relation "public.alunos" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:96: NOTICE:  policy "school_staff_manage_responsaveis" for relation "public.responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:97: NOTICE:  policy "school_staff_manage_links" for relation "public.aluno_responsaveis" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:98: NOTICE:  policy "school_staff_manage_turmas" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:99: NOTICE:  policy "school_staff_manage_matriculas" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:100: NOTICE:  policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:101: NOTICE:  policy "academic_manage_notas" for relation "public.notas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:102: NOTICE:  policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:103: NOTICE:  policy "conteudo_aula_select_authorized" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:104: NOTICE:  policy "conteudo_aula_manage_authorized" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:105: NOTICE:  policy "conteudo_aula_admin" for relation "public.conteudo_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:107: NOTICE:  policy "attendance_turmas_select" for relation "public.turmas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:108: NOTICE:  policy "attendance_matriculas_select" for relation "public.matriculas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:109: NOTICE:  policy "attendance_sessoes_select" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:110: NOTICE:  policy "attendance_sessoes_insert" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:111: NOTICE:  policy "attendance_sessoes_update" for relation "public.sessoes_aula" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:112: NOTICE:  policy "attendance_frequencia_select" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:113: NOTICE:  policy "attendance_frequencia_insert" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:114: NOTICE:  policy "attendance_frequencia_update" for relation "public.frequencia" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:117: NOTICE:  policy "pilot_escolas_insert" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:118: NOTICE:  policy "pilot_escolas_update" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:153: NOTICE:  policy "Authenticated users can read active flags" for relation "public.feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:154: NOTICE:  policy "Admin can manage flags" for relation "public.feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:155: NOTICE:  policy "Users can read own escola flags" for relation "public.escola_feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:156: NOTICE:  policy "Admin can manage escola flags" for relation "public.escola_feature_flags" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:161: NOTICE:  policy "attendance_municipal_thresholds_insert" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:760: NOTICE:  relation "pilot_audit_log" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260810220000_governed_pilot_security_hardening.sql:778: NOTICE:  relation "idx_pilot_audit_school_created" already exists, skipping
+Reapplying 20260812231418_pilot_import_batch_rollback_storage.sql after legacy replay
+Reapplying 20260812231541_pilot_auth_revocation_boundary.sql after legacy replay
+Reapplying 20260814000000_governed_import_owner_agreement.sql after legacy replay
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:21: NOTICE:  relation "pilot_data_treatment_agreements" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:28: NOTICE:  relation "idx_pilot_treatment_agreements_lookup" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:34: NOTICE:  column "processing_agreement_id" of relation "pilot_import_batches" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:34: NOTICE:  column "processing_agreement_confirmed" of relation "pilot_import_batches" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:34: NOTICE:  column "governance_owner_user_id" of relation "pilot_import_batches" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260814000000_governed_import_owner_agreement.sql:34: NOTICE:  column "governance_owner_authorized_at" of relation "pilot_import_batches" already exists, skipping
+Reapplying 20260815000000_bolsa_familia_visibility_policy.sql after legacy replay
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260815000000_bolsa_familia_visibility_policy.sql:67: NOTICE:  relation "configs_bolsa_familia_visibility_default" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260815000000_bolsa_familia_visibility_policy.sql:72: NOTICE:  relation "configs_bolsa_familia_visibility_school" already exists, skipping
+Reapplying 20260828000000_pilot_auth_audit_scope.sql after legacy replay
+Reapplying 20260829000000_sensitive_family_read_boundary.sql after legacy replay
+Reapplying 20260830000000_canonical_guardian_link_reads.sql after legacy replay
+Reapplying 20260907000000_auth_mutation_audit_receipts.sql after legacy replay
+Reapplying 20260908040000_governed_management_mutations.sql after legacy replay
+Reapplying 20260908050000_whatsapp_delivery_ownership.sql after legacy replay
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260908050000_whatsapp_delivery_ownership.sql:5: NOTICE:  column "claim_token" of relation "whatsapp_notification_messages" already exists, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260908050000_whatsapp_delivery_ownership.sql:5: NOTICE:  column "claim_expires_at" of relation "whatsapp_notification_messages" already exists, skipping
+Reapplying 20260908060000_pilot_import_rejection_receipts.sql after legacy replay
+Reapplying 20260908070000_governed_management_atomic_updates.sql after legacy replay
+Reapplying 20260908090000_whatsapp_governed_enqueue.sql after legacy replay
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/migrations/20260908090000_whatsapp_governed_enqueue.sql:8: NOTICE:  column "reconciliation_required_at" of relation "whatsapp_notification_messages" already exists, skipping
+Reapplying 20260908100000_invitation_audit_recovery.sql after legacy replay
+CANONICAL_REPLAY_CATALOG_PARITY_OK: schema, functions, policies, triggers and grants match
+Applying pilot-only provisioning provision-pilot-module-gate.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/pilot/provision-pilot-module-gate.sql:24: NOTICE:  policy "pilot_escolas_update" for relation "public.escolas" does not exist, skipping
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/pilot/provision-pilot-module-gate.sql:54: NOTICE:  trigger "pilot_high_risk_student_guard" for relation "alunos" does not exist, skipping
+Running attendance_canonical.test.sql
+Running attendance_correction_window.test.sql
+Running attendance_opening_cutoff.test.sql
+Running attendance_policy.test.sql
+Running attendance_reopen.test.sql
+Running auth_mutation_audit_receipts.test.sql
+Running bolsa_familia_visibility.test.sql
+psql:/tmp/educa-postgres-test.aWqYKu/source/supabase/tests/database/bolsa_familia_visibility.test.sql:234: ERROR:  assertion failed: the authorized journey reads only the active Bolsa Familia enrollment
+CONTEXT:  PL/pgSQL function pg_temp_3.assert_true(boolean,text) line 4 at RAISE

@@ -7,6 +7,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { Client } from 'pg'
 import { z } from 'zod'
+import { narrativeSnapshotSchema } from '../lib/reports/narrative-sources'
 import { assertPilotDescriptiveReportDemoSafety } from '../lib/pilot/descriptive-report-demo-safety'
 import {
   PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
@@ -61,6 +62,9 @@ const descriptiveReceiptSchema = z.object({
   reports: countSchema,
   sessions: countSchema,
   canonical_content: countSchema,
+  snapshot: narrativeSnapshotSchema,
+  snapshot_fingerprint_valid: z.boolean(),
+  snapshot_scope_valid: z.boolean(),
   marker: z.string().nullable(),
   release_revision: z.string().nullable(),
   rehearsal_environment: z.string().nullable(),
@@ -95,7 +99,7 @@ async function writePilotDescriptiveValidationReceipt(
       },
       reportingPeriod: PILOT_DESCRIPTIVE_EXPECTED_REPORT_PERIOD,
       canonicalSource: PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
-      fingerprintAlgorithm: PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM,
+      fingerprintAlgorithm: actual.snapshot.algoritmo,
       nonLegalBoundary: PILOT_DESCRIPTIVE_NON_LEGAL_BOUNDARY,
       expected: {
         counts: PILOT_DESCRIPTIVE_EXPECTED_COUNTS,
@@ -183,6 +187,12 @@ function recordScopeChecks(actual: DescriptiveReceipt): void {
 
 }
 
+function recordSnapshotChecks(actual: DescriptiveReceipt): void {
+  recordPilotDescriptiveCheck('snapshot_count', actual.snapshot.fontes.length === 1, String(actual.snapshot.fontes.length))
+  recordPilotDescriptiveCheck('snapshot_fingerprint', actual.snapshot_fingerprint_valid, actual.snapshot.fingerprint)
+  recordPilotDescriptiveCheck('snapshot_scope', actual.snapshot_scope_valid, actual.snapshot.versao)
+}
+
 function recordPeriodAndIssuerChecks(actual: DescriptiveReceipt): void {
   const reportingPeriod = actual.reporting_period
   recordPilotDescriptiveCheck(
@@ -223,6 +233,16 @@ async function validatePilotDescriptive(): Promise<void> {
         (SELECT count(*) FROM public.alunos WHERE id = $3) AS students,
         (SELECT count(*) FROM public.matriculas WHERE id = $4) AS enrollments,
         (SELECT count(*) FROM public.relatorios_descritivos WHERE id = $5 AND status = 'finalizado') AS reports,
+        (SELECT fontes_snapshot FROM public.relatorios_descritivos WHERE id=$5) AS snapshot,
+        (SELECT fontes_snapshot->>'fingerprint' = encode(sha256(convert_to(jsonb_build_object(
+          'periodo',fontes_snapshot->'periodo','fontes',fontes_snapshot->'fontes')::text,'UTF8')),'hex')
+          FROM public.relatorios_descritivos WHERE id=$5) AS snapshot_fingerprint_valid,
+        (SELECT fontes_snapshot->>'capturado_por'=r.finalizado_por::text
+          AND fontes_snapshot->'periodo'->>'escola_id'=$1::text
+          AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(r.fontes_snapshot->'fontes') v
+            WHERE v->>'matricula_id'<>r.matricula_id::text OR v->>'turma_id'<>r.turma_id::text
+              OR v->>'aluno_id'<>$3::text OR v->>'escola_id'<>$1::text)
+          FROM public.relatorios_descritivos r WHERE r.id=$5) AS snapshot_scope_valid,
         (SELECT count(*) FROM public.sessoes_aula
           WHERE turma_id = $2 AND data_aula >= $11::date AND data_aula <= $12::date) AS sessions,
         (SELECT count(*) FROM public.conteudo_aula c
@@ -251,8 +271,8 @@ async function validatePilotDescriptive(): Promise<void> {
         (SELECT json_build_object(
           'year', report.ano_letivo,
           'semester', report.semestre,
-          'start', $11::text,
-          'end', $12::text
+          'start', report.fontes_snapshot->'periodo'->>'data_inicio',
+          'end', report.fontes_snapshot->'periodo'->>'data_fim'
         ) FROM public.relatorios_descritivos report WHERE report.id = $5) AS reporting_period,
         (SELECT json_build_object(
           'reportId', report.id,
@@ -287,6 +307,7 @@ async function validatePilotDescriptive(): Promise<void> {
     recordCountChecks(actual)
     recordContractChecks(actual)
     recordScopeChecks(actual)
+    recordSnapshotChecks(actual)
     recordPeriodAndIssuerChecks(actual)
 
     console.info(`PILOT_DESCRIPTIVE_VALIDATION_RECEIPT: ${JSON.stringify(actual)}`)

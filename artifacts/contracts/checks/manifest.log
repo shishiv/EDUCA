@@ -1,0 +1,26 @@
+
+ RUN  v4.1.10 /root/.treehouse/educa-7c556a/1/educa/app
+
+ ❯ tests/unit/e2e/general-playwright-manifest.test.ts (8 tests | 1 failed) 27454ms
+     × keeps specialized tests out of the general runner (pilot=false) 5083ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/e2e/general-playwright-manifest.test.ts > general Playwright manifest > keeps specialized tests out of the general runner (pilot=false)
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/e2e/general-playwright-manifest.test.ts:29:28
+     27|
+     28| describe('general Playwright manifest', () => {
+     29|   it.each(['false', 'true'])('keeps specialized tests out of the gener…
+       |                            ^
+     30|       const manifest = listManifest('playwright.config.ts', { PILOT_MO…
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  08:55:26
+   Duration  29.40s (transform 239ms, setup 302ms, import 105ms, tests 27.45s, environment 1.09s)

@@ -1,0 +1,39 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /root/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0
+
+
+> educa@1.0.0 build /root/.treehouse/educa-7c556a/1/educa/app
+> next build --webpack
+
+▲ Next.js 16.3.0 (webpack)
+✓ Running next.config.js took 206ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+  Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ Compiled successfully in 82s
+  Running TypeScript ...
+.next/types/app/api/school-settings/academic-year/route.ts(44,7): error TS2344: Type '{ __tag__: "GET"; __param_position__: "first"; __param_type__: Request | undefined; }' does not satisfy the constraint 'ParamCheck<NextRequest | Request>'.
+  Types of property '__param_type__' are incompatible.
+    Type 'Request | undefined' is not assignable to type 'NextRequest | Request'.
+      Type 'undefined' is not assignable to type 'NextRequest | Request'.
+Failed to type check.
+
+ ELIFECYCLE  Command failed with exit code 1.

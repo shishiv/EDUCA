@@ -195,6 +195,12 @@ INSERT INTO public.escolas(id, codigo, nome, tipo, ativo)
 VALUES ('$SCHOOL_ID', 'C04-CONCURRENCY', 'Escola C04 concorrência', 'creche', true)
 ON CONFLICT (id) DO UPDATE
 SET codigo = EXCLUDED.codigo, nome = EXCLUDED.nome, tipo = EXCLUDED.tipo, ativo = EXCLUDED.ativo;
+RESET ROLE;
+INSERT INTO public.anos_letivos(escola_id,ano,data_inicio,data_fim,periodos)
+VALUES ('$SCHOOL_ID',2026,'2026-01-01','2026-12-31',
+ '[{"chave":"primeiro","nome":"Período sintético concorrência","data_inicio":"2026-01-01","data_fim":"2026-12-31"}]')
+ON CONFLICT (escola_id,ano) DO UPDATE SET periodos=EXCLUDED.periodos;
+SET LOCAL ROLE service_role;
 INSERT INTO public.users(id, nome, email, tipo_usuario, escola_id, ativo)
 VALUES ('$TEACHER_ID', 'Professora C04 concorrência', 'professora.concorrencia.c04@synthetic.invalid', 'professor', '$SCHOOL_ID', true)
 ON CONFLICT (id) DO UPDATE
@@ -341,9 +347,47 @@ SQL
   echo 'C04_CONCURRENCY_GREEN_FINALIZE_FIRST: source link waited and was rejected after finalization'
 }
 
+run_source_edit_during_capture() {
+  local held_app='narrative_source_edit_held'
+  local finalize_app='narrative_source_edit_finalize'
+  prepare_fixture
+  open_held_session "$held_app" "$TMP_DIR/source-edit-held.log"
+  send_held_sql <<SQL
+BEGIN;
+SET LOCAL statement_timeout = '15s';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '$TEACHER_ID', true);
+UPDATE public.vivencias SET descricao = 'Fonte sintética editada em outra transação durante a captura.'
+WHERE id = '$VIVENCIA_LINK_FIRST_ID';
+SQL
+  wait_for_held_idle "$held_app"
+  start_one_shot "$finalize_app" "$TMP_DIR/source-edit-finalize.log" <<SQL
+BEGIN;
+SET LOCAL statement_timeout = '15s';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '$TEACHER_ID', true);
+UPDATE public.relatorios_descritivos SET status='finalizado' WHERE id='$REPORT_LINK_FIRST_ID';
+COMMIT;
+SQL
+  wait_for_one_shot_exit "$finalize_app"
+  wait_one_shot
+  [[ "$ONE_STATUS" -eq 0 ]] || fail 'concurrent snapshot finalization failed'
+  release_held_session
+  local verified
+  verified=$("${psql_args[@]}" -Atqc "SELECT
+    r.fontes_snapshot->'fontes'->0->>'descricao' = 'Vivência sintética para vínculo iniciado antes da finalização.'
+    AND v.descricao = 'Fonte sintética editada em outra transação durante a captura.'
+    AND r.fontes_snapshot->'fontes'->0->>'id' = v.id::text
+    FROM public.relatorios_descritivos r JOIN public.vivencias v ON v.id='$VIVENCIA_LINK_FIRST_ID'
+    WHERE r.id='$REPORT_LINK_FIRST_ID';")
+  [[ "$verified" == t ]] || fail 'snapshot mixed an uncommitted source version with the finalization'
+  echo 'NARRATIVE_CONCURRENT_CAPTURE_OK: committed source version captured atomically; later source commit did not rewrite it'
+}
+
 prepare_fixture
 run_link_first
 run_finalize_first
+if [[ "$MODE" == guard ]]; then run_source_edit_during_capture; fi
 
 if [[ "$MODE" == expect-race ]]; then
   echo 'C04_DESCRIPTIVE_REPORT_CONCURRENCY_RED_REPRODUCED'

@@ -1,0 +1,187 @@
+LOGO DA ESCOLA
+espaço reservado
+cole aqui a logo oficial
+
+Relatório Descritivo
+Educação Infantil · documento gerado pela plataforma EDUCA
+ESCOLA
+
+Escola Descritiva Sintética
+
+CÓDIGO DA ESCOLA
+
+PILOT-DESC
+
+TURMA
+
+Pré II Sintético · Pré II
+
+PERÍODO DE REPORTE
+
+1 Semestre de 2026
+
+ALUNO(A)
+
+Criança Descritiva Sintética
+
+NASCIMENTO
+
+21/03/2021
+
+PROFESSOR(A)
+
+Professora Descritiva Sintética
+
+VIVÊNCIAS
+CAPTURADAS
+
+1
+
+Limite de uso
+Este é um relatório operacional de ensaio piloto sintético local. Não é documento legal, emissão municipal oficial,
+assinatura, certificado, comprovação de conformidade ou exportação Educacenso.
+
+Proveniência operacional da simulação
+CAPTURA NO BANCO
+
+2026-09-14T09:04:45.64685+00:00
+
+AUTOR DA FINALIZAÇÃO
+
+52e1ce31-52ff-4442-bb05-a6f253461ebc
+
+AMBIENTE
+
+local synthetic pilot rehearsal
+
+REVISÃO DE ORIGEM
+
+6a534024f0f664df151e4c050451b07d52953
+0b3
+
+ESCOPO AUTORIZADO
+
+Escola Descritiva Sintética / Pré II Sintético ·
+Pré II
+
+PERÍODO DE REPORTE
+
+1 Semestre de 2026 · 01/02 - 31/07
+
+FONTE CANÔNICA
+
+public.vivencias via
+relatorios_descritivos.fontes_snapshot
+(vivencias-v1)
+
+LINHAS DA FONTE
+
+1
+
+VERSÃO DA CAPTURA
+
+vivencias-v1 · SHA-256/postgresql-jsonb-v1
+
+EMISSOR RESPONSÁVEL
+
+Professora Descritiva Sintética · perfil
+professor
+
+ATOR AUTENTICADO
+
+52e1ce31-52ff-4442-bb05-a6f253461ebc ·
+professora.descritivo@synthetic.invalid
+
+CONTEXTO DO
+RELATÓRIO
+
+28000000-0000-0000-0000-000000000001
+· professor
+52e1ce31-52ff-4442-bb05-a6f253461ebc
+
+FINGERPRINT DA FONTE
+
+04348836a09723193df14c84c4ba786f310c182653cd198dc92d55b5161db7e8
+
+Desenvolvimento da criança
+Campo de experiência
+
+Registro descritivo
+
+O eu, o outro e o nos
+
+A criança sintética participa das rodas de conversa, reconhece colegas e demonstra
+autonomia progressiva nas interações cotidianas.
+
+Corpo, gestos e
+movimentos
+
+A criança sintética explora trajetos, movimentos e jogos corporais com curiosidade,
+respeitando os combinados do grupo.
+
+Tracos, sons, cores e
+formas
+
+A criança sintética combina traços, cores e sons para comunicar ideias,
+experimentando materiais com interesse e cuidado.
+
+Escuta, fala, pensamento e
+imaginacao
+
+A criança sintética amplia a escuta, organiza relatos e cria hipóteses durante
+conversas, histórias e brincadeiras.
+
+Espacos, tempos,
+quantidades, relacoes e
+transformacoes
+
+A criança sintética compara quantidades, observa transformações e usa referências
+de espaço e tempo em situações de investigação.
+
+Observações gerais
+
+EDUCA - Sistema de Gestão Escolar · documento gerado pela plataforma
+
+Página 1 de 2
+
+
+LOGO DA ESCOLA
+espaço reservado
+cole aqui a logo oficial
+
+Registro integralmente sintético para o ensaio local de emissão bounded do relatório descritivo.
+
+Vivências capturadas no período
+Data /
+Campos
+
+Descrição / Observações
+
+Fonte / Professor
+
+Versão da fonte
+
+10/03 · eu,
+corpo
+
+A criança sintética
+compartilhou descobertas e
+explorou movimentos com
+os colegas.
+Vivência sintética do ensaio
+narrativo.
+
+29000000-0000-0000-0000-00000000000
+1
+52e1ce31-52ff-4442-bb05-a6f253461ebc
+
+2026-08-10T12:00:00+00:00
+
+Professora Descritiva Sintética
+Professor(a)
+
+EDUCA - Sistema de Gestão Escolar · documento gerado pela plataforma
+
+Coordenação Pedagógica
+
+Página 2 de 2

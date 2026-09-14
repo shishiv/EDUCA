@@ -97,6 +97,16 @@ VALUES (
   'd4100000-0000-4000-8000-000000000101'
 );
 
+INSERT INTO public.anos_letivos(escola_id,ano,data_inicio,data_fim,periodos)
+VALUES ('d4000000-0000-4000-8000-000000000101',2026,'2026-01-01','2026-12-31',
+ '[{"chave":"primeiro","nome":"Período sintético finalização","data_inicio":"2026-01-01","data_fim":"2026-12-31"}]')
+ON CONFLICT (escola_id,ano) DO UPDATE SET periodos=EXCLUDED.periodos;
+INSERT INTO public.vivencias(escola_id,aluno_id,matricula_id,turma_id,professor_id,data_vivencia,campos_experiencia,descricao,created_by,updated_by)
+SELECT 'd4000000-0000-4000-8000-000000000101', aluno_id, id, turma_id,
+ 'd4100000-0000-4000-8000-000000000101','2026-09-01',ARRAY['eu'],'Fonte sintética para finalização direta e service role.',
+ 'd4100000-0000-4000-8000-000000000101','d4100000-0000-4000-8000-000000000101'
+FROM public.matriculas WHERE id IN ('d4400000-0000-4000-8000-000000000102','d4400000-0000-4000-8000-000000000103');
+
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', 'd4100000-0000-4000-8000-000000000101', true);
 

@@ -1,0 +1,8 @@
+
+ RUN  v4.1.10 /root/.treehouse/educa-7c556a/1/educa/app
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  09:00:23
+   Duration  23.23s (transform 153ms, setup 237ms, import 92ms, tests 21.16s, environment 1.18s)

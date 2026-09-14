@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Tables } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { loadNarrativePreview, narrativeSnapshotSchema } from '@/lib/reports/narrative-sources'
 import type { CampoType, Vivencia } from '@/types/diario-infantil'
 
 type VivenciaRow = Tables<'vivencias'>
@@ -109,32 +110,14 @@ export class VivenciasApiService {
   }
 
   async getByReport(reportId: string): Promise<Vivencia[]> {
-    const { data: sources, error: sourceError } = await this.supabase
-      .from('relatorios_descritivos_vivencias')
-      .select('vivencia_id')
-      .eq('relatorio_id', reportId)
-
-    if (sourceError) {
-      logger.error('Error fetching vivencia report sources', sourceError, { feature: 'vivencias', action: 'list_report_sources' })
-      throw sourceError
+    const { data: report, error } = await this.supabase.from('relatorios_descritivos')
+      .select('status,fontes_snapshot,matricula_id,ano_letivo,semestre').eq('id', reportId).maybeSingle()
+    if (error) throw error
+    if (!report) return []
+    if (report.status === 'finalizado') {
+      return report.fontes_snapshot === null ? [] : narrativeSnapshotSchema.parse(report.fontes_snapshot).fontes
     }
-
-    const vivenciaIds = (sources ?? []).map((source) => source.vivencia_id)
-    if (vivenciaIds.length === 0) return []
-
-    const { data, error } = await this.supabase
-      .from('vivencias')
-      .select(VIVENCIA_COLUMNS)
-      .in('id', vivenciaIds)
-      .order('data_vivencia', { ascending: false })
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      logger.error('Error fetching report vivencias', error, { feature: 'vivencias', action: 'list_report_vivencias' })
-      throw error
-    }
-
-    return (data ?? []).map(toVivencia)
+    return (await loadNarrativePreview(this.supabase, report.matricula_id, report.ano_letivo, report.semestre)).fontes
   }
 
   async getById(id: string): Promise<Vivencia | null> {

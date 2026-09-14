@@ -182,8 +182,7 @@ async function readVivencias(
 ): Promise<Vivencia[]> {
   if (query.report_id) {
     assertReadableRole(context.actor)
-    const data = await context.service.getByReport(query.report_id)
-    return data.slice(0, query.limit)
+    return context.service.getByReport(query.report_id)
   }
 
   if (query.turma_id) {

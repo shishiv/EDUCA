@@ -13,6 +13,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
 const academicYearSchema = z.object({
   startDate: isoDate,
   endDate: isoDate,
+  year: z.number().int().min(1).max(9999).optional(),
 }).strict().refine(value => value.startDate <= value.endDate)
 
 interface SchoolAcademicYearContext {
@@ -45,9 +46,12 @@ export function createSchoolAcademicYearRouteHandlers(
   dependencies: SchoolAcademicYearHandlerDependencies = productionDependencies,
 ) {
   return {
-    async GET(): Promise<NextResponse> {
+    async GET(request?: Request): Promise<NextResponse> {
       try {
-        const { schoolId, year } = await schoolContext(dependencies)
+        const context = await schoolContext(dependencies)
+        const requestedYear = request ? new URL(request.url).searchParams.get('year') : null
+        const year = requestedYear === null ? context.year : z.coerce.number().int().min(1).max(9999).parse(requestedYear)
+        const schoolId = context.schoolId
         const service = createAcademicYearService(await dependencies.createClient())
         const academicYear = await service.get(schoolId, year)
         if (!academicYear) {
@@ -79,7 +83,7 @@ export function createSchoolAcademicYearRouteHandlers(
         const service = createAcademicYearService(await dependencies.createClient())
         const academicYear = await service.set({
           schoolId,
-          year,
+          year: parsed.data.year ?? year,
           startDate: parsed.data.startDate,
           endDate: parsed.data.endDate,
         })

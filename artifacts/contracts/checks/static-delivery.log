@@ -1,0 +1,15 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /root/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0

@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import autoTable from 'jspdf-autotable'
+import autoTable, { type RowInput } from 'jspdf-autotable'
 import { formatDateBR, formatDateShortBR } from '@/lib/date-utils'
 import { createPDFDocument } from '@/lib/export/pdf-utils'
 import type { DescriptiveReportEmissionData } from '@/lib/reports/descriptive-report-emission'
@@ -173,7 +173,7 @@ function drawDescriptiveReportTitle(
     ['Escola', data.escola.nome, 'Código da escola', data.escola.codigo ?? 'Não cadastrado'],
     ['Turma', `${data.turma.nome} · ${data.turma.serie}`, 'Período de reporte', data.periodo.label],
     ['Aluno(a)', data.student.nome, 'Nascimento', formatDateBR(data.student.dataNascimento)],
-    ['Professor(a)', data.professor.nome, 'Registros de conteúdo', String(data.conteudoMinistrado.aulas.length)],
+    ['Professor(a)', data.professor.nome, 'Vivências capturadas', String(data.vivencias.length)],
   ]
 
   autoTable(doc, {
@@ -234,6 +234,7 @@ function drawDescriptiveReportProvenance(
 ): number {
   const provenanceY = drawDescriptiveReportSectionTitle(doc, 'Proveniência operacional da simulação', startY + 8)
   const rows = [
+    ['Captura no banco', data.provenance.capturedAt, 'Autor da finalização', data.provenance.capturedBy],
     [
       'Ambiente',
       data.provenance.environment,
@@ -253,8 +254,8 @@ function drawDescriptiveReportProvenance(
       String(data.provenance.canonicalRowCount),
     ],
     [
-      'Fingerprint da fonte',
-      `${data.provenance.fingerprintAlgorithm}: ${data.provenance.canonicalContentFingerprint}`,
+      'Versão da captura',
+      `${data.provenance.snapshotVersion} · ${data.provenance.fingerprintAlgorithm}`,
       'Emissor responsável',
       `${data.issuer.actorName} · perfil ${data.issuer.actorRole}`,
     ],
@@ -268,12 +269,18 @@ function drawDescriptiveReportProvenance(
 
   autoTable(doc, {
     startY: provenanceY,
-    body: rows.map(row => [
-      { content: row[0].toUpperCase(), styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
-      { content: row[1], styles: { textColor: REPORT_COLORS.ink } },
-      { content: row[2].toUpperCase(), styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
-      { content: row[3], styles: { textColor: REPORT_COLORS.ink } },
-    ]),
+    body: [
+      ...rows.map<RowInput>(row => [
+        { content: row[0].toUpperCase(), styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
+        { content: row[1], styles: { textColor: REPORT_COLORS.ink } },
+        { content: row[2].toUpperCase(), styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
+        { content: row[3], styles: { textColor: REPORT_COLORS.ink } },
+      ]),
+      [
+        { content: 'FINGERPRINT DA FONTE', styles: { fontStyle: 'bold', textColor: REPORT_COLORS.smoke } },
+        { content: data.provenance.canonicalContentFingerprint, colSpan: 3, styles: { textColor: REPORT_COLORS.ink } },
+      ],
+    ],
     theme: 'plain',
     styles: {
       font: 'Inter',
@@ -347,13 +354,13 @@ function drawDescriptiveReportSignatures(
 /**
  * Renders the bounded descriptive report as a portable A4 PDF. The visual
  * structure follows the PR14 printable-report wireframe and content evidence
- * comes only from the supplied canonical conteudo_aula report.
+ * comes only from the immutable Vivência snapshot captured at finalization.
  */
 export async function renderDescriptiveReportPdf(
   data: DescriptiveReportEmissionData
 ): Promise<ArrayBuffer> {
-  if (data.conteudoMinistrado.aulas.length === 0) {
-    throw new Error('DESCRIPTIVE_REPORT_PDF_CONTENT_EMPTY: canonical content is required')
+  if (data.vivencias.length === 0) {
+    throw new Error('DESCRIPTIVE_REPORT_PDF_SOURCES_EMPTY: captured Vivências are required')
   }
 
   const assets = await loadDescriptiveReportPdfAssets()
@@ -439,15 +446,15 @@ export async function renderDescriptiveReportPdf(
     currentY = drawDescriptiveReportPageHeader(doc, assets)
   }
 
-  currentY = drawDescriptiveReportSectionTitle(doc, 'Conteúdo ministrado no período', currentY + 8)
+  currentY = drawDescriptiveReportSectionTitle(doc, 'Vivências capturadas no período', currentY + 8)
   autoTable(doc, {
     startY: currentY,
-    head: [['Data', 'Conteúdo ministrado', 'Objetivo', 'Habilidades BNCC']],
-    body: data.conteudoMinistrado.aulas.map(aula => [
-      formatDateShortBR(aula.dataAula),
-      aula.tema,
-      aula.objetivo,
-      aula.habilidadesBncc.join(', ') || 'Não registrado',
+    head: [['Data / Campos', 'Descrição / Observações', 'Fonte / Professor', 'Versão da fonte']],
+    body: data.vivencias.map(vivencia => [
+      `${formatDateShortBR(vivencia.data_vivencia)} · ${vivencia.campos_experiencia.join(', ')}`,
+      [vivencia.descricao, vivencia.observacoes].filter(Boolean).join('\n'),
+      `${vivencia.id}\n${vivencia.professor_id}`,
+      vivencia.updated_at,
     ]),
     theme: 'grid',
     styles: {

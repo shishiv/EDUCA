@@ -207,6 +207,7 @@ export type Database = {
           data_inicio: string
           escola_id: string
           id: string
+          periodos: Json
           updated_at: string
         }
         Insert: {
@@ -216,6 +217,7 @@ export type Database = {
           data_inicio: string
           escola_id: string
           id?: string
+          periodos?: Json
           updated_at?: string
         }
         Update: {
@@ -225,6 +227,7 @@ export type Database = {
           data_inicio?: string
           escola_id?: string
           id?: string
+          periodos?: Json
           updated_at?: string
         }
         Relationships: [
@@ -2374,6 +2377,7 @@ export type Database = {
           created_by: string | null
           finalizado_em: string | null
           finalizado_por: string | null
+          fontes_snapshot: Json | null
           id: string
           matricula_id: string
           observacoes_gerais: string | null
@@ -2394,6 +2398,7 @@ export type Database = {
           created_by?: string | null
           finalizado_em?: string | null
           finalizado_por?: string | null
+          fontes_snapshot?: Json | null
           id?: string
           matricula_id: string
           observacoes_gerais?: string | null
@@ -2414,6 +2419,7 @@ export type Database = {
           created_by?: string | null
           finalizado_em?: string | null
           finalizado_por?: string | null
+          fontes_snapshot?: Json | null
           id?: string
           matricula_id?: string
           observacoes_gerais?: string | null
@@ -4098,6 +4104,7 @@ export type Database = {
           data_inicio: string
           escola_id: string
           id: string
+          periodos: Json
           updated_at: string
         }[]
         SetofOptions: {
@@ -4218,6 +4225,10 @@ export type Database = {
       pilot_teacher_owns_class: {
         Args: { target_class_id: string }
         Returns: boolean
+      }
+      preview_descriptive_report_sources: {
+        Args: { p_ano: number; p_matricula_id: string; p_semestre: string }
+        Returns: Json
       }
       record_governed_management_audit: {
         Args: {
@@ -4345,6 +4356,26 @@ export type Database = {
           data_inicio: string
           escola_id: string
           id: string
+          periodos: Json
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "anos_letivos"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      set_school_periods: {
+        Args: { p_ano: number; p_escola_id: string; p_periodos: Json }
+        Returns: {
+          ano: number
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          escola_id: string
+          id: string
+          periodos: Json
           updated_at: string
         }[]
         SetofOptions: {

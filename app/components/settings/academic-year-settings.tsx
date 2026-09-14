@@ -8,11 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SchoolPeriodSettings } from './school-period-settings'
+import { schoolPeriodsSchema, type SchoolPeriod } from '@/lib/services/school-periods'
 
 const configuredAcademicYearSchema = z.object({
   ano: z.number(),
   data_inicio: z.string(),
   data_fim: z.string(),
+  periodos: schoolPeriodsSchema.optional(),
 })
 
 const academicYearResponseSchema = z.object({
@@ -36,11 +39,12 @@ async function readAcademicYearResponse(response: Response): Promise<AcademicYea
 async function saveAcademicYearDates(
   startDate: string,
   endDate: string,
+  year: number,
 ): Promise<AcademicYearSaveResult> {
   const response = await fetch('/api/school-settings/academic-year', {
     method: 'PATCH',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ startDate, endDate }),
+    body: JSON.stringify({ startDate, endDate, year }),
   })
   const body = await readAcademicYearResponse(response)
   if (response.ok && body?.academicYear) {
@@ -52,7 +56,9 @@ async function saveAcademicYearDates(
 
 export function AcademicYearSettings() {
   const t = useTranslations('platform.settings')
-  const [year, setYear] = useState<number | null>(null)
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [periods, setPeriods] = useState<SchoolPeriod[]>([])
+  const [persisted, setPersisted] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [loading, setLoading] = useState(true)
@@ -64,12 +70,21 @@ export function AcademicYearSettings() {
     setLoading(true)
     setError('')
     try {
-      const response = await fetch('/api/school-settings/academic-year')
+      const response = await fetch(`/api/school-settings/academic-year?year=${year}`)
       const body = await readAcademicYearResponse(response)
-      if (!response.ok || !body?.academicYear) {
-        throw new Error(response.status === 403 ? t('academicYearDenied') : body?.error || t('academicYearLoadError'))
+      if (response.status === 404) {
+        setStartDate('')
+        setEndDate('')
+        setPeriods([])
+        setPersisted(false)
+        setError('Ano ainda não cadastrado. Informe e salve as datas antes de configurar os períodos.')
+        return
       }
-      setYear(body.academicYear.ano)
+      if (!response.ok || !body?.academicYear) {
+        throw new Error(t('academicYearLoadError'))
+      }
+      setPersisted(true)
+      setPeriods(body.academicYear.periodos ?? [])
       setStartDate(body.academicYear.data_inicio)
       setEndDate(body.academicYear.data_fim)
     } catch (caught) {
@@ -77,7 +92,7 @@ export function AcademicYearSettings() {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [t, year])
 
   useEffect(() => {
     void load()
@@ -93,11 +108,13 @@ export function AcademicYearSettings() {
 
     setSaving(true)
     try {
-      const result = await saveAcademicYearDates(startDate, endDate)
+      const result = await saveAcademicYearDates(startDate, endDate, year)
       if (result.kind === 'saved') {
         setStartDate(result.academicYear.data_inicio)
         setEndDate(result.academicYear.data_fim)
         setSuccess(t('academicYearSaved'))
+        setPersisted(true)
+        setPeriods(result.academicYear.periodos ?? [])
       } else {
         setError(result.kind === 'denied' ? t('academicYearDenied') : result.error || t('academicYearSaveError'))
       }
@@ -118,16 +135,17 @@ export function AcademicYearSettings() {
         <CardDescription>{t('academicYearDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        <div><Label htmlFor="academic-year-number">Ano letivo</Label><Input id="academic-year-number" type="number" min="1" max="9999" value={year} onChange={event => { const value = Number(event.target.value); if (value > 0 && value <= 9999) setYear(value) }} /></div>
         {loading ? (
           <p className="text-sm text-muted-foreground">{t('academicYearLoading')}</p>
-        ) : error && year === null ? (
+        ) : error && !startDate && persisted ? (
           <div className="space-y-3">
             <p role="alert" className="text-sm text-red-600">{error}</p>
             <Button type="button" variant="outline" onClick={() => void load()}>{t('retry')}</Button>
           </div>
         ) : (
           <form className="space-y-5" onSubmit={event => { event.preventDefault(); void save() }}>
-            <p className="text-sm font-medium">{t('academicYearLabel', { year: year ?? '' })}</p>
+            <p className="text-sm font-medium">{t('academicYearLabel', { year })}</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="academic-year-start">{t('academicYearStart')}</Label>
@@ -146,6 +164,7 @@ export function AcademicYearSettings() {
             </Button>
           </form>
         )}
+        {!loading && persisted && <SchoolPeriodSettings key={`${year}-${JSON.stringify(periods)}`} year={year} initialPeriods={periods} />}
       </CardContent>
     </Card>
   )

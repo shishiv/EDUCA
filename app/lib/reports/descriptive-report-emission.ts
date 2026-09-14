@@ -1,403 +1,115 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import type { Database, Tables } from '@/types/database'
 import {
-  PILOT_DESCRIPTIVE_SEED_MARKER,
-  PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
-  PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
-  PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
-  PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM,
-  PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
-  PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
-  requirePilotDescriptiveReleaseRevision,
-  PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY,
+  PILOT_DESCRIPTIVE_SEED_MARKER, PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
+  PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY, PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
+  PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT, PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+  requirePilotDescriptiveReleaseRevision, PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY,
 } from '@/lib/pilot/descriptive-report-demo-contract'
-import { fingerprintCanonicalContentRows } from '@/lib/pilot/descriptive-report-provenance'
 import type { PilotActor } from '@/lib/pilot/pilot-server-auth'
-import {
-  EXPERIENCE_FIELDS_CONFIG,
-  SEMESTER_CONFIG,
-  formatSemester,
-  type SemestreType,
-} from '@/types/descriptive-report'
-import {
-  generateContentReport,
-  type ContentReport,
-} from '@/lib/reports/content-reports'
+import { EXPERIENCE_FIELDS_CONFIG } from '@/types/descriptive-report'
+import { narrativeSnapshotSchema, type NarrativeSnapshot } from './narrative-sources'
 
-type DescriptiveReportRow = Database['public']['Tables']['relatorios_descritivos']['Row']
-
-/** A stable, client-safe failure for bounded descriptive-report PDF emission. */
 export class DescriptiveReportEmissionError extends Error {
-  constructor(
-    public readonly code: string,
-    public readonly status: number
-  ) {
+  constructor(public readonly code: string, public readonly status: number) {
     super(code)
     this.name = 'DescriptiveReportEmissionError'
   }
 }
 
-/** A finalized field that the PDF prints from the persisted descriptive report. */
-export interface DescriptiveReportEmissionField {
-  label: string
-  value: string
-}
-
-/** The only data shape accepted by the descriptive-report PDF renderer. */
-export interface DescriptiveReportEmissionData {
-  report: {
-    id: string
-    anoLetivo: number
-    semestre: SemestreType
-    observacoesGerais: string | null
-    fields: DescriptiveReportEmissionField[]
-  }
-  student: {
-    id: string
-    nome: string
-    dataNascimento: string
-  }
-  turma: {
-    id: string
-    nome: string
-    serie: string
-  }
-  escola: {
-    id: string
-    nome: string
-    codigo: string | null
-  }
-  professor: {
-    id: string
-    nome: string
-  }
-  periodo: {
-    inicio: string
-    fim: string
-    label: string
-  }
-  conteudoMinistrado: ContentReport
-  provenance: {
-    releaseRevision: string
-    environment: typeof PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT
-    canonicalSource: typeof PILOT_DESCRIPTIVE_CANONICAL_SOURCE
-    fingerprintAlgorithm: typeof PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM
-    canonicalRowCount: number
-    canonicalContentFingerprint: string
-  }
-  issuer: {
-    actorId: string
-    actorName: string
-    actorRole: PilotActor['role']
-    actorEmail: string | null
-    reportId: string
-    reportProfessorId: string
-  }
-}
-
-/** Calculates the canonical semester window used to query taught content. */
-export function getDescriptiveReportContentPeriod(
-  anoLetivo: number,
-  semestre: string
-): DescriptiveReportEmissionData['periodo'] {
-  if (!Number.isInteger(anoLetivo) || anoLetivo < 1) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_PERIOD_INVALID', 422)
-  }
-
-  const semester = requireSemester(semestre)
-  const config = SEMESTER_CONFIG[semester]
-  const lastDay = new Date(Date.UTC(anoLetivo, config.endMonth, 0))
-
-  return {
-    inicio: `${anoLetivo}-${String(config.startMonth).padStart(2, '0')}-01`,
-    fim: lastDay.toISOString().slice(0, 10),
-    label: formatSemester(semester, anoLetivo),
-  }
-}
-
-function requireSemester(semester: string): SemestreType {
-  if (semester === 'primeiro' || semester === 'segundo') return semester
-  throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_PERIOD_INVALID', 422)
-}
-
-function resolveFinalizedDescriptiveReportFields(
-  report: DescriptiveReportRow
-): DescriptiveReportEmissionField[] {
-  return EXPERIENCE_FIELDS_CONFIG.map(field => {
-    const value = report[field.key]
-    if (!value || value.trim().length === 0) {
-      throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_FIELDS_INCOMPLETE', 422)
-    }
-
-    return { label: field.fullName, value: value.trim() }
-  })
-}
-
-type EmissionReport = Pick<
-  DescriptiveReportRow,
-  'id' | 'ano_letivo' | 'semestre' | 'observacoes_gerais' | 'professor_id'
->
-type EmissionStudent = Pick<
-  Database['public']['Tables']['alunos']['Row'],
-  'id' | 'nome_completo' | 'data_nascimento'
->
-type EmissionClass = Pick<
-  Database['public']['Tables']['turmas']['Row'],
-  'id' | 'nome' | 'serie' | 'escola_id'
->
-type EmissionSchool = Pick<
-  Database['public']['Tables']['escolas']['Row'],
-  'id' | 'nome' | 'codigo'
->
-type EmissionTeacher = Pick<Database['public']['Tables']['users']['Row'], 'id' | 'nome'>
-
+type Report = Tables<'relatorios_descritivos'>
 export interface DescriptiveReportEmissionSource {
-  report: EmissionReport
-  fields: DescriptiveReportEmissionField[]
-  student: EmissionStudent
-  turma: Pick<EmissionClass, 'id' | 'nome' | 'serie'>
-  escola: EmissionSchool
-  professor: EmissionTeacher
-  periodo: DescriptiveReportEmissionData['periodo']
-  content: ContentReport
+  report: Report
+  snapshot: NarrativeSnapshot
+  student: Pick<Tables<'alunos'>, 'id' | 'nome_completo' | 'data_nascimento'>
+  turma: Pick<Tables<'turmas'>, 'id' | 'nome' | 'serie'>
+  escola: Pick<Tables<'escolas'>, 'id' | 'nome' | 'codigo'>
+  professor: Pick<Tables<'users'>, 'id' | 'nome'>
   releaseRevision: string
   actor: PilotActor
 }
 
-export function buildDescriptiveReportEmissionData(
-  source: DescriptiveReportEmissionSource
-): DescriptiveReportEmissionData {
+export function buildDescriptiveReportEmissionData(source: DescriptiveReportEmissionSource) {
+  const { report, snapshot } = source
   return {
     report: {
-      id: source.report.id,
-      anoLetivo: source.report.ano_letivo,
-      semestre: requireSemester(source.report.semestre),
-      observacoesGerais: source.report.observacoes_gerais?.trim() || null,
-      fields: source.fields,
+      id: report.id, anoLetivo: report.ano_letivo, semestre: report.semestre,
+      observacoesGerais: report.observacoes_gerais?.trim() || null,
+      fields: EXPERIENCE_FIELDS_CONFIG.map(field => ({ label: field.fullName, value: report[field.key]?.trim() ?? '' })),
     },
-    student: {
-      id: source.student.id,
-      nome: source.student.nome_completo,
-      dataNascimento: source.student.data_nascimento,
-    },
-    turma: {
-      id: source.turma.id,
-      nome: source.turma.nome,
-      serie: source.turma.serie,
-    },
-    escola: {
-      id: source.escola.id,
-      nome: source.escola.nome,
-      codigo: source.escola.codigo,
-    },
-    professor: {
-      id: source.professor.id,
-      nome: source.professor.nome,
-    },
-    periodo: source.periodo,
-    conteudoMinistrado: source.content,
+    student: { id: source.student.id, nome: source.student.nome_completo, dataNascimento: source.student.data_nascimento },
+    turma: source.turma,
+    escola: source.escola,
+    professor: source.professor,
+    periodo: { inicio: snapshot.periodo.data_inicio, fim: snapshot.periodo.data_fim, label: snapshot.periodo.nome },
+    vivencias: snapshot.fontes,
     provenance: {
       releaseRevision: source.releaseRevision,
       environment: PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT,
       canonicalSource: PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
-      fingerprintAlgorithm: PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM,
-      canonicalRowCount: source.content.aulas.length,
-      canonicalContentFingerprint: fingerprintCanonicalContentRows(source.content.aulas),
+      fingerprintAlgorithm: snapshot.algoritmo,
+      snapshotVersion: snapshot.versao,
+      capturedAt: snapshot.capturado_em,
+      capturedBy: snapshot.capturado_por,
+      canonicalRowCount: snapshot.fontes.length,
+      canonicalContentFingerprint: snapshot.fingerprint,
     },
     issuer: {
-      actorId: source.actor.id,
-      actorName: source.actor.name,
-      actorRole: source.actor.role,
-      actorEmail: source.actor.email,
-      reportId: source.report.id,
-      reportProfessorId: source.report.professor_id,
+      actorId: source.actor.id, actorName: source.actor.name, actorRole: source.actor.role,
+      actorEmail: source.actor.email, reportId: report.id, reportProfessorId: report.professor_id,
     },
   }
 }
+export type DescriptiveReportEmissionData = ReturnType<typeof buildDescriptiveReportEmissionData>
 
-async function requireDescriptiveReportSeed(
-  supabase: SupabaseClient<Database>,
-  releaseRevision: string
-): Promise<void> {
-  const { data: seedConfigs, error } = await supabase
-    .from('configs')
-    .select('chave,valor')
-    .in('chave', [
-      PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY,
-      PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
-      PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY,
-      PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
-    ])
-
+async function requireDescriptiveReportSeed(client: SupabaseClient<Database>, releaseRevision: string) {
+  const { data, error } = await client.from('configs').select('chave,valor').in('chave', [
+    PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY, PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY,
+    PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY, PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY,
+  ])
   if (error) throw error
-  const configByKey = new Map((seedConfigs ?? []).map(config => [config.chave, config.valor]))
-  if (configByKey.get(PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY) !== PILOT_DESCRIPTIVE_SEED_MARKER) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_SYNTHETIC_SEED_REQUIRED', 403)
-  }
-  if (configByKey.get(PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY) !== releaseRevision) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_RELEASE_REVISION_MISMATCH', 409)
-  }
-  if (configByKey.get(PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY) !== PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_ENVIRONMENT_INVALID', 403)
-  }
-  if (configByKey.get(PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY) !== PILOT_DESCRIPTIVE_CANONICAL_SOURCE) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CANONICAL_SOURCE_INVALID', 409)
-  }
+  const configs = new Map((data ?? []).map(config => [config.chave, config.valor]))
+  if (configs.get(PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY) !== PILOT_DESCRIPTIVE_SEED_MARKER) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_SYNTHETIC_SEED_REQUIRED', 403)
+  if (configs.get(PILOT_DESCRIPTIVE_RELEASE_REVISION_CONFIG_KEY) !== releaseRevision) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_RELEASE_REVISION_MISMATCH', 409)
+  if (configs.get(PILOT_DESCRIPTIVE_ENVIRONMENT_CONFIG_KEY) !== PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_ENVIRONMENT_INVALID', 403)
+  if (configs.get(PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY) !== PILOT_DESCRIPTIVE_CANONICAL_SOURCE) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CANONICAL_SOURCE_INVALID', 409)
 }
 
-async function loadFinalizedDescriptiveReport(
-  supabase: SupabaseClient<Database>,
-  reportId: string
-): Promise<DescriptiveReportRow> {
-  const { data, error } = await supabase
-    .from('relatorios_descritivos')
-    .select('*')
-    .eq('id', reportId)
-    .maybeSingle()
+export function requireNarrativeSnapshot(report: Report): NarrativeSnapshot {
+  if (report.status !== 'finalizado') throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_NOT_FINALIZED', 409)
+  if (report.fontes_snapshot === null) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_SNAPSHOT_MISSING', 422)
+  const parsed = narrativeSnapshotSchema.safeParse(report.fontes_snapshot)
+  if (!parsed.success) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_SNAPSHOT_INVALID', 422)
+  return parsed.data
+}
 
+function requireRow<T>(data: T | null, error: { message: string } | null): T {
   if (error) throw error
-  if (!data) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_NOT_FOUND', 404)
-  if (data.status !== 'finalizado') {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_NOT_FINALIZED', 409)
-  }
+  if (!data) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
   return data
 }
 
-interface DescriptiveReportContext {
-  student: EmissionStudent
-  turma: EmissionClass
-  escola: EmissionSchool
-  professor: EmissionTeacher
-  content: ContentReport
-}
-
-interface ContextQueryError {
-  message: string
-}
-
-async function loadReportEnrollment(
-  supabase: SupabaseClient<Database>,
-  report: DescriptiveReportRow,
-) {
-  const { data, error } = await supabase
-    .from('matriculas')
-    .select('id,aluno_id,turma_id')
-    .eq('id', report.matricula_id)
-    .maybeSingle()
-
-  if (error) throw error
-  if (!data || data.turma_id !== report.turma_id) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
-  }
-  return data
-}
-
-function throwFirstContextQueryError(errors: Array<ContextQueryError | null>): void {
-  for (const error of errors) {
-    if (error) throw error
-  }
-}
-
-function requireContextValue<T>(value: T | null): T {
-  if (!value) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
-  }
-  return value
-}
-
-function requireContentReport(
-  result: Awaited<ReturnType<typeof generateContentReport>>,
-  turmaId: string,
-): ContentReport {
-  if (result.error || !result.data) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_QUERY_FAILED', 502)
-  }
-  if (result.data.aulas.length === 0) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_EMPTY', 422)
-  }
-  if (result.data.turma?.id !== turmaId) {
-    throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTENT_SCOPE_MISMATCH', 422)
-  }
-  return result.data
-}
-
-async function loadReportSchool(
-  supabase: SupabaseClient<Database>,
-  schoolId: string,
-): Promise<EmissionSchool> {
-  const { data, error } = await supabase
-    .from('escolas')
-    .select('id,nome,codigo')
-    .eq('id', schoolId)
-    .maybeSingle()
-
-  if (error) throw error
-  return requireContextValue(data)
-}
-
-async function loadDescriptiveReportContext(
-  supabase: SupabaseClient<Database>,
-  report: DescriptiveReportRow,
-  periodo: DescriptiveReportEmissionData['periodo']
-): Promise<DescriptiveReportContext> {
-  const matricula = await loadReportEnrollment(supabase, report)
-
-  const [studentResult, turmaResult, professorResult, contentResult] = await Promise.all([
-    supabase.from('alunos').select('id,nome_completo,data_nascimento').eq('id', matricula.aluno_id).maybeSingle(),
-    supabase.from('turmas').select('id,nome,serie,escola_id').eq('id', report.turma_id).maybeSingle(),
-    supabase.from('users').select('id,nome').eq('id', report.professor_id).maybeSingle(),
-    generateContentReport(supabase, {
-      startDate: periodo.inicio,
-      endDate: periodo.fim,
-      turmaId: report.turma_id,
-    }),
-  ])
-
-  throwFirstContextQueryError([
-    studentResult.error,
-    turmaResult.error,
-    professorResult.error,
-  ])
-  const student = requireContextValue(studentResult.data)
-  const turma = requireContextValue(turmaResult.data)
-  const professor = requireContextValue(professorResult.data)
-  const content = requireContentReport(contentResult, report.turma_id)
-  const escola = await loadReportSchool(supabase, turma.escola_id)
-  return {
-    student,
-    turma,
-    professor,
-    escola,
-    content,
-  }
-}
-
-/**
- * Loads one finalized report and its canonical conteudo_aula evidence through
- * the caller's real RLS-scoped Supabase client. It never derives content from
- * legacy session columns or synthetic fallback text.
- */
-export async function loadDescriptiveReportEmissionData(
-  supabase: SupabaseClient<Database>,
-  reportId: string,
-  actor: PilotActor
-): Promise<DescriptiveReportEmissionData> {
+/** Emits only captured narrative evidence using the caller's real RLS client. */
+export async function loadDescriptiveReportEmissionData(client: SupabaseClient<Database>, reportId: string, actor: PilotActor): Promise<DescriptiveReportEmissionData> {
   const releaseRevision = requirePilotDescriptiveReleaseRevision()
-  await requireDescriptiveReportSeed(supabase, releaseRevision)
-  const report = await loadFinalizedDescriptiveReport(supabase, reportId)
-  const fields = resolveFinalizedDescriptiveReportFields(report)
-  const periodo = getDescriptiveReportContentPeriod(report.ano_letivo, report.semestre)
-  const context = await loadDescriptiveReportContext(supabase, report, periodo)
-  return buildDescriptiveReportEmissionData({
-    report,
-    fields,
-    student: context.student,
-    turma: context.turma,
-    escola: context.escola,
-    professor: context.professor,
-    periodo,
-    content: context.content,
-    releaseRevision,
-    actor,
-  })
+  await requireDescriptiveReportSeed(client, releaseRevision)
+  const reportResult = await client.from('relatorios_descritivos').select('*').eq('id', reportId).maybeSingle()
+  if (reportResult.error) throw reportResult.error
+  if (!reportResult.data) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_NOT_FOUND', 404)
+  const report = reportResult.data
+  const snapshot = requireNarrativeSnapshot(report)
+  const enrollmentResult = await client.from('matriculas').select('aluno_id,turma_id').eq('id', report.matricula_id).maybeSingle()
+  const enrollment = requireRow(enrollmentResult.data, enrollmentResult.error)
+  if (enrollment.turma_id !== report.turma_id) throw new DescriptiveReportEmissionError('DESCRIPTIVE_REPORT_CONTEXT_MISSING', 422)
+  const [studentResult, turmaResult, teacherResult] = await Promise.all([
+    client.from('alunos').select('id,nome_completo,data_nascimento').eq('id', enrollment.aluno_id).maybeSingle(),
+    client.from('turmas').select('id,nome,serie,escola_id').eq('id', report.turma_id).maybeSingle(),
+    client.from('users').select('id,nome').eq('id', report.professor_id).maybeSingle(),
+  ])
+  const student = requireRow(studentResult.data, studentResult.error)
+  const turma = requireRow(turmaResult.data, turmaResult.error)
+  const professor = requireRow(teacherResult.data, teacherResult.error)
+  const schoolResult = await client.from('escolas').select('id,nome,codigo').eq('id', turma.escola_id).maybeSingle()
+  const escola = requireRow(schoolResult.data, schoolResult.error)
+  return buildDescriptiveReportEmissionData({ report, snapshot, student, turma, professor, escola, releaseRevision, actor })
 }

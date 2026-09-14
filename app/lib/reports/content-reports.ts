@@ -15,6 +15,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { loadSchoolPeriods, type SchoolPeriod } from '@/lib/services/school-periods';
 import type { Database } from '@/types/database';
 import {
   BNCC_EXPERIENCE_FIELDS,
@@ -52,7 +53,7 @@ export type {
 /**
  * Group date by period type
  */
-function getGroupKey(date: string, groupBy: 'week' | 'month' | 'bimestre'): string {
+function getGroupKey(date: string, groupBy: 'week' | 'month' | 'bimestre', periods: SchoolPeriod[]): string {
   const d = new Date(date);
   const year = d.getFullYear();
 
@@ -69,13 +70,8 @@ function getGroupKey(date: string, groupBy: 'week' | 'month' | 'bimestre'): stri
       return `${year}-${month.toString().padStart(2, '0')}`;
     }
     case 'bimestre': {
-      const month = d.getMonth();
-      let bimestre: number;
-      if (month < 4) bimestre = 1;
-      else if (month < 7) bimestre = 2;
-      else if (month < 10) bimestre = 3;
-      else bimestre = 4;
-      return `${year}-B${bimestre}`;
+      const period = periods.find(item => item.chave.startsWith('bimestre_') && item.data_inicio <= date && item.data_fim >= date);
+      return period?.chave ?? 'unconfigured';
     }
   }
 }
@@ -83,7 +79,7 @@ function getGroupKey(date: string, groupBy: 'week' | 'month' | 'bimestre'): stri
 /**
  * Get period label for display
  */
-function getPeriodLabel(key: string, groupBy: 'week' | 'month' | 'bimestre'): string {
+function getPeriodLabel(key: string, groupBy: 'week' | 'month' | 'bimestre', periods: SchoolPeriod[]): string {
   const months = [
     'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
@@ -99,8 +95,7 @@ function getPeriodLabel(key: string, groupBy: 'week' | 'month' | 'bimestre'): st
       return `${months[parseInt(month, 10) - 1]} de ${year}`;
     }
     case 'bimestre': {
-      const [year, bim] = key.split('-B');
-      return `${bim}º Bimestre de ${year}`;
+      return periods.find(item => item.chave === key)?.nome ?? 'Sem período escolar configurado';
     }
   }
 }
@@ -191,6 +186,7 @@ export async function getContentByPeriod(
     }
 
     const report = reportResult.data;
+    const periods = groupBy === 'bimestre' ? await loadContentSchoolPeriods(supabase, filters.turmaId) : [];
 
     // Group lessons by period
     const groupedMap = new Map<string, {
@@ -199,7 +195,7 @@ export async function getContentByPeriod(
     }>();
 
     for (const aula of report.aulas) {
-      const key = getGroupKey(aula.dataAula, groupBy);
+      const key = getGroupKey(aula.dataAula, groupBy, periods);
 
       if (!groupedMap.has(key)) {
         groupedMap.set(key, { aulas: [], habilidades: new Set() });
@@ -214,7 +210,7 @@ export async function getContentByPeriod(
     const grouped: ContentReportGrouped[] = Array.from(groupedMap.entries())
       .map(([key, value]) => ({
         periodo: key,
-        label: getPeriodLabel(key, groupBy),
+        label: getPeriodLabel(key, groupBy, periods),
         aulas: value.aulas,
         habilidades: Array.from(value.habilidades).sort(),
       }))
@@ -235,6 +231,15 @@ export async function getContentByPeriod(
     logger.error('Error getting content by period', error instanceof Error ? error : errorMessage);
     return { data: null, error: errorMessage };
   }
+}
+
+async function loadContentSchoolPeriods(client: SupabaseClient<Database>, turmaId?: string) {
+  if (!turmaId) throw new Error('Selecione uma turma para agrupar por períodos escolares.');
+  const { data, error } = await client.from('turmas').select('escola_id,ano_letivo').eq('id', turmaId).single();
+  if (error) throw error;
+  const periods = await loadSchoolPeriods(client, data.escola_id, data.ano_letivo);
+  if (!periods.some(period => period.chave.startsWith('bimestre_'))) throw new Error('Períodos escolares não configurados.');
+  return periods;
 }
 
 function countSkillsByLevel(skills: BNNCSkillUsage[]) {

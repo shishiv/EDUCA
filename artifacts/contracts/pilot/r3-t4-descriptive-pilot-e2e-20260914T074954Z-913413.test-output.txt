@@ -1,0 +1,38 @@
+(node:1049348) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:1049908) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1049908) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+
+[1A[2K(node:1049908) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/6] [setup] › tests/e2e/pilot-descriptive/descriptive-auth.setup.ts:11:6 › authenticate the synthetic descriptive-report teacher
+[1A[2K(node:1052948) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1052948) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+
+[1A[2K(node:1052948) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:61:7 › bounded descriptive-report PDF emission › renders the seeded finalized report in the authenticated browser DOM
+[1A[2K[3/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:72:7 › bounded descriptive-report PDF emission › emits a real PDF artifact from captured Vivências
+[1A[2K[chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:72:7 › bounded descriptive-report PDF emission › emits a real PDF artifact from captured Vivências
+PILOT_DESCRIPTIVE_PDF_RECEIPT: filename=relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf bytes=1613695 artifact=/root/.treehouse/educa-7c556a/1/educa/app/.pilot-evidence/relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf
+
+[1A[2K[4/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:135:7 › bounded descriptive-report PDF emission › keeps narrative emission independent of taught content and rejects capture tampering
+[1A[2K[chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:135:7 › bounded descriptive-report PDF emission › keeps narrative emission independent of taught content and rejects capture tampering
+PILOT_DESCRIPTIVE_DELIBERATE_BREAK_RECEIPT: snapshot_tampering_denied=true taught_content_independent=true restored=true status=200
+
+[1A[2K[5/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:192:7 › bounded descriptive-report PDF emission › saves a draft without calendar and reloads it through the other narrative route
+[1A[2K[6/6] [chromium-descriptive] › tests/e2e/pilot-descriptive/descriptive-emission.spec.ts:196:7 › bounded descriptive-report PDF emission › configures the school period and freezes the teacher narrative through both routes
+[1A[2K  6 passed (37.6s)

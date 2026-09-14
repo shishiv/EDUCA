@@ -1,0 +1,47 @@
+{
+  "theme": "light",
+  "width": 1440,
+  "documentWidth": 1440,
+  "fonts": "loaded",
+  "images": [
+    {
+      "alt": "Tela real do EDUCA com relatório em rascunho e aviso de período escolar não configurado",
+      "loaded": true
+    },
+    {
+      "alt": "Tela real com relatório finalizado e painel de captura imutável de Vivências",
+      "loaded": true
+    },
+    {
+      "alt": "Formulário real da direção com períodos ainda não configurados",
+      "loaded": true
+    },
+    {
+      "alt": "Primeira página do PDF real com origem public.vivencias, autor, data e fingerprint",
+      "loaded": true
+    }
+  ],
+  "diagram": {
+    "viewport": 1132,
+    "content": 1132
+  },
+  "svgLabelsFit": [
+    {
+      "id": "source",
+      "fits": true
+    },
+    {
+      "id": "preview",
+      "fits": true
+    },
+    {
+      "id": "snapshot",
+      "fits": true
+    },
+    {
+      "id": "pdf",
+      "fits": true
+    }
+  ],
+  "externalResources": []
+}

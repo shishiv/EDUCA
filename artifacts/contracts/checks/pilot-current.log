@@ -1,0 +1,17 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+lib/export/descriptive-report-pdf.ts(273,7): error TS2322: Type '({ content: string; styles: { fontStyle: string; textColor: PdfRgbColor; }; } | { content: string; styles: { textColor: PdfRgbColor; fontStyle?: undefined; }; })[]' is not assignable to type 'RowInput'.
+  Type '({ content: string; styles: { fontStyle: string; textColor: PdfRgbColor; }; } | { content: string; styles: { textColor: PdfRgbColor; fontStyle?: undefined; }; })[]' is not assignable to type 'CellInput[]'.
+    Type '{ content: string; styles: { fontStyle: string; textColor: PdfRgbColor; }; } | { content: string; styles: { textColor: PdfRgbColor; fontStyle?: undefined; }; }' is not assignable to type 'CellInput'.
+      Type '{ content: string; styles: { fontStyle: string; textColor: PdfRgbColor; }; }' is not assignable to type 'CellInput'.
+        Type '{ content: string; styles: { fontStyle: string; textColor: PdfRgbColor; }; }' is not assignable to type 'CellDef'.
+          The types of 'styles.fontStyle' are incompatible between these types.
+            Type 'string' is not assignable to type 'FontStyle | undefined'.
+lib/export/descriptive-report-pdf.ts(280,54): error TS2322: Type 'string' is not assignable to type 'FontStyle | undefined'.
+lib/export/descriptive-report-pdf.ts(281,77): error TS2322: Type '{ fontStyle: string; textColor: PdfRgbColor; } | { textColor: PdfRgbColor; fontStyle?: undefined; } | { textColor: PdfRgbColor; }' is not assignable to type 'Partial<Styles> | undefined'.
+  Type '{ fontStyle: string; textColor: PdfRgbColor; }' is not assignable to type 'Partial<Styles>'.
+    Types of property 'fontStyle' are incompatible.
+      Type 'string' is not assignable to type 'FontStyle | undefined'.
+ ELIFECYCLE  Command failed with exit code 2.

@@ -1,0 +1,19 @@
+(node:2260813) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:2263471) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/3] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/3] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:2267475) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/3] [chromium] › tests/e2e/reports/frequency.spec.ts:293:7 › Relatório de frequência › diagnostic: compares ASCII and derived native download names in isolation
+[1A[2K[chromium] › tests/e2e/reports/frequency.spec.ts:293:7 › Relatório de frequência › diagnostic: compares ASCII and derived native download names in isolation
+SYNTHETIC_DOWNLOAD_COUNTERFACTUAL [{"filename":"frequencia_synthetic.xlsx","suggestedFilename":"frequencia_synthetic.xlsx","failure":null},{"filename":"frequencia_1º_Ano_A_E2E_2026-08-01_2026-10-31.xlsx","suggestedFilename":"download","failure":null}]
+
+[1A[2K  3 passed (23.9s)

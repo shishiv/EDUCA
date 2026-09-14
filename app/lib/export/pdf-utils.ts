@@ -8,6 +8,7 @@
  */
 
 import jsPDF from 'jspdf';
+import { downloadFilename } from './download-filename';
 import autoTable, {
   type CellInput,
   type Styles,
@@ -390,7 +391,7 @@ export function addPDFText(
 export function savePDF(doc: jsPDF, filename: string): void {
   // Add .pdf extension if not present
   const name = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
-  doc.save(name);
+  doc.save(downloadFilename(name));
 }
 
 /**

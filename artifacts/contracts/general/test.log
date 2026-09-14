@@ -1,0 +1,40 @@
+(node:2887463) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 27 tests using 1 worker
+
+[1A[2K(node:2890367) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/27] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/27] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:2896507) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/27] [chromium] › tests/e2e/config/settings.spec.ts:99:7 › Settings - municipal authority › persists and restores the governed municipal identity
+[1A[2K[4/27] [chromium] › tests/e2e/config/settings.spec.ts:127:7 › Settings - director authority › persists explicit school periods without inventing an absent calendar
+[1A[2K[5/27] [chromium] › tests/e2e/config/settings.spec.ts:157:7 › Settings - director authority › keeps municipal identity read-only and persists the school academic year
+[1A[2K[6/27] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:93:7 › Educação Infantil Vivências persistence › creates, edits the date, and reloads a narrative on desktop
+[1A[2K[7/27] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:184:7 › Educação Infantil Vivências persistence › keeps the form usable at 390px
+[1A[2K[8/27] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:192:7 › Educação Infantil Vivências persistence › renders only contextual links the professor may open
+[1A[2K[9/27] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:235:7 › Diretor Vivências read-only access › keeps the desktop diary and report read-only
+[1A[2K[10/27] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:248:7 › Secretário Vivências read-only access › keeps the 390px diary and report read-only
+[1A[2K[11/27] [chromium] › tests/e2e/reports/content.spec.ts:61:7 › Content report › shows description, filters and disabled export before generation
+[1A[2K[12/27] [chromium] › tests/e2e/reports/content.spec.ts:67:7 › Content report › provides accessible class, discipline and period filters
+[1A[2K[13/27] [chromium] › tests/e2e/reports/content.spec.ts:73:7 › Content report › shows custom date controls for a custom period
+[1A[2K[14/27] [chromium] › tests/e2e/reports/content.spec.ts:80:7 › Content report › generates the seeded lesson and summary
+[1A[2K[15/27] [chromium] › tests/e2e/reports/content.spec.ts:88:7 › Content report › shows lesson objective, BNCC skill and methodology
+[1A[2K[16/27] [chromium] › tests/e2e/reports/content.spec.ts:95:7 › Content report › switches between Aulas, BNCC and Tabela tabs
+[1A[2K[17/27] [chromium] › tests/e2e/reports/content.spec.ts:106:7 › Content report › filters report by a specific class
+[1A[2K[18/27] [chromium] › tests/e2e/reports/content.spec.ts:114:7 › Content report › applies the discipline filter to the canonical database query
+[1A[2K[19/27] [chromium] › tests/e2e/reports/content.spec.ts:135:7 › Content report › shows the canonical session, class, school, teacher and BNCC joins
+[1A[2K[20/27] [chromium] › tests/e2e/reports/content.spec.ts:149:7 › Content report › enables and downloads PDF with the persisted lesson content
+[1A[2K[21/27] [chromium] › tests/e2e/reports/content.spec.ts:169:7 › Content report › remains usable on mobile
+[1A[2K[22/27] [chromium] › tests/e2e/reports/content.spec.ts:175:7 › Content report › blocks PDF export with an explicit empty state for a period without content
+[1A[2K[23/27] [chromium] › tests/e2e/reports/content.spec.ts:185:7 › Content report › deliberate break: removing canonical content turns red, then restore turns green
+[1A[2K[24/27] [chromium] › tests/e2e/reports/frequency.spec.ts:185:7 › Relatório de frequência › shows the implemented filters, custom dates, and pre-generation export guard
+[1A[2K[25/27] [chromium] › tests/e2e/reports/frequency.spec.ts:204:7 › Relatório de frequência › renders persisted canonical attendance and the implemented table and chart states
+[1A[2K[26/27] [chromium] › tests/e2e/reports/frequency.spec.ts:230:7 › Relatório de frequência › downloads Excel and PDF exports with the generated attendance row
+[1A[2K[27/27] [chromium] › tests/e2e/reports/frequency.spec.ts:293:7 › Relatório de frequência › keeps filters and the real report usable at 390px
+[1A[2K  27 passed (2.4m)

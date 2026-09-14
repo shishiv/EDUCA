@@ -1,0 +1,24 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /root/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0
+
+
+ RUN  v4.1.10 /root/.treehouse/educa-7c556a/1/educa/app
+
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  10:39:14
+   Duration  9.64s (transform 334ms, setup 579ms, import 7.14s, tests 133ms, environment 3.77s)

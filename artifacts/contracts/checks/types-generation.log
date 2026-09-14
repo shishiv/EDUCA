@@ -1,0 +1,441 @@
+PILOT_PORT_RANGE_LEASE: base=61400 end=61409 lease_dir=/tmp/educa-pilot-port-leases/61400 owner_pid=2290240
+(node:2290526) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+WARN: no SMS provider is enabled. Disabling phone login
+2.8.1: Pulling from supabase/kong
+v1.74.2: Pulling from supabase/edge-runtime
+v2.194.0: Pulling from supabase/gotrue
+15.8.1.085: Pulling from supabase/postgres
+2026.07.27-sha-cbb076d: Pulling from supabase/studio
+v1.67.20: Pulling from supabase/storage-api
+v14.15: Pulling from supabase/postgrest
+v0.96.6: Pulling from supabase/postgres-meta
+v1.30.2: Pulling from supabase/mailpit
+v2.120.3: Pulling from supabase/realtime
+dc286a8aa197: Pulling fs layer
+55afa1ecc21d: Pulling fs layer
+90c8ace70fc4: Pulling fs layer
+565df2d910df: Pulling fs layer
+ba68bd15f292: Pulling fs layer
+2a8ba8ff1218: Pulling fs layer
+814dd06d26c7: Pulling fs layer
+213ec9aee27d: Pulling fs layer
+a70653f7a2d5: Pulling fs layer
+531e3bd93090: Pulling fs layer
+0367cb7f5023: Pulling fs layer
+abecb94bba46: Pulling fs layer
+be4c37910e5f: Pulling fs layer
+b9136609bef0: Pulling fs layer
+bfab333b5e81: Pulling fs layer
+724041fce750: Pulling fs layer
+b59be34ddc83: Pulling fs layer
+6b291c391b0f: Pulling fs layer
+3c02fd806613: Pulling fs layer
+1cc42fcade0e: Pulling fs layer
+90e6409bba99: Pulling fs layer
+ff86ea2e5edc: Pulling fs layer
+cae77ffb92d9: Pulling fs layer
+666018dcd023: Pulling fs layer
+e54aec64c365: Pulling fs layer
+804d4d68057c: Pulling fs layer
+64cfb949317c: Pulling fs layer
+e326d083c2c9: Pulling fs layer
+55afa1ecc21d: Pulling fs layer
+95403727e7d4: Pulling fs layer
+90c8ace70fc4: Download complete
+565df2d910df: Download complete
+213ec9aee27d: Download complete
+dc286a8aa197: Download complete
+814dd06d26c7: Download complete
+55afa1ecc21d: Download complete
+a70653f7a2d5: Download complete
+55afa1ecc21d: Download complete
+2a8ba8ff1218: Download complete
+213ec9aee27d: Pull complete
+a70653f7a2d5: Pull complete
+55afa1ecc21d: Pull complete
+565df2d910df: Pull complete
+dc286a8aa197: Pull complete
+ba68bd15f292: Download complete
+d61c80498797: Pulling fs layer
+5c32499ab806: Pulling fs layer
+a600b77dffec: Pulling fs layer
+c885c0da8489: Pulling fs layer
+470998efedac: Pulling fs layer
+1954857425fc: Pulling fs layer
+f1a8d2476dbf: Pulling fs layer
+7038d51c5bd6: Pulling fs layer
+e6a0977d37ed: Pulling fs layer
+ce6821eedd6d: Pulling fs layer
+adaaa347079b: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+4f4fb700ef54: Already exists
+4f4fb700ef54: Pull complete
+52cd27cac02e: Pulling fs layer
+09ddda476dba: Pulling fs layer
+0d8aa8e026f1: Pulling fs layer
+d2f04496a183: Pulling fs layer
+e1972bc3878f: Pulling fs layer
+a7657e15dcb9: Pulling fs layer
+378f4ac6aef8: Pulling fs layer
+a08337e8761c: Pulling fs layer
+16733d1099a5: Pulling fs layer
+a93abad2648d: Pulling fs layer
+7788af31fb5f: Pulling fs layer
+8b04f0977347: Pulling fs layer
+e2c5e8073fbb: Pulling fs layer
+daa7c753cf32: Pulling fs layer
+14c7c40f264e: Pulling fs layer
+13b7e930469f: Pulling fs layer
+fff1a581b40e: Pulling fs layer
+b87ddba4145f: Pulling fs layer
+bec4cd2d8288: Pulling fs layer
+c61d94d80b8d: Pulling fs layer
+73d5273f17e0: Pulling fs layer
+5d4d12d40ee2: Pulling fs layer
+cef3e4219e2d: Pulling fs layer
+95553dc9aee4: Pulling fs layer
+7dd51689e5de: Pulling fs layer
+7e1afeac9515: Pulling fs layer
+83a5975346e8: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+848b1c5912e5: Pulling fs layer
+826b8d755762: Pulling fs layer
+f2c897740b67: Pulling fs layer
+0f819c04149e: Pulling fs layer
+4e5b5a409361: Pulling fs layer
+addf9dc09fca: Pulling fs layer
+1e3ae6415742: Pulling fs layer
+2d3eb0cf3634: Pulling fs layer
+cb6a11cda9f8: Pulling fs layer
+5904fe0a8541: Pulling fs layer
+484e22708485: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+f54c636bbcd3: Pulling fs layer
+5bd4dd8b80e3: Pulling fs layer
+a00ab32c0cad: Pulling fs layer
+7df60113bd5f: Pulling fs layer
+1f87a4556ee4: Pulling fs layer
+586e7e55dc38: Pulling fs layer
+58c2f4245eec: Pulling fs layer
+44bd6c2c1e25: Pulling fs layer
+18e11daf70d2: Pulling fs layer
+9ace01da70a3: Pulling fs layer
+1f04457496a9: Pulling fs layer
+2a75afedac1e: Pulling fs layer
+ab6d1e52f2bb: Pulling fs layer
+e12ac39a69ef: Pulling fs layer
+04364d336696: Pulling fs layer
+e68f98342a0d: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+669f792103a4: Pulling fs layer
+f80d99bfabdb: Pulling fs layer
+531e3bd93090: Download complete
+d0ebd75bb4ef: Pulling fs layer
+a1028bd6f848: Pulling fs layer
+be4c37910e5f: Download complete
+4f4fb700ef54: Already exists
+ba68bd15f292: Pull complete
+0367cb7f5023: Download complete
+2a8ba8ff1218: Pull complete
+90c8ace70fc4: Pull complete
+724041fce750: Download complete
+b9136609bef0: Download complete
+b59be34ddc83: Download complete
+bfab333b5e81: Download complete
+a9c965961239: Pulling fs layer
+392df1351ac2: Pulling fs layer
+597c6c618d36: Pulling fs layer
+e33bee2ce77b: Pulling fs layer
+bb65bd65926c: Pulling fs layer
+78aec24813a6: Pulling fs layer
+437216719022: Pulling fs layer
+f5903f274973: Pulling fs layer
+636b9fe2f894: Pulling fs layer
+fc67fcff04e0: Download complete
+b59be34ddc83: Pull complete
+6b291c391b0f: Download complete
+666018dcd023: Download complete
+3c02fd806613: Download complete
+Digest: sha256:2f8e7b656f09db697a8875177694b417b35cb76c21370de07fc54e711e902326
+Status: Downloaded newer image for public.ecr.aws/supabase/postgrest:v14.15
+public.ecr.aws/supabase/postgrest:v14.15
+Digest: sha256:2b352c02adf11a2025cd5993c246ef85db73743553c39194d2b1862d1cc4d1fd
+Status: Downloaded newer image for public.ecr.aws/supabase/gotrue:v2.194.0
+public.ecr.aws/supabase/gotrue:v2.194.0
+cae77ffb92d9: Download complete
+1cc42fcade0e: Download complete
+e54aec64c365: Download complete
+90e6409bba99: Download complete
+531e3bd93090: Pull complete
+814dd06d26c7: Pull complete
+b9136609bef0: Pull complete
+Digest: sha256:1b53405d8680a09d6f44494b7990bf7da2ea43f84a258c59717d4539abf09f6d
+Status: Downloaded newer image for public.ecr.aws/supabase/kong:2.8.1
+public.ecr.aws/supabase/kong:2.8.1
+ff86ea2e5edc: Download complete
+e326d083c2c9: Download complete
+804d4d68057c: Download complete
+64cfb949317c: Download complete
+95403727e7d4: Download complete
+7e21010ebcc2: Download complete
+adaaa347079b: Download complete
+e6a0977d37ed: Download complete
+1954857425fc: Download complete
+ce6821eedd6d: Download complete
+d61c80498797: Download complete
+a600b77dffec: Download complete
+95403727e7d4: Pull complete
+f1a8d2476dbf: Download complete
+e326d083c2c9: Pull complete
+bfab333b5e81: Pull complete
+be4c37910e5f: Pull complete
+ff86ea2e5edc: Pull complete
+e54aec64c365: Pull complete
+470998efedac: Download complete
+7038d51c5bd6: Download complete
+c885c0da8489: Download complete
+abecb94bba46: Download complete
+52cd27cac02e: Download complete
+378f4ac6aef8: Download complete
+0d8aa8e026f1: Download complete
+09ddda476dba: Download complete
+e1972bc3878f: Download complete
+a08337e8761c: Download complete
+5c32499ab806: Download complete
+724041fce750: Pull complete
+804d4d68057c: Pull complete
+64cfb949317c: Pull complete
+3c02fd806613: Pull complete
+6b291c391b0f: Pull complete
+1cc42fcade0e: Pull complete
+16733d1099a5: Download complete
+7788af31fb5f: Download complete
+a7657e15dcb9: Download complete
+e2c5e8073fbb: Download complete
+a93abad2648d: Download complete
+d2f04496a183: Download complete
+5c32499ab806: Pull complete
+6c6b1bb9b83f: Download complete
+14c7c40f264e: Download complete
+8b04f0977347: Download complete
+13b7e930469f: Download complete
+b87ddba4145f: Download complete
+bec4cd2d8288: Download complete
+73d5273f17e0: Download complete
+95553dc9aee4: Download complete
+5d4d12d40ee2: Download complete
+cef3e4219e2d: Download complete
+eb3335600bd5: Download complete
+7dd51689e5de: Download complete
+c61d94d80b8d: Download complete
+fff1a581b40e: Download complete
+826b8d755762: Download complete
+848b1c5912e5: Download complete
+13b7e930469f: Pull complete
+16733d1099a5: Pull complete
+09ddda476dba: Pull complete
+0d8aa8e026f1: Pull complete
+abecb94bba46: Pull complete
+7e1afeac9515: Download complete
+f2c897740b67: Download complete
+2d3eb0cf3634: Download complete
+83a5975346e8: Download complete
+cb6a11cda9f8: Download complete
+484e22708485: Download complete
+5904fe0a8541: Download complete
+1e3ae6415742: Download complete
+addf9dc09fca: Download complete
+0367cb7f5023: Pull complete
+586e7e55dc38: Download complete
+04364d336696: Download complete
+Digest: sha256:a82676277615aee03c4f288cbbbf68dedb5ba8693073e567ab8dbfdd11ba5d45
+Status: Downloaded newer image for public.ecr.aws/supabase/edge-runtime:v1.74.2
+669f792103a4: Download complete
+public.ecr.aws/supabase/edge-runtime:v1.74.2
+cae77ffb92d9: Pull complete
+4e5b5a409361: Download complete
+1f04457496a9: Download complete
+e12ac39a69ef: Download complete
+2a75afedac1e: Download complete
+7df60113bd5f: Download complete
+a00ab32c0cad: Download complete
+666018dcd023: Pull complete
+90e6409bba99: Pull complete
+e68f98342a0d: Download complete
+9ace01da70a3: Download complete
+58c2f4245eec: Download complete
+ab6d1e52f2bb: Download complete
+5bd4dd8b80e3: Download complete
+18e11daf70d2: Download complete
+f80d99bfabdb: Download complete
+44bd6c2c1e25: Download complete
+a1028bd6f848: Download complete
+73a3716cfa9b: Download complete
+d0ebd75bb4ef: Download complete
+f54c636bbcd3: Download complete
+1f87a4556ee4: Download complete
+0f819c04149e: Download complete
+Digest: sha256:a84cc713585eea7b401e4a2561ec4a1e48c87083d1c7ecb4502f204bb4391300
+Status: Downloaded newer image for public.ecr.aws/supabase/postgres-meta:v0.96.6
+public.ecr.aws/supabase/postgres-meta:v0.96.6
+a071a99e757a: Download complete
+437216719022: Download complete
+f5903f274973: Download complete
+392df1351ac2: Download complete
+e33bee2ce77b: Download complete
+c885c0da8489: Pull complete
+597c6c618d36: Download complete
+daa7c753cf32: Download complete
+470998efedac: Pull complete
+a600b77dffec: Pull complete
+636b9fe2f894: Download complete
+7038d51c5bd6: Pull complete
+d61c80498797: Pull complete
+f1a8d2476dbf: Pull complete
+e6a0977d37ed: Pull complete
+1954857425fc: Pull complete
+bb65bd65926c: Download complete
+9e229077fbfa: Download complete
+fff1a581b40e: Pull complete
+059a6c32d57c: Download complete
+Digest: sha256:37a38e48e9338cd7e89dfeb487f37b02ebfcd9cb23111bed2d345e79d37d6dd6
+Status: Downloaded newer image for public.ecr.aws/supabase/mailpit:v1.30.2
+public.ecr.aws/supabase/mailpit:v1.30.2
+14c7c40f264e: Pull complete
+b87ddba4145f: Pull complete
+a9c965961239: Download complete
+ce6821eedd6d: Pull complete
+597c6c618d36: Pull complete
+d2f04496a183: Pull complete
+adaaa347079b: Pull complete
+52cd27cac02e: Pull complete
+e33bee2ce77b: Pull complete
+e1972bc3878f: Pull complete
+7788af31fb5f: Pull complete
+Digest: sha256:1b1b155e70e98eb8cf3d0e3103e1e56710fa5816c10c7ea24f1efaa1182c5153
+Status: Downloaded newer image for public.ecr.aws/supabase/realtime:v2.120.3
+public.ecr.aws/supabase/realtime:v2.120.3
+78aec24813a6: Download complete
+8b04f0977347: Pull complete
+a93abad2648d: Pull complete
+7e1afeac9515: Pull complete
+7dd51689e5de: Pull complete
+4f4fb700ef54: Pull complete
+bb65bd65926c: Pull complete
+392df1351ac2: Pull complete
+437216719022: Pull complete
+78aec24813a6: Pull complete
+f5903f274973: Pull complete
+636b9fe2f894: Pull complete
+a9c965961239: Pull complete
+Digest: sha256:91e8cf3857103605b354d29873fb36cd3173f700e3c57cb45d04a901d65feff7
+Status: Downloaded newer image for public.ecr.aws/supabase/studio:2026.07.27-sha-cbb076d
+public.ecr.aws/supabase/studio:2026.07.27-sha-cbb076d
+a7657e15dcb9: Pull complete
+e2c5e8073fbb: Pull complete
+a08337e8761c: Pull complete
+378f4ac6aef8: Pull complete
+Digest: sha256:a4846b3329f3afd52cd2ae31b89a0c1ae841221e9d3a22d55db65f9dca2a72b6
+Status: Downloaded newer image for public.ecr.aws/supabase/storage-api:v1.67.20
+public.ecr.aws/supabase/storage-api:v1.67.20
+daa7c753cf32: Pull complete
+c61d94d80b8d: Pull complete
+73d5273f17e0: Pull complete
+bec4cd2d8288: Pull complete
+95553dc9aee4: Pull complete
+5d4d12d40ee2: Pull complete
+cef3e4219e2d: Pull complete
+83a5975346e8: Pull complete
+0f819c04149e: Pull complete
+848b1c5912e5: Pull complete
+f2c897740b67: Pull complete
+4e5b5a409361: Pull complete
+addf9dc09fca: Pull complete
+1e3ae6415742: Pull complete
+2d3eb0cf3634: Pull complete
+cb6a11cda9f8: Pull complete
+5904fe0a8541: Pull complete
+484e22708485: Pull complete
+a00ab32c0cad: Pull complete
+5bd4dd8b80e3: Pull complete
+1f87a4556ee4: Pull complete
+7df60113bd5f: Pull complete
+586e7e55dc38: Pull complete
+58c2f4245eec: Pull complete
+826b8d755762: Pull complete
+18e11daf70d2: Pull complete
+1f04457496a9: Pull complete
+9ace01da70a3: Pull complete
+2a75afedac1e: Pull complete
+f54c636bbcd3: Pull complete
+ab6d1e52f2bb: Pull complete
+04364d336696: Pull complete
+e12ac39a69ef: Pull complete
+e68f98342a0d: Pull complete
+669f792103a4: Pull complete
+f80d99bfabdb: Pull complete
+a1028bd6f848: Pull complete
+d0ebd75bb4ef: Pull complete
+44bd6c2c1e25: Pull complete
+Digest: sha256:af083ef64d0408c8f098ee6f5c364a59b26f36fbc0f3a334a62c5c1d57362e9b
+Status: Downloaded newer image for public.ecr.aws/supabase/postgres:15.8.1.085
+public.ecr.aws/supabase/postgres:15.8.1.085
+Initialising schema...
+Seeding globals from roles.sql...
+Applying migration 00000000000000_baseline.sql...
+Applying migration 20260119_create_feature_flags.sql...
+Applying migration 20260124133337_create_relatorios_descritivos.sql...
+Applying migration 20260719031000_add_censo_escolar_fields.sql...
+Applying migration 20260721010000_fix_rls_role_policies.sql...
+Applying migration 20260721011000_create_conteudo_aula.sql...
+Applying migration 20260727050000_pilot_foundation_gate.sql...
+Applying migration 20260801000000_add_frequencia_student_day_unique.sql...
+Applying migration 20260801000001_whatsapp_notifications.sql...
+Applying migration 20260803095753_educa_attendance_canonical_flow.sql...
+Applying migration 20260803143646_attendance_batch_upsert_index.sql...
+Applying migration 20260803235036_fix_pilot_matricula_insert_rls.sql...
+Applying migration 20260805093305_demo_users_browser_write_boundary.sql...
+Applying migration 20260810042648_enforce_pilot_enrollment_capacity.sql...
+Applying migration 20260810120522_certificate_issuance_source_truth.sql...
+Applying migration 20260810120559_attendance_conditionality_read_model.sql...
+Applying migration 20260810192820_governed_pilot_csv_import.sql...
+Applying migration 20260810220000_governed_pilot_security_hardening.sql...
+Applying migration 20260811040831_student_admission_transaction.sql...
+Applying migration 20260812000000_attendance_reopen_workflow.sql...
+Applying migration 20260812192111_public_security_advisor_error_hardening.sql...
+Applying migration 20260812231418_pilot_import_batch_rollback_storage.sql...
+Applying migration 20260812231541_pilot_auth_revocation_boundary.sql...
+Applying migration 20260813000000_governed_pilot_manifest_retention_order.sql...
+Applying migration 20260814000000_governed_import_owner_agreement.sql...
+Applying migration 20260815000000_bolsa_familia_visibility_policy.sql...
+Applying migration 20260826010000_school_academic_years.sql...
+Applying migration 20260827000000_school_schema_canary_control_plane.sql...
+Applying migration 20260828000000_pilot_auth_audit_scope.sql...
+Applying migration 20260829000000_sensitive_family_read_boundary.sql...
+Applying migration 20260830000000_canonical_guardian_link_reads.sql...
+Applying migration 20260831000000_vivencias_persistence.sql...
+Applying migration 20260901000000_municipal_settings.sql...
+Applying migration 20260907000000_auth_mutation_audit_receipts.sql...
+Applying migration 20260908000000_attendance_correction_window.sql...
+Applying migration 20260908010000_attendance_opening_cutoff.sql...
+Applying migration 20260908020000_student_admission_guardian_payload.sql...
+Applying migration 20260908030000_user_self_profile_audit.sql...
+Applying migration 20260908040000_governed_management_mutations.sql...
+Applying migration 20260908050000_whatsapp_delivery_ownership.sql...
+Applying migration 20260908060000_pilot_import_rejection_receipts.sql...
+Applying migration 20260908070000_governed_management_atomic_updates.sql...
+Applying migration 20260908080000_class_capacity_defaults.sql...
+Applying migration 20260908090000_whatsapp_governed_enqueue.sql...
+Applying migration 20260908100000_invitation_audit_recovery.sql...
+Applying migration 20260908110000_session_realtime_publication.sql...
+Applying migration 20260908120000_descriptive_report_finalization.sql...
+Applying migration 20260908130000_student_admission_municipal_authority.sql...
+Applying migration 20260914000000_narrative_sources_and_school_periods.sql...
+WARN: no files matched pattern: supabase/seed.sql
+[REDACTED_LOCAL_STACK_CONNECTION_VALUES]
+Connecting to db 5432
+{"project_id_filter":"contracts-types-2290240","backup":false,"message":"Stopped supabase local development setup."}
+PILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=contracts-types-2290240
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/tmp/educa-pilot-port-leases/61400

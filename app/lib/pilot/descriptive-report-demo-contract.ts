@@ -19,9 +19,9 @@ export const PILOT_DESCRIPTIVE_CANONICAL_SOURCE_CONFIG_KEY = 'pilot_descriptive_
 /** The only environment authorized for this PDF rehearsal. */
 export const PILOT_DESCRIPTIVE_REHEARSAL_ENVIRONMENT = 'local synthetic pilot rehearsal'
 
-/** The content query that supplies the report's taught-content evidence. */
+/** Narrative evidence is frozen by the database when the teacher finalizes. */
 export const PILOT_DESCRIPTIVE_CANONICAL_SOURCE =
-  "public.conteudo_aula via generateContentReport (from('conteudo_aula'))"
+  'public.vivencias via relatorios_descritivos.fontes_snapshot (vivencias-v1)'
 
 /** Stable algorithm label for the deterministic canonical-row fingerprint. */
 export const PILOT_DESCRIPTIVE_FINGERPRINT_ALGORITHM = 'MD5'

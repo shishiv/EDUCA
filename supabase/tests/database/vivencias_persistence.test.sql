@@ -218,8 +218,8 @@ BEGIN
   BEGIN
     DELETE FROM public.vivencias WHERE id = 'a1500000-0000-0000-0000-000000000001';
     RAISE EXCEPTION 'report source deletion was accepted';
-  EXCEPTION WHEN restrict_violation THEN
-    NULL;
+  EXCEPTION WHEN restrict_violation OR foreign_key_violation THEN
+    IF SQLERRM NOT LIKE '%relatorios_descritivos_vivencias_vivencia_id_fkey%' THEN RAISE; END IF;
   END;
 END;
 $$;

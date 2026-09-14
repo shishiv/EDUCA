@@ -5,10 +5,11 @@ import { promisify } from 'node:util'
 import type { Database } from '@/types/database'
 import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
+import { narrativeSnapshotSchema } from '@/lib/reports/narrative-sources'
+import { saveUnconfiguredDraft, configureAndFinalizeDraft } from './narrative-contract-flow'
 import {
   PILOT_DESCRIPTIVE_AUTH_EMAIL,
   PILOT_DESCRIPTIVE_CONTENT_IDS,
-  PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS,
   PILOT_DESCRIPTIVE_REPORT_ID,
   PILOT_DESCRIPTIVE_STUDENT_ID,
 } from '../../../../supabase/seed-pilot-descriptive/pilot-descriptive-contract'
@@ -52,14 +53,14 @@ async function openDescriptiveReport(page: import('@playwright/test').Page) {
   await expect(
     page.getByRole('heading', { name: 'Criança Descritiva Sintética', exact: true })
   ).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: '1 Semestre de 2026 · Finalizado', exact: true })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Emitir PDF', exact: true })).toBeVisible({ timeout: 15_000 })
 }
 
 test.describe.serial('bounded descriptive-report PDF emission', () => {
   test('renders the seeded finalized report in the authenticated browser DOM', async ({ page }, testInfo) => {
     await openDescriptiveReport(page)
-    await expect(page.getByText('1 Semestre de 2026', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: '1 Semestre de 2026 · Finalizado', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Emitir PDF', exact: true })).toBeEnabled()
     await page.screenshot({ path: testInfo.outputPath('descriptive-report-desktop.png'), fullPage: true })
 
@@ -68,8 +69,11 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
     await page.screenshot({ path: testInfo.outputPath('descriptive-report-mobile-390x844.png') })
   })
 
-  test('emits a real PDF artifact from canonical taught content', async ({ page }, testInfo) => {
+  test('emits a real PDF artifact from captured Vivências', async ({ page }, testInfo) => {
     await openDescriptiveReport(page)
+    const { data: report, error } = await createLocalServiceClient().from('relatorios_descritivos').select('fontes_snapshot').eq('id', PILOT_DESCRIPTIVE_REPORT_ID).single()
+    if (error) throw error
+    const captured = narrativeSnapshotSchema.parse(report.fontes_snapshot)
 
     const downloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: 'Emitir PDF', exact: true }).click()
@@ -102,8 +106,11 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
     expect(pdfText).toContain('Escola Descritiva Sintética')
     expect(pdfText).toContain('Pré II Sintético')
     expect(pdfText).toContain('1 Semestre de 2026')
-    expect(pdfText).toContain('public.conteudo_aula')
-    expect(compactPdfText).toContain(PILOT_DESCRIPTIVE_EXPECTED_FINGERPRINTS.canonicalContent)
+    expect(pdfText).toContain('public.vivencias')
+    expect(pdfText).not.toContain('public.conteudo_aula')
+    expect(compactPdfText).toContain(captured.fingerprint)
+    expect(pdfText).toContain('vivencias-v1')
+    expect(compactPdfText).toContain(captured.fontes[0].id)
     expect(compactPdfText).toContain(PILOT_DESCRIPTIVE_AUTH_EMAIL)
     expect(compactPdfText).toContain(PILOT_DESCRIPTIVE_REPORT_ID)
     expect(pdfText).toContain('Não é documento legal')
@@ -125,7 +132,7 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
     console.info(`PILOT_DESCRIPTIVE_PDF_RECEIPT: filename=${download.suggestedFilename()} bytes=${bytes.length} artifact=${evidencePath}`)
   })
 
-  test('deliberate break: removing canonical content blocks emission in the browser', async ({ page }) => {
+  test('keeps narrative emission independent of taught content and rejects capture tampering', async ({ page }) => {
     const service = createLocalServiceClient()
     const { data: snapshot, error: snapshotError } = await service
       .from('conteudo_aula')
@@ -148,17 +155,15 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
       expect(validation.output).toContain('[FAIL] count_canonical_content')
 
       await openDescriptiveReport(page)
-      const blockedResponse = page.waitForResponse(response => {
+      const emissionResponse = page.waitForResponse(response => {
         const requestUrl = new URL(response.url())
         return requestUrl.pathname === reportRoute && response.request().method() === 'GET'
       })
       await page.getByRole('button', { name: 'Emitir PDF', exact: true }).click()
-      const response = await blockedResponse
-
-      expect(response.status()).toBe(422)
-      await expect(page.getByTestId('descriptive-report-emission-error')).toContainText(
-        'Não há conteúdo ministrado registrado no período deste relatório'
-      )
+      const response = await emissionResponse
+      expect(response.status()).toBe(200)
+      const { error: tamperError } = await service.from('relatorios_descritivos').update({ fontes_snapshot: null }).eq('id', PILOT_DESCRIPTIVE_REPORT_ID)
+      expect(tamperError?.message).toContain('DESCRIPTIVE_REPORT_FINALIZED_IMMUTABLE')
       breakObserved = true
     } finally {
       const { error: restoreError } = await service.from('conteudo_aula').insert(snapshot)
@@ -171,15 +176,24 @@ test.describe.serial('bounded descriptive-report PDF emission', () => {
       if (deliberateBreakReceiptPath && breakObserved) {
         await writeFile(deliberateBreakReceiptPath, `${JSON.stringify({
           result: 'pass',
-          target: 'canonical-content-removal',
+          target: 'capture-tampering-rejected-and-content-independent',
           boundary: 'real-browser-and-postgrest',
-          observedStatus: 422,
+          observedStatus: 200,
+          snapshotTamperingDenied: true,
           restored: true,
         }, null, 2)}\n`, 'utf8')
       }
       if (breakObserved) {
-        console.info('PILOT_DESCRIPTIVE_DELIBERATE_BREAK_RECEIPT: removed_content_blocked_pdf=true restored=true status=422')
+        console.info('PILOT_DESCRIPTIVE_DELIBERATE_BREAK_RECEIPT: snapshot_tampering_denied=true taught_content_independent=true restored=true status=200')
       }
     }
+  })
+
+  test('saves a draft without calendar and reloads it through the other narrative route', async ({ page }, testInfo) => {
+    await saveUnconfiguredDraft(page, testInfo)
+  })
+
+  test('configures the school period and freezes the teacher narrative through both routes', async ({ page, browser }, testInfo) => {
+    await configureAndFinalizeDraft(page, browser, createLocalServiceClient(), testInfo)
   })
 })

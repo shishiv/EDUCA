@@ -1,0 +1,5 @@
+PILOT_PORT_RANGE_LEASE: base=63390 end=63399 lease_dir=/tmp/educa-pilot-port-leases/63390 owner_pid=2425439
+(node:2426114) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/tmp/educa-pilot-port-leases/63390
+GENERAL_E2E_EXIT=0
