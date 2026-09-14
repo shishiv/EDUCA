@@ -53,7 +53,10 @@ import {
   Users,
   AlertTriangle,
 } from 'lucide-react'
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { useSchoolPeriods } from '@/hooks/use-school-periods'
+import { reportPeriodDates } from '@/lib/reports/report-period-dates'
+import { SchoolPeriodChoices, SchoolPeriodNotice } from '@/components/reports/SchoolPeriodChoices'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -97,48 +100,7 @@ interface DateRange {
 /**
  * Get date range from period option
  */
-function getPeriodDates(period: string, anoLetivo: number): DateRange {
-  const today = new Date()
 
-  switch (period) {
-    case 'current_month':
-      return {
-        from: startOfMonth(today),
-        to: endOfMonth(today),
-      }
-    case 'last_month':
-      const lastMonth = subMonths(today, 1)
-      return {
-        from: startOfMonth(lastMonth),
-        to: endOfMonth(lastMonth),
-      }
-    case 'bimestre_1':
-      return {
-        from: new Date(anoLetivo, 1, 1), // February
-        to: new Date(anoLetivo, 3, 30), // April
-      }
-    case 'bimestre_2':
-      return {
-        from: new Date(anoLetivo, 4, 1), // May
-        to: new Date(anoLetivo, 6, 31), // July
-      }
-    case 'bimestre_3':
-      return {
-        from: new Date(anoLetivo, 7, 1), // August
-        to: new Date(anoLetivo, 9, 31), // October
-      }
-    case 'bimestre_4':
-      return {
-        from: new Date(anoLetivo, 10, 1), // November
-        to: new Date(anoLetivo, 11, 31), // December
-      }
-    default:
-      return {
-        from: startOfMonth(today),
-        to: endOfMonth(today),
-      }
-  }
-}
 
 /**
  * Format date for display
@@ -175,8 +137,8 @@ export default function AttendanceReportsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'chart'>('table')
   const [printMode, setPrintMode] = useState(false)
 
-  // Current year for bimestre calculations
-  const currentYear = new Date().getFullYear()
+  const turma = turmas.find(item => item.id === selectedTurma)
+  const { periods, error: periodsError } = useSchoolPeriods(turma?.escola_id, turma?.ano_letivo)
 
   // Transform report data to table format
   const tableData: AttendanceTableRow[] = useMemo(() => {
@@ -230,10 +192,11 @@ export default function AttendanceReportsPage() {
 
   // Update date range when period option changes
   useEffect(() => {
-    if (periodOption !== 'custom') {
-      setDateRange(getPeriodDates(periodOption, currentYear))
-    }
-  }, [periodOption, currentYear])
+    if (periodOption === 'custom') return
+    const dates = reportPeriodDates(periodOption, periods)
+    if (dates) setDateRange(dates)
+    else setPeriodOption('current_month')
+  }, [periodOption, periods])
 
   // Fetch report data
   const fetchReport = useCallback(async () => {
@@ -422,16 +385,14 @@ export default function AttendanceReportsPage() {
                 <SelectContent>
                   <SelectItem value="current_month" className="py-3">{t('bolsa.currentMonth')}</SelectItem>
                   <SelectItem value="last_month" className="py-3">{t('bolsa.lastMonth')}</SelectItem>
-                  <SelectItem value="bimestre_1" className="py-3">{t('reports.firstBimester')}</SelectItem>
-                  <SelectItem value="bimestre_2" className="py-3">{t('reports.secondBimester')}</SelectItem>
-                  <SelectItem value="bimestre_3" className="py-3">{t('reports.thirdBimester')}</SelectItem>
-                  <SelectItem value="bimestre_4" className="py-3">{t('reports.fourthBimester')}</SelectItem>
+                  <SchoolPeriodChoices periods={periods} />
                   <SelectItem value="custom" className="py-3">{t('bolsa.custom')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Date Range (for custom period) */}
+            <SchoolPeriodNotice periods={periods} error={periodsError} />
             {periodOption === 'custom' && (
               <>
                 <div className="space-y-1.5 sm:space-y-2">

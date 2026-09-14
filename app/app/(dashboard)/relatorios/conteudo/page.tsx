@@ -69,7 +69,10 @@ import {
   Target,
   Lightbulb,
 } from 'lucide-react'
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { useSchoolPeriods } from '@/hooks/use-school-periods'
+import { reportPeriodDates } from '@/lib/reports/report-period-dates'
+import { SchoolPeriodChoices, SchoolPeriodNotice } from '@/components/reports/SchoolPeriodChoices'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -119,48 +122,7 @@ function isBNCCSubjectCode(value: string): value is BNNCSubjectCode {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function getPeriodDates(period: string, anoLetivo: number): DateRange {
-  const today = new Date()
 
-  switch (period) {
-    case 'current_month':
-      return {
-        from: startOfMonth(today),
-        to: endOfMonth(today),
-      }
-    case 'last_month':
-      const lastMonth = subMonths(today, 1)
-      return {
-        from: startOfMonth(lastMonth),
-        to: endOfMonth(lastMonth),
-      }
-    case 'bimestre_1':
-      return {
-        from: new Date(anoLetivo, 1, 1),
-        to: new Date(anoLetivo, 3, 30),
-      }
-    case 'bimestre_2':
-      return {
-        from: new Date(anoLetivo, 4, 1),
-        to: new Date(anoLetivo, 6, 31),
-      }
-    case 'bimestre_3':
-      return {
-        from: new Date(anoLetivo, 7, 1),
-        to: new Date(anoLetivo, 9, 31),
-      }
-    case 'bimestre_4':
-      return {
-        from: new Date(anoLetivo, 10, 1),
-        to: new Date(anoLetivo, 11, 31),
-      }
-    default:
-      return {
-        from: startOfMonth(today),
-        to: endOfMonth(today),
-      }
-  }
-}
 
 function formatDateDisplay(date: Date): string {
   return format(date, 'dd/MM/yyyy', { locale: ptBR })
@@ -438,7 +400,8 @@ export default function ContentReportsPage() {
   const [isLoadingReport, setIsLoadingReport] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const currentYear = new Date().getFullYear()
+  const turma = turmas.find(item => item.id === selectedTurma)
+  const { periods, error: periodsError } = useSchoolPeriods(turma?.escola_id, turma?.ano_letivo)
 
   // Period label
   const periodoLabel = useMemo(() => {
@@ -470,10 +433,11 @@ export default function ContentReportsPage() {
 
   // Update date range when period option changes
   useEffect(() => {
-    if (periodOption !== 'custom') {
-      setDateRange(getPeriodDates(periodOption, currentYear))
-    }
-  }, [periodOption, currentYear])
+    if (periodOption === 'custom') return
+    const dates = reportPeriodDates(periodOption, periods)
+    if (dates) setDateRange(dates)
+    else setPeriodOption('current_month')
+  }, [periodOption, periods])
 
   // Fetch report data
   const fetchReport = useCallback(async () => {
@@ -652,16 +616,14 @@ export default function ContentReportsPage() {
                 <SelectContent>
                   <SelectItem value="current_month">{t('bolsa.currentMonth')}</SelectItem>
                   <SelectItem value="last_month">{t('bolsa.lastMonth')}</SelectItem>
-                  <SelectItem value="bimestre_1">{t('reports.firstBimester')}</SelectItem>
-                  <SelectItem value="bimestre_2">{t('reports.secondBimester')}</SelectItem>
-                  <SelectItem value="bimestre_3">{t('reports.thirdBimester')}</SelectItem>
-                  <SelectItem value="bimestre_4">{t('reports.fourthBimester')}</SelectItem>
+                  <SchoolPeriodChoices periods={periods} />
                   <SelectItem value="custom">{t('bolsa.custom')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Date Range (for custom period) */}
+            <SchoolPeriodNotice periods={periods} error={periodsError} />
             {periodOption === 'custom' && (
               <>
                 <div className="space-y-2">

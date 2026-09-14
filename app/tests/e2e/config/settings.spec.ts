@@ -74,6 +74,12 @@ async function reloadAcademicYear(page: Page) {
   expect((await academicYearResponse).ok()).toBe(true)
 }
 
+async function savePeriods(page: Page) {
+  const saved = page.waitForResponse(response => matchesApiResponse(response, '/api/school-settings/periods', 'PATCH'))
+  await page.getByRole('button', { name: 'Salvar períodos', exact: true }).click()
+  expect((await saved).ok()).toBe(true)
+}
+
 function alternateAcademicPeriod(originalStart: string, originalEnd: string) {
   const year = originalStart.slice(0, 4)
   const candidates = [
@@ -117,6 +123,36 @@ test.describe('Settings - municipal authority', () => {
 
 test.describe('Settings - director authority', () => {
   test.use({ storageState: `${AUTH}/diretor.json` })
+
+  test('persists explicit school periods without inventing an absent calendar', async ({ page }, testInfo) => {
+    await openSettings(page, ACADEMIC_YEAR_ENDPOINT)
+    await expect(page.locator('#period-primeiro-name')).toHaveValue('')
+    const year = await page.locator('#academic-year-number').inputValue()
+    try {
+      await page.locator('#period-primeiro-name').fill('Primeiro período sintético')
+      await page.locator('#period-primeiro-start').fill(`${year}-02-01`)
+      await page.locator('#period-primeiro-end').fill(`${year}-06-30`)
+      await savePeriods(page)
+      await reloadAcademicYear(page)
+      await expect(page.locator('#period-primeiro-name')).toHaveValue('Primeiro período sintético')
+      await expect(page.locator('#period-primeiro-start')).toHaveValue(`${year}-02-01`)
+      await page.locator('section[aria-label="Períodos escolares"]').screenshot({ path: testInfo.outputPath('school-period-settings.png') })
+    } finally {
+      const restored = await page.request.patch('/api/school-settings/periods', { data: { year: Number(year), periods: [] } })
+      expect(restored.ok()).toBe(true)
+    }
+    await reloadAcademicYear(page)
+    await expect(page.locator('#period-primeiro-name')).toHaveValue('')
+    for (const route of ['/relatorios/frequencia', '/relatorios/conteudo']) {
+      await page.goto(route)
+      await page.getByLabel('Turma', { exact: true }).click()
+      await page.getByRole('option', { name: /1º Ano A E2E/ }).click()
+      await page.getByLabel('Período', { exact: true }).click()
+      await expect(page.getByRole('option', { name: 'Períodos escolares não configurados', exact: true })).toBeDisabled()
+      await page.getByRole('option', { name: 'Personalizado', exact: true }).click()
+      await expect(page.getByRole('button', { name: 'Gerar Relatorio', exact: true })).toBeEnabled()
+    }
+  })
 
   test('keeps municipal identity read-only and persists the school academic year', async ({ page }) => {
     await openSettings(page, ACADEMIC_YEAR_ENDPOINT)

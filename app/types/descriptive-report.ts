@@ -53,16 +53,10 @@ export const SEMESTER_CONFIG = {
   primeiro: {
     label: '1 Semestre',
     shortLabel: '1o Sem',
-    months: 'Fevereiro - Julho',
-    startMonth: 2,
-    endMonth: 7,
   },
   segundo: {
     label: '2 Semestre',
     shortLabel: '2o Sem',
-    months: 'Agosto - Dezembro',
-    startMonth: 8,
-    endMonth: 12,
   },
 } as const
 
@@ -336,14 +330,6 @@ export const DESCRIPTIVE_REPORT_ERROR_MESSAGES = {
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-/**
- * Get current semester based on date
- */
-export function getCurrentSemester(date: Date = new Date()): SemestreType {
-  const month = date.getMonth() + 1 // JavaScript months are 0-indexed
-  return month <= 7 ? 'primeiro' : 'segundo'
-}
 
 /**
  * Get current academic year

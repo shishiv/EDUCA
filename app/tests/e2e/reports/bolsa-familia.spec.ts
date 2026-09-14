@@ -2,7 +2,7 @@ import { execFile as execFileCallback } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
-import ExcelJS from 'exceljs'
+import type ExcelJS from 'exceljs'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Page } from '@playwright/test'
 import type { Database } from '@/types/database'
@@ -318,6 +318,7 @@ test.describe('Relatório Bolsa Família', () => {
     expect(excelBytes.subarray(0, 2).toString('ascii')).toBe('PK')
     expect(excelBytes.length).toBeGreaterThan(1000)
 
+    const { default: ExcelJS } = await import('exceljs')
     const workbook = new ExcelJS.Workbook()
     await workbook.xlsx.readFile(excelPath)
     expect(workbook.worksheets.map((worksheet) => worksheet.name)).toEqual(['Resumo', 'Alunos'])

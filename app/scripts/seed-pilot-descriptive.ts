@@ -1,11 +1,12 @@
 #!/usr/bin/env tsx
 /**
  * Seeds the isolated local rehearsal for bounded descriptive-report PDF emission.
- * Every row is synthetic and the two conteudo_aula records are the only source
- * that the emitted report may use as taught-content evidence.
+ * Every row is synthetic. Narrative emission captures Vivências; taught content
+ * remains present only to prove the separate content-report path.
  */
 import { Client, type QueryResultRow } from 'pg'
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '../types/database'
 import { assertPilotDescriptiveReportDemoSafety } from '../lib/pilot/descriptive-report-demo-safety'
 import {
   PILOT_DESCRIPTIVE_CANONICAL_SOURCE,
@@ -45,7 +46,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL || ''
 const RELEASE_REVISION = requirePilotDescriptiveReleaseRevision()
 
-const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+const service = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
@@ -130,6 +131,16 @@ async function ensureDescriptiveTeacherAuthUser(): Promise<string> {
   return data.user.id
 }
 
+async function seedNarrativeSources(client: Client, professorId: string) {
+  await client.query(`INSERT INTO public.anos_letivos(escola_id,ano,data_inicio,data_fim,periodos)
+    VALUES ($1,2026,'2026-01-01','2026-12-31',$2) ON CONFLICT (escola_id,ano) DO UPDATE SET periodos=EXCLUDED.periodos`,
+    [PILOT_DESCRIPTIVE_SCHOOL_ID, JSON.stringify([{ chave: 'primeiro', nome: '1 Semestre de 2026', data_inicio: '2026-02-01', data_fim: '2026-07-31' }])])
+  await client.query(`INSERT INTO public.vivencias(id,escola_id,aluno_id,matricula_id,turma_id,professor_id,data_vivencia,campos_experiencia,descricao,observacoes,created_by,updated_by,created_at,updated_at)
+    VALUES ('29000000-0000-0000-0000-000000000001',$1,$2,$3,$4,$5,'2026-03-10',ARRAY['eu','corpo'],$6,$7,$5,$5,$8,$8)`,
+    [PILOT_DESCRIPTIVE_SCHOOL_ID, PILOT_DESCRIPTIVE_STUDENT_ID, PILOT_DESCRIPTIVE_ENROLLMENT_ID, PILOT_DESCRIPTIVE_CLASS_ID, professorId,
+      'A criança sintética compartilhou descobertas e explorou movimentos com os colegas.', 'Vivência sintética do ensaio narrativo.', PILOT_DESCRIPTIVE_SEED_CREATED_AT])
+}
+
 async function writeDescriptiveSeed(client: Client, professorId: string): Promise<void> {
   await client.query('BEGIN')
 
@@ -191,6 +202,9 @@ async function writeDescriptiveSeed(client: Client, professorId: string): Promis
         PILOT_DESCRIPTIVE_CONTENT_IDS[1], PILOT_DESCRIPTIVE_SESSION_IDS[1], 'Exploração de sons, cores e movimentos', 'Expressar ideias com materiais sonoros e visuais', ['EI03TS02', 'EI03CG05'], 'Ateliê em pequenos grupos', 'Tintas, instrumentos e papel', 'Registro sintético de conteúdo ministrado', professorId, PILOT_DESCRIPTIVE_SEED_CREATED_AT, PILOT_DESCRIPTIVE_SEED_CREATED_AT,
       ]
     )
+    await seedNarrativeSources(client, professorId)
+    await client.query('SET LOCAL ROLE authenticated')
+    await client.query("SELECT set_config('request.jwt.claim.sub', $1, true)", [professorId])
     await client.query(
       `INSERT INTO public.relatorios_descritivos (
          id,matricula_id,turma_id,professor_id,ano_letivo,semestre,status,
@@ -210,9 +224,12 @@ async function writeDescriptiveSeed(client: Client, professorId: string): Promis
         PILOT_DESCRIPTIVE_SEED_CREATED_AT, PILOT_DESCRIPTIVE_SEED_CREATED_AT, professorId, PILOT_DESCRIPTIVE_SEED_CREATED_AT, professorId,
       ]
     )
+    await client.query('RESET ROLE')
+    await client.query("SELECT set_config('request.jwt.claim.sub', '', true)")
     await client.query(
       `INSERT INTO public.configs (id,chave,valor,categoria,descricao,tipo_valor,valor_padrao,ativo,created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+
       [PILOT_DESCRIPTIVE_MARKER_CONFIG_ID, PILOT_DESCRIPTIVE_SEED_MARKER_CONFIG_KEY, PILOT_DESCRIPTIVE_SEED_MARKER, 'pilot', 'Marker for the bounded descriptive-report rehearsal', 'string', PILOT_DESCRIPTIVE_SEED_MARKER, true, PILOT_DESCRIPTIVE_SEED_CREATED_AT]
     )
     await client.query(

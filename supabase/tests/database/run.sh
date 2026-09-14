@@ -80,6 +80,16 @@ for migration in "${migrations[@]}"; do
     "${PSQL[@]}" -f "$TESTS_DIR/school_academic_year.before.sql" >/dev/null
   fi
 
+  if [[ $(basename "$migration") == '20260914000000_narrative_sources_and_school_periods.sql' ]]; then
+    "${PSQL[@]}" -c 'CREATE DATABASE narrative_legacy TEMPLATE postgres' >/dev/null
+    LEGACY_PSQL=("${PSQL[@]}" -d narrative_legacy)
+    "${LEGACY_PSQL[@]}" -f "$TESTS_DIR/narrative_sources.before.sql" >/dev/null
+    "${LEGACY_PSQL[@]}" -f "$migration" >/dev/null
+    "${LEGACY_PSQL[@]}" -f "$TESTS_DIR/narrative_sources_legacy.contract.sql" >/dev/null
+    "${PSQL[@]}" -c 'DROP DATABASE narrative_legacy' >/dev/null
+    echo 'NARRATIVE_LEGACY_COMPATIBILITY_OK: isolated pre-migration report remains readable and immutable without fabricated sources'
+  fi
+
   echo "Applying $(basename "$migration")"
   "${PSQL[@]}" -f "$migration" >/dev/null
 done

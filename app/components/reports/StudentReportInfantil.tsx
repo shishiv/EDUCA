@@ -371,7 +371,7 @@ function SemesterReportCard({
               {semesterConfig.label} de {report.anoLetivo}
             </CardTitle>
             <CardDescription className="mt-1">
-              Periodo: {semesterConfig.months}
+              Consulte as datas e fontes no relatório narrativo.
             </CardDescription>
           </div>
 

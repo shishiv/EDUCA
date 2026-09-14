@@ -36,9 +36,12 @@ TEST_EXIT=1
 SKIPPED=false
 DELIBERATE_BREAK="${PILOT_DESCRIPTIVE_DELIBERATE_BREAK:-none}"
 APP_NAME="educa-pilot-descriptive-${RUN_ID,,}"
-EXPECTED_TEST_COUNT=3
+EXPECTED_TEST_COUNT=5
 EXPECTED_SETUP_TEST_COUNT=1
-EXPECTED_RUN_TEST_COUNT=4
+EXPECTED_RUN_TEST_COUNT=6
+export PILOT_DESCRIPTIVE_EXPECTED_TEST_COUNT="$EXPECTED_TEST_COUNT"
+export PILOT_DESCRIPTIVE_EXPECTED_SETUP_TEST_COUNT="$EXPECTED_SETUP_TEST_COUNT"
+export PILOT_DESCRIPTIVE_EXPECTED_RUN_TEST_COUNT="$EXPECTED_RUN_TEST_COUNT"
 AUTH_DIR=''
 AUTH_STATE_PATH=''
 APP_LOG=''
@@ -269,9 +272,9 @@ const receipt = {
     config: 'playwright.pilot-descriptive.config.ts',
     setup: 'tests/e2e/pilot-descriptive/descriptive-auth.setup.ts',
     specs: ['tests/e2e/pilot-descriptive/descriptive-emission.spec.ts'],
-    expectedTests: 3,
-    expectedSetupTests: 1,
-    expectedRunTests: 4,
+    expectedTests: Number(process.env.PILOT_DESCRIPTIVE_EXPECTED_TEST_COUNT),
+    expectedSetupTests: Number(process.env.PILOT_DESCRIPTIVE_EXPECTED_SETUP_TEST_COUNT),
+    expectedRunTests: Number(process.env.PILOT_DESCRIPTIVE_EXPECTED_RUN_TEST_COUNT),
   },
   setup: readJson(setupPath),
   seed: {

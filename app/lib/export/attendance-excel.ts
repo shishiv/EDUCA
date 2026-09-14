@@ -8,7 +8,7 @@
  */
 
 import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import { downloadFilename } from './download-filename';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatDateBR } from '@/lib/date-utils';
@@ -103,7 +103,15 @@ async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string): Promi
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const name = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
-  saveAs(blob, name);
+  // Keep the filename on a native link, independent of a shared window.saveAs.
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = downloadFilename(name);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  requestAnimationFrame(() => URL.revokeObjectURL(url));
 }
 
 /**
