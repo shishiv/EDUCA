@@ -2,7 +2,21 @@
 
 Testes End-to-End para o sistema EDUCA usando Playwright.
 
-## Estado de execução em 2026-09-08
+## Catálogo vigente e evidências
+
+Revisão documental em 2026-09-15 sobre `dev` `063e0e97`, sem nova execução da
+aplicação. O [índice por SHA/manifesto](../../../CONTEXT.md#operational-catalog-and-evidence)
+separa preservação, integração de qualidade já entregue e prova focal posterior
+de Vivências/períodos. O [runbook R3](../../../docs/R3-PILOT-E2E-FOLLOW-UP.md)
+já foi reconciliado; os bloqueios de ambiente de setembro abaixo são históricos.
+
+A decisão `grades-general-contract` de 2026-09-09 mantém `notas` bloqueada no
+schema canônico. O gate geral executa [`grades/access-boundary.spec.ts`](grades/access-boundary.spec.ts);
+os positivos ficam em [`playwright.grades-positive.config.ts`](../../playwright.grades-positive.config.ts).
+Coletá-los não é executá-los nem aprová-los. General9 continua vermelho; a
+integração posterior registra outra execução, com seleção diferente.
+
+## Histórico de execução: snapshot de 2026-09-08
 
 Este documento mantém o catálogo de casos. Marcas `[x]` abaixo significam que o
 caso está representado no inventário ou em uma spec; não significam `PASS` de uma
@@ -11,7 +25,7 @@ execução recente.
 | Escopo | Estado | Recibo e limite |
 |---|---|---|
 | Suíte geral | **RED diagnóstica; não aceita** | General9 selecionou 239 casos: 234 passaram, 3 falharam e 2 casos seriais dependentes não foram executados. O cleanup passou. |
-| Piloto agregado atual | **PASS no snapshot de Aggregate9: 36/36** | Legacy 26, capacity 3, descriptive 4 e security 3 passaram; cleanup aprovado. Extração posterior do helper de manifesto aguarda validação após o bloqueio de pressão do test-safe. |
+| Piloto agregado naquele snapshot | **PASS no snapshot de Aggregate9: 36/36** | Legacy 26, capacity 3, descriptive 4 e security 3 passaram; cleanup aprovado. Extração posterior do helper de manifesto aguarda validação após o bloqueio de pressão do test-safe. |
 | R1 canônico | **PASS delimitado** | Duas provas browser canônicas e cleanup aprovados no recibo preservado; não representa a suíte geral. |
 | SQL | **PASS delimitado** | Cadeia completa e contratos passaram, incluindo finalização C04 e as duas ordens concorrentes dos vínculos de Vivências. |
 | Hub de relatórios | **PASS delimitado** | A prova do hub verifica somente os três cartões e sua navegação para destinos canônicos. |
@@ -19,6 +33,7 @@ execução recente.
 | Unitários | **PASS: 124 arquivos / 1.316 testes** | A seleção unitária comum passou. Vinte testes live permanecem em contrato opt-in separado e não entram nessa contagem. |
 | Censo de código | **PASS: 623 arquivos, 16 regras, 0 diagnósticos** | Inclui a regra customizada do plugin e seus testes executáveis. Somente 22 arquivos idênticos ao vendor ficam excluídos; uma thread. |
 
+Leitura histórica do diagnóstico de 2026-09-08 (não pendências atuais):
 General9 permanece evidência diagnóstica. Duas falhas são dos contratos de entrada
 de notas e boletim para a nota sintética `8.4`; a leitura autenticada aguarda a
 decisão de governança sobre as políticas canônicas de `notas`. Os dois casos
@@ -27,7 +42,7 @@ locator entre o placeholder de série e um toast com o mesmo texto. O teste foi
 corrigido após o snapshot congelado de General9, mas ainda não recebeu nova
 execução em navegador. Nenhuma dessas condições aprova a suíte geral.
 
-Pausa de validação atual: o test-safe retornou PRESSURE_PERSISTENT antes de iniciar static10. O helper compartilhado de manifesto extraído depois do snapshot e a correção do toast de turma ainda aguardam validação. R1 run3 parou antes do proxy/banco por Portless ausente no PATH; o runtime existente foi localizado e a repetição está pendente.
+Pausa de validação registrada em 2026-09-08: o test-safe retornou PRESSURE_PERSISTENT antes de iniciar static10. O helper compartilhado de manifesto extraído depois do snapshot e a correção do toast de turma ainda aguardam validação. R1 run3 parou antes do proxy/banco por Portless ausente no PATH; o runtime existente foi localizado e a repetição está pendente.
 
 ## Execução local
 
@@ -85,7 +100,7 @@ tests/e2e/
 - [x] Campos obrigatórios
 - [x] Seleção de escola
 - [x] Criação com sucesso
-- [x] Atribuição de professor
+- [x] Diálogo de atribuição do titular e seletor de professor visível; `assignments/teacher.spec.ts` não confere opções, salva nem prova persistência
 
 ### Alunos
 - [x] Listagem com busca
@@ -100,8 +115,7 @@ tests/e2e/
 - [x] Listagem com filtros
 - [x] Seleção de aluno/turma
 - [x] Criação de matrícula
-- [x] Transferência
-- [x] Cancelamento
+- [x] Navegação para detalhe e ação Editar; a spec de matrícula não prova transferência/cancelamento persistidos
 
 ### Frequência (Chamada)
 - [x] Acesso ao diário
@@ -118,7 +132,8 @@ tests/e2e/
 - [x] Campos obrigatórios
 - [x] Tipos de usuário (roles)
 - [x] Escola obrigatória por role
-- [x] Criação com sucesso
+- [x] Convite sintético e status pela rota governada; no demo, a UI de status e o convite são simulados
+- [x] Edição inline de nome/e-mail na página de detalhe, com reload; papel e escola bloqueados, sem rota `/dashboard/usuarios/[id]/editar`
 
 ### Responsáveis
 - [x] Listagem
@@ -151,6 +166,13 @@ O hub não gera, agenda, mantém histórico, mostra progresso nem simula downloa
 Esses comportamentos não fazem parte do contrato de `flows/relatorios.spec.ts`.
 
 ### Permissões & RBAC
+
+Este catálogo de UI usa `lib/route-policy.ts`; o Pilot Gate pode restringi-lo
+mais. Não concede acesso a tabelas ou APIs. `/dashboard/configuracoes` segue
+bloqueada no piloto não-demo, enquanto as APIs de ano letivo/períodos exigem o
+diretor da própria escola. A UI correspondente é ensaiada no runner geral local;
+veja o [contrato de períodos](../../../docs/NARRATIVE-SOURCES-AND-SCHOOL-PERIODS.md).
+
 - [x] **Admin**: Acesso às superfícies ativas de cadastro, acadêmico, relatórios e configurações
 - [x] **Admin**: Criação de escolas
 - [x] **Admin**: Gestão de usuários
@@ -181,6 +203,12 @@ Esses comportamentos não fazem parte do contrato de `flows/relatorios.spec.ts`.
 - [x] Botões de ação apropriados por role
 
 ### Notas & Boletim
+
+No gate geral, [`grades/access-boundary.spec.ts`](grades/access-boundary.spec.ts)
+prova negação aos papéis de navegador com controle positivo via service role.
+Os itens abaixo são **contratos positivos preservados, fora do gate geral e não
+habilitados no schema atual**, não capacidades demo/piloto nem receipts verdes:
+
 - [x] Acesso à página de notas
 - [x] Projeção autorizada da turma e filtro exato do primeiro bimestre
 - [x] Nota inválida rejeitada sem escrita
@@ -257,8 +285,13 @@ pnpm exec playwright test --headed --slowmo=1000
 
 A matriz autoritativa de catálogo, incluindo rota, papel, viewport, interação e
 spec, está em [`COVERAGE_MATRIX.md`](COVERAGE_MATRIX.md). Contagem de catálogo e
-resultado de execução são campos separados. General6 permanece uma evidência RED
-diagnóstica; uma futura rodada só deve ser registrada como `PASS` quando houver um
-recibo geral completo e aceito.
+resultado de execução são campos separados. General9 permanece uma evidência RED
+diagnóstica. Uma nova rodada só recebe `PASS` com seu próprio recibo completo e
+aceito, sem substituir resultados antigos ou aprovar checks ausentes.
 
-*Última atualização: 2026-09-08*
+Diálogo aberto/cancelado, callback e mensagem de sucesso não demonstram gravação:
+por exemplo, `diary/lesson-form.spec.ts` cobre formulário/validação, enquanto
+`pilot/canonical-lesson.spec.ts` cobre a jornada canônica persistida. A matriz
+explicita limites equivalentes para atribuições, matrículas e usuários.
+
+*Revisão do catálogo: 2026-09-15; snapshot histórico acima: 2026-09-08.*

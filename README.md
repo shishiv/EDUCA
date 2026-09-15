@@ -38,9 +38,9 @@
 
 **EN:** To be direct: the repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim. If you need that today, it's not ready yet — but it's being built in the open, right here.
 
-**PT:** As telas de calendário escolar e feature flags permanecem dormentes e bloqueadas para todos os papéis. A rota de configurações expõe somente a identidade municipal governada e, para diretores, o período do ano letivo da própria escola.
+**PT:** As telas de calendário escolar e feature flags permanecem dormentes e bloqueadas para todos os papéis, inclusive no demo. Fora do bloqueio de UI do piloto, configurações expõe a identidade municipal governada e, para diretores, o ano letivo e os períodos pedagógicos da própria escola. No piloto, a API autenticada do diretor permanece disponível, mas `/dashboard/configuracoes` continua bloqueada. Notas não estão habilitadas para papéis de navegador; uma rota no catálogo não concede acesso aos dados.
 
-**EN:** The school-calendar and feature-flag screens remain dormant and blocked for every role. The settings route exposes only governed municipal identity and, for directors, their own school's academic-year period.
+**EN:** The school-calendar and feature-flag screens remain dormant and blocked for every role, including demo. Outside the pilot UI restriction, settings exposes governed municipal identity and, for directors, their own school's academic year and pedagogical periods. In pilot mode, the authenticated director API remains available, but `/dashboard/configuracoes` stays blocked. Grades are not enabled for browser roles; a cataloged route does not grant data access.
 
 ## Dúvidas comuns · Common questions
 
@@ -92,3 +92,5 @@ MIT · [`LICENSE`](LICENSE) · Copyright (c) 2025 Myke Matos
 ## Contexto do repositório · Repository context
 
 Arquitetura, decisões e limites: [`CONTEXT.md`](CONTEXT.md). · Architecture, decisions, and boundaries: [`CONTEXT.md`](CONTEXT.md).
+
+Catálogo vigente e índice de evidências por SHA/manifesto: [`CONTEXT.md`](CONTEXT.md#operational-catalog-and-evidence). · Current catalog and evidence index by SHA/manifest: [`CONTEXT.md`](CONTEXT.md#operational-catalog-and-evidence).

@@ -1,7 +1,15 @@
 # Contrato de jornadas do demo público
 
 Issue: #79: Jornadas do demo público
-Status: rascunho, bloqueado por #76 (mutabilidade) e #77 (privacidade)
+Status histórico em 2026-08-23: rascunho, então bloqueado por #76 (mutabilidade) e #77 (privacidade)
+
+Este é o mapa de jornadas e bloqueios observado em 2026-08-23, não um status
+atual do deploy, da credencial ou das decisões. Para capacidades atuais e provas
+por SHA/manifesto, consulte [`DEMO.md`](../../DEMO.md) e o
+[índice operacional](../../CONTEXT.md#operational-catalog-and-evidence).
+A proibição de mutações em `public-demo` abaixo limita o **smoke compartilhado**;
+não afirma que toda a aplicação demo é somente leitura. Não houve smoke externo
+nesta revisão documental de 2026-09-15.
 
 ## Purpose
 
@@ -31,7 +39,7 @@ Cada jornada tem persona, ambiente, limite de dados, resultado esperado e métod
 - **Local-synthetic:** mutações são permitidas e exercitadas. A stack é descartável (Supabase local + seed sintético).
 - **Public-demo:** o smoke verifica apenas leitura. Nenhum POST, PUT, DELETE ou RPC mutante é emitido contra o sandbox público compartilhado.
 
-## Blockers
+## Bloqueios observados em 2026-08-23
 
 1. **Deploy do site divergente**: não é possível provar que o smoke público reflete o código local.
 2. **Credencial pública do demo inválida**: login no endpoint público falha; J1 é a única jornada executável externamente.

@@ -10,6 +10,22 @@ Educação Infantil uses Vivências: teacher-authored daily narrative observatio
 
 The R3-T4 pilot aggregate runs the legacy, capacity, descriptive, and focused security children as separate lifecycle processes. It acquires one cross-worktree Docker-aware port-range lease and passes it to every child until cleanup completes. Capacity and descriptive setup files remain outside the shared legacy Playwright project, and the R1 canonical runner remains independent. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, health, disability, and race data remain disabled. The hardening ship releases only the scoped Bolsa Família conditionality read model and descriptive-report table; real Bolsa Família data remains blocked by the synthetic-only gate.
 
+## Operational catalog and evidence
+
+Catalog review: 2026-09-15, against `dev` at `063e0e978fd896d5c66ac0ba7d2ddf5afe67aba0`. This identifies the source inspected, not a new application test run. `main` remains production-only; ordinary changes target `dev`.
+
+- [`DEMO.md`](DEMO.md#source-capability-catalog): source capabilities, UI/API boundaries and local Supabase commands, separate from dated public observations.
+- [`E2E README`](app/tests/e2e/README.md) and [`coverage matrix`](app/tests/e2e/COVERAGE_MATRIX.md): cases and assertion depth, not an automatic PASS for the current tree.
+- [`R3 reconciliation`](docs/R3-PILOT-E2E-FOLLOW-UP.md): already delivered; not pending work. [`Narrative contract`](docs/NARRATIVE-SOURCES-AND-SCHOOL-PERIODS.md) and [`import contract`](docs/PILOT-DATA-IMPORT.md) remain the authorities for snapshots/periods and retention/rollback.
+
+| Evidence scope | SHA / manifest | What the record establishes |
+| --- | --- | --- |
+| Preservation, 2026-09-08 | Integration snapshot `2d95afc0237a74ded944cae53ed4db30a83903aa`; [content manifest](artifacts/educa-quality-prs-dev/20260908-inventory/content-manifest.json), [receipts](artifacts/educa-quality-prs-dev/preservation/receipts.json) | Original bytes and alternatives preserved, not work to merge blindly or proof of current readiness. See the [dated inventory](artifacts/educa-quality-prs-dev/README.md). |
+| Quality reconciliation, landed as `2f3f07801c461792557cb6dc580cb295947ecb22` | [Ledger](artifacts/quality-integration/reconciliation.json), [general result](artifacts/quality-integration/general/result.txt), [R3 selected manifests and receipts](artifacts/quality-integration/pilot/aggregate.json) | [Delivery record](artifacts/quality-integration/README.md): general 235/235 with negative grades boundary; four R3 children passed in that integration. This does not turn General9 red or its unexecuted cases into PASS. |
+| Vivências/periods, landed as `a41c2501d7f9cabdd2f5119a2d1a3060d4ef3373` | Code provenance `6a534024f0f664df151e4c050451b07d529530b3`; [descriptive manifest/receipt](artifacts/contracts/pilot/r3-t4-descriptive-pilot-e2e-20260914T090227Z-3081593.json) | [Delivery record](artifacts/contracts/README.md): focused general browser 27/27, descriptive 6/6 including setup, SQL and real PDF. Not a new full-general/R3 aggregate run. |
+
+Merge SHAs locate delivered work; they do not replace the source SHAs inside receipts. Historical logs, snapshots and hashes stay unchanged. `artifacts/quality-integration/verify.py` compares the ledger's pinned final bytes, not an evolving `dev`; later changes can fail that comparison and must not be hidden by updating old hashes. Missing checks remain missing; selection/collection, component callbacks and dialog rendering are not persistence proofs. Application gates remain `complexity max10` plus anti-slop in [`app/.oxlintrc.json`](app/.oxlintrc.json), run through `pnpm lint`; no hosted CI workflow is introduced.
+
 ## Architecture
 
 - `app/` is the Next.js 16 App Router application. It uses React 19, TypeScript, Tailwind/shadcn UI, Supabase SSR clients, and RLS-backed multi-school data access.
@@ -133,7 +149,7 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 ## Demo sandbox (issue #23)
 
 - The public demo sandbox ships code and reproducible configuration only; provisioning (Supabase/Vercel/DNS projects) is external and documented in `DEMO.md`.
-- The demo seed is deterministic: static entities use a fixed anchor timestamp and attendance is generated for a 20-school-day window ending at the reset date (seeded PRNG, fixed 70% alert case). `app/scripts/demo-reset.sh`, `pnpm demo:reset-check` and `supabase/seed-demo/verify-sql.sh` prove the local reset path and repeatability. The public scheduled reset remains absent; the public runtime is not considered deterministic until `sandbox-ar` approval and a controlled reset prove convergence.
+- The demo seed is deterministic: static entities use a fixed anchor timestamp and attendance is generated for a 20-school-day window ending at the reset date (seeded PRNG, fixed 70% alert case). `app/scripts/demo-reset.sh`, `pnpm demo:reset-check` and `supabase/seed-demo/verify-sql.sh` prove the local reset path and repeatability. The public scheduled reset remains absent. The 2026-08-10 audit recorded drift; the dated [runtime/validation receipt](data/educa-node-runtime-promote-final/report.md) and [2026-08-16 promotion receipt](docs/deployments/2026-08-16-educa-demo-promotion.md) belong to their recorded releases, not today's `dev`. A future shared reset still needs `sandbox-ar` approval and its own convergence receipt.
 - Demo sandbox mode (`NEXT_PUBLIC_DEMO_SANDBOX=true`) blocks signup (no UI, no INSERT grant/policy on `users` for authenticated, project setting in `DEMO.md`) and destructive actions (schema `REVOKE DELETE`, middleware + route guards, hidden UI deletes).
 - The demo database runs canonical migrations only - it never applies `supabase/pilot/provision-pilot-module-gate.sql`, so NIS/Bolsa Familia seed fields remain allowed.
 

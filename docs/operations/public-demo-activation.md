@@ -1,8 +1,17 @@
 # Gate de ativação do demo público
 
 Issue: #82
-Status: BLOCKED: dependências ainda não satisfeitas
-Dependências: #76 (claims/mutabilidade), #77 (privacidade), #79 (jornadas)
+Status histórico em 2026-08-23: BLOCKED: dependências então não satisfeitas
+Dependências daquele registro: #76 (claims/mutabilidade), #77 (privacidade), #79 (jornadas)
+
+Os status, checkboxes e bloqueios abaixo preservam a observação de 2026-08-23;
+não descrevem o runtime público atual nem reabrem essas decisões. O procedimento
+é uma referência para uma ativação futura explicitamente autorizada, não uma
+autorização para operar aliases ou rollback. Para o código vigente, consulte o
+[catálogo operacional e índice de evidências](../../CONTEXT.md#operational-catalog-and-evidence)
+e [`DEMO.md`](../../DEMO.md). Os [receipts datados de promoção](../deployments/2026-08-16-educa-demo-promotion.md)
+têm SHA/ambiente próprios e não comprovam que o `dev` atual está publicado.
+Nenhuma verificação externa foi realizada nesta revisão documental (2026-09-15).
 
 ## Objetivo
 
@@ -78,7 +87,7 @@ ativado_por: <pessoa>
 responsavel_rollback: <pessoa>
 ```
 
-## Current blockers
+## Bloqueios observados em 2026-08-23
 
 1. **Deploy do site divergente**: alias público não corresponde ao SHA local
 2. **Credencial pública do demo inválida**: login falha no endpoint público

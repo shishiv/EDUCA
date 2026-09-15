@@ -84,7 +84,7 @@ O pipeline resolve `recordedBy`, `submittedBy` e `approvedBy` em usuários ativo
 A aprovação publica a projeção canônica no RPC transacional `pilot_publish_synthetic_import_batch`; qualquer falha desfaz aprovação e linhas parciais. O fingerprint canônico inclui todos os campos, normaliza espaços, e-mails, timestamps e ordena subprocessadores.
 
 O validador exige owner, controller, processor, propósito, base legal, acordo, aprovadores maker-checker, subprocessadores, localização, criptografia, retenção, janela de rollback, saída e incidente.
-Ele rejeita campos incompletos, identidade que não termina em `.invalid`, aprovação pelo próprio submitter e a ordem `rawPayloadExpiresAt < rollbackUntil < canonicalDataExpiresAt`.
+Ele rejeita campos incompletos, identidade que não termina em `.invalid` e aprovação pelo próprio submitter. Exige a ordem estrita `rawPayloadExpiresAt < rollbackUntil < canonicalDataExpiresAt`; igualdade ou inversão é rejeitada. No banco, o mesmo contrato é `raw_expires_at < rollback_until < canonical_expires_at`, conforme o [validador de governança](../app/lib/pilot/governed-csv-import.ts) e a [constraint canônica de owner/acordo](../supabase/migrations/20260814000000_governed_import_owner_agreement.sql).
 
 ### Limite explícito do G2
 
@@ -98,7 +98,7 @@ O receipt guarda a versão e o fingerprint de governança, mas não guarda CSV, 
 As três identidades não se misturam:
 
 - **Prova sintética isolada:** usa `PILOT_IMPORT_TARGET=isolated-proof`, banco local `educa_pilot_proof_*`, modo `synthetic` e o marcador `SYNTHETIC-EDUCA-PILOT`.
-- **Demo público:** usa `NEXT_PUBLIC_DEMO_SANDBOX=true` e referências `SUPABASE_DEMO_*`. O demo não é alvo de importação e continua simulado e somente leitura.
+- **Demo público:** usa `NEXT_PUBLIC_DEMO_SANDBOX=true` e referências `SUPABASE_DEMO_*`. O demo não é alvo de importação: esse fluxo simula sucesso sem publicar dados canônicos. Isso não torna todo o sandbox somente leitura; outras mutações sintéticas têm limites próprios em [`DEMO.md`](../DEMO.md#source-capability-catalog).
 - **Piloto municipal:** é uma implantação posterior, com aprovação própria. O alvo municipal não pode reutilizar a configuração da prova sintética.
 
 A identidade de código fica em `PILOT_PROOF_TARGET_IDENTITY`, exportada por `app/lib/pilot/pilot-safety-gate.ts` e pelo guard de importação. A prova não autoriza dados reais, infraestrutura remota, credenciais municipais ou DNS.
