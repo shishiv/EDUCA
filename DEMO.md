@@ -1,16 +1,23 @@
 # EDUCA Public Demo Sandbox - Runbook (issue #23)
 
-The public demo sandbox is a shared, synthetic-only instance of EDUCA
-(`demo.educa.app.br`) with a fixed login and deterministic seed data. Decision
+The public demo sandbox contract describes a shared, synthetic-only EDUCA instance
+with a fixed login and deterministic seed data. `demo.educa.app.br` is the
+provisioning target, not a verified current alias. Decision
 D7 (2026-08-10) defines the reset as a versioned local script, not a hosted
 workflow. This document is the runbook for local resets, offline verification
 and provisioning the instance later. **This repository only ships code and
 reproducible configuration - it never creates Vercel/Supabase/DNS resources
 and never publishes anything.**
 
-## Operational status: 2026-08-10
+## Historical observation: 2026-08-10
 
-The public URL `educa-demo.vercel.app` responds healthy, but this audit found
+This is the August audit snapshot, not a current public-runtime check. The
+2026-08-10 promotion/validation receipt remains dated evidence in
+[`data/educa-node-runtime-promote-final/report.md`](data/educa-node-runtime-promote-final/report.md);
+neither proves that today's `dev` is deployed. Current source and evidence are
+indexed in [`CONTEXT.md`](CONTEXT.md#operational-catalog-and-evidence).
+
+At that audit, the public URL `educa-demo.vercel.app` responded healthy, but showed
 an old deployment and database drift: the dashboard showed 51 students and 9
 classes, and the Bolsa Família report showed zero students. The repository has
 no `.github/workflows/` files, and D7 explicitly keeps reset automation local.
@@ -43,7 +50,7 @@ Acceptance criteria from issue #23:
 | `supabase/seed-demo/verify-sql.sh` | Offline validation on a disposable raw PostgreSQL cluster (no Docker/Supabase): applies canonical migrations (demo shape, no pilot module gate), the seed, generated attendance and certificate source, structural asserts, and a same-anchor repeatability fingerprint check. |
 | `app/scripts/demo-reset.sh` | Versioned local wrapper: checks all three `SUPABASE_DEMO_*` variables without printing values, then runs `pnpm seed:demo` and `pnpm demo:validate`. |
 | `.github/workflows/` | Intentionally absent. D7 prohibits restoring GitHub Actions for this reset. |
-| `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Demo-sandbox mode guards: blocks admin data-management APIs, hides destructive UI actions, shows the demo banner. |
+| `app/lib/demo-sandbox/demo-sandbox.ts` + middleware + guarded routes | Named capability/effect guards, selected no-op flows, destructive UI guards and demo banner; not a blanket read-only API policy. |
 
 ## Failure receipts
 
@@ -74,31 +81,44 @@ This is the intended persona: an admin who can see and manage all three seeded s
 The `escola_id = NULL` pattern is correct. Do **not** assign the demo admin to a school;
 the multi-school view is the demoable differentiator.
 
-## Demoable flows (as of this change)
+## Source capability catalog
+
+Reviewed against `dev` `063e0e97` on 2026-09-15.
 
 The public demo uses an explicit capability allowlist in
 `app/lib/demo-sandbox/demo-sandbox.ts`. The allowlist only changes which product
 modules the pilot route guard exposes. It does not change authentication, role
-checks, school selection, RLS or audit.
+checks, school selection, RLS or audit. An allowlist entry is not proof that a
+page exists or that a browser role can read/write its tables. The final UI role
+boundary is [`app/lib/route-policy.ts`](app/lib/route-policy.ts); API handlers and
+canonical database grants/policies apply separately. This catalog is not an
+execution receipt for the shared public sandbox.
 
 | Capability | UI routes | API routes | Result |
 | --- | --- | --- | --- |
 | Dashboard and search | `/dashboard`, `/dashboard/perfil` | `/api/dashboard/alerts`, `/api/attendance/trends`, `/api/chamada/pendentes`, `/api/compliance/warnings`, `/api/search`, `/api/turmas/minhas` | Read synthetic metrics and alerts |
-| Schools | `/dashboard/escolas`, `/dashboard/escolas/nova`, `/dashboard/escolas/[id]` | Supabase client queries with RLS | Multi-school admin view; school context remains required for school-scoped writes |
-| Users | `/dashboard/usuarios`, `/dashboard/usuarios/[id]` | Existing typed Supabase queries, `/api/demo/audit` | Read and manage existing synthetic profiles; status toggle and invitation return a simulated-success no-op |
+| Schools | `/dashboard/escolas`, `/dashboard/escolas/nova`, `/dashboard/escolas/[id]` | RLS reads; governed school RPCs | Multi-school admin UI; browser table DML is revoked, writes use governed RPCs |
+| Users | `/dashboard/usuarios`, `/dashboard/usuarios/novo`, `/dashboard/usuarios/[id]` | RLS reads; `/api/users/[userId]`, `/api/users/[userId]/status`, `/api/pilot/invitations`, `/api/demo/audit` | Admin-only UI. Name/email editing is inline on the detail page for professor/diretor targets, with role/school locked. The list's demo status action and invitation simulate success; the PATCH handlers themselves persist authorized writes, not demo no-ops |
 | Students | `/dashboard/alunos`, `/dashboard/alunos/novo`, `/dashboard/alunos/[id]` | Existing typed Supabase queries | Synthetic CRUD with the selected school context |
-| Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | Existing typed Supabase queries | Synthetic class CRUD and teacher assignment |
-| Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Existing typed Supabase queries | Synthetic enrollment and guardian CRUD |
+| Classes and assignments | `/dashboard/turmas`, `/dashboard/turmas/nova`, `/dashboard/turmas/[id]`, `/dashboard/atribuicoes` | RLS reads; governed class RPCs | Synthetic class writes and titular assignment, not unrestricted browser table DML |
+| Enrollments and guardians | `/dashboard/matriculas`, `/dashboard/matriculas/nova`, `/dashboard/responsaveis` | Governed enrollment RPCs; RLS-backed guardian queries | Synthetic writes subject to role/school authority; no blanket destructive-CRUD allowance |
 | Attendance | `/dashboard/turmas`, `/dashboard/turmas/[id]/chamada` | `/api/sessoes/aula/abrir`, `/api/sessoes/aula/[id]/frequencia/batch` | Professor and diretor write; admin and secretaria view only; server-side role and school checks remain active |
 | Diary | `/dashboard/diario`, `/diario`, `/dashboard/alunos/[id]/diario` | `/api/vivencias` | Canonical class diary plus authenticated school-scoped Educação Infantil Vivências |
-| Grades and report cards | `/dashboard/notas`, `/dashboard/alunos/[id]/boletim` | `/api/grades/*` and typed Supabase queries | Synthetic grades and averages only |
+| Grades and report cards | `/dashboard/notas`, `/dashboard/alunos/[id]/boletim` remain in source/allowlist scope | `/api/grades/*` and typed Supabase queries do not bypass canonical policies | **Not an enabled grade-entry flow:** `notas` has RLS and zero policies for browser roles, including demo. Positive E2E contracts are separated, not approved |
 | Reports | `/dashboard/relatorios`, `/relatorios/frequencia`, `/relatorios/bolsa-familia`, `/relatorios/conteudo` | `/api/reports/*` and typed Supabase queries | Browser reports use synthetic rows; no government export is enabled |
-| Calendar and internal settings | `/dashboard/calendario`, `/dashboard/configuracoes`, `/dashboard/flags` | `/api/configs/*` | Internal synthetic configuration only |
+| Calendar and flags | `/dashboard/calendario`, `/dashboard/flags` | An allowlist prefix grants no UI access | Blocked for every role by route policy, including demo |
+| Governed settings | `/dashboard/configuracoes` | `/api/school-settings/municipal`, `/api/school-settings/academic-year`, `/api/school-settings/periods` | Municipal identity; own-school academic year and pedagogical periods for directors. The demo admin has no director's period editor. In the non-demo pilot the settings page stays blocked even though the director APIs remain available |
 | Audit and metrics | No standalone page | `/api/pilot/audit`, `/api/pilot/metrics` | Internal audit and pilot metrics remain available |
 | Local WhatsApp simulation | No standalone page | `/api/whatsapp/notify`, `/api/whatsapp/opt-in` | Local fake only; no Meta request is possible in demo mode |
 
 The route inventory is intentionally explicit. A new route is not demoable until
-its capability is named and its external effects are reviewed.
+its capability is named and its external effects are reviewed. The user mutation
+boundary is implemented in the [profile handler](app/app/api/users/[userId]/handler.ts),
+[status handler](app/app/api/users/[userId]/status/handler.ts) and
+[list UI](app/app/%28dashboard%29/dashboard/usuarios/page.tsx). A simulated UI
+status message must not be read as an API-wide guarantee of no persistence.
+The [E2E catalog](app/tests/e2e/COVERAGE_MATRIX.md) distinguishes dialog checks,
+persistence checks and separately gated positive grades contracts.
 
 ## Blocked effects
 
@@ -190,8 +210,9 @@ pnpm --dir app test:e2e:pilot:descriptive
 ## Live verification against a local Supabase stack (optional, Docker)
 
 ```bash
-pnpm --dir app exec supabase --workdir . start
-pnpm --dir app exec supabase --workdir . db reset
+# From the repository root; pnpm --dir app exec runs in app/.
+pnpm --dir app exec supabase --workdir .. start
+pnpm --dir app exec supabase --workdir .. db reset
 export SUPABASE_DEMO_URL=http://127.0.0.1:54321
 export SUPABASE_DEMO_SERVICE_KEY=<local service_role key>   # from supabase status
 export SUPABASE_DEMO_DB_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
@@ -208,8 +229,9 @@ pnpm --dir app demo:reset-check
 ## Provisioning the demo instance (later, outside this repository)
 
 1. **Supabase** - create the dedicated `educa-demo` project (free tier). Run
-   migrations: `pnpm --dir app exec supabase --workdir . link --project-ref <ref>`
-   then `pnpm --dir app exec supabase --workdir . db push`.
+   migrations (from the repository root): `pnpm --dir app exec supabase --workdir .. link --project-ref <ref>`
+   then `pnpm --dir app exec supabase --workdir .. db push`.
+   These are externally approved provisioning steps, not local verification commands.
 2. **Disable signup (hard requirement)** - in the Supabase dashboard:
    `Authentication > Sign In / Providers > Email > "Allow new users to sign up" = OFF`.
    The app has no signup UI. Migration
@@ -248,8 +270,8 @@ pnpm --dir app demo:reset-check
   not leave the sandbox through the monitoring collector.
 - The import validator accepts only `SYNTHETIC-EDUCA-PILOT`; the seed validator
   accepts only `SYNTHETIC-EDUCA-DEMO` in `configs.demo_synthetic_marker`.
-- UI: delete actions return early with a message and the calendar delete
-  affordance is hidden; a banner identifies the sandbox in the dashboard.
+- UI: destructive demo actions return early with a message; calendar/flags
+  routes remain unavailable. A banner identifies the sandbox in the dashboard.
 
 ## Boundaries (never cross)
 
