@@ -4306,6 +4306,14 @@ export type Database = {
         Args: { p_capacity: number; p_school_id: string }
         Returns: number
       }
+      set_governed_user_status: {
+        Args: { p_ativo: boolean; p_user_id: string }
+        Returns: {
+          ativo: boolean
+          audit_id: string
+          user_id: string
+        }[]
+      }
       set_guardian_whatsapp_opt_in: {
         Args: {
           p_opt_in: boolean

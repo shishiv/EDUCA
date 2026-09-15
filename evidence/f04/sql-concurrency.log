@@ -1,0 +1,12 @@
+
+> educa@1.0.0 test /root/.treehouse/educa-7c556a/5/educa/app
+> vitest run tests/live/user-status-concurrency.live.test.ts
+
+
+ RUN  v4.1.10 /root/.treehouse/educa-7c556a/5/educa/app
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  06:16:49
+   Duration  4.41s (transform 748ms, setup 1.60s, import 1.09s, tests 638ms, environment 0ms)

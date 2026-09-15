@@ -1,0 +1,6 @@
+
+> educa@1.0.0 typecheck /root/.treehouse/educa-7c556a/5/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+ ELIFECYCLE  Command failed.
+t received before a result; not PASS.

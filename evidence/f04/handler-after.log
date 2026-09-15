@@ -1,0 +1,14 @@
+
+> educa@1.0.0 test /root/.treehouse/educa-7c556a/5/educa/app
+> vitest run tests/unit/api/user-status-route.test.ts
+
+
+ RUN  v4.1.10 /root/.treehouse/educa-7c556a/5/educa/app
+
+(node:787955) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  06:08:34
+   Duration  34.67s (transform 3.32s, setup 3.60s, import 7.54s, tests 1.43s, environment 18.36s)

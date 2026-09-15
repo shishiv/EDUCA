@@ -1,0 +1,161 @@
+BEGIN
+CREATE FUNCTION
+CREATE FUNCTION
+INSERT 0 2
+INSERT 0 6
+ assert_status
+---------------
+
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+SET
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+RESET
+CREATE FUNCTION
+CREATE TRIGGER
+SET
+ status_denied
+---------------
+
+(1 row)
+
+ set_config
+------------
+ true
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+RESET
+ assert_status
+---------------
+
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+DROP TRIGGER
+SET
+              set_config
+--------------------------------------
+ f0410000-0000-4000-8000-000000000002
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+RESET
+ assert_status
+---------------
+
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+CREATE TRIGGER
+ set_config
+------------
+ false
+(1 row)
+
+SET
+ status_denied
+---------------
+
+(1 row)
+
+RESET
+ assert_status
+---------------
+
+(1 row)
+
+DROP TRIGGER
+SET
+              set_config
+--------------------------------------
+ f0410000-0000-4000-8000-000000000001
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+ assert_status
+---------------
+
+(1 row)
+
+ status_denied
+---------------
+
+(1 row)
+
+ROLLBACK
+F04_USER_STATUS_ATOMIC_OK

@@ -1,0 +1,40 @@
+
+> educa@1.0.0 test /root/.treehouse/educa-7c556a/5/educa/app
+> vitest run tests/unit/api/user-status-route.test.ts
+
+
+ RUN  v4.1.10 /root/.treehouse/educa-7c556a/5/educa/app
+
+(node:707934) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/unit/api/user-status-route.test.ts (5 tests | 1 failed) 230ms
+     × does not report success when the audit receipt fails 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/api/user-status-route.test.ts > user status route > does not report success when the audit receipt fails
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/api/user-status-route.test.ts:87:35
+     85|     expect(await response.json()).toEqual({ error: 'USER_STATUS_AUDIT_…
+     86|     expect(store).toMatchObject({ updateCalls: 1, auditCalls: 1 })
+     87|     expect(store.persistedActive).toBe(true)
+       |                                   ^
+     88|   })
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  06:03:13
+   Duration  16.87s (transform 2.11s, setup 2.86s, import 2.86s, tests 230ms, environment 9.23s)
+
+ ELIFECYCLE  Test failed. See above for more details.

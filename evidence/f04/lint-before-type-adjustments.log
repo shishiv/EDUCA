@@ -1,0 +1,13 @@
+
+> educa@1.0.0 lint /root/.treehouse/educa-7c556a/5/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /root/.treehouse/educa-7c556a/5/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+app/app/api/users/[userId]/status/handler.ts:41:37: error anti-slop(no-unknown-parameters): Parameter `error` leaves input unparsed. Accept a named domain type; run the expected schema or parser at the I/O boundary before calling this function.
+app/app/api/users/[userId]/status/handler.ts:43:69: error anti-slop(no-known-value-widening): The explicit open dictionary type on binding `errors` discards known type evidence. Keep inference, validate with `satisfies`, or use a named owner contract.
+app/tests/unit/api/user-status-route.test.ts:11:24: error anti-slop(no-object-parameters): Parameter `body` uses the broad `object` type. Accept a named owner type; parse external input at its boundary before calling this function.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
