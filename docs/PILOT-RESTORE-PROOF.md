@@ -1,8 +1,8 @@
 # Prova sintética de restore portátil
 
-Esta rotina prova um restore portátil local com dados sintéticos.
+Esta rotina oferece uma prova **parcial** de restore portátil local com dados sintéticos. Estrutura recriada por migrations não equivale a dados recuperados.
 
-Ela não prova prontidão municipal, aprovação legal, contrato, SLA comercial ou PITR gerenciado.
+Ela não prova recuperação completa do piloto/A1/B1, prontidão municipal, aprovação legal, contrato, SLA comercial ou PITR gerenciado.
 
 ## Comando
 
@@ -29,9 +29,11 @@ O guard de T08 exige estes valores:
 - marcador: `SYNTHETIC-EDUCA-PILOT`
 - identidades: domínio `.invalid`
 
-O artifact aceita somente a allowlist explícita do runner.
+O inventário versionado [`restore-coverage-v1.tsv`](../supabase/tests/pilot/restore-coverage-v1.tsv) é a fonte da allowlist: cada item tem status e motivo. O runner registra versão e SHA-256 do inventário no manifesto e no receipt. A lista de 18 tabelas públicas não foi ampliada nesta fatia.
 
-A allowlist inclui configuração municipal sintética, escolas, perfis, turmas, responsáveis, alunos, matrículas, aulas, sessões, frequência, tabelas do piloto, Auth referenciado por perfis ou convites, e Storage de fotos sintéticas.
+A allowlist inclui configuração municipal sintética, escolas, perfis, turmas, responsáveis, alunos, matrículas, aulas, sessões, frequência e tabelas do piloto. Auth referenciado por perfis ou convites e Storage de fotos sintéticas têm cobertura parcial, detalhada no inventário.
+
+**Não recuperados:** `configs` (incluindo overrides escolares), `anos_letivos`/períodos, `attendance_reopen_requests`/janela auditada, Vivências e seus campos, relatórios e snapshots/proveniência, além das demais tabelas fora da lista explícita. Defaults ou tabelas recriados por migrations não recuperam esses registros. Ampliar a cobertura para o agregado A1/B1 pertence a F07. Notas seguem bloqueadas; não se alteram RLS, grants, janela de frequência ou contratos canônicos de Vivências.
 
 O Storage exporta metadados de bucket e objeto, além dos bytes obtidos pelo contrato local de Storage.
 
@@ -45,7 +47,9 @@ O runner valida independentemente:
 - contagens e fingerprints de todas as tabelas allowlisted;
 - contagem e fingerprint do manifesto Auth;
 - metadados Storage e checksum dos bytes;
-- políticas, grants, view com `security_invoker` e RPC;
+- catálogo recriado antes/depois do replay: políticas com `qual`, `with_check`, roles e permissividade, RLS, ACLs de relações/colunas/funções públicas e políticas Storage do piloto;
+- SELECT nas 18 colunas permitidas de `alunos`, negação nas demais (incluindo CPF/NIS), negação de SELECT de tabela e bloqueio de notas;
+- view com `security_invoker` e existência do RPC;
 - guard do piloto e configuração sintética;
 - relacionamentos, tombstone e contagem de auditoria;
 - sessão sintética de professor, com leitura e escrita dentro da escola;
@@ -55,6 +59,44 @@ O runner valida independentemente:
 O receipt não contém nomes, e-mails, telefones, linhas CSV ou bytes de aluno.
 
 O banco temporário, artifacts plaintext, artifact cifrado e credenciais geradas são removidos em sucesso e falha.
+
+### Limites de Auth, Storage e catálogo
+
+`auth.users` recupera somente `id`, `email` e `created_at` referenciados. O destino usa [`restore-bootstrap.sql`](../supabase/tests/pilot/restore-bootstrap.sql), um shim SQL, não um serviço Auth restaurado. Claims SQL e vínculo perfil/identidade **não** provam login GoTrue, senha, sessão, refresh token, identidades de provedores, MFA, convite consumível ou revogação. A fixture de keys atuais (`SECRET_KEY`) e alias legado (`SERVICE_ROLE_KEY`) prova somente a seleção local de credenciais do wrapper.
+
+Os bytes de Storage são baixados da origem local e conferidos em arquivos após descriptografia; não há upload nem leitura HTTP em um Storage restaurado. ACLs gerenciadas de Auth/Storage não são copiadas. O catálogo comparado é o baseline das migrations + provisioner deste checkout, não um backup das ACLs de origem. O probe específico de grants também confere INSERT de frequência e SELECT de objetos Storage.
+
+## Regressão focal sem Supabase
+
+Com PostgreSQL 15+ disponível (`initdb`, `pg_ctl`, `psql`), como usuário não-root:
+
+```bash
+cd app
+pnpm test:database:restore
+pnpm exec vitest run tests/unit/pilot/restore-wrapper.test.ts tests/unit/pilot/restore-coverage.test.ts
+```
+
+O primeiro comando cria um cluster temporário, acessível apenas por socket Unix, migra origem e destino independentemente, carrega uma fixture sintética de duas escolas, compara CSVs das 18 tabelas e do manifesto de identidade, testa o catálogo e remove cluster/CSVs no EXIT. Cada tabela informa sua contagem: comparação de tabela vazia não é prova de recuperação de dados nela. Um sentinel de configuração escolar fica deliberadamente fora do restore.
+
+Ele testa a remoção de **cada** coluna permitida, grants de CPF/NIS e demais colunas sensíveis, e o contrafactual inseguro de SELECT de tabela. Todas essas mutações acontecem em subtransações revertidas. Alterar apenas `qual` ou `with_check`, desligar RLS ou adicionar grant deve mudar o catálogo. A sessão SQL prova roster escolar, negação de CPF/NIS/notas e escrita de frequência fora da escola negada.
+
+Probes externos devem retornar não-zero e confirmar cleanup:
+
+```bash
+PILOT_RESTORE_RAW_BREAK=allowed-column pnpm test:database:restore
+PILOT_RESTORE_RAW_BREAK=cpf pnpm test:database:restore
+PILOT_RESTORE_RAW_BREAK=nis pnpm test:database:restore
+```
+
+Alternativa isolada, sem instalar servidor no host, a partir de `app/`:
+
+```bash
+docker run --rm --network none --user postgres \
+  -v "$(cd .. && pwd):/work:ro" -w /work/app --entrypoint bash \
+  postgres:16-alpine ../supabase/tests/pilot/run-restore-contract.sh
+```
+
+Essa regressão raw-PG **não executa** criptografia do artifact, download/bytes de Storage, RPO/RTO ou serviço Auth. Não substitui a rotina portátil completa nem autoriza marcar esses itens como verdes. Evidência de investigação e execução: [`F02-RESTORE-GRANTS.md`](F02-RESTORE-GRANTS.md).
 
 ## Deliberate-breaks
 
