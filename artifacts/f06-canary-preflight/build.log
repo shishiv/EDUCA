@@ -1,0 +1,124 @@
+> educa@1.0.0 build /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> next build --webpack
+
+▲ Next.js 16.3.0 (webpack)
+✓ Running next.config.js took 27ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+  Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ Compiled successfully in 22.2s
+  Running TypeScript ...
+  Finished TypeScript in 17.7s ...
+  Collecting page data using 2 workers ...
+  Generating static pages using 2 workers (0/70) ...
+  Generating static pages using 2 workers (17/70)
+  Generating static pages using 2 workers (34/70)
+  Generating static pages using 2 workers (52/70)
+✓ Generating static pages using 2 workers (70/70) in 795ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/attendance/trends
+├ ƒ /api/chamada/pendentes
+├ ƒ /api/compliance/warnings
+├ ƒ /api/configs
+├ ƒ /api/dashboard/alerts
+├ ƒ /api/demo/audit
+├ ƒ /api/frequencia/marcar
+├ ƒ /api/frequencia/sessao/[aula_id]
+├ ƒ /api/health
+├ ƒ /api/health/detail
+├ ƒ /api/pilot/audit
+├ ƒ /api/pilot/descriptive-reports/[reportId]/pdf
+├ ƒ /api/pilot/first-access
+├ ƒ /api/pilot/imports
+├ ƒ /api/pilot/imports/[batchId]/approval
+├ ƒ /api/pilot/imports/[batchId]/rollback
+├ ƒ /api/pilot/invitations
+├ ƒ /api/pilot/metrics
+├ ƒ /api/pilot/users/[userId]/revoke
+├ ƒ /api/school-settings/academic-year
+├ ƒ /api/school-settings/municipal
+├ ƒ /api/school-settings/periods
+├ ƒ /api/search
+├ ƒ /api/sessoes/aula/[id]/cancelar
+├ ƒ /api/sessoes/aula/[id]/frequencia/batch
+├ ƒ /api/sessoes/aula/[id]/status
+├ ƒ /api/sessoes/aula/abrir
+├ ƒ /api/turmas/minhas
+├ ƒ /api/users/[userId]
+├ ƒ /api/users/[userId]/status
+├ ƒ /api/users/me
+├ ƒ /api/vivencias
+├ ƒ /api/vivencias/[id]
+├ ƒ /api/whatsapp/notify
+├ ƒ /api/whatsapp/opt-in
+├ ƒ /api/whatsapp/webhook
+├ ○ /apple-icon.png
+├ ƒ /blog
+├ ƒ /blog/[slug]
+├ ƒ /dashboard
+├ ƒ /dashboard/alunos
+├ ƒ /dashboard/alunos/[id]
+├ ƒ /dashboard/alunos/[id]/boletim
+├ ƒ /dashboard/alunos/[id]/diario
+├ ƒ /dashboard/alunos/[id]/diario/novo
+├ ƒ /dashboard/alunos/[id]/diario/relatorio
+├ ƒ /dashboard/alunos/[id]/editar
+├ ƒ /dashboard/alunos/novo
+├ ƒ /dashboard/atribuicoes
+├ ƒ /dashboard/calendario
+├ ƒ /dashboard/configuracoes
+├ ƒ /dashboard/diario
+├ ƒ /dashboard/escolas
+├ ƒ /dashboard/escolas/[id]
+├ ƒ /dashboard/escolas/[id]/editar
+├ ƒ /dashboard/escolas/nova
+├ ƒ /dashboard/flags
+├ ƒ /dashboard/matriculas
+├ ƒ /dashboard/matriculas/[id]
+├ ƒ /dashboard/matriculas/nova
+├ ƒ /dashboard/notas
+├ ƒ /dashboard/perfil
+├ ƒ /dashboard/relatorios
+├ ƒ /dashboard/responsaveis
+├ ƒ /dashboard/responsaveis/[id]
+├ ƒ /dashboard/responsaveis/novo
+├ ƒ /dashboard/sessoes
+├ ƒ /dashboard/turmas
+├ ƒ /dashboard/turmas/[id]
+├ ƒ /dashboard/turmas/[id]/chamada
+├ ƒ /dashboard/turmas/[id]/editar
+├ ƒ /dashboard/turmas/nova
+├ ƒ /dashboard/usuarios
+├ ƒ /dashboard/usuarios/[id]
+├ ƒ /dashboard/usuarios/novo
+├ ƒ /demo
+├ ƒ /diario
+├ ƒ /diario/frequencia
+├ ƒ /diario/relatorios/[alunoId]
+├ ○ /icon.png
+├ ƒ /login
+├ ƒ /offline
+├ ○ /opengraph-image.png
+├ ƒ /politica-privacidade
+├ ƒ /primeiro-acesso
+├ ƒ /relatorios/bolsa-familia
+├ ƒ /relatorios/conteudo
+├ ƒ /relatorios/frequencia
+├ ƒ /reset-password
+└ ƒ /unauthorized
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

@@ -19,6 +19,9 @@ set -euo pipefail
   exit 1
 }
 
+# Validate and pin the destination before libpq gets any opportunity to connect.
+DB_URL=$(printf '%s' "$DB_URL" | python3 "$CANARY_DIR/validate-db-url.py")
+
 server_address=$(psql "$DB_URL" -X -Atq -v ON_ERROR_STOP=1 -c "SELECT coalesce(inet_server_addr()::text, 'local-socket')")
 case "$server_address" in
   127.0.0.1|127.0.0.1/32|::1|::1/128|local-socket) ;;

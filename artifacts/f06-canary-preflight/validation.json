@@ -1,0 +1,55 @@
+{
+  "recorded_at": "2026-09-17T07:22:05.283019+00:00",
+  "base": "5b2ebe4f11e221fbbd058231444e34f47abd2a31",
+  "runtime": {
+    "node": "v26.8.1",
+    "execPath": "/usr/bin/node",
+    "abi": "147",
+    "pnpm": "9.15.9",
+    "python": "3.14.7",
+    "postgresql": "18.6"
+  },
+  "source_sha256": {
+    "supabase/canary/setup.sh": "736ecb5ceed99565a4da61bd84dc80b4cb419bd84e2fc8dec5237c34d0bcc6eb",
+    "supabase/canary/rollback.sh": "fd23330b0de03c9b080f3895a8441a9b5d1a9fe35d7af1c6e9d551b716ac51e8",
+    "supabase/canary/safety.sh": "90d32984208102d2e2258855648d78f35b1b28d679b8db6e9024da9d6a74f6df",
+    "supabase/canary/prerequisites.sh": "eb0238ec4904c38ff81f6041fe920b21edcc34385215d3b8b607ca465910431c",
+    "supabase/canary/validate-db-url.py": "09194b01028c11150768fc4281166fcf23988d621b452d2071093051a8fccbcb",
+    "supabase/tests/canary/run.sh": "358a51f085634a6c843ff6cc1ee2f4d8d2a42412a060b9eed211979833ef0c95",
+    "supabase/tests/canary/test_safety.py": "864a875c27c1e3b49a7b3a72a5c7ec75ecaf6a27bb7cda236343b0a96502f140"
+  },
+  "full_log_sha256": {
+    "raw-pg": "bc0cc64cc0ac1409b957755420faa6bb4d34fb24ab36c5e926d6edd1b738d1ec",
+    "unit": "04ec4aef51e2fe5135eed9f52108b72d4124afb009ba4bad497a18914ecf8d94",
+    "build": "26d73790b4732d52eb4eacc204164e7736930d832d73fcb7fc57981477b3bf06",
+    "lint": "124b7ef79ecf806d44b6edad9a48b03c98aad778618bb421c7d5bb456bf1a3bc",
+    "typecheck": "afc1bb252396d7f41a96427a4a49a561e68ee080e14ffa69b8c0157df451dcbd"
+  },
+  "results": {
+    "safety_tests": {
+      "passed": 13,
+      "workers": 1
+    },
+    "raw_pg": "PASS",
+    "cleanup": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "unit": {
+      "passed": 1333,
+      "skipped": 20,
+      "maxWorkers": 2
+    },
+    "build": {
+      "result": "PASS",
+      "static_pages": 70,
+      "workers": 2
+    },
+    "bash_syntax": "PASS",
+    "shellcheck_warning": "PASS"
+  },
+  "unexecuted": [
+    "browser E2E",
+    "Supabase pilot aggregate",
+    "hosted validation"
+  ]
+}

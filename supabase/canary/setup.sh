@@ -2,14 +2,9 @@
 set -euo pipefail
 
 CANARY_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source "$CANARY_DIR/prerequisites.sh"
+canary_require_prerequisites psql sha256sum cut date
 source "$CANARY_DIR/safety.sh"
-
-for command in psql sha256sum; do
-  command -v "$command" >/dev/null || {
-    echo "CANARY_PREREQUISITE_MISSING: $command" >&2
-    exit 1
-  }
-done
 
 school_id='ca000000-0000-0000-0000-000000000001'
 canary_schema='school_ca000000000000000000000000000001'

@@ -1,0 +1,18 @@
+test_cluster_initialization_failure_cleans_temporary_directory (__main__.CanarySafetyTest.test_cluster_initialization_failure_cleans_temporary_directory) ... ok
+test_effective_nonlocal_address_stops_before_mutation (__main__.CanarySafetyTest.test_effective_nonlocal_address_stops_before_mutation) ... ok
+test_existing_synthetic_gates_still_stop_before_psql (__main__.CanarySafetyTest.test_existing_synthetic_gates_still_stop_before_psql) ... ok
+test_invalid_runner_port_stops_before_allocation (__main__.CanarySafetyTest.test_invalid_runner_port_stops_before_allocation) ... ok
+test_local_urls_reach_probe_and_operation (__main__.CanarySafetyTest.test_local_urls_reach_probe_and_operation) ... ok
+test_missing_prerequisites_stop_before_connection_or_allocation (__main__.CanarySafetyTest.test_missing_prerequisites_stop_before_connection_or_allocation) ... ok
+test_partial_server_startup_is_stopped_before_cleanup (__main__.CanarySafetyTest.test_partial_server_startup_is_stopped_before_cleanup) ... ok
+test_python_version_checked_before_connection_or_allocation (__main__.CanarySafetyTest.test_python_version_checked_before_connection_or_allocation) ... ok
+test_rejects_urls_before_psql (__main__.CanarySafetyTest.test_rejects_urls_before_psql) ... ok
+test_remote_url_never_reaches_probe (__main__.CanarySafetyTest.test_remote_url_never_reaches_probe) ... ok
+test_routing_environment_is_denied_before_psql (__main__.CanarySafetyTest.test_routing_environment_is_denied_before_psql) ... ok
+test_setup_checksum_prerequisite_precedes_probe (__main__.CanarySafetyTest.test_setup_checksum_prerequisite_precedes_probe) ... ok
+test_shutdown_failure_retains_cluster_and_fails (__main__.CanarySafetyTest.test_shutdown_failure_retains_cluster_and_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 4.439s
+
+OK
