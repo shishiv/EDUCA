@@ -1,0 +1,59 @@
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > throw of semantic receipt preserves persisted state and both audit counts
+F04_HTTP_FAULT {
+  fault: 'throw',
+  status: 503,
+  body: { error: 'USER_STATUS_UPDATE_FAILED' },
+  before: { ativo: true, semantic: 7, generic: 14 },
+  after: { ativo: true, semantic: 7, generic: 14 }
+}
+
+ ✓ tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > throw of semantic receipt preserves persisted state and both audit counts 157ms
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > suppress of semantic receipt preserves persisted state and both audit counts
+F04_HTTP_FAULT {
+  fault: 'suppress',
+  status: 503,
+  body: { error: 'USER_STATUS_UPDATE_FAILED' },
+  before: { ativo: true, semantic: 7, generic: 15 },
+  after: { ativo: true, semantic: 7, generic: 15 }
+}
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > retries with a truthful no-op receipt after a committed desired state
+F04_HTTP_RECEIPT {
+  body: {
+    user: { id: '2b3aa1d6-49d6-48b6-8a13-0738a5b81861', ativo: false },
+    receipt: '4f719b3d-be06-4a8f-b266-47a7888331ec'
+  },
+  receipt: {
+    actor_user_id: '20000000-0000-0000-0000-000000000001',
+    escola_id: '10000000-0000-0000-0000-000000000001',
+    entity_type: 'user',
+    entity_id: '2b3aa1d6-49d6-48b6-8a13-0738a5b81861',
+    redacted_metadata: { active: false, changed: true, previous_active: true }
+  }
+}
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > retries with a truthful no-op receipt after a committed desired state
+F04_HTTP_RECEIPT {
+  body: {
+    user: { id: '2b3aa1d6-49d6-48b6-8a13-0738a5b81861', ativo: false },
+    receipt: '45d767d2-bfd1-4811-853e-09db1cd705a2'
+  },
+  receipt: {
+    actor_user_id: '20000000-0000-0000-0000-000000000001',
+    escola_id: '10000000-0000-0000-0000-000000000001',
+    entity_type: 'user',
+    entity_id: '2b3aa1d6-49d6-48b6-8a13-0738a5b81861',
+    redacted_metadata: { active: false, changed: false, previous_active: false }
+  }
+}
+
+ ✓ tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > suppress of semantic receipt preserves persisted state and both audit counts 69ms
+ ✓ tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > retries with a truthful no-op receipt after a committed desired state 152ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  05:46:17
+   Duration  696ms (transform 26ms, setup 48ms, import 49ms, tests 508ms, environment 0ms)

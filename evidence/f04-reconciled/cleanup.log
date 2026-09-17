@@ -1,0 +1,10 @@
+{"project_id_filter":"educa-f04-reconciled-local","backup":false,"message":"Stopped supabase local development setup."}
+PILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=educa-f04-reconciled-local
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/home/shiv/.treehouse/educa-7c556a/1/educa/.pilot-evidence/f04/leases/61000
+container_count=0
+volume_count=0
+network_count=0
+app_stopped=true
+local_environment_credentials_removed=true
+lease_removed=true
+task_scratch_removed=true

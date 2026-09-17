@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export PATH="/usr/bin:/home/shiv/.local/share/pnpm/.tools/pnpm/9.15.9/bin:$PATH"
+ROOT=$(pwd -P)
+WORK="$ROOT/.pilot-evidence/f04"
+cd "$ROOT/app"
+source scripts/pilot-port-range-lease.sh
+source scripts/pilot-supabase-cleanup.sh
+source scripts/pilot-local-runtime.sh
+export PILOT_E2E_PORT_LEASE_ROOT="$WORK/leases"
+PROJECT="$WORK/educa-f04-reconciled-local"
+APP_PID=''
+cleanup() {
+  trap - EXIT INT TERM
+  pilot_stop_app_process_group "$APP_PID"
+  pilot_supabase_stop_project "$PROJECT" "$(basename "$PROJECT")" >"$WORK/cleanup.log" 2>&1
+  pilot_port_range_lease_release >>"$WORK/cleanup.log"
+  rm -f "$WORK/env"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+pilot_port_range_lease_acquire
+ORIGIN="http://127.0.0.1:$((PILOT_E2E_PORT_BASE+9))"
+pilot_local_project_init "$ROOT" "$PROJECT" "$PILOT_E2E_PORT_BASE" "$ORIGIN"
+unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_DEMO_URL SUPABASE_DEMO_SERVICE_KEY SUPABASE_DEMO_DB_URL SUPABASE_PROJECT_REF SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD
+pnpm exec supabase --workdir "$PROJECT" start >"$WORK/start.log" 2>&1
+STATUS_ENV=$(pnpm exec supabase --workdir "$PROJECT" status -o env)
+eval "$(printf '%s\n' "$STATUS_ENV" | grep -E '^(API_URL|DB_URL|PUBLISHABLE_KEY|SECRET_KEY)=')"
+export NEXT_PUBLIC_SUPABASE_URL="$API_URL" NEXT_PUBLIC_SUPABASE_ANON_KEY="$PUBLISHABLE_KEY" SUPABASE_SERVICE_ROLE_KEY="$SECRET_KEY" SUPABASE_DB_URL="$DB_URL" NEXT_PUBLIC_APP_URL="$ORIGIN"
+export NEXT_PUBLIC_DEMO_SANDBOX=false DEMO_SANDBOX=false NEXT_PUBLIC_PILOT_MODE=true PILOT_MODE=true PILOT_SYNTHETIC_DATA_ONLY=true PILOT_EXTERNAL_DEPLOY_APPROVED=false PILOT_LEGAL_APPROVAL_STATUS=not_approved
+export PILOT_IMPORT_ENCRYPTION_KEY="$(printf 'synthetic-pilot-encryption-key!!' | base64 -w0)" PILOT_IMPORT_ENCRYPTION_KEY_ID=synthetic-local-v1
+umask 077
+export -p | grep -E ' (NEXT_PUBLIC_|SUPABASE_DB_URL|SUPABASE_SERVICE_ROLE_KEY|PILOT_|DEMO_SANDBOX)' > "$WORK/env"
+printf 'export F04_PROJECT=%q\n' "$PROJECT" >> "$WORK/env"
+pnpm exec supabase --workdir "$PROJECT" db reset --local >"$WORK/reset.log" 2>&1
+psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT/supabase/pilot/provision-pilot-module-gate.sql" >"$WORK/gate.log"
+pnpm exec tsx scripts/seed-pilot-synthetic.ts >"$WORK/seed.log" 2>&1
+setsid /usr/bin/node node_modules/next/dist/bin/next dev --webpack --hostname 127.0.0.1 --port "$((PILOT_E2E_PORT_BASE+9))" >"$WORK/app.log" 2>&1 &
+APP_PID=$!
+printf '%s\n' "$APP_PID" > "$WORK/app.pid"
+for attempt in $(seq 1 90); do
+  if curl --silent --fail "$ORIGIN/login" >/dev/null; then touch "$WORK/ready"; break; fi
+  sleep 1
+done
+test -f "$WORK/ready"
+for attempt in $(seq 1 7200); do
+  test ! -f "$WORK/stop" || exit 0
+  kill -0 "$APP_PID"
+  sleep 1
+done
+exit 1
