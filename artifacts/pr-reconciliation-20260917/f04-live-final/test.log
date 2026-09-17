@@ -1,0 +1,60 @@
+
+ RUN  v4.1.10 ./app
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > throw of semantic receipt preserves persisted state and both audit counts
+F04_HTTP_FAULT {
+  fault: 'throw',
+  status: 503,
+  body: { error: 'USER_STATUS_UPDATE_FAILED' },
+  before: { ativo: true, semantic: 0, generic: 1 },
+  after: { ativo: true, semantic: 0, generic: 1 }
+}
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > suppress of semantic receipt preserves persisted state and both audit counts
+F04_HTTP_FAULT {
+  fault: 'suppress',
+  status: 503,
+  body: { error: 'USER_STATUS_UPDATE_FAILED' },
+  before: { ativo: true, semantic: 0, generic: 2 },
+  after: { ativo: true, semantic: 0, generic: 2 }
+}
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > retries with a truthful no-op receipt after a committed desired state
+F04_HTTP_RECEIPT {
+  body: {
+    user: { id: '602407c2-849f-4586-a766-d9bae260f20a', ativo: false },
+    receipt: '75b8696e-7b15-4997-a254-844d2c5a4f99'
+  },
+  receipt: {
+    actor_user_id: '20000000-0000-0000-0000-000000000001',
+    escola_id: '10000000-0000-0000-0000-000000000001',
+    entity_type: 'user',
+    entity_id: '602407c2-849f-4586-a766-d9bae260f20a',
+    redacted_metadata: { active: false, changed: true, previous_active: true }
+  }
+}
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > retries with a truthful no-op receipt after a committed desired state
+F04_HTTP_RECEIPT {
+  body: {
+    user: { id: '602407c2-849f-4586-a766-d9bae260f20a', ativo: false },
+    receipt: '42c5838f-9c78-4b94-a49a-4c2ae96720ce'
+  },
+  receipt: {
+    actor_user_id: '20000000-0000-0000-0000-000000000001',
+    escola_id: '10000000-0000-0000-0000-000000000001',
+    entity_type: 'user',
+    entity_id: '602407c2-849f-4586-a766-d9bae260f20a',
+    redacted_metadata: { active: false, changed: false, previous_active: false }
+  }
+}
+
+ ✓ tests/live/user-status-atomic.live.test.ts (3 tests) 2086ms
+     ✓ throw of semantic receipt preserves persisted state and both audit counts  1585ms
+ ✓ tests/live/user-status-concurrency.live.test.ts (6 tests) 233ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  13:21:29
+   Duration  2.74s (transform 37ms, setup 111ms, import 82ms, tests 2.32s, environment 0ms)
+

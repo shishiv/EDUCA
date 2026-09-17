@@ -1,0 +1,1601 @@
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:23: trailing whitespace.
++import { useParams } from 'next/navigation'
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:131: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:132: trailing whitespace.
++interface StudentQueryData {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:133: trailing whitespace.
++  id: string
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:134: trailing whitespace.
++  nome_completo: string
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:135: trailing whitespace.
++  data_nascimento: string
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:137: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:138: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:139: trailing whitespace.
++interface ReportCardLoadData {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:140: trailing whitespace.
++  student: StudentData
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:141: trailing whitespace.
++  educationLevel: EducationLevel
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:142: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:143: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:144: trailing whitespace.
++interface EducationRecords {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:145: trailing whitespace.
++  grades?: DisciplineGrade[]
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:146: trailing whitespace.
++  descriptiveReports?: ReportSummary[]
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:147: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:148: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:297: trailing whitespace.
++    student: {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:298: trailing whitespace.
++      id: data.id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:299: trailing whitespace.
++      nome_completo: data.nome_completo,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:300: trailing whitespace.
++      data_nascimento: data.data_nascimento,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:304: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:305: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:306: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:307: trailing whitespace.
++async function loadStudentData(studentId: string): Promise<ReportCardLoadData | null> {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:308: trailing whitespace.
++  const { data, error } = await supabase
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:309: trailing whitespace.
++    .from('alunos')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:310: trailing whitespace.
++    .select(`
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:311: trailing whitespace.
++      id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:312: trailing whitespace.
++      nome_completo,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:313: trailing whitespace.
++      data_nascimento,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:314: trailing whitespace.
++      matriculas!inner (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:315: trailing whitespace.
++        id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:316: trailing whitespace.
++        turma_id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:317: trailing whitespace.
++        ano_letivo,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:318: trailing whitespace.
++        turmas!inner (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:326: trailing whitespace.
++          )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:327: trailing whitespace.
++        )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:328: trailing whitespace.
++      )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:329: trailing whitespace.
++    `)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:330: trailing whitespace.
++    .eq('id', studentId)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:331: trailing whitespace.
++    .eq('matriculas.situacao', 'ativa')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:332: trailing whitespace.
++    .single()
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:333: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:334: trailing whitespace.
++  if (error?.code === 'PGRST116') return null
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:335: trailing whitespace.
++  if (error) throw error
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:337: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:338: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:339: trailing whitespace.
++async function loadGrades(matriculaId: string): Promise<DisciplineGrade[] | undefined> {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:340: trailing whitespace.
++  const { data, error } = await supabase
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:341: trailing whitespace.
++    .from('notas')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:342: trailing whitespace.
++    .select('disciplina, bimestre, nota')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:343: trailing whitespace.
++    .eq('matricula_id', matriculaId)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:344: trailing whitespace.
++    .order('disciplina')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:345: trailing whitespace.
++    .order('bimestre')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:346: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:347: trailing whitespace.
++  if (error) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:348: trailing whitespace.
++    logger.warn('Error fetching grades', {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:349: trailing whitespace.
++      feature: 'boletim',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:350: trailing whitespace.
++      action: 'fetch_grades_failed',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:351: trailing whitespace.
++      metadata: { error: error.message },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:352: trailing whitespace.
++    })
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:353: trailing whitespace.
++    return undefined
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:354: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:356: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:357: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:358: trailing whitespace.
++async function loadDescriptiveReports(matriculaId: string): Promise<ReportSummary[] | undefined> {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:359: trailing whitespace.
++  try {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:362: trailing whitespace.
++      .select(`
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:363: trailing whitespace.
++        id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:364: trailing whitespace.
++        semestre,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:365: trailing whitespace.
++        ano_letivo,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:366: trailing whitespace.
++        status,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:367: trailing whitespace.
++        campo_eu_outro_nos,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:368: trailing whitespace.
++        campo_corpo_gestos,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:369: trailing whitespace.
++        campo_tracos_sons,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:370: trailing whitespace.
++        campo_escuta_fala,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:371: trailing whitespace.
++        campo_espacos_tempos,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:372: trailing whitespace.
++        observacoes_gerais,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:373: trailing whitespace.
++        finalizado_em,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:375: trailing whitespace.
++          nome
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:376: trailing whitespace.
++        )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:377: trailing whitespace.
++      `)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:378: trailing whitespace.
++      .eq('matricula_id', matriculaId)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:379: trailing whitespace.
++      .order('ano_letivo', { ascending: false })
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:380: trailing whitespace.
++      .order('semestre')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:381: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:393: trailing whitespace.
++      feature: 'boletim',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:394: trailing whitespace.
++      action: 'fetch_reports_skipped',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:395: trailing whitespace.
++    })
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:396: trailing whitespace.
++    return undefined
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:397: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:398: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:399: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:400: trailing whitespace.
++async function loadEducationRecords(data: ReportCardLoadData): Promise<EducationRecords> {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:401: trailing whitespace.
++  const matriculaId = data.student.matricula?.id
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:402: trailing whitespace.
++  if (!matriculaId) return {}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:403: trailing whitespace.
++  if (data.educationLevel === 'fundamental') {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:404: trailing whitespace.
++    return { grades: await loadGrades(matriculaId) }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:405: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:406: trailing whitespace.
++  return { descriptiveReports: await loadDescriptiveReports(matriculaId) }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:407: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:408: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:409: trailing whitespace.
++async function loadStudentAttendance(matricula: StudentData['matricula']): Promise<AttendanceSummary | null> {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:410: trailing whitespace.
++  if (!matricula?.turma_id) return null
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:411: trailing whitespace.
++  const summary = (await loadCanonicalAttendanceSummaries(supabase, [matricula.id])).get(matricula.id)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:412: trailing whitespace.
++  if (!summary) return null
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:413: trailing whitespace.
++  return calculateAttendanceSummary({
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:414: trailing whitespace.
++    total_aulas: summary.total,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:415: trailing whitespace.
++    presencas: summary.presencas,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:416: trailing whitespace.
++    faltas: summary.faltas,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:417: trailing whitespace.
++    atestados: summary.atestados,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:418: trailing whitespace.
++  })
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:419: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:420: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:421: trailing whitespace.
++type PDFDocument = ReturnType<typeof createPDFDocument>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:422: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:423: trailing whitespace.
++function addStudentPDFInfo(doc: PDFDocument, student: StudentData, currentY: number, studentLabel: string) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:424: trailing whitespace.
++  const matricula = student.matricula
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:425: trailing whitespace.
++  const turma = matricula?.turma
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:426: trailing whitespace.
++  doc.setFontSize(11)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:427: trailing whitespace.
++  doc.setFont('helvetica', 'bold')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:428: trailing whitespace.
++  doc.text(studentLabel, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:429: trailing whitespace.
++  currentY += 7
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:430: trailing whitespace.
++  doc.setFontSize(10)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:431: trailing whitespace.
++  doc.setFont('helvetica', 'normal')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:432: trailing whitespace.
++  doc.text(`Nome: ${student.nome_completo}`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:433: trailing whitespace.
++  currentY += 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:434: trailing whitespace.
++  doc.text(`Turma: ${turma?.nome || '-'} | Série: ${turma?.serie || '-'}`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:435: trailing whitespace.
++  currentY += 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:436: trailing whitespace.
++  doc.text(`Ano Letivo: ${matricula?.ano_letivo || new Date().getFullYear()}`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:437: trailing whitespace.
++  return currentY + 10
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:438: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:439: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:440: trailing whitespace.
++function addGradesPDFSection(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:441: trailing whitespace.
++  doc: PDFDocument,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:442: trailing whitespace.
++  grades: DisciplineGrade[],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:443: trailing whitespace.
++  currentY: number,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:444: trailing whitespace.
++  disciplineLabel: string,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:445: trailing whitespace.
++) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:446: trailing whitespace.
++  const tableEnd = addPDFTable(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:447: trailing whitespace.
++    doc,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:448: trailing whitespace.
++    {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:449: trailing whitespace.
++      title: 'Notas por Disciplina',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:450: trailing whitespace.
++      columns: [
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:451: trailing whitespace.
++        { header: disciplineLabel, dataKey: 'disciplina', halign: 'left' },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:452: trailing whitespace.
++        { header: '1o Bim', dataKey: 'bimestre1', halign: 'center', width: 20 },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:453: trailing whitespace.
++        { header: '2o Bim', dataKey: 'bimestre2', halign: 'center', width: 20 },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:454: trailing whitespace.
++        { header: '3o Bim', dataKey: 'bimestre3', halign: 'center', width: 20 },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:455: trailing whitespace.
++        { header: '4o Bim', dataKey: 'bimestre4', halign: 'center', width: 20 },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:456: trailing whitespace.
++        { header: 'Media', dataKey: 'media', halign: 'center', width: 20 },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:457: trailing whitespace.
++      ],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:458: trailing whitespace.
++      rows: grades.map((grade) => ({
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:459: trailing whitespace.
++        disciplina: grade.disciplina,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:460: trailing whitespace.
++        bimestre1: grade.bimestre1 !== null ? grade.bimestre1.toFixed(1) : '-',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:461: trailing whitespace.
++        bimestre2: grade.bimestre2 !== null ? grade.bimestre2.toFixed(1) : '-',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:462: trailing whitespace.
++        bimestre3: grade.bimestre3 !== null ? grade.bimestre3.toFixed(1) : '-',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:463: trailing whitespace.
++        bimestre4: grade.bimestre4 !== null ? grade.bimestre4.toFixed(1) : '-',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:464: trailing whitespace.
++        media: grade.media !== null ? grade.media.toFixed(1) : '-',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:465: trailing whitespace.
++      })),
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:466: trailing whitespace.
++    },
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:467: trailing whitespace.
++    currentY,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:468: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:469: trailing whitespace.
++  return tableEnd + 10
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:470: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:471: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:472: trailing whitespace.
++function addDescriptiveReportsPDFSection(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:473: trailing whitespace.
++  doc: PDFDocument,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:474: trailing whitespace.
++  reports: ReportSummary[],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:475: trailing whitespace.
++  currentY: number,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:476: trailing whitespace.
++) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:477: trailing whitespace.
++  doc.setFontSize(11)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:478: trailing whitespace.
++  doc.setFont('helvetica', 'bold')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:479: trailing whitespace.
++  doc.text('Relatorios Descritivos', 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:480: trailing whitespace.
++  currentY += 7
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:481: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:482: trailing whitespace.
++  for (const report of reports) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:483: trailing whitespace.
++    doc.setFontSize(10)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:484: trailing whitespace.
++    doc.setFont('helvetica', 'bold')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:485: trailing whitespace.
++    doc.text(`${report.semestre}o Semestre ${report.anoLetivo}`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:486: trailing whitespace.
++    currentY += 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:487: trailing whitespace.
++    doc.setFont('helvetica', 'normal')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:488: trailing whitespace.
++    if (report.observacoesGerais) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:489: trailing whitespace.
++      const lines = doc.splitTextToSize(report.observacoesGerais, 180)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:490: trailing whitespace.
++      doc.text(lines, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:491: trailing whitespace.
++      currentY += lines.length * 5 + 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:492: trailing whitespace.
++    }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:493: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:494: trailing whitespace.
++  return currentY
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:495: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:496: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:497: trailing whitespace.
++function addEducationPDFSection(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:498: trailing whitespace.
++  doc: PDFDocument,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:499: trailing whitespace.
++  educationLevel: EducationLevel,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:500: trailing whitespace.
++  grades: DisciplineGrade[],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:501: trailing whitespace.
++  reports: ReportSummary[],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:502: trailing whitespace.
++  currentY: number,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:503: trailing whitespace.
++  disciplineLabel: string,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:504: trailing whitespace.
++) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:505: trailing whitespace.
++  if (educationLevel === 'fundamental' && grades.length > 0) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:506: trailing whitespace.
++    return addGradesPDFSection(doc, grades, currentY, disciplineLabel)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:507: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:508: trailing whitespace.
++  if (educationLevel === 'infantil' && reports.length > 0) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:509: trailing whitespace.
++    return addDescriptiveReportsPDFSection(doc, reports, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:510: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:511: trailing whitespace.
++  return currentY
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:512: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:513: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:514: trailing whitespace.
++function addAttendancePDFSection(doc: PDFDocument, attendance: AttendanceSummary | null, currentY: number) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:515: trailing whitespace.
++  if (!attendance) return
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:516: trailing whitespace.
++  currentY += 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:517: trailing whitespace.
++  doc.setFontSize(11)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:518: trailing whitespace.
++  doc.setFont('helvetica', 'bold')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:519: trailing whitespace.
++  doc.text('Frequência', 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:520: trailing whitespace.
++  currentY += 7
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:521: trailing whitespace.
++  doc.setFontSize(10)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:522: trailing whitespace.
++  doc.setFont('helvetica', 'normal')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:523: trailing whitespace.
++  doc.text(`Total de Aulas: ${attendance.totalAulas}`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:524: trailing whitespace.
++  currentY += 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:525: trailing whitespace.
++  doc.text(`Presenças: ${attendance.presencas} | Faltas: ${attendance.faltas}`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:526: trailing whitespace.
++  currentY += 5
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:527: trailing whitespace.
++  doc.text(`Percentual de Frequência: ${attendance.percentual}%`, 15, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:528: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:529: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:530: trailing whitespace.
++function buildReportCardPDF(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:531: trailing whitespace.
++  student: StudentData,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:532: trailing whitespace.
++  educationLevel: EducationLevel,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:533: trailing whitespace.
++  grades: DisciplineGrade[],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:534: trailing whitespace.
++  reports: ReportSummary[],
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:535: trailing whitespace.
++  attendance: AttendanceSummary | null,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:536: trailing whitespace.
++  studentLabel: string,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:537: trailing whitespace.
++  disciplineLabel: string,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:538: trailing whitespace.
++) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:539: trailing whitespace.
++  const doc = createPDFDocument('portrait')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:540: trailing whitespace.
++  let currentY = addPDFHeader(doc, {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:541: trailing whitespace.
++    title: 'Boletim Escolar',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:542: trailing whitespace.
++    subtitle: educationLevel === 'infantil'
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:543: trailing whitespace.
++      ? 'Relatório de Desenvolvimento - Educação Infantil'
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:544: trailing whitespace.
++      : 'Desempenho Acadêmico - Ensino Fundamental',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:545: trailing whitespace.
++    schoolName: student.matricula?.turma.escola.nome || 'Escola Municipal',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:546: trailing whitespace.
++  })
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:547: trailing whitespace.
++  currentY = addStudentPDFInfo(doc, student, currentY, studentLabel)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:548: trailing whitespace.
++  currentY = addEducationPDFSection(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:549: trailing whitespace.
++    doc,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:550: trailing whitespace.
++    educationLevel,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:551: trailing whitespace.
++    grades,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:552: trailing whitespace.
++    reports,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:553: trailing whitespace.
++    currentY,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:554: trailing whitespace.
++    disciplineLabel,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:555: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:556: trailing whitespace.
++  addAttendancePDFSection(doc, attendance, currentY)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:557: trailing whitespace.
++  addPDFFooter(doc, { showPageNumbers: true, showGeneratedAt: true })
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:558: trailing whitespace.
++  return doc
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:559: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:560: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:561: trailing whitespace.
++function ReportCardLoading() {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:562: trailing whitespace.
++  return (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:563: trailing whitespace.
++    <div className="space-y-6">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:564: trailing whitespace.
++      <div className="flex items-center gap-4">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:565: trailing whitespace.
++        <Skeleton className="h-10 w-24" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:566: trailing whitespace.
++        <div className="flex-1">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:567: trailing whitespace.
++          <Skeleton className="h-8 w-48" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:568: trailing whitespace.
++          <Skeleton className="h-4 w-32 mt-2" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:569: trailing whitespace.
++        </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:570: trailing whitespace.
++      </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:571: trailing whitespace.
++      <Card>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:572: trailing whitespace.
++        <CardContent className="p-6 space-y-4">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:573: trailing whitespace.
++          <Skeleton className="h-24" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:574: trailing whitespace.
++          <Skeleton className="h-48" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:575: trailing whitespace.
++          <Skeleton className="h-24" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:576: trailing whitespace.
++        </CardContent>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:577: trailing whitespace.
++      </Card>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:578: trailing whitespace.
++    </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:579: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:580: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:581: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:582: trailing whitespace.
++function ReportCardError({
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:583: trailing whitespace.
++  studentId,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:584: trailing whitespace.
++  error,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:585: trailing whitespace.
++  onRetry,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:586: trailing whitespace.
++}: {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:587: trailing whitespace.
++  studentId: string
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:588: trailing whitespace.
++  error: string | null
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:589: trailing whitespace.
++  onRetry: () => void
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:590: trailing whitespace.
++}) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:591: trailing whitespace.
++  const t = useTranslations('registry')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:592: trailing whitespace.
++  return (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:593: trailing whitespace.
++    <div className="space-y-6">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:594: trailing whitespace.
++      <div className="flex items-center gap-4">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:595: trailing whitespace.
++        <Button variant="ghost" size="sm" asChild>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:596: trailing whitespace.
++          <Link href={`/dashboard/alunos/${studentId}`}>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:597: trailing whitespace.
++            <ArrowLeft className="h-4 w-4 mr-2" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:598: trailing whitespace.
++            {t('ui.voltar')}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:599: trailing whitespace.
++          </Link>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:600: trailing whitespace.
++        </Button>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:601: trailing whitespace.
++      </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:602: trailing whitespace.
++      <Alert variant="destructive">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:603: trailing whitespace.
++        <AlertTriangle className="h-4 w-4" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:604: trailing whitespace.
++        <AlertTitle>{t('labels.erro')}</AlertTitle>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:605: trailing whitespace.
++        <AlertDescription>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:606: trailing whitespace.
++          {error || 'Não foi possível carregar os dados do aluno.'}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:607: trailing whitespace.
++        </AlertDescription>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:608: trailing whitespace.
++      </Alert>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:609: trailing whitespace.
++      <Button onClick={onRetry}>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:610: trailing whitespace.
++        <RefreshCw className="h-4 w-4 mr-2" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:611: trailing whitespace.
++        Tentar novamente
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:612: trailing whitespace.
++      </Button>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:613: trailing whitespace.
++    </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:614: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:615: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:616: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:617: trailing whitespace.
++function ReportCardHeader({ studentId, educationLevel }: {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:618: trailing whitespace.
++  studentId: string
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:619: trailing whitespace.
++  educationLevel: EducationLevel
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:620: trailing whitespace.
++}) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:621: trailing whitespace.
++  const t = useTranslations('registry')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:622: trailing whitespace.
++  return (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:623: trailing whitespace.
++    <div className="flex items-center gap-4 print:hidden">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:624: trailing whitespace.
++      <Button variant="ghost" size="sm" asChild>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:625: trailing whitespace.
++        <Link href={`/dashboard/alunos/${studentId}`}>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:626: trailing whitespace.
++          <ArrowLeft className="h-4 w-4 mr-2" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:627: trailing whitespace.
++          {t('ui.voltar')}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:628: trailing whitespace.
++        </Link>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:629: trailing whitespace.
++      </Button>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:630: trailing whitespace.
++      <div className="flex-1">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:631: trailing whitespace.
++        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:632: trailing whitespace.
++          {educationLevel === 'infantil' ? (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:633: trailing whitespace.
++            <Baby className="h-6 w-6 text-purple-600" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:634: trailing whitespace.
++          ) : (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:635: trailing whitespace.
++            <GraduationCap className="h-6 w-6 text-blue-600" />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:636: trailing whitespace.
++          )}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:637: trailing whitespace.
++          Boletim Escolar
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:638: trailing whitespace.
++        </h1>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:639: trailing whitespace.
++        <p className="text-gray-600">
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:640: trailing whitespace.
++          {educationLevel === 'infantil'
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:641: trailing whitespace.
++            ? t('ui.relatorio-de-desenvolvimento-educacao-infantil')
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:642: trailing whitespace.
++            : t('ui.desempenho-academico-ensino-fundamental')}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:643: trailing whitespace.
++        </p>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:644: trailing whitespace.
++      </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:645: trailing whitespace.
++    </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:646: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:647: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:648: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:652: trailing whitespace.
++    id: student.id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:653: trailing whitespace.
++    nome: student.nome_completo,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:654: trailing whitespace.
++    dataNascimento: student.data_nascimento,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:659: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:670: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:671: trailing whitespace.
++function getInfantilStudentInfo(student: StudentData) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:672: trailing whitespace.
++  const matricula = student.matricula
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:673: trailing whitespace.
++  const turma = matricula?.turma
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:674: trailing whitespace.
++  return {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:675: trailing whitespace.
++    id: student.id,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:676: trailing whitespace.
++    nome: student.nome_completo,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:677: trailing whitespace.
++    dataNascimento: student.data_nascimento,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:678: trailing whitespace.
++    turma: turma?.nome || '',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:679: trailing whitespace.
++    faixaEtaria: turma?.serie,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:680: trailing whitespace.
++    escola: turma?.escola?.nome || '',
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:681: trailing whitespace.
++    anoLetivo: matricula?.ano_letivo || new Date().getFullYear(),
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:682: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:683: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:684: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:685: trailing whitespace.
++function ReportCardContent({
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:686: trailing whitespace.
++  studentId,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:687: trailing whitespace.
++  student,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:688: trailing whitespace.
++  educationLevel,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:689: trailing whitespace.
++  grades,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:690: trailing whitespace.
++  descriptiveReports,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:691: trailing whitespace.
++  attendance,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:692: trailing whitespace.
++  printMode,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:693: trailing whitespace.
++  onPrint,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:694: trailing whitespace.
++  onExportPDF,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:695: trailing whitespace.
++}: {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:696: trailing whitespace.
++  studentId: string
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:697: trailing whitespace.
++  student: StudentData
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:698: trailing whitespace.
++  educationLevel: EducationLevel
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:699: trailing whitespace.
++  grades: DisciplineGrade[]
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:700: trailing whitespace.
++  descriptiveReports: ReportSummary[]
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:701: trailing whitespace.
++  attendance: AttendanceSummary | null
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:702: trailing whitespace.
++  printMode: boolean
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:703: trailing whitespace.
++  onPrint: () => void
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:704: trailing whitespace.
++  onExportPDF: () => void
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:710: trailing whitespace.
++    <div className={cn('space-y-6', printMode && 'print:space-y-4')}>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:711: trailing whitespace.
++      <ReportCardHeader studentId={studentId} educationLevel={educationLevel} />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:712: trailing whitespace.
++      {educationLevel === 'fundamental' ? (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:713: trailing whitespace.
++        <StudentReport
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:714: trailing whitespace.
++          student={getFundamentalStudentInfo(student)}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:715: trailing whitespace.
++          grades={grades}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:716: trailing whitespace.
++          attendance={attendance || undefined}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:717: trailing whitespace.
++          onPrint={onPrint}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:721: trailing whitespace.
++        />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:722: trailing whitespace.
++      ) : (
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:723: trailing whitespace.
++        <StudentReportInfantil
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:724: trailing whitespace.
++          student={getInfantilStudentInfo(student)}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:725: trailing whitespace.
++          reports={descriptiveReports}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:726: trailing whitespace.
++          onPrint={onPrint}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:730: trailing whitespace.
++        />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:731: trailing whitespace.
++      )}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:732: trailing whitespace.
++    </div>
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:733: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:734: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:735: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:754: trailing whitespace.
++  const [, setExportingPDF] = useState(false)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:761: trailing whitespace.
++      const data = await loadStudentData(studentId)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:762: trailing whitespace.
++      if (!data) {
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:763: trailing whitespace.
++        setError(t('ui.aluno-nao-encontrado-ou-sem-matricula-ativa'))
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:767: trailing whitespace.
++      setStudent(data.student)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:768: trailing whitespace.
++      setEducationLevel(data.educationLevel)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:770: trailing whitespace.
++      const educationRecords = await loadEducationRecords(data)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:771: trailing whitespace.
++      if (educationRecords.grades) setGrades(educationRecords.grades)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:772: trailing whitespace.
++      if (educationRecords.descriptiveReports) setDescriptiveReports(educationRecords.descriptiveReports)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:774: trailing whitespace.
++      const attendanceSummary = await loadStudentAttendance(data.student.matricula)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:775: trailing whitespace.
++      if (attendanceSummary) setAttendance(attendanceSummary)
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:787: trailing whitespace.
++  }, [studentId, t])
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:808: trailing whitespace.
++      const doc = buildReportCardPDF(
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:809: trailing whitespace.
++        student,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:810: trailing whitespace.
++        educationLevel,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:811: trailing whitespace.
++        grades,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:812: trailing whitespace.
++        descriptiveReports,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:813: trailing whitespace.
++        attendance,
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:814: trailing whitespace.
++        t('labels.dados-do-aluno'),
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:815: trailing whitespace.
++        t('labels.disciplina'),
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:816: trailing whitespace.
++      )
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:838: trailing whitespace.
++  if (loading) return <ReportCardLoading />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:841: trailing whitespace.
++    return <ReportCardError studentId={studentId} error={error} onRetry={fetchStudentData} />
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:845: trailing whitespace.
++    <ReportCardContent
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:846: trailing whitespace.
++      studentId={studentId}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:847: trailing whitespace.
++      student={student}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:848: trailing whitespace.
++      educationLevel={educationLevel}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:849: trailing whitespace.
++      grades={grades}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:850: trailing whitespace.
++      descriptiveReports={descriptiveReports}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:851: trailing whitespace.
++      attendance={attendance}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:852: trailing whitespace.
++      printMode={printMode}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:853: trailing whitespace.
++      onPrint={handlePrint}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:854: trailing whitespace.
++      onExportPDF={handleExportPDF}
+app/app/(dashboard)/dashboard/alunos/[id]/boletim/page.tsx:855: trailing whitespace.
++    />
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:37: trailing whitespace.
++import { getStudentBolsaFamilia } from '@/lib/reports/attendance-conditionality'
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:38: trailing whitespace.
++import {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:100: trailing whitespace.
++type StudentEnrollment = AlunoDetalhado['matriculas'][number]
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:101: trailing whitespace.
++type StudentAttendance = AlunoDetalhado['frequencia']
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:102: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:103: trailing whitespace.
++function emptyAttendance(): StudentAttendance {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:104: trailing whitespace.
++  return {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:105: trailing whitespace.
++    percentual: 0,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:106: trailing whitespace.
++    total_aulas: 0,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:107: trailing whitespace.
++    presencas: 0,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:108: trailing whitespace.
++    faltas: 0,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:109: trailing whitespace.
++    faltas_justificadas: 0,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:110: trailing whitespace.
++    formatted: '0% (0/0 dias)',
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:111: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:112: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:113: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:114: trailing whitespace.
++async function loadCurrentAttendance(matriculas: StudentEnrollment[]): Promise<StudentAttendance> {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:115: trailing whitespace.
++  const today = new Date()
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:116: trailing whitespace.
++  const activeMatricula = matriculas.find(
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:117: trailing whitespace.
++    (matricula) => matricula.situacao === 'ativa' && matricula.ano_letivo === today.getFullYear(),
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:118: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:119: trailing whitespace.
++  if (!activeMatricula) return emptyAttendance()
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:120: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:121: trailing whitespace.
++  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:122: trailing whitespace.
++  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:123: trailing whitespace.
++  const summary = (await loadCanonicalAttendanceSummaries(
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:124: trailing whitespace.
++    supabase,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:125: trailing whitespace.
++    [activeMatricula.id],
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:126: trailing whitespace.
++    { startDate: monthStart, endDate: monthEnd },
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:127: trailing whitespace.
++  )).get(activeMatricula.id)
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:128: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:129: trailing whitespace.
++  if (!summary || summary.total <= 0) return emptyAttendance()
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:130: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:131: trailing whitespace.
++  const presencas = summary.presencas + summary.atestados
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:132: trailing whitespace.
++  return {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:133: trailing whitespace.
++    percentual: summary.percentual,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:134: trailing whitespace.
++    total_aulas: summary.total,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:135: trailing whitespace.
++    presencas,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:136: trailing whitespace.
++    faltas: summary.faltas,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:137: trailing whitespace.
++    faltas_justificadas: summary.atestados,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:138: trailing whitespace.
++    formatted: `${summary.percentual}% (${presencas}/${summary.total} dias)`,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:139: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:140: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:141: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:146: trailing whitespace.
++    getAuthorizedStudentProfiles(supabase, { studentId }),
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:147: trailing whitespace.
++    supabase
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:148: trailing whitespace.
++      .from('alunos')
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:149: trailing whitespace.
++      .select(`
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:150: trailing whitespace.
++        id,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:151: trailing whitespace.
++        matriculas:matriculas(
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:152: trailing whitespace.
++          id,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:153: trailing whitespace.
++          ano_letivo,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:154: trailing whitespace.
++          situacao,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:155: trailing whitespace.
++          data_matricula,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:156: trailing whitespace.
++          turma:turmas(
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:157: trailing whitespace.
++            nome,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:158: trailing whitespace.
++            serie,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:159: trailing whitespace.
++            turno,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:160: trailing whitespace.
++            escola:escolas(nome)
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:161: trailing whitespace.
++          )
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:162: trailing whitespace.
++        )
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:163: trailing whitespace.
++      `)
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:164: trailing whitespace.
++      .eq('id', studentId)
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:165: trailing whitespace.
++      .single(),
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:168: trailing whitespace.
++  ])
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:169: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:170: trailing whitespace.
++  if (error) throw error
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:171: trailing whitespace.
++  if (!profiles[0] || !relations) return null
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:172: trailing whitespace.
++  return {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:173: trailing whitespace.
++    profile: profiles[0],
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:193: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:195: trailing whitespace.
++  profile: AuthorizedStudentProfile,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:196: trailing whitespace.
++  matriculas: StudentEnrollment[],
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:197: trailing whitespace.
++  frequencia: StudentAttendance,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:201: trailing whitespace.
++  return {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:202: trailing whitespace.
++    id: profile.id,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:203: trailing whitespace.
++    nome_completo: profile.nome_completo,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:204: trailing whitespace.
++    data_nascimento: profile.data_nascimento,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:205: trailing whitespace.
++    cpf: profile.cpf || undefined,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:207: trailing whitespace.
++    endereco: profile.endereco || undefined,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:208: trailing whitespace.
++    telefone: profile.telefone || undefined,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:209: trailing whitespace.
++    nome_mae: profile.nome_mae || undefined,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:210: trailing whitespace.
++    nome_pai: profile.nome_pai || undefined,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:211: trailing whitespace.
++    necessidades_especiais: profile.necessidades_especiais || undefined,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:212: trailing whitespace.
++    ativo: profile.ativo ?? true,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:213: trailing whitespace.
++    created_at: profile.created_at ?? new Date().toISOString(),
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:215: trailing whitespace.
++    matriculas,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:216: trailing whitespace.
++    frequencia,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:217: trailing whitespace.
++    notas: [],
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:218: trailing whitespace.
++    bolsa_familia: bolsaFamilia ?? false,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:219: trailing whitespace.
++    vivencias_count: 0,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:220: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:307: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:324: trailing whitespace.
++        if (!record) {
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:325: trailing whitespace.
++          setError(t('ui.aluno-nao-encontrado'))
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:326: trailing whitespace.
++          return
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:328: trailing whitespace.
++        const frequencia = await loadCurrentAttendance(record.matriculas)
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:329: trailing whitespace.
++        setAluno(mapStudentDetails(
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:330: trailing whitespace.
++          record.profile,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:331: trailing whitespace.
++          record.matriculas,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:333: trailing whitespace.
++          record.bolsaFamilia,
+app/app/(dashboard)/dashboard/alunos/[id]/page.tsx:335: trailing whitespace.
++        ))
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:31: trailing whitespace.
++const INITIAL_STUDENT_FORM = {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:32: trailing whitespace.
++  nome_completo: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:33: trailing whitespace.
++  data_nascimento: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:34: trailing whitespace.
++  cpf: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:35: trailing whitespace.
++  rg: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:36: trailing whitespace.
++  sexo: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:37: trailing whitespace.
++  endereco: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:38: trailing whitespace.
++  telefone: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:39: trailing whitespace.
++  email: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:40: trailing whitespace.
++  nome_mae: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:41: trailing whitespace.
++  nome_pai: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:42: trailing whitespace.
++  responsavel_principal: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:43: trailing whitespace.
++  necessidades_especiais: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:44: trailing whitespace.
++  alergias: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:45: trailing whitespace.
++  medicamentos: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:46: trailing whitespace.
++  observacoes_medicas: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:47: trailing whitespace.
++  escola_anterior: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:48: trailing whitespace.
++  serie_pretendida: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:49: trailing whitespace.
++  turno_preferencia: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:50: trailing whitespace.
++  ativo: true,
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:51: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:52: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:53: trailing whitespace.
++const INITIAL_GUARDIAN_FORM = {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:54: trailing whitespace.
++  nome: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:55: trailing whitespace.
++  cpf: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:56: trailing whitespace.
++  telefone: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:57: trailing whitespace.
++  email: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:58: trailing whitespace.
++  parentesco: '',
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:62: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:63: trailing whitespace.
++type StudentFormState = typeof INITIAL_STUDENT_FORM
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:107: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:108: trailing whitespace.
++function getFieldErrors(issues: Array<{ path: PropertyKey[]; message: string }>) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:109: trailing whitespace.
++  const errors: Record<string, string> = {}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:110: trailing whitespace.
++  for (const issue of issues) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:111: trailing whitespace.
++    const field = String(issue.path[0] || 'form')
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:112: trailing whitespace.
++    if (!errors[field]) errors[field] = issue.message
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:113: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:114: trailing whitespace.
++  return errors
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:115: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:116: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:117: trailing whitespace.
++function getGuardianPayload(guardian: GuardianFormState, defaultRelationship: string) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:118: trailing whitespace.
++  if (!guardian.nome) return undefined
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:119: trailing whitespace.
++  return {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:132: trailing whitespace.
++  if (message.includes('duplicate') || message.includes('unique')) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:133: trailing whitespace.
++    if (message.includes('cpf')) return 'CPF já cadastrado no sistema'
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:134: trailing whitespace.
++    if (message.includes('email')) return 'E-mail já cadastrado no sistema'
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:135: trailing whitespace.
++    return 'Dados já existem no sistema'
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:136: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:137: trailing whitespace.
++  if (message.includes('violates check constraint')) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:138: trailing whitespace.
++    return 'Dados inválidos. Verifique as informações inseridas'
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:139: trailing whitespace.
++  }
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:140: trailing whitespace.
++  return message ? `Erro ao cadastrar aluno: ${message}` : 'Erro ao cadastrar aluno'
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:141: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:142: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:143: trailing whitespace.
++function SchoolSelectionAlert({ visible }: { visible: boolean }) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:144: trailing whitespace.
++  const t = useTranslations('registry')
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:145: trailing whitespace.
++  if (!visible) return null
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:146: trailing whitespace.
++  return (
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:147: trailing whitespace.
++    <Alert variant="destructive">
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:148: trailing whitespace.
++      <AlertDescription>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:149: trailing whitespace.
++        {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-aluno')}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:150: trailing whitespace.
++      </AlertDescription>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:151: trailing whitespace.
++    </Alert>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:152: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:153: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:154: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:155: trailing whitespace.
++function FormValidationAlert({ visible }: { visible: boolean }) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:156: trailing whitespace.
++  const t = useTranslations('registry')
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:157: trailing whitespace.
++  if (!visible) return null
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:158: trailing whitespace.
++  return (
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:159: trailing whitespace.
++    <Alert variant="destructive" className="mb-6" role="alert">
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:160: trailing whitespace.
++      <AlertDescription>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:161: trailing whitespace.
++        {t('ui.corrija-os-campos-obrigatorios-destacados-antes-de-continuar')}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:162: trailing whitespace.
++      </AlertDescription>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:163: trailing whitespace.
++    </Alert>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:164: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:165: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:166: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:167: trailing whitespace.
++function StudentTabsList({ pilotMode }: { pilotMode: boolean }) {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:168: trailing whitespace.
++  const t = useTranslations('registry')
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:169: trailing whitespace.
++  return (
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:170: trailing whitespace.
++    <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:171: trailing whitespace.
++      <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:172: trailing whitespace.
++        <User className="h-4 w-4 flex-shrink-0" />
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:173: trailing whitespace.
++        <span className="text-xs md:text-sm font-medium">{t('labels.dados-pessoais')}</span>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:174: trailing whitespace.
++      </TabsTrigger>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:175: trailing whitespace.
++      <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:176: trailing whitespace.
++        <Users className="h-4 w-4 flex-shrink-0" />
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:177: trailing whitespace.
++        <span className="text-xs md:text-sm font-medium">{t('labels.responsavel')}</span>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:178: trailing whitespace.
++      </TabsTrigger>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:179: trailing whitespace.
++      <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:180: trailing whitespace.
++        <FileText className="h-4 w-4 flex-shrink-0" />
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:181: trailing whitespace.
++        <span className="text-xs md:text-sm font-medium">{t('labels.dados-medicos')}</span>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:182: trailing whitespace.
++      </TabsTrigger>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:183: trailing whitespace.
++      <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:184: trailing whitespace.
++        <Upload className="h-4 w-4 flex-shrink-0" />
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:185: trailing whitespace.
++        <span className="text-xs md:text-sm font-medium">{t('labels.documentos')}</span>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:186: trailing whitespace.
++      </TabsTrigger>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:187: trailing whitespace.
++    </TabsList>
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:188: trailing whitespace.
++  )
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:189: trailing whitespace.
++}
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:190: trailing whitespace.
++
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:201: trailing whitespace.
++  const [formData, setFormData] = useState<StudentFormState>(INITIAL_STUDENT_FORM)
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:202: trailing whitespace.
++  const [responsavelData, setResponsavelData] = useState<GuardianFormState>(INITIAL_GUARDIAN_FORM)
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:211: trailing whitespace.
++      setFieldErrors(getFieldErrors(validationResult.error.issues))
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:227: trailing whitespace.
++      await studentsApi.createStudent({
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:229: trailing whitespace.
++        responsavel: getGuardianPayload(responsavelData, t('labels.responsavel')),
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:244: trailing whitespace.
++  const handleInputChange = <K extends keyof StudentFormState>(field: K, value: StudentFormState[K]) => {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:254: trailing whitespace.
++  const handleResponsavelChange = <K extends keyof GuardianFormState>(field: K, value: GuardianFormState[K]) => {
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:293: trailing whitespace.
++      <SchoolSelectionAlert visible={shouldShowSelector && !selectedEscolaId} />
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:296: trailing whitespace.
++        <FormValidationAlert visible={Object.keys(fieldErrors).length > 0} />
+app/app/(dashboard)/dashboard/alunos/novo/page.tsx:298: trailing whitespace.
++          <StudentTabsList pilotMode={pilotMode} />
+app/public/brand/svg/educa-app-mark-ink-lime.svg:5: new blank line at EOF.
+app/public/brand/svg/educa-full-gradient-on-transparent.svg:11: new blank line at EOF.
+app/public/brand/svg/educa-full-solid-emerald-on-transparent.svg:2: trailing whitespace.
++  
+app/public/brand/svg/educa-full-solid-emerald-on-transparent.svg:6: new blank line at EOF.
+app/public/brand/svg/educa-full-white-on-transparent.svg:2: trailing whitespace.
++  
+app/public/brand/svg/educa-full-white-on-transparent.svg:6: new blank line at EOF.
+app/public/brand/svg/educa-symbol-circle-gradient-light.svg:12: new blank line at EOF.
+app/public/brand/svg/educa-symbol-circle-gradient.svg:12: new blank line at EOF.
+app/public/brand/svg/educa-symbol-emerald-white.svg:5: new blank line at EOF.
+app/public/brand/svg/educa-symbol-ink-lime.svg:5: new blank line at EOF.
+app/public/brand/svg/favicon.svg:12: new blank line at EOF.
+app/types/database.ts:4576: new blank line at EOF.
+artifacts/educa-quality-prs-dev/checks/lint.log:12: new blank line at EOF.
+artifacts/educa-quality-prs-dev/checks/test-bounded.log:47: new blank line at EOF.
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-auth-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-auth-20260908        
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-contracts-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-contracts-20260908        
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-frequency-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-frequency-20260908        
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'refactor/educa-zero-slop-20260907' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/refactor/educa-zero-slop-20260907        
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-public-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-public-20260908        
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-readmodels-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-readmodels-20260908        
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-toolchain-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-toolchain-20260908        
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-validation-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-validation-20260908        
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:5: trailing whitespace.
++remote: 
+artifacts/quality-integration/build.log:20: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/build.log:21: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/build.log:22: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/build.log:125: new blank line at EOF.
+artifacts/quality-integration/database-retry.log:572: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:574: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:577: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:579: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:588: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:590: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:593: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:595: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:598: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:600: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:611: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:613: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:616: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:618: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:621: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:623: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:626: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:628: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:631: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:633: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:636: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:638: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:641: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:643: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:646: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:648: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:651: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:653: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:657: trailing whitespace.
++              set_config              
+artifacts/quality-integration/database-retry.log:662: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:664: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:667: trailing whitespace.
++              set_config              
+artifacts/quality-integration/database-retry.log:672: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:674: trailing whitespace.
++ 
+artifacts/quality-integration/general-auth-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-auth-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-auth-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-auth-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-auth-before/test.log:175: trailing whitespace.
++  1) [chromium] › tests/e2e/profile/user.spec.ts:66:5 › profile saves its own name with an audit receipt and survives reload 
+artifacts/quality-integration/general-auth-before/test.log:206: trailing whitespace.
++    [chromium] › tests/e2e/profile/user.spec.ts:66:5 › profile saves its own name with an audit receipt and survives reload 
+artifacts/quality-integration/general-before/build.log:20: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-before/build.log:21: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-before/build.log:22: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-before/build.log:125: new blank line at EOF.
+artifacts/quality-integration/general-before/test.log:50: trailing whitespace.
++  1) [chromium] › tests/e2e/attendance/grid.spec.ts:63:7 › Attendance grid › renders one P/F/J control group per seeded student 
+artifacts/quality-integration/general-before/test.log:84: trailing whitespace.
++    [chromium] › tests/e2e/attendance/grid.spec.ts:63:7 › Attendance grid › renders one P/F/J control group per seeded student 
+artifacts/quality-integration/general-date-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-date-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-date-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-date-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-date-before/test.log:75: trailing whitespace.
++  1) [chromium] › tests/e2e/diary/create.spec.ts:42:7 › Diário Infantil - criação disponível ao professor titular › opens the implemented form from the student diary and cancels without writing 
+artifacts/quality-integration/general-date-before/test.log:110: trailing whitespace.
++    [chromium] › tests/e2e/diary/create.spec.ts:42:7 › Diário Infantil - criação disponível ao professor titular › opens the implemented form from the student diary and cancels without writing 
+artifacts/quality-integration/general-focused/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-focused/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-focused/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-focused/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-grades-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-grades-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-grades-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-grades-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-grades-before/test.log:163: trailing whitespace.
++  1) [chromium] › tests/e2e/grades/entry.spec.ts:166:7 › Grades entry › filters the seeded class and a single bimestre 
+artifacts/quality-integration/general-grades-before/test.log:198: trailing whitespace.
++    [chromium] › tests/e2e/grades/entry.spec.ts:166:7 › Grades entry › filters the seeded class and a single bimestre 
+artifacts/quality-integration/general-profile-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-profile-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-profile-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-profile-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-profile-before/test.log:174: trailing whitespace.
++  1) [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in 
+artifacts/quality-integration/general-profile-before/test.log:201: trailing whitespace.
++    [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in 
+artifacts/quality-integration/general/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general/build.log:122: new blank line at EOF.
+artifacts/quality-integration/grades-canonical-policy.log:1: trailing whitespace.
++ canonical_notas_policies 
+artifacts/quality-integration/grades-canonical-policy.log:6: trailing whitespace.
++ notas_rls_enabled 
+artifacts/quality-integration/grades-canonical-policy.log:11: trailing whitespace.
++ authenticated_select_grant 
+artifacts/quality-integration/grades-canonical-policy.log:15: new blank line at EOF.
+artifacts/quality-integration/lint.log:12: new blank line at EOF.
+artifacts/quality-integration/manifest.log:13: new blank line at EOF.
+artifacts/quality-integration/typecheck.log:4: new blank line at EOF.
+artifacts/quality-integration/unit.log:47: new blank line at EOF.
+artifacts/quality-integration/whitespace-inherited.log:4: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:6: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-auth-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:8: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-auth-20260908        
+artifacts/quality-integration/whitespace-inherited.log:10: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:12: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:14: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-contracts-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:16: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-contracts-20260908        
+artifacts/quality-integration/whitespace-inherited.log:18: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:20: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:22: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-frequency-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:24: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-frequency-20260908        
+artifacts/quality-integration/whitespace-inherited.log:26: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:28: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:30: trailing whitespace.
+++remote: Create a pull request for 'refactor/educa-zero-slop-20260907' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:32: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/refactor/educa-zero-slop-20260907        
+artifacts/quality-integration/whitespace-inherited.log:34: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:36: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:38: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-public-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:40: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-public-20260908        
+artifacts/quality-integration/whitespace-inherited.log:42: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:44: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:46: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-readmodels-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:48: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-readmodels-20260908        
+artifacts/quality-integration/whitespace-inherited.log:50: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:52: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:54: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-toolchain-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:56: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-toolchain-20260908        
+artifacts/quality-integration/whitespace-inherited.log:58: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:60: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:62: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-validation-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:64: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-validation-20260908        
+artifacts/quality-integration/whitespace-inherited.log:66: trailing whitespace.
+++remote: 

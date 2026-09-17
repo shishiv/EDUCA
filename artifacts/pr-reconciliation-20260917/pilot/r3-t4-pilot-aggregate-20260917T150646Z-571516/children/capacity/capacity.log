@@ -1,0 +1,10 @@
+PILOT_PORT_RANGE_LEASE_EXTERNAL: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000
+(node:862559) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PILOT_CAPACITY_SEED_RECEIPT: seed=pass validation=pass marker=SYNTHETIC-EDUCA-PILOT-CAPACITY
+PILOT_CAPACITY_BUILD_RECEIPT: status=pass
+PILOT_CAPACITY_BROWSER_SETUP_RECEIPT: named_url=true numbered_port=false
+PILOT_CAPACITY_MANIFEST_RECEIPT: setup=1 specs=1 tests=2 descriptive=false r1_canonical=false
+PILOT_CAPACITY_TEST_RECEIPT: status=pass tests=2 concurrency_receipt=true output_redacted=true
+PILOT_CAPACITY_CLEANUP_RECEIPT: app_stopped=true database_stopped=true auth_state_removed=true isolated_removed=true result=pass receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/capacity/r3-t4-capacity-pilot-e2e-20260917T150944Z-861022.json
+PILOT_E2E_FINAL_RECEIPT: ./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/capacity/r3-t4-capacity-pilot-e2e-20260917T150944Z-861022.json

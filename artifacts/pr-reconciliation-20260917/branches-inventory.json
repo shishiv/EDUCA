@@ -1,0 +1,497 @@
+[
+  {
+    "name": "archive/fm-educa-pr114-security-revalidation-custody-20260812",
+    "protected": false,
+    "sha": "d1c1b392378550460123190466fbc2e2701410e3"
+  },
+  {
+    "name": "archive/fm-educa-r3-t4-aggregate-verticals-20260812",
+    "protected": false,
+    "sha": "ee7d60194b74c258ae4258a909c658cfa7e4cdd7"
+  },
+  {
+    "name": "chore/supabase-keepalive",
+    "protected": false,
+    "sha": "2062d82412bdcb1fe91b6ecb80a8dc8d672452de"
+  },
+  {
+    "name": "dev",
+    "protected": false,
+    "sha": "ee1c6976bbc1b57c288df737229137ba84890d06"
+  },
+  {
+    "name": "feature/canonical-public-entry",
+    "protected": false,
+    "sha": "895831b9499fccf282ea86ab232a4288a1c3065a"
+  },
+  {
+    "name": "fm/educa-blog-locale-manifest-fix",
+    "protected": false,
+    "sha": "667f18918fcd48ea33a1e0f74cbbd821dec72451"
+  },
+  {
+    "name": "fm/educa-blog-locale-tests",
+    "protected": false,
+    "sha": "164ef0d1605ca1bf73facdce55ca1a275f14b39e"
+  },
+  {
+    "name": "fm/educa-brand-assets-install",
+    "protected": false,
+    "sha": "dcc1a73d364043d001500a330fc2db25f1362b98"
+  },
+  {
+    "name": "fm/educa-canonical-public-entry",
+    "protected": false,
+    "sha": "babec131d37ec630a567bee61e7955f320eafcdb"
+  },
+  {
+    "name": "fm/educa-ci-minimum",
+    "protected": false,
+    "sha": "2c73541cd52f781f955570ed11ce340b8b6c5d0c"
+  },
+  {
+    "name": "fm/educa-contracts-integrator",
+    "protected": false,
+    "sha": "40c3efa07e11b25976f10f650eb238cd7b77998a"
+  },
+  {
+    "name": "fm/educa-corrigir-integracao-dev",
+    "protected": false,
+    "sha": "b518001105a19ef8ac58e7fe45cf107e5dca714b"
+  },
+  {
+    "name": "fm/educa-demo-guard-e2e-fix",
+    "protected": false,
+    "sha": "34916b701044f28d85c93320926eafc27c98d81b"
+  },
+  {
+    "name": "fm/educa-dep-security",
+    "protected": false,
+    "sha": "53ea788b471eb0dd981fe601ff664f3985db3c91"
+  },
+  {
+    "name": "fm/educa-dev-branch-model",
+    "protected": false,
+    "sha": "88a367f454c23c7c841cb8262e455c52555f9553"
+  },
+  {
+    "name": "fm/educa-f01-catalog",
+    "protected": false,
+    "sha": "2221d205d022408d2408fe9d39ddc4d9ee101999"
+  },
+  {
+    "name": "fm/educa-f02-restore-grants",
+    "protected": false,
+    "sha": "07466e0bd3269b6389ba069abd1df5ebd548a318"
+  },
+  {
+    "name": "fm/educa-f02-restore-grants-reconciled",
+    "protected": false,
+    "sha": "ba5b50267e744f565c15a22bc7a6fac5a50fa66e"
+  },
+  {
+    "name": "fm/educa-f03-password-recovery",
+    "protected": false,
+    "sha": "4e8bed176a57fb0e8afb4f2573e5c101b01f2d62"
+  },
+  {
+    "name": "fm/educa-f04-user-status-atomic",
+    "protected": false,
+    "sha": "ac8353328938f262ca1fd4f2b8f0e4c941b84c15"
+  },
+  {
+    "name": "fm/educa-f04-user-status-atomic-reconciled",
+    "protected": false,
+    "sha": "042fd7d6b02df69fa00195050ee4a5e061e8e335"
+  },
+  {
+    "name": "fm/educa-f05-import-proof-receipt",
+    "protected": false,
+    "sha": "bd73ba6be74004280c6e23fb95007714a8421fdd"
+  },
+  {
+    "name": "fm/educa-f06-canary-preflight",
+    "protected": false,
+    "sha": "105f52216ea09ccb0e95473c5c7d6650949a01da"
+  },
+  {
+    "name": "fm/educa-f07-pedagogical-restore",
+    "protected": false,
+    "sha": "b4295893c125b2649d13da0c6785d3a4241d1dc0"
+  },
+  {
+    "name": "fm/educa-f08-retention-batch",
+    "protected": false,
+    "sha": "3f9dfa244458768d166ab10a9cd78a216e217d6a"
+  },
+  {
+    "name": "fm/educa-f09-exact-browser-proofs",
+    "protected": false,
+    "sha": "50aa91fe174f839393aec66246a8800fbb9f1abd"
+  },
+  {
+    "name": "fm/educa-first-principles",
+    "protected": false,
+    "sha": "49ddf3f8dfa7ccc690f7c18521ee0bcea17aab5c"
+  },
+  {
+    "name": "fm/educa-first-principles-full-repo",
+    "protected": false,
+    "sha": "e77b5d5fd94e6c96a647d326824286668e56fedc"
+  },
+  {
+    "name": "fm/educa-fix-director-login-audit",
+    "protected": false,
+    "sha": "a705eea56fa221eed656f373f14fce1975ce5730"
+  },
+  {
+    "name": "fm/educa-fix-disabled-settings-redirect",
+    "protected": false,
+    "sha": "52c26df9b2fb3ca4efbbe2cb81a919e43608ae80"
+  },
+  {
+    "name": "fm/educa-fix-nullable-guardian-search",
+    "protected": false,
+    "sha": "7902ad9b0777e9a65e55797fff9c07043a68648e"
+  },
+  {
+    "name": "fm/educa-fix-sensitive-family-access",
+    "protected": false,
+    "sha": "e729a03722e2f135b90a55edb09242c0210b44dd"
+  },
+  {
+    "name": "fm/educa-fix-synthetic-admin",
+    "protected": false,
+    "sha": "ed3b77578d81921206394c14eae22aa9c5f46c34"
+  },
+  {
+    "name": "fm/educa-fix-synthetic-inep-code",
+    "protected": false,
+    "sha": "db3830b23ceb702c3d40d1776d910484c7494f98"
+  },
+  {
+    "name": "fm/educa-fix-teacher-school-display",
+    "protected": false,
+    "sha": "0f32cf0790aada0d1d7b8f7b17ef7d2bb3dcf2a7"
+  },
+  {
+    "name": "fm/educa-fix-teacher-status",
+    "protected": false,
+    "sha": "81ed17dd76dd96076b53a6d840caf866b3c5147d"
+  },
+  {
+    "name": "fm/educa-fix-unenrolled-student-links-r2",
+    "protected": false,
+    "sha": "85d36f41d51736c3763a07cc7571e14a647f2411"
+  },
+  {
+    "name": "fm/educa-locale-switcher-fix",
+    "protected": false,
+    "sha": "2a95fe2efcd3b1889654edc1465fe001a3f2e16c"
+  },
+  {
+    "name": "fm/educa-production-promotion-v4",
+    "protected": false,
+    "sha": "41c600b4acc3bcd19de7d6fff65ba0841c38b0f6"
+  },
+  {
+    "name": "fm/educa-production-promotion-v5",
+    "protected": false,
+    "sha": "b5045f1f57124c8a86183c8257fc0841f071c8e5"
+  },
+  {
+    "name": "fm/educa-production-promotion-v8",
+    "protected": false,
+    "sha": "06de61af0384f41d709a4a201fc34b4c9842219f"
+  },
+  {
+    "name": "fm/educa-public-nav-demo-polish",
+    "protected": false,
+    "sha": "63b23d6001d9807349eff66ff14270ffb124b2a7"
+  },
+  {
+    "name": "fm/educa-quality-prs-dev",
+    "protected": false,
+    "sha": "b87671e4f7795c0bebe0c972b80e9781db49ef5c"
+  },
+  {
+    "name": "fm/educa-r1-canonical-pilot-e2e",
+    "protected": false,
+    "sha": "922da243c8c8ca33db93b5eae41eff660a9ffbf5"
+  },
+  {
+    "name": "fm/educa-r2-executable-baseline",
+    "protected": false,
+    "sha": "3b861c01862a1e4c7fd686223222c8506a7ad825"
+  },
+  {
+    "name": "fm/educa-r3-auth-journey",
+    "protected": false,
+    "sha": "91bcec43474956e57c2aa88b526e3c096ecc7a31"
+  },
+  {
+    "name": "fm/educa-r3-classes-journey",
+    "protected": false,
+    "sha": "232f79fd7513b248ff3736c2df4ee95ebfecd0e8"
+  },
+  {
+    "name": "fm/educa-r3-followup-reconcile",
+    "protected": false,
+    "sha": "3106f6ea9e4f0172c39ea6e6ece86e057a8fe074"
+  },
+  {
+    "name": "fm/educa-r3-school-management-journey",
+    "protected": false,
+    "sha": "ef83691bbbbeffa92b9b1f49e3bb735837cd1156"
+  },
+  {
+    "name": "fm/educa-r3-students-guardians-journey",
+    "protected": false,
+    "sha": "f21a1334bb28b87c534074d3441925b066c3390a"
+  },
+  {
+    "name": "fm/educa-r3-teachers-journey",
+    "protected": false,
+    "sha": "04b5b6703d18b676d0c15e339e76abdd5c65c62c"
+  },
+  {
+    "name": "fm/educa-r5-bolsa-visibility",
+    "protected": false,
+    "sha": "0e09fb558581637216482736859252f5f12108c7"
+  },
+  {
+    "name": "fm/educa-r5-school-year",
+    "protected": false,
+    "sha": "7580a9d796113b36bbd184b55548e8d7d465d306"
+  },
+  {
+    "name": "fm/educa-r5-school-year-dashboard",
+    "protected": false,
+    "sha": "52b7ca188450fa8cebaefb590146aae88726aede"
+  },
+  {
+    "name": "fm/educa-r5-school-year-settings",
+    "protected": false,
+    "sha": "9f9b626e6792add9bae5cec5207163c2c75cd39b"
+  },
+  {
+    "name": "fm/educa-remove-github-actions",
+    "protected": false,
+    "sha": "a45d404a24da8069efaee7d7a13ef35e5b443314"
+  },
+  {
+    "name": "fm/educa-rework-a1-inert-tree",
+    "protected": false,
+    "sha": "39f6a8bda46a54ea6ed2a3dda9204efa26f8ac58"
+  },
+  {
+    "name": "fm/educa-rework-a2-wayfinder",
+    "protected": false,
+    "sha": "088efae1c7abcbfd006deddffeebb2dd92802296"
+  },
+  {
+    "name": "fm/educa-rework-a3-educacenso-id",
+    "protected": false,
+    "sha": "166101d12c24ca2488b71d3db2ef56f79cf08ec9"
+  },
+  {
+    "name": "fm/educa-rework-a4-seed-data",
+    "protected": false,
+    "sha": "4ab46f30c30604a7ef20a40abab02b9fbb1019fb"
+  },
+  {
+    "name": "fm/educa-rework-a5-reports",
+    "protected": false,
+    "sha": "9634737ba17d63d2cba32e5c9999d9877935c744"
+  },
+  {
+    "name": "fm/educa-rework-a6-class-diary-reads",
+    "protected": false,
+    "sha": "55e4da773d787be7aea709cd4221e214e78e6954"
+  },
+  {
+    "name": "fm/educa-rework-a7-responsavel-page",
+    "protected": false,
+    "sha": "62ee07ce7f72525c1be9de4e9233e87129cc1323"
+  },
+  {
+    "name": "fm/educa-rework-a8-user-detail",
+    "protected": false,
+    "sha": "1c856167a2f35028af4c467a54c362733acf51b7"
+  },
+  {
+    "name": "fm/educa-rework-a9-dashboard-shell",
+    "protected": false,
+    "sha": "c99bf58c013a1ef0969e5d3a723d2b3e363ec53e"
+  },
+  {
+    "name": "fm/educa-rework-a10-header",
+    "protected": false,
+    "sha": "e20a0e0a24f4cb9909725f99b4ce71b9aefa77fd"
+  },
+  {
+    "name": "fm/educa-rework-audit-fixes",
+    "protected": false,
+    "sha": "447febb416c4cbce15c61ef39f266a1f5d70d5c5"
+  },
+  {
+    "name": "fm/educa-rework-b1-pilot-imports",
+    "protected": false,
+    "sha": "2aa2425858423293281d5f025123b3922804fb88"
+  },
+  {
+    "name": "fm/educa-rework-b2-attendance-domain",
+    "protected": false,
+    "sha": "5635331b1f57ae374d92723c0d9cb7032d0fa346"
+  },
+  {
+    "name": "fm/educa-rework-b3-diary-ui",
+    "protected": false,
+    "sha": "28918266c9bb83e0f381b9d3e21ee3d9e1539a67"
+  },
+  {
+    "name": "fm/educa-rework-b4-student-pages",
+    "protected": false,
+    "sha": "9fc784bd2a841b26609b2c81b485078aea7add1e"
+  },
+  {
+    "name": "fm/educa-rework-b5-enrollment-pages",
+    "protected": false,
+    "sha": "c3e94796a84f6e6cb78f66237584777339026cb8"
+  },
+  {
+    "name": "fm/educa-rework-b6-dashboard-reads",
+    "protected": false,
+    "sha": "23550e2a24839a06a1f1c61c55833a16f2387f9a"
+  },
+  {
+    "name": "fm/educa-rework-b7-compliance-hook",
+    "protected": false,
+    "sha": "6fc560000d09760e1604f35793693b6828085224"
+  },
+  {
+    "name": "fm/educa-rework-b8-attendance-ui",
+    "protected": false,
+    "sha": "37186d5d013078f5103433803f5e889f567e7f72"
+  },
+  {
+    "name": "fm/educa-rework-f0-baseline-gate-r2",
+    "protected": false,
+    "sha": "03a3014b19c26f3fd1dbe7fe39f6ff9a8ced9833"
+  },
+  {
+    "name": "fm/educa-rework-global-search",
+    "protected": false,
+    "sha": "028d6c544bc0ee41b2b689a01a6bcbe50af3c1eb"
+  },
+  {
+    "name": "fm/educa-rework-municipal-config-migration",
+    "protected": false,
+    "sha": "3014c059e9f56e5cda691aad047b84777dc3b6b4"
+  },
+  {
+    "name": "fm/educa-rework-r6-generated-types",
+    "protected": false,
+    "sha": "725c7f633de650a54b76cd8c8505bddb4e4ea036"
+  },
+  {
+    "name": "fm/educa-rework-r7-route-policy-r3",
+    "protected": false,
+    "sha": "ac8b76c3ed44a09e4cfc9b3f4a89dadd53905135"
+  },
+  {
+    "name": "fm/educa-rework-vivencias-persistence-r3",
+    "protected": false,
+    "sha": "7e2768927d4d770851c37a79ceb540f3587c43e5"
+  },
+  {
+    "name": "fm/educa-schema-per-school-canary",
+    "protected": false,
+    "sha": "ccb3f8dc56df6200295d284ca6968ce88f0fb09b"
+  },
+  {
+    "name": "fm/educa-teacher-edit-journey",
+    "protected": false,
+    "sha": "9657fd56ffcb8581e974f2b494863ef1e2368993"
+  },
+  {
+    "name": "fm/educa-v8-autofix-backport",
+    "protected": false,
+    "sha": "e3c12ed009e2ae328e1d05dde1558788b224018d"
+  },
+  {
+    "name": "fm/pilot-csv-import",
+    "protected": false,
+    "sha": "87f7c1e88df509a79d059953710f0c808af1047a"
+  },
+  {
+    "name": "fm/runtime-final-promotion",
+    "protected": false,
+    "sha": "e93683b8613ac3c59d963814693754e456a31938"
+  },
+  {
+    "name": "main",
+    "protected": true,
+    "sha": "64c552ef6f929234b697ba4233a2d7ebc4e9c2a6"
+  },
+  {
+    "name": "preserve/educa-audit-correct-session-20260810-uncommitted",
+    "protected": false,
+    "sha": "f9f4dc18af5334f1fc4b10604471c02cd19c8b2a"
+  },
+  {
+    "name": "preserve/educa-c04-canonical-attendance-read-model-visual-evidence",
+    "protected": false,
+    "sha": "4bb5063fe08042b324f642d7253d164fbed6c028"
+  },
+  {
+    "name": "preserve/educa-node-sandbox-deploy-reset-report",
+    "protected": false,
+    "sha": "f0fe638860a667e64c1b20e1582f8e64a1e7832e"
+  },
+  {
+    "name": "refactor/educa-zero-slop-20260907",
+    "protected": false,
+    "sha": "2d95afc0237a74ded944cae53ed4db30a83903aa"
+  },
+  {
+    "name": "salvar/educa-quality-auth-20260908",
+    "protected": false,
+    "sha": "a8c143eab185d4459ce1cf7740c8a841f1e014b9"
+  },
+  {
+    "name": "salvar/educa-quality-contracts-20260908",
+    "protected": false,
+    "sha": "9732efeaee2edbf2455d01905bfb26ef48d40615"
+  },
+  {
+    "name": "salvar/educa-quality-frequency-20260908",
+    "protected": false,
+    "sha": "d8e884b3135edc24aba2a27df764c1a7224d7cb8"
+  },
+  {
+    "name": "salvar/educa-quality-public-20260908",
+    "protected": false,
+    "sha": "c0b0d4c63da6f2081f47a69000c7db654745c5aa"
+  },
+  {
+    "name": "salvar/educa-quality-readmodels-20260908",
+    "protected": false,
+    "sha": "8393a99dbc1f800a64753c7d737fb71ea43b20eb"
+  },
+  {
+    "name": "salvar/educa-quality-toolchain-20260908",
+    "protected": false,
+    "sha": "1fb7874e082ca05f867b72991b3a384e81468af2"
+  },
+  {
+    "name": "salvar/educa-quality-validation-20260908",
+    "protected": false,
+    "sha": "5d1bb89a78218a5abb0f82c29b275fa5f23ffab5"
+  },
+  {
+    "name": "shishiv-patch-1",
+    "protected": false,
+    "sha": "71d7cae2aeae460dcfd5ea8647ff0acf5c8bcee9"
+  }
+]

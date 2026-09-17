@@ -1,0 +1,9 @@
+{
+  "result": "pass",
+  "exitCode": 0,
+  "boundary": "real-playwright-browser-and-postgrest",
+  "config": "playwright.pilot-legacy.config.ts",
+  "expectedTestCount": 26,
+  "outputLines": 42,
+  "outputRedacted": true
+}

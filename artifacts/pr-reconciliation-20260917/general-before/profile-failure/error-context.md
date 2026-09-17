@@ -1,0 +1,131 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Início" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "EDUCA" [ref=e6]
+        - navigation "Navegação pública" [ref=e7]:
+          - link "Início" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Demo" [ref=e9] [cursor=pointer]:
+            - /url: /demo
+          - link "Blog" [ref=e10] [cursor=pointer]:
+            - /url: /blog
+          - link "Entrar" [ref=e11] [cursor=pointer]:
+            - /url: /login
+        - generic [ref=e12]:
+          - button "Mudar idioma para English" [ref=e13] [cursor=pointer]: PT
+          - status [ref=e14]
+    - main [ref=e15]:
+      - generic [ref=e16]:
+        - heading "Política de Privacidade" [level=1] [ref=e17]
+        - paragraph [ref=e18]: "Última atualização: agosto de 2026"
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - heading "Este é um demo público" [level=2] [ref=e23]
+          - paragraph [ref=e24]:
+            - text: O EDUCA disponibiliza esta instância para demonstração aberta do produto. Os registros exibidos aqui são
+            - strong [ref=e25]: sintéticos
+            - text: "e não correspondem a pessoas reais: não há titular real associado aos dados do demo."
+          - paragraph [ref=e26]: Não insira neste ambiente dados pessoais reais, especialmente dados de crianças e adolescentes. Use somente valores fictícios ao testar a interface.
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - img [ref=e29]
+            - heading "1. Escopo desta política" [level=2] [ref=e32]
+          - paragraph [ref=e33]: Esta página explica as condições de privacidade do demo público do EDUCA. Ela descreve um ambiente de demonstração com dados sintéticos, não uma operação municipal real e não uma política de privacidade de uma secretaria de educação.
+          - paragraph [ref=e34]: O demo serve para conhecer a interface e os fluxos do produto. Os dados de negócio apresentados nas telas são fictícios e podem ser reiniciados periodicamente como parte da operação do sandbox.
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - img [ref=e37]
+            - heading "2. Dados usados no demo" [level=2] [ref=e41]
+          - paragraph [ref=e42]: Os dados funcionais exibidos e usados nas telas do demo são sintéticos. Eles simulam rotinas de gestão escolar sem identificar aluno, responsável, profissional da educação ou qualquer outra pessoa real.
+          - paragraph [ref=e43]: O ambiente não foi disponibilizado para receber dados pessoais reais. Não informe nome, CPF, RG, endereço, telefone, e-mail, dados de saúde, dados educacionais reais ou qualquer outro dado que permita identificar uma pessoa.
+          - list [ref=e44]:
+            - listitem [ref=e45]: Os registros do demo não têm titular real.
+            - listitem [ref=e46]: Os valores de teste devem ser sempre fictícios.
+            - listitem [ref=e47]: O demo não é uma base de dados municipal em produção.
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - img [ref=e50]
+            - heading "3. Papéis e responsabilidades" [level=2] [ref=e55]
+          - paragraph [ref=e56]:
+            - text: Neste demo, a
+            - strong [ref=e57]: EDUCA não é controladora de dados pessoais de nenhum titular
+            - text: ", porque os registros da demonstração são sintéticos e não correspondem a pessoas reais."
+          - paragraph [ref=e58]: Em uma implantação municipal real, o município adotante define o controlador do tratamento e designa o encarregado (DPO), além de publicar os canais de contato e atender às solicitações dos titulares. A EDUCA atua como operadora, conforme o contrato e as instruções do controlador.
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - img [ref=e61]
+            - heading "4. Uso do produto em uma implantação municipal" [level=2] [ref=e64]
+          - paragraph [ref=e65]: "Em uma implantação municipal, o controlador deverá definir as finalidades, a base legal, os dados necessários, os prazos de retenção e as regras de acesso. O EDUCA pode apoiar rotinas como:"
+          - list [ref=e66]:
+            - listitem [ref=e67]: Gestão educacional e administrativa das escolas.
+            - listitem [ref=e68]: Registro e acompanhamento de frequência escolar.
+            - listitem [ref=e69]: Organização de turmas, matrículas e responsáveis.
+            - listitem [ref=e70]: Relatórios e acompanhamento da vida escolar.
+            - listitem [ref=e71]: Rotinas administrativas definidas pelo município adotante.
+        - generic [ref=e72]:
+          - generic [ref=e73]:
+            - img [ref=e74]
+            - heading "5. Compartilhamento e efeitos externos" [level=2] [ref=e79]
+          - paragraph [ref=e80]: O demo não compartilha dados pessoais reais e não deve ser usado para enviar informações a órgãos públicos, Educacenso, Bolsa Família, Conselho Tutelar ou qualquer outro terceiro. A existência de telas e relatórios de demonstração não significa que uma transmissão externa esteja ocorrendo.
+          - paragraph [ref=e81]: Na implantação municipal, o controlador deverá definir os compartilhamentos permitidos, suas finalidades e respectivas bases legais. O município também deverá revisar e aprovar qualquer integração com órgãos públicos ou terceiros antes de colocá-la em operação.
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - img [ref=e84]
+            - heading "6. Crianças e adolescentes" [level=2] [ref=e86]
+          - paragraph [ref=e87]: Este demo não contém dados de crianças ou adolescentes reais. Não insira esse tipo de dado no ambiente, mesmo para testar um fluxo.
+          - paragraph [ref=e88]: Na implantação municipal, o controlador deverá avaliar e documentar o tratamento de dados de crianças e adolescentes conforme o Artigo 14 da LGPD, considerando o melhor interesse, a transparência, a necessidade e os procedimentos aplicáveis ao caso. Esta página não substitui essa análise.
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - img [ref=e91]
+            - heading "7. Direitos dos titulares" [level=2] [ref=e94]
+          - paragraph [ref=e95]: Como os registros funcionais do demo são sintéticos e não têm titular real, esta página não recebe solicitações de titulares sobre esses registros.
+          - paragraph [ref=e96]: Em uma implantação municipal real, as solicitações de acesso, correção, exclusão, informação e demais direitos previstos na LGPD deverão ser encaminhadas ao controlador e ao encarregado (DPO) designados pelo município adotante.
+          - paragraph [ref=e97]: "Por isso, esta página não publica endereço, telefone ou e-mail de DPO: não há município controlador deste demo."
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - img [ref=e100]
+            - heading "8. Runbook para o município adotante" [level=2] [ref=e103]
+          - paragraph [ref=e104]: "O produto entrega um runbook de adequação à LGPD para orientar o município adotante a fazer o próprio dever de casa antes de uma implantação real. O município deverá, entre outras providências:"
+          - list [ref=e105]:
+            - listitem [ref=e106]: Definir controlador, operador e encarregado (DPO).
+            - listitem [ref=e107]: Publicar a política municipal e os canais para titulares.
+            - listitem [ref=e108]: Definir bases legais, finalidades, acessos e retenção.
+            - listitem [ref=e109]: Documentar o tratamento de dados de crianças e adolescentes.
+            - listitem [ref=e110]: Revisar fluxos como Educacenso e outros compartilhamentos.
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - img [ref=e113]
+            - heading "9. Aviso operacional e consentimento opcional" [level=2] [ref=e115]
+          - paragraph [ref=e116]: "O cadastro de responsáveis e alunos é uma rotina administrativa necessária à gestão escolar. O registro dos dados obrigatórios não depende de consentimento do titular: a base legal do tratamento é definida pelo município adotante (ex.: obrigação legal, execução de políticas públicas ou cumprimento de obrigação regulatória)."
+          - paragraph [ref=e117]:
+            - text: O sistema exibe um
+            - strong [ref=e118]: aviso informativo
+            - text: (ciência) no momento do cadastro, explicando quais dados são tratados e para qual finalidade. Esse aviso não é uma coleta de consentimento e não condiciona o cadastro.
+          - paragraph [ref=e119]:
+            - text: Para finalidades
+            - strong [ref=e120]: opcionais
+            - text: "(ex.: comunicações por WhatsApp, e-mail informativo além do estritamente necessário), o sistema oferece um consentimento separado e facultativo, que pode ser revogado a qualquer momento sem prejuízo ao cadastro ou à prestação do serviço escolar."
+          - list [ref=e121]:
+            - listitem [ref=e122]: "Dados necessários à rotina escolar: aviso informativo, sem consentimento obrigatório."
+            - listitem [ref=e123]: "Comunicações opcionais: consentimento separado, facultativo e revogável."
+            - listitem [ref=e124]: A recusa do consentimento opcional não impede o cadastro nem a prestação do serviço.
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - img [ref=e127]
+            - heading "10. Segurança e alterações" [level=2] [ref=e130]
+          - paragraph [ref=e131]: O sandbox aplica controles de acesso, bloqueia efeitos externos e pode ser reiniciado para preservar a natureza sintética da demonstração. Essas medidas não transformam o demo em ambiente autorizado para dados pessoais reais.
+          - paragraph [ref=e132]: Esta política pode ser atualizada para refletir mudanças no demo. A data no início da página indica a versão mais recente deste aviso.
+        - paragraph [ref=e134]:
+          - text: EDUCA - Demo público de demonstração
+          - text: Dados sintéticos, sem titular real
+          - text: © 2025-2026 - Sistema EDUCA
+  - region "Notifications alt+T"
+  - alert [ref=e135]
+```

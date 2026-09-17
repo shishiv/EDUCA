@@ -1,0 +1,102 @@
+{
+  "candidate_source_sha": "148e7fca80e33b3c707017c2b8c87e98b1be3e2f",
+  "historical_ledger_unchanged": true,
+  "areas": {
+    "integration": {
+      "evolved": 7,
+      "exact": 552
+    },
+    "auth": {
+      "exact": 27,
+      "evolved": 2
+    },
+    "contracts": {
+      "exact": 25
+    },
+    "frequency": {
+      "evolved": 2,
+      "exact": 37
+    },
+    "public": {
+      "exact": 49,
+      "evolved": 1
+    },
+    "readmodels": {
+      "exact": 42
+    },
+    "toolchain": {
+      "exact": 32,
+      "evolved": 1
+    },
+    "validation": {
+      "exact": 21
+    },
+    "evidence": {
+      "exact": 88
+    }
+  },
+  "evolved_destinations": [
+    {
+      "path": "CONTEXT.md",
+      "areas": [
+        "frequency",
+        "integration"
+      ],
+      "reason": "F02 partial restore documentation delta",
+      "actual_object": "100644 blob 01f8217b244e3a82f48707924a77329630021e62"
+    },
+    {
+      "path": "app/app/api/users/[userId]/status/handler.ts",
+      "areas": [
+        "auth",
+        "integration"
+      ],
+      "reason": "F04 atomic status and semantic receipt RPC",
+      "actual_object": "100644 blob 0fc2452c439cccdeb9aedb8002eb49247f6f972d"
+    },
+    {
+      "path": "app/lib/demo-sandbox/login-demo-credentials.ts",
+      "areas": [
+        "integration",
+        "public"
+      ],
+      "reason": "Preserve main exact public-flag guard; access contract not broadened",
+      "actual_object": "100644 blob 356de829235b74cb2a6e9c48f2b8c4c74c1b1138"
+    },
+    {
+      "path": "app/package.json",
+      "areas": [
+        "integration",
+        "toolchain"
+      ],
+      "reason": "F02 raw restore command",
+      "actual_object": "100644 blob 117aea7d0aee54a7638c94c215ce38f8ce1d0b7f"
+    },
+    {
+      "path": "app/tests/e2e/profile/user.spec.ts",
+      "areas": [
+        "integration"
+      ],
+      "reason": "Witnessed fixture teardown lifetime correction",
+      "actual_object": "100644 blob a9139071501db34a72744c3d7def23b03dfeb33e"
+    },
+    {
+      "path": "app/tests/unit/api/user-status-route.test.ts",
+      "areas": [
+        "auth",
+        "integration"
+      ],
+      "reason": "F04 receipt validation regressions",
+      "actual_object": "100644 blob b3c5f911123a4665b07d2ac74a29c8c4dc42d257"
+    },
+    {
+      "path": "app/types/database.ts",
+      "areas": [
+        "frequency",
+        "integration"
+      ],
+      "reason": "F04 generated RPC contract delta",
+      "actual_object": "100644 blob 0b39ea74d1cc283ec77c7e1dc4c1230bb558d0a6"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "result": "pass",
+  "boundary": "real-playwright-browser",
+  "identity": "professora.descritivo@synthetic.invalid",
+  "role": "professor",
+  "authStatePath": "./app/playwright/.pilot-descriptive/20260917T151135Z-1084303/teacher.json",
+  "landingRoute": "/dashboard"
+}

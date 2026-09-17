@@ -1,0 +1,10 @@
+PILOT_PORT_RANGE_LEASE_EXTERNAL: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000
+(node:1304080) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PILOT_LEGACY_SECURITY_RECEIPT: setup=1 focused_spec=1 tests=3 csv=false invitation=false capacity=false descriptive=false r1_canonical=false
+PILOT_LEGACY_BUILD_RECEIPT: status=pass
+PILOT_LEGACY_BROWSER_SETUP_RECEIPT: named_url=true numbered_port=false
+PILOT_LEGACY_SETUP_RECEIPT: isolated_local_supabase=true named_url_ready=true synthetic_only=true external_deploy=false legal=not_approved
+PILOT_LEGACY_TEST_RECEIPT: status=pass tests=2 run_tests=3 output_redacted=true
+PILOT_LEGACY_CLEANUP_RECEIPT: app_stopped=true named_route_removed=true database_stopped=true auth_state_removed=true isolated_removed=true result=pass receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/security/r3-t1-legacy-pilot-e2e-20260917T151340Z-1303553.json
+PILOT_E2E_FINAL_RECEIPT: ./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/security/r3-t1-legacy-pilot-e2e-20260917T151340Z-1303553.json

@@ -1,0 +1,47 @@
+{
+  "result": "pass",
+  "boundary": "real-postgresql",
+  "localSupabase": {
+    "apiHost": "127.0.0.1",
+    "databaseHost": "127.0.0.1",
+    "externalProject": false
+  },
+  "safetyMarker": {
+    "municipality": "synthetic-municipality",
+    "dataClassification": "synthetic_only",
+    "externalDeployAllowed": false,
+    "legalApprovalStatus": "not_approved"
+  },
+  "syntheticOnly": {
+    "nonSyntheticUsers": 0,
+    "identitiesUseSyntheticDomain": true
+  },
+  "counts": {
+    "schools": 2,
+    "users": 5,
+    "syntheticAdmins": 1,
+    "classes": 2,
+    "students": 2,
+    "guardians": 2,
+    "guardianLinks": 2,
+    "enrollments": 2,
+    "sessions": 1,
+    "attendance": 1,
+    "metricEvents": 4,
+    "tombstones": 1
+  },
+  "expectedCounts": {
+    "schools": 2,
+    "users": 5,
+    "syntheticAdmins": 1,
+    "classes": 2,
+    "students": 2,
+    "guardians": 2,
+    "guardianLinks": 2,
+    "enrollments": 2,
+    "sessions": 1,
+    "attendance": 1,
+    "metricEvents": 4,
+    "tombstones": 1
+  }
+}

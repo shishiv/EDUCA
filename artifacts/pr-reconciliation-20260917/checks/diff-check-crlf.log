@@ -1,0 +1,299 @@
+app/public/brand/svg/educa-app-mark-ink-lime.svg:5: new blank line at EOF.
+app/public/brand/svg/educa-full-gradient-on-transparent.svg:11: new blank line at EOF.
+app/public/brand/svg/educa-full-solid-emerald-on-transparent.svg:2: trailing whitespace.
++  
+app/public/brand/svg/educa-full-solid-emerald-on-transparent.svg:6: new blank line at EOF.
+app/public/brand/svg/educa-full-white-on-transparent.svg:2: trailing whitespace.
++  
+app/public/brand/svg/educa-full-white-on-transparent.svg:6: new blank line at EOF.
+app/public/brand/svg/educa-symbol-circle-gradient-light.svg:12: new blank line at EOF.
+app/public/brand/svg/educa-symbol-circle-gradient.svg:12: new blank line at EOF.
+app/public/brand/svg/educa-symbol-emerald-white.svg:5: new blank line at EOF.
+app/public/brand/svg/educa-symbol-ink-lime.svg:5: new blank line at EOF.
+app/public/brand/svg/favicon.svg:12: new blank line at EOF.
+app/types/database.ts:4576: new blank line at EOF.
+artifacts/educa-quality-prs-dev/checks/lint.log:12: new blank line at EOF.
+artifacts/educa-quality-prs-dev/checks/test-bounded.log:47: new blank line at EOF.
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-auth-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-auth-20260908        
+artifacts/educa-quality-prs-dev/preservation/auth.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-contracts-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-contracts-20260908        
+artifacts/educa-quality-prs-dev/preservation/contracts.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-frequency-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-frequency-20260908        
+artifacts/educa-quality-prs-dev/preservation/frequency.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'refactor/educa-zero-slop-20260907' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/refactor/educa-zero-slop-20260907        
+artifacts/educa-quality-prs-dev/preservation/integration.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-public-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-public-20260908        
+artifacts/educa-quality-prs-dev/preservation/public.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-readmodels-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-readmodels-20260908        
+artifacts/educa-quality-prs-dev/preservation/readmodels.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-toolchain-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-toolchain-20260908        
+artifacts/educa-quality-prs-dev/preservation/toolchain.push.txt:5: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:2: trailing whitespace.
++remote: 
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:3: trailing whitespace.
++remote: Create a pull request for 'salvar/educa-quality-validation-20260908' on GitHub by visiting:        
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:4: trailing whitespace.
++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-validation-20260908        
+artifacts/educa-quality-prs-dev/preservation/validation.push.txt:5: trailing whitespace.
++remote: 
+artifacts/quality-integration/build.log:20: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/build.log:21: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/build.log:22: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/build.log:125: new blank line at EOF.
+artifacts/quality-integration/database-retry.log:572: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:574: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:577: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:579: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:588: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:590: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:593: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:595: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:598: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:600: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:611: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:613: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:616: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:618: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:621: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:623: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:626: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:628: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:631: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:633: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:636: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:638: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:641: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:643: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:646: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:648: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:651: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:653: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:657: trailing whitespace.
++              set_config              
+artifacts/quality-integration/database-retry.log:662: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:664: trailing whitespace.
++ 
+artifacts/quality-integration/database-retry.log:667: trailing whitespace.
++              set_config              
+artifacts/quality-integration/database-retry.log:672: trailing whitespace.
++ assert_true 
+artifacts/quality-integration/database-retry.log:674: trailing whitespace.
++ 
+artifacts/quality-integration/general-auth-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-auth-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-auth-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-auth-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-auth-before/test.log:175: trailing whitespace.
++  1) [chromium] › tests/e2e/profile/user.spec.ts:66:5 › profile saves its own name with an audit receipt and survives reload 
+artifacts/quality-integration/general-auth-before/test.log:206: trailing whitespace.
++    [chromium] › tests/e2e/profile/user.spec.ts:66:5 › profile saves its own name with an audit receipt and survives reload 
+artifacts/quality-integration/general-before/build.log:20: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-before/build.log:21: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-before/build.log:22: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-before/build.log:125: new blank line at EOF.
+artifacts/quality-integration/general-before/test.log:50: trailing whitespace.
++  1) [chromium] › tests/e2e/attendance/grid.spec.ts:63:7 › Attendance grid › renders one P/F/J control group per seeded student 
+artifacts/quality-integration/general-before/test.log:84: trailing whitespace.
++    [chromium] › tests/e2e/attendance/grid.spec.ts:63:7 › Attendance grid › renders one P/F/J control group per seeded student 
+artifacts/quality-integration/general-date-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-date-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-date-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-date-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-date-before/test.log:75: trailing whitespace.
++  1) [chromium] › tests/e2e/diary/create.spec.ts:42:7 › Diário Infantil - criação disponível ao professor titular › opens the implemented form from the student diary and cancels without writing 
+artifacts/quality-integration/general-date-before/test.log:110: trailing whitespace.
++    [chromium] › tests/e2e/diary/create.spec.ts:42:7 › Diário Infantil - criação disponível ao professor titular › opens the implemented form from the student diary and cancels without writing 
+artifacts/quality-integration/general-focused/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-focused/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-focused/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-focused/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-grades-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-grades-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-grades-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-grades-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-grades-before/test.log:163: trailing whitespace.
++  1) [chromium] › tests/e2e/grades/entry.spec.ts:166:7 › Grades entry › filters the seeded class and a single bimestre 
+artifacts/quality-integration/general-grades-before/test.log:198: trailing whitespace.
++    [chromium] › tests/e2e/grades/entry.spec.ts:166:7 › Grades entry › filters the seeded class and a single bimestre 
+artifacts/quality-integration/general-profile-before/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general-profile-before/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general-profile-before/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general-profile-before/build.log:122: new blank line at EOF.
+artifacts/quality-integration/general-profile-before/test.log:174: trailing whitespace.
++  1) [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in 
+artifacts/quality-integration/general-profile-before/test.log:201: trailing whitespace.
++    [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in 
+artifacts/quality-integration/general/build.log:17: trailing whitespace.
++  Generating static pages using 15 workers (17/69) 
+artifacts/quality-integration/general/build.log:18: trailing whitespace.
++  Generating static pages using 15 workers (34/69) 
+artifacts/quality-integration/general/build.log:19: trailing whitespace.
++  Generating static pages using 15 workers (51/69) 
+artifacts/quality-integration/general/build.log:122: new blank line at EOF.
+artifacts/quality-integration/grades-canonical-policy.log:1: trailing whitespace.
++ canonical_notas_policies 
+artifacts/quality-integration/grades-canonical-policy.log:6: trailing whitespace.
++ notas_rls_enabled 
+artifacts/quality-integration/grades-canonical-policy.log:11: trailing whitespace.
++ authenticated_select_grant 
+artifacts/quality-integration/grades-canonical-policy.log:15: new blank line at EOF.
+artifacts/quality-integration/lint.log:12: new blank line at EOF.
+artifacts/quality-integration/manifest.log:13: new blank line at EOF.
+artifacts/quality-integration/typecheck.log:4: new blank line at EOF.
+artifacts/quality-integration/unit.log:47: new blank line at EOF.
+artifacts/quality-integration/whitespace-inherited.log:4: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:6: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-auth-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:8: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-auth-20260908        
+artifacts/quality-integration/whitespace-inherited.log:10: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:12: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:14: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-contracts-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:16: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-contracts-20260908        
+artifacts/quality-integration/whitespace-inherited.log:18: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:20: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:22: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-frequency-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:24: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-frequency-20260908        
+artifacts/quality-integration/whitespace-inherited.log:26: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:28: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:30: trailing whitespace.
+++remote: Create a pull request for 'refactor/educa-zero-slop-20260907' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:32: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/refactor/educa-zero-slop-20260907        
+artifacts/quality-integration/whitespace-inherited.log:34: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:36: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:38: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-public-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:40: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-public-20260908        
+artifacts/quality-integration/whitespace-inherited.log:42: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:44: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:46: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-readmodels-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:48: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-readmodels-20260908        
+artifacts/quality-integration/whitespace-inherited.log:50: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:52: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:54: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-toolchain-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:56: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-toolchain-20260908        
+artifacts/quality-integration/whitespace-inherited.log:58: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:60: trailing whitespace.
+++remote: 
+artifacts/quality-integration/whitespace-inherited.log:62: trailing whitespace.
+++remote: Create a pull request for 'salvar/educa-quality-validation-20260908' on GitHub by visiting:        
+artifacts/quality-integration/whitespace-inherited.log:64: trailing whitespace.
+++remote:      https://github.com/shishiv/EDUCA/pull/new/salvar/educa-quality-validation-20260908        
+artifacts/quality-integration/whitespace-inherited.log:66: trailing whitespace.
+++remote: 

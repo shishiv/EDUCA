@@ -1,0 +1,47 @@
+
+ RUN  v4.1.10 ./app
+
+stderr | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt
+[TypeError: fetch failed] {
+  [cause]: Error: bad port
+      at makeNetworkError (node:internal/deps/undici/undici:12621:35)
+      at mainFetch (node:internal/deps/undici/undici:14058:22)
+      at fetching (node:internal/deps/undici/undici:14045:7)
+      at fetch (node:internal/deps/undici/undici:13906:20)
+      at fetch (node:internal/deps/undici/undici:18785:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:83:12)
+      at ./app/node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/dist/main/lib/helpers.js:111:25
+      at _handleRequest (./app/node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:101:24)
+      at _request (./app/node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:91:24)
+      at SupabaseAuthClient.signInWithPassword (./app/node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js:436:50)
+}
+
+ ❯ tests/live/user-status-atomic.live.test.ts (3 tests | 3 skipped) 49ms
+     ↓ throw of semantic receipt preserves persisted state and both audit counts
+     ↓ suppress of semantic receipt preserves persisted state and both audit counts
+     ↓ retries with a truthful no-op receipt after a committed desired state
+ ✓ tests/live/user-status-concurrency.live.test.ts (6 tests) 244ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt
+AuthRetryableFetchError: fetch failed
+ ❯ _handleRequest node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/src/lib/fetch.ts:191:10
+ ❯ _request node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/src/lib/fetch.ts:157:15
+ ❯ SupabaseAuthClient.signInWithPassword node_modules/.pnpm/@supabase+auth-js@2.90.1/node_modules/@supabase/auth-js/src/GoTrueClient.ts:682:14
+ ❯ tests/live/user-status-atomic.live.test.ts:33:19
+     31|       { cookies: { getAll: () => [], setAll: entries => { cookie = ent…
+     32|     )
+     33|     const login = await client.auth.signInWithPassword({ email: 'admin…
+       |                   ^
+     34|     if (login.error) throw login.error
+     35|     expect(login.data.user?.id).toBe(actorId)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  6 passed | 3 skipped (9)
+   Start at  12:42:51
+   Duration  819ms (transform 50ms, setup 132ms, import 86ms, tests 293ms, environment 0ms)
+

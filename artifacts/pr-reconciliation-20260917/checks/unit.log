@@ -1,0 +1,696 @@
+
+> educa@1.0.0 test ./app
+> vitest run --maxWorkers\=2 --no-file-parallelism
+
+
+ RUN  v4.1.10 ./app
+
+ ✓ tests/unit/e2e/general-playwright-manifest.test.ts (3 tests) 8650ms
+     ✓ keeps specialized setup, pilot, and public tests out of the general runner  3023ms
+     ✓ preserves the positive grades contracts on an explicit, separate manifest  967ms
+     ✓ leaves each leaked suite on its specialized real manifest  4657ms
+ ✓ tests/unit/components/diary/BNNCSelector.test.tsx (46 tests) 2624ms
+       ✓ should show tooltip on help button hover  731ms
+       ✓ should display BNCC format information in tooltip  721ms
+ ✓ tests/unit/pilot/pilot-local-runtime.test.ts (12 tests) 1607ms
+     ✓ bounds cleanup when the app and its child ignore TERM, preserving other sessions  1448ms
+ ✓ tests/unit/components/diary/VivenciaForm.test.tsx (41 tests) 1430ms
+ ✓ tests/unit/components/reports/DescriptiveReportForm.test.tsx (47 tests) 1170ms
+(node:2690389) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/demo-sandbox/demo-demoable-flows.test.tsx (4 tests) 1185ms
+     ✓ sends the selected school and canonical class fields through the real Supabase request builder  511ms
+     ✓ requires a school selection and clears class and teacher selections when the school changes  434ms
+ ✓ tests/unit/components/reports/AttendanceReportTable.test.tsx (61 tests) 967ms
+ ✓ tests/unit/pilot/playwright-pilot-legacy-config.test.ts (1 test) 540ms
+     ✓ registers the isolated app name when Playwright owns the server  540ms
+(node:2700590) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/components/dashboard/nova-turma-school-selection.test.tsx (3 tests) 392ms
+ ✓ tests/unit/components/attendance/controls.test.tsx (53 tests) 460ms
+ ✓ tests/unit/components/ui/form.test.tsx (34 tests) 336ms
+ ✓ tests/unit/components/diary/LessonCard.test.tsx (62 tests) 323ms
+ ✓ tests/unit/components/vivencias/vivencia-form.test.tsx (1 test) 266ms
+ ✓ tests/unit/i18n/redesign-contract.test.tsx (8 tests) 244ms
+ ✓ tests/unit/components/attendance/grid.test.tsx (41 tests) 181ms
+ ✓ tests/unit/pilot/pilot-supabase-cleanup.test.ts (6 tests) 5008ms
+     ✓ stops running containers before removing them when supabase stop returns 0 but resources remain  890ms
+     ✓ removes all stopped containers, volumes, and networks after graceful stop  852ms
+     ✓ does not touch neighbor project resources  802ms
+     ✓ fails gracefully when docker stop cannot stop a running container  802ms
+     ✓ fails closed when Docker resource discovery fails  823ms
+     ✓ handles supabase stop returning nonzero and still cleans resources  836ms
+ ✓ tests/unit/components/turmas/TurmaCard.test.tsx (32 tests) 185ms
+ ✓ tests/unit/i18n/foundation.test.ts (7 tests) 145ms
+(node:2731334) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/demo-sandbox/demo-deploy-package.test.tsx (2 tests) 145ms
+ ✓ tests/unit/reports/descriptive-report-form.test.tsx (2 tests) 175ms
+ ✓ tests/unit/components/students/StudentProfileHeader.test.tsx (32 tests) 152ms
+ ✓ tests/unit/components/diary/diary-quality-components.test.tsx (2 tests) 128ms
+[stdin]:5
+    throw new Error('PILOT_APP_SERVER_ORIGIN_INVALID: direct origin must be loopback with the leased app port')
+    ^
+
+Error: PILOT_APP_SERVER_ORIGIN_INVALID: direct origin must be loopback with the leased app port
+    at [stdin]:5:11
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:485:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:483:60)
+    at evalFunction (node:internal/process/execution:317:30)
+    at evalTypeScript (node:internal/process/execution:329:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:239:5)
+    at Socket.emit (node:events:526:24)
+
+Node.js v26.8.1
+[stdin]:5
+    throw new Error('PILOT_APP_SERVER_ORIGIN_INVALID: direct origin must be loopback with the leased app port')
+    ^
+
+Error: PILOT_APP_SERVER_ORIGIN_INVALID: direct origin must be loopback with the leased app port
+    at [stdin]:5:11
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:485:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:483:60)
+    at evalFunction (node:internal/process/execution:317:30)
+    at evalTypeScript (node:internal/process/execution:329:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:239:5)
+    at Socket.emit (node:events:526:24)
+
+Node.js v26.8.1
+ ✓ tests/unit/pilot/pilot-app-server.test.ts (2 tests) 96ms
+stderr | tests/unit/hooks/use-service-worker.test.tsx > useServiceWorker lifecycle > keeps the first controller change in-page and removes lifecycle listeners on unmount
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/unit/hooks/use-service-worker.test.tsx (4 tests) 126ms
+ ✓ tests/unit/components/students/StudentTags.test.tsx (51 tests) 137ms
+ ✓ tests/unit/wayfinder/support-runbook.test.ts (8 tests) 124ms
+ ✓ tests/unit/export/descriptive-report-pdf.test.ts (3 tests) 103ms
+(node:2746703) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/i18n/dashboard-components.test.tsx (3 tests) 111ms
+ ✓ tests/unit/components/students/FaixaEtariaIndicator.test.tsx (29 tests) 108ms
+ ✓ tests/unit/components/attendance/fechar-aula-dialog.test.tsx (1 test) 108ms
+ ✓ tests/unit/i18n/locale-switcher.test.tsx (5 tests) 108ms
+ ✓ tests/unit/wayfinder/procurement-assessment.test.ts (4 tests) 89ms
+ ✓ tests/unit/demo-sandbox/attendance-generator.test.ts (15 tests) 71ms
+ ✓ tests/unit/pilot/restore-wrapper.test.ts (8 tests) 73ms
+ ✓ tests/unit/municipal-branding.test.tsx (1 test) 62ms
+(node:2755398) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects callers without a users profile row
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:20.496Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects inactive profiles
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:20.501Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects secretario (wrong role)
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:20.502Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects admin (view-only role, cannot record)
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:20.503Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > allows a professor to mark attendance in their own session
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:20.504Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects a professor marking another professor session (session ownership)
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:20.508Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects a diretor marking a session from another escola (school ownership)
+GoTrueClient@sb-127-auth-token:7 (2.90.1) 2026-09-17T14:49:20.509Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > allows a diretor to mark attendance in a session of their escola
+GoTrueClient@sb-127-auth-token:8 (2.90.1) 2026-09-17T14:49:20.511Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects a matricula from another class of the same escola (class ownership)
+GoTrueClient@sb-127-auth-token:9 (2.90.1) 2026-09-17T14:49:20.512Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects a forged attendance date that differs from the session date
+GoTrueClient@sb-127-auth-token:10 (2.90.1) 2026-09-17T14:49:20.514Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects a nonexistent session id
+GoTrueClient@sb-127-auth-token:11 (2.90.1) 2026-09-17T14:49:20.515Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > markAttendanceAction - authz > rejects a locked session without writing
+GoTrueClient@sb-127-auth-token:12 (2.90.1) 2026-09-17T14:49:20.516Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > ignores a forged client professor_id for a professor actor
+GoTrueClient@sb-127-auth-token:13 (2.90.1) 2026-09-17T14:49:20.518Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > rejects a professor opening a turma they do not own (class ownership)
+GoTrueClient@sb-127-auth-token:14 (2.90.1) 2026-09-17T14:49:20.520Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > ignores a forged client professor_id for a diretor actor
+GoTrueClient@sb-127-auth-token:15 (2.90.1) 2026-09-17T14:49:20.521Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > rejects a diretor opening a turma from another escola
+GoTrueClient@sb-127-auth-token:16 (2.90.1) 2026-09-17T14:49:20.522Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > rejects a diretor opening a turma without an assigned professor
+GoTrueClient@sb-127-auth-token:17 (2.90.1) 2026-09-17T14:49:20.523Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > rejects secretario (wrong role)
+GoTrueClient@sb-127-auth-token:18 (2.90.1) 2026-09-17T14:49:20.524Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > rejects unauthenticated callers
+GoTrueClient@sb-127-auth-token:19 (2.90.1) 2026-09-17T14:49:20.525Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > openSessionAction - authz and identity derivation > rejects a duplicate open session for the same turma and date
+GoTrueClient@sb-127-auth-token:20 (2.90.1) 2026-09-17T14:49:20.526Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > closeSessionAction - authz > allows a professor to close their own session
+GoTrueClient@sb-127-auth-token:21 (2.90.1) 2026-09-17T14:49:20.527Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > closeSessionAction - authz > rejects a professor closing another professor session
+GoTrueClient@sb-127-auth-token:22 (2.90.1) 2026-09-17T14:49:20.529Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > closeSessionAction - authz > allows a diretor to close a session of their escola
+GoTrueClient@sb-127-auth-token:23 (2.90.1) 2026-09-17T14:49:20.530Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > closeSessionAction - authz > rejects a diretor closing a session from another escola
+GoTrueClient@sb-127-auth-token:24 (2.90.1) 2026-09-17T14:49:20.531Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > closeSessionAction - authz > rejects secretario (wrong role)
+GoTrueClient@sb-127-auth-token:25 (2.90.1) 2026-09-17T14:49:20.532Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > closeSessionAction - authz > rejects unauthenticated callers
+GoTrueClient@sb-127-auth-token:26 (2.90.1) 2026-09-17T14:49:20.532Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > allows a professor to check their own session
+GoTrueClient@sb-127-auth-token:27 (2.90.1) 2026-09-17T14:49:20.533Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > rejects a professor checking another professor session
+GoTrueClient@sb-127-auth-token:28 (2.90.1) 2026-09-17T14:49:20.534Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > allows a diretor to check a session of their escola
+GoTrueClient@sb-127-auth-token:29 (2.90.1) 2026-09-17T14:49:20.535Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > rejects a diretor checking a session from another escola
+GoTrueClient@sb-127-auth-token:30 (2.90.1) 2026-09-17T14:49:20.536Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > allows a professor to check their own turma by turma_id + date
+GoTrueClient@sb-127-auth-token:31 (2.90.1) 2026-09-17T14:49:20.536Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > rejects a professor checking another turma by turma_id + date
+GoTrueClient@sb-127-auth-token:32 (2.90.1) 2026-09-17T14:49:20.537Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > allows secretario (view-only role) to read lock status in scope
+GoTrueClient@sb-127-auth-token:33 (2.90.1) 2026-09-17T14:49:20.538Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > allows secretariat admin to read lock status of any escola
+GoTrueClient@sb-127-auth-token:34 (2.90.1) 2026-09-17T14:49:20.539Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-auth.test.ts > checkLockStatusAction - authz > rejects unauthenticated callers
+GoTrueClient@sb-127-auth-token:35 (2.90.1) 2026-09-17T14:49:20.540Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/actions/attendance-auth.test.ts (36 tests) 51ms
+(node:2755839) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > rejects a non-current São Paulo opening date
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:20.937Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > rejects a duplicate planned or open session for the same class and date
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:20.938Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > derives professor and school from the turma instead of forged input fields
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:20.944Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > maps the database cutoff rejection without persisting a session
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:20.948Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > marks one enrollment with canonical status, date, teacher, and actor
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:20.951Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > marks a batch with the same canonical payload as repeated individual writes
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:20.956Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > marks a batch with the same canonical payload as repeated individual writes
+GoTrueClient@sb-127-auth-token:7 (2.90.1) 2026-09-17T14:49:20.958Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > persists an unmarked (null) status as NAO_MARCADO with the same payload as an individual write
+GoTrueClient@sb-127-auth-token:8 (2.90.1) 2026-09-17T14:49:20.962Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > persists an unmarked (null) status as NAO_MARCADO with the same payload as an individual write
+GoTrueClient@sb-127-auth-token:9 (2.90.1) 2026-09-17T14:49:20.964Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > rejects an enrollment mismatch before a batch write
+GoTrueClient@sb-127-auth-token:10 (2.90.1) 2026-09-17T14:49:20.967Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > denies a professor and director outside the authorized session school
+GoTrueClient@sb-127-auth-token:11 (2.90.1) 2026-09-17T14:49:20.969Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > denies a professor and director outside the authorized session school
+GoTrueClient@sb-127-auth-token:12 (2.90.1) 2026-09-17T14:49:20.970Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > rejects current-date writes when the session is locked or closed
+GoTrueClient@sb-127-auth-token:13 (2.90.1) 2026-09-17T14:49:20.971Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > rejects a past session without a database-authorized correction window
+GoTrueClient@sb-127-auth-token:14 (2.90.1) 2026-09-17T14:49:20.973Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > allows marking, batching and closing a past session authorized by the database window
+GoTrueClient@sb-127-auth-token:15 (2.90.1) 2026-09-17T14:49:20.974Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > blocks batching and closure when a correction expires even on the current day
+GoTrueClient@sb-127-auth-token:16 (2.90.1) 2026-09-17T14:49:20.979Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > keeps manual closure guards even if a stale RPC response reports editability
+GoTrueClient@sb-127-auth-token:17 (2.90.1) 2026-09-17T14:49:20.982Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > closes an open session through the one-way canonical transition
+GoTrueClient@sb-127-auth-token:18 (2.90.1) 2026-09-17T14:49:20.985Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > reads canonical sessions, active students, and normalized frequency facts
+GoTrueClient@sb-127-auth-token:19 (2.90.1) 2026-09-17T14:49:20.986Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > rejects a missing or RLS-hidden session without reporting it as unlocked
+GoTrueClient@sb-127-auth-token:20 (2.90.1) 2026-09-17T14:49:20.989Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/attendance-module.test.ts > canonical Attendance session module > reports no session only after authorizing the class for the requested date
+GoTrueClient@sb-127-auth-token:21 (2.90.1) 2026-09-17T14:49:20.990Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/services/attendance-module.test.ts (21 tests) 63ms
+ ✓ tests/unit/components/turmas/TurmaCardGrid.test.tsx (18 tests) 46ms
+(node:2756880) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > denies unauthorized writers before either write: {"actorId":null}
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:21.839Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > denies unauthorized writers before either write: {"active":false}
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:21.840Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > denies unauthorized writers before either write: {"role":"admin"}
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:21.841Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > denies unauthorized writers before either write: {"schoolId":"10000000-0000-0000-0000-000000000002"}
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:21.842Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > denies unauthorized writers before either write: {"actorId":"20000000-0000-0000-0000-000000000002"}
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:21.843Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > does not create a session on a different date: 2026-09-07
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:21.844Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > does not create a session on a different date: 2026-09-09
+GoTrueClient@sb-127-auth-token:7 (2.90.1) 2026-09-17T14:49:21.845Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > does not create a session after the canonical cutoff
+GoTrueClient@sb-127-auth-token:8 (2.90.1) 2026-09-17T14:49:21.847Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > opens after 18h when the school database policy still permits it
+GoTrueClient@sb-127-auth-token:9 (2.90.1) 2026-09-17T14:49:21.849Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > uses the database decision for an existing session during an audited correction window
+GoTrueClient@sb-127-auth-token:10 (2.90.1) 2026-09-17T14:49:21.852Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > denies content when the existing session window is expired
+GoTrueClient@sb-127-auth-token:11 (2.90.1) 2026-09-17T14:49:21.855Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > does not overwrite the content of an existing lesson
+GoTrueClient@sb-127-auth-token:12 (2.90.1) 2026-09-17T14:49:21.856Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > does not overwrite the content of an existing lesson
+GoTrueClient@sb-127-auth-token:13 (2.90.1) 2026-09-17T14:49:21.858Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > allows a content retry on the same session after a failed insert
+GoTrueClient@sb-127-auth-token:14 (2.90.1) 2026-09-17T14:49:21.860Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > allows a content retry on the same session after a failed insert
+GoTrueClient@sb-127-auth-token:15 (2.90.1) 2026-09-17T14:49:21.865Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/diary-lesson.test.ts > diary lesson through canonical attendance > stops before content insertion when a concurrent session wins the unique constraint
+GoTrueClient@sb-127-auth-token:16 (2.90.1) 2026-09-17T14:49:21.866Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/services/diary-lesson.test.ts (15 tests) 53ms
+(node:2757476) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp enqueue idempotency > stores no message body and no phone on the row
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:22.277Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp enqueue idempotency > rejects enqueue without an active guardian relationship and attendance context
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:22.279Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp enqueue idempotency > rolls back enqueue when its audit receipt cannot be stored
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:22.280Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > delivers due messages end to end and records masked receipts
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:22.281Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > blocks delivery when the guardian withdrew consent mid-queue
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:22.286Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > blocks delivery when the guardian has no valid phone
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:22.287Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > schedules a retry with backoff on transient failures
+GoTrueClient@sb-127-auth-token:7 (2.90.1) 2026-09-17T14:49:22.289Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > marks failed after exhausting all attempts
+GoTrueClient@sb-127-auth-token:8 (2.90.1) 2026-09-17T14:49:22.291Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > recovers after a transient failure when the next attempt succeeds
+GoTrueClient@sb-127-auth-token:9 (2.90.1) 2026-09-17T14:49:22.294Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > claims a due row once across concurrent drainers
+GoTrueClient@sb-127-auth-token:10 (2.90.1) 2026-09-17T14:49:22.296Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > marks an expired claim indeterminate without sending it again
+GoTrueClient@sb-127-auth-token:11 (2.90.1) 2026-09-17T14:49:22.298Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > holds an ambiguous gateway failure for reconciliation instead of retrying
+GoTrueClient@sb-127-auth-token:12 (2.90.1) 2026-09-17T14:49:22.299Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > holds even an expired final claim for reconciliation
+GoTrueClient@sb-127-auth-token:13 (2.90.1) 2026-09-17T14:49:22.301Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery with the local fake > keeps permanent failures terminal and out of later drains
+GoTrueClient@sb-127-auth-token:14 (2.90.1) 2026-09-17T14:49:22.301Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery status webhook application > applies sent -> delivered -> read monotonically
+GoTrueClient@sb-127-auth-token:15 (2.90.1) 2026-09-17T14:49:22.303Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery status webhook application > ignores duplicates and regressions
+GoTrueClient@sb-127-auth-token:16 (2.90.1) 2026-09-17T14:49:22.305Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery status webhook application > never regresses read delivery to failed
+GoTrueClient@sb-127-auth-token:17 (2.90.1) 2026-09-17T14:49:22.306Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery status webhook application > records failed receipts with the error code and becomes terminal
+GoTrueClient@sb-127-auth-token:18 (2.90.1) 2026-09-17T14:49:22.308Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-delivery-service.test.ts > whatsapp delivery status webhook application > ignores receipts for messages it never sent
+GoTrueClient@sb-127-auth-token:19 (2.90.1) 2026-09-17T14:49:22.309Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/notifications/whatsapp-delivery-service.test.ts (23 tests) 45ms
+(node:2758073) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/i18n/providers.test.tsx (1 test) 50ms
+ ✓ tests/unit/i18n/registry.test.ts (3 tests) 55ms
+(node:2759568) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/api/search-route.test.ts > global search route > keeps ranking, pagination, and entity filtering deterministic through the production store
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:23.783Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/search-route.test.ts > global search route > keeps ranking, pagination, and entity filtering deterministic through the production store
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:23.786Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/search-route.test.ts > global search route > returns sensitive student fields only to governed roles and never emits a blocked destination
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:23.788Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/search-route.test.ts > global search route > returns sensitive student fields only to governed roles and never emits a blocked destination
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:23.790Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/search-route.test.ts > global search route > keeps a school-scoped actor away from another school
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:23.792Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/search-route.test.ts > global search route > does not expose raw query data in failures
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:23.794Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/api/search-route.test.ts (6 tests) 33ms
+ ✓ tests/unit/i18n/platform.test.ts (2 tests) 37ms
+ ✓ tests/unit/service-worker/cache-boundaries.test.ts (14 tests) 41ms
+(node:2761353) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > allows a director to record within the own school
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:24.781Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > keeps secretario view-only
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:24.784Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > keeps admin view-only
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:24.785Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > rejects a session from another school
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:24.786Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > rejects a matricula from another class
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:24.787Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > rejects an inactive enrollment before writing
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:24.789Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > rejects a closed session before writing
+GoTrueClient@sb-127-auth-token:7 (2.90.1) 2026-09-17T14:49:24.791Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > requires justification for status J
+GoTrueClient@sb-127-auth-token:8 (2.90.1) 2026-09-17T14:49:24.793Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/actions/attendance-batch.test.ts > markAttendanceBatchAction > rejects duplicate enrollments in one batch
+GoTrueClient@sb-127-auth-token:9 (2.90.1) 2026-09-17T14:49:24.794Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/actions/attendance-batch.test.ts (10 tests) 27ms
+(node:2762005) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/api/sessoes-aula-batch.test.ts > POST /api/sessoes/aula/[id]/frequencia/batch > rejects the old aluno_id payload before any write
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:25.285Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/sessoes-aula-batch.test.ts > POST /api/sessoes/aula/[id]/frequencia/batch > returns 401 and does not mutate when there is no authenticated actor
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:25.287Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/api/sessoes-aula-batch.test.ts (3 tests) 33ms
+ ✓ tests/unit/components/attendance/correction-window.test.tsx (7 tests) 34ms
+ ✓ tests/unit/services/attendance-server-import.test.ts (2 tests) 37ms
+ ✓ tests/unit/i18n/classroom.test.ts (3 tests) 30ms
+(node:2766653) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/notifications/whatsapp-notification-service.test.ts > whatsapp notification local end-to-end path > blocks before any send when the guardian never consented
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:26.795Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-notification-service.test.ts > whatsapp notification local end-to-end path > is idempotent: a second trigger never double-sends
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:26.798Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-notification-service.test.ts > whatsapp notification local end-to-end path > recovers after transient failure: retry delivers, webhook completes the cycle
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:26.801Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/notifications/whatsapp-notification-service.test.ts (4 tests) 26ms
+(node:2767924) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/health-route.test.ts (9 tests) 23ms
+ ✓ tests/unit/export/pdf-utils.test.ts (11 tests) 21ms
+(node:2774745) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/api/self-profile-route.test.ts > self profile server mutation > rejects unknown fields before opening the profile store
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:29.774Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/self-profile-route.test.ts > self profile server mutation > rejects malformed JSON before opening the profile store
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:29.776Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/self-profile-route.test.ts > self profile server mutation > denies PILOT_AUTH_REQUIRED before opening the profile store
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:29.777Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/self-profile-route.test.ts > self profile server mutation > denies PILOT_ROLE_DENIED before opening the profile store
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:29.778Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/self-profile-route.test.ts > self profile server mutation > returns PROFILE_NOT_FOUND when the RPC returns no updated profile
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:29.779Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/self-profile-route.test.ts > self profile server mutation > returns the pilot fallback when the transactional RPC fails
+GoTrueClient@sb-127-auth-token:6 (2.90.1) 2026-09-17T14:49:29.781Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/api/self-profile-route.test.ts (7 tests) 22ms
+(node:2775704) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/user-status-route.test.ts (17 tests) 17ms
+(node:2776313) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/auth.test.ts > signIn > keeps a successful login successful when best-effort audit recording fails
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:30.563Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/auth.test.ts > signIn > does not attempt a protected audit for a failed unauthenticated login
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:30.571Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/auth.test.ts > signIn > validates display metadata returned by Supabase
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:30.574Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/auth.test.ts > signIn > rejects invalid display metadata returned by Supabase
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:30.577Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/auth.test.ts (4 tests) 18ms
+(node:2776991) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/api/management-family-access.test.ts > management family reads > returns only active canonical student links and stops before link reads when guardian access is denied
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:30.943Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:30.944Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/management-family-access.test.ts > management family reads > loads primary guardian sensitive fields only through the authorized projection
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:30.946Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/api/management-family-access.test.ts > management family reads > does not expose a linked guardian when the authorized projection denies it
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:30.948Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/api/management-family-access.test.ts (4 tests) 16ms
+(node:2777610) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/notifications/whatsapp-optin-service.test.ts > whatsapp opt-in service > withdraws consent keeping the consent history
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:31.349Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-optin-service.test.ts > whatsapp opt-in service > rejects guardians outside the actor scope
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:31.351Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-optin-service.test.ts > whatsapp opt-in service > defaults to no consent when no row exists
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:31.353Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-optin-service.test.ts > whatsapp opt-in service > reports false after explicit withdrawal
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:31.354Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/notifications/whatsapp-optin-service.test.ts > whatsapp opt-in service > does not persist consent when the audit receipt transaction fails
+GoTrueClient@sb-127-auth-token:5 (2.90.1) 2026-09-17T14:49:31.356Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/notifications/whatsapp-optin-service.test.ts (6 tests) 20ms
+(node:2778648) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/services/vivencias.test.ts > VivenciasApiService > rejects a database row with an unknown experience field
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:31.757Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/vivencias.test.ts > VivenciasApiService > sends date bounds and the limit in the student query
+GoTrueClient@sb-127-auth-token:2 (2.90.1) 2026-09-17T14:49:31.760Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/vivencias.test.ts > VivenciasApiService > stamps actor-owned fields through the database service payload
+GoTrueClient@sb-127-auth-token:3 (2.90.1) 2026-09-17T14:49:31.761Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+stderr | tests/unit/services/vivencias.test.ts > VivenciasApiService > persists an edited narrative date
+GoTrueClient@sb-127-auth-token:4 (2.90.1) 2026-09-17T14:49:31.763Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/services/vivencias.test.ts (5 tests) 19ms
+(node:2779857) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/vivencias.test.ts (9 tests) 16ms
+ ✓ tests/unit/utils/faixa-etaria.test.ts (21 tests) 15ms
+ ✓ tests/unit/pilot/governed-csv-import.test.ts (11 tests) 17ms
+(node:2782973) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/user-lifecycle-revocation-route.test.ts (3 tests) 14ms
+ ✓ tests/unit/components/attendance/AttendanceGridUtils.test.ts (1 test) 13ms
+(node:2787046) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/school-academic-year-route.test.ts (7 tests) 13ms
+(node:2787836) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/teacher-update-route.test.ts (6 tests) 13ms
+ ✓ tests/unit/contracts/logger-contract.test.ts (1 test) 13ms
+(node:2789187) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/pilot-audit-route.test.ts (5 tests) 12ms
+(node:2789997) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/user-lifecycle-routes.test.ts (4 tests) 14ms
+(node:2790803) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/municipal-settings-route.test.ts (5 tests) 12ms
+(node:2791605) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/governed-management.test.ts (1 test) 10ms
+(node:2792255) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/contracts/demo-audit-route-contract.test.ts (3 tests) 12ms
+(node:2793191) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/auth-middleware.test.ts (35 tests) 11ms
+ ✓ tests/unit/notifications/whatsapp-meta-adapter.test.ts (8 tests) 10ms
+(node:2794665) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/services/academic-year.test.ts (6 tests) 10ms
+ ✓ tests/unit/navigation.test.ts (21 tests) 8ms
+ ✓ tests/unit/educacenso/identification-2026.test.ts (8 tests) 9ms
+(node:2796735) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/reports/content-report-data.test.ts (3 tests) 11ms
+(node:2797519) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/unit/api/users-browser.test.ts
+GoTrueClient@sb-127-auth-token:1 (2.90.1) 2026-09-17T14:49:41.833Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+ ✓ tests/unit/api/users-browser.test.ts (5 tests) 9ms
+ ✓ tests/unit/validation/form-schemas.test.ts (35 tests) 8ms
+(node:2799291) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/i18n/proxy-contract.test.ts (2 tests) 9ms
+(node:2800078) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/class-diary-pagination.test.ts (1 test) 10ms
+(node:2801167) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/users-client.test.ts (3 tests) 9ms
+ ✓ tests/unit/demo-sandbox/demo-sandbox.test.ts (6 tests) 9ms
+ ✓ tests/unit/public-demo/public-demo-origin.test.ts (22 tests) 11ms
+ ✓ tests/unit/services/user-lifecycle.test.ts (6 tests) 10ms
+ ✓ tests/unit/utils/date-utils.test.ts (28 tests) 8ms
+(node:2809437) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/demo-audit-route.test.ts (2 tests) 7ms
+ ✓ tests/unit/utils/fuzzy-search.test.ts (42 tests) 8ms
+ ✓ tests/unit/dashboard/quick-access.test.ts (19 tests) 7ms
+ ✓ tests/unit/pilot/pilot-foundation.test.ts (6 tests) 8ms
+ ✓ tests/unit/realtime/session-realtime.test.ts (4 tests) 6ms
+ ✓ tests/unit/services/user-lifecycle-revocation.test.ts (4 tests) 8ms
+(node:2813570) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/health-detail-redaction.test.ts (1 test) 7ms
+ ✓ tests/unit/api/demo-guard-routes.test.ts (6 tests) 6ms
+(node:2814612) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/services/vivencias-auth.test.ts (4 tests) 7ms
+ ✓ tests/unit/reports/descriptive-report-emission.test.ts (1 test) 3ms
+ ✓ tests/unit/api/frequencia/marcar/route.test.ts (1 test) 7ms
+ ✓ tests/unit/validation/brazilian.test.ts (32 tests) 7ms
+ ✓ tests/unit/attendance/frequency-policy-contract.test.ts (3 tests) 5ms
+ ✓ tests/unit/notifications/whatsapp-local-adapter.test.ts (6 tests) 5ms
+ ✓ tests/unit/notifications/whatsapp-webhook-payload.test.ts (6 tests) 6ms
+ ✓ tests/unit/services/municipal-settings.test.ts (3 tests) 5ms
+ ✓ tests/unit/pilot/pilot-import-audit.test.ts (2 tests) 5ms
+ ✓ tests/unit/pilot/restore-coverage.test.ts (2 tests) 5ms
+ ✓ tests/unit/demo-sandbox/demo-client-noops.test.ts (2 tests) 5ms
+ ✓ tests/unit/demo-sandbox/demo-audit.test.ts (3 tests) 4ms
+(node:2820318) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/contracts/shared-contracts.test.ts (4 tests) 4ms
+ ✓ tests/unit/notifications/whatsapp-notification-payload.test.ts (8 tests) 4ms
+ ✓ tests/unit/privacy/guardian-consent-separation.test.ts (7 tests) 4ms
+ ✓ tests/unit/notifications/whatsapp-safety-gate.test.ts (6 tests) 3ms
+ ✓ tests/unit/i18n/locale-action.test.ts (2 tests) 4ms
+ ✓ tests/unit/pilot/pilot-import-proof.test.ts (1 test) 4ms
+ ✓ tests/unit/contexts/escola-selection.test.ts (3 tests) 4ms
+ ✓ tests/unit/auth-session-recovery.test.ts (2 tests) 4ms
+ ✓ tests/unit/monitoring/metrics.test.ts (1 test) 3ms
+ ✓ tests/unit/pilot/descriptive-report-demo-safety.test.ts (4 tests) 4ms
+ ✓ tests/unit/e2e/authenticated-user.test.ts (3 tests) 4ms
+ ✓ tests/unit/reports/attendance-conditionality-read-model.test.ts (5 tests) 3ms
+(node:2825711) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/api/dashboard-stats.test.ts (2 tests) 3ms
+ ✓ tests/unit/auth/login-demo-credentials.test.ts (1 test) 4ms
+ ✓ tests/unit/metadata/root-metadata.test.ts (2 tests) 3ms
+ ✓ tests/unit/pilot/pilot-operations-config.test.ts (1 test) 3ms
+ ✓ tests/unit/api/class-capacity-settings.test.ts (3 tests) 4ms
+ ✓ tests/unit/validation/external-values.test.ts (2 tests) 3ms
+ ✓ tests/unit/reports/bolsa-familia-display-projection.test.ts (2 tests) 2ms
+(node:2829928) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ tests/live/attendance-auth.live.test.ts (17 tests | 17 skipped)
+(node:2830492) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ tests/live/user-lifecycle-revocation.live.test.ts (1 test | 1 skipped)
+(node:2831094) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ tests/live/user-lifecycle.live.test.ts (2 tests | 2 skipped)
+ ↓ tests/live/user-status-atomic.live.test.ts (3 tests | 3 skipped)
+ ↓ tests/live/user-status-concurrency.live.test.ts (6 tests | 6 skipped)
+
+ Test Files  126 passed | 5 skipped (131)
+      Tests  1339 passed | 29 skipped (1368)
+   Start at  11:48:27
+   Duration  94.51s (transform 1.51s, setup 4.01s, import 21.75s, tests 28.95s, environment 27.40s)
+

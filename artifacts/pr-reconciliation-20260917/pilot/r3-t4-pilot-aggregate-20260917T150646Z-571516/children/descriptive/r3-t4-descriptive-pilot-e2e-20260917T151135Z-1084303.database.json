@@ -1,0 +1,9 @@
+{
+  "result": "pass",
+  "boundary": "real-postgresql",
+  "seedMarker": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE",
+  "seedCommand": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+  "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts",
+  "localDatabase": true,
+  "syntheticOnly": true
+}

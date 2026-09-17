@@ -1,0 +1,16 @@
+
+> educa@1.0.0 test:e2e:pilot ./app
+> bash scripts/run-pilot-aggregate-e2e.sh
+
+PILOT_PORT_RANGE_LEASE: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000 owner_pid=571516
+PILOT_AGGREGATE_CHILD_START: name=legacy command=cd app && pnpm test:e2e:pilot:legacy
+PILOT_AGGREGATE_CHILD_RESULT: name=legacy status=passed exit_code=0 receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/legacy/r3-t1-legacy-pilot-e2e-20260917T150647Z-575520.json
+PILOT_AGGREGATE_CHILD_START: name=capacity command=cd app && pnpm test:e2e:pilot:capacity
+PILOT_AGGREGATE_CHILD_RESULT: name=capacity status=passed exit_code=0 receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/capacity/r3-t4-capacity-pilot-e2e-20260917T150944Z-861022.json
+PILOT_AGGREGATE_CHILD_START: name=descriptive command=cd app && pnpm test:e2e:pilot:descriptive
+PILOT_AGGREGATE_CHILD_RESULT: name=descriptive status=passed exit_code=0 receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/descriptive/r3-t4-descriptive-pilot-e2e-20260917T151135Z-1084303.json
+PILOT_AGGREGATE_CHILD_START: name=security command=cd app && pnpm test:e2e:pilot:security
+PILOT_AGGREGATE_CHILD_RESULT: name=security status=passed exit_code=0 receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/security/r3-t1-legacy-pilot-e2e-20260917T151340Z-1303553.json
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/61000
+PILOT_AGGREGATE_CLEANUP_RECEIPT: result=pass receipt=./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516.cleanup.json
+PILOT_AGGREGATE_FINAL_RECEIPT: ./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516.json

@@ -1,0 +1,12 @@
+(node:1054129) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+REVOKE
+REVOKE
+psql:./supabase/pilot/provision-pilot-module-gate.sql:24: NOTICE:  policy "pilot_escolas_update" for relation "public.escolas" does not exist, skipping
+DROP POLICY
+REVOKE
+GRANT
+CREATE FUNCTION
+psql:./supabase/pilot/provision-pilot-module-gate.sql:54: NOTICE:  trigger "pilot_high_risk_student_guard" for relation "alunos" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER

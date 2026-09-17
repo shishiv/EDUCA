@@ -1,0 +1,1822 @@
+[
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f09-exact-browser-proofs",
+    "head_sha": "50aa91fe174f839393aec66246a8800fbb9f1abd",
+    "merge_commit_sha": "ee1c6976bbc1b57c288df737229137ba84890d06",
+    "merged_at": "2026-09-17T11:44:46Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/244"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f08-retention-batch",
+    "head_sha": "3f9dfa244458768d166ab10a9cd78a216e217d6a",
+    "merge_commit_sha": "2840895ea44ed4e6de31de755337d30c6acf9b15",
+    "merged_at": "2026-09-17T10:25:49Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/243"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f07-pedagogical-restore",
+    "head_sha": "b4295893c125b2649d13da0c6785d3a4241d1dc0",
+    "merge_commit_sha": "0f49d1f6d7c0061bcc44e386b0b3b891a570e610",
+    "merged_at": "2026-09-17T09:56:49Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/242"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f05-import-proof-receipt",
+    "head_sha": "bd73ba6be74004280c6e23fb95007714a8421fdd",
+    "merge_commit_sha": "877f6cdb82bb3bdc89beead5e1adfb1e2da7ba3b",
+    "merged_at": "2026-09-17T09:24:07Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/241"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f04-user-status-atomic-reconciled",
+    "head_sha": "042fd7d6b02df69fa00195050ee4a5e061e8e335",
+    "merge_commit_sha": "ae207d3f9ff29c147725bf1fd83bc7cff6d2e6e9",
+    "merged_at": "2026-09-17T08:52:38Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/240"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f03-password-recovery",
+    "head_sha": "4e8bed176a57fb0e8afb4f2573e5c101b01f2d62",
+    "merge_commit_sha": "1d373b550d54d92ddbc03cd362123d7d6f12e79b",
+    "merged_at": "2026-09-17T08:23:11Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/239"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f02-restore-grants-reconciled",
+    "head_sha": "ba5b50267e744f565c15a22bc7a6fac5a50fa66e",
+    "merge_commit_sha": "c149a2ab610ebf6e6fdc29f1cd24c0c88e00d8ea",
+    "merged_at": "2026-09-17T07:37:43Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/238"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f06-canary-preflight",
+    "head_sha": "105f52216ea09ccb0e95473c5c7d6650949a01da",
+    "merge_commit_sha": "5a77d1379ea1579dea6a1e907aa6f094f4fba07d",
+    "merged_at": "2026-09-17T07:25:02Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/237"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "fm/educa-f04-user-status-atomic",
+    "head_sha": "ac8353328938f262ca1fd4f2b8f0e4c941b84c15",
+    "merge_commit_sha": "f7cf7ba877b789fdcbe46d992ab097c91cddb90b",
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/224"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "fm/educa-f02-restore-grants",
+    "head_sha": "07466e0bd3269b6389ba069abd1df5ebd548a318",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/223"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-f01-catalog",
+    "head_sha": "2221d205d022408d2408fe9d39ddc4d9ee101999",
+    "merge_commit_sha": "5b2ebe4f11e221fbbd058231444e34f47abd2a31",
+    "merged_at": "2026-09-15T04:14:14Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/222"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-r3-followup-reconcile",
+    "head_sha": "3106f6ea9e4f0172c39ea6e6ece86e057a8fe074",
+    "merge_commit_sha": "063e0e978fd896d5c66ac0ba7d2ddf5afe67aba0",
+    "merged_at": "2026-09-14T19:59:39Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/221"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-contracts-integrator",
+    "head_sha": "40c3efa07e11b25976f10f650eb238cd7b77998a",
+    "merge_commit_sha": "a41c2501d7f9cabdd2f5119a2d1a3060d4ef3373",
+    "merged_at": "2026-09-14T09:38:23Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/220"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-corrigir-integracao-dev",
+    "head_sha": "b518001105a19ef8ac58e7fe45cf107e5dca714b",
+    "merge_commit_sha": "2f3f07801c461792557cb6dc580cb295947ecb22",
+    "merged_at": "2026-09-10T02:12:37Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/219"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "fm/educa-quality-prs-dev",
+    "head_sha": "b87671e4f7795c0bebe0c972b80e9781db49ef5c",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/218"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "salvar/educa-quality-toolchain-20260908",
+    "head_sha": "1fb7874e082ca05f867b72991b3a384e81468af2",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/217"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "salvar/educa-quality-readmodels-20260908",
+    "head_sha": "8393a99dbc1f800a64753c7d737fb71ea43b20eb",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/216"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "salvar/educa-quality-public-20260908",
+    "head_sha": "c0b0d4c63da6f2081f47a69000c7db654745c5aa",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/215"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "salvar/educa-quality-frequency-20260908",
+    "head_sha": "d8e884b3135edc24aba2a27df764c1a7224d7cb8",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/214"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "salvar/educa-quality-contracts-20260908",
+    "head_sha": "9732efeaee2edbf2455d01905bfb26ef48d40615",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/213"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "salvar/educa-quality-auth-20260908",
+    "head_sha": "a8c143eab185d4459ce1cf7740c8a841f1e014b9",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/212"
+  },
+  {
+    "base_ref": "dev",
+    "draft": true,
+    "head_ref": "refactor/educa-zero-slop-20260907",
+    "head_sha": "2d95afc0237a74ded944cae53ed4db30a83903aa",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/211"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-first-principles-full-repo",
+    "head_sha": "e77b5d5fd94e6c96a647d326824286668e56fedc",
+    "merge_commit_sha": "8713027b52caf6930999385253fdf1f052bbf912",
+    "merged_at": "2026-09-05T12:43:47Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/210"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-first-principles",
+    "head_sha": "49ddf3f8dfa7ccc690f7c18521ee0bcea17aab5c",
+    "merge_commit_sha": "3a924408a16efc674e751b9b750b87ca66306a1b",
+    "merged_at": "2026-09-05T12:23:04Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/209"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-audit-fixes",
+    "head_sha": "447febb416c4cbce15c61ef39f266a1f5d70d5c5",
+    "merge_commit_sha": "f1f2ade64cd32710fffe51fa346f0b490ef38b65",
+    "merged_at": "2026-09-03T18:29:48Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/208"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-municipal-config-migration",
+    "head_sha": "3014c059e9f56e5cda691aad047b84777dc3b6b4",
+    "merge_commit_sha": "165d5640b19eafb5d16974ad01b93571181c10d5",
+    "merged_at": "2026-09-03T16:58:32Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/207"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-global-search",
+    "head_sha": "028d6c544bc0ee41b2b689a01a6bcbe50af3c1eb",
+    "merge_commit_sha": "3276a23cdc294335d4c7b36c385cb9d2d7cecf16",
+    "merged_at": "2026-09-03T16:30:12Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/206"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-vivencias-persistence-r3",
+    "head_sha": "7e2768927d4d770851c37a79ceb540f3587c43e5",
+    "merge_commit_sha": "099646cffabd00ed97f62d54280f77e4d3e8eca2",
+    "merged_at": "2026-09-03T15:06:10Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/205"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-r7-route-policy-r3",
+    "head_sha": "ac8b76c3ed44a09e4cfc9b3f4a89dadd53905135",
+    "merge_commit_sha": "aae99daea07e8238126475f975cdc3cb554f61f9",
+    "merged_at": "2026-09-03T15:21:11Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/204"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-f0-baseline-gate-r2",
+    "head_sha": "03a3014b19c26f3fd1dbe7fe39f6ff9a8ced9833",
+    "merge_commit_sha": "ce4f84770af3544a24487fde96698eaf7870551a",
+    "merged_at": "2026-09-03T14:32:20Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/203"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-r6-generated-types",
+    "head_sha": "725c7f633de650a54b76cd8c8505bddb4e4ea036",
+    "merge_commit_sha": "1bc2fb3f3df24194314c982d46dd40e59824e7ba",
+    "merged_at": "2026-09-03T12:55:16Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/202"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b8-attendance-ui",
+    "head_sha": "37186d5d013078f5103433803f5e889f567e7f72",
+    "merge_commit_sha": "6a6f787706cd9e3cbab4c21ae5548d7fe526deb3",
+    "merged_at": "2026-09-03T12:12:03Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/201"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b4-student-pages",
+    "head_sha": "9fc784bd2a841b26609b2c81b485078aea7add1e",
+    "merge_commit_sha": "58da65dfb4c47503d555f24693b07b9d838bcec6",
+    "merged_at": "2026-09-03T12:01:45Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/200"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b5-enrollment-pages",
+    "head_sha": "c3e94796a84f6e6cb78f66237584777339026cb8",
+    "merge_commit_sha": "c7b208e4955819edf8825e1a7060b2a848a710be",
+    "merged_at": "2026-09-03T11:53:17Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/199"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b1-pilot-imports",
+    "head_sha": "2aa2425858423293281d5f025123b3922804fb88",
+    "merge_commit_sha": "47d9987d225948c8239a01a21ef0fe08c27c5bb1",
+    "merged_at": "2026-09-03T11:57:40Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/198"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b6-dashboard-reads",
+    "head_sha": "23550e2a24839a06a1f1c61c55833a16f2387f9a",
+    "merge_commit_sha": "0afb760db31fe9c6867b274b352dd59ffe15ae2e",
+    "merged_at": "2026-09-03T11:42:14Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/197"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b2-attendance-domain",
+    "head_sha": "5635331b1f57ae374d92723c0d9cb7032d0fa346",
+    "merge_commit_sha": "5f985fe17c7b161c8c1897d32500405b2af043ed",
+    "merged_at": "2026-09-03T11:42:08Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/196"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b3-diary-ui",
+    "head_sha": "28918266c9bb83e0f381b9d3e21ee3d9e1539a67",
+    "merge_commit_sha": "7154d101dd79bb5dcc2720209fe47ef2d9cdc0c7",
+    "merged_at": "2026-09-03T11:42:01Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/195"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-b7-compliance-hook",
+    "head_sha": "6fc560000d09760e1604f35793693b6828085224",
+    "merge_commit_sha": "10dbf16039868a4a8bfa1a5bb01b0780a54f1d54",
+    "merged_at": "2026-09-03T11:41:49Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/194"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a5-reports",
+    "head_sha": "9634737ba17d63d2cba32e5c9999d9877935c744",
+    "merge_commit_sha": "19f064513679fb833cdcab4dd6a174e5dc10072a",
+    "merged_at": "2026-09-03T11:20:46Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/193"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a9-dashboard-shell",
+    "head_sha": "c99bf58c013a1ef0969e5d3a723d2b3e363ec53e",
+    "merge_commit_sha": "5bde262a72a24792d67f4413ba17f90265095bce",
+    "merged_at": "2026-09-03T11:08:16Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/192"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a8-user-detail",
+    "head_sha": "1c856167a2f35028af4c467a54c362733acf51b7",
+    "merge_commit_sha": "187a52fcd96b8cb763e509d91ad6310cff605b39",
+    "merged_at": "2026-09-03T11:08:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/191"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a7-responsavel-page",
+    "head_sha": "62ee07ce7f72525c1be9de4e9233e87129cc1323",
+    "merge_commit_sha": "9bc52b140ff014170ff62c2e5b0489c8e44262d2",
+    "merged_at": "2026-09-03T11:08:03Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/190"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a1-inert-tree",
+    "head_sha": "39f6a8bda46a54ea6ed2a3dda9204efa26f8ac58",
+    "merge_commit_sha": "71a322ca594a09b5712f40b8babda564983b968a",
+    "merged_at": "2026-09-03T11:07:56Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/189"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a4-seed-data",
+    "head_sha": "4ab46f30c30604a7ef20a40abab02b9fbb1019fb",
+    "merge_commit_sha": "a66cb2b6a1ae0fc3dbf62b9ab2de432014768ee4",
+    "merged_at": "2026-09-03T11:07:49Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/188"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a10-header",
+    "head_sha": "e20a0e0a24f4cb9909725f99b4ce71b9aefa77fd",
+    "merge_commit_sha": "715218e1c8c556996190ef444e7cf2c8a083d119",
+    "merged_at": "2026-09-03T11:07:42Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/187"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a6-class-diary-reads",
+    "head_sha": "55e4da773d787be7aea709cd4221e214e78e6954",
+    "merge_commit_sha": "141a01e6504a6831f9f737fb444f18e3b5906d98",
+    "merged_at": "2026-09-03T11:07:35Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/186"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a2-wayfinder",
+    "head_sha": "088efae1c7abcbfd006deddffeebb2dd92802296",
+    "merge_commit_sha": "5565909b5562113de92101806ac77b05fdca4c29",
+    "merged_at": "2026-09-03T11:07:28Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/185"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-rework-a3-educacenso-id",
+    "head_sha": "166101d12c24ca2488b71d3db2ef56f79cf08ec9",
+    "merge_commit_sha": "6330c03090a73f4a586649b61e3d748d64cf2fb6",
+    "merged_at": "2026-09-03T11:07:21Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/184"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-v8-autofix-backport",
+    "head_sha": "e3c12ed009e2ae328e1d05dde1558788b224018d",
+    "merge_commit_sha": "f2368b6ca6c28aeda2f165c05ea57ab5cfe5a2fa",
+    "merged_at": "2026-09-03T03:45:24Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/183"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-production-promotion-v8",
+    "head_sha": "06de61af0384f41d709a4a201fc34b4c9842219f",
+    "merge_commit_sha": "64c552ef6f929234b697ba4233a2d7ebc4e9c2a6",
+    "merged_at": "2026-09-17T13:29:36Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/182"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-blog-locale-manifest-fix",
+    "head_sha": "667f18918fcd48ea33a1e0f74cbbd821dec72451",
+    "merge_commit_sha": "0d6f8ee4d8687e0626612f07edda434578e93d6b",
+    "merged_at": "2026-09-03T02:48:31Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/181"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-demo-guard-e2e-fix",
+    "head_sha": "34916b701044f28d85c93320926eafc27c98d81b",
+    "merge_commit_sha": "7f366ef865313603fd812a27e98dd7a3f7ce24de",
+    "merged_at": "2026-09-03T02:32:10Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/180"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-brand-assets-install",
+    "head_sha": "dcc1a73d364043d001500a330fc2db25f1362b98",
+    "merge_commit_sha": "6053b766fa8ed95815b752a2d1d9502ffcb9f1e7",
+    "merged_at": "2026-09-03T00:27:10Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/179"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-public-nav-demo-polish",
+    "head_sha": "63b23d6001d9807349eff66ff14270ffb124b2a7",
+    "merge_commit_sha": "f74671827e1cbf59de5fb9dc94418a7a1ef0e6b8",
+    "merged_at": "2026-09-02T23:48:03Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/178"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-production-promotion-v5",
+    "head_sha": "b5045f1f57124c8a86183c8257fc0841f071c8e5",
+    "merge_commit_sha": "f3f02c8fb9664895eeea10221f3e57b4f469388b",
+    "merged_at": "2026-09-02T21:52:13Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/177"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-locale-switcher-fix",
+    "head_sha": "2a95fe2efcd3b1889654edc1465fe001a3f2e16c",
+    "merge_commit_sha": "b5045f1f57124c8a86183c8257fc0841f071c8e5",
+    "merged_at": "2026-09-02T21:37:54Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/176"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-production-promotion-v4",
+    "head_sha": "41c600b4acc3bcd19de7d6fff65ba0841c38b0f6",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "open",
+    "url": "https://github.com/shishiv/EDUCA/pull/175"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-blog-locale-tests",
+    "head_sha": "164ef0d1605ca1bf73facdce55ca1a275f14b39e",
+    "merge_commit_sha": "6645ae143c5b40518a969296caf9804b38b5bcc7",
+    "merged_at": "2026-09-02T19:45:22Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/174"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-canonical-public-entry",
+    "head_sha": "babec131d37ec630a567bee61e7955f320eafcdb",
+    "merge_commit_sha": "ab65ad8fdd2de1dac1835f559cc87c46cdb125ed",
+    "merged_at": "2026-09-02T19:05:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/173"
+  },
+  {
+    "base_ref": "dev",
+    "draft": false,
+    "head_ref": "fm/educa-dev-branch-model",
+    "head_sha": "88a367f454c23c7c841cb8262e455c52555f9553",
+    "merge_commit_sha": "df71dc00d3f6cd51f99c7487b62ed3b645eac85f",
+    "merged_at": "2026-09-02T17:14:43Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/172"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-remove-github-actions",
+    "head_sha": "a45d404a24da8069efaee7d7a13ef35e5b443314",
+    "merge_commit_sha": "a45d404a24da8069efaee7d7a13ef35e5b443314",
+    "merged_at": "2026-09-02T15:52:56Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/171"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "chore/supabase-keepalive",
+    "head_sha": "2062d82412bdcb1fe91b6ecb80a8dc8d672452de",
+    "merge_commit_sha": "30e2a3edd3ccb880e6054eed7af5beb531e45520",
+    "merged_at": "2026-09-02T12:01:45Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/170"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-teacher-edit-journey",
+    "head_sha": "9657fd56ffcb8581e974f2b494863ef1e2368993",
+    "merge_commit_sha": "cc6f4179c3848fa35d7802ff95cf636cf2ebb041",
+    "merged_at": "2026-08-30T23:10:31Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/169"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-unenrolled-student-links-r2",
+    "head_sha": "85d36f41d51736c3763a07cc7571e14a647f2411",
+    "merge_commit_sha": "a0b6558e38cbedce0f7497bd7ae052af59dd265f",
+    "merged_at": "2026-08-30T23:10:24Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/168"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-nullable-guardian-search",
+    "head_sha": "7902ad9b0777e9a65e55797fff9c07043a68648e",
+    "merge_commit_sha": "330f8a66e3e45631b1eeba32fdaeabaaf607afff",
+    "merged_at": "2026-08-26T11:57:49Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/167"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-sensitive-family-access",
+    "head_sha": "e729a03722e2f135b90a55edb09242c0210b44dd",
+    "merge_commit_sha": "ee3db6a5472162601142ed8de42ceef39beb162e",
+    "merged_at": "2026-08-26T10:58:43Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/166"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-students-guardians-journey",
+    "head_sha": "f21a1334bb28b87c534074d3441925b066c3390a",
+    "merge_commit_sha": "d1ace5c4ce59e62d468a3896f3a234067bfe2968",
+    "merged_at": "2026-08-26T10:29:15Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/165"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-teacher-school-display",
+    "head_sha": "0f32cf0790aada0d1d7b8f7b17ef7d2bb3dcf2a7",
+    "merge_commit_sha": "36f20100cc8da2fad7200d4dc548e8c661d6ed55",
+    "merged_at": "2026-08-26T09:49:34Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/161"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-teacher-status",
+    "head_sha": "81ed17dd76dd96076b53a6d840caf866b3c5147d",
+    "merge_commit_sha": "7f66cd6bb0045bb58f1d665f2d7182e2c181de62",
+    "merged_at": "2026-08-26T09:20:14Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/160"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-teachers-journey",
+    "head_sha": "04b5b6703d18b676d0c15e339e76abdd5c65c62c",
+    "merge_commit_sha": "a8a67adebaeb01e51975e669c3259f9f5b92e257",
+    "merged_at": "2026-08-26T09:01:35Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/159"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-disabled-settings-redirect",
+    "head_sha": "52c26df9b2fb3ca4efbbe2cb81a919e43608ae80",
+    "merge_commit_sha": "e0c54e2fe701fa452f457627911443950e084082",
+    "merged_at": "2026-08-26T08:39:51Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/155"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-director-login-audit",
+    "head_sha": "a705eea56fa221eed656f373f14fce1975ce5730",
+    "merge_commit_sha": "dc7bad269619ac54a35ebe03d83dec5f48f01df0",
+    "merged_at": "2026-08-26T08:24:52Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/154"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-classes-journey",
+    "head_sha": "232f79fd7513b248ff3736c2df4ee95ebfecd0e8",
+    "merge_commit_sha": "91b97ecdecc859c37c40493e19bb0c1be053596c",
+    "merged_at": "2026-08-26T08:17:46Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/152"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-synthetic-inep-code",
+    "head_sha": "db3830b23ceb702c3d40d1776d910484c7494f98",
+    "merge_commit_sha": "cc87eee5f293ccd32eb40200bc3330a0307f3676",
+    "merged_at": "2026-08-26T08:11:27Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/150"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-school-management-journey",
+    "head_sha": "ef83691bbbbeffa92b9b1f49e3bb735837cd1156",
+    "merge_commit_sha": "93ee16d187c68105463175f4aed78404fe1d2c0d",
+    "merged_at": "2026-08-26T07:27:34Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/149"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-synthetic-admin",
+    "head_sha": "ed3b77578d81921206394c14eae22aa9c5f46c34",
+    "merge_commit_sha": "6e2fda8ffb543d42af2ae020ac9c6490b9bac0ff",
+    "merged_at": "2026-08-26T06:34:30Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/147"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-schema-per-school-canary",
+    "head_sha": "ccb3f8dc56df6200295d284ca6968ce88f0fb09b",
+    "merge_commit_sha": "9278a61868c9f6aef4d40e3df4df26b1233db0a9",
+    "merged_at": "2026-08-26T06:07:04Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/145"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-auth-journey",
+    "head_sha": "91bcec43474956e57c2aa88b526e3c096ecc7a31",
+    "merge_commit_sha": "53cbed81f66b7f2e0345183b28601d1b464d5e90",
+    "merged_at": "2026-08-26T05:46:35Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/144"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r5-school-year-settings",
+    "head_sha": "9f9b626e6792add9bae5cec5207163c2c75cd39b",
+    "merge_commit_sha": "4bc85133cc204e3db5dce490fc7e5647f06d8561",
+    "merged_at": "2026-08-26T05:18:00Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/143"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r5-school-year-dashboard",
+    "head_sha": "52b7ca188450fa8cebaefb590146aae88726aede",
+    "merge_commit_sha": "f124bc478812b1d79131973560ecf7f5993a49f2",
+    "merged_at": "2026-08-26T04:46:21Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/142"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r5-school-year",
+    "head_sha": "7580a9d796113b36bbd184b55548e8d7d465d306",
+    "merge_commit_sha": "db8225e3da7d5eb735a889d8dd4c502f46cfe56b",
+    "merged_at": "2026-08-26T04:18:29Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/141"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r5-bolsa-visibility",
+    "head_sha": "0e09fb558581637216482736859252f5f12108c7",
+    "merge_commit_sha": "ee464286c3c5f739edfcb608e2ec9b4efe7ae01f",
+    "merged_at": "2026-08-26T03:28:33Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/140"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-ci-minimum",
+    "head_sha": "2c73541cd52f781f955570ed11ce340b8b6c5d0c",
+    "merge_commit_sha": "d1fff9b81a4746fd2ba31cf4228dead65b583bef",
+    "merged_at": "2026-08-26T03:28:18Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/139"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r2-executable-baseline",
+    "head_sha": "3b861c01862a1e4c7fd686223222c8506a7ad825",
+    "merge_commit_sha": "54e94bdb810476c6cdcbabbb01950d5d12278060",
+    "merged_at": "2026-08-26T03:28:26Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/138"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "campaign/open-issues-e2e",
+    "head_sha": "b26b62e642fc9f3d6489223d6452dadae03556e1",
+    "merge_commit_sha": "12b552527c44dc69d7d16ccc817c87127215c89b",
+    "merged_at": "2026-08-23T22:51:47Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/137"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "feat/landing-e-app-interno",
+    "head_sha": "06a7f506b184e900edae99aaa802341f6c1ca486",
+    "merge_commit_sha": "ee74278aabcce17b274dedc80ca33b6527147ca5",
+    "merged_at": "2026-08-24T00:13:47Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/136"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "shishiv-patch-1",
+    "head_sha": "71d7cae2aeae460dcfd5ea8647ff0acf5c8bcee9",
+    "merge_commit_sha": "d01379325e25086ff36cccb8238bd2a30f01effc",
+    "merged_at": "2026-08-21T22:24:38Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/135"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/pilot-csv-import",
+    "head_sha": "87f7c1e88df509a79d059953710f0c808af1047a",
+    "merge_commit_sha": "012ad874b7c8989a71793bead85d93af30f145fd",
+    "merged_at": "2026-08-16T22:21:22Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/134"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/runtime-final-promotion",
+    "head_sha": "e93683b8613ac3c59d963814693754e456a31938",
+    "merge_commit_sha": "efdd8a71834c18fcd7c63f62cac842ff7041b19b",
+    "merged_at": "2026-08-16T20:24:18Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/133"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-dep-security",
+    "head_sha": "53ea788b471eb0dd981fe601ff664f3985db3c91",
+    "merge_commit_sha": "01a4e5a4db3c40c3914068159b4d1e1a5b838829",
+    "merged_at": "2026-08-16T05:43:37Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/132"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-simplify-codebase",
+    "head_sha": "47e3ee5222074fde5ab065c32f91b6b05659bec1",
+    "merge_commit_sha": "cdbfc36f220dc173710ebd1b0a3f0ac091453677",
+    "merged_at": "2026-08-14T23:32:34Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/131"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-pr109-rebase",
+    "head_sha": "cad9959f360593b9d416e57776a102cd7f60e557",
+    "merge_commit_sha": "e6bfba1b0914ba11b79a7262e09491b920f29343",
+    "merged_at": "2026-08-14T04:36:13Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/130"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-supabase-migration-history-reconcile",
+    "head_sha": "2b6e2bdf0e143fa145bbf6c05c846803f69b5557",
+    "merge_commit_sha": "ea50a3a38b4d72d7faf42ccacf6f3a6b9cb71e4a",
+    "merged_at": "2026-08-14T04:27:36Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/129"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t09-g2-portable-restore",
+    "head_sha": "684b0ea73310a9573abbe8f4dfcd5fcaf030cb98",
+    "merge_commit_sha": "22444880f2d10c9f4d7f9de1d9aef0bd7cb60f5a",
+    "merged_at": "2026-08-13T00:02:26Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/128"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t07-g2-auth-revocation",
+    "head_sha": "7ef2ce33bb92ea3da41b878d88bcf9bf63af88b2",
+    "merge_commit_sha": "bd1a6746d4969b7b33f90065bb434e2b832d9bf8",
+    "merged_at": "2026-08-12T23:50:10Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/127"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t06-g2-batch-rollback",
+    "head_sha": "e07012caa41e1a10e75afb609def79df4bcd23e7",
+    "merge_commit_sha": "29f4a8d2c51320ff7673a5896413ba889bfd32ba",
+    "merged_at": "2026-08-13T00:00:46Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/126"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t11-g3-support-runbook",
+    "head_sha": "2b5dc20e634a95a0818d123d2524401ba3f2d4fd",
+    "merge_commit_sha": "e58d8a1d1a833edce4d6f8037fe3b68353ac9f78",
+    "merged_at": "2026-08-12T23:55:47Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/125"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t10-g2-governance-manifest",
+    "head_sha": "7263443622d7b5160c761016968e2c242d46e232",
+    "merge_commit_sha": "5bb3c1a06d0d650423b33ebc0d1c64c0e20652e4",
+    "merged_at": "2026-08-12T23:30:59Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/124"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t08-g2-pilot-environment-isolation",
+    "head_sha": "fcb4278509deabcc5e37f3472adef8366e310eac",
+    "merge_commit_sha": "6c08611552ffe01d9b4922fc22c57b8f37235ba4",
+    "merged_at": "2026-08-12T23:30:56Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/123"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-wayfinder-t02-g0-procurement-packet",
+    "head_sha": "5003f5053f50d8c27919867c30ab1b48141a3414",
+    "merge_commit_sha": "a94ee445d47010a54f060b5492426af4a5a5de7a",
+    "merged_at": "2026-08-12T23:23:57Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/122"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-supabase-security-errors-20260812",
+    "head_sha": "903ff061992069d77e932fab4f9a3dccbdc13fb3",
+    "merge_commit_sha": "a07680cc680bd6e5e9acb93a7c8067712af02011",
+    "merged_at": "2026-08-12T20:10:37Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/121"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-e6-reposition-product-readme",
+    "head_sha": "9377d721e3671aa9d33a4c7e881f5c88d7da5cbf",
+    "merge_commit_sha": "1c89702a5460708c8ea474432aa9a158cf5cb6ff",
+    "merged_at": "2026-08-12T18:20:52Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/120"
+  },
+  {
+    "base_ref": "fm/educa-attendance-reopen-audit-flow",
+    "draft": false,
+    "head_ref": "fm/educa-pr114-reopen-conflict-fix",
+    "head_sha": "ded9bf3d92017fdf43bffec24d8ea27f851c9c00",
+    "merge_commit_sha": "374540feed0e124d643118377365b4bbc6896789",
+    "merged_at": "2026-08-12T15:49:28Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/119"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-g1-operational-pdf-v1",
+    "head_sha": "07c4061b2b376c3e054029498c1e7f8850aaefcd",
+    "merge_commit_sha": "c9a41aac3e6fbf1a853aa75ffcc99f768d2e1059",
+    "merged_at": "2026-08-12T06:41:51Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/118"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-captain-iteration-front",
+    "head_sha": "f38f056f126fc193c3f307cf247f534723eb40fd",
+    "merge_commit_sha": "45d7277827e5a38d7bdf0129d8d347c916167f1b",
+    "merged_at": "2026-08-12T05:41:42Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/117"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-t4-aggregate-verticals",
+    "head_sha": "97acc1dcaf2d98aa65055d5f940c4a1898970541",
+    "merge_commit_sha": "f7b3328ef29c2f5c8bd4f52d157e6f1814468423",
+    "merged_at": "2026-08-12T07:50:59Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/116"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-e2e-portless-unique-run-fix",
+    "head_sha": "d7101c6cb850df83018a9a48581a2bb470083e0f",
+    "merge_commit_sha": "bdd3ce0634ef51a297c80bb7fdd59a784b941416",
+    "merged_at": "2026-08-12T03:27:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/115"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-attendance-reopen-audit-flow",
+    "head_sha": "4c5dbced605042bd76efdc96ac9e73b6f241dcd2",
+    "merge_commit_sha": "e852d6eaf2e964a52bf02f391531a94e8a4391cb",
+    "merged_at": "2026-08-12T17:04:22Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/114"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-t2-governed-pilot-flows",
+    "head_sha": "c0b2e6d3fa8efee124d6cab0603e3488ecf2e880",
+    "merge_commit_sha": "a559c77c3e7917a7e547974bd4867e2fb3f40b88",
+    "merged_at": "2026-08-12T02:19:53Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/113"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-t3-security-regression",
+    "head_sha": "9b3922d04b860b5ef576013db955a7606e788185",
+    "merge_commit_sha": "b3bb893f5ebf7cd9edd54ab7e93f9886d76965a0",
+    "merged_at": "2026-08-12T04:50:05Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/112"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r3-t1-legacy-pilot-slice",
+    "head_sha": "3f40bdfa65c4a9491f1dfd5e41b9458ef55563ea",
+    "merge_commit_sha": "9d9e42e4fcf2832476dc57f6f0f94ca2f4a73a87",
+    "merged_at": "2026-08-12T01:12:25Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/111"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-impeccable-animate-colorize-app",
+    "head_sha": "52c010b50c08b74efe6351545048ae0586fdf53b",
+    "merge_commit_sha": "4653a7380c8c860ec278d9d642fa851a1a43c1f8",
+    "merged_at": "2026-08-12T01:12:45Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/110"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-r1-canonical-pilot-e2e",
+    "head_sha": "922da243c8c8ca33db93b5eae41eff660a9ffbf5",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/109"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-impeccable-layout-adapt",
+    "head_sha": "85c2638c43c1ca89bfd8818fc1ff66ce00f99c2f",
+    "merge_commit_sha": "e21b0d6c2a27ed725e01f1e1e1b80b1d3f1dd33d",
+    "merged_at": "2026-08-11T16:02:36Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/108"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-impeccable-layout-adapt-app",
+    "head_sha": "008bb09c20a502b206f8398b8a8cbdbb7946b3e6",
+    "merge_commit_sha": "b270c2c5030179638b1d9cc267e9ea306e7d2f5b",
+    "merged_at": "2026-08-11T14:36:53Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/107"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-c09-auth-profile-resume",
+    "head_sha": "6d545f899f6456feff3b24da8ecd22167d43f4a1",
+    "merge_commit_sha": "5b69f821f417c75972693262bea8b03cd7acc795",
+    "merged_at": "2026-08-11T14:39:10Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/106"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-c07-student-admission-transaction",
+    "head_sha": "d71d928d4e03ca7e6d240919b616bd0a49ba1dca",
+    "merge_commit_sha": "b8fbcdc9bac13395eecc6a01ea6303759132d617",
+    "merged_at": "2026-08-11T14:38:04Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/105"
+  },
+  {
+    "base_ref": "main",
+    "draft": true,
+    "head_ref": "preserve/educa-node-sandbox-deploy-reset-report",
+    "head_sha": "f0fe638860a667e64c1b20e1582f8e64a1e7832e",
+    "merge_commit_sha": "51c11d323cff2fa6e3f679ef4ac5bd540be55bfd",
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/104"
+  },
+  {
+    "base_ref": "main",
+    "draft": true,
+    "head_ref": "preserve/educa-c04-canonical-attendance-read-model-visual-evidence",
+    "head_sha": "4bb5063fe08042b324f642d7253d164fbed6c028",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/103"
+  },
+  {
+    "base_ref": "main",
+    "draft": true,
+    "head_ref": "preserve/educa-audit-correct-session-20260810-uncommitted",
+    "head_sha": "f9f4dc18af5334f1fc4b10604471c02cd19c8b2a",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/102"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-pilot-security-hardening",
+    "head_sha": "439455bf78bd6b5882d9ee708fda14cf99c8033c",
+    "merge_commit_sha": "83d48f21ba16275545de1e7c2707ad5bdf2f2d11",
+    "merged_at": "2026-08-10T22:14:19Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/101"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-pilot-csv-import",
+    "head_sha": "c1aa5b7fa63ad0c5b5bf4006d00fd5aa54b2545d",
+    "merge_commit_sha": "1c75bfa3a0e795f15f9092ba8e5f9341aad744ef",
+    "merged_at": "2026-08-10T19:51:18Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/100"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-runtime-promote-final",
+    "head_sha": "19205640be94f5c71927087400a71f93656c48fa",
+    "merge_commit_sha": "cd00c91d0b4c3d4510a6477da7bc6aa0e8666076",
+    "merged_at": "2026-08-10T19:41:32Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/99"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-fix-bf-beneficiary-selection",
+    "head_sha": "4840776fd649918f83197cfa96e24886fdd1eb29",
+    "merge_commit_sha": "e9ad3cdd8d4d22099a2bbdcafdf2e8b85c7dadaf",
+    "merged_at": "2026-08-10T19:07:33Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/98"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-fix-demo-seed-descriptive-content",
+    "head_sha": "a7ea4977e1210652fc318ccb9ae7d2ee5280e3b9",
+    "merge_commit_sha": "f127d8cf64930c04da45747d333891650b59866e",
+    "merged_at": "2026-08-10T19:07:30Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/97"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-attendance-policy",
+    "head_sha": "ff8673363ef38c4aea434aa437b050431f7a268c",
+    "merge_commit_sha": "adb91c091787d190012f2c1ab9682ab57195fa10",
+    "merged_at": "2026-08-10T14:18:47Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/96"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-descriptive-pilot",
+    "head_sha": "f835fff7fc74875536feaecb5a648007f81d568c",
+    "merge_commit_sha": "d0f89a79e7f6f34338cfbf7a732ba62c19c18f07",
+    "merged_at": "2026-08-10T14:13:29Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/95"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-diario-canonical-route",
+    "head_sha": "966544ca91f83395007dd8c62b89eda1597ea893",
+    "merge_commit_sha": "7c31cab418d83bd8dba71ffe61f6d0c1a7583b13",
+    "merged_at": "2026-08-10T14:03:59Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/94"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-c04-canonical-attendance-read-model",
+    "head_sha": "9f556773a5cd9ea361a1a00430036324a1974e21",
+    "merge_commit_sha": "e75ca66df06488d43ae1ea694b71cb1267608d78",
+    "merged_at": "2026-08-10T14:35:55Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/93"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-certificates",
+    "head_sha": "fd7498d3b38b324325aaefd9efa20caded916ae8",
+    "merge_commit_sha": "e15c540de7c0af071e39847d8a33f88d6ca31f52",
+    "merged_at": "2026-08-10T12:40:57Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/92"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-node-sandbox-automation",
+    "head_sha": "77844a9ed9ef383541cb3967e4538684cd988882",
+    "merge_commit_sha": "2b4ce5bd4c5d793b3cce03fbf02b9949ebd6e404",
+    "merged_at": "2026-08-10T12:23:29Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/91"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-report-content-truth-20260810",
+    "head_sha": "7fc498cbaffd982c2042ebf73c08d33263acbbe1",
+    "merge_commit_sha": "4e83ca28bbf0b66c3b527f638c917f1ef18e462e",
+    "merged_at": "2026-08-10T05:53:32Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/90"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-pilot-capacity-contract-20260810",
+    "head_sha": "95f259a73eba7aeb262505e04f2a73d8a6e2563b",
+    "merge_commit_sha": "45dd78db9ae6337aa0cef3da97cbbc8f5d401677",
+    "merged_at": "2026-08-10T05:53:17Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/89"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-audit-correct-session-20260810",
+    "head_sha": "58fa9dfddc8e3e122e78ae48e000334465ee3b0a",
+    "merge_commit_sha": "e52ae1ceb20717101df6d211128012677e52017b",
+    "merged_at": "2026-08-10T12:13:31Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/88"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-copy-humanizer-20260810",
+    "head_sha": "1696769a1c4ac183470a1cf759e8062dc0ef9ced",
+    "merge_commit_sha": "3ba139c847b5b7182b8eaf1054953ea10f91b931",
+    "merged_at": "2026-08-10T02:57:56Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/87"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-s1-libera-diario-pilot",
+    "head_sha": "f38e97651c14aeae56e13b8920f5a2b2776630c9",
+    "merge_commit_sha": "ae4795e57fd641e2b7d6325fc3724616ebbd7a86",
+    "merged_at": "2026-08-10T00:02:03Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/86"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-c03-canonical-attendance-module",
+    "head_sha": "e8274503e2e1f317ff127b3af910b1c369702038",
+    "merge_commit_sha": "43eb7b6e881dea0a6ecd400e8b9e882c0faf7636",
+    "merged_at": "2026-08-05T14:37:41Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/85"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-d2-d3-guard-investigation",
+    "head_sha": "26493dec09dfb0f0446605cdefa2eeb39513358b",
+    "merge_commit_sha": "2a1289166c4e955ba5f746a341dcc950fad15ecf",
+    "merged_at": "2026-08-05T16:35:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/84"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-d4-privacy-policy-copy",
+    "head_sha": "ea78ea51126635733ff46746bace58c7018ec70e",
+    "merge_commit_sha": "4ed0e2f91b32d2565e5cbf06515480cfc3e7708e",
+    "merged_at": "2026-08-05T09:10:31Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/83"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-app-nextjs-16-3-ship-a",
+    "head_sha": "0d5a315281b116b7c38be12b4d459126a7f40f26",
+    "merge_commit_sha": "95e48025a99073727195d1ac5461ab5f3310e0e2",
+    "merged_at": "2026-08-05T00:43:22Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/72"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-attendance-canonical-flow",
+    "head_sha": "a3f651dc7518de356a674141ee5b88edfc103019",
+    "merge_commit_sha": "b1d6b903bca0ed58062ef0c65690b71f39cc373e",
+    "merged_at": "2026-08-03T13:03:30Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/71"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-synthetic-capability-sandbox",
+    "head_sha": "599f2c5015247987760302cd7968515da89401bc",
+    "merge_commit_sha": "4f91b14a27baf70c42410f93fad0855fa88c19f2",
+    "merged_at": "2026-08-03T10:53:59Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/70"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-reset-workflow-repair",
+    "head_sha": "b5ec3488ba7b4815b1b991a01c3e126a5420cd25",
+    "merge_commit_sha": "2f3148ce342ef0eeddec514e8428e672d3c5c7bc",
+    "merged_at": "2026-08-03T10:52:46Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/69"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-deploy-package-pr64-d6-d3-d4",
+    "head_sha": "8f97432098706b357bab9ad29398b8388ee00252",
+    "merge_commit_sha": "fb3ba61a8aa6de949cf8ad8e1670db46222200b7",
+    "merged_at": "2026-08-03T10:40:06Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/68"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-ci-e2e-supabase-local",
+    "head_sha": "c7613f6eab8c77da5eaa63be73328bbfb00a5419",
+    "merge_commit_sha": "80bbf2ee68f02c2f07b76aa1e2a9035db25ff5f6",
+    "merged_at": "2026-08-04T13:09:36Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/67"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-frontend-polish-iteration",
+    "head_sha": "ebbb9d377c464165854ab344fd7232046f85b911",
+    "merge_commit_sha": "e5293816fc8e6458806cc67aea764181e7f44525",
+    "merged_at": "2026-08-02T14:49:27Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/66"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-e2e-prod",
+    "head_sha": "7cdd1ae3d3621663b9c5038917fce63473186988",
+    "merge_commit_sha": "c5c77094d3c92a2b7f0ceefa7c2c95c32cecf812",
+    "merged_at": "2026-08-02T13:11:55Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/65"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-demoable-fix",
+    "head_sha": "f43932245a162f069513de934747e3690f5a2f36",
+    "merge_commit_sha": "dfe1c16166b19ee71193da940de58a188d297e46",
+    "merged_at": "2026-08-02T10:06:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/64"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-pr45-test-adapter",
+    "head_sha": "2a21fae8b8ab29a03a85fa7e4d13883f76b8f7b4",
+    "merge_commit_sha": "905af7e4daec78af433364c2391939f7071461e8",
+    "merged_at": "2026-08-01T22:59:25Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/63"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-pr45-product-modules",
+    "head_sha": "8c79772ad769bdd8c8e244524f7b8b96444a70cb",
+    "merge_commit_sha": "17a4cf9adce3556b0674a9a9e81ea079f3324559",
+    "merged_at": "2026-08-01T19:36:06Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/62"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-attendance-action-auth",
+    "head_sha": "a33ba0076157e85464b32ebcbb598e4ddeb9d9d3",
+    "merge_commit_sha": "a157e89b8e0d4441401486532d1f6b699583c8af",
+    "merged_at": "2026-08-01T18:55:37Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/60"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-consolidate-supabase-client",
+    "head_sha": "777c6c12d9a14ec86647ce73d57c32e8555b8eba",
+    "merge_commit_sha": "42742ebc7e5c0b34092cfb7c3a04d91587eccf01",
+    "merged_at": "2026-08-01T19:05:40Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/59"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-whatsapp-mvp",
+    "head_sha": "48c94dc6e534aacf468242e647f35ea7f56eedb0",
+    "merge_commit_sha": "3338f2c14c72f0aaa38483445f82bfe84097cc5d",
+    "merged_at": "2026-08-01T19:05:38Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/58"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-demo-sandbox",
+    "head_sha": "5a6cd8904d6964f258d154095c4253b9760030c2",
+    "merge_commit_sha": "32ec77feac4e576f234752734853ef8c20d6b4f5",
+    "merged_at": "2026-08-01T19:15:42Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/57"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-critical-vulns",
+    "head_sha": "fb6a8c9400c6dbc1e0b4b65b22739f11ecea1cb2",
+    "merge_commit_sha": "392edd0d18bd4fed8f6e27302eac032cd49a2a7e",
+    "merged_at": "2026-08-01T19:07:11Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/56"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-eliminate-api-as-any",
+    "head_sha": "d2397c506bc6f5684586a33446507d123e400282",
+    "merge_commit_sha": "334de2d2ecebd03953aa6ebe762e2b8ff51eccd7",
+    "merged_at": "2026-08-01T18:55:31Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/55"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-pr45-access-module",
+    "head_sha": "b76734e7da41999b5eee4ca53afd15977a4437cb",
+    "merge_commit_sha": "3e8ce0b00663625578fffc532eb43a9746a446e5",
+    "merged_at": "2026-08-01T18:55:13Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/54"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-oss-quick-wins",
+    "head_sha": "d636f43cc6dc344d2b3381ae63edda27e70c50df",
+    "merge_commit_sha": "7aa6e8e84ac6118718c98c22a7e1fdaf23bd3387",
+    "merged_at": "2026-08-01T18:55:29Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/53"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-harden-health-endpoint",
+    "head_sha": "718530d402b5038c72b0c132600de95403e559ec",
+    "merge_commit_sha": "1999e4d15ff8aaa8c27b6b1ece8170ff08056e7c",
+    "merged_at": "2026-08-01T18:55:27Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/52"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-remove-posthog",
+    "head_sha": "e51d3d8ab296d79873beff9b16fa3f25e6007193",
+    "merge_commit_sha": "f63eebe3b6111b1fe2351501c7078a645a65988a",
+    "merged_at": "2026-08-01T18:55:25Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/51"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-clean-zustand-stub",
+    "head_sha": "f59d95cf532fc8ef543516a7505fa2d5c6642f3e",
+    "merge_commit_sha": "092fd298d24835f8267e8acedccd0ed9b59bbc75",
+    "merged_at": "2026-08-01T18:55:23Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/50"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-fix-role-column-bug",
+    "head_sha": "429400ca70334fbfb32faf54426ee82d1b1ab286",
+    "merge_commit_sha": "15cab665cff960447dea4809a4f4419f9d4065d0",
+    "merged_at": "2026-08-01T18:55:21Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/49"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-file-cleanup",
+    "head_sha": "1e7e59157fb9ce544a15c67f1477982a95096ba1",
+    "merge_commit_sha": "e1e7cf18543cfd812272c3d6f12470977ef7d9e2",
+    "merged_at": "2026-08-01T08:31:27Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/48"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-pilot-foundation",
+    "head_sha": "2df8a703b26e692c7e23ec4bf0bde4b0e097f9b8",
+    "merge_commit_sha": "f7b5ea57cfa1f599368a4d29946bae9d84c9eb9d",
+    "merged_at": "2026-07-27T10:11:36Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/47"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-remove-noise-workflows",
+    "head_sha": "c371af94f1a6de660c47e1409bb059dcdf864923",
+    "merge_commit_sha": "5785ce43f6e7f02c5584e2c0e0038b669772cecb",
+    "merged_at": "2026-07-24T06:02:58Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/46"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-e2e-all-interfaces",
+    "head_sha": "ed38a5375107d56e36b407eb1c13e7baef4a118c",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/45"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "fm/educa-censo-migration",
+    "head_sha": "29c75c2894b537c6a2abbc9666b4593b8bc2bb2f",
+    "merge_commit_sha": "010ec9914f637f897107fd470430f91f0f911c72",
+    "merged_at": "2026-07-19T07:43:00Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/44"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "docs/readme-oss-cloud-model",
+    "head_sha": "d0efa9b107404849ec19f62aee2f4225ff8147e9",
+    "merge_commit_sha": "293b2486082a75cb22f0ef29110ca908adbc2c8a",
+    "merged_at": "2026-07-18T20:36:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/43"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "imgbot",
+    "head_sha": "9f5caaed31db3dead5e66b193b2eac5129dcd62e",
+    "merge_commit_sha": "4a46788b46ac23c0e9f340ecd3ae173c39bb29b7",
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/42"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "docs/oss-apply-and-roadmap",
+    "head_sha": "883b553e89414b1e49ebb7dc6c1c001dfa0b2aac",
+    "merge_commit_sha": "f78979b9ded49fe8c33facae65849f9231198436",
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/41"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "imgbot",
+    "head_sha": "f89c1958f55e11035c59be09cde921aed1167cfd",
+    "merge_commit_sha": "bb21aec7148854c34a959b72085dee50f4444fb8",
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/40"
+  },
+  {
+    "base_ref": "main",
+    "draft": true,
+    "head_ref": "claude/implement-todo-item-QstpY",
+    "head_sha": "a59a11944ffbdf31ec43ae2e2560cadf73405b76",
+    "merge_commit_sha": null,
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/10"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "chore/cleanup-planning",
+    "head_sha": "cab20554201b39e341bed6a7a31763fcb82f9745",
+    "merge_commit_sha": "3eea37fa4fd61da3a19c20852f6ac26ac553e581",
+    "merged_at": "2026-02-20T08:53:23Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/9"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "copilot/refactor-code-for-improvements",
+    "head_sha": "62cbb2cac4cb5a0488867ab5b4a53c5405974ae6",
+    "merge_commit_sha": "22a98979ca2dd8255a6a0005d4cc6ebae43da45e",
+    "merged_at": "2026-02-04T01:26:02Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/8"
+  },
+  {
+    "base_ref": "main",
+    "draft": true,
+    "head_ref": "copilot/debug-tweakcc-issues",
+    "head_sha": "9452162a3ba943744919b0a14348df02df3b9c27",
+    "merge_commit_sha": "24ca456e9cbfd2a0f6a119d281da65c7276342df",
+    "merged_at": null,
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/7"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "copilot/organize-cleanup-unused-code",
+    "head_sha": "5ce2d5819f97b198110b419c97229eb696aff54b",
+    "merge_commit_sha": "f46c256281421f3c6c1e8f085aea2ba4f29a82f2",
+    "merged_at": "2025-12-09T13:05:34Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/6"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "copilot/review-codebase",
+    "head_sha": "bc52692d7da7b8aea9514ac1454e46c5f918a366",
+    "merge_commit_sha": "7121cb1127ef8424f60a4869f8ccbc1cffaacb14",
+    "merged_at": "2025-12-09T12:43:19Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/5"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "mvp-day13-production-readiness",
+    "head_sha": "b30a6e91edaa4a642395e6d3d9f38be3aa8e88cf",
+    "merge_commit_sha": "e3050570a1e89e33717085d1365d9c253bfa7430",
+    "merged_at": "2025-10-05T16:30:01Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/4"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "mvp-day13-production-readiness",
+    "head_sha": "8f05fd5de1560391eb63ad30ffc27b90a6775cbe",
+    "merge_commit_sha": "a1d70ba8098453a139f3d60c976c5eb65fbf7ef9",
+    "merged_at": "2025-10-02T19:05:31Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/3"
+  },
+  {
+    "base_ref": "main",
+    "draft": false,
+    "head_ref": "enhanced-abrir-aula-workflow",
+    "head_sha": "dbb436dc84bffebd3a5026f5d058f6a5f2863234",
+    "merge_commit_sha": "01c755a447bfe68be9046596a8fb87d669c562c6",
+    "merged_at": "2025-10-02T11:44:09Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/2"
+  },
+  {
+    "base_ref": "master",
+    "draft": false,
+    "head_ref": "003-ui-ux-improvement",
+    "head_sha": "87e412643c804fe771bd8765c28cd99206d45733",
+    "merge_commit_sha": "0e5b5564c29f237dccedd9b5f6f9232c59b2dc35",
+    "merged_at": "2025-09-16T20:19:34Z",
+    "state": "closed",
+    "url": "https://github.com/shishiv/EDUCA/pull/1"
+  }
+]

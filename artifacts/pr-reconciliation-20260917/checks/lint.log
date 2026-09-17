@@ -1,0 +1,14 @@
+
+> educa@1.0.0 lint ./app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint ./app
+> node tools/oxlint/run-oxlint.mjs
+
+Found 0 warnings and 0 errors.
+Finished in 1.0s on 629 files with 16 rules using 1 threads.
+
+> educa@1.0.0 lint:eslint ./app
+> eslint . --max-warnings 0
+
