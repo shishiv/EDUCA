@@ -11,4 +11,4 @@ export { StudentTags } from './StudentTags'
 export { StudentInfoGrid } from './StudentInfoGrid'
 
 // Type exports
-export type { StudentFormData } from '@/lib/validation'
+export type { StudentFormData } from '@/lib/validation/brazilian'

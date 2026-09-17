@@ -1,0 +1,31 @@
+{
+  "baseline": "64c552ef6f929234b697ba4233a2d7ebc4e9c2a6",
+  "candidate_source_sha": "148e7fca80e33b3c707017c2b8c87e98b1be3e2f",
+  "canonical_quality_source": "2f3f07801c461792557cb6dc580cb295947ecb22",
+  "strict_guard_preserved_from": "64c552ef6f929234b697ba4233a2d7ebc4e9c2a6",
+  "strict_guard_path": "app/lib/demo-sandbox/login-demo-credentials.ts",
+  "steps": [
+    {
+      "from": "5a77d1379ea1579dea6a1e907aa6f094f4fba07d",
+      "to": "c149a2ab610ebf6e6fdc29f1cd24c0c88e00d8ea",
+      "patch_sha256": "07cc6ef1c0471201f54833a86f060c9f04c100567385d23a42b1a14602faa321"
+    },
+    {
+      "from": "1d373b550d54d92ddbc03cd362123d7d6f12e79b",
+      "to": "ae207d3f9ff29c147725bf1fd83bc7cff6d2e6e9",
+      "patch_sha256": "212e101dc6761d785297fbf28e3371a7c05826937c30007e7a001934fed784d8"
+    },
+    {
+      "own_path": "artifacts/quality-integration/run-general-e2e.sh",
+      "patch_sha256": "9d6083da0b177c9d2e86f17cbbf4ea7637cada813a7b4a1b7d8a399fc6a6dadf"
+    },
+    {
+      "own_path": "app/tests/e2e/profile/user.spec.ts",
+      "patch_sha256": "8a2f91fc59b71678fc9191929ccf57973238f9f0a380e013692058f00ce13a1b"
+    }
+  ],
+  "expected_tree": "c3893f42050a022f11d96c09905fe39a719cec83",
+  "actual_tree": "c3893f42050a022f11d96c09905fe39a719cec83",
+  "projection_matches": true,
+  "current_dev_not_promoted": "ee1c6976bbc1b57c288df737229137ba84890d06"
+}

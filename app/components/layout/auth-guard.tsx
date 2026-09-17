@@ -7,10 +7,11 @@ import { hasPermission, canAccessSchool } from '@/lib/auth'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useTranslations } from 'next-intl'
+import type { RouteRole } from '@/lib/route-policy'
 
 export interface AuthGuardProps {
   children: React.ReactNode
-  allowedRoles?: ('admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel')[]
+  allowedRoles?: RouteRole[]
   requiredSchoolId?: string
   fallbackPath?: string
 }

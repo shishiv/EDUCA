@@ -1,0 +1,32 @@
+{
+  "projects_checked": [
+    "quality-general.2bhgc6",
+    "quality-general.bA9s3A",
+    "quality-general.r0LJZf",
+    "reconciliation-f04.2jxrns",
+    "reconciliation-f04.8apnI3",
+    "reconciliation-f04.LNUnoG"
+  ],
+  "remaining_resources": [],
+  "remaining_workdirs": [],
+  "app_workdir_processes": [],
+  "all_owned_cleanup_checks_passed": true,
+  "r3_cleanup_receipts": [
+    {
+      "child": "legacy",
+      "cleanup_result": "pass"
+    },
+    {
+      "child": "capacity",
+      "cleanup_result": "pass"
+    },
+    {
+      "child": "descriptive",
+      "cleanup_result": "pass"
+    },
+    {
+      "child": "security",
+      "cleanup_result": "pass"
+    }
+  ]
+}

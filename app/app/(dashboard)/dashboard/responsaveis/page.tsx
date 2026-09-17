@@ -46,8 +46,8 @@ interface Responsavel {
   rg: string | null
   orgao_emissor_rg: string | null
   renda_familiar: number | null
-  ativo: boolean
-  lgpd_consentimento: boolean
+  ativo: boolean | null
+  lgpd_consentimento: boolean | null
   lgpd_data_consentimento: string | null
 }
 
@@ -75,7 +75,7 @@ export default function ResponsaveisPage() {
       setResponsaveis(responsaveisWithCount)
       logger.info('Responsáveis carregados:', { metadata: { count: responsaveisWithCount.length } })
     } catch (error) {
-      logger.error('Erro ao carregar responsáveis:', error as any)
+      logger.error('Erro ao carregar responsáveis:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-carregar-lista-de-responsaveis'))
       setResponsaveis([])
     } finally {
@@ -117,14 +117,13 @@ export default function ResponsaveisPage() {
   }
 
   const getParentescoBadgeColor = (parentesco: string) => {
-    const colors: Record<string, string> = {
-      'mae': 'bg-pink-100 text-pink-800',
-      'pai': 'bg-blue-100 text-blue-800',
-      'avo': 'bg-purple-100 text-purple-800',
-      'tio': 'bg-green-100 text-green-800',
-      'outro': 'bg-gray-100 text-gray-800'
+    switch (parentesco.toLowerCase()) {
+      case 'mae': return 'bg-pink-100 text-pink-800'
+      case 'pai': return 'bg-blue-100 text-blue-800'
+      case 'avo': return 'bg-purple-100 text-purple-800'
+      case 'tio': return 'bg-green-100 text-green-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
-    return colors[parentesco.toLowerCase()] || 'bg-gray-100 text-gray-800'
   }
 
   const filteredResponsaveis = responsaveis.filter(resp => {

@@ -74,7 +74,7 @@ function recordCapacityCheck(name: string, ok: boolean, detail: string): void {
   checks.push({ name, ok, detail })
 }
 
-function countValue(value: unknown): number {
+function countValue(value: string | number | null | undefined): number {
   return Number(value)
 }
 
@@ -95,7 +95,11 @@ function expectedSchoolDays(): string[] {
 
 async function checkCapacityCounts(client: Client): Promise<void> {
   const teachers = expectedTeacherEmails()
-  const result = await client.query(`
+  const result = await client.query<{
+    schools: string; classes: string; active_students: string; enrollments: string;
+    guardians: string; teacher_owners: string; directors: string; guardian_links: string;
+    sessions: string; attendance: string;
+  }>(`
     SELECT
       (SELECT count(*) FROM public.escolas WHERE id = $1) AS schools,
       (SELECT count(*) FROM public.turmas WHERE escola_id = $1 AND import_source_id LIKE 'pilot-capacity:%') AS classes,
@@ -109,8 +113,8 @@ async function checkCapacityCounts(client: Client): Promise<void> {
       (SELECT count(*) FROM public.frequencia WHERE sessao_id IN (SELECT id FROM public.sessoes_aula WHERE escola_id = $1 AND turma_id IN (SELECT id FROM public.turmas WHERE escola_id = $1 AND import_source_id LIKE 'pilot-capacity:%'))) AS attendance
   `, [PILOT_CAPACITY_SCHOOL_ID, teachers, PILOT_CAPACITY_DIRECTOR_EMAIL])
 
-  const row = result.rows[0] as Record<string, unknown>
-  const expectedCounts: Record<string, number> = {
+  const row = result.rows[0]
+  const expectedCounts = {
     schools: EXPECTED_CAPACITY_COUNTS.schools,
     classes: EXPECTED_CAPACITY_COUNTS.classes,
     active_students: EXPECTED_CAPACITY_COUNTS.activeStudents,
@@ -123,23 +127,24 @@ async function checkCapacityCounts(client: Client): Promise<void> {
     attendance: EXPECTED_CAPACITY_COUNTS.attendance,
   }
 
+  const actualCounts = new Map(Object.entries(row))
   for (const [name, expected] of Object.entries(expectedCounts)) {
-    const actual = countValue(row[name])
+    const actual = countValue(actualCounts.get(name))
     recordCapacityCheck(`count_${name}`, actual === expected, `${actual} == ${expected}`)
   }
 }
 
 async function checkCapacityMarker(client: Client): Promise<void> {
-  const marker = await client.query(
+  const marker = await client.query<{ valor: string | null }>(
     `SELECT valor FROM public.configs WHERE id = $1 AND chave = 'pilot_capacity_synthetic_marker'`,
     [PILOT_CAPACITY_CONFIG_MARKER_ID]
   )
-  const anchor = await client.query(
+  const anchor = await client.query<{ valor: string | null }>(
     `SELECT valor FROM public.configs WHERE id = $1 AND chave = 'pilot_capacity_seed_anchor_date'`,
     [PILOT_CAPACITY_CONFIG_ANCHOR_ID]
   )
-  const markerValue = marker.rows[0]?.valor as string | undefined
-  const anchorValue = anchor.rows[0]?.valor as string | undefined
+  const markerValue = marker.rows[0]?.valor
+  const anchorValue = anchor.rows[0]?.valor
   recordCapacityCheck(
     'marker_synthetic',
     markerValue === PILOT_CAPACITY_SEED_MARKER,
@@ -160,7 +165,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
     (_, index) => pilotCapacityClassId(index + 1)
   )
 
-  const schoolDirector = await client.query(`
+  const schoolDirector = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM public.escolas e
     LEFT JOIN public.users u ON u.id = e.diretor_id
@@ -169,7 +174,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [PILOT_CAPACITY_SCHOOL_ID, PILOT_CAPACITY_DIRECTOR_EMAIL])
   recordCapacityCheck('rel_school_director', countValue(schoolDirector.rows[0].invalid) === 0, `${schoolDirector.rows[0].invalid} invalid director links`)
 
-  const classOwners = await client.query(`
+  const classOwners = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM public.turmas t
     LEFT JOIN public.users u ON u.id = t.professor_id
@@ -184,7 +189,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [classIds, PILOT_CAPACITY_SCHOOL_ID, EXPECTED_CAPACITY_COUNTS.studentsPerClass, teacherEmails])
   recordCapacityCheck('rel_class_school_and_owner', countValue(classOwners.rows[0].invalid) === 0, `${classOwners.rows[0].invalid} invalid class school/owner links`)
 
-  const oneClassPerTeacher = await client.query(`
+  const oneClassPerTeacher = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM (
       SELECT u.email
@@ -197,7 +202,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [classIds])
   recordCapacityCheck('rel_one_class_per_teacher', countValue(oneClassPerTeacher.rows[0].invalid) === 0, `${oneClassPerTeacher.rows[0].invalid} teachers do not own one class`)
 
-  const studentSchool = await client.query(`
+  const studentSchool = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM public.alunos a
     JOIN public.matriculas m ON m.aluno_id = a.id
@@ -212,7 +217,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [PILOT_CAPACITY_SCHOOL_ID])
   recordCapacityCheck('rel_student_enrollment_school', countValue(studentSchool.rows[0].invalid) === 0, `${studentSchool.rows[0].invalid} invalid student/enrollment school links`)
 
-  const oneEnrollment = await client.query(`
+  const oneEnrollment = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM (
       SELECT a.id
@@ -225,7 +230,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `)
   recordCapacityCheck('rel_one_active_enrollment_per_student', countValue(oneEnrollment.rows[0].invalid) === 0, `${oneEnrollment.rows[0].invalid} students do not have one active enrollment`)
 
-  const classOccupancy = await client.query(`
+  const classOccupancy = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM (
       SELECT t.id
@@ -238,7 +243,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [classIds, EXPECTED_CAPACITY_COUNTS.studentsPerClass])
   recordCapacityCheck('rel_class_occupancy', countValue(classOccupancy.rows[0].invalid) === 0, `${classOccupancy.rows[0].invalid} classes have an invalid active occupancy`)
 
-  const guardians = await client.query(`
+  const guardians = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM public.alunos a
     LEFT JOIN public.responsaveis r ON r.id = a.responsavel_id
@@ -248,7 +253,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [PILOT_CAPACITY_SCHOOL_ID])
   recordCapacityCheck('rel_student_guardian', countValue(guardians.rows[0].invalid) === 0, `${guardians.rows[0].invalid} invalid student/guardian links`)
 
-  const sessionIdentity = await client.query(`
+  const sessionIdentity = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM public.sessoes_aula s
     JOIN public.turmas t ON t.id = s.turma_id
@@ -265,17 +270,17 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `, [PILOT_CAPACITY_SCHOOL_ID])
   recordCapacityCheck('rel_canonical_session_identity', countValue(sessionIdentity.rows[0].invalid) === 0, `${sessionIdentity.rows[0].invalid} invalid canonical session identities`)
 
-  const sessionDates = await client.query(`
+  const sessionDates = await client.query<{ data_aula: string }>(`
     SELECT DISTINCT s.data_aula::text AS data_aula
     FROM public.sessoes_aula s
     JOIN public.turmas t ON t.id = s.turma_id
     WHERE s.escola_id = $1 AND t.import_source_id LIKE 'pilot-capacity:%'
     ORDER BY data_aula
   `, [PILOT_CAPACITY_SCHOOL_ID])
-  const actualDates = sessionDates.rows.map(row => row.data_aula as string)
+  const actualDates = sessionDates.rows.map(row => row.data_aula)
   recordCapacityCheck('rel_school_day_window', JSON.stringify(actualDates) === JSON.stringify(schoolDays), `${actualDates.join(',')} == ${schoolDays.join(',')}`)
 
-  const attendanceLinks = await client.query(`
+  const attendanceLinks = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM public.frequencia f
     LEFT JOIN public.matriculas m ON m.id = f.matricula_id
@@ -294,7 +299,7 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
   `)
   recordCapacityCheck('rel_attendance_session_enrollment', countValue(attendanceLinks.rows[0].invalid) === 0, `${attendanceLinks.rows[0].invalid} invalid canonical attendance links`)
 
-  const attendanceCoverage = await client.query(`
+  const attendanceCoverage = await client.query<{ invalid: string }>(`
     SELECT count(*) AS invalid
     FROM (
       SELECT m.id
@@ -311,20 +316,20 @@ async function checkCapacityRelationships(client: Client): Promise<void> {
 
 async function checkSyntheticContacts(client: Client): Promise<void> {
   const teacherEmails = expectedTeacherEmails()
-  const contacts = await client.query(`
+  const contacts = await client.query<{ invalid_teacher_emails: string; invalid_director_email: string; invalid_guardian_contacts: string }>(`
     SELECT
       (SELECT count(*) FROM public.users WHERE escola_id = $1 AND email = ANY($2::text[]) AND email !~ $3) AS invalid_teacher_emails,
       (SELECT count(*) FROM public.users WHERE escola_id = $1 AND email = $4 AND email !~ $3) AS invalid_director_email,
       (SELECT count(*) FROM public.responsaveis WHERE escola_id = $1 AND import_source_id LIKE 'pilot-capacity:guardian:%' AND (email IS NULL OR email !~ $3 OR telefone IS NULL OR telefone !~ '^\\+55 00 90000-[0-9]{4}$')) AS invalid_guardian_contacts
   `, [PILOT_CAPACITY_SCHOOL_ID, teacherEmails, `@${PILOT_CAPACITY_CONTACT_DOMAIN}$`, PILOT_CAPACITY_DIRECTOR_EMAIL])
-  const row = contacts.rows[0] as Record<string, unknown>
+  const row = contacts.rows[0]
   recordCapacityCheck('synthetic_teacher_contacts', countValue(row.invalid_teacher_emails) === 0, `${row.invalid_teacher_emails} teacher contacts outside .invalid`)
   recordCapacityCheck('synthetic_director_contact', countValue(row.invalid_director_email) === 0, `${row.invalid_director_email} director contacts outside .invalid`)
   recordCapacityCheck('synthetic_guardian_contacts', countValue(row.invalid_guardian_contacts) === 0, `${row.invalid_guardian_contacts} guardian contacts outside the synthetic phone/email patterns`)
 }
 
 async function checkLowAttendanceCase(client: Client): Promise<void> {
-  const result = await client.query(`
+  const result = await client.query<{ total: string; present: string; absent: string; percentage: string | null }>(`
     SELECT
       count(*) AS total,
       count(*) FILTER (WHERE f.presente) AS present,
@@ -335,7 +340,7 @@ async function checkLowAttendanceCase(client: Client): Promise<void> {
     JOIN public.alunos a ON a.id = m.aluno_id
     WHERE a.id = $1
   `, [pilotCapacityStudentId(EXPECTED_CAPACITY_COUNTS.lowAttendanceStudentIndex)])
-  const row = result.rows[0] as Record<string, unknown>
+  const row = result.rows[0]
   const ok = countValue(row.total) === EXPECTED_CAPACITY_COUNTS.schoolDays
     && countValue(row.present) === EXPECTED_CAPACITY_COUNTS.lowAttendancePresent
     && countValue(row.absent) === EXPECTED_CAPACITY_COUNTS.lowAttendanceAbsent
@@ -344,8 +349,10 @@ async function checkLowAttendanceCase(client: Client): Promise<void> {
   recordCapacityCheck('low_attendance_designated_case', ok, `${row.present}/${row.total} = ${row.percentage}% (threshold ${EXPECTED_CAPACITY_COUNTS.attendanceThresholdPercent}%)`)
 }
 
-function fingerprintSql(table: string): string {
-  const expressions: Record<string, string> = {
+type CapacityTable = keyof typeof EXPECTED_CAPACITY_FINGERPRINTS
+
+function fingerprintSql(table: CapacityTable): string {
+  const expressions = {
     school: "concat_ws('|', e.id::text, e.codigo, e.nome, e.tipo, e.ativo::text)",
     users: "concat_ws('|', u.email, u.nome, u.tipo_usuario, u.escola_id::text, u.ativo::text)",
     classes: "concat_ws('|', t.id::text, t.import_source_id, t.nome, t.serie, t.turno, t.ano_letivo::text, t.capacidade::text, t.escola_id::text, t.ativo::text)",
@@ -355,7 +362,7 @@ function fingerprintSql(table: string): string {
     sessions: "concat_ws('|', s.id::text, s.turma_id::text, s.escola_id::text, s.data_aula::text, s.inicio_aula::text, s.fim_aula::text, s.status, s.conteudo_programatico)",
     attendance: "concat_ws('|', f.id::text, f.matricula_id::text, f.sessao_id::text, f.data_aula::text, f.presente::text, f.status_presenca)",
   }
-  const from: Record<string, string> = {
+  const from = {
     school: 'public.escolas e',
     users: 'public.users u',
     classes: 'public.turmas t',
@@ -365,7 +372,7 @@ function fingerprintSql(table: string): string {
     sessions: 'public.sessoes_aula s JOIN public.turmas t ON t.id = s.turma_id',
     attendance: 'public.frequencia f JOIN public.sessoes_aula s ON s.id = f.sessao_id',
   }
-  const where: Record<string, string> = {
+  const where = {
     school: 'e.id = $1',
     users: "u.escola_id = $1 AND (u.email = ANY($2::text[]) OR u.email = $3)",
     classes: "t.escola_id = $1 AND t.import_source_id LIKE 'pilot-capacity:%'",
@@ -381,14 +388,15 @@ function fingerprintSql(table: string): string {
 async function checkCapacityFingerprints(client: Client): Promise<void> {
   const teachers = expectedTeacherEmails()
   const fingerprints: Record<string, string> = {}
-  for (const table of ['school', 'users', 'classes', 'guardians', 'students', 'enrollments', 'sessions', 'attendance']) {
+  const tables: CapacityTable[] = ['school', 'users', 'classes', 'guardians', 'students', 'enrollments', 'sessions', 'attendance']
+  for (const table of tables) {
     const params = table === 'users'
       ? [PILOT_CAPACITY_SCHOOL_ID, teachers, PILOT_CAPACITY_DIRECTOR_EMAIL]
       : [PILOT_CAPACITY_SCHOOL_ID]
-    const result = await client.query(fingerprintSql(table), params)
-    const fingerprint = result.rows[0]?.fingerprint as string | null
+    const result = await client.query<{ fingerprint: string | null }>(fingerprintSql(table), params)
+    const fingerprint = result.rows[0]?.fingerprint
     fingerprints[table] = fingerprint || ''
-    const expectedFingerprint = EXPECTED_CAPACITY_FINGERPRINTS[table as keyof typeof EXPECTED_CAPACITY_FINGERPRINTS]
+    const expectedFingerprint = EXPECTED_CAPACITY_FINGERPRINTS[table]
     recordCapacityCheck(
       `fingerprint_${table}`,
       fingerprint === expectedFingerprint,

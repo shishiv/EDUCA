@@ -1,0 +1,51 @@
+[
+  {
+    "name": "typecheck",
+    "command": [
+      "pnpm",
+      "--dir",
+      "/home/shiv/Projects/EDUCA-quality-20260907/integration/app",
+      "typecheck"
+    ],
+    "exit_code": 2,
+    "seconds": 17.44
+  },
+  {
+    "name": "lint",
+    "command": [
+      "pnpm",
+      "--dir",
+      "/home/shiv/Projects/EDUCA-quality-20260907/integration/app",
+      "lint"
+    ],
+    "exit_code": 0,
+    "seconds": 15.6
+  },
+  {
+    "name": "test",
+    "command": [
+      "pnpm",
+      "--dir",
+      "/home/shiv/Projects/EDUCA-quality-20260907/integration/app",
+      "test",
+      "--maxWorkers=2",
+      "--no-file-parallelism"
+    ],
+    "exit_code": 1,
+    "seconds": 0.21
+  },
+  {
+    "name": "test-bounded",
+    "command": [
+      "pnpm",
+      "--dir",
+      "/home/shiv/Projects/EDUCA-quality-20260907/integration/app",
+      "run",
+      "test",
+      "--maxWorkers=2",
+      "--no-file-parallelism"
+    ],
+    "exit_code": 0,
+    "seconds": 81.79
+  }
+]

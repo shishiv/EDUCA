@@ -1,0 +1,701 @@
+{
+  "contract": "R3-T4 aggregate pilot E2E",
+  "result": "passed",
+  "exitCode": 0,
+  "children": [
+    {
+      "name": "legacy",
+      "command": "cd app && pnpm test:e2e:pilot:legacy",
+      "exitCode": 0,
+      "status": "passed",
+      "receiptPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/legacy/r3-t1-legacy-pilot-e2e-20260917T150647Z-575520.json",
+      "outputPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/legacy/legacy.log",
+      "receipt": {
+        "contract": "R3-T1 bounded legacy pilot E2E",
+        "vertical": "legacy",
+        "result": "passed",
+        "exitCode": 0,
+        "command": "cd app && pnpm test:e2e:pilot:legacy",
+        "selectedManifest": {
+          "config": "playwright.pilot-legacy.config.ts",
+          "setup": "tests/e2e/auth.setup.ts",
+          "specs": [
+            "tests/e2e/pilot/attendance-reopen.spec.ts",
+            "tests/e2e/pilot/canonical-lesson.spec.ts",
+            "tests/e2e/pilot/core-scope.spec.ts",
+            "tests/e2e/pilot/csv-import.spec.ts",
+            "tests/e2e/pilot/deployed-isolation.spec.ts",
+            "tests/e2e/pilot/invalid-refresh-token.spec.ts",
+            "tests/e2e/pilot/invitation-first-access.spec.ts",
+            "tests/e2e/pilot/security-hardening.spec.ts"
+          ],
+          "expectedTests": 25,
+          "expectedSetupTests": 1,
+          "expectedRunTests": 26,
+          "selectionIsExact": true,
+          "excluded": [
+            "tests/e2e/pilot/capacity-contract.spec.ts",
+            "tests/e2e/pilot/capacity-auth.setup.ts",
+            "tests/e2e/pilot-descriptive/descriptive-emission.spec.ts",
+            "tests/e2e/pilot-descriptive/descriptive-auth.setup.ts",
+            "tests/e2e/pilot/canonical-pilot.spec.ts",
+            "tests/e2e/pilot/canonical-auth.setup.ts",
+            "playwright.pilot-canonical.config.ts",
+            "scripts/run-pilot-canonical-e2e.sh"
+          ]
+        },
+        "setup": {
+          "result": "ready",
+          "resetBoundary": "safety proof precedes database reset",
+          "localSupabase": {
+            "apiHost": "127.0.0.1",
+            "databaseHost": "127.0.0.1",
+            "apiIsLocal": true,
+            "databaseIsLocal": true,
+            "externalProjectUsed": false
+          },
+          "app": {
+            "url": "http://127.0.0.1",
+            "namedLocalUrl": true,
+            "server": "direct",
+            "serverMode": "direct"
+          },
+          "flags": {
+            "nextPublicPilotMode": true,
+            "pilotMode": true,
+            "syntheticDataOnly": true,
+            "externalDeployApproved": false,
+            "legalApprovalStatus": "not_approved",
+            "descriptiveReportDemo": false,
+            "demoSandbox": false
+          },
+          "keyAliases": {
+            "currentPublishableAlias": "PUBLISHABLE_KEY",
+            "currentSecretAlias": "SECRET_KEY",
+            "publishableAliasPresent": true,
+            "secretAliasPresent": true,
+            "deprecatedAliasesUsed": false
+          },
+          "portRangeLease": {
+            "serverMode": "direct",
+            "external": true,
+            "leaseDir": null
+          },
+          "externalCredentialsUsed": false,
+          "publicDemoUsed": false
+        },
+        "seed": {
+          "result": "pass",
+          "marker": "SYNTHETIC-EDUCA-PILOT",
+          "command": "pnpm exec tsx scripts/seed-pilot-synthetic.ts",
+          "validationCommand": "pnpm exec tsx scripts/validate-pilot-legacy.ts"
+        },
+        "database": {
+          "result": "pass",
+          "boundary": "real-postgresql",
+          "localSupabase": {
+            "apiHost": "127.0.0.1",
+            "databaseHost": "127.0.0.1",
+            "externalProject": false
+          },
+          "safetyMarker": {
+            "municipality": "synthetic-municipality",
+            "dataClassification": "synthetic_only",
+            "externalDeployAllowed": false,
+            "legalApprovalStatus": "not_approved"
+          },
+          "syntheticOnly": {
+            "nonSyntheticUsers": 0,
+            "identitiesUseSyntheticDomain": true
+          },
+          "counts": {
+            "schools": 2,
+            "users": 5,
+            "syntheticAdmins": 1,
+            "classes": 2,
+            "students": 2,
+            "guardians": 2,
+            "guardianLinks": 2,
+            "enrollments": 2,
+            "sessions": 1,
+            "attendance": 1,
+            "metricEvents": 4,
+            "tombstones": 1
+          },
+          "expectedCounts": {
+            "schools": 2,
+            "users": 5,
+            "syntheticAdmins": 1,
+            "classes": 2,
+            "students": 2,
+            "guardians": 2,
+            "guardianLinks": 2,
+            "enrollments": 2,
+            "sessions": 1,
+            "attendance": 1,
+            "metricEvents": 4,
+            "tombstones": 1
+          }
+        },
+        "roleSetup": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "identity": "secretaria@synthetic.invalid",
+          "role": "secretario",
+          "schoolScope": "municipal",
+          "domain": "synthetic.invalid",
+          "landingRoute": "/dashboard"
+        },
+        "browser": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "identity": "secretaria@synthetic.invalid",
+          "role": "secretario",
+          "schoolScope": "municipal",
+          "domain": "synthetic.invalid",
+          "landingRoute": "/dashboard"
+        },
+        "portRangeLease": {
+          "serverMode": "direct",
+          "external": true,
+          "leaseDir": null,
+          "released": false
+        },
+        "tests": {
+          "receipt": {
+            "result": "pass",
+            "exitCode": 0,
+            "boundary": "real-playwright-browser-and-postgrest",
+            "config": "playwright.pilot-legacy.config.ts",
+            "expectedTestCount": 26,
+            "outputLines": 42,
+            "outputRedacted": true
+          },
+          "outputPath": "../artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/legacy/r3-t1-legacy-pilot-e2e-20260917T150647Z-575520.test-output.txt",
+          "outputRedacted": true
+        },
+        "cleanup": {
+          "result": "pass",
+          "appStopped": true,
+          "namedRouteRemoved": true,
+          "databaseStopped": true,
+          "syntheticAuthStateRemoved": true,
+          "isolatedDirectoryRemoved": true,
+          "portRangeLeaseExternal": true,
+          "portRangeLeaseReleased": false,
+          "portRangeLeaseReleaseFailed": false,
+          "redacted": true
+        },
+        "namedBaseUrl": "http://127.0.0.1",
+        "deliberateBreak": null,
+        "r1Independent": true,
+        "externalCredentialsUsed": false,
+        "publicDemoUsed": false
+      },
+      "receiptError": null
+    },
+    {
+      "name": "capacity",
+      "command": "cd app && pnpm test:e2e:pilot:capacity",
+      "exitCode": 0,
+      "status": "passed",
+      "receiptPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/capacity/r3-t4-capacity-pilot-e2e-20260917T150944Z-861022.json",
+      "outputPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/capacity/capacity.log",
+      "receipt": {
+        "contract": "R3-T4 dedicated capacity pilot E2E",
+        "result": "passed",
+        "exitCode": 0,
+        "command": "cd app && pnpm test:e2e:pilot:capacity",
+        "selectedManifest": {
+          "config": "playwright.pilot-capacity.config.ts",
+          "setup": "tests/e2e/pilot/capacity-auth.setup.ts",
+          "specs": [
+            "tests/e2e/pilot/capacity-contract.spec.ts"
+          ],
+          "expectedTests": 2,
+          "expectedSetupTests": 1,
+          "expectedRunTests": 3
+        },
+        "setup": {
+          "result": "ready",
+          "resetBoundary": "safety proof precedes database reset",
+          "localSupabase": {
+            "apiHost": "127.0.0.1",
+            "databaseHost": "127.0.0.1",
+            "apiIsLocal": true,
+            "databaseIsLocal": true,
+            "externalProjectUsed": false
+          },
+          "app": {
+            "url": "http://127.0.0.1",
+            "namedLocalUrl": true,
+            "server": "direct",
+            "serverMode": "direct"
+          },
+          "roleSetup": {
+            "role": "diretor",
+            "identity": "diretor.capacidade@synthetic.invalid",
+            "authStatePath": "./app/playwright/.pilot-capacity/20260917T150944Z-861022/director.json"
+          },
+          "seed": {
+            "command": "pnpm exec tsx scripts/seed-pilot-capacity.ts",
+            "validationCommand": "pnpm exec tsx scripts/validate-pilot-capacity.ts"
+          },
+          "flags": {
+            "nextPublicPilotMode": true,
+            "pilotMode": true,
+            "syntheticDataOnly": true,
+            "externalDeployApproved": false,
+            "legalApprovalStatus": "not_approved",
+            "descriptiveReportDemo": false
+          },
+          "currentKeyAliases": {
+            "publishableAliasPresent": true,
+            "secretAliasPresent": true
+          },
+          "portRangeLease": {
+            "serverMode": "direct",
+            "external": true,
+            "leaseDir": null
+          },
+          "externalCredentialsUsed": false,
+          "publicDemoUsed": false
+        },
+        "seed": {
+          "result": "pass",
+          "marker": "SYNTHETIC-EDUCA-PILOT-CAPACITY",
+          "command": "pnpm exec tsx scripts/seed-pilot-capacity.ts",
+          "validationCommand": "pnpm exec tsx scripts/validate-pilot-capacity.ts"
+        },
+        "database": {
+          "result": "pass",
+          "boundary": "real-postgresql",
+          "seedMarker": "SYNTHETIC-EDUCA-PILOT-CAPACITY",
+          "seedCommand": "pnpm exec tsx scripts/seed-pilot-capacity.ts",
+          "validationCommand": "pnpm exec tsx scripts/validate-pilot-capacity.ts",
+          "localDatabase": true,
+          "syntheticOnly": true,
+          "concurrencyContract": "real PostgREST insert boundary is exercised by Playwright"
+        },
+        "roleSetup": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "identity": "diretor.capacidade@synthetic.invalid",
+          "role": "diretor",
+          "authStatePath": "./app/playwright/.pilot-capacity/20260917T150944Z-861022/director.json",
+          "landingRoute": "/dashboard"
+        },
+        "tests": {
+          "receipt": {
+            "result": "pass",
+            "exitCode": 0,
+            "boundary": "real-playwright-browser-and-postgrest",
+            "config": "playwright.pilot-capacity.config.ts",
+            "expectedTestCount": 3,
+            "outputLines": 19,
+            "outputRedacted": true
+          },
+          "outputPath": "../artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/capacity/r3-t4-capacity-pilot-e2e-20260917T150944Z-861022.test-output.txt",
+          "outputRedacted": true
+        },
+        "concurrency": {
+          "result": "pass",
+          "boundary": "real-postgrest-governed-rpc",
+          "successCount": 1,
+          "capacityErrors": 1,
+          "activeEnrollments": 1,
+          "errorMarker": "PILOT_CAPACITY_EXCEEDED"
+        },
+        "lifecycleDeliberateBreak": null,
+        "portRangeLease": {
+          "serverMode": "direct",
+          "external": true,
+          "leaseDir": null,
+          "released": false
+        },
+        "cleanup": {
+          "result": "pass",
+          "appStopped": true,
+          "namedRouteRemoved": true,
+          "databaseStopped": true,
+          "syntheticAuthStateRemoved": true,
+          "isolatedDirectoryRemoved": true,
+          "portRangeLeaseExternal": true,
+          "portRangeLeaseReleased": false,
+          "portRangeLeaseReleaseFailed": false,
+          "redacted": true
+        },
+        "namedBaseUrl": "http://127.0.0.1",
+        "deliberateBreak": null,
+        "r1Independent": true,
+        "externalCredentialsUsed": false,
+        "publicDemoUsed": false
+      },
+      "receiptError": null
+    },
+    {
+      "name": "descriptive",
+      "command": "cd app && pnpm test:e2e:pilot:descriptive",
+      "exitCode": 0,
+      "status": "passed",
+      "receiptPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/descriptive/r3-t4-descriptive-pilot-e2e-20260917T151135Z-1084303.json",
+      "outputPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/descriptive/descriptive.log",
+      "receipt": {
+        "contract": "R3-T4 dedicated descriptive-report pilot E2E",
+        "result": "passed",
+        "exitCode": 0,
+        "command": "cd app && pnpm test:e2e:pilot:descriptive",
+        "selectedManifest": {
+          "config": "playwright.pilot-descriptive.config.ts",
+          "setup": "tests/e2e/pilot-descriptive/descriptive-auth.setup.ts",
+          "specs": [
+            "tests/e2e/pilot-descriptive/descriptive-emission.spec.ts"
+          ],
+          "expectedTests": 3,
+          "expectedSetupTests": 1,
+          "expectedRunTests": 4
+        },
+        "setup": {
+          "result": "ready",
+          "resetBoundary": "safety proof precedes database reset",
+          "localSupabase": {
+            "apiHost": "127.0.0.1",
+            "databaseHost": "127.0.0.1",
+            "apiIsLocal": true,
+            "databaseIsLocal": true,
+            "externalProjectUsed": false
+          },
+          "app": {
+            "url": "http://127.0.0.1",
+            "namedLocalUrl": true,
+            "server": "direct",
+            "serverMode": "direct"
+          },
+          "roleSetup": {
+            "role": "professor",
+            "identity": "professora.descritivo@synthetic.invalid",
+            "authStatePath": "./app/playwright/.pilot-descriptive/20260917T151135Z-1084303/teacher.json"
+          },
+          "seed": {
+            "command": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+            "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts"
+          },
+          "flags": {
+            "nextPublicPilotMode": true,
+            "pilotMode": true,
+            "syntheticDataOnly": true,
+            "descriptiveReportDemo": true,
+            "externalDeployApproved": false,
+            "legalApprovalStatus": "not_approved"
+          },
+          "currentKeyAliases": {
+            "publishableAliasPresent": true,
+            "secretAliasPresent": true
+          },
+          "portRangeLease": {
+            "serverMode": "direct",
+            "external": true,
+            "leaseDir": null
+          },
+          "externalCredentialsUsed": false,
+          "publicDemoUsed": false
+        },
+        "seed": {
+          "result": "pass",
+          "marker": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE",
+          "command": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+          "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts"
+        },
+        "database": {
+          "result": "pass",
+          "boundary": "real-postgresql",
+          "seedMarker": "SYNTHETIC-EDUCA-PILOT-DESCRIPTIVE",
+          "seedCommand": "pnpm exec tsx scripts/seed-pilot-descriptive.ts",
+          "validationCommand": "pnpm exec tsx scripts/validate-pilot-descriptive.ts",
+          "localDatabase": true,
+          "syntheticOnly": true
+        },
+        "roleSetup": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "identity": "professora.descritivo@synthetic.invalid",
+          "role": "professor",
+          "authStatePath": "./app/playwright/.pilot-descriptive/20260917T151135Z-1084303/teacher.json",
+          "landingRoute": "/dashboard"
+        },
+        "tests": {
+          "receipt": {
+            "result": "pass",
+            "exitCode": 0,
+            "boundary": "real-playwright-browser-and-pdf-download",
+            "config": "playwright.pilot-descriptive.config.ts",
+            "expectedTestCount": 4,
+            "outputLines": 22,
+            "outputRedacted": true
+          },
+          "outputPath": "../artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/descriptive/r3-t4-descriptive-pilot-e2e-20260917T151135Z-1084303.test-output.txt",
+          "outputRedacted": true
+        },
+        "pdf": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "filename": "relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf",
+          "artifactPath": "./app/.pilot-evidence/relatorio_descritivo_2026_primeiro_28000000-0000-0000-0000-000000000001.pdf",
+          "bytes": 1612560,
+          "pdfHeader": "%PDF-"
+        },
+        "productDeliberateBreak": {
+          "result": "pass",
+          "target": "canonical-content-removal",
+          "boundary": "real-browser-and-postgrest",
+          "observedStatus": 422,
+          "restored": true
+        },
+        "lifecycleDeliberateBreak": null,
+        "portRangeLease": {
+          "serverMode": "direct",
+          "external": true,
+          "leaseDir": null,
+          "released": false
+        },
+        "cleanup": {
+          "result": "pass",
+          "appStopped": true,
+          "namedRouteRemoved": true,
+          "databaseStopped": true,
+          "syntheticAuthStateRemoved": true,
+          "isolatedDirectoryRemoved": true,
+          "portRangeLeaseExternal": true,
+          "portRangeLeaseReleased": false,
+          "portRangeLeaseReleaseFailed": false,
+          "redacted": true
+        },
+        "namedBaseUrl": "http://127.0.0.1",
+        "deliberateBreak": null,
+        "r1Independent": true,
+        "externalCredentialsUsed": false,
+        "publicDemoUsed": false
+      },
+      "receiptError": null
+    },
+    {
+      "name": "security",
+      "command": "cd app && pnpm test:e2e:pilot:security",
+      "exitCode": 0,
+      "status": "passed",
+      "receiptPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/security/r3-t1-legacy-pilot-e2e-20260917T151340Z-1303553.json",
+      "outputPath": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/security/security.log",
+      "receipt": {
+        "contract": "R3-T4 focused security pilot E2E",
+        "vertical": "security",
+        "result": "passed",
+        "exitCode": 0,
+        "command": "cd app && pnpm test:e2e:pilot:security",
+        "selectedManifest": {
+          "config": "playwright.pilot-security.config.ts",
+          "setup": "tests/e2e/auth.setup.ts",
+          "specs": [
+            "tests/e2e/pilot/security-hardening.spec.ts"
+          ],
+          "expectedTests": 3,
+          "expectedRunTests": 3,
+          "selectionIsExact": true,
+          "excluded": [
+            "tests/e2e/pilot/core-scope.spec.ts",
+            "tests/e2e/pilot/csv-import.spec.ts",
+            "tests/e2e/pilot/deployed-isolation.spec.ts",
+            "tests/e2e/pilot/invalid-refresh-token.spec.ts",
+            "tests/e2e/pilot/invitation-first-access.spec.ts",
+            "tests/e2e/pilot/capacity-contract.spec.ts",
+            "tests/e2e/pilot/capacity-auth.setup.ts",
+            "tests/e2e/pilot-descriptive/descriptive-emission.spec.ts",
+            "tests/e2e/pilot-descriptive/descriptive-auth.setup.ts",
+            "tests/e2e/pilot/canonical-pilot.spec.ts",
+            "tests/e2e/pilot/canonical-auth.setup.ts"
+          ]
+        },
+        "setup": {
+          "result": "ready",
+          "resetBoundary": "safety proof precedes database reset",
+          "localSupabase": {
+            "apiHost": "127.0.0.1",
+            "databaseHost": "127.0.0.1",
+            "apiIsLocal": true,
+            "databaseIsLocal": true,
+            "externalProjectUsed": false
+          },
+          "app": {
+            "url": "http://127.0.0.1",
+            "namedLocalUrl": true,
+            "server": "direct",
+            "serverMode": "direct"
+          },
+          "flags": {
+            "nextPublicPilotMode": true,
+            "pilotMode": true,
+            "syntheticDataOnly": true,
+            "externalDeployApproved": false,
+            "legalApprovalStatus": "not_approved",
+            "descriptiveReportDemo": false,
+            "demoSandbox": false
+          },
+          "keyAliases": {
+            "currentPublishableAlias": "PUBLISHABLE_KEY",
+            "currentSecretAlias": "SECRET_KEY",
+            "publishableAliasPresent": true,
+            "secretAliasPresent": true,
+            "deprecatedAliasesUsed": false
+          },
+          "portRangeLease": {
+            "serverMode": "direct",
+            "external": true,
+            "leaseDir": null
+          },
+          "externalCredentialsUsed": false,
+          "publicDemoUsed": false
+        },
+        "seed": {
+          "result": "pass",
+          "marker": "SYNTHETIC-EDUCA-PILOT",
+          "command": "pnpm exec tsx scripts/seed-pilot-synthetic.ts",
+          "validationCommand": "pnpm exec tsx scripts/validate-pilot-legacy.ts"
+        },
+        "database": {
+          "result": "pass",
+          "boundary": "real-postgresql",
+          "localSupabase": {
+            "apiHost": "127.0.0.1",
+            "databaseHost": "127.0.0.1",
+            "externalProject": false
+          },
+          "safetyMarker": {
+            "municipality": "synthetic-municipality",
+            "dataClassification": "synthetic_only",
+            "externalDeployAllowed": false,
+            "legalApprovalStatus": "not_approved"
+          },
+          "syntheticOnly": {
+            "nonSyntheticUsers": 0,
+            "identitiesUseSyntheticDomain": true
+          },
+          "counts": {
+            "schools": 2,
+            "users": 5,
+            "syntheticAdmins": 1,
+            "classes": 2,
+            "students": 2,
+            "guardians": 2,
+            "guardianLinks": 2,
+            "enrollments": 2,
+            "sessions": 1,
+            "attendance": 1,
+            "metricEvents": 4,
+            "tombstones": 1
+          },
+          "expectedCounts": {
+            "schools": 2,
+            "users": 5,
+            "syntheticAdmins": 1,
+            "classes": 2,
+            "students": 2,
+            "guardians": 2,
+            "guardianLinks": 2,
+            "enrollments": 2,
+            "sessions": 1,
+            "attendance": 1,
+            "metricEvents": 4,
+            "tombstones": 1
+          }
+        },
+        "roleSetup": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "identity": "secretaria@synthetic.invalid",
+          "role": "secretario",
+          "schoolScope": "municipal",
+          "domain": "synthetic.invalid",
+          "landingRoute": "/dashboard"
+        },
+        "browser": {
+          "result": "pass",
+          "boundary": "real-playwright-browser",
+          "identity": "secretaria@synthetic.invalid",
+          "role": "secretario",
+          "schoolScope": "municipal",
+          "domain": "synthetic.invalid",
+          "landingRoute": "/dashboard"
+        },
+        "portRangeLease": {
+          "serverMode": "direct",
+          "external": true,
+          "leaseDir": null,
+          "released": false
+        },
+        "tests": {
+          "receipt": {
+            "result": "pass",
+            "exitCode": 0,
+            "boundary": "real-playwright-browser-and-postgrest",
+            "config": "playwright.pilot-security.config.ts",
+            "expectedTestCount": 3,
+            "outputLines": 19,
+            "outputRedacted": true
+          },
+          "outputPath": "../artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516/children/security/r3-t1-legacy-pilot-e2e-20260917T151340Z-1303553.test-output.txt",
+          "outputRedacted": true
+        },
+        "cleanup": {
+          "result": "pass",
+          "appStopped": true,
+          "namedRouteRemoved": true,
+          "databaseStopped": true,
+          "syntheticAuthStateRemoved": true,
+          "isolatedDirectoryRemoved": true,
+          "portRangeLeaseExternal": true,
+          "portRangeLeaseReleased": false,
+          "portRangeLeaseReleaseFailed": false,
+          "redacted": true
+        },
+        "namedBaseUrl": "http://127.0.0.1",
+        "deliberateBreak": null,
+        "r1Independent": true,
+        "externalCredentialsUsed": false,
+        "publicDemoUsed": false
+      },
+      "receiptError": null
+    }
+  ],
+  "totals": {
+    "expected": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0
+  },
+  "childOrder": [
+    "legacy",
+    "capacity",
+    "descriptive",
+    "security"
+  ],
+  "capacityAndDescriptiveIndependent": true,
+  "sharedLegacyProjectDoesNotLoadVerticalSetups": true,
+  "r1Independent": true,
+  "deliberateBreak": null,
+  "cleanup": {
+    "result": "pass",
+    "childReceiptsPreserved": true,
+    "childLogsRedacted": true,
+    "serverMode": "direct",
+    "portRangeLeaseDir": null,
+    "portRangeLeaseReleased": true,
+    "aggregateDirectory": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516"
+  },
+  "externalCredentialsUsed": false,
+  "publicDemoUsed": false,
+  "portRangeLease": {
+    "serverMode": "direct",
+    "external": false,
+    "leaseDir": null,
+    "released": true
+  }
+}

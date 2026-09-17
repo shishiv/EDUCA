@@ -15,7 +15,7 @@
 'use client'
 
 import React from 'react'
-import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
+import { format, addDays, subDays, startOfWeek, endOfWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, UserCheck, UserX, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -88,6 +88,7 @@ export function FrequencyControls({
   disabled = false,
 }: FrequencyControlsProps) {
   const t = useClassroomTranslations()
+  const controlsDisabled = loading || disabled
   // Date navigation handlers
   const handlePreviousDay = () => {
     onDateChange(subDays(selectedDate, 1))
@@ -108,13 +109,6 @@ export function FrequencyControls({
     }
   }
 
-  // Calculate attendance rate color
-  const getAttendanceRateColor = (rate: number) => {
-    const status = getFrequencyPolicyStatus(rate)
-    if (status === 'CONFORME') return 'text-green-600'
-    if (status === 'ATENCAO') return 'text-yellow-600'
-    return 'text-red-600'
-  }
 
   return (
     <Card className="bg-gray-100 border-gray-200">
@@ -128,7 +122,7 @@ export function FrequencyControls({
             <Select
               value={selectedTurmaId || ''}
               onValueChange={onTurmaChange}
-              disabled={loading || disabled || turmas.length === 0}
+              disabled={controlsDisabled || turmas.length === 0}
             >
               <SelectTrigger
                 id="turma-select"
@@ -158,11 +152,8 @@ export function FrequencyControls({
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={cn(
-                      'flex-1 justify-start text-left font-normal bg-white',
-                      !selectedDate && 'text-muted-foreground'
-                    )}
-                    disabled={loading || disabled}
+                    className="flex-1 justify-start text-left font-normal bg-white"
+                    disabled={controlsDisabled}
                     aria-label={t('attendance.selectDate')}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -183,7 +174,7 @@ export function FrequencyControls({
                 variant="outline"
                 size="icon"
                 onClick={handlePreviousDay}
-                disabled={loading || disabled}
+                disabled={controlsDisabled}
                 className="bg-gray-300 hover:bg-gray-400 border-gray-300"
                 aria-label={t('attendance.previousDay')}
               >
@@ -193,7 +184,7 @@ export function FrequencyControls({
                 variant="outline"
                 size="icon"
                 onClick={handleNextDay}
-                disabled={loading || disabled}
+                disabled={controlsDisabled}
                 className="bg-gray-300 hover:bg-gray-400 border-gray-300"
                 aria-label={t('attendance.nextDay')}
               >
@@ -217,7 +208,7 @@ export function FrequencyControls({
                     : 'bg-gray-300 text-gray-900 hover:bg-gray-400'
                 )}
                 onClick={() => onPeriodViewChange('week')}
-                disabled={loading || disabled}
+                disabled={controlsDisabled}
               >
                 Semana
               </Button>
@@ -230,7 +221,7 @@ export function FrequencyControls({
                     : 'bg-gray-300 text-gray-900 hover:bg-gray-400'
                 )}
                 onClick={() => onPeriodViewChange('month')}
-                disabled={loading || disabled}
+                disabled={controlsDisabled}
               >
                 Mês
               </Button>
@@ -240,7 +231,24 @@ export function FrequencyControls({
             </p>
           </div>
 
-          {/* Frequency Summary */}
+          <FrequencySummary summary={summary} />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function FrequencySummary({ summary }: { summary: AttendanceSummary | undefined }) {
+  const t = useClassroomTranslations()
+  // Calculate attendance rate color
+  const getAttendanceRateColor = (rate: number) => {
+    const status = getFrequencyPolicyStatus(rate)
+    if (status === 'CONFORME') return 'text-green-600'
+    if (status === 'ATENCAO') return 'text-yellow-600'
+    return 'text-red-600'
+  }
+
+  return (
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             {summary ? (
               <>
@@ -276,9 +284,6 @@ export function FrequencyControls({
               </div>
             )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 

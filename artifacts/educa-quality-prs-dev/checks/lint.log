@@ -1,0 +1,12 @@
+
+> educa@1.0.0 lint /home/shiv/Projects/EDUCA-quality-20260907/integration/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /home/shiv/Projects/EDUCA-quality-20260907/integration/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /home/shiv/Projects/EDUCA-quality-20260907/integration/app
+> eslint . --max-warnings 0
+

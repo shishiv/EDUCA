@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
+import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
   ArrowRight,
@@ -21,15 +22,16 @@ import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
 import {
+  isQuickAccessRole,
   quickAccessItems,
   resolveVisibleQuickAccess,
-  type QuickAccessRole,
 } from '@/lib/dashboard/quick-access'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { logger } from '@/lib/logger'
 import { canManagePilotSchool, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { createAcademicYearService, type ResolvedAcademicYear } from '@/lib/services/academic-year'
 import { supabase } from '@/lib/supabase'
+import type { UserProfile } from '@/lib/auth'
 
 interface DashboardStats {
   totalAlunos: number
@@ -47,6 +49,14 @@ interface Turma {
   alunosCount: number
 }
 
+interface MetricItem {
+  label: string
+  value: string
+  detail: string
+  icon: LucideIcon
+  tone: 'teal' | 'warning' | 'paper' | 'lime' | 'ink'
+}
+
 const academicYearService = createAcademicYearService(supabase)
 
 function getSerieTone(serie: string) {
@@ -57,13 +67,60 @@ function getSerieTone(serie: string) {
   return 'default'
 }
 
+function getGreetingKey(hour: number): 'morning' | 'afternoon' | 'evening' {
+  if (hour < 12) return 'morning'
+  if (hour < 18) return 'afternoon'
+  return 'evening'
+}
+
+async function loadClassSummaries(escolaId: string, academicYear: number): Promise<Turma[]> {
+  const { data: turmaRows, error: turmasError } = await supabase
+    .from('turmas')
+    .select('id, nome, serie, turno')
+    .eq('escola_id', escolaId)
+    .eq('ano_letivo', academicYear)
+    .eq('ativo', true)
+    .order('nome')
+    .limit(5)
+
+  if (turmasError) throw turmasError
+
+  const classes = turmaRows ?? []
+  const classIds = classes.map((turma) => turma.id)
+  if (classIds.length === 0) {
+    return classes.map((turma) => ({ ...turma, alunosCount: 0 }))
+  }
+
+  const { data: matriculasData, error: matriculasError } = await supabase
+    .from('matriculas')
+    .select('turma_id')
+    .in('turma_id', classIds)
+    .eq('ano_letivo', academicYear)
+    .eq('situacao', 'ativa')
+
+  if (matriculasError) throw matriculasError
+
+  const enrollmentsByClass = new Map<string, number>()
+  for (const matricula of matriculasData ?? []) {
+    enrollmentsByClass.set(
+      matricula.turma_id,
+      (enrollmentsByClass.get(matricula.turma_id) ?? 0) + 1,
+    )
+  }
+
+  return classes.map((turma) => ({
+    ...turma,
+    alunosCount: enrollmentsByClass.get(turma.id) ?? 0,
+  }))
+}
+
 function DashboardSkeleton() {
   const t = useTranslations('layout.dashboard')
   return (
     <div className="app-dashboard app-dashboard-skeleton" aria-busy="true" aria-label={t('loading')}>
       <div className="app-skeleton h-20 w-full" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[0, 1, 2, 3].map(item => <div key={item} className="app-skeleton h-28" />)}
+        {[0, 1, 2, 3].map((item) => <div key={item} className="app-skeleton h-28" />)}
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,.8fr)]">
         <div className="app-skeleton h-80" />
@@ -73,13 +130,16 @@ function DashboardSkeleton() {
   )
 }
 
-export default function DashboardPage() {
+function useDashboardData({
+  escolaId,
+  escolaLoading,
+  userRole,
+}: {
+  escolaId: string | null
+  escolaLoading: boolean
+  userRole: UserProfile['tipo_usuario'] | undefined
+}) {
   const t = useTranslations('platform.dashboard')
-  const locale = useLocale()
-  const { userProfile } = useAuth()
-  const { selectedEscolaId, shouldShowSelector, loading: escolaLoading } = useEscola()
-  const userRole = userProfile?.tipo_usuario
-  const escolaId = shouldShowSelector ? selectedEscolaId : userProfile?.escola_id ?? null
   const [stats, setStats] = useState<DashboardStats>({
     totalAlunos: 0,
     totalEscolas: 0,
@@ -101,19 +161,11 @@ export default function DashboardPage() {
 
       const resolvedAcademicYear = await academicYearService.resolveCurrent(escolaId, getTodaySaoPaulo())
       setAcademicYear(resolvedAcademicYear)
-
       if (userRole === 'professor') return
 
-      const [apiStats, turmasResult] = await Promise.all([
+      const [apiStats, classSummaries] = await Promise.all([
         dashboardStatsApi.getStats({ escolaId, academicYear: resolvedAcademicYear }),
-        supabase
-          .from('turmas')
-          .select('id, nome, serie, turno')
-          .eq('escola_id', escolaId)
-          .eq('ano_letivo', resolvedAcademicYear.year)
-          .eq('ativo', true)
-          .order('nome')
-          .limit(5),
+        loadClassSummaries(escolaId, resolvedAcademicYear.year),
       ])
 
       setStats({
@@ -123,45 +175,16 @@ export default function DashboardPage() {
         totalProfessores: apiStats.totalProfessores,
         frequenciaMedia: apiStats.frequenciaGeral,
       })
-
-      if (turmasResult.error) throw turmasResult.error
-
-      const turmaRows = turmasResult.data ?? []
-      const turmaIds = turmaRows.map(turma => turma.id)
-      let matriculasData: Array<{ turma_id: string }> = []
-
-      if (turmaIds.length > 0) {
-        const { data, error } = await supabase
-          .from('matriculas')
-          .select('turma_id')
-          .in('turma_id', turmaIds)
-          .eq('ano_letivo', resolvedAcademicYear.year)
-          .eq('situacao', 'ativa')
-
-        if (error) throw error
-        matriculasData = data ?? []
-      }
-
-      const matriculasPorTurma = new Map<string, number>()
-      for (const matricula of matriculasData) {
-        matriculasPorTurma.set(
-          matricula.turma_id,
-          (matriculasPorTurma.get(matricula.turma_id) ?? 0) + 1
-        )
-      }
-
-      setTurmas(turmaRows.map(turma => ({
-        id: turma.id,
-        nome: turma.nome,
-        serie: turma.serie,
-        turno: turma.turno,
-        alunosCount: matriculasPorTurma.get(turma.id) ?? 0,
-      })))
+      setTurmas(classSummaries)
     } catch (error) {
-      logger.error('DASHBOARD_DATA_LOAD_FAILED', error as Error, {
-        feature: 'dashboard',
-        action: 'load_dashboard_data',
-      })
+      logger.error(
+        'DASHBOARD_DATA_LOAD_FAILED',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          feature: 'dashboard',
+          action: 'load_dashboard_data',
+        },
+      )
       setAcademicYear(null)
       setLoadError(t('loadError'))
     } finally {
@@ -180,16 +203,231 @@ export default function DashboardPage() {
     void loadDashboardData()
   }, [escolaId, escolaLoading, loadDashboardData, userRole])
 
-  if (loading || escolaLoading) return <DashboardSkeleton />
+  return { academicYear, loadDashboardData, loadError, loading, stats, turmas }
+}
 
-  if (!escolaId) {
-    return <div className="app-dashboard"><EscolaRequiredState /></div>
-  }
+function DashboardIntro({ academicYear, userName }: { academicYear: ResolvedAcademicYear; userName?: string | null }) {
+  const t = useTranslations('platform.dashboard')
+  const locale = useLocale()
+  const now = new Date()
+  const formattedDate = new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  }).format(now)
+
+  return (
+    <header className="app-dashboard__intro">
+      <div>
+        <h1>{t(`greeting.${getGreetingKey(now.getHours())}`)}, {userName?.split(' ')[0] || t('user')}.</h1>
+        <p>{t('subtitle', { year: academicYear.year })}</p>
+      </div>
+      <div className="app-dashboard__date">
+        <CalendarDays aria-hidden="true" />
+        <span>{t('today')}</span>
+        <time dateTime={now.toISOString().slice(0, 10)}>{formattedDate}</time>
+      </div>
+    </header>
+  )
+}
+
+function DashboardMetrics({ academicYear, stats }: { academicYear: ResolvedAcademicYear; stats: DashboardStats }) {
+  const t = useTranslations('platform.dashboard')
+  const locale = useLocale()
+  const frequencyIsConformant = stats.frequenciaMedia >= CONFORMIDADE
+  const number = new Intl.NumberFormat(locale)
+  const metrics: MetricItem[] = [
+    {
+      label: t('averageAttendance'),
+      value: `${stats.frequenciaMedia}%`,
+      detail: frequencyIsConformant ? t('compliant') : t('attention'),
+      icon: frequencyIsConformant ? CheckCircle2 : AlertTriangle,
+      tone: frequencyIsConformant ? 'teal' : 'warning',
+    },
+    {
+      label: t('totalStudents'),
+      value: number.format(stats.totalAlunos),
+      detail: t('students'),
+      icon: Users,
+      tone: 'paper',
+    },
+    {
+      label: t('activeClasses'),
+      value: number.format(stats.totalTurmas),
+      detail: t('activeClassesDescription', { year: academicYear.year }),
+      icon: GraduationCap,
+      tone: 'lime',
+    },
+    {
+      label: t('activeTeachers'),
+      value: number.format(stats.totalProfessores),
+      detail: t('activeTeachers'),
+      icon: UserCheck,
+      tone: 'ink',
+    },
+  ]
+
+  return (
+    <section className="app-dashboard__overview" aria-labelledby="network-overview-title">
+      <div className="app-section-heading">
+        <div>
+          <h2 id="network-overview-title">{t('title')}</h2>
+          <p>{t('subtitle', { year: academicYear.year })}</p>
+        </div>
+        <span>{t('activeSchools', { count: stats.totalEscolas })}</span>
+      </div>
+
+      <div className="app-metric-grid">
+        {metrics.map(({ label, value, detail, icon: Icon, tone }) => (
+          <article className="app-metric" data-tone={tone} key={label}>
+            <div className="app-metric__label">
+              <span>{label}</span>
+              <Icon aria-hidden="true" />
+            </div>
+            <strong className="text-3xl tabular-nums">{value}</strong>
+            <small>{detail}</small>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function DashboardQuickAccess({ role }: { role: UserProfile['tipo_usuario'] | undefined }) {
+  const t = useTranslations('platform.dashboard')
+  const { userProfile } = useAuth()
+  const pilotMode = isPilotModeEnabled()
+  const demoSandbox = isDemoSandboxEnabled()
+  const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
+  const visibleQuickAccess = resolveVisibleQuickAccess(quickAccessItems, {
+    role: isQuickAccessRole(role) ? role : null,
+    pilotMode,
+    canManageSchool,
+    demoSandbox,
+  })
+
+  if (visibleQuickAccess.length === 0) return null
+
+  return (
+    <section className="app-dashboard__routines" aria-labelledby="quick-access-title">
+      <div className="app-section-heading app-section-heading--compact">
+        <div>
+          <h2 id="quick-access-title">{t('routines')}</h2>
+          <p>{t('routinesDescription')}</p>
+        </div>
+      </div>
+      <nav className="app-quick-actions" aria-label={t('quickAccess')}>
+        {visibleQuickAccess.map((item) => {
+          const Icon = item.icon
+          return (
+            <Link key={item.name} href={item.href} className="app-quick-action">
+              <Icon aria-hidden="true" />
+              <span>{t(`quick.${item.labelKey}`)}</span>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          )
+        })}
+      </nav>
+    </section>
+  )
+}
+
+function DashboardClasses({ academicYear, turmas }: { academicYear: ResolvedAcademicYear; turmas: Turma[] }) {
+  const t = useTranslations('platform.dashboard')
+  const locale = useLocale()
+  const number = new Intl.NumberFormat(locale)
+
+  return (
+    <section className="app-panel" aria-labelledby="classes-title">
+      <header className="app-panel__header">
+        <div>
+          <h2 id="classes-title">{t('myClasses')}</h2>
+          <p>{t('activeClassesDescription', { year: academicYear.year })}</p>
+        </div>
+        <Link href="/dashboard/turmas" className="app-text-link">
+          {t('viewAllClasses')} <ArrowRight aria-hidden="true" />
+        </Link>
+      </header>
+
+      {turmas.length === 0 ? (
+        <div className="app-empty-state" role="status">
+          <GraduationCap aria-hidden="true" />
+          <div><strong>{t('noClasses')}</strong></div>
+        </div>
+      ) : (
+        <ul className="app-class-list">
+          {turmas.map((turma) => (
+            <li key={turma.id}>
+              <Link href={`/dashboard/turmas/${turma.id}`} className="app-class-row">
+                <span className="app-class-row__marker" data-tone={getSerieTone(turma.serie)} aria-hidden="true" />
+                <span className="app-class-row__copy">
+                  <strong>{turma.nome}</strong>
+                  <small>{turma.serie} · {turma.turno}</small>
+                </span>
+                <span className="app-class-row__count">
+                  <strong className="tabular-nums">{number.format(turma.alunosCount)}</strong>
+                  <small>{t('students')}</small>
+                </span>
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function DashboardOverview({
+  academicYear,
+  escolaId,
+  stats,
+  turmas,
+  userName,
+  role,
+}: {
+  academicYear: ResolvedAcademicYear
+  escolaId: string
+  stats: DashboardStats
+  turmas: Turma[]
+  userName?: string | null
+  role: UserProfile['tipo_usuario'] | undefined
+}) {
+  return (
+    <div className="app-dashboard">
+      <DashboardIntro academicYear={academicYear} userName={userName} />
+      <DashboardMetrics academicYear={academicYear} stats={stats} />
+      <DashboardQuickAccess role={role} />
+      <div className="app-dashboard__work-grid">
+        <DashboardClasses academicYear={academicYear} turmas={turmas} />
+        <AlertasCard escolaId={escolaId} academicYear={academicYear} />
+      </div>
+    </div>
+  )
+}
+
+function DashboardSchoolContent({
+  academicYear,
+  escolaId,
+  loadDashboardData,
+  loadError,
+  stats,
+  turmas,
+  userProfile,
+}: {
+  academicYear: ResolvedAcademicYear | null
+  escolaId: string
+  loadDashboardData: () => Promise<void>
+  loadError: string | null
+  stats: DashboardStats
+  turmas: Turma[]
+  userProfile: UserProfile | null
+}) {
+  const t = useTranslations('platform.dashboard')
 
   if (userProfile?.tipo_usuario === 'professor' && academicYear) {
     return <TeacherDashboardEnhanced professorId={userProfile.id} academicYear={academicYear} />
   }
-
   if (loadError) {
     return (
       <section className="app-dashboard-error" role="alert">
@@ -202,142 +440,74 @@ export default function DashboardPage() {
       </section>
     )
   }
-
   if (!academicYear) return <DashboardSkeleton />
 
-  const pilotMode = isPilotModeEnabled()
-  const demoSandbox = isDemoSandboxEnabled()
-  const canManageSchool = !pilotMode || canManagePilotSchool(userProfile)
-  const visibleQuickAccess = resolveVisibleQuickAccess(quickAccessItems, {
-    role: (userProfile?.tipo_usuario as QuickAccessRole) ?? null,
-    pilotMode,
-    canManageSchool,
-    demoSandbox,
-  })
-  const frequencyIsConformant = stats.frequenciaMedia >= CONFORMIDADE
-  const formattedDate = new Intl.DateTimeFormat(locale, {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-  }).format(new Date())
-  const number = new Intl.NumberFormat(locale)
+  return (
+    <DashboardOverview
+      academicYear={academicYear}
+      escolaId={escolaId}
+      stats={stats}
+      turmas={turmas}
+      userName={userProfile?.nome}
+      role={userProfile?.tipo_usuario}
+    />
+  )
+}
 
-  const metricItems = [
-    {
-      label: t('averageAttendance'),
-      value: `${stats.frequenciaMedia}%`,
-      detail: frequencyIsConformant ? t('compliant') : t('attention'),
-      icon: frequencyIsConformant ? CheckCircle2 : AlertTriangle,
-      tone: frequencyIsConformant ? 'teal' : 'warning',
-    },
-    { label: t('totalStudents'), value: number.format(stats.totalAlunos), detail: t('students'), icon: Users, tone: 'paper' },
-    { label: t('activeClasses'), value: number.format(stats.totalTurmas), detail: t('activeClassesDescription', { year: academicYear.year }), icon: GraduationCap, tone: 'lime' },
-    { label: t('activeTeachers'), value: number.format(stats.totalProfessores), detail: t('activeTeachers'), icon: UserCheck, tone: 'ink' },
-  ] as const
+function DashboardContent({
+  academicYear,
+  escolaId,
+  escolaLoading,
+  loadDashboardData,
+  loadError,
+  loading,
+  stats,
+  turmas,
+  userProfile,
+}: {
+  academicYear: ResolvedAcademicYear | null
+  escolaId: string | null
+  escolaLoading: boolean
+  loadDashboardData: () => Promise<void>
+  loadError: string | null
+  loading: boolean
+  stats: DashboardStats
+  turmas: Turma[]
+  userProfile: UserProfile | null
+}) {
+  if (loading) return <DashboardSkeleton />
+  if (escolaLoading) return <DashboardSkeleton />
+  if (!escolaId) return <div className="app-dashboard"><EscolaRequiredState /></div>
 
   return (
-    <div className="app-dashboard">
-      <header className="app-dashboard__intro">
-        <div>
-          <h1>{t(`greeting.${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}`)}, {userProfile?.nome?.split(' ')[0] || t('user')}.</h1>
-          <p>{t('subtitle', { year: academicYear.year })}</p>
-        </div>
-        <div className="app-dashboard__date">
-          <CalendarDays aria-hidden="true" />
-          <span>{t('today')}</span>
-          <time dateTime={new Date().toISOString().slice(0, 10)}>{formattedDate}</time>
-        </div>
-      </header>
+    <DashboardSchoolContent
+      academicYear={academicYear}
+      escolaId={escolaId}
+      loadDashboardData={loadDashboardData}
+      loadError={loadError}
+      stats={stats}
+      turmas={turmas}
+      userProfile={userProfile}
+    />
+  )
+}
 
-      <section className="app-dashboard__overview" aria-labelledby="network-overview-title">
-        <div className="app-section-heading">
-          <div>
-            <h2 id="network-overview-title">{t('title')}</h2>
-            <p>{t('subtitle', { year: academicYear.year })}</p>
-          </div>
-          <span>{t('activeSchools', { count: stats.totalEscolas })}</span>
-        </div>
+export default function DashboardPage() {
+  const { userProfile } = useAuth()
+  const { selectedEscolaId, shouldShowSelector, loading: escolaLoading } = useEscola()
+  const escolaId = shouldShowSelector ? selectedEscolaId : userProfile?.escola_id ?? null
+  const dashboardData = useDashboardData({
+    escolaId,
+    escolaLoading,
+    userRole: userProfile?.tipo_usuario,
+  })
 
-        <div className="app-metric-grid">
-          {metricItems.map(({ label, value, detail, icon: Icon, tone }) => (
-            <article className="app-metric" data-tone={tone} key={label}>
-              <div className="app-metric__label">
-                <span>{label}</span>
-                <Icon aria-hidden="true" />
-              </div>
-              <strong className="text-3xl tabular-nums">{value}</strong>
-              <small>{detail}</small>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {visibleQuickAccess.length > 0 && (
-        <section className="app-dashboard__routines" aria-labelledby="quick-access-title">
-          <div className="app-section-heading app-section-heading--compact">
-            <div>
-              <h2 id="quick-access-title">{t('routines')}</h2>
-              <p>{t('routinesDescription')}</p>
-            </div>
-          </div>
-          <nav className="app-quick-actions" aria-label={t('quickAccess')}>
-            {visibleQuickAccess.map(item => {
-              const Icon = item.icon
-              return (
-                <Link key={item.name} href={item.href} className="app-quick-action">
-                  <Icon aria-hidden="true" />
-                  <span>{t(`quick.${item.labelKey}`)}</span>
-                  <ArrowRight aria-hidden="true" />
-                </Link>
-              )
-            })}
-          </nav>
-        </section>
-      )}
-
-      <div className="app-dashboard__work-grid">
-        <section className="app-panel" aria-labelledby="classes-title">
-          <header className="app-panel__header">
-            <div>
-              <h2 id="classes-title">{t('myClasses')}</h2>
-              <p>{t('activeClassesDescription', { year: academicYear.year })}</p>
-            </div>
-            <Link href="/dashboard/turmas" className="app-text-link">
-              {t('viewAllClasses')} <ArrowRight aria-hidden="true" />
-            </Link>
-          </header>
-
-          {turmas.length === 0 ? (
-            <div className="app-empty-state" role="status">
-              <GraduationCap aria-hidden="true" />
-              <div>
-                <strong>{t('noClasses')}</strong>
-              </div>
-            </div>
-          ) : (
-            <ul className="app-class-list">
-              {turmas.map(turma => (
-                <li key={turma.id}>
-                  <Link href={`/dashboard/turmas/${turma.id}`} className="app-class-row">
-                    <span className="app-class-row__marker" data-tone={getSerieTone(turma.serie)} aria-hidden="true" />
-                    <span className="app-class-row__copy">
-                      <strong>{turma.nome}</strong>
-                      <small>{turma.serie} · {turma.turno}</small>
-                    </span>
-                    <span className="app-class-row__count">
-                      <strong className="tabular-nums">{number.format(turma.alunosCount)}</strong>
-                      <small>{t('students')}</small>
-                    </span>
-                    <ArrowRight aria-hidden="true" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <AlertasCard escolaId={escolaId} academicYear={academicYear} />
-      </div>
-    </div>
+  return (
+    <DashboardContent
+      {...dashboardData}
+      escolaId={escolaId}
+      escolaLoading={escolaLoading}
+      userProfile={userProfile}
+    />
   )
 }

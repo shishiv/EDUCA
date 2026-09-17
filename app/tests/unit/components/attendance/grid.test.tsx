@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
-import { AttendanceGrid } from '@/components/attendance/AttendanceGrid'
 import { AttendanceCell, AttendanceCellRow } from '@/components/attendance/AttendanceCell'
-import type { AttendanceStatus } from '@/components/attendance/AttendanceCell'
 
 /**
  * Unit Tests: Attendance Grid Components
@@ -16,55 +14,6 @@ import type { AttendanceStatus } from '@/components/attendance/AttendanceCell'
  *
  * Swarm 3: Frequência (Chamada)
  */
-
-// Mock dependencies
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: [
-          {
-            id: 'student-1',
-            nome_completo: 'João Silva',
-            data_nascimento: '2010-05-15',
-            matriculas: [{ id: 'mat-1', turma_id: 'turma-1', situacao: 'ativa' }]
-          },
-          {
-            id: 'student-2',
-            nome_completo: 'Maria Santos',
-            data_nascimento: '2011-03-20',
-            matriculas: [{ id: 'mat-2', turma_id: 'turma-1', situacao: 'ativa' }]
-          }
-        ],
-        error: null
-      }),
-    })),
-    channel: vi.fn(() => ({
-      on: vi.fn().mockReturnThis(),
-      subscribe: vi.fn(),
-      unsubscribe: vi.fn(),
-    })),
-  },
-}))
-
-vi.mock('@/lib/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}))
-
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}))
-
-global.fetch = vi.fn()
 
 describe('AttendanceCell Component', () => {
   const mockOnChange = vi.fn()

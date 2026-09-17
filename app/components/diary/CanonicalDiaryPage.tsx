@@ -26,16 +26,73 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getClassDiary } from '@/lib/api/class-diary'
 import type { ClassDiaryEntry, ClassDiaryFilters } from '@/lib/api/class-diary'
+import type { UserProfile } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
-/** The canonical {t('diary.title')} route is `/diario`; dashboard is an alias. */
-export function CanonicalDiaryPage() {
+const ITEMS_PER_PAGE = 20
+
+type DiaryUserInfo = Pick<UserProfile, 'id' | 'tipo_usuario' | 'escola_id'>
+
+interface AuthenticatedDiaryPageProps {
+  userInfo: DiaryUserInfo
+  requestedTurmaId: string | null
+}
+
+function buildDefaultFilters(
+  userInfo: DiaryUserInfo,
+  requestedTurmaId: string | null,
+): ClassDiaryFilters {
+  const filters: ClassDiaryFilters = {}
+  if (userInfo.tipo_usuario === 'professor') filters.professor_id = userInfo.id
+  if (isSchoolScopedRole(userInfo.tipo_usuario) && userInfo.escola_id) {
+    filters.escola_id = userInfo.escola_id
+  }
+  if (requestedTurmaId) filters.turma_id = requestedTurmaId
+  return filters
+}
+
+function isSchoolScopedRole(role: string): boolean {
+  return role === 'diretor' || role === 'secretario'
+}
+
+function canWriteDiary(role: string): boolean {
+  return role === 'professor' || role === 'diretor'
+}
+
+function isViewOnlyRole(role: string): boolean {
+  return role === 'admin' || role === 'secretario'
+}
+
+function professorFilter(userInfo: DiaryUserInfo): string | undefined {
+  return userInfo.tipo_usuario === 'professor' ? userInfo.id : undefined
+}
+
+function schoolFilter(userInfo: DiaryUserInfo): string | undefined {
+  if (!isSchoolScopedRole(userInfo.tipo_usuario)) return undefined
+  return userInfo.escola_id || undefined
+}
+
+function DiaryLoadingState() {
+  return (
+    <div className="space-y-6" aria-busy="true">
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 rounded w-1/4" />
+        <div className="h-32 bg-gray-200 rounded" />
+        <div className="h-64 bg-gray-200 rounded" />
+      </div>
+    </div>
+  )
+}
+
+function AuthenticatedDiaryPage({
+  userInfo,
+  requestedTurmaId,
+}: AuthenticatedDiaryPageProps) {
   const t = useClassroomTranslations()
-  const searchParams = useSearchParams()
-  const { userProfile, loading: authLoading } = useAuth()
 
   const [entries, setEntries] = useState<ClassDiaryEntry[]>([])
+  const [totalEntries, setTotalEntries] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentFilters, setCurrentFilters] = useState<ClassDiaryFilters | null>(null)
@@ -45,51 +102,25 @@ export function CanonicalDiaryPage() {
   const [isNewLessonOpen, setIsNewLessonOpen] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
 
-  const itemsPerPage = 20
-  const requestedTurmaId = searchParams.get('turma')
-
-  const userInfo = useMemo(() => {
-    if (!userProfile) return null
-    return {
-      id: userProfile.id,
-      tipo_usuario: userProfile.tipo_usuario,
-      escola_id: userProfile.escola_id,
-    }
-  }, [userProfile])
-
-  const defaultFilters = useMemo<ClassDiaryFilters>(() => {
-    if (!userInfo) return {}
-
-    const filters: ClassDiaryFilters = {}
-    if (userInfo.tipo_usuario === 'professor') {
-      filters.professor_id = userInfo.id
-    }
-    if (
-      (userInfo.tipo_usuario === 'diretor' || userInfo.tipo_usuario === 'secretario') &&
-      userInfo.escola_id
-    ) {
-      filters.escola_id = userInfo.escola_id
-    }
-    if (requestedTurmaId) filters.turma_id = requestedTurmaId
-    return filters
-  }, [requestedTurmaId, userInfo])
+  const defaultFilters = useMemo(
+    () => buildDefaultFilters(userInfo, requestedTurmaId),
+    [requestedTurmaId, userInfo],
+  )
 
   const activeFilters = currentFilters ?? defaultFilters
   const selectedTurmaId = activeFilters.turma_id ?? null
-  const canWriteDiary = userInfo?.tipo_usuario === 'professor' || userInfo?.tipo_usuario === 'diretor'
-  const isViewOnlyRole = userInfo?.tipo_usuario === 'admin' || userInfo?.tipo_usuario === 'secretario'
+  const userCanWriteDiary = canWriteDiary(userInfo.tipo_usuario)
+  const userIsViewOnly = isViewOnlyRole(userInfo.tipo_usuario)
 
   useEffect(() => {
-    if (authLoading || !userInfo) return
-
     async function fetchEntries() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await getClassDiary(supabase, {
+      const { data, total, error: fetchError } = await getClassDiary(supabase, {
         ...activeFilters,
-        limit: itemsPerPage,
-        offset: (currentPage - 1) * itemsPerPage,
+        limit: ITEMS_PER_PAGE,
+        offset: (currentPage - 1) * ITEMS_PER_PAGE,
       })
 
       if (fetchError || !data) {
@@ -99,16 +130,18 @@ export function CanonicalDiaryPage() {
         )
         setError('Erro ao carregar o diário de classe. Tente novamente.')
         setEntries([])
+        setTotalEntries(0)
         setLoading(false)
         return
       }
 
       setEntries(data)
+      setTotalEntries(total)
       setLoading(false)
     }
 
     void fetchEntries()
-  }, [activeFilters, authLoading, currentPage, refreshToken, userInfo])
+  }, [activeFilters, currentPage, refreshToken])
 
   const handleFilterChange = (filters: ClassDiaryFilters) => {
     setCurrentFilters(filters)
@@ -134,19 +167,7 @@ export function CanonicalDiaryPage() {
     setRefreshToken((token) => token + 1)
   }
 
-  const totalPages = Math.max(1, Math.ceil(entries.length / itemsPerPage))
-
-  if (authLoading || !userInfo) {
-    return (
-      <div className="space-y-6" aria-busy="true">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4" />
-          <div className="h-32 bg-gray-200 rounded" />
-          <div className="h-64 bg-gray-200 rounded" />
-        </div>
-      </div>
-    )
-  }
+  const totalPages = Math.max(1, Math.ceil(totalEntries / ITEMS_PER_PAGE))
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
@@ -160,7 +181,7 @@ export function CanonicalDiaryPage() {
             {t('diary.subtitle')}
           </p>
         </div>
-        {canWriteDiary && selectedTurmaId && (
+        {userCanWriteDiary && selectedTurmaId && (
           <Button onClick={() => setIsNewLessonOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('actions.newLesson')}
@@ -176,7 +197,7 @@ export function CanonicalDiaryPage() {
         </AlertDescription>
       </Alert>
 
-      {isViewOnlyRole && (
+      {userIsViewOnly && (
         <Alert data-testid="diary-view-only-notice">
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle>{t('diary.viewOnly')}</AlertTitle>
@@ -189,12 +210,8 @@ export function CanonicalDiaryPage() {
       <ClassDiaryFilter
         onFilterChange={handleFilterChange}
         initialFilters={activeFilters}
-        profesor_id={userInfo.tipo_usuario === 'professor' ? userInfo.id : undefined}
-        escola_id={
-          userInfo.tipo_usuario === 'diretor' || userInfo.tipo_usuario === 'secretario'
-            ? userInfo.escola_id || undefined
-            : undefined
-        }
+        profesor_id={professorFilter(userInfo)}
+        escola_id={schoolFilter(userInfo)}
       />
 
       {error && (
@@ -232,5 +249,24 @@ export function CanonicalDiaryPage() {
         onSuccess={handleNewLessonSuccess}
       />
     </div>
+  )
+}
+
+/** The canonical {t('diary.title')} route is `/diario`; dashboard is an alias. */
+export function CanonicalDiaryPage() {
+  const searchParams = useSearchParams()
+  const { userProfile, loading: authLoading } = useAuth()
+
+  if (authLoading || !userProfile) return <DiaryLoadingState />
+
+  return (
+    <AuthenticatedDiaryPage
+      userInfo={{
+        id: userProfile.id,
+        tipo_usuario: userProfile.tipo_usuario,
+        escola_id: userProfile.escola_id,
+      }}
+      requestedTurmaId={searchParams.get('turma')}
+    />
   )
 }

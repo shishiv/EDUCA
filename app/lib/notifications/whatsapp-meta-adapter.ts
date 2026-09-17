@@ -15,6 +15,7 @@
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { z } from 'zod'
 import {
   buildAttendanceMessageBody,
   type AttendanceNotificationPayload,
@@ -24,6 +25,7 @@ import type {
   WhatsAppNotificationGateway,
   WhatsAppSendResult,
 } from './whatsapp-gateway'
+import { WhatsAppTransientDeliveryError } from './whatsapp-gateway'
 import { formatWhatsAppReceipt } from './whatsapp-receipts'
 
 export const WHATSAPP_GRAPH_API_VERSION = 'v23.0'
@@ -39,17 +41,28 @@ export interface WhatsAppMetaAdapterConfig {
   fetchFn?: typeof fetch
 }
 
-interface MetaApiErrorBody {
-  error?: { code?: number; message?: string; type?: string; error_subcode?: number }
-}
+const metaSuccessSchema = z.object({ messages: z.array(z.object({ id: z.string() })).min(1) })
+const metaErrorSchema = z.object({ error: z.object({ code: z.number() }).optional() })
 
 /** Meta error codes mapped to stable failure codes (numbers only, no body text). */
-const META_ERROR_CODE_MAP: Record<number, string> = {
+const META_ERROR_CODE_MAP = {
   130429: 'rate_limited',
   131026: 'template_pending', // business-initiated outside the 24h window
   131042: 'template_pending', // re-engagement template required
   131047: 'template_pending', // free entry point required
   131051: 'recipient_unavailable', // user opted out or number not on WhatsApp
+} as const
+
+function metaFailureCode(errorCode: number | undefined, status: number): string {
+  if (errorCode === undefined) return `meta_http_${status}`
+  switch (errorCode) {
+    case 130429: return META_ERROR_CODE_MAP[130429]
+    case 131026: return META_ERROR_CODE_MAP[131026]
+    case 131042: return META_ERROR_CODE_MAP[131042]
+    case 131047: return META_ERROR_CODE_MAP[131047]
+    case 131051: return META_ERROR_CODE_MAP[131051]
+    default: return `meta_error_${errorCode}`
+  }
 }
 
 export class WhatsAppMetaAdapter implements WhatsAppNotificationGateway {
@@ -92,7 +105,7 @@ export class WhatsAppMetaAdapter implements WhatsAppNotificationGateway {
         }
       )
     } catch (error) {
-      throw new Error(
+      throw new WhatsAppTransientDeliveryError(
         `WhatsAppMetaAdapter network failure: ${error instanceof Error ? error.message : 'unknown'}`
       )
     }
@@ -101,9 +114,8 @@ export class WhatsAppMetaAdapter implements WhatsAppNotificationGateway {
       return this.mapMetaErrorResponse(payload, response)
     }
 
-    const body = (await response.json()) as { messages?: Array<{ id?: string }> }
-    const externalMessageId = body.messages?.[0]?.id
-    if (!externalMessageId) {
+    const body = metaSuccessSchema.safeParse(await response.json())
+    if (!body.success) {
       return {
         outcome: 'failed',
         failureCode: 'meta_missing_message_id',
@@ -118,12 +130,12 @@ export class WhatsAppMetaAdapter implements WhatsAppNotificationGateway {
 
     return {
       outcome: 'accepted',
-      externalMessageId,
+      externalMessageId: body.data.messages[0].id,
       receipt: formatWhatsAppReceipt({
         gateway: this.identity(),
         notificationType: payload.type,
         outcome: 'accepted',
-        externalMessageId,
+        externalMessageId: body.data.messages[0].id,
         guardianRef: undefined,
       }),
     }
@@ -135,14 +147,23 @@ export class WhatsAppMetaAdapter implements WhatsAppNotificationGateway {
   ): Promise<WhatsAppSendResult> {
     let errorCode: number | undefined
     try {
-      const body = (await response.json()) as MetaApiErrorBody
-      errorCode = body.error?.code
+      const body = metaErrorSchema.safeParse(await response.json())
+      errorCode = body.success ? body.data.error?.code : undefined
     } catch {
       // Unparseable error body: fall back to the HTTP status only.
     }
-    const failureCode = errorCode !== undefined
-      ? (META_ERROR_CODE_MAP[errorCode] ?? `meta_error_${errorCode}`)
-      : `meta_http_${response.status}`
+    if (errorCode === 130429 || response.status === 429) {
+      throw new WhatsAppTransientDeliveryError(
+        `WhatsAppMetaAdapter transient response: ${errorCode ?? response.status}`,
+        { retrySafe: true },
+      )
+    }
+    if (response.status >= 500) {
+      throw new WhatsAppTransientDeliveryError(
+        `WhatsAppMetaAdapter indeterminate response: ${errorCode ?? response.status}`,
+      )
+    }
+    const failureCode = metaFailureCode(errorCode, response.status)
 
     return {
       outcome: 'failed',

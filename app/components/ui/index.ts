@@ -34,8 +34,6 @@ export { Switch } from './switch'
 export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from './table'
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs'
 export { Textarea } from './textarea'
-export { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from './toast'
-export { Toaster } from './toaster'
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip'
 
 // Custom UI Components for Educational System
@@ -51,12 +49,6 @@ export {
   RefreshButton,
   OverlayLoading,
 } from './loading-states'
-
-// Mobile-First Responsive Components
-export {
-  ResponsiveDataTable,
-  StudentDataTable
-} from './responsive-data-table'
 
 // Sonner Toast Integration
 export { Toaster as SonnerToaster } from './sonner'

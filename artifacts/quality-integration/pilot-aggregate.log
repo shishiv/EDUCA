@@ -1,0 +1,12 @@
+
+> educa@1.0.0 test:e2e:pilot /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app
+> bash scripts/run-pilot-aggregate-e2e.sh
+
+PILOT_PORT_RANGE_LEASE: base=63260 end=63269 lease_dir=/run/user/1000/educa-pilot-port-leases/63260 owner_pid=488626
+PILOT_AGGREGATE_CHILD_START: name=legacy command=cd app && pnpm test:e2e:pilot:legacy
+PILOT_AGGREGATE_CHILD_RESULT: name=legacy status=failed exit_code=1 receipt=/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/.pilot-evidence/r3-t4-pilot-aggregate-20260909T230530Z-488626/children/legacy/r3-t1-legacy-pilot-e2e-20260909T230530Z-488702.json
+PILOT_AGGREGATE_CHILD_START: name=capacity command=cd app && pnpm test:e2e:pilot:capacity
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/63260
+PILOT_AGGREGATE_CLEANUP_RECEIPT: result=pass receipt=/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/.pilot-evidence/r3-t4-pilot-aggregate-20260909T230530Z-488626.cleanup.json
+PILOT_AGGREGATE_FINAL_RECEIPT: /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/.pilot-evidence/r3-t4-pilot-aggregate-20260909T230530Z-488626.json
+ ELIFECYCLE  Command failed with exit code 143.

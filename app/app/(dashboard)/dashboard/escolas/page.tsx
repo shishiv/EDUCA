@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { schoolsApi } from '@/lib/api/schools'
+import { schoolFormSchema } from '@/lib/validation/brazilian'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,12 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Eye, Edit, Trash2, School, Users, GraduationCap, MapPin, Phone, Download, CheckCircle, BookOpen, Search as SearchIcon } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, School, Users, MapPin, Phone, Download, CheckCircle, BookOpen, Search as SearchIcon } from 'lucide-react'
 import { StatsBar } from '@/components/dashboard'
 import { InlineFilters } from '@/components/filters'
 import { TableEmptyState } from '@/components/ui/table-empty-state'
 import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
 
 interface Escola {
   id: string
@@ -44,6 +44,24 @@ interface Escola {
   created_at: string | null
 }
 
+function matchesSchool(escola: Escola, search: string, tipo: string, status: string) {
+  const query = search.toLowerCase()
+  const textMatch = [escola.nome, escola.codigo, escola.diretor.nome].some(value => value.toLowerCase().includes(query))
+  const statusMatch = status === 'todos' || (status === 'ativo' && escola.ativo) || (status === 'inativo' && !escola.ativo)
+  return textMatch && (tipo === 'todos' || escola.tipo === tipo) && statusMatch
+}
+
+type SchoolRecord = Awaited<ReturnType<typeof schoolsApi.getSchoolsWithDetails>>[number]
+function toSchoolListItem(school: SchoolRecord): Escola {
+  const counts = school._count ?? { students: 0, classes: 0, teachers: 0 }
+  const diretor = { nome: school.diretor?.nome ?? 'Sem diretor atribuído', email: school.diretor?.email ?? '' }
+  return { id: school.id, nome: school.nome, codigo: school.codigo, endereco: school.endereco, telefone: school.telefone || '', tipo: schoolFormSchema.shape.tipo.parse(school.tipo), diretor, estatisticas: { totalAlunos: counts.students || 0, totalTurmas: counts.classes || 0, totalProfessores: counts.teachers || 0, capacidadeTotal: school.turmas.reduce((total, turma) => total + (turma.capacidade ?? 0), 0) }, ativo: school.ativo, created_at: school.created_at }
+}
+
+function SchoolEmptyState({ hasFilters, t, onClear }: { hasFilters: boolean; t: ReturnType<typeof useTranslations>; onClear: () => void }) {
+  return <TableEmptyState colSpan={7} icon={hasFilters ? SearchIcon : School} title={hasFilters ? t('ui.nenhuma-escola-encontrada') : t('ui.nenhuma-escola-cadastrada')} description={hasFilters ? t('ui.tente-ajustar-os-filtros-para-encontrar-o-que-procura') : t('ui.comece-adicionando-a-primeira-escola-da-rede')} actions={hasFilters ? [{ label: 'Limpar filtros', variant: 'outline', onClick: onClear }] : [{ label: t('labels.nova-escola'), href: '/dashboard/escolas/nova', icon: Plus }]} />
+}
+
 
 export default function EscolasPage() {
   const t = useTranslations('registry')
@@ -56,36 +74,14 @@ export default function EscolasPage() {
   const loadEscolas = useCallback(async () => {
     setLoading(true)
     try {
-      const schoolsData = await schoolsApi.getSchoolsWithDetails()
+      const schoolsData = await schoolsApi.getSchoolsWithDetails({ activeOnly: false })
 
-      // Transform API data to match component interface
-      const formattedSchools = schoolsData.map(school => ({
-        id: school.id,
-        nome: school.nome,
-        codigo: school.codigo,
-        endereco: school.endereco,
-        telefone: school.telefone || '',
-        tipo: school.tipo as 'creche' | 'pre_escola' | 'fundamental',
-        diretor: {
-          nome: school.diretor?.nome || 'Sem diretor atribuído',
-          email: school.diretor?.email || ''
-        },
-        estatisticas: {
-          totalAlunos: school._count?.students || 0,
-          totalTurmas: school._count?.classes || 0,
-          totalProfessores: school._count?.teachers || 0,
-          capacidadeTotal: 0
-        },
-        ativo: school.ativo,
-        created_at: school.created_at
-      }))
+      const formattedSchools = schoolsData.map(toSchoolListItem)
 
       setEscolas(formattedSchools)
-    } catch (error) {
-      // logger.error('Erro ao carregar escolas:', error)
+    } catch {
       toast.error(t('ui.erro-ao-carregar-lista-de-escolas-verifique-a-conexao'))
 
-      // Show empty state instead of mock data
       setEscolas([])
     } finally {
       setLoading(false)
@@ -105,13 +101,13 @@ export default function EscolasPage() {
       .slice(0, 2)
   }
 
-  const getTipoLabel = (tipo: string) => {
+  const getTipoLabel = (tipo: Escola['tipo']) => {
     const tipos = {
       creche: 'Creche',
       pre_escola: 'Pré-Escola',
       fundamental: 'Ensino Fundamental'
     }
-    return tipos[tipo as keyof typeof tipos] || tipo
+    return tipos[tipo]
   }
 
   const getTipoBadgeVariant = (tipo: string) => {
@@ -134,18 +130,8 @@ export default function EscolasPage() {
     return 'text-green-600'
   }
 
-  const filteredEscolas = escolas.filter(escola => {
-    const matchesSearch = escola.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         escola.codigo.toLowerCase().includes(search.toLowerCase()) ||
-                         escola.diretor.nome.toLowerCase().includes(search.toLowerCase())
-
-    const matchesTipo = tipoFilter === 'todos' || escola.tipo === tipoFilter
-    const matchesStatus = statusFilter === 'todos' ||
-                         (statusFilter === 'ativo' && escola.ativo) ||
-                         (statusFilter === 'inativo' && !escola.ativo)
-
-    return matchesSearch && matchesTipo && matchesStatus
-  })
+  const filteredEscolas = escolas.filter(escola => matchesSchool(escola, search, tipoFilter, statusFilter))
+  const hasFilters = Boolean(search || tipoFilter !== 'todos' || statusFilter !== 'todos')
 
   const totalEscolas = escolas.length
   const escolasAtivas = escolas.filter(e => e.ativo).length
@@ -349,43 +335,7 @@ export default function EscolasPage() {
                     </TableRow>
                   )
                 })}
-                {filteredEscolas.length === 0 && (
-                  <TableEmptyState
-                    colSpan={7}
-                    icon={search || tipoFilter !== 'todos' || statusFilter !== 'todos' ? SearchIcon : School}
-                    title={
-                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? t('ui.nenhuma-escola-encontrada')
-                        : t('ui.nenhuma-escola-cadastrada')
-                    }
-                    description={
-                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? t('ui.tente-ajustar-os-filtros-para-encontrar-o-que-procura')
-                        : t('ui.comece-adicionando-a-primeira-escola-da-rede')
-                    }
-                    actions={
-                      search || tipoFilter !== 'todos' || statusFilter !== 'todos'
-                        ? [
-                            {
-                              label: 'Limpar filtros',
-                              variant: 'outline',
-                              onClick: () => {
-                                setSearch('')
-                                setTipoFilter('todos')
-                                setStatusFilter('todos')
-                              },
-                            },
-                          ]
-                        : [
-                            {
-                              label: t('labels.nova-escola'),
-                              href: '/dashboard/escolas/nova',
-                              icon: Plus,
-                            },
-                          ]
-                    }
-                  />
-                )}
+                {filteredEscolas.length === 0 && <SchoolEmptyState hasFilters={hasFilters} t={t} onClear={() => { setSearch(''); setTipoFilter('todos'); setStatusFilter('todos') }} />}
               </TableBody>
             </Table>
           </div>

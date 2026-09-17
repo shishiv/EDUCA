@@ -30,11 +30,16 @@
  */
 'use client'
 
-import { supabase, type Inserts } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { openSessionAction } from '@/app/actions/attendance/open-session'
 import { markAttendanceBatchAction } from '@/app/actions/attendance/mark-attendance-batch'
 import { closeSessionAction } from '@/app/actions/attendance/close-session'
-import { createAttendanceModule } from '@/lib/services/attendance-module'
+import {
+  createAttendanceModule,
+  normalizeSessionStatus,
+  type AttendanceSession as CanonicalAttendanceSession,
+  type AttendanceSessionRow,
+} from '@/lib/services/attendance-module'
 import {
   createAttendanceReopenService,
   type AttendanceReopenRequest,
@@ -47,25 +52,7 @@ import {
  * queries, status rules, date rules, authorization, or writes.
  */
 
-export interface AttendanceSession {
-  id: string
-  turma_id: string
-  professor_id: string
-  escola_id: string
-  data_aula: string
-  conteudo_programatico: string
-  metodologia?: string | null
-  recursos_utilizados?: string | null
-  observacoes?: string | null
-  duracao_minutos: number
-  status: 'PLANEJADA' | 'ABERTA' | 'FECHADA' | 'CANCELADA' | 'planejada' | 'aberta' | 'fechada' | 'cancelada'
-  inicio_aula: string
-  aberta_em: string | null
-  fechada_em: string | null
-  fim_aula?: string | null
-  created_at: string
-  updated_at?: string | null
-}
+export type AttendanceSession = CanonicalAttendanceSession
 
 export interface AttendanceRecord {
   id: string
@@ -87,24 +74,14 @@ export interface AttendanceWithDetails extends AttendanceRecord {
   sessao?: AttendanceSession
 }
 
-/**
- * @deprecated Use openSessionAction. This helper does not authorize a write.
- * It remains only for the compile-time payload regression test.
- */
-export function buildChamadaSessionInsert(params: {
-  turmaId: string
-  dateStr: string
-  professorId: string
-  escolaId: string
-}): Inserts<'sessoes_aula'> {
-  return {
-    turma_id: params.turmaId,
-    data_aula: params.dateStr,
-    status: 'ABERTA',
-    professor_id: params.professorId,
-    escola_id: params.escolaId,
-    conteudo_programatico: 'Chamada',
+function toAttendanceSession(session: AttendanceSessionRow): AttendanceSession {
+  const status = normalizeSessionStatus(session.status)
+
+  if (!status) {
+    throw new Error('A sessão retornou um status inválido')
   }
+
+  return { ...session, status }
 }
 
 export class AttendanceApiService {
@@ -121,7 +98,7 @@ export class AttendanceApiService {
     if (!result.success || !result.session) {
       throw new Error(result.error || 'Não foi possível abrir a chamada')
     }
-    return result.session as unknown as AttendanceSession
+    return toAttendanceSession(result.session)
   }
 
   async closeSession(sessionId: string): Promise<AttendanceSession> {
@@ -129,7 +106,7 @@ export class AttendanceApiService {
     if (!result.success || !result.session) {
       throw new Error(result.error || 'Não foi possível fechar a chamada')
     }
-    return result.session as unknown as AttendanceSession
+    return toAttendanceSession(result.session)
   }
 
   async getSessionByDate(turmaId: string, date: string): Promise<AttendanceSession | null> {
@@ -143,11 +120,11 @@ export class AttendanceApiService {
     date: string,
     requestedSessionId?: string | null
   ): Promise<AttendanceSession[]> {
-    return (await this.canonicalAttendance.getSessionsForChamada(
+    return this.canonicalAttendance.getSessionsForChamada(
       turmaId,
       date,
       requestedSessionId
-    )) as unknown as AttendanceSession[]
+    )
   }
 
   async getStudentsForChamada(turmaId: string): Promise<{
@@ -180,6 +157,11 @@ export class AttendanceApiService {
     return result
   }
 
+  /**
+   * Legacy date-only callers retain the empty result when no session exists.
+   * When a date has multiple canonical sessions this compatibility adapter
+   * selects one session; it is not a policy aggregation or legal rule.
+   */
   async getAttendanceForDate(turmaId: string, date: string): Promise<{
     sessionId: string | null
     sessionStatus: string | null

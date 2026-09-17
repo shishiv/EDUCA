@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { z } from 'zod'
 import {
   createPilotDryRunValidationToken,
   decryptPilotImportPayload,
@@ -7,6 +8,7 @@ import {
   type PilotEncryptedImportPayload,
 } from './pilot-import-crypto'
 import { PILOT_PROOF_SYNTHETIC_MARKER } from './pilot-safety-gate'
+import { parseCsvRecords } from './csv-record-parser'
 
 /** CSV marker shared by the synthetic pilot proof and its safety gate. */
 export const SYNTHETIC_CSV_MARKER = PILOT_PROOF_SYNTHETIC_MARKER
@@ -51,114 +53,164 @@ export interface SyntheticCsvValidationReport {
   issues: CsvValidationIssue[]
 }
 
+export interface SyntheticCsvValidationResult {
+  rows: SyntheticStudentImportRow[]
+  report: SyntheticCsvValidationReport
+}
+
+interface SyntheticCsvRowCollection {
+  rows: SyntheticStudentImportRow[]
+  issues: CsvValidationIssue[]
+}
+
 export type EncryptedStagingPayload = PilotEncryptedImportPayload
 
-function parseCsvRecords(csv: string): string[][] {
-  const records: string[][] = []
-  let record: string[] = []
-  let field = ''
-  let quoted = false
+const syntheticStudentImportCandidateSchema = z.object({
+  synthetic_marker: z.string(),
+  source_id: z.string(),
+  school_code: z.string(),
+  class_code: z.string(),
+  student_name: z.string(),
+  birth_date: z.string(),
+  sex: z.string(),
+  guardian_name: z.string(),
+  guardian_phone: z.string(),
+  guardian_relationship: z.string(),
+}).strict()
 
-  for (let index = 0; index < csv.length; index += 1) {
-    const character = csv[index]
-    const nextCharacter = csv[index + 1]
-    if (character === '"' && quoted && nextCharacter === '"') {
-      field += '"'
-      index += 1
-    } else if (character === '"') {
-      quoted = !quoted
-    } else if (character === ',' && !quoted) {
-      record.push(field.trim())
-      field = ''
-    } else if ((character === '\n' || character === '\r') && !quoted) {
-      if (character === '\r' && nextCharacter === '\n') index += 1
-      record.push(field.trim())
-      field = ''
-      if (record.some(value => value !== '')) records.push(record)
-      record = []
-    } else {
-      field += character
-    }
-  }
+const syntheticStudentImportRowSchema = syntheticStudentImportCandidateSchema.extend({
+  synthetic_marker: z.literal(SYNTHETIC_CSV_MARKER),
+  sex: z.enum(['M', 'F']),
+})
 
-  if (quoted) throw new Error('CSV_INVALID_QUOTING: unclosed quoted field')
-  record.push(field.trim())
-  if (record.some(value => value !== '')) records.push(record)
-  return records
-}
+type SyntheticStudentImportCandidate = z.infer<typeof syntheticStudentImportCandidateSchema>
 
 function isValidDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
 }
 
-/** Parses only the synthetic, low-risk student import allowlist. */
-export function validateSyntheticStudentCsv(csv: string): {
-  rows: SyntheticStudentImportRow[]
-  report: SyntheticCsvValidationReport
-} {
-  const contentSha256 = createHash('sha256').update(csv, 'utf8').digest('hex')
-  let records: string[][]
-  try {
-    records = parseCsvRecords(csv)
-  } catch {
-    return {
-      rows: [],
-      report: { valid: false, totalRows: 0, validRows: 0, contentSha256, schoolCodes: [], issues: [{ row: 1, field: 'csv', code: 'invalid_quoting' }] },
-    }
-  }
+function validationIssue(row: number, field: string, code: string): CsvValidationIssue {
+  return { row, field, code }
+}
 
-  const issues: CsvValidationIssue[] = []
-  const headers = records[0] ?? []
-  if (headers.length !== SYNTHETIC_STUDENT_CSV_HEADERS.length || headers.some((header, index) => header !== SYNTHETIC_STUDENT_CSV_HEADERS[index])) {
-    issues.push({ row: 1, field: 'headers', code: 'allowlist_mismatch' })
-    return { rows: [], report: { valid: false, totalRows: Math.max(0, records.length - 1), validRows: 0, contentSha256, schoolCodes: [], issues } }
-  }
+function validateSyntheticFormula(
+  headers: readonly string[],
+  values: string[],
+  row: number
+): CsvValidationIssue[] {
+  const field = headers.find((header, index) =>
+    header !== 'guardian_phone' && /^[=+\-@]/.test(values[index])
+  )
+  return field ? [validationIssue(row, field, 'spreadsheet_formula_rejected')] : []
+}
 
-  const rows: SyntheticStudentImportRow[] = []
-  const seenSourceIds = new Set<string>()
-  for (let index = 1; index < records.length; index += 1) {
-    const values = records[index]
-    const rowNumber = index + 1
-    if (values.length !== headers.length) {
-      issues.push({ row: rowNumber, field: 'row', code: 'column_count_mismatch' })
-      continue
-    }
-    const candidate = Object.fromEntries(headers.map((header, valueIndex) => [header, values[valueIndex]])) as unknown as SyntheticStudentImportRow
-    const rowIssues: CsvValidationIssue[] = []
-    const formulaField = headers.find((header, valueIndex) =>
-      header !== 'guardian_phone' && /^[=+\-@]/.test(values[valueIndex])
-    )
-    if (formulaField) rowIssues.push({ row: rowNumber, field: formulaField, code: 'spreadsheet_formula_rejected' })
-    if (candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER) rowIssues.push({ row: rowNumber, field: 'synthetic_marker', code: 'real_data_rejected' })
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)) rowIssues.push({ row: rowNumber, field: 'source_id', code: 'invalid' })
-    if (seenSourceIds.has(candidate.source_id)) rowIssues.push({ row: rowNumber, field: 'source_id', code: 'duplicate' })
-    if (!candidate.school_code || !candidate.class_code) rowIssues.push({ row: rowNumber, field: 'school_or_class_code', code: 'required' })
-    if (candidate.student_name.length < 2 || candidate.student_name.length > 160) rowIssues.push({ row: rowNumber, field: 'student_name', code: 'invalid_length' })
-    if (!isValidDate(candidate.birth_date)) rowIssues.push({ row: rowNumber, field: 'birth_date', code: 'invalid' })
-    if (!['M', 'F'].includes(candidate.sex)) rowIssues.push({ row: rowNumber, field: 'sex', code: 'invalid' })
-    if (candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160) rowIssues.push({ row: rowNumber, field: 'guardian_name', code: 'invalid_length' })
-    if (!/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)) rowIssues.push({ row: rowNumber, field: 'guardian_phone', code: 'invalid' })
-    if (candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40) rowIssues.push({ row: rowNumber, field: 'guardian_relationship', code: 'invalid_length' })
-    issues.push(...rowIssues)
-    if (rowIssues.length === 0) {
-      rows.push(candidate)
-      seenSourceIds.add(candidate.source_id)
-    }
-  }
+function validateSyntheticCandidateFields(
+  candidate: SyntheticStudentImportCandidate,
+  seenSourceIds: Set<string>,
+  row: number
+): CsvValidationIssue[] {
+  const rules = [
+    ['synthetic_marker', 'real_data_rejected', candidate.synthetic_marker !== SYNTHETIC_CSV_MARKER],
+    ['source_id', 'invalid', !/^[A-Za-z0-9_-]{1,64}$/.test(candidate.source_id)],
+    ['source_id', 'duplicate', seenSourceIds.has(candidate.source_id)],
+    ['school_or_class_code', 'required', !candidate.school_code || !candidate.class_code],
+    ['student_name', 'invalid_length', candidate.student_name.length < 2 || candidate.student_name.length > 160],
+    ['birth_date', 'invalid', !isValidDate(candidate.birth_date)],
+    ['sex', 'invalid', !['M', 'F'].includes(candidate.sex)],
+    ['guardian_name', 'invalid_length', candidate.guardian_name.length < 2 || candidate.guardian_name.length > 160],
+    ['guardian_phone', 'invalid', !/^\+?[0-9 ()-]{8,24}$/.test(candidate.guardian_phone)],
+    ['guardian_relationship', 'invalid_length', candidate.guardian_relationship.length < 2 || candidate.guardian_relationship.length > 40],
+  ] as const
+  return rules.flatMap(([field, code, invalid]) => invalid ? [validationIssue(row, field, code)] : [])
+}
 
-  const schoolCodes = [...new Set(rows.map(row => row.school_code))].sort()
-  if (schoolCodes.length > 1) issues.push({ row: 1, field: 'school_code', code: 'one_school_per_batch_required' })
+function validateSyntheticStudentRow(
+  candidate: SyntheticStudentImportCandidate,
+  headers: readonly string[],
+  values: string[],
+  seenSourceIds: Set<string>,
+  row: number
+): CsvValidationIssue[] {
+  return [
+    ...validateSyntheticFormula(headers, values, row),
+    ...validateSyntheticCandidateFields(candidate, seenSourceIds, row),
+  ]
+}
+
+function createSyntheticCsvResult(
+  rows: SyntheticStudentImportRow[],
+  totalRows: number,
+  contentSha256: string,
+  schoolCodes: string[],
+  issues: CsvValidationIssue[]
+): SyntheticCsvValidationResult {
   return {
     rows,
     report: {
       valid: issues.length === 0 && rows.length > 0,
-      totalRows: Math.max(0, records.length - 1),
+      totalRows,
       validRows: rows.length,
       contentSha256,
       schoolCodes,
       issues,
     },
   }
+}
+
+function hasSyntheticCsvHeaders(headers: string[]): boolean {
+  return headers.length === SYNTHETIC_STUDENT_CSV_HEADERS.length && headers.every((header, index) =>
+    header === SYNTHETIC_STUDENT_CSV_HEADERS[index]
+  )
+}
+
+function collectSyntheticCsvRows(
+  records: string[][],
+  headers: string[]
+): SyntheticCsvRowCollection {
+  const rows: SyntheticStudentImportRow[] = []
+  const issues: CsvValidationIssue[] = []
+  const seenSourceIds = new Set<string>()
+  for (let index = 1; index < records.length; index += 1) {
+    const values = records[index]
+    const row = index + 1
+    if (values.length !== headers.length) {
+      issues.push(validationIssue(row, 'row', 'column_count_mismatch'))
+      continue
+    }
+    const candidate = syntheticStudentImportCandidateSchema.parse(
+      Object.fromEntries(headers.map((header, valueIndex) => [header, values[valueIndex]]))
+    )
+    const rowIssues = validateSyntheticStudentRow(candidate, headers, values, seenSourceIds, row)
+    issues.push(...rowIssues)
+    if (rowIssues.length === 0) {
+      rows.push(syntheticStudentImportRowSchema.parse(candidate))
+      seenSourceIds.add(candidate.source_id)
+    }
+  }
+  return { rows, issues }
+}
+
+/** Parses only the synthetic, low-risk student import allowlist. */
+export function validateSyntheticStudentCsv(csv: string): SyntheticCsvValidationResult {
+  const contentSha256 = createHash('sha256').update(csv, 'utf8').digest('hex')
+  let records: string[][]
+  try {
+    records = parseCsvRecords(csv, 'CSV_INVALID_QUOTING: unclosed quoted field')
+  } catch {
+    return createSyntheticCsvResult([], 0, contentSha256, [], [validationIssue(1, 'csv', 'invalid_quoting')])
+  }
+
+  const headers = records[0] ?? []
+  const totalRows = Math.max(0, records.length - 1)
+  if (!hasSyntheticCsvHeaders(headers)) {
+    return createSyntheticCsvResult([], totalRows, contentSha256, [], [validationIssue(1, 'headers', 'allowlist_mismatch')])
+  }
+
+  const { rows, issues } = collectSyntheticCsvRows(records, headers)
+
+  const schoolCodes = [...new Set(rows.map(row => row.school_code))].sort()
+  if (schoolCodes.length > 1) issues.push({ row: 1, field: 'school_code', code: 'one_school_per_batch_required' })
+  return createSyntheticCsvResult(rows, totalRows, contentSha256, schoolCodes, issues)
 }
 
 /** Encrypts the legacy synthetic CSV contract before database staging. */

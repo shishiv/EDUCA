@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test'
+import type { Json } from '@/types/database'
 import { LEGACY_PILOT_APP_NAME } from './legacy-pilot-manifest'
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
 function createExpiredSyntheticAuthCookie(): string {
-  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url')
+  const encode = (value: Json) => Buffer.from(JSON.stringify(value)).toString('base64url')
   const expiredAccessToken = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ exp: 1, sub: '00000000-0000-0000-0000-000000000000' })}.synthetic-signature`
   const session = {
     access_token: expiredAccessToken,

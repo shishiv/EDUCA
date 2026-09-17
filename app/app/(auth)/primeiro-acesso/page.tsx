@@ -20,7 +20,7 @@ export default function PrimeiroAcessoPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  function firstAccessErrorMessage(code: unknown): string {
+  function firstAccessErrorMessage(code: string | undefined): string {
     switch (code) {
       case 'PILOT_FIRST_ACCESS_PASSWORD_INVALID':
         return t('errors.passwordInvalid')

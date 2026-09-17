@@ -1,39 +1,19 @@
-/**
- * Nova Vivencia Page
- * Form page for registering new child observations
- *
- * Features:
- * - VivenciaForm with validation
- * - Student info display
- * - Toast feedback on submit
- * - Redirect back to diario page
- *
- * @see .planning/phases/05-aluno-diario-infantil/05-02-PLAN.md
- */
-
 'use client'
-import { useTranslations } from 'next-intl'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import { toast } from 'sonner'
-import { logger } from '@/lib/logger'
+import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft } from 'lucide-react'
-
-// Components
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { VivenciaForm } from '@/components/diary/VivenciaForm'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { VivenciaForm } from '@/components/diary/VivenciaForm'
-
-// Types
-import { type VivenciaFormData } from '@/types/diario-infantil'
-
-// ============================================================================
-// Types
-// ============================================================================
+import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
+import type { VivenciaFormData } from '@/types/diario-infantil'
 
 interface Student {
   id: string
@@ -45,62 +25,124 @@ interface Matricula {
   turma_id: string
 }
 
-// ============================================================================
-// Component
-// ============================================================================
+const apiErrorSchema = z.object({ error: z.string() })
+
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  const result = apiErrorSchema.safeParse(await response.json().catch(() => null))
+  return result.success ? result.data.error : fallback
+}
+
+async function fetchStudent(alunoId: string): Promise<Student> {
+  const { data, error } = await supabase
+    .from('alunos')
+    .select('id, nome_completo, data_nascimento')
+    .eq('id', alunoId)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function fetchActiveEnrollment(alunoId: string): Promise<Matricula | null> {
+  const { data, error } = await supabase
+    .from('matriculas')
+    .select('turma_id')
+    .eq('aluno_id', alunoId)
+    .eq('situacao', 'ativa')
+    .single()
+
+  if (!error) return data
+  logger.warn('No active matricula found', {
+    feature: 'diario-infantil',
+    action: 'load_matricula',
+    metadata: { alunoId, error: error.message },
+  })
+  return null
+}
+
+async function createVivencia(
+  alunoId: string,
+  turmaId: string,
+  data: VivenciaFormData,
+): Promise<void> {
+  const response = await fetch('/api/vivencias', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      aluno_id: alunoId,
+      turma_id: turmaId,
+      data_vivencia: data.data_vivencia,
+      campos_experiencia: data.campos_experiencia,
+      descricao: data.descricao,
+      observacoes: data.observacoes || null,
+      escopo: 'individual',
+    }),
+  })
+
+  if (!response.ok) throw new Error(await readApiError(response, 'Erro ao salvar vivencia'))
+}
+
+function NewVivenciaLoading() {
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 p-4">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-8 w-8" />
+        <Skeleton className="h-6 w-24" />
+      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-7 w-48" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function NewVivenciaError({ message, onBack }: { message: string; onBack(): void }) {
+  const t = useTranslations('registry')
+  return (
+    <div className="mx-auto max-w-2xl p-4">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
+        <p className="mt-1 text-sm">{message}</p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t('ui.voltar')}
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 export default function NovaVivenciaPage() {
   const t = useTranslations('registry')
-  const params = useParams()
+  const { id: alunoId } = useParams<{ id: string }>()
   const router = useRouter()
-  const alunoId = params?.id as string
-
-  // State
+  const diaryPath = `/dashboard/alunos/${alunoId}/diario`
   const [student, setStudent] = useState<Student | null>(null)
   const [matricula, setMatricula] = useState<Matricula | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const handleBack = useCallback(() => router.back(), [router])
 
-  // Load student data and active matricula
   const loadData = useCallback(async () => {
-    if (!alunoId) return
-
     try {
       setLoading(true)
-
-      // Load student
-      const { data: studentData, error: studentError } = await supabase
-        .from('alunos')
-        .select('id, nome_completo, data_nascimento')
-        .eq('id', alunoId)
-        .single()
-
-      if (studentError) throw studentError
+      const studentData = await fetchStudent(alunoId)
       setStudent(studentData)
-
-      // Load active matricula to get turma_id
-      const { data: matriculaData, error: matriculaError } = await supabase
-        .from('matriculas')
-        .select('turma_id')
-        .eq('aluno_id', alunoId)
-        .eq('status', 'ativo')
-        .single()
-
-      if (matriculaError) {
-        logger.warn('No active matricula found', {
-          feature: 'diario-infantil',
-          action: 'load_matricula',
-          metadata: { alunoId, error: matriculaError.message }
-        })
-        // Not a fatal error - user might need to select turma manually
-      } else {
-        setMatricula(matriculaData)
-      }
-    } catch (err) {
-      logger.error('Error loading data', err as Error, {
+      setMatricula(await fetchActiveEnrollment(alunoId))
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error('Error loading data')
+      logger.error('Error loading data', failure, {
         feature: 'diario-infantil',
         action: 'load_student_data',
-        metadata: { alunoId }
+        metadata: { alunoId },
       })
       setError(t('ui.erro-ao-carregar-dados-do-aluno'))
     } finally {
@@ -108,16 +150,13 @@ export default function NovaVivenciaPage() {
     }
   }, [alunoId, t])
 
-  // Initial load
   useEffect(() => {
-    loadData()
+    void loadData()
   }, [loadData])
 
-  // Handle form submission
   const handleSubmit = useCallback(async (data: VivenciaFormData) => {
-    if (!alunoId || !student) return
-
-    if (!matricula?.turma_id) {
+    if (!student) return
+    if (!matricula) {
       toast.error(t('ui.aluno-nao-possui-matricula-ativa'), {
         description: 'O aluno precisa estar matriculado em uma turma para registrar vivencias.',
       })
@@ -125,109 +164,41 @@ export default function NovaVivenciaPage() {
     }
 
     try {
-      const response = await fetch('/api/vivencias', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          aluno_id: alunoId,
-          turma_id: matricula.turma_id,
-          data_vivencia: data.data_vivencia,
-          campos_experiencia: data.campos_experiencia,
-          descricao: data.descricao,
-          observacoes: data.observacoes || null,
-          escopo: 'individual'
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erro ao salvar vivencia')
-      }
-
+      await createVivencia(alunoId, matricula.turma_id, data)
       toast.success(t('ui.vivencia-registrada-com-sucesso'), {
         description: `Vivencia de ${student.nome_completo} salva.`,
       })
-
-      // Redirect back to diario page
-      router.push(`/dashboard/alunos/${alunoId}/diario`)
-    } catch (err) {
-      logger.error('Error saving vivencia', err as Error, {
+      router.push(diaryPath)
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error('Tente novamente.')
+      logger.error('Error saving vivencia', failure, {
         feature: 'diario-infantil',
         action: 'create_vivencia',
-        metadata: { alunoId, turmaId: matricula?.turma_id }
+        metadata: { alunoId, turmaId: matricula.turma_id },
       })
-      const errorMessage = err instanceof Error ? err.message : 'Tente novamente.'
-      toast.error(t('ui.erro-ao-salvar-vivencia'), {
-        description: errorMessage,
-      })
-      throw err // Re-throw to keep form in submitting state
+      toast.error(t('ui.erro-ao-salvar-vivencia'), { description: failure.message })
     }
-  }, [alunoId, student, matricula, router, t])
+  }, [alunoId, diaryPath, matricula, router, student, t])
 
-  // Handle cancel
   const handleCancel = useCallback(() => {
-    router.push(`/dashboard/alunos/${alunoId}/diario`)
-  }, [router, alunoId])
+    router.push(diaryPath)
+  }, [diaryPath, router])
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="space-y-6 p-4 max-w-2xl mx-auto">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-6 w-24" />
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-7 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Error state
+  if (loading) return <NewVivenciaLoading />
   if (error || !student) {
-    return (
-      <div className="p-4 max-w-2xl mx-auto">
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800">
-          <p className="font-medium">{t('labels.erro-ao-carregar-pagina')}</p>
-          <p className="text-sm mt-1">{error || t('ui.aluno-nao-encontrado')}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('ui.voltar')}
-          </Button>
-        </div>
-      </div>
-    )
+    return <NewVivenciaError message={error || t('ui.aluno-nao-encontrado')} onBack={handleBack} />
   }
 
   return (
-    <div className="space-y-6 p-4 max-w-2xl mx-auto">
-      {/* Back navigation */}
+    <div className="mx-auto max-w-2xl space-y-6 p-4">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/dashboard/alunos/${alunoId}/diario`}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
+          <Link href={diaryPath}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
             Diario
           </Link>
         </Button>
       </div>
-
-      {/* Form card */}
       <Card>
         <CardHeader>
           <CardTitle>{t('labels.registrar-vivencia')}</CardTitle>

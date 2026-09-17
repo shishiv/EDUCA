@@ -1,0 +1,133 @@
+PILOT_PORT_RANGE_LEASE: base=62770 end=62779 lease_dir=/run/user/1000/educa-pilot-port-leases/62770 owner_pid=3836577
+(node:3836993) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[WebServer] Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+[WebServer]   npx update-browserslist-db@latest
+[WebServer]   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+
+Running 10 tests using 1 worker
+
+(node:3845070) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1/10] tests/e2e/public-demo/public-visitor.spec.ts:12:7 › J1: public visitor journey › visitor can move from landing to demo, login, and home
+[WebServer] ⚠ Blocked cross-origin request to Next.js dev resource /_next/hmr from "127.0.0.1".
+[WebServer] Cross-origin access to Next.js dev resources is blocked by default for safety.
+[WebServer] 
+[WebServer] To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+[WebServer] 
+[WebServer] // next.config.js
+[WebServer] module.exports = {
+[WebServer]   allowedDevOrigins: ['127.0.0.1'],
+[WebServer] }
+[WebServer] 
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+
+  1) tests/e2e/public-demo/public-visitor.spec.ts:12:7 › J1: public visitor journey › visitor can move from landing to demo, login, and home 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByLabel('E-mail', { exact: true })
+    Expected: "[DEMO CREDENTIAL REDACTED]"
+    Received: ""
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveValue" with timeout 5000ms
+      - waiting for getByLabel('E-mail', { exact: true })
+        8 × locator resolved to <input value="" id="email" required="" type="email" autocomplete="email" placeholder="[EMAIL REDACTED]" class="flex w-full rounded-educa bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring disabled:cursor-n…/>
+          - unexpected value ""
+
+
+      29 |     await expect(page.getByLabel('Senha', { exact: true })).toBeVisible()
+      30 |     await page.getByRole('button', { name: 'Preencher credenciais demo' }).click()
+    > 31 |     await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('[DEMO CREDENTIAL REDACTED]')
+         |                                                              ^
+      32 |     await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('[DEMO CREDENTIAL REDACTED]')
+      33 |     await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
+      34 |     await page.getByRole('link', { name: /voltar ao início/i }).click()
+        at ./app/tests/e2e/public-demo/public-visitor.spec.ts:31:62
+
+    Error Context: test-results/public-visitor-J1-public-v-2cbae-ding-to-demo-login-and-home/error-context.md
+
+
+(node:3858230) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[2/10] tests/e2e/public-demo/public-visitor.spec.ts:38:7 › J1: public visitor journey › public headers use the compact locale button and login has no locale control
+  2) tests/e2e/public-demo/public-visitor.spec.ts:38:7 › J1: public visitor journey › public headers use the compact locale button and login has no locale control 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "en"
+    Received: undefined
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      40 |     if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
+      41 |     await page.getByRole('button', { name: 'Mudar idioma para English' }).first().click()
+    > 42 |     await expect.poll(async () => (await page.context().cookies()).find(cookie => cookie.name === 'EDUCA_LOCALE')?.value).toBe('en')
+         |     ^
+      43 |     await expect(page.getByRole('heading', { level: 1, name: 'School management for municipal networks, with open-source code.' })).toBeVisible()
+      44 |
+      45 |     for (const path of ['/demo', '/politica-privacidade']) {
+        at ./app/tests/e2e/public-demo/public-visitor.spec.ts:42:5
+
+    Error Context: test-results/public-visitor-J1-public-v-f70b5-login-has-no-locale-control/error-context.md
+
+
+(node:3886112) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[3/10] tests/e2e/public-demo/public-visitor.spec.ts:55:7 › J1: public visitor journey › Portuguese-only blog routes hide the locale button
+[4/10] tests/e2e/public-demo/public-visitor.spec.ts:66:7 › J1: public visitor journey › privacy policy remains public
+[5/10] tests/e2e/public-demo/public-visitor.spec.ts:72:7 › J1: public visitor journey › blog index and all migrated articles remain public with working OG images
+[6/10] tests/e2e/public-demo/public-visitor.spec.ts:90:7 › J1: public visitor journey › legacy public URLs redirect permanently to equivalent canonical destinations
+[7/10] tests/e2e/public-demo/public-visitor.spec.ts:110:7 › J1: public visitor journey › /reset-password is accessible without auth
+[8/10] tests/e2e/public-demo/public-visitor.spec.ts:115:7 › J1: public visitor journey › unauthenticated access to /dashboard redirects to /login
+[9/10] tests/e2e/public-demo/service-worker-lifecycle.spec.ts:29:5 › the first service-worker controller does not reload a public visit
+  3) tests/e2e/public-demo/service-worker-lifecycle.spec.ts:29:5 › the first service-worker controller does not reload a public visit 
+
+    Error: Timeout 5000ms exceeded while waiting on the predicate
+
+      46 |   await expect(page.getByRole('heading', { level: 1, name: 'Gestão escolar para redes municipais, com código aberto.' })).toBeVisible()
+      47 |
+    > 48 |   await expect.poll(() => lifecycleSnapshot(page)).toEqual({ controllerChanges: 1, controlled: true })
+         |   ^
+      49 |
+      50 |   await expect.poll(() => lifecycleEventCount(page, 'pageshow')).toBe(1)
+      51 | })
+        at ./app/tests/e2e/public-demo/service-worker-lifecycle.spec.ts:48:3
+
+    Error Context: test-results/service-worker-lifecycle-t-8b696-s-not-reload-a-public-visit/error-context.md
+
+
+(node:3947162) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[10/10] tests/e2e/public-demo/service-worker-lifecycle.spec.ts:53:5 › an explicit update activation reloads a page that already has a worker
+  4) tests/e2e/public-demo/service-worker-lifecycle.spec.ts:53:5 › an explicit update activation reloads a page that already has a worker 
+
+    Error: Timeout 5000ms exceeded while waiting on the predicate
+
+      67 |
+      68 |   await page.goto('/')
+    > 69 |   await expect.poll(async () => page.evaluate(async () => {
+         |   ^
+      70 |     await navigator.serviceWorker.ready
+      71 |     return navigator.serviceWorker.controller !== null
+      72 |   })).toBe(true)
+        at ./app/tests/e2e/public-demo/service-worker-lifecycle.spec.ts:69:3
+
+    Error Context: test-results/service-worker-lifecycle-a-9d205-e-that-already-has-a-worker/error-context.md
+
+
+  4 failed
+    tests/e2e/public-demo/public-visitor.spec.ts:12:7 › J1: public visitor journey › visitor can move from landing to demo, login, and home 
+    tests/e2e/public-demo/public-visitor.spec.ts:38:7 › J1: public visitor journey › public headers use the compact locale button and login has no locale control 
+    tests/e2e/public-demo/service-worker-lifecycle.spec.ts:29:5 › the first service-worker controller does not reload a public visit 
+    tests/e2e/public-demo/service-worker-lifecycle.spec.ts:53:5 › an explicit update activation reloads a page that already has a worker 
+  6 passed (50.2s)
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/62770

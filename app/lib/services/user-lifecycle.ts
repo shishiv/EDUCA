@@ -24,6 +24,9 @@
  * @module services/user-lifecycle
  */
 import { createHash } from 'node:crypto'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+import type { Database } from '@/types/database'
 
 /**
  * User lifecycle orchestration for Auth identities, profiles, invitations, and first access.
@@ -33,11 +36,13 @@ import { createHash } from 'node:crypto'
  */
 
 export type UserLifecycleRole = 'secretario' | 'diretor' | 'professor'
+type UserLifecycleMetadata = { synthetic?: boolean; pilot_role?: UserLifecycleRole; pilot_school_id?: string | null; nome?: string }
+type UserLifecycleErrorInfo = { code?: string; message?: string; status?: number }
 
 export interface UserLifecycleAuthUser {
   id: string
   email?: string | null
-  user_metadata?: Record<string, unknown> | null
+  user_metadata?: UserLifecycleMetadata | null
 }
 
 export type UserLifecycleAuthRemoval = 'removed' | 'already_missing'
@@ -85,7 +90,7 @@ export interface UserLifecycleAuthPort {
   inviteUserByEmail(input: {
     email: string
     redirectTo: string
-    data: Record<string, unknown>
+    data: UserLifecycleMetadata
   }): Promise<UserLifecycleAuthUser>
   getUserById(userId: string): Promise<UserLifecycleAuthUser>
   deleteUser(userId: string): Promise<UserLifecycleAuthRemoval>
@@ -118,45 +123,12 @@ export interface UserLifecyclePorts {
   invitation: UserLifecycleInvitationPort
 }
 
-interface SupabaseLifecycleQueryResult {
-  data: unknown
-  error: unknown | null
-}
-
-interface SupabaseLifecycleQuery {
-  select(columns?: string): SupabaseLifecycleQuery
-  eq(column: string, value: string | boolean | null): SupabaseLifecycleQuery
-  order(column: string, options?: { ascending?: boolean }): SupabaseLifecycleQuery
-  limit(count: number): SupabaseLifecycleQuery
-  insert(values: Record<string, unknown>): SupabaseLifecycleQuery
-  upsert(values: Record<string, unknown>, options?: { onConflict?: string }): SupabaseLifecycleQuery
-  update(values: Record<string, unknown>): SupabaseLifecycleQuery
-  maybeSingle(): Promise<SupabaseLifecycleQueryResult>
-  single(): Promise<SupabaseLifecycleQueryResult>
-}
-
-interface SupabaseLifecycleClient {
-  from(table: string): SupabaseLifecycleQuery
-  auth: {
-    admin: {
-      inviteUserByEmail(
-        email: string,
-        options: { redirectTo: string; data: Record<string, unknown> },
-      ): Promise<{ data: { user: UserLifecycleAuthUser | null }; error: unknown | null }>
-      getUserById(userId: string): Promise<{ data: { user: UserLifecycleAuthUser | null }; error: unknown | null }>
-      deleteUser(userId: string, shouldSoftDelete?: boolean): Promise<{ data: { user: UserLifecycleAuthUser | null }; error: unknown | null }>
-    }
-    updateUser(attributes: { password: string }): Promise<{ data: unknown; error: unknown | null }>
-  }
-}
-
 /** Builds lifecycle ports over the server service client and the signed-in client. */
 export function createSupabaseUserLifecyclePorts(clients: {
-  serviceClient: unknown
-  sessionClient: unknown
+  serviceClient: SupabaseClient<Database>
+  sessionClient: SupabaseClient<Database>
 }): UserLifecyclePorts {
-  const serviceClient = clients.serviceClient as SupabaseLifecycleClient
-  const sessionClient = clients.sessionClient as SupabaseLifecycleClient
+  const { serviceClient, sessionClient } = clients
 
   return {
     auth: {
@@ -169,7 +141,9 @@ export function createSupabaseUserLifecyclePorts(clients: {
         if (!response.data.user) {
           throw new UserLifecycleError('AUTH_USER_MISSING', 'O convite não retornou uma identidade Auth.')
         }
-        return response.data.user
+        const metadata = lifecycleMetadataSchema.parse(response.data.user.user_metadata)
+        const pilotRole = metadata.pilot_role && isRevocablePilotRole(metadata.pilot_role) ? metadata.pilot_role : undefined
+        return { id: response.data.user.id, email: response.data.user.email, user_metadata: { ...metadata, pilot_role: pilotRole } }
       },
       async getUserById(userId) {
         const response = await serviceClient.auth.admin.getUserById(userId)
@@ -177,12 +151,14 @@ export function createSupabaseUserLifecyclePorts(clients: {
         if (!response.data.user) {
           throw new UserLifecycleError('AUTH_USER_MISSING', 'A identidade Auth do cadastro não existe.')
         }
-        return response.data.user
+        const metadata = lifecycleMetadataSchema.parse(response.data.user.user_metadata)
+        const pilotRole = metadata.pilot_role && isRevocablePilotRole(metadata.pilot_role) ? metadata.pilot_role : undefined
+        return { id: response.data.user.id, email: response.data.user.email, user_metadata: { ...metadata, pilot_role: pilotRole } }
       },
       async deleteUser(userId) {
         const response = await serviceClient.auth.admin.deleteUser(userId, false)
         if (response.error) {
-          if (isAuthUserMissingError(response.error)) return 'already_missing'
+          if (isAuthUserMissingError(lifecycleErrorInfo.parse(response.error))) return 'already_missing'
           throw response.error
         }
         return response.data.user ? 'removed' : 'already_missing'
@@ -252,7 +228,7 @@ export function createSupabaseUserLifecyclePorts(clients: {
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
-        return readSupabaseLifecycleData<UserLifecycleInvitation | null>(response)
+        return validateLifecycleInvitation(readSupabaseLifecycleData<LifecycleInvitationRow | null>(response))
       },
       async findByAuthUserId(userId) {
         const response = await serviceClient
@@ -260,7 +236,7 @@ export function createSupabaseUserLifecyclePorts(clients: {
           .select('id,auth_user_id,email,invited_role,escola_id,invited_by,accepted_at,created_at')
           .eq('auth_user_id', userId)
           .maybeSingle()
-        return readSupabaseLifecycleData<UserLifecycleInvitation | null>(response)
+        return validateLifecycleInvitation(readSupabaseLifecycleData<LifecycleInvitationRow | null>(response))
       },
       async create(input) {
         const response = await serviceClient
@@ -274,7 +250,7 @@ export function createSupabaseUserLifecyclePorts(clients: {
           })
           .select('id,auth_user_id,email,invited_role,escola_id,invited_by,accepted_at,created_at')
           .single()
-        const invitation = readSupabaseLifecycleData<UserLifecycleInvitation | null>(response)
+        const invitation = validateLifecycleInvitation(readSupabaseLifecycleData<LifecycleInvitationRow | null>(response))
         if (!invitation) throw new Error('USER_LIFECYCLE_INVITATION_WRITE_EMPTY')
         return invitation
       },
@@ -292,9 +268,26 @@ export function createSupabaseUserLifecyclePorts(clients: {
   }
 }
 
-function readSupabaseLifecycleData<T>(response: SupabaseLifecycleQueryResult): T {
+function readSupabaseLifecycleData<T>(response: { data: T; error: unknown | null }): T {
   if (response.error) throw response.error
-  return response.data as T
+  return response.data
+}
+
+const lifecycleInvitationSchema = z.object({
+  id: z.string(), auth_user_id: z.string(), email: z.string(), invited_role: z.string(), escola_id: z.string().nullable(),
+  invited_by: z.string(), accepted_at: z.string().nullable(), created_at: z.string().nullable().optional(),
+})
+
+type LifecycleInvitationRow = Database['public']['Tables']['pilot_user_invitations']['Row']
+
+function validateLifecycleInvitation(value: LifecycleInvitationRow | null): UserLifecycleInvitation | null {
+  if (value === null) return null
+  const parsed = lifecycleInvitationSchema.safeParse(value)
+  if (!parsed.success || !isRevocablePilotRole(parsed.data.invited_role)) {
+    throw new UserLifecycleError('INVITATION_PERSISTENCE_FAILED', 'O convite retornou um formato ou papel inválido.')
+  }
+  const invitedRole = parsed.data.invited_role
+  return { ...parsed.data, invited_role: invitedRole }
 }
 
 export type UserLifecycleErrorCode =
@@ -377,62 +370,13 @@ export async function revokeSyntheticPilotIdentity(
   input: UserLifecycleRevocationInput,
   revokedAt = new Date().toISOString(),
 ): Promise<UserLifecycleRevocationResult> {
-  if (!isSafeLifecycleReceiptCode(input.release) || !isSafeLifecycleReceiptCode(input.reason) || input.reason.length < 3) {
-    throw new UserLifecycleError(
-      'REVOCATION_RECEIPT_INVALID',
-      'O recibo de revogação exige identificadores seguros.',
-    )
-  }
-
-  const currentProfile = await ports.profile.findById(input.userId)
-  if (!currentProfile) {
-    throw new UserLifecycleError('PROFILE_NOT_FOUND', 'O perfil sintético não existe.')
-  }
-
-  let authUser: UserLifecycleAuthUser | null = null
-  try {
-    authUser = await ports.auth.getUserById(input.userId)
-  } catch (error) {
-    if (!isAuthUserMissingLifecycleError(error)) throw error
-  }
-
-  if (!isSyntheticPilotIdentity(authUser?.email ?? currentProfile.email)) {
-    throw new UserLifecycleError(
-      'SYNTHETIC_IDENTITY_REQUIRED',
-      'A revogação exige uma identidade sintética .invalid.',
-    )
-  }
-
-  if (!isRevocablePilotRole(currentProfile.tipo_usuario)) {
-    throw new UserLifecycleError(
-      'USER_ROLE_NOT_REVOCABLE',
-      'A revogação exige um papel de usuário do piloto.',
-    )
-  }
-
-  const profileDeactivated = currentProfile.ativo === true
-  if (profileDeactivated) {
-    try {
-      await ports.profile.deactivate(input.userId)
-    } catch (error) {
-      throw new UserLifecycleError(
-        'PROFILE_REVOCATION_FAILED',
-        'O perfil sintético não foi desativado.',
-        { cause: error },
-      )
-    }
-  }
-
-  let authIdentity: UserLifecycleAuthRemoval
-  try {
-    authIdentity = await ports.auth.deleteUser(input.userId)
-  } catch (error) {
-    throw new UserLifecycleError(
-      'AUTH_IDENTITY_REVOCATION_FAILED',
-      'A identidade Auth sintética não foi removida.',
-      { cause: error },
-    )
-  }
+  validateRevocationInput(input)
+  const currentProfile = await requireRevocableProfile(ports, input.userId)
+  const authUser = await readRevocationAuthUser(ports, input.userId)
+  validateRevocationIdentity(currentProfile, authUser)
+  if (!isRevocablePilotRole(currentProfile.tipo_usuario)) throw new UserLifecycleError('USER_ROLE_NOT_REVOCABLE', 'A revogação exige um papel de usuário do piloto.')
+  const profileDeactivated = await deactivateRevocationProfile(ports, input.userId, currentProfile.ativo === true)
+  const authIdentity = await deleteRevocationIdentity(ports, input.userId)
 
   return {
     revoked: true,
@@ -446,13 +390,50 @@ export async function revokeSyntheticPilotIdentity(
   }
 }
 
+function validateRevocationInput(input: UserLifecycleRevocationInput): void {
+  if (!isSafeLifecycleReceiptCode(input.release) || !isSafeLifecycleReceiptCode(input.reason) || input.reason.length < 3) {
+    throw new UserLifecycleError('REVOCATION_RECEIPT_INVALID', 'O recibo de revogação exige identificadores seguros.')
+  }
+}
+
+async function requireRevocableProfile(ports: UserLifecyclePorts, userId: string): Promise<UserLifecycleProfile> {
+  const profile = await ports.profile.findById(userId)
+  if (!profile) throw new UserLifecycleError('PROFILE_NOT_FOUND', 'O perfil sintético não existe.')
+  return profile
+}
+
+async function readRevocationAuthUser(ports: UserLifecyclePorts, userId: string): Promise<UserLifecycleAuthUser | null> {
+  try { return await ports.auth.getUserById(userId) } catch (error) {
+    if (isAuthUserMissingLifecycleError(error instanceof UserLifecycleError ? error : lifecycleErrorInfo.parse(error))) return null
+    throw error
+  }
+}
+
+function validateRevocationIdentity(profile: UserLifecycleProfile, authUser: UserLifecycleAuthUser | null): void {
+  if (!isSyntheticPilotIdentity(authUser?.email ?? profile.email)) throw new UserLifecycleError('SYNTHETIC_IDENTITY_REQUIRED', 'A revogação exige uma identidade sintética .invalid.')
+  if (!isRevocablePilotRole(profile.tipo_usuario)) throw new UserLifecycleError('USER_ROLE_NOT_REVOCABLE', 'A revogação exige um papel de usuário do piloto.')
+}
+
+async function deactivateRevocationProfile(ports: UserLifecyclePorts, userId: string, active: boolean): Promise<boolean> {
+  if (!active) return false
+  try { await ports.profile.deactivate(userId); return true } catch (error) {
+    throw new UserLifecycleError('PROFILE_REVOCATION_FAILED', 'O perfil sintético não foi desativado.', { cause: error })
+  }
+}
+
+async function deleteRevocationIdentity(ports: UserLifecyclePorts, userId: string): Promise<UserLifecycleAuthRemoval> {
+  try { return await ports.auth.deleteUser(userId) } catch (error) {
+    throw new UserLifecycleError('AUTH_IDENTITY_REVOCATION_FAILED', 'A identidade Auth sintética não foi removida.', { cause: error })
+  }
+}
+
 /** Resolves a display name without using editable metadata for authorization. */
 export function resolveUserLifecycleProfileName(
   authUser: UserLifecycleAuthUser,
   fallbackName: string,
 ): string {
   const metadataName = authUser.user_metadata?.nome
-  if (typeof metadataName === 'string' && metadataName.trim().length >= 2) {
+  if (metadataName?.trim().length && metadataName.trim().length >= 2) {
     return metadataName.trim()
   }
 
@@ -483,7 +464,7 @@ export async function startOrResumeUserRegistration(
       },
     })
   } catch (error) {
-    if (isAlreadyRegisteredError(error)) {
+    if (isAlreadyRegisteredError(lifecycleErrorInfo.parse(error))) {
       throw new UserLifecycleError(
         'AUTH_USER_ALREADY_REGISTERED',
         'A identidade Auth já existe e não será apagada.',
@@ -540,26 +521,7 @@ export async function completePendingUserRegistration(
   }
 
   if (invitation.accepted_at) {
-    const profile = await ports.profile.findById(authUser.id)
-    if (!profile) {
-      throw new UserLifecycleError(
-        'PROFILE_INCOMPLETE',
-        'O convite foi aceito, mas o perfil não está disponível para a sessão.',
-      )
-    }
-    if (profile.ativo !== true) {
-      throw new UserLifecycleError(
-        'INVITATION_REVOKED',
-        'Este convite pertence a uma identidade revogada.',
-      )
-    }
-    return {
-      completed: true,
-      invitation,
-      profile,
-      resumedProfile: false,
-      idempotentReplay: true,
-    }
+    return replayAcceptedInvitation(ports, authUser.id, invitation)
   }
 
   const currentProfile = await ports.profile.findById(authUser.id)
@@ -571,29 +533,8 @@ export async function completePendingUserRegistration(
   }
   const profile = currentProfile ?? await ensureIncompleteProfile(ports, authUser, invitation, invitation.email)
 
-  try {
-    await ports.auth.updatePassword(password)
-  } catch (error) {
-    if (isSamePasswordError(error) && profile.primeiro_login === false && profile.senha_padrao === false) {
-      await acceptInvitation(ports, invitation, completedAt)
-      return {
-        completed: true,
-        invitation: { ...invitation, accepted_at: completedAt },
-        profile,
-        resumedProfile: currentProfile === null,
-        idempotentReplay: true,
-      }
-    }
-
-    if (isSamePasswordError(error)) {
-      throw new UserLifecycleError(
-        'FIRST_ACCESS_PASSWORD_UNCHANGED',
-        'A nova senha precisa ser diferente da senha temporária.',
-        { cause: error },
-      )
-    }
-    throw error
-  }
+  const unchanged = await updateLifecyclePassword(ports, password, profile, invitation, completedAt)
+  if (unchanged) return { completed: true, invitation: { ...invitation, accepted_at: completedAt }, profile, resumedProfile: currentProfile === null, idempotentReplay: true }
 
   let completedProfile: UserLifecycleProfile
   try {
@@ -613,6 +554,22 @@ export async function completePendingUserRegistration(
     profile: completedProfile,
     resumedProfile: currentProfile === null,
     idempotentReplay: false,
+  }
+}
+
+async function replayAcceptedInvitation(ports: UserLifecyclePorts, userId: string, invitation: UserLifecycleInvitation): Promise<UserLifecycleCompletionResult> {
+  const profile = await ports.profile.findById(userId)
+  if (!profile) throw new UserLifecycleError('PROFILE_INCOMPLETE', 'O convite foi aceito, mas o perfil não está disponível para a sessão.')
+  if (profile.ativo !== true) throw new UserLifecycleError('INVITATION_REVOKED', 'Este convite pertence a uma identidade revogada.')
+  return { completed: true, invitation, profile, resumedProfile: false, idempotentReplay: true }
+}
+
+async function updateLifecyclePassword(ports: UserLifecyclePorts, password: string, profile: UserLifecycleProfile, invitation: UserLifecycleInvitation, completedAt: string): Promise<boolean> {
+  try { await ports.auth.updatePassword(password); return false } catch (error) {
+    const info = lifecycleErrorInfo.parse(error)
+    if (!isSamePasswordError(info)) throw error
+    if (profile.primeiro_login === false && profile.senha_padrao === false) { await acceptInvitation(ports, invitation, completedAt); return true }
+    throw new UserLifecycleError('FIRST_ACCESS_PASSWORD_UNCHANGED', 'A nova senha precisa ser diferente da senha temporária.', { cause: error })
   }
 }
 
@@ -698,33 +655,30 @@ async function acceptInvitation(
   }
 }
 
-function isAlreadyRegisteredError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : readErrorMessage(error)
+const lifecycleErrorInfo = z.object({ code: z.string().optional(), message: z.string().optional(), status: z.number().optional() }).catch({})
+const lifecycleMetadataSchema = z.object({ synthetic: z.boolean().optional(), pilot_role: z.string().optional(), pilot_school_id: z.string().nullable().optional(), nome: z.string().optional() }).catch({})
+
+function isAlreadyRegisteredError(error: UserLifecycleErrorInfo): boolean {
+  const message = error.message ?? ''
   return /already (been )?registered|already exists|email_exists/i.test(message)
 }
 
-function isAuthUserMissingLifecycleError(error: unknown): boolean {
+function isAuthUserMissingLifecycleError(error: UserLifecycleErrorInfo | UserLifecycleError): boolean {
   if (error instanceof UserLifecycleError) return error.code === 'AUTH_USER_MISSING'
   return isAuthUserMissingError(error)
 }
 
-function isAuthUserMissingError(error: unknown): boolean {
+function isAuthUserMissingError(error: UserLifecycleErrorInfo): boolean {
   const code = readErrorCode(error)
   const message = readErrorMessage(error)
   const status = readErrorStatus(error)
   return status === 404 || code === 'user_not_found' || /user not found|user does not exist/i.test(message)
 }
 
-function readErrorStatus(error: unknown): number | undefined {
-  if (typeof error === 'object' && error !== null && 'status' in error) {
-    const status = error.status
-    return typeof status === 'number' ? status : undefined
-  }
-  return undefined
-}
+function readErrorStatus(error: UserLifecycleErrorInfo): number | undefined { return error.status }
 
 function isSyntheticPilotIdentity(email: string | null | undefined): boolean {
-  return typeof email === 'string' && email.toLowerCase().endsWith('@synthetic.invalid')
+  return email?.toLowerCase().endsWith('@synthetic.invalid') ?? false
 }
 
 function isRevocablePilotRole(role: string): role is UserLifecycleRole {
@@ -739,24 +693,11 @@ function redactLifecycleIdentity(userId: string): string {
   return `synthetic-${createHash('md5').update(userId).digest('hex').slice(0, 16)}`
 }
 
-function isSamePasswordError(error: unknown): boolean {
+function isSamePasswordError(error: UserLifecycleErrorInfo): boolean {
   if (readErrorCode(error) === 'same_password') return true
   return /same password|senha temporária|password unchanged/i.test(readErrorMessage(error))
 }
 
-function readErrorCode(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'code' in error) {
-    const code = error.code
-    return typeof code === 'string' ? code : undefined
-  }
-  return undefined
-}
+function readErrorCode(error: UserLifecycleErrorInfo): string | undefined { return error.code }
 
-function readErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    const message = error.message
-    return typeof message === 'string' ? message : ''
-  }
-  return ''
-}
+function readErrorMessage(error: UserLifecycleErrorInfo): string { return error.message ?? '' }

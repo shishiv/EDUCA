@@ -1,0 +1,18 @@
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY] Aborted removal of modules directory due to no TTY
+
+If you are running pnpm in CI, set the CI environment variable to "true", or set "confirmModulesPurge" to "false".
+[ERROR] Command failed with exit code 1: /usr/bin/node [pnpm-global]/bin/pnpm.mjs install
+
+pnpm: Command failed with exit code 1: /usr/bin/node [pnpm-global]/bin/pnpm.mjs install
+    at getFinalError (file://[pnpm-global]/dist/pnpm.mjs:89319:14)
+    at makeError (file://[pnpm-global]/dist/pnpm.mjs:91626:21)
+    at getSyncResult (file://[pnpm-global]/dist/pnpm.mjs:93470:10)
+    at spawnSubprocessSync (file://[pnpm-global]/dist/pnpm.mjs:93430:14)
+    at execaCoreSync (file://[pnpm-global]/dist/pnpm.mjs:93360:23)
+    at callBoundExeca (file://[pnpm-global]/dist/pnpm.mjs:95888:23)
+    at boundExeca (file://[pnpm-global]/dist/pnpm.mjs:95865:49)
+    at sync2 (file://[pnpm-global]/dist/pnpm.mjs:96024:10)
+    at runPnpmCli (file://[pnpm-global]/dist/pnpm.mjs:273513:5)
+    at runDepsStatusCheck (file://[pnpm-global]/dist/pnpm.mjs:274731:7)

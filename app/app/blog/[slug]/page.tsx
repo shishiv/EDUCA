@@ -54,7 +54,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <div className="public-site" lang="pt-BR">
-      <PublicHeader />
+      <PublicHeader pathname={`/blog/${slug}`} />
       <main>
         <section className="blog-hero blog-article-hero">
           <div className="public-shell">

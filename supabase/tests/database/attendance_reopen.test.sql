@@ -36,6 +36,8 @@ INSERT INTO public.matriculas(id, aluno_id, turma_id, ano_letivo, situacao) VALU
   ('52000000-0000-0000-0000-000000000001','42000000-0000-0000-0000-000000000001','32000000-0000-0000-0000-000000000001',2026,'ativa');
 
 SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','22000000-0000-0000-0000-000000000002',true);
+SELECT public.set_attendance_daily_cutoff('12000000-0000-0000-0000-000000000001','24:00:00');
 SELECT set_config('request.jwt.claim.sub','22000000-0000-0000-0000-000000000001',true);
 
 INSERT INTO public.sessoes_aula(

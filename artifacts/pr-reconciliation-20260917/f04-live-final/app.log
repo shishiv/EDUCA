@@ -1,0 +1,85 @@
+▲ Next.js 16.3.0 (webpack)
+- Local:         http://127.0.0.1
+- Network:       http://127.0.0.1
+✓ Ready in 366ms
+✓ Running next.config.js took 44ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ GET /login 200 in 3.0s (next.js: 2.6s, proxy.ts: 178ms, application-code: 234ms)
+ GET /login 200 in 121ms (next.js: 4ms, proxy.ts: 78ms, application-code: 40ms)
+🎓 [ERROR] [13:21:31] USER_STATUS_UPDATE_FAILED
+📍 Context: {
+  "feature": "user-status",
+  "metadata": {
+    "message": ""
+  },
+  "sessionId": "1789662091705-szti8hraz"
+}
+❌ Error: USER_STATUS_UPDATE_FAILED
+Error: USER_STATUS_UPDATE_FAILED
+    at pilotErrorResponse (webpack-internal:///(rsc)/./lib/pilot/pilot-api-error.ts:60:114)
+    at statusErrorResponse (webpack-internal:///(rsc)/./app/api/users/[userId]/status/handler.ts:112:90)
+    at PATCH (webpack-internal:///(rsc)/./app/api/users/[userId]/status/handler.ts:59:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AppRouteRouteModule.do (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:5:42791)
+    at async AppRouteRouteModule.handle (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:5:50709)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&page=%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&appPaths=&allNormalizedAppPaths=&pagePath=private-next-app-dir%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute.ts&appDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:219:30)
+    at async AppRouteRouteModule.handleResponse (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:1:248724)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&page=%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&appPaths=&allNormalizedAppPaths=&pagePath=private-next-app-dir%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute.ts&appDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:292:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&page=%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&appPaths=&allNormalizedAppPaths=&pagePath=private-next-app-dir%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute.ts&appDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:413:9)
+    at async DevServer.renderToResponseWithComponentsImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1537:9)
+    at async DevServer.renderPageComponent (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1589:24)
+    at async DevServer.renderToResponseImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1639:32)
+    at async DevServer.pipeImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1088:25)
+    at async NextNodeServer.handleCatchallRenderRequest (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/next-server.js:338:17)
+    at async DevServer.handleRequestImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:979:17)
+    at async ./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/dev/next-dev-server.js:426:20
+    at async Span.traceAsyncFn (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/trace/trace.js:164:20)
+    at async DevServer.handleRequest (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/dev/next-dev-server.js:422:24)
+    at async invokeRender (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/router-server.js:306:21)
+    at async handleRequest (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/router-server.js:508:24)
+    at async requestHandlerImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/router-server.js:565:13)
+    at async Server.requestListener (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/start-server.js:225:13)
+ PATCH /api/users/602407c2-849f-4586-a766-d9bae260f20a/status 503 in 1565ms (next.js: 1402ms, proxy.ts: 9ms, application-code: 154ms)
+🎓 [ERROR] [13:21:32] USER_STATUS_UPDATE_FAILED
+📍 Context: {
+  "feature": "user-status",
+  "metadata": {
+    "message": ""
+  },
+  "sessionId": "1789662091705-szti8hraz"
+}
+❌ Error: USER_STATUS_UPDATE_FAILED
+Error: USER_STATUS_UPDATE_FAILED
+    at pilotErrorResponse (webpack-internal:///(rsc)/./lib/pilot/pilot-api-error.ts:60:114)
+    at statusErrorResponse (webpack-internal:///(rsc)/./app/api/users/[userId]/status/handler.ts:112:90)
+    at PATCH (webpack-internal:///(rsc)/./app/api/users/[userId]/status/handler.ts:59:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AppRouteRouteModule.do (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:5:42791)
+    at async AppRouteRouteModule.handle (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:5:50709)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&page=%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&appPaths=&allNormalizedAppPaths=&pagePath=private-next-app-dir%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute.ts&appDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:219:30)
+    at async AppRouteRouteModule.handleResponse (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:1:248724)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&page=%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&appPaths=&allNormalizedAppPaths=&pagePath=private-next-app-dir%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute.ts&appDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:292:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&page=%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute&appPaths=&allNormalizedAppPaths=&pagePath=private-next-app-dir%2Fapi%2Fusers%2F%5BuserId%5D%2Fstatus%2Froute.ts&appDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fshiv%2F.treehouse%2Feduca-7c556a%2F1%2Feduca%2Fapp&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:413:9)
+    at async DevServer.renderToResponseWithComponentsImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1537:9)
+    at async DevServer.renderPageComponent (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1589:24)
+    at async DevServer.renderToResponseImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1639:32)
+    at async DevServer.pipeImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:1088:25)
+    at async NextNodeServer.handleCatchallRenderRequest (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/next-server.js:338:17)
+    at async DevServer.handleRequestImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/base-server.js:979:17)
+    at async ./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/dev/next-dev-server.js:426:20
+    at async Span.traceAsyncFn (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/trace/trace.js:164:20)
+    at async DevServer.handleRequest (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/dev/next-dev-server.js:422:24)
+    at async invokeRender (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/router-server.js:306:21)
+    at async handleRequest (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/router-server.js:508:24)
+    at async requestHandlerImpl (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/router-server.js:565:13)
+    at async Server.requestListener (./app/node_modules/.pnpm/next@16.3.0_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_@types+node@2_gze2bavld3wnlokcorrw2n7bxa/node_modules/next/dist/server/lib/start-server.js:225:13)
+ PATCH /api/users/602407c2-849f-4586-a766-d9bae260f20a/status 503 in 178ms (next.js: 29ms, proxy.ts: 77ms, application-code: 73ms)
+ PATCH /api/users/602407c2-849f-4586-a766-d9bae260f20a/status 200 in 86ms (next.js: 7ms, proxy.ts: 4ms, application-code: 75ms)
+ PATCH /api/users/602407c2-849f-4586-a766-d9bae260f20a/status 200 in 76ms (next.js: 3ms, proxy.ts: 5ms, application-code: 69ms)
+

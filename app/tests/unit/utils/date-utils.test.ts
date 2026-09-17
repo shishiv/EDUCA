@@ -7,8 +7,8 @@ import {
   formatMonthYearBR,
   formatRelativeTimeBR,
   formatTimeBR,
+  getCurrentUtcMonthRange,
   getTodayISO,
-  isPast18hSaoPaulo,
 } from '@/lib/date-utils'
 
 describe('Brazilian Date Utilities', () => {
@@ -139,21 +139,6 @@ describe('Brazilian Date Utilities', () => {
     })
   })
 
-  describe('Validacao de Horario Sao Paulo', () => {
-    it('isPast18hSaoPaulo deve retornar boolean', () => {
-      const result = isPast18hSaoPaulo()
-      expect(typeof result).toBe('boolean')
-    })
-
-    // Nota: Este teste depende do horario real, entao apenas verificamos o tipo
-    it('deve usar timezone America/Sao_Paulo', () => {
-      // O comportamento correto é testado indiretamente
-      // pelo uso consistente do timezone em toda a aplicacao
-      const result = isPast18hSaoPaulo()
-      expect([true, false]).toContain(result)
-    })
-  })
-
   describe('Tratamento de Edge Cases', () => {
     it('deve tratar strings vazias', () => {
       expect(formatDateBR('')).toBe('-')
@@ -173,5 +158,18 @@ describe('Brazilian Date Utilities', () => {
     it('deve formatar datas no fim do ano', () => {
       expect(formatDateBR('2024-12-31T12:00:00')).toBe('31/12/2024')
     })
+  })
+})
+
+
+describe('UTC month ranges', () => {
+  it.each([
+    ['2025-02-15T12:00:00Z', '2025-02-01', '2025-02-28'],
+    ['2024-02-15T12:00:00Z', '2024-02-01', '2024-02-29'],
+    ['2026-09-08T12:00:00Z', '2026-09-01', '2026-09-30'],
+    ['2026-12-08T12:00:00Z', '2026-12-01', '2026-12-31'],
+    ['2026-08-31T23:30:00-03:00', '2026-09-01', '2026-09-30'],
+  ])('uses real inclusive calendar dates for %s', (now, startDate, endDate) => {
+    expect(getCurrentUtcMonthRange(new Date(now))).toEqual({ startDate, endDate })
   })
 })

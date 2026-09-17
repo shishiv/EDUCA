@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import type { ComponentProps } from 'react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { ChamadaStatusButtons } from '@/components/attendance/ChamadaStatusButtons'
 import { JustificationModal } from '@/components/attendance/JustificationModal'
@@ -16,23 +17,15 @@ import { JustificationModal } from '@/components/attendance/JustificationModal'
  * Swarm 3: Frequência (Chamada)
  */
 
-// Mock dependencies
-vi.mock('@/lib/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-  },
-}))
-
 describe('ChamadaStatusButtons Component', () => {
   const mockOnChange = vi.fn()
   const mockOnJustificationNeeded = vi.fn()
 
   const defaultProps = {
-    status: null as 'P' | 'F' | 'J' | null,
+    status: null,
     onChange: mockOnChange,
     onJustificationNeeded: mockOnJustificationNeeded,
-  }
+  } satisfies Pick<ComponentProps<typeof ChamadaStatusButtons>, 'status' | 'onChange' | 'onJustificationNeeded'>
 
   beforeEach(() => {
     vi.clearAllMocks()

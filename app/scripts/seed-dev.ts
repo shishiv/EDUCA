@@ -14,15 +14,13 @@ async function main() {
   if (command === 'clear') {
     const result = await clearSeedData()
 
-    if (result.success) {
-    } else {
+    if (!result.success) {
       process.exit(1)
     }
   } else {
     const result = await insertSeedData()
 
-    if (result.success) {
-    } else {
+    if (!result.success) {
       process.exit(1)
     }
   }
@@ -31,6 +29,7 @@ async function main() {
 // Handle script execution
 if (require.main === module) {
   main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error))
     process.exit(1)
   })
 }

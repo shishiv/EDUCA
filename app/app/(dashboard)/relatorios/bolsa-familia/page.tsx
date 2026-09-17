@@ -61,11 +61,16 @@ type Turma = ReportTurma
 
 type PeriodOption = 'current_month' | 'last_month' | 'bimester_1' | 'bimester_2' | 'bimester_3' | 'bimester_4' | 'custom';
 
+interface PeriodDates {
+  start: string
+  end: string
+}
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
-function getPeriodDates(period: PeriodOption, customStart?: Date, customEnd?: Date): { start: string; end: string } {
+function getPeriodDates(period: PeriodOption, customStart?: Date, customEnd?: Date): PeriodDates {
   const now = new Date();
   const year = now.getFullYear();
 
@@ -102,6 +107,44 @@ function getPeriodDates(period: PeriodOption, customStart?: Date, customEnd?: Da
   }
 }
 
+function isPeriodOption(value: string): value is PeriodOption {
+  return value === 'current_month'
+    || value === 'last_month'
+    || value === 'bimester_1'
+    || value === 'bimester_2'
+    || value === 'bimester_3'
+    || value === 'bimester_4'
+    || value === 'custom'
+}
+
+const BOLSA_STATUS_CLASSES = {
+  CRITICO: { row: 'bg-red-50', percentage: 'text-red-600' },
+  ALERTA: { row: 'bg-amber-50', percentage: 'text-amber-600' },
+  CONFORME: { row: '', percentage: 'text-green-600' },
+} as const
+
+function BolsaTableStatus({ status }: { status: keyof typeof BOLSA_STATUS_CLASSES }) {
+  const t = useTranslations('platform')
+  if (status === 'CRITICO') {
+    return <Badge variant="destructive" className="text-[10px] sm:text-xs px-1 sm:px-2"><span className="hidden sm:inline">Critico</span><AlertTriangle className="h-3 w-3 sm:hidden" /></Badge>
+  }
+  if (status === 'ALERTA') {
+    return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-[10px] sm:text-xs px-1 sm:px-2"><span className="hidden sm:inline">{t('components.bolsa.alert')}</span><AlertCircle className="h-3 w-3 sm:hidden" /></Badge>
+  }
+  return <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-[10px] sm:text-xs px-1 sm:px-2"><span className="hidden sm:inline">OK</span><CheckCircle className="h-3 w-3 sm:hidden" /></Badge>
+}
+
+function getLegalStatusDisplay(aluno: BolsaFamiliaReport['alunos'][number]): string {
+  return aluno.pisoLegalPercent === null ? aluno.statusLegal : `${aluno.statusLegal} (${aluno.pisoLegalPercent}%)`
+}
+
+function getMunicipalStatusDisplay(aluno: BolsaFamiliaReport['alunos'][number]): string {
+  const hasResolvedMargin = aluno.margemMunicipalCriticaPercent !== null && aluno.margemMunicipalAlertaPercent !== null
+  return hasResolvedMargin
+    ? `${aluno.margemMunicipalStatus} (${aluno.margemMunicipalCriticaPercent}/${aluno.margemMunicipalAlertaPercent}%)`
+    : aluno.margemMunicipalStatus
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -128,7 +171,7 @@ export default function BolsaFamiliaReportPage() {
         const schoolsData = await reportsApi.getSchoolsForFilters();
         setSchools(schoolsData);
       } catch (error) {
-        logger.error('Error fetching schools', error as Error, {
+        logger.error('Error fetching schools', error instanceof Error ? error : new Error(String(error)), {
           feature: 'reports',
           action: 'load_bolsa_familia_schools'
         });
@@ -153,7 +196,7 @@ export default function BolsaFamiliaReportPage() {
         setTurmas(turmasData);
         setSelectedTurma('all');
       } catch (error) {
-        logger.error('Error fetching turmas', error as Error, {
+        logger.error('Error fetching turmas', error instanceof Error ? error : new Error(String(error)), {
           feature: 'reports',
           action: 'load_bolsa_familia_turmas',
           metadata: { escolaId: selectedSchool }
@@ -187,7 +230,7 @@ export default function BolsaFamiliaReportPage() {
 
       setReport(result.data);
     } catch (error) {
-      logger.error('Error fetching report', error as Error, {
+      logger.error('Error fetching report', error instanceof Error ? error : new Error(String(error)), {
         feature: 'reports',
         action: 'generate_bolsa_familia_report',
         metadata: { escolaId: selectedSchool, turmaId: selectedTurma }
@@ -217,7 +260,7 @@ export default function BolsaFamiliaReportPage() {
       await generateBolsaFamiliaReportExcel(report, selectedSchoolName, true);
       toast.success(t('bolsa.excelSuccess'), { id: 'export-excel' });
     } catch (error) {
-      logger.error('Error exporting Excel', error as Error, {
+      logger.error('Error exporting Excel', error instanceof Error ? error : new Error(String(error)), {
         feature: 'reports',
         action: 'export_bolsa_familia_excel'
       });
@@ -238,7 +281,7 @@ export default function BolsaFamiliaReportPage() {
       generateBolsaFamiliaReportPDF(report, selectedSchoolName, true);
       toast.success(t('bolsa.pdfSuccess'), { id: 'export-pdf' });
     } catch (error) {
-      logger.error('Error exporting PDF', error as Error, {
+      logger.error('Error exporting PDF', error instanceof Error ? error : new Error(String(error)), {
         feature: 'reports',
         action: 'export_bolsa_familia_pdf'
       });
@@ -254,7 +297,8 @@ export default function BolsaFamiliaReportPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Page Header - Mobile optimized */}
+      {(() => (
+      /* Page Header - Mobile optimized */
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -299,8 +343,10 @@ export default function BolsaFamiliaReportPage() {
           </Button>
         </div>
       </div>
+      ))()}
 
-      {/* Filters - Mobile optimized */}
+      {(() => (
+      /* Filters - Mobile optimized */
       <Card>
         <CardHeader className="pb-3 px-3 sm:px-6">
           <div className="flex items-center gap-2">
@@ -353,7 +399,9 @@ export default function BolsaFamiliaReportPage() {
             {/* Period Filter */}
             <div className="space-y-1.5 sm:space-y-2">
               <label htmlFor="bolsa-familia-periodo" className="text-xs sm:text-sm font-medium text-gray-700">{t('attendance.period')}</label>
-              <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as PeriodOption)}>
+              <Select value={selectedPeriod} onValueChange={(value) => {
+                if (isPeriodOption(value)) setSelectedPeriod(value)
+              }}>
                 <SelectTrigger id="bolsa-familia-periodo" className="min-h-[44px]">
                   <SelectValue placeholder="Selecione o periodo" />
                 </SelectTrigger>
@@ -414,9 +462,11 @@ export default function BolsaFamiliaReportPage() {
           </div>
         </CardContent>
       </Card>
+      ))()}
 
-      {/* Summary Cards - Mobile optimized grid */}
-      {loading ? (
+      {(() => (
+      /* Summary Cards - Mobile optimized grid */
+      loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -501,9 +551,11 @@ export default function BolsaFamiliaReportPage() {
             </CardContent>
           </Card>
         </div>
-      )}
+      )
+      ))()}
 
-      {/* Report Content - Mobile optimized tabs */}
+      {(() => (
+      /* Report Content - Mobile optimized tabs */
       <Tabs defaultValue="alert" className="space-y-4">
         <TabsList className="grid w-full sm:w-auto sm:max-w-[280px] grid-cols-2">
           <TabsTrigger value="alert" className="min-h-[44px]">
@@ -582,8 +634,7 @@ export default function BolsaFamiliaReportPage() {
                           key={aluno.matriculaId}
                           className={cn(
                             'min-h-[44px]',
-                            aluno.status === 'CRITICO' && 'bg-red-50',
-                            aluno.status === 'ALERTA' && 'bg-amber-50'
+                            BOLSA_STATUS_CLASSES[aluno.status].row,
                           )}
                         >
                           <TableCell className="font-medium text-xs sm:text-sm py-3">
@@ -601,43 +652,20 @@ export default function BolsaFamiliaReportPage() {
                           <TableCell className="text-center font-bold text-xs sm:text-sm">
                             <span
                               className={cn(
-                                aluno.status === 'CRITICO' && 'text-red-600',
-                                aluno.status === 'ALERTA' && 'text-amber-600',
-                                aluno.status === 'CONFORME' && 'text-green-600'
+                                BOLSA_STATUS_CLASSES[aluno.status].percentage,
                               )}
                             >
                               {aluno.percentual}%
                             </span>
                           </TableCell>
                           <TableCell className="text-center text-xs hidden md:table-cell">
-                            {aluno.statusLegal}
-                            {aluno.pisoLegalPercent !== null ? ` (${aluno.pisoLegalPercent}%)` : ''}
+                            {getLegalStatusDisplay(aluno)}
                           </TableCell>
                           <TableCell className="text-center text-xs hidden lg:table-cell">
-                            {aluno.margemMunicipalStatus}
-                            {aluno.margemMunicipalCriticaPercent !== null && aluno.margemMunicipalAlertaPercent !== null
-                              ? ` (${aluno.margemMunicipalCriticaPercent}/${aluno.margemMunicipalAlertaPercent}%)`
-                              : ''}
+                            {getMunicipalStatusDisplay(aluno)}
                           </TableCell>
                           <TableCell className="text-center">
-                            {aluno.status === 'CRITICO' && (
-                              <Badge variant="destructive" className="text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">Critico</span>
-                                <AlertTriangle className="h-3 w-3 sm:hidden" />
-                              </Badge>
-                            )}
-                            {aluno.status === 'ALERTA' && (
-                              <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">{t('components.bolsa.alert')}</span>
-                                <AlertCircle className="h-3 w-3 sm:hidden" />
-                              </Badge>
-                            )}
-                            {aluno.status === 'CONFORME' && (
-                              <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-[10px] sm:text-xs px-1 sm:px-2">
-                                <span className="hidden sm:inline">OK</span>
-                                <CheckCircle className="h-3 w-3 sm:hidden" />
-                              </Badge>
-                            )}
+                            <BolsaTableStatus status={aluno.status} />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -649,8 +677,10 @@ export default function BolsaFamiliaReportPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      ))()}
 
-      {/* Info Footer - Mobile optimized */}
+      {(() => (
+      /* Info Footer - Mobile optimized */
       <Card className="bg-gray-50">
         <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
           <div className="text-xs sm:text-sm text-gray-600 space-y-1.5 sm:space-y-2">
@@ -676,6 +706,7 @@ export default function BolsaFamiliaReportPage() {
           </div>
         </CardContent>
       </Card>
+      ))()}
     </div>
   );
 }

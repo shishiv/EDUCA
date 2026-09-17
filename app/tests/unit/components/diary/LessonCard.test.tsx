@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { renderWithMessages as render } from '../render-with-messages'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LessonCard, LessonCardSkeleton, LessonCardEmpty } from '@/components/diary/LessonCard'
 import type { LessonCardData } from '@/components/diary/LessonCard'
@@ -47,13 +48,13 @@ describe('LessonCard', () => {
     it('should render discipline name', () => {
       render(<LessonCard lesson={mockLesson} />)
       
-      expect(screen.getByText(/matemática/i)).toBeInTheDocument()
+      expect(screen.getByText(/^Matemática -$/)).toBeInTheDocument()
     })
 
     it('should render attendance stats', () => {
       render(<LessonCard lesson={mockLesson} />)
       
-      expect(screen.getByText(/23\/25/)).toBeInTheDocument()
+      expect(screen.getAllByText(/23\/25/)).toHaveLength(2)
     })
 
     it('should render attendance percentage badge', () => {
@@ -66,10 +67,7 @@ describe('LessonCard', () => {
     it('should render summary when provided', () => {
       render(<LessonCard lesson={mockLesson} />)
       
-      const summary = screen.queryByText(/introdução.*adição.*subtração/i)
-      if (summary) {
-        expect(summary).toBeInTheDocument()
-      }
+      expect(screen.getByText(/introdução.*adição.*subtração/i)).toBeInTheDocument()
     })
 
     it('should not render summary in compact mode', () => {
@@ -92,10 +90,7 @@ describe('LessonCard', () => {
       render(<LessonCard lesson={mockLesson} />)
       
       // 2024-02-15 is a Thursday
-      const dayOfWeek = screen.queryByText(/quinta/i)
-      if (dayOfWeek) {
-        expect(dayOfWeek).toBeInTheDocument()
-      }
+      expect(screen.getAllByText(/quinta/i)).toHaveLength(2)
     })
 
     it('should have datetime attribute', () => {
@@ -172,13 +167,13 @@ describe('LessonCard', () => {
     it('should use green color for good attendance (>=85%)', () => {
       const goodAttendance: LessonCardData = {
         ...mockLesson,
-        total_presentes: 20,
+        total_presentes: 23,
         total_ausentes: 2,
       }
       
-      const { container } = render(<LessonCard lesson={goodAttendance} />)
+      render(<LessonCard lesson={goodAttendance} />)
       
-      const badge = screen.getByText('91%').closest('[class*="badge"]')
+      const badge = screen.getByLabelText('Taxa de frequência: 92%')
       expect(badge).toHaveClass(/green/)
     })
 
@@ -190,9 +185,9 @@ describe('LessonCard', () => {
         total_ausentes: 4,
       }
       
-      const { container } = render(<LessonCard lesson={warningAttendance} />)
+      render(<LessonCard lesson={warningAttendance} />)
       
-      const badge = screen.getByText('80%').closest('[class*="badge"]')
+      const badge = screen.getByLabelText('Taxa de frequência: 80%')
       expect(badge).toHaveClass(/amber|yellow/)
     })
 
@@ -203,9 +198,9 @@ describe('LessonCard', () => {
         total_ausentes: 10,
       }
       
-      const { container } = render(<LessonCard lesson={lowAttendance} />)
+      render(<LessonCard lesson={lowAttendance} />)
       
-      const badge = screen.getByText('60%').closest('[class*="badge"]')
+      const badge = screen.getByLabelText('Taxa de frequência: 60%')
       expect(badge).toHaveClass(/red/)
     })
   })
@@ -214,10 +209,7 @@ describe('LessonCard', () => {
     it('should display absence count', () => {
       render(<LessonCard lesson={mockLesson} />)
       
-      const absenceText = screen.queryByText(/2.*falta/i)
-      if (absenceText) {
-        expect(absenceText).toBeInTheDocument()
-      }
+      expect(screen.getByText(/2.*falta/i)).toBeInTheDocument()
     })
 
     it('should use singular "falta" for 1 absence', () => {
@@ -229,19 +221,13 @@ describe('LessonCard', () => {
       
       render(<LessonCard lesson={oneAbsence} />)
       
-      const absenceText = screen.queryByText(/1.*falta$/i)
-      if (absenceText) {
-        expect(absenceText).toBeInTheDocument()
-      }
+      expect(screen.getByText(/1.*falta$/i)).toBeInTheDocument()
     })
 
     it('should use plural "faltas" for multiple absences', () => {
       render(<LessonCard lesson={mockLesson} />)
       
-      const absenceText = screen.queryByText(/2.*faltas/i)
-      if (absenceText) {
-        expect(absenceText).toBeInTheDocument()
-      }
+      expect(screen.getByText(/2.*faltas/i)).toBeInTheDocument()
     })
 
     it('should not display absences when zero', () => {
@@ -266,10 +252,7 @@ describe('LessonCard', () => {
       
       render(<LessonCard lesson={withAtestados} />)
       
-      const atestadosText = screen.queryByText(/3.*atestado/i)
-      if (atestadosText) {
-        expect(atestadosText).toBeInTheDocument()
-      }
+      expect(screen.getByText(/3.*atestado/i)).toBeInTheDocument()
     })
   })
 
@@ -374,10 +357,7 @@ describe('LessonCard', () => {
     it('should display resumo when available', () => {
       render(<LessonCard lesson={mockLesson} />)
       
-      const summary = screen.queryByText(/introdução.*adição/i)
-      if (summary) {
-        expect(summary).toBeInTheDocument()
-      }
+      expect(screen.getByText(/introdução.*adição/i)).toBeInTheDocument()
     })
 
     it('should display objetivo if resumo is missing', () => {
@@ -388,10 +368,7 @@ describe('LessonCard', () => {
       
       render(<LessonCard lesson={noResumo} />)
       
-      const summary = screen.queryByText(/compreender.*operações/i)
-      if (summary) {
-        expect(summary).toBeInTheDocument()
-      }
+      expect(screen.getByText(/compreender.*operações/i)).toBeInTheDocument()
     })
 
     it('should display tema if both resumo and objetivo are missing', () => {
@@ -404,7 +381,7 @@ describe('LessonCard', () => {
       render(<LessonCard lesson={noSummary} />)
       
       // Theme should still be in heading
-      expect(screen.getByText(/operações.*matemáticas/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /operações.*matemáticas/i })).toBeInTheDocument()
     })
 
     it('should truncate long summaries', () => {
@@ -425,10 +402,7 @@ describe('LessonCard', () => {
       render(<LessonCard lesson={mockLesson} compact={true} />)
       
       // Should show dd/MM/yyyy format
-      const shortDate = screen.queryByText(/15\/02\/2024/)
-      if (shortDate) {
-        expect(shortDate).toBeInTheDocument()
-      }
+      expect(screen.getByText(/15\/02\/2024/)).toBeInTheDocument()
     })
 
     it('should hide summary in compact mode', () => {
@@ -609,7 +583,7 @@ describe('LessonCardEmpty', () => {
   })
 
   it('should apply custom className', () => {
-    const { container } = render(<LessonCardEmpty className="custom-empty" />)
+    render(<LessonCardEmpty className="custom-empty" />)
     
     const emptyState = screen.getByRole('status')
     expect(emptyState).toHaveClass('custom-empty')

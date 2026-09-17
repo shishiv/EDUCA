@@ -26,7 +26,7 @@ import { Calendar, Save, X, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import type { CalendarioEvento } from '@/app/(dashboard)/dashboard/calendario/page'
+import type { CalendarioEvento, CalendarioEventoTipo } from '@/app/(dashboard)/dashboard/calendario/page'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
 interface CalendarioEventFormProps {
@@ -35,7 +35,7 @@ interface CalendarioEventFormProps {
   evento: CalendarioEvento | null
   onClose: () => void
   onSuccess: () => void
-  tipoLabels: Record<string, string>
+  tipoLabels: Record<CalendarioEventoTipo, string>
 }
 
 const TIPO_OPTIONS = [
@@ -45,7 +45,30 @@ const TIPO_OPTIONS = [
   { value: 'evento', afeta: false },
   { value: 'reuniao', afeta: false },
   { value: 'conselho', afeta: false },
-]
+] as const satisfies ReadonlyArray<{ value: CalendarioEventoTipo; afeta: boolean }>
+
+interface CalendarioEventFormData {
+  titulo: string
+  descricao: string
+  data_inicio: string
+  data_fim: string
+  tipo: CalendarioEventoTipo
+  afeta_frequencia: boolean
+  ano_letivo: number
+}
+
+function validateEvent(formData: CalendarioEventFormData): string | null {
+  if (!formData.titulo.trim()) return 'Informe o título do evento'
+  if (!formData.data_inicio || !formData.data_fim) return 'Informe as datas de início e fim'
+  if (formData.data_fim < formData.data_inicio) {
+    return 'A data de fim não pode ser anterior à data de início'
+  }
+  return null
+}
+
+function isEventType(value: string): value is CalendarioEventoTipo {
+  return TIPO_OPTIONS.some(option => option.value === value)
+}
 
 export function CalendarioEventForm({
   escolaId,
@@ -57,12 +80,12 @@ export function CalendarioEventForm({
 }: CalendarioEventFormProps) {
   const t = useClassroomTranslations()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CalendarioEventFormData>({
     titulo: '',
     descricao: '',
     data_inicio: '',
     data_fim: '',
-    tipo: 'evento' as string,
+    tipo: 'evento',
     afeta_frequencia: false,
     ano_letivo: new Date().getFullYear(),
   })
@@ -101,28 +124,15 @@ export function CalendarioEventForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const validationError = validateEvent(formData)
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+
     setLoading(true)
-
     try {
-      // Validation
-      if (!formData.titulo.trim()) {
-        toast.error('Informe o título do evento')
-        setLoading(false)
-        return
-      }
-
-      if (!formData.data_inicio || !formData.data_fim) {
-        toast.error('Informe as datas de início e fim')
-        setLoading(false)
-        return
-      }
-
-      if (formData.data_fim < formData.data_inicio) {
-        toast.error('A data de fim não pode ser anterior à data de início')
-        setLoading(false)
-        return
-      }
-
       const eventoData = {
         escola_id: escolaId,
         titulo: formData.titulo.trim(),
@@ -154,16 +164,24 @@ export function CalendarioEventForm({
       }
 
       onSuccess()
-    } catch (error: any) {
-      logger.error('Erro ao salvar evento:', error)
-      toast.error(error.message || 'Erro ao salvar evento')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao salvar evento'
+      logger.error('Erro ao salvar evento:', message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = <Field extends keyof CalendarioEventFormData>(
+    field: Field,
+    value: CalendarioEventFormData[Field],
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleTypeChange = (value: string) => {
+    if (isEventType(value)) handleChange('tipo', value)
   }
 
   return (
@@ -201,7 +219,7 @@ export function CalendarioEventForm({
             </Label>
             <Select
               value={formData.tipo}
-              onValueChange={(value) => handleChange('tipo', value)}
+              onValueChange={handleTypeChange}
               disabled={loading}
             >
               <SelectTrigger id="tipo">

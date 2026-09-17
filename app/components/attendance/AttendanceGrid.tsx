@@ -7,7 +7,7 @@
  * - Touch-optimized with 44px minimum touch targets
  * - Real-time summary with the canonical attendance policy colors
  * - Batch operations and real-time sync
- * - Visual lock indicator when session is locked after 18:00
+ * - Visual lock indicator for the session's captured editing deadline
  * - Brazilian educational compliance: "nao existe o esquecer"
  *
  * Subcomponents:
@@ -25,8 +25,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import type { Database } from '@/types/database'
 import type { AttendanceStatusUI } from '@/types/attendance'
 import { uiStatusToDB, dbStatusToUI } from '@/types/attendance'
 import { AttendanceGridHeader } from './AttendanceGridHeader'
@@ -45,6 +47,90 @@ import { useClassroomTranslations } from '@/i18n/classroom'
 // Re-export types for consumers
 export type { AttendanceStats, AttendanceGridProps } from './AttendanceGridTypes'
 
+const attendanceStatusFields: Record<AttendanceStatusUI, { presente: boolean; status_presenca: string }> = {
+  presente: { presente: true, status_presenca: 'P' },
+  falta: { presente: false, status_presenca: 'F' },
+  attestado: { presente: true, status_presenca: 'A' },
+  empty: { presente: false, status_presenca: '' },
+}
+
+const canonicalStatusByUI: Record<AttendanceStatusUI, 'P' | 'F' | 'J' | null> = {
+  presente: 'P',
+  falta: 'F',
+  attestado: 'J',
+  empty: null,
+}
+
+const attendanceStatusLabels: Record<AttendanceStatusUI, string> = {
+  presente: 'presente',
+  falta: 'ausente',
+  attestado: 'com atestado',
+  empty: 'desmarcado',
+}
+
+type StoredAttendanceRecord = Database['public']['Tables']['frequencia']['Row']
+
+function storedAttendanceUIStatus(record: StoredAttendanceRecord): AttendanceStatusUI {
+  switch (record.status_presenca) {
+    case 'P': return 'presente'
+    case 'F': return 'falta'
+    case 'A':
+    case 'J': return 'attestado'
+    default:
+      if (record.presente) return 'presente'
+      return record.presente === false ? 'falta' : 'empty'
+  }
+}
+
+function gridAttendanceRecord(record: StoredAttendanceRecord): AttendanceRecord {
+  const status = storedAttendanceUIStatus(record)
+  return {
+    id: record.id,
+    student_id: record.matricula_id,
+    presente: record.presente || status === 'presente' || status === 'attestado',
+    status_presenca: uiStatusToDB(status),
+    observacoes: record.observacoes_frequencia ?? undefined,
+    horario_marcacao: record.marcado_em || record.created_at || new Date().toISOString(),
+    is_locked: record.bloqueado ?? false,
+    created_by: record.marcado_por ?? undefined,
+    updated_by: record.marcado_por ?? undefined,
+  }
+}
+
+function withOptimisticAttendance(
+  previous: Map<string, AttendanceRecord>,
+  studentId: string,
+  status: AttendanceStatusUI
+): Map<string, AttendanceRecord> {
+  const next = new Map(previous)
+  if (status === 'empty') {
+    next.delete(studentId)
+  } else {
+    next.set(studentId, {
+      student_id: studentId,
+      presente: attendanceStatusFields[status].presente,
+      status_presenca: uiStatusToDB(status),
+      horario_marcacao: new Date().toISOString()
+    })
+  }
+  return next
+}
+
+function getActiveMatriculaId(students: Student[], studentId: string): string {
+  const matriculaId = students.find(student => student.id === studentId)?.matriculas[0]?.id
+  if (!matriculaId) throw new Error('Matrícula ativa não encontrada para o aluno')
+  return matriculaId
+}
+
+const AttendanceApiFailureSchema = z.object({
+  error: z.string().optional(),
+})
+
+function isAttendanceLockError(error: z.infer<typeof AttendanceApiFailureSchema>): boolean {
+  const message = error.error ?? ''
+  return message.includes('bloqueado') || message.includes('locked')
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -54,6 +140,8 @@ export function AttendanceGrid({
   turmaId,
   sessionDate,
   sessionStatus,
+  correctionDeadlineAt,
+  scheduledCutoffAt,
   readonly = false,
   showPhotos = true,
   onAttendanceChange
@@ -69,7 +157,7 @@ export function AttendanceGrid({
   const [isOnline, setIsOnline] = useState(true)
   const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'error'>('synced')
   const [lockInfo, setLockInfo] = useState<SessionLockInfo>(() =>
-    getSessionLockInfo(sessionDate, sessionStatus)
+    getSessionLockInfo(sessionDate, sessionStatus, correctionDeadlineAt, new Date(), scheduledCutoffAt)
   )
 
   const isEffectivelyReadonly = readonly || lockInfo.isLocked || !lockInfo.canEdit
@@ -81,12 +169,20 @@ export function AttendanceGrid({
   // Update lock info periodically
   useEffect(() => {
     const updateLockInfo = () => {
-      setLockInfo(getSessionLockInfo(sessionDate, sessionStatus))
+      setLockInfo(getSessionLockInfo(sessionDate, sessionStatus, correctionDeadlineAt, new Date(), scheduledCutoffAt))
     }
     updateLockInfo()
     const interval = setInterval(updateLockInfo, 60000)
-    return () => clearInterval(interval)
-  }, [sessionDate, sessionStatus])
+    const deadline = correctionDeadlineAt ?? scheduledCutoffAt
+    const remaining = deadline ? Date.parse(deadline) - Date.now() : 0
+    const expiry = remaining > 0 ? setTimeout(updateLockInfo, remaining) : undefined
+    window.addEventListener('focus', updateLockInfo)
+    return () => {
+      clearInterval(interval)
+      clearTimeout(expiry)
+      window.removeEventListener('focus', updateLockInfo)
+    }
+  }, [sessionDate, sessionStatus, correctionDeadlineAt, scheduledCutoffAt])
 
   // Monitor online status
   useEffect(() => {
@@ -125,7 +221,13 @@ export function AttendanceGrid({
         .order('nome_completo')
 
       if (studentsError) throw studentsError
-      setStudents(studentsData || [])
+      setStudents((studentsData || []).map(student => ({
+        ...student,
+        matriculas: student.matriculas.map(matricula => ({
+          ...matricula,
+          situacao: matricula.situacao ?? '',
+        })),
+      })))
 
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('frequencia')
@@ -136,24 +238,7 @@ export function AttendanceGrid({
 
       const attendanceMap = new Map<string, AttendanceRecord>()
       attendanceData?.forEach(record => {
-        let status: AttendanceStatusUI = 'empty'
-        if (record.status_presenca === 'P') status = 'presente'
-        else if (record.status_presenca === 'F') status = 'falta'
-        else if (record.status_presenca === 'A' || record.status_presenca === 'J') status = 'attestado'
-        else if (record.presente) status = 'presente'
-        else if (record.presente === false) status = 'falta'
-
-        attendanceMap.set(record.matricula_id, {
-          id: record.id,
-          student_id: record.matricula_id,
-          presente: record.presente || status === 'presente' || status === 'attestado',
-          status_presenca: uiStatusToDB(status),
-          observacoes: record.observacoes_frequencia ?? undefined,
-          horario_marcacao: record.marcado_em || record.created_at || new Date().toISOString(),
-          is_locked: record.bloqueado,
-          created_by: record.marcado_por ?? undefined,
-          updated_by: record.marcado_por ?? undefined
-        })
+        attendanceMap.set(record.matricula_id, gridAttendanceRecord(record))
       })
 
       setAttendance(attendanceMap)
@@ -259,44 +344,9 @@ export function AttendanceGrid({
     try {
       setSyncStatus('pending')
 
-      const statusMap: Record<AttendanceStatusUI, { presente: boolean; status_presenca: string }> = {
-        'presente': { presente: true, status_presenca: 'P' },
-        'falta': { presente: false, status_presenca: 'F' },
-        'attestado': { presente: true, status_presenca: 'A' },
-        'empty': { presente: false, status_presenca: '' }
-      }
+      setAttendance(previous => withOptimisticAttendance(previous, studentId, status))
 
-      const statusFields = statusMap[status]
-
-      // Optimistic update
-      setAttendance(prev => {
-        const newMap = new Map(prev)
-        if (status === 'empty') {
-          newMap.delete(studentId)
-        } else {
-          newMap.set(studentId, {
-            student_id: studentId,
-            presente: statusFields.presente,
-            status_presenca: uiStatusToDB(status),
-            horario_marcacao: new Date().toISOString()
-          })
-        }
-        return newMap
-      })
-
-      const student = students.find(currentStudent => currentStudent.id === studentId)
-      const matriculaId = student?.matriculas[0]?.id
-      if (!matriculaId) {
-        throw new Error('Matrícula ativa não encontrada para o aluno')
-      }
-
-      const canonicalStatus = status === 'presente'
-        ? 'P'
-        : status === 'falta'
-          ? 'F'
-          : status === 'attestado'
-            ? 'J'
-            : null
+      const matriculaId = getActiveMatriculaId(students, studentId)
 
       const response = await fetch(`/api/sessoes/aula/${sessionId}/frequencia/batch`, {
         method: 'POST',
@@ -304,32 +354,25 @@ export function AttendanceGrid({
         body: JSON.stringify({
           attendance: [{
             matricula_id: matriculaId,
-            status: canonicalStatus,
+            status: canonicalStatusByUI[status],
             justificativa: status === 'attestado' ? 'Atestado apresentado' : null,
           }]
         })
       })
 
-      const result = await response.json()
+      const result = AttendanceApiFailureSchema.parse(await response.json())
 
       if (!response.ok) {
-        if (result.error?.includes('18:00') || result.error?.includes('bloqueado') || result.error?.includes('locked')) {
-          setLockInfo(getSessionLockInfo(sessionDate, sessionStatus))
+        if (isAttendanceLockError(result)) {
+          setLockInfo(getSessionLockInfo(sessionDate, sessionStatus, correctionDeadlineAt, new Date(), scheduledCutoffAt))
           toast.error('Frequencia bloqueada. Atualizando status...')
         }
         throw new Error(result.error || 'Erro ao marcar presenca')
       }
 
       setSyncStatus('synced')
-
-      const statusLabels: Record<AttendanceStatusUI, string> = {
-        'presente': 'presente',
-        'falta': 'ausente',
-        'attestado': 'com atestado',
-        'empty': 'desmarcado'
-      }
       const studentName = students.find(s => s.id === studentId)?.nome_completo || 'Aluno'
-      toast.success(`${studentName} marcado como ${statusLabels[status]}`, { duration: 2000 })
+      toast.success(`${studentName} marcado como ${attendanceStatusLabels[status]}`, { duration: 2000 })
 
     } catch (error) {
       logger.error('Erro ao marcar presenca:', error instanceof Error ? error : new Error(String(error)))
@@ -389,7 +432,7 @@ export function AttendanceGrid({
         body: JSON.stringify({ attendance: payloadRecords })
       })
 
-      const result = await response.json()
+      const result = AttendanceApiFailureSchema.parse(await response.json())
       if (!response.ok) throw new Error(result.error || 'Erro ao marcar presença em lote')
 
       setSyncStatus('synced')

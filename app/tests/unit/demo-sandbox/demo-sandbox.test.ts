@@ -72,7 +72,7 @@ describe('demo sandbox guard', () => {
 
     const response = demoSandboxSimulatedSuccessResponse(
       'demo.config.update',
-      { config: { id: 'config-1', valor: 'demo' } },
+      { config: { id: 'config-1', chave: 'demo-config', valor: 'demo' } },
       { auditId: 'audit-1', correlationId: 'correlation-1' },
       demoEnv,
     )
@@ -96,7 +96,7 @@ describe('demo sandbox guard', () => {
   })
 
   it('does not build a simulated success response outside the demo', () => {
-    expect(demoSandboxSimulatedSuccessResponse('demo.config.update', {}, {}, {})).toBeNull()
+    expect(demoSandboxSimulatedSuccessResponse('demo.config.update', undefined, {}, {})).toBeNull()
   })
 
   it('mantem bloqueados Educacenso, webhook e rotas nao inventariadas', async () => {

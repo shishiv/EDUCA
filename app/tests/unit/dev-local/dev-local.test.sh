@@ -35,6 +35,10 @@ case "${1:-}" in
   doctor) echo 'ok Proxy is responding' ;;
   get) echo "https://${2:-educa-dev-local}.localhost" ;;
   run) sleep 0.1 ;;
+  list)
+    [[ "${STUB_ROUTE_PROBE_FAIL:-false}" != true ]] || exit 42
+    [[ "${STUB_ROUTE_STUCK:-false}" != true ]] || sed -n 's/^portless run --name \([^ ]*\).*/\1/p' "$CALLS"
+    ;;
 esac
 STUB
 cat > "$BIN/pnpm" <<'STUB'
@@ -89,5 +93,19 @@ if run_baseline --unknown >/dev/null 2>&1; then
   echo 'unknown argument must be rejected' >&2
   exit 1
 fi
+
+for failed_probe in STUB_ROUTE_PROBE_FAIL STUB_ROUTE_STUCK; do
+  : > "$CALLS"
+  if output=$(env "$failed_probe=true" PATH="$BIN:$PATH" CALLS="$CALLS" TMPDIR="$WORK/tmp" XDG_RUNTIME_DIR="$WORK/runtime" bash "$SCRIPT" 2>&1); then
+    echo 'unconfirmed route cleanup must fail' >&2
+    exit 1
+  fi
+  grep -q 'Local EDUCA cleanup failed' <<<"$output"
+  if grep -q 'Local EDUCA environment removed' <<<"$output"; then
+    echo 'failed cleanup must not claim removal' >&2
+    exit 1
+  fi
+  grep -q 'supabase .* stop .* --no-backup' "$CALLS"
+done
 
 printf 'dev-local baseline checks passed\n'

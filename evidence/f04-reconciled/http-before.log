@@ -1,0 +1,46 @@
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+stdout | tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > suppress of semantic receipt preserves persisted state and both audit counts
+F04_HTTP_FAULT {
+  fault: 'suppress',
+  status: 503,
+  body: { error: 'USER_STATUS_AUDIT_INCOMPLETE', completed: false },
+  before: { ativo: true, semantic: 0, generic: 2 },
+  after: { ativo: false, semantic: 0, generic: 3 }
+}
+
+ ❯ tests/live/user-status-atomic.live.test.ts (3 tests | 1 failed | 2 skipped) 1888ms
+     × suppress of semantic receipt preserves persisted state and both audit counts 1758ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/live/user-status-atomic.live.test.ts > F04 real HTTP status and semantic receipt > suppress of semantic receipt preserves persisted state and both audit counts
+AssertionError: expected { ativo: false, semantic: +0, …(1) } to deeply equal { ativo: true, semantic: +0, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "ativo": true,
+-   "generic": 2,
++   "ativo": false,
++   "generic": 3,
+    "semantic": 0,
+  }
+
+ ❯ tests/live/user-status-atomic.live.test.ts:80:21
+     78|       expect(response.status).toBe(503)
+     79|       expect(body).not.toHaveProperty('receipt')
+     80|       expect(after).toEqual(before)
+       |                     ^
+     81|     } finally {
+     82|       await database.query('DROP TRIGGER f04_http_receipt_failure ON p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  05:30:25
+   Duration  2.12s (transform 27ms, setup 64ms, import 67ms, tests 1.89s, environment 0ms)

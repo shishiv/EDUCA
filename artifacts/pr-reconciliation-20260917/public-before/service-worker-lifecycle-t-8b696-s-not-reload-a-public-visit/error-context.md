@@ -1,0 +1,211 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "EDUCA" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "EDUCA" [ref=e6]
+        - navigation "Navegação principal" [ref=e7]:
+          - link "Como funciona" [ref=e8] [cursor=pointer]:
+            - /url: "#como-funciona"
+          - link "Recursos" [ref=e9] [cursor=pointer]:
+            - /url: "#recursos"
+          - link "Código aberto" [ref=e10] [cursor=pointer]:
+            - /url: "#aberta"
+          - link "Blog" [ref=e11] [cursor=pointer]:
+            - /url: /blog
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - button "Mudar idioma para English" [ref=e14] [cursor=pointer]: PT
+            - status [ref=e15]
+          - link "Conhecer o EDUCA" [ref=e16] [cursor=pointer]:
+            - /url: /demo
+            - text: Conhecer o EDUCA
+            - img [ref=e17]
+    - main [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - heading "Gestão escolar para redes municipais, com código aberto." [level=1] [ref=e22]
+          - paragraph [ref=e23]: O EDUCA reúne escolas, turmas, estudantes, matrículas e frequência em um só sistema.
+          - paragraph [ref=e24]: A Secretaria de Educação acompanha a rede. Cada escola e sala registra o que acontece no dia.
+          - generic [ref=e25]:
+            - link "Ver a demonstração" [ref=e26] [cursor=pointer]:
+              - /url: /demo
+              - text: Ver a demonstração
+              - img [ref=e27]
+            - link "Entrar no sistema" [ref=e29] [cursor=pointer]:
+              - /url: /login
+          - paragraph [ref=e30]:
+            - img [ref=e31]
+            - text: A experiência pública atual é uma demonstração sintética, não uma operação municipal ao vivo.
+          - generic "Caminho da informação no EDUCA" [ref=e34]:
+            - generic [ref=e35]: Secretaria
+            - img [ref=e36]
+            - generic [ref=e38]: Escola
+            - img [ref=e39]
+            - generic [ref=e41]: Sala de aula
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - text: Acompanhe a rede
+            - generic [ref=e44]: ↗
+          - figure "Prévia ilustrativa e sintética do painel do EDUCA, sem dados de uma rede real." [ref=e45]:
+            - generic [ref=e46]: Prévia ilustrativa e sintética do painel do EDUCA, sem dados de uma rede real.
+            - generic [ref=e47]:
+              - generic [ref=e48]:
+                - generic [ref=e53]: Rede municipal / Visão geral
+                - generic [ref=e54]: Ambiente sintético
+              - generic [ref=e56]:
+                - complementary [ref=e57]:
+                  - generic [ref=e58]: EDUCA
+                  - generic [ref=e59]: Visão geral
+                  - generic [ref=e60]: Escolas
+                  - generic [ref=e61]: Estudantes
+                  - generic [ref=e62]: Turmas
+                  - generic [ref=e63]: Frequência
+                  - generic [ref=e64]: Relatórios
+                  - generic [ref=e65]: Configurações
+                - generic [ref=e66]:
+                  - generic [ref=e67]:
+                    - generic [ref=e68]:
+                      - paragraph [ref=e69]: PERÍODO DE DEMONSTRAÇÃO
+                      - heading [level=2] [ref=e70]: Visão da rede
+                    - generic [ref=e71]:
+                      - text: Todas as escolas
+                      - img [ref=e72]
+                  - generic [ref=e75]:
+                    - generic [ref=e76]:
+                      - generic [ref=e77]: Escolas ativas
+                      - strong [ref=e78]: "-"
+                      - generic [ref=e79]: na rede
+                    - generic [ref=e80]:
+                      - generic [ref=e81]: Turmas hoje
+                      - strong [ref=e82]: "-"
+                      - generic [ref=e83]: em andamento
+                    - generic [ref=e84]:
+                      - generic [ref=e85]: Frequência lançada
+                      - strong [ref=e86]: "-"
+                      - generic [ref=e87]: até agora
+                  - generic [ref=e88]:
+                    - generic [ref=e89]:
+                      - generic [ref=e90]:
+                        - strong [ref=e91]: Atividade da rede
+                        - generic [ref=e92]:
+                          - text: Ver tudo
+                          - img [ref=e93]
+                      - generic [ref=e96]:
+                        - generic [ref=e97]: ESCOLA
+                        - generic [ref=e98]: FREQUÊNCIA
+                        - generic [ref=e99]: STATUS
+                      - generic [ref=e100]:
+                        - generic [ref=e101]:
+                          - generic [ref=e102]: A
+                          - text: Escola de exemplo A
+                        - generic [ref=e103]: "-"
+                        - generic [ref=e104]: Em dia
+                      - generic [ref=e105]:
+                        - generic [ref=e106]:
+                          - generic [ref=e107]: B
+                          - text: Escola de exemplo B
+                        - generic [ref=e108]: "-"
+                        - generic [ref=e109]: Acompanhar
+                      - generic [ref=e110]:
+                        - generic [ref=e111]:
+                          - generic [ref=e112]: C
+                          - text: Escola de exemplo C
+                        - generic [ref=e113]: "-"
+                        - generic [ref=e114]: Em dia
+                    - generic [ref=e115]:
+                      - img [ref=e117]
+                      - strong [ref=e120]: Diário de classe
+                      - paragraph [ref=e121]: Registros ilustrativos aguardando revisão.
+                      - generic [ref=e122]:
+                        - text: Abrir rotina
+                        - img [ref=e123]
+          - generic [ref=e126]: Feito para o cotidiano da escola
+      - generic [ref=e130]:
+        - heading "Da secretaria à sala de aula. Uma visão compartilhada." [level=2] [ref=e131]:
+          - text: Da secretaria à sala de aula.
+          - emphasis [ref=e132]: Uma visão compartilhada.
+        - paragraph [ref=e133]: A gestão municipal reúne decisões, cadastros e rotinas que atravessam diferentes escolas. O EDUCA dá forma a esse caminho, preservando os vínculos que fazem sentido em cada território.
+        - link "Conheça os recursos" [ref=e134] [cursor=pointer]:
+          - /url: "#recursos"
+          - text: Conheça os recursos
+          - img [ref=e135]
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - heading "O trabalho da rede, em um fluxo conectado." [level=2] [ref=e140]:
+            - text: O trabalho da rede,
+            - emphasis [ref=e141]: em um fluxo conectado.
+          - paragraph [ref=e142]: "Uma fundação para o que a equipe já faz: organizar a rede, acompanhar vínculos e registrar a rotina com contexto."
+        - generic [ref=e143]:
+          - article [ref=e144]:
+            - img [ref=e146]
+            - generic [ref=e149]:
+              - heading "Escolas e turmas" [level=3] [ref=e150]
+              - paragraph [ref=e151]: Organize a rede, as turmas e as atribuições em um só lugar.
+            - img [ref=e152]
+          - article [ref=e155]:
+            - img [ref=e157]
+            - generic [ref=e161]:
+              - heading "Frequência e diário" [level=3] [ref=e162]
+              - paragraph [ref=e163]: Registre o cotidiano da sala de aula com um fluxo claro.
+            - img [ref=e164]
+          - article [ref=e167]:
+            - img [ref=e169]
+            - generic [ref=e174]:
+              - heading "Pessoas e matrículas" [level=3] [ref=e175]
+              - paragraph [ref=e176]: Tenha uma visão consistente de estudantes, responsáveis e vínculos.
+            - img [ref=e177]
+      - generic [ref=e181]:
+        - generic [ref=e182]:
+          - heading "O código fica aberto. O contexto, também." [level=2] [ref=e183]:
+            - text: O código fica aberto.
+            - emphasis [ref=e184]: O contexto, também.
+          - paragraph [ref=e185]: O repositório público usa a licença MIT. Você pode examinar, executar e adaptar o código ao contexto local. O produto segue como fundação de piloto municipal com dados sintéticos.
+          - link "Ler o código" [ref=e186] [cursor=pointer]:
+            - /url: https://github.com/shishiv/EDUCA
+            - text: Ler o código
+            - img [ref=e187]
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - img [ref=e192]
+            - generic [ref=e195]: PROVA OPEN SOURCE
+          - link "github.com/shishiv EDUCA" [ref=e196] [cursor=pointer]:
+            - /url: https://github.com/shishiv/EDUCA
+            - generic [ref=e197]: github.com/shishiv
+            - strong [ref=e198]: EDUCA
+            - img [ref=e199]
+          - generic [ref=e202]:
+            - generic [ref=e203]: MIT
+            - generic [ref=e204]:
+              - strong [ref=e205]: Licença permissiva e verificável
+              - paragraph [ref=e206]: Permite usar, copiar, modificar e distribuir o código nos termos da licença.
+            - link "Ler licença" [ref=e207] [cursor=pointer]:
+              - /url: https://github.com/shishiv/EDUCA/blob/main/LICENSE
+          - list [ref=e208]:
+            - listitem [ref=e209]:
+              - img [ref=e210]
+              - text: Examine a implementação e o histórico do projeto.
+            - listitem [ref=e212]:
+              - img [ref=e213]
+              - text: Execute e adapte a base ao contexto da sua rede.
+    - contentinfo [ref=e215]:
+      - generic [ref=e216]:
+        - link "EDUCA" [ref=e217] [cursor=pointer]:
+          - /url: /
+          - img "EDUCA" [ref=e218]
+        - paragraph [ref=e219]: Uma fundação open source para a gestão escolar municipal.
+        - generic [ref=e220]:
+          - link "Entrar no sistema" [ref=e221] [cursor=pointer]:
+            - /url: /login
+          - link "Política de privacidade" [ref=e222] [cursor=pointer]:
+            - /url: /politica-privacidade
+          - link "Voltar ao início" [ref=e223] [cursor=pointer]:
+            - /url: "#inicio"
+            - text: Voltar ao início
+            - img [ref=e224]
+  - region "Notifications alt+T"
+```

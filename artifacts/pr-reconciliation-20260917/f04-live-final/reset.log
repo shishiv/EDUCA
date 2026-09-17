@@ -1,0 +1,237 @@
+Resetting local database...
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+WARN: no SMS provider is enabled. Disabling phone login
+Recreating database...
+Initialising schema...
+Seeding globals from roles.sql...
+Applying migration 00000000000000_baseline.sql...
+NOTICE (42710): extension "uuid-ossp" already exists, skipping
+Applying migration 20260119_create_feature_flags.sql...
+NOTICE (00000): trigger "trigger_feature_flags_updated_at" for relation "feature_flags" does not exist, skipping
+NOTICE (00000): trigger "trigger_escola_feature_flags_updated_at" for relation "escola_feature_flags" does not exist, skipping
+Applying migration 20260124133337_create_relatorios_descritivos.sql...
+Applying migration 20260719031000_add_censo_escolar_fields.sql...
+Applying migration 20260721010000_fix_rls_role_policies.sql...
+NOTICE (00000): policy "users_select_authorized" for relation "public.users" does not exist, skipping
+NOTICE (00000): policy "turmas_select_authorized" for relation "public.turmas" does not exist, skipping
+NOTICE (00000): policy "alunos_select_authorized" for relation "public.alunos" does not exist, skipping
+NOTICE (00000): policy "matriculas_select_authorized" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): policy "responsaveis_select_authorized" for relation "public.responsaveis" does not exist, skipping
+NOTICE (00000): policy "aluno_responsaveis_select_authorized" for relation "public.aluno_responsaveis" does not exist, skipping
+NOTICE (00000): policy "disciplinas_select_authorized" for relation "public.disciplinas" does not exist, skipping
+NOTICE (00000): policy "frequencia_select_authorized" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "notas_select_authorized" for relation "public.notas" does not exist, skipping
+NOTICE (00000): policy "sessoes_aula_select_authorized" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "aulas_abertas_select_authorized" for relation "public.aulas_abertas" does not exist, skipping
+NOTICE (00000): policy "calendario_select_authorized" for relation "public.calendario_escolar" does not exist, skipping
+NOTICE (00000): policy "configs_select_authorized" for relation "public.configs" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.escolas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.users" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.alunos" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.responsaveis" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.aluno_responsaveis" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.turmas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.disciplinas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.notas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.aulas_abertas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.calendario_escolar" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.configs" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.relatorios_descritivos" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.feature_flags" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.escola_feature_flags" does not exist, skipping
+NOTICE (00000): policy "school_staff_manage_alunos" for relation "public.alunos" does not exist, skipping
+NOTICE (00000): policy "school_staff_manage_responsaveis" for relation "public.responsaveis" does not exist, skipping
+NOTICE (00000): policy "school_staff_manage_links" for relation "public.aluno_responsaveis" does not exist, skipping
+NOTICE (00000): policy "school_staff_manage_turmas" for relation "public.turmas" does not exist, skipping
+NOTICE (00000): policy "school_staff_manage_matriculas" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "academic_manage_notas" for relation "public.notas" does not exist, skipping
+NOTICE (00000): policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+Applying migration 20260721011000_create_conteudo_aula.sql...
+NOTICE (00000): policy "conteudo_aula_select_authorized" for relation "public.conteudo_aula" does not exist, skipping
+NOTICE (00000): policy "conteudo_aula_manage_authorized" for relation "public.conteudo_aula" does not exist, skipping
+NOTICE (00000): policy "conteudo_aula_admin" for relation "public.conteudo_aula" does not exist, skipping
+Applying migration 20260727050000_pilot_foundation_gate.sql...
+NOTICE (00000): trigger "pilot_single_municipality_guard" for relation "pilot_municipality_config" does not exist, skipping
+NOTICE (00000): policy "users_select_same_escola" for relation "users" does not exist, skipping
+NOTICE (00000): policy "turmas_select_escola" for relation "turmas" does not exist, skipping
+NOTICE (00000): policy "alunos_select_via_matricula" for relation "alunos" does not exist, skipping
+NOTICE (00000): policy "matriculas_select_escola" for relation "matriculas" does not exist, skipping
+NOTICE (00000): policy "frequencia_select_escola" for relation "frequencia" does not exist, skipping
+NOTICE (00000): policy "sessoes_aula_select_escola" for relation "sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_sessoes_select" for relation "sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_sessoes_insert" for relation "sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_sessoes_update" for relation "sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_frequencia_select" for relation "frequencia" does not exist, skipping
+NOTICE (00000): policy "attendance_frequencia_insert" for relation "frequencia" does not exist, skipping
+NOTICE (00000): policy "attendance_frequencia_update" for relation "frequencia" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_append_only" for relation "pilot_audit_log" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "escolas" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "users" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "alunos" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "responsaveis" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "aluno_responsaveis" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "turmas" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "matriculas" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "frequencia" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "sessoes_aula" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "aulas_abertas" does not exist, skipping
+NOTICE (00000): policy "pilot_student_photos_select" for relation "storage.objects" does not exist, skipping
+NOTICE (00000): policy "pilot_student_photos_insert" for relation "storage.objects" does not exist, skipping
+NOTICE (00000): policy "pilot_student_photos_update" for relation "storage.objects" does not exist, skipping
+Applying migration 20260801000000_add_frequencia_student_day_unique.sql...
+Applying migration 20260801000001_whatsapp_notifications.sql...
+NOTICE (00000): trigger "whatsapp_optin_school_sync" for relation "whatsapp_notification_optins" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "whatsapp_notification_optins" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "whatsapp_notification_messages" does not exist, skipping
+Applying migration 20260803095753_educa_attendance_canonical_flow.sql...
+NOTICE (00000): index "idx_sessoes_aula_open_turma_date" does not exist, skipping
+NOTICE (00000): trigger "attendance_prepare_frequency_record" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): trigger "attendance_protect_session_state" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): trigger "attendance_protect_frequency_state" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): trigger "attendance_audit_session_change" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): trigger "attendance_audit_frequency_change" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "attendance_turmas_select" for relation "public.turmas" does not exist, skipping
+NOTICE (00000): policy "attendance_matriculas_select" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "attendance_sessoes_select" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_sessoes_insert" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_sessoes_update" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "attendance_frequencia_select" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "attendance_frequencia_insert" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "attendance_frequencia_update" for relation "public.frequencia" does not exist, skipping
+Applying migration 20260803143646_attendance_batch_upsert_index.sql...
+Applying migration 20260803235036_fix_pilot_matricula_insert_rls.sql...
+Applying migration 20260805093305_demo_users_browser_write_boundary.sql...
+Applying migration 20260810042648_enforce_pilot_enrollment_capacity.sql...
+NOTICE (00000): trigger "pilot_lock_matricula_capacity" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): trigger "pilot_validate_matricula_capacity" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): trigger "pilot_validate_matricula_capacity_insert" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): trigger "pilot_validate_matricula_capacity_update" for relation "public.matriculas" does not exist, skipping
+Applying migration 20260810120522_certificate_issuance_source_truth.sql...
+NOTICE (42P06): schema "extensions" already exists, skipping
+NOTICE (42710): extension "pgcrypto" already exists, skipping
+Applying migration 20260810120559_attendance_conditionality_read_model.sql...
+NOTICE (00000): trigger "assign_school_municipality" for relation "public.escolas" does not exist, skipping
+NOTICE (00000): trigger "prepare_attendance_municipal_threshold_metadata" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+NOTICE (00000): trigger "audit_attendance_municipal_threshold_insert" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+NOTICE (00000): trigger "prevent_attendance_municipal_threshold_update" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+NOTICE (00000): policy "attendance_municipal_thresholds_select" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+NOTICE (00000): policy "attendance_municipal_thresholds_insert" for relation "public.attendance_municipal_thresholds" does not exist, skipping
+NOTICE (00000): view "vw_frequencia_condicionalidade" does not exist, skipping
+Applying migration 20260810192820_governed_pilot_csv_import.sql...
+NOTICE (00000): trigger "pilot_import_batch_immutable" for relation "public.alunos" does not exist, skipping
+NOTICE (00000): trigger "pilot_import_batch_immutable" for relation "public.responsaveis" does not exist, skipping
+NOTICE (00000): trigger "pilot_import_batch_immutable" for relation "public.aluno_responsaveis" does not exist, skipping
+NOTICE (00000): trigger "pilot_import_batch_immutable" for relation "public.matriculas" does not exist, skipping
+Applying migration 20260810220000_governed_pilot_security_hardening.sql...
+NOTICE (00000): policy "admin_full_access" for relation "public.users" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "admin_full_access" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "escolas_select_authenticated" for relation "public.escolas" does not exist, skipping
+NOTICE (00000): policy "users_select_same_escola" for relation "public.users" does not exist, skipping
+NOTICE (00000): policy "turmas_select_escola" for relation "public.turmas" does not exist, skipping
+NOTICE (00000): policy "alunos_select_via_matricula" for relation "public.alunos" does not exist, skipping
+NOTICE (00000): policy "matriculas_select_escola" for relation "public.matriculas" does not exist, skipping
+NOTICE (00000): policy "frequencia_select_escola" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "sessoes_aula_select_escola" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "audit_logs_admin_only" for relation "public.audit_logs" does not exist, skipping
+NOTICE (00000): policy "escolas_select_authenticated" for relation "public.escolas" does not exist, skipping
+NOTICE (00000): policy "academic_manage_frequencia" for relation "public.frequencia" does not exist, skipping
+NOTICE (00000): policy "academic_manage_sessoes" for relation "public.sessoes_aula" does not exist, skipping
+NOTICE (00000): policy "pilot_disciplinas_select" for relation "public.disciplinas" does not exist, skipping
+NOTICE (00000): policy "pilot_configs_select" for relation "public.configs" does not exist, skipping
+NOTICE (00000): policy "governed_conteudo_aula_select" for relation "public.conteudo_aula" does not exist, skipping
+NOTICE (00000): policy "governed_conteudo_aula_insert" for relation "public.conteudo_aula" does not exist, skipping
+NOTICE (00000): policy "governed_conteudo_aula_update" for relation "public.conteudo_aula" does not exist, skipping
+NOTICE (00000): policy "governed_relatorios_descritivos_select" for relation "public.relatorios_descritivos" does not exist, skipping
+NOTICE (00000): policy "governed_relatorios_descritivos_insert" for relation "public.relatorios_descritivos" does not exist, skipping
+NOTICE (00000): policy "governed_relatorios_descritivos_update" for relation "public.relatorios_descritivos" does not exist, skipping
+NOTICE (42P07): relation "pilot_audit_log" already exists, skipping
+NOTICE (42P07): relation "idx_pilot_audit_school_created" already exists, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "public.conteudo_aula" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "public.relatorios_descritivos" does not exist, skipping
+Applying migration 20260811040831_student_admission_transaction.sql...
+Applying migration 20260812000000_attendance_reopen_workflow.sql...
+NOTICE (00000): trigger "attendance_reopen_audit_change" for relation "public.attendance_reopen_requests" does not exist, skipping
+Applying migration 20260812192111_public_security_advisor_error_hardening.sql...
+NOTICE (00000): policy "security_errors_school_browser_denied" for relation "public.School" does not exist, skipping
+NOTICE (00000): policy "security_errors_user_browser_denied" for relation "public.User" does not exist, skipping
+NOTICE (00000): policy "security_errors_user_role_browser_denied" for relation "public.UserRole" does not exist, skipping
+NOTICE (00000): policy "security_errors_role_browser_denied" for relation "public.Role" does not exist, skipping
+NOTICE (00000): policy "security_errors_role_permission_browser_denied" for relation "public.RolePermission" does not exist, skipping
+NOTICE (00000): policy "security_errors_permission_browser_denied" for relation "public.Permission" does not exist, skipping
+NOTICE (00000): policy "security_errors_codigos_inep_browser_denied" for relation "public.codigos_inep" does not exist, skipping
+NOTICE (00000): policy "security_errors_educacenso_exports_browser_denied" for relation "public.educacenso_exports" does not exist, skipping
+Applying migration 20260812231418_pilot_import_batch_rollback_storage.sql...
+Applying migration 20260812231541_pilot_auth_revocation_boundary.sql...
+Applying migration 20260813000000_governed_pilot_manifest_retention_order.sql...
+Applying migration 20260814000000_governed_import_owner_agreement.sql...
+NOTICE (00000): trigger "pilot_require_governed_import_batch" for relation "public.alunos" does not exist, skipping
+NOTICE (00000): trigger "pilot_require_governed_import_batch" for relation "public.responsaveis" does not exist, skipping
+NOTICE (00000): trigger "pilot_require_governed_import_batch" for relation "public.aluno_responsaveis" does not exist, skipping
+NOTICE (00000): trigger "pilot_require_governed_import_batch" for relation "public.matriculas" does not exist, skipping
+Applying migration 20260815000000_bolsa_familia_visibility_policy.sql...
+NOTICE (00000): trigger "create_bolsa_familia_visibility_config" for relation "public.escolas" does not exist, skipping
+NOTICE (00000): policy "bolsa_familia_visibility_config_update" for relation "public.configs" does not exist, skipping
+NOTICE (00000): constraint "pilot_audit_bolsa_familia_metadata_check" of relation "pilot_audit_log" does not exist, skipping
+Applying migration 20260826010000_school_academic_years.sql...
+Applying migration 20260827000000_school_schema_canary_control_plane.sql...
+Applying migration 20260828000000_pilot_auth_audit_scope.sql...
+Applying migration 20260829000000_sensitive_family_read_boundary.sql...
+NOTICE (00000): constraint "pilot_audit_sensitive_family_metadata_check" of relation "pilot_audit_log" does not exist, skipping
+Applying migration 20260830000000_canonical_guardian_link_reads.sql...
+Applying migration 20260831000000_vivencias_persistence.sql...
+NOTICE (00000): trigger "vivencias_identity" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): trigger "vivencias_sync_campos" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): trigger "relatorios_descritivos_vivencias_scope" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+NOTICE (00000): trigger "vivencias_audit_trail" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): trigger "vivencias_campos_audit_trail" for relation "public.vivencias_campos_experiencia" does not exist, skipping
+NOTICE (00000): trigger "relatorios_descritivos_vivencias_audit_trail" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "public.vivencias_campos_experiencia" does not exist, skipping
+NOTICE (00000): trigger "pilot_audit_core_change" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+NOTICE (00000): policy "vivencias_select" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): policy "vivencias_insert" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): policy "vivencias_update" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): policy "vivencias_delete" for relation "public.vivencias" does not exist, skipping
+NOTICE (00000): policy "vivencias_campos_select" for relation "public.vivencias_campos_experiencia" does not exist, skipping
+NOTICE (00000): policy "relatorios_descritivos_vivencias_select" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+NOTICE (00000): policy "relatorios_descritivos_vivencias_insert" for relation "public.relatorios_descritivos_vivencias" does not exist, skipping
+Applying migration 20260901000000_municipal_settings.sql...
+NOTICE (00000): policy "municipal_settings_select_scoped" for relation "public.configs" does not exist, skipping
+Applying migration 20260907000000_auth_mutation_audit_receipts.sql...
+Applying migration 20260908000000_attendance_correction_window.sql...
+Applying migration 20260908010000_attendance_opening_cutoff.sql...
+Applying migration 20260908020000_student_admission_guardian_payload.sql...
+Applying migration 20260908030000_user_self_profile_audit.sql...
+Applying migration 20260908040000_governed_management_mutations.sql...
+Applying migration 20260908050000_whatsapp_delivery_ownership.sql...
+NOTICE (00000): constraint "whatsapp_notification_messages_claim_state_check" of relation "whatsapp_notification_messages" does not exist, skipping
+Applying migration 20260908060000_pilot_import_rejection_receipts.sql...
+Applying migration 20260908070000_governed_management_atomic_updates.sql...
+Applying migration 20260908080000_class_capacity_defaults.sql...
+Applying migration 20260908090000_whatsapp_governed_enqueue.sql...
+NOTICE (00000): constraint "whatsapp_notification_messages_reconciliation_state_check" of relation "whatsapp_notification_messages" does not exist, skipping
+Applying migration 20260908100000_invitation_audit_recovery.sql...
+Applying migration 20260908110000_session_realtime_publication.sql...
+Applying migration 20260908120000_descriptive_report_finalization.sql...
+NOTICE (00000): trigger "descriptive_report_finalization_guard" for relation "public.relatorios_descritivos" does not exist, skipping
+Applying migration 20260908130000_student_admission_municipal_authority.sql...
+Applying migration 20260915040000_atomic_user_status.sql...
+WARN: no files matched pattern: supabase/seed.sql
+Restarting containers...
+A new version of Supabase CLI is available: v2.117.0 (currently installed v2.111.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+WARN: no SMS provider is enabled. Disabling phone login
+A new version of Supabase CLI is available: v2.117.0 (currently installed v2.111.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+Finished supabase db reset on branch main.

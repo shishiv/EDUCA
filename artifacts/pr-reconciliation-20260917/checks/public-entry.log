@@ -1,0 +1,81 @@
+PILOT_PORT_RANGE_LEASE: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000 owner_pid=82211
+(node:84623) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[WebServer] Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+[WebServer]   npx update-browserslist-db@latest
+[WebServer]   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+
+Running 10 tests using 1 worker
+
+(node:95172) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1/10] tests/e2e/public-demo/public-visitor.spec.ts:12:7 › J1: public visitor journey › visitor can move from landing to demo, login, and home
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[2/10] tests/e2e/public-demo/public-visitor.spec.ts:38:7 › J1: public visitor journey › public headers use the compact locale button and login has no locale control
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[3/10] tests/e2e/public-demo/public-visitor.spec.ts:55:7 › J1: public visitor journey › Portuguese-only blog routes hide the locale button
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[4/10] tests/e2e/public-demo/public-visitor.spec.ts:66:7 › J1: public visitor journey › privacy policy remains public
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[5/10] tests/e2e/public-demo/public-visitor.spec.ts:72:7 › J1: public visitor journey › blog index and all migrated articles remain public with working OG images
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[6/10] tests/e2e/public-demo/public-visitor.spec.ts:90:7 › J1: public visitor journey › legacy public URLs redirect permanently to equivalent canonical destinations
+[7/10] tests/e2e/public-demo/public-visitor.spec.ts:110:7 › J1: public visitor journey › /reset-password is accessible without auth
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[8/10] tests/e2e/public-demo/public-visitor.spec.ts:115:7 › J1: public visitor journey › unauthenticated access to /dashboard redirects to /login
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+
+[9/10] tests/e2e/public-demo/service-worker-lifecycle.spec.ts:29:5 › the first service-worker controller does not reload a public visit
+[10/10] tests/e2e/public-demo/service-worker-lifecycle.spec.ts:53:5 › an explicit update activation reloads a page that already has a worker
+  10 passed (31.8s)
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/61000

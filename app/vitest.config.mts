@@ -18,11 +18,7 @@ export default defineConfig({
     exclude: [
       'node_modules',
       'tests/e2e',
-      // These suites cover modules explicitly disabled by the confirmed pilot.
-      // Keep the files for a future reactivation gate, but do not treat them as
-      // evidence for the core-only municipal pilot.
-      'tests/unit/components/diary/**',
-      'tests/unit/components/reports/**',
+
     ],
     coverage: {
       provider: 'v8',

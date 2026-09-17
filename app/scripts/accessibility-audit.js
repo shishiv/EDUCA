@@ -203,8 +203,8 @@ const EDUCATIONAL_REQUIREMENTS = {
 
 // Color contrast checker
 function checkColorContrast() {
-  console.log('\n🎨 Color Contrast Analysis')
-  console.log('========================================')
+  console.info('\n🎨 Color Contrast Analysis')
+  console.info('========================================')
 
   const contrastResults = {
     passed: [],
@@ -238,7 +238,7 @@ function checkColorContrast() {
   simulatedResults.forEach(result => {
     const status = result.passed ? '✅' : '❌'
     const ratioText = `${result.ratio.toFixed(1)}:1`
-    console.log(`  ${status} ${result.combination}: ${ratioText} (target: ${result.target}:1)`)
+    console.info(`  ${status} ${result.combination}: ${ratioText} (target: ${result.target}:1)`)
 
     if (result.passed) {
       contrastResults.passed.push(result)
@@ -252,8 +252,8 @@ function checkColorContrast() {
 
 // Keyboard navigation checker
 function checkKeyboardNavigation() {
-  console.log('\n⌨️  Keyboard Navigation Analysis')
-  console.log('========================================')
+  console.info('\n⌨️  Keyboard Navigation Analysis')
+  console.info('========================================')
 
   const keyboardTests = [
     'Tab order follows logical reading sequence',
@@ -272,20 +272,20 @@ function checkKeyboardNavigation() {
     // Simulate test results (in real implementation, would run actual tests)
     const passed = Math.random() > 0.1 // 90% pass rate for demo
     const status = passed ? '✅' : '❌'
-    console.log(`  ${status} ${test}`)
+    console.info(`  ${status} ${test}`)
     return { test, passed }
   })
 
   const passedCount = results.filter(r => r.passed).length
-  console.log(`\n📊 Keyboard Navigation Score: ${passedCount}/${keyboardTests.length} (${Math.round(passedCount/keyboardTests.length*100)}%)`)
+  console.info(`\n📊 Keyboard Navigation Score: ${passedCount}/${keyboardTests.length} (${Math.round(passedCount/keyboardTests.length*100)}%)`)
 
   return results
 }
 
 // Screen reader compatibility checker
 function checkScreenReaderCompatibility() {
-  console.log('\n🔊 Screen Reader Compatibility Analysis')
-  console.log('========================================')
+  console.info('\n🔊 Screen Reader Compatibility Analysis')
+  console.info('========================================')
 
   const screenReaderTests = [
     'Page landmarks are properly defined (header, nav, main, footer)',
@@ -303,20 +303,20 @@ function checkScreenReaderCompatibility() {
   const results = screenReaderTests.map((test, index) => {
     const passed = Math.random() > 0.05 // 95% pass rate for demo
     const status = passed ? '✅' : '❌'
-    console.log(`  ${status} ${test}`)
+    console.info(`  ${status} ${test}`)
     return { test, passed }
   })
 
   const passedCount = results.filter(r => r.passed).length
-  console.log(`\n📊 Screen Reader Score: ${passedCount}/${screenReaderTests.length} (${Math.round(passedCount/screenReaderTests.length*100)}%)`)
+  console.info(`\n📊 Screen Reader Score: ${passedCount}/${screenReaderTests.length} (${Math.round(passedCount/screenReaderTests.length*100)}%)`)
 
   return results
 }
 
 // Educational accessibility checker
 function checkEducationalAccessibility() {
-  console.log('\n🎓 Educational Accessibility Analysis')
-  console.log('========================================')
+  console.info('\n🎓 Educational Accessibility Analysis')
+  console.info('========================================')
 
   const educationalTests = [
     'Student data is privacy-conscious and accessible',
@@ -334,20 +334,20 @@ function checkEducationalAccessibility() {
   const results = educationalTests.map((test, index) => {
     const passed = Math.random() > 0.08 // 92% pass rate for demo
     const status = passed ? '✅' : '❌'
-    console.log(`  ${status} ${test}`)
+    console.info(`  ${status} ${test}`)
     return { test, passed }
   })
 
   const passedCount = results.filter(r => r.passed).length
-  console.log(`\n📊 Educational Accessibility Score: ${passedCount}/${educationalTests.length} (${Math.round(passedCount/educationalTests.length*100)}%)`)
+  console.info(`\n📊 Educational Accessibility Score: ${passedCount}/${educationalTests.length} (${Math.round(passedCount/educationalTests.length*100)}%)`)
 
   return results
 }
 
 // Performance impact of accessibility features
 function checkAccessibilityPerformance() {
-  console.log('\n⚡ Accessibility Performance Impact')
-  console.log('========================================')
+  console.info('\n⚡ Accessibility Performance Impact')
+  console.info('========================================')
 
   const performanceMetrics = {
     bundleSize: {
@@ -367,19 +367,19 @@ function checkAccessibilityPerformance() {
     }
   }
 
-  console.log(`  📦 Bundle size impact: ${performanceMetrics.bundleSize.impact}`)
-  console.log(`  ⏱️  Dashboard load time: ${performanceMetrics.loadTime.dashboard}s (target: <3s) ✅`)
-  console.log(`  ⏱️  Attendance load time: ${performanceMetrics.loadTime.attendance}s (target: <1s) ✅`)
-  console.log(`  ⏱️  Reports load time: ${performanceMetrics.loadTime.reports}s (target: <2.5s) ✅`)
-  console.log(`  🔊 Screen reader announcements: ${performanceMetrics.screenReaderPerformance.announcement}`)
+  console.info(`  📦 Bundle size impact: ${performanceMetrics.bundleSize.impact}`)
+  console.info(`  ⏱️  Dashboard load time: ${performanceMetrics.loadTime.dashboard}s (target: <3s) ✅`)
+  console.info(`  ⏱️  Attendance load time: ${performanceMetrics.loadTime.attendance}s (target: <1s) ✅`)
+  console.info(`  ⏱️  Reports load time: ${performanceMetrics.loadTime.reports}s (target: <2.5s) ✅`)
+  console.info(`  🔊 Screen reader announcements: ${performanceMetrics.screenReaderPerformance.announcement}`)
 
   return performanceMetrics
 }
 
 // Generate accessibility report
 function generateAccessibilityReport() {
-  console.log('\n📋 WCAG 2.1 AA Compliance Report')
-  console.log('========================================')
+  console.info('\n📋 WCAG 2.1 AA Compliance Report')
+  console.info('========================================')
 
   const contrastResults = checkColorContrast()
   const keyboardResults = checkKeyboardNavigation()
@@ -396,45 +396,45 @@ function generateAccessibilityReport() {
   const overallScore = Math.round((totalPassed / totalTests) * 100)
   const contrastScore = Math.round((contrastResults.passed.length / (contrastResults.passed.length + contrastResults.failed.length)) * 100)
 
-  console.log('\n🎯 Final Accessibility Assessment')
-  console.log('========================================')
-  console.log(`📊 Overall WCAG 2.1 AA Compliance: ${overallScore}%`)
-  console.log(`🎨 Color Contrast Compliance: ${contrastScore}%`)
-  console.log(`⌨️  Keyboard Navigation: ${Math.round(keyboardResults.filter(r => r.passed).length / keyboardResults.length * 100)}%`)
-  console.log(`🔊 Screen Reader Support: ${Math.round(screenReaderResults.filter(r => r.passed).length / screenReaderResults.length * 100)}%`)
-  console.log(`🎓 Educational Accessibility: ${Math.round(educationalResults.filter(r => r.passed).length / educationalResults.length * 100)}%`)
+  console.info('\n🎯 Final Accessibility Assessment')
+  console.info('========================================')
+  console.info(`📊 Overall WCAG 2.1 AA Compliance: ${overallScore}%`)
+  console.info(`🎨 Color Contrast Compliance: ${contrastScore}%`)
+  console.info(`⌨️  Keyboard Navigation: ${Math.round(keyboardResults.filter(r => r.passed).length / keyboardResults.length * 100)}%`)
+  console.info(`🔊 Screen Reader Support: ${Math.round(screenReaderResults.filter(r => r.passed).length / screenReaderResults.length * 100)}%`)
+  console.info(`🎓 Educational Accessibility: ${Math.round(educationalResults.filter(r => r.passed).length / educationalResults.length * 100)}%`)
 
   // WCAG 2.1 AA Certification Status
   const isWCAGCompliant = overallScore >= 95 && contrastScore >= 95
   const certificationStatus = isWCAGCompliant ? '✅ WCAG 2.1 AA COMPLIANT' : '⚠️ NEEDS IMPROVEMENT'
 
-  console.log(`\n🏆 Certification Status: ${certificationStatus}`)
+  console.info(`\n🏆 Certification Status: ${certificationStatus}`)
 
   if (isWCAGCompliant) {
-    console.log('\n🎉 Congratulations! The educational management system meets WCAG 2.1 AA standards.')
-    console.log('   This system is accessible to users with disabilities and ready for deployment')
-    console.log('   in Brazilian educational institutions.')
+    console.info('\n🎉 Congratulations! The educational management system meets WCAG 2.1 AA standards.')
+    console.info('   This system is accessible to users with disabilities and ready for deployment')
+    console.info('   in Brazilian educational institutions.')
   } else {
-    console.log('\n⚠️  Areas requiring attention:')
+    console.info('\n⚠️  Areas requiring attention:')
     if (contrastScore < 95) {
-      console.log('   • Color contrast ratios need improvement')
+      console.info('   • Color contrast ratios need improvement')
     }
     if (overallScore < 95) {
-      console.log('   • Some accessibility features need refinement')
+      console.info('   • Some accessibility features need refinement')
     }
   }
 
-  console.log('\n📋 Implementation Summary')
-  console.log('========================================')
-  console.log('✅ Skip links and landmark navigation implemented')
-  console.log('✅ High contrast mode support added')
-  console.log('✅ Accessible form components created')
-  console.log('✅ Educational data tables with ARIA support')
-  console.log('✅ Screen reader-friendly image components')
-  console.log('✅ Keyboard navigation fully supported')
-  console.log('✅ Touch target size compliance (44px minimum)')
-  console.log('✅ Brazilian educational terminology support')
-  console.log('✅ Comprehensive accessibility testing suite')
+  console.info('\n📋 Implementation Summary')
+  console.info('========================================')
+  console.info('✅ Skip links and landmark navigation implemented')
+  console.info('✅ High contrast mode support added')
+  console.info('✅ Accessible form components created')
+  console.info('✅ Educational data tables with ARIA support')
+  console.info('✅ Screen reader-friendly image components')
+  console.info('✅ Keyboard navigation fully supported')
+  console.info('✅ Touch target size compliance (44px minimum)')
+  console.info('✅ Brazilian educational terminology support')
+  console.info('✅ Comprehensive accessibility testing suite')
 
   return {
     overallScore,
@@ -446,22 +446,22 @@ function generateAccessibilityReport() {
 
 // Main execution
 if (require.main === module) {
-  console.log('🚀 Starting WCAG 2.1 AA Accessibility Audit')
-  console.log('Educational Management System - web')
-  console.log('================================================\n')
+  console.info('🚀 Starting WCAG 2.1 AA Accessibility Audit')
+  console.info('Educational Management System - web')
+  console.info('================================================\n')
 
   try {
     const report = generateAccessibilityReport()
 
-    console.log('\n📄 Detailed compliance information available in:')
-    console.log('   • tests/accessibility/accessibility-compliance.spec.ts')
-    console.log('   • components/accessibility/ (implementation files)')
-    console.log('   • app/globals.css (high contrast styles)')
+    console.info('\n📄 Detailed compliance information available in:')
+    console.info('   • tests/accessibility/accessibility-compliance.spec.ts')
+    console.info('   • components/accessibility/ (implementation files)')
+    console.info('   • app/globals.css (high contrast styles)')
 
-    console.log('\n🔗 Useful Resources:')
-    console.log('   • WCAG 2.1 Guidelines: https://www.w3.org/WAI/WCAG21/quickref/')
-    console.log('   • Brazilian Web Accessibility: https://www.gov.br/governodigital/pt-br/acessibilidade-e-usuario/acessibilidade-digital')
-    console.log('   • Educational Accessibility: https://www.w3.org/WAI/teach-advocate/')
+    console.info('\n🔗 Useful Resources:')
+    console.info('   • WCAG 2.1 Guidelines: https://www.w3.org/WAI/WCAG21/quickref/')
+    console.info('   • Brazilian Web Accessibility: https://www.gov.br/governodigital/pt-br/acessibilidade-e-usuario/acessibilidade-digital')
+    console.info('   • Educational Accessibility: https://www.w3.org/WAI/teach-advocate/')
 
     process.exit(report.isCompliant ? 0 : 1)
 

@@ -6,6 +6,7 @@ import {
   resolveVisibleQuickActionCards,
   type QuickAccessRole,
 } from '@/lib/dashboard/quick-access'
+import { canAccessRoute } from '@/lib/route-policy'
 
 const attendanceItem = quickAccessItems.find((item) => item.name === 'Frequência')!
 
@@ -44,6 +45,18 @@ describe('dashboard quick access routes', () => {
     ).toHaveLength(0)
   })
 
+  it.each(['admin', 'diretor', 'secretario', 'professor', 'responsavel'] as const)('only exposes %s to routes they can open', role => {
+    const visible = resolveVisibleQuickAccess(quickAccessItems, {
+      role,
+      pilotMode: false,
+      canManageSchool: true,
+    })
+
+    for (const item of visible) {
+      expect(canAccessRoute(item.href, role)).toBe(true)
+    }
+  })
+
   it('applies pilot role narrowing for Novo Aluno', () => {
     const secretarioPilot = resolveVisibleQuickAccess(quickAccessItems, {
       role: 'secretario',
@@ -61,9 +74,10 @@ describe('dashboard quick access routes', () => {
   })
 
   it('shows the class diary in pilot mode while keeping other modules blocked', () => {
-    for (const role of ['admin', 'diretor', 'secretario', 'professor']) {
+    const pilotRoles: QuickAccessRole[] = ['admin', 'diretor', 'secretario', 'professor']
+    for (const role of pilotRoles) {
       const visible = resolveVisibleQuickAccess(quickAccessItems, {
-        role: role as QuickAccessRole,
+        role,
         pilotMode: true,
         canManageSchool: role !== 'professor',
       })
@@ -97,6 +111,32 @@ describe('dashboard quick access routes', () => {
     expect(diretorDemo.map((item) => item.name)).toContain('Diário de Classe')
     expect(diretorDemo.map((item) => item.name)).toContain('Relatórios')
   })
+
+  it.each(['admin', 'diretor', 'secretario'] as const)(
+    'keeps reports available to the %s role outside pilot restrictions',
+    (role) => {
+      const visible = resolveVisibleQuickAccess(quickAccessItems, {
+        role,
+        pilotMode: false,
+        canManageSchool: true,
+      })
+
+      expect(visible.find((item) => item.name === 'Relatórios')?.href).toBe('/dashboard/relatorios')
+    },
+  )
+
+  it.each(['professor', 'responsavel'] as const)(
+    'does not expose reports to the %s role',
+    (role) => {
+      const visible = resolveVisibleQuickAccess(quickAccessItems, {
+        role,
+        pilotMode: false,
+        canManageSchool: false,
+      })
+
+      expect(visible.map((item) => item.name)).not.toContain('Relatórios')
+    },
+  )
 
   it('exposes safe synthetic capabilities in demo without widening role checks', () => {
     const secretarioDemo = resolveVisibleQuickAccess(quickAccessItems, {

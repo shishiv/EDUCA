@@ -1,0 +1,10 @@
+
+> educa@1.0.0 typecheck /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+tests/unit/pilot/restore-wrapper.test.ts(12,34): error TS2741: Property 'NODE_ENV' is missing in type '{}' but required in type 'ProcessEnv'.
+tests/unit/pilot/restore-wrapper.test.ts(52,36): error TS2345: Argument of type '{ SECRET_KEY: string; SERVICE_ROLE_KEY: string; }' is not assignable to parameter of type 'ProcessEnv'.
+  Property 'NODE_ENV' is missing in type '{ SECRET_KEY: string; SERVICE_ROLE_KEY: string; }' but required in type 'ProcessEnv'.
+tests/unit/pilot/restore-wrapper.test.ts(64,48): error TS2345: Argument of type '{ PILOT_MODE: string; PILOT_IMPORT_TARGET?: undefined; PILOT_IMPORT_DATA_MODE?: undefined; NEXT_PUBLIC_DEMO_SANDBOX?: undefined; } | { PILOT_IMPORT_TARGET: string; PILOT_MODE?: undefined; PILOT_IMPORT_DATA_MODE?: undefined; NEXT_PUBLIC_DEMO_SANDBOX?: undefined; } | { ...; } | { ...; }' is not assignable to parameter of type 'ProcessEnv | undefined'.
+  Property 'NODE_ENV' is missing in type '{ PILOT_MODE: string; PILOT_IMPORT_TARGET?: undefined; PILOT_IMPORT_DATA_MODE?: undefined; NEXT_PUBLIC_DEMO_SANDBOX?: undefined; }' but required in type 'ProcessEnv'.
+ ELIFECYCLE  Command failed with exit code 2.

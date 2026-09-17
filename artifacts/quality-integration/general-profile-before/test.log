@@ -1,0 +1,204 @@
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 235 tests using 1 worker
+
+[1A[2K[1/235] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/235] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K[3/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:16:7 › Login Page › should display login form
+[1A[2K[4/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:24:7 › Login Page › should show HTML5 validation for empty email
+[1A[2K[5/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:35:7 › Login Page › should show error for invalid credentials
+[1A[2K[6/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:47:7 › Login Page › should show HTML5 validation for invalid email format
+[1A[2K[7/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:60:7 › Authentication Flows › should protect dashboard route - redirect unauthenticated to login
+[1A[2K[8/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:66:7 › Authentication Flows › login page shows forgot-password link
+[1A[2K[9/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:73:7 › Authentication Flows › root / renders the public landing page when unauthenticated
+[1A[2K[10/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:88:7 › Authentication Flows › reset-password form sends instructions and shows confirmation
+[1A[2K[11/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:104:7 › Authentication Flows › privacy page is public
+[1A[2K[12/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:109:7 › Authentication Flows › offline page is public to unauthenticated pilot users
+[1A[2K[13/235] [chromium-unauth] › tests/e2e/auth/login.spec.ts:116:7 › Authentication Flows › login controls remain usable on mobile
+[1A[2K[14/235] [chromium] › tests/e2e/alunos/create.spec.ts:89:7 › Alunos - formulário de admissão atual › expõe os campos e abas que participam da admissão
+[1A[2K[15/235] [chromium] › tests/e2e/alunos/create.spec.ts:101:7 › Alunos - formulário de admissão atual › bloqueia a submissão sem os campos obrigatórios implementados
+[1A[2K[16/235] [chromium] › tests/e2e/alunos/create.spec.ts:108:7 › Alunos - formulário de admissão atual › preserva os dados pessoais ao navegar para o responsável e cancelar
+[1A[2K[17/235] [chromium] › tests/e2e/alunos/create.spec.ts:121:7 › Alunos - criações reais › persiste os campos obrigatórios e telefone do aluno
+[1A[2K[18/235] [chromium] › tests/e2e/alunos/create.spec.ts:149:7 › Alunos - criações reais › persiste uma admissão sem CPF, pois CPF é opcional no formulário atual
+[1A[2K[19/235] [chromium] › tests/e2e/alunos/create.spec.ts:167:7 › Alunos - criações reais › persiste aluno, responsável, telefones e vínculo pela fronteira de admissão
+[1A[2K[20/235] [chromium] › tests/e2e/alunos/create.spec.ts:211:7 › Alunos - criações reais › mostra o estado de envio enquanto a RPC de admissão está pendente
+[1A[2K[21/235] [chromium] › tests/e2e/alunos/detail.spec.ts:32:7 › Student detail › loads directly from a seeded student link
+[1A[2K[22/235] [chromium] › tests/e2e/alunos/detail.spec.ts:37:7 › Student detail › shows identity, age and birth date
+[1A[2K[23/235] [chromium] › tests/e2e/alunos/detail.spec.ts:44:7 › Student detail › shows personal and family data
+[1A[2K[24/235] [chromium] › tests/e2e/alunos/detail.spec.ts:52:7 › Student detail › shows enrollment history and attendance summary
+[1A[2K[25/235] [chromium] › tests/e2e/alunos/detail.spec.ts:58:7 › Student detail › shows active/class tags
+[1A[2K[26/235] [chromium] › tests/e2e/alunos/detail.spec.ts:63:7 › Student detail › back returns to the student list
+[1A[2K[27/235] [chromium] › tests/e2e/alunos/detail.spec.ts:68:7 › Student detail › edit opens the implemented edit form
+[1A[2K[28/235] [chromium] › tests/e2e/alunos/detail.spec.ts:74:7 › Student detail › keeps core controls visible on mobile
+[1A[2K[29/235] [chromium] › tests/e2e/alunos/detail.spec.ts:83:5 › invalid student id shows an explicit error and recovery action
+[1A[2K[30/235] [chromium] › tests/e2e/alunos/list.spec.ts:16:7 › Students list › shows actions and summary metrics
+[1A[2K[31/235] [chromium] › tests/e2e/alunos/list.spec.ts:24:7 › Students list › shows seeded students and accessible table columns
+[1A[2K[32/235] [chromium] › tests/e2e/alunos/list.spec.ts:31:7 › Students list › filters by exact student search and updates count
+[1A[2K[33/235] [chromium] › tests/e2e/alunos/list.spec.ts:39:7 › Students list › shows and clears a no-results state
+[1A[2K[34/235] [chromium] › tests/e2e/alunos/list.spec.ts:48:7 › Students list › provides accessible and operable status and sex filters
+[1A[2K[35/235] [chromium] › tests/e2e/alunos/list.spec.ts:65:7 › Students list › filters by female students
+[1A[2K[36/235] [chromium] › tests/e2e/alunos/list.spec.ts:73:7 › Students list › opens student detail through an accessible action
+[1A[2K[37/235] [chromium] › tests/e2e/alunos/list.spec.ts:80:7 › Students list › opens student edit through an accessible action
+[1A[2K[38/235] [chromium] › tests/e2e/alunos/list.spec.ts:87:7 › Students list › opens and cancels the deactivate confirmation
+[1A[2K[39/235] [chromium] › tests/e2e/alunos/list.spec.ts:95:7 › Students list › navigates to student creation
+[1A[2K[40/235] [chromium] › tests/e2e/alunos/list.spec.ts:101:5 › student list remains usable on mobile
+[1A[2K[41/235] [chromium] › tests/e2e/assignments/teacher.spec.ts:10:7 › Professor titular por turma › shows the single-titular assignment page
+[1A[2K[42/235] [chromium] › tests/e2e/assignments/teacher.spec.ts:19:7 › Professor titular por turma › does not expose discipline or multi-teacher controls
+[1A[2K[43/235] [chromium] › tests/e2e/assignments/teacher.spec.ts:23:7 › Professor titular por turma › opens the titular teacher dialog from a class card
+[1A[2K[44/235] [chromium] › tests/e2e/assignments/teacher.spec.ts:31:7 › Professor titular por turma › offers only teachers from the selected school
+[1A[2K[45/235] [chromium] › tests/e2e/attendance/grid.spec.ts:65:7 › Attendance grid › renders one P/F/J control group per seeded student
+[1A[2K[46/235] [chromium] › tests/e2e/attendance/grid.spec.ts:74:7 › Attendance grid › shows aggregate attendance statistics and save state
+[1A[2K[47/235] [chromium] › tests/e2e/attendance/grid.spec.ts:82:7 › Attendance grid › marks a student present and exposes unsaved changes
+[1A[2K[48/235] [chromium] › tests/e2e/attendance/grid.spec.ts:90:7 › Attendance grid › toggles an active status off
+[1A[2K[49/235] [chromium] › tests/e2e/attendance/grid.spec.ts:97:7 › Attendance grid › captures a mandatory justification
+[1A[2K[50/235] [chromium] › tests/e2e/attendance/grid.spec.ts:111:7 › Attendance grid › supports keyboard activation
+[1A[2K[51/235] [chromium] › tests/e2e/attendance/grid.spec.ts:119:7 › Attendance grid › saves and persists attendance after reload
+[1A[2K[52/235] [chromium] › tests/e2e/attendance/grid.spec.ts:162:7 › Attendance grid › navigates to the previous day
+[1A[2K[53/235] [chromium] › tests/e2e/attendance/grid.spec.ts:169:7 › Attendance grid › does not offer an open session for a future date
+[1A[2K[54/235] [chromium] › tests/e2e/attendance/grid.spec.ts:175:7 › Attendance grid › keeps touch targets at least 44px on mobile
+[1A[2K[55/235] [chromium] › tests/e2e/attendance/justification.spec.ts:34:7 › Attendance justification dialog › opens with the selected student context
+[1A[2K[56/235] [chromium] › tests/e2e/attendance/justification.spec.ts:40:7 › Attendance justification dialog › auto-focuses the justification textarea
+[1A[2K[57/235] [chromium] › tests/e2e/attendance/justification.spec.ts:45:7 › Attendance justification dialog › requires non-whitespace content
+[1A[2K[58/235] [chromium] › tests/e2e/attendance/justification.spec.ts:55:7 › Attendance justification dialog › confirms with Ctrl+Enter
+[1A[2K[59/235] [chromium] › tests/e2e/attendance/justification.spec.ts:64:7 › Attendance justification dialog › cancels without changing the status
+[1A[2K[60/235] [chromium] › tests/e2e/attendance/justification.spec.ts:72:7 › Attendance justification dialog › closes on Escape
+[1A[2K[61/235] [chromium] › tests/e2e/attendance/justification.spec.ts:78:7 › Attendance justification dialog › traps keyboard focus inside the dialog
+[1A[2K[62/235] [chromium] › tests/e2e/attendance/justification.spec.ts:88:7 › Attendance justification dialog › exposes accessible labels for every action
+[1A[2K[63/235] [chromium] › tests/e2e/attendance/workflow.spec.ts:55:7 › Canonical attendance session workflow › class details link to the canonical chamada route
+[1A[2K[64/235] [chromium] › tests/e2e/attendance/workflow.spec.ts:63:7 › Canonical attendance session workflow › opens one sessoes_aula session for today
+[1A[2K[65/235] [chromium] › tests/e2e/attendance/workflow.spec.ts:80:7 › Canonical attendance session workflow › renders P/F/J controls only after a canonical session exists
+[1A[2K[66/235] [chromium] › tests/e2e/config/settings.spec.ts:93:7 › Settings - municipal authority › persists and restores the governed municipal identity
+[1A[2K[67/235] [chromium] › tests/e2e/config/settings.spec.ts:121:7 › Settings - director authority › keeps municipal identity read-only and persists the school academic year
+[1A[2K[68/235] [chromium] › tests/e2e/diary/canonical-route.spec.ts:62:7 › Diário - canonical route and source › redirects the dashboard alias and reads the canonical session source
+[1A[2K[69/235] [chromium] › tests/e2e/diary/canonical-route.spec.ts:88:7 › Diário - canonical route and source › serves the same canonical diary surface at /diario
+[1A[2K[70/235] [chromium] › tests/e2e/diary/create.spec.ts:42:7 › Diário Infantil - criação disponível ao professor titular › opens the implemented form from the student diary and cancels without writing
+[1A[2K[71/235] [chromium] › tests/e2e/diary/create.spec.ts:83:7 › Diário Infantil - criação disponível ao professor titular › requires the implemented date, experience-field, and narrative constraints
+[1A[2K[72/235] [chromium] › tests/e2e/diary/lesson-form.spec.ts:53:7 › Diário de Classe - formulário de aula disponível › shows only the implemented lesson fields and discards a cancelled draft
+[1A[2K[73/235] [chromium] › tests/e2e/diary/lesson-form.spec.ts:75:7 › Diário de Classe - formulário de aula disponível › enforces required lengths and BNCC code format before submission
+[1A[2K[74/235] [chromium] › tests/e2e/diary/list.spec.ts:77:7 › Diário de Classe - lista canônica › shows the seeded lesson and its canonical details on desktop
+[1A[2K[75/235] [chromium] › tests/e2e/diary/list.spec.ts:101:7 › Diário de Classe - lista canônica › combines filters, exposes an empty state, and clears the form
+[1A[2K[76/235] [chromium] › tests/e2e/diary/list.spec.ts:131:7 › Diário de Classe - lista canônica › renders the seeded lesson without horizontal overflow at 390px
+[1A[2K[77/235] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:93:7 › Educação Infantil Vivências persistence › creates, edits the date, and reloads a narrative on desktop
+[1A[2K[78/235] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:183:7 › Educação Infantil Vivências persistence › keeps the form usable at 390px
+[1A[2K[79/235] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:191:7 › Educação Infantil Vivências persistence › renders only contextual links the professor may open
+[1A[2K[80/235] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:234:7 › Diretor Vivências read-only access › keeps the desktop diary and report read-only
+[1A[2K[81/235] [chromium] › tests/e2e/diary/vivencias-persistence.spec.ts:247:7 › Secretário Vivências read-only access › keeps the 390px diary and report read-only
+[1A[2K[82/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:14:7 › Dashboard - Page Loads › dashboard renders greeting and network heading
+[1A[2K[83/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:19:7 › Dashboard - Page Loads › dashboard shows quick-access actions for admin
+[1A[2K[84/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:31:7 › Dashboard - Stat Cards › should display Total de Alunos stat card
+[1A[2K[85/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:35:7 › Dashboard - Stat Cards › should display Turmas Ativas stat card
+[1A[2K[86/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:40:7 › Dashboard - Stat Cards › should display Frequencia Media stat card
+[1A[2K[87/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:44:7 › Dashboard - Stat Cards › should display Professores Ativos stat card
+[1A[2K[88/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:48:7 › Dashboard - Stat Cards › stat cards contain numeric values
+[1A[2K[89/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:58:7 › Dashboard - Navigation › quick-access Novo Aluno navigates to alunos/novo
+[1A[2K[90/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:65:7 › Dashboard - Navigation › quick-access Nova Turma navigates to turmas/nova
+[1A[2K[91/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:71:7 › Dashboard - Navigation › Relatórios hub links to the implemented report routes
+[1A[2K[92/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:87:7 › Dashboard - Navigation › Diário page loads from the shared navigation
+[1A[2K[93/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:94:7 › Dashboard - Navigation › Configurações page loads
+[1A[2K[94/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:103:7 › Dashboard - Minhas Turmas section › Minhas Turmas card is visible
+[1A[2K[95/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:108:7 › Dashboard - Minhas Turmas section › Turmas ativas description is visible
+[1A[2K[96/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:120:7 › Dashboard - Mobile Navigation › bottom navigation exposes only implemented routes
+[1A[2K[97/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:127:7 › Dashboard - Mobile Navigation › drawer opens, exposes role-allowed links and closes
+[1A[2K[98/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:137:7 › Dashboard - Sidebar Navigation › sidebar nav links are present
+[1A[2K[99/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:143:7 › Dashboard - Sidebar Navigation › navigate to Alunos via sidebar
+[1A[2K[100/235] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:150:7 › Dashboard - Sidebar Navigation › shared shell keeps route context on a secondary screen
+[1A[2K[101/235] [chromium] › tests/e2e/flows/locale-layout.spec.ts:8:7 › keeps language and student form actions usable on desktop
+[1A[2K[102/235] [chromium] › tests/e2e/flows/locale-layout.spec.ts:8:7 › keeps language and student form actions usable on compact desktop
+[1A[2K[103/235] [chromium] › tests/e2e/flows/locale-layout.spec.ts:8:7 › keeps language and student form actions usable on mobile
+[1A[2K[104/235] [chromium] › tests/e2e/flows/permissions.spec.ts:30:9 › Permissions - Admin › can open users
+[1A[2K[105/235] [chromium] › tests/e2e/flows/permissions.spec.ts:30:9 › Permissions - Admin › can open schools
+[1A[2K[106/235] [chromium] › tests/e2e/flows/permissions.spec.ts:30:9 › Permissions - Admin › can open settings
+[1A[2K[107/235] [chromium] › tests/e2e/flows/permissions.spec.ts:30:9 › Permissions - Admin › can open reports
+[1A[2K[108/235] [chromium] › tests/e2e/flows/permissions.spec.ts:36:9 › Permissions - Admin › cannot open dormant feature flags
+[1A[2K[109/235] [chromium] › tests/e2e/flows/permissions.spec.ts:36:9 › Permissions - Admin › cannot open dormant calendar
+[1A[2K[110/235] [chromium] › tests/e2e/flows/permissions.spec.ts:41:7 › Permissions - Admin › renders links for permitted navigation
+[1A[2K[111/235] [chromium] › tests/e2e/flows/permissions.spec.ts:59:9 › Permissions - Diretor › can open students
+[1A[2K[112/235] [chromium] › tests/e2e/flows/permissions.spec.ts:59:9 › Permissions - Diretor › can open enrollment
+[1A[2K[113/235] [chromium] › tests/e2e/flows/permissions.spec.ts:59:9 › Permissions - Diretor › can open assignments
+[1A[2K[114/235] [chromium] › tests/e2e/flows/permissions.spec.ts:59:9 › Permissions - Diretor › can open settings
+[1A[2K[115/235] [chromium] › tests/e2e/flows/permissions.spec.ts:69:9 › Permissions - Diretor › cannot open users
+[1A[2K[116/235] [chromium] › tests/e2e/flows/permissions.spec.ts:69:9 › Permissions - Diretor › cannot open schools
+[1A[2K[117/235] [chromium] › tests/e2e/flows/permissions.spec.ts:69:9 › Permissions - Diretor › cannot open feature flags
+[1A[2K[118/235] [chromium] › tests/e2e/flows/permissions.spec.ts:69:9 › Permissions - Diretor › cannot open calendar
+[1A[2K[119/235] [chromium] › tests/e2e/flows/permissions.spec.ts:74:7 › Permissions - Diretor › hides denied links and rejects a direct URL
+[1A[2K[120/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open students
+[1A[2K[121/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open enrollment
+[1A[2K[122/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open guardians
+[1A[2K[123/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open reports
+[1A[2K[124/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open grades
+[1A[2K[125/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open attendance
+[1A[2K[126/235] [chromium] › tests/e2e/flows/permissions.spec.ts:95:9 › Permissions - Secretario › can open settings
+[1A[2K[127/235] [chromium] › tests/e2e/flows/permissions.spec.ts:105:9 › Permissions - Secretario › cannot open users
+[1A[2K[128/235] [chromium] › tests/e2e/flows/permissions.spec.ts:105:9 › Permissions - Secretario › cannot open schools
+[1A[2K[129/235] [chromium] › tests/e2e/flows/permissions.spec.ts:105:9 › Permissions - Secretario › cannot open feature flags
+[1A[2K[130/235] [chromium] › tests/e2e/flows/permissions.spec.ts:105:9 › Permissions - Secretario › cannot open calendar
+[1A[2K[131/235] [chromium] › tests/e2e/flows/permissions.spec.ts:110:7 › Permissions - Secretario › hides denied links and rejects a direct URL
+[1A[2K[132/235] [chromium] › tests/e2e/flows/permissions.spec.ts:123:7 › Permissions - Professor › sees the teacher-specific dashboard
+[1A[2K[133/235] [chromium] › tests/e2e/flows/permissions.spec.ts:135:9 › Permissions - Professor › can open classes
+[1A[2K[134/235] [chromium] › tests/e2e/flows/permissions.spec.ts:135:9 › Permissions - Professor › can open diary
+[1A[2K[135/235] [chromium] › tests/e2e/flows/permissions.spec.ts:135:9 › Permissions - Professor › can open attendance
+[1A[2K[136/235] [chromium] › tests/e2e/flows/permissions.spec.ts:135:9 › Permissions - Professor › can open grades
+[1A[2K[137/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open student creation
+[1A[2K[138/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open class creation
+[1A[2K[139/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open enrollment
+[1A[2K[140/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open reports
+[1A[2K[141/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open settings
+[1A[2K[142/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open users
+[1A[2K[143/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open schools
+[1A[2K[144/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open feature flags
+[1A[2K[145/235] [chromium] › tests/e2e/flows/permissions.spec.ts:150:9 › Permissions - Professor › cannot open calendar
+[1A[2K[146/235] [chromium] › tests/e2e/flows/permissions.spec.ts:166:9 › Permissions - Responsavel boundary › cannot open dashboard
+[1A[2K[147/235] [chromium] › tests/e2e/flows/permissions.spec.ts:166:9 › Permissions - Responsavel boundary › cannot open students
+[1A[2K[148/235] [chromium] › tests/e2e/flows/permissions.spec.ts:166:9 › Permissions - Responsavel boundary › cannot open grades
+[1A[2K[149/235] [chromium] › tests/e2e/flows/permissions.spec.ts:166:9 › Permissions - Responsavel boundary › cannot open reports
+[1A[2K[150/235] [chromium] › tests/e2e/flows/permissions.spec.ts:166:9 › Permissions - Responsavel boundary › cannot open feature flags
+[1A[2K[151/235] [chromium] › tests/e2e/flows/permissions.spec.ts:166:9 › Permissions - Responsavel boundary › cannot open calendar
+[1A[2K[152/235] [chromium] › tests/e2e/flows/permissions.spec.ts:171:7 › Permissions - Responsavel boundary › can access public privacy content
+[1A[2K[153/235] [chromium] › tests/e2e/flows/relatorios.spec.ts:11:7 › Relatórios: canonical destinations › shows the three available report destinations
+[1A[2K[154/235] [chromium] › tests/e2e/flows/relatorios.spec.ts:24:9 › Relatórios: canonical destinations › opens Frequência from its card
+[1A[2K[155/235] [chromium] › tests/e2e/flows/relatorios.spec.ts:24:9 › Relatórios: canonical destinations › opens Conteúdo from its card
+[1A[2K[156/235] [chromium] › tests/e2e/flows/relatorios.spec.ts:24:9 › Relatórios: canonical destinations › opens Bolsa Família from its card
+[1A[2K[157/235] [chromium] › tests/e2e/grades/access-boundary.spec.ts:11:5 › keeps grades hidden and immutable for every browser role in the canonical schema
+[1A[2K[158/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:191:7 › Enrollment form › shows student search and required enrollment fields
+[1A[2K[159/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:199:7 › Enrollment form › keeps submit disabled until student and class are selected
+[1A[2K[160/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:208:7 › Enrollment form › filters students and shows identity details
+[1A[2K[161/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:217:7 › Enrollment form › shows an explicit empty search state
+[1A[2K[162/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:222:7 › Enrollment form › shows class capacity after selection
+[1A[2K[163/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:228:7 › Enrollment form › cancel and back return to the list
+[1A[2K[164/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:235:7 › Enrollment mutations › creates, persists, and reloads an enrollment for a disposable student
+[1A[2K[165/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:273:7 › Enrollment mutations › shows loading state during the governed enrollment insertion
+[1A[2K[166/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:324:7 › Enrollment list and detail › list exposes filters and a detail action
+[1A[2K[167/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:343:7 › Enrollment list and detail › detail shows student, class, status and management actions
+[1A[2K[168/235] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:357:7 › Enrollment list and detail › edit action opens the existing enrollment detail workflow
+[1A[2K[169/235] [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in
+[1A[2K  1) [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m1788997833755[39m
+    Received: [31m1788997725040[39m
+
+      47 |   // GoTrue's session and admin endpoints retain different submillisecond
+      48 |   // precision. Both values must represent the same JavaScript timestamp.
+    > 49 |   expect(new Date(displayed).getTime()).toBe(new Date(expected).getTime())
+         |                                         ^
+      50 |   await expect(time).toContainText('Último acesso:')
+      51 | }
+      52 |
+        at expectLastAccess (/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app/tests/e2e/profile/user.spec.ts:49:41)
+        at /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app/tests/e2e/profile/user.spec.ts:59:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/profile-user-profile-displ-27092-ity-and-actual-last-sign-in-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/profile-user-profile-displ-27092-ity-and-actual-last-sign-in-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/profile/user.spec.ts:53:5 › profile displays the persisted identity and actual last sign-in 
+  66 did not run
+  168 passed (2.0m)
+  1 error was not a part of any test, see above for details

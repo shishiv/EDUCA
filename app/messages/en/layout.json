@@ -1,4 +1,5 @@
 {
+  "realtime": { "sessionLocked": "The lesson session was closed." },
   "dashboard": {
     "loading": "Loading overview",
     "preparing": "Preparing your workspace..."
@@ -14,6 +15,16 @@
   },
   "header": {
     "searchPlaceholder": "Search students, classes...",
+    "searchLabel": "Global search",
+    "searchResults": "Search results",
+    "searchLoading": "Searching...",
+    "searchNoResults": "No results found",
+    "searchTypes": {
+      "student": "Student",
+      "teacher": "Teacher",
+      "school": "School",
+      "class": "Class"
+    },
     "connection": "Connection: {status}",
     "openNotifications": "Open notifications",
     "notifications": "System notifications",

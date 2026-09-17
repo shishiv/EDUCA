@@ -1,6 +1,10 @@
 import { test, expect } from '../support/diagnostics'
 
 const AUTH = 'playwright/.auth'
+const DORMANT_ROUTES = [
+  { label: 'feature flags', route: '/dashboard/flags' },
+  { label: 'calendar', route: '/dashboard/calendario' },
+] as const
 
 async function expectAllowed(page: import('@playwright/test').Page, route: string) {
   await page.goto(route)
@@ -20,7 +24,6 @@ test.describe('Permissions - Admin', () => {
   for (const entry of [
     { label: 'users', route: '/dashboard/usuarios' },
     { label: 'schools', route: '/dashboard/escolas' },
-    { label: 'feature flags', route: '/dashboard/flags' },
     { label: 'settings', route: '/dashboard/configuracoes' },
     { label: 'reports', route: '/dashboard/relatorios' },
   ]) {
@@ -28,6 +31,20 @@ test.describe('Permissions - Admin', () => {
       await expectAllowed(page, entry.route)
     })
   }
+
+  for (const entry of DORMANT_ROUTES) {
+    test(`cannot open dormant ${entry.label}`, async ({ page }) => {
+      await expectDenied(page, entry.route)
+    })
+  }
+
+  test('renders links for permitted navigation', async ({ page }) => {
+    await page.goto('/dashboard')
+    for (const route of ['/dashboard/usuarios', '/dashboard/escolas', '/dashboard/configuracoes']) {
+      await expect(page.locator(`a[href="${route}"]`).first()).toBeAttached()
+    }
+    await expect(page.locator('a[href="/dashboard/calendario"]')).toHaveCount(0)
+  })
 })
 
 test.describe('Permissions - Diretor', () => {
@@ -47,12 +64,20 @@ test.describe('Permissions - Diretor', () => {
   for (const entry of [
     { label: 'users', route: '/dashboard/usuarios' },
     { label: 'schools', route: '/dashboard/escolas' },
-    { label: 'feature flags', route: '/dashboard/flags' },
+    ...DORMANT_ROUTES,
   ]) {
     test(`cannot open ${entry.label}`, async ({ page }) => {
       await expectDenied(page, entry.route)
     })
   }
+
+  test('hides denied links and rejects a direct URL', async ({ page }) => {
+    await page.goto('/dashboard')
+    for (const route of ['/dashboard/usuarios', '/dashboard/escolas', '/dashboard/flags']) {
+      await expect(page.locator(`a[href="${route}"]`)).toHaveCount(0)
+    }
+    await expectDenied(page, '/dashboard/usuarios')
+  })
 })
 
 test.describe('Permissions - Secretario', () => {
@@ -64,7 +89,8 @@ test.describe('Permissions - Secretario', () => {
     { label: 'guardians', route: '/dashboard/responsaveis' },
     { label: 'reports', route: '/dashboard/relatorios' },
     { label: 'grades', route: '/dashboard/notas' },
-    { label: 'attendance', route: '/dashboard/turmas' }
+    { label: 'attendance', route: '/dashboard/turmas' },
+    { label: 'settings', route: '/dashboard/configuracoes' },
   ]) {
     test(`can open ${entry.label}`, async ({ page }) => {
       await expectAllowed(page, entry.route)
@@ -74,12 +100,21 @@ test.describe('Permissions - Secretario', () => {
   for (const entry of [
     { label: 'users', route: '/dashboard/usuarios' },
     { label: 'schools', route: '/dashboard/escolas' },
-    { label: 'settings', route: '/dashboard/configuracoes' },
+    ...DORMANT_ROUTES,
   ]) {
     test(`cannot open ${entry.label}`, async ({ page }) => {
       await expectDenied(page, entry.route)
     })
   }
+
+  test('hides denied links and rejects a direct URL', async ({ page }) => {
+    await page.goto('/dashboard')
+    for (const route of ['/dashboard/usuarios', '/dashboard/escolas', '/dashboard/flags', '/dashboard/calendario']) {
+      await expect(page.locator(`a[href="${route}"]`)).toHaveCount(0)
+    }
+    await expect(page.locator('a[href="/dashboard/configuracoes"]').first()).toBeAttached()
+    await expectDenied(page, '/dashboard/usuarios')
+  })
 })
 
 test.describe('Permissions - Professor', () => {
@@ -110,6 +145,7 @@ test.describe('Permissions - Professor', () => {
     { label: 'settings', route: '/dashboard/configuracoes' },
     { label: 'users', route: '/dashboard/usuarios' },
     { label: 'schools', route: '/dashboard/escolas' },
+    ...DORMANT_ROUTES,
   ]) {
     test(`cannot open ${entry.label}`, async ({ page }) => {
       await expectDenied(page, entry.route)
@@ -125,6 +161,7 @@ test.describe('Permissions - Responsavel boundary', () => {
     { label: 'students', route: '/dashboard/alunos' },
     { label: 'grades', route: '/dashboard/notas' },
     { label: 'reports', route: '/dashboard/relatorios' },
+    ...DORMANT_ROUTES,
   ]) {
     test(`cannot open ${entry.label}`, async ({ page }) => {
       await expectDenied(page, entry.route)
@@ -134,6 +171,8 @@ test.describe('Permissions - Responsavel boundary', () => {
   test('can access public privacy content', async ({ page }) => {
     await page.goto('/politica-privacidade')
     await expect(page).toHaveURL(/politica-privacidade/)
-    await expect(page.locator('main')).toBeVisible()
+    await expect(page.getByRole('main').getByRole('heading', {
+      name: 'Política de Privacidade', level: 1, exact: true,
+    })).toBeVisible()
   })
 })

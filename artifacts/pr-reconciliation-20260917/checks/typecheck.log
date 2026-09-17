@@ -1,0 +1,4 @@
+
+> educa@1.0.0 typecheck ./app
+> tsc --project tsconfig.typecheck.json --noEmit
+

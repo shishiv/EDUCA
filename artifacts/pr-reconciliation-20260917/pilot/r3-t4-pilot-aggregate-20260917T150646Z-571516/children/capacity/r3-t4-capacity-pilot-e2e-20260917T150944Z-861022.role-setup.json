@@ -1,0 +1,8 @@
+{
+  "result": "pass",
+  "boundary": "real-playwright-browser",
+  "identity": "diretor.capacidade@synthetic.invalid",
+  "role": "diretor",
+  "authStatePath": "./app/playwright/.pilot-capacity/20260917T150944Z-861022/director.json",
+  "landingRoute": "/dashboard"
+}

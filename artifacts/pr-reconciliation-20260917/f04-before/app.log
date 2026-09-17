@@ -1,0 +1,16 @@
+▲ Next.js 16.3.0 (webpack)
+- Local:         http://127.0.0.1
+- Network:       http://127.0.0.1
+✓ Ready in 233ms
+✓ Running next.config.js took 34ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+○ Compiling /login ...
+ GET /login 200 in 5.4s (next.js: 4.9s, proxy.ts: 141ms, application-code: 287ms)
+ GET /login 200 in 134ms (next.js: 5ms, proxy.ts: 86ms, application-code: 43ms)
+

@@ -1,0 +1,21 @@
+
+> educa@1.0.0 build ./app
+> next build --webpack
+
+▲ Next.js 16.3.0 (webpack)
+✓ Running next.config.js took 63ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+  Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ Compiled successfully in 23.0s
+  Running TypeScript ...
+.next/dev/types/validator.ts(503,39): error TS2307: Cannot find module '../../../app/reset-password/complete/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(719,39): error TS2307: Cannot find module '../../../app/api/school-settings/periods/route.js' or its corresponding type declarations.
+Failed to type check.
+
+ ELIFECYCLE  Command failed with exit code 1.

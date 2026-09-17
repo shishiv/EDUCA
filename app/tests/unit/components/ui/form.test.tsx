@@ -410,7 +410,7 @@ describe('Form Components', () => {
         const errorMessage = screen.getByText(/nome deve ter pelo menos/i)
 
         expect(nameInput).toHaveAttribute('aria-invalid', 'true')
-        expect(nameInput).toHaveAttribute('aria-describedby')
+        expect(nameInput.getAttribute('aria-describedby')?.split(' ')).toContain(errorMessage.id)
       })
     })
 
@@ -434,7 +434,7 @@ describe('Form Components', () => {
 
       // Input should have aria-describedby pointing to description
       const describedBy = nameInput.getAttribute('aria-describedby')
-      expect(describedBy).toBeTruthy()
+      expect(describedBy?.split(' ')).toContain(description.id)
     })
   })
 

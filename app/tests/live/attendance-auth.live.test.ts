@@ -3,9 +3,9 @@
  *
  * Runs against a REAL local Supabase stack with the pilot provisioner applied
  * and the synthetic seed loaded (see scripts/run-pilot-e2e.sh). The actions
- * execute their real code with real authenticated sessions; only the
- * next/headers request context is stubbed, and the SSR client factory is
- * pointed at a real supabase-js client signed in as the scenario actor.
+ * execute their real code with real authenticated sessions through the
+ * injected request-client factory and cache-invalidation callback. The
+ * supplied Supabase client signs in as the scenario actor.
  *
  * Skipped unless EDUCA_LIVE_SUPABASE=1 plus NEXT_PUBLIC_SUPABASE_URL /
  * NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are set.
@@ -23,12 +23,14 @@
  * Expected outcomes AFTER the fix: every case below passes.
  */
 
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { markAttendanceAction } from '@/app/actions/attendance/mark-attendance'
-import { openSessionAction } from '@/app/actions/attendance/open-session'
-import { closeSessionAction } from '@/app/actions/attendance/close-session'
-import { checkLockStatusAction } from '@/app/actions/attendance/check-lock-status'
+import type { Database } from '@/types/database'
+import { createMarkAttendanceAction } from '@/lib/services/attendance-actions'
+import { createOpenSessionAction } from '@/lib/services/attendance-actions'
+import type { MarkAttendanceResult, OpenSessionParams, OpenSessionResult } from '@/lib/services/attendance-module'
+import { createCloseSessionAction } from '@/lib/services/attendance-actions'
+import { createCheckLockStatusAction } from '@/lib/services/attendance-actions'
 import { getSaoPauloDate } from '@/lib/services/attendance-module'
 
 const LIVE = process.env.EDUCA_LIVE_SUPABASE === '1'
@@ -52,38 +54,37 @@ const run = LIVE
   ? describe
   : describe.skip
 
-// ---------------------------------------------------------------------------
-// SSR client factory stub: hands the action under test a REAL supabase-js
-// client authenticated as the current scenario actor.
-// ---------------------------------------------------------------------------
+let currentActorClient: SupabaseClient<Database> | null = null
+let admin: SupabaseClient<Database> | null = null
 
-const { setActorClient, getActorClient } = vi.hoisted(() => {
-  let client: unknown = null
-  return {
-    setActorClient(c: unknown) {
-      client = c
-    },
-    getActorClient() {
-      return client
-    },
-  }
-})
+function requireActorClient(): SupabaseClient<Database> {
+  if (!currentActorClient) throw new Error('Attendance actor client was not initialized')
+  return currentActorClient
+}
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(async () => getActorClient()),
-}))
+function setActorClient(client: SupabaseClient<Database>): void {
+  currentActorClient = client
+}
 
-vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn(),
-}))
+const actionDependencies = {
+  createClient: async () => requireActorClient(),
+  revalidatePath: () => undefined,
+}
 
-let admin: SupabaseClient | null = null
+const markAttendanceAction = createMarkAttendanceAction(actionDependencies)
+const openSessionAction = createOpenSessionAction(actionDependencies)
+const closeSessionAction = createCloseSessionAction(actionDependencies)
+const checkLockStatusAction = createCheckLockStatusAction(actionDependencies)
 
 /**
  * When EDUCA_LIVE_REPORT=1, log every scenario outcome as a structured line
  * (used to capture before/after divergence evidence, see the issue #30 PR).
  */
-function report(label: string, result: { success: boolean; code?: string; error?: string; session?: Record<string, unknown> | null }) {
+type AttendanceReport = Pick<MarkAttendanceResult | OpenSessionResult, 'success' | 'code' | 'error'> & {
+  session?: { id: string; professor_id: string | null; escola_id: string } | null
+}
+
+function report(label: string, result: AttendanceReport) {
   if (process.env.EDUCA_LIVE_REPORT === '1') {
     // eslint-disable-next-line no-console
     console.log(`[LIVE-REPORT] ${label} -> ${JSON.stringify({ success: result.success, code: result.code, error: result.error, sessionId: result.session?.id, sessionProfessorId: result.session?.professor_id, sessionEscolaId: result.session?.escola_id })}`)
@@ -118,8 +119,8 @@ async function createSyntheticUser(
   return authUser.user.id
 }
 
-async function actorClient(email: string): Promise<SupabaseClient> {
-  const client = createClient(URL!, ANON_KEY!, {
+async function actorClient(email: string): Promise<SupabaseClient<Database>> {
+  const client = createClient<Database>(URL!, ANON_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   })
   const { data, error } = await client.auth.signInWithPassword({ email, password: PASSWORD })
@@ -152,7 +153,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     if (!URL || !ANON_KEY || !SERVICE_ROLE_KEY) {
       throw new Error('live test requires NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY')
     }
-    admin = createClient(URL, SERVICE_ROLE_KEY, {
+    admin = createClient<Database>(URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
     })
     const { data: secretaria } = await admin.from('users')
@@ -169,7 +170,12 @@ run('attendance server actions - live authz (issue #30)', () => {
     await wipeTestData()
   })
 
-  async function openSessionAs(email: string, turmaId: string, date: string, extra: Record<string, unknown> = {}) {
+  async function openSessionAs(
+    email: string,
+    turmaId: string,
+    date: string,
+    extra: Pick<OpenSessionParams, 'professor_id' | 'escola_id'> = {},
+  ) {
     setActorClient(await actorClient(email))
     // Realistic client: sends its own user id. Exploit scenarios override
     // professor_id/escola_id below; the server must ignore those overrides.
@@ -230,10 +236,13 @@ run('attendance server actions - live authz (issue #30)', () => {
       expect(openedB.success).toBe(true)
 
       // professora.a tries to mark into professor B's session using her own
-      // class matricula: must be rejected at the application layer.
+      // class matricula: RLS hides the foreign session before the app's ownership check.
       const marked = await markAs('professora.a@synthetic.invalid', openedB.session!.id, MATRICULA_A, TEST_DATE)
       expect(marked.success).toBe(false)
-      expect(marked.code).toBe('SESSION_NOT_OWNED')
+      expect(marked.code).toBe('SESSION_NOT_FOUND')
+      const attemptedRows = await admin!.from('frequencia').select('id').eq('sessao_id', openedB.session!.id)
+      expect(attemptedRows.error).toBeNull()
+      expect(attemptedRows.data).toEqual([])
     })
 
     it('diretor cannot mark into a session of another escola (school ownership)', async () => {
@@ -272,7 +281,7 @@ run('attendance server actions - live authz (issue #30)', () => {
     })
 
     it('unauthenticated caller cannot mark attendance', async () => {
-      setActorClient(createClient(URL!, ANON_KEY!, {
+      setActorClient(createClient<Database>(URL!, ANON_KEY!, {
         auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
       }))
       const marked = await markAttendanceAction({
@@ -395,7 +404,10 @@ run('attendance server actions - live authz (issue #30)', () => {
       const closed = await closeSessionAction({ session_id: openedB.session!.id })
       report('close: professor cannot close another professor session', closed)
       expect(closed.success).toBe(false)
-      expect(closed.code).toBe('SESSION_NOT_OWNED')
+      expect(closed.code).toBe('SESSION_NOT_FOUND')
+      const persisted = await admin!.from('sessoes_aula').select('status,fechada_em,travada_em').eq('id', openedB.session!.id).single()
+      expect(persisted.error).toBeNull()
+      expect(persisted.data).toEqual({ status: 'ABERTA', fechada_em: null, travada_em: null })
     })
   })
 
@@ -428,7 +440,9 @@ run('attendance server actions - live authz (issue #30)', () => {
       setActorClient(await actorClient('professora.a@synthetic.invalid'))
       const checked = await checkLockStatusAction(openedB.session!.id)
       expect(checked.success).toBe(false)
-      expect(checked.code).toBe('SESSION_NOT_OWNED')
+      expect(checked.code).toBe('SESSION_NOT_FOUND')
+      expect(checked.isLocked).toBe(true)
+      expect(checked.session).toBeUndefined()
     })
 
     it('secretario (view-only) can read lock status', async () => {

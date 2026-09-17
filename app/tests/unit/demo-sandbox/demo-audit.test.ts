@@ -4,18 +4,24 @@ import {
   buildDemoActionAuditMetadata,
   writeDemoActionInterceptedAudit,
 } from '@/lib/demo-sandbox/demo-audit'
+import type { DemoActionAuditInput } from '@/lib/demo-sandbox/demo-audit'
+import type { DemoAuditRpcClient, WritePilotAuditEventArgs } from '@/lib/demo-sandbox/demo-audit'
 
-const input = {
-  operation: 'demo.config.update' as const,
+const input: DemoActionAuditInput = {
+  operation: 'demo.config.update',
   entityId: 'config-1',
   schoolId: 'school-1',
 }
 
 describe('demo action audit', () => {
   it('writes a distinct simulated outcome without request payload fields', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: 'audit-1', error: null })
+    const calls: Array<['write_pilot_audit_event', WritePilotAuditEventArgs]> = []
+    const rpc: DemoAuditRpcClient['rpc'] = vi.fn((functionName, args) => {
+      calls.push([functionName, args])
+      return Promise.resolve({ data: 'audit-1', error: null })
+    })
     const receipt = await writeDemoActionInterceptedAudit(
-      { rpc } as never,
+      { rpc },
       { ...input, correlationId: 'correlation-1' },
     )
 
@@ -26,7 +32,7 @@ describe('demo action audit', () => {
       outcome: 'simulated_success',
       effectSuppressed: true,
     })
-    expect(rpc).toHaveBeenCalledWith('write_pilot_audit_event', {
+    expect(calls).toEqual([['write_pilot_audit_event', {
       p_event_type: DEMO_ACTION_INTERCEPTED_EVENT,
       p_entity_type: 'demo_operation',
       p_entity_id: 'config-1',
@@ -38,10 +44,10 @@ describe('demo action audit', () => {
         synthetic_only: true,
         correlation_id: 'correlation-1',
       },
-    })
-    expect(JSON.stringify(rpc.mock.calls)).not.toContain('cpf')
-    expect(JSON.stringify(rpc.mock.calls)).not.toContain('password')
-    expect(JSON.stringify(rpc.mock.calls)).not.toContain('free_text')
+    }]])
+    expect(JSON.stringify(calls)).not.toContain('cpf')
+    expect(JSON.stringify(calls)).not.toContain('password')
+    expect(JSON.stringify(calls)).not.toContain('free_text')
   })
 
   it('uses only fixed audit metadata', () => {
@@ -55,10 +61,10 @@ describe('demo action audit', () => {
   })
 
   it('fails closed when the append-only audit RPC fails', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: 'denied' } })
+    const rpc: DemoAuditRpcClient['rpc'] = vi.fn().mockResolvedValue({ data: null, error: { message: 'denied' } })
 
     await expect(
-      writeDemoActionInterceptedAudit({ rpc } as never, input),
+      writeDemoActionInterceptedAudit({ rpc }, input),
     ).rejects.toThrow('DEMO_ACTION_AUDIT_FAILED')
   })
 })

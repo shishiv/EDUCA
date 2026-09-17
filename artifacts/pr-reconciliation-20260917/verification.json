@@ -1,0 +1,94 @@
+{
+  "source_sha": "148e7fca80e33b3c707017c2b8c87e98b1be3e2f",
+  "runtime_source_sha": "748eaf1b3f5fcedab2662a258e82f7eb5976c1b7",
+  "date": "2026-09-17",
+  "tools": {
+    "node": "26.8.1",
+    "node_exec_path": "/usr/bin/node",
+    "node_abi": "147",
+    "pnpm": "9.15.9",
+    "postgresql": "18.6",
+    "chromium": "152.0.7977.82"
+  },
+  "gates": {
+    "typecheck": "passed",
+    "lint": {
+      "status": "passed",
+      "warnings": 0,
+      "errors": 0,
+      "complexity_max": 10,
+      "anti_slop": true
+    },
+    "anti_slop_plugin": {
+      "passed": 2,
+      "workers": 1
+    },
+    "unit": {
+      "passed": 1339,
+      "skipped_live": 29,
+      "passed_files": 126,
+      "skipped_files": 5,
+      "workers": 2,
+      "file_parallelism": false
+    },
+    "build": {
+      "status": "passed",
+      "workers": 2
+    },
+    "sql_rls": "passed",
+    "f02_restore": {
+      "status": "passed",
+      "tables": 18,
+      "partial_proof": true
+    },
+    "f04_live": {
+      "passed": 9,
+      "http": 3,
+      "concurrency": 6,
+      "workers": 1
+    },
+    "pilot": {
+      "status": "passed",
+      "legacy": 26,
+      "capacity": 3,
+      "descriptive": 4,
+      "security": 3,
+      "workers": 1,
+      "cleanup": "passed"
+    },
+    "general": {
+      "passed": 235,
+      "skipped": 0,
+      "workers": 1
+    },
+    "profile_focused": {
+      "passed": 5,
+      "case_repetitions": 3,
+      "includes_setup": true,
+      "workers": 1
+    },
+    "public_entry": {
+      "passed": 10,
+      "workers": 1,
+      "hostname": "localhost"
+    },
+    "demo_sql": "passed",
+    "typography": "passed",
+    "raw_diff_check": "inherited whitespace findings, not passed"
+  },
+  "production_runtime_verified": false,
+  "new_deployment_requested": false,
+  "remote_migrations_applied": false,
+  "remaining_unexecuted_live_cases": 20,
+  "cleanup_verified": true,
+  "branch_cleanup_proposal": {
+    "eligible_after_landing": 71,
+    "preserve_unproven": 26,
+    "preserve_main_dev": 2,
+    "executed": false
+  },
+  "scope": "repository-integration-only",
+  "f04_harness_sha256": "e66e1b15a9a13a7a8d93ba92e7a307aba1bdabf2daf70bf13fe02cb689b85f7a",
+  "f04_evidence": "f04-live-final",
+  "f04_relative_evidence_path_rejected": true
+}

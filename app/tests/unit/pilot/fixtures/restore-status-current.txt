@@ -1,0 +1,4 @@
+API_URL="http://127.0.0.1:54321"
+DB_URL="postgresql://postgres:synthetic@127.0.0.1:54322/postgres"
+PUBLISHABLE_KEY="sb_publishable_synthetic_fixture"
+SECRET_KEY="sb_secret_synthetic_fixture"

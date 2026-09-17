@@ -1,0 +1,66 @@
+{
+  "plugins": ["eslint"],
+  "categories": {
+    "correctness": "off"
+  },
+  "ignorePatterns": [
+    ".agent/**",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".continue/**",
+    ".cursor/**",
+    ".gemini/**",
+    ".opencode/**",
+    ".pi/**",
+    ".roo/**",
+    ".windsurf/**",
+    "**/node_modules/**",
+    "tools/oxlint/anti-slop/effect/index.ts",
+    "tools/oxlint/anti-slop/effect/rules/no-service-constructor-imports.ts",
+    "tools/oxlint/anti-slop/index.ts",
+    "tools/oxlint/anti-slop/rules/no-chained-type-assertions.ts",
+    "tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.ts",
+    "tools/oxlint/anti-slop/rules/no-known-value-widening.ts",
+    "tools/oxlint/anti-slop/rules/no-module-mocking.ts",
+    "tools/oxlint/anti-slop/rules/no-object-parameters.ts",
+    "tools/oxlint/anti-slop/rules/no-reflect-apply.ts",
+    "tools/oxlint/anti-slop/rules/no-reflect-get.ts",
+    "tools/oxlint/anti-slop/rules/no-runtime-typeof.ts",
+    "tools/oxlint/anti-slop/rules/no-unknown-parameters.ts",
+    "tools/oxlint/anti-slop/rules/no-unknown-returns.ts",
+    "tools/oxlint/anti-slop/rules/no-unknown-type-aliases.ts",
+    "tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.ts",
+    "tools/oxlint/anti-slop/rules/no-widen-then-assert.ts",
+    "tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts",
+    "tools/oxlint/anti-slop/shared/dictionary-types.ts",
+    "tools/oxlint/anti-slop/shared/function-parameters.ts",
+    "tools/oxlint/anti-slop/shared/lexical-type-parameters.ts",
+    "tools/oxlint/anti-slop/shared/reflect-method.ts",
+    "tools/oxlint/anti-slop/shared/type-alias-resolution.ts"
+  ],
+  "jsPlugins": [
+    {
+      "name": "anti-slop",
+      "specifier": "./tools/oxlint/anti-slop/index.ts"
+    }
+  ],
+  "rules": {
+    "complexity": ["error", { "max": 10 }],
+    "anti-slop/no-chained-type-assertions": "error",
+    "anti-slop/no-conditional-empty-object-spread": "error",
+    "anti-slop/no-known-value-widening": "error",
+    "anti-slop/no-module-mocking": "error",
+    "anti-slop/no-object-parameters": "error",
+    "anti-slop/no-reflect-apply": "error",
+    "anti-slop/no-reflect-get": "error",
+    "anti-slop/no-runtime-typeof": "error",
+    "anti-slop/no-shape-in-symbol-names": "error",
+    "anti-slop/no-unknown-parameters": "error",
+    "anti-slop/no-unknown-returns": "error",
+    "anti-slop/no-unknown-type-aliases": "error",
+    "anti-slop/no-unsafe-dictionary-type": "error",
+    "anti-slop/no-widen-then-assert": "error",
+    "anti-slop/require-safety-comment-for-type-assertion": "error"
+  }
+}

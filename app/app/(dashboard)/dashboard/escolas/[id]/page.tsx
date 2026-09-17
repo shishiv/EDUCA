@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -19,7 +19,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   ArrowLeft,
   Edit2,
-  School,
   MapPin,
   Phone,
   Mail,
@@ -50,7 +49,7 @@ interface Escola {
   created_at: string | null
   diretor?: {
     nome: string
-    email: string
+    email: string | null
   } | null
 }
 
@@ -76,11 +75,24 @@ interface Turma {
   }
 }
 
+function formatSchoolPhone(phone: string | null) {
+  if (!phone) return '-'
+  const cleaned = phone.replace(/\D/g, '')
+  if (cleaned.length === 11) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`
+  if (cleaned.length === 10) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`
+  return phone
+}
+
+function SchoolStatusBadge({ active }: { active: boolean | null }) {
+  const t = useTranslations('registry')
+  return <Badge variant={active ? 'default' : 'secondary'}>{active ? t('labels.ativa') : t('ui.inativa')}</Badge>
+}
+
 export default function EscolaDetailsPage() {
   const t = useTranslations('registry')
-  const params = useParams()
+  const params = useParams<{ id: string }>()
   const router = useRouter()
-  const id = params.id as string
+  const id = params.id
 
   const [loading, setLoading] = useState(true)
   const [escola, setEscola] = useState<Escola | null>(null)
@@ -92,13 +104,7 @@ export default function EscolaDetailsPage() {
     matriculasAtivas: 0
   })
 
-  useEffect(() => {
-    if (id) {
-      loadEscolaDetails()
-    }
-  }, [id])
-
-  const loadEscolaDetails = async () => {
+  const loadEscolaDetails = useCallback(async () => {
     setLoading(true)
     try {
       // Load school data
@@ -121,7 +127,7 @@ export default function EscolaDetailsPage() {
         return
       }
 
-      setEscola(escolaData as any)
+      setEscola(escolaData)
 
       // Load turmas
       const { data: turmasData, error: turmasError } = await supabase
@@ -143,19 +149,26 @@ export default function EscolaDetailsPage() {
       if (turmasError) {
         logger.error('Erro ao carregar turmas:', turmasError)
       } else {
-        setTurmas(turmasData || [])
+        setTurmas((turmasData || []).map(turma => ({
+          ...turma,
+          capacidade: turma.capacidade ?? 0,
+        })))
       }
 
       // Calculate statistics
       await calculateStats(id)
-    } catch (error: any) {
-      logger.error('Erro ao carregar escola:', error)
+    } catch (error) {
+      logger.error('Erro ao carregar escola:', error instanceof Error ? error : String(error))
       toast.error(t('ui.erro-ao-carregar-detalhes-da-escola'))
       router.push('/dashboard/escolas')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, router, t])
+
+  useEffect(() => {
+    if (id) void loadEscolaDetails()
+  }, [id, loadEscolaDetails])
 
   const calculateStats = async (escolaId: string) => {
     try {
@@ -205,40 +218,29 @@ export default function EscolaDetailsPage() {
         totalProfessores: totalProfessores || 0,
         matriculasAtivas
       })
-    } catch (error: any) {
-      logger.error('Erro ao calcular estatísticas:', error)
+    } catch (error) {
+      logger.error('Erro ao calcular estatísticas:', error instanceof Error ? error : String(error))
     }
   }
 
   const getTipoLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      creche: 'Creche',
-      pre_escola: 'Pré-Escola',
-      fundamental: 'Fundamental',
-      medio: 'Médio'
-    }
-    return labels[tipo] || tipo
+    const labels = new Map([
+      ['creche', 'Creche'],
+      ['pre_escola', 'Pré-Escola'],
+      ['fundamental', 'Fundamental'],
+      ['medio', 'Médio'],
+    ])
+    return labels.get(tipo) || tipo
   }
 
   const getTurnoLabel = (turno: string) => {
-    const labels: Record<string, string> = {
-      matutino: 'Manhã',
-      vespertino: 'Tarde',
-      integral: t('labels.integral'),
-      noturno: 'Noite'
-    }
-    return labels[turno] || turno
-  }
-
-  const formatPhone = (phone: string | null) => {
-    if (!phone) return '-'
-    const cleaned = phone.replace(/\D/g, '')
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`
-    } else if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`
-    }
-    return phone
+    const labels = new Map([
+      ['matutino', 'Manhã'],
+      ['vespertino', 'Tarde'],
+      ['integral', t('labels.integral')],
+      ['noturno', 'Noite'],
+    ])
+    return labels.get(turno) || turno
   }
 
   if (loading) {
@@ -284,9 +286,7 @@ export default function EscolaDetailsPage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-            {escola.ativo ? t('labels.ativa') : t('ui.inativa')}
-          </Badge>
+          <SchoolStatusBadge active={escola.ativo} />
           <Button onClick={() => router.push(`/dashboard/escolas/${id}/editar`)} variant="outline">
             <Edit2 className="h-4 w-4 mr-2" />
             {t('ui.editar')}
@@ -386,9 +386,7 @@ export default function EscolaDetailsPage() {
             <div>
               <Label className="text-gray-600">{t('labels.status')}</Label>
               <div className="mt-1">
-                <Badge variant={escola.ativo ? 'default' : 'secondary'}>
-                  {escola.ativo ? t('labels.ativa') : t('ui.inativa')}
-                </Badge>
+                <SchoolStatusBadge active={escola.ativo} />
               </div>
             </div>
           </CardContent>
@@ -407,7 +405,7 @@ export default function EscolaDetailsPage() {
               <Label className="text-gray-600">{t('labels.telefone')}</Label>
               <div className="flex items-center space-x-2 mt-1">
                 <Phone className="h-4 w-4 text-gray-400" />
-                <p className="font-medium">{formatPhone(escola.telefone)}</p>
+                <p className="font-medium">{formatSchoolPhone(escola.telefone)}</p>
               </div>
             </div>
             <div>

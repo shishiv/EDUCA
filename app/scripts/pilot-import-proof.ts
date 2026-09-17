@@ -6,6 +6,7 @@
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { Client } from 'pg'
+import { z } from 'zod'
 import {
   assertPilotImportOwnerMatchesActor,
   countCanonicalPilotRows,
@@ -15,6 +16,9 @@ import {
   transformGovernedPilotCsvToCanonicalRows,
   validateGovernedPilotImportManifest,
   validateGovernedPilotStudentCsv,
+  type CanonicalPilotStudentRow,
+  type GovernedCsvCanonicalCounts,
+  type GovernedPilotImportManifest,
   type GovernedPilotImportDataMode,
 } from '../lib/pilot/governed-csv-import'
 import {
@@ -27,14 +31,36 @@ import {
   validatePilotImportEncryptionKey,
 } from '../lib/pilot/pilot-import-crypto'
 
-interface ProofImportArguments {
-  command: 'import' | 'rollback' | 'cleanup'
+interface CollectedProofImportArguments {
   csvPath?: string
   approvalPath?: string
   batchId?: string
   actorEmail?: string
   reason?: string
 }
+
+interface ImportProofArguments {
+  command: 'import'
+  csvPath: string
+  approvalPath: string
+}
+
+interface RollbackProofArguments {
+  command: 'rollback'
+  batchId: string
+  actorEmail: string
+  reason: string
+}
+
+interface CleanupProofArguments {
+  command: 'cleanup'
+}
+
+type ProofImportArguments = ImportProofArguments | RollbackProofArguments | CleanupProofArguments
+
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+
+type CanonicalCountKey = keyof GovernedCsvCanonicalCounts | 'storageObjects'
 
 interface ActorRow {
   id: string
@@ -67,7 +93,7 @@ interface BatchRow {
   iv: string | null
   auth_tag: string | null
   source_row_count: number | null
-  canonical_counts: unknown
+  canonical_counts: JsonValue | null
   canonical_fingerprint_sha256: string | null
   database_fingerprint_sha256: string | null
   governance_fingerprint_sha256: string | null
@@ -107,45 +133,126 @@ interface RollbackEvidence {
   tombstoneMatchesBatch: boolean
 }
 
+interface ImportReceipt {
+  batchId: string
+  target: GovernedPilotProofSafetyReceipt['target']
+  status: string
+  safety: GovernedPilotProofSafetyReceipt
+  sourceMode: GovernedPilotImportDataMode
+  sourceRowCount: number | null
+  canonicalCounts: JsonValue | null
+  sourceFingerprintSha256: string
+  canonicalFingerprintSha256: string | null
+  databaseFingerprintSha256: string | null
+  governanceManifestVersion: typeof SYNTHETIC_PILOT_GOVERNANCE_MANIFEST_VERSION
+  governanceFingerprintSha256: string | null
+  encryption: {
+    algorithm: 'aes-256-gcm'
+    keyId: string
+    ciphertextStored: boolean
+    plaintextStored: false
+  }
+  storageObjects: StorageObjectState
+  retention: {
+    policy: string | null
+    rawPayloadExpiresAt: string
+    canonicalDataExpiresAt: string | null
+    rollbackUntil: string | null
+  }
+  rolledBackAt: string | null
+}
+
+interface RollbackReceipt extends ImportReceipt {
+  rollback: {
+    actorResolved: true
+    deletedEnrollments: number
+    deletedRelationships: number
+    deletedStudents: number
+    deletedGuardians: number
+    storageObjects: {
+      requested: number
+      removed: number
+      remaining: number
+    }
+    tombstone: {
+      count: number
+      matchesBatch: boolean
+    }
+    audit: {
+      rollbackEvents: number
+      redacted: boolean
+    }
+    reasonRecorded: true
+  }
+}
+
+interface RetentionCleanupReceipt {
+  target: GovernedPilotProofSafetyReceipt['target']
+  safety: GovernedPilotProofSafetyReceipt
+  rawPayloadsCleaned: number
+}
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const KEY_ID_PATTERN = /^[A-Za-z0-9._-]{1,80}$/
+const proofCommandSchema = z.enum(['import', 'rollback', 'cleanup'])
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() => z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  z.array(jsonValueSchema),
+  z.record(jsonValueSchema),
+]))
+const storedCanonicalCountsContainerSchema = z.record(jsonValueSchema)
+const storedCanonicalCountSchema = z.number()
+
+function assignProofImportArgument(
+  result: CollectedProofImportArguments,
+  argument: string,
+  value: string | undefined
+): void {
+  if (!value) throw new Error(`PILOT_IMPORT_PROOF_ARGUMENT_INVALID: unknown or incomplete argument ${argument}`)
+  if (argument === '--csv') result.csvPath = value
+  else if (argument === '--approval') result.approvalPath = value
+  else if (argument === '--batch') result.batchId = value
+  else if (argument === '--actor-email') result.actorEmail = value
+  else if (argument === '--reason') result.reason = value
+  else throw new Error(`PILOT_IMPORT_PROOF_ARGUMENT_INVALID: unknown or incomplete argument ${argument}`)
+}
+
+function completeProofImportArguments(
+  command: ProofImportArguments['command'],
+  result: CollectedProofImportArguments
+): ProofImportArguments {
+  if (command === 'import') {
+    if (result.csvPath && result.approvalPath) {
+      return { command, csvPath: result.csvPath, approvalPath: result.approvalPath }
+    }
+    throw new Error('PILOT_IMPORT_PROOF_INPUT_REQUIRED: --csv and --approval are required')
+  }
+  if (command === 'rollback') {
+    if (result.batchId && result.actorEmail && result.reason) {
+      return { command, batchId: result.batchId, actorEmail: result.actorEmail, reason: result.reason }
+    }
+    throw new Error('PILOT_IMPORT_PROOF_ROLLBACK_INPUT_REQUIRED: --batch, --actor-email, and --reason are required')
+  }
+  return { command }
+}
 
 function parseProofImportArguments(argv: string[]): ProofImportArguments {
-  const command = argv[0] || 'import'
-  if (!['import', 'rollback', 'cleanup'].includes(command)) {
+  const parsedCommand = proofCommandSchema.safeParse(argv[0] || 'import')
+  if (!parsedCommand.success) {
     throw new Error('PILOT_IMPORT_PROOF_COMMAND_INVALID: use import, rollback, or cleanup')
   }
-  const result: ProofImportArguments = { command: command as ProofImportArguments['command'] }
+  const result: CollectedProofImportArguments = {}
   for (let index = 1; index < argv.length; index += 1) {
     const argument = argv[index]
     const next = argv[index + 1]
-    if (argument === '--csv' && next) {
-      result.csvPath = next
-      index += 1
-    } else if (argument === '--approval' && next) {
-      result.approvalPath = next
-      index += 1
-    } else if (argument === '--batch' && next) {
-      result.batchId = next
-      index += 1
-    } else if (argument === '--actor-email' && next) {
-      result.actorEmail = next
-      index += 1
-    } else if (argument === '--reason' && next) {
-      result.reason = next
-      index += 1
-    } else {
-      throw new Error(`PILOT_IMPORT_PROOF_ARGUMENT_INVALID: unknown or incomplete argument ${argument}`)
-    }
+    assignProofImportArgument(result, argument, next)
+    index += 1
   }
 
-  if (result.command === 'import' && (!result.csvPath || !result.approvalPath)) {
-    throw new Error('PILOT_IMPORT_PROOF_INPUT_REQUIRED: --csv and --approval are required')
-  }
-  if (result.command === 'rollback' && (!result.batchId || !result.actorEmail || !result.reason)) {
-    throw new Error('PILOT_IMPORT_PROOF_ROLLBACK_INPUT_REQUIRED: --batch, --actor-email, and --reason are required')
-  }
-  return result
+  return completeProofImportArguments(parsedCommand.data, result)
 }
 
 function readDataMode(): GovernedPilotImportDataMode {
@@ -163,7 +270,7 @@ function readEncryptionKeyId(): string {
   return keyId
 }
 
-async function readJsonFile(path: string): Promise<unknown> {
+async function readJsonFile(path: string): Promise<JsonValue> {
   let raw: string
   try {
     raw = await readFile(path, 'utf8')
@@ -171,7 +278,7 @@ async function readJsonFile(path: string): Promise<unknown> {
     throw new Error('PILOT_IMPORT_APPROVAL_FILE_READ_FAILED: approval manifest cannot be read')
   }
   try {
-    return JSON.parse(raw) as unknown
+    return jsonValueSchema.parse(JSON.parse(raw))
   } catch {
     throw new Error('PILOT_IMPORT_APPROVAL_FILE_INVALID: approval manifest must be JSON')
   }
@@ -386,7 +493,7 @@ async function buildImportReceipt(
   client: Client,
   batch: BatchRow,
   safetyReceipt: GovernedPilotProofSafetyReceipt
-): Promise<Record<string, unknown>> {
+): Promise<ImportReceipt> {
   const storage = await readStorageObjectState(client, batch.id)
   return {
     batchId: batch.id,
@@ -421,12 +528,131 @@ async function buildImportReceipt(
   }
 }
 
+async function resolveProofImportGovernance(
+  client: Client,
+  school: SchoolRow,
+  manifest: GovernedPilotImportManifest
+) {
+  const submitter = await findActiveActor(client, manifest.approval.submittedBy.email, 'PILOT_IMPORT_SUBMITTER_REQUIRED')
+  const approver = await findActiveActor(client, manifest.approval.approvedBy.email, 'PILOT_IMPORT_APPROVER_REQUIRED')
+  const agreementRecorder = await findActiveActor(
+    client,
+    manifest.processingAgreement.recordedBy.email,
+    'PILOT_IMPORT_AGREEMENT_RECORDER_REQUIRED'
+  )
+  const owner = await findActiveActor(client, manifest.owner.email, 'PILOT_IMPORT_OWNER_REQUIRED')
+  assertPilotImportOwnerMatchesActor(manifest.owner, {
+    name: owner.nome,
+    email: owner.email,
+    role: owner.tipo_usuario,
+    schoolId: null,
+  })
+  if (owner.id !== submitter.id) throw new Error('PILOT_IMPORT_OWNER_DENIED: owner must authorize the submitted batch')
+  if (submitter.id === approver.id) throw new Error('PILOT_IMPORT_MAKER_CHECKER_REQUIRED: submitter and approver must differ')
+  const agreementResult = await client.query<{
+    id: string
+    confirmed: boolean
+    confirmed_at: string | null
+    confirmed_by: string | null
+    escola_id: string
+  }>(
+    `SELECT id, confirmed, confirmed_at, confirmed_by, escola_id
+     FROM public.pilot_data_treatment_agreements
+     WHERE escola_id = $1 AND reference = $2 AND version = $3 AND confirmed = true
+     LIMIT 1`,
+    [school.id, manifest.processingAgreement.reference, manifest.processingAgreement.version]
+  )
+  const agreement = agreementResult.rows[0]
+  if (!agreement || !agreement.confirmed || !agreement.confirmed_at || !agreement.confirmed_by) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
+  }
+  if (agreement.confirmed_by !== agreementRecorder.id) {
+    throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_MISMATCH: agreement confirmer does not match the manifest')
+  }
+  return { submitter, approver, agreementRecorder, owner, agreement }
+}
+
+async function findExistingProofBatch(
+  client: Client,
+  schoolId: string,
+  idempotencyKey: string,
+  contentSha256: string,
+  governanceFingerprint: string
+): Promise<string | null> {
+  const existing = await client.query<{ id: string; governance_fingerprint_sha256: string | null }>(
+    `SELECT id, governance_fingerprint_sha256
+     FROM public.pilot_import_batches
+     WHERE escola_id = $1 AND import_target = 'isolated_proof'
+       AND (idempotency_key = $2 OR content_sha256 = $3)
+     ORDER BY created_at
+     LIMIT 1`,
+    [schoolId, idempotencyKey, contentSha256]
+  )
+  const batch = existing.rows[0]
+  if (!batch) return null
+  if (batch.governance_fingerprint_sha256 !== governanceFingerprint) {
+    throw new Error('PILOT_IMPORT_IDEMPOTENCY_GOVERNANCE_MISMATCH: existing batch has different governance')
+  }
+  return batch.id
+}
+
+async function createProofCanonicalRows(
+  client: Client,
+  batchId: string,
+  schoolId: string,
+  canonicalRows: CanonicalPilotStudentRow[]
+): Promise<void> {
+  const classRows = new Map<string, ClassRow>()
+  for (const row of canonicalRows) {
+    if (!classRows.has(row.classCode)) classRows.set(row.classCode, await findProofClass(client, schoolId, row.classCode))
+  }
+
+  for (const row of canonicalRows) {
+    const guardian = await client.query<{ id: string }>(
+      `INSERT INTO public.responsaveis (
+         escola_id, import_source_id, nome, cpf, parentesco, telefone, ativo, pilot_import_batch_id
+       ) VALUES ($1, $2, $3, NULL, $4, $5, true, $6)
+       RETURNING id`,
+      [schoolId, `proof:${row.guardianSourceId}`, row.guardianName, row.guardianRelationship, row.guardianPhone, batchId]
+    )
+    const guardianId = guardian.rows[0]?.id
+    if (!guardianId) throw new Error('PILOT_IMPORT_PROOF_GUARDIAN_CREATE_FAILED: guardian id is missing')
+
+    const student = await client.query<{ id: string }>(
+      `INSERT INTO public.alunos (
+         escola_id, import_source_id, nome_completo, data_nascimento, sexo,
+         responsavel_id, ativo, pilot_import_batch_id
+       ) VALUES ($1, $2, $3, $4, $5, $6, true, $7)
+       RETURNING id`,
+      [schoolId, `proof:${row.sourceId}`, row.studentName, row.birthDate, row.sex, guardianId, batchId]
+    )
+    const studentId = student.rows[0]?.id
+    if (!studentId) throw new Error('PILOT_IMPORT_PROOF_STUDENT_CREATE_FAILED: student id is missing')
+
+    await client.query(
+      `INSERT INTO public.aluno_responsaveis (
+         aluno_id, responsavel_id, tipo_responsabilidade, pilot_import_batch_id
+       ) VALUES ($1, $2, $3, $4)`,
+      [studentId, guardianId, row.guardianRelationship, batchId]
+    )
+
+    const classRow = classRows.get(row.classCode)
+    if (!classRow) throw new Error(`PILOT_IMPORT_PROOF_CLASS_NOT_FOUND: class ${row.classCode} is missing`)
+    await client.query(
+      `INSERT INTO public.matriculas (
+         aluno_id, turma_id, ano_letivo, situacao, observacoes, pilot_import_batch_id
+       ) VALUES ($1, $2, $3, 'ativa', 'governed isolated proof CSV import', $4)`,
+      [studentId, classRow.id, classRow.ano_letivo, batchId]
+    )
+  }
+}
+
 async function runGovernedProofImport(
   client: Client,
   csvPath: string,
   approvalPath: string,
   safetyReceipt: GovernedPilotProofSafetyReceipt
-): Promise<Record<string, unknown>> {
+): Promise<ImportReceipt> {
   const dataMode = readDataMode()
   const encryptionKey = process.env.PILOT_IMPORT_ENCRYPTION_KEY
   if (!encryptionKey) throw new Error('PILOT_IMPORT_KEY_MISSING: encryption key is required')
@@ -451,59 +677,18 @@ async function runGovernedProofImport(
   await client.query('BEGIN')
   try {
     const school = await findProofSchool(client, report.schoolCodes[0])
-    const submitter = await findActiveActor(client, manifest.approval.submittedBy.email, 'PILOT_IMPORT_SUBMITTER_REQUIRED')
-    const approver = await findActiveActor(client, manifest.approval.approvedBy.email, 'PILOT_IMPORT_APPROVER_REQUIRED')
-    const agreementRecorder = await findActiveActor(
-      client,
-      manifest.processingAgreement.recordedBy.email,
-      'PILOT_IMPORT_AGREEMENT_RECORDER_REQUIRED'
-    )
-    const owner = await findActiveActor(client, manifest.owner.email, 'PILOT_IMPORT_OWNER_REQUIRED')
-    assertPilotImportOwnerMatchesActor(manifest.owner, {
-      name: owner.nome,
-      email: owner.email,
-      role: owner.tipo_usuario,
-      schoolId: null,
-    })
-    if (owner.id !== submitter.id) throw new Error('PILOT_IMPORT_OWNER_DENIED: owner must authorize the submitted batch')
-    if (submitter.id === approver.id) throw new Error('PILOT_IMPORT_MAKER_CHECKER_REQUIRED: submitter and approver must differ')
-    const agreementResult = await client.query<{
-      id: string
-      confirmed: boolean
-      confirmed_at: string | null
-      confirmed_by: string | null
-      escola_id: string
-    }>(
-      `SELECT id, confirmed, confirmed_at, confirmed_by, escola_id
-       FROM public.pilot_data_treatment_agreements
-       WHERE escola_id = $1 AND reference = $2 AND version = $3 AND confirmed = true
-       LIMIT 1`,
-      [school.id, manifest.processingAgreement.reference, manifest.processingAgreement.version]
-    )
-    const agreement = agreementResult.rows[0]
-    if (!agreement || !agreement.confirmed || !agreement.confirmed_at || !agreement.confirmed_by) {
-      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_REQUIRED: a confirmed treatment agreement must be on file')
-    }
-    if (agreement.confirmed_by !== agreementRecorder.id) {
-      throw new Error('PILOT_IMPORT_TREATMENT_AGREEMENT_RECORDER_MISMATCH: agreement confirmer does not match the manifest')
-    }
-    const ownerEmail = owner.email
+    const { submitter, approver, agreementRecorder, owner, agreement } = await resolveProofImportGovernance(client, school, manifest)
     const idempotencyKey = `proof-${report.contentSha256}`
-    const existing = await client.query<{ id: string; governance_fingerprint_sha256: string | null }>(
-      `SELECT id, governance_fingerprint_sha256
-       FROM public.pilot_import_batches
-       WHERE escola_id = $1 AND import_target = 'isolated_proof'
-         AND (idempotency_key = $2 OR content_sha256 = $3)
-       ORDER BY created_at
-       LIMIT 1`,
-      [school.id, idempotencyKey, report.contentSha256]
+    const existingBatchId = await findExistingProofBatch(
+      client,
+      school.id,
+      idempotencyKey,
+      report.contentSha256,
+      governanceFingerprint
     )
-    if (existing.rows[0]) {
-      if (existing.rows[0].governance_fingerprint_sha256 !== governanceFingerprint) {
-        throw new Error('PILOT_IMPORT_IDEMPOTENCY_GOVERNANCE_MISMATCH: existing batch has different governance')
-      }
+    if (existingBatchId) {
       await client.query('COMMIT')
-      return buildImportReceipt(client, await readBatch(client, existing.rows[0].id), safetyReceipt)
+      return buildImportReceipt(client, await readBatch(client, existingBatchId), safetyReceipt)
     }
 
     const batchResult = await client.query<{ id: string }>(
@@ -542,7 +727,7 @@ async function runGovernedProofImport(
         manifest.retention.rawPayloadExpiresAt,
         dataMode,
         owner.nome,
-        ownerEmail,
+        owner.email,
         owner.id,
         manifest.approval.approvedAt,
         submitter.nome,
@@ -580,49 +765,7 @@ async function runGovernedProofImport(
       [batchId, school.id, submitter.id, approver.id, reportFingerprint, manifest.approval.approvedAt]
     )
 
-    const classRows = new Map<string, ClassRow>()
-    for (const row of canonicalRows) {
-      if (!classRows.has(row.classCode)) classRows.set(row.classCode, await findProofClass(client, school.id, row.classCode))
-    }
-
-    for (const row of canonicalRows) {
-      const guardian = await client.query<{ id: string }>(
-        `INSERT INTO public.responsaveis (
-           escola_id, import_source_id, nome, cpf, parentesco, telefone, ativo, pilot_import_batch_id
-         ) VALUES ($1, $2, $3, NULL, $4, $5, true, $6)
-         RETURNING id`,
-        [school.id, `proof:${row.guardianSourceId}`, row.guardianName, row.guardianRelationship, row.guardianPhone, batchId]
-      )
-      const guardianId = guardian.rows[0]?.id
-      if (!guardianId) throw new Error('PILOT_IMPORT_PROOF_GUARDIAN_CREATE_FAILED: guardian id is missing')
-
-      const student = await client.query<{ id: string }>(
-        `INSERT INTO public.alunos (
-           escola_id, import_source_id, nome_completo, data_nascimento, sexo,
-           responsavel_id, ativo, pilot_import_batch_id
-         ) VALUES ($1, $2, $3, $4, $5, $6, true, $7)
-         RETURNING id`,
-        [school.id, `proof:${row.sourceId}`, row.studentName, row.birthDate, row.sex, guardianId, batchId]
-      )
-      const studentId = student.rows[0]?.id
-      if (!studentId) throw new Error('PILOT_IMPORT_PROOF_STUDENT_CREATE_FAILED: student id is missing')
-
-      await client.query(
-        `INSERT INTO public.aluno_responsaveis (
-           aluno_id, responsavel_id, tipo_responsabilidade, pilot_import_batch_id
-         ) VALUES ($1, $2, $3, $4)`,
-        [studentId, guardianId, row.guardianRelationship, batchId]
-      )
-
-      const classRow = classRows.get(row.classCode)
-      if (!classRow) throw new Error(`PILOT_IMPORT_PROOF_CLASS_NOT_FOUND: class ${row.classCode} is missing`)
-      await client.query(
-        `INSERT INTO public.matriculas (
-           aluno_id, turma_id, ano_letivo, situacao, observacoes, pilot_import_batch_id
-         ) VALUES ($1, $2, $3, 'ativa', 'governed isolated proof CSV import', $4)`,
-        [studentId, classRow.id, classRow.ano_letivo, batchId]
-      )
-    }
+    await createProofCanonicalRows(client, batchId, school.id, canonicalRows)
 
     const databaseFingerprint = await readDatabaseFingerprint(client, batchId)
     await client.query(
@@ -658,10 +801,14 @@ async function runGovernedProofImport(
   }
 }
 
-function expectedCanonicalCount(batch: BatchRow, key: string): number | null {
-  if (!batch.canonical_counts || typeof batch.canonical_counts !== 'object') return null
-  const value = (batch.canonical_counts as Record<string, unknown>)[key]
-  return typeof value === 'number' ? value : null
+export function expectedCanonicalCount(
+  canonicalCounts: JsonValue | null,
+  key: CanonicalCountKey
+): number | null {
+  const container = storedCanonicalCountsContainerSchema.safeParse(canonicalCounts)
+  if (!container.success) return null
+  const parsed = storedCanonicalCountSchema.safeParse(container.data[key])
+  return parsed.success ? parsed.data : null
 }
 
 async function runRollback(
@@ -670,7 +817,7 @@ async function runRollback(
   actorEmail: string,
   reason: string,
   safetyReceipt: GovernedPilotProofSafetyReceipt
-): Promise<Record<string, unknown>> {
+): Promise<RollbackReceipt> {
   if (!UUID_PATTERN.test(batchId)) throw new Error('PILOT_IMPORT_PROOF_BATCH_INVALID: batch id must be a UUID')
   const actor = await findActiveActor(client, actorEmail, 'PILOT_IMPORT_ROLLBACK_ACTOR_REQUIRED')
   const batchBefore = await readBatch(client, batchId)
@@ -690,7 +837,7 @@ async function runRollback(
       ['storageObjects', rollback.deleted_storage_objects],
     ] as const
     for (const [key, observed] of expectedCounts) {
-      const expected = expectedCanonicalCount(batchBefore, key)
+      const expected = expectedCanonicalCount(batchBefore.canonical_counts, key)
       if (expected !== null && observed !== expected) {
         throw new Error(`PILOT_IMPORT_ROLLBACK_RECEIPT_MISMATCH: ${key} count does not match ownership receipt`)
       }
@@ -729,7 +876,7 @@ async function runRollback(
 async function runRetentionCleanup(
   client: Client,
   safetyReceipt: GovernedPilotProofSafetyReceipt
-): Promise<Record<string, unknown>> {
+): Promise<RetentionCleanupReceipt> {
   const result = await client.query<{ pilot_cleanup_import_retention: number }>(
     `SELECT public.pilot_cleanup_import_retention()`
   )
@@ -749,15 +896,14 @@ async function main(): Promise<void> {
   const client = new Client({ connectionString: proofDatabaseUrl })
   await client.connect()
   try {
-    let receipt: Record<string, unknown>
     if (args.command === 'import') {
-      receipt = await runGovernedProofImport(client, args.csvPath!, args.approvalPath!, safetyReceipt)
+      const receipt = await runGovernedProofImport(client, args.csvPath, args.approvalPath, safetyReceipt)
       console.info(`PILOT_GOVERNED_IMPORT_RECEIPT: ${JSON.stringify(receipt)}`)
     } else if (args.command === 'rollback') {
-      receipt = await runRollback(client, args.batchId!, args.actorEmail!, args.reason!, safetyReceipt)
+      const receipt = await runRollback(client, args.batchId, args.actorEmail, args.reason, safetyReceipt)
       console.info(`PILOT_GOVERNED_ROLLBACK_RECEIPT: ${JSON.stringify(receipt)}`)
     } else {
-      receipt = await runRetentionCleanup(client, safetyReceipt)
+      const receipt = await runRetentionCleanup(client, safetyReceipt)
       console.info(`PILOT_GOVERNED_RETENTION_RECEIPT: ${JSON.stringify(receipt)}`)
     }
   } finally {
@@ -765,7 +911,9 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(error => {
-  console.error(error instanceof Error ? error.message : String(error))
-  process.exit(1)
-})
+if (require.main === module) {
+  main().catch(error => {
+    console.error(error instanceof Error ? error.message : String(error))
+    process.exit(1)
+  })
+}

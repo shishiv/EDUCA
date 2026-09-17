@@ -1,0 +1,9 @@
+{
+  "result": "pass",
+  "childReceiptsPreserved": true,
+  "childLogsRedacted": true,
+  "serverMode": "direct",
+  "portRangeLeaseDir": null,
+  "portRangeLeaseReleased": true,
+  "aggregateDirectory": "./artifacts/pr-reconciliation-20260917/pilot/r3-t4-pilot-aggregate-20260917T150646Z-571516"
+}

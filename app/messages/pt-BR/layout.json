@@ -1,4 +1,5 @@
 {
+  "realtime": { "sessionLocked": "A sessão de aula foi encerrada." },
   "dashboard": {
     "loading": "Carregando visão geral",
     "preparing": "Preparando seu espaço de trabalho..."
@@ -14,6 +15,16 @@
   },
   "header": {
     "searchPlaceholder": "Buscar alunos, turmas...",
+    "searchLabel": "Busca global",
+    "searchResults": "Resultados da busca",
+    "searchLoading": "Buscando...",
+    "searchNoResults": "Nenhum resultado encontrado",
+    "searchTypes": {
+      "student": "Aluno",
+      "teacher": "Professor",
+      "school": "Escola",
+      "class": "Turma"
+    },
     "connection": "Conexão: {status}",
     "openNotifications": "Abrir notificações",
     "notifications": "Notificações do Sistema",

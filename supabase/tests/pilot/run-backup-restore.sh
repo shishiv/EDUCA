@@ -7,6 +7,9 @@ APP_DIR="$ROOT_DIR/app"
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
 PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 EVIDENCE_FILE="$ROOT_DIR/.pilot-evidence/synthetic-restore-evidence.md"
+PROOF_DIR="$ROOT_DIR/supabase/tests/pilot"
+COVERAGE_FILE="$PROOF_DIR/restore-coverage-v1.tsv"
+COVERAGE_SHA=$(sha256sum "$COVERAGE_FILE" | cut -d' ' -f1)
 
 EXPECTED_TARGET='isolated-proof'
 EXPECTED_DATABASE_TARGET='isolated_proof'
@@ -60,7 +63,7 @@ if env | grep -q '^SUPABASE_DEMO_[^=]*='; then
   exit 1
 fi
 
-for command in psql curl openssl sha256sum tar diff python3; do
+for command in psql curl openssl sha256sum tar diff cmp python3; do
   command -v "$command" >/dev/null || {
     echo "PILOT_RESTORE_PREREQUISITE_MISSING: $command" >&2
     exit 1
@@ -265,7 +268,7 @@ policy_manifest() {
   local database_url=$1
   local destination=$2
   psql "$database_url" -X -Atq -v ON_ERROR_STOP=1 -c \
-    "SELECT schemaname||'.'||tablename||'|'||policyname||'|'||cmd||'|'||array_to_string(roles,',') FROM pg_policies WHERE schemaname IN ('public','storage') ORDER BY schemaname,tablename,policyname" \
+    "SELECT jsonb_build_array(schemaname,tablename,policyname,permissive,cmd,roles,qual,with_check)::text FROM pg_policies WHERE schemaname IN ('public','storage') ORDER BY schemaname,tablename,policyname" \
     > "$destination"
 }
 
@@ -280,26 +283,8 @@ policy_fingerprint() {
 # runner must pass that contract before it reads the local source database.
 run_restore_safety
 
-PUBLIC_TABLES=(
-  pilot_municipality_config
-  attendance_municipal_thresholds
-  escolas
-  users
-  turmas
-  responsaveis
-  alunos
-  aluno_responsaveis
-  matriculas
-  aulas_abertas
-  sessoes_aula
-  frequencia
-  pilot_import_batches
-  pilot_import_approvals
-  pilot_user_invitations
-  pilot_metric_events
-  pilot_data_tombstones
-  pilot_audit_log
-)
+# The versioned inventory is the allowlist; exclusions never enter the replay.
+mapfile -t PUBLIC_TABLES < <(awk -F '\t' '$1 == "included" { print $2 }' "$COVERAGE_FILE")
 
 SOURCE_GOVERNANCE_OK=$(query_source "SELECT (count(*) = 1 AND bool_and(data_classification = 'synthetic_only' AND external_deploy_allowed = false AND legal_approval_status = 'not_approved' AND backup_rpo_hours IS NOT NULL AND backup_rto_hours IS NOT NULL)) FROM public.pilot_municipality_config")
 SOURCE_SYNTHETIC_IDENTITIES_OK=$(query_source "SELECT NOT EXISTS (SELECT 1 FROM public.users WHERE email IS NULL OR email !~ '@synthetic\\.invalid$') AND NOT EXISTS (SELECT 1 FROM auth.users AS auth_user WHERE (EXISTS (SELECT 1 FROM public.users AS profile WHERE profile.id = auth_user.id) OR EXISTS (SELECT 1 FROM public.pilot_user_invitations AS invitation WHERE invitation.auth_user_id = auth_user.id)) AND (auth_user.email IS NULL OR auth_user.email !~ '@synthetic\\.invalid$'))")
@@ -377,6 +362,9 @@ data_mode=$EXPECTED_DATA_MODE
 synthetic_marker=$EXPECTED_SYNTHETIC_MARKER
 created_at=$BACKUP_ISO
 schema_source=repository_migrations
+proof_scope=partial
+coverage_inventory=restore-coverage-v1.tsv
+coverage_sha256=$COVERAGE_SHA
 portable_data=explicit_public_table_allowlist
 provider_boundary=auth_identity_manifest,storage_metadata_and_bytes
 auth_manifest=auth_users_referenced_by_profiles_or_invitations
@@ -441,45 +429,10 @@ export PILOT_IMPORT_PROOF_DATABASE_URL="$RESTORE_URL"
 run_restore_safety
 
 # This is a compatibility boundary for a second database in the local
-# Supabase PostgreSQL cluster. Source Auth and Storage are exercised through
-# their real local contracts above; application schema and RLS come only from
+# Supabase PostgreSQL cluster. Source identities are read via SQL and Storage
+# bytes via the local API, not restored provider services; schema and RLS come from
 # repository migrations and the explicit pilot provisioner below.
-if ! psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 > /dev/null 2> "$MIGRATION_LOG" <<'SQL'
-CREATE SCHEMA auth;
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
-  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid
-$$;
-CREATE TABLE auth.users (
-  id uuid PRIMARY KEY,
-  email text,
-  created_at timestamptz
-);
-
-CREATE SCHEMA storage;
-CREATE TABLE storage.buckets (
-  id text PRIMARY KEY,
-  name text NOT NULL,
-  public boolean NOT NULL DEFAULT false,
-  file_size_limit bigint,
-  allowed_mime_types text[]
-);
-CREATE TABLE storage.objects (
-  id uuid PRIMARY KEY,
-  bucket_id text NOT NULL REFERENCES storage.buckets(id),
-  name text NOT NULL,
-  metadata jsonb,
-  created_at timestamptz
-);
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-CREATE FUNCTION storage.foldername(name text) RETURNS text[]
-LANGUAGE sql IMMUTABLE AS $$ SELECT string_to_array(name, '/') $$;
-GRANT USAGE ON SCHEMA auth, storage TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, service_role;
-GRANT ALL ON auth.users, storage.buckets, storage.objects TO service_role;
-GRANT SELECT ON storage.buckets TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON storage.objects TO authenticated;
-SQL
-then
+if ! psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-bootstrap.sql" > /dev/null 2> "$MIGRATION_LOG"; then
   cat "$MIGRATION_LOG" >&2
   exit 1
 fi
@@ -500,6 +453,9 @@ if ! psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -f "$PILOT_PROVISIONING" >> "$MIG
   cat "$MIGRATION_LOG" >&2
   exit 1
 fi
+
+# Compare the replay with this migration-only baseline, not merely a nonempty hash.
+psql "$RESTORE_URL" -X -Atq -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-catalog.sql" > "$WORK_DIR/expected-catalog.txt"
 
 # These migrations bootstrap one synthetic municipality and two storage
 # buckets. Replace only those provider/application metadata rows with the
@@ -615,7 +571,12 @@ RESTORE_SYNTHETIC_IDENTITIES_OK=$(query_restore "SELECT NOT EXISTS (SELECT 1 FRO
 RESTORE_AUTH_PROFILE_LINK_OK=$(query_restore "SELECT NOT EXISTS (SELECT 1 FROM public.users AS profile LEFT JOIN auth.users AS auth_user ON auth_user.id = profile.id WHERE auth_user.id IS NULL OR auth_user.email IS DISTINCT FROM profile.email)")
 RESTORE_CONFIG_OK=$(query_restore "SELECT (count(*) = 1 AND bool_and(data_classification = 'synthetic_only' AND external_deploy_allowed = false AND legal_approval_status = 'not_approved')) FROM public.pilot_municipality_config")
 RESTORE_REQUIRED_POLICIES_OK=$(query_restore "SELECT NOT EXISTS (SELECT required.policy_name FROM (VALUES ('pilot_alunos_select'),('pilot_frequencia_select'),('pilot_frequencia_insert'),('pilot_frequencia_update'),('pilot_student_photos_select'),('pilot_student_photos_insert'),('pilot_student_photos_update'),('pilot_users_select')) AS required(policy_name) WHERE NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname IN ('public','storage') AND policyname = required.policy_name))")
-RESTORE_GRANTS_OK=$(query_restore "SELECT has_table_privilege('authenticated','public.alunos','SELECT') AND has_table_privilege('authenticated','public.frequencia','INSERT') AND has_table_privilege('authenticated','storage.objects','SELECT') AND NOT has_table_privilege('authenticated','public.notas','SELECT')")
+RESTORE_GRANTS_OK=$(psql "$RESTORE_URL" -X -Atq -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-grants.sql")
+psql "$RESTORE_URL" -X -Atq -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-catalog.sql" > "$WORK_DIR/restored-catalog.txt"
+RESTORE_CATALOG_OK=f
+if cmp -s "$WORK_DIR/expected-catalog.txt" "$WORK_DIR/restored-catalog.txt"; then
+  RESTORE_CATALOG_OK=t
+fi
 RESTORE_VIEW_OK=$(query_restore "SELECT coalesce(reloptions @> ARRAY['security_invoker=true'], false) FROM pg_class WHERE oid = 'public.vw_frequencia_completa'::regclass")
 RESTORE_RPC_OK=$(query_restore "SELECT to_regprocedure('public.pilot_dashboard_metrics(uuid)') IS NOT NULL")
 RESTORE_PILOT_GUARD_OK=$(query_restore "SELECT to_regprocedure('public.pilot_reject_high_risk_student_fields()') IS NOT NULL AND EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'pilot_high_risk_student_guard' AND tgrelid = 'public.alunos'::regclass)")
@@ -748,6 +709,7 @@ assert_positive 'restore.policy_count' "$RESTORE_POLICY_COUNT"
 assert_positive 'restore.policy_fingerprint' "${#RESTORE_POLICY_FINGERPRINT}"
 assert_true 'restore.required_policies' "$RESTORE_REQUIRED_POLICIES_OK"
 assert_true 'restore.grants' "$RESTORE_GRANTS_OK"
+assert_true 'restore.migration_catalog_qual_with_check_grants' "$RESTORE_CATALOG_OK"
 assert_true 'restore.security_invoker_view' "$RESTORE_VIEW_OK"
 assert_true 'restore.dashboard_rpc' "$RESTORE_RPC_OK"
 assert_true 'restore.pilot_gate' "$RESTORE_PILOT_GUARD_OK"
@@ -788,13 +750,14 @@ cleanup_work_dir || {
 }
 
 cat > "$EVIDENCE_FILE" <<EOF
-# Synthetic portable restore proof
+# Partial synthetic portable restore proof
 
-Este receipt registra uma prova técnica sintética e isolada. Ele não demonstra prontidão municipal, aprovação legal, contrato, SLA comercial ou PITR gerenciado do provedor. O banco de origem local foi somente lido.
+Este receipt registra uma prova técnica parcial, sintética e isolada. Estrutura recriada por migrations não é dado recuperado; configurações escolares, Vivências, relatórios e histórico de reabertura não estão nesta allowlist. Auth limita-se a um manifesto de identidade e a claims SQL, sem login GoTrue, senha, sessão, refresh token, MFA ou revogação. Bytes Storage são verificados em arquivos, não publicados em um serviço restaurado. Ele não demonstra prontidão municipal, aprovação legal, contrato, SLA comercial ou PITR gerenciado do provedor. O banco de origem local foi somente lido.
 
 | Check | Observed |
 |---|---:|
-| Result | pass |
+| Result | pass within partial coverage only |
+| Coverage inventory | \`restore-coverage-v1.tsv\` / \`$COVERAGE_SHA\` |
 | Isolated synthetic target | \`$EXPECTED_TARGET\` |
 | Database target identity | \`$EXPECTED_DATABASE_TARGET\` |
 | Data mode and marker | \`$EXPECTED_DATA_MODE\` / \`$EXPECTED_SYNTHETIC_MARKER\` |
@@ -816,9 +779,10 @@ Este receipt registra uma prova técnica sintética e isolada. Ele não demonstr
 | Storage metadata fingerprint source/restore | \`$SOURCE_STORAGE_OBJECT_FINGERPRINT\` / \`$RESTORED_STORAGE_OBJECT_FINGERPRINT\` |
 | Storage byte checksum source/restore | \`$SOURCE_STORAGE_BYTES_FINGERPRINT\` / \`$RESTORED_STORAGE_BYTES_FINGERPRINT\` |
 | Restored policy count / fingerprint | $RESTORE_POLICY_COUNT / \`$RESTORE_POLICY_FINGERPRINT\` |
-| Grants | $RESTORE_GRANTS_OK |
+| Column grants and sensitive-read denial | $RESTORE_GRANTS_OK |
+| Recreated catalog parity (qual, with_check, RLS, grants) | $RESTORE_CATALOG_OK |
 | Security-invoker view | $RESTORE_VIEW_OK |
-| Dashboard RPC | $RESTORE_RPC_OK |
+| Dashboard RPC existence | $RESTORE_RPC_OK |
 | Pilot gate | $RESTORE_PILOT_GUARD_OK |
 | Relationships | $RESTORE_RELATIONSHIPS_OK |
 | Tombstone prevents resurrection | $RESTORE_TOMBSTONE_OK |
@@ -833,5 +797,5 @@ Este receipt registra uma prova técnica sintética e isolada. Ele não demonstr
 Focused failure probes are intentional and must fail visibly: \`artifact\`, \`student-checksum\`, \`attendance-checksum\`, \`policy\`, \`auth\`, \`storage\`, and \`cleanup\`. Run them only against the disposable local synthetic proof.
 EOF
 
-printf 'Portable synthetic restore proof passed: target=%s RPO=%ss/%sh RTO=%ss/%sh evidence=%s\n' \
+printf 'Partial portable synthetic restore proof passed: target=%s RPO=%ss/%sh RTO=%ss/%sh evidence=%s\n' \
   "$EXPECTED_TARGET" "$RPO_SECONDS" "$RPO_TARGET_HOURS" "$RTO_SECONDS" "$RTO_TARGET_HOURS" "$EVIDENCE_FILE"

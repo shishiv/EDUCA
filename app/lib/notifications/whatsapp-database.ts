@@ -1,8 +1,7 @@
 /**
  * Typed data surface for the WhatsApp notification module.
  *
- * app/types/database.ts intentionally lags the live schema (see CONTEXT.md),
- * so this module owns the types for the tables and RPCs it touches. The
+ * This module deliberately exposes only the tables and RPCs it touches. The
  * read-only tables (responsaveis, alunos, aluno_responsaveis, escolas) are
  * typed with Insert/Update = never: the module can read them but only write
  * through its own notification tables. Callers bridge real clients with
@@ -10,6 +9,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 export type WhatsAppJson =
   | string
@@ -19,6 +19,17 @@ export type WhatsAppJson =
   | { [key: string]: WhatsAppJson | undefined }
   | WhatsAppJson[]
 
+export type WhatsAppNotificationStatus =
+  | 'queued'
+  | 'processing'
+  | 'accepted'
+  | 'sent'
+  | 'delivered'
+  | 'read'
+  | 'failed'
+  | 'blocked'
+  | 'delivery_unknown'
+
 export type WhatsAppNotificationMessageRow = {
   id: string
   responsavel_id: string
@@ -26,7 +37,7 @@ export type WhatsAppNotificationMessageRow = {
   escola_id: string
   tipo: 'presenca_falta' | 'presenca_presente'
   data_aula: string
-  status: 'queued' | 'accepted' | 'sent' | 'delivered' | 'read' | 'failed' | 'blocked'
+  status: WhatsAppNotificationStatus
   external_message_id: string | null
   idempotency_key: string
   tentativas: number
@@ -45,6 +56,9 @@ export type WhatsAppNotificationMessageRow = {
   falhou_em: string | null
   bloqueado_em: string | null
   ultimo_status_em: string | null
+  claim_token: string | null
+  claim_expires_at: string | null
+  reconciliation_required_at: string | null
   criado_por: string | null
   created_at: string
   updated_at: string
@@ -57,7 +71,7 @@ export type WhatsAppNotificationMessageInsert = {
   tipo: 'presenca_falta' | 'presenca_presente'
   data_aula: string
   idempotency_key: string
-  status?: 'queued' | 'accepted' | 'sent' | 'delivered' | 'read' | 'failed' | 'blocked'
+  status?: WhatsAppNotificationStatus
   tentativas?: number
   proxima_tentativa?: string
   external_message_id?: string | null
@@ -68,6 +82,9 @@ export type WhatsAppNotificationMessageInsert = {
   falhou_em?: string | null
   bloqueado_em?: string | null
   ultimo_status_em?: string | null
+  claim_token?: string | null
+  claim_expires_at?: string | null
+  reconciliation_required_at?: string | null
   criado_por?: string | null
   created_at?: string
   updated_at?: string
@@ -85,6 +102,9 @@ export type WhatsAppNotificationMessageUpdate = {
   falhou_em?: string | null
   bloqueado_em?: string | null
   ultimo_status_em?: string | null
+  claim_token?: string | null
+  claim_expires_at?: string | null
+  reconciliation_required_at?: string | null
   updated_at?: string
 }
 
@@ -156,14 +176,14 @@ export type WhatsAppDatabase = {
     Tables: {
       whatsapp_notification_messages: {
         Row: WhatsAppNotificationMessageRow
-        Insert: WhatsAppNotificationMessageInsert
-        Update: WhatsAppNotificationMessageUpdate
+        Insert: never
+        Update: never
         Relationships: []
       }
       whatsapp_notification_optins: {
         Row: WhatsAppNotificationOptInRow
-        Insert: WhatsAppNotificationOptInInsert
-        Update: WhatsAppNotificationOptInUpdate
+        Insert: never
+        Update: never
         Relationships: []
       }
       responsaveis: ReadOnlyTable<WhatsAppGuardianRow>
@@ -182,6 +202,57 @@ export type WhatsAppDatabase = {
         }
         Returns: boolean
       }
+      enqueue_guardian_whatsapp_attendance_notification: {
+        Args: {
+          p_responsavel_id: string
+          p_aluno_id: string
+          p_tipo: 'presenca_falta' | 'presenca_presente'
+          p_data_aula: string
+          p_criado_por: string
+        }
+        Returns: Array<{
+          message_id: string
+          status: WhatsAppNotificationStatus
+          duplicated: boolean
+          audit_id: string
+        }>
+      }
+      claim_whatsapp_notifications: {
+        Args: {
+          p_claim_token: string
+          p_max_attempts: number
+          p_limit?: number
+          p_message_id?: string | null
+          p_lease_seconds?: number
+        }
+        Returns: WhatsAppNotificationMessageRow[]
+      }
+      complete_whatsapp_notification_delivery: {
+        Args: {
+          p_message_id: string
+          p_claim_token: string
+          p_outcome: 'accepted' | 'delivered' | 'blocked' | 'failed' | 'retry' | 'indeterminate'
+          p_external_message_id?: string | null
+          p_block_reason?: string | null
+          p_failure_code?: string | null
+          p_retry_delay_seconds?: number | null
+        }
+        Returns: boolean
+      }
+      set_guardian_whatsapp_opt_in: {
+        Args: {
+          p_responsavel_id: string
+          p_opt_in: boolean
+          p_registrado_por: string
+        }
+        Returns: Array<{
+          responsavel_id: string
+          opt_in: boolean
+          consentido_em: string | null
+          cancelado_em: string | null
+          audit_id: string
+        }>
+      }
       write_pilot_audit_event: {
         Args: {
           p_event_type: string
@@ -198,7 +269,9 @@ export type WhatsAppDatabase = {
 
 export type WhatsAppSupabase = SupabaseClient<WhatsAppDatabase>
 
-/** Bridges a real (stale-typed) client into the module's typed surface. */
-export function asWhatsAppClient(client: unknown): WhatsAppSupabase {
+/** Narrows a real client to the module's database capabilities. */
+export function asWhatsAppClient(client: SupabaseClient<Database> | WhatsAppSupabase): WhatsAppSupabase {
+  // SAFETY: this adapter narrows a Supabase client to the tables and RPCs owned by this module;
+  // every member is backed by the same public schema and verified by typecheck/database tests.
   return client as WhatsAppSupabase
 }

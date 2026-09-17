@@ -1,0 +1,49 @@
+
+Running 26 tests using 1 worker
+
+[1A[2K(node:610964) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:610964) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/26] [legacy-setup] › tests/e2e/auth.setup.ts:37:8 › authenticate
+[1A[2K[legacy-setup] › tests/e2e/auth.setup.ts:37:8 › authenticate
+PILOT_LEGACY_BROWSER_RECEIPT: result=pass identity=secretaria@synthetic.invalid role=secretario route=/dashboard
+
+[1A[2K(node:611562) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:611562) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/26] [chromium-legacy] › tests/e2e/pilot/attendance-reopen.spec.ts:151:7 › Attendance reopen workflow › teacher requests and school director approves only the canonical session
+[1A[2K[3/26] [chromium-legacy] › tests/e2e/pilot/attendance-reopen.spec.ts:212:7 › Attendance reopen workflow › director sees an actionable conflict and preserves the pending request
+[1A[2K[4/26] [chromium-legacy] › tests/e2e/pilot/canonical-lesson.spec.ts:92:7 › canonical diary creation › creates a lesson through attendance and preserves two sessions on the same day
+[1A[2K[5/26] [chromium-legacy] › tests/e2e/pilot/canonical-lesson.spec.ts:133:7 › canonical diary creation › shows the database cutoff rejection without persisting session or lesson content
+[1A[2K[6/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:123:7 › synthetic municipal pilot core scope › shows only confirmed pilot modules plus the class diary
+[1A[2K[7/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:139:7 › synthetic municipal pilot core scope › loads core school and attendance flows
+[1A[2K[8/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:152:7 › synthetic municipal pilot core scope › redirects disabled pilot modules but serves the class diary
+[1A[2K[9/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:166:7 › synthetic municipal pilot core scope › keeps offline service worker and IndexedDB disabled
+[1A[2K[10/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:178:7 › synthetic municipal pilot core scope › covers the synthetic school-management journey
+[1A[2K[11/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:225:7 › synthetic municipal pilot core scope › covers the synthetic student and guardian management journey
+[1A[2K[12/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:399:7 › synthetic municipal pilot core scope › covers the synthetic class-management journey
+[1A[2K[13/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:466:7 › synthetic municipal pilot core scope › covers the synthetic teacher-management journey
+[1A[2K[14/26] [chromium-legacy] › tests/e2e/pilot/core-scope.spec.ts:593:7 › synthetic municipal pilot core scope › covers the complete synthetic authentication journey
+[1A[2K[15/26] [chromium-legacy] › tests/e2e/pilot/csv-import.spec.ts:494:5 › dry-runs, stages, approves, publishes, and rolls back synthetic CSV
+[1A[2K[16/26] [chromium-legacy] › tests/e2e/pilot/csv-import.spec.ts:515:5 › rejects atomically and retains encrypted source until raw expiry
+[1A[2K[17/26] [chromium-legacy] › tests/e2e/pilot/deployed-isolation.spec.ts:21:7 › deployed Supabase isolation › isolates directors and teachers across schools
+[1A[2K[18/26] [chromium-legacy] › tests/e2e/pilot/deployed-isolation.spec.ts:54:7 › deployed Supabase isolation › keeps secretariat municipal while views and RPCs honor RLS
+[1A[2K[19/26] [chromium-legacy] › tests/e2e/pilot/deployed-isolation.spec.ts:81:7 › deployed Supabase isolation › enforces private school-prefixed storage policies
+[1A[2K[20/26] [chromium-legacy] › tests/e2e/pilot/deployed-isolation.spec.ts:92:7 › deployed Supabase isolation › keeps audit append-only and redacted even for service role
+[1A[2K[21/26] [chromium-legacy] › tests/e2e/pilot/invalid-refresh-token.spec.ts:21:5 › clears an invalid synthetic refresh token and redirects to login
+[1A[2K[22/26] [chromium-legacy] › tests/e2e/pilot/invitation-first-access.spec.ts:11:5 › invites a teacher and completes first access
+[1A[2K[23/26] [chromium-legacy] › tests/e2e/pilot/invitation-first-access.spec.ts:123:5 › rejects parent invitations during the pilot
+[1A[2K[24/26] [chromium-legacy] › tests/e2e/pilot/invitation-first-access.spec.ts:135:5 › invites municipal secretariat and a school director
+[1A[2K[25/26] [chromium-legacy] › tests/e2e/pilot/security-hardening.spec.ts:527:7 › isolated governed pilot security hardening › proves the three roles, conditionality release, and negative writes at PostgREST
+[1A[2K[26/26] [chromium-legacy] › tests/e2e/pilot/security-hardening.spec.ts:543:7 › isolated governed pilot security hardening › keeps audit and cleanup boundaries, and proves the deliberate DELETE break
+[1A[2K  26 passed (55.8s)

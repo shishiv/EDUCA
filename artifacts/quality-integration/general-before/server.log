@@ -1,0 +1,19 @@
+
+> educa@1.0.0 start /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app
+> next start --hostname 127.0.0.1 --port 61009
+
+▲ Next.js 16.3.0
+- Local:         http://127.0.0.1
+- Network:       http://127.0.0.1
+✓ Ready in 88ms
+✓ Running next.config.js took 29ms
+🎓 [ERROR] [20:21:51] ATTENDANCE_SESSION_OPEN_FAILED
+📍 Context: {
+  "metadata": {
+    "turmaId": "cb135296-3006-4f86-9a17-5bf8d35879ea",
+    "date": "2026-09-09"
+  },
+  "sessionId": "1788996111580-m6wp50qfx"
+}
+❌ Error: [object Object]
+ ELIFECYCLE  Command failed with exit code 143.

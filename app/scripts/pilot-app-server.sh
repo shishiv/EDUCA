@@ -31,7 +31,7 @@ pilot_app_server_origin() {
     [[ "$app_port" =~ ^[0-9]+$ ]] || return 1
     printf 'http://127.0.0.1:%s' "$app_port"
   else
-    printf 'https://%s.localhost' "$app_name"
+    portless get "$app_name"
   fi
 }
 

@@ -22,7 +22,7 @@ test.describe('Turmas - List View', () => {
 
   test('displays the four statistics', async ({ page }) => {
     const main = page.getByRole('main')
-    for (const label of ['Total', 'Ativas', 'Alunos', 'Ocupacao']) {
+    for (const label of ['Total', 'Ativa', 'Alunos', 'Capacidade']) {
       await expect(main.getByText(label, { exact: true })).toBeVisible()
     }
     await expect(main.getByText(/%/).first()).toBeVisible()
@@ -52,7 +52,7 @@ test.describe('Turmas - Filters', () => {
   })
 
   test('has accessible search and select filters', async ({ page }) => {
-    await expect(page.getByPlaceholder(/buscar por nome/i)).toBeVisible()
+    await expect(page.getByPlaceholder('Search by name, series, school or teacher...')).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Escola' })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Série' })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Turno' })).toBeVisible()
@@ -60,20 +60,20 @@ test.describe('Turmas - Filters', () => {
   })
 
   test('filters by search and updates the observable count', async ({ page }) => {
-    const search = page.getByPlaceholder(/buscar por nome/i)
+    const search = page.getByPlaceholder('Search by name, series, school or teacher...')
     await search.fill('1º Ano')
     await expect(page.getByRole('heading', { name: /Turmas \(1\)/ })).toBeVisible()
     await expect(classLinks(page)).toHaveCount(1)
   })
 
   test('shows an empty state for an unmatched query', async ({ page }) => {
-    await page.getByPlaceholder(/buscar por nome/i).fill('xyznonexistent123')
+    await page.getByPlaceholder('Search by name, series, school or teacher...').fill('xyznonexistent123')
     await expect(page.getByText('Nenhuma turma encontrada')).toBeVisible()
     await expect(classLinks(page)).toHaveCount(0)
   })
 
   test('clears active filters', async ({ page }) => {
-    const search = page.getByPlaceholder(/buscar por nome/i)
+    const search = page.getByPlaceholder('Search by name, series, school or teacher...')
     await search.fill('xyznonexistent123')
     await page.getByRole('button', { name: 'Limpar', exact: true }).click()
     await expect(search).toHaveValue('')
@@ -108,6 +108,6 @@ test.describe('Turmas - Responsive layout', () => {
     const first = await links.nth(0).boundingBox()
     const second = await links.nth(1).boundingBox()
     expect(second!.y).toBeGreaterThan(first!.y)
-    await expect(page.getByLabel(/navegacao principal mobile/i)).toBeVisible()
+    await expect(page.getByLabel('Navegação principal mobile', { exact: true })).toBeVisible()
   })
 })

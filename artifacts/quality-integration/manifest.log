@@ -1,0 +1,13 @@
+
+> educa@1.0.0 test /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app
+> vitest run tests/unit/e2e/general-playwright-manifest.test.ts --maxWorkers\=1 --no-file-parallelism
+
+
+ RUN  v4.1.10 /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  20:46:48
+   Duration  7.39s (transform 24ms, setup 58ms, import 12ms, tests 6.90s, environment 328ms)
+

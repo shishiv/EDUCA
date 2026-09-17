@@ -56,5 +56,5 @@ const pages = [
   // Removed: /showcase (dev-only page deleted in Phase 14-02)
 ];
 
-console.log('Total pages to capture:', pages.length);
-console.log('Pages:', pages.map(p => p.name).join(', '));
+console.info('Total pages to capture:', pages.length);
+console.info('Pages:', pages.map(p => p.name).join(', '));

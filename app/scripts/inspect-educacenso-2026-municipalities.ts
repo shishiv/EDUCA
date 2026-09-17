@@ -8,6 +8,28 @@ const EXPECTED_SHA256 =
   'cea115117f79a697f3402eb67133976788544399b15c9789bcd9fe2ad08d80a3'
 const EXPECTED_COUNT = 5_571
 
+function readMunicipalityCodes(worksheet: ExcelJS.Worksheet) {
+  const codes: string[] = []
+  const rowsByCode = new Map<string, number>()
+  for (let rowNumber = 9; rowNumber <= worksheet.rowCount; rowNumber += 1) {
+    const value = String(worksheet.getCell(`C${rowNumber}`).value ?? '')
+    if (!/^\d{7}$/.test(value)) throw new Error(`Código inválido na linha oficial ${rowNumber}: ${value}`)
+    codes.push(value)
+    rowsByCode.set(value, rowNumber)
+  }
+  return { codes, rowsByCode }
+}
+
+function validateMunicipalityCatalog(codes: string[]): void {
+  const uniqueCount = new Set(codes).size
+  if (codes.length !== EXPECTED_COUNT || uniqueCount !== EXPECTED_COUNT) {
+    throw new Error(`Catálogo inesperado: ${codes.length} linhas e ${uniqueCount} códigos únicos.`)
+  }
+  if (codes.some((code, index) => index > 0 && codes[index - 1] >= code)) {
+    throw new Error('Os códigos da tabela oficial não estão em ordem estritamente crescente.')
+  }
+}
+
 async function main(): Promise<void> {
   const filePath = process.argv[2]
   if (!filePath) {
@@ -32,25 +54,8 @@ async function main(): Promise<void> {
     throw new Error(`Cabeçalho oficial inesperado em C8: ${header}`)
   }
 
-  const codes: string[] = []
-  const rowsByCode = new Map<string, number>()
-  for (let rowNumber = 9; rowNumber <= worksheet.rowCount; rowNumber += 1) {
-    const value = String(worksheet.getCell(`C${rowNumber}`).value ?? '')
-    if (!/^\d{7}$/.test(value)) {
-      throw new Error(`Código inválido na linha oficial ${rowNumber}: ${value}`)
-    }
-    codes.push(value)
-    rowsByCode.set(value, rowNumber)
-  }
-
-  if (codes.length !== EXPECTED_COUNT || new Set(codes).size !== EXPECTED_COUNT) {
-    throw new Error(
-      `Catálogo inesperado: ${codes.length} linhas e ${new Set(codes).size} códigos únicos.`
-    )
-  }
-  if (codes.some((code, index) => index > 0 && codes[index - 1] >= code)) {
-    throw new Error('Os códigos da tabela oficial não estão em ordem estritamente crescente.')
-  }
+  const { codes, rowsByCode } = readMunicipalityCodes(worksheet)
+  validateMunicipalityCatalog(codes)
 
   process.stdout.write(
     `${JSON.stringify(
@@ -70,7 +75,7 @@ async function main(): Promise<void> {
   )
 }
 
-main().catch((error: unknown) => {
+main().catch((error: Error | string) => {
   const message = error instanceof Error ? error.message : String(error)
   process.stderr.write(`${message}\n`)
   process.exitCode = 1

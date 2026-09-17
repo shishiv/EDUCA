@@ -1,0 +1,3 @@
+PILOT_PORT_RANGE_LEASE: base=61070 end=61079 lease_dir=/run/user/1000/educa-pilot-port-leases/61070 owner_pid=942907
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/61070
+GENERAL_E2E_EXIT=1

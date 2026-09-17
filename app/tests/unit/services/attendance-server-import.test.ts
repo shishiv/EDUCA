@@ -20,9 +20,11 @@ describe('canonical Attendance session module in a server runtime', () => {
 
     const attendance = await import('@/lib/services/attendance-module')
 
-    expect(typeof attendance.createAttendanceModule).toBe('function')
-    expect(typeof attendance.normalizeSessionStatus).toBe('function')
-    expect(typeof attendance.normalizeAttendanceStatus).toBe('function')
+    expect(attendance).toMatchObject({
+      createAttendanceModule: expect.any(Function),
+      normalizeSessionStatus: expect.any(Function),
+      normalizeAttendanceStatus: expect.any(Function),
+    })
   })
 
   it('creates the canonical interface from an injected client', async () => {
@@ -39,14 +41,17 @@ describe('canonical Attendance session module in a server runtime', () => {
     }
 
     const { createAttendanceModule } = await import('@/lib/services/attendance-module')
+    // SAFETY: this import-only contract never executes a query; the fake supplies every client method exposed by the factory boundary.
     const attendance = createAttendanceModule(fakeClient as never)
 
-    expect(typeof attendance.openSession).toBe('function')
-    expect(typeof attendance.markAttendance).toBe('function')
-    expect(typeof attendance.markAttendanceBatch).toBe('function')
-    expect(typeof attendance.closeSession).toBe('function')
-    expect(typeof attendance.checkLockStatus).toBe('function')
-    expect(typeof attendance.getStudentsForChamada).toBe('function')
-    expect(typeof attendance.getAttendanceForSession).toBe('function')
+    expect(attendance).toMatchObject({
+      openSession: expect.any(Function),
+      markAttendance: expect.any(Function),
+      markAttendanceBatch: expect.any(Function),
+      closeSession: expect.any(Function),
+      checkLockStatus: expect.any(Function),
+      getStudentsForChamada: expect.any(Function),
+      getAttendanceForSession: expect.any(Function),
+    })
   })
 })

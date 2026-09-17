@@ -18,7 +18,6 @@ import { useEscola } from '@/contexts/escola-context'
 import { featureFlagsApi } from '@/lib/api/feature-flags'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
-import type { FeatureFlag, FlagWithEscolaStatus } from '@/types/feature-flags'
 
 // ============================================================================
 // Query Keys

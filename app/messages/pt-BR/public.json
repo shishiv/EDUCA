@@ -194,7 +194,7 @@
     "footer": "Uma fundação open source para a gestão escolar municipal.",
     "backTop": "Voltar ao início",
     "privacy": "Política de privacidade",
-    "boardCaption": "Prévia sintética do painel do EDUCA, com dados de exemplo da rede municipal.",
+    "boardCaption": "Prévia ilustrativa e sintética do painel do EDUCA, sem dados de uma rede real.",
     "synthetic": "Ambiente sintético",
     "overview": "Visão geral",
     "schools": "Escolas",
@@ -205,7 +205,7 @@
     "settings": "Configurações",
     "networkView": "Visão da rede",
     "boardCrumb": "Rede municipal / Visão geral",
-    "boardDate": "SEGUNDA-FEIRA, 24 DE AGOSTO",
+    "boardDate": "PERÍODO DE DEMONSTRAÇÃO",
     "allSchools": "Todas as escolas",
     "activeSchools": "Escolas ativas",
     "networkSuffix": "na rede",
@@ -221,7 +221,8 @@
     "upToDate": "Em dia",
     "followUp": "Acompanhar",
     "classDiary": "Diário de classe",
-    "pendingReview": "32 registros aguardando revisão.",
+    "pendingReview": "Registros ilustrativos aguardando revisão.",
+    "exampleSchool": "Escola de exemplo",
     "openRoutine": "Abrir rotina"
   }
 }

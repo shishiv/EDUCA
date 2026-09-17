@@ -3,18 +3,51 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CalendarDays, Save } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-interface AcademicYearResponse {
-  academicYear?: {
-    ano: number
-    data_inicio: string
-    data_fim: string
+const configuredAcademicYearSchema = z.object({
+  ano: z.number(),
+  data_inicio: z.string(),
+  data_fim: z.string(),
+})
+
+const academicYearResponseSchema = z.object({
+  academicYear: configuredAcademicYearSchema.optional(),
+  error: z.string().optional(),
+}).strict()
+
+type AcademicYearResponse = z.infer<typeof academicYearResponseSchema>
+type ConfiguredAcademicYear = z.infer<typeof configuredAcademicYearSchema>
+
+type AcademicYearSaveResult =
+  | { kind: 'saved'; academicYear: ConfiguredAcademicYear }
+  | { kind: 'denied' }
+  | { kind: 'failed'; error?: string }
+
+async function readAcademicYearResponse(response: Response): Promise<AcademicYearResponse | null> {
+  const parsed = academicYearResponseSchema.safeParse(await response.json())
+  return parsed.success ? parsed.data : null
+}
+
+async function saveAcademicYearDates(
+  startDate: string,
+  endDate: string,
+): Promise<AcademicYearSaveResult> {
+  const response = await fetch('/api/school-settings/academic-year', {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ startDate, endDate }),
+  })
+  const body = await readAcademicYearResponse(response)
+  if (response.ok && body?.academicYear) {
+    return { kind: 'saved', academicYear: body.academicYear }
   }
-  error?: string
+  if (response.status === 403) return { kind: 'denied' }
+  return { kind: 'failed', error: body?.error }
 }
 
 export function AcademicYearSettings() {
@@ -32,9 +65,9 @@ export function AcademicYearSettings() {
     setError('')
     try {
       const response = await fetch('/api/school-settings/academic-year')
-      const body = await response.json() as AcademicYearResponse
-      if (!response.ok || !body.academicYear) {
-        throw new Error(response.status === 403 ? t('academicYearDenied') : body.error || t('academicYearLoadError'))
+      const body = await readAcademicYearResponse(response)
+      if (!response.ok || !body?.academicYear) {
+        throw new Error(response.status === 403 ? t('academicYearDenied') : body?.error || t('academicYearLoadError'))
       }
       setYear(body.academicYear.ano)
       setStartDate(body.academicYear.data_inicio)
@@ -60,18 +93,14 @@ export function AcademicYearSettings() {
 
     setSaving(true)
     try {
-      const response = await fetch('/api/school-settings/academic-year', {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ startDate, endDate }),
-      })
-      const body = await response.json() as AcademicYearResponse
-      if (!response.ok || !body.academicYear) {
-        throw new Error(response.status === 403 ? t('academicYearDenied') : body.error || t('academicYearSaveError'))
+      const result = await saveAcademicYearDates(startDate, endDate)
+      if (result.kind === 'saved') {
+        setStartDate(result.academicYear.data_inicio)
+        setEndDate(result.academicYear.data_fim)
+        setSuccess(t('academicYearSaved'))
+      } else {
+        setError(result.kind === 'denied' ? t('academicYearDenied') : result.error || t('academicYearSaveError'))
       }
-      setStartDate(body.academicYear.data_inicio)
-      setEndDate(body.academicYear.data_fim)
-      setSuccess(t('academicYearSaved'))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('academicYearSaveError'))
     } finally {

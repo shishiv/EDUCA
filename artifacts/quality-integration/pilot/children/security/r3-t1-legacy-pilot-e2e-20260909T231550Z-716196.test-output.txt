@@ -1,0 +1,26 @@
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:754526) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:754526) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/3] [setup] › tests/e2e/auth.setup.ts:37:8 › authenticate
+[1A[2K[setup] › tests/e2e/auth.setup.ts:37:8 › authenticate
+PILOT_LEGACY_BROWSER_RECEIPT: result=pass identity=secretaria@synthetic.invalid role=secretario route=/dashboard
+
+[1A[2K(node:756104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:756104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/3] [chromium-pilot-security] › tests/e2e/pilot/security-hardening.spec.ts:527:7 › isolated governed pilot security hardening › proves the three roles, conditionality release, and negative writes at PostgREST
+[1A[2K[3/3] [chromium-pilot-security] › tests/e2e/pilot/security-hardening.spec.ts:543:7 › isolated governed pilot security hardening › keeps audit and cleanup boundaries, and proves the deliberate DELETE break
+[1A[2K  3 passed (4.8s)

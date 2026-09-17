@@ -1,29 +1,15 @@
 /**
- * Reports API - attendance, enrollment, and school reports generation.  Uses canonical attendance facts for compliance calculations.
+ * Filter data for the concrete report routes.
+ *
+ * Report generation and downloads belong to their respective report routes.
+ * This module only exposes the school and class filters shared by those
+ * routes, so it cannot manufacture report history or placeholder files.
  */
 'use client'
 
-import { BaseApiService, type TableName } from './base'
-import { supabase } from '@/lib/supabase'
-import { usersApi } from './users'
-import { schoolsApi } from './schools'
 import { logger } from '@/lib/logger'
-import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
+import { supabase } from '@/lib/supabase'
 
-export interface Report {
-  id: string
-  titulo: string
-  tipo: 'alunos' | 'frequencia' | 'notas' | 'censo' | 'usuarios' | 'escolas'
-  descricao: string
-  data_geracao: string
-  status: 'processando' | 'concluido' | 'erro'
-  arquivo_url?: string
-  dados?: any
-}
-
-/**
- * Turma (class) data for reports filtering
- */
 export interface ReportTurma {
   id: string
   nome: string
@@ -35,169 +21,40 @@ export interface ReportTurma {
   }
 }
 
-/**
- * School data for reports filtering
- */
 export interface ReportSchool {
   id: string
   nome: string
 }
 
-export class ReportsApiService extends BaseApiService {
-  constructor() {
-    // The reports table is not part of the generated schema yet; the service
-    // only uses it as a pattern anchor and never calls base data methods.
-    super('reports' as TableName)
+function logReportFilterError(action: string, error: Error | string, metadata?: { escolaId: string }) {
+  logger.error(
+    `Error in ${action}`,
+    error instanceof Error ? error : new Error(error),
+    { feature: 'reports', action, metadata },
+  )
+}
+
+function toReportTurma(turma: {
+  id: string
+  nome: string
+  serie: string
+  ano_letivo: number
+  escola_id: string
+  escolas: { nome: string } | { nome: string }[] | null
+}): ReportTurma {
+  const escola = Array.isArray(turma.escolas) ? turma.escolas[0] : turma.escolas
+
+  return {
+    id: turma.id,
+    nome: turma.nome,
+    serie: turma.serie,
+    ano_letivo: turma.ano_letivo,
+    escola_id: turma.escola_id,
+    escola: escola ? { nome: escola.nome } : undefined,
   }
+}
 
-  // Generate reports based on existing data
-  async generateReport(tipo: Report['tipo'], parametros?: Record<string, any>): Promise<Report> {
-    const reportId = crypto.randomUUID()
-    const now = new Date().toISOString()
-
-    try {
-      let dados: any = {}
-      let titulo = ''
-      let descricao = ''
-
-      switch (tipo) {
-        case 'usuarios':
-          const userStats = await usersApi.getUserStats()
-          dados = userStats
-          titulo = 'Relatório de Usuários'
-          descricao = 'Estatísticas gerais dos usuários do sistema'
-          break
-
-        case 'escolas':
-          const schoolsList = await schoolsApi.getAll() as { ativo: boolean; tipo: string }[]
-          dados = {
-            total: schoolsList.length,
-            ativas: schoolsList.filter((s) => s.ativo).length,
-            tipos: schoolsList.reduce((acc: Record<string, number>, school) => {
-              acc[school.tipo] = (acc[school.tipo] || 0) + 1
-              return acc
-            }, {})
-          }
-          titulo = 'Relatório de Escolas'
-          descricao = 'Estatísticas das unidades escolares'
-          break
-
-        case 'alunos':
-          // Get student count from alunos table
-          const { count: totalAlunos } = await supabase
-            .from('alunos')
-            .select('id', { count: 'exact', head: true })
-
-          const { count: alunosAtivos } = await supabase
-            .from('alunos')
-            .select('id', { count: 'exact', head: true })
-            .eq('ativo', true)
-
-          dados = {
-            total: totalAlunos || 0,
-            ativos: alunosAtivos || 0,
-            inativos: (totalAlunos || 0) - (alunosAtivos || 0)
-          }
-          titulo = 'Relatório de Alunos'
-          descricao = 'Estatísticas dos alunos matriculados'
-          break
-
-        case 'frequencia':
-          // Get attendance statistics from the canonical session-backed read.
-          const { data: attendanceMatriculas, error: attendanceMatriculasError } = await supabase
-            .from('matriculas')
-            .select('id')
-            .eq('situacao', 'ativa')
-
-          if (attendanceMatriculasError) throw attendanceMatriculasError
-
-          const attendanceFacts = await loadCanonicalAttendanceFacts(
-            supabase,
-            (attendanceMatriculas ?? []).map((matricula) => matricula.id)
-          )
-          const totalFrequencia = attendanceFacts.length
-          const presentes = attendanceFacts.filter((fact) => fact.presente).length
-
-          dados = {
-            total: totalFrequencia,
-            presentes,
-            ausentes: totalFrequencia - presentes,
-            percentualPresenca: totalFrequencia ? (presentes / totalFrequencia * 100).toFixed(2) : '0'
-          }
-          titulo = 'Relatório de Frequência'
-          descricao = 'Estatísticas de presença dos alunos'
-          break
-
-        default:
-          throw new Error(`Tipo de relatório não suportado: ${tipo}`)
-      }
-
-      const report: Report = {
-        id: reportId,
-        titulo,
-        tipo,
-        descricao,
-        data_geracao: now,
-        status: 'concluido',
-        dados
-      }
-
-      return report
-    } catch (error) {
-      return {
-        id: reportId,
-        titulo: 'Erro na Geração',
-        tipo,
-        descricao: 'Erro ao processar o relatório',
-        data_geracao: now,
-        status: 'erro'
-      }
-    }
-  }
-
-  // Get all reports (would be stored in database in real implementation)
-  // @ts-expect-error - Override return type from BaseApiService since reports table doesn't exist yet
-  async getAll(): Promise<Report[]> {
-    // For now, return some sample reports
-    // In a real implementation, these would be stored in a reports table
-    const now = new Date()
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
-    return [
-      {
-        id: '1',
-        titulo: 'Relatório Mensal de Usuários',
-        tipo: 'usuarios',
-        descricao: 'Relatório com estatísticas dos usuários do sistema',
-        data_geracao: yesterday.toISOString(),
-        status: 'concluido'
-      },
-      {
-        id: '2',
-        titulo: 'Relatório de Escolas Ativas',
-        tipo: 'escolas',
-        descricao: 'Lista de todas as unidades escolares ativas',
-        data_geracao: now.toISOString(),
-        status: 'concluido'
-      }
-    ]
-  }
-
-  // Download report data as JSON (in real implementation would generate PDF/Excel)
-  async downloadReport(reportId: string): Promise<Blob> {
-    // This is a placeholder - in real implementation would generate proper reports
-    const mockData = { message: 'Relatório gerado com sucesso', reportId, timestamp: new Date().toISOString() }
-    return new Blob([JSON.stringify(mockData, null, 2)], { type: 'application/json' })
-  }
-
-  // ============================================================================
-  // Report Filtering Data Methods
-  // ============================================================================
-
-  /**
-   * Get turmas (classes) for report filters
-   * Used by frequencia and conteudo report pages
-   */
+export class ReportsApiService {
   async getTurmasForFilters(): Promise<ReportTurma[]> {
     try {
       const { data, error } = await supabase
@@ -216,35 +73,18 @@ export class ReportsApiService extends BaseApiService {
         .order('serie', { ascending: true })
         .order('nome', { ascending: true })
 
-      if (error) {
-        logger.error('Error fetching turmas for filters', error, {
-          feature: 'reports',
-          action: 'get_turmas_for_filters'
-        })
-        throw error
-      }
+      if (error) throw error
 
-      return (data || []).map((t: any) => ({
-        id: t.id,
-        nome: t.nome,
-        serie: t.serie,
-        ano_letivo: t.ano_letivo,
-        escola_id: t.escola_id,
-        escola: t.escolas ? { nome: t.escolas.nome } : undefined,
-      }))
+      return (data ?? []).map(toReportTurma)
     } catch (error) {
-      logger.error('Error in getTurmasForFilters', error as Error, {
-        feature: 'reports',
-        action: 'get_turmas_for_filters'
-      })
+      logReportFilterError(
+        'get_turmas_for_filters',
+        error instanceof Error ? error : String(error),
+      )
       throw error
     }
   }
 
-  /**
-   * Get schools for report filters
-   * Used by bolsa-familia report page
-   */
   async getSchoolsForFilters(): Promise<ReportSchool[]> {
     try {
       const { data, error } = await supabase
@@ -252,28 +92,18 @@ export class ReportsApiService extends BaseApiService {
         .select('id, nome')
         .order('nome')
 
-      if (error) {
-        logger.error('Error fetching schools for filters', error, {
-          feature: 'reports',
-          action: 'get_schools_for_filters'
-        })
-        throw error
-      }
+      if (error) throw error
 
-      return (data || []) as ReportSchool[]
+      return data ?? []
     } catch (error) {
-      logger.error('Error in getSchoolsForFilters', error as Error, {
-        feature: 'reports',
-        action: 'get_schools_for_filters'
-      })
+      logReportFilterError(
+        'get_schools_for_filters',
+        error instanceof Error ? error : String(error),
+      )
       throw error
     }
   }
 
-  /**
-   * Get turmas by school for cascading filters
-   * Used by bolsa-familia report page
-   */
   async getTurmasBySchool(escolaId: string): Promise<ReportTurma[]> {
     try {
       const { data, error } = await supabase
@@ -283,22 +113,21 @@ export class ReportsApiService extends BaseApiService {
         .order('serie')
         .order('nome')
 
-      if (error) {
-        logger.error('Error fetching turmas by school', error, {
-          feature: 'reports',
-          action: 'get_turmas_by_school',
-          metadata: { escolaId }
-        })
-        throw error
-      }
+      if (error) throw error
 
-      return (data || []) as ReportTurma[]
+      return (data ?? []).map((turma) => ({
+        id: turma.id,
+        nome: turma.nome,
+        serie: turma.serie,
+        ano_letivo: turma.ano_letivo,
+        escola_id: turma.escola_id,
+      }))
     } catch (error) {
-      logger.error('Error in getTurmasBySchool', error as Error, {
-        feature: 'reports',
-        action: 'get_turmas_by_school',
-        metadata: { escolaId }
-      })
+      logReportFilterError(
+        'get_turmas_by_school',
+        error instanceof Error ? error : String(error),
+        { escolaId },
+      )
       throw error
     }
   }

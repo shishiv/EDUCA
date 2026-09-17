@@ -1,0 +1,4 @@
+Decision key: grades-general-contract
+Resolved by Firstmate at 2026-09-09T23:42:29Z (inbox 001).
+
+Mantenha o bloqueio da leitura geral de notas e separe os contratos positivos já comprovados, preservando todos os arquivos e comportamentos únicos. Não reative acesso fora do piloto, não crie políticas RLS novas e não altere permissões nesta tarefa. Documente a ausência de policies como limite explícito da integração, mantenha o E2E geral como prova negativa esperada no escopo correto e conclua a validação/PR contra dev com os checks já definidos.

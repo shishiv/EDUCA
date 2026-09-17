@@ -3,7 +3,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
-import { logger } from '@/lib/logger'
+import { checkRouteAccess } from '@/lib/route-policy'
 import { isPilotDisabledPath, isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import {
   demoSandboxGuardResponse,
@@ -13,6 +13,8 @@ import {
   isDemoSandboxPilotPathAllowed,
 } from '@/lib/demo-sandbox/demo-sandbox'
 import { isInvalidRefreshTokenError, isSupabaseAuthCookieName } from '@/lib/auth-session-recovery'
+
+export { checkRouteAccess } from '@/lib/route-policy'
 
 export async function createSupabaseServerClient(request: NextRequest) {
   let response = NextResponse.next({
@@ -114,155 +116,101 @@ function clearInvalidSupabaseCookies(request: NextRequest, response: NextRespons
   }
 }
 
-// gestor_sme: deferred per pilot decision E1=B; add here when the pilot expands.
-// The database keeps gestor_sme as a valid role, but this interface must not
-// name a role it does not enforce, and must not map English names onto
-// Portuguese tipo_usuario values. gestor_sme users are denied on protected
-// routes until the deferral is lifted.
-type UserRole = 'admin' | 'diretor' | 'secretario' | 'professor' | 'responsavel'
+const isStaticOrApiPath = (pathname: string) =>
+  pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.') || pathname.startsWith('/favicon.ico')
 
-interface ProtectedRoute {
-  prefix: string
-  roles: UserRole[]
+function pilotDisabledResponse(request: NextRequest, pathname: string) {
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
+  }
+  const redirectUrl = request.nextUrl.clone()
+  redirectUrl.pathname = '/dashboard'
+  redirectUrl.searchParams.set('pilotScope', 'disabled')
+  return NextResponse.redirect(redirectUrl)
 }
 
-// Route protection configuration uses the real Portuguese application routes.
-export const routeProtection = {
-  public: ['/login', '/primeiro-acesso', '/reset-password', '/politica-privacidade', '/demo', '/blog', '/offline', '/'],
-  protected: [
-    // Admin-only system management
-    { prefix: '/dashboard/usuarios', roles: ['admin'] },
-    { prefix: '/dashboard/escolas', roles: ['admin'] },
-    { prefix: '/dashboard/flags', roles: ['admin'] },
-
-    // Municipal and school management
-    { prefix: '/dashboard/atribuicoes', roles: ['admin', 'diretor'] },
-    { prefix: '/dashboard/configuracoes', roles: ['admin', 'diretor'] },
-    { prefix: '/dashboard/alunos', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/turmas/nova', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/turmas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/dashboard/matriculas', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/responsaveis', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/dashboard/relatorios', roles: ['admin', 'diretor', 'secretario'] },
-    { prefix: '/relatorios', roles: ['admin', 'diretor', 'secretario'] },
-
-    // Academic operations
-    { prefix: '/dashboard/notas', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/dashboard/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/diario', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-    { prefix: '/dashboard/sessoes', roles: ['admin', 'diretor', 'secretario', 'professor'] },
-  ] satisfies ProtectedRoute[],
-  authenticated: ['/dashboard'],
+function loginRedirect(request: NextRequest, pathname: string, reason?: string) {
+  const loginUrl = request.nextUrl.clone()
+  loginUrl.pathname = '/login'
+  if (reason) loginUrl.searchParams.set('reason', reason)
+  loginUrl.searchParams.set('returnUrl', pathname)
+  return NextResponse.redirect(loginUrl)
 }
 
-const matchesRoute = (pathname: string, route: string) =>
-  route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`)
-
-export function checkRouteAccess(
-  pathname: string,
-  userRole?: string
-): { hasAccess: boolean; redirectTo?: string } {
-  if (routeProtection.public.some(route => matchesRoute(pathname, route))) {
-    return { hasAccess: true }
-  }
-
-  if (!userRole) {
-    return { hasAccess: false, redirectTo: '/login' }
-  }
-
-  const classEditRoute: ProtectedRoute | undefined =
-    /^\/dashboard\/turmas\/[^/]+\/editar$/.test(pathname)
-      ? { prefix: pathname, roles: ['admin', 'diretor', 'secretario'] }
-      : undefined
-  const protectedRoute = classEditRoute || routeProtection.protected.find(route =>
-    matchesRoute(pathname, route.prefix)
-  )
-  if (protectedRoute && !(protectedRoute.roles as UserRole[]).includes(userRole as UserRole)) {
-    return { hasAccess: false, redirectTo: '/unauthorized' }
-  }
-
-  if (routeProtection.authenticated.some(route => matchesRoute(pathname, route))) {
-    return { hasAccess: true }
-  }
-
-  // Authenticated users may access public-adjacent routes unless explicitly restricted.
-  return { hasAccess: true }
-}
-
-export async function authMiddleware(request: NextRequest) {
-  const { supabase, response } = await createSupabaseServerClient(request)
-  const pathname = request.nextUrl.pathname
-
+function demoGuard(pathname: string): NextResponse | null {
   const demoSandboxBlockReason = getDemoSandboxBlockedReason(pathname)
   if (isDemoSandboxHardBlockedPath(pathname)) {
-    return demoSandboxGuardResponse(demoSandboxBlockReason ?? 'external_effect') ?? response
+    return demoSandboxGuardResponse(demoSandboxBlockReason ?? 'external_effect')
   }
+  return null
+}
 
-  // The synthetic demo may expose a named product capability that the
-  // narrower pilot hides. The allowlist is path-scoped: it never skips auth,
-  // role checks, school isolation, RLS or audit in the route itself.
-  if (
-    isPilotModeEnabled() &&
-    isPilotDisabledPath(pathname) &&
-    !isDemoSandboxPilotPathAllowed(pathname) &&
-    !(isDemoSandboxEnabled() && demoSandboxBlockReason && !pathname.startsWith('/api/'))
-  ) {
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'PILOT_SCOPE_DISABLED' }, { status: 404 })
-    }
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    redirectUrl.searchParams.set('pilotScope', 'disabled')
-    return NextResponse.redirect(redirectUrl)
-  }
+function pilotScopeGuard(request: NextRequest, pathname: string): NextResponse | null {
+  const demoBlockReason = getDemoSandboxBlockedReason(pathname)
+  const isDemoException = isDemoSandboxEnabled() && Boolean(demoBlockReason) && !pathname.startsWith('/api/')
+  const isDisabled = isPilotModeEnabled() && isPilotDisabledPath(pathname)
+  if (!isDisabled || isPilotDisabledPathAllowed(pathname, isDemoException)) return null
+  return pilotDisabledResponse(request, pathname)
+}
 
-  // Skip middleware for static files and API routes
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('.') ||
-    pathname.startsWith('/favicon.ico')
-  ) {
+function isPilotDisabledPathAllowed(pathname: string, isDemoException: boolean): boolean {
+  return isDemoSandboxPilotPathAllowed(pathname) || isDemoException
+}
+
+function invalidSessionResponse(request: NextRequest, pathname: string, response: NextResponse): NextResponse {
+  if (pathname === '/login') {
+    clearInvalidSupabaseCookies(request, response)
     return response
   }
+  const redirect = loginRedirect(request, pathname, 'session_expired')
+  clearInvalidSupabaseCookies(request, redirect)
+  return redirect
+}
 
-  try {
-    // NOTE: Session validation is done via cookies, not network calls
-    // The client-side code (hooks/use-auth.ts) handles token refresh
-    // Middleware only validates existing session from cookies
-    const serverUser = await getServerUser(request)
-    if (serverUser.invalidSession) {
-      if (pathname === '/login') {
-        clearInvalidSupabaseCookies(request, response)
-        return response
-      }
-      const loginUrl = request.nextUrl.clone()
-      loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('reason', 'session_expired')
-      loginUrl.searchParams.set('returnUrl', pathname)
-      const invalidSessionRedirect = NextResponse.redirect(loginUrl)
-      clearInvalidSupabaseCookies(request, invalidSessionRedirect)
-      return invalidSessionRedirect
+function unavailableSessionResponse(request: NextRequest, pathname: string, response: NextResponse): NextResponse {
+  const access = checkRouteAccess(pathname)
+  if (access.hasAccess) return response
+  return access.redirectTo === '/login'
+    ? loginRedirect(request, pathname, 'session_unavailable')
+    : NextResponse.redirect(new URL('/unauthorized', request.url))
+}
+
+type AuthMiddlewareRuntime = {
+  initialize(request: NextRequest): Promise<{ response: NextResponse }>
+  getServerUser(request: NextRequest): ReturnType<typeof getServerUser>
+}
+
+const productionAuthMiddlewareRuntime: AuthMiddlewareRuntime = {
+  async initialize(request) {
+    const { response } = await createSupabaseServerClient(request)
+    return { response }
+  },
+  getServerUser,
+}
+
+/** Creates the request guard with an explicit runtime seam for deterministic security tests. */
+export function createAuthMiddleware(runtime: AuthMiddlewareRuntime = productionAuthMiddlewareRuntime) {
+  return async function runAuthMiddleware(request: NextRequest): Promise<NextResponse> {
+    const { response } = await runtime.initialize(request)
+    const pathname = request.nextUrl.pathname
+    const responseFromDemo = demoGuard(pathname)
+    if (responseFromDemo) return responseFromDemo
+    const responseFromPilotScope = pilotScopeGuard(request, pathname)
+    if (responseFromPilotScope) return responseFromPilotScope
+    if (isStaticOrApiPath(pathname)) return response
+
+    try {
+      const serverUser = await runtime.getServerUser(request)
+      if (serverUser.invalidSession) return invalidSessionResponse(request, pathname, response)
+      const access = checkRouteAccess(pathname, serverUser.userProfile?.tipo_usuario)
+      if (access.hasAccess || !access.redirectTo) return response
+      return access.redirectTo === '/login'
+        ? loginRedirect(request, pathname)
+        : NextResponse.redirect(new URL(access.redirectTo, request.url))
+    } catch {
+      return unavailableSessionResponse(request, pathname, response)
     }
-    const userRole = serverUser?.userProfile?.tipo_usuario
-
-    const { hasAccess, redirectTo } = checkRouteAccess(pathname, userRole)
-
-    if (!hasAccess && redirectTo) {
-      const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = redirectTo
-
-      // Add return URL for login redirect
-      if (redirectTo === '/login') {
-        redirectUrl.searchParams.set('returnUrl', pathname)
-      }
-
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    return response
-  } catch (error) {
-    // logger.error('Auth middleware error:', { error: error })
-    return response
   }
 }
+
+export const authMiddleware = createAuthMiddleware()

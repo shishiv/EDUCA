@@ -101,7 +101,7 @@ export const EXPERIENCE_FIELDS_CONFIG: ExperienceFieldConfig[] = [
   {
     key: 'campo_eu_outro_nos',
     code: 'EO',
-    label: 'O eu, o outro e o nos',
+    label: 'O eu, o outro e o nós',
     fullName: 'O eu, o outro e o nos',
     description:
       'Desenvolvimento da identidade pessoal e social, construcao de autonomia e nocao de coletividade',
@@ -125,7 +125,7 @@ export const EXPERIENCE_FIELDS_CONFIG: ExperienceFieldConfig[] = [
   {
     key: 'campo_tracos_sons',
     code: 'TS',
-    label: 'Tracos, sons, cores e formas',
+    label: 'Traços, sons, cores e formas',
     fullName: 'Tracos, sons, cores e formas',
     description:
       'Exploracao artistica atraves de tracos, sons, cores, formas e expressoes culturais',
@@ -137,7 +137,7 @@ export const EXPERIENCE_FIELDS_CONFIG: ExperienceFieldConfig[] = [
   {
     key: 'campo_escuta_fala',
     code: 'EF',
-    label: 'Escuta, fala, pensamento e imaginacao',
+    label: 'Escuta, fala, pensamento e imaginação',
     fullName: 'Escuta, fala, pensamento e imaginacao',
     description:
       'Desenvolvimento da linguagem oral, escuta ativa, pensamento critico e imaginacao',
@@ -149,7 +149,7 @@ export const EXPERIENCE_FIELDS_CONFIG: ExperienceFieldConfig[] = [
   {
     key: 'campo_espacos_tempos',
     code: 'ET',
-    label: 'Espacos, tempos, quantidades',
+    label: 'Espaços, tempos, quantidades',
     fullName: 'Espacos, tempos, quantidades, relacoes e transformacoes',
     description:
       'Nocoes espaciais, temporais, quantitativas e relacoes de transformacao do mundo',
@@ -201,9 +201,6 @@ export interface DescriptiveReport {
   campo_espacos_tempos: string | null
   // General
   observacoes_gerais: string | null
-  // Draft
-  draft_data: Record<string, unknown> | null
-  last_draft_saved_at: string | null
   // Finalization
   finalizado_em: string | null
   finalizado_por: string | null
@@ -261,7 +258,6 @@ export interface DescriptiveReportUpdate {
   campo_espacos_tempos?: string | null
   observacoes_gerais?: string | null
   status?: ReportStatus
-  draft_data?: Record<string, unknown> | null
 }
 
 /**
@@ -378,10 +374,12 @@ export function calculateReportCompletion(report: DescriptiveReport): number {
 /**
  * Check if report can be finalized
  */
-export function canFinalizeReport(report: DescriptiveReport): {
+export interface CanFinalizeReportResult {
   canFinalize: boolean
   missingFields: ExperienceFieldKey[]
-} {
+}
+
+export function canFinalizeReport(report: DescriptiveReport): CanFinalizeReportResult {
   const missingFields: ExperienceFieldKey[] = []
 
   const fieldsToCheck: { key: ExperienceFieldKey; value: string | null }[] = [

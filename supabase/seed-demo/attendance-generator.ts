@@ -66,13 +66,19 @@ export interface MatriculaRef {
   turmaRef: TurmaRef
 }
 
-export const TURMAS: TurmaRef[] = [
+function defineTurmas<const Entries extends readonly TurmaRef[]>(turmas: Entries): Entries {
+  return turmas
+}
+
+export const TURMAS = defineTurmas([
   { id: '00000000-0000-0000-0000-000000000101', escolaId: '00000000-0000-0000-0000-000000000001', professorId: '00000000-0000-0000-0000-000000000011', turno: 'manha' },
   { id: '00000000-0000-0000-0000-000000000102', escolaId: '00000000-0000-0000-0000-000000000001', professorId: '00000000-0000-0000-0000-000000000012', turno: 'tarde' },
   { id: '00000000-0000-0000-0000-000000000103', escolaId: '00000000-0000-0000-0000-000000000001', professorId: '00000000-0000-0000-0000-000000000013', turno: 'manha' },
   { id: '00000000-0000-0000-0000-000000000104', escolaId: '00000000-0000-0000-0000-000000000002', professorId: '00000000-0000-0000-0000-000000000015', turno: 'manha' },
   { id: '00000000-0000-0000-0000-000000000105', escolaId: '00000000-0000-0000-0000-000000000003', professorId: '00000000-0000-0000-0000-000000000018', turno: 'integral' },
-]
+])
+
+type TurmaId = typeof TURMAS[number]['id']
 
 interface DemoContentTemplate {
   disciplinaId: string
@@ -87,7 +93,7 @@ interface DemoContentTemplate {
  * Every generated session receives one content row through its real session
  * id. The discipline ids point to the static canonical discipline rows above.
  */
-const CONTENT_TEMPLATE_BY_TURMA: Record<string, DemoContentTemplate> = {
+const CONTENT_TEMPLATE_BY_TURMA = {
   '00000000-0000-0000-0000-000000000101': {
     disciplinaId: '00000000-0000-0000-0000-000000000600',
     tema: 'Operacoes e resolucao de problemas',
@@ -128,7 +134,7 @@ const CONTENT_TEMPLATE_BY_TURMA: Record<string, DemoContentTemplate> = {
     metodologia: 'Exploracao livre com intervencao do professor',
     recursos: 'Colchonetes e tecidos',
   },
-}
+} satisfies { [id in TurmaId]: DemoContentTemplate }
 
 /** Matriculas 401-410 -> turma 101, 411-420 -> 102, 421-430 -> 103, 431-440 -> 104, 441-450 -> 105. */
 export const MATRICULAS: MatriculaRef[] = (() => {
@@ -372,58 +378,53 @@ const sqlBool = (value: boolean): string => (value ? 'true' : 'false')
 function emitMultiRowInsert(
   table: string,
   columns: string[],
-  rows: Array<Array<string | number | boolean | null>>
+  rows: string[][]
 ): string {
   const chunks: string[] = []
   for (let i = 0; i < rows.length; i += 50) {
     const batch = rows.slice(i, i + 50)
     const values = batch
-      .map(row => `(${row.map(v => (v === null ? 'NULL' : typeof v === 'number' ? String(v) : sqlBoolOrLiteral(v))).join(',')})`)
+      .map(row => `(${row.join(',')})`)
       .join(',\n')
     chunks.push(`INSERT INTO ${table} (${columns.join(',')}) VALUES\n${values};`)
   }
   return chunks.join('\n')
 }
 
-function sqlBoolOrLiteral(value: string | number | boolean): string {
-  if (typeof value === 'boolean') return sqlBool(value)
-  return sqlLiteral(value as string)
-}
-
 export function attendanceSql(options: AttendanceGenerationOptions): string {
   const { aulas, frequencia, conteudos } = generateAttendance(options)
 
-  const sessionRows: Array<Array<string | number | boolean | null>> = aulas.map(aula => [
-    aula.id,
-    aula.turmaId,
-    aula.escolaId,
-    aula.professorId,
-    aula.disciplinaId,
-    aula.dataAula,
-    aula.abertaEm.slice(11, 16),
-    aula.fechadaEm.slice(11, 16),
-    aula.status,
-    aula.abertaEm,
-    aula.fechadaEm,
-    aula.fechadaEm,
-    'Chamada do sandbox',
-    true,
-    aula.createdAt,
-    aula.createdAt,
+  const sessionRows = aulas.map(aula => [
+    sqlLiteral(aula.id),
+    sqlLiteral(aula.turmaId),
+    sqlLiteral(aula.escolaId),
+    sqlLiteral(aula.professorId),
+    sqlLiteral(aula.disciplinaId),
+    sqlLiteral(aula.dataAula),
+    sqlLiteral(aula.abertaEm.slice(11, 16)),
+    sqlLiteral(aula.fechadaEm.slice(11, 16)),
+    sqlLiteral(aula.status),
+    sqlLiteral(aula.abertaEm),
+    sqlLiteral(aula.fechadaEm),
+    sqlLiteral(aula.fechadaEm),
+    sqlLiteral('Chamada do sandbox'),
+    sqlBool(true),
+    sqlLiteral(aula.createdAt),
+    sqlLiteral(aula.createdAt),
   ])
 
-  const frequenciaRows: Array<Array<string | number | boolean | null>> = frequencia.map(f => [
-    f.id,
-    f.matriculaId,
-    f.aulaId,
-    f.dataAula,
-    f.presente,
-    f.statusPresenca,
-    f.justificativa,
-    f.professorId,
-    f.marcadoPor,
-    f.marcadoEm,
-    f.createdAt,
+  const frequenciaRows = frequencia.map(f => [
+    sqlLiteral(f.id),
+    sqlLiteral(f.matriculaId),
+    sqlLiteral(f.aulaId),
+    sqlLiteral(f.dataAula),
+    sqlBool(f.presente),
+    sqlLiteral(f.statusPresenca),
+    sqlLiteral(f.justificativa),
+    sqlLiteral(f.professorId),
+    sqlLiteral(f.marcadoPor),
+    sqlLiteral(f.marcadoEm),
+    sqlLiteral(f.createdAt),
   ])
 
   const contentRows = conteudos.map(content => `(${[

@@ -28,7 +28,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'off',
     ignoreHTTPSErrors: true,
-    ...(executablePath ? { launchOptions: { executablePath } } : {}),
+    launchOptions: { executablePath },
   },
   projects: [
     {

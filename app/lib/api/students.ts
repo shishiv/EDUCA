@@ -5,14 +5,17 @@
 
 import { BaseApiService } from './base'
 import { createStudentAdmission } from './student-admission'
-import { supabase, Tables, Aluno } from '@/lib/supabase'
-import { StudentFormData } from '@/lib/validation'
+import { supabase, Tables } from '@/lib/supabase'
+import type { StudentFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
-import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
+import {
+  getAuthorizedStudentProfiles,
+  type AuthorizedStudentProfile,
+} from '@/lib/sensitive-family-access'
 
-export type StudentWithDetails = Omit<Aluno, 'bolsa_familia' | 'nis'> & {
+export type StudentWithDetails = AuthorizedStudentProfile & {
   responsavel?: Partial<Tables<'responsaveis'>>
   escola?: Partial<Tables<'escolas'>>
   turma?: Partial<Tables<'turmas'>>
@@ -23,81 +26,101 @@ export type StudentWithDetails = Omit<Aluno, 'bolsa_familia' | 'nis'> & {
   })[]
 }
 
-export class StudentsApiService extends BaseApiService {
+type StudentQueryOptions = {
+  schoolId?: string
+  searchTerm?: string
+  specialNeeds?: 'all' | 'yes' | 'no'
+  activeOnly?: boolean
+  limit?: number
+  offset?: number
+}
+
+type GuardianAdmissionInput = {
+  nome: string
+  cpf?: string
+  telefone?: string
+  email?: string
+  endereco?: string
+  profissao?: string
+  grau_parentesco: string
+}
+
+type StudentCreationInput = StudentFormData & {
+  responsavel?: GuardianAdmissionInput
+  escola_id_override?: string
+}
+
+function filterStudents(
+  students: AuthorizedStudentProfile[],
+  options: StudentQueryOptions,
+): AuthorizedStudentProfile[] {
+  const activeStudents = options.activeOnly === false
+    ? students
+    : students.filter(student => student.ativo)
+  const matchingSearch = options.searchTerm
+    ? activeStudents.filter(student => {
+        const search = options.searchTerm?.toLocaleLowerCase() ?? ''
+        return student.nome_completo.toLocaleLowerCase().includes(search) || student.cpf?.includes(search)
+      })
+    : activeStudents
+  if (options.specialNeeds === 'yes') {
+    return matchingSearch.filter(student => student.necessidades_especiais)
+  }
+  if (options.specialNeeds === 'no') {
+    return matchingSearch.filter(student => !student.necessidades_especiais)
+  }
+  return matchingSearch
+}
+
+function paginateStudents(
+  students: AuthorizedStudentProfile[],
+  options: StudentQueryOptions,
+): AuthorizedStudentProfile[] {
+  const offset = options.offset ?? 0
+  const end = options.limit === undefined ? undefined : offset + options.limit
+  return students.slice(offset, end)
+}
+
+async function resolveStudentSchoolId(escolaIdOverride?: string): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('PILOT_STUDENT_AUTH_REQUIRED')
+
+  const { data: actorProfile, error } = await supabase
+    .from('users')
+    .select('escola_id')
+    .eq('id', user.id)
+    .single()
+  if (error) throw error
+
+  const schoolId = actorProfile?.escola_id ?? escolaIdOverride
+  if (!schoolId) {
+    throw new Error('PILOT_STUDENT_SCHOOL_REQUIRED: selecione uma escola antes de cadastrar um aluno')
+  }
+  return schoolId
+}
+
+function mapGuardianAdmission(guardian?: GuardianAdmissionInput) {
+  if (!guardian) return undefined
+  return {
+    nome: guardian.nome,
+    cpf: guardian.cpf,
+    telefone: guardian.telefone,
+    email: guardian.email,
+    endereco: guardian.endereco,
+    profissao: guardian.profissao,
+    grau_parentesco: guardian.grau_parentesco,
+  }
+}
+
+export class StudentsApiService extends BaseApiService<'alunos'> {
   constructor() {
     super('alunos')
   }
 
-  // Get students enrolled in a specific class
-  async getStudentsByClass(classId: string): Promise<StudentWithDetails[]> {
-    try {
-      // First get matriculas with aluno info for this class
-      const { data: matriculasData, error: matriculasError } = await supabase
-        .from('matriculas')
-        .select(`
-          id,
-          situacao,
-          data_matricula,
-          turma_id,
-          aluno:alunos(id,nome_completo,data_nascimento,sexo,ativo,created_at)
-        `)
-        .eq('turma_id', classId)
-        .eq('situacao', 'ativa')
-
-      if (matriculasError) throw matriculasError
-      if (!matriculasData || matriculasData.length === 0) return []
-
-      const result = matriculasData
-        .filter((m) => m.aluno)
-        .map((m) => {
-          const aluno = m.aluno
-          return {
-            ...aluno,
-            matriculas: [{
-              id: m.id,
-              situacao: m.situacao,
-              data_matricula: m.data_matricula,
-              turma_id: m.turma_id
-            }]
-          } as StudentWithDetails
-        })
-        .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
-
-      return result
-    } catch (error) {
-      throw error
-    }
-  }
-
   // Get students with related data
-  async getStudentsWithDetails(options?: {
-    filter?: Record<string, any>
-    searchTerm?: string
-    schools?: string[]
-    classes?: string[]
-    ageRange?: [number, number]
-    specialNeeds?: 'all' | 'yes' | 'no'
-    activeOnly?: boolean
-    limit?: number
-    offset?: number
-  }): Promise<StudentWithDetails[]> {
-    try {
-      const schoolId = typeof options?.filter?.escola_id === 'string' ? options.filter.escola_id : undefined
-      let students = await getAuthorizedStudentProfiles(supabase, { schoolId })
-      if (options?.activeOnly !== false) students = students.filter(student => student.ativo)
-      if (options?.searchTerm) {
-        const search = options.searchTerm.toLocaleLowerCase()
-        students = students.filter(student =>
-          student.nome_completo.toLocaleLowerCase().includes(search) || student.cpf?.includes(search)
-        )
-      }
-      if (options?.specialNeeds === 'yes') students = students.filter(student => student.necessidades_especiais)
-      if (options?.specialNeeds === 'no') students = students.filter(student => !student.necessidades_especiais)
-      const offset = options?.offset ?? 0
-      return students.slice(offset, options?.limit ? offset + options.limit : undefined) as StudentWithDetails[]
-    } catch (error) {
-      throw error
-    }
+  async getStudentsWithDetails(options: StudentQueryOptions = {}): Promise<StudentWithDetails[]> {
+    const students = await getAuthorizedStudentProfiles(supabase, { schoolId: options.schoolId })
+    return paginateStudents(filterStudents(students, options), options)
   }
 
   // Create student with guardian relationship.
@@ -105,95 +128,25 @@ export class StudentsApiService extends BaseApiService {
   // (escola_id IS NULL on their users row) and must supply the target school from
   // the UI's school-context selector. School-scoped users (diretor, secretario)
   // always use their own escola_id.
-  async createStudent(studentData: StudentFormData & {
-    responsavel?: {
-      nome: string
-      telefone?: string
-      email?: string
-      grau_parentesco: string
-    }
-    escola_id_override?: string
-  }) {
-    try {
-      const { responsavel, escola_id_override, ...aluno } = studentData
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('PILOT_STUDENT_AUTH_REQUIRED')
-      const { data: actorProfile } = await supabase.from('users').select('escola_id, tipo_usuario').eq('id', user.id).single()
-      // Secretariat admins (escola_id IS NULL) must supply the target school from the
-      // school-context selector via escola_id_override.
-      const resolvedEscolaId = actorProfile?.escola_id ?? escola_id_override ?? null
-      if (!resolvedEscolaId) {
-        throw new Error('PILOT_STUDENT_SCHOOL_REQUIRED: selecione uma escola antes de cadastrar um aluno')
-      }
+  async createStudent(studentData: StudentCreationInput) {
+    const { responsavel, escola_id_override, ...aluno } = studentData
+    const schoolId = await resolveStudentSchoolId(escola_id_override)
 
-      // The RPC owns the three related writes in one database transaction.
-      // Auth/profile reads remain preflight checks; school RLS is enforced again
-      // by the invoker function and each table policy.
-      return await createStudentAdmission(supabase, {
-        p_nome_completo: aluno.nome_completo,
-        p_data_nascimento: aluno.data_nascimento,
-        p_sexo: aluno.sexo,
-        p_escola_id: resolvedEscolaId,
-        p_cpf: aluno.cpf ?? null,
-        p_rg: aluno.rg ?? null,
-        p_email: aluno.email ?? null,
-        p_telefone: aluno.telefone ?? null,
-        p_endereco: aluno.endereco ?? null,
-        p_nome_mae: aluno.nome_mae ?? null,
-        p_nome_pai: aluno.nome_pai ?? null,
-        p_necessidades_especiais: aluno.necessidades_especiais ?? null,
-        p_responsavel: responsavel
-          ? {
-              nome: responsavel.nome,
-              telefone: responsavel.telefone,
-              email: responsavel.email,
-              grau_parentesco: responsavel.grau_parentesco,
-            }
-          : null,
-      })
-    } catch (error) {
-      throw error
-    }
-  }
-
-  // Enroll student in class
-  async enrollStudent(studentId: string, turmaId: string, observacoes?: string) {
-    try {
-      const { data, error } = await supabase
-        .from('matriculas')
-        .insert({
-          aluno_id: studentId,
-          turma_id: turmaId,
-          ano_letivo: new Date().getFullYear(),
-          situacao: 'ativa' as const,
-          data_matricula: new Date().toISOString().split('T')[0],
-          observacoes
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    } catch (error) {
-      throw error
-    }
-  }
-
-  // Update enrollment status
-  async updateEnrollmentStatus(matriculaId: string, situacao: 'ativa' | 'transferida' | 'concluida' | 'cancelada') {
-    try {
-      const { data, error } = await supabase
-        .from('matriculas')
-        .update({ situacao })
-        .eq('id', matriculaId)
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    } catch (error) {
-      throw error
-    }
+    return createStudentAdmission(supabase, {
+      p_nome_completo: aluno.nome_completo,
+      p_data_nascimento: aluno.data_nascimento,
+      p_sexo: aluno.sexo,
+      p_escola_id: schoolId,
+      p_cpf: aluno.cpf ?? undefined,
+      p_rg: aluno.rg ?? undefined,
+      p_email: aluno.email ?? undefined,
+      p_telefone: aluno.telefone ?? undefined,
+      p_endereco: aluno.endereco ?? undefined,
+      p_nome_mae: aluno.nome_mae ?? undefined,
+      p_nome_pai: aluno.nome_pai ?? undefined,
+      p_necessidades_especiais: aluno.necessidades_especiais ?? undefined,
+      p_responsavel: mapGuardianAdmission(responsavel),
+    })
   }
 
   // Get student attendance summary
@@ -279,31 +232,6 @@ export class StudentsApiService extends BaseApiService {
     }
   }
 
-  // Bulk enrollment
-  async bulkEnrollStudents(enrollments: { studentId: string; turmaId: string; observacoes?: string }[]) {
-    try {
-      const anoLetivo = new Date().getFullYear()
-      const matriculas = enrollments.map(enrollment => ({
-        aluno_id: enrollment.studentId,
-        turma_id: enrollment.turmaId,
-        ano_letivo: anoLetivo,
-        situacao: 'ativa' as const,
-        data_matricula: new Date().toISOString().split('T')[0],
-        observacoes: enrollment.observacoes
-      }))
-
-      const { data, error } = await supabase
-        .from('matriculas')
-        .insert(matriculas)
-        .select()
-
-      if (error) throw error
-      return data
-    } catch (error) {
-      throw error
-    }
-  }
-
   // Update student status
   async updateStudentStatus(id: string, ativo: boolean, reason?: string) {
     try {
@@ -322,7 +250,8 @@ export class StudentsApiService extends BaseApiService {
 
       return { id, ativo }
     } catch (error) {
-      logger.error('Error updating student status', error as Error, {
+      const failure = error instanceof Error ? error : new Error('Error updating student status')
+      logger.error('Error updating student status', failure, {
         feature: 'students',
         action: 'update_student_status',
         metadata: { studentId: id }
@@ -341,14 +270,15 @@ export class StudentsApiService extends BaseApiService {
     atRisk: number
   }> {
     try {
-      const filters = schoolId ? { escola_id: schoolId } : {}
-      const students = await this.getStudentsWithDetails({ filter: filters })
+      const students = await this.getStudentsWithDetails({ schoolId })
+      const byAge: Record<string, number> = {}
+      const byGrade: Record<string, number> = {}
 
       const stats = {
         total: students.length,
         active: students.filter(s => s.ativo).length,
-        byAge: {} as Record<string, number>,
-        byGrade: {} as Record<string, number>,
+        byAge,
+        byGrade,
         specialNeeds: students.filter(s => s.necessidades_especiais).length,
         atRisk: 0
       }
@@ -377,7 +307,7 @@ export class StudentsApiService extends BaseApiService {
       stats.atRisk = atRiskStudents.length
 
       return stats
-    } catch (error) {
+    } catch {
       return {
         total: 0,
         active: 0,

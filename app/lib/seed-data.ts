@@ -2,7 +2,8 @@
  * Seed data for SRE Educational Management System
  * This file contains development seed data for all 5 user roles and educational entities
  */
-import { supabase } from './supabase'
+import { Aluno, Escola, Responsavel, supabase, Turma, User } from './supabase'
+import { resolveSeedMunicipalityId } from './pilot/seed-municipality'
 
 export interface SeedData {
   users: Array<{
@@ -94,7 +95,7 @@ export const seedData: SeedData = {
     }
   ],
 
-  // Seed schools — replace with real school names
+  // Seed schools: replace with real school names
   escolas: [
     {
       nome: 'CEMEI Pequenos Passos',
@@ -312,129 +313,119 @@ export const seedData: SeedData = {
   ]
 }
 
+async function insertEscolas() {
+  const municipioId = await resolveSeedMunicipalityId(supabase)
+  const result = await supabase.from('escolas').insert(seedData.escolas.map(school => ({ ...school, municipio_id: municipioId }))).select()
+
+  if (result.error) {
+    throw new Error(`Failed to insert schools: ${result.error.message}`)
+  }
+
+  return result.data
+}
+
+async function insertResponsaveis() {
+  const result = await supabase.from('responsaveis').insert(seedData.responsaveis).select()
+
+  if (result.error) {
+    throw new Error(`Failed to insert guardians: ${result.error.message}`)
+  }
+
+  return result.data
+}
+
+async function insertUsers(escolas: Escola[] | null) {
+  const usersWithSchools = seedData.users.map((user) => ({
+    ...user,
+    escola_id: user.tipo_usuario === 'admin' ? null : escolas?.[0]?.id || null
+  }))
+  const result = await supabase.from('users').insert(usersWithSchools).select()
+
+  if (result.error) {
+    throw new Error(`Failed to insert users: ${result.error.message}`)
+  }
+
+  return result.data
+}
+
+async function assignDirector(escolas: Escola[] | null, users: User[] | null) {
+  if (users && users.length > 1) {
+    const directorUser = users.find((user) => user.tipo_usuario === 'diretor')
+    if (directorUser && escolas && escolas.length > 0) {
+      await supabase.from('escolas').update({ diretor_id: directorUser.id }).eq('id', escolas[0].id)
+    }
+  }
+}
+
+async function insertTurmas(escolas: Escola[] | null, users: User[] | null) {
+  const turmasWithAssociations = seedData.turmas.map((turma, index) => ({
+    ...turma,
+    escola_id: (escolas?.[index % escolas.length]?.id || escolas?.[0]?.id)!,
+    professor_id: users?.find((user) => user.tipo_usuario === 'professor')?.id || null
+  }))
+  const result = await supabase.from('turmas').insert(turmasWithAssociations).select()
+
+  if (result.error) {
+    throw new Error(`Failed to insert classes: ${result.error.message}`)
+  }
+
+  return result.data
+}
+
+async function insertAlunos(responsaveis: Responsavel[] | null) {
+  const alunosWithResponsaveis = seedData.alunos.map((aluno, index) => ({
+    ...aluno,
+    responsavel_id: responsaveis?.[index % responsaveis.length]?.id || null
+  }))
+  const result = await supabase.from('alunos').insert(alunosWithResponsaveis).select('id')
+
+  if (result.error) {
+    throw new Error(`Failed to insert students: ${result.error.message}`)
+  }
+
+  return result.data
+}
+
+async function insertMatriculas(alunos: Pick<Aluno, 'id'>[] | null, turmas: Turma[] | null) {
+  if (alunos && turmas && alunos.length > 0 && turmas.length > 0) {
+    const matriculas = alunos.map((aluno, index) => ({
+      aluno_id: aluno.id,
+      turma_id: turmas[index % turmas.length].id,
+      ano_letivo: 2025,
+      situacao: 'ativa' as const,
+      observacoes: 'Matrícula inicial - seed data'
+    }))
+    const result = await supabase.from('matriculas').insert(matriculas).select()
+
+    if (result.error) {
+      throw new Error(`Failed to insert enrollments: ${result.error.message}`)
+    }
+  }
+}
+
 /**
  * Insert seed data into the database
  * This function should be called during development setup
  */
 export async function insertSeedData() {
-
   try {
-    // Insert schools first (needed for user school associations)
-    const { data: escolas, error: escolasError } = await supabase
-      .from('escolas')
-      .insert(seedData.escolas)
-      .select()
-
-    if (escolasError) {
-      throw new Error(`Failed to insert schools: ${escolasError.message}`)
-    }
-
-
-    // Insert responsaveis
-    const { data: responsaveis, error: responsaveisError } = await supabase
-      .from('responsaveis')
-      .insert(seedData.responsaveis)
-      .select()
-
-    if (responsaveisError) {
-      throw new Error(`Failed to insert guardians: ${responsaveisError.message}`)
-    }
-
-
-    // Insert users with school associations
-    const usersWithSchools = seedData.users.map((user, index) => ({
-      ...user,
-      escola_id: user.tipo_usuario === 'admin' ? null : escolas?.[0]?.id || null
-    }))
-
-    const { data: users, error: usersError } = await supabase
-      .from('users')
-      .insert(usersWithSchools)
-      .select()
-
-    if (usersError) {
-      throw new Error(`Failed to insert users: ${usersError.message}`)
-    }
-
-
-    // Update schools with directors
-    if (users && users.length > 1) {
-      const directorUser = users.find(user => user.tipo_usuario === 'diretor')
-      if (directorUser && escolas && escolas.length > 0) {
-        const { error: updateError } = await supabase
-          .from('escolas')
-          .update({ diretor_id: directorUser.id })
-          .eq('id', escolas[0].id)
-
-        if (!updateError) {
-        }
-      }
-    }
-
-    // Insert turmas with school and professor associations
-    const turmasWithAssociations = seedData.turmas.map((turma, index) => ({
-      ...turma,
-      escola_id: escolas?.[index % escolas.length]?.id || escolas?.[0]?.id,
-      professor_id: users?.find(u => u.tipo_usuario === 'professor')?.id || null
-    }))
-
-    const { data: turmas, error: turmasError } = await supabase
-      .from('turmas')
-      .insert(turmasWithAssociations)
-      .select()
-
-    if (turmasError) {
-      throw new Error(`Failed to insert classes: ${turmasError.message}`)
-    }
-
-
-    // Insert students with guardian associations
-    const alunosWithResponsaveis = seedData.alunos.map((aluno, index) => ({
-      ...aluno,
-      responsavel_id: responsaveis?.[index % responsaveis.length]?.id || null
-    }))
-
-    const { data: alunos, error: alunosError } = await supabase
-      .from('alunos')
-      .insert(alunosWithResponsaveis)
-      .select('id')
-
-    if (alunosError) {
-      throw new Error(`Failed to insert students: ${alunosError.message}`)
-    }
-
-
-    // Insert matriculas (enrollments)
-    if (alunos && turmas && alunos.length > 0 && turmas.length > 0) {
-      const matriculas = alunos.map((aluno, index) => ({
-        aluno_id: aluno.id,
-        turma_id: turmas[index % turmas.length].id,
-        ano_letivo: 2025,
-        situacao: 'ativa' as const,
-        observacoes: 'Matrícula inicial - seed data'
-      }))
-
-      const { data: matriculasData, error: matriculasError } = await supabase
-        .from('matriculas')
-        .insert(matriculas)
-        .select()
-
-      if (matriculasError) {
-        throw new Error(`Failed to insert enrollments: ${matriculasError.message}`)
-      }
-
-    }
-
+    const escolas = await insertEscolas()
+    const responsaveis = await insertResponsaveis()
+    const users = await insertUsers(escolas)
+    await assignDirector(escolas, users)
+    const turmas = await insertTurmas(escolas, users)
+    const alunos = await insertAlunos(responsaveis)
+    await insertMatriculas(alunos, turmas)
 
     return {
       success: true,
       data: {
-        escolas: escolas?.length || 0,
-        users: users?.length || 0,
-        responsaveis: responsaveis?.length || 0,
-        alunos: alunos?.length || 0,
-        turmas: turmas?.length || 0
-      }
+        escolas: escolas.length,
+        users: users.length,
+        responsaveis: responsaveis.length,
+        alunos: alunos.length,
+        turmas: turmas.length,
+      },
     }
 
   } catch (error) {

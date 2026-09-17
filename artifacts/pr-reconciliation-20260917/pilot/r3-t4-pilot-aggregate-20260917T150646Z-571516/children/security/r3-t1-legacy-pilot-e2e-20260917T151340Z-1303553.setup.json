@@ -1,0 +1,40 @@
+{
+  "result": "ready",
+  "resetBoundary": "safety proof precedes database reset",
+  "localSupabase": {
+    "apiHost": "127.0.0.1",
+    "databaseHost": "127.0.0.1",
+    "apiIsLocal": true,
+    "databaseIsLocal": true,
+    "externalProjectUsed": false
+  },
+  "app": {
+    "url": "http://127.0.0.1",
+    "namedLocalUrl": true,
+    "server": "direct",
+    "serverMode": "direct"
+  },
+  "flags": {
+    "nextPublicPilotMode": true,
+    "pilotMode": true,
+    "syntheticDataOnly": true,
+    "externalDeployApproved": false,
+    "legalApprovalStatus": "not_approved",
+    "descriptiveReportDemo": false,
+    "demoSandbox": false
+  },
+  "keyAliases": {
+    "currentPublishableAlias": "PUBLISHABLE_KEY",
+    "currentSecretAlias": "SECRET_KEY",
+    "publishableAliasPresent": true,
+    "secretAliasPresent": true,
+    "deprecatedAliasesUsed": false
+  },
+  "portRangeLease": {
+    "serverMode": "direct",
+    "external": true,
+    "leaseDir": null
+  },
+  "externalCredentialsUsed": false,
+  "publicDemoUsed": false
+}

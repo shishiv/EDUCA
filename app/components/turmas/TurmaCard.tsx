@@ -27,6 +27,7 @@ export interface TurmaCardProps {
 }
 
 type SerieColorKey = 'pink' | 'orange' | 'violet' | 'gray'
+type TurmaTurno = TurmaCardProps['turma']['turno']
 
 /**
  * Maps serie name to color category:
@@ -72,16 +73,13 @@ const serieColorClasses: Record<SerieColorKey, string> = {
   gray: 'from-gray-400 to-gray-600'
 }
 
-const getTurnoLabel = (turno: string): string => {
-  const turnos: Record<string, string> = {
-    matutino: 'Matutino',
-    vespertino: 'Vespertino',
-    integral: 'Integral'
-  }
-  return turnos[turno] || turno
-}
+const turnoLabels = {
+  matutino: 'Matutino',
+  vespertino: 'Vespertino',
+  integral: 'Integral',
+} satisfies Record<TurmaTurno, string>
 
-const getTurnoBadgeVariant = (turno: string): 'default' | 'secondary' | 'outline' => {
+const getTurnoBadgeVariant = (turno: TurmaTurno): 'default' | 'secondary' | 'outline' => {
   switch (turno) {
     case 'matutino': return 'default'
     case 'vespertino': return 'secondary'
@@ -90,10 +88,17 @@ const getTurnoBadgeVariant = (turno: string): 'default' | 'secondary' | 'outline
   }
 }
 
-export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
-  const t = useClassroomTranslations()
-
+export function TurmaCard(props: TurmaCardProps) {
   const router = useRouter()
+  return <TurmaCardView {...props} navigate={router.push} />
+}
+
+type TurmaCardViewProps = TurmaCardProps & {
+  navigate?: (href: string) => void
+}
+
+export function TurmaCardView({ turma, onChamada, onDiario, navigate = () => undefined }: TurmaCardViewProps) {
+  const t = useClassroomTranslations()
   const serieColor = getSerieColor(turma.serie)
   const gradientClasses = serieColorClasses[serieColor]
   const ocupacao = turma.capacidade > 0
@@ -106,7 +111,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
     if (onChamada) {
       onChamada(turma.id)
     } else {
-      router.push(`/dashboard/turmas/${turma.id}/chamada`)
+      navigate(`/dashboard/turmas/${turma.id}/chamada`)
     }
   }
 
@@ -116,7 +121,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
     if (onDiario) {
       onDiario(turma.id)
     } else {
-      router.push(`/diario?turma=${encodeURIComponent(turma.id)}`)
+      navigate(`/diario?turma=${encodeURIComponent(turma.id)}`)
     }
   }
 
@@ -161,7 +166,7 @@ export function TurmaCard({ turma, onChamada, onDiario }: TurmaCardProps) {
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4 text-gray-400" />
               <Badge variant={getTurnoBadgeVariant(turma.turno)} className="text-xs">
-                {getTurnoLabel(turma.turno)}
+                {turnoLabels[turma.turno]}
               </Badge>
             </div>
           </div>

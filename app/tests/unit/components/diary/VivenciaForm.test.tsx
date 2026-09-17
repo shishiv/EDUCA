@@ -1,6 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithMessages as render } from '../render-with-messages'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { format } from 'date-fns'
 import { VivenciaForm } from '@/components/diary/VivenciaForm'
 import type { VivenciaFormData } from '@/types/diario-infantil'
 
@@ -10,7 +12,7 @@ import type { VivenciaFormData } from '@/types/diario-infantil'
  */
 
 describe('VivenciaForm', () => {
-  const mockOnSubmit = vi.fn()
+  const mockOnSubmit = vi.fn<(data: VivenciaFormData) => Promise<void>>()
   const mockOnCancel = vi.fn()
   
   const defaultProps = {
@@ -20,6 +22,7 @@ describe('VivenciaForm', () => {
 
   beforeEach(() => {
     mockOnSubmit.mockReset()
+    mockOnSubmit.mockResolvedValue(undefined)
     mockOnCancel.mockReset()
   })
 
@@ -81,10 +84,10 @@ describe('VivenciaForm', () => {
     it('should default date to today', () => {
       render(<VivenciaForm {...defaultProps} />)
       
-      const dateInput = screen.getByLabelText(/data/i) as HTMLInputElement
-      const today = new Date().toISOString().split('T')[0]
+      const dateInput = screen.getByLabelText(/data/i)
+      const today = format(new Date(), 'yyyy-MM-dd')
       
-      expect(dateInput.value).toBe(today)
+      expect(dateInput).toHaveValue(today)
     })
 
     it('should use initial data when provided', () => {
@@ -97,16 +100,15 @@ describe('VivenciaForm', () => {
       
       render(<VivenciaForm {...defaultProps} initialData={initialData} />)
       
-      const dateInput = screen.getByLabelText(/data/i) as HTMLInputElement
-      expect(dateInput.value).toBe('2024-01-15')
+      const dateInput = screen.getByLabelText(/data/i)
+      expect(dateInput).toHaveValue('2024-01-15')
     })
 
     it('should have empty campos by default', () => {
       render(<VivenciaForm {...defaultProps} />)
       
-      // No campo badges should be visible
-      const badges = screen.queryAllByRole('status')
-      expect(badges.length).toBe(0)
+      expect(screen.getAllByRole('checkbox')).toHaveLength(5)
+      expect(screen.queryAllByRole('checkbox', { checked: true })).toHaveLength(0)
     })
   })
 
@@ -181,7 +183,7 @@ describe('VivenciaForm', () => {
       await user.click(saveButton)
       
       await waitFor(() => {
-        expect(screen.getByText(/selecione.*campo/i)).toBeInTheDocument()
+        expect(screen.getByRole('alert')).toHaveTextContent(/selecione.*campo/i)
       })
     })
 
@@ -192,10 +194,11 @@ describe('VivenciaForm', () => {
       const textarea = screen.getByLabelText(/descrição/i)
       await user.type(textarea, 'abc')
       
-      fireEvent.blur(textarea)
+      await user.click(screen.getByRole('button', { name: /salvar/i }))
       
       await waitFor(() => {
-        expect(screen.getByText(/mínimo.*caracteres/i)).toBeInTheDocument()
+        expect(textarea).toHaveAccessibleDescription(/mínimo.*caracteres/i)
+        expect(textarea).toHaveAttribute('aria-invalid', 'true')
       })
     })
 
@@ -204,14 +207,13 @@ describe('VivenciaForm', () => {
       render(<VivenciaForm {...defaultProps} />)
       
       const textarea = screen.getByLabelText(/descrição/i)
-      const longText = 'a'.repeat(2000)
-      await user.type(textarea, longText)
+      const longText = 'a'.repeat(2001)
+      fireEvent.change(textarea, { target: { value: longText } })
+      await user.click(screen.getByRole('button', { name: /salvar/i }))
       
       await waitFor(() => {
-        const errorMessage = screen.queryByText(/máximo.*caracteres/i)
-        if (errorMessage) {
-          expect(errorMessage).toBeInTheDocument()
-        }
+        expect(textarea).toHaveAccessibleDescription(/máximo.*2000.*caracteres/i)
+        expect(mockOnSubmit).not.toHaveBeenCalled()
       })
     })
 
@@ -220,13 +222,13 @@ describe('VivenciaForm', () => {
       render(<VivenciaForm {...defaultProps} />)
       
       const obsTextarea = screen.getByLabelText(/observações/i)
-      const longText = 'a'.repeat(2000)
-      await user.type(obsTextarea, longText)
+      const longText = 'a'.repeat(501)
+      fireEvent.change(obsTextarea, { target: { value: longText } })
+      await user.click(screen.getByRole('button', { name: /salvar/i }))
       
       await waitFor(() => {
-        // Should show error or prevent input
-        const value = (obsTextarea as HTMLTextAreaElement).value
-        expect(value.length).toBeLessThanOrEqual(2000)
+        expect(obsTextarea).toHaveAccessibleDescription(/máximo.*500.*caracteres/i)
+        expect(mockOnSubmit).not.toHaveBeenCalled()
       })
     })
   })
@@ -242,19 +244,23 @@ describe('VivenciaForm', () => {
       const textarea = screen.getByLabelText(/descrição/i)
       await user.type(textarea, 'Descrição completa da vivência observada com a criança')
       
-      // Mock campo selection (would need to test CampoExperienciaSelector separately)
-      // For now, assume campos can be set via initial data
+      await user.click(screen.getByRole('checkbox', { name: /O eu, o outro/i }))
       
       const saveButton = screen.getByRole('button', { name: /salvar/i })
       await user.click(saveButton)
       
-      // Note: Full validation might prevent submission without campos
-      // This tests that the submit handler is wired correctly
+      await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledExactlyOnceWith({
+        data_vivencia: format(new Date(), 'yyyy-MM-dd'),
+        campos_experiencia: ['eu'],
+        descricao: 'Descrição completa da vivência observada com a criança',
+        observacoes: '',
+      }))
     })
 
     it('should show loading state during submission', async () => {
       const user = userEvent.setup()
-      mockOnSubmit.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)))
+      const submission = Promise.withResolvers<void>()
+      mockOnSubmit.mockReturnValue(submission.promise)
       
       const initialData: Partial<VivenciaFormData> = {
         campos_experiencia: ['eu'],
@@ -269,15 +275,19 @@ describe('VivenciaForm', () => {
       await waitFor(() => {
         expect(screen.getByText(/salvando/i)).toBeInTheDocument()
       })
+      expect(mockOnSubmit).toHaveBeenCalledOnce()
+      await act(async () => { submission.resolve() })
+      expect(screen.getByRole('button', { name: /salvar/i })).toBeEnabled()
     })
 
     it('should disable form during submission', async () => {
       const user = userEvent.setup()
-      mockOnSubmit.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)))
+      const submission = Promise.withResolvers<void>()
+      mockOnSubmit.mockReturnValue(submission.promise)
       
       const initialData: Partial<VivenciaFormData> = {
         campos_experiencia: ['eu'],
-        descricao: 'Descrição válida',
+        descricao: 'Descrição válida da vivência observada',
       }
       
       render(<VivenciaForm {...defaultProps} initialData={initialData} />)
@@ -289,6 +299,9 @@ describe('VivenciaForm', () => {
         const textarea = screen.getByLabelText(/descrição/i)
         expect(textarea).toBeDisabled()
       })
+      expect(mockOnSubmit).toHaveBeenCalledOnce()
+      await act(async () => { submission.resolve() })
+      expect(screen.getByLabelText(/descrição/i)).toBeEnabled()
     })
 
     it('should call onCancel when cancel button is clicked', async () => {
@@ -406,7 +419,7 @@ describe('VivenciaForm', () => {
       render(<VivenciaForm {...defaultProps} />)
       
       expect(screen.getByLabelText(/data.*vivência/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/campos.*experiência/i)).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: /campos.*experiência/i })).toBeInTheDocument()
       expect(screen.getByLabelText(/descrição.*vivência/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/observações/i)).toBeInTheDocument()
     })
@@ -430,15 +443,15 @@ describe('VivenciaForm', () => {
       await user.click(saveButton)
       
       await waitFor(() => {
-        const errorMessage = screen.getByText(/data.*obrigatória/i)
-        expect(errorMessage).toBeInTheDocument()
+        expect(dateInput).toHaveAccessibleDescription(/data.*obrigatória/i)
+        expect(dateInput).toHaveAttribute('aria-invalid', 'true')
       })
     })
 
     it('should have semantic HTML structure', () => {
       render(<VivenciaForm {...defaultProps} />)
       
-      const form = screen.getByRole('form')
+      const form = screen.getByRole('form', { name: 'Registrar vivência de João Silva Santos' })
       expect(form).toBeInTheDocument()
       expect(form.tagName).toBe('FORM')
     })

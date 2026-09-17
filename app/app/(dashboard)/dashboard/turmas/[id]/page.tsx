@@ -23,6 +23,8 @@ import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-fac
 import { logger } from '@/lib/logger'
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import { useClassroomTranslations } from '@/i18n/classroom'
+import { useAuth } from '@/hooks/use-auth'
+import { canAccessRoute } from '@/lib/route-policy'
 
 interface Turma {
   id: string
@@ -66,11 +68,83 @@ interface SessaoAula {
   ausentes: number
 }
 
+async function fetchTurma(id: string) {
+  const { data, error } = await supabase.from('turmas').select('*, escolas (nome), users:professor_id (nome)').eq('id', id).single()
+  if (error) throw error
+  return { ...data, capacidade: data.capacidade ?? 0 }
+}
+
+async function fetchMatriculas(id: string, year: number) {
+  const { data, error } = await supabase
+    .from('matriculas')
+    .select('id, situacao, alunos (id, nome_completo, data_nascimento, sexo, ativo)')
+    .eq('turma_id', id)
+    .eq('ano_letivo', year)
+    .order('alunos(nome_completo)')
+  if (error) throw error
+  return (data ?? []).map(matricula => ({ ...matricula, situacao: matricula.situacao ?? '' }))
+}
+
+function attendanceAverage(facts: Awaited<ReturnType<typeof loadCanonicalAttendanceFacts>>) {
+  if (facts.length === 0) return 0
+  return Number(((facts.filter(fact => fact.presente).length / facts.length) * 100).toFixed(1))
+}
+
+function ClassDetailsCard({ turma, shiftLabel }: { turma: Turma; shiftLabel: string }) {
+  const t = useClassroomTranslations()
+  return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('classes.info')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm text-gray-500">{t('labels.series')}</p>
+              <p className="text-lg font-medium">{turma.serie}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t('labels.shift')}</p>
+              <Badge variant="secondary">{shiftLabel}</Badge>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t('forms.teacher')}</p>
+              <p className="text-lg font-medium">{turma.users?.nome || t('status.notAssigned')}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t('labels.capacity')}</p>
+              <p className="text-lg font-medium">{turma.capacidade} alunos</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t('labels.year')}</p>
+              <p className="text-lg font-medium">{turma.ano_letivo}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t('labels.status')}</p>
+              {turma.ativo ? (
+                <Badge className="bg-green-100 text-green-800">{t('status.active')}</Badge>
+              ) : (
+                <Badge variant="secondary">{t('status.inactive')}</Badge>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
+  )
+}
+
 export default function TurmaDetalhesPage() {
   const t = useClassroomTranslations()
   const router = useRouter()
-  const params = useParams()
-  const id = params?.id as string
+  const params = useParams<{ id: string }>()
+  const { userProfile } = useAuth()
+  const id = params.id
+  const role = userProfile?.tipo_usuario
+  const attendancePath = `/dashboard/turmas/${id}/chamada`
+  const editPath = `/dashboard/turmas/${id}/editar`
+  const canAccessAttendance = canAccessRoute(attendancePath, role)
 
   const [loading, setLoading] = useState(true)
   const [turma, setTurma] = useState<Turma | null>(null)
@@ -87,40 +161,10 @@ export default function TurmaDetalhesPage() {
     try {
       setLoading(true)
 
-      // Load turma data
-      const { data: turmaData, error: turmaError } = await supabase
-        .from('turmas')
-        .select(`
-          *,
-          escolas (nome),
-          users:professor_id (nome)
-        `)
-        .eq('id', id)
-        .single()
-
-      if (turmaError) throw turmaError
+      const turmaData = await fetchTurma(id)
+      const matriculasData = await fetchMatriculas(id, turmaData.ano_letivo)
       setTurma(turmaData)
-
-      // Load matriculas (students enrolled)
-      const { data: matriculasData, error: matriculasError } = await supabase
-        .from('matriculas')
-        .select(`
-          id,
-          situacao,
-          alunos (
-            id,
-            nome_completo,
-            data_nascimento,
-            sexo,
-            ativo
-          )
-        `)
-        .eq('turma_id', id)
-        .eq('ano_letivo', turmaData.ano_letivo)
-        .order('alunos(nome_completo)')
-
-      if (matriculasError) throw matriculasError
-      setMatriculas(matriculasData || [])
+      setMatriculas(matriculasData)
 
       // Load the recent canonical sessions for this turma.
       const { data: sessoesData, error: sessoesError } = await supabase
@@ -132,7 +176,7 @@ export default function TurmaDetalhesPage() {
 
       if (sessoesError) throw sessoesError
 
-      const matriculasAtivas = matriculasData?.filter(m => m.situacao === 'ativa') || []
+      const matriculasAtivas = matriculasData.filter(m => m.situacao === 'ativa')
       const attendanceFacts = await loadCanonicalAttendanceFacts(
         supabase,
         matriculasAtivas.map(matricula => matricula.id)
@@ -153,32 +197,30 @@ export default function TurmaDetalhesPage() {
         const attendance = attendanceBySession.get(sessao.id) ?? { presentes: 0, ausentes: 0 }
         return {
           ...sessao,
+          inicio_aula: sessao.inicio_aula ?? '',
           presentes: attendance.presentes,
           ausentes: attendance.ausentes,
         }
       })
       setSessoes(transformedSessoes)
 
-      const attendanceRate = attendanceFacts.length === 0
-        ? 0
-        : Number(((attendanceFacts.filter(fact => fact.presente).length / attendanceFacts.length) * 100).toFixed(1))
       const stats = {
-        totalAlunos: matriculasData?.length || 0,
+        totalAlunos: matriculasData.length,
         matriculados: matriculasAtivas.length,
         vagasDisponiveis: turmaData.capacidade - matriculasAtivas.length,
-        frequenciaMedia: attendanceRate,
+        frequenciaMedia: attendanceAverage(attendanceFacts),
       }
       setFrequenciaStats(stats)
 
       logger.info('Detalhes da turma carregados:', {
         metadata: {
           turma: turmaData.nome,
-          matriculas: matriculasData?.length || 0,
+          matriculas: matriculasData.length,
           sessoes: sessoesData?.length || 0
         }
       })
     } catch (error) {
-      logger.error('Erro ao carregar detalhes da turma:', error as Error)
+      logger.error('Erro ao carregar detalhes da turma:', error instanceof Error ? error : String(error))
       toast.error('Erro ao carregar dados da turma')
       router.push('/dashboard/turmas')
     } finally {
@@ -215,24 +257,24 @@ export default function TurmaDetalhesPage() {
   }
 
   const getTurnoLabel = (turno: string) => {
-    const turnos: Record<string, string> = {
-      'matutino': 'Manhã',
-      'vespertino': 'Tarde',
-      'integral': 'Integral',
-      'noturno': 'Noite'
-    }
-    return turnos[turno.toLowerCase()] || turno
+    const turnos = new Map([
+      ['matutino', 'Manhã'],
+      ['vespertino', 'Tarde'],
+      ['integral', 'Integral'],
+      ['noturno', 'Noite'],
+    ])
+    return turnos.get(turno.toLowerCase()) || turno
   }
 
   const getStatusBadge = (situacao: string) => {
-    const badges: Record<string, { variant: NonNullable<BadgeProps['variant']>; label: string }> = {
-      'ativa': { variant: 'default', label: 'Ativa' },
-      'transferida': { variant: 'secondary', label: 'Transferido' },
-      'concluida': { variant: 'secondary', label: 'Concluída' },
-      'cancelada': { variant: 'destructive', label: 'Cancelada' }
-    }
+    const badges = new Map<string, { variant: NonNullable<BadgeProps['variant']>; label: string }>([
+      ['ativa', { variant: 'default', label: 'Ativa' }],
+      ['transferida', { variant: 'secondary', label: 'Transferido' }],
+      ['concluida', { variant: 'secondary', label: 'Concluída' }],
+      ['cancelada', { variant: 'destructive', label: 'Cancelada' }],
+    ])
 
-    const config = badges[situacao] || { variant: 'secondary', label: situacao }
+    const config = badges.get(situacao) || { variant: 'secondary', label: situacao }
 
     return (
       <Badge variant={config.variant} className={
@@ -244,13 +286,13 @@ export default function TurmaDetalhesPage() {
   }
 
   const getSessaoStatusBadge = (status: string) => {
-    const badges: Record<string, { icon: LucideIcon; color: string; label: string }> = {
-      'PLANEJADA': { icon: Calendar, color: 'bg-blue-100 text-blue-800', label: 'Planejada' },
-      'ABERTA': { icon: Clock, color: 'bg-amber-100 text-amber-800', label: 'Aberta' },
-      'FECHADA': { icon: CheckCircle2, color: 'bg-green-100 text-green-800', label: 'Fechada' }
-    }
+    const badges = new Map<string, { icon: LucideIcon; color: string; label: string }>([
+      ['PLANEJADA', { icon: Calendar, color: 'bg-blue-100 text-blue-800', label: 'Planejada' }],
+      ['ABERTA', { icon: Clock, color: 'bg-amber-100 text-amber-800', label: 'Aberta' }],
+      ['FECHADA', { icon: CheckCircle2, color: 'bg-green-100 text-green-800', label: 'Fechada' }],
+    ])
 
-    const config = badges[status] || { icon: XCircle, color: 'bg-gray-100 text-gray-800', label: status }
+    const config = badges.get(status) || { icon: XCircle, color: 'bg-gray-100 text-gray-800', label: status }
     const Icon = config.icon
 
     return (
@@ -313,18 +355,22 @@ export default function TurmaDetalhesPage() {
           </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link href={`/dashboard/turmas/${id}/chamada`}>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              {t('actions.openAttendance')}
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={`/dashboard/turmas/${id}/editar`}>
-              <Edit className="mr-2 h-4 w-4" />
-              {t('actions.edit')}
-            </Link>
-          </Button>
+          {canAccessAttendance && (
+            <Button variant="outline" asChild>
+              <Link href={attendancePath}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {t('actions.openAttendance')}
+              </Link>
+            </Button>
+          )}
+          {canAccessRoute(editPath, role) && (
+            <Button asChild>
+              <Link href={editPath}>
+                <Edit className="mr-2 h-4 w-4" />
+                {t('actions.edit')}
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -388,44 +434,7 @@ export default function TurmaDetalhesPage() {
         </Card>
       </div>
 
-      {/* Turma Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('classes.info')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-sm text-gray-500">{t('labels.series')}</p>
-              <p className="text-lg font-medium">{turma.serie}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{t('labels.shift')}</p>
-              <Badge variant="secondary">{getTurnoLabel(turma.turno)}</Badge>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{t('forms.teacher')}</p>
-              <p className="text-lg font-medium">{turma.users?.nome || t('status.notAssigned')}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{t('labels.capacity')}</p>
-              <p className="text-lg font-medium">{turma.capacidade} alunos</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{t('labels.year')}</p>
-              <p className="text-lg font-medium">{turma.ano_letivo}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{t('labels.status')}</p>
-              {turma.ativo ? (
-                <Badge className="bg-green-100 text-green-800">{t('status.active')}</Badge>
-              ) : (
-                <Badge variant="secondary">{t('status.inactive')}</Badge>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ClassDetailsCard turma={turma} shiftLabel={getTurnoLabel(turma.turno)} />
 
       {/* Students List */}
       <Card>
@@ -460,8 +469,16 @@ export default function TurmaDetalhesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {matriculas.map((matricula) => (
-                  <TableRow key={matricula.id}>
+                {matriculas.map((matricula) => {
+                  const profilePath = `/dashboard/alunos/${matricula.alunos.id}`
+                  const diaryPath = `${profilePath}/diario`
+                  const studentPath = canAccessRoute(profilePath, role)
+                    ? profilePath
+                    : canAccessRoute(diaryPath, role)
+                      ? diaryPath
+                      : null
+
+                  return <TableRow key={matricula.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar>
@@ -476,14 +493,16 @@ export default function TurmaDetalhesPage() {
                     <TableCell>{matricula.alunos.sexo === 'M' ? 'Masculino' : 'Feminino'}</TableCell>
                     <TableCell>{getStatusBadge(matricula.situacao)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/alunos/${matricula.alunos.id}`}>
-                          {t('actions.viewProfile')}
-                        </Link>
-                      </Button>
+                      {studentPath && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={studentPath}>
+                            {studentPath === profilePath ? t('actions.viewProfile') : t('diary.title')}
+                          </Link>
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
-                ))}
+                })}
               </TableBody>
             </Table>
           )}
@@ -498,11 +517,13 @@ export default function TurmaDetalhesPage() {
               <BookOpen className="h-5 w-5 text-purple-600" />
               <CardTitle>{t('classes.recentSessions')}</CardTitle>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/turmas/${id}/chamada`}>
-                {t('actions.viewAttendances')}
-              </Link>
-            </Button>
+            {canAccessAttendance && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={attendancePath}>
+                  {t('actions.viewAttendances')}
+                </Link>
+              </Button>
+            )}
           </div>
           <CardDescription>
             {t('classes.recentSessionsHint')}
@@ -541,11 +562,13 @@ export default function TurmaDetalhesPage() {
                       {sessao.conteudo_programatico || '-'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/turmas/${id}/chamada?sessao=${sessao.id}`}>
-                          {t('actions.viewAttendance')}
-                        </Link>
-                      </Button>
+                      {canAccessAttendance && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`${attendancePath}?sessao=${sessao.id}`}>
+                            {t('actions.viewAttendance')}
+                          </Link>
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
