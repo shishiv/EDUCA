@@ -16,8 +16,12 @@ STATUS_ENV=$("$SUPABASE_CLI" --workdir "$ROOT_DIR" status -o env 2>/dev/null) ||
   echo "PILOT_RESTORE_LOCAL_STACK_REQUIRED: start the local Supabase stack first" >&2
   exit 1
 }
-eval "$(printf '%s\n' "$STATUS_ENV" | grep -E '^(API_URL|SERVICE_ROLE_KEY|DB_URL)=')"
+# Never fall back to an inherited credential when the local CLI omits a key.
+unset API_URL SECRET_KEY SERVICE_ROLE_KEY DB_URL
+eval "$(printf '%s\n' "$STATUS_ENV" | grep -E '^(API_URL|SECRET_KEY|SERVICE_ROLE_KEY|DB_URL)=')"
 unset STATUS_ENV
+SERVICE_ROLE_KEY="${SECRET_KEY:-${SERVICE_ROLE_KEY:-}}"
+unset SECRET_KEY
 
 for required_variable in API_URL SERVICE_ROLE_KEY DB_URL; do
   [[ -n "${!required_variable:-}" ]] || {

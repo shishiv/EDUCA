@@ -1,0 +1,10 @@
+✔ reports each forbidden local import binding once while ignoring exported import names (179.668249ms)
+✔ continues to report forbidden local symbols (174.661765ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 400.206869
