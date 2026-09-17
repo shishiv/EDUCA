@@ -1,0 +1,19 @@
+(node:2314179) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:2317070) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/6] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/6] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:2320144) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/6] [chromium] › tests/e2e/assignments/teacher.spec.ts:34:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher
+[1A[2K[4/6] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years
+[1A[2K[5/6] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:91:7 › Dashboard - Stat Cards › F09 a failed dashboard query is not presented as valid zero metrics
+[1A[2K[6/6] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:236:7 › Enrollment mutations › F09 cancellation persists after reload and invalid reactivation is denied
+[1A[2K  6 passed (15.6s)

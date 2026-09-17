@@ -1,0 +1,22 @@
+[
+  {
+    "test": "F09 cancellation persists after reload and invalid reactivation is denied",
+    "status": "failed",
+    "enrollmentId": "1e08cc0a-6b2a-4abf-8b8d-6b57dc9242f7",
+    "studentId": "98702585-8fa3-4fec-9957-1b86fd281e24",
+    "removed": true,
+    "retainedAudit": [
+      {
+        "id": "1c64fdf5-845f-427e-af30-438ce7121a8f",
+        "escola_id": "69f0ee40-7d56-4feb-a810-502d491dc0fa",
+        "fingerprint": "7b6cf3baa01735525ead0484e1a8e8c6"
+      },
+      {
+        "id": "6ab1f313-cd19-4f62-a3fc-22b8b4a10b27",
+        "escola_id": "69f0ee40-7d56-4feb-a810-502d491dc0fa",
+        "fingerprint": "ea6ef91532e1f9f03519706cbc6ee853"
+      }
+    ],
+    "appendedDuringCleanup": 1
+  }
+]

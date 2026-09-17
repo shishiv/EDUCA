@@ -1,0 +1,59 @@
+(node:1606588) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:1609839) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/3] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/3] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:1613165) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/3] [chromium] › tests/e2e/matriculas/enrollment.spec.ts:236:7 › Enrollment mutations › F09 cancellation persists after reload and invalid reactivation is denied
+[1A[2K  1) [chromium] › tests/e2e/matriculas/enrollment.spec.ts:236:7 › Enrollment mutations › F09 cancellation persists after reload and invalid reactivation is denied 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Array [[22m
+    [2m    Object {[22m
+    [2m      "aluno_id": "98702585-8fa3-4fec-9957-1b86fd281e24",[22m
+    [2m      "id": "1e08cc0a-6b2a-4abf-8b8d-6b57dc9242f7",[22m
+    [32m-     "observacoes": "Cancelamento sintético F09",[39m
+    [32m-     "situacao": "cancelada",[39m
+    [31m+     "observacoes": "Matrícula de visualização E2E",[39m
+    [31m+     "situacao": "ativa",[39m
+    [2m      "turma_id": "9ed69087-0a2e-4b0c-94fe-9d4d6f59410a",[22m
+    [2m    },[22m
+    [2m  ][22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      251 |       await page.getByLabel('Observações', { exact: true }).fill('Cancelamento sintético F09')
+      252 |       await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+    > 253 |       await expect.poll(readState).toEqual(cancelled)
+          |       ^
+      254 |       await page.reload()
+      255 |       await expect(page.getByRole('alert').filter({ hasText: 'Status da Matrícula' })).toContainText('Cancelada')
+      256 |       await expect(page.getByText('Cancelamento sintético F09', { exact: true })).toBeVisible()
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/matriculas/enrollment.spec.ts:253:7
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/matriculas-enrollment-Enro-75c26-alid-reactivation-is-denied-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/matriculas-enrollment-Enro-75c26-alid-reactivation-is-denied-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/matriculas/enrollment.spec.ts:236:7 › Enrollment mutations › F09 cancellation persists after reload and invalid reactivation is denied 
+  2 passed (10.5s)
+  1 error was not a part of any test, see above for details

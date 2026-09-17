@@ -1,0 +1,174 @@
+- generic
+  - link "Pular para o conteúdo principal" [ref=e1]
+  - complementary "Navegação principal"
+    - link "EDUCA Sistema Escolar" [ref=e3]
+      - strong
+        - StaticText "EDUCA"
+      - StaticText "Sistema Escolar"
+    - combobox "Escola sintética F09 A ebe9ba32-9dea-4349-8ec6-6ee726b1d9b5" [expanded=false, ref=e4]
+      - StaticText "Escola sintética F09 A ebe9ba32-9dea-4349-8ec6-6ee726b1d9b5"
+    - button "Recolher menu lateral" [ref=e5]
+    - LayoutTable
+      - navigation
+        - region "Principal" [ref=e31]
+          - button "PRINCIPAL" [expanded=true, ref=e44]
+            - StaticText "PRINCIPAL"
+          - link "Dashboard" [ref=e48]
+            - StaticText "Dashboard"
+        - region "Cadastros" [ref=e32]
+          - button "CADASTROS" [expanded=true, ref=e45]
+            - StaticText "CADASTROS"
+          - generic
+            - link "Alunos" [ref=e49]
+              - StaticText "Alunos"
+            - link "Usuários" [ref=e50]
+              - StaticText "Usuários"
+            - link "Escolas" [ref=e51]
+              - StaticText "Escolas"
+            - link "Turmas" [ref=e52]
+              - StaticText "Turmas"
+            - link "Matrículas" [ref=e53]
+              - StaticText "Matrículas"
+            - link "Atribuições" [ref=e54]
+              - StaticText "Atribuições"
+            - link "Responsáveis" [ref=e55]
+              - StaticText "Responsáveis"
+        - region "Acadêmico" [ref=e33]
+          - button "ACADÊMICO" [expanded=true, ref=e46]
+            - StaticText "ACADÊMICO"
+          - generic
+            - link "Frequência" [ref=e56]
+              - StaticText "Frequência"
+            - link "Diário de Classe" [ref=e57]
+              - StaticText "Diário de Classe"
+            - link "Notas" [ref=e58]
+              - StaticText "Notas"
+        - region "Gestão" [ref=e34]
+          - button "GESTÃO" [expanded=false, ref=e47]
+            - StaticText "GESTÃO"
+    - paragraph
+      - StaticText "Rede municipal · ambiente autenticado"
+  - banner
+    - navigation "Dashboard" [ref=e6]
+      - StaticText "EDUCA"
+      - strong
+        - StaticText "Dashboard"
+    - combobox "Busca global" [expanded=false, ref=e12]
+    - generic
+      - button "Mudar idioma para English" [ref=e13]
+        - StaticText "PT"
+      - status
+    - StaticText "Online"
+    - StaticText "Escola sintética F09 A ebe9ba32-9dea-4349-8ec6-6ee726b1d9b5"
+    - button "Abrir menu do usuário" [expanded=false, ref=e7]
+  - main
+    - sectionheader
+      - heading "Bom dia, Admin." [level=1, ref=e14]
+        - StaticText "Bom dia, Admin."
+      - paragraph
+        - StaticText "Rede Municipal de Educação · Ano Letivo 2026"
+      - StaticText "Hoje"
+      - time
+        - StaticText "Quinta-Feira, 17 De Setembro"
+    - region "Dashboard" [ref=e8]
+      - heading "Dashboard" [level=2, ref=e15]
+      - paragraph
+        - StaticText "Rede Municipal de Educação · Ano Letivo 2026"
+      - StaticText "1 escola ativa"
+      - article
+        - StaticText "Frequência média"
+        - strong
+          - StaticText "33.3%"
+        - StaticText "atenção"
+      - article
+        - StaticText "Total de Alunos"
+        - strong
+          - StaticText "2"
+        - StaticText "alunos"
+      - article
+        - StaticText "Turmas Ativas"
+        - strong
+          - StaticText "1"
+        - StaticText "Turmas ativas no ano letivo 2026"
+      - article
+        - StaticText "Professores Ativos"
+        - strong
+          - StaticText "1"
+        - StaticText "Professores Ativos"
+    - region "Rotinas" [ref=e9]
+      - heading "Rotinas" [level=2, ref=e16]
+      - paragraph
+        - StaticText "Acesse as tarefas mais usadas sem perder o contexto."
+      - navigation "Acessos rápidos" [ref=e17]
+        - link "Novo Aluno" [ref=e18]
+          - StaticText "Novo Aluno"
+        - link "Matrícula" [ref=e19]
+          - StaticText "Matrícula"
+        - link "Frequência" [ref=e20]
+          - StaticText "Frequência"
+        - link "Diário de Classe" [ref=e21]
+          - StaticText "Diário de Classe"
+        - link "Nova Turma" [ref=e22]
+          - StaticText "Nova Turma"
+        - link "Relatórios" [ref=e23]
+          - StaticText "Relatórios"
+        - link "Configurações" [ref=e24]
+          - StaticText "Configurações"
+    - region "Minhas Turmas" [ref=e10]
+      - sectionheader
+        - heading "Minhas Turmas" [level=2, ref=e25]
+        - paragraph
+          - StaticText "Turmas ativas no ano letivo 2026"
+        - link "Ver todas as turmas" [ref=e26]
+      - list
+        - listitem [level=1]
+          - link "F09 2026 turma 1 1º Ano · matutino 2 alunos" [ref=e30]
+            - strong
+              - StaticText "F09 2026 turma 1"
+            - generic
+              - StaticText "1º Ano · matutino"
+            - strong
+              - StaticText "2"
+            - StaticText "alunos"
+    - region "Alertas e pendências" [ref=e11]
+      - sectionheader
+        - heading "Alertas e pendências" [level=2, ref=e27]
+        - paragraph
+          - StaticText "Itens que pedem acompanhamento"
+      - generic "Carregando alertas"
+  - region "Notifications alt+T" [ref=e2]
+  - alert
+  - dialog
+    - generic
+      - LabelText
+      - image
+      - combobox [expanded=true, ref=e28]
+      - listbox "Suggestions" [ref=e29]
+        - group
+          - option "CEMEI Pequenos Passos" [ref=e35]
+            - image
+            - StaticText "CEMEI Pequenos Passos"
+          - option "EMEF Professor João Silva" [ref=e36]
+            - image
+            - StaticText "EMEF Professor João Silva"
+          - option "EMEI Jardim da Infância" [ref=e37]
+            - image
+            - StaticText "EMEI Jardim da Infância"
+          - option "Escola sintética F09 A 3e5be8b1-e362-4e41-b443-68a65dd7246f" [ref=e38]
+            - image
+            - StaticText "Escola sintética F09 A 3e5be8b1-e362-4e41-b443-68a65dd7246f"
+          - option "Escola sintética F09 A a6380b29-ff6c-4cc9-8b62-6894e9202a58" [ref=e39]
+            - image
+            - StaticText "Escola sintética F09 A a6380b29-ff6c-4cc9-8b62-6894e9202a58"
+          - option "Escola sintética F09 A ebe9ba32-9dea-4349-8ec6-6ee726b1d9b5" [selected, ref=e40]
+            - image
+            - StaticText "Escola sintética F09 A ebe9ba32-9dea-4349-8ec6-6ee726b1d9b5"
+          - option "Escola sintética F09 B 5e327974-d4c6-4807-8889-82aa7783356f" [ref=e41]
+            - image
+            - StaticText "Escola sintética F09 B 5e327974-d4c6-4807-8889-82aa7783356f"
+          - option "Escola sintética F09 B 65c7a439-8b67-4098-8523-a9d39124c157" [ref=e42]
+            - image
+            - StaticText "Escola sintética F09 B 65c7a439-8b67-4098-8523-a9d39124c157"
+          - option "Escola sintética F09 B 71021321-b22e-4626-aadb-27e260ac1166" [ref=e43]
+            - image
+            - StaticText "Escola sintética F09 B 71021321-b22e-4626-aadb-27e260ac1166"

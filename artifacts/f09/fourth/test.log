@@ -1,0 +1,49 @@
+(node:3770318) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:3772949) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/6] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/6] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:3779218) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/6] [chromium] › tests/e2e/assignments/teacher.spec.ts:33:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher
+[1A[2K[4/6] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years
+[1A[2K  1) [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years 
+
+    error: update or delete on table "escolas" violates foreign key constraint "pilot_audit_log_escola_id_fkey" on table "pilot_audit_log"
+
+       at flows/dashboard-fixture.ts:111
+
+      109 |         await db.query('DELETE FROM anos_letivos WHERE escola_id = ANY($1::uuid[])', [schools])
+      110 |         await db.query('DELETE FROM configs WHERE escola_id = ANY($1::uuid[])', [schools])
+    > 111 |         await db.query('DELETE FROM escolas WHERE id = ANY($1::uuid[])', [schools])
+          |         ^
+      112 |         const remaining = await db.query('SELECT id FROM escolas WHERE id = ANY($1::uuid[])', [schools])
+      113 |         if (remaining.rowCount !== 0) throw new Error('Dashboard F09 fixture cleanup failed')
+      114 |       })
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js:652:17
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-fixture.ts:111:9
+        at withLocalDatabase (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/support/local-database.ts:15:12)
+        at Object.cleanup (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-fixture.ts:101:7)
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:85:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years 
+  2 did not run
+  3 passed (11.7s)
+  1 error was not a part of any test, see above for details

@@ -1,0 +1,390 @@
+{
+  "config": {
+    "configFile": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/playwright.quality.local.config.ts",
+    "rootDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/auth.setup.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-unauth",
+        "name": "chromium-unauth",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\/(auth)\\/.*/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [
+          "/.*\\/(auth|pilot|pilot-descriptive|public-demo)\\/.*/",
+          "**/grades/entry.spec.ts",
+          "**/grades/report-card.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate as admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:16:28.927Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-1580989d32f149e984ed",
+          "file": "auth.setup.ts",
+          "line": 124,
+          "column": 8
+        },
+        {
+          "title": "authenticate all roles",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1806,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:16:29.233Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-907d75c9b0b21b12872d",
+          "file": "auth.setup.ts",
+          "line": 172,
+          "column": 8
+        }
+      ]
+    },
+    {
+      "title": "assignments/teacher.spec.ts",
+      "file": "assignments/teacher.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Professor titular por turma",
+          "file": "assignments/teacher.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F09 titular persists after reload and rejects a foreign-school teacher",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2690,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:16:31.520Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-titular-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "3b596e37cd90cc908ce1-f31f31ed93aa94ada769",
+              "file": "assignments/teacher.spec.ts",
+              "line": 34,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows/dashboard-metrics.spec.ts",
+      "file": "flows/dashboard-metrics.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dashboard - Stat Cards",
+          "file": "flows/dashboard-metrics.spec.ts",
+          "line": 28,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F09 exact metrics survive school changes and reloads in two academic years",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4251,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:16:34.373Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-dashboard-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "98a68ca360bf88cccb34-3ef4001ee9f933f2ff79",
+              "file": "flows/dashboard-metrics.spec.ts",
+              "line": 50,
+              "column": 7
+            },
+            {
+              "title": "F09 a failed dashboard query is not presented as valid zero metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1722,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:16:38.634Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-dashboard-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "98a68ca360bf88cccb34-aa2d04705197b4f31607",
+              "file": "flows/dashboard-metrics.spec.ts",
+              "line": 91,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "matriculas/enrollment.spec.ts",
+      "file": "matriculas/enrollment.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Enrollment mutations",
+          "file": "matriculas/enrollment.spec.ts",
+          "line": 235,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F09 cancellation persists after reload and invalid reactivation is denied",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1842,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:16:40.383Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-enrollment-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f0f10e6810edd7288675-77ca8f9faa9a76fc72e7",
+              "file": "matriculas/enrollment.spec.ts",
+              "line": 236,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-17T11:16:27.312Z",
+    "duration": 14988.86,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

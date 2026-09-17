@@ -1,0 +1,274 @@
+{
+  "config": {
+    "configFile": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/playwright.quality.local.config.ts",
+    "rootDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 1,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/auth.setup.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-unauth",
+        "name": "chromium-unauth",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\/(auth)\\/.*/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [
+          "/.*\\/(auth|pilot|pilot-descriptive|public-demo)\\/.*/",
+          "**/grades/entry.spec.ts",
+          "**/grades/report-card.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate as admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 108,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:26:25.953Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-1580989d32f149e984ed",
+          "file": "auth.setup.ts",
+          "line": 124,
+          "column": 8
+        },
+        {
+          "title": "authenticate all roles",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1681,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:26:26.203Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-907d75c9b0b21b12872d",
+          "file": "auth.setup.ts",
+          "line": 172,
+          "column": 8
+        }
+      ]
+    },
+    {
+      "title": "flows/dashboard-metrics.spec.ts",
+      "file": "flows/dashboard-metrics.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dashboard - Stat Cards",
+          "file": "flows/dashboard-metrics.spec.ts",
+          "line": 28,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F09 exact metrics survive school changes and reloads in two academic years",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6396,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')\nTimeout: 5000ms\n\u001b[32m- Expected  - 4\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   \"75%\",\u001b[39m\n\u001b[32m-   \"3\",\u001b[39m\n\u001b[32m-   \"2\",\u001b[39m\n\u001b[32m-   \"1\",\u001b[39m\n\u001b[31m+   \"0%\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[2m  ]\u001b[22m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')\u001b[22m\n\u001b[2m    9 × locator resolved to 4 elements\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')\nTimeout: 5000ms\n\u001b[32m- Expected  - 4\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   \"75%\",\u001b[39m\n\u001b[32m-   \"3\",\u001b[39m\n\u001b[32m-   \"2\",\u001b[39m\n\u001b[32m-   \"1\",\u001b[39m\n\u001b[31m+   \"0%\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[2m  ]\u001b[22m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')\u001b[22m\n\u001b[2m    9 × locator resolved to 4 elements\u001b[22m\n\n    at expectDashboardMetrics (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:131:66)\n    at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:78:15",
+                        "location": {
+                          "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts",
+                          "column": 66,
+                          "line": 131
+                        },
+                        "snippet": "  129 | }) {\n  130 |   const dashboard = page.getByRole('region', { name: 'Dashboard', exact: true })\n> 131 |   await expect(dashboard.getByRole('article').locator('strong')).toHaveText([\n      |                                                                  ^\n  132 |     `${expected.attendance}%`, String(expected.students), String(expected.classes), String(expected.teachers),\n  133 |   ])\n  134 |   await expect(page.getByRole('region', { name: 'Minhas Turmas' })).toContainText(`Turmas ativas no ano letivo ${year}`)"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts",
+                            "column": 66,
+                            "line": 131
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')\nTimeout: 5000ms\n\u001b[32m- Expected  - 4\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   \"75%\",\u001b[39m\n\u001b[32m-   \"3\",\u001b[39m\n\u001b[32m-   \"2\",\u001b[39m\n\u001b[32m-   \"1\",\u001b[39m\n\u001b[31m+   \"0%\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[31m+   \"0\",\u001b[39m\n\u001b[2m  ]\u001b[22m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')\u001b[22m\n\u001b[2m    9 × locator resolved to 4 elements\u001b[22m\n\n\n  129 | }) {\n  130 |   const dashboard = page.getByRole('region', { name: 'Dashboard', exact: true })\n> 131 |   await expect(dashboard.getByRole('article').locator('strong')).toHaveText([\n      |                                                                  ^\n  132 |     `${expected.attendance}%`, String(expected.students), String(expected.classes), String(expected.teachers),\n  133 |   ])\n  134 |   await expect(page.getByRole('region', { name: 'Minhas Turmas' })).toContainText(`Turmas ativas no ano letivo ${year}`)\n    at expectDashboardMetrics (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:131:66)\n    at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:78:15"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:26:28.366Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-dashboard-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]="
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts",
+                        "column": 66,
+                        "line": 131
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "98a68ca360bf88cccb34-3ef4001ee9f933f2ff79",
+              "file": "flows/dashboard-metrics.spec.ts",
+              "line": 50,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "message": "\u001b[31mTesting stopped early after 1 maximum allowed failures.\u001b[39m"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-09-17T11:26:24.371Z",
+    "duration": 10587.449,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

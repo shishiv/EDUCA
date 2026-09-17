@@ -1,0 +1,47 @@
+(node:3002986) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:3008996) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/6] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/6] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:3015243) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/6] [chromium] › tests/e2e/assignments/teacher.spec.ts:32:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher
+[1A[2K  1) [chromium] › tests/e2e/assignments/teacher.spec.ts:32:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Definir Professor Titular', exact: true })[22m
+
+
+      43 |       await expect(page.getByRole('option', { name: /estrangeiro/i })).toHaveCount(0)
+      44 |       await page.getByRole('option', { name: /Titular F09/ }).click()
+    > 45 |       await page.getByRole('button', { name: 'Definir Professor Titular', exact: true }).click()
+         |                                                                                          ^
+      46 |       await expect.poll(fixture.read).toEqual([{ id: fixture.turmaId, professor_id: fixture.teacherId }])
+      47 |       await expect(page.getByRole('dialog')).toBeHidden()
+      48 |       await page.reload()
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts:45:90
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assignments-teacher-Profes-43507-ts-a-foreign-school-teacher-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/assignments-teacher-Profes-43507-ts-a-foreign-school-teacher-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/assignments/teacher.spec.ts:32:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher 
+  3 did not run
+  2 passed (35.0s)
+  1 error was not a part of any test, see above for details

@@ -1,0 +1,25 @@
+[
+  {
+    "test": "F09 titular persists after reload and rejects a foreign-school teacher",
+    "status": "failed",
+    "turmaId": "2e754999-9d43-4402-a579-88eee561357e",
+    "teacherIds": [
+      "d21e87f6-ff4c-4731-9b25-3a31528e55ea",
+      "131c48b7-7700-49c5-b20e-00928bb5d631"
+    ],
+    "removed": true,
+    "retainedAudit": [
+      {
+        "id": "34a0c60c-1a59-4c52-97ae-805ee9628f05",
+        "escola_id": "7095af30-b858-44c4-b78e-d000109c2331",
+        "fingerprint": "8f0855dc1956215e41156ca253910103"
+      },
+      {
+        "id": "9913fdb0-4712-4553-84f6-7a1dd7ba808d",
+        "escola_id": "7095af30-b858-44c4-b78e-d000109c2331",
+        "fingerprint": "b32da32cb166d0f156d22e7af4ea5d78"
+      }
+    ],
+    "appendedDuringCleanup": 1
+  }
+]

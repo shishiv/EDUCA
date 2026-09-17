@@ -21,6 +21,10 @@ access to `notas`. Positive entry/report-card cases remain in
 [`playwright.grades-positive.config.ts`](../../playwright.grades-positive.config.ts),
 outside that gate; collection does not establish a passing execution.
 
+The [F09 receipt](../../../artifacts/f09/README.md) records only the three strengthened
+browser slices and their no-op counterfactuals. It is not a general or R3 campaign
+and does not update any historical receipt below.
+
 ## Historical execution receipts: 2026-09-08 snapshot
 
 | Scope | State | Receipt and limit |
@@ -101,7 +105,7 @@ persistence. Source contracts and execution receipts remain separate.
 | `/politica-privacidade` | public | desktop + mobile | heading and policy content render without auth | `auth/login.spec.ts` | catalogado |
 | `/offline` | public | mobile | offline explanation and retry link | `auth/login.spec.ts` | catalogado |
 | `/unauthorized` | authenticated | desktop + mobile | denial message and return-to-dashboard link | `flows/permissions.spec.ts` | catalogado |
-| `/dashboard` | admin, diretor, secretario, professor | desktop + mobile | role greeting, stat cards, quick actions, mobile drawer, bottom nav, sidebar collapse/group toggle | `flows/dashboard-metrics.spec.ts`, `flows/permissions.spec.ts` | catalogado |
+| `/dashboard` | admin, diretor, secretario, professor | desktop + mobile | role greeting, quick actions and navigation; F09 desktop admin proof compares exact students/classes/teachers/attendance to SQL for two schools in 2025 and 2026, preserves context after reload, and distinguishes a failed query from zero | `flows/dashboard-metrics.spec.ts`, `flows/permissions.spec.ts` | catalogado |
 | `/dashboard/alunos` | admin, diretor, secretario | desktop + mobile | search, filters, empty/clear states, detail/edit navigation; deactivate opens and cancels the confirmation dialog, without a persistence assertion; no pagination control | `alunos/list.spec.ts` | catalogado |
 | `/dashboard/alunos/novo` | admin, diretor, secretario | desktop + mobile | tabs, required/native validation, CPF validation, save, cancel | `alunos/create.spec.ts` | catalogado |
 | `/dashboard/alunos/[id]` | admin, diretor, secretario | desktop + mobile | profile data, status, guardian, enrollment and edit/diary links | `alunos/detail.spec.ts` | catalogado |
@@ -124,11 +128,11 @@ persistence. Source contracts and execution receipts remain separate.
 | `/dashboard/turmas/[id]/chamada` | admin, diretor, secretario, professor | desktop + mobile | date/session selection, P/F/J toggles, save, review, close, immutable state | `attendance/grid.spec.ts`, `attendance/workflow.spec.ts` | catalogado |
 | `/dashboard/matriculas` | admin, diretor, secretario | desktop + mobile | search/filter/sort/pagination, detail, create | `matriculas/enrollment.spec.ts` | catalogado |
 | `/dashboard/matriculas/nova` | admin, diretor, secretario | desktop | student/class selection, capacity validation, create/cancel | `matriculas/enrollment.spec.ts` | catalogado |
-| `/dashboard/matriculas/[id]` | admin, diretor, secretario | desktop | detail navigation, student/class/status and Edit action visibility; no transfer/cancellation persistence assertion here (creation is persisted/reloaded in the same spec) | `matriculas/enrollment.spec.ts` | detalhe catalogado |
+| `/dashboard/matriculas/[id]` | admin, diretor, secretario; F09 mutation as diretor | desktop | detail and edit; F09 cancellation through the real save action, reload and exact SQL state; inactive-student reactivation denied without changing cancellation. Transfer persistence remains unproved | `matriculas/enrollment.spec.ts` | persistência catalogada |
 | `/dashboard/responsaveis` | admin, diretor, secretario | desktop + mobile | search/filter/pagination, detail, create | `responsaveis/crud.spec.ts` | catalogado |
 | `/dashboard/responsaveis/novo` | admin, diretor, secretario | desktop | required validation, CPF/phone, child linking, save/cancel | `responsaveis/crud.spec.ts` | catalogado |
 | `/dashboard/responsaveis/[id]` | admin, diretor, secretario | desktop | contact edit, save/reload and persisted field checks; fixture removal uses service-role cleanup, not a browser delete/unlink proof | `responsaveis/crud.spec.ts` | catalogado |
-| `/dashboard/atribuicoes` | admin, diretor | desktop | page, titular dialog and visible teacher selector; no option-scope or assignment save/reload assertion | `assignments/teacher.spec.ts` | diálogo catalogado |
+| `/dashboard/atribuicoes` | admin, diretor; F09 mutation as diretor | desktop | exact school teacher options, real assignment save, reload and SQL identity check; tampered foreign teacher rejected by the governed RPC without changing the saved titular | `assignments/teacher.spec.ts` | persistência catalogada |
 | `/dashboard/calendario` | blocked for all roles | desktop + mobile | dormant source retained; route and navigation must remain unavailable until governed persistence is approved | `flows/permissions.spec.ts`, `../unit/auth-middleware.test.ts`, `../unit/navigation.test.ts` | bloqueado |
 | `/diario` | admin, diretor, secretario, professor | desktop + mobile | seeded class-lesson list, filters/empty state, lesson detail dialog and mobile layout | `diary/list.spec.ts` | catalogado |
 | `/dashboard/diario` | authenticated diary roles | desktop + mobile | compatibility redirect to `/diario` | `diary/canonical-route.spec.ts` | catalogado |

@@ -1,0 +1,12 @@
+diff --git i/app/components/classes/teacher-assignment.tsx w/app/components/classes/teacher-assignment.tsx
+index c116418d..198d3786 100644
+--- i/app/components/classes/teacher-assignment.tsx
++++ w/app/components/classes/teacher-assignment.tsx
+@@ -103,6 +103,7 @@ export function TeacherAssignment({
+   }, [classId, schoolId, currentTeacherId, t])
+ 
+   const handleAssignTeacher = async () => {
++    return // F09 deliberate no-op, restored after the counterfactual run.
+     if (!selectedTeacherId) return
+ 
+     setLoading(true)
