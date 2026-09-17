@@ -42,6 +42,7 @@
     "test:database:restore": "bash ../supabase/tests/pilot/run-restore-contract.sh",
     "pilot:import:proof": "tsx scripts/pilot-import-proof.ts",
     "test:e2e:pilot:import": "bash scripts/run-pilot-import-proof-e2e.sh",
+    "test:pilot:import:lifecycle": "bash tests/unit/pilot/import-proof-lifecycle.test.sh",
     "deploy": "tsx scripts/pilot-safety-gate.ts deploy && vercel --prod",
     "deploy:preview": "tsx scripts/pilot-safety-gate.ts deploy && vercel",
     "vercel:login": "vercel login",
