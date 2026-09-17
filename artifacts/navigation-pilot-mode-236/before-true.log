@@ -1,0 +1,69 @@
+
+> educa@1.0.0 test /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> vitest run tests/unit/navigation.test.ts --maxWorkers\=1
+
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+ ❯ tests/unit/navigation.test.ts (21 tests | 3 failed) 15ms
+     × preserves mobile order and hides ungranted report and student routes 4ms
+     × keeps denied routes out of secretary and professor navigation 1ms
+     × shows settings to every role authorized for its route 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/navigation.test.ts > authenticated navigation > preserves mobile order and hides ungranted report and student routes
+AssertionError: expected [ 'dashboard', 'students', …(2) ] to deeply equal [ 'dashboard', 'students', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "dashboard",
+    "students",
+    "attendance",
+    "classDiary",
+-   "reports",
+  ]
+
+ ❯ tests/unit/navigation.test.ts:19:8
+     17|   it('preserves mobile order and hides ungranted report and student ro…
+     18|     expect(getMobileNavigationForRole('admin').map(item => item.id))
+     19|       .toEqual(['dashboard', 'students', 'attendance', 'classDiary', '…
+       |        ^
+     20|     expect(getMobileNavigationForRole('professor').map(item => item.id…
+     21|       .toEqual(['dashboard', 'attendance', 'classDiary'])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/unit/navigation.test.ts > authenticated navigation > keeps denied routes out of secretary and professor navigation
+AssertionError: expected [ '/dashboard', …(6) ] to include '/dashboard/configuracoes'
+ ❯ tests/unit/navigation.test.ts:57:28
+     55|     expect(secretaryLinks).not.toContain('/dashboard/usuarios')
+     56|     expect(secretaryLinks).not.toContain('/dashboard/escolas')
+     57|     expect(secretaryLinks).toContain('/dashboard/configuracoes')
+       |                            ^
+     58|     expect(professorLinks).not.toContain('/dashboard/alunos')
+     59|     expect(professorLinks).not.toContain('/dashboard/matriculas')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/unit/navigation.test.ts > authenticated navigation > shows settings to every role authorized for its route
+AssertionError: expected [ '/dashboard', …(9) ] to include '/dashboard/configuracoes'
+ ❯ tests/unit/navigation.test.ts:75:21
+     73|     for (const role of ['admin', 'secretario', 'diretor']) {
+     74|       const links = getNavigationForRole(role).flatMap(group => group.…
+     75|       expect(links).toContain('/dashboard/configuracoes')
+       |                     ^
+     76|     }
+     77|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 18 passed (21)
+   Start at  19:13:57
+   Duration  679ms (transform 52ms, setup 65ms, import 126ms, tests 15ms, environment 355ms)
+
+ ELIFECYCLE  Test failed. See above for more details.
