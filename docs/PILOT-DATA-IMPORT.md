@@ -149,7 +149,25 @@ Objetos de Storage do proof recebem os metadados `pilot_import_batch_id` e `pilo
 
 O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt de segurança, contagens, fingerprints, objetos de Storage, estado criptográfico e retenção. Falhas emitem `PILOT_IMPORT_PROOF_SAFETY_RECEIPT` com o alvo tentado e o motivo, sem URL, chave ou conteúdo.
 
-O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. O E2E grava um receipt operacional em `.pilot-evidence/governed-import-proof-e2e.md`; esse diretório é ignorado e não contém dados de aluno ou família. O receipt não contém CSV, nomes, e-mails ou PII e identifica uma prova isolada sintética, não prontidão municipal.
+O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. Esses receipts de operação não comprovam que o E2E terminou ou que seu cluster foi removido.
+
+O E2E anuncia `PILOT_IMPORT_PROOF_E2E_ATTEMPT` antes do preflight e guarda cada tentativa em `.pilot-evidence/governed-import-proof-e2e/<runId>/`. Não há alias de sucesso corrente. O antigo `governed-import-proof-e2e.md`, se existir, é movido para `legacy-unattributed.md` na nova tentativa. Esse arquivo é histórico sem atribuição, nunca o resultado da tentativa nova.
+
+- `result.json` relaciona `runId`, SHA do commit, indicação de árvore modificada, comando selecionado, hash do manifesto, código de saída e estados do banco e workspace. Começa em `running`. Só termina em `pass` após todas as verificações e cleanup.
+- `selection.sha256` identifica os bytes do runner completo selecionado, seu finalizador, dependências de importação, manifesto de pacote, lockfile, bootstrap, migrations e provisionamento aplicados. Os hashes são conferidos novamente antes do sucesso para rejeitar alteração durante a execução. Não representa seleção ou execução de testes de browser.
+- `receipt.md` é publicado atomicamente apenas após `pg_ctl stop` bem-sucedido, `pg_ctl status` igual a 3, ausência de PID vivo conhecido e remoção verificada do workspace. Tem o mesmo `runId`, SHA e hash do manifesto. Falhas não publicam esse arquivo.
+- Falha de parada, status incerto ou PID vivo conservam o workspace privado. `recovery.txt` registra somente seu caminho local para intervenção. Não remova esse diretório até comprovar que o processo terminou. O runner não exporta logs brutos, CSV, nomes, e-mails ou chaves como diagnóstico.
+
+`INT`, `TERM` e `HUP` preservam saída não-zero e passam pelo mesmo cleanup, inclusive se chegarem durante a parada. Um `KILL` ou queda da máquina não executa traps: `running` não é sucesso e exige inspeção dos recursos locais. O diretório de evidência é ignorado pelo Git. O receipt identifica somente uma prova sintética isolada, não prontidão municipal.
+
+A regressão serial do lifecycle usa stubs locais, sem banco nem browser:
+
+```bash
+cd app
+pnpm test:pilot:import:lifecycle
+```
+
+Ela cobre receipt histórico, falha precoce, parada falha, parada que mente, PID vivo, status desconhecido, sinais inclusive durante cleanup, startup parcial, alteração de fontes durante a execução e sucesso após cleanup. Não substitui a prova raw-PG `pnpm test:e2e:pilot:import`.
 
 O E2E de browser executa importação sintética real, aprovação maker-checker, verifica ciphertext e acordo, chama rollback, e confirma que as linhas canônicas, ciphertext, tombstone e auditoria desapareceram ou ficaram redigidos. O proof runner também executa deliberate-breaks de segurança e governança: alvo inesperado, host de banco fora da lista local, demo, modo real configurado, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
 O teste de banco cobre associação de lote ausente, lote ausente, alvo demo ou incorreto, expiração, frequência vinculada, responsável compartilhado, isolamento, rollback exato e replay. Se uma validação for removida, o teste falha.

@@ -1,0 +1,13 @@
+{
+  "runId": "20260917T091328Z-ttOJHC",
+  "sourceSha": "492da58becd059dfc4b30e4a9ab12268dae99205",
+  "sourceDirty": false,
+  "command": "pnpm test:e2e:pilot:import",
+  "selectionManifest": "selection.sha256",
+  "selectionSha256": "34f47a0969346537eb65e767a81f3ea26311638c0dcb39bdf3894da4d5c12c5f",
+  "result": "pass",
+  "exitCode": 0,
+  "stage": "complete",
+  "database": "stopped",
+  "workspace": "removed"
+}

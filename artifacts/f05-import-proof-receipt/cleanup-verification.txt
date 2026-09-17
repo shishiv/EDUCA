@@ -1,0 +1,5 @@
+PASS: source SHA, clean source tree, selection hash and final result agree
+PASS: local PostgreSQL listener on port 56779 refuses connections
+PASS: .f05 was empty, including child caches, and its parent directory was removed
+PASS: earlier long-path validation workspaces and caches also removed
+PASS: failed long-path attempt has failed result and no success receipt

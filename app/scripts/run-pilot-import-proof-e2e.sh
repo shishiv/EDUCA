@@ -6,38 +6,37 @@ ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
 BOOTSTRAP="$ROOT_DIR/supabase/tests/database/bootstrap.sql"
 PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
-EVIDENCE_FILE="$ROOT_DIR/.pilot-evidence/governed-import-proof-e2e.md"
+source "$APP_DIR/scripts/pilot-import-proof-lifecycle.sh"
+begin_import_proof
 
-for command in initdb pg_ctl psql node; do
+for command in initdb pg_ctl psql node pnpm; do
   command -v "$command" >/dev/null || { echo "PILOT_IMPORT_PROOF_E2E_MISSING_COMMAND: $command" >&2; exit 1; }
 done
 
 WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-pilot-import-proof.XXXXXX")
+WORKSPACE_STATE=created
+# Keep child tool caches and temporary files inside the owned cleanup boundary.
+export TMPDIR="$WORK_DIR"
 DATA_DIR="$WORK_DIR/data"
-SOCKET_DIR="$WORK_DIR/socket"
 PORT=${POSTGRES_TEST_PORT:-$((50000 + $$ % 10000))}
 PROOF_DB="educa_pilot_proof_$$"
 PROOF_URL="postgresql://postgres@127.0.0.1:$PORT/$PROOF_DB"
-SERVER_STARTED=false
 CSV_FILE="$WORK_DIR/pilot.csv"
 SECOND_CSV_FILE="$WORK_DIR/pilot-second.csv"
 APPROVAL_FILE="$WORK_DIR/approval.json"
 MISSING_OWNER_FILE="$WORK_DIR/approval-missing-owner.json"
 CHANGED_GOVERNANCE_FILE="$WORK_DIR/approval-changed-governance.json"
 
-cleanup() {
-  if [[ "$SERVER_STARTED" == true ]]; then
-    pg_ctl -D "$DATA_DIR" -m immediate -w stop >/dev/null 2>&1 || true
-    SERVER_STARTED=false
-  fi
-  rm -rf "$WORK_DIR"
-}
-trap cleanup EXIT
-
-mkdir -p "$SOCKET_DIR"
+# Raw subprocess output stays inside the private disposable workspace. Only
+# allowlisted lifecycle diagnostics and the post-cleanup receipt escape it.
+{
+PROOF_STAGE=initdb
 initdb -D "$DATA_DIR" -A trust --no-locale --encoding=UTF8 --username=postgres >/dev/null
-pg_ctl -D "$DATA_DIR" -l "$WORK_DIR/postgres.log" -o "-F -k '$SOCKET_DIR' -p $PORT" -w start >/dev/null
-SERVER_STARTED=true
+PROOF_STAGE=start
+START_ATTEMPTED=true
+pg_ctl -D "$DATA_DIR" -l "$WORK_DIR/postgres.log" -o "-F -k '' -p $PORT -h 127.0.0.1" -t 15 -w start >/dev/null
+DATABASE_STATE=running
+PROOF_STAGE=proof
 
 PSQL=(psql -X -h 127.0.0.1 -p "$PORT" -U postgres -v ON_ERROR_STOP=1)
 "${PSQL[@]}" -d postgres -c "CREATE DATABASE \"$PROOF_DB\"" >/dev/null
@@ -172,7 +171,8 @@ export PILOT_SYNTHETIC_DATA_ONLY=true
 export PILOT_IMPORT_SYNTHETIC_MARKER=SYNTHETIC-EDUCA-PILOT
 export NEXT_PUBLIC_DEMO_SANDBOX=false
 export DEMO_SANDBOX=false
-export PILOT_IMPORT_ENCRYPTION_KEY="$(printf '01234567890123456789012345678901' | base64 -w0)"
+PILOT_IMPORT_ENCRYPTION_KEY="$(printf '01234567890123456789012345678901' | base64 -w0)"
+export PILOT_IMPORT_ENCRYPTION_KEY
 export PILOT_IMPORT_ENCRYPTION_KEY_ID=proof-e2e-v1
 unset SUPABASE_DEMO_URL SUPABASE_DEMO_DB_URL SUPABASE_DEMO_SERVICE_KEY
 
@@ -192,7 +192,6 @@ run_expected_failure() {
   fi
   grep -F "$expected" "$WORK_DIR/expected-failure.log" >/dev/null || {
     echo "PILOT_IMPORT_PROOF_DELIBERATE_BREAK_WRONG_ERROR: expected $expected" >&2
-    cat "$WORK_DIR/expected-failure.log" >&2
     exit 1
   }
 }
@@ -321,14 +320,20 @@ if printf '%s\n' "$REPLAY_OUTPUT" | grep -F '"deletedEnrollments":0' >/dev/null 
 fi
 [[ "$REPLAY_CHECK" == true ]] || { echo "PILOT_IMPORT_PROOF_E2E_REPLAY_FAILED: replay was not idempotent" >&2; exit 1; }
 
-mkdir -p "$(dirname "$EVIDENCE_FILE")"
-cat > "$EVIDENCE_FILE" <<EOF
+write_import_proof_receipt() {
+cat <<EOF
 # Governed pilot CSV proof receipt
 
 This evidence was generated against a disposable PostgreSQL cluster and one database named $PROOF_DB. The CSV contained synthetic rows only. No demo or production endpoint was used.
 
 | Check | Observed |
 | --- | --- |
+| runId | $RUN_ID |
+| Source commit SHA | $SOURCE_SHA |
+| Source working tree dirty | $SOURCE_DIRTY |
+| Selection manifest | selection.sha256 |
+| Selection SHA-256 | $SELECTION_SHA256 |
+| PostgreSQL stopped and workspace removed | true |
 | Target | isolated-proof |
 | Source mode | synthetic |
 | Batch | $BATCH_ID |
@@ -345,6 +350,7 @@ This evidence was generated against a disposable PostgreSQL cluster and one data
 | Plaintext payload stored | false |
 | Owner and agreement recorded | true |
 | Receipt contains no CSV or PII | true |
+| Safety deliberate breaks: target, host, demo, demo reference, real mode, missing marker, missing data mode, pilot disabled | red, no batch mutation |
 | Deliberate break without owner | red |
 | Governance change fingerprint mismatch | red |
 | Deliberate break without encryption key | red |
@@ -357,11 +363,7 @@ This evidence was generated against a disposable PostgreSQL cluster and one data
 This is a synthetic isolated proof receipt. It is not evidence of municipal readiness.
 EOF
 
-cleanup
-[[ ! -e "$WORK_DIR" ]] || {
-  echo "PILOT_IMPORT_PROOF_E2E_CLEANUP_FAILED: temporary artifacts remain" >&2
-  exit 1
 }
-trap - EXIT
-
-echo "PILOT_IMPORT_PROOF_E2E_OK: synthetic isolated PostgreSQL and Storage governance, safety guard, retention, fingerprints, exact rollback, isolation, replay, and cleanup passed"
+PROOF_COMPLETE=true
+PROOF_STAGE=cleanup
+} > "$WORK_DIR/proof.log" 2>&1
