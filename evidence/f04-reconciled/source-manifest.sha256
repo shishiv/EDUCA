@@ -1,0 +1,7 @@
+752ad91d589d6ef1e8916ba93d99e85cca4bdf73424a5e026cf744c5e77e8116  app/app/api/users/[userId]/status/handler.ts
+98578771a8f4b53393ba16b26fedad79086afab68724fe12e6241fa9012c417c  app/tests/unit/api/user-status-route.test.ts
+7e772f214d4ca9c7e67a7440c3da946a17fb09b449c973178eba653dc4c8e748  app/tests/live/user-status-atomic.live.test.ts
+e2e8a9b998f427988ab4e079894d2c301f356105b5d95a125ae5bd23fb44dad7  app/tests/live/user-status-concurrency.live.test.ts
+f97b889455a22d4a22df766c88f9c1863eb06fc9c1bcf307f9d36185dba2db2c  app/types/database.ts
+54c72c04bcf2fba262e4f43830ea77e392461277369c114d1d9379bb97bce64e  supabase/migrations/20260915040000_atomic_user_status.sql
+6382cb9f2052de1d9c743fb4e88496f77a0025f75171766376a17ad87d0dc814  supabase/tests/database/user_status_atomic.test.sql

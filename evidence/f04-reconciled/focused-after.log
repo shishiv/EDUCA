@@ -1,0 +1,14 @@
+
+> educa@1.0.0 test /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> vitest run tests/live/user-status-atomic.live.test.ts tests/live/user-status-concurrency.live.test.ts tests/unit/api/user-status-route.test.ts --maxWorkers\=1
+
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+(node:1389851) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  05:33:38
+   Duration  3.05s (transform 98ms, setup 169ms, import 240ms, tests 1.89s, environment 395ms)

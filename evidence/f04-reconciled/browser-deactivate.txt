@@ -1,0 +1,3 @@
+result: "{\"receipts\":[{\"status\":200,\"body\":{\"user\":{\"id\":\"2b3aa1d6-49d6-48b6-8a13-0738a5b81861\",\"ativo\":false},\"receipt\":\"03205a28-f38e-4b46-860e-2bfccc4279cf\"}}],\"row\":\"PS\\nProfessora Sintetica A\\nprofessora.a@synthetic.invalid\\n\\tProfessor(a)\\t\\nEscola Sintetica A\\n\\t\\n17/09/2026 às 05:29\\n\\tInativo\\t\"}"
+help[1]:
+  Run `chrome-devtools-axi snapshot` to see current page state
