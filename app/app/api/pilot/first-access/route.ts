@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { newPasswordSchema } from '@/lib/validation/new-password'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { pilotErrorResponse } from '@/lib/pilot/pilot-api-error'
@@ -17,7 +18,7 @@ import {
 } from '@/lib/services/user-lifecycle'
 
 const firstAccessSchema = z.object({
-  password: z.string().min(12).max(128).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/).regex(/[^A-Za-z0-9]/),
+  password: newPasswordSchema,
 })
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 type ServiceClient = ReturnType<typeof createServiceRoleClient>
