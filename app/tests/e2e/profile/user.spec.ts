@@ -162,6 +162,9 @@ test('profile changes the password of an isolated synthetic account', async ({ p
     await passwordResponse?.catch(() => undefined)
     await page.goto('/politica-privacidade')
     await expect(page.getByRole('heading', { name: 'Política de Privacidade', level: 1, exact: true })).toBeVisible()
+    // Public pages still mount AuthProvider. Stop its authenticated observers
+    // before retiring the fixture so cleanup cannot race a profile read.
+    await page.close()
     // Login leaves immutable audit history referencing this account. Retire
     // the exact fixture here; the disposable database lifecycle removes it.
     const { error: profileError } = await service.from('users').update({ ativo: false }).eq('id', userId)
