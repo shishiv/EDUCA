@@ -1,0 +1,12 @@
+
+> educa@1.0.0 test /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> vitest run tests/unit/navigation.test.ts --maxWorkers\=1
+
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  19:14:47
+   Duration  472ms (transform 48ms, setup 45ms, import 99ms, tests 11ms, environment 222ms)

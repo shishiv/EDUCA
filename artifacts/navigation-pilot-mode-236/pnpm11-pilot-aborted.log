@@ -1,0 +1,18 @@
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY] Aborted removal of modules directory due to no TTY
+
+If you are running pnpm in CI, set the CI environment variable to "true", or set "confirmModulesPurge" to "false".
+[ERROR] Command failed with exit code 1: pnpm install
+
+pnpm: Command failed with exit code 1: pnpm install
+    at getFinalError (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:89319:14)
+    at makeError (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:91626:21)
+    at getSyncResult (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:93470:10)
+    at spawnSubprocessSync (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:93430:14)
+    at execaCoreSync (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:93360:23)
+    at callBoundExeca (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:95888:23)
+    at boundExeca (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:95865:49)
+    at sync2 (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:96020:14)
+    at runPnpmCli (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:273515:5)
+    at runDepsStatusCheck (file:///home/shiv/.local/lib/node_modules/pnpm/dist/pnpm.mjs:274731:7)

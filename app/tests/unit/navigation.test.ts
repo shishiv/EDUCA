@@ -1,8 +1,22 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getActiveNavigationItemId, getMobileNavigationForRole, getNavigationForRole, isNavigationItemActive } from '../../components/layout/navigation'
 import { canAccessRoute, routeRoles } from '../../lib/route-policy'
 
-describe('authenticated navigation', () => {
+beforeEach(() => {
+  vi.stubEnv('NEXT_PUBLIC_DEMO_SANDBOX', 'false')
+  vi.stubEnv('DEMO_SANDBOX', 'false')
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+describe('authenticated navigation in general mode', () => {
+  beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_PILOT_MODE', 'false')
+    vi.stubEnv('PILOT_MODE', 'false')
+  })
+
   it.each(routeRoles)('derives mobile destinations and icons from the authorized navigation for %s', role => {
     const available = getNavigationForRole(role).flatMap(group => group.items)
     const mobile = getMobileNavigationForRole(role)
@@ -80,5 +94,31 @@ describe('authenticated navigation', () => {
     const groups = getNavigationForRole('diretor')
     expect(getActiveNavigationItemId('/dashboard/turmas', groups)).toBe('classes')
     expect(groups.flatMap(group => group.items).filter(item => item.id === getActiveNavigationItemId('/dashboard/turmas', groups))).toHaveLength(1)
+  })
+})
+
+describe('authenticated navigation in synthetic pilot mode', () => {
+  beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_PILOT_MODE', 'true')
+    vi.stubEnv('PILOT_MODE', 'true')
+  })
+
+  it('preserves mobile core destinations without reports or ungranted student routes', () => {
+    expect(getMobileNavigationForRole('admin').map(item => item.id))
+      .toEqual(['dashboard', 'students', 'attendance', 'classDiary'])
+    expect(getMobileNavigationForRole('professor').map(item => item.id))
+      .toEqual(['dashboard', 'attendance', 'classDiary'])
+    expect(getMobileNavigationForRole('unrecognized')).toEqual([])
+  })
+
+  it.each(['admin', 'secretario', 'diretor'])('hides reports and settings from %s despite route authorization', role => {
+    const links = getNavigationForRole(role).flatMap(group => group.items).map(item => item.href)
+
+    expect(canAccessRoute('/dashboard/relatorios', role)).toBe(true)
+    expect(canAccessRoute('/dashboard/configuracoes', role)).toBe(true)
+    expect(links).not.toContain('/dashboard/relatorios')
+    expect(links).not.toContain('/dashboard/configuracoes')
+    expect(links).toContain('/dashboard')
+    expect(links).toContain('/diario')
   })
 })
