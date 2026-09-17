@@ -65,6 +65,7 @@ This is the intended persona: an admin who can see and manage all three seeded s
 | Aspect | Detail |
 | --- | --- |
 | Email / password | `demo@educa.app.br` / `Demo@2026` |
+| Sandbox login form | With `NEXT_PUBLIC_DEMO_SANDBOX=true`, **Preencher credenciais demo** fills the fixed sign-in fields without submitting them. |
 | Role | `admin` |
 | `escola_id` | `NULL` (multi-school secretariat) |
 | School context | Admin must select a school from the sidebar selector before school-scoped actions |

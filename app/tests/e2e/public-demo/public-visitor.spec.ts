@@ -13,8 +13,7 @@ test.describe('J1: public visitor journey', () => {
     expect(response?.status()).toBeLessThan(400)
     await expect(page.getByRole('heading', { level: 1, name: 'Gestão escolar para redes municipais, com código aberto.' })).toBeVisible()
     await expect(page.getByRole('img', { name: 'EDUCA' }).first()).toBeVisible()
-    await expect(page.getByTestId('locale-switcher')).toBeVisible()
-    await expect(page.getByTestId('locale-switcher')).toHaveCSS('position', 'relative')
+    await expect(page.getByRole('button', { name: 'Mudar idioma para English' }).first()).toHaveText('PT')
 
     await page.getByRole('link', { name: 'Ver a demonstração' }).click()
     await expect(page).toHaveURL(/\/demo\/?$/)
@@ -25,26 +24,31 @@ test.describe('J1: public visitor journey', () => {
     await expect(page).toHaveURL(/\/login\/?$/)
     await expect(page.getByLabel('E-mail', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Senha', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Preencher credenciais demo' }).click()
+    await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('demo@educa.app.br')
+    await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('Demo@2026')
+    await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
     await page.getByRole('link', { name: /voltar ao início/i }).click()
     await expect(page).toHaveURL(/\/$/)
   })
 
-  test('public pages keep the language selector in layout flow', async ({ page }) => {
+  test('public headers use the compact locale button and login has no locale control', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('combobox', { name: 'Idioma da aplicação' }).selectOption('en')
+    await page.getByRole('button', { name: 'Mudar idioma para English' }).first().click()
     await expect.poll(async () => (await page.context().cookies()).find(cookie => cookie.name === 'EDUCA_LOCALE')?.value).toBe('en')
     await expect(page.getByRole('heading', { level: 1, name: 'School management for municipal networks, with open-source code.' })).toBeVisible()
 
-    for (const path of ['/demo', '/login', '/politica-privacidade']) {
+    for (const path of ['/demo', '/politica-privacidade']) {
       await page.goto(path)
-      const selector = page.getByTestId('locale-switcher')
-      await expect(selector).toBeVisible()
-      await expect(selector).toHaveCSS('position', 'relative')
+      await expect(page.getByRole('button', { name: 'Switch language to Português (Brasil)' })).toHaveText('EN')
     }
+
+    await page.goto('/login')
+    await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
   })
 
 
-  test('Portuguese-only blog routes hide the locale selector', async ({ page }) => {
+  test('Portuguese-only blog routes hide the locale button', async ({ page }) => {
     for (const path of [
       '/blog',
       '/blog/lgpd-em-escola-municipal',

@@ -40,20 +40,15 @@ function renderProviders(pathname: string) {
 describe('Providers locale presentation', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it.each(['/', '/demo', '/politica-privacidade'])('keeps the locale selector on %s', pathname => {
-    renderProviders(pathname)
-
-    expect(screen.getByTestId('locale-switcher')).toBeVisible()
-  })
-
-  it.each([
-    '/blog',
-    '/blog/lgpd-em-escola-municipal',
-    '/blog/encarregado-de-dados-em-prefeitura',
-    '/blog/dado-de-crianca-no-educacenso',
-  ])('hides the locale selector on Portuguese-only blog route %s', pathname => {
+  it.each(['/', '/demo', '/login', '/politica-privacidade', '/blog'])('hides the floating locale selector on public path %s', pathname => {
     renderProviders(pathname)
 
     expect(screen.queryByTestId('locale-switcher')).not.toBeInTheDocument()
+  })
+
+  it('keeps the app locale selector on dashboard paths', () => {
+    renderProviders('/dashboard')
+
+    expect(screen.getByTestId('locale-switcher')).toHaveClass('locale-switcher--app')
   })
 })

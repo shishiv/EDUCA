@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react'
 import { BrandLogo } from '@/components/marketing/brand-logo'
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
 
 function Wordmark() {
   return <Link href="/" className="landing-wordmark"><BrandLogo /></Link>
@@ -99,8 +100,8 @@ export function EducaLanding() {
             <Link href="/blog">{t('blog')}</Link>
           </nav>
           <div className="landing-header__actions">
-            <Link href="/login" className="landing-login">{t('login')}</Link>
-            <a href="#comecar" className="landing-header__cta">{t('meet')} <ArrowRight size={15} /></a>
+            <LocaleSwitcher variant="button" />
+            <Link href="/demo" className="landing-header__cta">{t('meet')} <ArrowRight size={15} /></Link>
           </div>
           <details className="landing-menu">
             <summary aria-label={t('openMenu')}><Menu size={23} /></summary>
@@ -109,7 +110,7 @@ export function EducaLanding() {
               <a href="#recursos">{t('resources')}</a>
               <a href="#aberta">{t('openSource')}</a>
               <Link href="/blog">{t('blog')}</Link>
-              <Link href="/login">{t('login')}</Link>
+              <LocaleSwitcher variant="button" />
             </nav>
           </details>
         </div>

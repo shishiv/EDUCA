@@ -13,10 +13,6 @@ function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(path => path === '/' ? pathname === path : pathname === path || pathname.startsWith(`${path}/`))
 }
 
-function isPortugueseOnlyBlogPath(pathname: string) {
-  return pathname === '/blog' || pathname.startsWith('/blog/')
-}
-
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [queryClient] = useState(
@@ -35,7 +31,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ServiceWorkerProvider>
-          {!isPortugueseOnlyBlogPath(pathname) && <LocaleSwitcher variant={isPublicPath(pathname) ? 'public' : 'app'} />}
+          {!isPublicPath(pathname) && <LocaleSwitcher />}
           {children}
         </ServiceWorkerProvider>
       </AuthProvider>

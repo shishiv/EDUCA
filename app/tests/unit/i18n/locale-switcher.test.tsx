@@ -20,19 +20,30 @@ vi.mock('@/i18n/actions', () => ({
 describe('LocaleSwitcher', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.setUserLocale.mockResolvedValue(undefined)
+    mocks.setUserLocale.mockImplementation(() => new Promise(() => {}))
   })
 
-  it('exposes a labelled native selector with Portuguese selected by default', () => {
+  it('exposes a labelled compact locale button', () => {
     render(
       <NextIntlClientProvider locale="pt-BR" messages={{ common: commonMessages }}>
-        <LocaleSwitcher variant="public" />
+        <LocaleSwitcher variant="button" />
       </NextIntlClientProvider>
     )
 
-    expect(screen.getByRole('combobox', { name: 'Idioma da aplicação' })).toHaveValue('pt-BR')
-    expect(screen.getByRole('option', { name: 'English' })).toBeInTheDocument()
-    expect(screen.getByTestId('locale-switcher')).toHaveClass('locale-switcher--public')
+    expect(screen.getByRole('button', { name: 'Mudar idioma para English' })).toHaveTextContent('PT')
+    expect(screen.getByTestId('locale-switcher')).toHaveClass('locale-switcher--button')
+  })
+
+  it('switches to the other locale from the compact button', async () => {
+    render(
+      <NextIntlClientProvider locale="pt-BR" messages={{ common: commonMessages }}>
+        <LocaleSwitcher variant="button" />
+      </NextIntlClientProvider>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mudar idioma para English' }))
+
+    await waitFor(() => expect(mocks.setUserLocale).toHaveBeenCalledWith('en'))
   })
 
   it('persists a supported locale', async () => {

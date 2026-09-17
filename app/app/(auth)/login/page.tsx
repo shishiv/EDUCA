@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { BrandLogo } from '@/components/marketing/brand-logo'
+import { showDemoCredentialButton } from '@/lib/demo-sandbox/login-demo-credentials'
 
 export default function LoginPage() {
   const t = useTranslations('auth.login')
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const { signIn } = useAuth()
   const router = useRouter()
+  const demoCredentialButtonVisible = showDemoCredentialButton()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -213,6 +215,20 @@ export default function LoginPage() {
                 </>
               )}
             </Button>
+            {demoCredentialButtonVisible && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEmail('demo@educa.app.br')
+                  setPassword('Demo@2026')
+                  setError('')
+                }}
+                className="w-full"
+              >
+                {t('fillDemoCredentials')}
+              </Button>
+            )}
           </form>
 
           <p className="auth-login__footer mt-8 text-center text-sm">

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="EDUCA">
+  <defs>
+    <linearGradient id="educa-icon-grad-favicon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <circle cx="24" cy="24" r="22" fill="url(#educa-icon-grad-favicon)"/>
+  <text x="12" y="33" font-family="Lexend, sans-serif" font-weight="700" font-size="28" fill="#ffffff">E</text>
+  <circle cx="36" cy="14" r="4" fill="#fcd34d"/>
+</svg>
