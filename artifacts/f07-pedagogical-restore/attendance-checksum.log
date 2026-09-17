@@ -1,0 +1,208 @@
+PILOT_RESTORE_TARGET_RECEIPT: target=isolated-proof database_target=isolated_proof data_mode=synthetic synthetic_marker=SYNTHETIC-EDUCA-PILOT database_guard=pending
+(node:51303) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+DO
+DO
+RESTORE_INTEGRITY_OK: foreign keys, PostgreSQL JSONB fingerprints and captured deadline consistency
+PILOT_RESTORE_ASSERTION name=source.captured_reports result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.legacy_reports result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.captured_deadlines result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.synthetic_governance result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=source.synthetic_identities result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=source.auth_manifest_count result=pass observed=4 expected=>0
+PILOT_RESTORE_ASSERTION name=source.student_count result=pass observed=2 expected=>0
+PILOT_RESTORE_ASSERTION name=source.attendance_count result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.storage_bucket_count result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.storage_object_count result=pass observed=2 expected=>0
+PILOT_RESTORE_ASSERTION name=source.rpo_target_hours result=pass observed=24 expected=>0
+PILOT_RESTORE_ASSERTION name=source.rto_target_hours result=pass observed=4 expected=>0
+PILOT_RESTORE_TARGET_RECEIPT: target=isolated-proof database_target=isolated_proof data_mode=synthetic synthetic_marker=SYNTHETIC-EDUCA-PILOT database_guard=accepted
+(node:54431) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+NOTICE:  truncate cascades to table "escolas"
+NOTICE:  truncate cascades to table "attendance_municipal_thresholds"
+NOTICE:  truncate cascades to table "users"
+NOTICE:  truncate cascades to table "responsaveis"
+NOTICE:  truncate cascades to table "alunos"
+NOTICE:  truncate cascades to table "turmas"
+NOTICE:  truncate cascades to table "disciplinas"
+NOTICE:  truncate cascades to table "aulas_abertas"
+NOTICE:  truncate cascades to table "sessoes_aula"
+NOTICE:  truncate cascades to table "calendario_escolar"
+NOTICE:  truncate cascades to table "configs"
+NOTICE:  truncate cascades to table "educacenso_exports"
+NOTICE:  truncate cascades to table "audit_logs"
+NOTICE:  truncate cascades to table "audit_trail"
+NOTICE:  truncate cascades to table "escola_feature_flags"
+NOTICE:  truncate cascades to table "pilot_audit_log"
+NOTICE:  truncate cascades to table "pilot_import_batches"
+NOTICE:  truncate cascades to table "pilot_import_approvals"
+NOTICE:  truncate cascades to table "pilot_user_invitations"
+NOTICE:  truncate cascades to table "pilot_metric_events"
+NOTICE:  truncate cascades to table "whatsapp_notification_optins"
+NOTICE:  truncate cascades to table "whatsapp_notification_messages"
+NOTICE:  truncate cascades to table "certificado_emissores"
+NOTICE:  truncate cascades to table "attendance_reopen_requests"
+NOTICE:  truncate cascades to table "pilot_data_treatment_agreements"
+NOTICE:  truncate cascades to table "anos_letivos"
+NOTICE:  truncate cascades to table "school_schema_registry"
+NOTICE:  truncate cascades to table "vivencias"
+NOTICE:  truncate cascades to table "vivencias_campos_experiencia"
+NOTICE:  truncate cascades to table "relatorios_descritivos_vivencias"
+NOTICE:  truncate cascades to table "aluno_responsaveis"
+NOTICE:  truncate cascades to table "matriculas"
+NOTICE:  truncate cascades to table "frequencia"
+NOTICE:  truncate cascades to table "codigos_inep"
+NOTICE:  truncate cascades to table "audit_sessoes_aula"
+NOTICE:  truncate cascades to table "relatorios_descritivos"
+NOTICE:  truncate cascades to table "conteudo_aula"
+NOTICE:  truncate cascades to table "pilot_data_tombstones"
+NOTICE:  truncate cascades to table "certificado_atividades"
+NOTICE:  truncate cascades to table "certificado_atividade_sessoes"
+NOTICE:  truncate cascades to table "certificados_emitidos"
+NOTICE:  truncate cascades to table "attendance_municipal_threshold_audit"
+NOTICE:  truncate cascades to table "school_schema_versions"
+NOTICE:  truncate cascades to table "notas"
+NOTICE:  truncate cascades to table "objects"
+DO
+DO
+RESTORE_INTEGRITY_OK: foreign keys, PostgreSQL JSONB fingerprints and captured deadline consistency
+BEGIN
+CREATE FUNCTION
+ assert_true
+-------------
+
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+SET
+              set_config
+--------------------------------------
+ 20000000-0000-0000-0000-000000000001
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+DO
+              set_config
+--------------------------------------
+ 20000000-0000-0000-0000-000000000003
+(1 row)
+
+ set_attendance_reopen_window_hours
+------------------------------------
+                                 48
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+              set_config
+--------------------------------------
+ 20000000-0000-0000-0000-000000000002
+(1 row)
+
+DO
+ROLLBACK
+RESTORE_PEDAGOGICAL_OK: two schools, empty/configured period, 60 captured sources, legacy, expired deadline, RLS and write denials
+PILOT_RESTORE_ASSERTION name=restore.pedagogical_fixture_scope_and_immutability result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.auth_manifest_count result=pass observed=4 expected=4
+PILOT_RESTORE_ASSERTION name=restore.student_count result=pass observed=2 expected=2
+PILOT_RESTORE_ASSERTION name=restore.attendance_count result=fail observed=0 expected=1
+PILOT_RESTORE_ASSERTION name=restore.storage_metadata_count result=pass observed=2 expected=2
+PILOT_RESTORE_ASSERTION name=restore.storage_bucket_count result=pass observed=1 expected=1
+PILOT_RESTORE_ASSERTION name=restore.synthetic_identities result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.auth_profile_link result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.migration_files result=pass observed=50 expected=>0
+PILOT_RESTORE_ASSERTION name=restore.pilot_configuration result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.rpo_target_hours result=pass observed=24 expected=24
+PILOT_RESTORE_ASSERTION name=restore.rto_target_hours result=pass observed=4 expected=4
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_municipality_config result=pass observed=ac32f20672a120d8a895dcfa205ba7133f35d9e1992de739c7bc68183ced13f9 expected=ac32f20672a120d8a895dcfa205ba7133f35d9e1992de739c7bc68183ced13f9
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.attendance_municipal_thresholds result=pass observed=f138dd83cdb8388846e65af5ce4d2f54145b9b1633e116490f5cf9fd4e74a117 expected=f138dd83cdb8388846e65af5ce4d2f54145b9b1633e116490f5cf9fd4e74a117
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.escolas result=pass observed=0edf9fe982af890c1f40949ce2d239b1597c229da67f8ad0a32789e48db934ec expected=0edf9fe982af890c1f40949ce2d239b1597c229da67f8ad0a32789e48db934ec
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.users result=pass observed=ad199c4948ac16112b5906c6a7267380cf322804487af28a108d7a9118be9e4c expected=ad199c4948ac16112b5906c6a7267380cf322804487af28a108d7a9118be9e4c
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.configs result=pass observed=0b6aabab3ef130870a2e769a3a8654e02fc48aef120ad9d88903b67620c4f8f3 expected=0b6aabab3ef130870a2e769a3a8654e02fc48aef120ad9d88903b67620c4f8f3
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.anos_letivos result=pass observed=8ab19293edb79ffe0a10db1c3390369dd09ee347a8c2d67e8748dd3b5b55425f expected=8ab19293edb79ffe0a10db1c3390369dd09ee347a8c2d67e8748dd3b5b55425f
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.turmas result=pass observed=038117e86e0109eb89c519b6bdf017dc23a4613f5888fea77b39559664213908 expected=038117e86e0109eb89c519b6bdf017dc23a4613f5888fea77b39559664213908
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.responsaveis result=pass observed=c368cf802719c8717eb252b37f103ee9b4af768573bb76688adc089a8a6b76c8 expected=c368cf802719c8717eb252b37f103ee9b4af768573bb76688adc089a8a6b76c8
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.alunos result=pass observed=650c9b8ba6352b65da6c161aa2e6669b5751c11670dc8c9daa1f06905f9aeb72 expected=650c9b8ba6352b65da6c161aa2e6669b5751c11670dc8c9daa1f06905f9aeb72
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.aluno_responsaveis result=pass observed=28d2c7a166e8298696292d585f1793b2acc69de714f43ebdcdfad5edfa9ec0df expected=28d2c7a166e8298696292d585f1793b2acc69de714f43ebdcdfad5edfa9ec0df
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.matriculas result=pass observed=a8a7be05c833e3a1414707dc7903549e3a90dea61048d38606eeebf6af6d0cdb expected=a8a7be05c833e3a1414707dc7903549e3a90dea61048d38606eeebf6af6d0cdb
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.aulas_abertas result=pass observed=a0887e546022f584967e0abf94bd577af5d5403d312f522617955dff0b2f75d6 expected=a0887e546022f584967e0abf94bd577af5d5403d312f522617955dff0b2f75d6
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.sessoes_aula result=pass observed=ed1a4b5af913eab4ec493278cf1035efaa25f31f97ab635a9245768723175ec1 expected=ed1a4b5af913eab4ec493278cf1035efaa25f31f97ab635a9245768723175ec1
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.conteudo_aula result=pass observed=d02e7a044c2ca92a213f9ee793e083771c2639bd6c9286394d78e156516f7306 expected=d02e7a044c2ca92a213f9ee793e083771c2639bd6c9286394d78e156516f7306
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.frequencia result=fail observed=5a909f5e541fae407f2892e556fdf01f9037d6084483273b95bd1b79864195d3 expected=25c9a84551f57f2d10814063ac2f358e3b8e1d5f88e269b97740dc1d4ef49641
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.attendance_reopen_requests result=pass observed=73db08cadaf8cb387ba391c8ba34f819a2f38e1a492166af4dada91cfe37e450 expected=73db08cadaf8cb387ba391c8ba34f819a2f38e1a492166af4dada91cfe37e450
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.vivencias result=pass observed=09ff282a4fce3bc6408bb2e6999bb2101fd05d42011572091dd042ab5eb51098 expected=09ff282a4fce3bc6408bb2e6999bb2101fd05d42011572091dd042ab5eb51098
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.vivencias_campos_experiencia result=pass observed=2098f9a0d5514b078ade67e5641c776bbc13bb3d24cfe4f6074ef26e1843a219 expected=2098f9a0d5514b078ade67e5641c776bbc13bb3d24cfe4f6074ef26e1843a219
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.relatorios_descritivos result=pass observed=6148210d041d30ee3b4a443c8dcec71f73040ab99cc76438125c6b7ab1793483 expected=6148210d041d30ee3b4a443c8dcec71f73040ab99cc76438125c6b7ab1793483
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.relatorios_descritivos_vivencias result=pass observed=874ea3cb52fa7ad6e28e4da41ecf166d289f54a7d766cae789eb41c5b7e30f2e expected=874ea3cb52fa7ad6e28e4da41ecf166d289f54a7d766cae789eb41c5b7e30f2e
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_import_batches result=pass observed=678d734ead48de7b8cbfcea076a451204cd9111262618bd28a4c4810e8dc3ab2 expected=678d734ead48de7b8cbfcea076a451204cd9111262618bd28a4c4810e8dc3ab2
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_import_approvals result=pass observed=b168c12a7bcf1d34616e4020880295d06e60efcba9c7e45460ae73bf3fa6d71d expected=b168c12a7bcf1d34616e4020880295d06e60efcba9c7e45460ae73bf3fa6d71d
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_user_invitations result=pass observed=82b7ab18e8f2dcd2071daed3e46d6cb1f633b2c5addd1fae49deeaadd5310eb5 expected=82b7ab18e8f2dcd2071daed3e46d6cb1f633b2c5addd1fae49deeaadd5310eb5
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_metric_events result=pass observed=e6d12c2dcbafef4128e6a0a86341b211cc6400906a9a22a215eddbaab93070ef expected=e6d12c2dcbafef4128e6a0a86341b211cc6400906a9a22a215eddbaab93070ef
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_data_tombstones result=pass observed=207767327248081e3f16e107270c81de8dc6a81c98b8d66620118b042bc9b46e expected=207767327248081e3f16e107270c81de8dc6a81c98b8d66620118b042bc9b46e
+PILOT_RESTORE_ASSERTION name=restore.allowlisted_table.pilot_audit_log result=pass observed=afb900d62d729c3cc4dda757792a4add8cdcbd753f96073ccfe298ce4ba6c8d4 expected=afb900d62d729c3cc4dda757792a4add8cdcbd753f96073ccfe298ce4ba6c8d4
+PILOT_RESTORE_ASSERTION name=restore.student_fingerprint result=pass observed=650c9b8ba6352b65da6c161aa2e6669b5751c11670dc8c9daa1f06905f9aeb72 expected=650c9b8ba6352b65da6c161aa2e6669b5751c11670dc8c9daa1f06905f9aeb72
+PILOT_RESTORE_ASSERTION name=restore.attendance_fingerprint result=fail observed=5a909f5e541fae407f2892e556fdf01f9037d6084483273b95bd1b79864195d3 expected=25c9a84551f57f2d10814063ac2f358e3b8e1d5f88e269b97740dc1d4ef49641
+PILOT_RESTORE_ASSERTION name=restore.auth_manifest_fingerprint result=pass observed=268bf134a47820d94a5ebfac3b2fb596990873db820075223b8fa9355b54aa36 expected=268bf134a47820d94a5ebfac3b2fb596990873db820075223b8fa9355b54aa36
+PILOT_RESTORE_ASSERTION name=restore.storage_bucket_fingerprint result=pass observed=30227c27f7e0639db20691c8a75e83cb4f378670360e8c5eececdf4ae9ff5c12 expected=30227c27f7e0639db20691c8a75e83cb4f378670360e8c5eececdf4ae9ff5c12
+PILOT_RESTORE_ASSERTION name=restore.storage_metadata_fingerprint result=pass observed=7a345d2b206622d6cd2009effb8ed2f498bcff9e199c499201daed4dc2f16907 expected=7a345d2b206622d6cd2009effb8ed2f498bcff9e199c499201daed4dc2f16907
+PILOT_RESTORE_ASSERTION name=restore.storage_bytes_fingerprint result=pass observed=274ccb9f60b60419f701453020cf95ef352a74f2a4151a9f6fd8312b4c23f754 expected=274ccb9f60b60419f701453020cf95ef352a74f2a4151a9f6fd8312b4c23f754
+PILOT_RESTORE_ASSERTION name=restore.storage_bytes result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.policy_count result=pass observed=81 expected=>0
+PILOT_RESTORE_ASSERTION name=restore.policy_fingerprint result=pass observed=64 expected=>0
+PILOT_RESTORE_ASSERTION name=restore.required_policies result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.grants result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.migration_catalog_qual_with_check_grants result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.security_invoker_view result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.dashboard_rpc result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.pilot_gate result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.relationships result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.pedagogical_foreign_keys_jsonb_deadlines result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.tombstone result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.audit_count result=pass observed=266 expected=266
+PILOT_RESTORE_ASSERTION name=restore.teacher_session_scope result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.storage_session_scope result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=restore.rpo_observed_target result=pass observed=t expected=t
+PILOT_RESTORE_ASSERTION name=restore.rto_observed_target result=pass observed=t expected=t
+
+PILOT_RESTORE_ASSERTION_SUMMARY total=73 failed=3
+PILOT_RESTORE_PROOF_RED: failed_assertions=restore.attendance_count
+restore.allowlisted_table.frequencia
+restore.attendance_fingerprint
+PILOT_RESTORE_CLEANUP: status=1 temporary_database_and_artifacts_removed

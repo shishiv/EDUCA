@@ -1,0 +1,7 @@
+Post-campaign inspection on 2026-09-17
+Containers with f07-source or educa-f07 in name: 0
+Volumes with f07-source in name: 0
+Networks with f07-source in name: 0
+Task source directories remaining: 0
+Current portable success receipt absent after last negative: yes
+Leased range 61000 removed: yes
