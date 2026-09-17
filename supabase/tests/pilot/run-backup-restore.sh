@@ -8,7 +8,7 @@ MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
 PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 EVIDENCE_FILE="$ROOT_DIR/.pilot-evidence/synthetic-restore-evidence.md"
 PROOF_DIR="$ROOT_DIR/supabase/tests/pilot"
-COVERAGE_FILE="$PROOF_DIR/restore-coverage-v1.tsv"
+COVERAGE_FILE="$PROOF_DIR/restore-coverage-v2.tsv"
 COVERAGE_SHA=$(sha256sum "$COVERAGE_FILE" | cut -d' ' -f1)
 
 EXPECTED_TARGET='isolated-proof'
@@ -76,9 +76,9 @@ else
   DELIBERATE_BREAK="$PILOT_RESTORE_DELIBERATE_BREAK"
 fi
 case "$DELIBERATE_BREAK" in
-  none|artifact|student-checksum|attendance-checksum|policy|auth|storage|cleanup) ;;
+  none|artifact|student-checksum|attendance-checksum|policy|auth|storage|cleanup|pedagogical-omission|snapshot|deadline) ;;
   *)
-    echo "PILOT_RESTORE_DELIBERATE_BREAK_INVALID: use artifact, student-checksum, attendance-checksum, policy, auth, storage, or cleanup" >&2
+    echo "PILOT_RESTORE_DELIBERATE_BREAK_INVALID: use artifact, student-checksum, attendance-checksum, policy, auth, storage, cleanup, pedagogical-omission, snapshot, or deadline" >&2
     exit 1
     ;;
 esac
@@ -199,12 +199,16 @@ cleanup() {
     if (( exit_status == 0 )); then
       exit_status=1
     fi
+  else
+    printf 'PILOT_RESTORE_CLEANUP: status=%s temporary_database_and_artifacts_removed\n' "$exit_status"
   fi
 
   trap - EXIT
   exit "$exit_status"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # These credentials exist only inside this child process and the temporary work
 # directory. The cleanup trap unsets them on both success and failure.
@@ -285,6 +289,13 @@ run_restore_safety
 
 # The versioned inventory is the allowlist; exclusions never enter the replay.
 mapfile -t PUBLIC_TABLES < <(awk -F '\t' '$1 == "included" { print $2 }' "$COVERAGE_FILE")
+psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-integrity.sql"
+SOURCE_SNAPSHOT_COUNT=$(query_source "SELECT count(*) FROM public.relatorios_descritivos WHERE fontes_snapshot IS NOT NULL")
+SOURCE_LEGACY_COUNT=$(query_source "SELECT count(*) FROM public.relatorios_descritivos WHERE status = 'finalizado' AND fontes_snapshot IS NULL")
+SOURCE_DEADLINE_COUNT=$(query_source "SELECT count(*) FROM public.attendance_reopen_requests WHERE correction_deadline_at IS NOT NULL")
+assert_positive 'source.captured_reports' "$SOURCE_SNAPSHOT_COUNT"
+assert_positive 'source.legacy_reports' "$SOURCE_LEGACY_COUNT"
+assert_positive 'source.captured_deadlines' "$SOURCE_DEADLINE_COUNT"
 
 SOURCE_GOVERNANCE_OK=$(query_source "SELECT (count(*) = 1 AND bool_and(data_classification = 'synthetic_only' AND external_deploy_allowed = false AND legal_approval_status = 'not_approved' AND backup_rpo_hours IS NOT NULL AND backup_rto_hours IS NOT NULL)) FROM public.pilot_municipality_config")
 SOURCE_SYNTHETIC_IDENTITIES_OK=$(query_source "SELECT NOT EXISTS (SELECT 1 FROM public.users WHERE email IS NULL OR email !~ '@synthetic\\.invalid$') AND NOT EXISTS (SELECT 1 FROM auth.users AS auth_user WHERE (EXISTS (SELECT 1 FROM public.users AS profile WHERE profile.id = auth_user.id) OR EXISTS (SELECT 1 FROM public.pilot_user_invitations AS invitation WHERE invitation.auth_user_id = auth_user.id)) AND (auth_user.email IS NULL OR auth_user.email !~ '@synthetic\\.invalid$'))")
@@ -363,7 +374,7 @@ synthetic_marker=$EXPECTED_SYNTHETIC_MARKER
 created_at=$BACKUP_ISO
 schema_source=repository_migrations
 proof_scope=partial
-coverage_inventory=restore-coverage-v1.tsv
+coverage_inventory=restore-coverage-v2.tsv
 coverage_sha256=$COVERAGE_SHA
 portable_data=explicit_public_table_allowlist
 provider_boundary=auth_identity_manifest,storage_metadata_and_bytes
@@ -457,23 +468,26 @@ fi
 # Compare the replay with this migration-only baseline, not merely a nonempty hash.
 psql "$RESTORE_URL" -X -Atq -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-catalog.sql" > "$WORK_DIR/expected-catalog.txt"
 
-# These migrations bootstrap one synthetic municipality and two storage
-# buckets. Replace only those provider/application metadata rows with the
-# exported allowlisted rows before importing dependent school data.
-psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -c "TRUNCATE public.pilot_municipality_config CASCADE" >/dev/null
+# Replace seeded defaults, never merge them into the recovered overrides.
+# The target is a newly created disposable database, never the source.
+psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -c "TRUNCATE public.pilot_municipality_config CASCADE; TRUNCATE public.configs" >/dev/null
 psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -c "TRUNCATE storage.buckets CASCADE" >/dev/null
 
 restore_public_table() {
   local table=$1
   local source_file="$RESTORED_DIR/public.$table.csv"
+  # Owner replay preserves RPC-only table grants. No additional role access.
+  # Replica mode prevents capture/sync/audit triggers from renewing state.
   psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 \
-    -c "SET session_replication_role = replica; SET ROLE service_role" \
+    -c "SET session_replication_role = replica" \
     -c "\\copy public.\"$table\" FROM '$source_file' WITH (FORMAT csv, HEADER true)" \
     >/dev/null
 }
 
 for table in "${PUBLIC_TABLES[@]}"; do
-  restore_public_table "$table"
+  if [[ "$DELIBERATE_BREAK" != pedagogical-omission || "$table" != vivencias_campos_experiencia ]]; then
+    restore_public_table "$table"
+  fi
 done
 psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 \
   -c "SET session_replication_role = replica; SET ROLE service_role" \
@@ -512,11 +526,28 @@ apply_deliberate_break() {
       storage_file=$(find "$RESTORED_DIR/storage-bytes" -maxdepth 1 -type f -name '*.bin' | LC_ALL=C sort | head -1)
       [[ -n "$storage_file" ]] && rm -f "$storage_file"
       ;;
-    cleanup) ;;
-    artifact) ;;
+    snapshot)
+      query_restore "SET session_replication_role = replica; UPDATE public.relatorios_descritivos SET fontes_snapshot = jsonb_set(fontes_snapshot, '{fontes,0,descricao}', '\"corrupted\"') WHERE fontes_snapshot IS NOT NULL" >/dev/null
+      ;;
+    deadline)
+      query_restore "SET session_replication_role = replica; UPDATE public.attendance_reopen_requests SET approved_at = approved_at + interval '1 day', decided_at = decided_at + interval '1 day', correction_deadline_at = correction_deadline_at + interval '1 day' WHERE correction_deadline_at IS NOT NULL" >/dev/null
+      ;;
+    cleanup|artifact|pedagogical-omission) ;;
   esac
 }
 apply_deliberate_break
+RESTORE_INTEGRITY_OK=f
+if psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-integrity.sql"; then
+  RESTORE_INTEGRITY_OK=t
+fi
+RESTORE_PEDAGOGICAL_SCENARIO=not_exercised
+if [[ "${PILOT_RESTORE_FIXTURE_CONTRACT:-}" == pedagogical-v2 ]]; then
+  RESTORE_PEDAGOGICAL_SCENARIO=f
+  if psql "$RESTORE_URL" -X -v ON_ERROR_STOP=1 -f "$PROOF_DIR/restore-pedagogical.test.sql"; then
+    RESTORE_PEDAGOGICAL_SCENARIO=t
+  fi
+  assert_true 'restore.pedagogical_fixture_scope_and_immutability' "$RESTORE_PEDAGOGICAL_SCENARIO"
+fi
 
 RESTORED_STORAGE_INDEX="$RESTORED_DIR/storage-bytes/index.tsv"
 RESTORED_STORAGE_DIGEST="$WORK_DIR/restored-storage-digest.tsv"
@@ -714,6 +745,7 @@ assert_true 'restore.security_invoker_view' "$RESTORE_VIEW_OK"
 assert_true 'restore.dashboard_rpc' "$RESTORE_RPC_OK"
 assert_true 'restore.pilot_gate' "$RESTORE_PILOT_GUARD_OK"
 assert_true 'restore.relationships' "$RESTORE_RELATIONSHIPS_OK"
+assert_true 'restore.pedagogical_foreign_keys_jsonb_deadlines' "$RESTORE_INTEGRITY_OK"
 assert_true 'restore.tombstone' "$RESTORE_TOMBSTONE_OK"
 assert_equal 'restore.audit_count' "$RESTORE_AUDIT_COUNT" "$SOURCE_AUDIT_COUNT"
 assert_true 'restore.teacher_session_scope' "$TEACHER_SESSION_RESULT"
@@ -752,12 +784,12 @@ cleanup_work_dir || {
 cat > "$EVIDENCE_FILE" <<EOF
 # Partial synthetic portable restore proof
 
-Este receipt registra uma prova técnica parcial, sintética e isolada. Estrutura recriada por migrations não é dado recuperado; configurações escolares, Vivências, relatórios e histórico de reabertura não estão nesta allowlist. Auth limita-se a um manifesto de identidade e a claims SQL, sem login GoTrue, senha, sessão, refresh token, MFA ou revogação. Bytes Storage são verificados em arquivos, não publicados em um serviço restaurado. Ele não demonstra prontidão municipal, aprovação legal, contrato, SLA comercial ou PITR gerenciado do provedor. O banco de origem local foi somente lido.
+Este receipt registra uma prova técnica parcial, sintética e isolada. A allowlist v2 recupera configurações escolares, anos/períodos, conteúdo, Vivências, relatórios e reaberturas com seus snapshots e deadlines originais. Estrutura recriada por migrations não é dado recuperado. Auditoria histórica completa e demais módulos excluídos não são recuperados. Auth limita-se a um manifesto de identidade e a claims SQL, sem login GoTrue, senha, sessão, refresh token, MFA ou revogação. Bytes Storage são verificados em arquivos, não publicados em um serviço restaurado. Ele não demonstra prontidão municipal, aprovação legal, contrato, SLA comercial ou PITR gerenciado do provedor. O banco de origem local foi somente lido.
 
 | Check | Observed |
 |---|---:|
 | Result | pass within partial coverage only |
-| Coverage inventory | \`restore-coverage-v1.tsv\` / \`$COVERAGE_SHA\` |
+| Coverage inventory | \`restore-coverage-v2.tsv\` / \`$COVERAGE_SHA\` |
 | Isolated synthetic target | \`$EXPECTED_TARGET\` |
 | Database target identity | \`$EXPECTED_DATABASE_TARGET\` |
 | Data mode and marker | \`$EXPECTED_DATA_MODE\` / \`$EXPECTED_SYNTHETIC_MARKER\` |
@@ -785,6 +817,11 @@ Este receipt registra uma prova técnica parcial, sintética e isolada. Estrutur
 | Dashboard RPC existence | $RESTORE_RPC_OK |
 | Pilot gate | $RESTORE_PILOT_GUARD_OK |
 | Relationships | $RESTORE_RELATIONSHIPS_OK |
+| Pedagogical foreign keys / PostgreSQL JSONB fingerprint / deadline consistency | $RESTORE_INTEGRITY_OK |
+| Original snapshots / legacy reports / captured deadlines | $SOURCE_SNAPSHOT_COUNT / $SOURCE_LEGACY_COUNT / $SOURCE_DEADLINE_COUNT |
+| Two-school pedagogical fixture, 60 sources, RLS and immutable legacy/deadline behavior | $RESTORE_PEDAGOGICAL_SCENARIO |
+| Snapshot and deadline preservation | exact per-table CSV fingerprints, no recapture |
+| Legacy provenance | original NULL snapshot and links, no inferred provenance |
 | Tombstone prevents resurrection | $RESTORE_TOMBSTONE_OK |
 | Synthetic teacher session within school scope | $TEACHER_SESSION_RESULT |
 | Storage policy session within school scope | $STORAGE_SESSION_RESULT |
@@ -794,7 +831,7 @@ Este receipt registra uma prova técnica parcial, sintética e isolada. Estrutur
 | Default deliberate-break contract | \`PILOT_RESTORE_DELIBERATE_BREAK=student-checksum\` must produce red |
 | Receipt PII | none |
 
-Focused failure probes are intentional and must fail visibly: \`artifact\`, \`student-checksum\`, \`attendance-checksum\`, \`policy\`, \`auth\`, \`storage\`, and \`cleanup\`. Run them only against the disposable local synthetic proof.
+Focused failure probes are intentional and must fail visibly: \`artifact\`, \`student-checksum\`, \`attendance-checksum\`, \`policy\`, \`auth\`, \`storage\`, \`cleanup\`, \`pedagogical-omission\`, \`snapshot\`, and \`deadline\`. Run them only against the disposable local synthetic proof.
 EOF
 
 printf 'Partial portable synthetic restore proof passed: target=%s RPO=%ss/%sh RTO=%ss/%sh evidence=%s\n' \

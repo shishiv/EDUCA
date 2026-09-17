@@ -1,0 +1,22 @@
+PILOT_RESTORE_TARGET_RECEIPT: target=isolated-proof database_target=isolated_proof data_mode=synthetic synthetic_marker=SYNTHETIC-EDUCA-PILOT database_guard=pending
+(node:71265) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+DO
+DO
+RESTORE_INTEGRITY_OK: foreign keys, PostgreSQL JSONB fingerprints and captured deadline consistency
+PILOT_RESTORE_ASSERTION name=source.captured_reports result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.legacy_reports result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.captured_deadlines result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.synthetic_governance result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=source.synthetic_identities result=pass observed=t expected=true
+PILOT_RESTORE_ASSERTION name=source.auth_manifest_count result=pass observed=4 expected=>0
+PILOT_RESTORE_ASSERTION name=source.student_count result=pass observed=2 expected=>0
+PILOT_RESTORE_ASSERTION name=source.attendance_count result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.storage_bucket_count result=pass observed=1 expected=>0
+PILOT_RESTORE_ASSERTION name=source.storage_object_count result=pass observed=2 expected=>0
+PILOT_RESTORE_ASSERTION name=source.rpo_target_hours result=pass observed=24 expected=>0
+PILOT_RESTORE_ASSERTION name=source.rto_target_hours result=pass observed=4 expected=>0
+bad decrypt
+4037FBD5457F0000:error:1C800064:Provider routines:ossl_cipher_unpadblock:bad decrypt:providers/implementations/ciphers/ciphercommon_block.c:107:
+PILOT_RESTORE_PROOF_RED: encrypted artifact decryption failed
+PILOT_RESTORE_CLEANUP: status=1 temporary_database_and_artifacts_removed

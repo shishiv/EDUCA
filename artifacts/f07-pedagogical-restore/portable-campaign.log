@@ -1,0 +1,16 @@
+PILOT_PORT_RANGE_LEASE: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000 owner_pid=4157312
+(node:4159937) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+F07_REHEARSAL_PROBE: none exit=0 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: student-checksum exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: attendance-checksum exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: policy exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: auth exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: storage exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: artifact exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: cleanup exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: pedagogical-omission exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: snapshot exit=1 restore_database_removed receipt_contract_verified
+F07_REHEARSAL_PROBE: deadline exit=1 restore_database_removed receipt_contract_verified
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/61000
+F07_REHEARSAL_CLEANUP: status=0 isolated_source_removed
