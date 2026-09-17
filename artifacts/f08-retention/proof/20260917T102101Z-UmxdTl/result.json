@@ -1,0 +1,14 @@
+{
+  "runId": "20260917T102101Z-UmxdTl",
+  "sourceSha": "b9e147fe2818ec1664deace5916100089528f48f",
+  "sourceDirty": false,
+  "command": "pnpm test:e2e:pilot:import",
+  "retentionDeliberateBreak": "isolation",
+  "selectionManifest": "selection.sha256",
+  "selectionSha256": "057a651361a6e492ebcc00d19fee0044ab1bf52db6773d0a1f6876ba5f56f0a9",
+  "result": "failed",
+  "exitCode": 3,
+  "stage": "retention",
+  "database": "stopped",
+  "workspace": "removed"
+}
