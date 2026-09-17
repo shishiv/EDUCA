@@ -1,0 +1,274 @@
+{
+  "config": {
+    "configFile": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/playwright.quality.local.config.ts",
+    "rootDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 1,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/auth.setup.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-unauth",
+        "name": "chromium-unauth",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\/(auth)\\/.*/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [
+          "/.*\\/(auth|pilot|pilot-descriptive|public-demo)\\/.*/",
+          "**/grades/entry.spec.ts",
+          "**/grades/report-card.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate as admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 116,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:23:43.416Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-1580989d32f149e984ed",
+          "file": "auth.setup.ts",
+          "line": 124,
+          "column": 8
+        },
+        {
+          "title": "authenticate all roles",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1766,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:23:43.702Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-907d75c9b0b21b12872d",
+          "file": "auth.setup.ts",
+          "line": 172,
+          "column": 8
+        }
+      ]
+    },
+    {
+      "title": "matriculas/enrollment.spec.ts",
+      "file": "matriculas/enrollment.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Enrollment mutations",
+          "file": "matriculas/enrollment.spec.ts",
+          "line": 235,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F09 cancellation persists after reload and invalid reactivation is denied",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6082,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 2\u001b[39m\n\u001b[31m+ Received  + 2\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    Object {\u001b[22m\n\u001b[2m      \"aluno_id\": \"98702585-8fa3-4fec-9957-1b86fd281e24\",\u001b[22m\n\u001b[2m      \"id\": \"1e08cc0a-6b2a-4abf-8b8d-6b57dc9242f7\",\u001b[22m\n\u001b[32m-     \"observacoes\": \"Cancelamento sintético F09\",\u001b[39m\n\u001b[32m-     \"situacao\": \"cancelada\",\u001b[39m\n\u001b[31m+     \"observacoes\": \"Matrícula de visualização E2E\",\u001b[39m\n\u001b[31m+     \"situacao\": \"ativa\",\u001b[39m\n\u001b[2m      \"turma_id\": \"9ed69087-0a2e-4b0c-94fe-9d4d6f59410a\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[2m  ]\u001b[22m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 2\u001b[39m\n\u001b[31m+ Received  + 2\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    Object {\u001b[22m\n\u001b[2m      \"aluno_id\": \"98702585-8fa3-4fec-9957-1b86fd281e24\",\u001b[22m\n\u001b[2m      \"id\": \"1e08cc0a-6b2a-4abf-8b8d-6b57dc9242f7\",\u001b[22m\n\u001b[32m-     \"observacoes\": \"Cancelamento sintético F09\",\u001b[39m\n\u001b[32m-     \"situacao\": \"cancelada\",\u001b[39m\n\u001b[31m+     \"observacoes\": \"Matrícula de visualização E2E\",\u001b[39m\n\u001b[31m+     \"situacao\": \"ativa\",\u001b[39m\n\u001b[2m      \"turma_id\": \"9ed69087-0a2e-4b0c-94fe-9d4d6f59410a\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[2m  ]\u001b[22m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate\n    at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/matriculas/enrollment.spec.ts:253:7",
+                        "location": {
+                          "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/matriculas/enrollment.spec.ts",
+                          "column": 7,
+                          "line": 253
+                        },
+                        "snippet": "  251 |       await page.getByLabel('Observações', { exact: true }).fill('Cancelamento sintético F09')\n  252 |       await page.getByRole('button', { name: 'Salvar', exact: true }).click()\n> 253 |       await expect.poll(readState).toEqual(cancelled)\n      |       ^\n  254 |       await page.reload()\n  255 |       await expect(page.getByRole('alert').filter({ hasText: 'Status da Matrícula' })).toContainText('Cancelada')\n  256 |       await expect(page.getByText('Cancelamento sintético F09', { exact: true })).toBeVisible()"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/matriculas/enrollment.spec.ts",
+                            "column": 7,
+                            "line": 253
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 2\u001b[39m\n\u001b[31m+ Received  + 2\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    Object {\u001b[22m\n\u001b[2m      \"aluno_id\": \"98702585-8fa3-4fec-9957-1b86fd281e24\",\u001b[22m\n\u001b[2m      \"id\": \"1e08cc0a-6b2a-4abf-8b8d-6b57dc9242f7\",\u001b[22m\n\u001b[32m-     \"observacoes\": \"Cancelamento sintético F09\",\u001b[39m\n\u001b[32m-     \"situacao\": \"cancelada\",\u001b[39m\n\u001b[31m+     \"observacoes\": \"Matrícula de visualização E2E\",\u001b[39m\n\u001b[31m+     \"situacao\": \"ativa\",\u001b[39m\n\u001b[2m      \"turma_id\": \"9ed69087-0a2e-4b0c-94fe-9d4d6f59410a\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[2m  ]\u001b[22m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate\n\n  251 |       await page.getByLabel('Observações', { exact: true }).fill('Cancelamento sintético F09')\n  252 |       await page.getByRole('button', { name: 'Salvar', exact: true }).click()\n> 253 |       await expect.poll(readState).toEqual(cancelled)\n      |       ^\n  254 |       await page.reload()\n  255 |       await expect(page.getByRole('alert').filter({ hasText: 'Status da Matrícula' })).toContainText('Cancelada')\n  256 |       await expect(page.getByText('Cancelamento sintético F09', { exact: true })).toBeVisible()\n    at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/matriculas/enrollment.spec.ts:253:7"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:23:45.971Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-enrollment-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]=="
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results/matriculas-enrollment-Enro-75c26-alid-reactivation-is-denied-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results/matriculas-enrollment-Enro-75c26-alid-reactivation-is-denied-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/matriculas/enrollment.spec.ts",
+                        "column": 7,
+                        "line": 253
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f0f10e6810edd7288675-77ca8f9faa9a76fc72e7",
+              "file": "matriculas/enrollment.spec.ts",
+              "line": 236,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "message": "\u001b[31mTesting stopped early after 1 maximum allowed failures.\u001b[39m"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-09-17T11:23:41.741Z",
+    "duration": 10496.998,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

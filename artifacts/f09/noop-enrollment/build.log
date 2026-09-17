@@ -1,0 +1,21 @@
+
+> educa@1.0.0 build /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> next build --webpack
+
+▲ Next.js 16.3.0 (webpack)
+✓ Running next.config.js took 23ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+  Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ Compiled successfully in 9.4s
+  Running TypeScript ...
+app/(dashboard)/dashboard/matriculas/[id]/page.tsx(715,52): error TS2345: Argument of type 'string' is not assignable to parameter of type '"ativa" | "cancelada" | "concluida" | "transferida"'.
+app/(dashboard)/dashboard/matriculas/[id]/page.tsx(721,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'.
+Failed to type check.
+
+ ELIFECYCLE  Command failed with exit code 1.

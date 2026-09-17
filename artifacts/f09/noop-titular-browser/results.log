@@ -1,0 +1,274 @@
+{
+  "config": {
+    "configFile": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/playwright.quality.local.config.ts",
+    "rootDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 1,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/auth.setup.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-unauth",
+        "name": "chromium-unauth",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\/(auth)\\/.*/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e",
+        "testIgnore": [
+          "/.*\\/(auth|pilot|pilot-descriptive|public-demo)\\/.*/",
+          "**/grades/entry.spec.ts",
+          "**/grades/report-card.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate as admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 112,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:19:40.442Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-1580989d32f149e984ed",
+          "file": "auth.setup.ts",
+          "line": 124,
+          "column": 8
+        },
+        {
+          "title": "authenticate all roles",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1728,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-17T11:19:40.702Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-907d75c9b0b21b12872d",
+          "file": "auth.setup.ts",
+          "line": 172,
+          "column": 8
+        }
+      ]
+    },
+    {
+      "title": "assignments/teacher.spec.ts",
+      "file": "assignments/teacher.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Professor titular por turma",
+          "file": "assignments/teacher.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F09 titular persists after reload and rejects a foreign-school teacher",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6321,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    Object {\u001b[22m\n\u001b[2m      \"id\": \"2e754999-9d43-4402-a579-88eee561357e\",\u001b[22m\n\u001b[32m-     \"professor_id\": \"d21e87f6-ff4c-4731-9b25-3a31528e55ea\",\u001b[39m\n\u001b[31m+     \"professor_id\": null,\u001b[39m\n\u001b[2m    },\u001b[22m\n\u001b[2m  ]\u001b[22m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    Object {\u001b[22m\n\u001b[2m      \"id\": \"2e754999-9d43-4402-a579-88eee561357e\",\u001b[22m\n\u001b[32m-     \"professor_id\": \"d21e87f6-ff4c-4731-9b25-3a31528e55ea\",\u001b[39m\n\u001b[31m+     \"professor_id\": null,\u001b[39m\n\u001b[2m    },\u001b[22m\n\u001b[2m  ]\u001b[22m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate\n    at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts:48:7",
+                        "location": {
+                          "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts",
+                          "column": 7,
+                          "line": 48
+                        },
+                        "snippet": "  46 |       await page.getByRole('option', { name: /Titular F09/ }).click()\n  47 |       await page.getByRole('button', { name: 'Definir professor titular', exact: true }).click()\n> 48 |       await expect.poll(fixture.read).toEqual([{ id: fixture.turmaId, professor_id: fixture.teacherId }])\n     |       ^\n  49 |       await expect(page.getByRole('dialog')).toBeHidden()\n  50 |       await page.reload()\n  51 |       await expect(card).toContainText('Titular F09')"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts",
+                            "column": 7,
+                            "line": 48
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    Object {\u001b[22m\n\u001b[2m      \"id\": \"2e754999-9d43-4402-a579-88eee561357e\",\u001b[22m\n\u001b[32m-     \"professor_id\": \"d21e87f6-ff4c-4731-9b25-3a31528e55ea\",\u001b[39m\n\u001b[31m+     \"professor_id\": null,\u001b[39m\n\u001b[2m    },\u001b[22m\n\u001b[2m  ]\u001b[22m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate\n\n  46 |       await page.getByRole('option', { name: /Titular F09/ }).click()\n  47 |       await page.getByRole('button', { name: 'Definir professor titular', exact: true }).click()\n> 48 |       await expect.poll(fixture.read).toEqual([{ id: fixture.turmaId, professor_id: fixture.teacherId }])\n     |       ^\n  49 |       await expect(page.getByRole('dialog')).toBeHidden()\n  50 |       await page.reload()\n  51 |       await expect(card).toContainText('Titular F09')\n    at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts:48:7"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-17T11:19:42.947Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "f09-titular-cleanup.json",
+                          "contentType": "application/json",
+                          "body": "[REDACTED_TOKEN]="
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results/assignments-teacher-Profes-43507-ts-a-foreign-school-teacher-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/test-results/assignments-teacher-Profes-43507-ts-a-foreign-school-teacher-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts",
+                        "column": 7,
+                        "line": 48
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3b596e37cd90cc908ce1-f31f31ed93aa94ada769",
+              "file": "assignments/teacher.spec.ts",
+              "line": 34,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "message": "\u001b[31mTesting stopped early after 1 maximum allowed failures.\u001b[39m"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-09-17T11:19:38.887Z",
+    "duration": 10574.317,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

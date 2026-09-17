@@ -1,0 +1,51 @@
+(node:3241892) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:3244190) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/6] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/6] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:3247891) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/6] [chromium] › tests/e2e/assignments/teacher.spec.ts:32:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher
+[1A[2K[4/6] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years
+[1A[2K  1) [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years 
+
+    error: ATTENDANCE_STATUS_INVALID: use P, F, J, A or NAO_MARCADO
+
+       at flows/dashboard-fixture.ts:66
+
+      64 |     VALUES ($1, $2, $3, $4, $5, 'ABERTA', 'F09 frequência sintética')`,
+      65 |   [sessionId, input.seed.schoolId, input.classId, input.teacherId, input.date])
+    > 66 |   await db.query(`INSERT INTO frequencia (matricula_id, sessao_id, data_aula, presente, status_presenca)
+         |   ^
+      67 |     VALUES ($1, $2, $3, $4, $5)`,
+      68 |   [input.enrollmentId, sessionId, input.date, input.present, input.present ? 'PRESENTE' : 'FALTA'])
+      69 | }
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js:652:17
+        at seedFact (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-fixture.ts:66:3)
+        at seedSchoolYear (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-fixture.ts:39:5)
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-fixture.ts:88:7
+        at withLocalDatabase (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/support/local-database.ts:15:12)
+        at createDashboardFixture (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-fixture.ts:75:3)
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:51:21
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years 
+  2 did not run
+  3 passed (7.8s)
+  1 error was not a part of any test, see above for details

@@ -1,0 +1,19 @@
+
+> educa@1.0.0 test /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> vitest run "tests/unit/api/dashboard-stats.test.ts" "tests/unit/api/governed-management.test.ts" "tests/unit/services/academic-year.test.ts" "tests/unit/contexts/escola-selection.test.ts" "tests/unit/e2e" "--maxWorkers=2"
+
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+(node:2182590) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2183250) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2183815) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  6 passed (6)
+      Tests  23 passed (23)
+   Start at  08:28:55
+   Duration  5.58s (transform 116ms, setup 228ms, import 186ms, tests 5.08s, environment 1.15s)
+

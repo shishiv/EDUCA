@@ -1,0 +1,193 @@
+{
+  "scope": "F09: titular, cancellation, exact dashboard metrics only",
+  "baseSha": "2840895ea44ed4e6de31de755337d30c6acf9b15",
+  "testedSha": "706311434bd235a51ec9db2d965f13d699c74ca8",
+  "runtime": {
+    "version": "v26.8.1",
+    "execPath": "/usr/bin/node",
+    "abi": "147"
+  },
+  "pnpm": "9.15.4",
+  "sourceSha256": {
+    "app/tests/e2e/assignments/teacher-fixture.ts": "6cc31b8daece470b6ac615a94b25be3427c649815e024f32ba9b4f98a147dfc4",
+    "app/tests/e2e/assignments/teacher.spec.ts": "abaca32f903af119a4d3928a6e07b94ee8c7446a1b03698409871234ce2b1fca",
+    "app/tests/e2e/flows/dashboard-fixture.ts": "8319a88b7dfb476fe566267c3ccc0c994309bfe9baa81f48ad0553002e193402",
+    "app/tests/e2e/flows/dashboard-metrics.spec.ts": "9eff6722f024c68a1f99640abeafa20c99deb549868d449f8bbd36a31dd6394b",
+    "app/tests/e2e/matriculas/enrollment.spec.ts": "b5d0e87c5232a3beddd9988d4ef196d598edd1bf7fd9cd4d8d52672b48ca8b7c",
+    "app/tests/e2e/support/diagnostics.ts": "24cc216825339e52a0f514ea5b1f75c10a7bbb2563763d825ceb7b9584c1572f",
+    "app/tests/e2e/support/local-database.ts": "7552eaf282c1ec571afe580dbbdf72548dca304551a950c725d3ee2df4b9d627",
+    "artifacts/contracts/run-focused-browser.sh": "8d315ceff87422444542f9d86d67255413bdc4728eae11b68dc56f904ccc4c35"
+  },
+  "browserWorkers": 1,
+  "unitWorkers": 2,
+  "unitFiles": 6,
+  "unitPassed": 23,
+  "unitSkipped": 0,
+  "runs": {
+    "final": {
+      "stats": {
+        "startTime": "2026-09-17T11:30:11.072Z",
+        "duration": 15618.35,
+        "expected": 6,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "selected": [
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate as admin",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate all roles",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "assignments/teacher.spec.ts",
+          "title": "F09 titular persists after reload and rejects a foreign-school teacher",
+          "project": "chromium",
+          "status": "expected"
+        },
+        {
+          "file": "flows/dashboard-metrics.spec.ts",
+          "title": "F09 exact metrics survive school changes and reloads in two academic years",
+          "project": "chromium",
+          "status": "expected"
+        },
+        {
+          "file": "flows/dashboard-metrics.spec.ts",
+          "title": "F09 a failed dashboard query is not presented as valid zero metrics",
+          "project": "chromium",
+          "status": "expected"
+        },
+        {
+          "file": "matriculas/enrollment.spec.ts",
+          "title": "F09 cancellation persists after reload and invalid reactivation is denied",
+          "project": "chromium",
+          "status": "expected"
+        }
+      ],
+      "result": "GENERAL_E2E_EXIT=0",
+      "cleanup": "{\"project_id_filter\":\"quality-general.uUXg1f\",\"backup\":false,\"message\":\"Stopped supabase local development setup.\"}\nPILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=quality-general.uUXg1f",
+      "logicalCleanup": "final/f09-cleanup.log"
+    },
+    "noop-titular-browser": {
+      "stats": {
+        "startTime": "2026-09-17T11:19:38.887Z",
+        "duration": 10574.317,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "selected": [
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate as admin",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate all roles",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "assignments/teacher.spec.ts",
+          "title": "F09 titular persists after reload and rejects a foreign-school teacher",
+          "project": "chromium",
+          "status": "unexpected"
+        }
+      ],
+      "result": "GENERAL_E2E_EXIT=1",
+      "cleanup": "{\"project_id_filter\":\"quality-general.9pfBbi\",\"backup\":false,\"message\":\"Stopped supabase local development setup.\"}\nPILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=quality-general.9pfBbi",
+      "logicalCleanup": "noop-titular-browser/f09-cleanup.log"
+    },
+    "noop-enrollment-browser": {
+      "stats": {
+        "startTime": "2026-09-17T11:23:41.741Z",
+        "duration": 10496.998,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "selected": [
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate as admin",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate all roles",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "matriculas/enrollment.spec.ts",
+          "title": "F09 cancellation persists after reload and invalid reactivation is denied",
+          "project": "chromium",
+          "status": "unexpected"
+        }
+      ],
+      "result": "GENERAL_E2E_EXIT=1",
+      "cleanup": "{\"project_id_filter\":\"quality-general.lkYswB\",\"backup\":false,\"message\":\"Stopped supabase local development setup.\"}\nPILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=quality-general.lkYswB",
+      "logicalCleanup": "noop-enrollment-browser/f09-cleanup.log"
+    },
+    "noop-dashboard": {
+      "stats": {
+        "startTime": "2026-09-17T11:26:24.371Z",
+        "duration": 10587.449,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "selected": [
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate as admin",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "auth.setup.ts",
+          "title": "authenticate all roles",
+          "project": "setup",
+          "status": "expected"
+        },
+        {
+          "file": "flows/dashboard-metrics.spec.ts",
+          "title": "F09 exact metrics survive school changes and reloads in two academic years",
+          "project": "chromium",
+          "status": "unexpected"
+        }
+      ],
+      "result": "GENERAL_E2E_EXIT=1",
+      "cleanup": "{\"project_id_filter\":\"quality-general.Sb1LLa\",\"backup\":false,\"message\":\"Stopped supabase local development setup.\"}\nPILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=quality-general.Sb1LLa",
+      "logicalCleanup": "noop-dashboard/f09-cleanup.log"
+    }
+  },
+  "cleanupObserved": {
+    "authDirectoryAbsent": true,
+    "temporaryConfigAbsent": true,
+    "temporaryProjectsAbsent": true,
+    "runnerProcessAbsent": true,
+    "agentBrowserClosed": true
+  },
+  "boundaries": {
+    "syntheticOnly": true,
+    "externalDatabase": false,
+    "deployment": false,
+    "productionCodeChanged": false,
+    "generalCampaignExecuted": false,
+    "R3CampaignExecuted": false
+  }
+}

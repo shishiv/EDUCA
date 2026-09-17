@@ -1,0 +1,10 @@
+
+> educa@1.0.0 start /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> next start "--hostname" "127.0.0.1" "--port" "61009"
+
+▲ Next.js 16.3.0
+- Local:         http://127.0.0.1
+- Network:       http://127.0.0.1
+✓ Ready in 105ms
+✓ Running next.config.js took 38ms
+ ELIFECYCLE  Command failed with exit code 143.

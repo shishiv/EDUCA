@@ -1,0 +1,12 @@
+diff --git i/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx w/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx
+index fcdd345d..0e7766af 100644
+--- i/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx
++++ w/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx
+@@ -703,6 +703,7 @@ export default function MatriculaDetailsPage() {
+   }, [id, loadMatriculaDetails])
+ 
+   const handleSave = async () => {
++    return // F09 deliberate no-op, restored after the counterfactual run.
+     if (!matricula) return
+     if (!isGovernedEnrollmentSituation(formData.situacao)) {
+       toast.error('Situação de matrícula inválida')

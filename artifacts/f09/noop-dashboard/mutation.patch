@@ -1,0 +1,13 @@
+diff --git i/app/app/(dashboard)/dashboard/page.tsx w/app/app/(dashboard)/dashboard/page.tsx
+index 7037f3fd..6d3fca51 100644
+--- i/app/app/(dashboard)/dashboard/page.tsx
++++ w/app/app/(dashboard)/dashboard/page.tsx
+@@ -168,7 +168,7 @@ function useDashboardData({
+         loadClassSummaries(escolaId, resolvedAcademicYear.year),
+       ])
+ 
+-      setStats({
++      void ({ // F09 deliberate metrics publication no-op; numeric cards remain at zero.
+         totalAlunos: apiStats.totalAlunos,
+         totalEscolas: apiStats.totalEscolas,
+         totalTurmas: apiStats.totalTurmas,

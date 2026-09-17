@@ -1,0 +1,13 @@
+diff --git i/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx w/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx
+index fcdd345d..f7c27daf 100644
+--- i/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx
++++ w/app/app/(dashboard)/dashboard/matriculas/[id]/page.tsx
+@@ -711,7 +711,7 @@ export default function MatriculaDetailsPage() {
+ 
+     setSaving(true)
+     try {
+-      await updateGovernedEnrollment(supabase, id, formData.situacao, formData.observacoes || null)
++      await Promise.resolve() // F09 deliberate persistence no-op; preserve validation and success UI.
+ 
+       toast.success(t('ui.matricula-atualizada-com-sucesso'))
+       setEditMode(false)

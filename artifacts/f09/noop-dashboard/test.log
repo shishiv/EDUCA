@@ -1,0 +1,64 @@
+(node:1942327) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 3 tests using 1 worker
+
+[1A[2K(node:1942861) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/3] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/3] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:1943931) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/3] [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years
+[1A[2K  1) [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')
+    Timeout: 5000ms
+    [32m- Expected  - 4[39m
+    [31m+ Received  + 4[39m
+
+    [2m  Array [[22m
+    [32m-   "75%",[39m
+    [32m-   "3",[39m
+    [32m-   "2",[39m
+    [32m-   "1",[39m
+    [31m+   "0%",[39m
+    [31m+   "0",[39m
+    [31m+   "0",[39m
+    [31m+   "0",[39m
+    [2m  ][22m
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')[22m
+    [2m    9 × locator resolved to 4 elements[22m
+
+
+      129 | }) {
+      130 |   const dashboard = page.getByRole('region', { name: 'Dashboard', exact: true })
+    > 131 |   await expect(dashboard.getByRole('article').locator('strong')).toHaveText([
+          |                                                                  ^
+      132 |     `${expected.attendance}%`, String(expected.students), String(expected.classes), String(expected.teachers),
+      133 |   ])
+      134 |   await expect(page.getByRole('region', { name: 'Minhas Turmas' })).toContainText(`Turmas ativas no ano letivo ${year}`)
+        at expectDashboardMetrics (/home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:131:66)
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/flows/dashboard-metrics.spec.ts:78:15
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/flows-dashboard-metrics-Da-d4029-loads-in-two-academic-years-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years 
+  2 passed (10.6s)
+  1 error was not a part of any test, see above for details

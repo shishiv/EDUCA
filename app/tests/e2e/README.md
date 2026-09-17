@@ -61,6 +61,23 @@ Os runners provisionam somente dados sintéticos e recursos locais descartáveis
 Consulte `CONTEXT.md` antes de executar um filho isolado ou abrir um relatório
 Playwright preservado.
 
+### Prova focal F09
+
+O [recibo F09](../../../artifacts/f09/README.md) separa a rodada dos três recortes
+dos registros históricos. O runner existente aceita `FOCUSED_BROWSER_EVIDENCE_DIR`
+para não sobrescrever recibos anteriores:
+
+```bash
+FOCUSED_BROWSER_EVIDENCE_DIR="$PWD/../artifacts/f09/local-run" \
+  bash ../artifacts/contracts/run-focused-browser.sh \
+  assignments/teacher.spec.ts matriculas/enrollment.spec.ts flows/dashboard-metrics.spec.ts --grep F09
+```
+
+São quatro testes funcionais e dois setups, com um worker. `SUPABASE_DB_URL`
+vem exclusivamente do stack local isolado. O dashboard não possui seletor de ano:
+a prova fixa o relógio do browser para exercitar o resolvedor existente, sem mudar
+o relógio do servidor nem criar uma funcionalidade.
+
 ## Estrutura
 
 ```
@@ -100,7 +117,7 @@ tests/e2e/
 - [x] Campos obrigatórios
 - [x] Seleção de escola
 - [x] Criação com sucesso
-- [x] Diálogo de atribuição do titular e seletor de professor visível; `assignments/teacher.spec.ts` não confere opções, salva nem prova persistência
+- [x] Titular F09: opções exatas da escola, gravação pelo diretor, recarga e oracle SQL do vínculo; docente estrangeiro rejeitado pelo RPC real
 
 ### Alunos
 - [x] Listagem com busca
@@ -115,7 +132,7 @@ tests/e2e/
 - [x] Listagem com filtros
 - [x] Seleção de aluno/turma
 - [x] Criação de matrícula
-- [x] Navegação para detalhe e ação Editar; a spec de matrícula não prova transferência/cancelamento persistidos
+- [x] Navegação para detalhe e ação Editar; cancelamento F09 persistido e recarregado com oracle SQL, seguido de reativação negada para aluno inativo. Transferência continua sem prova persistida
 
 ### Frequência (Chamada)
 - [x] Acesso ao diário
@@ -143,7 +160,7 @@ tests/e2e/
 - [x] Vínculo com aluno
 
 ### Dashboard & Métricas
-- [x] Exibição de métricas principais (alunos, escolas, turmas, matrículas)
+- [x] Métricas F09 exatas de alunos, escolas, turmas, professores e frequência: duas escolas nos anos 2025 e 2026, oracle SQL independente, troca de contexto e recarga. Falha de consulta esconde métricas e permite repetir a leitura
 - [x] Cards de estatísticas com ícones
 - [x] Alertas de baixa frequência
 - [x] Alertas de documentos pendentes

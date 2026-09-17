@@ -1,4 +1,6 @@
+import type { Page } from '@playwright/test'
 import { test, expect } from '../support/diagnostics'
+import { createDashboardFixture, readDashboardOracle } from './dashboard-fixture'
 import { navigateToDashboard } from '../utils/test-helpers'
 
 /**
@@ -45,14 +47,93 @@ test.describe('Dashboard - Stat Cards', () => {
     await expect(page.locator('.app-metric__label').getByText('Professores Ativos', { exact: true })).toBeVisible()
   })
 
-  test('stat cards contain numeric values', async ({ page }) => {
-    const values = page.getByRole('region', { name: 'Dashboard', exact: true }).getByRole('article').locator('strong')
-    await expect(values).toHaveCount(4)
-    for (const value of await values.all()) {
-      await expect(value).toHaveText(/^\d[\d.,]*%?$/)
+  test('F09 exact metrics survive school changes and reloads in two academic years', async ({ page }, testInfo) => {
+    const fixture = await createDashboardFixture()
+    try {
+      const cases = [
+        { schoolId: fixture.schoolA, school: fixture.schoolAName, year: 2025, students: 3, classes: 2, teachers: 1, facts: 4, present: 3, attendance: 75 },
+        { schoolId: fixture.schoolB, school: fixture.schoolBName, year: 2025, students: 1, classes: 1, teachers: 1, facts: 2, present: 2, attendance: 100 },
+        { schoolId: fixture.schoolA, school: fixture.schoolAName, year: 2026, students: 2, classes: 1, teachers: 1, facts: 3, present: 1, attendance: 33.3 },
+        { schoolId: fixture.schoolB, school: fixture.schoolBName, year: 2026, students: 4, classes: 2, teachers: 2, facts: 5, present: 1, attendance: 20 },
+      ]
+      for (const { schoolId, school, year, ...expected } of cases) {
+        expect(await readDashboardOracle(schoolId, year)).toEqual(expected)
+        // There is no year picker. The existing dashboard resolves the browser's civil year.
+        await page.clock.setFixedTime(new Date(`${year}-09-17T12:00:00Z`))
+        await page.reload()
+        const alerts = page.waitForResponse(response => {
+          const url = new URL(response.url())
+          return url.pathname === '/api/dashboard/alerts' && url.searchParams.get('escolaId') === schoolId
+            && url.searchParams.get('year') === String(year)
+        })
+        await selectDashboardSchool(page, school)
+        const alertResponse = await alerts
+        // Alerts resolve the server year, independently of the browser clock used for metrics.
+        if (year !== new Date().getFullYear()) {
+          expect(alertResponse.status()).toBe(409)
+          expect(await alertResponse.json()).toEqual({ error: 'Ano letivo desatualizado' })
+        } else {
+          expect(alertResponse.status()).toBe(200)
+        }
+        await expectDashboardMetrics(page, year, expected)
+        await page.reload()
+        await expectDashboardMetrics(page, year, expected)
+      }
+      await selectDashboardSchool(page, fixture.schoolAName)
+      await expectDashboardMetrics(page, 2026, { students: 2, classes: 1, teachers: 1, attendance: 33.3 })
+    } finally {
+      await testInfo.attach('f09-dashboard-cleanup.json', {
+        body: JSON.stringify(await fixture.cleanup()), contentType: 'application/json',
+      })
+    }
+  })
+
+  test('F09 a failed dashboard query is not presented as valid zero metrics', async ({ page }, testInfo) => {
+    const fixture = await createDashboardFixture()
+    try {
+      await page.clock.setFixedTime(new Date('2026-09-17T12:00:00Z'))
+      await page.reload()
+      await selectDashboardSchool(page, fixture.schoolBName)
+      await expectDashboardMetrics(page, 2026, { students: 4, classes: 2, teachers: 2, attendance: 20 })
+      await page.route('**/rest/v1/frequencia?*', route => route.fulfill({
+        status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'F09 deliberate query failure' }),
+      }))
+      await page.reload()
+      await expect(page.getByRole('alert').filter({ hasText: /dashboard|painel/i })).toBeVisible()
+      await expect(page.locator('.app-metric strong')).toHaveCount(0)
+      await page.unroute('**/rest/v1/frequencia?*')
+      await page.getByRole('button', { name: /tentar novamente/i }).click()
+      await expectDashboardMetrics(page, 2026, { students: 4, classes: 2, teachers: 2, attendance: 20 })
+      expect(await readDashboardOracle(fixture.schoolB, 2026)).toEqual({
+        students: 4, classes: 2, teachers: 2, attendance: 20, facts: 5, present: 1,
+      })
+    } finally {
+      await testInfo.attach('f09-dashboard-cleanup.json', {
+        body: JSON.stringify(await fixture.cleanup()), contentType: 'application/json',
+      })
     }
   })
 })
+
+async function selectDashboardSchool(page: Page, school: string) {
+  const selector = page.getByRole('complementary', { name: /navegação principal/i }).getByRole('combobox')
+  await selector.click()
+  const option = page.getByRole('option', { name: school, exact: true })
+  await expect(option).toHaveCount(1)
+  await option.click()
+  await expect(selector).toHaveText(school)
+}
+
+async function expectDashboardMetrics(page: Page, year: number, expected: {
+  students: number; classes: number; teachers: number; attendance: number
+}) {
+  const dashboard = page.getByRole('region', { name: 'Dashboard', exact: true })
+  await expect(dashboard.getByRole('article').locator('strong')).toHaveText([
+    `${expected.attendance}%`, String(expected.students), String(expected.classes), String(expected.teachers),
+  ])
+  await expect(page.getByRole('region', { name: 'Minhas Turmas' })).toContainText(`Turmas ativas no ano letivo ${year}`)
+  await expect(dashboard).toContainText('1 escola ativa')
+}
 
 test.describe('Dashboard - Navigation', () => {
   test('quick-access Novo Aluno navigates to alunos/novo', async ({ page }) => {

@@ -3,6 +3,7 @@ import type { Page, Route } from '@playwright/test'
 import type { Database, Tables } from '@/types/database'
 import { test, expect } from '../support/diagnostics'
 import { loginAs } from '../utils/test-helpers'
+import { readEntityAudit, withLocalDatabase } from '../support/local-database'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -232,6 +233,56 @@ test.describe('Enrollment form', () => {
 })
 
 test.describe('Enrollment mutations', () => {
+  test('F09 cancellation persists after reload and invalid reactivation is denied', async ({ page }, testInfo) => {
+    const fixture = await createPersistedEnrollmentFixture(`F09 Cancelamento ${Date.now()}`)
+    const readState = () => withLocalDatabase(async db => (await db.query(
+      'SELECT id, aluno_id, turma_id, situacao, observacoes FROM matriculas WHERE id = $1', [fixture.enrollmentId],
+    )).rows)
+    const cancelled = [{
+      id: fixture.enrollmentId, aluno_id: fixture.student.id, turma_id: fixture.turma.id,
+      situacao: 'cancelada', observacoes: 'Cancelamento sintético F09',
+    }]
+    try {
+      await loginAs(page, ENROLLMENT_MANAGER_EMAIL)
+      await page.goto(`/dashboard/matriculas/${fixture.enrollmentId}`)
+      await page.getByRole('button', { name: 'Editar', exact: true }).click()
+      await page.getByRole('combobox', { name: 'Situação', exact: true }).click()
+      await page.getByRole('option', { name: 'Cancelada', exact: true }).click()
+      await page.getByLabel('Observações', { exact: true }).fill('Cancelamento sintético F09')
+      await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+      await expect.poll(readState).toEqual(cancelled)
+      await page.reload()
+      await expect(page.getByRole('alert').filter({ hasText: 'Status da Matrícula' })).toContainText('Cancelada')
+      await expect(page.getByText('Cancelamento sintético F09', { exact: true })).toBeVisible()
+      expect(await readState()).toEqual(cancelled)
+
+      // An inactive student is an existing governed reactivation rejection, not a new rule.
+      await withLocalDatabase(db => db.query('UPDATE alunos SET ativo = false WHERE id = $1', [fixture.student.id]))
+      await page.getByRole('button', { name: 'Editar', exact: true }).click()
+      await page.getByRole('combobox', { name: 'Situação', exact: true }).click()
+      await page.getByRole('option', { name: 'Ativa', exact: true }).click()
+      const denied = page.waitForResponse('**/rest/v1/rpc/update_governed_enrollment')
+      await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+      const response = await denied
+      expect(response.ok()).toBe(false)
+      expect(await response.text()).toContain('PILOT_MANAGEMENT_STUDENT_DENIED')
+      await expect(page.getByText('Erro ao atualizar matrícula', { exact: true })).toBeVisible()
+      await page.reload()
+      await expect(page.getByRole('alert').filter({ hasText: 'Status da Matrícula' })).toContainText('Cancelada')
+      expect(await readState()).toEqual(cancelled)
+    } finally {
+      if (!fixture.enrollmentId) throw new Error('F09 cancellation fixture requires an enrollment id')
+      const audit = await readEntityAudit(fixture.enrollmentId)
+      await cleanupEnrollmentFixture(fixture)
+      const retainedAudit = await readEntityAudit(fixture.enrollmentId)
+      expect(retainedAudit.filter(row => audit.some(before => before.id === row.id))).toEqual(audit)
+      await testInfo.attach('f09-enrollment-cleanup.json', {
+        body: JSON.stringify({ enrollmentId: fixture.enrollmentId, studentId: fixture.student.id, removed: true, retainedAudit, appendedDuringCleanup: retainedAudit.length - audit.length }),
+        contentType: 'application/json',
+      })
+    }
+  })
+
   test('creates, persists, and reloads an enrollment for a disposable student', async ({ page }, testInfo) => {
     const fixture = await createEnrollmentFixture(`E2E Enrollment ${Date.now()}-${testInfo.workerIndex}`)
     let enrollmentResponse: Promise<import('@playwright/test').Response> | undefined

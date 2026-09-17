@@ -1,0 +1,62 @@
+(node:633495) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 6 tests using 1 worker
+
+[1A[2K(node:633909) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[1/6] [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin
+[1A[2K[2/6] [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles
+[1A[2K(node:636772) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[1A[2K[3/6] [chromium] › tests/e2e/assignments/teacher.spec.ts:34:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher
+[1A[2K  1) [chromium] › tests/e2e/assignments/teacher.spec.ts:34:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 0[39m
+    [31m+ Received  + 5[39m
+
+    [33m@@ -4,10 +4,15 @@[39m
+    [2m      "fingerprint": "46d536428d040d827d277e06025a2533",[22m
+    [2m      "id": "26bb899f-c50f-4166-a2f3-d31d14e6c607",[22m
+    [2m    },[22m
+    [2m    Object {[22m
+    [2m      "escola_id": "e1900741-779d-4945-96c4-4180319e2012",[22m
+    [31m+     "fingerprint": "eaf6cb959745d29b9c6e56562afecb2f",[39m
+    [31m+     "id": "615c1f4b-43f8-436c-9042-a32e4f4f801a",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "escola_id": "e1900741-779d-4945-96c4-4180319e2012",[39m
+    [2m      "fingerprint": "a8e968ec549f29ca9930961ea0869d6d",[22m
+    [2m      "id": "d7ce7abe-63f9-4b15-bfd2-754d79e4ea84",[22m
+    [2m    },[22m
+    [2m    Object {[22m
+    [2m      "escola_id": "e1900741-779d-4945-96c4-4180319e2012",[22m
+
+      75 |       const audit = await readEntityAudit(fixture.turmaId)
+      76 |       await fixture.cleanup()
+    > 77 |       expect(await readEntityAudit(fixture.turmaId)).toEqual(audit)
+         |                                                      ^
+      78 |       await testInfo.attach('f09-titular-cleanup.json', {
+      79 |         body: JSON.stringify({ turmaId: fixture.turmaId, teacherIds: [fixture.teacherId, fixture.foreignTeacherId], removed: true, retainedAudit: audit }),
+      80 |         contentType: 'application/json',
+        at /home/shiv/.treehouse/educa-7c556a/1/educa/app/tests/e2e/assignments/teacher.spec.ts:77:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assignments-teacher-Profes-43507-ts-a-foreign-school-teacher-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/assignments-teacher-Profes-43507-ts-a-foreign-school-teacher-chromium/error-context.md
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/assignments/teacher.spec.ts:34:7 › Professor titular por turma › F09 titular persists after reload and rejects a foreign-school teacher 
+  3 did not run
+  2 passed (6.9s)
+  1 error was not a part of any test, see above for details

@@ -1,0 +1,6 @@
+PILOT_PORT_RANGE_LEASE: base=61000 end=61009 lease_dir=/run/user/1000/educa-pilot-port-leases/61000 owner_pid=921756
+(node:926546) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+artifacts/contracts/run-focused-browser.sh: line 49: syntax error near unexpected token `)'
+PILOT_PORT_RANGE_LEASE_RELEASED: lease_dir=/run/user/1000/educa-pilot-port-leases/61000
+GENERAL_E2E_EXIT=2

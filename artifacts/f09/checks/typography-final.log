@@ -1,0 +1,30 @@
+
+> educa@1.0.0 check:diff-typography /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> node scripts/check-no-new-em-dash.mjs
+
+fatal: Not a valid object name main
+node:internal/errors:999
+  const err = new Error(message);
+              ^
+
+Error: Command failed: git merge-base main HEAD
+fatal: Not a valid object name main
+
+    at genericNodeError (node:internal/errors:999:15)
+    at wrappedFn (node:internal/errors:544:14)
+    at checkExecSyncError (node:child_process:942:11)
+    at execFileSync (node:child_process:978:15)
+    at file:///home/shiv/.treehouse/educa-7c556a/1/educa/app/scripts/check-no-new-em-dash.mjs:4:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  status: 128,
+  signal: null,
+  output: [ null, '', 'fatal: Not a valid object name main\n' ],
+  pid: 2903667,
+  stdout: '',
+  stderr: 'fatal: Not a valid object name main\n'
+}
+
+Node.js v26.8.1
+ ELIFECYCLE  Command failed with exit code 1.
