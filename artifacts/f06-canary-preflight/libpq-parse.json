@@ -1,0 +1,37 @@
+{
+  "api": "PQconninfoParse",
+  "connections_attempted": 0,
+  "result": "PASS",
+  "cases": [
+    {
+      "host": "127.0.0.1",
+      "hostaddr": "127.0.0.1",
+      "port": "5432",
+      "dbname": "postgres"
+    },
+    {
+      "host": "localhost",
+      "hostaddr": "127.0.0.1",
+      "port": "5432",
+      "dbname": "postgres"
+    },
+    {
+      "host": "::1",
+      "hostaddr": "::1",
+      "port": "6543",
+      "dbname": "postgres"
+    },
+    {
+      "host": "127.0.0.1",
+      "hostaddr": "127.0.0.1",
+      "port": "5432",
+      "dbname": "postgres"
+    },
+    {
+      "host": "127.0.0.1",
+      "hostaddr": "127.0.0.1",
+      "port": "5432",
+      "dbname": "postgres"
+    }
+  ]
+}

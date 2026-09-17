@@ -2,12 +2,9 @@
 set -euo pipefail
 
 CANARY_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source "$CANARY_DIR/prerequisites.sh"
+canary_require_prerequisites psql date
 source "$CANARY_DIR/safety.sh"
-
-command -v psql >/dev/null || {
-  echo 'CANARY_PREREQUISITE_MISSING: psql' >&2
-  exit 1
-}
 
 started_at=$(date +%s%N)
 psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$CANARY_DIR/rollback.sql" >/dev/null

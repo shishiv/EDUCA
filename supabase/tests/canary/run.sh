@@ -5,36 +5,45 @@ ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 CANARY_DIR="$ROOT_DIR/supabase/canary"
 TEST_DIR="$ROOT_DIR/supabase/tests/canary"
 MIGRATIONS_DIR="$ROOT_DIR/supabase/migrations"
-WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-schema-canary.XXXXXX")
-DATA_DIR="$WORK_DIR/data"
-SOCKET_DIR="$WORK_DIR/socket"
 PORT=${POSTGRES_CANARY_PORT:-$((55000 + $$ % 5000))}
 DB_URL="postgresql://postgres@127.0.0.1:$PORT/postgres"
 RESTORE_DB='educa_schema_canary_restore'
 RESTORE_URL="postgresql://postgres@127.0.0.1:$PORT/$RESTORE_DB"
 CANARY_SCHOOL_ID='ca000000-0000-0000-0000-000000000001'
 CANARY_SCHEMA='school_ca000000000000000000000000000001'
-SERVER_STARTED=false
-
-for command in initdb pg_ctl psql pg_dump pg_restore createdb sha256sum diff python3; do
-  command -v "$command" >/dev/null || {
-    echo "CANARY_PREREQUISITE_MISSING: $command" >&2
-    exit 1
-  }
-done
+source "$CANARY_DIR/prerequisites.sh"
+canary_require_prerequisites initdb pg_ctl psql pg_dump pg_restore createdb sha256sum diff \
+  mktemp mkdir rm cp find sort grep cut date
+# Reject invalid ports and inherited libpq routing before allocating the cluster.
+printf '%s' "$DB_URL" | python3 "$CANARY_DIR/validate-db-url.py" >/dev/null
+WORK_DIR=''
+DATA_DIR=''
 
 cleanup() {
-  if [[ "$SERVER_STARTED" == true ]]; then
-    pg_ctl -D "$DATA_DIR" -m immediate -w stop >/dev/null
+  local status=$?
+  # pg_ctl can fail after spawning postgres. A success flag misses partial startup.
+  if [[ -n "$DATA_DIR" && -f "$DATA_DIR/postmaster.pid" ]]; then
+    if ! pg_ctl -D "$DATA_DIR" -m immediate -w stop >/dev/null; then
+      echo "CANARY_CLEANUP_FAILED: cluster retained at $DATA_DIR" >&2
+      exit 1
+    fi
   fi
-  rm -rf "$WORK_DIR"
+  if [[ -n "$WORK_DIR" ]]; then
+    rm -rf "$WORK_DIR"
+    echo 'CANARY_CLEANUP_OK'
+  fi
+  exit "$status"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
+WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-schema-canary.XXXXXX")
+DATA_DIR="$WORK_DIR/data"
+SOCKET_DIR="$WORK_DIR/socket"
 mkdir -p "$SOCKET_DIR"
 initdb -D "$DATA_DIR" -A trust --no-locale --encoding=UTF8 --username=postgres >/dev/null
 pg_ctl -D "$DATA_DIR" -l "$WORK_DIR/postgres.log" -o "-F -h 127.0.0.1 -k '$SOCKET_DIR' -p $PORT" -w start >/dev/null
-SERVER_STARTED=true
 
 apply_schema() {
   local database_url=$1

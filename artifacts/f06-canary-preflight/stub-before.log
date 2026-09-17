@@ -1,0 +1,51 @@
+FF
+======================================================================
+FAIL: test_remote_url_never_reaches_probe (__main__.CanarySafetyTest.test_remote_url_never_reaches_probe) (entry='setup')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/shiv/.treehouse/educa-7c556a/1/educa/supabase/tests/canary/test_safety.py", line 72, in test_remote_url_never_reaches_probe
+    self.assertEqual(self.recorded_calls(), [], result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [['postgresql://postgres@remote.invalid/po[110 chars]')"]] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+['postgresql://postgres@remote.invalid/postgres', '-X', '-Atq', '-v', 'ON_ERROR_STOP=1', '-c', "SELECT coalesce(inet_server_addr()::text, 'local-socket')"]
+
++ []
+- [['postgresql://postgres@remote.invalid/postgres',
+-   '-X',
+-   '-Atq',
+-   '-v',
+-   'ON_ERROR_STOP=1',
+-   '-c',
+-   "SELECT coalesce(inet_server_addr()::text, 'local-socket')"]] : CANARY_NONLOCAL_DATABASE_DENIED: 203.0.113.5
+
+
+======================================================================
+FAIL: test_remote_url_never_reaches_probe (__main__.CanarySafetyTest.test_remote_url_never_reaches_probe) (entry='rollback')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/shiv/.treehouse/educa-7c556a/1/educa/supabase/tests/canary/test_safety.py", line 72, in test_remote_url_never_reaches_probe
+    self.assertEqual(self.recorded_calls(), [], result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [['postgresql://postgres@remote.invalid/po[110 chars]')"]] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+['postgresql://postgres@remote.invalid/postgres', '-X', '-Atq', '-v', 'ON_ERROR_STOP=1', '-c', "SELECT coalesce(inet_server_addr()::text, 'local-socket')"]
+
++ []
+- [['postgresql://postgres@remote.invalid/postgres',
+-   '-X',
+-   '-Atq',
+-   '-v',
+-   'ON_ERROR_STOP=1',
+-   '-c',
+-   "SELECT coalesce(inet_server_addr()::text, 'local-socket')"]] : CANARY_NONLOCAL_DATABASE_DENIED: 203.0.113.5
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.036s
+
+FAILED (failures=2)
