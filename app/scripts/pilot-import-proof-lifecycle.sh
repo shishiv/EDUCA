@@ -9,6 +9,7 @@ write_import_proof_result() {
   "sourceSha": "$SOURCE_SHA",
   "sourceDirty": $SOURCE_DIRTY,
   "command": "pnpm test:e2e:pilot:import",
+  "retentionDeliberateBreak": "$RETENTION_DELIBERATE_BREAK",
   "selectionManifest": "selection.sha256",
   "selectionSha256": "$SELECTION_SHA256",
   "result": "$result",
@@ -107,6 +108,10 @@ begin_import_proof() {
   ATTEMPT_DIR=$(mktemp -d "$evidence_root/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
   RUN_ID=${ATTEMPT_DIR##*/}
   SOURCE_SHA=$(git -C "$ROOT_DIR" rev-parse HEAD)
+  case "${PILOT_IMPORT_RETENTION_DELIBERATE_BREAK:-none}" in
+    none|isolation) RETENTION_DELIBERATE_BREAK=${PILOT_IMPORT_RETENTION_DELIBERATE_BREAK:-none} ;;
+    *) RETENTION_DELIBERATE_BREAK=invalid ;;
+  esac
   SOURCE_DIRTY=false
   if [[ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]]; then SOURCE_DIRTY=true; fi
   SELECTION_SHA256=''
@@ -131,7 +136,8 @@ begin_import_proof() {
   # browser/SQL suite ran. Hashes also disambiguate an uncommitted working tree.
   (
     cd "$ROOT_DIR" || exit
-    sha256sum app/scripts/run-pilot-import-proof-e2e.sh app/scripts/pilot-import-proof-lifecycle.sh app/package.json app/pnpm-lock.yaml
+    sha256sum app/scripts/run-pilot-import-proof-e2e.sh app/scripts/pilot-import-proof-lifecycle.sh app/package.json app/pnpm-lock.yaml \
+      supabase/tests/database/pilot_retention_batch.test.sql supabase/tests/pilot/retention-fixture.sql
     find app/scripts app/lib/pilot supabase/migrations supabase/pilot supabase/tests/database \
       -maxdepth 1 -type f \( -name 'pilot-import-proof.ts' -o -path 'app/lib/pilot/*.ts' \
       -o -path 'supabase/migrations/*.sql' -o -name 'bootstrap.sql' -o -name 'provision-pilot-module-gate.sql' \) \

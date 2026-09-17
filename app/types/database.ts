@@ -4150,6 +4150,16 @@ export type Database = {
         Returns: boolean
       }
       pilot_cleanup_import_retention: { Args: never; Returns: number }
+      pilot_cleanup_import_retention_results: {
+        Args: never
+        Returns: {
+          batch_id: string
+          canonical_status: string
+          escola_id: string
+          raw_payload_status: string
+          reason_code: string
+        }[]
+      }
       pilot_current_role: { Args: never; Returns: string }
       pilot_current_school_id: { Args: never; Returns: string }
       pilot_dashboard_metrics: {

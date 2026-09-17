@@ -11,6 +11,9 @@ BIN="$WORK/bin"
 mkdir -p "$FIXTURE/app/scripts" "$FIXTURE/app/lib/pilot" "$FIXTURE/supabase/"{migrations,pilot,tests/database} "$BIN" "$WORK/tmp"
 cp "$APP_DIR/scripts/run-pilot-import-proof-e2e.sh" "$FIXTURE/app/scripts/"
 cp "$APP_DIR/package.json" "$APP_DIR/pnpm-lock.yaml" "$FIXTURE/app/"
+cp "$ROOT_DIR/supabase/tests/database/pilot_retention_batch.test.sql" "$FIXTURE/supabase/tests/database/"
+mkdir -p "$FIXTURE/supabase/tests/pilot"
+cp "$ROOT_DIR/supabase/tests/pilot/retention-fixture.sql" "$FIXTURE/supabase/tests/pilot/"
 if [[ -f "$APP_DIR/scripts/pilot-import-proof-lifecycle.sh" ]]; then
   cp "$APP_DIR/scripts/pilot-import-proof-lifecycle.sh" "$FIXTURE/app/scripts/"
 fi
@@ -90,8 +93,21 @@ case "$*" in
   *approval-changed-governance*) error=PILOT_IMPORT_IDEMPOTENCY_GOVERNANCE_MISMATCH ;;
 esac
 if [[ -n "$error" ]]; then echo "PILOT_IMPORT_PROOF_SAFETY_RECEIPT $error"; exit 1; fi
+if [[ "${*: -1}" == cleanup ]]; then
+  count=0
+  [[ ! -f "$TMPDIR/cleanup-count" ]] || read -r count < "$TMPDIR/cleanup-count"
+  count=$((count + 1))
+  printf '%s\n' "$count" > "$TMPDIR/cleanup-count"
+  if [[ "$count" == 2 ]]; then
+    echo 'PILOT_GOVERNED_RETENTION_RECEIPT: {"rawPayloadsCleaned":2,"canonicalBatchesDeleted":1,"canonicalBatchesPreserved":1,"canonicalBatchesFailed":0,"batches":[{"batch_id":"10000000-0000-0000-0000-000000000002","canonical_status":"preserved_dependency"},{"batch_id":"10000000-0000-0000-0000-000000000003","canonical_status":"deleted"}]}'
+  else
+    echo 'PILOT_GOVERNED_RETENTION_RECEIPT: {"rawPayloadsCleaned":0,"canonicalBatchesDeleted":0,"batches":[{"batch_id":"10000000-0000-0000-0000-000000000002","canonical_status":"preserved_dependency"}]}'
+  fi
+  exit 0
+fi
 batch=10000000-0000-0000-0000-000000000001
 [[ "$*" != *pilot-second.csv* ]] || batch=10000000-0000-0000-0000-000000000002
+[[ "$*" != *pilot-third.csv* ]] || batch=10000000-0000-0000-0000-000000000003
 printf '{"target":"isolated-proof","attemptedTarget":"isolated-proof","batchId":"%s","sourceFingerprintSha256":"%064d","canonicalFingerprintSha256":"%064d","databaseFingerprintSha256":"%064d","governanceFingerprintSha256":"%064d","governanceManifestVersion":"educa-synthetic-pilot-governance-v1","deletedEnrollments":0,"removed":0,"rollbackEvents":1}\n' "$batch" 1 2 3 4
 STUB
 chmod +x "$BIN"/*
