@@ -64,6 +64,7 @@ cat > "$BIN/psql" <<'STUB'
 #!/usr/bin/env bash
 set -eu
 if [[ "$STUB_CASE" == signal-stop-fails ]]; then kill -TERM "$PPID"; exit 0; fi
+mkdir -p "$TMPDIR/tool-cache"
 case "$*" in
   *'SELECT count(*) FROM public.pilot_import_batches'*) echo 0 ;;
   *"SELECT coalesce(user_metadata->>'pilot_import_object_fingerprint'"*) printf '%064d\n' 1 ;;
@@ -166,6 +167,7 @@ run_case success
 [[ "$status" == 0 ]] || { cat "$WORK/output" >&2; fail 'success turned red'; }
 data=$(<"$STUB_DATA")
 [[ ! -d "$data" && -f "$attempt/receipt.md" ]] || fail 'success did not follow cleanup'
+[[ -z "$(find "$WORK/tmp" -mindepth 1 -print -quit)" ]] || fail 'child tool cache escaped cleanup'
 grep -q "$(basename "$attempt")" "$attempt/receipt.md"
 grep -q 'PILOT_IMPORT_PROOF_E2E_OK' "$WORK/output"
 previous=$attempt

@@ -15,6 +15,8 @@ done
 
 WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-pilot-import-proof.XXXXXX")
 WORKSPACE_STATE=created
+# Keep child tool caches and temporary files inside the owned cleanup boundary.
+export TMPDIR="$WORK_DIR"
 DATA_DIR="$WORK_DIR/data"
 PORT=${POSTGRES_TEST_PORT:-$((50000 + $$ % 10000))}
 PROOF_DB="educa_pilot_proof_$$"
