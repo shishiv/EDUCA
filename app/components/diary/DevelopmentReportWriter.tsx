@@ -35,12 +35,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Label } from '@/components/ui/label'
 
 // Types
 import {
   type CampoType,
-  CAMPOS_EXPERIENCIA,
   getAllCampos,
   type Vivencia,
 } from '@/types/diario-infantil'
@@ -113,13 +111,13 @@ const DEFAULT_VALUES: ReportFormValues = {
   observacoes_gerais: '',
 }
 
+const CAMPOS = getAllCampos()
+
 // ============================================================================
 // Component
 // ============================================================================
 
 export function DevelopmentReportWriter({
-  studentName,
-  semesterLabel,
   initialValues,
   onSave,
   onFinalize,
@@ -142,10 +140,9 @@ export function DevelopmentReportWriter({
 
   // Calculate progress
   const progress = useMemo(() => {
-    const campos = getAllCampos()
     let filledCount = 0
 
-    campos.forEach((campo) => {
+    CAMPOS.forEach((campo) => {
       const fieldKey = CAMPO_FIELD_MAP[campo.key]
       const value = values[fieldKey] || ''
       if (value.trim().length >= MIN_CHARS_FOR_FINALIZATION) {
@@ -155,17 +152,16 @@ export function DevelopmentReportWriter({
 
     return {
       filled: filledCount,
-      total: campos.length,
-      percentage: Math.round((filledCount / campos.length) * 100),
+      total: CAMPOS.length,
+      percentage: Math.round((filledCount / CAMPOS.length) * 100),
     }
   }, [values])
 
   // Check if can finalize
   const canFinalize = useMemo(() => {
-    const campos = getAllCampos()
     const missingFields: string[] = []
 
-    campos.forEach((campo) => {
+    CAMPOS.forEach((campo) => {
       const fieldKey = CAMPO_FIELD_MAP[campo.key]
       const value = values[fieldKey] || ''
       if (value.trim().length < MIN_CHARS_FOR_FINALIZATION) {
@@ -206,7 +202,7 @@ export function DevelopmentReportWriter({
       await onSave?.(values)
       toast.success('Rascunho salvo com sucesso!')
     } catch (error) {
-      logger.error('Error saving draft', error as Error, {
+      logger.error('Error saving draft', error instanceof Error ? error : String(error), {
         feature: 'reports',
         action: 'save_development_report_draft'
       })
@@ -229,7 +225,7 @@ export function DevelopmentReportWriter({
       await onFinalize?.(values)
       toast.success('Relatório finalizado com sucesso!')
     } catch (error) {
-      logger.error('Error finalizing report', error as Error, {
+      logger.error('Error finalizing report', error instanceof Error ? error : String(error), {
         feature: 'reports',
         action: 'finalize_development_report'
       })
@@ -238,8 +234,6 @@ export function DevelopmentReportWriter({
       setIsFinalizing(false)
     }
   }, [values, canFinalize, onFinalize])
-
-  const campos = getAllCampos()
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -263,31 +257,14 @@ export function DevelopmentReportWriter({
       </Card>
 
       {/* Campo Fields */}
-      {campos.map((campo, index) => {
-        const fieldKey = CAMPO_FIELD_MAP[campo.key]
-        const value = values[fieldKey] || ''
-        const charCount = value.length
-        const isFilled = charCount >= MIN_CHARS_FOR_FINALIZATION
-        const isFocused = focusedCampo === campo.key
-
-        return (
-          <CampoField
-            key={campo.key}
-            index={index + 1}
-            campo={campo}
-            value={value}
-            placeholder={PLACEHOLDERS[campo.key]}
-            charCount={charCount}
-            minChars={MIN_CHARS_FOR_FINALIZATION}
-            isFilled={isFilled}
-            isFocused={isFocused}
-            disabled={isFormDisabled}
-            onChange={(newValue) => handleFieldChange(fieldKey, newValue)}
-            onFocus={() => handleFieldFocus(campo.key)}
-            onBlur={handleFieldBlur}
-          />
-        )
-      })}
+      <ReportCampoFields
+        values={values}
+        focusedCampo={focusedCampo}
+        disabled={isFormDisabled}
+        onFieldChange={handleFieldChange}
+        onFieldFocus={handleFieldFocus}
+        onFieldBlur={handleFieldBlur}
+      />
 
       {/* General Observations (optional) */}
       <Card>
@@ -315,69 +292,165 @@ export function DevelopmentReportWriter({
       </Card>
 
       {/* Finalization Warning */}
-      {!canFinalize.canFinalize && (
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">
-            {t('diary.incomplete')}
-          </AlertTitle>
-          <AlertDescription className="text-yellow-700">
-            Para finalizar, preencha todos os campos com pelo menos{' '}
-            {MIN_CHARS_FOR_FINALIZATION} caracteres.
-            <br />
-            <span className="font-medium">
-              Faltam: {canFinalize.missingFields.join(', ')}
-            </span>
-          </AlertDescription>
-        </Alert>
-      )}
+      <FinalizationWarning
+        disabled={disabled}
+        canFinalize={canFinalize.canFinalize}
+        missingFields={canFinalize.missingFields}
+      />
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleSaveDraft}
-          disabled={isSaving || isFinalizing || isFormDisabled}
-          className="min-w-[140px]"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              {t('actions.saving')}
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              {t('diary.saveDraft')}
-            </>
-          )}
-        </Button>
+      <ReportActions
+        hidden={disabled}
+        isSaving={isSaving}
+        isFinalizing={isFinalizing}
+        isFormDisabled={isFormDisabled}
+        canFinalize={canFinalize.canFinalize}
+        onSaveDraft={handleSaveDraft}
+        onFinalize={handleFinalize}
+      />
+    </div>
+  )
+}
 
-        <Button
-          type="button"
-          onClick={handleFinalize}
-          disabled={
-            isSaving ||
-            isFinalizing ||
-            !canFinalize.canFinalize ||
-            isFormDisabled
-          }
-          className="min-w-[140px] bg-green-600 hover:bg-green-700"
-        >
-          {isFinalizing ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Finalizando...
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {t('diary.finalize')}
-            </>
-          )}
-        </Button>
-      </div>
+interface ReportCampoFieldsProps {
+  values: ReportFormValues
+  focusedCampo: CampoType | null
+  disabled: boolean
+  onFieldChange: (fieldKey: keyof ReportFormValues, value: string) => void
+  onFieldFocus: (campo: CampoType) => void
+  onFieldBlur: () => void
+}
+
+function ReportCampoFields({
+  values,
+  focusedCampo,
+  disabled,
+  onFieldChange,
+  onFieldFocus,
+  onFieldBlur,
+}: ReportCampoFieldsProps) {
+  return CAMPOS.map((campo, index) => {
+    const fieldKey = CAMPO_FIELD_MAP[campo.key]
+    const value = values[fieldKey] || ''
+    const charCount = value.length
+
+    return (
+      <CampoField
+        key={campo.key}
+        index={index + 1}
+        campo={campo}
+        value={value}
+        placeholder={PLACEHOLDERS[campo.key]}
+        charCount={charCount}
+        minChars={MIN_CHARS_FOR_FINALIZATION}
+        isFilled={charCount >= MIN_CHARS_FOR_FINALIZATION}
+        isFocused={focusedCampo === campo.key}
+        disabled={disabled}
+        onChange={(newValue) => onFieldChange(fieldKey, newValue)}
+        onFocus={() => onFieldFocus(campo.key)}
+        onBlur={onFieldBlur}
+      />
+    )
+  })
+}
+
+interface FinalizationWarningProps {
+  disabled: boolean
+  canFinalize: boolean
+  missingFields: string[]
+}
+
+function FinalizationWarning({
+  disabled,
+  canFinalize,
+  missingFields,
+}: FinalizationWarningProps) {
+  const t = useClassroomTranslations()
+  if (disabled || canFinalize) return null
+
+  return (
+    <Alert className="border-yellow-200 bg-yellow-50">
+      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      <AlertTitle className="text-yellow-800">
+        {t('diary.incomplete')}
+      </AlertTitle>
+      <AlertDescription className="text-yellow-700">
+        Para finalizar, preencha todos os campos com pelo menos{' '}
+        {MIN_CHARS_FOR_FINALIZATION} caracteres.
+        <br />
+        <span className="font-medium">
+          Faltam: {missingFields.join(', ')}
+        </span>
+      </AlertDescription>
+    </Alert>
+  )
+}
+
+interface ReportActionsProps {
+  hidden: boolean
+  isSaving: boolean
+  isFinalizing: boolean
+  isFormDisabled: boolean
+  canFinalize: boolean
+  onSaveDraft: () => void
+  onFinalize: () => void
+}
+
+function ReportActions({
+  hidden,
+  isSaving,
+  isFinalizing,
+  isFormDisabled,
+  canFinalize,
+  onSaveDraft,
+  onFinalize,
+}: ReportActionsProps) {
+  const t = useClassroomTranslations()
+  if (hidden) return null
+
+  const saveDisabled = [isSaving, isFinalizing, isFormDisabled].some(Boolean)
+  const finalizeDisabled = [isSaving, isFinalizing, !canFinalize, isFormDisabled].some(Boolean)
+
+  return (
+    <div className="flex items-center justify-end gap-3 pt-4 border-t">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onSaveDraft}
+        disabled={saveDisabled}
+        className="min-w-[140px]"
+      >
+        {isSaving ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            {t('actions.saving')}
+          </>
+        ) : (
+          <>
+            <Save className="h-4 w-4 mr-2" />
+            {t('diary.saveDraft')}
+          </>
+        )}
+      </Button>
+
+      <Button
+        type="button"
+        onClick={onFinalize}
+        disabled={finalizeDisabled}
+        className="min-w-[140px] bg-green-600 hover:bg-green-700"
+      >
+        {isFinalizing ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Finalizando...
+          </>
+        ) : (
+          <>
+            <CheckCircle className="h-4 w-4 mr-2" />
+            {t('diary.finalize')}
+          </>
+        )}
+      </Button>
     </div>
   )
 }

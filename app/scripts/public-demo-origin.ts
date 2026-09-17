@@ -6,9 +6,7 @@ function isPrivateOrLoopbackIpv4(hostname: string): boolean {
 
   const [first, second] = octets
   return (
-    first === 0 ||
-    first === 10 ||
-    first === 127 ||
+    [0, 10, 127].includes(first) ||
     (first === 169 && second === 254) ||
     (first === 172 && second >= 16 && second <= 31) ||
     (first === 192 && second === 168)
@@ -32,19 +30,17 @@ export function isLocalOrLoopbackHostname(rawHostname: string): boolean {
   const hostname = rawHostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '')
   const ipVersion = isIP(hostname)
 
-  if (ipVersion === 0 && (
-    !hostname.includes('.') ||
-    hostname.endsWith('.localhost') ||
-    hostname.endsWith('.local') ||
-    hostname.endsWith('.internal') ||
-    hostname.endsWith('.home.arpa')
-  )) {
-    return true
-  }
+  if (ipVersion === 0) return isLocalDnsName(hostname)
 
   if (ipVersion === 4) return isPrivateOrLoopbackIpv4(hostname)
-  if (ipVersion !== 6) return false
+  return ipVersion === 6 && isLocalIpv6(hostname)
+}
 
+function isLocalDnsName(hostname: string): boolean {
+  return !hostname.includes('.') || ['.localhost', '.local', '.internal', '.home.arpa'].some(suffix => hostname.endsWith(suffix))
+}
+
+function isLocalIpv6(hostname: string): boolean {
   const words = expandIpv6(hostname)
   if (!words) return true
 

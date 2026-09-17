@@ -107,13 +107,18 @@ export function getAllCampos() {
  */
 export interface Vivencia {
   id: string
+  escola_id: string
   aluno_id: string
+  matricula_id: string
   turma_id: string
   professor_id: string
   data_vivencia: string // ISO date (YYYY-MM-DD)
   campos_experiencia: CampoType[] // Multiple campos allowed per vivencia
   descricao: string // Main observation text
   observacoes?: string | null // Additional notes
+  escopo: 'individual' | 'coletiva'
+  created_by: string
+  updated_by: string
   created_at: string
   updated_at: string
 }
@@ -168,15 +173,24 @@ export const VIVENCIA_VALIDATION = {
   minCamposSelected: 1,
 } as const
 
+export function isValidVivenciaDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
+export function isVivenciaDateNotFuture(value: string): boolean {
+  return value <= new Date().toISOString().slice(0, 10)
+}
+
 /**
  * Error messages for validation
  */
 export const VIVENCIA_ERROR_MESSAGES = {
-  descricaoTooShort: `A descricao deve ter pelo menos ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`,
-  descricaoTooLong: `A descricao deve ter no maximo ${VIVENCIA_VALIDATION.maxDescricaoLength} caracteres`,
-  noCampoSelected: 'Selecione pelo menos um Campo de Experiencia',
-  observacoesTooLong: `As observacoes devem ter no maximo ${VIVENCIA_VALIDATION.maxObservacoesLength} caracteres`,
-  dataRequired: 'A data da vivencia e obrigatoria',
+  descricaoTooShort: `A descrição deve ter no mínimo ${VIVENCIA_VALIDATION.minDescricaoLength} caracteres`,
+  descricaoTooLong: `A descrição deve ter no máximo ${VIVENCIA_VALIDATION.maxDescricaoLength} caracteres`,
+  noCampoSelected: 'Selecione pelo menos um Campo de Experiência',
+  observacoesTooLong: `As observações devem ter no máximo ${VIVENCIA_VALIDATION.maxObservacoesLength} caracteres`,
+  dataRequired: 'A data da vivência é obrigatória',
 } as const
 
 // ============================================================================

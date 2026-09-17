@@ -5,6 +5,8 @@ set -euo pipefail
 APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 cd "$APP_DIR"
+source "$APP_DIR/scripts/pilot-local-runtime.sh"
+PILOT_RUNTIME_FAILURE_PREFIX=PILOT_CAPACITY_E2E_FAILED
 # shellcheck source=pilot-port-range-lease.sh
 # shellcheck source=pilot-supabase-cleanup.sh
 source "$APP_DIR/scripts/pilot-port-range-lease.sh"
@@ -19,6 +21,7 @@ SUPABASE_PROJECT_ID=''
 SUPABASE_STARTED=false
 APP_PID=''
 APP_STOPPED=false
+APP_ROUTE_REMOVED=false
 DATABASE_STOPPED=false
 AUTH_STATE_REMOVED=false
 TEMP_REMOVED=false
@@ -32,7 +35,7 @@ RESULT='failed'
 TEST_EXIT=1
 SKIPPED=false
 DELIBERATE_BREAK="${PILOT_CAPACITY_DELIBERATE_BREAK:-none}"
-APP_NAME='educa-pilot-capacity'
+APP_NAME="educa-pilot-capacity-${RUN_ID,,}"
 EXPECTED_TEST_COUNT=2
 EXPECTED_SETUP_TEST_COUNT=1
 EXPECTED_RUN_TEST_COUNT=3
@@ -58,40 +61,6 @@ CLEANUP_RECEIPT="$RECEIPT_STEM.cleanup.json"
 FINAL_RECEIPT="$RECEIPT_STEM.json"
 
 mkdir -p "$RECEIPT_DIR"
-
-redact_file() {
-  local source_file="$1"
-  local destination_file="$2"
-  if [[ ! -f "$source_file" ]]; then
-    return 0
-  fi
-  sed -E \
-    -e 's/sb_(publishable|secret)_[A-Za-z0-9_-]+/[REDACTED_SUPABASE_KEY]/g' \
-    -e 's/eyJ[A-Za-z0-9._-]+/[REDACTED_TOKEN]/g' \
-    -e 's#(postgresql://[^:@/]+):[^@]+@#\1:[REDACTED]@#g' \
-    -e 's#(https?://[^:/[:space:]]+):[0-9]+#\1#g' \
-    "$source_file" > "$destination_file"
-}
-
-show_log_on_failure() {
-  local log_file="$1"
-  local redacted_log="${log_file}.redacted"
-  redact_file "$log_file" "$redacted_log"
-  if [[ -s "$redacted_log" ]]; then
-    cat "$redacted_log" >&2
-  fi
-}
-
-run_captured() {
-  local phase="$1"
-  local log_file="$2"
-  shift 2
-  if ! "$@" >"$log_file" 2>&1; then
-    echo "PILOT_CAPACITY_E2E_FAILED: phase=$phase" >&2
-    show_log_on_failure "$log_file"
-    return 1
-  fi
-}
 
 choose_port_base() {
   local candidate="${PILOT_E2E_PORT_BASE:-}"
@@ -240,40 +209,7 @@ cleanup() {
   trap - EXIT INT TERM
   set +e
 
-  if [[ -n "$APP_PID" ]]; then
-    kill "$APP_PID" 2>/dev/null || true
-    wait "$APP_PID" 2>/dev/null || true
-    if kill -0 "$APP_PID" 2>/dev/null; then
-      APP_STOPPED=false
-      CLEANUP_FAILED=true
-    else
-      APP_STOPPED=true
-    fi
-  else
-    APP_STOPPED=true
-  fi
-
-  if [[ "$SUPABASE_STARTED" == true && -d "$ISOLATED_PROJECT_DIR" ]]; then
-    if pilot_supabase_stop_project "$ISOLATED_PROJECT_DIR" "$SUPABASE_PROJECT_ID" >"$ISOLATED_PROJECT_DIR/stop.log" 2>&1; then
-      DATABASE_STOPPED=true
-    else
-      DATABASE_STOPPED=false
-      CLEANUP_FAILED=true
-      show_log_on_failure "$ISOLATED_PROJECT_DIR/stop.log"
-    fi
-  else
-    DATABASE_STOPPED=true
-  fi
-
-  if [[ -n "$AUTH_STATE_PATH" && -e "$AUTH_STATE_PATH" ]]; then
-    rm -f "$AUTH_STATE_PATH"
-  fi
-  if [[ -n "$AUTH_DIR" && -e "$AUTH_DIR" ]]; then
-    rm -rf "$AUTH_DIR"
-  fi
-  if [[ -n "$AUTH_STATE_PATH" && ! -e "$AUTH_STATE_PATH" ]]; then
-    AUTH_STATE_REMOVED=true
-  fi
+  pilot_cleanup_services
 
   redact_file "$SETUP_RECEIPT_TMP" "$SETUP_RECEIPT"
   redact_file "$DATABASE_RECEIPT_TMP" "$DATABASE_RECEIPT"
@@ -286,20 +222,7 @@ cleanup() {
     redact_file "$APP_LOG" "${RECEIPT_STEM}.app-log.txt"
   fi
 
-  if [[ -n "$ISOLATED_PROJECT_DIR" && -e "$ISOLATED_PROJECT_DIR" ]]; then
-    rm -rf "$ISOLATED_PROJECT_DIR"
-  fi
-  if [[ -n "$ISOLATED_PROJECT_DIR" && ! -e "$ISOLATED_PROJECT_DIR" ]]; then
-    TEMP_REMOVED=true
-  else
-    TEMP_REMOVED=false
-    CLEANUP_FAILED=true
-  fi
-
-  if ! pilot_port_range_lease_release; then
-    PORT_LEASE_RELEASE_FAILED=true
-    CLEANUP_FAILED=true
-  fi
+  pilot_cleanup_project
 
   for receipt_path in "$SETUP_RECEIPT" "$DATABASE_RECEIPT" "$ROLE_SETUP_RECEIPT" "$TEST_RECEIPT"; do
     if [[ ! -f "$receipt_path" ]]; then
@@ -316,6 +239,7 @@ cleanup() {
 {
   "result": "$([[ "$CLEANUP_FAILED" == true ]] && printf failed || printf pass)",
   "appStopped": $APP_STOPPED,
+  "namedRouteRemoved": $APP_ROUTE_REMOVED,
   "databaseStopped": $DATABASE_STOPPED,
   "syntheticAuthStateRemoved": $AUTH_STATE_REMOVED,
   "isolatedDirectoryRemoved": $TEMP_REMOVED,
@@ -390,7 +314,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 APP_SERVER_MODE=$(pilot_app_server_mode)
-for command in ss docker pnpm psql curl node; do
+for command in setsid ss docker pnpm psql curl node; do
   command -v "$command" >/dev/null || {
     echo "PILOT_CAPACITY_E2E_PREREQUISITE_MISSING: $command" >&2
     exit 1
@@ -449,20 +373,7 @@ MANIFEST_LIST_LOG="$ISOLATED_PROJECT_DIR/manifest-list.log"
 BUILD_LOG="$ISOLATED_PROJECT_DIR/build.log"
 APP_LOG="$ISOLATED_PROJECT_DIR/next.log"
 
-mkdir -p "$SUPABASE_CONFIG_DIR"
-cp "$ROOT_DIR/supabase/config.toml" "$SUPABASE_CONFIG_DIR/config.toml"
-ln -s "$ROOT_DIR/supabase/migrations" "$SUPABASE_CONFIG_DIR/migrations"
-sed -i \
-  -e "0,/port = 54321/s//port = $API_PORT/" \
-  -e "0,/port = 54322/s//port = $DB_PORT/" \
-  -e "0,/port = 54323/s//port = $STUDIO_PORT/" \
-  -e "0,/port = 54324/s//port = $MAILPIT_PORT/" \
-  -e "0,/port = 54327/s//port = $ANALYTICS_PORT/" \
-  -e "0,/vector_port = 54328/s//vector_port = $VECTOR_PORT/" \
-  -e "0,/port = 54329/s//port = $POOLER_PORT/" \
-  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"$APP_ORIGIN\"#" \
-  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"$APP_ORIGIN\"]#" \
-  "$SUPABASE_CONFIG_DIR/config.toml"
+pilot_local_project_init "$ROOT_DIR" "$ISOLATED_PROJECT_DIR" "$PORT_BASE" "$APP_ORIGIN"
 
 # Do not let inherited remote project settings or credentials influence this run.
 unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL DATABASE_URL
@@ -556,11 +467,11 @@ run_captured 'build' "$BUILD_LOG" pnpm build
 printf 'PILOT_CAPACITY_BUILD_RECEIPT: status=pass\n'
 
 if [[ "$APP_SERVER_MODE" == direct ]]; then
-  PORT="$APP_PORT" HOSTNAME=127.0.0.1 pnpm start >"$APP_LOG" 2>&1 &
+  setsid pnpm run start --hostname 127.0.0.1 --port "$APP_PORT" >"$APP_LOG" 2>&1 &
   APP_PID=$!
   BASE_URL="$APP_ORIGIN"
 else
-  portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
+  setsid portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
   APP_PID=$!
 fi
 for _ in $(seq 1 60); do

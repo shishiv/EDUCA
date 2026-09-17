@@ -1,0 +1,14 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": [
+    {
+      "name": "anti-slop",
+      "specifier": "../index.ts"
+    }
+  ],
+  "rules": {
+    "anti-slop/no-shape-in-symbol-names": "error"
+  }
+}

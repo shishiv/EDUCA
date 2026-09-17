@@ -8,10 +8,20 @@
  */
 
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, {
+  type CellInput,
+  type Styles,
+  type Table,
+} from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatDateShortBR } from '@/lib/date-utils';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    lastAutoTable?: Table;
+  }
+}
 
 // ============================================================================
 // TYPES
@@ -44,7 +54,7 @@ export interface PDFTableColumn {
 
 export interface PDFTableData {
   columns: PDFTableColumn[];
-  rows: Record<string, any>[];
+  rows: Array<Record<string, CellInput>>;
   title?: string;
   summary?: string;
 }
@@ -56,6 +66,14 @@ export interface PDFStyles {
   alternateBgColor?: [number, number, number];
   fontSize?: number;
   fontFamily?: string;
+}
+
+interface ResolvedPDFTableStyles {
+  headerBgColor: [number, number, number];
+  headerTextColor: [number, number, number];
+  alternateBgColor: [number, number, number];
+  fontSize: number;
+  fontFamily: string;
 }
 
 // ============================================================================
@@ -80,7 +98,7 @@ const DEFAULT_STYLES: PDFStyles = {
  * Note: For short format (DD/MM/YYYY), use formatDateShortBR from lib/date-utils
  */
 export function formatDateBR(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = date instanceof Date ? date : new Date(date);
   return format(dateObj, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 }
 
@@ -214,46 +232,26 @@ export function addPDFTable(
   startY: number,
   styles: PDFStyles = DEFAULT_STYLES
 ): number {
-  // Add table title if provided
-  if (table.title) {
-    doc.setFontSize(12);
-    doc.setFont(styles.fontFamily || 'helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(table.title, 15, startY);
-    startY += 8;
-  }
-
-  // Prepare columns for autoTable
-  const columns = table.columns.map((col) => ({
-    header: col.header,
-    dataKey: col.dataKey,
-  }));
-
-  // Configure column styles
-  const columnStyles: Record<string, any> = {};
-  table.columns.forEach((col) => {
-    columnStyles[col.dataKey] = {
-      halign: col.halign || 'left',
-      cellWidth: col.width || 'auto',
-    };
-  });
+  const tableStartY = addPDFTableTitle(doc, table.title, startY, styles);
+  const columnStyles = createPDFColumnStyles(table.columns);
+  const tableStyles = resolvePDFTableStyles(styles);
 
   // Add table using autoTable
   autoTable(doc, {
-    startY,
+    startY: tableStartY,
     head: [table.columns.map((c) => c.header)],
     body: table.rows.map((row) => table.columns.map((c) => row[c.dataKey] ?? '')),
     headStyles: {
-      fillColor: styles.headerBgColor || [41, 128, 185],
-      textColor: styles.headerTextColor || [255, 255, 255],
+      fillColor: tableStyles.headerBgColor,
+      textColor: tableStyles.headerTextColor,
       fontStyle: 'bold',
-      fontSize: styles.fontSize || 10,
+      fontSize: tableStyles.fontSize,
     },
     bodyStyles: {
-      fontSize: styles.fontSize || 10,
+      fontSize: tableStyles.fontSize,
     },
     alternateRowStyles: {
-      fillColor: styles.alternateBgColor || [245, 245, 245],
+      fillColor: tableStyles.alternateBgColor,
     },
     columnStyles,
     margin: { left: 15, right: 15 },
@@ -261,18 +259,57 @@ export function addPDFTable(
   });
 
   // Get the final Y position
-  const finalY = (doc as any).lastAutoTable?.finalY || startY + 20;
+  const finalY = resolveFinalTableY(doc, tableStartY);
 
   // Add summary if provided
   if (table.summary) {
     doc.setFontSize(9);
-    doc.setFont(styles.fontFamily || 'helvetica', 'italic');
+    doc.setFont(tableStyles.fontFamily, 'italic');
     doc.setTextColor(100, 100, 100);
     doc.text(table.summary, 15, finalY + 5);
     return finalY + 10;
   }
 
   return finalY;
+}
+
+function resolvePDFTableStyles(styles: PDFStyles): ResolvedPDFTableStyles {
+  return {
+    headerBgColor: styles.headerBgColor ?? [41, 128, 185],
+    headerTextColor: styles.headerTextColor ?? [255, 255, 255],
+    alternateBgColor: styles.alternateBgColor ?? [245, 245, 245],
+    fontSize: styles.fontSize ?? 10,
+    fontFamily: styles.fontFamily ?? 'helvetica',
+  };
+}
+
+function resolveFinalTableY(doc: jsPDF, tableStartY: number): number {
+  return doc.lastAutoTable?.finalY ?? tableStartY + 20;
+}
+
+function addPDFTableTitle(
+  doc: jsPDF,
+  title: string | undefined,
+  startY: number,
+  styles: PDFStyles,
+): number {
+  if (!title) return startY;
+
+  doc.setFontSize(12);
+  doc.setFont(styles.fontFamily || 'helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(title, 15, startY);
+  return startY + 8;
+}
+
+function createPDFColumnStyles(columns: PDFTableColumn[]): Record<string, Partial<Styles>> {
+  return Object.fromEntries(columns.map((column) => [
+    column.dataKey,
+    {
+      halign: column.halign || 'left',
+      cellWidth: column.width || 'auto',
+    },
+  ]));
 }
 
 /**

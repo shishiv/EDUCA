@@ -4,6 +4,10 @@ set -euo pipefail
 APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ROOT_DIR=$(cd "$APP_DIR/.." && pwd)
 cd "$APP_DIR"
+source "$APP_DIR/scripts/pilot-local-runtime.sh"
+source "$APP_DIR/scripts/pilot-supabase-cleanup.sh"
+source "$APP_DIR/scripts/pilot-port-range-lease.sh"
+PILOT_RUNTIME_FAILURE_PREFIX=PILOT_CANONICAL_E2E_FAILED
 ISOLATED_PROJECT_DIR=$(mktemp -d "$ROOT_DIR/.pilot-r1-canonical-supabase.XXXXXX")
 SUPABASE_CONFIG_DIR="$ISOLATED_PROJECT_DIR/supabase"
 AUTH_DIR="$ISOLATED_PROJECT_DIR/auth"
@@ -16,6 +20,18 @@ TEST_OUTPUT_EVIDENCE="$RECEIPT_STEM.test-output.txt"
 DATABASE_EVIDENCE="$RECEIPT_STEM.database.json"
 AUTH_EVIDENCE="$RECEIPT_STEM.identity.json"
 BROWSER_EVIDENCE="$RECEIPT_STEM.browser.json"
+SUPABASE_PROJECT_ID=$(basename "$ISOLATED_PROJECT_DIR")
+SUPABASE_PROJECT_ID="${SUPABASE_PROJECT_ID#.}"
+SUPABASE_STARTED=false
+SUPABASE_READY=false
+PILOT_GATE_APPLIED=false
+SYNTHETIC_SEED_APPLIED=false
+APP_NAME="educa-r1-canonical-$$"
+APP_SERVER_MODE=portless
+APP_ROUTE_REMOVED=false
+AUTH_STATE_REMOVED=false
+CLEANUP_FAILED=false
+PORT_LEASE_RELEASE_FAILED=false
 APP_PID=''
 BASE_URL=''
 RESULT='failed'
@@ -29,80 +45,13 @@ DELIBERATE_BREAK=${PILOT_CANONICAL_DELIBERATE_BREAK:-none}
 
 mkdir -p "$RECEIPT_DIR"
 
-redact_file() {
-  local source_file="$1"
-  local destination_file="$2"
-  if [[ ! -f "$source_file" ]]; then
-    return 0
-  fi
-  sed -E \
-    -e 's/sb_(publishable|secret)_[A-Za-z0-9_-]+/[REDACTED]/g' \
-    -e 's/eyJ[A-Za-z0-9._-]+/[REDACTED]/g' \
-    "$source_file" > "$destination_file"
-}
-
-show_log_on_failure() {
-  local log_file="$1"
-  local redacted_log="$ISOLATED_PROJECT_DIR/redacted-failure.log"
-  redact_file "$log_file" "$redacted_log"
-  if [[ -s "$redacted_log" ]]; then
-    cat "$redacted_log" >&2
-  fi
-}
-
-run_captured() {
-  local phase="$1"
-  local log_file="$2"
-  shift 2
-  if ! "$@" >"$log_file" 2>&1; then
-    echo "PILOT_CANONICAL_E2E_FAILED: phase=$phase" >&2
-    show_log_on_failure "$log_file"
-    exit 1
-  fi
-}
-
-choose_port_base() {
-  local candidate=${PILOT_CANONICAL_PORT_BASE:-55331}
-  if [[ ! "$candidate" =~ ^[0-9]+$ ]]; then
-    echo 'PILOT_CANONICAL_E2E_PORT_BASE_INVALID: PILOT_CANONICAL_PORT_BASE must be numeric' >&2
-    exit 1
-  fi
-  while ss -ltn | awk '{print $4}' | grep -Eq ":($(seq "$candidate" "$((candidate + 8))" | paste -sd'|' -))$"; do
-    candidate=$((candidate + 10))
-  done
-  printf '%s' "$candidate"
-}
-
 cleanup() {
   local exit_code=$?
+  trap - EXIT INT TERM
   set +e
 
-  if [[ -n "$APP_PID" ]]; then
-    kill "$APP_PID" 2>/dev/null || true
-    wait "$APP_PID" 2>/dev/null || true
-    APP_STOPPED=true
-  else
-    APP_STOPPED=true
-  fi
-
-  if [[ -d "$ISOLATED_PROJECT_DIR" ]]; then
-    (cd "$APP_DIR" && pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" stop --no-backup >"$ISOLATED_PROJECT_DIR/stop.log" 2>&1)
-    if [[ $? -eq 0 ]]; then
-      DATABASE_STOPPED=true
-    fi
-  else
-    DATABASE_STOPPED=true
-  fi
-
-  if [[ -f "$AUTH_STATE_PATH" ]]; then
-    rm -f "$AUTH_STATE_PATH"
-  fi
-  if [[ -d "$AUTH_DIR" ]]; then
-    rmdir "$AUTH_DIR" 2>/dev/null || true
-  fi
-  if [[ ! -e "$AUTH_STATE_PATH" ]]; then
-    AUTH_REMOVED=true
-  fi
+  pilot_cleanup_services
+  AUTH_REMOVED="$AUTH_STATE_REMOVED"
 
   if [[ -f "$ISOLATED_PROJECT_DIR/database-receipt.json" ]]; then
     cp "$ISOLATED_PROJECT_DIR/database-receipt.json" "$DATABASE_EVIDENCE"
@@ -120,19 +69,21 @@ cleanup() {
     redact_file "$APP_LOG" "$RECEIPT_STEM.app-log.txt"
   fi
 
-  rm -rf "$ISOLATED_PROJECT_DIR"
-  if [[ ! -e "$ISOLATED_PROJECT_DIR" ]]; then
-    TEMP_REMOVED=true
+  pilot_cleanup_project
+  if [[ "$CLEANUP_FAILED" == true ]]; then
+    RESULT=failed
+    if [[ "$exit_code" -eq 0 ]]; then exit_code=1; fi
   fi
 
-  node - "$FINAL_RECEIPT" "$DATABASE_EVIDENCE" "$AUTH_EVIDENCE" "$BROWSER_EVIDENCE" "$TEST_OUTPUT_EVIDENCE" "$exit_code" "$RESULT" "$APP_STOPPED" "$DATABASE_STOPPED" "$TEMP_REMOVED" "$AUTH_REMOVED" "$BASE_URL" "$DELIBERATE_BREAK" <<'NODE'
+  SUPABASE_READY="$SUPABASE_READY" PILOT_GATE_APPLIED="$PILOT_GATE_APPLIED" SYNTHETIC_SEED_APPLIED="$SYNTHETIC_SEED_APPLIED" node - "$FINAL_RECEIPT" "$DATABASE_EVIDENCE" "$AUTH_EVIDENCE" "$BROWSER_EVIDENCE" "$TEST_OUTPUT_EVIDENCE" "$exit_code" "$RESULT" "$APP_STOPPED" "$DATABASE_STOPPED" "$TEMP_REMOVED" "$AUTH_REMOVED" "$BASE_URL" "$DELIBERATE_BREAK" "$APP_ROUTE_REMOVED" "$PILOT_E2E_PORT_LEASE_RELEASED" <<'NODE'
 const fs = require('node:fs')
 const path = require('node:path')
 
-const [receiptPath, databasePath, authPath, browserPath, testOutputPath, exitCode, result, appStopped, databaseStopped, tempRemoved, authRemoved, baseUrl, deliberateBreak] = process.argv.slice(2)
+const [receiptPath, databasePath, authPath, browserPath, testOutputPath, exitCode, result, appStopped, databaseStopped, tempRemoved, authRemoved, baseUrl, deliberateBreak, routeRemoved, leaseReleased] = process.argv.slice(2)
 const readJson = file => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null
 const lineCount = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean).length : 0
 const relative = file => path.relative(process.cwd(), file)
+const parsedBaseUrl = baseUrl ? new URL(baseUrl) : null
 
 const receipt = {
   contract: 'R1 bounded canonical pilot E2E',
@@ -140,13 +91,14 @@ const receipt = {
   exitCode: Number(exitCode),
   command: 'cd app && pnpm test:e2e:pilot:canonical',
   setup: {
-    isolatedLocalSupabase: true,
-    pilotGateApplied: true,
-    syntheticSeedApplied: true,
+    isolatedLocalSupabase: process.env.SUPABASE_READY === 'true',
+    pilotGateApplied: process.env.PILOT_GATE_APPLIED === 'true',
+    syntheticSeedApplied: process.env.SYNTHETIC_SEED_APPLIED === 'true',
     publicDemoUsed: false,
     externalCredentialsUsed: false,
     appServer: 'portless',
     namedBaseUrl: baseUrl || null,
+    numberedUrl: parsedBaseUrl ? parsedBaseUrl.port !== '' : false,
   },
   database: readJson(databasePath),
   syntheticIdentity: readJson(authPath),
@@ -157,6 +109,8 @@ const receipt = {
   },
   cleanup: {
     appStopped: appStopped === 'true',
+    namedRouteRemoved: routeRemoved === 'true',
+    portRangeLeaseReleased: leaseReleased === 'true',
     databaseStopped: databaseStopped === 'true',
     isolatedDirectoryRemoved: tempRemoved === 'true',
     syntheticAuthStateRemoved: authRemoved === 'true',
@@ -174,15 +128,19 @@ NODE
   exit "$exit_code"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-for command in ss pnpm psql portless curl node; do
+for command in ss docker pnpm psql portless curl node setsid; do
   command -v "$command" >/dev/null || {
     echo "PILOT_CANONICAL_E2E_PREREQUISITE_MISSING: $command" >&2
     exit 1
   }
 done
 
-PORT_BASE=$(choose_port_base)
+# R1 owns a separate lease and lifecycle from the aggregate.
+pilot_port_range_lease_acquire
+PORT_BASE="$PILOT_E2E_PORT_BASE"
 API_PORT=$PORT_BASE
 DB_PORT=$((PORT_BASE + 1))
 STUDIO_PORT=$((PORT_BASE + 2))
@@ -191,21 +149,9 @@ ANALYTICS_PORT=$((PORT_BASE + 6))
 VECTOR_PORT=$((PORT_BASE + 7))
 POOLER_PORT=$((PORT_BASE + 8))
 CANONICAL_DATE=$(TZ=America/Sao_Paulo date +%F)
-APP_NAME='educa-r1-canonical'
 
-mkdir -p "$SUPABASE_CONFIG_DIR"
-cp "$ROOT_DIR/supabase/config.toml" "$SUPABASE_CONFIG_DIR/config.toml"
-ln -s "$ROOT_DIR/supabase/migrations" "$SUPABASE_CONFIG_DIR/migrations"
-
-sed -i \
-  -e "0,/port = 54321/s//port = $API_PORT/" \
-  -e "0,/port = 54322/s//port = $DB_PORT/" \
-  -e "0,/port = 54323/s//port = $STUDIO_PORT/" \
-  -e "0,/port = 54324/s//port = $MAILPIT_PORT/" \
-  -e "0,/port = 54327/s//port = $ANALYTICS_PORT/" \
-  -e "0,/vector_port = 54328/s//vector_port = $VECTOR_PORT/" \
-  -e "0,/port = 54329/s//port = $POOLER_PORT/" \
-  "$SUPABASE_CONFIG_DIR/config.toml"
+APP_ORIGIN=$(portless get "$APP_NAME")
+pilot_local_project_init "$ROOT_DIR" "$ISOLATED_PROJECT_DIR" "$PORT_BASE" "$APP_ORIGIN"
 
 SUPABASE_LOG="$ISOLATED_PROJECT_DIR/supabase-start.log"
 STATUS_LOG="$ISOLATED_PROJECT_DIR/supabase-status.log"
@@ -218,7 +164,9 @@ BUILD_LOG="$ISOLATED_PROJECT_DIR/build.log"
 APP_LOG="$ISOLATED_PROJECT_DIR/next.log"
 
 export NO_COLOR=1
+SUPABASE_STARTED=true
 run_captured 'supabase_start' "$SUPABASE_LOG" pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" start
+SUPABASE_READY=true
 
 STATUS_ENV=$(pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" status -o env 2>"$STATUS_LOG") || {
   echo 'PILOT_CANONICAL_E2E_FAILED: phase=supabase_status' >&2
@@ -231,7 +179,7 @@ export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
 export NEXT_PUBLIC_SUPABASE_ANON_KEY="${PUBLISHABLE_KEY:-${ANON_KEY:-}}"
 export SUPABASE_SERVICE_ROLE_KEY="${SECRET_KEY:-${SERVICE_ROLE_KEY:-}}"
 export SUPABASE_DB_URL="$DB_URL"
-export NEXT_PUBLIC_APP_URL="https://educa-r1-canonical.localhost"
+export NEXT_PUBLIC_APP_URL="$APP_ORIGIN"
 export NEXT_PUBLIC_PILOT_MODE=true
 export PILOT_MODE=true
 export PILOT_SYNTHETIC_DATA_ONLY=true
@@ -253,7 +201,9 @@ export PILOT_CANONICAL_OUTPUT_DIR="$ISOLATED_PROJECT_DIR/playwright-output"
 run_captured 'db_reset' "$DB_RESET_LOG" pnpm exec supabase --workdir "$ISOLATED_PROJECT_DIR" db reset
 run_captured 'pilot_safety_gate' "$GATE_LOG" pnpm exec tsx scripts/pilot-safety-gate.ts seed
 run_captured 'pilot_module_gate_sql' "$GATE_SQL_LOG" psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
+PILOT_GATE_APPLIED=true
 run_captured 'synthetic_seed' "$SEED_LOG" pnpm exec tsx scripts/seed-pilot-synthetic.ts
+SYNTHETIC_SEED_APPLIED=true
 if [[ "$DELIBERATE_BREAK" == 'security' ]]; then
   psql "$DB_URL" -X -v ON_ERROR_STOP=1 -c 'DROP POLICY pilot_frequencia_insert ON public.frequencia' >>"$SEED_LOG" 2>&1
   printf 'PILOT_CANONICAL_DELIBERATE_BREAK: target=security expected=red\n'
@@ -267,7 +217,7 @@ grep '^PILOT_CANONICAL_' "$VALIDATE_LOG" || true
 run_captured 'build' "$BUILD_LOG" pnpm build
 printf 'PILOT_CANONICAL_BUILD_RECEIPT: status=pass\n'
 
-portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
+setsid portless run --name "$APP_NAME" pnpm start >"$APP_LOG" 2>&1 &
 APP_PID=$!
 
 for _ in $(seq 1 60); do
@@ -285,8 +235,16 @@ fi
 
 export PLAYWRIGHT_BASE_URL="$BASE_URL"
 export PILOT_CANONICAL_SERVER_MANAGED=true
-export NODE_EXTRA_CA_CERTS="${NODE_EXTRA_CA_CERTS:-$HOME/.portless/ca.pem}"
-printf 'PILOT_CANONICAL_SETUP_RECEIPT: isolated_local_supabase=true pilot_gate=applied synthetic_seed=applied named_url_ready=true\n'
+unset NODE_EXTRA_CA_CERTS
+PORTLESS_CA_PATH="${PORTLESS_STATE_DIR:-$HOME/.portless}/ca.pem"
+if [[ -f "$PORTLESS_CA_PATH" ]]; then
+  export NODE_EXTRA_CA_CERTS="$PORTLESS_CA_PATH"
+fi
+NUMBERED_URL=false
+if node -e 'process.exit(new URL(process.argv[1]).port ? 0 : 1)' "$BASE_URL"; then
+  NUMBERED_URL=true
+fi
+printf 'PILOT_CANONICAL_SETUP_RECEIPT: isolated_local_supabase=true pilot_gate=applied synthetic_seed=applied named_url_ready=true numbered_url=%s\n' "$NUMBERED_URL"
 printf 'PILOT_CANONICAL_COMMAND_RECEIPT: cd app && pnpm test:e2e:pilot:canonical\n'
 
 set +e

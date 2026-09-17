@@ -31,6 +31,38 @@ interface StudentTagsProps {
   className?: string
 }
 
+function StatusTag({ active }: { active: boolean }) {
+  const t = useTranslations('registry')
+  return <Badge variant={active ? 'success' : 'secondary'}>{active ? t('ui.ativo') : t('labels.inativo')}</Badge>
+}
+
+function TurmaTag({ turma }: { turma?: string | null }) {
+  return turma ? <Badge variant="info">{turma}</Badge> : null
+}
+
+function TurnoTag({ turno }: { turno?: string | null }) {
+  const t = useTranslations('registry')
+  if (!turno) return null
+  const labels = new Map([
+    ['matutino', t('labels.matutino')],
+    ['vespertino', t('labels.vespertino')],
+    ['integral', t('labels.integral')],
+    ['noturno', t('labels.noturno')],
+  ])
+  return <Badge variant="secondary">{labels.get(turno.toLowerCase()) ?? turno}</Badge>
+}
+
+function BolsaFamiliaTag({ visible }: { visible: boolean }) {
+  const t = useTranslations('registry')
+  if (!visible) return null
+  return (
+    <Badge variant="warning" className="flex items-center gap-1">
+      <AlertTriangle className="h-3 w-3" />
+      <span>{t('labels.bolsa-familia')}</span>
+    </Badge>
+  )
+}
+
 /**
  * Displays colored tag chips for turma, turno, status, and optionally Bolsa Familia.
  * Uses flex-wrap for responsive layout.
@@ -43,51 +75,12 @@ export function StudentTags({
   ativo = true,
   className,
 }: StudentTagsProps) {
-  const t = useTranslations('registry')
-  const turnoLabels: Record<string, string> = {
-    matutino: t('labels.matutino'),
-    vespertino: t('labels.vespertino'),
-    integral: t('labels.integral'),
-    noturno: t('labels.noturno'),
-  }
-  const hasAnyTag =
-    turma ||
-    turno ||
-    (showBolsaFamilia && bolsaFamilia) ||
-    ativo !== undefined
-
-  if (!hasAnyTag) return null
-
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className || ''}`}>
-      {/* Status Badge */}
-      {ativo !== undefined && (
-        <Badge variant={ativo ? 'success' : 'secondary'}>
-          {ativo ? t('ui.ativo') : t('labels.inativo')}
-        </Badge>
-      )}
-
-      {/* Turma Badge (blue) */}
-      {turma && (
-        <Badge variant="info">
-          {turma}
-        </Badge>
-      )}
-
-      {/* Turno Badge (gray/secondary) */}
-      {turno && (
-        <Badge variant="secondary">
-          {turnoLabels[turno.toLowerCase()] || turno}
-        </Badge>
-      )}
-
-      {/* Bolsa Familia Badge (yellow with warning icon) */}
-      {showBolsaFamilia && bolsaFamilia && (
-        <Badge variant="warning" className="flex items-center gap-1">
-          <AlertTriangle className="h-3 w-3" />
-          <span>{t('labels.bolsa-familia')}</span>
-        </Badge>
-      )}
+      <StatusTag active={ativo} />
+      <TurmaTag turma={turma} />
+      <TurnoTag turno={turno} />
+      <BolsaFamiliaTag visible={showBolsaFamilia && Boolean(bolsaFamilia)} />
     </div>
   )
 }

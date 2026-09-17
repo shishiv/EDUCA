@@ -42,7 +42,7 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options)
             })
-          } catch (error) {
+          } catch {
             // Handle cookie setting errors in middleware/edge runtime
             // Cookies may not be settable in some contexts
           }
@@ -123,7 +123,7 @@ export async function verifyUserRole(
     return false
   }
 
-  return allowedRoles.includes(userData.tipo_usuario as any)
+  return allowedRoles.some((role) => role === userData.tipo_usuario)
 }
 
 // Type exports for convenience

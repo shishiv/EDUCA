@@ -78,7 +78,8 @@ export class WhatsAppLocalAdapter implements WhatsAppNotificationGateway {
 
     if (this.mode === 'fail') {
       throw new WhatsAppTransientDeliveryError(
-        'WhatsAppLocalAdapter simulated transient failure (WHATSAPP_LOCAL_FAKE_MODE=fail)'
+        'WhatsAppLocalAdapter simulated transient failure (WHATSAPP_LOCAL_FAKE_MODE=fail)',
+        { retrySafe: true },
       )
     }
 

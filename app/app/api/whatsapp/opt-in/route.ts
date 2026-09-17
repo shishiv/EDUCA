@@ -1,7 +1,7 @@
 /**
  * POST /api/whatsapp/opt-in - explicit guardian consent management.
  *
- * Pilot staff record (or withdraw) a guardian's explicit WhatsApp consent
+ * Active school directors record (or withdraw) a guardian's explicit WhatsApp consent
  * for attendance alerts. The service stores consent timestamps, derives the
  * school scope from the guardian record, and writes the change to the
  * append-only audit log. Phone numbers are never part of this endpoint.
@@ -20,7 +20,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const actor = await requirePilotActor(['admin', 'secretario', 'diretor', 'professor'])
+    const actor = await requirePilotActor(['diretor'])
     const input = whatsappOptInInputSchema.parse(await request.json())
     const supabase = asWhatsAppClient(await createClient())
 

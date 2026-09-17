@@ -1,541 +1,398 @@
+import { execFile as execFileCallback } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
+import ExcelJS from 'exceljs'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Page } from '@playwright/test'
+import type { Database } from '@/types/database'
 import { test, expect } from '../support/diagnostics'
 
-/**
- * E2E Tests: Bolsa Familia Report (Relatorio Bolsa Familia)
- * Task Group 4.2: Alerta Bolsa Familia
- * OpenSpec Change: 2025-12-04-diario-de-classe
- *
- * Tests the Bolsa Familia compliance report with:
- * - School/turma filters
- * - Period selection
- * - Alert visualization
- * - Table view
- * - Export functionality
- */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  || 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-test.describe('Bolsa Familia Report - Page Access', () => {
-  test('should access bolsa familia report page', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    
-    await expect(page.getByRole('heading', { name: 'Bolsa Família', exact: true })).toBeVisible()
-  })
+const CLASS_NAME = '1º Ano A E2E'
+const SCHOOL_NAME = 'CEMEI Pequenos Passos'
+const FIXTURE_RUN_ID = randomUUID()
+const STUDENT_ID = randomUUID()
+const ENROLLMENT_ID = randomUUID()
+const STUDENT_NAME = `Bolsa Família C14 E2E ${FIXTURE_RUN_ID.slice(0, 8)}`
+const STUDENT_NIS = FIXTURE_RUN_ID.replace(/\D/g, '').padEnd(11, '0').slice(0, 11)
+const FIXTURE_DATES = ['2026-09-05', '2026-09-06', '2026-09-07'] as const
+const SESSION_IDS = [
+  randomUUID(),
+  randomUUID(),
+  randomUUID(),
+] as const
+const ATTENDANCE_IDS = [
+  randomUUID(),
+  randomUUID(),
+  randomUUID(),
+] as const
 
-  test('should display page description', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    
-    await expect(page.getByText(/monitoramento de frequência|monitoramento de frequencia/i).first()).toBeVisible()
-  })
+type ConditionalityRow =
+  Database['public']['Functions']['get_attendance_conditionality']['Returns'][number]
 
-  test('should show filter section', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    
-    await expect(page.getByText(/filtros/i)).toBeVisible()
-  })
+const execFile = promisify(execFileCallback)
 
-  test('should have export buttons in header', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    
-    await expect(page.getByRole('button', { name: /excel/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /pdf/i })).toBeVisible()
+function exportedRowValues(row: ExcelJS.Row) {
+  if (!Array.isArray(row.values)) throw new Error('BOLSA_FAMILIA_EXPORT_ROW_VALUES_INVALID')
+  return row.values.slice(1)
+}
+
+let admin: SupabaseClient<Database>
+let classId = ''
+let schoolId = ''
+let expectedRow: ConditionalityRow
+
+function getLocalAdminClient(): SupabaseClient<Database> {
+  if (!new URL(SUPABASE_URL).hostname.match(/^(127\.0\.0\.1|localhost)$/)) {
+    throw new Error('Bolsa Família report E2E requires a loopback Supabase URL')
+  }
+  if (!SERVICE_ROLE_KEY.startsWith('sb_secret_')) {
+    throw new Error('Bolsa Família report E2E requires the local Supabase service key')
+  }
+  return createClient<Database>(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
   })
+}
+
+function requireDatabaseSuccess(label: string, error: { message: string } | null): void {
+  if (error) throw new Error(`${label}: ${error.message}`)
+}
+
+async function cleanupFixture(client: SupabaseClient<Database>): Promise<void> {
+  const attendance = await client.from('frequencia').delete().in('id', [...ATTENDANCE_IDS])
+  requireDatabaseSuccess('Bolsa fixture attendance cleanup failed', attendance.error)
+  const sessions = await client.from('sessoes_aula').delete().in('id', [...SESSION_IDS])
+  requireDatabaseSuccess('Bolsa fixture session cleanup failed', sessions.error)
+  const enrollment = await client.from('matriculas').delete().eq('id', ENROLLMENT_ID)
+  requireDatabaseSuccess('Bolsa fixture enrollment cleanup failed', enrollment.error)
+  const student = await client.from('alunos').delete().eq('id', STUDENT_ID)
+  requireDatabaseSuccess('Bolsa fixture student cleanup failed', student.error)
+}
+
+async function seedFixture(client: SupabaseClient<Database>): Promise<void> {
+  // The conditionality projection counts marked facts independently of session
+  // finalization. Keep this disposable fixture open so cleanup remains legal.
+  await cleanupFixture(client)
+  const [turmaResult, teacherResult] = await Promise.all([
+    client.from('turmas').select('id, escola_id').eq('nome', CLASS_NAME).single(),
+    client.from('users').select('id').eq('email', 'professor@test.com').single(),
+  ])
+  requireDatabaseSuccess('Bolsa fixture class lookup failed', turmaResult.error)
+  requireDatabaseSuccess('Bolsa fixture teacher lookup failed', teacherResult.error)
+  if (!turmaResult.data || !teacherResult.data) throw new Error('BOLSA_FIXTURE_SCOPE_MISSING')
+  classId = turmaResult.data.id
+  schoolId = turmaResult.data.escola_id
+
+  const student = await client.from('alunos').insert({
+    id: STUDENT_ID,
+    escola_id: schoolId,
+    nome_completo: STUDENT_NAME,
+    data_nascimento: '2018-01-10',
+    sexo: 'M',
+    ativo: true,
+    bolsa_familia: true,
+    nis: STUDENT_NIS,
+  })
+  requireDatabaseSuccess('Bolsa fixture student insert failed', student.error)
+
+  const enrollment = await client.from('matriculas').insert({
+    id: ENROLLMENT_ID,
+    aluno_id: STUDENT_ID,
+    turma_id: classId,
+    ano_letivo: 2026,
+    situacao: 'ativa',
+    data_matricula: '2026-02-02',
+    observacoes: `Fixture persistida do relatório Bolsa Família C14 ${FIXTURE_RUN_ID}`,
+  })
+  requireDatabaseSuccess('Bolsa fixture enrollment insert failed', enrollment.error)
+
+  const sessions = await client.from('sessoes_aula').insert(SESSION_IDS.map((id, index) => ({
+    id,
+    turma_id: classId,
+    escola_id: schoolId,
+    professor_id: teacherResult.data.id,
+    data_aula: FIXTURE_DATES[index],
+    conteudo_programatico: `Bolsa Família C14 ${FIXTURE_RUN_ID} ${index + 1}`,
+    status: 'ABERTA',
+    aberta_em: `${FIXTURE_DATES[index]}T08:00:00-03:00`,
+  })))
+  requireDatabaseSuccess('Bolsa fixture sessions insert failed', sessions.error)
+
+  const statuses = ['P', 'F', 'A'] as const
+  const attendance = await client.from('frequencia').insert(ATTENDANCE_IDS.map((id, index) => ({
+    id,
+    matricula_id: ENROLLMENT_ID,
+    sessao_id: SESSION_IDS[index],
+    data_aula: FIXTURE_DATES[index],
+    presente: statuses[index] !== 'F',
+    status_presenca: statuses[index],
+    professor_id: teacherResult.data.id,
+    marcado_por: teacherResult.data.id,
+    marcado_em: `${FIXTURE_DATES[index]}T08:15:00-03:00`,
+  })))
+  requireDatabaseSuccess('Bolsa fixture attendance insert failed', attendance.error)
+}
+
+async function loadExpectedConditionality(): Promise<ConditionalityRow> {
+  const client = createClient<Database>(SUPABASE_URL, ANON_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const signIn = await client.auth.signInWithPassword({
+    email: 'admin@test.com',
+    password: 'test123456',
+  })
+  requireDatabaseSuccess('Bolsa expected-row authentication failed', signIn.error)
+
+  const result = await client.rpc('get_attendance_conditionality', {
+    p_start_date: '2026-08-01',
+    p_end_date: '2026-09-30',
+    p_escola_id: schoolId,
+    p_turma_id: classId,
+  })
+  requireDatabaseSuccess('Bolsa expected-row RPC failed', result.error)
+  const row = result.data?.find(candidate => candidate.aluno_id === STUDENT_ID)
+  if (!row) throw new Error('BOLSA_CANONICAL_ROW_MISSING')
+  return row
+}
+
+async function openReport(page: Page): Promise<void> {
+  await page.goto('/relatorios/bolsa-familia')
+  await expect(page.getByRole('heading', { name: 'Relatório Bolsa Família', exact: true })).toBeVisible()
+  await expect(page.getByLabel('Escola', { exact: true })).toBeVisible()
+}
+
+async function filterToFixture(page: Page): Promise<void> {
+  const schoolSelect = page.getByLabel('Escola', { exact: true })
+  await schoolSelect.click()
+  await page.getByRole('option', { name: SCHOOL_NAME, exact: true }).click()
+
+  const classSelect = page.getByLabel('Turma', { exact: true })
+  await expect(classSelect).toBeEnabled()
+  await classSelect.click()
+  await page.getByRole('option', { name: `${CLASS_NAME} (1º Ano)`, exact: true }).click()
+
+  await page.getByLabel('Período', { exact: true }).click()
+  await page.getByRole('option', { name: '3º Bimestre', exact: true }).click()
+  await page.getByRole('tab', { name: /Tabela/ }).click()
+  await expect(page.getByRole('row').filter({ hasText: STUDENT_NAME })).toBeVisible()
+}
+
+function legalStatusDisplay(row: ConditionalityRow): string {
+  return row.piso_legal_percent === null
+    ? row.condicionalidade_legal_status
+    : `${row.condicionalidade_legal_status} (${row.piso_legal_percent}%)`
+}
+
+function municipalStatusDisplay(row: ConditionalityRow): string {
+  const hasResolvedMargin = row.margem_municipal_critica_percent !== null
+    && row.margem_municipal_alerta_percent !== null
+  return hasResolvedMargin
+    ? `${row.margem_municipal_status} (${row.margem_municipal_critica_percent}/${row.margem_municipal_alerta_percent}%)`
+    : row.margem_municipal_status
+}
+
+function exportMunicipalStatus(row: ConditionalityRow): string {
+  const status = row.margem_municipal_status === 'CRITICO'
+    ? 'NÃO CONFORME'
+    : row.margem_municipal_status === 'ALERTA'
+      ? 'ALERTA MUNICIPAL'
+      : 'CONFORME'
+  return `${status} (${row.margem_municipal_origem ?? 'sem origem'})`
+}
+
+function exportLegalFloor(row: ConditionalityRow): string {
+  return row.piso_legal_percent === null ? '-' : `${row.piso_legal_percent}%`
+}
+
+function exportMunicipalMargin(row: ConditionalityRow): string {
+  return row.margem_municipal_critica_percent !== null && row.margem_municipal_alerta_percent !== null
+    ? `${row.margem_municipal_critica_percent}%/${row.margem_municipal_alerta_percent}%`
+    : 'não configurada'
+}
+
+function expectedInAlertView(row: ConditionalityRow): boolean {
+  return row.condicionalidade_legal_status === 'CRITICO'
+    || row.margem_municipal_status !== 'CONFORME'
+}
+
+test.beforeAll(async () => {
+  admin = getLocalAdminClient()
+  await seedFixture(admin)
+  expectedRow = await loadExpectedConditionality()
 })
 
-test.describe('Bolsa Familia Report - Filters', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-  })
-
-  test('should display school filter', async ({ page }) => {
-    const schoolSelect = page.getByLabel(/escola/i)
-    await expect(schoolSelect).toBeVisible()
-  })
-
-  test('should display turma filter', async ({ page }) => {
-    const turmaSelect = page.getByLabel(/turma/i)
-    await expect(turmaSelect).toBeVisible()
-  })
-
-  test('should display period filter', async ({ page }) => {
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    await expect(periodSelect).toBeVisible()
-  })
-
-  test('should select school from dropdown', async ({ page }) => {
-    const schoolSelect = page.getByLabel(/escola/i)
-    
-    await schoolSelect.click()
-    
-    // Should have "Todas as escolas" option
-    await expect(page.getByRole('option', { name: /todas.*escolas/i })).toBeVisible()
-    
-    // Select first school
-    const schoolOptions = page.getByRole('option').filter({ hasNotText: /todas/i })
-    const firstSchool = schoolOptions.first()
-    
-    if (await firstSchool.isVisible()) {
-      await firstSchool.click()
-      
-      // Turma filter should become enabled
-      const turmaSelect = page.getByLabel(/turma/i)
-      await expect(turmaSelect).toBeEnabled()
-    }
-  })
-
-  test('should disable turma filter when "all schools" selected', async ({ page }) => {
-    const schoolSelect = page.getByLabel(/escola/i)
-    
-    await schoolSelect.click()
-    await page.getByRole('option', { name: /todas.*escolas/i }).click()
-    
-    // Turma should be disabled
-    const turmaSelect = page.getByLabel(/turma/i)
-    await expect(turmaSelect).toBeDisabled()
-  })
-
-  test('should have period options', async ({ page }) => {
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    
-    await periodSelect.click()
-    
-    await expect(page.getByRole('option', { name: /mes atual|mês atual/i })).toBeVisible()
-    await expect(page.getByRole('option', { name: /mes anterior|mês anterior/i })).toBeVisible()
-    await expect(page.getByRole('option', { name: /1.*bimestre/i })).toBeVisible()
-    await expect(page.getByRole('option', { name: /personalizado/i })).toBeVisible()
-  })
-
-  test('should show custom date pickers for custom period', async ({ page }) => {
-    const periodSelect = page.getByLabel(/periodo|período/i)
-    
-    await periodSelect.click()
-    await page.getByRole('option', { name: /personalizado/i }).click()
-    
-    // Date pickers should appear
-    await page.waitForTimeout(500)
-    
-    const datePickers = page.getByRole('button').filter({ hasText: /inicio|início|fim/i })
-    const count = await datePickers.count()
-    
-    expect(count).toBeGreaterThanOrEqual(2)
-  })
-
-  test('should have refresh button', async ({ page }) => {
-    const refreshButton = page.getByRole('button', { name: /atualizar/i })
-    
-    if (await refreshButton.isVisible()) {
-      await expect(refreshButton).toBeVisible()
-    }
-  })
+test.afterAll(async () => {
+  if (admin) await cleanupFixture(admin)
 })
 
-test.describe('Bolsa Familia Report - Summary Cards', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000) // Wait for auto-load
+test.describe('Relatório Bolsa Família', () => {
+  test('shows governed filters and reveals the implemented custom date controls', async ({ page }) => {
+    await openReport(page)
+
+    await expect(page.getByText('Monitoramento de frequência para alunos do programa', { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Filtros', exact: true })).toBeVisible()
+    await expect(page.getByLabel('Turma', { exact: true })).toBeDisabled()
+    await expect(page.getByLabel('Período', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Atualizar relatório', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Exportar para Excel', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Exportar para PDF', exact: true })).toBeVisible()
+
+    await page.getByLabel('Período', { exact: true }).click()
+    await page.getByRole('option', { name: 'Personalizado', exact: true }).click()
+    const customDates = page.getByText('Datas', { exact: true }).locator('..')
+    await expect(customDates.getByRole('button', { name: 'Inicio', exact: true })).toBeVisible()
+    await expect(customDates.getByRole('button', { name: 'Fim', exact: true })).toBeVisible()
+
+    await page.getByLabel('Escola', { exact: true }).click()
+    await page.getByRole('option', { name: SCHOOL_NAME, exact: true }).click()
+    await expect(page.getByLabel('Turma', { exact: true })).toBeEnabled()
   })
 
-  test('should display summary statistics', async ({ page }) => {
-    // Check for summary cards
-    const hasCards = await page.getByText(/total.*bf|alunos.*bolsa/i).isVisible({ timeout: 5000 }).catch(() => false)
-    
-    if (hasCards) {
-      await expect(page.getByText(/total.*bf|alunos.*bolsa/i)).toBeVisible()
-    }
-  })
+  test('renders the authorized canonical row, resolved statuses, tabs, and refresh', async ({ page }) => {
+    await openReport(page)
+    await filterToFixture(page)
 
-  test('should show conformes count', async ({ page }) => {
-    const conformesCard = page.getByText(/conformes|ok/i).first()
-    const hasConformes = await conformesCard.isVisible({ timeout: 5000 }).catch(() => false)
-    
-    if (hasConformes) {
-      await expect(conformesCard).toBeVisible()
-    }
-  })
+    await expect(page.getByText('Alunos Bolsa Família', { exact: true })).toBeVisible()
+    await expect(page.getByText('Conformes na margem municipal', { exact: true })).toBeVisible()
+    await expect(page.getByText('Em alerta municipal', { exact: true })).toBeVisible()
+    await expect(page.getByText('Críticos na margem municipal', { exact: true })).toBeVisible()
 
-  test('should show alerta count', async ({ page }) => {
-    const alertaCard = page.getByText(/alerta/i).first()
-    const hasAlerta = await alertaCard.isVisible({ timeout: 5000 }).catch(() => false)
-    
-    if (hasAlerta) {
-      await expect(alertaCard).toBeVisible()
-    }
-  })
-
-  test('should show critico count', async ({ page }) => {
-    const criticoCard = page.getByText(/crítico|critico/i).first()
-    const hasCritico = await criticoCard.isVisible({ timeout: 5000 }).catch(() => false)
-    
-    if (hasCritico) {
-      await expect(criticoCard).toBeVisible()
-    }
-  })
-
-  test('should display counts as numbers', async ({ page }) => {
-    await page.waitForTimeout(2000)
-    
-    // Look for numeric values in cards
-    const numberPattern = /^\d+$/
-    const numberCells = page.locator('div, p').filter({ hasText: numberPattern })
-    
-    const count = await numberCells.count()
-    expect(count).toBeGreaterThanOrEqual(0)
-  })
-})
-
-test.describe('Bolsa Familia Report - View Tabs', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-  })
-
-  test('should have alert and table tabs', async ({ page }) => {
-    const alertTab = page.getByRole('tab', { name: /alerta/i })
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    
-    const hasAlertTab = await alertTab.isVisible().catch(() => false)
-    const hasTableTab = await tableTab.isVisible().catch(() => false)
-    
-    if (hasAlertTab && hasTableTab) {
-      await expect(alertTab).toBeVisible()
-      await expect(tableTab).toBeVisible()
-    }
-  })
-
-  test('should switch to table view', async ({ page }) => {
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    
-    if (await tableTab.isVisible()) {
-      await tableTab.click()
-      await page.waitForTimeout(500)
-      
-      // Table should be visible
-      const table = page.getByRole('table')
-      const hasTable = await table.isVisible().catch(() => false)
-      
-      if (hasTable) {
-        await expect(table).toBeVisible()
-      }
-    }
-  })
-
-  test('should switch to alert view', async ({ page }) => {
-    const alertTab = page.getByRole('tab', { name: /alerta/i })
-    
-    if (await alertTab.isVisible()) {
-      await alertTab.click()
-      await page.waitForTimeout(500)
-      
-      // Alert cards/list should be visible
-      const hasAlerts = await page.getByText(/crítico|alerta|conforme/i).isVisible().catch(() => false)
-      
-      expect(hasAlerts || true).toBeTruthy()
-    }
-  })
-})
-
-test.describe('Bolsa Familia Report - Alert View', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-    
-    // Switch to alert tab
-    const alertTab = page.getByRole('tab', { name: /alerta/i })
-    if (await alertTab.isVisible()) {
-      await alertTab.click()
-      await page.waitForTimeout(500)
-    }
-  })
-
-  test('should display alert visual component', async ({ page }) => {
-    // Check for BolsaFamiliaAlert component
-    const hasAlertComponent = await page.locator('[class*="alert"], [class*="card"]').first().isVisible().catch(() => false)
-    
-    expect(hasAlertComponent || true).toBeTruthy()
-  })
-
-  test('should show student alerts with status badges', async ({ page }) => {
-    // Look for status badges
-    const badges = page.locator('[class*="badge"], [class*="Badge"]').filter({ hasText: /crítico|alerta|ok|conforme/i })
-    
-    const count = await badges.count()
-    expect(count).toBeGreaterThanOrEqual(0)
-  })
-
-  test('should prioritize critical students', async ({ page }) => {
-    // Critical students should appear first/prominently
-    const criticalBadges = page.getByText(/crítico|critico/i)
-    const count = await criticalBadges.count()
-    
-    expect(count).toBeGreaterThanOrEqual(0)
-  })
-})
-
-test.describe('Bolsa Familia Report - Table View', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-    
-    // Switch to table tab
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    if (await tableTab.isVisible()) {
-      await tableTab.click()
-      await page.waitForTimeout(500)
-    }
-  })
-
-  test('should display student table', async ({ page }) => {
     const table = page.getByRole('table')
-    const hasTable = await table.isVisible().catch(() => false)
-    
-    if (hasTable) {
-      await expect(table).toBeVisible()
+    const row = table.getByRole('row').filter({ hasText: STUDENT_NAME })
+    const cells = row.getByRole('cell')
+    await expect(cells.nth(1)).toHaveText(STUDENT_NIS)
+    await expect(cells.nth(2)).toHaveText(CLASS_NAME)
+    await expect(cells.nth(3)).toHaveText(SCHOOL_NAME)
+    await expect(cells.nth(4)).toHaveText(String(expectedRow.presencas - expectedRow.atestados))
+    await expect(cells.nth(5)).toHaveText(String(expectedRow.faltas))
+    await expect(cells.nth(6)).toHaveText(String(expectedRow.total_aulas))
+    await expect(cells.nth(7)).toHaveText(`${Math.round(expectedRow.percentual_frequencia)}%`)
+    await expect(cells.nth(8)).toHaveText(legalStatusDisplay(expectedRow))
+    await expect(cells.nth(9)).toHaveText(municipalStatusDisplay(expectedRow))
+    await expect(cells.nth(10)).toHaveText(expectedRow.margem_municipal_status === 'CRITICO'
+      ? 'Critico'
+      : expectedRow.margem_municipal_status === 'ALERTA' ? 'Alerta' : 'OK')
+    await expect(page.getByText('Margens municipais:', { exact: true })).toBeVisible()
+    await expect(page.getByText(/Gerado em: \d{2}\/\d{2}\/\d{4}/)).toBeVisible()
+
+    const refreshResponsePromise = page.waitForResponse(response => {
+      return response.url().includes('/rest/v1/rpc/get_attendance_conditionality')
+        && response.request().method() === 'POST'
+    })
+    await page.getByRole('button', { name: 'Atualizar relatório', exact: true }).click()
+    expect((await refreshResponsePromise).status()).toBe(200)
+    await expect(row).toBeVisible()
+
+    await page.getByRole('tab', { name: /Alerta/ }).click()
+    const alertPanel = page.getByRole('tabpanel')
+    if (expectedInAlertView(expectedRow)) {
+      await expect(alertPanel.getByText(STUDENT_NAME, { exact: true })).toBeVisible()
+      await expect(alertPanel.getByText(`NIS: ${STUDENT_NIS}`, { exact: true })).toBeVisible()
+    } else {
+      await expect(alertPanel.getByText('Bolsa Família: Sem Alertas', { exact: true })).toBeVisible()
     }
   })
 
-  test('should show required columns', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      await expect(page.getByRole('columnheader', { name: /nome/i })).toBeVisible()
-      await expect(page.getByRole('columnheader', { name: /nis/i })).toBeVisible()
-      await expect(page.getByRole('columnheader', { name: /status/i })).toBeVisible()
-    }
+  test('downloads Excel and PDF exports with the generated conditionality row', async ({ page }, testInfo) => {
+    await openReport(page)
+    await filterToFixture(page)
+
+    const expectedPresences = expectedRow.presencas - expectedRow.atestados
+    const expectedPercentage = Math.round(expectedRow.percentual_frequencia)
+    const expectedMunicipalStatus = exportMunicipalStatus(expectedRow)
+    const expectedLegalFloor = exportLegalFloor(expectedRow)
+    const expectedMunicipalMargin = exportMunicipalMargin(expectedRow)
+
+    const excelDownloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Exportar para Excel', exact: true }).click()
+    const excelDownload = await excelDownloadPromise
+    expect(excelDownload.suggestedFilename()).toMatch(/^bolsa_familia_.*\.xlsx$/)
+    const excelPath = testInfo.outputPath(excelDownload.suggestedFilename())
+    await excelDownload.saveAs(excelPath)
+    const excelBytes = await readFile(excelPath)
+    expect(excelBytes.subarray(0, 2).toString('ascii')).toBe('PK')
+    expect(excelBytes.length).toBeGreaterThan(1000)
+
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.readFile(excelPath)
+    expect(workbook.worksheets.map((worksheet) => worksheet.name)).toEqual(['Resumo', 'Alunos'])
+    const summarySheet = workbook.getWorksheet('Resumo')
+    const studentsSheet = workbook.getWorksheet('Alunos')
+    if (!summarySheet || !studentsSheet) throw new Error('BOLSA_FAMILIA_EXPORT_WORKSHEET_MISSING')
+    expect(summarySheet.getCell('A1').text).toBe('Relatório Bolsa Família - Resumo')
+    expect(summarySheet.getCell('A3').text).toBe(`Escola: ${SCHOOL_NAME}`)
+    expect(exportedRowValues(studentsSheet.getRow(4))).toEqual([
+      'Nome', 'NIS', 'Turma', 'Escola', 'P', 'F', 'A', 'Total', '%',
+      'Piso legal', 'Status legal', 'Margem crítica', 'Margem alerta', 'Status municipal',
+    ])
+
+    let excelStudentRow: ExcelJS.Row | undefined
+    studentsSheet.eachRow((row, rowNumber) => {
+      if (rowNumber >= 5 && row.getCell(1).text === STUDENT_NAME) excelStudentRow = row
+    })
+    if (!excelStudentRow) throw new Error('BOLSA_FAMILIA_EXPORT_STUDENT_ROW_MISSING')
+    expect(exportedRowValues(excelStudentRow)).toEqual([
+      STUDENT_NAME,
+      STUDENT_NIS,
+      CLASS_NAME,
+      SCHOOL_NAME,
+      expectedPresences,
+      expectedRow.faltas,
+      expectedRow.atestados,
+      expectedRow.total_aulas,
+      expectedPercentage,
+      expectedRow.piso_legal_percent ?? '-',
+      expectedRow.condicionalidade_legal_status,
+      expectedRow.margem_municipal_critica_percent ?? '-',
+      expectedRow.margem_municipal_alerta_percent ?? '-',
+      expectedMunicipalStatus,
+    ])
+
+    const pdfDownloadPromise = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Exportar para PDF', exact: true }).click()
+    const pdfDownload = await pdfDownloadPromise
+    expect(pdfDownload.suggestedFilename()).toMatch(/^bolsa_familia_.*\.pdf$/)
+    const pdfPath = testInfo.outputPath(pdfDownload.suggestedFilename())
+    await pdfDownload.saveAs(pdfPath)
+    const pdfBytes = await readFile(pdfPath)
+    const { stdout } = await execFile('pdftotext', [pdfPath, '-'])
+    const pdfText = stdout.toString()
+    const compactPdfText = pdfText.replace(/\s+/g, ' ')
+    expect(pdfBytes.subarray(0, 4).toString('ascii')).toBe('%PDF')
+    expect(pdfBytes.length).toBeGreaterThan(1000)
+    expect(compactPdfText).toContain('Relatório Bolsa Família')
+    expect(compactPdfText).toContain(SCHOOL_NAME)
+    expect(compactPdfText).toContain('Nome NIS Turma Escola P F A % Piso legal Status legal Margem municipal Status')
+    expect(compactPdfText).toContain(
+      `${STUDENT_NAME} ${STUDENT_NIS} ${CLASS_NAME} ${SCHOOL_NAME} ${expectedPresences} ${expectedRow.faltas} ${expectedRow.atestados} ${expectedPercentage}% ${expectedLegalFloor} ${expectedRow.condicionalidade_legal_status} ${expectedMunicipalMargin} ${expectedMunicipalStatus.split(' (')[0]}`,
+    )
   })
 
-  test('should show attendance columns', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      // Shortened column headers on mobile (P, F, A, %)
-      const hasPresencas = await page.getByText(/^P$|presenças|presencas/i).isVisible().catch(() => false)
-      const hasFaltas = await page.getByText(/^F$|faltas/i).isVisible().catch(() => false)
-      
-      expect(hasPresencas || hasFaltas || true).toBeTruthy()
-    }
-  })
+  test('keeps the filtered report usable at 390px', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await openReport(page)
+    await filterToFixture(page)
 
-  test('should highlight critical students in table', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      // Critical rows should have red background
-      const criticalRows = page.locator('tr[class*="bg-red"]')
-      const count = await criticalRows.count()
-      
-      expect(count).toBeGreaterThanOrEqual(0)
-    }
-  })
-
-  test('should show status badges in table', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (hasTable) {
-      const statusBadges = page.locator('td').filter({ hasText: /crítico|alerta|ok|conforme/i })
-      const count = await statusBadges.count()
-      
-      expect(count).toBeGreaterThanOrEqual(0)
-    }
-  })
-
-  test('should show empty state when no BF students', async ({ page }) => {
-    const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-    
-    if (!hasTable) {
-      // Empty state should be visible
-      const emptyState = page.getByText(/nenhum.*aluno.*bolsa.*família|nenhum.*aluno.*encontrado/i)
-      const hasEmpty = await emptyState.isVisible().catch(() => false)
-      
-      expect(hasEmpty || !hasTable).toBeTruthy()
-    }
-  })
-})
-
-test.describe('Bolsa Familia Report - Export', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-  })
-
-  test('should export to Excel', async ({ page }) => {
-    const excelButton = page.getByRole('button', { name: /excel/i })
-    
-    await excelButton.click()
-    
-    await page.waitForTimeout(1000)
-    
-    // Should show success or error toast
-    const hasToast = await page.getByText(/sucesso|erro|gerado/i).isVisible({ timeout: 3000 }).catch(() => false)
-    
-    expect(true).toBeTruthy()
-  })
-
-  test('should export to PDF', async ({ page }) => {
-    const pdfButton = page.getByRole('button', { name: /pdf/i })
-    
-    await pdfButton.click()
-    
-    await page.waitForTimeout(1000)
-    
-    expect(true).toBeTruthy()
-  })
-
-  test('should handle export error gracefully', async ({ page }) => {
-    const excelButton = page.getByRole('button', { name: /excel/i })
-    
-    await excelButton.click()
-    
-    // If no data, should show error
-    const errorToast = page.getByText(/erro/i)
-    const hasError = await errorToast.isVisible({ timeout: 3000 }).catch(() => false)
-    
-    // Error or success both OK
-    expect(true).toBeTruthy()
-  })
-})
-
-test.describe('Bolsa Familia Report - Thresholds', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-  })
-
-  test('should display threshold information', async ({ page }) => {
-    // Look for threshold info in footer
-    const thresholdInfo = page.getByText(/política|politica|não conformidade|nao conformidade|atenção preventiva|atencao preventiva/i)
-    const hasInfo = await thresholdInfo.isVisible().catch(() => false)
-    
-    if (hasInfo) {
-      await expect(thresholdInfo).toBeVisible()
-    }
-  })
-
-  test('should explain legend', async ({ page }) => {
-    // Legend should explain P, F, A abbreviations
-    const legend = page.getByText(/legenda|presença|presenca|falta|atestado/i)
-    const hasLegend = await legend.isVisible().catch(() => false)
-    
-    if (hasLegend) {
-      await expect(legend).toBeVisible()
-    }
-  })
-
-  test('should show calculation explanation', async ({ page }) => {
-    const explanation = page.getByText(/cálculo|calculo|atestados.*presença|atestados.*presenca/i)
-    const hasExplanation = await explanation.isVisible().catch(() => false)
-    
-    if (hasExplanation) {
-      await expect(explanation).toBeVisible()
-    }
-  })
-})
-
-test.describe('Bolsa Familia Report - Mobile Responsiveness', () => {
-  test.use({ viewport: { width: 375, height: 667 } })
-
-  test('should display mobile layout', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    
-    await expect(page.getByRole('heading', { name: 'Bolsa Família', exact: true })).toBeVisible()
-  })
-
-  test('should stack summary cards in grid', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-    
-    // Summary cards should be visible
-    const cards = page.locator('[class*="grid"]').filter({ has: page.getByText(/total|conforme|alerta|crítico/i) })
-    const hasCards = await cards.first().isVisible().catch(() => false)
-    
-    expect(hasCards || true).toBeTruthy()
-  })
-
-  test('should have touch-friendly buttons', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    
-    const excelButton = page.getByRole('button', { name: /excel/i })
+    const excelButton = page.getByRole('button', { name: 'Exportar para Excel', exact: true })
     const buttonBox = await excelButton.boundingBox()
-    
-    if (buttonBox) {
-      // Minimum 44px height for touch targets
-      expect(buttonBox.height).toBeGreaterThanOrEqual(44)
-    }
-  })
+    expect(buttonBox).not.toBeNull()
+    expect(buttonBox?.height).toBeGreaterThanOrEqual(44)
 
-  test('should have horizontal scroll for table', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-    
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    if (await tableTab.isVisible()) {
-      await tableTab.click()
-      
-      const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-      
-      if (hasTable) {
-        // Should be in scrollable container
-        const scrollContainer = page.locator('.overflow-x-auto, [class*="overflow"]')
-        const hasScroll = await scrollContainer.first().isVisible().catch(() => false)
-        
-        expect(hasScroll || true).toBeTruthy()
-      }
-    }
-  })
-
-  test('should abbreviate column headers on mobile', async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-    
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    if (await tableTab.isVisible()) {
-      await tableTab.click()
-      
-      // Should use abbreviated headers: P, F, A
-      const abbreviatedHeaders = page.getByText(/^P$|^F$|^A$/)
-      const count = await abbreviatedHeaders.count()
-      
-      expect(count).toBeGreaterThanOrEqual(0)
-    }
-  })
-})
-
-test.describe('Bolsa Familia Report - Data Accuracy', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/relatorios/bolsa-familia')
-    await page.waitForTimeout(2000)
-  })
-
-  test('should show generation timestamp', async ({ page }) => {
-    const timestamp = page.getByText(/gerado em.*\d{2}\/\d{2}\/\d{4}/i)
-    const hasTimestamp = await timestamp.isVisible().catch(() => false)
-    
-    if (hasTimestamp) {
-      await expect(timestamp).toBeVisible()
-    }
-  })
-
-  test('should display period range', async ({ page }) => {
-    const period = page.getByText(/período|periodo.*\d{2}\/\d{2}\/\d{4}/i)
-    const hasPeriod = await period.isVisible().catch(() => false)
-    
-    if (hasPeriod) {
-      await expect(period).toBeVisible()
-    }
-  })
-
-  test('should calculate percentages with attendance formula', async ({ page }) => {
-    const tableTab = page.getByRole('tab', { name: /tabela/i })
-    if (await tableTab.isVisible()) {
-      await tableTab.click()
-      
-      const hasTable = await page.getByRole('table').isVisible().catch(() => false)
-      
-      if (hasTable) {
-        // Percentages should follow formula: (P + A) / Total * 100
-        // Just check format is correct
-        const percentages = page.locator('td, span').filter({ hasText: /\d{1,3}%/ })
-        const count = await percentages.count()
-        
-        expect(count).toBeGreaterThanOrEqual(0)
-      }
-    }
+    const table = page.getByRole('table')
+    const scrollContainer = table.locator('..')
+    await expect(scrollContainer).toHaveCSS('overflow-x', 'auto')
+    const tableScrollsInsideContainer = await scrollContainer.evaluate(
+      element => element.scrollWidth > element.clientWidth,
+    )
+    expect(tableScrollsInsideContainer).toBe(true)
+    const documentOverflows = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    )
+    expect(documentOverflows).toBe(false)
   })
 })

@@ -1,0 +1,9 @@
+{
+  "result": "pass",
+  "boundary": "real-playwright-browser",
+  "identity": "secretaria@synthetic.invalid",
+  "role": "secretario",
+  "schoolScope": "municipal",
+  "domain": "synthetic.invalid",
+  "landingRoute": "/dashboard"
+}

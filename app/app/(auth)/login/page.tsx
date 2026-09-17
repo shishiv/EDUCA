@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { getUserProfile } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -16,8 +16,32 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { BrandLogo } from '@/components/marketing/brand-logo'
 import { showDemoCredentialButton } from '@/lib/demo-sandbox/login-demo-credentials'
+import { postLoginDestination } from '@/lib/route-policy'
+
+async function loadProfileWithRetry(userId: string) {
+  const maxRetries = 5
+  let profile = null
+  let retries = 0
+
+  for (; retries < maxRetries && !profile; retries += 1) {
+    profile = await getUserProfile(userId)
+    if (!profile && retries + 1 < maxRetries) {
+      logger.info('Profile not found, retrying...', {
+        userId,
+        metadata: { retry: retries + 1, maxRetries },
+      })
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+
+  return { profile, retries }
+}
 
 export default function LoginPage() {
+  return <Suspense><LoginForm /></Suspense>
+}
+
+function LoginForm() {
   const t = useTranslations('auth.login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,6 +50,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const { signIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const demoCredentialButtonVisible = showDemoCredentialButton()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,35 +66,13 @@ export default function LoginPage() {
           userId: result.user.id
         })
 
-        // WAIT FOR PROFILE WITH RETRY (prevents race condition)
-        let retries = 0
-        const maxRetries = 5
-        let profile = null
-
-        while (retries < maxRetries && !profile) {
-          profile = await getUserProfile(result.user.id)
-
-          if (!profile) {
-            retries++
-            logger.info('Profile not found, retrying...', {
-              userId: result.user.id,
-              metadata: {
-                retry: retries,
-                maxRetries
-              }
-            })
-
-            if (retries < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 500))
-            }
-          }
-        }
+        const { profile, retries } = await loadProfileWithRetry(result.user.id)
 
         if (!profile) {
           // Profile doesn't exist after all retries
           logger.error('Profile not found after login', new Error('PROFILE_NOT_FOUND'), {
-            userId: result.user.id,
-            metadata: {
+              userId: result.user.id,
+              metadata: {
               retriesMade: retries
             }
           })
@@ -84,17 +87,17 @@ export default function LoginPage() {
         }
 
         logger.info('Profile loaded successfully', {
-          userId: result.user.id,
-          userRole: profile.tipo_usuario,
-          metadata: {
-            retriesNeeded: retries
+            userId: result.user.id,
+            userRole: profile.tipo_usuario,
+            metadata: {
+              retriesNeeded: retries
           }
         })
 
         toast.success(t('success'))
 
         // Only redirect after profile is confirmed to exist
-        router.replace('/dashboard')
+        router.replace(postLoginDestination(searchParams.get('returnUrl'), profile.tipo_usuario))
       }
     } catch (err: unknown) {
       const loginError = err instanceof Error ? err : new Error(String(err))

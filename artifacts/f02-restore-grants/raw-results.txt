@@ -1,0 +1,5 @@
+none exit=0 cleanup=confirmed container=absent
+allowed-column exit=3 cleanup=confirmed container=absent
+cpf exit=3 cleanup=confirmed container=absent
+nis exit=3 cleanup=confirmed container=absent
+database container=absent

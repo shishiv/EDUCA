@@ -1,0 +1,15 @@
+ canonical_notas_policies 
+--------------------------
+                        0
+(1 row)
+
+ notas_rls_enabled 
+-------------------
+ t
+(1 row)
+
+ authenticated_select_grant 
+----------------------------
+ t
+(1 row)
+

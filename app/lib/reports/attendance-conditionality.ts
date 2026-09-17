@@ -1,9 +1,13 @@
 /**
  * Typed seam for the canonical attendance conditionality RPC.
  *
- * The committed generated Supabase type surface intentionally lags migrations.
- * This module owns the narrow RPC contract until the next local type generation.
+ * This module keeps a narrow contract for the sensitive conditionality RPC.
+ * The RPC currently includes legacy attendance rows without a session, while
+ * the general canonical-facts seam excludes them. That divergence is kept
+ * explicit pending a domain/legal decision; this adapter does not choose one.
  */
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 /** Filters for the canonical attendance conditionality read model. */
 export interface AttendanceConditionalityFilters {
@@ -14,80 +18,16 @@ export interface AttendanceConditionalityFilters {
 }
 
 /** One enrollment row resolved by legal rules and persisted municipality margins. */
-export interface AttendanceConditionalityRow {
-  matricula_id: string
-  aluno_id: string
-  aluno_nome: string
-  nis: string | null
-  is_bolsa_familia: boolean
-  data_nascimento: string
-  idade_anos: number
-  educacao_basica_concluida: boolean
-  turma_id: string
-  turma_nome: string
-  turma_serie: string
-  etapa_ensino: string | null
-  escola_id: string
-  escola_nome: string
-  municipio_id: string
-  total_aulas: number
-  presencas: number
-  faltas: number
-  atestados: number
-  percentual_frequencia: number
-  tem_dados_frequencia: boolean
-  condicionalidade_legal: string | null
-  piso_legal_percent: number | null
-  condicionalidade_legal_status: string
-  margem_municipal_id: string | null
-  margem_municipal_critica_percent: number | null
-  margem_municipal_alerta_percent: number | null
-  margem_municipal_status: string
-  margem_municipal_precedencia: number | null
-  margem_municipal_origem: string | null
-  margem_municipal_definida_por: string | null
-  margem_municipal_definida_em: string | null
-  margem_municipal_fallback: boolean | null
-  margem_municipal_fallback_motivo: string | null
-  margem_municipal_vigencia_inicio: string | null
-  margem_municipal_vigencia_fim: string | null
-}
-
-interface AttendanceConditionalityRpcClient {
-  rpc(
-    functionName: 'get_attendance_conditionality',
-    args: {
-      p_start_date: string
-      p_end_date: string
-      p_escola_id?: string
-      p_turma_id?: string
-    },
-  ): Promise<{
-    data: AttendanceConditionalityRow[] | null
-    error: { message: string } | null
-  }>
-}
-
-interface StudentBolsaFamiliaRpcClient {
-  rpc(
-    functionName: 'get_student_bolsa_familia',
-    args: { p_student_id: string },
-  ): Promise<{
-    data: boolean | null
-    error: { message: string } | null
-  }>
-}
-
-/** Bridges the stale generated client into this migration-owned RPC contract. */
-export function asAttendanceConditionalityClient(client: unknown): AttendanceConditionalityRpcClient {
-  return client as AttendanceConditionalityRpcClient
-}
+export type AttendanceConditionalityRow =
+  Database['public']['Functions']['get_attendance_conditionality']['Returns'][number]
+type AttendanceConditionalityArgs =
+  Database['public']['Functions']['get_attendance_conditionality']['Args']
 
 export async function getStudentBolsaFamilia(
-  client: unknown,
+  supabase: SupabaseClient<Database>,
   studentId: string,
 ): Promise<boolean | null> {
-  const { data, error } = await (client as StudentBolsaFamiliaRpcClient).rpc(
+  const { data, error } = await supabase.rpc(
     'get_student_bolsa_familia',
     { p_student_id: studentId },
   )
@@ -106,17 +46,19 @@ export interface AttendanceConditionalityResult {
  * frequencia directly for Bolsa Família alerts or reports.
  */
 export async function getAttendanceConditionality(
-  supabase: unknown,
+  supabase: SupabaseClient<Database>,
   filters: AttendanceConditionalityFilters,
 ): Promise<AttendanceConditionalityResult> {
-  const { data, error } = await asAttendanceConditionalityClient(supabase).rpc(
+  const args: AttendanceConditionalityArgs = {
+    p_start_date: filters.startDate,
+    p_end_date: filters.endDate,
+  }
+  if (filters.escolaId) args.p_escola_id = filters.escolaId
+  if (filters.turmaId) args.p_turma_id = filters.turmaId
+
+  const { data, error } = await supabase.rpc(
     'get_attendance_conditionality',
-    {
-      p_start_date: filters.startDate,
-      p_end_date: filters.endDate,
-      ...(filters.escolaId ? { p_escola_id: filters.escolaId } : {}),
-      ...(filters.turmaId ? { p_turma_id: filters.turmaId } : {}),
-    },
+    args,
   )
 
   if (error) {

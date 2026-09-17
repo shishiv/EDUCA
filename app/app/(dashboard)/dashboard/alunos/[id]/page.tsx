@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -19,11 +18,11 @@ import {
 import {
   ArrowLeft,
   Edit,
-  User,
   GraduationCap,
   BookOpen,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { z } from 'zod'
 
 // New student profile components
 import {
@@ -36,7 +35,12 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
 import { getStudentBolsaFamilia } from '@/lib/reports/attendance-conditionality'
-import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
+import {
+  getAuthorizedStudentProfiles,
+  getPrimaryGuardianForStudent,
+  type AuthorizedGuardianProfile,
+  type AuthorizedStudentProfile,
+} from '@/lib/sensitive-family-access'
 
 interface AlunoDetalhado {
   id: string
@@ -51,7 +55,7 @@ interface AlunoDetalhado {
   necessidades_especiais?: string
   ativo: boolean
   created_at: string
-  responsavel: {
+  responsavel?: {
     nome: string
     telefone: string
     email?: string
@@ -60,7 +64,7 @@ interface AlunoDetalhado {
   matriculas: {
     id: string
     ano_letivo: number
-    situacao: string
+    situacao: string | null
     turma: {
       nome: string
       serie: string
@@ -69,7 +73,7 @@ interface AlunoDetalhado {
         nome: string
       }
     }
-    data_matricula: string
+    data_matricula: string | null
   }[]
   frequencia: {
     percentual: number
@@ -93,133 +97,248 @@ interface AlunoDetalhado {
   vivencias_count?: number
 }
 
+type StudentEnrollment = AlunoDetalhado['matriculas'][number]
+type StudentAttendance = AlunoDetalhado['frequencia']
+
+function emptyAttendance(): StudentAttendance {
+  return {
+    percentual: 0,
+    total_aulas: 0,
+    presencas: 0,
+    faltas: 0,
+    faltas_justificadas: 0,
+    formatted: '0% (0/0 dias)',
+  }
+}
+
+async function loadCurrentAttendance(matriculas: StudentEnrollment[]): Promise<StudentAttendance> {
+  const today = new Date()
+  const activeMatricula = matriculas.find(
+    (matricula) => matricula.situacao === 'ativa' && matricula.ano_letivo === today.getFullYear(),
+  )
+  if (!activeMatricula) return emptyAttendance()
+
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
+  const summary = (await loadCanonicalAttendanceSummaries(
+    supabase,
+    [activeMatricula.id],
+    { startDate: monthStart, endDate: monthEnd },
+  )).get(activeMatricula.id)
+
+  if (!summary || summary.total <= 0) return emptyAttendance()
+
+  const presencas = summary.presencas + summary.atestados
+  return {
+    percentual: summary.percentual,
+    total_aulas: summary.total,
+    presencas,
+    faltas: summary.faltas,
+    faltas_justificadas: summary.atestados,
+    formatted: `${summary.percentual}% (${presencas}/${summary.total} dias)`,
+  }
+}
+
+async function loadStudentRecord(studentId: string) {
+  if (!z.string().uuid().safeParse(studentId).success) return null
+
+  const [profiles, { data: relations, error }, bolsaFamilia, responsavel] = await Promise.all([
+    getAuthorizedStudentProfiles(supabase, { studentId }),
+    supabase
+      .from('alunos')
+      .select(`
+        id,
+        matriculas:matriculas(
+          id,
+          ano_letivo,
+          situacao,
+          data_matricula,
+          turma:turmas(
+            nome,
+            serie,
+            turno,
+            escola:escolas(nome)
+          )
+        )
+      `)
+      .eq('id', studentId)
+      .single(),
+    getStudentBolsaFamilia(supabase, studentId),
+    getPrimaryGuardianForStudent(supabase, studentId),
+  ])
+
+  if (error) throw error
+  if (!profiles[0] || !relations) return null
+  return {
+    profile: profiles[0],
+    matriculas: relations.matriculas ?? [],
+    bolsaFamilia,
+    responsavel,
+  }
+}
+
+function normalizeStudentSex(sex: string): 'M' | 'F' {
+  return sex === 'F' ? 'F' : 'M'
+}
+
+function mapGuardian(guardian: AuthorizedGuardianProfile | null): AlunoDetalhado['responsavel'] {
+  if (!guardian) return undefined
+  return {
+    nome: guardian.nome,
+    telefone: guardian.telefone || 'Não informado',
+    email: guardian.email || undefined,
+    parentesco: guardian.parentesco,
+  }
+}
+
+function mapStudentDetails(
+  profile: AuthorizedStudentProfile,
+  matriculas: StudentEnrollment[],
+  frequencia: StudentAttendance,
+  bolsaFamilia: boolean | null,
+  guardian: AuthorizedGuardianProfile | null,
+): AlunoDetalhado {
+  return {
+    id: profile.id,
+    nome_completo: profile.nome_completo,
+    data_nascimento: profile.data_nascimento,
+    cpf: profile.cpf || undefined,
+    sexo: normalizeStudentSex(profile.sexo),
+    endereco: profile.endereco || undefined,
+    telefone: profile.telefone || undefined,
+    nome_mae: profile.nome_mae || undefined,
+    nome_pai: profile.nome_pai || undefined,
+    necessidades_especiais: profile.necessidades_especiais || undefined,
+    ativo: profile.ativo ?? true,
+    created_at: profile.created_at ?? new Date().toISOString(),
+    responsavel: mapGuardian(guardian),
+    matriculas,
+    frequencia,
+    notas: [],
+    bolsa_familia: bolsaFamilia ?? false,
+    vivencias_count: 0,
+  }
+}
+
+function getNotaColor(nota: number): string {
+  if (nota >= 8) return 'text-green-600 font-semibold'
+  if (nota >= 6) return 'text-blue-600'
+  if (nota >= 4) return 'text-orange-600'
+  return 'text-red-600 font-semibold'
+}
+
+function GradeCell({ grade }: { grade?: number }) {
+  const className = grade === undefined ? 'text-gray-400' : getNotaColor(grade)
+  return <TableCell className={`text-center ${className}`}>{grade?.toFixed(1) ?? '-'}</TableCell>
+}
+
+function AcademicPerformanceCard({ notas }: { notas: AlunoDetalhado['notas'] }) {
+  const t = useTranslations('registry')
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <GraduationCap className="h-5 w-5" />
+          {t('ui.desempenho-academico-2024')}
+        </CardTitle>
+        <CardDescription>Notas por disciplina e bimestre</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('labels.disciplina')}</TableHead>
+                <TableHead className="text-center">{t('labels.1o-bim')}</TableHead>
+                <TableHead className="text-center">{t('labels.2o-bim')}</TableHead>
+                <TableHead className="text-center">{t('labels.3o-bim')}</TableHead>
+                <TableHead className="text-center">{t('labels.4o-bim')}</TableHead>
+                <TableHead className="text-center">{t('labels.media')}</TableHead>
+                <TableHead className="text-center">{t('labels.situacao')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {notas.map(nota => (
+                <TableRow key={nota.disciplina}>
+                  <TableCell className="font-medium">{nota.disciplina}</TableCell>
+                  <GradeCell grade={nota.bimestre1} />
+                  <GradeCell grade={nota.bimestre2} />
+                  <GradeCell grade={nota.bimestre3} />
+                  <GradeCell grade={nota.bimestre4} />
+                  <TableCell className={`text-center font-semibold ${getNotaColor(nota.media)}`}>
+                    {nota.media.toFixed(1)}
+                  </TableCell>
+                  <TableCell className="text-center"><Badge variant="outline">{t('labels.cursando')}</Badge></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function StudentActions({ studentId, showDiary }: { studentId: string; showDiary: boolean }) {
+  const t = useTranslations('registry')
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {showDiary ? (
+        <Button variant="outline" asChild>
+          <Link href={`/dashboard/alunos/${studentId}/diario`}><BookOpen className="h-4 w-4 mr-2" />{t('ui.ver-diario-infantil')}</Link>
+        </Button>
+      ) : null}
+      <Button asChild>
+        <Link href={`/dashboard/alunos/${studentId}/editar`}><Edit className="h-4 w-4 mr-2" />{t('ui.editar')}</Link>
+      </Button>
+    </div>
+  )
+}
+
+function AcademicPerformanceSection({ student, infantil }: { student: AlunoDetalhado; infantil: boolean }) {
+  if (infantil || student.notas.length === 0) return null
+  return <AcademicPerformanceCard notas={student.notas} />
+}
+
+function currentClass(enrollment?: StudentEnrollment) {
+  if (!enrollment) return null
+  return { nome: enrollment.turma.nome, turno: enrollment.turma.turno }
+}
+
 export default function AlunoDetalhesPage() {
   const t = useTranslations('registry')
-  const params = useParams()
+  const params = useParams<{ id: string }>()
   const [aluno, setAluno] = useState<AlunoDetalhado | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadStudent() {
-      if (!params?.id) return
+      if (!params.id) return
 
       try {
         setLoading(true)
         setError(null)
 
-        // Fetch student with matriculas
-        const [profiles, { data: studentRelations, error: alunoError }, bolsaFamilia] = await Promise.all([
-          getAuthorizedStudentProfiles(supabase, { studentId: params.id as string }),
-          supabase
-          .from('alunos')
-          .select(`
-            id,
-            matriculas:matriculas(
-              id,
-              ano_letivo,
-              situacao,
-              data_matricula,
-              turma:turmas(
-                nome,
-                serie,
-                turno,
-                escola:escolas(nome)
-              )
-            )
-          `)
-          .eq('id', params.id as string)
-          .single(),
-          getStudentBolsaFamilia(supabase, params.id as string),
-        ])
-
-        const alunoData = profiles[0]
-        if (alunoError) throw alunoError
-        if (!alunoData || !studentRelations) {
+        const record = await loadStudentRecord(params.id)
+        if (!record) {
           setError(t('ui.aluno-nao-encontrado'))
           return
         }
-        const matriculas = studentRelations.matriculas ?? []
-
-        // Get active matricula for current year
-        const currentYear = new Date().getFullYear()
-        const activeMatricula = matriculas.find(
-          (m: { situacao: string; ano_letivo: number }) => m.situacao === 'ativa' && m.ano_letivo === currentYear
-        )
-
-        // Calculate attendance for current month
-        let frequencia = {
-          percentual: 0,
-          total_aulas: 0,
-          presencas: 0,
-          faltas: 0,
-          faltas_justificadas: 0,
-          formatted: '0% (0/0 dias)'
-        }
-
-        if (activeMatricula) {
-          const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-            .toISOString().split('T')[0]
-          const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
-            .toISOString().split('T')[0]
-
-          const attendanceSummary = (await loadCanonicalAttendanceSummaries(
-            supabase,
-            [activeMatricula.id],
-            { startDate: monthStart, endDate: monthEnd }
-          )).get(activeMatricula.id)
-
-          if (attendanceSummary && attendanceSummary.total > 0) {
-            const total = attendanceSummary.total
-            const presentes = attendanceSummary.presencas + attendanceSummary.atestados
-            const faltas = attendanceSummary.faltas
-            const justificadas = attendanceSummary.atestados
-            const percentual = attendanceSummary.percentual
-
-            frequencia = {
-              percentual,
-              total_aulas: total,
-              presencas: presentes,
-              faltas,
-              faltas_justificadas: justificadas,
-              formatted: `${percentual}% (${presentes}/${total} dias)`
-            }
-          }
-        }
-
-        // Build student object matching AlunoDetalhado interface
-        const studentData: AlunoDetalhado = {
-          id: alunoData.id,
-          nome_completo: alunoData.nome_completo,
-          data_nascimento: alunoData.data_nascimento,
-          cpf: alunoData.cpf || undefined,
-          sexo: alunoData.sexo as 'M' | 'F',
-          endereco: alunoData.endereco || undefined,
-          telefone: alunoData.telefone || undefined,
-          nome_mae: alunoData.nome_mae || undefined,
-          nome_pai: alunoData.nome_pai || undefined,
-          necessidades_especiais: alunoData.necessidades_especiais || undefined,
-          ativo: alunoData.ativo ?? true,
-          created_at: alunoData.created_at ?? new Date().toISOString(),
-          responsavel: {
-            nome: alunoData.nome_mae || alunoData.nome_pai || 'Não informado',
-            telefone: alunoData.telefone || 'Não informado',
-            email: undefined,
-            parentesco: alunoData.nome_mae ? t('labels.mae') : t('labels.pai')
-          },
-          matriculas,
+        const frequencia = await loadCurrentAttendance(record.matriculas)
+        setAluno(mapStudentDetails(
+          record.profile,
+          record.matriculas,
           frequencia,
-          notas: [], // Notas not implemented yet
-          bolsa_familia: bolsaFamilia ?? false,
-          vivencias_count: 0 // Will be populated when vivencias API exists
-        }
-
-        setAluno(studentData)
-      } catch (err) {
-        logger.error('Error loading student', err as Error, {
+          record.bolsaFamilia,
+          record.responsavel,
+        ))
+      } catch (error) {
+        const failure = error instanceof Error ? error : new Error('Erro ao carregar aluno')
+        logger.error('Error loading student', failure, {
           feature: 'alunos',
           action: 'load_student_profile',
-          metadata: { studentId: params?.id }
+          metadata: { studentId: params.id }
         })
         setError(t('ui.erro-ao-carregar-dados-do-aluno'))
         toast.error(t('ui.erro-ao-carregar-dados-do-aluno'))
@@ -229,14 +348,7 @@ export default function AlunoDetalhesPage() {
     }
 
     loadStudent()
-  }, [params?.id, t])
-
-  const getNotaColor = (nota: number) => {
-    if (nota >= 8) return 'text-green-600 font-semibold'
-    if (nota >= 6) return 'text-blue-600'
-    if (nota >= 4) return 'text-orange-600'
-    return 'text-red-600 font-semibold'
-  }
+  }, [params.id, t])
 
   // Loading skeleton
   if (loading) {
@@ -265,7 +377,7 @@ export default function AlunoDetalhesPage() {
   if (!aluno || error) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">{error || t('ui.aluno-nao-encontrado')}</p>
+        <p className="text-muted-foreground">{error ?? t('ui.aluno-nao-encontrado')}</p>
         <Button asChild className="mt-4">
           <Link href="/dashboard/alunos">{t('labels.voltar-para-lista')}</Link>
         </Button>
@@ -287,23 +399,7 @@ export default function AlunoDetalhesPage() {
             {t('ui.voltar')}
           </Link>
         </Button>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Diario Infantil button for young students */}
-          {isInfantil && (
-            <Button variant="outline" asChild>
-              <Link href={`/dashboard/alunos/${aluno.id}/diario`}>
-                <BookOpen className="h-4 w-4 mr-2" />
-                {t('ui.ver-diario-infantil')}
-              </Link>
-            </Button>
-          )}
-          <Button asChild>
-            <Link href={`/dashboard/alunos/${aluno.id}/editar`}>
-              <Edit className="h-4 w-4 mr-2" />
-              {t('ui.editar')}
-            </Link>
-          </Button>
-        </div>
+        <StudentActions studentId={aluno.id} showDiary={isInfantil} />
       </div>
 
       {/* Profile Header: Large Avatar + Name + Stats */}
@@ -314,10 +410,7 @@ export default function AlunoDetalhesPage() {
           data_nascimento: aluno.data_nascimento,
           foto_url: null,
         }}
-        turma={currentMatricula?.turma ? {
-          nome: currentMatricula.turma.nome,
-          turno: currentMatricula.turma.turno,
-        } : null}
+        turma={currentClass(currentMatricula)}
         stats={{
           frequencia: aluno.frequencia.percentual,
           vivencias: aluno.vivencias_count,
@@ -355,61 +448,7 @@ export default function AlunoDetalhesPage() {
         />
 
         {/* Academic Performance (only for Fundamental) */}
-        {!isInfantil && aluno.notas.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                {t('ui.desempenho-academico-2024')}
-              </CardTitle>
-              <CardDescription>
-                Notas por disciplina e bimestre
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('labels.disciplina')}</TableHead>
-                      <TableHead className="text-center">{t('labels.1o-bim')}</TableHead>
-                      <TableHead className="text-center">{t('labels.2o-bim')}</TableHead>
-                      <TableHead className="text-center">{t('labels.3o-bim')}</TableHead>
-                      <TableHead className="text-center">{t('labels.4o-bim')}</TableHead>
-                      <TableHead className="text-center">{t('labels.media')}</TableHead>
-                      <TableHead className="text-center">{t('labels.situacao')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {aluno.notas.map((nota) => (
-                      <TableRow key={nota.disciplina}>
-                        <TableCell className="font-medium">{nota.disciplina}</TableCell>
-                        <TableCell className={`text-center ${nota.bimestre1 ? getNotaColor(nota.bimestre1) : 'text-gray-400'}`}>
-                          {nota.bimestre1?.toFixed(1) || '-'}
-                        </TableCell>
-                        <TableCell className={`text-center ${nota.bimestre2 ? getNotaColor(nota.bimestre2) : 'text-gray-400'}`}>
-                          {nota.bimestre2?.toFixed(1) || '-'}
-                        </TableCell>
-                        <TableCell className={`text-center ${nota.bimestre3 ? getNotaColor(nota.bimestre3) : 'text-gray-400'}`}>
-                          {nota.bimestre3?.toFixed(1) || '-'}
-                        </TableCell>
-                        <TableCell className={`text-center ${nota.bimestre4 ? getNotaColor(nota.bimestre4) : 'text-gray-400'}`}>
-                          {nota.bimestre4?.toFixed(1) || '-'}
-                        </TableCell>
-                        <TableCell className={`text-center font-semibold ${getNotaColor(nota.media)}`}>
-                          {nota.media.toFixed(1)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{t('labels.cursando')}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <AcademicPerformanceSection student={aluno} infantil={isInfantil} />
       </div>
     </div>
   )

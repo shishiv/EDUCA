@@ -2,7 +2,7 @@
 
 import { useClassroomTranslations } from '@/i18n/classroom'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,11 +27,9 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Calendar,
-  Clock,
   Search,
   Filter,
   Play,
-  Square,
   CheckCircle2,
   XCircle,
   Eye,
@@ -80,6 +78,21 @@ interface StatsData {
   canceladas: number
 }
 
+function SessionClassCells({ turma, turnoLabel }: { turma: Sessao['turmas']; turnoLabel: string }) {
+  return <>
+    <TableCell>{turma?.nome || '-'}</TableCell>
+    <TableCell><Badge variant="outline">{turma?.serie || '-'}</Badge></TableCell>
+    <TableCell>{turnoLabel}</TableCell>
+  </>
+}
+
+function SessionPeopleCells({ sessao }: { sessao: Sessao }) {
+  return <>
+    <TableCell>{sessao.users?.nome || '-'}</TableCell>
+    <TableCell className="text-sm text-gray-600">{sessao.turmas?.escolas?.nome || '-'}</TableCell>
+  </>
+}
+
 export default function SessoesPage() {
   const t = useClassroomTranslations()
   const router = useRouter()
@@ -99,15 +112,11 @@ export default function SessoesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('todos')
   const [dateFilter, setDateFilter] = useState<string>('')
 
-  useEffect(() => {
-    loadSessoes()
+  const calculateStats = useCallback((data: Sessao[]) => {
+    setStats({ total: data.length, planejadas: data.filter(s => s.status === 'PLANEJADA').length, abertas: data.filter(s => s.status === 'ABERTA').length, fechadas: data.filter(s => s.status === 'FECHADA').length, canceladas: data.filter(s => s.status === 'CANCELADA').length })
   }, [])
 
-  useEffect(() => {
-    applyFilters()
-  }, [searchTerm, statusFilter, dateFilter, sessoes])
-
-  const loadSessoes = async () => {
+  const loadSessoes = useCallback(async () => {
     setLoading(true)
     try {
       const { data: sessoesData, error } = await supabase
@@ -127,28 +136,23 @@ export default function SessoesPage() {
 
       if (error) throw error
 
-      setSessoes(sessoesData || [])
-      calculateStats(sessoesData || [])
-    } catch (error: any) {
-      logger.error('Erro ao carregar sessões:', error)
+      const sessions = (sessoesData || []).map(session => ({
+        ...session,
+        inicio_aula: session.inicio_aula ?? '',
+      }))
+      setSessoes(sessions)
+      calculateStats(sessions)
+    } catch (error) {
+      logger.error('Erro ao carregar sessões:', error instanceof Error ? error : new Error('Falha ao carregar sessões'))
       toast.error('Erro ao carregar sessões de aula')
     } finally {
       setLoading(false)
     }
-  }
+  }, [calculateStats])
 
-  const calculateStats = (data: Sessao[]) => {
-    const statsData: StatsData = {
-      total: data.length,
-      planejadas: data.filter(s => s.status === 'PLANEJADA').length,
-      abertas: data.filter(s => s.status === 'ABERTA').length,
-      fechadas: data.filter(s => s.status === 'FECHADA').length,
-      canceladas: data.filter(s => s.status === 'CANCELADA').length
-    }
-    setStats(statsData)
-  }
+  useEffect(() => { void loadSessoes() }, [loadSessoes])
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...sessoes]
 
     // Search filter (turma name, professor name, school)
@@ -174,7 +178,9 @@ export default function SessoesPage() {
     }
 
     setFilteredSessoes(filtered)
-  }
+  }, [dateFilter, searchTerm, sessoes, statusFilter])
+
+  useEffect(() => { applyFilters() }, [applyFilters])
 
   const getStatusBadge = (status: Sessao['status']) => {
     const statusConfig = {
@@ -204,7 +210,7 @@ export default function SessoesPage() {
       }
     }
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['PLANEJADA']
+    const config = new Map(Object.entries(statusConfig)).get(status) ?? statusConfig.PLANEJADA
     const Icon = config.icon
 
     return (
@@ -216,13 +222,13 @@ export default function SessoesPage() {
   }
 
   const getTurnoLabel = (turno: string) => {
-    const labels: Record<string, string> = {
-      matutino: 'Manhã',
-      vespertino: 'Tarde',
-      integral: 'Integral',
-      noturno: 'Noite'
-    }
-    return labels[turno] || turno
+    const labels = new Map<string, string>([
+      ['matutino', 'Manhã'],
+      ['vespertino', 'Tarde'],
+      ['integral', 'Integral'],
+      ['noturno', 'Noite'],
+    ])
+    return labels.get(turno) || turno
   }
 
   const formatDate = (dateString: string) => {
@@ -459,15 +465,8 @@ export default function SessoesPage() {
                       <TableCell className="font-medium">
                         {formatDate(sessao.data_aula)}
                       </TableCell>
-                      <TableCell>{sessao.turmas?.nome || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{sessao.turmas?.serie || '-'}</Badge>
-                      </TableCell>
-                      <TableCell>{getTurnoLabel(sessao.turmas?.turno || '')}</TableCell>
-                      <TableCell>{sessao.users?.nome || '-'}</TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {sessao.turmas?.escolas?.nome || '-'}
-                      </TableCell>
+                      <SessionClassCells turma={sessao.turmas} turnoLabel={getTurnoLabel(sessao.turmas?.turno || '')} />
+                      <SessionPeopleCells sessao={sessao} />
                       <TableCell className="text-sm">
                         {formatTime(sessao.hora_inicio || null)} - {formatTime(sessao.hora_fim || null)}
                       </TableCell>

@@ -1,0 +1,24 @@
+ M app/lib/date-utils.ts
+ M app/lib/educacenso/2026/identification.ts
+ M app/lib/validation/brazilian-educational.ts
+ M app/lib/validation/brazilian.ts
+ M app/lib/validation/descriptive-report.ts
+ A app/lib/validation/external-values.ts
+ M app/lib/validation/lesson-content.ts
+ M app/lib/validation/schools-validation.ts
+ M app/lib/validation/students-validation.ts
+ M app/lib/validation/users-validation.ts
+ M app/lib/wayfinder/procurement-assessment.ts
+ M app/lib/wayfinder/support-runbook.ts
+ M app/scripts/inspect-educacenso-2026-municipalities.ts
+ M app/scripts/validate-procurement-assessment.ts
+ M app/scripts/validate-support-runbook.ts
+ M app/tests/unit/educacenso/identification-2026.test.ts
+ M app/tests/unit/utils/faixa-etaria.test.ts
+ M app/tests/unit/validation/brazilian.test.ts
+ A app/tests/unit/validation/external-values.test.ts
+ M app/tests/unit/wayfinder/procurement-assessment.test.ts
+ M app/tests/unit/wayfinder/support-runbook.test.ts
+?? .pi/semantic-grep.sqlite
+?? .pi/semantic-grep.sqlite-shm
+?? .pi/semantic-grep.sqlite-wal

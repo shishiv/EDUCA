@@ -49,12 +49,9 @@ import {
 	Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { StatusPresenca } from "@/types/diario-classe";
-import { municipalConfig } from "@/lib/config";
 import {
 	ATENCAO,
 	CONFORMIDADE,
-	getFrequencyPolicyStatus,
 } from "@/lib/attendance/attendance-policy";
 
 // ============================================================================
@@ -97,6 +94,7 @@ export interface AttendanceReportTableProps {
 	onExportPDF?: () => void;
 	/** CSS class for the container */
 	className?: string;
+	municipalityName: string;
 }
 
 type SortField = "nome" | "presencas" | "faltas" | "atestados" | "percentual";
@@ -119,13 +117,9 @@ function getAttendanceBadgeClass(
 	percentual: number,
 	threshold: number,
 ): string {
-	if (percentual >= ATENCAO) {
-		return "bg-green-100 text-green-800 border-green-300";
-	}
-	if (percentual >= threshold) {
-		return "bg-yellow-100 text-yellow-800 border-yellow-300";
-	}
-	return "bg-red-100 text-red-800 border-red-300";
+	if (percentual < threshold) return "bg-red-100 text-red-800 border-red-300";
+	if (percentual < ATENCAO) return "bg-yellow-100 text-yellow-800 border-yellow-300";
+	return "bg-green-100 text-green-800 border-green-300";
 }
 
 /**
@@ -219,7 +213,7 @@ function SummaryBar({
 	}, [data, riskThreshold]);
 
 	return (
-		<div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 print:grid-cols-5 print:gap-2">
+		<section aria-label={t('components.attendance.summary')} className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 print:grid-cols-5 print:gap-2">
 			<div className="p-3 bg-blue-50 rounded-lg text-center">
 				<div className="flex items-center justify-center gap-1 mb-1">
 					<Users className="h-4 w-4 text-blue-600" />
@@ -269,7 +263,7 @@ function SummaryBar({
 				</div>
 				<div className="text-xs">{t('components.attendance.classAverage')}</div>
 			</div>
-		</div>
+		</section>
 	);
 }
 
@@ -332,6 +326,7 @@ export function AttendanceReportTable({
 	onPrint,
 	onExportPDF,
 	className,
+	municipalityName,
 }: AttendanceReportTableProps) {
   const t = useTranslations('platform')
 	const [sortField, setSortField] = useState<SortField>("nome");
@@ -395,6 +390,7 @@ export function AttendanceReportTable({
 				printMode && "print:border print:shadow-none",
 			)}
 		>
+			{(() => (
 			<CardHeader className="pb-4">
 				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 					<div>
@@ -431,7 +427,9 @@ export function AttendanceReportTable({
 					)}
 				</div>
 			</CardHeader>
+			))()}
 
+			{(() => (
 			<CardContent>
 				{/* Summary Statistics */}
 				<SummaryBar data={data} riskThreshold={riskThreshold} />
@@ -497,9 +495,8 @@ export function AttendanceReportTable({
 							</TableHeader>
 							<TableBody>
 								{sortedData.map((row, index) => {
-									const policyStatus = getFrequencyPolicyStatus(row.percentual);
-									const isAtRisk = policyStatus === "CRITICO";
-									const isPreventiveAttention = policyStatus === "ATENCAO";
+									const isAtRisk = row.percentual < riskThreshold;
+									const isPreventiveAttention = !isAtRisk && row.percentual < ATENCAO;
 
 									return (
 										<TableRow
@@ -558,7 +555,7 @@ export function AttendanceReportTable({
 								) : isPreventiveAttention ? (
 									<Badge className="bg-yellow-500 text-white">{t('components.attendance.preventive')}</Badge>
 								) : (
-									<Badge className="bg-green-500 text-white">{t('components.bolsa.compliant')}</Badge>
+									<Badge className="bg-green-500 text-white">{t('components.attendance.compliance')}</Badge>
 								)}
 											</TableCell>
 										</TableRow>
@@ -570,7 +567,7 @@ export function AttendanceReportTable({
 				)}
 
 				{/* Legend */}
-				<div className="flex flex-wrap gap-4 text-xs text-gray-600 mt-4 pt-4 border-t print:text-[10px]">
+				<section aria-label={t('components.attendance.legend')} className="flex flex-wrap gap-4 text-xs text-gray-600 mt-4 pt-4 border-t print:text-[10px]">
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-green-500" />
 						<span>
@@ -580,7 +577,7 @@ export function AttendanceReportTable({
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-yellow-500" />
 						<span>
-							{t('components.attendance.preventiveWithThreshold', { threshold: riskThreshold, attention: ATENCAO })}
+							{t('components.attendance.preventiveWithThreshold', { threshold: riskThreshold, attention: Math.max(ATENCAO, riskThreshold) })}
 						</span>
 					</div>
 					<div className="flex items-center gap-1">
@@ -589,7 +586,7 @@ export function AttendanceReportTable({
 							{t('components.attendance.nonComplianceWithThreshold', { threshold: riskThreshold })}
 						</span>
 					</div>
-				</div>
+				</section>
 
 				{/* Print footer */}
 				{printMode && (
@@ -598,10 +595,11 @@ export function AttendanceReportTable({
 							Documento gerado em {new Date().toLocaleDateString("pt-BR")} -
 							Sistema de Gestao Escolar EDUCA
 						</p>
-						<p>{municipalConfig.nome}</p>
+						<p>{municipalityName}</p>
 					</div>
 				)}
 			</CardContent>
+			))()}
 		</Card>
 	);
 }

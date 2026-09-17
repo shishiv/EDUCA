@@ -1,0 +1,45 @@
+{
+  "result": "ready",
+  "resetBoundary": "safety proof precedes database reset",
+  "localSupabase": {
+    "apiHost": "127.0.0.1",
+    "databaseHost": "127.0.0.1",
+    "apiIsLocal": true,
+    "databaseIsLocal": true,
+    "externalProjectUsed": false
+  },
+  "app": {
+    "url": "http://127.0.0.1",
+    "namedLocalUrl": true,
+    "server": "direct",
+    "serverMode": "direct"
+  },
+  "roleSetup": {
+    "role": "diretor",
+    "identity": "diretor.capacidade@synthetic.invalid",
+    "authStatePath": "/home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app/playwright/.pilot-capacity/20260909T231205Z-632751/director.json"
+  },
+  "seed": {
+    "command": "pnpm exec tsx scripts/seed-pilot-capacity.ts",
+    "validationCommand": "pnpm exec tsx scripts/validate-pilot-capacity.ts"
+  },
+  "flags": {
+    "nextPublicPilotMode": true,
+    "pilotMode": true,
+    "syntheticDataOnly": true,
+    "externalDeployApproved": false,
+    "legalApprovalStatus": "not_approved",
+    "descriptiveReportDemo": false
+  },
+  "currentKeyAliases": {
+    "publishableAliasPresent": true,
+    "secretAliasPresent": true
+  },
+  "portRangeLease": {
+    "serverMode": "direct",
+    "external": true,
+    "leaseDir": null
+  },
+  "externalCredentialsUsed": false,
+  "publicDemoUsed": false
+}

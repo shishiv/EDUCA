@@ -74,7 +74,8 @@ function createPorts(options: { inactive?: boolean; authMissing?: boolean } = {}
     create: vi.fn(async () => INVITATION),
     accept: vi.fn(async () => undefined),
   }
-  return { ports: { auth, profile: profilePort, invitation } as UserLifecyclePorts, auth, profile: profilePort }
+  const ports = { auth, profile: profilePort, invitation } satisfies UserLifecyclePorts
+  return { ports, auth, profile: profilePort }
 }
 
 describe('synthetic pilot identity revocation', () => {

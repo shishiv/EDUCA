@@ -1,0 +1,15 @@
+BEGIN
+SELECT 1
+CREATE FUNCTION
+CREATE TRIGGER
+SET
+              set_config
+--------------------------------------
+ 20000000-0000-0000-0000-000000000001
+(1 row)
+
+DO
+RESET
+DO
+ROLLBACK
+F04_COMPARATOR_OK: real update_governed_school receipt throw rolls back school and audit

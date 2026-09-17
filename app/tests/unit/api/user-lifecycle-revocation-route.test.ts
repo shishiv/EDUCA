@@ -1,54 +1,36 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type {
-  UserLifecycleAuthUser,
-  UserLifecycleInvitation,
-  UserLifecyclePorts,
-  UserLifecycleProfile,
+import { describe, expect, it } from 'vitest'
+import {
+  createRevocationHandler,
+  type PilotIdentityRevocationAdapter,
+  type RevocationHandlerDependencies,
+} from '@/app/api/pilot/users/[userId]/revoke/handler'
+import type { PilotActor, PilotUserRole } from '@/lib/pilot/pilot-server-auth'
+import {
+  revokeSyntheticPilotIdentity,
+  type UserLifecycleRevocationInput,
+  type UserLifecycleRevocationResult,
 } from '@/lib/services/user-lifecycle'
+import { createMemoryUserLifecycleFixture } from './user-lifecycle-fixtures'
 
-const {
-  actorMock,
-  createClientMock,
-  serviceRoleMock,
-  safetyMock,
-  demoMock,
-  lifecyclePortsFactoryMock,
-} = vi.hoisted(() => ({
-  actorMock: vi.fn(),
-  createClientMock: vi.fn(),
-  serviceRoleMock: vi.fn(),
-  safetyMock: vi.fn(),
-  demoMock: vi.fn(),
-  lifecyclePortsFactoryMock: vi.fn(),
-}))
-
-vi.mock('@/lib/pilot/pilot-server-auth', () => ({ requirePilotActor: actorMock }))
-vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }))
-vi.mock('@/lib/supabase/service-role', () => ({ createServiceRoleClient: serviceRoleMock }))
-vi.mock('@/lib/pilot/pilot-safety-gate', () => ({ assertSyntheticPilotSafety: safetyMock }))
-vi.mock('@/lib/demo-sandbox/demo-sandbox', () => ({ isDemoSandboxEnabled: demoMock }))
-vi.mock('@/lib/pilot/pilot-api-error', () => ({
-  pilotErrorResponse: vi.fn((error: unknown) => new Response(JSON.stringify({ error: String(error) }), { status: 500 })),
-}))
-vi.mock('@/lib/services/user-lifecycle', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/services/user-lifecycle')>('@/lib/services/user-lifecycle')
-  return { ...actual, createSupabaseUserLifecyclePorts: lifecyclePortsFactoryMock }
-})
-
-import { POST } from '@/app/api/pilot/users/[userId]/revoke/route'
-
-const USER_ID = '00000000-0000-0000-0000-000000000701'
-const SCHOOL_ID = '00000000-0000-0000-0000-000000000001'
 const ACTOR_ID = '00000000-0000-0000-0000-000000000001'
-const AUTH_USER: UserLifecycleAuthUser = {
+const USER_ID = '00000000-0000-0000-0000-000000000701'
+const SCHOOL_ID = '00000000-0000-0000-0000-000000000301'
+const MUNICIPAL_SECRETARY: PilotActor = {
+  id: ACTOR_ID,
+  name: 'Secretaria',
+  role: 'secretario',
+  schoolId: null,
+  email: 'secretaria@synthetic.invalid',
+}
+const AUTH_USER = {
   id: USER_ID,
   email: 't07-route@synthetic.invalid',
   user_metadata: { synthetic: true },
 }
-const PROFILE: UserLifecycleProfile = {
+const PROFILE = {
   id: USER_ID,
-  email: AUTH_USER.email!,
-  nome: 'T07 Route Sintetico',
+  email: AUTH_USER.email,
+  nome: 'T07 Route Sintético',
   tipo_usuario: 'diretor',
   escola_id: SCHOOL_ID,
   ativo: true,
@@ -56,70 +38,70 @@ const PROFILE: UserLifecycleProfile = {
   senha_padrao: false,
   data_ultimo_acesso: null,
 }
-const INVITATION: UserLifecycleInvitation = {
+const INVITATION = {
   id: '00000000-0000-0000-0000-000000000702',
   auth_user_id: USER_ID,
-  email: AUTH_USER.email!,
-  invited_role: 'diretor',
+  email: AUTH_USER.email,
+  invited_role: 'diretor' as const,
   escola_id: SCHOOL_ID,
   invited_by: ACTOR_ID,
   accepted_at: null,
 }
 
-function createPorts(): UserLifecyclePorts {
-  let currentProfile = PROFILE
-  return {
-    auth: {
-      inviteUserByEmail: vi.fn(async () => AUTH_USER),
-      getUserById: vi.fn(async () => AUTH_USER),
-      deleteUser: vi.fn(async () => 'removed' as const),
-      updatePassword: vi.fn(async () => undefined),
-    },
-    profile: {
-      findById: vi.fn(async () => currentProfile),
-      createIncomplete: vi.fn(async () => currentProfile),
-      complete: vi.fn(async () => currentProfile),
-      deactivate: vi.fn(async () => {
-        currentProfile = { ...currentProfile, ativo: false }
-        return currentProfile
-      }),
-    },
-    invitation: {
-      findByEmail: vi.fn(async () => INVITATION),
-      findByAuthUserId: vi.fn(async () => INVITATION),
-      create: vi.fn(async () => INVITATION),
-      accept: vi.fn(async () => undefined),
-    },
+class MemoryRevocationAdapter implements PilotIdentityRevocationAdapter {
+  readonly auditInputs: Array<{ input: UserLifecycleRevocationInput; result: UserLifecycleRevocationResult }> = []
+  readonly lifecycle = createMemoryUserLifecycleFixture({ authUser: AUTH_USER, profile: PROFILE, invitation: INVITATION })
+  revocationCalls = 0
+
+  constructor(private readonly auditSucceeds = true) {}
+
+  async revoke(input: UserLifecycleRevocationInput): Promise<UserLifecycleRevocationResult> {
+    this.revocationCalls += 1
+    return revokeSyntheticPilotIdentity(this.lifecycle.ports, input, '2026-09-08T12:00:00.000Z')
+  }
+
+  async recordRevocationAudit(input: UserLifecycleRevocationInput, result: UserLifecycleRevocationResult): Promise<void> {
+    this.auditInputs.push({ input, result })
+    if (!this.auditSucceeds) throw new Error('Synthetic audit persistence failure')
   }
 }
 
-describe('pilot auth revocation route', () => {
-  beforeEach(() => {
-    actorMock.mockReset()
-    createClientMock.mockReset()
-    serviceRoleMock.mockReset()
-    safetyMock.mockReset()
-    demoMock.mockReset()
-    lifecyclePortsFactoryMock.mockReset()
-    actorMock.mockResolvedValue({ id: ACTOR_ID, name: 'Secretaria', role: 'secretario', schoolId: null })
-    createClientMock.mockResolvedValue({
-      rpc: vi.fn().mockResolvedValue({ data: 'audit-id', error: null }),
-    })
-    serviceRoleMock.mockReturnValue({})
-    safetyMock.mockImplementation(() => undefined)
-    demoMock.mockReturnValue(false)
-    lifecyclePortsFactoryMock.mockReturnValue(createPorts())
+function request(): Request {
+  return new Request('http://test/api/pilot/users/target/revoke', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ release: 't07-local', reason: 'synthetic-boundary-test' }),
   })
+}
 
-  it('returns only a redacted synthetic receipt after the lifecycle operation', async () => {
-    const response = await POST(
-      new Request('http://test/api/pilot/users/target/revoke', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ release: 't07-local', reason: 'synthetic-boundary-test' }),
-      }),
-      { params: Promise.resolve({ userId: USER_ID }) },
-    )
+function createActorResolver(actor: PilotActor): RevocationHandlerDependencies['requireActor'] {
+  return async (allowedRoles: PilotUserRole[]) => {
+    if (!allowedRoles.includes(actor.role)) throw new Error('PILOT_ROLE_DENIED')
+    return actor
+  }
+}
+
+function createRoute(
+  adapter: MemoryRevocationAdapter,
+  options: { actor?: PilotActor; demo?: boolean; safetyFailure?: boolean } = {},
+) {
+  const controls = { safetyChecks: 0 }
+  const route = createRevocationHandler({
+    isDemoSandboxEnabled: () => options.demo === true,
+    enforcePilotSafety: () => {
+      controls.safetyChecks += 1
+      if (options.safetyFailure === true) throw new Error('PILOT_SAFETY_GATE: synthetic-only pilot mode is required')
+    },
+    requireActor: createActorResolver(options.actor ?? MUNICIPAL_SECRETARY),
+    createAdapter: () => adapter,
+  })
+  return { route, controls }
+}
+
+describe('pilot auth revocation handler', () => {
+  it('deactivates the active profile, removes the synthetic identity, and returns a redacted receipt', async () => {
+    const adapter = new MemoryRevocationAdapter()
+    const response = await createRoute(adapter).route(request(), { params: Promise.resolve({ userId: USER_ID }) })
     const body = await response.json()
 
     expect(response.status).toBe(200)
@@ -132,22 +114,45 @@ describe('pilot auth revocation route', () => {
         school: SCHOOL_ID,
         release: 't07-local',
         reason: 'synthetic-boundary-test',
-        timestamp: expect.any(String),
+        timestamp: '2026-09-08T12:00:00.000Z',
       },
     })
     expect(Object.keys(body.receipt).sort()).toEqual(['identity', 'reason', 'release', 'role', 'school', 'timestamp'])
     expect(JSON.stringify(body)).not.toMatch(/@|password|senha|token|jwt|phone|telefone|header/i)
+    expect(adapter.lifecycle.currentProfile()).toMatchObject({ ativo: false, escola_id: SCHOOL_ID, tipo_usuario: 'diretor' })
+    expect(adapter.lifecycle.activity).toMatchObject({ profilesDeactivated: 1, identitiesDeleted: 1 })
+    expect(adapter.auditInputs).toHaveLength(1)
   })
 
-  it('does not operate in the demo sandbox', async () => {
-    demoMock.mockReturnValue(true)
+  it('keeps demo, safety, municipal scope, and self-revocation gates ahead of the lifecycle adapter', async () => {
+    const demoAdapter = new MemoryRevocationAdapter()
+    const demo = await createRoute(demoAdapter, { demo: true }).route(request(), { params: Promise.resolve({ userId: USER_ID }) })
+    const unsafeAdapter = new MemoryRevocationAdapter()
+    const unsafe = await createRoute(unsafeAdapter, { safetyFailure: true }).route(request(), { params: Promise.resolve({ userId: USER_ID }) })
+    const scopedAdapter = new MemoryRevocationAdapter()
+    const scopedActor: PilotActor = { ...MUNICIPAL_SECRETARY, schoolId: SCHOOL_ID }
+    const scoped = await createRoute(scopedAdapter, { actor: scopedActor }).route(request(), { params: Promise.resolve({ userId: USER_ID }) })
+    const selfAdapter = new MemoryRevocationAdapter()
+    const selfActor: PilotActor = { ...MUNICIPAL_SECRETARY, id: USER_ID }
+    const self = await createRoute(selfAdapter, { actor: selfActor }).route(request(), { params: Promise.resolve({ userId: USER_ID }) })
 
-    const response = await POST(
-      new Request('http://test/api/pilot/users/target/revoke', { method: 'POST' }),
-      { params: Promise.resolve({ userId: USER_ID }) },
-    )
+    expect(demo.status).toBe(404)
+    expect(unsafe.status).toBe(403)
+    expect(scoped.status).toBe(403)
+    expect(self.status).toBe(403)
+    expect(demoAdapter.revocationCalls).toBe(0)
+    expect(unsafeAdapter.revocationCalls).toBe(0)
+    expect(scopedAdapter.revocationCalls).toBe(0)
+    expect(selfAdapter.revocationCalls).toBe(0)
+  })
 
-    expect(response.status).toBe(404)
-    expect(lifecyclePortsFactoryMock).not.toHaveBeenCalled()
+  it('never reports revocation success when the audit receipt cannot be persisted', async () => {
+    const adapter = new MemoryRevocationAdapter(false)
+    const response = await createRoute(adapter).route(request(), { params: Promise.resolve({ userId: USER_ID }) })
+
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({ error: 'PILOT_AUTH_REVOCATION_FAILED' })
+    expect(adapter.revocationCalls).toBe(1)
+    expect(adapter.auditInputs).toHaveLength(1)
   })
 })

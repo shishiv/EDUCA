@@ -18,8 +18,10 @@
  *
  * ## Policy thresholds
  *
- * - `CONFORMIDADE = 80%` - Bolsa Família legal floor
- * - `ATENCAO = 85%` - preventive municipal margin
+ * - `CONFORMIDADE = 80%` - general attendance policy
+ * - `ATENCAO = 85%` - preventive general-policy margin
+ *
+ * Legal Bolsa Família floors remain in the separate conditionality RPC.
  *
  * ## Mode availability
  *
@@ -28,7 +30,7 @@
  * @module api/canonical-attendance-facts
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import type { Database, Tables } from '@/types/database'
 import {
   countAttendanceRecords,
   summarizeAttendanceCounts,
@@ -59,6 +61,49 @@ export interface CanonicalAttendanceSummary extends AttendancePolicySummary {
 // Receipt: supabase/config.toml exposes at most 1,000 rows per API response.
 const FREQUENCIA_QUERY_PAGE_SIZE = 1_000
 
+type AttendanceFactRow = Pick<
+  Tables<'frequencia'>,
+  'id' | 'matricula_id' | 'sessao_id' | 'data_aula' | 'presente' | 'status_presenca' | 'justificativa'
+>
+
+async function loadCanonicalAttendancePage(
+  supabase: SupabaseClient<Database>,
+  matriculaIds: string[],
+  options: CanonicalAttendanceQueryOptions,
+  offset: number,
+): Promise<AttendanceFactRow[]> {
+  let query = supabase
+    .from('frequencia')
+    .select('id, matricula_id, sessao_id, data_aula, presente, status_presenca, justificativa')
+    .not('sessao_id', 'is', null)
+
+  if (matriculaIds.length > 0) query = query.in('matricula_id', matriculaIds)
+  if (options.sessaoIds?.length) query = query.in('sessao_id', options.sessaoIds)
+  if (options.startDate) query = query.gte('data_aula', options.startDate)
+  if (options.endDate) query = query.lte('data_aula', options.endDate)
+
+  const { data, error } = await query
+    .order('id', { ascending: true })
+    .range(offset, offset + FREQUENCIA_QUERY_PAGE_SIZE - 1)
+
+  if (error) throw error
+  return data ?? []
+}
+
+function toCanonicalAttendanceFact(record: AttendanceFactRow): CanonicalAttendanceFact | null {
+  if (!record.sessao_id || record.status_presenca === 'NAO_MARCADO') return null
+
+  return {
+    id: record.id,
+    matriculaId: record.matricula_id,
+    sessaoId: record.sessao_id,
+    dataAula: record.data_aula,
+    presente: record.presente ?? false,
+    statusPresenca: record.status_presenca,
+    justificativa: record.justificativa,
+  }
+}
+
 /**
  * Loads every marked attendance fact for the supplied enrollments.
  *
@@ -78,35 +123,10 @@ export async function loadCanonicalAttendanceFacts(
   let offset = 0
 
   while (true) {
-    let query = supabase
-      .from('frequencia')
-      .select('id, matricula_id, sessao_id, data_aula, presente, status_presenca, justificativa')
-      .not('sessao_id', 'is', null)
-
-    if (matriculaIds.length > 0) query = query.in('matricula_id', matriculaIds)
-    if (options.sessaoIds && options.sessaoIds.length > 0) query = query.in('sessao_id', options.sessaoIds)
-    if (options.startDate) query = query.gte('data_aula', options.startDate)
-    if (options.endDate) query = query.lte('data_aula', options.endDate)
-    query = query
-      .order('id', { ascending: true })
-      .range(offset, offset + FREQUENCIA_QUERY_PAGE_SIZE - 1)
-
-    const { data, error } = await query
-
-    if (error) throw error
-
-    const page = data ?? []
+    const page = await loadCanonicalAttendancePage(supabase, matriculaIds, options, offset)
     for (const record of page) {
-      if (!record.sessao_id || record.status_presenca === 'NAO_MARCADO') continue
-      facts.push({
-        id: record.id,
-        matriculaId: record.matricula_id,
-        sessaoId: record.sessao_id,
-        dataAula: record.data_aula,
-        presente: record.presente,
-        statusPresenca: record.status_presenca,
-        justificativa: record.justificativa,
-      })
+      const fact = toCanonicalAttendanceFact(record)
+      if (fact) facts.push(fact)
     }
 
     if (page.length < FREQUENCIA_QUERY_PAGE_SIZE) return facts

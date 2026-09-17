@@ -20,6 +20,12 @@ export const validateCPF = validateCPFBase
 export const formatCPF = formatCPFBase
 
 // ===== CNPJ VALIDATION =====
+function matchesCnpjDigit(value: string, weights: readonly number[], digitIndex: number): boolean {
+  const sum = weights.reduce((total, weight, index) => total + Number(value[index]) * weight, 0)
+  const expected = sum % 11 < 2 ? 0 : 11 - (sum % 11)
+  return expected === Number(value[digitIndex])
+}
+
 export function validateCNPJ(cnpj: string): boolean {
   if (!cnpj) return false
 
@@ -27,27 +33,8 @@ export function validateCNPJ(cnpj: string): boolean {
   if (cleanCNPJ.length !== 14) return false
   if (/^(\d)\1{13}$/.test(cleanCNPJ)) return false
 
-  // First check digit - uses weights 5,4,3,2,9,8,7,6,5,4,3,2
-  let digitSum = 0
-  let weightMultiplier = 5
-  for (let digitIndex = 0; digitIndex < 12; digitIndex++) {
-    digitSum += parseInt(cleanCNPJ.charAt(digitIndex)) * weightMultiplier--
-    if (weightMultiplier < 2) weightMultiplier = 9
-  }
-  let expectedDigit = digitSum % 11 < 2 ? 0 : 11 - digitSum % 11
-  if (expectedDigit !== parseInt(cleanCNPJ.charAt(12))) return false
-
-  // Second check digit - uses weights 6,5,4,3,2,9,8,7,6,5,4,3,2
-  digitSum = 0
-  weightMultiplier = 6
-  for (let digitIndex = 0; digitIndex < 13; digitIndex++) {
-    digitSum += parseInt(cleanCNPJ.charAt(digitIndex)) * weightMultiplier--
-    if (weightMultiplier < 2) weightMultiplier = 9
-  }
-  expectedDigit = digitSum % 11 < 2 ? 0 : 11 - digitSum % 11
-  if (expectedDigit !== parseInt(cleanCNPJ.charAt(13))) return false
-
-  return true
+  return matchesCnpjDigit(cleanCNPJ, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2], 12) &&
+    matchesCnpjDigit(cleanCNPJ, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2], 13)
 }
 
 export function formatCNPJ(cnpj: string): string {
@@ -156,11 +143,13 @@ export function validateSchoolDate(date: Date, schoolYear: number): boolean {
   return true
 }
 
-export function validateAttendancePercentage(percentage: number): {
+export interface AttendancePercentageValidation {
   isValid: boolean
   status: 'adequate' | 'warning' | 'critical'
   message: string
-} {
+}
+
+export function validateAttendancePercentage(percentage: number): AttendancePercentageValidation {
   if (percentage >= ATENCAO) {
     return {
       isValid: true,

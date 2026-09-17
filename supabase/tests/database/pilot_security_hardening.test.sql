@@ -149,11 +149,12 @@ SELECT pg_temp.assert_true(
   'browser roles have no delete privilege for diary, reports, or consent'
 );
 SELECT pg_temp.assert_true(
-  has_function_privilege('service_role', 'public.pilot_cleanup_import_staging()', 'EXECUTE')
-    AND NOT has_function_privilege('authenticated', 'public.pilot_cleanup_import_staging()', 'EXECUTE')
+  to_regprocedure('public.pilot_cleanup_import_staging()') IS NULL
+    AND has_function_privilege('service_role', 'public.pilot_cleanup_import_retention()', 'EXECUTE')
+    AND NOT has_function_privilege('authenticated', 'public.pilot_cleanup_import_retention()', 'EXECUTE')
     AND has_function_privilege('service_role', 'public.pilot_rollback_import_batch(uuid,uuid,text)', 'EXECUTE')
     AND NOT has_function_privilege('authenticated', 'public.pilot_rollback_import_batch(uuid,uuid,text)', 'EXECUTE'),
-  'cleanup and rollback are service-role-only'
+  'retention cleanup replaces the divergent staging helper and remains service-role-only'
 );
 SELECT pg_temp.assert_true(
   (SELECT reloptions @> ARRAY['security_invoker=true']
@@ -297,18 +298,39 @@ $$;
 -- Consent, event ownership, and append-only audit receipts
 -- ---------------------------------------------------------------------------
 SELECT set_config('request.jwt.claim.sub', '98100000-0000-0000-0000-000000000002', true);
-INSERT INTO public.whatsapp_notification_optins(
-  id, responsavel_id, escola_id, canal, opt_in, consentido_em, registrado_por
-)
-VALUES (
-  '98900000-0000-0000-0000-000000000001',
-  '98800000-0000-0000-0000-000000000001',
-  '98000000-0000-0000-0000-000000000002',
-  'whatsapp', true, now(), '98100000-0000-0000-0000-000000000002'
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO public.whatsapp_notification_optins(
+      responsavel_id, escola_id, canal, opt_in, consentido_em, registrado_por
+    )
+    VALUES (
+      '98800000-0000-0000-0000-000000000001',
+      '98000000-0000-0000-0000-000000000002',
+      'whatsapp', true, now(), '98100000-0000-0000-0000-000000000002'
+    );
+    RAISE EXCEPTION 'direct consent insert unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END;
+$$;
+SELECT pg_temp.assert_true(
+  (SELECT responsavel_id = '98800000-0000-0000-0000-000000000001'
+      AND opt_in = true
+      AND audit_id IS NOT NULL
+   FROM public.set_guardian_whatsapp_opt_in(
+     '98800000-0000-0000-0000-000000000001',
+     true,
+     '98100000-0000-0000-0000-000000000002'
+   )),
+  'director records consent through the governed RPC with an audit receipt'
 );
 SELECT pg_temp.assert_true(
-  (SELECT escola_id = '98000000-0000-0000-0000-000000000001' AND registrado_por = '98100000-0000-0000-0000-000000000002'
-   FROM public.whatsapp_notification_optins WHERE id = '98900000-0000-0000-0000-000000000001'),
+  (SELECT escola_id = '98000000-0000-0000-0000-000000000001'
+      AND registrado_por = '98100000-0000-0000-0000-000000000002'
+   FROM public.whatsapp_notification_optins
+   WHERE responsavel_id = '98800000-0000-0000-0000-000000000001'),
   'consent school and actor are derived and bounded'
 );
 SELECT pg_temp.assert_true(
@@ -364,14 +386,15 @@ SELECT pg_temp.assert_true(
   'municipal login audit remains global'
 );
 DO $$
-DECLARE
-  changed integer;
 BEGIN
-  UPDATE public.whatsapp_notification_optins
-  SET opt_in = false, cancelado_em = now(), registrado_por = '98100000-0000-0000-0000-000000000001'
-  WHERE id = '98900000-0000-0000-0000-000000000001';
-  GET DIAGNOSTICS changed = ROW_COUNT;
-  IF changed <> 0 THEN RAISE EXCEPTION 'secretariat consent update unexpectedly succeeded'; END IF;
+  BEGIN
+    UPDATE public.whatsapp_notification_optins
+    SET opt_in = false, cancelado_em = now(), registrado_por = '98100000-0000-0000-0000-000000000001'
+    WHERE responsavel_id = '98800000-0000-0000-0000-000000000001';
+    RAISE EXCEPTION 'secretariat consent update unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
 END;
 $$;
 
@@ -435,7 +458,7 @@ SELECT set_config('request.jwt.claim.sub', '98100000-0000-0000-0000-000000000001
 DO $$
 BEGIN
   BEGIN
-    PERFORM public.pilot_cleanup_import_staging();
+    PERFORM public.pilot_cleanup_import_retention();
     RAISE EXCEPTION 'authenticated cleanup unexpectedly succeeded';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'authenticated cleanup unexpectedly succeeded' THEN RAISE; END IF;
@@ -459,11 +482,11 @@ $$;
 RESET ROLE;
 
 SET LOCAL ROLE service_role;
-SELECT pg_temp.assert_true((SELECT public.pilot_cleanup_import_staging() = 1), 'service cleanup clears expired ciphertext');
+SELECT pg_temp.assert_true((SELECT public.pilot_cleanup_import_retention() = 1), 'service cleanup clears expired ciphertext');
 RESET ROLE;
 SELECT pg_temp.assert_true(
-  (SELECT encrypted_payload IS NULL AND status = 'cleaned' FROM public.pilot_import_batches WHERE id = '99000000-0000-0000-0000-000000000001')
-    AND (SELECT count(*) = 1 FROM public.pilot_audit_log WHERE event_type = 'import_staging_cleaned' AND entity_id = '99000000-0000-0000-0000-000000000001'),
+  (SELECT encrypted_payload IS NULL AND status = 'pending_approval' FROM public.pilot_import_batches WHERE id = '99000000-0000-0000-0000-000000000001')
+    AND (SELECT count(*) = 1 FROM public.pilot_audit_log WHERE event_type = 'import_payload_cleaned' AND entity_id = '99000000-0000-0000-0000-000000000001'),
   'cleanup leaves a receipt without exposing plaintext'
 );
 

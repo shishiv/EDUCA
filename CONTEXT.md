@@ -6,6 +6,8 @@ EDUCA is an MIT-licensed school-management application for Brazilian municipal a
 
 The repository currently supports a **synthetic-only municipal pilot foundation**. It does not authorize real student data, municipal deployment, legal approval, or a production-compliance claim.
 
+Educação Infantil uses Vivências: teacher-authored daily narrative observations linked to one or more of the five BNCC Campos de Experiência. Vivências are source material for period development reports and are not grades or generic notes.
+
 The R3-T4 pilot aggregate runs the legacy, capacity, descriptive, and focused security children as separate lifecycle processes. It acquires one cross-worktree Docker-aware port-range lease and passes it to every child until cleanup completes. Capacity and descriptive setup files remain outside the shared legacy Playwright project, and the R1 canonical runner remains independent. The pilot core is authentication and role-based access, schools, users, students, classes, enrolments, guardians, assignments, attendance, dashboard, and the class diary (captain decision 2026-08-09: diary is a real pilot feature). Grades, Educacenso, health, disability, and race data remain disabled. The hardening ship releases only the scoped Bolsa Família conditionality read model and descriptive-report table; real Bolsa Família data remains blocked by the synthetic-only gate.
 
 ## Architecture
@@ -33,15 +35,15 @@ pnpm dev
 For a full local Supabase stack, run from the repository root:
 
 ```bash
-pnpm --dir app exec supabase --workdir . start
-pnpm --dir app exec supabase --workdir . db reset
+pnpm --dir app exec supabase --workdir .. start
+pnpm --dir app exec supabase --workdir .. db reset
 ```
 
 Generate the committed type surface only from that disposable local stack, never a linked or remote project:
 
 ```bash
-pnpm --dir app exec supabase --workdir . gen types typescript --local > app/types/database.ts
-pnpm --dir app exec supabase --workdir . stop
+pnpm --dir app exec supabase --workdir .. gen types typescript --local > app/types/database.ts
+pnpm --dir app exec supabase --workdir .. stop
 ```
 
 ## Exact commands
@@ -68,7 +70,8 @@ pnpm test:database:attendance:conditionality  # isolated raw PostgreSQL legal fl
 pnpm test:database:schema-canary              # isolated synthetic per-school schema setup/export/restore/rollback proof
 pnpm canary:schema:setup                      # local-only synthetic canary setup; requires the documented DB_URL and safety flags
 pnpm canary:schema:rollback                   # removes only canary schema metadata; requires the same local safety flags
-pnpm pilot:restore-test                 # local synthetic encrypted backup/restore rehearsal
+pnpm pilot:restore-test                 # partial local synthetic encrypted backup/restore rehearsal
+pnpm test:database:restore              # isolated raw PostgreSQL restore coverage, grants, catalog and school-scope regression
 pnpm seed:demo                          # synthetic demo seed / reset primitive (issue #23)
 pnpm demo:validate       # prove counts, relationships, synthetic markers, alert case
 pnpm demo:reset          # local wrapper: preflight demo env, seed, then validate
@@ -90,11 +93,11 @@ Run database migration validation from the repository root:
 supabase/tests/database/run.sh
 ```
 
-It needs `initdb`, `pg_ctl`, and `psql` from PostgreSQL 15 or newer. It creates and removes its own temporary cluster. The pilot commands require a running local Supabase stack and refuse an external Supabase endpoint.
+It needs `initdb`, `pg_ctl`, `psql`, and `pg_dump` from PostgreSQL 15 or newer. It creates and removes its own temporary cluster. Contracts run against the canonical ordered migration chain. Legacy report replay runs on an isolated database copy whose schema, function bodies, policies, triggers, and grants must match the canonical catalog before pilot provisioning. The pilot commands require a running local Supabase stack and refuse an external Supabase endpoint.
 
 ## Supabase and data boundaries
 
-`app/types/database.ts` is generated from the local Supabase schema and is required by the application build. Preserve it and regenerate it only through the command above. It intentionally lags the live schema: pilot code casts at the seam (`asPilotRpcClient`, `asWhatsAppClient`).
+`app/types/database.ts` is generated from the complete local Supabase migration chain and is required by the application build. Preserve it and regenerate it only through the command above. Pilot, WhatsApp, attendance-reopen, and sensitive-family adapters remain intentionally narrower than the generated client at security-sensitive seams.
 
 `pnpm dev:local` creates a disposable Supabase project on a leased local port range, applies the pilot module gate, loads the synthetic pilot seed, and removes that project on exit. It prints the browser URL and uses the documented `secretaria@synthetic.invalid` secretariat role. The canonical migrations retain the full product schema. The pilot-only provisioner revokes grades, Educacenso, and the legacy Bolsa Família view, and blocks high-risk student fields during synthetic pilot rehearsal. The hardening migration releases only the security-invoker conditionality RPC/view and scoped descriptive-report table. The pilot accepts synthetic data only, expects the `SYNTHETIC-EDUCA-PILOT` marker during import, and uses `.invalid` identities in its test harness. The browser CSV route records the authenticated secretary or designated operator as owner, verifies a confirmed `pilot_data_treatment_agreements` row, publishes canonical rows through the transactional `pilot_publish_synthetic_import_batch` RPC, keeps the encrypted source through raw retention, and rolls back exact canonical rows through the service-role RPC.
 
@@ -102,7 +105,7 @@ It needs `initdb`, `pg_ctl`, and `psql` from PostgreSQL 15 or newer. It creates 
 
 `app/scripts/pilot-safety-gate.ts` blocks external deploys while `PILOT_MODE=true`. To authorize real data or external pilot deployment, make a separate reviewed change with named legal and governance approvals. Do not weaken the gate as part of routine feature work.
 
-The portable restore proof writes generated evidence under ignored `.pilot-evidence/`. `app/scripts/run-pilot-restore-test.sh` requires T08's `isolated-proof` identity, reads only a local synthetic source, replays the explicit allowlist into a temporary migrated database, validates Auth, Storage, policies, grants, views, RPCs, tombstones, scoped teacher session, checksums, cleanup, and documented RPO/RTO, then removes all temporary state. It is a synthetic proof, not municipal readiness; see `docs/PILOT-RESTORE-PROOF.md`. Governed pilot CSV preparation is proof-only: `app/scripts/run-pilot-import-proof-e2e.sh` creates a disposable PostgreSQL database, requires the explicit `isolated-proof` target and synthetic marker, encrypts the payload, records redacted safety receipts, counts and fingerprints, cleans expired ciphertext, and exercises rollback. It rejects the public demo, `SUPABASE_DEMO_*`, real mode, and production endpoints before database access; see `docs/PILOT-DATA-IMPORT.md`.
+The partial portable restore proof writes generated evidence under ignored `.pilot-evidence/`. `app/scripts/run-pilot-restore-test.sh` requires T08's `isolated-proof` identity, reads only a local synthetic source, and replays the unchanged 18-table allowlist from `supabase/tests/pilot/restore-coverage-v1.tsv` into a temporary migrated database. It checks the bounded identity manifest, Storage files, recreated policy expressions and grants, views, RPC existence, tombstones, SQL teacher scope, checksums, cleanup and documented RPO/RTO. It does not recover school configuration/period overrides, Vivências/report provenance or attendance-reopen history, nor prove a restored Auth/Storage service. `pnpm test:database:restore` is the smaller raw-PostgreSQL regression, not the encrypted portable rehearsal. See `docs/PILOT-RESTORE-PROOF.md` for the coverage and provider limits. Governed pilot CSV preparation is proof-only: `app/scripts/run-pilot-import-proof-e2e.sh` creates a disposable PostgreSQL database, requires the explicit `isolated-proof` target and synthetic marker, encrypts the payload, records redacted safety receipts, counts and fingerprints, cleans expired ciphertext, and exercises rollback. It rejects the public demo, `SUPABASE_DEMO_*`, real mode, and production endpoints before database access; see `docs/PILOT-DATA-IMPORT.md`.
 
 ## WhatsApp attendance notifications (bounded MVP)
 
@@ -126,7 +129,7 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 | `supabase/seed-demo/` | Deterministic demo dataset, reset runner, validation (issue #23). |
 | `DEMO.md` | Demo sandbox runbook, local reset command, environment contract and safety boundaries. |
 | `app/lib/demo-sandbox/` | Demo sandbox mode guards (signup + destructive actions). |
-| `app/content/`, `app/lib/blog-posts.ts`, `app/public/brand/`, `app/public/site.webmanifest`, `app/app/icon.png`, `app/app/apple-icon.png`, `app/app/favicon.ico`, `app/app/opengraph-image.png` | Canonical public articles, social, PWA, and brand assets preserved or derived from the former marketing repository. |
+| `app/content/`, `app/lib/blog-posts.ts`, `app/public/brand/`, `app/app/icon.png`, `app/app/apple-icon.png`, `app/app/favicon.ico`, `app/app/opengraph-image.jpg` | Canonical public articles, social images, and raster brand assets preserved or derived from the former marketing repository. |
 
 ## Demo sandbox (issue #23)
 
@@ -143,13 +146,15 @@ The bounded WhatsApp notification module lives in `app/lib/notifications/whatsap
 - School isolation depends on Supabase RLS. Keep role checks, school scoping, and audit behavior intact when changing data access.
 - Attendance is designed to be immutable and time-locked. Treat changes to `app/lib/services/attendance-*` and related migrations as compliance-sensitive.
 - Attendance uses `/dashboard/turmas/[id]/chamada` and `sessoes_aula` as its canonical flow. A turma has one titular professor in the pilot; discipline and assignment-history controls are not part of this model. Server actions enforce actor/role/school/session ownership through `app/lib/services/attendance-auth.ts` (issue #30). Never trust client-supplied `professor_id`/`escola_id`; resolve the actor from the server session. Live regression harness: `app/tests/live/attendance-auth.live.test.ts` (needs `EDUCA_LIVE_SUPABASE=1` and a provisioned local stack). The V1 reopen contract lives in `supabase/migrations/20260812000000_attendance_reopen_workflow.sql`, `app/lib/services/attendance-reopen.ts`, and the attendance reopen database/browser tests: only the titular teacher requests, and only a director of the same school decides.
+- An attendance correction window is the bounded editing period granted when the school's director approves the titular teacher's reopening request. The approval captures its deadline using the database's seeded default or per-school override; later configuration changes do not extend an existing approval. The captured deadline takes precedence over the ordinary day/cutoff, and expiry blocks correction writes and teacher/director closure even while the session remains open. Closing inside the window restores the immutable hash and lock. Historical approvals without a captured deadline receive no retroactive window; actor, session, school, reason, decision and corrected records remain audited.
 - `frequencia` is canonical per `(sessao_id, matricula_id)`. The session supplies and protects `data_aula`; multiple sessions on one class-day preserve separate history. Migration `20260803095753_educa_attendance_canonical_flow.sql` removes the older day-level conflict target and enforces the session-level unique index.
 - The demo sandbox persona is a secretariat-level admin (`tipo_usuario = 'admin'`, `escola_id = NULL`). Create flows (alunos, turmas, responsaveis) resolve the target school from the UI escola-context selector; the admin must select a school first. Do not assign the demo admin to a school - the multi-school view is the intended demo differentiator. See `DEMO.md` for the demoable flow list.
 - `use-compliance-warnings.ts` filters active enrolments with `.eq('situacao', 'ativa')` (`matriculas` has no `ativo` column; the column name is `situacao`).
-- Attendance alert policy D5 (2026-08-10) lives in `app/lib/attendance/attendance-policy.ts`: `CONFORMIDADE=80` is the Bolsa Família conditionality and `ATENCAO=85` is the preventive municipal margin. Alert reads use `app/lib/api/canonical-attendance-facts.ts`.
+- The general attendance alert bands in `app/lib/attendance/attendance-policy.ts` retain the municipal reference of 80 and preventive margin of 85. They do not determine Bolsa Família eligibility. General alert reads use `app/lib/api/canonical-attendance-facts.ts`; benefit-specific legal floors and municipal margins belong to the separately authorized conditionality read model.
 - `anos_letivos` stores each school's dated academic-year records. The adjustable product default is the current calendar year from January 1 through December 31, without asserting a legal or pedagogical calendar. Migration backfills only a missing current year for existing schools, and later years are separate records so prior years remain unchanged.
 - Bolsa Família and NIS reads are denied on `alunos` for browser roles and exposed only through policy-checked RPCs. `configs.bolsa_familia_visible_roles` stores the seeded database default and per-school overrides; teachers and guardians cannot be added. Coordination and social-assistance duties use existing administrative roles rather than new role values.
 - The former CI contract ran typecheck, lint, unit tests, and a full E2E suite against disposable local Supabase. No hosted workflow is currently tracked. Run build, database validation, and applicable local Supabase pilot checks before proposing operational or database changes.
 - GitHub's default branch is `dev`: ordinary work starts from and targets `dev`. `main` is production-only; do not push or merge ordinary work there. Promote `dev` to `main` only through a separate explicit production-promotion action.
-- `tsconfig.typecheck.json` and `vitest.config.mts` exclude diary-component and descriptive-report test directories because those suites were written before the diary entered the confirmed pilot. Those files remain for a future reactivation gate and do not prove pilot-core readiness.
+- Grades remain inaccessible to browser roles in the canonical schema: `notas` has RLS enabled and no policies after `20260810220000_governed_pilot_security_hardening.sql`. The general E2E verifies that denial in `app/tests/e2e/grades/access-boundary.spec.ts`. Positive grade-entry/report-card contracts remain intact under `app/playwright.grades-positive.config.ts`, outside the general gate; collecting them is not a passing execution. Reactivating access requires separate authorization (decision `grades-general-contract`, 2026-09-09).
+- Diary-component and descriptive-report suites participate in both `tsconfig.typecheck.json` and `vitest.config.mts`. Their component tests prove DOM, form validation and callbacks; they do not replace browser, SQL, persistence, or pilot lifecycle checks.
 - Historical and extended documentation is archived outside the repository at `/home/shiv/docs/EDUCA/`, preserving original repository-relative paths. `MOVED_FROM_REPO.md` there records the archive manifest and source commit.

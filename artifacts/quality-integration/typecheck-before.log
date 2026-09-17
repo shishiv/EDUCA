@@ -1,0 +1,6 @@
+
+> educa@1.0.0 typecheck /home/shiv/.treehouse/EDUCA-7c556a/2/EDUCA/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+tests/e2e/pilot/deployed-isolation.spec.ts(71,26): error TS7006: Parameter 'metric' implicitly has an 'any' type.
+ ELIFECYCLE  Command failed with exit code 2.

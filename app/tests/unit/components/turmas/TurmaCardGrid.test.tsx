@@ -89,9 +89,10 @@ describe('TurmaCardGrid', () => {
       </TurmaCardGrid>
     )
     
-    const grid = container.firstChild as HTMLElement
-    expect(grid.classList.contains('grid')).toBe(true)
-    expect(grid.classList.contains('mt-8')).toBe(true)
+    const grid = container.firstElementChild
+    expect(grid).not.toBeNull()
+    expect(grid?.classList.contains('grid')).toBe(true)
+    expect(grid?.classList.contains('mt-8')).toBe(true)
   })
 
   it('should render empty when no children', () => {

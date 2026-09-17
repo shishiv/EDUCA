@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { renderWithMessages as render } from '../render-with-messages'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BNNCSelector } from '@/components/diary/BNNCSelector'
 
@@ -95,11 +96,12 @@ describe('BNNCSelector', () => {
 
     it('should handle empty input', async () => {
       const user = userEvent.setup()
-      render(<BNNCSelector value="EF01MA06" onChange={mockOnChange} />)
-      
+      const { rerender } = render(<BNNCSelector value="EF01MA06" onChange={mockOnChange} />)
+
       const input = screen.getByLabelText(/habilidades/i)
       await user.clear(input)
-      
+      expect(mockOnChange).toHaveBeenLastCalledWith('')
+      rerender(<BNNCSelector value="" onChange={mockOnChange} />)
       expect(input).toHaveValue('')
     })
   })
@@ -114,10 +116,8 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const checkIcon = screen.queryByTestId('check-icon')
-        if (checkIcon) {
-          expect(checkIcon).toBeInTheDocument()
-        }
+        expect(screen.getByRole('img', { name: 'Códigos válidos' })).toBeInTheDocument()
+        expect(input).toHaveAttribute('aria-invalid', 'false')
       })
     })
 
@@ -163,10 +163,8 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const warningIcon = screen.queryByTestId('alert-icon')
-        if (warningIcon) {
-          expect(warningIcon).toBeInTheDocument()
-        }
+        expect(screen.getByRole('img', { name: 'Códigos inválidos' })).toBeInTheDocument()
+        expect(input).toHaveAccessibleDescription(/Códigos inválidos: INVALID123/)
       })
     })
 
@@ -179,10 +177,8 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const errorText = screen.queryByText(/invalid/i)
-        if (errorText) {
-          expect(errorText).toBeInTheDocument()
-        }
+        expect(input).toHaveAccessibleDescription(/Códigos inválidos: INVALID/)
+        expect(screen.getByText('EF01MA06')).toBeInTheDocument()
       })
     })
 
@@ -195,10 +191,9 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const invalidText = screen.queryByText(/inválido/i)
-        if (invalidText) {
-          expect(invalidText).toBeInTheDocument()
-        }
+        expect(input).toHaveAccessibleDescription(/Códigos inválidos: BAD/)
+        expect(screen.getByText('EF01MA06')).toBeInTheDocument()
+        expect(screen.getByText('EI03EO01')).toBeInTheDocument()
       })
     })
   })
@@ -213,10 +208,8 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const badge = screen.queryByText('EF01MA06')
-        if (badge && badge.closest('[class*="badge"]')) {
-          expect(badge).toBeInTheDocument()
-        }
+        expect(screen.getByText('EF01MA06')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Remover EF01MA06' })).toBeEnabled()
       })
     })
 
@@ -229,12 +222,8 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const badge1 = screen.queryByText('EF01MA06')
-        const badge2 = screen.queryByText('EF02LP08')
-        if (badge1 && badge2) {
-          expect(badge1).toBeInTheDocument()
-          expect(badge2).toBeInTheDocument()
-        }
+        expect(screen.getByText('EF01MA06')).toBeInTheDocument()
+        expect(screen.getByText('EF02LP08')).toBeInTheDocument()
       })
     })
 
@@ -247,11 +236,7 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const badge = screen.queryByText('EI03EO01')
-        if (badge) {
-          // EI codes should have purple styling
-          expect(badge.closest('[class*="purple"]')).toBeTruthy()
-        }
+        expect(screen.getByText('EI03EO01')).toHaveClass('bg-purple-100')
       })
     })
 
@@ -263,16 +248,10 @@ describe('BNNCSelector', () => {
       await user.type(input, 'EF01MA06')
       fireEvent.blur(input)
       
-      await waitFor(async () => {
-        const removeButton = screen.queryByRole('button', { name: /remover.*ef01ma06/i })
-        if (removeButton) {
-          await user.click(removeButton)
-          
-          await waitFor(() => {
-            expect(screen.queryByText('EF01MA06')).not.toBeInTheDocument()
-          })
-        }
-      })
+      await user.click(screen.getByRole('button', { name: 'Remover EF01MA06' }))
+      expect(screen.queryByText('EF01MA06')).not.toBeInTheDocument()
+      expect(input).toHaveValue('')
+      expect(mockOnChange).toHaveBeenLastCalledWith('')
     })
   })
 
@@ -386,10 +365,8 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const warning = screen.queryByText(/máximo.*3.*habilidades/i)
-        if (warning) {
-          expect(warning).toBeInTheDocument()
-        }
+        expect(input).toHaveAccessibleDescription(/Máximo de 3 habilidades permitidas \(4 selecionadas\)/)
+        expect(input).toHaveAttribute('aria-invalid', 'true')
       })
     })
 
@@ -402,10 +379,7 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const count = screen.queryByText(/2.*habilidade.*selecionada/i)
-        if (count) {
-          expect(count).toBeInTheDocument()
-        }
+        expect(screen.getByText('2 habilidades selecionadas')).toBeInTheDocument()
       })
     })
 
@@ -418,10 +392,7 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const count = screen.queryByText(/1.*habilidade.*selecionada/i)
-        if (count) {
-          expect(count).toBeInTheDocument()
-        }
+        expect(screen.getByText('1 habilidade selecionada')).toBeInTheDocument()
       })
     })
   })
@@ -435,10 +406,7 @@ describe('BNNCSelector', () => {
       await user.hover(helpButton)
       
       await waitFor(() => {
-        const tooltip = screen.queryByRole('tooltip')
-        if (tooltip) {
-          expect(tooltip).toBeInTheDocument()
-        }
+        expect(screen.getByRole('tooltip')).toBeInTheDocument()
       })
     })
 
@@ -450,10 +418,7 @@ describe('BNNCSelector', () => {
       await user.hover(helpButton)
       
       await waitFor(() => {
-        const tooltip = screen.queryByText(/formato.*código.*bncc/i)
-        if (tooltip) {
-          expect(tooltip).toBeInTheDocument()
-        }
+        expect(screen.getByRole('tooltip')).toHaveTextContent('Formato do Código BNCC:')
       })
     })
   })
@@ -468,7 +433,7 @@ describe('BNNCSelector', () => {
       await user.type(input, 'INVALID')
       
       // Validation should not show while typing
-      expect(screen.queryByTestId('alert-icon')).not.toBeInTheDocument()
+      expect(screen.queryByRole('img', { name: 'Códigos inválidos' })).not.toBeInTheDocument()
     })
 
     it('should show validation after blur', async () => {
@@ -480,10 +445,7 @@ describe('BNNCSelector', () => {
       fireEvent.blur(input)
       
       await waitFor(() => {
-        const warning = screen.queryByTestId('alert-icon')
-        if (warning) {
-          expect(warning).toBeInTheDocument()
-        }
+        expect(screen.getByRole('img', { name: 'Códigos inválidos' })).toBeInTheDocument()
       })
     })
   })
@@ -494,11 +456,11 @@ describe('BNNCSelector', () => {
         <BNNCSelector value="EF01MA06" onChange={mockOnChange} />
       )
       
-      const input = screen.getByLabelText(/habilidades/i) as HTMLInputElement
-      expect(input.value).toBe('EF01MA06')
+      const input = screen.getByLabelText(/habilidades/i)
+      expect(input).toHaveValue('EF01MA06')
       
       rerender(<BNNCSelector value="EF02LP08" onChange={mockOnChange} />)
-      expect(input.value).toBe('EF02LP08')
+      expect(input).toHaveValue('EF02LP08')
     })
 
     it('should work as uncontrolled component', async () => {

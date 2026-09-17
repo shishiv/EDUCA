@@ -1,0 +1,3 @@
+result: "{\"status\":403,\"body\":{\"error\":\"USER_STATUS_SCHOOL_DENIED\"}}"
+help[1]:
+  Run `chrome-devtools-axi snapshot` to see current page state

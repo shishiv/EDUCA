@@ -1,96 +1,97 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const { actorMock, serviceRoleMock } = vi.hoisted(() => ({
-  actorMock: vi.fn(),
-  serviceRoleMock: vi.fn(),
-}))
-
-vi.mock('@/lib/pilot/pilot-server-auth', () => ({ requirePilotActor: actorMock }))
-vi.mock('@/lib/supabase/service-role', () => ({ createServiceRoleClient: serviceRoleMock }))
-
-import { PATCH } from '@/app/api/users/[userId]/status/route'
+import { describe, expect, it, vi } from 'vitest'
+import { createStatusHandler } from '@/app/api/users/[userId]/status/handler'
+import type { PilotActor } from '@/lib/pilot/pilot-server-auth'
 
 const USER_ID = '20000000-0000-0000-0000-000000000004'
-const SCHOOL_A = '10000000-0000-0000-0000-000000000001'
-const SCHOOL_B = '10000000-0000-0000-0000-000000000002'
-
-function request(body: unknown = { ativo: false }, userId = USER_ID) {
-  return PATCH(new Request(`http://test/api/users/${userId}/status`, {
-    method: 'PATCH',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  }), { params: Promise.resolve({ userId }) })
+const RECEIPT_ID = '30000000-0000-4000-8000-000000000004'
+const ADMIN: PilotActor = {
+  id: 'session-admin', name: 'Admin', email: 'admin@synthetic.invalid', role: 'admin', schoolId: null,
 }
-
-function service(target: { id: string; escola_id: string | null } | null) {
-  let ativo = true
-  const targetQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(async () => ({ data: target, error: null })),
-  }
-  const updateQuery = {
-    eq: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(async () => ({ data: target ? { id: target.id, ativo } : null, error: null })),
-  }
-  const client = {
-    from: vi.fn()
-      .mockReturnValueOnce(targetQuery)
-      .mockImplementation(() => ({
-        update: vi.fn((values: { ativo: boolean }) => {
-          ativo = values.ativo
-          return updateQuery
-        }),
-      })),
-  }
-  serviceRoleMock.mockReturnValue(client)
-  return { client, updateQuery }
-}
-
-describe('user status route', () => {
-  beforeEach(() => {
-    actorMock.mockReset()
-    serviceRoleMock.mockReset()
-    actorMock.mockResolvedValue({ id: 'admin-id', role: 'admin', schoolId: null })
+const context = { params: Promise.resolve({ userId: USER_ID }) }
+type StatusInput = { ativo?: boolean | string; actorId?: string; escola_id?: string; schoolId?: string }
+function request(body: StatusInput = { ativo: false }): Request {
+  return new Request(`http://test/api/users/${USER_ID}/status`, {
+    method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   })
+}
+function setup() {
+  const requireActor = vi.fn(async () => ADMIN)
+  const mutate = vi.fn(async (_id: string, ativo: boolean) => ({ user_id: USER_ID, ativo, audit_id: RECEIPT_ID }))
+  return { requireActor, mutate, route: createStatusHandler({ requireActor, mutate }) }
+}
 
-  it('updates an authorized target and returns its persisted status', async () => {
-    service({ id: USER_ID, escola_id: SCHOOL_A })
-
-    const response = await request()
-
+describe('user status transactional handler', () => {
+  it('calls one session-owned mutation with only target and desired state', async () => {
+    const { route, requireActor, mutate } = setup()
+    const response = await route(request(), context)
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ user: { id: USER_ID, ativo: false } })
+    expect(await response.json()).toEqual({ user: { id: USER_ID, ativo: false }, receipt: RECEIPT_ID })
+    expect(requireActor).toHaveBeenCalledWith(['admin'])
+    expect(mutate.mock.calls).toEqual([[USER_ID, false]])
   })
 
-  it('denies non-admin actors before opening the service boundary', async () => {
-    actorMock.mockRejectedValue(new Error('PILOT_ROLE_DENIED'))
-
-    const response = await request()
-
-    expect(response.status).toBe(403)
-    expect(serviceRoleMock).not.toHaveBeenCalled()
+  it('does not report success when receipt persistence rolls back', async () => {
+    const { route, mutate } = setup()
+    mutate.mockRejectedValue({ message: 'injected receipt failure', code: 'P0001' })
+    const response = await route(request(), context)
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({ error: 'USER_STATUS_UPDATE_FAILED' })
+    expect(mutate).toHaveBeenCalledOnce()
+    // Persistence rollback is exercised in user_status_atomic.test.sql, not simulated here.
   })
 
-  it('denies a school-scoped admin targeting another school', async () => {
-    actorMock.mockResolvedValue({ id: 'admin-id', role: 'admin', schoolId: SCHOOL_A })
-    const { client } = service({ id: USER_ID, escola_id: SCHOOL_B })
-
-    const response = await request()
-
-    expect(response.status).toBe(403)
-    expect(await response.json()).toEqual({ error: 'USER_STATUS_SCHOOL_DENIED' })
-    expect(client.from).toHaveBeenCalledTimes(1)
+  it.each(['PILOT_AUTH_REQUIRED', 'PILOT_ROLE_DENIED'])('denies %s before mutation', async message => {
+    const { route, requireActor, mutate } = setup()
+    requireActor.mockRejectedValue(new Error(message))
+    const response = await route(request(), context)
+    expect(response.status).toBe(message === 'PILOT_AUTH_REQUIRED' ? 401 : 403)
+    expect(mutate).not.toHaveBeenCalled()
   })
 
-  it('rejects malformed and unknown targets without updating users', async () => {
-    expect((await request({ ativo: false, schoolId: SCHOOL_A })).status).toBe(400)
-    expect((await request({ ativo: false }, 'forged-user')).status).toBe(400)
+  it.each([
+    ['PILOT_USER_STATUS_ROLE_DENIED', 403, 'USER_STATUS_ROLE_DENIED'],
+    ['PILOT_USER_STATUS_SCHOOL_DENIED', 403, 'USER_STATUS_SCHOOL_DENIED'],
+    ['PILOT_USER_STATUS_TARGET_NOT_FOUND', 404, 'USER_STATUS_TARGET_NOT_FOUND'],
+  ])('preserves the database revalidation failure %s', async (message, status, code) => {
+    const { route, mutate } = setup()
+    mutate.mockRejectedValue({ message })
+    const response = await route(request(), context)
+    expect(response.status).toBe(status)
+    expect(await response.json()).toEqual({ error: code })
+  })
 
-    service(null)
-    const missing = await request()
-    expect(missing.status).toBe(404)
-    expect(await missing.json()).toEqual({ error: 'USER_STATUS_TARGET_NOT_FOUND' })
+  it.each([
+    { ativo: false, actorId: USER_ID }, { ativo: false, escola_id: USER_ID },
+    { ativo: false, schoolId: USER_ID }, { ativo: 'false' }, {},
+  ])('rejects forged or invalid fields %j', async body => {
+    const { route, mutate } = setup()
+    expect((await route(request(body), context)).status).toBe(400)
+    expect(mutate).not.toHaveBeenCalled()
+  })
+
+  it('rejects malformed JSON and target IDs', async () => {
+    const { route, mutate } = setup()
+    expect((await route(new Request('http://test', { method: 'PATCH', body: '{' }), context)).status).toBe(400)
+    expect((await route(request(), { params: Promise.resolve({ userId: 'forged' }) })).status).toBe(400)
+    expect(mutate).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { user_id: USER_ID, ativo: false, audit_id: '' },
+    { user_id: RECEIPT_ID, ativo: false, audit_id: RECEIPT_ID },
+    { user_id: USER_ID, ativo: true, audit_id: RECEIPT_ID },
+  ])('refuses success with missing or mismatched committed result %j', async result => {
+    const { route, mutate } = setup()
+    mutate.mockResolvedValue(result)
+    const response = await route(request(), context)
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({ error: 'USER_STATUS_AUDIT_INCOMPLETE' })
+  })
+
+  it('retries the desired value rather than toggling stale state', async () => {
+    const { route, mutate } = setup()
+    expect((await route(request(), context)).status).toBe(200)
+    expect((await route(request(), context)).status).toBe(200)
+    expect(mutate.mock.calls).toEqual([[USER_ID, false], [USER_ID, false]])
   })
 })

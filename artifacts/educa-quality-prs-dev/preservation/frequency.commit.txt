@@ -1,0 +1,6 @@
+[salvar/educa-quality-frequency-20260908 d8e884b3] chore(quality): preserve frequency worktree from 2026-09-07
+ 39 files changed, 2803 insertions(+), 1862 deletions(-)
+ create mode 100644 app/lib/services/attendance-batch-action.ts
+ create mode 100644 app/tests/unit/components/attendance/correction-window.test.tsx
+ create mode 100644 supabase/migrations/20260908000000_attendance_correction_window.sql
+ create mode 100644 supabase/tests/database/attendance_correction_window.test.sql

@@ -21,12 +21,172 @@ import { ArrowLeft, Save, User, Users, FileText, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { studentFormSchema } from '@/lib/validation'
+import { studentFormSchema } from '@/lib/validation/brazilian'
 import { studentsApi } from '@/lib/api/students'
 import { logger } from '@/lib/logger'
 import { isPilotModeEnabled } from '@/lib/pilot/pilot-scope'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
 import { useEscola } from '@/contexts/escola-context'
+
+const INITIAL_STUDENT_FORM = {
+  nome_completo: '',
+  data_nascimento: '',
+  cpf: '',
+  rg: '',
+  sexo: '',
+  endereco: '',
+  telefone: '',
+  email: '',
+  nome_mae: '',
+  nome_pai: '',
+  responsavel_principal: '',
+  necessidades_especiais: '',
+  alergias: '',
+  medicamentos: '',
+  observacoes_medicas: '',
+  escola_anterior: '',
+  serie_pretendida: '',
+  turno_preferencia: '',
+  ativo: true,
+}
+
+const INITIAL_GUARDIAN_FORM = {
+  nome: '',
+  cpf: '',
+  telefone: '',
+  email: '',
+  parentesco: '',
+  endereco: '',
+  profissao: '',
+}
+
+type StudentFormState = typeof INITIAL_STUDENT_FORM
+type GuardianFormState = typeof INITIAL_GUARDIAN_FORM
+
+function optionalValue(value: string): string | undefined {
+  return value || undefined
+}
+
+function studentValidationInput(form: StudentFormState) {
+  return {
+    nome_completo: form.nome_completo.trim(),
+    data_nascimento: form.data_nascimento,
+    cpf: optionalValue(form.cpf),
+    rg: optionalValue(form.rg),
+    sexo: form.sexo,
+    telefone: optionalValue(form.telefone),
+    email: optionalValue(form.email),
+    endereco: form.endereco.trim(),
+    nome_mae: form.nome_mae.trim(),
+    nome_pai: optionalValue(form.nome_pai.trim()),
+    necessidades_especiais: optionalValue(form.necessidades_especiais),
+  }
+}
+
+function fieldErrorId(message: string | undefined, field: string): string | undefined {
+  return message ? `${field}-error` : undefined
+}
+
+function FieldError({ field, message }: { field: string; message?: string }) {
+  if (!message) return null
+  return <p id={`${field}-error`} className="text-sm text-red-600" role="alert">{message}</p>
+}
+
+function PilotHiddenField({ pilotMode, children }: { pilotMode: boolean; children: React.ReactNode }) {
+  if (pilotMode) return null
+  return <div className="space-y-2">{children}</div>
+}
+
+function SubmitButton({ loading }: { loading: boolean }) {
+  const t = useTranslations('registry')
+  if (loading) {
+    return <Button type="submit" disabled className="w-full sm:w-auto"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Cadastrando...</Button>
+  }
+  return <Button type="submit" className="w-full sm:w-auto"><Save className="h-4 w-4 mr-2" />{t('labels.cadastrar-aluno')}</Button>
+}
+
+function getFieldErrors(issues: Array<{ path: PropertyKey[]; message: string }>) {
+  const errors: Record<string, string> = {}
+  for (const issue of issues) {
+    const field = String(issue.path[0] || 'form')
+    if (!errors[field]) errors[field] = issue.message
+  }
+  return errors
+}
+
+function getGuardianPayload(guardian: GuardianFormState, defaultRelationship: string) {
+  if (!guardian.nome) return undefined
+  return {
+    nome: guardian.nome,
+    cpf: guardian.cpf.replace(/\D/g, '') || undefined,
+    telefone: guardian.telefone.replace(/\D/g, '') || undefined,
+    email: guardian.email || undefined,
+    endereco: guardian.endereco || undefined,
+    profissao: guardian.profissao || undefined,
+    grau_parentesco: guardian.parentesco || defaultRelationship,
+  }
+}
+
+function getCreateErrorMessage(error: Error) {
+  const message = error.message
+  if (message.includes('duplicate') || message.includes('unique')) {
+    if (message.includes('cpf')) return 'CPF já cadastrado no sistema'
+    if (message.includes('email')) return 'E-mail já cadastrado no sistema'
+    return 'Dados já existem no sistema'
+  }
+  if (message.includes('violates check constraint')) {
+    return 'Dados inválidos. Verifique as informações inseridas'
+  }
+  return message ? `Erro ao cadastrar aluno: ${message}` : 'Erro ao cadastrar aluno'
+}
+
+function SchoolSelectionAlert({ visible }: { visible: boolean }) {
+  const t = useTranslations('registry')
+  if (!visible) return null
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>
+        {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-aluno')}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
+function FormValidationAlert({ visible }: { visible: boolean }) {
+  const t = useTranslations('registry')
+  if (!visible) return null
+  return (
+    <Alert variant="destructive" className="mb-6" role="alert">
+      <AlertDescription>
+        {t('ui.corrija-os-campos-obrigatorios-destacados-antes-de-continuar')}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
+function StudentTabsList({ pilotMode }: { pilotMode: boolean }) {
+  const t = useTranslations('registry')
+  return (
+    <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
+      <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+        <User className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.dados-pessoais')}</span>
+      </TabsTrigger>
+      <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
+        <Users className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.responsavel')}</span>
+      </TabsTrigger>
+      <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
+        <FileText className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.dados-medicos')}</span>
+      </TabsTrigger>
+      <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
+        <Upload className="h-4 w-4 flex-shrink-0" />
+        <span className="text-xs md:text-sm font-medium">{t('labels.documentos')}</span>
+      </TabsTrigger>
+    </TabsList>
+  )
+}
 
 export default function NovoAlunoPage() {
   const t = useTranslations('registry')
@@ -38,73 +198,17 @@ export default function NovoAlunoPage() {
   const { selectedEscolaId, shouldShowSelector } = useEscola()
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [formData, setFormData] = useState({
-    // Dados pessoais
-    nome_completo: '',
-    data_nascimento: '',
-    cpf: '',
-    rg: '',
-    sexo: '',
-    endereco: '',
-    telefone: '',
-    email: '',
-
-    // Dados familiares
-    nome_mae: '',
-    nome_pai: '',
-    responsavel_principal: '',
-
-    // Dados médicos/especiais
-    necessidades_especiais: '',
-    alergias: '',
-    medicamentos: '',
-    observacoes_medicas: '',
-
-    // Dados escolares
-    escola_anterior: '',
-    serie_pretendida: '',
-    turno_preferencia: '',
-
-    // Status
-    ativo: true
-  })
-
-  const [responsavelData, setResponsavelData] = useState({
-    nome: '',
-    cpf: '',
-    telefone: '',
-    email: '',
-    parentesco: '',
-    endereco: '',
-    profissao: '',
-    renda_familiar: ''
-  })
+  const [formData, setFormData] = useState<StudentFormState>(INITIAL_STUDENT_FORM)
+  const [responsavelData, setResponsavelData] = useState<GuardianFormState>(INITIAL_GUARDIAN_FORM)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFieldErrors({})
 
-    const validationResult = studentFormSchema.safeParse({
-      nome_completo: formData.nome_completo.trim(),
-      data_nascimento: formData.data_nascimento,
-      cpf: formData.cpf || undefined,
-      rg: formData.rg || undefined,
-      sexo: formData.sexo,
-      telefone: formData.telefone || undefined,
-      email: formData.email || undefined,
-      endereco: formData.endereco.trim(),
-      nome_mae: formData.nome_mae.trim(),
-      nome_pai: formData.nome_pai.trim() || undefined,
-      necessidades_especiais: formData.necessidades_especiais || undefined,
-    })
+    const validationResult = studentFormSchema.safeParse(studentValidationInput(formData))
 
     if (!validationResult.success) {
-      const nextErrors: Record<string, string> = {}
-      for (const issue of validationResult.error.issues) {
-        const field = String(issue.path[0] || 'form')
-        if (!nextErrors[field]) nextErrors[field] = issue.message
-      }
-      setFieldErrors(nextErrors)
+      setFieldErrors(getFieldErrors(validationResult.error.issues))
       toast.error(t('ui.corrija-os-campos-obrigatorios-antes-de-continuar'))
       return
     }
@@ -112,65 +216,32 @@ export default function NovoAlunoPage() {
     setLoading(true)
 
     try {
-      // Prepare normalized student data in API format
       const studentData = {
         ...validationResult.data,
         cpf: validationResult.data.cpf?.replace(/\D/g, ''),
         telefone: validationResult.data.telefone?.replace(/\D/g, ''),
         data_nascimento: formData.data_nascimento,
-        sexo: validationResult.data.sexo as 'M' | 'F',
+        sexo: validationResult.data.sexo,
         necessidades_especiais: pilotMode ? undefined : validationResult.data.necessidades_especiais || undefined,
       }
-
-      // Prepare guardian data if provided
-      let guardianData = undefined
-      if (responsavelData.nome) {
-        guardianData = {
-          nome: responsavelData.nome,
-          telefone: responsavelData.telefone?.replace(/\D/g, '') || undefined,
-          email: responsavelData.email || undefined,
-          grau_parentesco: responsavelData.parentesco || t('labels.responsavel'),
-        }
-      }
-
-      // Create student via API.
-      // escola_id_override is needed when the actor is a secretariat-level admin
-      // (escola_id IS NULL on their profile). The selected escola from the UI
-      // context is passed through so the student is scoped to the right school.
-      const createdStudent = await studentsApi.createStudent({
+      await studentsApi.createStudent({
         ...studentData,
-        responsavel: guardianData,
+        responsavel: getGuardianPayload(responsavelData, t('labels.responsavel')),
         escola_id_override: selectedEscolaId ?? undefined,
       })
 
       toast.success(t('ui.aluno-cadastrado-com-sucesso'))
       router.push('/dashboard/alunos')
-    } catch (error: any) {
-      logger.error('Erro ao cadastrar aluno:', error)
-
-      // Enhanced error handling with Brazilian context
-      let errorMessage = 'Erro ao cadastrar aluno'
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-        if (error.message.includes('cpf')) {
-          errorMessage = 'CPF já cadastrado no sistema'
-        } else if (error.message.includes('email')) {
-          errorMessage = 'E-mail já cadastrado no sistema'
-        } else {
-          errorMessage = 'Dados já existem no sistema'
-        }
-      } else if (error.message?.includes('violates check constraint')) {
-        errorMessage = 'Dados inválidos. Verifique as informações inseridas'
-      } else if (error.message) {
-        errorMessage = `Erro ao cadastrar aluno: ${error.message}`
-      }
-
-      toast.error(errorMessage)
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error('Erro ao cadastrar aluno')
+      logger.error('Erro ao cadastrar aluno:', failure)
+      toast.error(getCreateErrorMessage(failure))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <K extends keyof StudentFormState>(field: K, value: StudentFormState[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setFieldErrors(prev => {
       if (!prev[field]) return prev
@@ -180,7 +251,7 @@ export default function NovoAlunoPage() {
     })
   }
 
-  const handleResponsavelChange = (field: string, value: any) => {
+  const handleResponsavelChange = <K extends keyof GuardianFormState>(field: K, value: GuardianFormState[K]) => {
     setResponsavelData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -219,42 +290,12 @@ export default function NovoAlunoPage() {
         </div>
       </div>
 
-      {/* Admin must select a school before creating a student */}
-      {shouldShowSelector && !selectedEscolaId && (
-        <Alert variant="destructive">
-          <AlertDescription>
-            {t('ui.selecione-uma-escola-no-menu-lateral-antes-de-cadastrar-um-aluno')}
-          </AlertDescription>
-        </Alert>
-      )}
+      <SchoolSelectionAlert visible={shouldShowSelector && !selectedEscolaId} />
 
       <form onSubmit={handleSubmit} noValidate>
-        {Object.keys(fieldErrors).length > 0 && (
-          <Alert variant="destructive" className="mb-6" role="alert">
-            <AlertDescription>
-              {t('ui.corrija-os-campos-obrigatorios-destacados-antes-de-continuar')}
-            </AlertDescription>
-          </Alert>
-        )}
+        <FormValidationAlert visible={Object.keys(fieldErrors).length > 0} />
         <Tabs defaultValue="pessoais" className="space-y-6">
- <TabsList className={`grid w-full grid-cols-2 ${pilotMode ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-1 h-auto p-1`}>
-            <TabsTrigger value="pessoais" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
-              <User className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.dados-pessoais')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="responsavel" className="flex flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2">
-              <Users className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.responsavel')}</span>
-            </TabsTrigger>
- <TabsTrigger value="medicos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
-              <FileText className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.dados-medicos')}</span>
-            </TabsTrigger>
- <TabsTrigger value="documentos" disabled={pilotMode} className={`${pilotMode ? 'hidden' : 'flex'} flex-col md:flex-row items-center space-y-1 md:space-y-0 md:space-x-2 py-3 px-2`}>
-              <Upload className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium">{t('labels.documentos')}</span>
-            </TabsTrigger>
-          </TabsList>
+          <StudentTabsList pilotMode={pilotMode} />
 
           <TabsContent value="pessoais">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -276,14 +317,10 @@ export default function NovoAlunoPage() {
                           onChange={(e) => handleInputChange('nome_completo', e.target.value)}
  placeholder={t('labels.digite-o-nome-completo-do-aluno')}
  aria-invalid={Boolean(fieldErrors.nome_completo)}
- aria-describedby={fieldErrors.nome_completo ? 'nome_completo-error' : undefined}
+ aria-describedby={fieldErrorId(fieldErrors.nome_completo, 'nome_completo')}
  required
                         />
-                        {fieldErrors.nome_completo && (
-                          <p id="nome_completo-error" className="text-sm text-red-600" role="alert">
-                            {fieldErrors.nome_completo}
-                          </p>
-                        )}
+                        <FieldError field="nome_completo" message={fieldErrors.nome_completo} />
                       </div>
 
                       <div className="space-y-2">
@@ -294,14 +331,10 @@ export default function NovoAlunoPage() {
                           value={formData.data_nascimento}
                           onChange={(e) => handleInputChange('data_nascimento', e.target.value)}
                           aria-invalid={Boolean(fieldErrors.data_nascimento)}
-                          aria-describedby={fieldErrors.data_nascimento ? 'data_nascimento-error' : undefined}
+                          aria-describedby={fieldErrorId(fieldErrors.data_nascimento, 'data_nascimento')}
                           required
                         />
-                        {fieldErrors.data_nascimento && (
-                          <p id="data_nascimento-error" className="text-sm text-red-600" role="alert">
-                            {fieldErrors.data_nascimento}
-                          </p>
-                        )}
+                        <FieldError field="data_nascimento" message={fieldErrors.data_nascimento} />
                       </div>
 
                       <div className="space-y-2">
@@ -310,7 +343,7 @@ export default function NovoAlunoPage() {
                           <SelectTrigger
                             id="sexo"
                             aria-invalid={Boolean(fieldErrors.sexo)}
-                            aria-describedby={fieldErrors.sexo ? 'sexo-error' : undefined}
+                            aria-describedby={fieldErrorId(fieldErrors.sexo, 'sexo')}
                           >
                             <SelectValue placeholder={t('labels.selecione-o-sexo')} />
                           </SelectTrigger>
@@ -319,11 +352,7 @@ export default function NovoAlunoPage() {
                             <SelectItem value="F">{t('labels.feminino')}</SelectItem>
                           </SelectContent>
                         </Select>
-                        {fieldErrors.sexo && (
-                          <p id="sexo-error" className="text-sm text-red-600" role="alert">
-                            {fieldErrors.sexo}
-                          </p>
-                        )}
+                        <FieldError field="sexo" message={fieldErrors.sexo} />
                       </div>
                     </div>
 
@@ -337,13 +366,9 @@ export default function NovoAlunoPage() {
                           placeholder="000.000.000-00"
                           maxLength={14}
                           aria-invalid={Boolean(fieldErrors.cpf)}
-                          aria-describedby={fieldErrors.cpf ? 'cpf-error' : undefined}
+                          aria-describedby={fieldErrorId(fieldErrors.cpf, 'cpf')}
                         />
-                        {fieldErrors.cpf && (
-                          <p id="cpf-error" className="text-sm text-red-600" role="alert">
-                            {fieldErrors.cpf}
-                          </p>
-                        )}
+                        <FieldError field="cpf" message={fieldErrors.cpf} />
                       </div>
 
                       <div className="space-y-2">
@@ -365,14 +390,10 @@ export default function NovoAlunoPage() {
                         onChange={(e) => handleInputChange('endereco', e.target.value)}
                         placeholder={t('labels.rua-numero-bairro-cidade')}
                         aria-invalid={Boolean(fieldErrors.endereco)}
-                        aria-describedby={fieldErrors.endereco ? 'endereco-error' : undefined}
+                        aria-describedby={fieldErrorId(fieldErrors.endereco, 'endereco')}
                         required
                       />
-                      {fieldErrors.endereco && (
-                        <p id="endereco-error" className="text-sm text-red-600" role="alert">
-                          {fieldErrors.endereco}
-                        </p>
-                      )}
+                      <FieldError field="endereco" message={fieldErrors.endereco} />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -408,14 +429,10 @@ export default function NovoAlunoPage() {
                           onChange={(e) => handleInputChange('nome_mae', e.target.value)}
                           placeholder={t('labels.nome-completo-da-mae')}
                           aria-invalid={Boolean(fieldErrors.nome_mae)}
-                          aria-describedby={fieldErrors.nome_mae ? 'nome_mae-error' : undefined}
+                          aria-describedby={fieldErrorId(fieldErrors.nome_mae, 'nome_mae')}
                           required
                         />
-                        {fieldErrors.nome_mae && (
-                          <p id="nome_mae-error" className="text-sm text-red-600" role="alert">
-                            {fieldErrors.nome_mae}
-                          </p>
-                        )}
+                        <FieldError field="nome_mae" message={fieldErrors.nome_mae} />
                       </div>
 
                       <div className="space-y-2">
@@ -540,7 +557,7 @@ export default function NovoAlunoPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className={pilotMode ? 'hidden' : 'space-y-2'}>
+                  <PilotHiddenField pilotMode={pilotMode}>
                     <Label htmlFor="resp_cpf">{t('labels.cpf-2')}</Label>
                     <Input
                       id="resp_cpf"
@@ -550,7 +567,7 @@ export default function NovoAlunoPage() {
  maxLength={14}
  required={!pilotMode}
                     />
-                  </div>
+                  </PilotHiddenField>
 
                   <div className="space-y-2">
                     <Label htmlFor="resp_telefone">{t('labels.telefone-2')}</Label>
@@ -577,7 +594,7 @@ export default function NovoAlunoPage() {
                     />
                   </div>
 
-                  <div className={pilotMode ? 'hidden' : 'space-y-2'}>
+                  <PilotHiddenField pilotMode={pilotMode}>
                     <Label htmlFor="resp_profissao">{t('labels.profissao')}</Label>
                     <Input
                       id="resp_profissao"
@@ -585,10 +602,10 @@ export default function NovoAlunoPage() {
                       onChange={(e) => handleResponsavelChange('profissao', e.target.value)}
                       placeholder={t('labels.profissao-do-responsavel')}
                     />
-                  </div>
+                  </PilotHiddenField>
                 </div>
 
-                <div className={pilotMode ? 'hidden' : 'space-y-2'}>
+                <PilotHiddenField pilotMode={pilotMode}>
                   <Label htmlFor="resp_endereco">{t('labels.endereco')}</Label>
                   <Input
                     id="resp_endereco"
@@ -596,23 +613,8 @@ export default function NovoAlunoPage() {
                     onChange={(e) => handleResponsavelChange('endereco', e.target.value)}
                     placeholder={t('labels.endereco-completo-do-responsavel')}
                   />
-                </div>
+                </PilotHiddenField>
 
-                <div className={pilotMode ? 'hidden' : 'space-y-2'}>
-                  <Label htmlFor="resp_renda">{t('labels.renda-familiar')}</Label>
-                  <Select value={responsavelData.renda_familiar} onValueChange={(value) => handleResponsavelChange('renda_familiar', value)}>
-                    <SelectTrigger id="resp_renda">
-                      <SelectValue placeholder={t('labels.selecione-a-faixa-de-renda')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ate_1_salario">{t('labels.ate-1-salario-minimo')}</SelectItem>
-                      <SelectItem value="1_a_2_salarios">{t('labels.1-a-2-salarios-minimos')}</SelectItem>
-                      <SelectItem value="2_a_3_salarios">{t('labels.2-a-3-salarios-minimos')}</SelectItem>
-                      <SelectItem value="3_a_5_salarios">{t('labels.3-a-5-salarios-minimos')}</SelectItem>
-                      <SelectItem value="acima_5_salarios">{t('labels.acima-de-5-salarios-minimos')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -760,19 +762,7 @@ export default function NovoAlunoPage() {
                 {t('labels.cancelar')}
               </Link>
             </Button>
-            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Cadastrando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  {t('labels.cadastrar-aluno')}
-                </>
-              )}
-            </Button>
+            <SubmitButton loading={loading} />
           </div>
         </Tabs>
       </form>

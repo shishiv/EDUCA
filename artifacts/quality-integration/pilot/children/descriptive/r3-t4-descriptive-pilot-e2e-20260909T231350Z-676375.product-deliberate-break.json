@@ -1,0 +1,7 @@
+{
+  "result": "pass",
+  "target": "canonical-content-removal",
+  "boundary": "real-browser-and-postgrest",
+  "observedStatus": 422,
+  "restored": true
+}

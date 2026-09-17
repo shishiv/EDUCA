@@ -1,4 +1,6 @@
 import { test as base, expect, type TestInfo } from '@playwright/test'
+import { schoolSelectionStorageKey } from '@/contexts/escola-selection'
+import { authenticatedUserId } from './authenticated-user'
 
 interface BrowserIssue {
   kind: 'console' | 'pageerror' | 'requestfailed' | 'response'
@@ -6,8 +8,6 @@ interface BrowserIssue {
 }
 
 const ignoredUrl = (url: string) => url.includes('/_next/webpack-hmr')
-
-const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
 
 const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
   // Invalid-credential coverage intentionally exercises Supabase's 400 response.
@@ -26,16 +26,32 @@ const expectedResponse = (url: string, status: number, testInfo: TestInfo) => {
   return false
 }
 
+function expectedConsole(text: string, testInfo: TestInfo): boolean {
+  if (/Download the React DevTools/i.test(text)) return true
+  if (testInfo.project.name === 'chromium-unauth' && /AuthSessionMissingError|Auth session missing/i.test(text)) return true
+  const expected = [
+    { title: /invalid credentials/i, message: /invalid login credentials|failed to load resource: the server responded with a status of 400/i },
+    { title: /invalid student id/i, message: /failed to load resource|error loading student/i },
+    { title: /prevents a duplicate session/i, message: /erro_duplicacao|já existe uma sessão|ja existe uma sessao/i },
+  ]
+  return expected.some(pattern => pattern.title.test(testInfo.title) && pattern.message.test(text))
+}
+
 /**
  * Auto fixture that converts browser diagnostics into deterministic failures.
  * Keep exceptions small and evidence-backed; add new benign noise only here.
  */
 export const test = base.extend<{ browserDiagnostics: void }>({
   page: async ({ page }, applyPage) => {
+    const selectedSchoolId = process.env.E2E_SELECTED_SCHOOL_ID
     if (selectedSchoolId) {
-      await page.addInitScript((schoolId: string) => {
-        window.sessionStorage.setItem('educa-selected-escola', schoolId)
-      }, selectedSchoolId)
+      const userId = authenticatedUserId(await page.context().cookies())
+      if (userId) {
+        await page.addInitScript(({ schoolId, storageKey }) => {
+          if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return
+          window.sessionStorage.setItem(storageKey, schoolId)
+        }, { schoolId: selectedSchoolId, storageKey: schoolSelectionStorageKey(userId) })
+      }
     }
     await applyPage(page)
   },
@@ -46,28 +62,7 @@ export const test = base.extend<{ browserDiagnostics: void }>({
       page.on('console', message => {
         if (message.type() !== 'error') return
         const text = message.text()
-        if (/Download the React DevTools/i.test(text)) return
-        // AuthProvider hydrates getUser() on every unauthenticated page
-        // (login, privacy, offline). With no session that is the expected
-        // state, not an app failure - scoped to the chromium-unauth project
-        // so authenticated tests still fail on real auth errors.
-        if (
-          testInfo.project.name === 'chromium-unauth' &&
-          /AuthSessionMissingError|Auth session missing/i.test(text)
-        ) return
-        if (
-          /invalid credentials/i.test(testInfo.title) &&
-          (/invalid login credentials/i.test(text) ||
-            /failed to load resource: the server responded with a status of 400/i.test(text))
-        ) return
-        if (
-          /invalid student id/i.test(testInfo.title) &&
-          /failed to load resource|error loading student/i.test(text)
-        ) return
-        if (
-          /prevents a duplicate session/i.test(testInfo.title) &&
-          /erro_duplicacao|já existe uma sessão|ja existe uma sessao/i.test(text)
-        ) return
+        if (expectedConsole(text, testInfo)) return
         issues.push({ kind: 'console', message: text })
       })
 

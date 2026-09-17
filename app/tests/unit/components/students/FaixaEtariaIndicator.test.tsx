@@ -338,7 +338,7 @@ describe('FaixaEtariaIndicator', () => {
     it('should correctly use calculateFaixaEtaria utility', () => {
       // Test that component uses the utility function correctly
       const birthDates = [
-        { months: 10, expected: 'Bebês' },
+        { months: 10, expected: /^Bebês$/ },
         { months: 25, expected: /crianças.*bem.*pequenas/i },
         { months: 50, expected: /crianças.*pequenas/i },
       ]
@@ -347,15 +347,11 @@ describe('FaixaEtariaIndicator', () => {
         const birthDate = new Date()
         birthDate.setMonth(birthDate.getMonth() - months)
         
-        const { container, rerender } = render(
+        const { rerender } = render(
           <FaixaEtariaIndicator birthDate={birthDate.toISOString()} />
         )
         
-        if (typeof expected === 'string') {
-          expect(screen.getByText(expected)).toBeInTheDocument()
-        } else {
-          expect(screen.getByText(expected)).toBeInTheDocument()
-        }
+        expect(screen.getByText(expected)).toBeInTheDocument()
         
         rerender(<div />)
       })

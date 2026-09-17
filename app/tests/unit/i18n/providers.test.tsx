@@ -1,54 +1,40 @@
-import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Providers } from '@/app/providers'
 import commonMessages from '@/messages/pt-BR/common.json'
 
-const mocks = vi.hoisted(() => ({
-  pathname: '/',
-  refresh: vi.fn(),
-  setUserLocale: vi.fn(),
-}))
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', (media: string): MediaQueryList => ({
+    media,
+    matches: false,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: () => false,
+  }))
+})
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => mocks.pathname,
-  useRouter: () => ({ refresh: mocks.refresh }),
-}))
+afterEach(() => vi.unstubAllGlobals())
 
-vi.mock('@/i18n/actions', () => ({
-  setUserLocale: mocks.setUserLocale,
-}))
-
-vi.mock('@/contexts/auth-context', () => ({
-  AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
-
-vi.mock('@/components/providers/service-worker-provider', () => ({
-  ServiceWorkerProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
-
-function renderProviders(pathname: string) {
-  mocks.pathname = pathname
+function renderProviders() {
   render(
     <NextIntlClientProvider locale="pt-BR" messages={{ common: commonMessages }}>
-      <Providers><p>Conteúdo público</p></Providers>
+      <Providers Auth={({ children }) => <>{children}</>} ServiceWorker={({ children }) => <>{children}</>}>
+        <p>Conteúdo público</p>
+      </Providers>
     </NextIntlClientProvider>
   )
 }
 
 describe('Providers locale presentation', () => {
-  beforeEach(() => vi.clearAllMocks())
+  it('renders content without placing a locale overlay outside the page layout', () => {
+    renderProviders()
 
-  it.each(['/', '/demo', '/login', '/politica-privacidade', '/blog'])('hides the floating locale selector on public path %s', pathname => {
-    renderProviders(pathname)
-
+    expect(screen.getByText('Conteúdo público')).toBeInTheDocument()
     expect(screen.queryByTestId('locale-switcher')).not.toBeInTheDocument()
-  })
-
-  it('keeps the app locale selector on dashboard paths', () => {
-    renderProviders('/dashboard')
-
-    expect(screen.getByTestId('locale-switcher')).toHaveClass('locale-switcher--app')
+    expect(screen.getByRole('region', { name: 'Notifications alt+T' })).toBeInTheDocument()
   })
 })

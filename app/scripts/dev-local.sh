@@ -6,6 +6,7 @@ APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/.." && pwd)"
 source "$SCRIPT_DIR/pilot-port-range-lease.sh"
 source "$SCRIPT_DIR/pilot-supabase-cleanup.sh"
+source "$SCRIPT_DIR/pilot-local-runtime.sh"
 
 for arg in "$@"; do
   case "$arg" in
@@ -56,9 +57,9 @@ cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
   set +e
+  pilot_stop_app_process_group "$APP_PID" || CLEANUP_FAILED=true
   if [[ -n "$APP_PID" ]]; then
-    kill -TERM -- "-$APP_PID" 2>/dev/null || kill -TERM "$APP_PID" 2>/dev/null || true
-    wait "$APP_PID" 2>/dev/null || true
+    pilot_verify_app_route_removed portless "$APP_NAME" || CLEANUP_FAILED=true
   fi
   if [[ "$SUPABASE_STARTED" == true && -n "$ISOLATED_PROJECT_DIR" ]]; then
     pilot_supabase_stop_project "$ISOLATED_PROJECT_DIR" "$SUPABASE_PROJECT_ID" >/dev/null 2>&1 || CLEANUP_FAILED=true
@@ -68,7 +69,11 @@ cleanup() {
   if [[ "$CLEANUP_FAILED" == true && "$exit_code" -eq 0 ]]; then
     exit_code=1
   fi
-  printf '\nLocal EDUCA environment removed.\n'
+  if [[ "$CLEANUP_FAILED" == true ]]; then
+    printf '\nLocal EDUCA cleanup failed; inspect remaining project resources.\n' >&2
+  else
+    printf '\nLocal EDUCA environment removed.\n'
+  fi
   exit "$exit_code"
 }
 
@@ -81,20 +86,7 @@ PORT_BASE="$PILOT_E2E_PORT_BASE"
 ISOLATED_PROJECT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/educa-dev-local.XXXXXX")
 SUPABASE_PROJECT_ID=$(basename "$ISOLATED_PROJECT_DIR")
 SUPABASE_CONFIG_DIR="$ISOLATED_PROJECT_DIR/supabase"
-mkdir -p "$SUPABASE_CONFIG_DIR"
-cp "$REPO_ROOT/supabase/config.toml" "$SUPABASE_CONFIG_DIR/config.toml"
-ln -s "$REPO_ROOT/supabase/migrations" "$SUPABASE_CONFIG_DIR/migrations"
-sed -i \
-  -e "0,/port = 54321/s//port = $PORT_BASE/" \
-  -e "0,/port = 54322/s//port = $((PORT_BASE + 1))/" \
-  -e "0,/port = 54323/s//port = $((PORT_BASE + 2))/" \
-  -e "0,/port = 54324/s//port = $((PORT_BASE + 3))/" \
-  -e "0,/port = 54327/s//port = $((PORT_BASE + 6))/" \
-  -e "0,/vector_port = 54328/s//vector_port = $((PORT_BASE + 7))/" \
-  -e "0,/port = 54329/s//port = $((PORT_BASE + 8))/" \
-  -e "s#site_url = \"http://127.0.0.1:3000\"#site_url = \"$APP_ORIGIN\"#" \
-  -e "s#additional_redirect_urls = \[\"http://127.0.0.1:3000\"\]#additional_redirect_urls = [\"$APP_ORIGIN\"]#" \
-  "$SUPABASE_CONFIG_DIR/config.toml"
+pilot_local_project_init "$REPO_ROOT" "$ISOLATED_PROJECT_DIR" "$PORT_BASE" "$APP_ORIGIN"
 
 unset NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
 unset SUPABASE_DEMO_URL SUPABASE_DEMO_SERVICE_KEY SUPABASE_DEMO_DB_URL
@@ -164,5 +156,4 @@ set +e
 wait "$APP_PID"
 APP_EXIT=$?
 set -e
-APP_PID=''
 exit "$APP_EXIT"

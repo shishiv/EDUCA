@@ -5,30 +5,32 @@
 
 import { BaseApiService } from './base'
 import { supabase, Tables, Turma } from '@/lib/supabase'
-import { ClassFormData } from '@/lib/validation'
+import type { ClassFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
+import { getCurrentUtcMonthRange } from '@/lib/date-utils'
 import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
+import { writeGovernedClass } from './governed-management'
 
 export type ClassWithDetails = Turma & {
-  escola?: Tables<'escolas'>
-  professor?: Tables<'users'>
+  escola?: Pick<Tables<'escolas'>, 'id' | 'nome' | 'codigo' | 'tipo'> | null
+  professor?: Pick<Tables<'users'>, 'id' | 'nome' | 'email'> | null
   _count?: {
     students: number
     matriculas: number
   }
-  matriculas?: (Tables<'matriculas'> & {
-    aluno?: Tables<'alunos'>
+  matriculas?: (Pick<Tables<'matriculas'>, 'id' | 'situacao' | 'data_matricula'> & {
+    aluno?: Pick<Tables<'alunos'>, 'id' | 'nome_completo' | 'data_nascimento'> | null
   })[]
 }
 
-export class ClassesApiService extends BaseApiService {
+export class ClassesApiService extends BaseApiService<'turmas'> {
   constructor() {
     super('turmas')
   }
 
   // Get classes with related data
   async getClassesWithDetails(options?: {
-    filter?: Record<string, any>
+    filter?: Record<string, string | number | boolean | null | undefined>
     searchTerm?: string
     schools?: string[]
     series?: string[]
@@ -38,10 +40,38 @@ export class ClassesApiService extends BaseApiService {
     limit?: number
     offset?: number
   }): Promise<ClassWithDetails[]> {
-    try {
-      let query = supabase
-        .from('turmas')
-        .select(`
+    const { data, error } = await this.buildClassesWithDetailsQuery(options)
+
+    if (error) throw error
+
+    return data.map((classData) => this.withEnrollmentCounts(classData))
+  }
+
+  private buildClassesWithDetailsQuery(options?: {
+    filter?: Record<string, string | number | boolean | null | undefined>
+    searchTerm?: string
+    schools?: string[]
+    series?: string[]
+    turnos?: ('matutino' | 'vespertino' | 'integral')[]
+    academicYear?: number
+    activeOnly?: boolean
+    limit?: number
+    offset?: number
+  }) {
+    const {
+      activeOnly,
+      filter,
+      schools = [],
+      series = [],
+      turnos = [],
+      academicYear,
+      searchTerm,
+      limit,
+      offset,
+    } = options || {}
+    let query = supabase
+      .from('turmas')
+      .select(`
           *,
           escola:escolas(
             id,
@@ -66,74 +96,44 @@ export class ClassesApiService extends BaseApiService {
           )
         `)
 
-      // Apply filters
-      if (options?.activeOnly !== false) {
-        query = query.eq('ativo', true)
-      }
-
-      if (options?.filter) {
-        Object.entries(options.filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            query = query.eq(key, value)
-          }
-        })
-      }
-
-      // School filter
-      if (options?.schools && options.schools.length > 0) {
-        query = query.in('escola_id', options.schools)
-      }
-
-      // Series filter
-      if (options?.series && options.series.length > 0) {
-        query = query.in('serie', options.series)
-      }
-
-      // Shift filter
-      if (options?.turnos && options.turnos.length > 0) {
-        query = query.in('turno', options.turnos)
-      }
-
-      // Academic year filter
-      if (options?.academicYear) {
-        query = query.eq('ano_letivo', options.academicYear)
-      }
-
-      // Search filter
-      if (options?.searchTerm) {
-        query = query.or(`nome.ilike.%${options.searchTerm}%,serie.ilike.%${options.searchTerm}%`)
-      }
-
-      // Apply pagination
-      if (options?.limit) {
-        const from = options.offset || 0
-        const to = from + options.limit - 1
-        query = query.range(from, to)
-      }
-
-      // Order by name
-      query = query.order('nome', { ascending: true })
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      // Add counts for each class
-      const classesWithCounts = (data as ClassWithDetails[]).map(classData => {
-        const activeEnrollments = classData.matriculas?.filter(m => m.situacao === 'ativa') || []
-
-        return {
-          ...classData,
-          _count: {
-            students: activeEnrollments.length,
-            matriculas: classData.matriculas?.length || 0
-          }
-        }
+    const applyBaseFilters = () => {
+      if (activeOnly !== false) query = query.eq('ativo', true)
+      Object.entries(filter ?? {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) query = query.eq(key, value)
       })
+    }
 
-      return classesWithCounts
-    } catch (error) {
-      throw error
+    const applyClassFilters = () => {
+      if (schools.length > 0) query = query.in('escola_id', schools)
+      if (series.length > 0) query = query.in('serie', series)
+      if (turnos.length > 0) query = query.in('turno', turnos)
+      if (academicYear) query = query.eq('ano_letivo', academicYear)
+    }
+
+    const applySearchAndPagination = () => {
+      if (searchTerm) query = query.or(`nome.ilike.%${searchTerm}%,serie.ilike.%${searchTerm}%`)
+      if (limit) {
+        const from = offset || 0
+        query = query.range(from, from + limit - 1)
+      }
+    }
+
+    applyBaseFilters()
+    applyClassFilters()
+    applySearchAndPagination()
+
+    return query.order('nome', { ascending: true })
+  }
+
+  private withEnrollmentCounts(classData: ClassWithDetails): ClassWithDetails {
+    const activeEnrollments = classData.matriculas?.filter((matricula) => matricula.situacao === 'ativa') || []
+
+    return {
+      ...classData,
+      _count: {
+        students: activeEnrollments.length,
+        matriculas: classData.matriculas?.length || 0
+      }
     }
   }
 
@@ -173,10 +173,11 @@ export class ClassesApiService extends BaseApiService {
         id: data.id,
         nome: data.nome,
         serie: data.serie,
+        // SAFETY: The select above requests the singular `escola(nome)` relationship.
         escola: { nome: (data.escola as { nome: string })?.nome || 'Escola' }
       }
     } catch (error) {
-      logger.error('Error in getClassWithSchool', error as Error, {
+      logger.error('Error in getClassWithSchool', error instanceof Error ? error : String(error), {
         feature: 'classes',
         action: 'get_class_with_school',
         metadata: { classId }
@@ -187,28 +188,12 @@ export class ClassesApiService extends BaseApiService {
 
   // Create class
   async createClass(classData: ClassFormData) {
-    try {
-      const result = await this.create({
-        ...classData,
-        ativo: true,
-        created_at: new Date().toISOString()
-      })
-
-      return result
-    } catch (error) {
-      throw error
-    }
+    return writeGovernedClass(supabase, null, { ...classData, ativo: true })
   }
 
   // Set the single titular teacher for a class. Null removes the current titular.
   async assignTeacher(classId: string, teacherId: string | null) {
-    try {
-      const result = await this.update(classId, { professor_id: teacherId })
-
-      return result
-    } catch (error) {
-      throw error
-    }
+    return writeGovernedClass(supabase, classId, { professor_id: teacherId })
   }
 
   // Get class statistics
@@ -228,7 +213,7 @@ export class ClassesApiService extends BaseApiService {
       const activeEnrollments = enrollments?.filter(e => e.situacao === 'ativa') || []
 
       // Get attendance summary for current month
-      const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
+      const currentMonth = getCurrentUtcMonthRange()
       const matriculaIds = activeEnrollments.map(e => e.id)
 
       let attendanceSummary: Record<string, number> = {}
@@ -236,10 +221,11 @@ export class ClassesApiService extends BaseApiService {
 
       if (matriculaIds.length > 0) {
         const attendanceData = await loadCanonicalAttendanceFacts(supabase, matriculaIds, {
-          startDate: `${currentMonth}-01`,
-          endDate: `${currentMonth}-31`,
+          startDate: currentMonth.startDate,
+          endDate: currentMonth.endDate,
         })
 
+        // SAFETY: Attendance status values are strings, so this accumulator is a string-keyed count map.
         attendanceSummary = attendanceData.reduce((acc, record) => {
           const status = record.statusPresenca || (record.presente ? 'P' : 'F')
           acc[status] = (acc[status] || 0) + 1
@@ -308,7 +294,7 @@ export class ClassesApiService extends BaseApiService {
         throw new Error(`Cannot reduce capacity below current enrollment count (${stats.activeEnrollments})`)
       }
 
-      const result = await this.update(classId, { capacidade: newCapacity })
+      const result = await writeGovernedClass(supabase, classId, { capacidade: newCapacity })
       return result
     } catch (error) {
       throw error
@@ -318,7 +304,7 @@ export class ClassesApiService extends BaseApiService {
   // Update class status
   async updateClassStatus(id: string, ativo: boolean, reason?: string) {
     try {
-      const result = await this.update(id, { ativo })
+      const result = await writeGovernedClass(supabase, id, { ativo })
 
       logger.info(`Class status updated to ${ativo ? 'active' : 'inactive'}`, {
         feature: 'classes',
@@ -328,7 +314,7 @@ export class ClassesApiService extends BaseApiService {
 
       return result
     } catch (error) {
-      logger.error('Error updating class status', error as Error, {
+      logger.error('Error updating class status', error instanceof Error ? error : String(error), {
         feature: 'classes',
         action: 'update_class_status',
         metadata: { classId: id }
@@ -386,7 +372,7 @@ export class ClassesApiService extends BaseApiService {
         })
       }
 
-      return availableStudents.map(({ matriculas, ...student }) => student)
+      return availableStudents.map(({ matriculas: _matriculas, ...student }) => student)
     } catch (error) {
       throw error
     }
@@ -410,8 +396,11 @@ export class ClassesApiService extends BaseApiService {
       const stats = {
         total: classes.length,
         active: classes.filter(c => c.ativo).length,
+        // SAFETY: These maps start empty and are populated only with string keys below.
         byType: {} as Record<string, number>,
+        // SAFETY: These maps start empty and are populated only with string keys below.
         bySeries: {} as Record<string, number>,
+        // SAFETY: These maps start empty and are populated only with string keys below.
         byShift: {} as Record<string, number>,
         totalStudents: 0,
         averageCapacity: 0,
@@ -432,7 +421,7 @@ export class ClassesApiService extends BaseApiService {
 
         const enrolled = classData._count?.students || 0
         stats.totalStudents += enrolled
-        totalCapacity += classData.capacidade
+        totalCapacity += classData.capacidade ?? 0
         totalEnrolled += enrolled
       })
 
@@ -440,7 +429,7 @@ export class ClassesApiService extends BaseApiService {
       stats.utilizationRate = totalCapacity > 0 ? Math.round((totalEnrolled / totalCapacity) * 100) : 0
 
       return stats
-    } catch (error) {
+    } catch {
       return {
         total: 0,
         active: 0,

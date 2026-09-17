@@ -62,7 +62,7 @@ export default function BlogPage() {
 
   return (
     <div className="public-site" lang="pt-BR">
-      <PublicHeader />
+      <PublicHeader pathname="/blog" />
       <main>
         <section className="blog-hero">
           <div className="public-shell blog-hero__grid">

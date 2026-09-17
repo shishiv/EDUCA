@@ -10,6 +10,7 @@ import { Client } from 'pg'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import type { Database } from '../types/database'
 import { assertSyntheticPilotSafety } from '../lib/pilot/pilot-safety-gate'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -69,6 +70,22 @@ interface ProfileRow {
   escola_id: string | null
 }
 
+interface GovernedFunctionRow {
+  security_definer: boolean
+  secure_search_path: boolean
+  authenticated_execute: boolean
+  anon_execute: boolean
+  public_execute_revoked: boolean
+}
+
+interface GovernedAuditRow {
+  actor_user_id: string
+  escola_id: string
+  event_type: string
+  entity_type: string
+  entity_id: string
+}
+
 function requireEnvironment(): void {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_DB_URL) {
     throw new Error('PILOT_CANONICAL_VALIDATE_ENV_REQUIRED: local Supabase variables are required')
@@ -80,7 +97,7 @@ function requireEnvironment(): void {
   }
 }
 
-function assertCondition(condition: unknown, message: string): asserts condition {
+function assertCondition(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(`PILOT_CANONICAL_VALIDATE_FAILED: ${message}`)
 }
 
@@ -88,8 +105,8 @@ function sortedIds(rows: Array<{ id: string }> | null | undefined): string[] {
   return (rows ?? []).map(row => row.id).sort()
 }
 
-async function signedInClient(email: string): Promise<SupabaseClient> {
-  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+async function signedInClient(email: string): Promise<SupabaseClient<Database>> {
+  const client = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   })
   const { data, error } = await client.auth.signInWithPassword({ email, password: PASSWORD })
@@ -104,7 +121,7 @@ async function checkDatabaseMarker(client: Client): Promise<void> {
     WHERE municipality_slug = 'synthetic-municipality'
   `)
   const row = marker.rows[0]
-  assertCondition(row, 'synthetic municipality marker is missing')
+  assertCondition(row !== undefined, 'synthetic municipality marker is missing')
   assertCondition(row.municipality_slug === 'synthetic-municipality', 'municipality marker is incorrect')
   assertCondition(row.data_classification === 'synthetic_only', 'database is not synthetic-only')
   assertCondition(row.external_deploy_allowed === false, 'external deployment is not blocked')
@@ -139,36 +156,84 @@ async function checkDatabaseMarker(client: Client): Promise<void> {
   assertCondition(privilegeRow?.classes_select === true, 'canonical classes read grant is missing')
   assertCondition(privilegeRow?.attendance_insert === true, 'canonical attendance write grant is missing')
 
-  const schoolUpdatePolicies = await client.query<{ qual: string; with_check: string }>(`
-    SELECT qual, with_check
+  await checkGovernedSchoolUpdateContract(client)
+}
+
+async function checkGovernedSchoolUpdateContract(client: Client): Promise<void> {
+  const directSchoolUpdatePolicies = await client.query<{ policy_count: number }>(`
+    SELECT count(*)::int AS policy_count
     FROM pg_policies
     WHERE schemaname = 'public'
       AND tablename = 'escolas'
-      AND cmd = 'UPDATE'
+      AND cmd IN ('UPDATE', 'ALL')
   `)
-  assertCondition(schoolUpdatePolicies.rows.length === 1, 'admin-only school update policy is missing')
-  const schoolUpdatePolicy = schoolUpdatePolicies.rows[0]
   assertCondition(
-    schoolUpdatePolicy.qual.includes('pilot_current_role()') &&
-      schoolUpdatePolicy.qual.includes('admin') &&
-      schoolUpdatePolicy.with_check.includes('pilot_current_role()') &&
-      schoolUpdatePolicy.with_check.includes('admin'),
-    'school update policy is not admin-only'
+    directSchoolUpdatePolicies.rows[0]?.policy_count === 0,
+    'legacy direct school update policy remains enabled'
   )
 
-  const schoolUpdatePrivileges = await client.query<{ column_name: string }>(`
-    SELECT column_name
-    FROM information_schema.column_privileges
-    WHERE table_schema = 'public'
-      AND table_name = 'escolas'
-      AND grantee = 'authenticated'
-      AND privilege_type = 'UPDATE'
-    ORDER BY column_name
+  const governedSchoolFunction = await client.query<GovernedFunctionRow>(`
+    SELECT
+      p.prosecdef AS security_definer,
+      position('search_path=public, pg_temp' IN coalesce(array_to_string(p.proconfig, ','), '')) > 0 AS secure_search_path,
+      has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_execute,
+      has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_execute,
+      NOT EXISTS (
+        SELECT 1
+        FROM aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) AS privilege
+        WHERE privilege.grantee = 0
+          AND privilege.privilege_type = 'EXECUTE'
+      ) AS public_execute_revoked
+    FROM pg_proc AS p
+    WHERE p.oid = 'public.update_governed_school(uuid,jsonb)'::regprocedure
+  `)
+  assertCondition(governedSchoolFunction.rows.length === 1, 'governed school update RPC is missing')
+  const governedSchoolFunctionRow = governedSchoolFunction.rows[0]
+  assertCondition(
+    governedSchoolFunctionRow.security_definer &&
+      governedSchoolFunctionRow.secure_search_path &&
+      governedSchoolFunctionRow.authenticated_execute &&
+      !governedSchoolFunctionRow.anon_execute &&
+      governedSchoolFunctionRow.public_execute_revoked,
+    'governed school update RPC authorization contract is incomplete'
+  )
+
+  await checkGovernedSchoolAuditContract(client)
+
+  const directSchoolUpdateGrant = await client.query<{ update_granted: boolean }>(`
+    SELECT has_table_privilege('authenticated', 'public.escolas', 'UPDATE') AS update_granted
   `)
   assertCondition(
-    JSON.stringify(schoolUpdatePrivileges.rows.map(row => row.column_name)) ===
-      JSON.stringify(['ativo', 'codigo', 'diretor_id', 'email', 'endereco', 'nome', 'telefone', 'tipo']),
-    'school update privileges are broader than the edit form'
+    directSchoolUpdateGrant.rows[0]?.update_granted === false,
+    'school columns remain writable outside the governed RPC'
+  )
+}
+
+async function checkGovernedSchoolAuditContract(client: Client): Promise<void> {
+  const auditFunction = await client.query<GovernedFunctionRow>(`
+    SELECT
+      p.prosecdef AS security_definer,
+      position('search_path=public, pg_temp' IN coalesce(array_to_string(p.proconfig, ','), '')) > 0 AS secure_search_path,
+      has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_execute,
+      has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_execute,
+      NOT EXISTS (
+        SELECT 1
+        FROM aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) AS privilege
+        WHERE privilege.grantee = 0
+          AND privilege.privilege_type = 'EXECUTE'
+      ) AS public_execute_revoked
+    FROM pg_proc AS p
+    WHERE p.oid = 'public.record_governed_management_audit(text,uuid,text,uuid)'::regprocedure
+  `)
+  assertCondition(auditFunction.rows.length === 1, 'governed management audit function is missing')
+  const auditFunctionRow = auditFunction.rows[0]
+  assertCondition(
+    auditFunctionRow.security_definer &&
+      auditFunctionRow.secure_search_path &&
+      !auditFunctionRow.authenticated_execute &&
+      !auditFunctionRow.anon_execute &&
+      auditFunctionRow.public_execute_revoked,
+    'governed management audit function is exposed outside the RPC boundary'
   )
 }
 
@@ -198,7 +263,7 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
     ATTENDANCE_A,
   ])
   const row = counts.rows[0]
-  assertCondition(row, 'synthetic dataset count query returned no row')
+  assertCondition(row !== undefined, 'synthetic dataset count query returned no row')
 
   const expected: CountRow = {
     schools: 2,
@@ -213,8 +278,10 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
     metric_events: 4,
     tombstones: 1,
   }
+  const actualCounts = new Map(Object.entries(row))
   for (const [name, value] of Object.entries(expected)) {
-    assertCondition(row[name as keyof CountRow] === value, `${name} count is ${row[name as keyof CountRow]}, expected ${value}`)
+    const actual = actualCounts.get(name)
+    assertCondition(actual === value, `${name} count is ${actual}, expected ${value}`)
   }
 
   const profiles = await client.query<ProfileRow>(`
@@ -235,7 +302,7 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
   ].sort()
   assertCondition(JSON.stringify(profileReceipt) === JSON.stringify(expectedProfiles), 'synthetic profile identities are incorrect')
 
-  const auth = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  const auth = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   })
   const { data: authUsers, error: authError } = await auth.auth.admin.listUsers({ page: 1, perPage: 1000 })
@@ -260,15 +327,13 @@ async function checkSyntheticDataset(client: Client): Promise<CountRow> {
   return row
 }
 
-async function checkPostgrestAccess(): Promise<void> {
-  const [admin, secretariat, directorA, directorB, teacherA] = await Promise.all([
-    signedInClient(ADMIN_EMAIL),
-    signedInClient(SECRETARIAT_EMAIL),
-    signedInClient(DIRECTOR_A_EMAIL),
-    signedInClient(DIRECTOR_B_EMAIL),
-    signedInClient(TEACHER_A_EMAIL),
-  ])
-
+async function checkSchoolScopedReads(
+  admin: SupabaseClient<Database>,
+  secretariat: SupabaseClient<Database>,
+  directorA: SupabaseClient<Database>,
+  directorB: SupabaseClient<Database>,
+  teacherA: SupabaseClient<Database>
+): Promise<void> {
   const [adminSchools, secretariatSchools, directorASchools, directorBSchools, teacherClasses, teacherStudents] = await Promise.all([
     admin.from('escolas').select('id').order('id'),
     secretariat.from('escolas').select('id').order('id'),
@@ -290,13 +355,41 @@ async function checkPostgrestAccess(): Promise<void> {
   assertCondition(JSON.stringify(sortedIds(directorBSchools.data)) === JSON.stringify([SCHOOL_B]), 'director B school scope is incorrect')
   assertCondition(JSON.stringify(sortedIds(teacherClasses.data)) === JSON.stringify([CLASS_A]), 'teacher class scope is incorrect')
   assertCondition(JSON.stringify(sortedIds(teacherStudents.data)) === JSON.stringify([STUDENT_A]), 'teacher student scope is incorrect')
+}
 
-  const adminSchoolUpdate = await admin.from('escolas').update({ codigo: '00000001' }).eq('id', SCHOOL_A).select('codigo').single()
-  assertCondition(!adminSchoolUpdate.error && adminSchoolUpdate.data.codigo === '00000001', 'admin cannot save the seeded school')
+async function checkPostgrestAccess(client: Client): Promise<void> {
+  const [admin, secretariat, directorA, directorB, teacherA] = await Promise.all([
+    signedInClient(ADMIN_EMAIL),
+    signedInClient(SECRETARIAT_EMAIL),
+    signedInClient(DIRECTOR_A_EMAIL),
+    signedInClient(DIRECTOR_B_EMAIL),
+    signedInClient(TEACHER_A_EMAIL),
+  ])
+
+  await checkSchoolScopedReads(admin, secretariat, directorA, directorB, teacherA)
+
+  const adminSchoolUpdate = await admin.rpc('update_governed_school', {
+    p_school_id: SCHOOL_A,
+    p_changes: { codigo: '00000001' },
+  })
+  const auditId = adminSchoolUpdate.data?.[0]?.audit_id ?? null
+  assertCondition(!adminSchoolUpdate.error && auditId !== null, 'admin cannot save the seeded school through the governed RPC')
+  const governedAudit = await client.query<GovernedAuditRow>(`
+    SELECT actor_user_id, escola_id, event_type, entity_type, entity_id
+    FROM public.pilot_audit_log
+    WHERE id = $1::uuid
+  `, [auditId])
+  const governedAuditRow = governedAudit.rows[0]
+  assertCondition(governedAuditRow?.actor_user_id === ADMIN_ID, 'governed school audit actor is incorrect')
+  assertCondition(governedAuditRow.escola_id === SCHOOL_A, 'governed school audit school is incorrect')
+  assertCondition(governedAuditRow.event_type === 'school_updated', 'governed school audit event is incorrect')
+  assertCondition(governedAuditRow.entity_type === 'school', 'governed school audit entity type is incorrect')
+  assertCondition(governedAuditRow.entity_id === SCHOOL_A, 'governed school audit entity is incorrect')
   const adminSchoolReread = await admin.from('escolas').select('codigo').eq('id', SCHOOL_A).single()
   assertCondition(!adminSchoolReread.error && adminSchoolReread.data.codigo === '00000001', 'admin cannot reread the saved school')
 
   for (const [role, client] of [
+    ['admin', admin],
     ['secretariat', secretariat],
     ['director', directorA],
     ['teacher', teacherA],
@@ -331,7 +424,7 @@ async function validate(): Promise<void> {
   try {
     await checkDatabaseMarker(client)
     const counts = await checkSyntheticDataset(client)
-    await checkPostgrestAccess()
+    await checkPostgrestAccess(client)
 
     const receipt = {
       marker: {

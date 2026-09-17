@@ -1,0 +1,3 @@
+result: "{\"status\":200,\"body\":{\"user\":{\"id\":\"2b3aa1d6-49d6-48b6-8a13-0738a5b81861\",\"ativo\":true},\"receipt\":\"f87dfaf4-1a39-4771-aec5-971c5a5b8d6a\"}}"
+help[1]:
+  Run `chrome-devtools-axi snapshot` to see current page state

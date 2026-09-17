@@ -1,0 +1,89 @@
+{
+  "captured_at": "2026-09-08T22:06:59.403513+00:00",
+  "command": "git -C <path> status --porcelain=v1 -uall",
+  "exclusions": [
+    ".pi/semantic-grep.sqlite*"
+  ],
+  "worktrees": [
+    {
+      "name": "integration",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/integration",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "refactor/educa-zero-slop-20260907",
+      "tracked_changes": 561,
+      "new_files": 0,
+      "excluded_noise": 0,
+      "raw_status_entries": 561
+    },
+    {
+      "name": "auth",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/auth",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 25,
+      "new_files": 4,
+      "excluded_noise": 1,
+      "raw_status_entries": 30
+    },
+    {
+      "name": "contracts",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/contracts",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 24,
+      "new_files": 1,
+      "excluded_noise": 1,
+      "raw_status_entries": 26
+    },
+    {
+      "name": "frequency",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/frequency",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 39,
+      "new_files": 0,
+      "excluded_noise": 1,
+      "raw_status_entries": 40
+    },
+    {
+      "name": "public",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/public",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 51,
+      "new_files": 0,
+      "excluded_noise": 1,
+      "raw_status_entries": 52
+    },
+    {
+      "name": "readmodels",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/readmodels",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 41,
+      "new_files": 1,
+      "excluded_noise": 3,
+      "raw_status_entries": 45
+    },
+    {
+      "name": "toolchain",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/toolchain",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 33,
+      "new_files": 0,
+      "excluded_noise": 1,
+      "raw_status_entries": 34
+    },
+    {
+      "name": "validation",
+      "path": "/home/shiv/Projects/EDUCA-quality-20260907/workers/validation",
+      "head": "8713027b52caf6930999385253fdf1f052bbf912",
+      "branch": "HEAD",
+      "tracked_changes": 21,
+      "new_files": 0,
+      "excluded_noise": 3,
+      "raw_status_entries": 24
+    }
+  ]
+}

@@ -1,12 +1,21 @@
 import { test as setup, expect } from '@playwright/test'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'path'
+import { z } from 'zod'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
+const sessionResponseSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_at: z.number(),
+  expires_in: z.number(),
+  token_type: z.string(),
+  user: z.unknown(),
+})
 
 // Paths relative to app/ root (where playwright.config.ts lives)
 const AUTH_DIR = path.join(__dirname, '../../playwright/.auth')
@@ -85,7 +94,7 @@ if (isPilotMode) {
       const body = await res.text()
       throw new Error(`Auth failed ${res.status}: ${body}`)
     }
-    const data = await res.json()
+    const data = sessionResponseSchema.parse(await res.json())
     // Build the session object that @supabase/ssr stores
     const sessionObj = {
       access_token: data.access_token,
@@ -100,7 +109,7 @@ if (isPilotMode) {
     const b64 = Buffer.from(jsonStr).toString('base64url')
     return {
       cookieValue: `base64-${b64}`,
-      accessToken: data.access_token as string,
+      accessToken: data.access_token,
     }
   }
 

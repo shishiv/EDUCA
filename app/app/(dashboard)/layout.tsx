@@ -11,11 +11,9 @@ import { SessionRealtimeProvider } from '@/contexts/session-realtime-context'
 import { EscolaProvider } from '@/contexts/escola-context'
 import { DemoSandboxBanner } from '@/components/demo-sandbox/DemoSandboxBanner'
 import { isDemoSandboxEnabled } from '@/lib/demo-sandbox/demo-sandbox'
-import { Toaster } from '@/components/ui/sonner'
+import { dashboardRoles } from '@/lib/route-policy'
 import { useAuth } from '@/hooks/use-auth'
 import { useTranslations } from 'next-intl'
-import { ModalProvider } from '@/components/ui/modal-manager'
-import { ModalRenderer } from '@/components/ui/modal-renderer'
 
 export default function DashboardLayout({
   children,
@@ -23,16 +21,12 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthGuard allowedRoles={['admin', 'diretor', 'secretario', 'professor']}>
-      <ModalProvider>
-        <DashboardWithRealtime>
-          <DashboardLayoutInner>
-            {children}
-          </DashboardLayoutInner>
-          <Toaster />
-        </DashboardWithRealtime>
-        <ModalRenderer />
-      </ModalProvider>
+    <AuthGuard allowedRoles={[...dashboardRoles]}>
+      <DashboardWithRealtime>
+        <DashboardLayoutInner>
+          {children}
+        </DashboardLayoutInner>
+      </DashboardWithRealtime>
     </AuthGuard>
   )
 }
@@ -104,7 +98,7 @@ function DashboardWithRealtime({ children }: { children: React.ReactNode }) {
         user={{
           id: userProfile.id,
           tipo_usuario: userProfile.tipo_usuario,
-          escola_id: userProfile.escola_id || '' // Default to empty string if null
+          escola_id: userProfile.escola_id
         }}
       >
         {children}

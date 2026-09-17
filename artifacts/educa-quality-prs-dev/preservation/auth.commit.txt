@@ -1,0 +1,10 @@
+[salvar/educa-quality-auth-20260908 a8c143ea] chore(quality): preserve auth worktree from 2026-09-07
+ 29 files changed, 2021 insertions(+), 1312 deletions(-)
+ create mode 100644 VENT.md
+ create mode 100644 app/app/api/pilot/invitations/handler.ts
+ create mode 100644 app/app/api/pilot/users/[userId]/revoke/handler.ts
+ create mode 100644 app/app/api/search/handler.ts
+ create mode 100644 app/app/api/users/[userId]/status/handler.ts
+ create mode 100644 app/app/api/users/me/route.ts
+ create mode 100644 app/tests/unit/api/user-lifecycle-fixtures.ts
+ create mode 100644 supabase/migrations/20260907000000_auth_mutation_audit_receipts.sql

@@ -22,7 +22,7 @@ import { ChevronDown, ChevronUp, FileText } from 'lucide-react'
 
 // Components
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 // Types
@@ -30,7 +30,6 @@ import {
   type Vivencia,
   type CampoType,
   CAMPOS_EXPERIENCIA,
-  getCampoBadgeVariant,
   getAllCampos,
 } from '@/types/diario-infantil'
 import { useClassroomTranslations } from '@/i18n/classroom'
@@ -48,6 +47,24 @@ export interface VivenciasReferenceProps {
   onFilterChange?: (campo: CampoType | null) => void
   /** Additional class name */
   className?: string
+}
+
+type CampoConfig = ReturnType<typeof getAllCampos>[number]
+
+const CAMPO_BADGE_VARIANTS = {
+  eu: 'campo-eu',
+  corpo: 'campo-corpo',
+  tracos: 'campo-tracos',
+  escuta: 'campo-escuta',
+  espacos: 'campo-espacos',
+} satisfies Record<CampoType, NonNullable<BadgeProps['variant']>>
+
+const CAMPO_RING_CLASSES: Record<CampoType, string> = {
+  eu: 'ring-pink-400',
+  corpo: 'ring-orange-400',
+  tracos: 'ring-violet-400',
+  escuta: 'ring-sky-400',
+  espacos: 'ring-emerald-400',
 }
 
 // ============================================================================
@@ -122,35 +139,15 @@ export function VivenciasReference({
           >
             {t('labels.all')}
           </Button>
-          {campos.map((campo) => {
-            const isSelected = selectedCampo === campo.key
-            const count = vivencias.filter((v) =>
-              v.campos_experiencia.includes(campo.key)
-            ).length
-            return (
-              <Button
-                key={campo.key}
-                variant={isSelected ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleFilterClick(campo.key)}
-                className={cn(
-                  'h-7 text-xs gap-1',
-                  isSelected && 'ring-2 ring-offset-1',
-                  isSelected && campo.key === 'eu' && 'ring-pink-400',
-                  isSelected && campo.key === 'corpo' && 'ring-orange-400',
-                  isSelected && campo.key === 'tracos' && 'ring-violet-400',
-                  isSelected && campo.key === 'escuta' && 'ring-sky-400',
-                  isSelected && campo.key === 'espacos' && 'ring-emerald-400'
-                )}
-                title={campo.name}
-              >
-                <span>{campo.emoji}</span>
-                {count > 0 && (
-                  <span className="text-[10px] opacity-70">({count})</span>
-                )}
-              </Button>
-            )
-          })}
+          {campos.map((campo) => (
+            <CampoFilterButton
+              key={campo.key}
+              campo={campo}
+              vivencias={vivencias}
+              isSelected={selectedCampo === campo.key}
+              onClick={() => handleFilterClick(campo.key)}
+            />
+          ))}
         </div>
       </div>
 
@@ -188,6 +185,43 @@ export function VivenciasReference({
         </div>
       </ScrollArea>
     </div>
+  )
+}
+
+interface CampoFilterButtonProps {
+  campo: CampoConfig
+  vivencias: Vivencia[]
+  isSelected: boolean
+  onClick: () => void
+}
+
+function CampoFilterButton({
+  campo,
+  vivencias,
+  isSelected,
+  onClick,
+}: CampoFilterButtonProps) {
+  const count = vivencias.filter((vivencia) => (
+    vivencia.campos_experiencia.includes(campo.key)
+  )).length
+
+  return (
+    <Button
+      variant={isSelected ? 'default' : 'outline'}
+      size="sm"
+      onClick={onClick}
+      className={cn(
+        'h-7 text-xs gap-1',
+        isSelected && 'ring-2 ring-offset-1',
+        isSelected && CAMPO_RING_CLASSES[campo.key],
+      )}
+      title={campo.name}
+    >
+      <span>{campo.emoji}</span>
+      {count > 0 && (
+        <span className="text-[10px] opacity-70">({count})</span>
+      )}
+    </Button>
   )
 }
 
@@ -283,16 +317,10 @@ interface SmallCampoBadgeProps {
 
 function SmallCampoBadge({ campo, isHighlighted }: SmallCampoBadgeProps) {
   const config = CAMPOS_EXPERIENCIA[campo]
-  const variant = getCampoBadgeVariant(campo) as
-    | 'campo-eu'
-    | 'campo-corpo'
-    | 'campo-tracos'
-    | 'campo-escuta'
-    | 'campo-espacos'
 
   return (
     <Badge
-      variant={variant}
+      variant={CAMPO_BADGE_VARIANTS[campo]}
       className={cn(
         'text-[10px] px-1.5 py-0 h-5',
         isHighlighted && 'ring-2 ring-offset-1 ring-current'

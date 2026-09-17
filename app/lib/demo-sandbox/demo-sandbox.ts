@@ -18,6 +18,7 @@
 
 import { NextResponse } from 'next/server'
 import type { DemoActionOperation } from '@/lib/demo-sandbox/demo-audit'
+import type { GovernedCsvValidationReport } from '@/lib/pilot/governed-csv-import'
 
 /** Env flag that switches the instance into public demo sandbox mode. */
 export const DEMO_SANDBOX_ENV_KEY = 'NEXT_PUBLIC_DEMO_SANDBOX'
@@ -327,27 +328,96 @@ export interface DemoSandboxSimulatedSuccessOptions {
   correlationId?: string
 }
 
+interface DemoConfigPayload {
+  id: string
+  chave: string
+  valor: string
+  descricao?: string
+  categoria?: string
+  tipo_valor?: string | null
+  valor_padrao?: string | null
+  ativo?: boolean | null
+  escola_id?: string | null
+  criado_por?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+interface DemoInvitationPayload {
+  id: string
+  email: string
+  invited_role: 'secretario' | 'diretor' | 'professor'
+  escola_id: string | null
+  simulated: true
+}
+
+interface DemoBatchPayload {
+  id: string
+  status: string
+  decision?: 'approved' | 'rejected'
+  validation_report?: GovernedCsvValidationReport
+}
+
+interface DemoRollbackPayload {
+  reasonRecorded: true
+}
+
+type DemoResponseData =
+  | { config: DemoConfigPayload }
+  | { invitation: DemoInvitationPayload }
+  | {
+      batch: DemoBatchPayload
+      report?: GovernedCsvValidationReport
+      rollback?: DemoRollbackPayload
+      validationToken?: string
+      simulatedRowCount?: number
+    }
+  | { completed: true; simulated: true }
+
+interface DemoSandboxOutcome {
+  operation: DemoActionOperation
+  outcome: 'simulated_success'
+  effect_suppressed: true
+  synthetic_only: true
+  correlation_id: string
+}
+
 /** Returns a truthful 2xx response whose business effect was suppressed. */
 export function demoSandboxSimulatedSuccessResponse(
   operation: DemoActionOperation,
-  data: Record<string, unknown> = {},
+  data: DemoResponseData | undefined = undefined,
   options: DemoSandboxSimulatedSuccessOptions = {},
   env: Record<string, string | undefined> = process.env
 ): NextResponse | null {
   if (!isDemoSandboxEnabled(env)) return null
 
   const correlationId = options.correlationId ?? crypto.randomUUID()
+  const demo: DemoSandboxOutcome = {
+    operation,
+    outcome: 'simulated_success',
+    effect_suppressed: true,
+    synthetic_only: true,
+    correlation_id: correlationId,
+  }
+  const payload = data ?? {}
+  if (options.auditId) {
+    return NextResponse.json({
+      ...payload,
+      success: true,
+      demo: { ...demo, audit_id: options.auditId },
+    }, {
+      status: options.status ?? 200,
+      headers: {
+        'cache-control': 'no-store',
+        'x-educa-demo-outcome': 'simulated_success',
+      },
+    })
+  }
+
   const response = {
-    ...data,
+    ...payload,
     success: true,
-    demo: {
-      operation,
-      outcome: 'simulated_success' as const,
-      effect_suppressed: true as const,
-      synthetic_only: true as const,
-      correlation_id: correlationId,
-      ...(options.auditId ? { audit_id: options.auditId } : {}),
-    },
+    demo,
   }
 
   return NextResponse.json(response, {

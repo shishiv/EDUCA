@@ -4,21 +4,47 @@
  * T030-T032 Implementation
  */
 
-import { supabase } from './supabase'
+import { supabase, type Tables } from './supabase'
+import type { Json } from '@/types/database'
 
-export interface AuditLog {
-  id?: string
+export interface AuditEventFields {
+  readonly [key: string]: Json | undefined
+}
+
+export interface AuditEvent {
   user_id: string
   action: AuditAction
   table_name: string
   record_id: string
-  old_values?: Record<string, any>
-  new_values?: Record<string, any>
+  old_values?: AuditEventFields
+  new_values?: AuditEventFields
+  ip_address?: string
+  user_agent?: string
+  escola_id?: string
+  details?: AuditEventFields
+}
+
+type AuditLogRow = Tables<'audit_logs'>
+type NormalizedAuditJson = Exclude<AuditLogRow['old_values'], null>
+
+export type AuditLog = Omit<
+  AuditLogRow,
+  | 'created_at'
+  | 'old_values'
+  | 'new_values'
+  | 'timestamp'
+  | 'ip_address'
+  | 'user_agent'
+  | 'escola_id'
+  | 'details'
+> & {
+  old_values?: NormalizedAuditJson
+  new_values?: NormalizedAuditJson
   timestamp?: string
   ip_address?: string
   user_agent?: string
   escola_id?: string
-  details?: Record<string, any>
+  details?: NormalizedAuditJson
 }
 
 export type AuditAction =
@@ -66,7 +92,7 @@ export type AuditAction =
  * @param headers - Optional request headers for server-side IP detection
  */
 export const logAuditEvent = async (
-  auditData: Omit<AuditLog, 'id' | 'timestamp'>,
+  auditData: AuditEvent,
   _headers?: Headers
 ): Promise<void> => {
   if (typeof window === 'undefined') {
@@ -166,8 +192,8 @@ export const logUserEvent = async (
   actorUserId: string,
   action: AuditAction,
   targetUserId: string,
-  oldValues?: Record<string, any>,
-  newValues?: Record<string, any>,
+  oldValues?: AuditEventFields,
+  newValues?: AuditEventFields,
   schoolId?: string
 ): Promise<void> => {
   await logAuditEvent({
@@ -213,7 +239,7 @@ export const logConfigEvent = async (
 /**
  * Get audit logs for a specific user/school (respects RLS)
  */
-export const getAuditLogs = async (options?: {
+export interface AuditLogQuery {
   userId?: string
   schoolId?: string
   action?: AuditAction
@@ -221,40 +247,62 @@ export const getAuditLogs = async (options?: {
   startDate?: string
   endDate?: string
   limit?: number
-}): Promise<AuditLog[]> => {
+}
+
+function createAuditLogQuery() {
+  return supabase
+    .from('audit_logs')
+    .select('*')
+    .order('timestamp', { ascending: false })
+}
+
+type AuditLogBuilder = ReturnType<typeof createAuditLogQuery>
+
+function applyAuditIdentityFilters(
+  query: AuditLogBuilder,
+  filters: AuditLogQuery,
+): AuditLogBuilder {
+  let filteredQuery = query
+  if (filters.userId) filteredQuery = filteredQuery.eq('user_id', filters.userId)
+  if (filters.schoolId) filteredQuery = filteredQuery.eq('escola_id', filters.schoolId)
+  if (filters.action) filteredQuery = filteredQuery.eq('action', filters.action)
+  if (filters.tableName) filteredQuery = filteredQuery.eq('table_name', filters.tableName)
+  return filteredQuery
+}
+
+function applyAuditWindow(
+  query: AuditLogBuilder,
+  filters: AuditLogQuery,
+): AuditLogBuilder {
+  let filteredQuery = query
+  if (filters.startDate) filteredQuery = filteredQuery.gte('timestamp', filters.startDate)
+  if (filters.endDate) filteredQuery = filteredQuery.lte('timestamp', filters.endDate)
+  if (filters.limit) filteredQuery = filteredQuery.limit(filters.limit)
+  return filteredQuery
+}
+
+function toAuditLog(row: AuditLogRow): AuditLog {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    action: row.action,
+    table_name: row.table_name,
+    record_id: row.record_id,
+    old_values: row.old_values ?? undefined,
+    new_values: row.new_values ?? undefined,
+    timestamp: row.timestamp ?? undefined,
+    ip_address: row.ip_address ?? undefined,
+    user_agent: row.user_agent ?? undefined,
+    escola_id: row.escola_id ?? undefined,
+    details: row.details ?? undefined,
+  }
+}
+
+export const getAuditLogs = async (options?: AuditLogQuery): Promise<AuditLog[]> => {
   try {
-    let query = supabase
-      .from('audit_logs')
-      .select('*')
-      .order('timestamp', { ascending: false })
-
-    if (options?.userId) {
-      query = query.eq('user_id', options.userId)
-    }
-
-    if (options?.schoolId) {
-      query = query.eq('escola_id', options.schoolId)
-    }
-
-    if (options?.action) {
-      query = query.eq('action', options.action)
-    }
-
-    if (options?.tableName) {
-      query = query.eq('table_name', options.tableName)
-    }
-
-    if (options?.startDate) {
-      query = query.gte('timestamp', options.startDate)
-    }
-
-    if (options?.endDate) {
-      query = query.lte('timestamp', options.endDate)
-    }
-
-    if (options?.limit) {
-      query = query.limit(options.limit)
-    }
+    const filters = options ?? {}
+    const identityQuery = applyAuditIdentityFilters(createAuditLogQuery(), filters)
+    const query = applyAuditWindow(identityQuery, filters)
 
     const { data, error } = await query
 
@@ -262,23 +310,8 @@ export const getAuditLogs = async (options?: {
       return []
     }
 
-    // Cast database rows to AuditLog interface
-    // Note: action in database is string, we cast to AuditAction for type safety
-    return (data || []).map(row => ({
-      id: row.id,
-      user_id: row.user_id,
-      action: row.action as AuditAction,
-      table_name: row.table_name,
-      record_id: row.record_id,
-      old_values: row.old_values as Record<string, unknown> | undefined,
-      new_values: row.new_values as Record<string, unknown> | undefined,
-      timestamp: row.timestamp,
-      ip_address: row.ip_address ?? undefined,
-      user_agent: row.user_agent ?? undefined,
-      escola_id: row.escola_id ?? undefined,
-      details: row.details as Record<string, unknown> | undefined
-    }))
-  } catch (error) {
+    return (data ?? []).map(toAuditLog)
+  } catch {
     return []
   }
 }
@@ -306,12 +339,14 @@ export const generateAuditReport = async (
     limit: 1000
   })
 
+  const userActions: Record<string, number> = {}
+  for (const log of logs) {
+    userActions[log.action] = (userActions[log.action] || 0) + 1
+  }
+
   const summary = {
     total_events: logs.length,
-    user_actions: logs.reduce((acc, log) => {
-      acc[log.action] = (acc[log.action] || 0) + 1
-      return acc
-    }, {} as Record<string, number>),
+    user_actions: userActions,
     critical_events: logs.filter(log =>
       ['attendance_marked', 'class_opened', 'grade_entered'].includes(log.action)
     ).length,

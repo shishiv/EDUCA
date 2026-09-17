@@ -21,6 +21,7 @@ import { ArrowLeft, Save, UserCheck, Search, Users, GraduationCap, Loader2 } fro
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { createGovernedEnrollment } from '@/lib/api/governed-management'
 import { logger } from '@/lib/logger'
 import { getAuthorizedStudentProfiles } from '@/lib/sensitive-family-access'
 
@@ -44,6 +45,40 @@ interface Turma {
   turno: string
 }
 
+interface EnrollmentFormData {
+  aluno_id: string
+  turma_id: string
+  ano_letivo: number
+  data_matricula: string
+  observacoes: string
+}
+
+function EnrollmentSubmitButton({ loading, selectedAluno, classId }: {
+  loading: boolean
+  selectedAluno: Aluno | null
+  classId: string
+}) {
+  const t = useTranslations('registry')
+  return (
+              <Button
+                type="submit"
+                disabled={loading || !selectedAluno || !classId}
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {t('ui.realizar-matricula')}
+                  </>
+                )}
+              </Button>
+  )
+}
+
 export default function NovaMatriculaPage() {
   const t = useTranslations('registry')
   const router = useRouter()
@@ -53,7 +88,7 @@ export default function NovaMatriculaPage() {
   const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [turmas, setTurmas] = useState<Turma[]>([])
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EnrollmentFormData>({
     aluno_id: '',
     turma_id: '',
     ano_letivo: new Date().getFullYear(),
@@ -100,8 +135,8 @@ export default function NovaMatriculaPage() {
           id: t.id,
           nome: t.nome,
           serie: t.serie,
-          escola: (t.escola as { nome: string } | null)?.nome || 'Nao informada',
-          professor: (t.professor as { nome: string } | null)?.nome || 'Nao informado',
+          escola: t.escola?.nome || 'Nao informada',
+          professor: t.professor?.nome || 'Nao informado',
           capacidade: t.capacidade || 30,
           matriculados: matriculasCount?.filter(m => m.turma_id === t.id).length || 0,
           turno: t.turno || 'matutino'
@@ -113,6 +148,7 @@ export default function NovaMatriculaPage() {
           nome_completo: a.nome_completo,
           data_nascimento: a.data_nascimento,
           cpf: a.cpf || undefined,
+          // SAFETY: `alunos.sexo` is restricted to the two values accepted by this list model.
           sexo: a.sexo as 'M' | 'F',
           responsavel: a.nome_mae || 'Nao informado'
         }))
@@ -120,7 +156,7 @@ export default function NovaMatriculaPage() {
         setAlunos(alunosFormatted)
         setTurmas(turmasWithCount)
       } catch (error) {
-        logger.error('Error loading data', error as Error, {
+        logger.error('Error loading data', error instanceof Error ? error : String(error), {
           feature: 'matriculas',
           action: 'load_matricula_data'
         })
@@ -138,23 +174,18 @@ export default function NovaMatriculaPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('matriculas')
-        .insert({
-          aluno_id: formData.aluno_id,
-          turma_id: formData.turma_id,
-          ano_letivo: formData.ano_letivo,
-          data_matricula: formData.data_matricula,
-          situacao: 'ativa',
-          observacoes: formData.observacoes || null
-        })
-
-      if (error) throw error
+      await createGovernedEnrollment(supabase, {
+        alunoId: formData.aluno_id,
+        turmaId: formData.turma_id,
+        anoLetivo: formData.ano_letivo,
+        dataMatricula: formData.data_matricula,
+        observacoes: formData.observacoes || null,
+      })
 
       toast.success(t('ui.matricula-realizada-com-sucesso'))
       router.push('/dashboard/matriculas')
     } catch (error) {
-      logger.error('Error creating matricula', error as Error, {
+      logger.error('Error creating matricula', error instanceof Error ? error : String(error), {
         feature: 'matriculas',
         action: 'create_matricula',
         metadata: { alunoId: formData.aluno_id, turmaId: formData.turma_id }
@@ -165,7 +196,7 @@ export default function NovaMatriculaPage() {
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <Field extends keyof EnrollmentFormData>(field: Field, value: EnrollmentFormData[Field]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -429,22 +460,7 @@ export default function NovaMatriculaPage() {
                   {t('labels.cancelar')}
                 </Link>
               </Button>
-              <Button
-                type="submit"
-                disabled={loading || !selectedAluno || !formData.turma_id}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {t('ui.realizar-matricula')}
-                  </>
-                )}
-              </Button>
+              <EnrollmentSubmitButton loading={loading} selectedAluno={selectedAluno} classId={formData.turma_id} />
             </div>
           </form>
         </div>

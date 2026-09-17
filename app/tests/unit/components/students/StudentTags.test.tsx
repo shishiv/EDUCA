@@ -39,14 +39,14 @@ describe('StudentTags', () => {
     })
 
     it('should apply success variant for active status', () => {
-      const { container } = renderWithIntl(<StudentTags ativo={true} />)
+      renderWithIntl(<StudentTags ativo={true} />)
 
       const badge = screen.getByText('Ativo')
       expect(badge).toBeInTheDocument()
     })
 
     it('should apply secondary variant for inactive status', () => {
-      const { container } = renderWithIntl(<StudentTags ativo={false} />)
+      renderWithIntl(<StudentTags ativo={false} />)
 
       const badge = screen.getByText('Inativo')
       expect(badge).toBeInTheDocument()
@@ -83,7 +83,7 @@ describe('StudentTags', () => {
     })
 
     it('should apply info variant for turma', () => {
-      const { container } = renderWithIntl(<StudentTags turma="5º Ano A" />)
+      renderWithIntl(<StudentTags turma="5º Ano A" />)
 
       const badge = screen.getByText('5º Ano A')
       expect(badge).toBeInTheDocument()
@@ -134,7 +134,7 @@ describe('StudentTags', () => {
     })
 
     it('should apply secondary variant for turno', () => {
-      const { container } = renderWithIntl(<StudentTags turno="matutino" />)
+      renderWithIntl(<StudentTags turno="matutino" />)
 
       const badge = screen.getByText('Matutino')
       expect(badge).toBeInTheDocument()
@@ -174,7 +174,7 @@ describe('StudentTags', () => {
     })
 
     it('should apply warning variant for Bolsa Família', () => {
-      const { container } = renderWithIntl(
+      renderWithIntl(
         <StudentTags bolsaFamilia={true} showBolsaFamilia={true} />
       )
 
@@ -217,7 +217,7 @@ describe('StudentTags', () => {
     })
 
     it('should handle empty props', () => {
-      const { container } = renderWithIntl(<StudentTags />)
+      renderWithIntl(<StudentTags />)
 
       // Should show default Ativo badge
       expect(screen.getByText('Ativo')).toBeInTheDocument()

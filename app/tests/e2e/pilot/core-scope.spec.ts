@@ -3,7 +3,103 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const password = 'Synthetic-Only-2026!'
+const schoolA = '10000000-0000-0000-0000-000000000001'
+const seededTeacher = {
+  email: 'professora.a@synthetic.invalid',
+  name: 'Professora Sintetica A',
+  role: 'professor',
+  schoolId: schoolA,
+} as const
+const journeyTeacher = {
+  email: 'professora.jornada@synthetic.invalid',
+  name: 'Professora Jornada Sintetica',
+} as const
+
+function serviceClient() {
+  if (!serviceRoleKey) throw new Error('PILOT_CORE_SCOPE_SERVICE_ROLE_KEY_REQUIRED')
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+async function restoreSeededTeacher(page: import('@playwright/test').Page, teacherId: string) {
+  const response = await page.request.patch(`/api/users/${teacherId}`, {
+    data: {
+      nome: seededTeacher.name,
+      email: seededTeacher.email,
+      tipo_usuario: seededTeacher.role,
+      escola_id: seededTeacher.schoolId,
+    },
+  })
+  expect(response.status(), 'seeded teacher cleanup must succeed').toBe(200)
+  await expect(response.json()).resolves.toEqual(expect.objectContaining({
+    user: expect.objectContaining({
+      id: teacherId,
+      nome: seededTeacher.name,
+      email: seededTeacher.email,
+      tipo_usuario: seededTeacher.role,
+      escola_id: seededTeacher.schoolId,
+    }),
+  }))
+
+  const restoredClient = await signedInClient(seededTeacher.email)
+  const { data, error } = await restoredClient
+    .from('users')
+    .select('id,nome,email,tipo_usuario,escola_id')
+    .eq('id', teacherId)
+    .single()
+  expect(error, 'seeded teacher profile cleanup must be readable').toBeNull()
+  expect(data).toMatchObject({
+    id: teacherId,
+    nome: seededTeacher.name,
+    email: seededTeacher.email,
+    tipo_usuario: seededTeacher.role,
+    escola_id: seededTeacher.schoolId,
+  })
+}
+
+async function removeJourneyTeacherFixture() {
+  const service = serviceClient()
+  const { data: authData, error: authError } = await service.auth.admin.listUsers()
+  if (authError) throw authError
+  const journeyUserIds = authData.users
+    .filter(user => user.email === journeyTeacher.email)
+    .map(user => user.id)
+
+  const { error: invitationError } = await service
+    .from('pilot_user_invitations')
+    .delete()
+    .eq('email', journeyTeacher.email)
+  if (invitationError) throw invitationError
+
+  const { error: profileError } = await service
+    .from('users')
+    .delete()
+    .eq('email', journeyTeacher.email)
+  if (profileError) throw profileError
+
+  for (const userId of journeyUserIds) {
+    const { error } = await service.auth.admin.deleteUser(userId)
+    if (error) throw error
+  }
+
+  const { data: remainingProfile, error: remainingProfileError } = await service
+    .from('users')
+    .select('id')
+    .eq('email', journeyTeacher.email)
+    .maybeSingle()
+  if (remainingProfileError) throw remainingProfileError
+  expect(remainingProfile, 'journey teacher profile cleanup must be exact').toBeNull()
+
+  const { data: remainingAuthData, error: remainingAuthError } = await service.auth.admin.listUsers()
+  if (remainingAuthError) throw remainingAuthError
+  expect(
+    remainingAuthData.users.find(user => user.email === journeyTeacher.email),
+    'journey teacher Auth cleanup must be exact',
+  ).toBeUndefined()
+}
 
 async function login(page: import('@playwright/test').Page, email: string) {
   await page.context().clearCookies()
@@ -27,8 +123,8 @@ test.describe('synthetic municipal pilot core scope', () => {
   test('shows only confirmed pilot modules plus the class diary', async ({ page }) => {
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/\/dashboard/)
-    await expect(page.getByText('Escolas', { exact: true }).first()).toBeVisible()
-    await expect(page.getByText('Usuários', { exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Escolas', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Usuários', exact: true })).toHaveCount(0)
     await expect(page.getByText('Alunos', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Turmas', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Matrículas', { exact: true }).first()).toBeVisible()
@@ -42,6 +138,8 @@ test.describe('synthetic municipal pilot core scope', () => {
 
   test('loads core school and attendance flows', async ({ page }) => {
     await page.goto('/dashboard/escolas')
+    await expect(page).toHaveURL(/\/unauthorized$/)
+    await page.goto('/dashboard/usuarios')
     await expect(page).toHaveURL(/\/unauthorized$/)
     await page.goto('/dashboard/alunos')
     await expect(page.getByRole('heading', { name: /alunos/i }).first()).toBeVisible()
@@ -79,8 +177,6 @@ test.describe('synthetic municipal pilot core scope', () => {
 
   test('covers the synthetic school-management journey', async ({ page }) => {
     test.setTimeout(60_000)
-    const schoolA = '10000000-0000-0000-0000-000000000001'
-
     await page.goto('/dashboard/escolas')
     await expect(page).toHaveURL(/\/unauthorized$/)
 
@@ -103,7 +199,7 @@ test.describe('synthetic municipal pilot core scope', () => {
 
     await page.locator(`a[href="/dashboard/escolas/${schoolA}"]`).click()
     await expect(page.getByRole('heading', { name: 'Escola Sintetica A', exact: true })).toBeVisible()
-    await expect(page.getByText('SYN-A', { exact: true })).toBeVisible()
+    await expect(page.getByText('00000001', { exact: true })).toBeVisible()
     await page.reload()
     await expect(page.getByRole('heading', { name: 'Escola Sintetica A', exact: true })).toBeVisible()
 
@@ -114,7 +210,8 @@ test.describe('synthetic municipal pilot core scope', () => {
 
     await page.goto(`/dashboard/escolas/${schoolA}/editar`)
     await expect(page.getByLabel(/nome da escola/i)).toHaveValue('Escola Sintetica A')
-    await expect(page.getByLabel(/código inep/i)).toHaveValue('SYN-A')
+    await expect(page.getByLabel(/código inep/i)).toHaveValue('00000001')
+    await page.getByLabel(/código inep/i).fill('123')
     await page.getByRole('button', { name: /salvar alterações/i }).click()
     await expect(page.getByText(/código inep deve ter exatamente 8 dígitos/i)).toBeVisible()
 
@@ -368,9 +465,6 @@ test.describe('synthetic municipal pilot core scope', () => {
 
   test('covers the synthetic teacher-management journey', async ({ page }) => {
     test.setTimeout(90_000)
-    const teacherName = 'Professora Jornada Sintetica'
-    const teacherEmail = 'professora.jornada@synthetic.invalid'
-
     await page.context().clearCookies()
     await page.goto('/login')
     await page.getByLabel('E-mail', { exact: true }).fill('diretora.a@synthetic.invalid')
@@ -382,15 +476,15 @@ test.describe('synthetic municipal pilot core scope', () => {
     const { data: teacher } = await directorClient
       .from('users')
       .select('id,nome')
-      .eq('email', 'professora.a@synthetic.invalid')
+      .eq('email', seededTeacher.email)
       .single()
     expect(teacher).toBeTruthy()
     const deniedResponse = await page.request.patch(`/api/users/${teacher!.id}`, {
       data: {
         nome: 'Tentativa sem autorização',
-        email: 'professora.a@synthetic.invalid',
-        tipo_usuario: 'professor',
-        escola_id: '10000000-0000-0000-0000-000000000001',
+        email: seededTeacher.email,
+        tipo_usuario: seededTeacher.role,
+        escola_id: seededTeacher.schoolId,
       },
     })
     expect(deniedResponse.status()).toBe(403)
@@ -403,7 +497,7 @@ test.describe('synthetic municipal pilot core scope', () => {
       .eq('id', teacher!.id)
     expect(directUpdateError).toBeTruthy()
     const { data: unchangedTeacher } = await directorClient.from('users').select('nome').eq('id', teacher!.id).single()
-    expect(unchangedTeacher?.nome).toBe('Professora Sintetica A')
+    expect(unchangedTeacher?.nome).toBe(seededTeacher.name)
 
     await page.context().clearCookies()
     await page.goto('/login')
@@ -414,7 +508,7 @@ test.describe('synthetic municipal pilot core scope', () => {
 
     await page.getByRole('link', { name: 'Usuários', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
-    await expect(page.getByText('Professora Sintetica A', { exact: true })).toBeVisible()
+    await expect(page.getByText(seededTeacher.name, { exact: true })).toBeVisible()
 
     const adminRow = page.getByRole('row').filter({ hasText: 'admin@synthetic.invalid' })
     await expect(adminRow).toContainText('Todas as escolas')
@@ -424,61 +518,70 @@ test.describe('synthetic municipal pilot core scope', () => {
     await expect(page.getByText(/nenhum usuário encontrado/i)).toBeVisible()
     await page.getByRole('button', { name: /limpar filtros/i }).click()
 
-    const teacherRow = page.getByRole('row').filter({ hasText: 'Professora Sintetica A' })
-    await expect(teacherRow).toContainText('Escola Sintetica A')
-    await teacherRow.locator('a[href*="/dashboard/usuarios/"]').click()
-    await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
-    await expect(page.getByText('professora.a@synthetic.invalid', { exact: true })).toBeVisible()
-    await expect(page.getByText('Escola Sintetica A', { exact: true })).toBeVisible()
-    await expect(page.getByText('Ativo', { exact: true })).toBeVisible()
-    await page.reload()
-    await expect(page.getByRole('heading', { name: 'Professora Sintetica A', exact: true })).toBeVisible()
+    await removeJourneyTeacherFixture()
+    try {
+      const teacherRow = page.getByRole('row').filter({ hasText: seededTeacher.name })
+      await expect(teacherRow).toContainText('Escola Sintetica A')
+      await teacherRow.locator('a[href*="/dashboard/usuarios/"]').click()
+      await expect(page.getByRole('heading', { name: seededTeacher.name, exact: true })).toBeVisible()
+      await expect(page.getByText(seededTeacher.email, { exact: true })).toBeVisible()
+      await expect(page.getByText('Escola Sintetica A', { exact: true })).toBeVisible()
+      await expect(page.getByText('Ativo', { exact: true })).toBeVisible()
+      await page.reload()
+      await expect(page.getByRole('heading', { name: seededTeacher.name, exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Editar', exact: true }).click()
-    const editName = page.getByLabel('Nome completo', { exact: true })
-    const editEmail = page.getByLabel('E-mail', { exact: true })
-    await editName.fill('P')
-    await editEmail.fill('email-invalido')
-    await page.getByRole('button', { name: 'Salvar alterações' }).click()
-    expect(await editName.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true)
-    expect(await editEmail.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
-    await editName.fill('Professora Sintetica A Editada')
-    await editEmail.fill('professora.a.editada@synthetic.invalid')
-    await page.getByRole('button', { name: 'Salvar alterações' }).click()
-    await expect(page.getByText('Professor atualizado com sucesso')).toBeVisible()
-    await expect(page.getByText('professora.a.editada@synthetic.invalid', { exact: true })).toBeVisible()
-    await page.reload()
-    await expect(page.getByText('Professora Sintetica A Editada', { exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Editar', exact: true }).click()
-    await page.getByLabel('Nome completo', { exact: true }).fill('Professora Sintetica A')
-    await page.getByLabel('E-mail', { exact: true }).fill('professora.a@synthetic.invalid')
-    await page.getByRole('button', { name: 'Salvar alterações' }).click()
-    await expect(page.getByText('Professor atualizado com sucesso')).toBeVisible()
+      await page.getByRole('button', { name: 'Editar', exact: true }).click()
+      const editName = page.getByLabel('Nome completo', { exact: true })
+      const editEmail = page.getByLabel('E-mail', { exact: true })
+      await editName.fill('P')
+      await editEmail.fill('email-invalido')
+      await page.getByRole('button', { name: 'Salvar alterações' }).click()
+      expect(await editName.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true)
+      expect(await editEmail.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
+      await editName.fill('Professora Sintetica A Editada')
+      await editEmail.fill('professora.a.editada@synthetic.invalid')
+      await page.getByRole('button', { name: 'Salvar alterações' }).click()
+      await expect(page.getByText('Professor atualizado com sucesso')).toBeVisible()
+      await expect(page.getByRole('tabpanel').getByText('professora.a.editada@synthetic.invalid', { exact: true })).toBeVisible()
+      await page.reload()
+      await expect(page.getByText('Professora Sintetica A Editada', { exact: true })).toBeVisible()
+      await page.getByRole('button', { name: 'Editar', exact: true }).click()
+      await page.getByLabel('Nome completo', { exact: true }).fill(seededTeacher.name)
+      await page.getByLabel('E-mail', { exact: true }).fill(seededTeacher.email)
+      await page.getByRole('button', { name: 'Salvar alterações' }).click()
+      await expect(page.getByText('Professor atualizado com sucesso')).toBeVisible()
 
-    await page.goto('/dashboard/usuarios/novo')
-    const name = page.getByLabel(/nome completo/i)
-    const email = page.getByLabel(/^email/i)
-    await page.getByRole('button', { name: /criar usuário/i }).click()
-    expect(await name.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
-    await name.fill(teacherName)
-    await email.fill('email-invalido')
-    await page.getByRole('button', { name: /criar usuário/i }).click()
-    expect(await email.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
-    await email.fill(teacherEmail)
-    await page.locator('#tipo_usuario').click()
-    await page.getByRole('option', { name: 'Professor', exact: true }).click()
-    await page.locator('#escola').click()
-    await page.getByRole('option', { name: 'Escola Sintetica A', exact: true }).click()
-    await page.getByRole('button', { name: /criar usuário/i }).click()
-    await expect(page).toHaveURL(/\/dashboard\/usuarios$/)
-    await expect(page.getByText(/convite enviado com sucesso/i)).toBeVisible()
-    await search.fill(teacherEmail)
-    const createdTeacherRow = page.getByRole('row').filter({ hasText: teacherEmail })
-    await expect(createdTeacherRow).toContainText(teacherName)
-    await expect(createdTeacherRow).toContainText('Professor(a)')
-    await expect(createdTeacherRow).toContainText('Ativo')
-    await page.reload()
-    await expect(page.getByRole('row').filter({ hasText: teacherEmail })).toBeVisible()
+      await page.goto('/dashboard/usuarios/novo')
+      const name = page.getByLabel(/nome completo/i)
+      const email = page.getByLabel(/^email/i)
+      await page.getByRole('button', { name: /criar usuário/i }).click()
+      expect(await name.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true)
+      await name.fill(journeyTeacher.name)
+      await email.fill('email-invalido')
+      await page.getByRole('button', { name: /criar usuário/i }).click()
+      expect(await email.evaluate((input: HTMLInputElement) => input.validity.typeMismatch)).toBe(true)
+      await email.fill(journeyTeacher.email)
+      await page.locator('#tipo_usuario').click()
+      await page.getByRole('option', { name: 'Professor', exact: true }).click()
+      await page.locator('#escola').click()
+      await page.getByRole('option', { name: 'Escola Sintetica A', exact: true }).click()
+      await page.getByRole('button', { name: /criar usuário/i }).click()
+      await expect(page).toHaveURL(/\/dashboard\/usuarios$/)
+      await expect(page.getByText(/convite enviado com sucesso/i)).toBeVisible()
+      await search.fill(journeyTeacher.email)
+      const createdTeacherRow = page.getByRole('row').filter({ hasText: journeyTeacher.email })
+      await expect(createdTeacherRow).toContainText(journeyTeacher.name)
+      await expect(createdTeacherRow).toContainText('Professor(a)')
+      await expect(createdTeacherRow).toContainText('Ativo')
+      await page.reload()
+      await expect(page.getByRole('row').filter({ hasText: journeyTeacher.email })).toBeVisible()
+    } finally {
+      try {
+        await restoreSeededTeacher(page, teacher!.id)
+      } finally {
+        await removeJourneyTeacherFixture()
+      }
+    }
 
     await page.getByRole('button', { name: 'Abrir menu do usuário' }).click()
     await page.getByRole('menuitem', { name: /sair do sistema/i }).click()

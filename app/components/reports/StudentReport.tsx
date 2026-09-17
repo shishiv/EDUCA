@@ -21,7 +21,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import React, { useMemo, useRef } from 'react'
+import React, { useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -48,10 +48,8 @@ import {
   User,
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
-import { municipalConfig } from "@/lib/config"
 import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
-  type Bimester,
   formatGrade,
   getGradeColor,
   roundGrade,
@@ -125,6 +123,7 @@ export interface StudentReportProps {
   className?: string
   /** Whether to show in print-optimized mode */
   printMode?: boolean
+  municipalityName: string
 }
 
 // ============================================================================
@@ -224,7 +223,7 @@ function getStatusConfig(status: 'aprovado' | 'reprovado' | 'em_curso') {
  * Format date for display
  */
 function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = date instanceof Date ? date : new Date(date)
   return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -328,13 +327,7 @@ function ReportHeader({
 /**
  * Grades table component
  */
-function GradesTable({
-  grades,
-  printMode,
-}: {
-  grades: DisciplineGrade[]
-  printMode?: boolean
-}) {
+function GradesTable({ grades }: { grades: DisciplineGrade[] }) {
   const t = useTranslations('platform')
   return (
     <div className="overflow-x-auto">
@@ -474,7 +467,7 @@ function AttendanceSummaryCard({
         {!isAttendanceOk && (
           <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-sm text-red-700">
             <AlertTriangle className="h-4 w-4" />
-            {t('components.studentReport.bolsaWarning', { threshold: CONFORMIDADE })}
+            {t('components.studentReport.municipalWarning', { threshold: CONFORMIDADE })}
           </div>
         )}
       </CardContent>
@@ -595,13 +588,10 @@ export function StudentReport({
   onExportPDF,
   className,
   printMode = false,
+  municipalityName,
 }: StudentReportProps) {
   const t = useTranslations('platform')
   const reportRef = useRef<HTMLDivElement>(null)
-
-  // Calculate status
-  const status = useMemo(() => calculateStatus(grades, attendance), [grades, attendance])
-  const statusConfig = getStatusConfig(status)
 
   // Handle print
   const handlePrint = () => {
@@ -659,7 +649,7 @@ export function StudentReport({
             <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
               Desempenho Academico
             </h3>
-            <GradesTable grades={grades} printMode={printMode} />
+            <GradesTable grades={grades} />
           </div>
 
           {/* Legend */}
@@ -696,7 +686,7 @@ export function StudentReport({
       {printMode && (
         <div className="text-center text-xs text-gray-500 border-t pt-4">
           <p>{t('components.studentReport.generated', { date: formatDate(reportDate) })}</p>
-          <p>{municipalConfig.nome}</p>
+          <p>{municipalityName}</p>
         </div>
       )}
     </div>

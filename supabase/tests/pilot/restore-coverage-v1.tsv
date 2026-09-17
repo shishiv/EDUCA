@@ -1,0 +1,36 @@
+status	object	reason
+included	pilot_municipality_config	Synthetic governance and RPO/RTO data
+included	attendance_municipal_thresholds	Municipal attendance thresholds
+included	escolas	School rows
+included	users	Application profiles, not Auth credentials
+included	turmas	Class rows
+included	responsaveis	Guardian rows
+included	alunos	Synthetic student rows only
+included	aluno_responsaveis	Student guardian links
+included	matriculas	Enrolments
+included	aulas_abertas	Legacy lesson rows
+included	sessoes_aula	Canonical attendance sessions
+included	frequencia	Canonical attendance facts
+included	pilot_import_batches	Import batch metadata only
+included	pilot_import_approvals	Import approvals
+included	pilot_user_invitations	Invitation metadata, not Auth recovery
+included	pilot_metric_events	Pilot metric data
+included	pilot_data_tombstones	Deletion tombstones
+included	pilot_audit_log	Pilot audit rows
+partial	auth.users	Only id/email/created_at referenced by profiles or invitations; no passwords, sessions, refresh tokens, identities, MFA or GoTrue login
+partial	storage.buckets	Only student-photos id/name/public/file_size_limit/allowed_mime_types
+partial	storage.objects	Only student-photos id/bucket_id/name/metadata/created_at
+partial	storage.bytes	Download and decrypted file checksums only; no upload to a restored Storage service
+excluded	public.configs	Defaults may be recreated by migrations; school overrides are not recovered (F07)
+excluded	public.anos_letivos	School years and configured periods are not recovered (F07)
+excluded	public.attendance_reopen_requests	Audited correction-window history is not recovered (F07)
+excluded	public.vivencias	Canonical narratives are not recovered (F07)
+excluded	public.vivencias_campos_experiencia	Narrative field links are not recovered (F07)
+excluded	public.relatorios_descritivos	Final reports and immutable source snapshots are not recovered (F07)
+excluded	public.relatorios_descritivos_vivencias	Report provenance links are not recovered (F07)
+excluded	public.notas	Grades remain blocked; data excluded
+excluded	public.*	Every other public table not explicitly included above; no implicit restore expansion
+excluded	auth.*	All provider Auth state except the bounded identity manifest
+excluded	storage.*	Other buckets, objects and provider state are not exported
+excluded	provider_metadata	Owners, ACLs, roles, extensions, managed session settings and PITR are not exported
+recreated	migration_catalog	Canonical migrations plus pilot provisioner recreate schema/RLS/qual/with_check/grants; catalog comparison is structural, not recovered data

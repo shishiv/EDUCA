@@ -8,7 +8,7 @@
  * Legal Context:
  * The Class Diary (Diário de Classe) is a legal document in Brazilian education that must:
  * - Record all classes taught with date and content
- * - Track attendance for Bolsa Família compliance at the canonical 80% threshold and expose the 85% preventive margin
+ * - Report canonical session attendance using the general municipal alert bands
  * - Be auditable and immutable after locking
  * - Support director/secretary review
  *
@@ -22,7 +22,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { logger } from '@/lib/logger'
-import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
+import {
+  loadCanonicalAttendanceFacts,
+  type CanonicalAttendanceFact,
+} from '@/lib/api/canonical-attendance-facts'
 import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 /**
@@ -98,6 +101,51 @@ export interface ClassDiaryFilters {
   offset?: number
 }
 
+interface DiarySessionSummarySource {
+  id: string
+  data_aula: string
+  turma_id: string
+  professor_id: string
+  status: string
+  observacoes: string | null
+  observacoes_fechamento: string | null
+  aberta_em: string | null
+  fechada_em: string | null
+  travada_em: string | null
+  created_at: string | null
+  turmas: {
+    nome: string
+    serie: string
+    ano_letivo: number
+    escolas: { id: string; nome: string } | null
+  } | null
+  professor: { nome: string } | null
+  disciplina: { nome: string } | null
+}
+
+interface AttendanceStats {
+  presentes: number
+  ausentes: number
+  total: number
+}
+
+interface AttendanceStudentSource {
+  matriculas: {
+    alunos: { id: string; nome_completo: string } | null
+  } | null
+}
+
+interface AttendanceHistorySource extends AttendanceStudentSource {
+  id: string
+  sessao_id: string | null
+  data_aula: string
+  presente: boolean | null
+  observacoes: string | null
+  sessoes_aula: {
+    turmas: { nome: string } | null
+  } | null
+}
+
 /** Maps the canonical session lifecycle into the diary's display phases. */
 function getDiaryPhase(
   status: string,
@@ -125,6 +173,155 @@ function isDiarySessionLocked(status: string, travadaEm: string | null): boolean
   return Boolean(travadaEm) || status === 'FECHADA' || status === 'CANCELADA'
 }
 
+function buildDiaryClassInfo(session: DiarySessionSummarySource) {
+  const turma = session.turmas
+  return {
+    turma_nome: turma?.nome || 'N/A',
+    turma_ano: turma?.ano_letivo || new Date().getFullYear(),
+    turma_serie: turma?.serie || 'N/A',
+  }
+}
+
+function buildDiarySchoolInfo(session: DiarySessionSummarySource) {
+  const escola = session.turmas?.escolas
+  return {
+    escola_id: escola?.id || '',
+    escola_nome: escola?.nome || 'N/A',
+  }
+}
+
+function buildDiaryTeachingInfo(session: DiarySessionSummarySource) {
+  return {
+    professor_nome: session.professor?.nome || 'N/A',
+    disciplina: session.disciplina?.nome || null,
+  }
+}
+
+function buildDiaryEntryState(
+  session: DiarySessionSummarySource,
+  stats: AttendanceStats,
+) {
+  return {
+    status: session.status,
+    fase: getDiaryPhase(session.status, session.travada_em),
+    observacoes_abertura: session.observacoes,
+    observacoes_fechamento: session.observacoes_fechamento,
+    total_alunos: stats.total,
+    total_presentes: stats.presentes,
+    total_ausentes: stats.ausentes,
+    aberta_em: session.aberta_em || session.created_at || '',
+    fechada_em: session.fechada_em,
+    travada_em: session.travada_em,
+    bloqueado: isDiarySessionLocked(session.status, session.travada_em),
+  }
+}
+
+function buildDiaryEntry(
+  session: DiarySessionSummarySource,
+  stats: AttendanceStats,
+): ClassDiaryEntry {
+  return {
+    id: session.id,
+    data_aula: session.data_aula,
+    turma_id: session.turma_id,
+    professor_id: session.professor_id,
+    ...buildDiaryClassInfo(session),
+    ...buildDiarySchoolInfo(session),
+    ...buildDiaryTeachingInfo(session),
+    ...buildDiaryEntryState(session, stats),
+  }
+}
+
+function buildAttendanceStats(
+  attendanceFacts: CanonicalAttendanceFact[],
+): Map<string, AttendanceStats> {
+  const statsBySession = new Map<string, AttendanceStats>()
+
+  for (const fact of attendanceFacts) {
+    const stats = statsBySession.get(fact.sessaoId) ?? { presentes: 0, ausentes: 0, total: 0 }
+    const counts = countAttendanceRecords([{
+      presente: fact.presente,
+      status_presenca: fact.statusPresenca,
+    }])
+    statsBySession.set(fact.sessaoId, {
+      total: stats.total + counts.total,
+      presentes: stats.presentes + counts.presencas + counts.atestados,
+      ausentes: stats.ausentes + counts.faltas,
+    })
+  }
+
+  return statsBySession
+}
+
+function createClassDiaryQuery(supabase: SupabaseClient<Database>) {
+  return supabase
+    .from('sessoes_aula')
+    .select(`
+      id,
+      data_aula,
+      turma_id,
+      professor_id,
+      disciplina_id,
+      status,
+      observacoes,
+      observacoes_fechamento,
+      aberta_em,
+      fechada_em,
+      travada_em,
+      created_at,
+      turmas!inner(
+        id,
+        nome,
+        serie,
+        ano_letivo,
+        escola_id,
+        escolas!inner(
+          id,
+          nome
+        )
+      ),
+      professor:users(
+        id,
+        nome
+      ),
+      disciplina:disciplinas(
+        nome
+      )
+    `, { count: 'exact' })
+}
+
+type ClassDiaryQuery = ReturnType<typeof createClassDiaryQuery>
+
+function applyDiaryStatusFilter(
+  query: ClassDiaryQuery,
+  status: ClassDiaryFilters['status'],
+): ClassDiaryQuery {
+  if (!status) return query
+
+  const statusQuery = query.eq('status', getCanonicalStatusFilter(status))
+  if (status === 'travada') return statusQuery.not('travada_em', 'is', null)
+  return statusQuery
+}
+
+async function readClassDiaryPage(
+  supabase: SupabaseClient<Database>,
+  filters: ClassDiaryFilters,
+) {
+  let query = applyDiaryStatusFilter(createClassDiaryQuery(supabase), filters.status)
+
+  if (filters.turma_id) query = query.eq('turma_id', filters.turma_id)
+  if (filters.professor_id) query = query.eq('professor_id', filters.professor_id)
+  if (filters.disciplina) query = query.eq('disciplina_id', filters.disciplina)
+  if (filters.date_from) query = query.gte('data_aula', filters.date_from)
+  if (filters.date_to) query = query.lte('data_aula', filters.date_to)
+  if (filters.escola_id) query = query.eq('turmas.escola_id', filters.escola_id)
+
+  const { limit = 20, offset = 0 } = filters
+  return query
+    .order('data_aula', { ascending: false })
+    .range(offset, offset + limit - 1)
+}
+
 /**
  * Get Class Diary entries with optional filters
  *
@@ -141,94 +338,17 @@ function isDiarySessionLocked(status: string, travadaEm: string | null): boolean
 export async function getClassDiary(
   supabase: SupabaseClient<Database>,
   filters: ClassDiaryFilters = {}
-): Promise<{ data: ClassDiaryEntry[] | null; error: unknown }> {
+): Promise<{ data: ClassDiaryEntry[] | null; total: number; error: unknown }> {
   try {
-    // Sessions and session-scoped attendance are the canonical diary source.
-    let query = supabase
-      .from('sessoes_aula')
-      .select(`
-        id,
-        data_aula,
-        turma_id,
-        professor_id,
-        disciplina_id,
-        status,
-        observacoes,
-        observacoes_fechamento,
-        aberta_em,
-        fechada_em,
-        travada_em,
-        created_at,
-        turmas!inner(
-          id,
-          nome,
-          serie,
-          ano_letivo,
-          escola_id,
-          escolas!inner(
-            id,
-            nome
-          )
-        ),
-        professor:users(
-          id,
-          nome
-        ),
-        disciplina:disciplinas(
-          nome
-        )
-      `)
-
-    // Apply filters
-    if (filters.turma_id) {
-      query = query.eq('turma_id', filters.turma_id)
-    }
-
-    if (filters.professor_id) {
-      query = query.eq('professor_id', filters.professor_id)
-    }
-
-    if (filters.disciplina) {
-      query = query.eq('disciplina_id', filters.disciplina)
-    }
-
-    if (filters.status) {
-      query = query.eq('status', getCanonicalStatusFilter(filters.status))
-      if (filters.status === 'travada') {
-        query = query.not('travada_em', 'is', null)
-      }
-    }
-
-    if (filters.date_from) {
-      query = query.gte('data_aula', filters.date_from)
-    }
-
-    if (filters.date_to) {
-      query = query.lte('data_aula', filters.date_to)
-    }
-
-    // Apply escola_id filter through turmas relationship
-    if (filters.escola_id) {
-      query = query.eq('turmas.escola_id', filters.escola_id)
-    }
-
-    // Order by date descending (most recent first)
-    query = query.order('data_aula', { ascending: false })
-
-    // Apply pagination
-    const limit = filters.limit ?? 20
-    const offset = filters.offset ?? 0
-    query = query.range(offset, offset + limit - 1)
-
-    const { data: aulas, error } = await query
+    const { data: aulas, count, error } = await readClassDiaryPage(supabase, filters)
 
     if (error) {
-      logger.error('Error fetching class diary', error as Error, { feature: 'class-diary', action: 'fetch_diary' })
-      return { data: null, error }
+      logger.error('Error fetching class diary', error.message, { feature: 'class-diary', action: 'fetch_diary' })
+      return { data: null, total: 0, error }
     }
 
     if (!aulas || aulas.length === 0) {
-      return { data: [], error: null }
+      return { data: [], total: count ?? 0, error: null }
     }
 
     // Attendance belongs to the canonical session, never the legacy aula_id.
@@ -237,60 +357,38 @@ export async function getClassDiary(
       sessaoIds: sessionIds,
     })
 
-    // Build frequency facts by canonical session ID.
-    const frequenciaMap = new Map<string, { presentes: number; ausentes: number; total: number }>()
-    frequencias.forEach((freq) => {
-      if (!frequenciaMap.has(freq.sessaoId)) {
-        frequenciaMap.set(freq.sessaoId, { presentes: 0, ausentes: 0, total: 0 })
-      }
-      const stats = frequenciaMap.get(freq.sessaoId)!
-      const counts = countAttendanceRecords([{
-        presente: freq.presente,
-        status_presenca: freq.statusPresenca,
-      }])
-      stats.total += counts.total
-      stats.presentes += counts.presencas + counts.atestados
-      stats.ausentes += counts.faltas
-    })
+    const statsBySession = buildAttendanceStats(frequencias)
+    const transformedData = aulas.map((session) => buildDiaryEntry(
+      session,
+      statsBySession.get(session.id) ?? { presentes: 0, ausentes: 0, total: 0 },
+    ))
 
-    // Transform data to match ClassDiaryEntry interface
-    const transformedData: ClassDiaryEntry[] = aulas.map((session) => {
-      const stats = frequenciaMap.get(session.id) || { presentes: 0, ausentes: 0, total: 0 }
-      const turma = session.turmas
-      const escola = turma?.escolas
-      const professor = session.professor
-      const disciplina = session.disciplina
-
-      return {
-        id: session.id,
-        data_aula: session.data_aula,
-        turma_id: session.turma_id,
-        turma_nome: turma?.nome || 'N/A',
-        turma_ano: turma?.ano_letivo || new Date().getFullYear(),
-        turma_serie: turma?.serie || 'N/A',
-        escola_id: escola?.id || '',
-        escola_nome: escola?.nome || 'N/A',
-        professor_id: session.professor_id,
-        professor_nome: professor?.nome || 'N/A',
-        disciplina: disciplina?.nome || null,
-        status: session.status,
-        fase: getDiaryPhase(session.status, session.travada_em),
-        observacoes_abertura: session.observacoes,
-        observacoes_fechamento: session.observacoes_fechamento,
-        total_alunos: stats.total,
-        total_presentes: stats.presentes,
-        total_ausentes: stats.ausentes,
-        aberta_em: session.aberta_em || session.created_at || '',
-        fechada_em: session.fechada_em,
-        travada_em: session.travada_em,
-        bloqueado: isDiarySessionLocked(session.status, session.travada_em),
-      }
-    })
-
-    return { data: transformedData, error: null }
+    return { data: transformedData, total: count ?? 0, error: null }
   } catch (error) {
-    logger.error('Exception in getClassDiary', error as Error, { feature: 'class-diary', action: 'fetch_diary_exception' })
-    return { data: null, error }
+    logger.error('Exception in getClassDiary', error instanceof Error ? error : String(error), { feature: 'class-diary', action: 'fetch_diary_exception' })
+    return { data: null, total: 0, error }
+  }
+}
+
+function buildAttendanceStudentInfo(record: AttendanceStudentSource) {
+  return {
+    aluno_id: record.matriculas?.alunos?.id || '',
+    aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
+  }
+}
+
+function buildAttendanceHistoryRecord(
+  record: AttendanceHistorySource,
+): AttendanceHistoryRecord {
+  return {
+    id: record.id,
+    aula_id: record.sessao_id || '',
+    data: record.data_aula,
+    ...buildAttendanceStudentInfo(record),
+    presente: record.presente ?? false,
+    observacoes: record.observacoes,
+    turma_nome: record.sessoes_aula?.turmas?.nome || 'N/A',
+    is_locked: true,
   }
 }
 
@@ -361,28 +459,18 @@ export async function getAttendanceHistory(
     const { data, error } = await query
 
     if (error) {
-      logger.error('Error fetching attendance history', error as Error, { feature: 'class-diary', action: 'fetch_attendance_history' })
+      logger.error('Error fetching attendance history', error.message, { feature: 'class-diary', action: 'fetch_attendance_history' })
       return { data: null, error }
     }
 
     // Transform data
     const transformedData: AttendanceHistoryRecord[] = (data || [])
       .filter(record => record.status_presenca !== 'NAO_MARCADO')
-      .map((record) => ({
-        id: record.id,
-        aula_id: record.sessao_id || '',
-        data: record.data_aula,
-        aluno_id: record.matriculas?.alunos?.id || '',
-        aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
-        presente: record.presente,
-        observacoes: record.observacoes,
-        turma_nome: record.sessoes_aula?.turmas?.nome || 'N/A',
-        is_locked: true,
-      }))
+      .map(buildAttendanceHistoryRecord)
 
     return { data: transformedData, error: null }
   } catch (error) {
-    logger.error('Exception in getAttendanceHistory', error as Error, { feature: 'class-diary', action: 'fetch_attendance_history_exception' })
+    logger.error('Exception in getAttendanceHistory', error instanceof Error ? error : String(error), { feature: 'class-diary', action: 'fetch_attendance_history_exception' })
     return { data: null, error }
   }
 }
@@ -402,149 +490,175 @@ export async function getAttendanceHistory(
  * @example
  * const session = await getClassDetail(supabase, 'session-uuid')
  */
+async function readClassDetailSession(
+  supabase: SupabaseClient<Database>,
+  sessionId: string
+) {
+  return supabase
+    .from('sessoes_aula')
+    .select(`
+      id,
+      data_aula,
+      turma_id,
+      professor_id,
+      disciplina_id,
+      status,
+      observacoes,
+      observacoes_fechamento,
+      aberta_em,
+      fechada_em,
+      travada_em,
+      created_at,
+      hash_integridade,
+      conteudo_programatico,
+      turmas!inner(
+        id,
+        nome,
+        serie,
+        ano_letivo,
+        escola_id,
+        escolas!inner(
+          id,
+          nome
+        )
+      ),
+      professor:users(
+        id,
+        nome
+      ),
+      disciplina:disciplinas(
+        nome
+      )
+    `)
+    .eq('id', sessionId)
+    .single()
+}
+
+async function readClassDetailAttendance(
+  supabase: SupabaseClient<Database>,
+  sessionId: string
+) {
+  return supabase
+    .from('frequencia')
+    .select(`
+      id,
+      sessao_id,
+      data_aula,
+      status_presenca,
+      matricula_id,
+      presente,
+      observacoes,
+      matriculas!inner(
+        aluno_id,
+        alunos!inner(
+          id,
+          nome_completo
+        )
+      )
+    `)
+    .eq('sessao_id', sessionId)
+}
+
+type ClassDetailSession = NonNullable<Awaited<ReturnType<typeof readClassDetailSession>>['data']>
+type ClassDetailAttendance = NonNullable<Awaited<ReturnType<typeof readClassDetailAttendance>>['data']>[number]
+
+function buildClassDetailAttendance(
+  attendanceData: ClassDetailAttendance[],
+  session: ClassDetailSession,
+  sessionId: string
+): AttendanceHistoryRecord[] {
+  const turmaNome = session.turmas?.nome || 'N/A'
+  const isLocked = isDiarySessionLocked(session.status, session.travada_em)
+
+  return attendanceData
+    .filter((record) => record.status_presenca !== 'NAO_MARCADO')
+    .map((record) => ({
+      id: record.id,
+      aula_id: record.sessao_id || sessionId,
+      data: record.data_aula,
+      aluno_id: record.matriculas?.alunos?.id || '',
+      aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
+      presente: record.presente ?? false,
+      observacoes: record.observacoes,
+      turma_nome: turmaNome,
+      is_locked: isLocked,
+    }))
+}
+
+function buildClassDetailIdentity(session: ClassDetailSession) {
+  return {
+    id: session.id,
+    data_aula: session.data_aula,
+    turma_id: session.turma_id,
+    professor_id: session.professor_id,
+    ...buildDiaryClassInfo(session),
+    ...buildDiarySchoolInfo(session),
+    ...buildDiaryTeachingInfo(session),
+  }
+}
+
+function buildClassDetailState(
+  session: ClassDetailSession,
+  totalAlunos: number,
+  totalPresentes: number
+) {
+  return {
+    status: session.status,
+    fase: getDiaryPhase(session.status, session.travada_em),
+    observacoes_abertura: session.observacoes,
+    observacoes_fechamento: session.observacoes_fechamento,
+    observacoes: session.conteudo_programatico || session.observacoes || session.observacoes_fechamento || null,
+    total_alunos: totalAlunos,
+    total_presentes: totalPresentes,
+    total_ausentes: totalAlunos - totalPresentes,
+    aberta_em: session.aberta_em || session.created_at || '',
+    fechada_em: session.fechada_em,
+    travada_em: session.travada_em,
+    bloqueado: isDiarySessionLocked(session.status, session.travada_em),
+    bloqueado_em: session.travada_em || session.fechada_em,
+    hash_integridade: session.hash_integridade,
+  }
+}
+
+function buildClassDetail(
+  session: ClassDetailSession,
+  attendanceData: ClassDetailAttendance[],
+  sessionId: string
+): DetailedSession {
+  const attendanceRecords = buildClassDetailAttendance(attendanceData, session, sessionId)
+  const totalAlunos = attendanceRecords.length
+  const totalPresentes = attendanceRecords.filter((record) => record.presente).length
+
+  return {
+    ...buildClassDetailIdentity(session),
+    ...buildClassDetailState(session, totalAlunos, totalPresentes),
+    attendance_records: attendanceRecords,
+    attendance_percentage: totalAlunos > 0 ? Math.round((totalPresentes / totalAlunos) * 100) : 0,
+  }
+}
+
 export async function getClassDetail(
   supabase: SupabaseClient<Database>,
   sessionId: string
 ): Promise<{ data: DetailedSession | null; error: unknown }> {
   try {
-    const { data: sessionData, error: sessionError } = await supabase
-      .from('sessoes_aula')
-      .select(`
-        id,
-        data_aula,
-        turma_id,
-        professor_id,
-        disciplina_id,
-        status,
-        observacoes,
-        observacoes_fechamento,
-        aberta_em,
-        fechada_em,
-        travada_em,
-        created_at,
-        hash_integridade,
-        conteudo_programatico,
-        turmas!inner(
-          id,
-          nome,
-          serie,
-          ano_letivo,
-          escola_id,
-          escolas!inner(
-            id,
-            nome
-          )
-        ),
-        professor:users(
-          id,
-          nome
-        ),
-        disciplina:disciplinas(
-          nome
-        )
-      `)
-      .eq('id', sessionId)
-      .single()
+    const { data: sessionData, error: sessionError } = await readClassDetailSession(supabase, sessionId)
 
     if (sessionError || !sessionData) {
-      logger.error('Error fetching canonical session', sessionError as Error, { feature: 'class-diary', action: 'fetch_session_detail' })
+      logger.error('Error fetching canonical session', sessionError?.message || 'Canonical session not found', { feature: 'class-diary', action: 'fetch_session_detail' })
       return { data: null, error: sessionError }
     }
 
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('frequencia')
-      .select(`
-        id,
-        sessao_id,
-        data_aula,
-        status_presenca,
-        matricula_id,
-        presente,
-        observacoes,
-        matriculas!inner(
-          aluno_id,
-          alunos!inner(
-            id,
-            nome_completo
-          )
-        )
-      `)
-      .eq('sessao_id', sessionId)
+    const { data: attendanceData, error: attendanceError } = await readClassDetailAttendance(supabase, sessionId)
 
     if (attendanceError) {
-      logger.error('Error fetching attendance records', attendanceError as Error, { feature: 'class-diary', action: 'fetch_attendance_records' })
+      logger.error('Error fetching attendance records', attendanceError.message, { feature: 'class-diary', action: 'fetch_attendance_records' })
       return { data: null, error: attendanceError }
     }
 
-    // Calculate attendance statistics
-    const markedAttendanceData = (attendanceData || []).filter(
-      record => record.status_presenca !== 'NAO_MARCADO'
-    )
-    const totalAlunos = markedAttendanceData.length
-    const totalPresentes = markedAttendanceData.filter(record => record.presente).length
-    const totalAusentes = totalAlunos - totalPresentes
-
-    const session = sessionData
-    const turma = session.turmas
-    const escola = turma?.escolas
-    const professor = session.professor
-    const disciplina = session.disciplina
-
-    // Transform attendance records
-    const attendanceRecords: AttendanceHistoryRecord[] = markedAttendanceData.map(
-      (record) => ({
-        id: record.id,
-        aula_id: record.sessao_id || sessionId,
-        data: record.data_aula,
-        aluno_id: record.matriculas?.alunos?.id || '',
-        aluno_nome: record.matriculas?.alunos?.nome_completo || 'N/A',
-        presente: record.presente,
-        observacoes: record.observacoes,
-        turma_nome: turma?.nome || 'N/A',
-        is_locked: isDiarySessionLocked(session.status, session.travada_em),
-      })
-    )
-
-    // Calculate attendance percentage
-    const attendance_percentage =
-      totalAlunos > 0
-        ? Math.round((totalPresentes / totalAlunos) * 100)
-        : 0
-
-    // Build detailed session object
-    const detailedSession: DetailedSession = {
-      id: session.id,
-      data_aula: session.data_aula,
-      turma_id: session.turma_id,
-      turma_nome: turma?.nome || 'N/A',
-      turma_ano: turma?.ano_letivo || new Date().getFullYear(),
-      turma_serie: turma?.serie || 'N/A',
-      escola_id: escola?.id || '',
-      escola_nome: escola?.nome || 'N/A',
-      professor_id: session.professor_id,
-      professor_nome: professor?.nome || 'N/A',
-      disciplina: disciplina?.nome || null,
-      status: session.status,
-      fase: getDiaryPhase(session.status, session.travada_em),
-      observacoes_abertura: session.observacoes,
-      observacoes_fechamento: session.observacoes_fechamento,
-      observacoes: session.conteudo_programatico || session.observacoes || session.observacoes_fechamento || null,
-      total_alunos: totalAlunos,
-      total_presentes: totalPresentes,
-      total_ausentes: totalAusentes,
-      aberta_em: session.aberta_em || session.created_at || '',
-      fechada_em: session.fechada_em,
-      travada_em: session.travada_em,
-      bloqueado: isDiarySessionLocked(session.status, session.travada_em),
-      bloqueado_em: session.travada_em || session.fechada_em,
-      hash_integridade: session.hash_integridade,
-      attendance_records: attendanceRecords,
-      attendance_percentage,
-    }
-
-    return { data: detailedSession, error: null }
+    return { data: buildClassDetail(sessionData, attendanceData || [], sessionId), error: null }
   } catch (error) {
-    logger.error('Exception in getClassDetail', error as Error, { feature: 'class-diary', action: 'fetch_class_detail_exception' })
+    logger.error('Exception in getClassDetail', error instanceof Error ? error : String(error), { feature: 'class-diary', action: 'fetch_class_detail_exception' })
     return { data: null, error }
   }
 }
@@ -589,7 +703,7 @@ export async function getAvailableTurmas(
     const { data, error } = await query
 
     if (error) {
-      logger.error('Error fetching available turmas', error as Error, { feature: 'class-diary', action: 'fetch_available_turmas' })
+      logger.error('Error fetching available turmas', error.message, { feature: 'class-diary', action: 'fetch_available_turmas' })
       return { data: null, error }
     }
 
@@ -610,113 +724,7 @@ export async function getAvailableTurmas(
 
     return { data: uniqueTurmas, error: null }
   } catch (error) {
-    logger.error('Exception in getAvailableTurmas', error as Error, { feature: 'class-diary', action: 'fetch_available_turmas_exception' })
+    logger.error('Exception in getAvailableTurmas', error instanceof Error ? error : String(error), { feature: 'class-diary', action: 'fetch_available_turmas_exception' })
     return { data: null, error }
-  }
-}
-
-/**
- * Update a class session
- *
- * @param supabase - Supabase client instance
- * @param sessionId - Session UUID
- * @param updates - Fields to update
- * @returns Updated session or error
- */
-export interface UpdateSessionInput {
-  conteudo_programatico?: string
-  observacoes_fechamento?: string
-  status?: 'aberta' | 'fechada' | 'travada'
-}
-
-export async function updateSession(
-  supabase: SupabaseClient<Database>,
-  sessionId: string,
-  updates: UpdateSessionInput
-): Promise<{ data: { id: string } | null; error: unknown }> {
-  try {
-    const { data, error } = await supabase
-      .from('sessoes_aula')
-      .update(updates)
-      .eq('id', sessionId)
-      .select('id')
-      .single()
-
-    if (error) {
-      logger.error('Error updating session', error as Error, { feature: 'class-diary', action: 'update_session' })
-      return { data: null, error }
-    }
-
-    logger.info('Session updated successfully', {
-      feature: 'class-diary',
-      action: 'update_session',
-      metadata: { sessionId, updatedFields: Object.keys(updates) }
-    })
-
-    return { data, error: null }
-  } catch (error) {
-    logger.error('Exception in updateSession', error as Error, { feature: 'class-diary', action: 'update_session_exception' })
-    return { data: null, error }
-  }
-}
-
-/**
- * Minimal client shape for the optional conteudo_aula cleanup.
- *
- * The table is not part of the generated schema (it belongs to a future
- * migration), so the typed client cannot reach it. This narrow interface keeps
- * the delete scoped to exactly one table and one column instead of an any cast.
- */
-interface ConteudoAulaCleanupClient {
-  from(table: 'conteudo_aula'): {
-    delete(): {
-      eq(column: 'sessao_id', value: string): Promise<unknown>
-    }
-  }
-}
-
-/**
- * Delete a class session and associated data
- *
- * @param supabase - Supabase client instance
- * @param sessionId - Session UUID
- * @returns Success or error
- */
-export async function deleteSession(
-  supabase: SupabaseClient<Database>,
-  sessionId: string
-): Promise<{ success: boolean; error: unknown }> {
-  try {
-    // First try to delete associated conteudo_aula (if table exists)
-    try {
-      await (supabase as unknown as ConteudoAulaCleanupClient)
-        .from('conteudo_aula')
-        .delete()
-        .eq('sessao_id', sessionId)
-    } catch {
-      // Content table might not exist, continue
-    }
-
-    // Delete the session
-    const { error } = await supabase
-      .from('sessoes_aula')
-      .delete()
-      .eq('id', sessionId)
-
-    if (error) {
-      logger.error('Error deleting session', error as Error, { feature: 'class-diary', action: 'delete_session' })
-      return { success: false, error }
-    }
-
-    logger.info('Session deleted successfully', {
-      feature: 'class-diary',
-      action: 'delete_session',
-      metadata: { sessionId }
-    })
-
-    return { success: true, error: null }
-  } catch (error) {
-    logger.error('Exception in deleteSession', error as Error, { feature: 'class-diary', action: 'delete_session_exception' })
-    return { success: false, error }
   }
 }

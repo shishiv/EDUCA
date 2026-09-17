@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import { prepareGuardianRegistration, type GuardianRegistrationForm } from '@/lib/services/guardian-registration'
 import { studentRegistrationSchema } from '@/lib/validation/students-validation'
 
 // We test the validation schema directly since it's the contract that
@@ -33,47 +34,42 @@ describe('guardian consent separation (#77)', () => {
     expect(resultUndefined.data).toBe(false)
   })
 
-  it('consent timestamp is null when optional consent is not given', () => {
-    // This tests the application-layer logic from the form:
-    // when lgpd_consentimento=false, lgpd_data_consentimento should be null
-    const lgpd_consentimento = false
-    const lgpd_data_consentimento = lgpd_consentimento
-      ? new Date().toISOString()
-      : null
+  const form: GuardianRegistrationForm = {
+    nome: ' Maria Sintética da Silva ', cpf: '529.982.247-25', telefone: '(11) 99999-0001',
+    email: '', parentesco: 'Mae', endereco: '', profissao: '', lgpd_consentimento: false,
+  }
+  const recordedAt = new Date('2026-09-08T12:30:00.000Z')
+  const schoolId = '00000000-0000-0000-0000-000000000001'
 
-    expect(lgpd_data_consentimento).toBeNull()
+  it('prepares the actual registration payload without optional consent', () => {
+    const registration = prepareGuardianRegistration(form, schoolId, recordedAt)
+
+    expect(registration).toEqual({
+      valid: true,
+      data: {
+        nome: 'Maria Sintética da Silva', cpf: '52998224725', telefone: '11999990001',
+        email: null, parentesco: 'Mae', endereco: null, profissao: null,
+        lgpd_consentimento: false, lgpd_data_consentimento: null, escola_id: schoolId,
+      },
+    })
   })
 
-  it('consent timestamp is set when optional consent is given', () => {
-    const lgpd_consentimento = true
-    const lgpd_data_consentimento = lgpd_consentimento
-      ? new Date().toISOString()
-      : null
+  it('records the supplied time only when optional consent was given', () => {
+    const registration = prepareGuardianRegistration({ ...form, lgpd_consentimento: true }, schoolId, recordedAt)
+    if (!registration.valid) throw new Error(registration.error)
 
-    expect(lgpd_data_consentimento).not.toBeNull()
-    expect(typeof lgpd_data_consentimento).toBe('string')
+    expect(registration.data.lgpd_consentimento).toBe(true)
+    expect(registration.data.lgpd_data_consentimento).toBe('2026-09-08T12:30:00.000Z')
   })
 
-  it('registration data is valid without consent', () => {
-    // Simulates the form data object that would be sent to Supabase
-    const responsavelData = {
-      nome: 'Maria Sintética da Silva',
-      cpf: '52998224725',
-      telefone: '11999990001',
-      email: null,
-      parentesco: 'Mae',
-      endereco: null,
-      profissao: null,
-      lgpd_consentimento: false,
-      lgpd_data_consentimento: null,
-      escola_id: '00000000-0000-0000-0000-000000000001',
+  it.each([
+    [{ nome: '   ' }, 'ui.preencha-todos-os-campos-obrigatorios'],
+    [{ cpf: '111.111.111-11' }, 'ui.cpf-invalido-verifique-os-dados-inseridos'],
+    [{ telefone: '123' }, 'ui.telefone-invalido-informe-um-telefone-com-10-ou-11-digitos'],
+  ])('rejects invalid registration fields independently of consent', (changes, error) => {
+    for (const consent of [false, true]) {
+      expect(prepareGuardianRegistration({ ...form, ...changes, lgpd_consentimento: consent }, schoolId, recordedAt))
+        .toEqual({ valid: false, error })
     }
-
-    // The form should not block: all required fields are present
-    expect(responsavelData.nome).toBeTruthy()
-    expect(responsavelData.cpf).toBeTruthy()
-    expect(responsavelData.parentesco).toBeTruthy()
-    // And consent is explicitly NOT required
-    expect(responsavelData.lgpd_consentimento).toBe(false)
   })
 })

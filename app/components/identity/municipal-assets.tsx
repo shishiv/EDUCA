@@ -1,12 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { GraduationCap, School } from "lucide-react";
-import { municipalConfig } from "@/lib/config";
+import { useMunicipalSettings } from "@/hooks/use-municipal-settings";
 
 interface MunicipalLogoProps {
 	size?: "sm" | "md" | "lg" | "xl";
-	priority?: boolean;
 	className?: string;
 }
 
@@ -19,7 +17,6 @@ const sizeMap = {
 
 export function MunicipalLogo({
 	size = "md",
-	priority = false,
 	className = "",
 }: MunicipalLogoProps) {
 	const dimensions = sizeMap[size];
@@ -37,7 +34,7 @@ export function MunicipalLogo({
 export function MunicipalBrasao({
 	size = "md",
 	className = "",
-}: Omit<MunicipalLogoProps, "priority">) {
+}: MunicipalLogoProps) {
 	const dimensions = sizeMap[size];
 
 	return (
@@ -54,20 +51,23 @@ export function MunicipalHeaderIdentity({
 	className = "",
 	variant = "default",
 }: {
-	className?: string;
-	variant?: "default" | "full";
+  className?: string;
+  variant?: "default" | "full";
 }) {
+	const settings = useMunicipalSettings();
+	if (!settings) return null;
+
 	return (
 		<div className={`flex items-center space-x-3 ${className}`}>
 			<MunicipalBrasao size="md" />
 			<div className="flex flex-col">
 				<span className="text-sm font-bold text-municipal-primary">
 					{variant === "full"
-						? municipalConfig.nome
-						: municipalConfig.secretaria}
+						? settings.municipality_name
+						: settings.education_department_name}
 				</span>
 				<span className="text-xs text-municipal-gray-600">
-					{municipalConfig.secretaria}
+					{settings.education_department_name}
 				</span>
 			</div>
 		</div>

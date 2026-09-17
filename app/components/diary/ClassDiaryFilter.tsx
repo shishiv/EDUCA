@@ -39,6 +39,13 @@ interface ClassDiaryFilterProps {
   escola_id?: string
 }
 
+type DiaryStatus = NonNullable<ClassDiaryFilters['status']>
+type DiaryStatusFilter = DiaryStatus | 'all'
+
+function isDiaryStatus(value: string): value is DiaryStatus {
+  return value === 'aberta' || value === 'fechada' || value === 'travada'
+}
+
 export function ClassDiaryFilter({
   onFilterChange,
   initialFilters = {},
@@ -50,7 +57,7 @@ export function ClassDiaryFilter({
   const [turmaId, setTurmaId] = useState<string>(initialFilters.turma_id || 'all')
   const [dateFrom, setDateFrom] = useState<string>(initialFilters.date_from || '')
   const [dateTo, setDateTo] = useState<string>(initialFilters.date_to || '')
-  const [fase, setFase] = useState<string>(initialFilters.status || 'all')
+  const [fase, setFase] = useState<DiaryStatusFilter>(initialFilters.status || 'all')
 
   // Available turmas for dropdown
   const [turmas, setTurmas] = useState<
@@ -80,6 +87,10 @@ export function ClassDiaryFilter({
     fetchTurmas()
   }, [profesor_id, escola_id])
 
+  const handleStatusChange = (value: string) => {
+    setFase(isDiaryStatus(value) ? value : 'all')
+  }
+
   // Handle filter application
   const handleApplyFilters = () => {
     const filters: ClassDiaryFilters = {}
@@ -87,7 +98,7 @@ export function ClassDiaryFilter({
     if (turmaId && turmaId !== 'all') filters.turma_id = turmaId
     if (dateFrom) filters.date_from = dateFrom
     if (dateTo) filters.date_to = dateTo
-    if (fase && fase !== 'all') filters.status = fase as 'aberta' | 'fechada' | 'travada'
+    if (fase !== 'all') filters.status = fase
     if (profesor_id) filters.professor_id = profesor_id
     if (escola_id) filters.escola_id = escola_id
 
@@ -173,7 +184,7 @@ export function ClassDiaryFilter({
           {/* Fase/Status Filter */}
           <div className="space-y-2">
             <Label htmlFor="fase-select">{t('diary.lessonStatus')}</Label>
-            <Select value={fase} onValueChange={setFase}>
+            <Select value={fase} onValueChange={handleStatusChange}>
               <SelectTrigger id="fase-select">
                 <SelectValue placeholder={t('diary.allStatuses')} />
               </SelectTrigger>

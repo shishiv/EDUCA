@@ -12,6 +12,7 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL,
+    launchOptions: { executablePath: process.env.PILOT_PLAYWRIGHT_EXECUTABLE_PATH },
     serviceWorkers: 'block',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

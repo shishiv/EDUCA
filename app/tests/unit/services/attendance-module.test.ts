@@ -73,7 +73,7 @@ function baseState(): FakeAttendanceDbState {
 
 function createSubject(state = baseState()) {
   const fake = createFakeSupabase(state)
-  const subject = createAttendanceModule(fake as never, { now: () => TEST_NOW })
+  const subject = createAttendanceModule(fake, { now: () => TEST_NOW })
   return { fake, subject }
 }
 
@@ -86,11 +86,20 @@ describe('canonical Attendance session module', () => {
     expect(normalizeAttendanceStatus('NAO_MARCADO')).toBe('NAO_MARCADO')
   })
 
-  it('centralizes lock state and current-date normalization for UI adapters', () => {
-    expect(getCanonicalSessionLockInfo(TEST_DATE, 'aberta', new Date('2026-08-05T16:00:00-03:00'))).toEqual(expect.objectContaining({
+  it('projects lock state from the persisted database cutoff without inventing a client deadline', () => {
+    expect(getCanonicalSessionLockInfo(TEST_DATE, 'aberta', new Date('2026-08-05T20:00:00-03:00'))).toEqual(expect.objectContaining({
       isLocked: false,
       lockReason: null,
       canEdit: true,
+      timeUntilLockMinutes: null,
+    }))
+    expect(getCanonicalSessionLockInfo(TEST_DATE, 'aberta', TEST_NOW, null, '2026-08-05T16:00:00.000Z')).toEqual(expect.objectContaining({
+      isLocked: false,
+      timeUntilLockMinutes: 60,
+    }))
+    expect(getCanonicalSessionLockInfo(TEST_DATE, 'aberta', TEST_NOW, null, '2026-08-05T14:59:00.000Z')).toEqual(expect.objectContaining({
+      isLocked: true,
+      lockReason: 'time_cutoff',
     }))
     expect(getCanonicalSessionLockInfo('2026-08-04', 'ABERTA', TEST_NOW)).toEqual(expect.objectContaining({
       isLocked: true,
@@ -138,7 +147,9 @@ describe('canonical Attendance session module', () => {
   })
 
   it('derives professor and school from the turma instead of forged input fields', async () => {
-    const { fake, subject } = createSubject()
+    const state = baseState()
+    state.insertedSessionDeadline = '2026-08-05T21:00:00.000Z'
+    const { fake, subject } = createSubject(state)
     fake.state.sessions = []
 
     const result = await subject.openSession({
@@ -155,6 +166,25 @@ describe('canonical Attendance session module', () => {
       data_aula: TEST_DATE,
       status: 'ABERTA',
     }))
+    expect(fake.writes.inserts[0]).not.toHaveProperty('aberta_em')
+    expect(fake.writes.inserts[0]).not.toHaveProperty('auto_fechamento_agendado')
+    expect(result.session?.auto_fechamento_agendado).toBe(state.insertedSessionDeadline)
+  })
+
+  it('maps the database cutoff rejection without persisting a session', async () => {
+    const state = baseState()
+    state.sessions = []
+    state.insertSessionError = {
+      code: 'P0001',
+      message: 'ATTENDANCE_OPEN_CUTOFF_PASSED: configured school deadline elapsed',
+    }
+    const { fake, subject } = createSubject(state)
+
+    const result = await subject.openSession({ turma_id: TURMA_A, data_aula: TEST_DATE })
+
+    expect(result).toEqual(expect.objectContaining({ success: false, code: 'SESSION_CUTOFF_PASSED' }))
+    expect(fake.writes.inserts).toHaveLength(1)
+    expect(fake.state.sessions).toHaveLength(0)
   })
 
   it('marks one enrollment with canonical status, date, teacher, and actor', async () => {
@@ -203,7 +233,7 @@ describe('canonical Attendance session module', () => {
       }),
     ])
     expect(batch.fake.writes.upserts[0]).toEqual([
-      expect.objectContaining(individual.fake.writes.upserts[0] as Record<string, unknown>),
+      individual.fake.writes.upserts[0],
     ])
   })
 
@@ -230,7 +260,7 @@ describe('canonical Attendance session module', () => {
       }),
     ])
     expect(batch.fake.writes.upserts[0]).toEqual([
-      expect.objectContaining(individual.fake.writes.upserts[0] as Record<string, unknown>),
+      individual.fake.writes.upserts[0],
     ])
   })
 
@@ -281,15 +311,53 @@ describe('canonical Attendance session module', () => {
     expect(fake.writes.upserts).toHaveLength(0)
   })
 
-  it('rejects a session date that is not the current São Paulo date', async () => {
+  it('rejects a past session without a database-authorized correction window', async () => {
     const state = baseState()
     state.sessions[0].data_aula = '2026-08-04'
+    state.isEditable = false
     const { fake, subject } = createSubject(state)
 
     const result = await subject.closeSession({ session_id: SESSION_A })
 
     expect(result).toEqual(expect.objectContaining({ success: false, code: 'SESSION_DATE_NOT_CURRENT' }))
     expect(fake.writes.updates).toHaveLength(0)
+  })
+
+  it('allows marking, batching and closing a past session authorized by the database window', async () => {
+    const state = baseState()
+    state.sessions[0].data_aula = '2026-08-04'
+    state.sessions[0].auto_fechamento_agendado = '2026-08-04T21:00:00Z'
+    state.isEditable = true
+    const { fake, subject } = createSubject(state)
+
+    expect(await subject.checkLockStatus({ sessionIdOrTurmaId: SESSION_A })).toMatchObject({ success: true, isLocked: false })
+    expect(await subject.markAttendance({ sessao_id: SESSION_A, matricula_id: MATRICULA_A, status: 'P' })).toMatchObject({ success: true })
+    expect(await subject.markAttendanceBatch({ sessao_id: SESSION_A, records: [{ matricula_id: MATRICULA_A, status: 'J', justificativa: 'Conferência' }] })).toMatchObject({ success: true, processed_count: 1 })
+    expect(fake.writes.upserts[0]).toMatchObject({ data_aula: '2026-08-04', professor_id: PROF_A, marcado_por: PROF_A })
+    expect(await subject.closeSession({ session_id: SESSION_A })).toMatchObject({ success: true })
+  })
+
+  it('blocks batching and closure when a correction expires even on the current day', async () => {
+    const state = baseState()
+    state.sessions[0].auto_fechamento_agendado = '2026-08-05T21:00:00Z'
+    state.isEditable = false
+    const { fake, subject } = createSubject(state)
+
+    expect(await subject.checkLockStatus({ sessionIdOrTurmaId: SESSION_A })).toMatchObject({ success: true, isLocked: true })
+    expect(await subject.markAttendanceBatch({ sessao_id: SESSION_A, records: [{ matricula_id: MATRICULA_A, status: 'P' }] })).toMatchObject({ success: false, processed_count: 0 })
+    expect(await subject.closeSession({ session_id: SESSION_A })).toMatchObject({ success: false })
+    expect(fake.writes.upserts).toHaveLength(0)
+    expect(fake.writes.updates).toHaveLength(0)
+  })
+
+  it('keeps manual closure guards even if a stale RPC response reports editability', async () => {
+    const state = baseState()
+    state.sessions[0].travada_em = TEST_NOW.toISOString()
+    state.isEditable = true
+    const { fake, subject } = createSubject(state)
+    expect(await subject.markAttendance({ sessao_id: SESSION_A, matricula_id: MATRICULA_A, status: 'P' })).toMatchObject({ success: false })
+    expect(await subject.closeSession({ session_id: SESSION_A })).toMatchObject({ success: false })
+    expect(fake.writes.upserts).toHaveLength(0)
   })
 
   it('closes an open session through the one-way canonical transition', async () => {
@@ -328,11 +396,24 @@ describe('canonical Attendance session module', () => {
     })
   })
 
-  it('returns a stable lock state for a missing session without creating a write', async () => {
-    const { subject } = createSubject()
+  it('rejects a missing or RLS-hidden session without reporting it as unlocked', async () => {
+    const { subject, fake } = createSubject()
 
     const result = await subject.checkLockStatus({ sessionIdOrTurmaId: '31000000-0000-0000-0000-000000000099' })
 
-    expect(result).toEqual({ success: true, session: null, isLocked: false, lockReason: null })
+    expect(result).toMatchObject({ success: false, isLocked: true, code: 'SESSION_NOT_FOUND' })
+    expect(result.session).toBeUndefined()
+    expect(fake.writes).toEqual({ upserts: [], inserts: [], updates: [] })
+  })
+
+  it('reports no session only after authorizing the class for the requested date', async () => {
+    const state = baseState()
+    state.sessions = []
+    const { subject } = createSubject(state)
+
+    expect(await subject.checkLockStatus({ sessionIdOrTurmaId: TURMA_A, date: TEST_DATE }))
+      .toEqual({ success: true, session: null, isLocked: false, lockReason: null })
+    expect(await subject.checkLockStatus({ sessionIdOrTurmaId: '31000000-0000-0000-0000-000000000099', date: TEST_DATE }))
+      .toMatchObject({ success: false, code: 'TURMA_NOT_FOUND' })
   })
 })

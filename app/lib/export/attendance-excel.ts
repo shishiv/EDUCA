@@ -13,7 +13,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatDateBR } from '@/lib/date-utils';
 import type { ClassAttendanceReport } from '@/lib/reports/attendance-reports';
-import type { BolsaFamiliaReport } from '@/lib/reports/bolsa-familia-reports';
+import type {
+  BolsaFamiliaReport,
+  BolsaFamiliaStatus,
+  BolsaFamiliaStudent,
+  MunicipalMarginResolution,
+} from '@/lib/reports/bolsa-familia-reports';
 import {
   ATENCAO,
   CONFORMIDADE,
@@ -106,6 +111,66 @@ async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string): Promi
  */
 function getStatusText(percentual: number): string {
   return getFrequencyPolicyLabel(getFrequencyPolicyStatus(percentual));
+}
+
+const BOLSA_STATUS_LABELS = {
+  CRITICO: 'NÃO CONFORME',
+  ALERTA: 'ALERTA MUNICIPAL',
+  CONFORME: 'CONFORME',
+} satisfies Record<BolsaFamiliaStatus, string>;
+
+function displayResolutionValue<T>(value: T | null, fallback: string): T | string {
+  return value ?? fallback;
+}
+
+function formatResolutionDetails(resolution: MunicipalMarginResolution): string {
+  return `crítico ${displayResolutionValue(resolution.criticalPercent, 'não configurada')}%, alerta ${displayResolutionValue(resolution.warningPercent, 'não configurada')}%, precedência ${displayResolutionValue(resolution.precedence, 'n/a')}, origem ${displayResolutionValue(resolution.source, 'não informada')}, fallback ${resolution.fallback ? 'sim' : 'não'}, definido por ${displayResolutionValue(resolution.definedBy, 'sistema')} em ${displayResolutionValue(resolution.definedAt, 'n/a')}`;
+}
+
+function formatResolutionMargin(resolution: MunicipalMarginResolution): string {
+  return `${resolution.municipalityId}: crítico ${displayResolutionValue(resolution.criticalPercent, 'não configurada')}%, alerta ${displayResolutionValue(resolution.warningPercent, 'não configurada')}%, origem ${displayResolutionValue(resolution.source, 'não informada')}`;
+}
+
+function getBolsaStudentFillColor(status: BolsaFamiliaStatus, index: number): string | null {
+  if (status === 'CRITICO') return 'FFFEE2E2';
+  if (status === 'ALERTA') return 'FFFEF3C7';
+  if (index % 2 === 1) return 'FFF5F5F5';
+  return null;
+}
+
+function addBolsaStudentRow(
+  worksheet: ExcelJS.Worksheet,
+  student: BolsaFamiliaStudent,
+  index: number,
+): void {
+  const statusLabel = BOLSA_STATUS_LABELS[student.status];
+  const row = worksheet.addRow([
+    student.nome,
+    student.nis || '-',
+    student.turmaNome,
+    student.escolaNome,
+    student.presencas,
+    student.faltas,
+    student.atestados,
+    student.totalAulas,
+    student.percentual,
+    displayResolutionValue(student.pisoLegalPercent, '-'),
+    student.statusLegal,
+    displayResolutionValue(student.margemMunicipalCriticaPercent, '-'),
+    displayResolutionValue(student.margemMunicipalAlertaPercent, '-'),
+    `${statusLabel} (${displayResolutionValue(student.margemMunicipalOrigem, 'sem origem')})`,
+  ]);
+
+  const fillColor = getBolsaStudentFillColor(student.status, index);
+  if (fillColor === null) return;
+
+  row.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: fillColor },
+    };
+  });
 }
 // ============================================================================
 // ATTENDANCE REPORT EXCEL
@@ -246,7 +311,7 @@ export async function generateBolsaFamiliaReportExcel(
   for (const resolution of report.resolucoesMargemMunicipal) {
     summarySheet.addRow([
       `Resolução municipal ${resolution.municipalityId}`,
-      `crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}%, precedência ${resolution.precedence ?? 'n/a'}, origem ${resolution.source ?? 'não informada'}, fallback ${resolution.fallback ? 'sim' : 'não'}, definido por ${resolution.definedBy ?? 'sistema'} em ${resolution.definedAt ?? 'n/a'}`,
+      formatResolutionDetails(resolution),
     ]);
   }
 
@@ -277,58 +342,11 @@ export async function generateBolsaFamiliaReportExcel(
 
   // Data rows
   studentsToShow.forEach((student, index) => {
-    const statusLabel = student.status === 'CRITICO' ? 'NÃO CONFORME' :
-                        student.status === 'ALERTA' ? 'ALERTA MUNICIPAL' : 'CONFORME';
-
-    const row = studentsSheet.addRow([
-      student.nome,
-      student.nis || '-',
-      student.turmaNome,
-      student.escolaNome,
-      student.presencas,
-      student.faltas,
-      student.atestados,
-      student.totalAulas,
-      student.percentual,
-      student.pisoLegalPercent ?? '-',
-      student.statusLegal,
-      student.margemMunicipalCriticaPercent ?? '-',
-      student.margemMunicipalAlertaPercent ?? '-',
-      `${statusLabel} (${student.margemMunicipalOrigem ?? 'sem origem'})`,
-    ]);
-
-    // Color coding based on status
-    if (student.status === 'CRITICO') {
-      row.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFEE2E2' },
-        };
-      });
-    } else if (student.status === 'ALERTA') {
-      row.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFEF3C7' },
-        };
-      });
-    } else if (index % 2 === 1) {
-      row.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFF5F5F5' },
-        };
-      });
-    }
+    addBolsaStudentRow(studentsSheet, student, index);
   });
 
   studentsSheet.addRow([]); // Empty row
-  const marginSummary = report.resolucoesMargemMunicipal.map((resolution) =>
-    `${resolution.municipalityId}: crítico ${resolution.criticalPercent ?? 'não configurada'}%, alerta ${resolution.warningPercent ?? 'não configurada'}%, origem ${resolution.source ?? 'não informada'}`,
-  ).join(' | ')
+  const marginSummary = report.resolucoesMargemMunicipal.map(formatResolutionMargin).join(' | ')
   studentsSheet.addRow(['Legenda: P = Presença, F = Falta, A = Atestado (conta como presença).']);
   studentsSheet.addRow([`Margens municipais resolvidas: ${marginSummary || 'não configuradas'}`]);
   studentsSheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);

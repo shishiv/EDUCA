@@ -46,7 +46,7 @@ export default function FlagsPage() {
 
         if (error) throw error
         setAllEscolas(data || [])
-      } catch (err) {
+      } catch {
         toast.error(t('bolsa.loadSchoolsError'))
       } finally {
         setEscolasLoading(false)
@@ -56,7 +56,7 @@ export default function FlagsPage() {
   }, [t])
 
   // Access control - only admin and gestor_sme can access
-  const canAccess = userProfile?.tipo_usuario === 'admin' || userProfile?.tipo_usuario === 'gestor_sme'
+  const canAccess = ['admin', 'gestor_sme'].includes(userProfile?.tipo_usuario ?? '')
 
   // Get selected flag data
   const selectedFlag = flagsWithStatus?.find((f) => f.id === selectedFlagId) ?? null
@@ -101,7 +101,7 @@ export default function FlagsPage() {
         escolaId,
         enabled: !currentEnabled,
       })
-    } catch (err) {
+    } catch {
       // Error handled by mutation
     }
   }
@@ -117,7 +117,7 @@ export default function FlagsPage() {
         enabled: true,
       })
       setSelectedEscolaIds([])
-    } catch (err) {
+    } catch {
       // Error handled by mutation
     }
   }
@@ -133,82 +133,14 @@ export default function FlagsPage() {
         enabled: false,
       })
       setSelectedEscolaIds([])
-    } catch (err) {
+    } catch {
       // Error handled by mutation
     }
   }
 
-  // Loading state
-  if (authLoading || flagsLoading || escolasLoading) {
+  function renderFlagList() {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
-        </div>
-        <TableLoading rows={5} columns={4} />
-      </div>
-    )
-  }
-
-  // Access denied
-  if (!canAccess) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
-        </div>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.denied')}</h3>
-              <p className="text-gray-600">
-                {t('flags.noPermission')}
-                <br />{t('flags.adminOnly')}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
-        </div>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.loadError')}</h3>
-              <p className="text-gray-600 mb-4">{t('flags.fetchError')}</p>
-              <Button onClick={() => refetch()} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />{t('flags.retry')}</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
-        <p className="text-gray-600 mt-1">{t('flags.activationSubtitle')}</p>
-      </div>
-
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column: Flag list */}
-        <div className="lg:col-span-1">
+      <div className="lg:col-span-1">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -255,9 +187,12 @@ export default function FlagsPage() {
             </CardContent>
           </Card>
         </div>
+    )
+  }
 
-        {/* Right column: Escola toggles */}
-        <div className="lg:col-span-2">
+  function renderSchoolControls() {
+    return (
+      <div className="lg:col-span-2">
           {!selectedFlagId ? (
             <Card>
               <CardContent className="pt-6">
@@ -377,6 +312,80 @@ export default function FlagsPage() {
             </Card>
           )}
         </div>
+    )
+  }
+
+  // Loading state
+  if (authLoading || flagsLoading || escolasLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
+        </div>
+        <TableLoading rows={5} columns={4} />
+      </div>
+    )
+  }
+
+  // Access denied
+  if (!canAccess) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.denied')}</h3>
+              <p className="text-gray-600">
+                {t('flags.noPermission')}
+                <br />{t('flags.adminOnly')}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('flags.subtitle')}</p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('flags.loadError')}</h3>
+              <p className="text-gray-600 mb-4">{t('flags.fetchError')}</p>
+              <Button onClick={() => refetch()} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />{t('flags.retry')}</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">{t('flags.title')}</h1>
+        <p className="text-gray-600 mt-1">{t('flags.activationSubtitle')}</p>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {renderFlagList()}
+        {renderSchoolControls()}
       </div>
     </div>
   )

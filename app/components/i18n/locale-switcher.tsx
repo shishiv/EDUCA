@@ -2,69 +2,19 @@
 
 import { Languages } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
 import { startTransition, useEffect, useState } from 'react'
 import { setUserLocale } from '@/i18n/actions'
 import { isAppLocale } from '@/i18n/config'
 
-export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public' | 'button' }) {
+export function LocaleSwitcher({ variant = 'app', persistLocale = setUserLocale }: { variant?: 'app' | 'public' | 'button'; persistLocale?: typeof setUserLocale }) {
   const locale = useLocale()
-  const router = useRouter()
   const t = useTranslations('common.locale')
-  const [selectedLocale, setSelectedLocale] = useState(locale)
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState(false)
-
-  useEffect(() => setSelectedLocale(locale), [locale])
-
-  function changeLocale(value: string) {
-    if (!isAppLocale(value) || value === locale) return
-
-    setSelectedLocale(value)
-    setPending(true)
-    setError(false)
-    startTransition(async () => {
-      try {
-        await setUserLocale(value)
-        if (typeof window !== 'undefined') {
-          window.location.reload()
-        } else {
-          router.refresh()
-        }
-      } catch {
-        setSelectedLocale(locale)
-        setError(true)
-      } finally {
-        setPending(false)
-      }
-    })
-  }
+  const { selectedLocale, pending, error, changeLocale } = useLocaleChange(locale, persistLocale)
 
   const targetLocale = locale === 'pt-BR' ? 'en' : 'pt-BR'
 
   if (variant === 'button') {
-    return (
-      <div data-testid="locale-switcher" className="locale-switcher locale-switcher--button">
-        <button
-          type="button"
-          onClick={() => changeLocale(targetLocale)}
-          disabled={pending}
-          aria-busy={pending}
-          aria-label={t('switchTo', { locale: targetLocale === 'pt-BR' ? t('portuguese') : t('english') })}
-          className="locale-switcher__button"
-        >
-          {locale === 'pt-BR' ? 'PT' : 'EN'}
-        </button>
-        <span className="sr-only" role="status" aria-live="polite">
-          {pending ? t('changing') : ''}
-        </span>
-        {error && (
-          <span className="locale-switcher__error" role="alert">
-            {t('error')}
-          </span>
-        )}
-      </div>
-    )
+    return <LocaleButton locale={locale} targetLocale={targetLocale} pending={pending} error={error} onChange={changeLocale} />
   }
 
   const variantClass = variant === 'public' ? 'locale-switcher--public' : 'locale-switcher--app'
@@ -100,6 +50,54 @@ export function LocaleSwitcher({ variant = 'app' }: { variant?: 'app' | 'public'
           {t('error')}
         </span>
       )}
+    </div>
+  )
+}
+
+function useLocaleChange(locale: string, persistLocale: typeof setUserLocale) {
+  const [selectedLocale, setSelectedLocale] = useState(locale)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState(false)
+
+  useEffect(() => setSelectedLocale(locale), [locale])
+
+  function changeLocale(value: string) {
+    if (!isAppLocale(value) || value === locale) return
+    setSelectedLocale(value)
+    setPending(true)
+    setError(false)
+    startTransition(async () => {
+      try {
+        await persistLocale(value)
+        window.location.reload()
+      } catch {
+        setSelectedLocale(locale)
+        setError(true)
+      } finally {
+        setPending(false)
+      }
+    })
+  }
+
+  return { selectedLocale, pending, error, changeLocale }
+}
+
+function LocaleButton({ locale, targetLocale, pending, error, onChange }: {
+  locale: string
+  targetLocale: string
+  pending: boolean
+  error: boolean
+  onChange: (value: string) => void
+}) {
+  const t = useTranslations('common.locale')
+  const targetLabel = targetLocale === 'pt-BR' ? t('portuguese') : t('english')
+  return (
+    <div data-testid="locale-switcher" className="locale-switcher locale-switcher--button">
+      <button type="button" onClick={() => onChange(targetLocale)} disabled={pending} aria-busy={pending} aria-label={t('switchTo', { locale: targetLabel })} className="locale-switcher__button">
+        {locale === 'pt-BR' ? 'PT' : 'EN'}
+      </button>
+      <span className="sr-only" role="status" aria-live="polite">{pending ? t('changing') : ''}</span>
+      {error && <span className="locale-switcher__error" role="alert">{t('error')}</span>}
     </div>
   )
 }

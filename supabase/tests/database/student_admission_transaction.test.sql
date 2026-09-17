@@ -41,6 +41,12 @@ VALUES
   ('97100000-0000-0000-0000-000000000002', 'Diretora Admission B', 'admission.b@synthetic.invalid', 'diretor', '97000000-0000-0000-0000-000000000002', true),
   ('97100000-0000-0000-0000-000000000003', 'Professor Admission A', 'admission.professor@synthetic.invalid', 'professor', '97000000-0000-0000-0000-000000000001', true);
 
+CREATE TEMP TABLE admission_receipts(
+  label text PRIMARY KEY,
+  student_id uuid NOT NULL
+);
+GRANT INSERT, SELECT ON admission_receipts TO authenticated;
+
 RESET ROLE;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001', true);
@@ -49,7 +55,6 @@ SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001
 DO $$
 DECLARE
   student_id uuid;
-  guardian_id uuid;
 BEGIN
   SELECT id
   INTO student_id
@@ -63,30 +68,44 @@ BEGIN
     p_nome_mae => 'Mãe Admission Success',
     p_responsavel => jsonb_build_object(
       'nome', 'Admission Success Guardian',
+      'cpf', '11144477735',
       'telefone', '34999990001',
       'email', 'guardian.success@synthetic.invalid',
+      'endereco', 'Rua Guardian Admission, 20',
+      'profissao', 'Artesã',
       'grau_parentesco', 'mae'
     )
   );
 
-  SELECT id INTO guardian_id
-  FROM public.responsaveis
-  WHERE nome = 'Admission Success Guardian';
-
   PERFORM pg_temp.assert_true(student_id IS NOT NULL, 'success returns the inserted student');
-  PERFORM pg_temp.assert_true(guardian_id IS NOT NULL, 'success inserts the guardian');
-  PERFORM pg_temp.assert_true(
-    (SELECT count(*) = 1 FROM public.aluno_responsaveis
-     WHERE aluno_id = student_id AND responsavel_id = guardian_id AND ativo = true),
-    'success inserts the active relationship'
-  );
+  INSERT INTO admission_receipts(label, student_id) VALUES ('success', student_id);
 END;
 $$;
 
--- A student without a guardian keeps the existing optional-guardian behavior.
+RESET ROLE;
+SET LOCAL ROLE service_role;
 SELECT pg_temp.assert_true(
-  (SELECT count(*) = 1
-   FROM public.create_student_admission(
+  (SELECT guardian.cpf = '11144477735'
+       AND guardian.telefone = '34999990001'
+       AND guardian.email = 'guardian.success@synthetic.invalid'
+       AND guardian.endereco = 'Rua Guardian Admission, 20'
+       AND guardian.profissao = 'Artesã'
+       AND link.ativo = true
+   FROM admission_receipts AS receipt
+   JOIN public.aluno_responsaveis AS link ON link.aluno_id = receipt.student_id
+   JOIN public.responsaveis AS guardian ON guardian.id = link.responsavel_id
+   WHERE receipt.label = 'success'),
+  'success persists the explicit guardian payload and active relationship'
+);
+
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001', true);
+
+-- A student without a guardian keeps the existing optional-guardian behavior.
+INSERT INTO admission_receipts(label, student_id)
+SELECT 'without_guardian', id
+FROM public.create_student_admission(
      p_nome_completo => 'Admission Without Guardian',
      p_data_nascimento => DATE '2019-02-11',
      p_sexo => 'M',
@@ -94,13 +113,27 @@ SELECT pg_temp.assert_true(
      p_endereco => 'Rua Admission Without Guardian, 11',
      p_nome_mae => 'Mãe Without Guardian',
      p_responsavel => NULL
-   )),
-  'a missing optional guardian still commits the student'
-);
+   );
+
+RESET ROLE;
+SET LOCAL ROLE service_role;
 SELECT pg_temp.assert_true(
-  (SELECT count(*) = 0 FROM public.responsaveis WHERE nome = 'Admission Without Guardian'),
-  'missing guardian does not create a placeholder guardian'
+  (SELECT count(*) = 1
+   FROM admission_receipts AS receipt
+   JOIN public.alunos AS student ON student.id = receipt.student_id
+   WHERE receipt.label = 'without_guardian')
+    AND NOT EXISTS (
+      SELECT 1
+      FROM admission_receipts AS receipt
+      JOIN public.aluno_responsaveis AS link ON link.aluno_id = receipt.student_id
+      WHERE receipt.label = 'without_guardian'
+    ),
+  'a missing optional guardian commits the student without a placeholder relationship'
 );
+
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001', true);
 
 -- Mid-flow failure: the student insert succeeds inside the function before the
 -- malformed guardian reaches its NOT NULL constraint. The call must roll back.
@@ -129,6 +162,8 @@ BEGIN
 END;
 $$;
 
+RESET ROLE;
+SET LOCAL ROLE service_role;
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0 FROM public.alunos WHERE nome_completo = 'Admission Rollback Student'),
   'student row is rolled back after the guardian failure'
@@ -146,10 +181,12 @@ SELECT pg_temp.assert_true(
 
 -- Retry the same logical admission after rollback. It converges to one complete
 -- graph because the failed call left no durable partial rows.
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001', true);
 DO $$
 DECLARE
   student_id uuid;
-  guardian_id uuid;
 BEGIN
   SELECT id
   INTO student_id
@@ -169,25 +206,27 @@ BEGIN
     )
   );
 
-  SELECT id INTO guardian_id
-  FROM public.responsaveis
-  WHERE nome = 'Admission Rollback Guardian';
-
-  PERFORM pg_temp.assert_true(
-    (SELECT count(*) = 1 FROM public.alunos WHERE nome_completo = 'Admission Rollback Student'),
-    'retry creates exactly one student'
-  );
-  PERFORM pg_temp.assert_true(
-    (SELECT count(*) = 1 FROM public.responsaveis WHERE nome = 'Admission Rollback Guardian'),
-    'retry creates exactly one guardian'
-  );
-  PERFORM pg_temp.assert_true(
-    (SELECT count(*) = 1 FROM public.aluno_responsaveis
-     WHERE aluno_id = student_id AND responsavel_id = guardian_id),
-    'retry creates exactly one relationship'
-  );
+  PERFORM pg_temp.assert_true(student_id IS NOT NULL, 'retry returns the inserted student');
+  INSERT INTO admission_receipts(label, student_id) VALUES ('retry', student_id);
 END;
 $$;
+
+RESET ROLE;
+SET LOCAL ROLE service_role;
+SELECT pg_temp.assert_true(
+  (SELECT count(*) = 1
+   FROM admission_receipts AS receipt
+   JOIN public.alunos AS student ON student.id = receipt.student_id
+   WHERE receipt.label = 'retry'
+     AND student.nome_completo = 'Admission Rollback Student')
+    AND (SELECT count(*) = 1
+         FROM admission_receipts AS receipt
+         JOIN public.aluno_responsaveis AS link ON link.aluno_id = receipt.student_id
+         JOIN public.responsaveis AS guardian ON guardian.id = link.responsavel_id
+         WHERE receipt.label = 'retry'
+           AND guardian.nome = 'Admission Rollback Guardian'),
+  'retry creates exactly one student, guardian, and relationship'
+);
 
 -- Duplicate relationship behavior is owned by the existing real unique index.
 -- A repeated link fails and cannot create a second relationship row.
@@ -216,6 +255,9 @@ END;
 $$;
 
 -- School and role boundaries remain enforced by the function and RLS.
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001', true);
 DO $$
 BEGIN
   BEGIN
@@ -237,11 +279,16 @@ BEGIN
   END;
 END;
 $$;
+
+RESET ROLE;
+SET LOCAL ROLE service_role;
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0 FROM public.alunos WHERE nome_completo = 'Admission Cross School Rejected'),
   'cross-school admission creates no student'
 );
 
+RESET ROLE;
+SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000003', true);
 DO $$
 BEGIN
@@ -264,6 +311,9 @@ BEGIN
   END;
 END;
 $$;
+
+RESET ROLE;
+SET LOCAL ROLE service_role;
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0 FROM public.alunos WHERE nome_completo = 'Admission Professor Rejected'),
   'professor admission creates no student'

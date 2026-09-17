@@ -9,6 +9,7 @@
 
 import { createHmac } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { WhatsAppLocalAdapter, WHATSAPP_LOCAL_APP_SECRET } from '@/lib/notifications/whatsapp-local-adapter'
 import { setGuardianWhatsAppOptIn } from '@/lib/notifications/whatsapp-optin-service'
 import { notifyGuardianAttendanceAlert } from '@/lib/notifications/whatsapp-notification-service'
@@ -23,6 +24,7 @@ import { createFakeWhatsAppSupabase, asDeliveryStatus, type FakeTables } from '.
 const GUARDIAN_ID = '10000000-0000-0000-0000-000000000001'
 const STUDENT_ID = '20000000-0000-0000-0000-000000000001'
 const SCHOOL_ID = '50000000-0000-0000-0000-000000000001'
+const ACTOR_ID = '90000000-0000-0000-0000-000000000001'
 
 function seedSchool(tables: FakeTables) {
   tables.escolas.rows.push({ id: SCHOOL_ID, nome: 'Escola Sintetica' })
@@ -42,9 +44,18 @@ function seedSchool(tables: FakeTables) {
     responsavel_id: GUARDIAN_ID,
     ativo: true,
   })
+  for (const [index, dataAula] of ['2026-08-03', '2026-08-04', '2026-08-05'].entries()) {
+    tables.attendance_contexts.rows.push({
+      id: `attendance-${index + 1}`,
+      aluno_id: STUDENT_ID,
+      escola_id: SCHOOL_ID,
+      data_aula: dataAula,
+      status_presenca: 'F',
+    })
+  }
 }
 
-function signedEnvelope(body: unknown): { rawBody: string; signature: string } {
+function signedEnvelope(body: z.input<typeof whatsappWebhookEnvelopeSchema>) {
   const rawBody = JSON.stringify(body)
   const signature = `sha256=${createHmac('sha256', WHATSAPP_LOCAL_APP_SECRET).update(rawBody, 'utf8').digest('hex')}`
   return { rawBody, signature }
@@ -65,16 +76,18 @@ describe('whatsapp notification local end-to-end path', () => {
       responsavelId: GUARDIAN_ID,
       alunoId: STUDENT_ID,
       dataAula: '2026-08-03',
+      criadoPor: ACTOR_ID,
     })
 
     expect(result.outcome).toBe('delivered')
     expect(result.receipt).toContain('outcome=delivered')
     expect(result.receipt).not.toContain('5531999998888')
     expect(result.receipt).not.toContain('Aluno Sintetico')
+    expect(result.auditReceiptId).toMatch(/^[0-9a-f-]{36}$/)
 
     const row = tables.whatsapp_notification_messages.rows[0]
     expect(row.status).toBe('delivered')
-    const wamid = row.external_message_id as string
+    const wamid = requireExternalMessageId(row.external_message_id)
 
     // 3. Webhook signature validation rejects tampering.
     const envelope = {
@@ -101,7 +114,7 @@ describe('whatsapp notification local end-to-end path', () => {
           ],
         },
       ],
-    }
+    } satisfies z.input<typeof whatsappWebhookEnvelopeSchema>
     const { rawBody, signature } = signedEnvelope(envelope)
     expect(verifyWhatsAppWebhookSignature(rawBody, signature, WHATSAPP_LOCAL_APP_SECRET)).toBe(true)
     expect(verifyWhatsAppWebhookSignature(rawBody, 'sha256=0'.repeat(64), WHATSAPP_LOCAL_APP_SECRET)).toBe(false)
@@ -131,6 +144,7 @@ describe('whatsapp notification local end-to-end path', () => {
       responsavelId: GUARDIAN_ID,
       alunoId: STUDENT_ID,
       dataAula: '2026-08-03',
+      criadoPor: ACTOR_ID,
     })
 
     expect(result.outcome).toBe('blocked')
@@ -149,11 +163,13 @@ describe('whatsapp notification local end-to-end path', () => {
       responsavelId: GUARDIAN_ID,
       alunoId: STUDENT_ID,
       dataAula: '2026-08-04',
+      criadoPor: ACTOR_ID,
     })
     const second = await notifyGuardianAttendanceAlert(supabase, { gateway }, {
       responsavelId: GUARDIAN_ID,
       alunoId: STUDENT_ID,
       dataAula: '2026-08-04',
+      criadoPor: ACTOR_ID,
     })
 
     expect(first.outcome).toBe('delivered')
@@ -163,17 +179,19 @@ describe('whatsapp notification local end-to-end path', () => {
   })
 
   it('recovers after transient failure: retry delivers, webhook completes the cycle', async () => {
-    const { supabase, tables } = createFakeWhatsAppSupabase()
+    const { supabase, tables, setDatabaseNow } = createFakeWhatsAppSupabase()
     seedSchool(tables)
     const gateway = new WhatsAppLocalAdapter({})
     await setGuardianWhatsAppOptIn(supabase, { id: 'actor-1' }, { responsavelId: GUARDIAN_ID, optIn: true })
 
     const now = new Date('2026-08-01T12:00:00Z')
-    const failingDeps = { gateway: new WhatsAppLocalAdapter({ mode: 'fail' }), now: () => now, maxAttempts: 3, retryBaseDelayMs: 1000 }
+    setDatabaseNow(now)
+    const failingDeps = { gateway: new WhatsAppLocalAdapter({ mode: 'fail' }), maxAttempts: 3, retryBaseDelayMs: 1000 }
     const failed = await notifyGuardianAttendanceAlert(supabase, failingDeps, {
       responsavelId: GUARDIAN_ID,
       alunoId: STUDENT_ID,
       dataAula: '2026-08-05',
+      criadoPor: ACTOR_ID,
     })
     expect(failed.outcome).toBe('queued')
     expect(tables.whatsapp_notification_messages.rows[0].status).toBe('queued')
@@ -183,14 +201,14 @@ describe('whatsapp notification local end-to-end path', () => {
 
     // Backoff elapses; the same message recovers on the retry worker path.
     const { deliverDueWhatsAppNotifications } = await import('@/lib/notifications/whatsapp-delivery-service')
+    setDatabaseNow('2026-08-01T12:00:06Z')
     const recovery = await deliverDueWhatsAppNotifications(supabase, {
       gateway,
-      now: () => new Date('2026-08-01T12:00:06Z'),
     })
     expect(recovery.attempted).toBe(1)
     expect(tables.whatsapp_notification_messages.rows[0].status).toBe('delivered')
 
-    const wamid = tables.whatsapp_notification_messages.rows[0].external_message_id as string
+    const wamid = requireExternalMessageId(tables.whatsapp_notification_messages.rows[0].external_message_id)
     expect(
       await applyWhatsAppDeliveryStatus(supabase, asDeliveryStatus({ externalMessageId: wamid, status: 'delivered' }))
     ).toBe(false) // duplicate receipt is a no-op
@@ -199,3 +217,8 @@ describe('whatsapp notification local end-to-end path', () => {
     ).toBe(true)
   })
 })
+
+function requireExternalMessageId(value: string | null): string {
+  if (!value) throw new Error('Expected an external message id')
+  return value
+}

@@ -21,7 +21,7 @@
 'use client'
 
 import React, { useCallback, useMemo, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,6 +72,71 @@ export interface LessonContentFormProps {
   className?: string
 }
 
+function getLessonFormValues(
+  initialValues: Partial<LessonContentFormData> = {},
+  educationLevel: EducationLevel
+): LessonContentFormData {
+  const {
+    tema = '', objetivo = '', habilidades_bncc_input = '', metodologia = '',
+    recursos = '', observacoes = '', campos_experiencia = [],
+  } = initialValues
+  return { tema, objetivo, habilidades_bncc_input, metodologia, recursos, observacoes,
+    campos_experiencia, education_level: educationLevel }
+}
+
+function LessonExperienceFields({
+  selectedFields,
+  onToggle,
+  disabled,
+}: {
+  selectedFields: BNNCExperienceFieldCode[] | undefined
+  onToggle: (code: BNNCExperienceFieldCode, checked: boolean) => void
+  disabled: boolean
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-purple-600" />
+          Campo de Experiencia
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground mb-4">
+          Selecione os Campos de Experiencia trabalhados nesta aula:
+        </p>
+        <div className="space-y-3">
+          {EXPERIENCE_FIELD_OPTIONS.map((field) => (
+            <div
+              key={field.code}
+              className={cn(
+                'flex items-start space-x-3 p-3 rounded-lg border transition-colors',
+                selectedFields?.includes(field.code)
+                  ? 'border-purple-300 bg-purple-50'
+                  : 'border-gray-200 hover:border-purple-200'
+              )}
+            >
+              <Checkbox
+                id={`experience-${field.code}`}
+                checked={selectedFields?.includes(field.code)}
+                onCheckedChange={(checked) => onToggle(field.code, checked === true)}
+                disabled={disabled}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <Label htmlFor={`experience-${field.code}`} className="text-sm font-medium cursor-pointer">
+                  {field.label}
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">{field.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function LessonContentForm({
   sessionId,
   educationLevel = 'fundamental',
@@ -86,42 +151,23 @@ export function LessonContentForm({
   // Form setup with Zod validation
   const form = useForm({
     resolver: zodResolver(lessonContentFormSchema),
-    defaultValues: {
-      tema: initialValues?.tema || '',
-      objetivo: initialValues?.objetivo || '',
-      habilidades_bncc_input: initialValues?.habilidades_bncc_input || '',
-      metodologia: initialValues?.metodologia || '',
-      recursos: initialValues?.recursos || '',
-      observacoes: initialValues?.observacoes || '',
-      campos_experiencia: initialValues?.campos_experiencia || [],
-      education_level: educationLevel,
-    } as LessonContentFormData,
+    defaultValues: getLessonFormValues(initialValues, educationLevel),
   })
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { errors, isSubmitting },
     reset,
-    watch,
   } = form
 
   // Watch selected experience fields for Ed. Infantil
-  const selectedExperienceFields = watch('campos_experiencia')
+  const selectedExperienceFields = useWatch({ control, name: 'campos_experiencia' })
 
   // Reset form when initialValues change
   useEffect(() => {
     if (initialValues) {
-      reset({
-        tema: initialValues.tema || '',
-        objetivo: initialValues.objetivo || '',
-        habilidades_bncc_input: initialValues.habilidades_bncc_input || '',
-        metodologia: initialValues.metodologia || '',
-        recursos: initialValues.recursos || '',
-        observacoes: initialValues.observacoes || '',
-        campos_experiencia: initialValues.campos_experiencia || [],
-        education_level: educationLevel,
-      } as LessonContentFormData)
+      reset(getLessonFormValues(initialValues, educationLevel))
     }
   }, [initialValues, educationLevel, reset])
 
@@ -256,53 +302,11 @@ export function LessonContentForm({
 
         {/* Ed. Infantil - Experience Fields */}
         {educationLevel === 'infantil' && (
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-purple-600" />
-                Campo de Experiencia
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-4">
-                Selecione os Campos de Experiencia trabalhados nesta aula:
-              </p>
-              <div className="space-y-3">
-                {EXPERIENCE_FIELD_OPTIONS.map((field) => (
-                  <div
-                    key={field.code}
-                    className={cn(
-                      'flex items-start space-x-3 p-3 rounded-lg border transition-colors',
-                      selectedExperienceFields?.includes(field.code)
-                        ? 'border-purple-300 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-200'
-                    )}
-                  >
-                    <Checkbox
-                      id={`experience-${field.code}`}
-                      checked={selectedExperienceFields?.includes(field.code)}
-                      onCheckedChange={(checked) =>
-                        toggleExperienceField(field.code, checked as boolean)
-                      }
-                      disabled={isFormDisabled}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <Label
-                        htmlFor={`experience-${field.code}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {field.label}
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {field.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <LessonExperienceFields
+            selectedFields={selectedExperienceFields}
+            onToggle={toggleExperienceField}
+            disabled={isFormDisabled}
+          />
         )}
 
         {/* BNCC Skills */}

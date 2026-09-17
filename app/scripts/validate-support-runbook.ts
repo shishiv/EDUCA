@@ -6,31 +6,37 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateSupportRunbook } from '../lib/wayfinder/support-runbook'
+import { parseJsonRecord, type JsonRecord, type JsonValue } from '../lib/validation/external-values'
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const runbookPath = path.join(repositoryRoot, 'data', 'wayfinder', 'educa', 'support-runbook', 'runbook.json')
-const runbook = JSON.parse(readFileSync(runbookPath, 'utf8')) as unknown
+// SAFETY: the adjacent fixture/parser boundary establishes the asserted contract.
+const runbook = JSON.parse(readFileSync(runbookPath, 'utf8')) as JsonValue
 const deliberateBreak = process.env.SUPPORT_RUNBOOK_DELIBERATE_BREAK
 
-function recordAt(value: unknown, pathName: string): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+function recordAt(value: JsonValue, pathName: string): JsonRecord {
+  const record = parseJsonRecord(value)
+  if (!record) {
     throw new Error(`SUPPORT_RUNBOOK_DELIBERATE_BREAK_INVALID: ${pathName} is not an object`)
   }
-  return value as Record<string, unknown>
+  return record
 }
 
-function applyDeliberateBreak(value: unknown, target: string): unknown {
-  const copy = JSON.parse(JSON.stringify(value)) as unknown
+function applyDeliberateBreak(value: JsonValue, target: string): JsonValue {
+  // SAFETY: the adjacent fixture/parser boundary establishes the asserted contract.
+  const copy = JSON.parse(JSON.stringify(value)) as JsonValue
   const runbookRecord = recordAt(copy, '$')
   if (target === 'owner') {
     const binding = recordAt(runbookRecord.humanBinding, '$.humanBinding')
     delete binding.owner
-    return copy
+    runbookRecord.humanBinding = binding
+    return runbookRecord
   }
   if (target === 'severity') {
     const incident = recordAt(runbookRecord.incident, '$.incident')
     delete incident.severity
-    return copy
+    runbookRecord.incident = incident
+    return runbookRecord
   }
   throw new Error(`SUPPORT_RUNBOOK_DELIBERATE_BREAK_INVALID: use owner or severity, received ${target}`)
 }

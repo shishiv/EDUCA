@@ -1,0 +1,4 @@
+[salvar/educa-quality-validation-20260908 5d1bb89a] chore(quality): preserve validation worktree from 2026-09-07
+ 21 files changed, 3322 insertions(+), 3224 deletions(-)
+ create mode 100644 app/lib/validation/external-values.ts
+ create mode 100644 app/tests/unit/validation/external-values.test.ts

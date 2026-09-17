@@ -2,6 +2,6 @@
   "version": 2,
   "framework": "nextjs",
   "buildCommand": "pnpm run build",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --frozen-lockfile",
   "regions": ["gru1"]
 }
