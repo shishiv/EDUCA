@@ -1,5 +1,10 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/types/database'
+import { isPasswordRecoveryCallback, readPasswordRecoveryUser } from '@/lib/password-recovery'
+
+// Capture callback intent before createBrowserClient starts consuming its URL.
+const onRecoveryPage = typeof window !== 'undefined' && window.location.pathname === '/reset-password/complete'
+const hadRecoveryCode = onRecoveryPage && isPasswordRecoveryCallback(new URL(window.location.href))
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -12,6 +17,20 @@ export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonK
     detectSessionInUrl: true
   }
 })
+
+// One result per browser document also survives React Strict Mode effect replay.
+// No token, verifier, or recovery flag is copied into application storage.
+let recoveryUser = onRecoveryPage
+  ? readPasswordRecoveryUser(supabase.auth, hadRecoveryCode).catch(() => null)
+  : Promise.resolve(null)
+
+export function passwordRecoveryUser(): Promise<string | null> {
+  return recoveryUser
+}
+
+export function forgetPasswordRecovery() {
+  recoveryUser = Promise.resolve(null)
+}
 
 // Tipos para as tabelas principais
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']

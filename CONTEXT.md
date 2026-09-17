@@ -76,6 +76,7 @@ pnpm lint                # ESLint
 pnpm check:diff-typography # rejects new U+2014 em dashes relative to main
 pnpm test                # enabled Vitest unit tests
 pnpm test:e2e            # general Playwright suite
+pnpm test:e2e:password-recovery         # isolated local Auth + mail catcher + serial AXI recovery scenarios
 pnpm test:e2e:pilot                     # R3-T4 aggregate: legacy, capacity, descriptive, and focused security children
 pnpm test:e2e:pilot:canonical           # isolated local Supabase, synthetic gate/identity, named app, one canonical attendance E2E
 pnpm test:e2e:pilot:legacy              # R3-T1 shared legacy slice only
@@ -122,6 +123,8 @@ It needs `initdb`, `pg_ctl`, `psql`, and `pg_dump` from PostgreSQL 15 or newer. 
 `app/scripts/pilot-safety-gate.ts` blocks external deploys while `PILOT_MODE=true`. To authorize real data or external pilot deployment, make a separate reviewed change with named legal and governance approvals. Do not weaken the gate as part of routine feature work.
 
 The partial portable restore proof writes generated evidence under ignored `.pilot-evidence/`. `app/scripts/run-pilot-restore-test.sh` requires T08's `isolated-proof` identity, reads only a local synthetic source, and replays the unchanged 18-table allowlist from `supabase/tests/pilot/restore-coverage-v1.tsv` into a temporary migrated database. It checks the bounded identity manifest, Storage files, recreated policy expressions and grants, views, RPC existence, tombstones, SQL teacher scope, checksums, cleanup and documented RPO/RTO. It does not recover school configuration/period overrides, Vivências/report provenance or attendance-reopen history, nor prove a restored Auth/Storage service. `pnpm test:database:restore` is the smaller raw-PostgreSQL regression, not the encrypted portable rehearsal. See `docs/PILOT-RESTORE-PROOF.md` for the coverage and provider limits. Governed pilot CSV preparation is proof-only: `app/scripts/run-pilot-import-proof-e2e.sh` creates a disposable PostgreSQL database, requires the explicit `isolated-proof` target and synthetic marker, encrypts the payload, records redacted safety receipts, counts and fingerprints, cleans expired ciphertext, and exercises rollback. It rejects the public demo, `SUPABASE_DEMO_*`, real mode, and production endpoints before database access; see `docs/PILOT-DATA-IMPORT.md`.
+
+Password recovery uses the local PKCE and browser lifecycle contract in [`docs/PASSWORD-RECOVERY.md`](docs/PASSWORD-RECOVERY.md). That document owns the focused rehearsal prerequisites, callback allowlist and causal negative control.
 
 ## WhatsApp attendance notifications (bounded MVP)
 
