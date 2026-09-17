@@ -8,10 +8,6 @@ BEGIN
 END;
 $$;
 SELECT pg_temp.assert_true(
-  NOT EXISTS (SELECT 1 FROM public.configs WHERE chave = 'restore_excluded_sentinel'),
-  'excluded school config must not be reported as recovered'
-);
-SELECT pg_temp.assert_true(
   NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'notas')
     AND (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.notas'::regclass),
   'grades remain blocked with RLS and no policies'

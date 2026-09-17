@@ -19,5 +19,5 @@ INSERT INTO public.sessoes_aula(id, turma_id, escola_id, professor_id, data_aula
   ('60000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', (now() AT TIME ZONE 'America/Sao_Paulo')::date, 'Synthetic restore', 'ABERTA', now());
 INSERT INTO public.frequencia(id, matricula_id, sessao_id, data_aula, presente, status_presenca, professor_id, marcado_por) VALUES
   ('70000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001', (now() AT TIME ZONE 'America/Sao_Paulo')::date, true, 'P', '20000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001');
-INSERT INTO public.configs(chave, valor, categoria, descricao, escola_id) VALUES
-  ('restore_excluded_sentinel', 'synthetic', 'test', 'Must not be recovered by F02', '10000000-0000-0000-0000-000000000001');
+-- This base fixture is loaded before the snapshot migration in the source only.
+-- The destination receives these rows exclusively through the bounded replay.

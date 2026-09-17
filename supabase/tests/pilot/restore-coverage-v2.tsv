@@ -1,0 +1,42 @@
+status	object	reason
+included	pilot_municipality_config	Synthetic governance and RPO/RTO data
+included	attendance_municipal_thresholds	Municipal attendance thresholds
+included	escolas	School rows; director/profile cycle is checked after replay
+included	users	Application profiles, not Auth credentials
+included	configs	Persisted defaults and per-school overrides; replace migration defaults without merging
+included	anos_letivos	School academic years with empty or configured periods
+included	turmas	Class rows
+included	responsaveis	Guardian rows
+included	alunos	Synthetic student rows only
+included	aluno_responsaveis	Student guardian links
+included	matriculas	Enrolments
+included	aulas_abertas	Legacy lesson rows
+included	sessoes_aula	Canonical attendance sessions
+included	conteudo_aula	Diary content dependent on canonical sessions
+included	frequencia	Canonical attendance facts
+included	attendance_reopen_requests	Decisions with before/after states and original captured deadlines; never recapture
+included	vivencias	Canonical narrative sources, independent of immutable report snapshots
+included	vivencias_campos_experiencia	Persisted narrative field links; do not regenerate IDs or timestamps
+included	relatorios_descritivos	Drafts, finalized reports and original JSONB snapshots; NULL legacy provenance stays NULL
+included	relatorios_descritivos_vivencias	Existing report source links only; never infer legacy links
+included	pilot_import_batches	Import batch metadata only; nullable references to excluded agreements must be absent
+included	pilot_import_approvals	Import approvals
+included	pilot_user_invitations	Invitation metadata, not Auth recovery
+included	pilot_metric_events	Pilot metric data
+included	pilot_data_tombstones	Deletion tombstones
+included	pilot_audit_log	Pilot audit rows, including narrative and reopening events
+partial	auth.users	Only id/email/created_at referenced by profiles or invitations; no passwords, sessions, refresh tokens, identities, MFA or GoTrue login
+partial	storage.buckets	Only student-photos id/name/public/file_size_limit/allowed_mime_types
+partial	storage.objects	Only student-photos id/bucket_id/name/metadata/created_at
+partial	storage.bytes	Download and decrypted file checksums only; no upload to a restored Storage service
+excluded	public.disciplinas	Pilot classes have one titular teacher without disciplines; a referenced missing discipline fails FK verification
+excluded	public.pilot_data_treatment_agreements	Governed import lifecycle is not recovered; a referenced missing agreement fails FK verification
+excluded	public.audit_trail	Full cross-module historical audit is outside this aggregate; request before/after states and pilot_audit_log are recovered
+excluded	public.audit_sessoes_aula	Historical duplicate session audit is outside this aggregate
+excluded	public.audit_logs	Legacy cross-module audit is outside this aggregate
+excluded	public.notas	Grades remain blocked; data excluded
+excluded	public.*	Every other public table not explicitly included above, including certificates, WhatsApp, Educacenso, feature flags and schema canary; no implicit expansion
+excluded	auth.*	All provider Auth state except the bounded identity manifest
+excluded	storage.*	Other buckets, objects and provider state are not exported
+excluded	provider_metadata	Owners, ACLs, roles, extensions, managed session settings and PITR are not exported
+recreated	migration_catalog	Canonical migrations plus pilot provisioner recreate schema/RLS/qual/with_check/grants; catalog comparison is structural, not recovered data
