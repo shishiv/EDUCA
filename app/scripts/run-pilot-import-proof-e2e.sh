@@ -9,6 +9,11 @@ PILOT_PROVISIONING="$ROOT_DIR/supabase/pilot/provision-pilot-module-gate.sql"
 source "$APP_DIR/scripts/pilot-import-proof-lifecycle.sh"
 begin_import_proof
 
+case "$RETENTION_DELIBERATE_BREAK" in
+  none|isolation) ;;
+  *) echo 'PILOT_IMPORT_RETENTION_BREAK_INVALID' >&2; exit 1 ;;
+esac
+
 for command in initdb pg_ctl psql node pnpm; do
   command -v "$command" >/dev/null || { echo "PILOT_IMPORT_PROOF_E2E_MISSING_COMMAND: $command" >&2; exit 1; }
 done
@@ -320,6 +325,75 @@ if printf '%s\n' "$REPLAY_OUTPUT" | grep -F '"deletedEnrollments":0' >/dev/null 
 fi
 [[ "$REPLAY_CHECK" == true ]] || { echo "PILOT_IMPORT_PROOF_E2E_REPLAY_FAILED: replay was not idempotent" >&2; exit 1; }
 
+PROOF_STAGE=retention
+if [[ "$RETENTION_DELIBERATE_BREAK" == isolation ]]; then
+  # Deliberately restore the old abort-all failure mechanism in this disposable
+  # database only. The retention oracle below must fail, then F05 tears it down.
+  "${PSQL[@]}" -d "$PROOF_DB" >/dev/null <<'SQL'
+DO $$
+DECLARE definition text; broken text;
+BEGIN
+  definition := pg_get_functiondef('public.pilot_cleanup_import_retention_results()'::regprocedure);
+  broken := replace(replace(definition,
+    'canonical_status := ''preserved_dependency'';', 'RAISE;'),
+    'reason_code := ''batch_failed'';', 'RAISE;');
+  IF broken = definition THEN RAISE EXCEPTION 'F08_DELIBERATE_BREAK_NOT_APPLIED'; END IF;
+  EXECUTE broken;
+END;
+$$;
+SQL
+fi
+
+# The canonical SQL contract includes school B, a finalized snapshot, Vivências,
+# attendance, shared state, a mid-delete failure, exact deadlines and retries.
+"${PSQL[@]}" -d "$PROOF_DB" -f "$ROOT_DIR/supabase/tests/database/pilot_retention_batch.test.sql" >/dev/null
+
+# Exercise the real CLI receipt with two expired batches, not just its serializer.
+THIRD_CSV_FILE="$WORK_DIR/pilot-third.csv"
+sed 's/synthetic-proof-student-two/synthetic-proof-student-three/g' "$SECOND_CSV_FILE" > "$THIRD_CSV_FILE"
+THIRD_IMPORT_OUTPUT=$(pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts import --csv "$THIRD_CSV_FILE" --approval "$APPROVAL_FILE")
+THIRD_BATCH_ID=$(printf '%s\n' "$THIRD_IMPORT_OUTPUT" | sed -n 's/.*"batchId":"\([0-9a-f-]*\)".*/\1/p' | tail -1)
+[[ -n "$THIRD_BATCH_ID" && "$THIRD_BATCH_ID" != "$SECOND_BATCH_ID" ]] || exit 1
+"${PSQL[@]}" -d "$PROOF_DB" -v blocked_batch="$SECOND_BATCH_ID" -v removable_batch="$THIRD_BATCH_ID" >/dev/null <<'SQL'
+INSERT INTO public.sessoes_aula(id, turma_id, escola_id, professor_id, data_aula, conteudo_programatico, status)
+VALUES ('30000000-0000-4000-8000-000000000097', '30000000-0000-0000-0000-000000000099',
+  '10000000-0000-0000-0000-000000000099', '20000000-0000-0000-0000-000000000098', '2026-03-01', 'Synthetic retention dependency', 'ABERTA');
+INSERT INTO public.frequencia(matricula_id, sessao_id, data_aula, presente, status_presenca)
+SELECT id, '30000000-0000-4000-8000-000000000097', '2026-03-01', true, 'P'
+FROM public.matriculas WHERE pilot_import_batch_id = :'blocked_batch';
+-- Fixture clock setup only. The cleanup itself must never rewrite these values.
+UPDATE public.pilot_import_batches
+SET raw_expires_at = now() - interval '30 days', rollback_until = now() - interval '7 days', canonical_expires_at = now() - interval '1 day'
+WHERE id IN (:'blocked_batch', :'removable_batch');
+SQL
+RETENTION_OUTPUT=$(pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts cleanup)
+node - "$RETENTION_OUTPUT" "$SECOND_BATCH_ID" "$THIRD_BATCH_ID" <<'NODE'
+const assert = require('node:assert/strict')
+const [output, blocked, removed] = process.argv.slice(2)
+const receipt = JSON.parse(output.split('PILOT_GOVERNED_RETENTION_RECEIPT: ')[1])
+assert.equal(receipt.rawPayloadsCleaned, 2)
+assert.equal(receipt.canonicalBatchesDeleted, 1)
+assert.equal(receipt.canonicalBatchesPreserved, 1)
+assert.equal(receipt.canonicalBatchesFailed, 0)
+assert.equal(receipt.batches.length, 2)
+assert.equal(receipt.batches.find(batch => batch.batch_id === blocked).canonical_status, 'preserved_dependency')
+assert.equal(receipt.batches.find(batch => batch.batch_id === removed).canonical_status, 'deleted')
+assert.doesNotMatch(output, /Aluno Prova|Responsavel Prova|@synthetic\.invalid|ciphertext|private-f08-error/)
+NODE
+RETENTION_RETRY_OUTPUT=$(pnpm --dir "$APP_DIR" exec tsx scripts/pilot-import-proof.ts cleanup)
+node - "$RETENTION_RETRY_OUTPUT" "$SECOND_BATCH_ID" <<'NODE'
+const assert = require('node:assert/strict')
+const [output, blocked] = process.argv.slice(2)
+const receipt = JSON.parse(output.split('PILOT_GOVERNED_RETENTION_RECEIPT: ')[1])
+assert.equal(receipt.rawPayloadsCleaned, 0)
+assert.equal(receipt.canonicalBatchesDeleted, 0)
+assert.equal(receipt.batches.length, 1)
+assert.equal(receipt.batches[0].batch_id, blocked)
+assert.equal(receipt.batches[0].canonical_status, 'preserved_dependency')
+NODE
+RETENTION_STORAGE_CHECK=$("${PSQL[@]}" -d "$PROOF_DB" -At -c "SELECT (SELECT count(*) FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$SECOND_BATCH_ID') = 1 AND (SELECT count(*) FROM storage.objects WHERE coalesce(user_metadata->>'pilot_import_batch_id', metadata->>'pilot_import_batch_id') = '$THIRD_BATCH_ID') = 0 AND (SELECT count(*) FROM public.pilot_data_tombstones WHERE source_fingerprint = (SELECT content_sha256 FROM public.pilot_import_batches WHERE id = '$THIRD_BATCH_ID')) = 1")
+[[ "$RETENTION_STORAGE_CHECK" == t ]] || { echo 'PILOT_IMPORT_RETENTION_STORAGE_FAILED' >&2; exit 1; }
+
 write_import_proof_receipt() {
 cat <<EOF
 # Governed pilot CSV proof receipt
@@ -359,6 +433,13 @@ This evidence was generated against a disposable PostgreSQL cluster and one data
 | Tombstone and redacted audit | true |
 | Other batch remained unchanged | true |
 | Idempotent rollback replay | true |
+| Retention CLI: expired blocked and removable batches | preserved_dependency + deleted, raw cleanup = 2 |
+| Retention CLI retry | preserved_dependency only, raw cleanup = 0, no duplicate tombstone |
+| Storage after retention | blocked batch kept, removable batch removed by exact association |
+| Retention SQL: school B and real-mode sentinel | unchanged, synthetic fixture only |
+| Retention SQL: finalized report, source links, Vivências, attendance and shared guardian | preserved |
+| Retention SQL: injected mid-delete failure and ownership gap | failed, no partial canonical deletion |
+| Retention SQL: existing deadlines, policy and purpose | unchanged |
 
 This is a synthetic isolated proof receipt. It is not evidence of municipal readiness.
 EOF

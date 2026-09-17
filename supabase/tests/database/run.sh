@@ -131,6 +131,7 @@ REPLAY_FINALIZERS=(
   "$GOVERNED_MANAGEMENT_ATOMIC_UPDATES_MIGRATION"
   "20260908090000_whatsapp_governed_enqueue.sql"
   "20260908100000_invitation_audit_recovery.sql"
+  "20260917000000_pilot_retention_batch_results.sql"
 )
 for finalizer in "${REPLAY_FINALIZERS[@]}"; do
   echo "Reapplying $finalizer after legacy replay"

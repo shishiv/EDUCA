@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { Client } from 'pg'
 import { z } from 'zod'
+import { importRetentionResultsSchema, summarizeImportRetention } from '../lib/pilot/import-retention-receipt'
 import {
   assertPilotImportOwnerMatchesActor,
   countCanonicalPilotRows,
@@ -184,12 +185,6 @@ interface RollbackReceipt extends ImportReceipt {
     }
     reasonRecorded: true
   }
-}
-
-interface RetentionCleanupReceipt {
-  target: GovernedPilotProofSafetyReceipt['target']
-  safety: GovernedPilotProofSafetyReceipt
-  rawPayloadsCleaned: number
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -876,14 +871,16 @@ async function runRollback(
 async function runRetentionCleanup(
   client: Client,
   safetyReceipt: GovernedPilotProofSafetyReceipt
-): Promise<RetentionCleanupReceipt> {
-  const result = await client.query<{ pilot_cleanup_import_retention: number }>(
-    `SELECT public.pilot_cleanup_import_retention()`
+) {
+  const result = await client.query(
+    `SELECT * FROM public.pilot_cleanup_import_retention_results()`
   )
+  const parsed = importRetentionResultsSchema.safeParse(result.rows)
+  if (!parsed.success) throw new Error('PILOT_IMPORT_RETENTION_RECEIPT_INVALID')
   return {
     target: safetyReceipt.target,
     safety: safetyReceipt,
-    rawPayloadsCleaned: result.rows[0]?.pilot_cleanup_import_retention ?? 0,
+    ...summarizeImportRetention(parsed.data),
   }
 }
 

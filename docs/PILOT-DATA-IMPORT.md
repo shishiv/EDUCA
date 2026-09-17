@@ -138,18 +138,38 @@ Cada linha canônica recebe `pilot_import_batch_id`. A tabela do lote registra o
 
 Objetos de Storage do proof recebem os metadados `pilot_import_batch_id` e `pilot_import_object_fingerprint`. O rollback usa a associação exata do lote, nunca o nome amplo do objeto.
 
-- `pilot_cleanup_import_retention()` remove ciphertext após `rawPayloadExpiresAt`.
+- `pilot_cleanup_import_retention_results()` aplica retenção somente a lotes `source_mode = 'synthetic'` dos alvos existentes. Retorna um resultado redigido por lote elegível.
+- `pilot_cleanup_import_retention()` mantém a assinatura escalar para os clientes existentes. Sua contagem histórica soma operações de limpeza bruta e descarte canônico, não lotes distintos. O proof usa o RPC detalhado.
 - `pilot_rollback_synthetic_import_batch()` remove somente linhas canônicas do lote `synthetic_local`, registra tombstone e auditoria.
 - `pilot_rollback_import_batch()` mantém a prova isolada com Storage e sua associação por fingerprint.
 - O endpoint `POST /api/pilot/imports/{batchId}/rollback` exige ator autenticado, motivo e janela `rollbackUntil` vigente.
 - Após `canonicalDataExpiresAt`, a limpeza de retenção usa o rollback transacional com motivo `retention_expired`.
 - O rollback recusa lotes com frequência já vinculada, associação incompleta ou responsável compartilhado fora do lote.
 
+### Resultados independentes de retenção
+
+A [migração F08](../supabase/migrations/20260917000000_pilot_retention_batch_results.sql) isola cada lote em uma subtransação. A limpeza do envelope e o rollback canônico têm subtransações separadas. Assim, uma dependência canônica não restaura ciphertext já expirado nem desfaz a limpeza de outro lote.
+
+O RPC detalhado retorna `batch_id`, `escola_id`, `raw_payload_status`, `canonical_status` e `reason_code`. O resultado bruto é `cleaned`, `not_due` ou `failed`. O resultado canônico é:
+
+| `canonical_status` | Significado e ação |
+| --- | --- |
+| `deleted` | Rollback exato concluído, com tombstone e auditoria existentes. |
+| `preserved_dependency` | Frequência, responsável compartilhado ou referência protegida impediu o descarte. Inclui `RESTRICT` de relatórios e Vivências, SQLSTATE `23001`, e violação de FK `23503`. Preserve o lote. Uma decisão sobre descarte pertence à autoridade de governança. |
+| `failed` | Falha operacional ou associação incompleta. O rollback parcial é desfeito. Corrija a causa antes de tentar novamente. |
+| `not_due` | Não houve descarte canônico nesta tentativa. |
+
+Os motivos são códigos fixos. Mensagens do PostgreSQL, nomes, conteúdo narrativo e detalhes de dependência não saem no resultado. Cada tentativa registra `import_retention_result` na auditoria existente. Se essa gravação falhar, a subtransação restaura o lote inteiro e o chamador recebe `failed` com `batch_failed`, sem afirmar que houve auditoria persistida.
+
+Lotes eliminados deixam de ser elegíveis. Lotes preservados ou falhos continuam elegíveis para retry manual, sem duplicar o tombstone ou a auditoria de rollback de lotes já eliminados. O lock e a rechecagem do lote evitam repetir uma limpeza concorrente concluída. As subtransações não são commits autônomos: cancelamento da chamada ou falha da conexão não comprovam uma execução concluída.
+
+Nenhum prazo, propósito ou categoria é reescrito. `raw_expires_at`, `rollback_until`, `canonical_expires_at` e a política persistida continuam sendo a autoridade. Não há scheduler novo nem autorização de descarte de dados reais ou compartilhados.
+
 ## Receipt
 
 O comando emite `PILOT_GOVERNED_IMPORT_RECEIPT` com lote, alvo aceito, receipt de segurança, contagens, fingerprints, objetos de Storage, estado criptográfico e retenção. Falhas emitem `PILOT_IMPORT_PROOF_SAFETY_RECEIPT` com o alvo tentado e o motivo, sem URL, chave ou conteúdo.
 
-O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. Esses receipts de operação não comprovam que o E2E terminou ou que seu cluster foi removido.
+O rollback acrescenta contagens removidas, evidência de tombstone, auditoria redigida, associação de Storage por fingerprint e replay idempotente. O comando `cleanup` emite `PILOT_GOVERNED_RETENTION_RECEIPT` com `batches` e contagens separadas de envelopes limpos, falhas brutas, lotes canônicos eliminados, preservados e falhos. Um comando concluído pode conter lotes preservados ou falhos. Consulte esses resultados, não apenas o código de saída. Esses receipts de operação não comprovam que o E2E terminou ou que seu cluster foi removido.
 
 O E2E anuncia `PILOT_IMPORT_PROOF_E2E_ATTEMPT` antes do preflight e guarda cada tentativa em `.pilot-evidence/governed-import-proof-e2e/<runId>/`. Não há alias de sucesso corrente. O antigo `governed-import-proof-e2e.md`, se existir, é movido para `legacy-unattributed.md` na nova tentativa. Esse arquivo é histórico sem atribuição, nunca o resultado da tentativa nova.
 
@@ -171,3 +191,14 @@ Ela cobre receipt histórico, falha precoce, parada falha, parada que mente, PID
 
 O E2E de browser executa importação sintética real, aprovação maker-checker, verifica ciphertext e acordo, chama rollback, e confirma que as linhas canônicas, ciphertext, tombstone e auditoria desapareceram ou ficaram redigidos. O proof runner também executa deliberate-breaks de segurança e governança: alvo inesperado, host de banco fora da lista local, demo, modo real configurado, marcador ausente, aprovação sem owner, import sem chave e replay com governança alterada. Cada falha precisa ficar vermelha e sem mutar o banco.
 O teste de banco cobre associação de lote ausente, lote ausente, alvo demo ou incorreto, expiração, frequência vinculada, responsável compartilhado, isolamento, rollback exato e replay. Se uma validação for removida, o teste falha.
+
+O proof também executa [`pilot_retention_batch.test.sql`](../supabase/tests/database/pilot_retention_batch.test.sql), presente na suíte de banco. A fixture é inteiramente sintética. Ela protege a escola B, um relatório realmente finalizado com snapshot e vínculos, Vivências, frequência e um responsável compartilhado. Injeta falhas depois de DELETEs parciais e na gravação de auditoria, verifica a restauração do lote afetado e mantém a remoção dos lotes independentes. Um sentinela sintético marcado `source_mode = 'real'` prova a exclusão desse modo, sem usar dados reais. O CLI recebe dois lotes expirados e confirma `preserved_dependency` e `deleted`, inclusive Storage por associação exata e retry.
+
+O controle negativo remove somente no banco descartável a contenção das exceções por dependência. A execução deve terminar em vermelho na etapa `retention`, sem `receipt.md` de sucesso e com cleanup verificado em `result.json`:
+
+```bash
+cd app
+PILOT_IMPORT_RETENTION_DELIBERATE_BREAK=isolation pnpm test:e2e:pilot:import
+```
+
+Depois, execute `pnpm test:e2e:pilot:import` sem essa variável para obter uma nova tentativa positiva. As duas tentativas mantêm diretórios distintos e manifestos dos arquivos selecionados.
