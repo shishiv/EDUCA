@@ -1,0 +1,39 @@
+PASS recovery form ready
+PASS recovery email requested
+OBSERVED recovery landing path=/reset-password/complete
+PASS valid recovery reaches new password form
+PASS exactly one automatic PKCE exchange
+PASS mobile form has no horizontal overflow
+PASS weak password rejected
+PASS confirmation mismatch rejected
+PASS same password rejected by Auth
+PASS password changed
+PASS recovery session ended
+PASS login ready after client navigation
+PASS previous password refused
+PASS new password login succeeds without Auth lock deadlock
+PASS completed recovery cannot resume through client history
+PASS reused email link rejected
+PASS callback parameters removed
+PASS login ready
+PASS ordinary login succeeds in a clean independent browser
+PASS ordinary login does not authorize a recovery form
+PASS callback parameters removed
+PASS recovery form ready
+PASS recovery email requested
+PASS another browser cannot use requester PKCE code
+PASS callback parameters removed
+PASS wrong-browser attempt preserves its own identity
+PASS requesting browser can still consume the code
+PASS isolated recovery completes
+PASS reused PKCE callback rejected
+PASS callback parameters removed
+PASS recovery form ready
+PASS recovery email requested
+PASS actually expired email link rejected
+PASS callback parameters removed
+PASS invalid email token rejected
+PASS callback parameters removed
+PASS other identity remains isolated after recovery
+PASS all F03 browser scenarios; workers=1; credentials retained=false
+F03: result=passed cleanup=true receipt=/home/shiv/.treehouse/educa-7c556a/1/educa/.pilot-evidence/f03-production.json

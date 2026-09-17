@@ -1,0 +1,59 @@
+== typecheck ==
+
+> educa@1.0.0 typecheck /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+== lint ==
+
+> educa@1.0.0 lint /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0
+
+
+== unit ==
+
+> educa@1.0.0 test /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> vitest run --maxWorkers\=2 tests/unit/auth/password-recovery.test.ts tests/unit/auth.test.ts tests/unit/auth-session-recovery.test.ts tests/unit/auth-middleware.test.ts
+
+
+ RUN  v4.1.10 /home/shiv/.treehouse/educa-7c556a/1/educa/app
+
+(node:3710667) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3710664) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3711332) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  4 passed (4)
+      Tests  52 passed (52)
+   Start at  05:13:47
+   Duration  900ms (transform 132ms, setup 159ms, import 219ms, tests 48ms, environment 948ms)
+
+
+== typography ==
+
+> educa@1.0.0 check:diff-typography /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> node scripts/check-no-new-em-dash.mjs
+
+NO_NEW_EM_DASH: base=origin/dev result=pass
+
+== worker-check ==
+NEXT_BUILD_WORKERS=1; CIRCLE_NODE_TOTAL=2
+
+== final-gates ==
+CAUSAL CONTROL: expected failure witnessed, completion restored
+BUILD AND PRODUCTION BROWSER: passed
+FINAL F03 GATES: passed
+
+== shellcheck ==
+cd app && shellcheck -x scripts/run-password-recovery-e2e.sh
+exit=0

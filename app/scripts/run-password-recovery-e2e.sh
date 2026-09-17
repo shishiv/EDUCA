@@ -92,7 +92,7 @@ pnpm exec tsx scripts/seed-pilot-synthetic.ts >"$PROJECT/seed.log" 2>&1
 # The development pass reproduces React Strict Mode and SDK initialization.
 if [[ "${F03_BUILD:-false}" == true ]]; then
   CIRCLE_NODE_TOTAL=2 pnpm build >"$PROJECT/build.log" 2>&1
-  printf 'PASS production build; workers=2\n'
+  printf 'PASS production build; CIRCLE_NODE_TOTAL=2; Next workers=1\n'
   setsid pnpm start --hostname 127.0.0.1 --port "$((PILOT_E2E_PORT_BASE + 9))" >"$PROJECT/app.log" 2>&1 &
 else
   setsid pnpm dev --hostname 127.0.0.1 --port "$((PILOT_E2E_PORT_BASE + 9))" >"$PROJECT/app.log" 2>&1 &

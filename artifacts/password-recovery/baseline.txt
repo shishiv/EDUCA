@@ -1,0 +1,5 @@
+PASS recovery form ready
+PASS recovery email requested
+OBSERVED recovery landing path=/login
+F03_ASSERTION_FAILED: valid recovery reaches new password form
+F03: result=failed cleanup=true receipt=/home/shiv/.treehouse/educa-7c556a/1/educa/.pilot-evidence/f03-baseline.json

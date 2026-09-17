@@ -26,7 +26,7 @@ pnpm test:e2e:password-recovery
 F03_MODE=production F03_BUILD=true pnpm test:e2e:password-recovery
 ```
 
-The first command uses development mode, including React Strict Mode. The second builds and serves the production artifact locally. Build workers are bounded to two with Next's `CIRCLE_NODE_TOTAL=2` setting. Browser actions always run serially with one worker across two isolated profiles.
+The first command uses development mode, including React Strict Mode. The second builds and serves the production artifact locally. `CIRCLE_NODE_TOTAL=2` selects one build worker in the installed Next version, whose calculation subtracts one from that setting. Browser actions always run serially with one worker across two isolated profiles.
 
 The runner creates a disposable project in this worktree, remaps ports, applies canonical migrations and the synthetic pilot gate, then seeds synthetic identities. Its callback allowlist includes the exact local `/reset-password/complete` URL. Auth's SMTP target is the project's own catcher container, with `.invalid` sender and recipients. The SMTP username and password must be nonempty synthetic values because the CLI rejects empty values. No external SMTP, remote Auth, deployment or hosted CI is involved.
 
@@ -38,4 +38,4 @@ Receipts and screenshots are written to ignored `.pilot-evidence/`. Browser scri
 
 In an isolated worktree, temporarily move `app/app/reset-password/complete/page.tsx` outside the App Router and run the same rehearsal with `F03_MODE=causal`. The valid-link assertion must fail because no new-password form exists. Restore the file before the positive run. Do not treat another failure, setup failure or timeout as this causal result.
 
-No remote callback allowlist or SMTP configuration is changed by this patch. Any separately authorized deployment must configure its own exact completion URL. Current evidence is local and synthetic only.
+No remote callback allowlist or SMTP configuration is changed by this patch. Any separately authorized deployment must configure its own exact completion URL. Current evidence is local and synthetic only. See the [2026-09-17 recovery receipts](../artifacts/password-recovery/README.md).
