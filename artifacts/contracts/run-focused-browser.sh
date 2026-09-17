@@ -6,7 +6,7 @@ cd "$ROOT/app"
 source scripts/pilot-local-runtime.sh
 source scripts/pilot-port-range-lease.sh
 source scripts/pilot-supabase-cleanup.sh
-EVIDENCE="$ROOT/artifacts/contracts/general"
+EVIDENCE="${FOCUSED_BROWSER_EVIDENCE_DIR:-$ROOT/artifacts/contracts/general}"
 mkdir -p "$EVIDENCE"
 PROJECT=$(mktemp -d "$ROOT/.quality-general.XXXXXX")
 PROJECT_ID=$(basename "$PROJECT")
@@ -24,7 +24,32 @@ cleanup() {
     pilot_supabase_stop_project "$PROJECT" "$PROJECT_ID" > "$EVIDENCE/cleanup.log" 2>&1 || result=1
   fi
   pilot_port_range_lease_release || result=1
-  for name in supabase-start build server test; do
+  # Decode only scoped, JSON-only F09 receipts before token redaction treats base64 as a JWT.
+  if [[ -f "$PROJECT/results.log" ]]; then
+    node - "$PROJECT/results.log" "$PROJECT/f09-cleanup.log" <<'NODE' || result=1
+const fs = require('node:fs')
+const [input, output] = process.argv.slice(2)
+const allowed = new Set(['f09-titular-cleanup.json', 'f09-dashboard-cleanup.json', 'f09-enrollment-cleanup.json'])
+const receipts = []
+function visit(suite) {
+  for (const spec of suite.specs ?? []) {
+    for (const test of spec.tests) {
+      for (const result of test.results) {
+        for (const attachment of result.attachments ?? []) {
+          if (allowed.has(attachment.name) && attachment.contentType === 'application/json') {
+            receipts.push({ test: spec.title, status: result.status, ...JSON.parse(Buffer.from(attachment.body, 'base64').toString('utf8')) })
+          }
+        }
+      }
+    }
+  }
+  for (const child of suite.suites ?? []) visit(child)
+}
+visit(JSON.parse(fs.readFileSync(input, 'utf8')))
+fs.writeFileSync(output, JSON.stringify(receipts, null, 2) + '\n')
+NODE
+  fi
+  for name in supabase-start build server test manifest results f09-cleanup; do
     redact_file "$PROJECT/$name.log" "$EVIDENCE/$name.log"
     if [[ -f "$EVIDENCE/$name.log" ]]; then
       sed -i -E 's/"(JWT_SECRET|S3_PROTOCOL_ACCESS_KEY_ID|S3_PROTOCOL_ACCESS_KEY_SECRET)":"[^"]*"/"\1":"[REDACTED_LOCAL_SECRET]"/g' "$EVIDENCE/$name.log"
@@ -72,4 +97,8 @@ export default defineConfig({
   use: { ...config.use, launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } },
 })
 TS
-pnpm exec playwright test --config "$CONFIG" --workers=1 --max-failures=1 --reporter=line "$@" > "$PROJECT/test.log" 2>&1
+pnpm exec playwright test --config "$CONFIG" --list --reporter=json "$@" > "$PROJECT/manifest.log" 2>&1
+PLAYWRIGHT_JSON_OUTPUT_NAME="$PROJECT/results.log" pnpm exec playwright test --config "$CONFIG" --workers=1 --max-failures=1 --reporter=line,json "$@" > "$PROJECT/test.log" 2>&1
+if [[ -n "${FOCUSED_BROWSER_AFTER_TEST_SCRIPT:-}" ]]; then
+  bash "$FOCUSED_BROWSER_AFTER_TEST_SCRIPT"
+fi
