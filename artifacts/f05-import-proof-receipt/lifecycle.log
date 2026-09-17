@@ -1,0 +1,17 @@
+
+> educa@1.0.0 test:pilot:import:lifecycle /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> bash tests/unit/pilot/import-proof-lifecycle.test.sh
+
+PASS: stale receipt invalidated and early failure attributed
+PASS: stop-fails preserves data and rejects success
+PASS: stop-lies preserves data and rejects success
+PASS: live-pid preserves data and rejects success
+PASS: status-unknown preserves data and rejects success
+PASS: signal-stop-fails preserves data and rejects success
+PASS: signal cleans the workspace without success
+PASS: signal-int cleans the workspace without success
+PASS: signal-hup cleans the workspace without success
+PASS: signal-during-stop cleans the workspace without success
+PASS: partial-start cleans the workspace without success
+PASS: source-changed cleans the workspace without success
+PASS: success is post-cleanup and each invocation has separate evidence

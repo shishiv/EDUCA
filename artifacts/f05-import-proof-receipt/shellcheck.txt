@@ -1,0 +1,1 @@
+PASS: shellcheck from app/ on runner, finalizer and lifecycle stubs
