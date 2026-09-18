@@ -1202,6 +1202,20 @@
   .blog-prose input[type='checkbox'] { width: 1rem; height: 1rem; margin-right: .45rem; accent-color: var(--app-teal-dark); }
 
 
+  /* Between the desktop header and the compact one, the navigation moves into
+     the menu while both next steps stay visible in the header itself. */
+  @media (max-width: 900px) {
+    .landing-nav { display: none; }
+    .landing-header__actions { margin-left: auto; }
+    .landing-menu { display: inline-flex; }
+  }
+
+  @media (min-width: 641px) and (max-width: 900px) {
+    .landing-menu__language,
+    .landing-menu__actions { display: none; }
+    .landing-menu__panel { gap: 0; }
+  }
+
   @media (max-width: 1040px) {
     .landing-container { width: min(100% - 48px, 760px); }
     .landing-nav { gap: 18px; }

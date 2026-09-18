@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
   ArrowRight,
+  ArrowUpRight,
   BookOpen,
   Check,
   ClipboardCheck,
@@ -16,7 +17,6 @@ import {
   School,
   ShieldCheck,
   Users,
-  ArrowUpRight,
 } from 'lucide-react'
 import { BrandLogo } from '@/components/marketing/brand-logo'
 import { LocaleSwitcher } from '@/components/i18n/locale-switcher'
