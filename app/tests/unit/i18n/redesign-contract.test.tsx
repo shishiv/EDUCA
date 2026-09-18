@@ -39,15 +39,26 @@ describe('redesign localization contract', () => {
       </NextIntlClientProvider>
     )
 
-    expect(screen.getByRole('heading', { level: 1 })).toBeVisible()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      `${publicMessages.landing.heroTitle} ${publicMessages.landing.heroEmphasis}`
+    )
     expect(screen.getByText(publicMessages.landing.productDescription)).toBeVisible()
     expect(screen.getByText(publicMessages.landing.syntheticState)).toBeVisible()
-    expect(screen.getByRole('link', { name: publicMessages.landing.demo })).toHaveAttribute('href', '/demo')
-    expect(screen.getByRole('link', { name: publicMessages.landing.meet })).toHaveAttribute('href', '/demo')
-    expect(screen.queryByRole('link', { name: publicMessages.landing.login })).not.toBeInTheDocument()
+
+    // The demo call to action is repeated in the header and in the hero under
+    // one label, and both reach the same destination.
+    const demoLinks = screen.getAllByRole('link', { name: publicMessages.landing.demo })
+    expect(demoLinks.length).toBeGreaterThanOrEqual(2)
+    for (const link of demoLinks) expect(link).toHaveAttribute('href', '/demo')
+    expect(screen.getAllByRole('link', { name: publicMessages.landing.login })[0]).toHaveAttribute('href', '/login')
     expect(screen.getAllByRole('button', { name: /language|idioma/i })).not.toHaveLength(0)
     expect(screen.getByRole('link', { name: publicMessages.landing.privacy })).toHaveAttribute('href', '/politica-privacidade')
     expect(screen.getAllByRole('link').some(link => link.getAttribute('href') === 'https://github.com/shishiv/EDUCA')).toBe(true)
+
+    // Feature rows have no destination yet, so they must carry no link affordance.
+    for (const feature of [publicMessages.landing.module1Title, publicMessages.landing.module2Title, publicMessages.landing.module3Title]) {
+      expect(screen.queryByRole('link', { name: feature })).not.toBeInTheDocument()
+    }
 
     const renderedText = document.body.textContent ?? ''
     expect(renderedText).not.toMatch(/measured impact|measured impact|adoption claim|production ready/i)
