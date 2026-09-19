@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
+  AlertCircle,
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
   Check,
   ClipboardCheck,
   Github,
@@ -108,19 +108,33 @@ function LandingMenu() {
 }
 
 /**
- * Illustrative preview of the Overview screen. Every value stays a dash: no
+ * Illustrative preview of the authenticated Overview screen implemented in
+ * `app/app/(dashboard)/dashboard/page.tsx`: the four metrics of
+ * `DashboardMetrics`, the class list of `DashboardClasses` and the alerts panel
+ * of `app/components/dashboard/alertas-card.tsx`. The labels are read from the
+ * namespaces that screen itself uses, so the preview cannot drift away from the
+ * structure the caption claims to reproduce. Every value stays a dash: no
  * network has been measured. The inner composition is `aria-hidden` and the
  * caption carries that contract in the document flow.
  */
 function ProductBoard() {
   const t = useTranslations('public.landing')
+  const dashboard = useTranslations('platform.dashboard')
+  const section = useTranslations('layout.navigation.items')
   // Class names stay literal: `@layer components` rules in globals.css are
   // dropped by Tailwind's content scan when a selector is built at runtime.
-  const schools = [
-    { initial: 'A', avatarClass: 'landing-avatar', badgeClass: 'landing-badge landing-badge--ok', status: t('upToDate') },
-    { initial: 'B', avatarClass: 'landing-avatar landing-avatar--orange', badgeClass: 'landing-badge landing-badge--watch', status: t('followUp') },
-    { initial: 'C', avatarClass: 'landing-avatar landing-avatar--blue', badgeClass: 'landing-badge landing-badge--ok', status: t('upToDate') },
+  const metrics = [
+    { label: dashboard('averageAttendance'), tone: 'landing-board__metric landing-board__metric--teal' },
+    { label: dashboard('totalStudents'), tone: 'landing-board__metric landing-board__metric--paper' },
+    { label: dashboard('activeClasses'), tone: 'landing-board__metric landing-board__metric--lime' },
+    { label: dashboard('activeTeachers'), tone: 'landing-board__metric landing-board__metric--ink' },
   ]
+  const turmas = [
+    { letter: 'A', marker: 'landing-board__class-marker' },
+    { letter: 'B', marker: 'landing-board__class-marker landing-board__class-marker--orange' },
+    { letter: 'C', marker: 'landing-board__class-marker landing-board__class-marker--indigo' },
+  ]
+  const sidebar = ['students', 'schools', 'classes', 'enrolments', 'attendance', 'classDiary'] as const
   return (
     <figure className="landing-board-figure">
       <div className="landing-board" aria-hidden="true">
@@ -130,7 +144,7 @@ function ProductBoard() {
             <i />
             <i />
           </div>
-          <span className="landing-board__crumb">{t('boardCrumb')}</span>
+          <span className="landing-board__crumb">EDUCA / {section('dashboard')}</span>
           <span className="landing-board__status">
             <span /> {t('synthetic')}
           </span>
@@ -138,49 +152,39 @@ function ProductBoard() {
         <div className="landing-board__body">
           <div className="landing-board__sidebar">
             <div className="landing-board__mini-brand">EDUCA</div>
-            <div className="landing-board__side-item landing-board__side-item--active">{t('overview')}</div>
-            <div className="landing-board__side-item">{t('schools')}</div>
-            <div className="landing-board__side-item">{t('students')}</div>
-            <div className="landing-board__side-item">{t('classes')}</div>
-            <div className="landing-board__side-item">{t('attendance')}</div>
-            <div className="landing-board__side-item">{t('reports')}</div>
-            <div className="landing-board__side-footer">{t('settings')}</div>
+            <div className="landing-board__side-item landing-board__side-item--active">{section('dashboard')}</div>
+            {sidebar.map((item) => (
+              <div className="landing-board__side-item" key={item}>{section(item)}</div>
+            ))}
+            <div className="landing-board__side-footer">{section('settings')}</div>
           </div>
           <div className="landing-board__content">
-            <p className="landing-board__title">{t('networkView')}</p>
+            <p className="landing-board__title">{dashboard('title')}</p>
             <div className="landing-board__metrics">
-              <div className="landing-board__metric landing-board__metric--teal"><span>{t('activeSchools')}</span><strong>-</strong><small>{t('networkSuffix')}</small></div>
-              <div className="landing-board__metric landing-board__metric--yellow"><span>{t('classesToday')}</span><strong>-</strong><small>{t('underway')}</small></div>
-              <div className="landing-board__metric landing-board__metric--ink"><span>{t('attendanceRecorded')}</span><strong>-</strong><small>{t('soFar')}</small></div>
+              {metrics.map(({ label, tone }) => (
+                <div className={tone} key={label}><span>{label}</span><strong>-</strong></div>
+              ))}
             </div>
-            <p className="landing-board__table-title">{t('networkActivity')}</p>
-            <table className="landing-board__table">
-              <thead>
-                <tr>
-                  <th scope="col">{t('schoolHeading')}</th>
-                  <th scope="col">{t('attendanceHeading')}</th>
-                  <th scope="col">{t('statusHeading')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schools.map(({ initial, avatarClass, badgeClass, status }) => (
-                  <tr key={initial}>
-                    <td>
-                      <span className="landing-board__school">
-                        <b className={avatarClass}>{initial}</b>
-                        {t('exampleSchool')} {initial}
-                      </span>
-                    </td>
-                    <td>-</td>
-                    <td><span className={badgeClass}>{status}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="landing-board__list-title">{dashboard('myClasses')}</p>
+            <ul className="landing-board__classes">
+              {turmas.map(({ letter, marker }) => (
+                <li className="landing-board__class" key={letter}>
+                  <span className={marker} />
+                  <span className="landing-board__class-copy">
+                    <strong>{t('exampleClass')} {letter}</strong>
+                    <small>-</small>
+                  </span>
+                  <span className="landing-board__class-count">
+                    <strong>-</strong>
+                    <small>{dashboard('students')}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
             <div className="landing-board__note">
-              <span className="landing-board__note-icon"><BookOpen size={15} /></span>
-              <strong>{t('classDiary')}</strong>
-              <p>{t('pendingReview')}</p>
+              <span className="landing-board__note-icon"><AlertCircle size={15} /></span>
+              <strong>{dashboard('alertsTitle')}</strong>
+              <p>{dashboard('alertsSubtitle')}</p>
             </div>
           </div>
         </div>

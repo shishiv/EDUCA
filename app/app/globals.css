@@ -761,10 +761,13 @@
   .landing-menu__actions { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--landing-line); }
   .landing-menu__actions .landing-button { width: 100%; }
 
+  /* The copy column carries the display h1: at the 1440px reference viewport it
+     resolves to ~543px, the width where the English title composes in four
+     lines instead of breaking "School" onto a line of its own. */
   .landing-hero {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(330px, .86fr) minmax(520px, 1.14fr);
+    grid-template-columns: minmax(330px, .95fr) minmax(500px, 1.05fr);
     align-items: center;
     gap: 56px;
     padding-top: 76px;
@@ -870,28 +873,29 @@
   .landing-board__side-footer { margin-top: auto; padding: 12px 9px 0; border-top: 1px solid #d4e0d9; }
   .landing-board__content { padding: 20px 22px 22px; }
   .landing-board__title { margin: 0; color: var(--landing-ink); font-family: var(--font-display); font-size: 1.3rem; font-weight: 500; letter-spacing: -.04em; line-height: 1.1; }
-  .landing-board__metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  /* Four metrics and a class list, mirroring the metric tones and the class
+     rows of the authenticated Overview screen (`.app-metric`, `.app-class-row`). */
+  .landing-board__metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
   .landing-board__metric { display: flex; flex-direction: column; gap: 4px; padding: 11px; border-radius: 5px; color: var(--landing-ink); }
   .landing-board__metric span { font-size: .78rem; font-weight: 700; line-height: 1.25; }
   .landing-board__metric strong { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: -.04em; line-height: 1; }
-  .landing-board__metric small { color: var(--landing-ink-soft); font-size: .78rem; }
   .landing-board__metric--teal { background: #cbeae0; }
-  .landing-board__metric--yellow { background: #edf3b7; }
+  .landing-board__metric--paper { background: #f1f5ef; }
+  .landing-board__metric--lime { background: #edf3b7; }
   .landing-board__metric--ink { background: #dce6e6; }
-  .landing-board__table-title { margin: 20px 0 0; color: var(--landing-ink); font-size: .86rem; font-weight: 700; }
-  .landing-board__table { width: 100%; margin-top: 6px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  .landing-board__table th { padding: 5px 0; border-bottom: 1px solid #e5ece9; color: #4f6c67; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
-  .landing-board__table td { padding: 9px 0; border-bottom: 1px solid #eef3f0; color: #3f5c58; font-size: .8rem; }
-  .landing-board__table tr:last-child td { border-bottom: 0; }
-  .landing-board__table th:not(:first-child),
-  .landing-board__table td:not(:first-child) { text-align: right; }
-  .landing-board__school { display: flex; align-items: center; gap: 8px; }
-  .landing-avatar { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #bfe3d7; color: #12544f; font-size: .74rem; font-weight: 800; }
-  .landing-avatar--orange { background: #f9d1be; color: #80351f; }
-  .landing-avatar--blue { background: #cedce8; color: #2f5470; }
-  .landing-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: .78rem; font-weight: 800; white-space: nowrap; }
-  .landing-badge--ok { background: #d8f0e2; color: #1d5f45; }
-  .landing-badge--watch { background: #f9e6b9; color: #6d480b; }
+  .landing-board__list-title { margin: 20px 0 0; color: var(--landing-ink); font-size: .86rem; font-weight: 700; }
+  .landing-board__classes { margin: 6px 0 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; }
+  .landing-board__class { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #eef3f0; }
+  .landing-board__class:last-child { border-bottom: 0; }
+  .landing-board__class-marker { width: 9px; height: 9px; border-radius: 50%; background: #2f8a62; }
+  .landing-board__class-marker--orange { background: var(--landing-orange); }
+  .landing-board__class-marker--indigo { background: #59618f; }
+  .landing-board__class-copy { display: grid; min-width: 0; gap: 2px; }
+  .landing-board__class-copy strong { overflow: hidden; color: var(--landing-ink); font-size: .8rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+  .landing-board__class-copy small { color: #4f6c67; font-size: .74rem; }
+  .landing-board__class-count { display: grid; justify-items: end; }
+  .landing-board__class-count strong { color: var(--landing-ink); font-family: var(--font-display); font-size: .9rem; }
+  .landing-board__class-count small { color: #4f6c67; font-size: .7rem; }
   .landing-board__note { display: grid; grid-template-columns: auto 1fr; gap: 4px 11px; margin-top: 16px; padding: 12px; border: 1px solid #dce8e0; border-radius: 5px; background: #f4f8ed; color: var(--landing-ink); }
   .landing-board__note-icon { display: grid; width: 30px; height: 30px; grid-row: 1 / span 2; place-items: center; border-radius: 4px; background: var(--landing-orange); color: #fff; }
   .landing-board__note strong { align-self: end; font-family: var(--font-display); font-size: .86rem; font-weight: 700; }
@@ -1252,10 +1256,9 @@
     .landing-board__sidebar { display: none; }
     .landing-board__content { padding: 16px 14px 18px; }
     .landing-board__metrics { grid-template-columns: 1fr; gap: 6px; margin-top: 14px; }
-    .landing-board__metric { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 0 12px; padding: 10px 12px; }
+    .landing-board__metric { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 12px; padding: 10px 12px; }
     .landing-board__metric span { grid-column: 1; }
-    .landing-board__metric strong { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 1.4rem; }
-    .landing-board__metric small { grid-column: 1; }
+    .landing-board__metric strong { grid-column: 2; font-size: 1.4rem; }
     .landing-intro, .landing-open { padding: 72px 0; }
     .landing-intro__grid { gap: 33px; }
     .landing-intro h2, .landing-section-heading h2, .landing-open h2 { font-size: clamp(2.2rem, 10vw, 2.9rem); }
