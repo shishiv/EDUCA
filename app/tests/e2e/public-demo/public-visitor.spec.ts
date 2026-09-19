@@ -16,9 +16,12 @@ test.describe('J1: public visitor journey', () => {
     await expect(page.getByRole('img', { name: 'EDUCA' }).first()).toBeVisible()
     if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
     await expect(page.getByRole('button', { name: 'Mudar idioma para English' }).first()).toHaveText('PT')
-    if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
+    await expect(page.locator('header').getByRole('link', { name: 'Ver a demonstração' })).toHaveAttribute('href', '/demo')
+    if (isMobile) await page.keyboard.press('Escape')
 
-    await page.getByRole('link', { name: 'Ver a demonstração' }).click()
+    // The demo call to action is repeated in the header and in the hero under
+    // the same label; the hero one is the in-page next step.
+    await page.locator('main').getByRole('link', { name: 'Ver a demonstração' }).click()
     await expect(page).toHaveURL(/\/demo\/?$/)
     await expect(page.getByRole('heading', { level: 1, name: /sandbox público do educa/i })).toBeVisible()
     await expect(page.getByText(/não insira dados pessoais ou escolares reais/i)).toBeVisible()
