@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  ATENCAO,
-  CONFORMIDADE,
   getFrequencyPolicyStatus,
   isAttendanceCompliant,
 } from '@/lib/attendance/attendance-policy'
 import { calculateFaltasParaCritico } from '@/lib/reports/bolsa-familia-reports'
+import { validateMinimumAttendance } from '@/lib/validation/brazilian'
+import { validateAttendancePercentage } from '@/lib/validation/brazilian-educational'
 
 const POLICY_SURFACES = [
   'lib/reports/bolsa-familia-reports.ts',
@@ -40,19 +40,23 @@ function readSurface(relativePath: string): string {
 }
 
 describe('canonical frequency policy contract', () => {
-  it('keeps the captain thresholds and boundary meanings independent of consumers', () => {
-    expect(CONFORMIDADE).toBe(80)
-    expect(ATENCAO).toBe(85)
+  it('preserves exact boundary meanings for the seeded policy without rounding into a higher band', () => {
+    const bands = { reference: 80, attention: 85 }
+    expect([79.99, 80, 84.99, 85].map(value => getFrequencyPolicyStatus(value, bands)))
+      .toEqual(['CRITICO', 'ATENCAO', 'ATENCAO', 'CONFORME'])
+    expect(isAttendanceCompliant(80, bands)).toBe(true)
+    expect(isAttendanceCompliant(79.99, bands)).toBe(false)
+    expect(calculateFaltasParaCritico(16, 4, 0, 80)).toBe(1)
+    expect(calculateFaltasParaCritico(14, 6, 0, 80)).toBe(0)
+  })
 
-    expect(getFrequencyPolicyStatus(70)).toBe('CRITICO')
-    expect(getFrequencyPolicyStatus(79)).toBe('CRITICO')
-    expect(getFrequencyPolicyStatus(80)).toBe('ATENCAO')
-    expect(getFrequencyPolicyStatus(84)).toBe('ATENCAO')
-    expect(getFrequencyPolicyStatus(85)).toBe('CONFORME')
-    expect(isAttendanceCompliant(80)).toBe(true)
-    expect(isAttendanceCompliant(79)).toBe(false)
-    expect(calculateFaltasParaCritico(16, 4, 0)).toBe(1)
-    expect(calculateFaltasParaCritico(14, 6, 0)).toBe(0)
+  it('does not change legacy benefit assertions when general bands move across the same attendance', () => {
+    const legalMessage = 'Atenção preventiva municipal abaixo de 85%; condicionalidade Bolsa Família atendida a partir de 80%'
+    for (const bands of [{ reference: 70, attention: 75 }, { reference: 90, attention: 95 }]) {
+      expect(getFrequencyPolicyStatus(82, bands)).toBe(bands.reference === 70 ? 'CONFORME' : 'CRITICO')
+      expect(validateMinimumAttendance(82)).toBe(true)
+      expect(validateAttendancePercentage(82)).toEqual({ isValid: true, status: 'warning', message: legalMessage })
+    }
   })
 
   it('rejects legacy literals and direct attendance reads in alert surfaces', () => {

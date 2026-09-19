@@ -4,7 +4,10 @@
  */
 
 import { z } from 'zod'
-import { ATENCAO, CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+
+// Legacy benefit validation is not a general alert. Its rule needs a separate product decision.
+const LEGACY_BOLSA_FAMILIA_ATTENDANCE_FLOOR = 80
 
 /**
  * Validates Brazilian CPF (Cadastro de Pessoas Físicas)
@@ -233,9 +236,10 @@ export function calculateAttendanceRate(presentDays: number, totalDays: number):
  * @param attendanceRate Attendance percentage
  * @returns Attendance status using the canonical frequency policy
  */
-export function getAttendanceStatus(attendanceRate: number): 'adequate' | 'warning' | 'critical' {
-  if (attendanceRate >= ATENCAO) return 'adequate'
-  if (attendanceRate >= CONFORMIDADE) return 'warning'
+export function getAttendanceStatus(attendanceRate: number, bands: AttendanceBands): 'adequate' | 'warning' | 'critical' {
+  const status = getFrequencyPolicyStatus(attendanceRate, bands)
+  if (status === 'CONFORME') return 'adequate'
+  if (status === 'ATENCAO') return 'warning'
   return 'critical'
 }
 
@@ -245,7 +249,7 @@ export function getAttendanceStatus(attendanceRate: number): 'adequate' | 'warni
  * @returns boolean indicating if minimum requirement is met
  */
 export function validateMinimumAttendance(attendanceRate: number): boolean {
-  return attendanceRate >= CONFORMIDADE
+  return attendanceRate >= LEGACY_BOLSA_FAMILIA_ATTENDANCE_FLOOR
 }
 
 // Zod schemas for Brazilian educational data validation

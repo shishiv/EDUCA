@@ -19,7 +19,7 @@ import { EscolaRequiredState } from '@/components/ui/escola-required-state'
 import { useEscola } from '@/contexts/escola-context'
 import { useAuth } from '@/hooks/use-auth'
 import { dashboardStatsApi } from '@/lib/api/dashboard-stats'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { useAttendanceBands } from '@/hooks/use-attendance-bands'
 import { getTodaySaoPaulo } from '@/lib/date-utils'
 import {
   isQuickAccessRole,
@@ -231,10 +231,13 @@ function DashboardIntro({ academicYear, userName }: { academicYear: ResolvedAcad
   )
 }
 
-function DashboardMetrics({ academicYear, stats }: { academicYear: ResolvedAcademicYear; stats: DashboardStats }) {
+function DashboardMetrics({ academicYear, stats, escolaId }: { academicYear: ResolvedAcademicYear; stats: DashboardStats; escolaId: string }) {
   const t = useTranslations('platform.dashboard')
   const locale = useLocale()
-  const frequencyIsConformant = stats.frequenciaMedia >= CONFORMIDADE
+  const { data: bands, error } = useAttendanceBands(escolaId)
+  if (error) return <p role="alert">Configuração de frequência indisponível. Recarregue a página.</p>
+  if (!bands) return <p role="status">Carregando faixas de frequência...</p>
+  const frequencyIsConformant = stats.frequenciaMedia >= bands.reference
   const number = new Intl.NumberFormat(locale)
   const metrics: MetricItem[] = [
     {
@@ -396,7 +399,7 @@ function DashboardOverview({
   return (
     <div className="app-dashboard">
       <DashboardIntro academicYear={academicYear} userName={userName} />
-      <DashboardMetrics academicYear={academicYear} stats={stats} />
+      <DashboardMetrics academicYear={academicYear} stats={stats} escolaId={escolaId} />
       <DashboardQuickAccess role={role} />
       <div className="app-dashboard__work-grid">
         <DashboardClasses academicYear={academicYear} turmas={turmas} />

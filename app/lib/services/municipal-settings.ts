@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import type { Database } from '@/types/database'
+import { attendanceBandsSchema } from '@/lib/attendance/attendance-policy'
 import { asPilotRpcClient, type PilotRpcClient } from '@/lib/pilot/pilot-rpc-client'
 
 export const municipalSettingsSchema = z.object({
@@ -11,6 +12,7 @@ export const municipalSettingsSchema = z.object({
   dpo_email: z.string(),
   dpo_address: z.string(),
   educacenso_deadline: z.string().nullable(),
+  attendance_bands: attendanceBandsSchema,
 })
 
 export type MunicipalSettings = z.infer<typeof municipalSettingsSchema>
@@ -38,7 +40,7 @@ export function createMunicipalSettingsService(
 
     if (error) throw new Error(error.message)
     if (!data?.[0]) throw new Error('MUNICIPAL_SETTINGS_NOT_FOUND')
-    return data[0]
+    return municipalSettingsSchema.parse(data[0])
   }
 
   return {
@@ -55,11 +57,12 @@ export function createMunicipalSettingsService(
         p_dpo_address: input.dpo_address,
         p_educacenso_year: input.educacensoYear,
         p_educacenso_deadline: input.educacenso_deadline,
+        p_attendance_bands: attendanceBandsSchema.parse(input.attendance_bands),
       })
 
       if (error) throw new Error(error.message)
       if (!data?.[0]) throw new Error('MUNICIPAL_SETTINGS_NOT_SAVED')
-      return data[0]
+      return municipalSettingsSchema.parse(data[0])
     },
   }
 }

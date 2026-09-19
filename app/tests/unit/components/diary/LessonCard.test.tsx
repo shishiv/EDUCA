@@ -12,6 +12,7 @@ import type { LessonCardData } from '@/components/diary/LessonCard'
 
 describe('LessonCard', () => {
   const mockLesson: LessonCardData = {
+    bands: { reference: 80, attention: 85 },
     id: '123e4567-e89b-12d3-a456-426614174000',
     data_aula: '2024-02-15',
     tema: 'Operações Matemáticas Básicas',

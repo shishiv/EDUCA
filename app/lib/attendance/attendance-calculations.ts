@@ -1,4 +1,4 @@
-import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus, type FrequencyPolicyStatus } from './attendance-policy'
+import { getFrequencyPolicyStatus, type AttendanceBands, type FrequencyPolicyStatus } from './attendance-policy'
 
 export interface AttendanceCounts {
   presencas: number
@@ -65,20 +65,21 @@ export interface AttendancePolicySummary extends AttendanceCounts {
 
 /** Adds the canonical policy status to a set of attendance counts. */
 export function summarizeAttendanceCounts(
-  counts: AttendanceCounts
+  counts: AttendanceCounts,
+  bands: AttendanceBands,
 ): AttendancePolicySummary {
   const percentual = calculateAttendancePercentage(
     counts.presencas,
     counts.faltas,
     counts.atestados
   )
-  const status = getFrequencyPolicyStatus(percentual)
+  const status = getFrequencyPolicyStatus(percentual, bands)
 
   return {
     ...counts,
     percentual,
     status,
-    conforme: percentual >= CONFORMIDADE,
-    atencaoPreventiva: percentual >= CONFORMIDADE && percentual < ATENCAO,
+    conforme: status !== 'CRITICO',
+    atencaoPreventiva: status === 'ATENCAO',
   }
 }

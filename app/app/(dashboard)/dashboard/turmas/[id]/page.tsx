@@ -21,7 +21,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { loadCanonicalAttendanceFacts } from '@/lib/api/canonical-attendance-facts'
 import { logger } from '@/lib/logger'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { useAttendanceBands } from '@/hooks/use-attendance-bands'
 import { useClassroomTranslations } from '@/i18n/classroom'
 import { useAuth } from '@/hooks/use-auth'
 import { canAccessRoute } from '@/lib/route-policy'
@@ -88,6 +88,13 @@ async function fetchMatriculas(id: string, year: number) {
 function attendanceAverage(facts: Awaited<ReturnType<typeof loadCanonicalAttendanceFacts>>) {
   if (facts.length === 0) return 0
   return Number(((facts.filter(fact => fact.presente).length / facts.length) * 100).toFixed(1))
+}
+
+function ClassFrequencyReference({ schoolId, percentage }: { schoolId: string; percentage: number }) {
+  const { data: bands, error } = useAttendanceBands(schoolId)
+  if (error) return <span role="alert">Configuração de frequência indisponível.</span>
+  if (!bands) return <span role="status">Carregando faixas...</span>
+  return <span>{percentage >= bands.reference ? 'Acima' : 'Abaixo'} da referência municipal ({bands.reference}%)</span>
 }
 
 function ClassDetailsCard({ turma, shiftLabel }: { turma: Turma; shiftLabel: string }) {
@@ -416,7 +423,7 @@ export default function TurmaDetalhesPage() {
           <CardContent>
             <div className="flex items-center text-sm text-gray-600">
               <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-              {frequenciaStats.frequenciaMedia >= CONFORMIDADE ? 'Acima' : 'Abaixo'} da conformidade ({CONFORMIDADE}%)
+              <ClassFrequencyReference schoolId={turma.escola_id} percentage={frequenciaStats.frequenciaMedia} />
             </div>
           </CardContent>
         </Card>

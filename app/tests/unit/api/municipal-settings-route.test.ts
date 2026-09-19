@@ -13,6 +13,7 @@ const settings: MunicipalSettings = {
   dpo_email: '',
   dpo_address: '',
   educacenso_deadline: '2026-07-31',
+  attendance_bands: { reference: 80, attention: 85 },
 }
 const director: PilotActor = {
   id: 'director-1',
@@ -32,6 +33,7 @@ interface MunicipalSettingsRequestBody {
   dpoAddress?: string
   educacensoYear?: number
   educacensoDeadline?: string | null
+  attendanceBands?: { reference: number; attention: number }
 }
 
 function patch(handler: (request: Request) => Promise<Response>, body: MunicipalSettingsRequestBody) {
@@ -105,6 +107,7 @@ describe('/api/school-settings/municipal', () => {
       dpoAddress: settings.dpo_address,
       educacensoYear: 2026,
       educacensoDeadline: settings.educacenso_deadline,
+      attendanceBands: settings.attendance_bands,
     })
 
     expect(response.status).toBe(200)
@@ -119,6 +122,7 @@ describe('/api/school-settings/municipal', () => {
       dpo_address: settings.dpo_address,
       educacensoYear: 2026,
       educacenso_deadline: settings.educacenso_deadline,
+      attendance_bands: settings.attendance_bands,
     })
   })
 

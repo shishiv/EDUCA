@@ -40,6 +40,9 @@ function fakeSupabase(requests: Request[]) {
             },
           })
         }
+        if (path === '/rest/v1/rpc/get_municipal_settings') {
+          return Response.json([{ attendance_bands: { reference: 90, attention: 95 } }])
+        }
         if (path === '/rest/v1/frequencia') {
           return new Response('[]', { headers: { 'Content-Type': 'application/json' } })
         }
@@ -63,6 +66,7 @@ describe('getClassDiary pagination', () => {
     expect(result.error).toBeNull()
     expect(result.total).toBe(21)
     expect(result.data).toHaveLength(1)
+    expect(result.data?.[0].bands).toEqual({ reference: 90, attention: 95 })
 
     const pageRequest = requests[0]
     const pageUrl = new URL(pageRequest.url)

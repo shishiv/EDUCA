@@ -12,7 +12,10 @@ import {
   validateCPF as validateCPFBase,
   formatCPF as formatCPFBase
 } from '@/lib/validation/brazilian'
-import { ATENCAO, CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+// This legacy validator asserts legal outcomes. Preserve its behavior separately
+// until a product decision replaces it. Municipal general alerts cannot govern it.
+const LEGACY_EDUCATIONAL_ATTENDANCE_FLOOR = 80
+const LEGACY_EDUCATIONAL_ATTENDANCE_ATTENTION = 85
 
 // ===== CPF VALIDATION =====
 // Re-export from brazilian.ts to maintain consistent validation logic
@@ -150,17 +153,17 @@ export interface AttendancePercentageValidation {
 }
 
 export function validateAttendancePercentage(percentage: number): AttendancePercentageValidation {
-  if (percentage >= ATENCAO) {
+  if (percentage >= LEGACY_EDUCATIONAL_ATTENDANCE_ATTENTION) {
     return {
       isValid: true,
       status: 'adequate',
       message: 'Frequência adequada conforme LDB'
     }
-  } else if (percentage >= CONFORMIDADE) {
+  } else if (percentage >= LEGACY_EDUCATIONAL_ATTENDANCE_FLOOR) {
     return {
       isValid: true,
       status: 'warning',
-      message: `Atenção preventiva municipal abaixo de ${ATENCAO}%; condicionalidade Bolsa Família atendida a partir de ${CONFORMIDADE}%`
+      message: `Atenção preventiva municipal abaixo de ${LEGACY_EDUCATIONAL_ATTENDANCE_ATTENTION}%; condicionalidade Bolsa Família atendida a partir de ${LEGACY_EDUCATIONAL_ATTENDANCE_FLOOR}%`
     }
   } else {
     return {

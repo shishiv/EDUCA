@@ -1,7 +1,25 @@
 import { randomUUID } from 'node:crypto'
 import type { Client } from 'pg'
-import { expect } from '@playwright/test'
+import { expect, type APIRequestContext } from '@playwright/test'
+import type { AttendanceBands } from '@/lib/attendance/attendance-policy'
+import { municipalSettingsSchema } from '@/lib/services/municipal-settings'
 import { withLocalDatabase } from '../support/local-database'
+
+/** Uses the authenticated municipal route, not a service-role config write. */
+export async function setFixtureAttendanceBands(request: APIRequestContext, schoolId: string, bands: AttendanceBands) {
+  const response = await request.get(`/api/school-settings/municipal?schoolId=${schoolId}&year=2026`)
+  expect(response.ok()).toBe(true)
+  const previous = municipalSettingsSchema.parse((await response.json()).settings)
+  const saved = await request.patch('/api/school-settings/municipal', { data: {
+    schoolId, municipalityName: previous.municipality_name, educationDepartmentName: previous.education_department_name,
+    state: previous.state, contactPhone: previous.contact_phone, dpoEmail: previous.dpo_email,
+    dpoAddress: previous.dpo_address, educacensoYear: 2026, educacensoDeadline: previous.educacenso_deadline,
+    attendanceBands: bands,
+  } })
+  expect(saved.ok()).toBe(true)
+  expect((await saved.json()).settings.attendance_bands).toEqual(bands)
+  return previous.attendance_bands
+}
 
 interface SchoolYearSeed {
   schoolId: string

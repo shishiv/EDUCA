@@ -110,6 +110,7 @@ interface DescriptiveReportData {
 }
 
 interface AttendanceData {
+  bands: AttendanceSummary['bands']
   total_aulas: number
   presencas: number
   faltas: number
@@ -265,6 +266,7 @@ function calculateAttendanceSummary(attendance: AttendanceData): AttendanceSumma
   const percentual = total_aulas > 0 ? (presencas / total_aulas) * 100 : 0
 
   return {
+    bands: attendance.bands,
     totalAulas: total_aulas,
     presencas,
     faltas,
@@ -411,6 +413,7 @@ async function loadStudentAttendance(matricula: StudentData['matricula']): Promi
   const summary = (await loadCanonicalAttendanceSummaries(supabase, [matricula.id])).get(matricula.id)
   if (!summary) return null
   return calculateAttendanceSummary({
+    bands: summary.bands,
     total_aulas: summary.total,
     presencas: summary.presencas,
     faltas: summary.faltas,

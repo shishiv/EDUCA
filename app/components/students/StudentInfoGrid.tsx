@@ -16,7 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 
 interface Matricula {
   id: string
@@ -31,6 +31,7 @@ interface Matricula {
 }
 
 interface Frequencia {
+  bands: AttendanceBands
   percentual: number
   total_aulas: number
   presencas: number
@@ -64,8 +65,8 @@ interface StudentInfoGridProps {
   className?: string
 }
 
-function frequencyColor(percentual: number): string {
-  const status = getFrequencyPolicyStatus(percentual)
+function frequencyColor(percentual: number, bands: AttendanceBands): string {
+  const status = getFrequencyPolicyStatus(percentual, bands)
   if (status === 'CONFORME') return 'text-green-600'
   if (status === 'ATENCAO') return 'text-amber-600'
   return 'text-red-600'
@@ -147,13 +148,13 @@ function GuardianCard({ guardian }: { guardian?: Responsavel | null }) {
   )
 }
 
-function FrequencyStatus({ percentual }: { percentual: number }) {
-  const status = getFrequencyPolicyStatus(percentual)
+function FrequencyStatus({ percentual, bands }: { percentual: number; bands: AttendanceBands }) {
+  const status = getFrequencyPolicyStatus(percentual, bands)
   if (status === 'CONFORME') {
-    return <><CheckCircle className="h-4 w-4 text-green-600" /><span className="text-green-600">Condicionalidade Bolsa Família atendida (a partir de {CONFORMIDADE}%)</span></>
+    return <><CheckCircle className="h-4 w-4 text-green-600" /><span className="text-green-600">Referência municipal atendida (a partir de {bands.reference}%)</span></>
   }
   if (status === 'ATENCAO') {
-    return <><AlertTriangle className="h-4 w-4 text-amber-600" /><span className="text-amber-600">Atenção preventiva municipal (abaixo de {ATENCAO}%)</span></>
+    return <><AlertTriangle className="h-4 w-4 text-amber-600" /><span className="text-amber-600">Atenção preventiva municipal (abaixo de {bands.attention}%)</span></>
   }
   return <><AlertTriangle className="h-4 w-4 text-red-600" /><span className="text-red-600">Atenção: Frequência abaixo do mínimo</span></>
 }
@@ -177,10 +178,10 @@ function FrequencyCard({ frequency }: { frequency?: Frequencia | null }) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t('labels.percentual')}</span>
-            <span className={`font-bold ${frequencyColor(frequency.percentual)}`}>{frequency.percentual}%</span>
+            <span className={`font-bold ${frequencyColor(frequency.percentual, frequency.bands)}`}>{frequency.percentual}%</span>
           </div>
           <Progress value={frequency.percentual} className="h-2" />
-          <div className="flex items-center gap-2 text-sm"><FrequencyStatus percentual={frequency.percentual} /></div>
+          <div className="flex items-center gap-2 text-sm"><FrequencyStatus percentual={frequency.percentual} bands={frequency.bands} /></div>
         </div>
       </CardContent>
     </Card>

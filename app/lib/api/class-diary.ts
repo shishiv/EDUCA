@@ -26,6 +26,8 @@ import {
   loadCanonicalAttendanceFacts,
   type CanonicalAttendanceFact,
 } from '@/lib/api/canonical-attendance-facts'
+import type { AttendanceBands } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
 import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
 
 /**
@@ -33,6 +35,7 @@ import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations
  * Represents a single class session in the diary
  */
 export interface ClassDiaryEntry {
+  bands: AttendanceBands
   id: string
   data_aula: string // ISO date format YYYY-MM-DD
   turma_id: string
@@ -219,8 +222,10 @@ function buildDiaryEntryState(
 function buildDiaryEntry(
   session: DiarySessionSummarySource,
   stats: AttendanceStats,
+  bands: AttendanceBands,
 ): ClassDiaryEntry {
   return {
+    bands,
     id: session.id,
     data_aula: session.data_aula,
     turma_id: session.turma_id,
@@ -358,10 +363,15 @@ export async function getClassDiary(
     })
 
     const statsBySession = buildAttendanceStats(frequencias)
-    const transformedData = aulas.map((session) => buildDiaryEntry(
-      session,
-      statsBySession.get(session.id) ?? { presentes: 0, ausentes: 0, total: 0 },
-    ))
+    const bandsBySchool = new Map<string, AttendanceBands>()
+    for (const schoolId of new Set(aulas.map(session => session.turmas.escola_id))) {
+      bandsBySchool.set(schoolId, await resolveAttendanceBands(supabase, schoolId))
+    }
+    const transformedData = aulas.map(session => {
+      const bands = bandsBySchool.get(session.turmas.escola_id)
+      if (!bands) throw new Error('ATTENDANCE_BANDS_MISSING')
+      return buildDiaryEntry(session, statsBySession.get(session.id) ?? { presentes: 0, ausentes: 0, total: 0 }, bands)
+    })
 
     return { data: transformedData, total: count ?? 0, error: null }
   } catch (error) {
@@ -623,13 +633,15 @@ function buildClassDetailState(
 function buildClassDetail(
   session: ClassDetailSession,
   attendanceData: ClassDetailAttendance[],
-  sessionId: string
+  sessionId: string,
+  bands: AttendanceBands,
 ): DetailedSession {
   const attendanceRecords = buildClassDetailAttendance(attendanceData, session, sessionId)
   const totalAlunos = attendanceRecords.length
   const totalPresentes = attendanceRecords.filter((record) => record.presente).length
 
   return {
+    bands,
     ...buildClassDetailIdentity(session),
     ...buildClassDetailState(session, totalAlunos, totalPresentes),
     attendance_records: attendanceRecords,
@@ -656,7 +668,8 @@ export async function getClassDetail(
       return { data: null, error: attendanceError }
     }
 
-    return { data: buildClassDetail(sessionData, attendanceData || [], sessionId), error: null }
+    const bands = await resolveAttendanceBands(supabase, sessionData.turmas.escola_id)
+    return { data: buildClassDetail(sessionData, attendanceData || [], sessionId, bands), error: null }
   } catch (error) {
     logger.error('Exception in getClassDetail', error instanceof Error ? error : String(error), { feature: 'class-diary', action: 'fetch_class_detail_exception' })
     return { data: null, error }

@@ -33,6 +33,8 @@ import {
 import { isInfantilAge } from '@/lib/utils/faixa-etaria'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import type { AttendanceBands } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
 import { loadCanonicalAttendanceSummaries } from '@/lib/api/canonical-attendance-facts'
 import { getStudentBolsaFamilia } from '@/lib/reports/attendance-conditionality'
 import {
@@ -76,6 +78,7 @@ interface AlunoDetalhado {
     data_matricula: string | null
   }[]
   frequencia: {
+    bands: AttendanceBands
     percentual: number
     total_aulas: number
     presencas: number
@@ -100,8 +103,9 @@ interface AlunoDetalhado {
 type StudentEnrollment = AlunoDetalhado['matriculas'][number]
 type StudentAttendance = AlunoDetalhado['frequencia']
 
-function emptyAttendance(): StudentAttendance {
+function emptyAttendance(bands: AttendanceBands): StudentAttendance {
   return {
+    bands,
     percentual: 0,
     total_aulas: 0,
     presencas: 0,
@@ -111,12 +115,12 @@ function emptyAttendance(): StudentAttendance {
   }
 }
 
-async function loadCurrentAttendance(matriculas: StudentEnrollment[]): Promise<StudentAttendance> {
+async function loadCurrentAttendance(matriculas: StudentEnrollment[], schoolId: string): Promise<StudentAttendance> {
   const today = new Date()
   const activeMatricula = matriculas.find(
     (matricula) => matricula.situacao === 'ativa' && matricula.ano_letivo === today.getFullYear(),
   )
-  if (!activeMatricula) return emptyAttendance()
+  if (!activeMatricula) return emptyAttendance(await resolveAttendanceBands(supabase, schoolId))
 
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
   const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
@@ -126,10 +130,11 @@ async function loadCurrentAttendance(matriculas: StudentEnrollment[]): Promise<S
     { startDate: monthStart, endDate: monthEnd },
   )).get(activeMatricula.id)
 
-  if (!summary || summary.total <= 0) return emptyAttendance()
+  if (!summary) throw new Error('ATTENDANCE_ENROLLMENT_NOT_FOUND')
 
   const presencas = summary.presencas + summary.atestados
   return {
+    bands: summary.bands,
     percentual: summary.percentual,
     total_aulas: summary.total,
     presencas,
@@ -325,7 +330,7 @@ export default function AlunoDetalhesPage() {
           setError(t('ui.aluno-nao-encontrado'))
           return
         }
-        const frequencia = await loadCurrentAttendance(record.matriculas)
+        const frequencia = await loadCurrentAttendance(record.matriculas, record.profile.escola_id)
         setAluno(mapStudentDetails(
           record.profile,
           record.matriculas,

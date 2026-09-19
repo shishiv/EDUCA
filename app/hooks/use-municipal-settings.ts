@@ -1,37 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import {
-  municipalSettingsSchema,
-  type MunicipalSettings,
-} from '@/lib/services/municipal-settings'
+import { useAuth } from '@/hooks/use-auth'
+import { municipalSettingsSchema } from '@/lib/services/municipal-settings'
 
-const municipalSettingsEnvelopeSchema = z.object({
-  settings: municipalSettingsSchema.optional(),
-})
+const municipalSettingsEnvelopeSchema = z.object({ settings: municipalSettingsSchema })
 
 export function useMunicipalSettings(schoolId?: string | null, year = new Date().getFullYear()) {
-  const [settings, setSettings] = useState<MunicipalSettings | null>(null)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const search = new URLSearchParams({ year: String(year) })
-    if (schoolId) search.set('schoolId', schoolId)
-    setSettings(null)
-
-    fetch(`/api/school-settings/municipal?${search}`, { signal: controller.signal })
-      .then(async response => {
-        if (!response.ok) throw new Error('MUNICIPAL_SETTINGS_LOAD_FAILED')
-        return municipalSettingsEnvelopeSchema.parse(await response.json())
-      })
-      .then(body => setSettings(body.settings ?? null))
-      .catch(error => {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) setSettings(null)
-      })
-
-    return () => controller.abort()
-  }, [schoolId, year])
-
-  return settings
+  const { userProfile } = useAuth()
+  const { data } = useQuery({
+    queryKey: ['municipal-settings', userProfile?.id, schoolId ?? null, year],
+    enabled: Boolean(userProfile),
+    retry: false,
+    throwOnError: true,
+    queryFn: async ({ signal }) => {
+      const search = new URLSearchParams({ year: String(year) })
+      if (schoolId) search.set('schoolId', schoolId)
+      const response = await fetch(`/api/school-settings/municipal?${search}`, { signal })
+      if (!response.ok) throw new Error('MUNICIPAL_SETTINGS_LOAD_FAILED: configuração municipal indisponível')
+      return municipalSettingsEnvelopeSchema.parse(await response.json()).settings
+    },
+  })
+  return data ?? null
 }

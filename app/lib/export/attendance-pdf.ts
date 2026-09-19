@@ -9,8 +9,7 @@
 import type { ClassAttendanceReport } from '@/lib/reports/attendance-reports';
 import type { BolsaFamiliaReport } from '@/lib/reports/bolsa-familia-reports';
 import {
-  ATENCAO,
-  CONFORMIDADE,
+  type AttendanceBands,
   getFrequencyPolicyLabel,
   getFrequencyPolicyStatus,
   type FrequencyPolicyStatus,
@@ -85,7 +84,7 @@ function resolveStudentRiskPresentation(data: StudentReportData): StudentRiskPre
     return { status, color: ATTENDANCE_RISK_COLORS[status], label: 'Piso legal' };
   }
 
-  const status = getFrequencyPolicyStatus(percentage);
+  const status = getFrequencyPolicyStatus(percentage, data.bands);
   return {
     status,
     color: ATTENDANCE_RISK_COLORS[status],
@@ -155,7 +154,7 @@ export function generateAttendanceReportPDF(
     atestados: student.atestados,
     total: student.totalAulas,
     percentual: `${student.percentual}%`,
-    status: getFrequencyPolicyLabel(getFrequencyPolicyStatus(student.percentual)),
+    status: getFrequencyPolicyLabel(getFrequencyPolicyStatus(student.percentual, report.bands)),
   }));
 
   addPDFTable(
@@ -163,7 +162,7 @@ export function generateAttendanceReportPDF(
     {
       columns,
       rows,
-      summary: `P = Presença, F = Falta, A = Atestado. Não conformidade = frequência abaixo de ${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a menos de ${ATENCAO}%.`,
+      summary: `P = Presença, F = Falta, A = Atestado. Referência municipal: ${report.bands.reference}%; atenção preventiva até ${report.bands.attention}%.`,
     },
     currentY,
     ATTENDANCE_STYLES
@@ -314,6 +313,7 @@ export function generateBolsaFamiliaReportPDF(
 // ============================================================================
 
 export interface StudentReportData {
+  bands: AttendanceBands;
   studentName: string;
   studentId: string;
   className: string;
@@ -360,8 +360,7 @@ export function generateStudentReportPDF(data: StudentReportData): void {
 
   currentY += 5;
 
-  // Thresholds come from the canonical read model when available. The
-  // application policy remains the fallback for legacy callers without them.
+  // Benefit-specific floors and margins remain independent of the general bands.
   const risk = resolveStudentRiskPresentation(data);
 
   currentY = addPDFSummary(

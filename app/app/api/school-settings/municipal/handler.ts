@@ -12,6 +12,8 @@ import {
   type PilotActor,
 } from '@/lib/pilot/pilot-server-auth'
 
+import { attendanceBandsSchema } from '@/lib/attendance/attendance-policy'
+
 const year = z.coerce.number().int().min(2000).max(2100)
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
   const date = new Date(`${value}T00:00:00.000Z`)
@@ -27,6 +29,7 @@ const municipalSettingsInputSchema = z.object({
   dpoAddress: z.string().trim().max(500),
   educacensoYear: year,
   educacensoDeadline: isoDate.nullable(),
+  attendanceBands: attendanceBandsSchema,
 }).strict()
 
 function readScope(request: Request, actor: PilotActor) {
@@ -89,6 +92,7 @@ export function createMunicipalSettingsRoute(
           dpo_address: input.dpoAddress,
           educacensoYear: input.educacensoYear,
           educacenso_deadline: input.educacensoDeadline,
+          attendance_bands: input.attendanceBands,
         })
         return NextResponse.json({ settings })
       } catch (error) {

@@ -1,5 +1,3 @@
-import { CONFORMIDADE } from '../../app/lib/attendance/attendance-policy'
-
 /**
  * attendance-generator.ts
  *
@@ -21,10 +19,9 @@ import { CONFORMIDADE } from '../../app/lib/attendance/attendance-policy'
  *  - DEMO_SCHOOL_DAYS = 20: measured volume choice - one month (4 weeks) of
  *    school history, scaling the previous 10-day seed to 50 matriculas x 20
  *    days = 1000 frequencia rows and 5 turmas x 20 days = 100 sessoes.
- *  - LOW_ATTENDANCE_RATE = 0.70: fixed 70% < 80%, the BOLSA_FAMILIA_THRESHOLD
- *    receipt lives in app/lib/reports/bolsa-familia-reports.ts (80) and in the
- *    seeded configs row `frequencia_minima` = 80 (issue #23: "<80% para
- *    demonstrar alerta Bolsa Família").
+ *  - LOW_ATTENDANCE_RATE = 0.70: synthetic low-attendance case from issue #23.
+ *    The demo's assertion threshold is persisted as `demo_alert_threshold`.
+ *    Generating attendance never resolves benefit eligibility.
  */
 
 // -----------------------------------------------------------------------------
@@ -43,9 +40,6 @@ export const LOW_ATTENDANCE_RATE = 0.7
 /** Deterministic per-student base rates for everyone else (86% - 98%). */
 export const ATTENDANCE_RATE_MIN = 0.86
 export const ATTENDANCE_RATE_MAX = 0.98
-
-/** Bolsa Família compliance threshold from the shared attendance policy. */
-export const BOLSA_FAMILIA_THRESHOLD = CONFORMIDADE
 
 /** Anchor timestamp used for every static created_at in the demo dataset. */
 export const STATIC_CREATED_AT = '2026-02-03 08:00:00-03'

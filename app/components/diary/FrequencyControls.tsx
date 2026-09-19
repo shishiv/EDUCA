@@ -32,7 +32,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { AttendanceSummary } from '@/types/diario-classe'
-import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { getFrequencyPolicyStatus, type AttendanceBands } from '@/lib/attendance/attendance-policy'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
@@ -49,6 +49,7 @@ export interface Turma {
 export type PeriodView = 'week' | 'month'
 
 export interface FrequencyControlsProps {
+  bands: AttendanceBands
   /** List of available turmas for selection */
   turmas: Turma[]
   /** Currently selected turma ID */
@@ -76,6 +77,7 @@ export interface FrequencyControlsProps {
 // ============================================================================
 
 export function FrequencyControls({
+  bands,
   turmas,
   selectedTurmaId,
   onTurmaChange,
@@ -231,18 +233,18 @@ export function FrequencyControls({
             </p>
           </div>
 
-          <FrequencySummary summary={summary} />
+          <FrequencySummary summary={summary} bands={bands} />
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function FrequencySummary({ summary }: { summary: AttendanceSummary | undefined }) {
+function FrequencySummary({ summary, bands }: { summary: AttendanceSummary | undefined; bands: AttendanceBands }) {
   const t = useClassroomTranslations()
   // Calculate attendance rate color
   const getAttendanceRateColor = (rate: number) => {
-    const status = getFrequencyPolicyStatus(rate)
+    const status = getFrequencyPolicyStatus(rate, bands)
     if (status === 'CONFORME') return 'text-green-600'
     if (status === 'ATENCAO') return 'text-yellow-600'
     return 'text-red-600'

@@ -38,7 +38,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
@@ -66,6 +66,7 @@ export interface LessonDetailData {
 }
 
 interface LessonDetailPanelProps {
+  bands: AttendanceBands
   lesson: LessonDetailData | null
   onEdit?: (lesson: LessonDetailData) => void
   onDelete?: (lesson: LessonDetailData) => void
@@ -78,8 +79,8 @@ function getLessonAttendanceRate(lesson: LessonDetailData | null) {
   return Math.round(((lesson.total_presentes + (lesson.total_atestados || 0)) / lesson.total_alunos) * 100)
 }
 
-function getAttendanceColor(rate: number) {
-  const status = getFrequencyPolicyStatus(rate)
+function getAttendanceColor(rate: number, bands: AttendanceBands) {
+  const status = getFrequencyPolicyStatus(rate, bands)
   if (status === 'CONFORME') return 'bg-green-100 text-green-700'
   if (status === 'ATENCAO') return 'bg-yellow-100 text-yellow-700'
   return 'bg-red-100 text-red-700'
@@ -90,6 +91,7 @@ function getAttendanceColor(rate: number) {
 // ============================================================================
 
 export function LessonDetailPanel({
+  bands,
   lesson,
   onEdit,
   onDelete,
@@ -196,7 +198,7 @@ export function LessonDetailPanel({
 
           <Separator />
 
-          <LessonAttendanceDetails lesson={lesson} attendanceRate={attendanceRate} />
+          <LessonAttendanceDetails lesson={lesson} attendanceRate={attendanceRate} bands={bands} />
 
           {/* Observations Section */}
           {lesson.observacoes && (
@@ -317,9 +319,9 @@ function LessonContentDetails({ lesson }: { lesson: LessonDetailData }) {
   )
 }
 
-function LessonAttendanceDetails({ lesson, attendanceRate }: { lesson: LessonDetailData; attendanceRate: number }) {
+function LessonAttendanceDetails({ lesson, attendanceRate, bands }: { lesson: LessonDetailData; attendanceRate: number; bands: AttendanceBands }) {
   const t = useClassroomTranslations()
-  const attendanceStatus = getFrequencyPolicyStatus(attendanceRate)
+  const attendanceStatus = getFrequencyPolicyStatus(attendanceRate, bands)
   return (
           <div className="space-y-2 sm:space-y-3">
             <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -361,7 +363,7 @@ function LessonAttendanceDetails({ lesson, attendanceRate }: { lesson: LessonDet
             <div
               className={cn(
                 'rounded-lg p-3 sm:p-4 flex items-center justify-between',
-                getAttendanceColor(attendanceRate)
+                getAttendanceColor(attendanceRate, bands)
               )}
             >
               <span className="text-xs sm:text-sm font-medium">Taxa de Frequência</span>
@@ -374,7 +376,7 @@ function LessonAttendanceDetails({ lesson, attendanceRate }: { lesson: LessonDet
                 attendanceStatus === 'CRITICO' ? 'text-red-600 bg-red-50' : 'text-yellow-700 bg-yellow-50'
               )}>
                 <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
-                <span>{attendanceStatus === 'CRITICO' ? `Frequência abaixo da referência municipal de ${CONFORMIDADE}%.` : `Atenção preventiva: frequência abaixo de ${ATENCAO}%.`}</span>
+                <span>{attendanceStatus === 'CRITICO' ? `Frequência abaixo da referência municipal de ${bands.reference}%.` : `Atenção preventiva: frequência abaixo de ${bands.attention}%.`}</span>
               </div>
             )}
           </div>

@@ -8,7 +8,6 @@
 import { logger } from '@/lib/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
 import {
   filterBolsaFamiliaConditionality,
   getAttendanceConditionality,
@@ -128,7 +127,7 @@ export function calculateFaltasParaCritico(
   presencasSemAtestados: number,
   faltas: number,
   atestados: number,
-  criticalPercent: number = CONFORMIDADE,
+  criticalPercent: number,
 ): number {
   const presencasComAtestados = presencasSemAtestados + atestados
   const total = presencasComAtestados + faltas

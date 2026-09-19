@@ -45,10 +45,9 @@ import type { DetailedSession } from '@/lib/api/class-diary'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import {
-  ATENCAO,
-  CONFORMIDADE,
   getFrequencyPolicyStatus,
   type FrequencyPolicyStatus,
+  type AttendanceBands,
 } from '@/lib/attendance/attendance-policy'
 
 interface ClassDiaryDetailProps {
@@ -247,17 +246,17 @@ function AttendanceStatistics({ session }: { session: DetailedSession }) {
           <p className="text-xs text-muted-foreground">{t('labels.absent')}</p>
         </div>
       </div>
-      <AttendancePolicy percentage={session.attendance_percentage} />
+      <AttendancePolicy percentage={session.attendance_percentage} bands={session.bands} />
     </div>
   )
 }
 
-function AttendancePolicy({ percentage }: { percentage: number }) {
+function AttendancePolicy({ percentage, bands }: { percentage: number; bands: AttendanceBands }) {
   const t = useClassroomTranslations()
-  const status = getFrequencyPolicyStatus(percentage)
+  const status = getFrequencyPolicyStatus(percentage, bands)
   const warning = status === 'CRITICO'
-    ? `Não conformidade Bolsa Família: abaixo de ${CONFORMIDADE}%.`
-    : `Atenção preventiva municipal: abaixo de ${ATENCAO}%; condicionalidade atendida a partir de ${CONFORMIDADE}%.`
+    ? `Frequência abaixo da referência municipal de ${bands.reference}%.`
+    : `Atenção preventiva municipal: abaixo de ${bands.attention}%.`
 
   return (
     <div className="bg-primary/10 p-4 rounded-lg">

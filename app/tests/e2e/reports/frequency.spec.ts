@@ -8,6 +8,7 @@ import type { Page } from '@playwright/test'
 import type { Database, Json } from '@/types/database'
 import { test, expect } from '../support/diagnostics'
 import { instrumentDownload } from './download-diagnostics'
+import { setFixtureAttendanceBands } from '../flows/dashboard-fixture'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321'
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -227,67 +228,75 @@ test.describe('Relatório de frequência', () => {
     await expect(table).toBeVisible()
   })
 
-  test('downloads Excel and PDF exports with the generated attendance row', async ({ page }, testInfo) => {
-    const captureDownload = await instrumentDownload(page)
-    await openReport(page)
-    await generateFixtureReport(page)
+  test('downloads Excel and PDF exports with the generated attendance row and F10 school override', async ({ page }, testInfo) => {
+    const previousBands = await setFixtureAttendanceBands(page.request, periodSchoolId, { reference: 60, attention: 65 })
+    try {
+      const captureDownload = await instrumentDownload(page)
+      await openReport(page)
+      await generateFixtureReport(page)
 
-    const excelDownloadPromise = page.waitForEvent('download')
-    await page.getByRole('button', { name: 'Excel', exact: true }).click()
-    const excelDownload = await excelDownloadPromise
-    await captureDownload(excelDownload, testInfo)
-    expect(excelDownload.suggestedFilename()).toMatch(/^frequencia_.*\.xlsx$/)
-    const excelPath = testInfo.outputPath(excelDownload.suggestedFilename())
-    await excelDownload.saveAs(excelPath)
-    const excelBytes = await readFile(excelPath)
-    expect(excelBytes.subarray(0, 2).toString('ascii')).toBe('PK')
-    expect(excelBytes.length).toBeGreaterThan(1000)
+      const excelDownloadPromise = page.waitForEvent('download')
+      await page.getByRole('button', { name: 'Excel', exact: true }).click()
+      const excelDownload = await excelDownloadPromise
+      await captureDownload(excelDownload, testInfo)
+      expect(excelDownload.suggestedFilename()).toMatch(/^frequencia_.*\.xlsx$/)
+      const excelPath = testInfo.outputPath(excelDownload.suggestedFilename())
+      await excelDownload.saveAs(excelPath)
+      const excelBytes = await readFile(excelPath)
+      expect(excelBytes.subarray(0, 2).toString('ascii')).toBe('PK')
+      expect(excelBytes.length).toBeGreaterThan(1000)
 
-    const { default: ExcelJS } = await import('exceljs')
-    const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.readFile(excelPath)
-    expect(workbook.worksheets.map((worksheet) => worksheet.name)).toEqual(['Frequência'])
-    const worksheet = workbook.getWorksheet('Frequência')
-    if (!worksheet) throw new Error('FREQUENCY_EXPORT_WORKSHEET_MISSING')
-    expect(worksheet.getCell('A1').text).toBe('Relatório de Frequência')
-    expect(worksheet.getCell('A2').text).toBe(`${CLASS_NAME} - 1º Ano`)
-    expect(worksheet.getCell('A4').text).toBe(`Escola: ${SCHOOL_NAME}`)
-    expect(exportedRowValues(worksheet.getRow(8))).toEqual(['Nome', 'P', 'F', 'A', 'Total', '%', 'Status'])
+      const { default: ExcelJS } = await import('exceljs')
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.readFile(excelPath)
+      expect(workbook.worksheets.map((worksheet) => worksheet.name)).toEqual(['Frequência'])
+      const worksheet = workbook.getWorksheet('Frequência')
+      if (!worksheet) throw new Error('FREQUENCY_EXPORT_WORKSHEET_MISSING')
+      expect(worksheet.getCell('A1').text).toBe('Relatório de Frequência')
+      expect(worksheet.getCell('A2').text).toBe(`${CLASS_NAME} - 1º Ano`)
+      expect(worksheet.getCell('A4').text).toBe(`Escola: ${SCHOOL_NAME}`)
+      expect(exportedRowValues(worksheet.getRow(8))).toEqual(['Nome', 'P', 'F', 'A', 'Total', '%', 'Status'])
 
-    let excelStudentRow: ExcelJS.Row | undefined
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber >= 9 && row.getCell(1).text === STUDENT_NAME) excelStudentRow = row
-    })
-    if (!excelStudentRow) throw new Error('FREQUENCY_EXPORT_STUDENT_ROW_MISSING')
-    expect(exportedRowValues(excelStudentRow)).toEqual([
-      STUDENT_NAME,
-      1,
-      1,
-      1,
-      3,
-      67,
-      'Abaixo da referência municipal',
-    ])
+      let excelStudentRow: ExcelJS.Row | undefined
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber >= 9 && row.getCell(1).text === STUDENT_NAME) excelStudentRow = row
+      })
+      if (!excelStudentRow) throw new Error('FREQUENCY_EXPORT_STUDENT_ROW_MISSING')
+      expect(exportedRowValues(excelStudentRow)).toEqual([
+        STUDENT_NAME,
+        1,
+        1,
+        1,
+        3,
+        67,
+        'Referência municipal atendida',
+      ])
+      const legend = worksheet.getColumn(1).values.join(' ')
+      expect(legend).toContain('Referência municipal: 60%; atenção preventiva até 65%')
 
-    const pdfDownloadPromise = page.waitForEvent('download')
-    await page.getByRole('button', { name: 'PDF', exact: true }).first().click()
-    const pdfDownload = await pdfDownloadPromise
-    expect(pdfDownload.suggestedFilename()).toMatch(/^frequencia_.*\.pdf$/)
-    const pdfPath = testInfo.outputPath(pdfDownload.suggestedFilename())
-    await pdfDownload.saveAs(pdfPath)
-    const pdfBytes = await readFile(pdfPath)
-    const { stdout } = await execFile('pdftotext', [pdfPath, '-'])
-    const pdfText = stdout.toString()
-    const compactPdfText = pdfText.replace(/\s+/g, ' ')
-    expect(pdfBytes.subarray(0, 4).toString('ascii')).toBe('%PDF')
-    expect(pdfBytes.length).toBeGreaterThan(1000)
-    expect(compactPdfText).toContain('Relatório de Frequência')
-    expect(compactPdfText).toContain(`${CLASS_NAME} - 1º Ano`)
-    expect(compactPdfText).toContain(SCHOOL_NAME)
-    expect(compactPdfText).toContain('Nome P F A Total % Status')
-    expect(compactPdfText).toContain(
-      `${STUDENT_NAME} 1 1 1 3 67% Abaixo da referência municipal`,
-    )
+      const pdfDownloadPromise = page.waitForEvent('download')
+      await page.getByRole('button', { name: 'PDF', exact: true }).first().click()
+      const pdfDownload = await pdfDownloadPromise
+      expect(pdfDownload.suggestedFilename()).toMatch(/^frequencia_.*\.pdf$/)
+      const pdfPath = testInfo.outputPath(pdfDownload.suggestedFilename())
+      await pdfDownload.saveAs(pdfPath)
+      const pdfBytes = await readFile(pdfPath)
+      const { stdout } = await execFile('pdftotext', [pdfPath, '-'])
+      const pdfText = stdout.toString()
+      const compactPdfText = pdfText.replace(/\s+/g, ' ')
+      expect(pdfBytes.subarray(0, 4).toString('ascii')).toBe('%PDF')
+      expect(pdfBytes.length).toBeGreaterThan(1000)
+      expect(compactPdfText).toContain('Relatório de Frequência')
+      expect(compactPdfText).toContain(`${CLASS_NAME} - 1º Ano`)
+      expect(compactPdfText).toContain(SCHOOL_NAME)
+      expect(compactPdfText).toContain('Nome P F A Total % Status')
+      expect(compactPdfText).toContain(
+        `${STUDENT_NAME} 1 1 1 3 67% Referência municipal atendida`,
+      )
+      expect(compactPdfText).toContain('Referência municipal: 60%; atenção preventiva até 65%')
+    } finally {
+      await setFixtureAttendanceBands(page.request, periodSchoolId, previousBands)
+    }
   })
 
   test('keeps filters and the real report usable at 390px', async ({ page }) => {

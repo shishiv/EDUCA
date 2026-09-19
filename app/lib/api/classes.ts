@@ -142,6 +142,7 @@ export class ClassesApiService extends BaseApiService<'turmas'> {
    * Used by chamada page to display turma header
    */
   async getClassWithSchool(classId: string): Promise<{
+    escola_id: string
     id: string
     nome: string
     serie: string
@@ -154,6 +155,7 @@ export class ClassesApiService extends BaseApiService<'turmas'> {
           id,
           nome,
           serie,
+          escola_id,
           escola:escolas(nome)
         `)
         .eq('id', classId)
@@ -173,6 +175,7 @@ export class ClassesApiService extends BaseApiService<'turmas'> {
         id: data.id,
         nome: data.nome,
         serie: data.serie,
+        escola_id: data.escola_id,
         // SAFETY: The select above requests the singular `escola(nome)` relationship.
         escola: { nome: (data.escola as { nome: string })?.nome || 'Escola' }
       }
