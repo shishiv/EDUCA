@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -21,6 +21,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const common = useTranslations('common')
   const pathname = usePathname()
   const { userProfile } = useAuth()
+  const [panel, setPanel] = useState<HTMLElement | null>(null)
   const visibleGroups = userProfile ? getNavigationForRole(userProfile.tipo_usuario) : []
   const activeItemId = getActiveNavigationItemId(pathname, visibleGroups)
 
@@ -49,7 +50,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             leaveFrom="translate-x-0"
             leaveTo="-translate-x-full"
           >
-            <Dialog.Panel className="app-drawer">
+            <Dialog.Panel ref={setPanel} className="app-drawer">
               <div className="app-drawer__header">
                 <Dialog.Title className="sr-only">{t('drawerTitle')}</Dialog.Title>
                 <Link href="/dashboard" className="app-wordmark" onClick={onClose}>
@@ -66,7 +67,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               </div>
 
               <div className="app-drawer__school">
-                <EscolaSelector />
+                <EscolaSelector popoverContainer={panel} />
               </div>
 
               <nav className="app-drawer__nav" aria-label={t('ariaLabel')}>

@@ -3,11 +3,37 @@
  *
  * Dedicated configs run this spec against a local app or an explicitly
  * configured public demo origin.
- * It performs NO mutations - read-only assertions only.
+ * It performs NO server mutations; explicit submission is intercepted locally.
  * Safe to run against the shared sandbox.
  */
 import { createHash } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
+
+async function focusAppearance(target: Locator) {
+  return target.evaluate(element => {
+    const style = getComputedStyle(element)
+    return { outline: style.outline, boxShadow: style.boxShadow }
+  })
+}
+
+async function tabTo(page: Page, target: Locator, key: 'Tab' | 'Shift+Tab' = 'Tab') {
+  await expect(target).toBeVisible()
+  if (await target.evaluate(element => element === document.activeElement)) {
+    await page.keyboard.press(key)
+  }
+  const unfocused = await focusAppearance(target)
+  // Safety bound, not an assertion about incidental tab order or tab count.
+  for (let step = 0; step < 50; step += 1) {
+    await page.keyboard.press(key)
+    if (await target.evaluate(element => element === document.activeElement)) {
+      await expect(target).toBeInViewport()
+      expect(await target.evaluate(element => element.matches(':focus-visible'))).toBe(true)
+      await expect.poll(() => focusAppearance(target)).not.toEqual(unfocused)
+      return
+    }
+  }
+  await expect(target, `Control must be reachable with ${key}`).toBeFocused()
+}
 
 test.describe('J1: public visitor journey', () => {
   test('visitor can move from landing to demo, login, and home', async ({ page, isMobile }) => {
@@ -15,14 +41,18 @@ test.describe('J1: public visitor journey', () => {
     expect(response?.status()).toBeLessThan(400)
     await expect(page.getByRole('heading', { level: 1, name: 'Gestão escolar para redes municipais, com código aberto.' })).toBeVisible()
     await expect(page.getByRole('img', { name: 'EDUCA' }).first()).toBeVisible()
-    if (isMobile) await page.getByLabel('Abrir menu', { exact: true }).click()
+    if (isMobile) {
+      await tabTo(page, page.getByLabel('Abrir menu', { exact: true }))
+      await page.keyboard.press('Enter')
+    }
     await expect(page.getByRole('button', { name: 'Mudar idioma para English' }).first()).toHaveText('PT')
     await expect(page.locator('header').getByRole('link', { name: 'Ver a demonstração' })).toHaveAttribute('href', '/demo')
     if (isMobile) await page.keyboard.press('Escape')
 
     // The demo call to action is repeated in the header and in the hero under
     // the same label; the hero one is the in-page next step.
-    await page.locator('main').getByRole('link', { name: 'Ver a demonstração' }).click()
+    await tabTo(page, page.locator('main').getByRole('link', { name: 'Ver a demonstração' }))
+    await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/demo\/?$/)
     await expect(page.getByRole('heading', { level: 1, name: /sandbox público do educa/i })).toBeVisible()
     await expect(page.getByText(/não insira dados pessoais ou escolares reais/i)).toBeVisible()
@@ -31,12 +61,20 @@ test.describe('J1: public visitor journey', () => {
     page.on('request', request => {
       if (new URL(request.url()).pathname === '/auth/v1/token') signInRequests += 1
     })
-    await page.getByRole('link', { name: /continuar para o login do demo/i }).click()
+    // Never send credentials or create a session on a shared sandbox.
+    await page.route('**/auth/v1/token**', route => route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'invalid_credentials', message: 'Invalid login credentials' }),
+    }))
+    await tabTo(page, page.getByRole('link', { name: /continuar para o login do demo/i }))
+    await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/login\/?$/)
     await page.setViewportSize({ width: 390, height: 844 })
     const email = page.getByLabel('E-mail', { exact: true })
     const password = page.getByLabel('Senha', { exact: true })
     const fillDemo = page.getByRole('button', { name: 'Preencher credenciais demo' })
+    const submit = page.getByRole('button', { name: 'Entrar', exact: true })
     await expect(email).toBeInViewport()
     await expect(password).toBeInViewport()
     await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeInViewport()
@@ -50,9 +88,14 @@ test.describe('J1: public visitor journey', () => {
       // Initial values above are visible before interaction. Let the route's
       // client scripts finish loading before testing its restore handler.
       await page.waitForLoadState('networkidle')
-      await email.fill('edited@synthetic.invalid')
-      await password.fill('')
-      await fillDemo.click()
+      await tabTo(page, email)
+      await page.keyboard.press('ControlOrMeta+A')
+      await page.keyboard.type('edited@synthetic.invalid')
+      await tabTo(page, password)
+      await page.keyboard.press('ControlOrMeta+A')
+      await page.keyboard.press('Backspace')
+      await tabTo(page, fillDemo)
+      await page.keyboard.press('Space')
       await expect(email).toHaveValue('demo@educa.app.br')
       expect(await password.inputValue() === initialPassword).toBe(true)
     } else {
@@ -64,7 +107,39 @@ test.describe('J1: public visitor journey', () => {
     expect(signInRequests).toBe(0)
     await expect(page).toHaveURL(/\/login\/?$/)
     await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
-    await page.getByRole('link', { name: /voltar ao início/i }).click()
+    await page.waitForLoadState('networkidle')
+    const remember = page.getByRole('checkbox', { name: 'Manter conectado' })
+    await tabTo(page, remember)
+    await page.keyboard.press('Space')
+    await expect(remember).not.toBeChecked()
+    await page.keyboard.press('Space')
+    await expect(remember).toBeChecked()
+    const recovery = page.getByRole('link', { name: 'Esqueci minha senha' })
+    await tabTo(page, recovery)
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/reset-password\/?$/)
+    await expect(page.getByLabel(/e-mail/i)).toBeVisible()
+    await tabTo(page, page.getByRole('link', { name: 'Voltar ao login' }))
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/login\/?$/)
+    await page.waitForLoadState('networkidle')
+    await tabTo(page, password)
+    await tabTo(page, email, 'Shift+Tab')
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type('keyboard@synthetic.invalid')
+    await tabTo(page, password)
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type('synthetic-keyboard-input')
+    await tabTo(page, submit)
+    expect(signInRequests).toBe(0)
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('alert').first()).toHaveText('E-mail ou senha inválidos.')
+    expect(signInRequests).toBe(1)
+    await expect(submit).toBeEnabled()
+    await expect(email).toHaveValue('keyboard@synthetic.invalid')
+    await expect(page).toHaveURL(/\/login\/?$/)
+    await tabTo(page, page.getByRole('link', { name: /voltar ao início/i }), 'Shift+Tab')
+    await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/$/)
   })
 

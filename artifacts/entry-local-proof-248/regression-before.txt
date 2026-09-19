@@ -1,0 +1,11 @@
+Falha esperada antes do patch de produto, sem retries configurados:
+  ✘  1 [chromium] › tests/e2e/flows/locale-layout.spec.ts:38:7 › mobile school selection › selects a school by touch and restores focus when closing nested menus (30.0s)
+  1) [chromium] › tests/e2e/flows/locale-layout.spec.ts:38:7 › mobile school selection › selects a school by touch and restores focus when closing nested menus
+    Test timeout of 30000ms exceeded.
+    Error: locator.tap: Test timeout of 30000ms exceeded.
+          - <a href="/dashboard" aria-current="page" class="app-drawer__link is-active">…</a> from <div id="headlessui-portal-root">…</div> subtree intercepts pointer events
+           - <a href="/dashboard" aria-current="page" class="app-drawer__link is-active">…</a> from <div id="headlessui-portal-root">…</div> subtree intercepts pointer events
+    > 48 |     await option.tap()
+        at <worktree>/app/tests/e2e/flows/locale-layout.spec.ts:48:18
+  1 failed
+    [chromium] › tests/e2e/flows/locale-layout.spec.ts:38:7 › mobile school selection › selects a school by touch and restores focus when closing nested menus
