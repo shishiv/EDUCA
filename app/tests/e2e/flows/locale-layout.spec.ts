@@ -31,3 +31,34 @@ for (const viewport of [
     expect(overflow).toBe(false)
   })
 }
+
+test.describe('mobile school selection', () => {
+  test.use({ hasTouch: true })
+
+  test('selects a school by touch and restores focus when closing nested menus', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/dashboard')
+    const openMenu = page.getByRole('button', { name: 'Abrir menu', exact: true })
+    await openMenu.tap()
+    const drawer = page.getByRole('dialog', { name: 'Menu principal', exact: true })
+    const closeMenu = drawer.getByRole('button', { name: 'Fechar sidebar', exact: true })
+    const school = drawer.locator('button[role="combobox"]')
+    await school.tap()
+    const option = page.getByRole('option').first()
+    const schoolName = (await option.innerText()).trim()
+    await option.tap()
+    await expect(school).toHaveAttribute('aria-label', schoolName)
+    await expect(page.getByRole('listbox')).toBeHidden()
+    await expect(closeMenu).toBeVisible()
+
+    await school.tap()
+    await expect(page.getByRole('listbox')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('listbox')).toBeHidden()
+    await expect(school).toBeFocused()
+    await expect(closeMenu).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(closeMenu).toBeHidden()
+    await expect(openMenu).toBeFocused()
+  })
+})

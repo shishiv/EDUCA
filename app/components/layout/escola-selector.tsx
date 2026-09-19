@@ -23,6 +23,7 @@ import { useEscola } from '@/contexts/escola-context'
 interface EscolaSelectorProps {
   className?: string
   collapsed?: boolean // For collapsed sidebar state
+  popoverContainer?: HTMLElement | null
 }
 
 /**
@@ -45,9 +46,10 @@ interface SelectorParts {
   selectedEscola: ReturnType<typeof useEscola>["selectedEscola"]
   selectEscola: ReturnType<typeof useEscola>["selectEscola"]
   t: ReturnType<typeof useTranslations>
+  popoverContainer?: HTMLElement | null
 }
 
-function CollapsedSchoolSelector({ open, setOpen, escolas, selectedEscolaId, selectedEscola, selectEscola, t }: SelectorParts) {
+function CollapsedSchoolSelector({ open, setOpen, escolas, selectedEscolaId, selectedEscola, selectEscola, t, popoverContainer }: SelectorParts) {
   return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -64,7 +66,7 @@ function CollapsedSchoolSelector({ open, setOpen, escolas, selectedEscolaId, sel
             <School aria-hidden="true" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="app-school-popover w-[280px] p-0" align="start" side="right">
+        <PopoverContent container={popoverContainer} className="app-school-popover w-[280px] p-0" align="start" side="right">
           <Command>
             <CommandInput placeholder={t('search')} />
             <CommandList>
@@ -99,7 +101,7 @@ function CollapsedSchoolSelector({ open, setOpen, escolas, selectedEscolaId, sel
     )
 }
 
-export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
+export function EscolaSelector({ className, collapsed, popoverContainer }: EscolaSelectorProps) {
   const t = useTranslations('layout.schoolSelector')
   const [open, setOpen] = React.useState(false)
   const {
@@ -132,7 +134,7 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
   }
 
   if (collapsed) {
-    return <CollapsedSchoolSelector open={open} setOpen={setOpen} escolas={escolas} selectedEscolaId={selectedEscolaId} selectedEscola={selectedEscola} selectEscola={selectEscola} t={t} />
+    return <CollapsedSchoolSelector open={open} setOpen={setOpen} escolas={escolas} selectedEscolaId={selectedEscolaId} selectedEscola={selectedEscola} selectEscola={selectEscola} t={t} popoverContainer={popoverContainer} />
   }
 
   // Expanded sidebar: full combobox
@@ -159,7 +161,7 @@ export function EscolaSelector({ className, collapsed }: EscolaSelectorProps) {
           <ChevronsUpDown className="ml-2 shrink-0 opacity-60" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="app-school-popover w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent container={popoverContainer} className="app-school-popover w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder={t('search')} />
           <CommandList>

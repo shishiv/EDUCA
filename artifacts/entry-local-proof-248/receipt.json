@@ -1,0 +1,74 @@
+{
+  "base_sha": "9177ab5c29ae3732182f812a488033ac48130c20",
+  "source_sha256": {
+    "app/components/layout/escola-selector.tsx": "4fe1213a65c40a5a350f00111d6b5b2dfd9a0109bd7049a72b7bce017b004429",
+    "app/components/layout/mobile-sidebar.tsx": "b38635ec3d4561ff59c8c7c53a186e69c66ee7232a29850de71b22b5a4aa2801",
+    "app/components/ui/popover.tsx": "49ad76fd5c5c38f4f9f3722f0d4aaf856f1e748fc34c3416310bbed516836b4f",
+    "app/tests/e2e/flows/locale-layout.spec.ts": "15a1b6e6229ab8335202f4a5fff27e3e45756fe3b1f07c70a3efe14fc9644892",
+    "app/tests/e2e/public-demo/public-visitor.spec.ts": "72e0e5ff1a97fb33831ed19e59099dc9da8660ea51f14f65190cde843ccc68c1"
+  },
+  "counterfactual": {
+    "before": {
+      "popupInsidePanel": false,
+      "focusInsidePanel": false,
+      "popupAncestors": [
+        "radix-_r_f_",
+        "DIV",
+        "BODY",
+        "HTML"
+      ],
+      "panelAncestors": [
+        "headlessui-dialog-panel-_r_d_",
+        "DIV",
+        "headlessui-dialog-_r_7_",
+        "DIV",
+        "DIV",
+        "headlessui-portal-root",
+        "BODY",
+        "HTML"
+      ]
+    },
+    "after": {
+      "focusInsidePanel": true,
+      "hitInsideOption": true,
+      "hitText": "Escola Sintetica A",
+      "popupInsidePanel": true,
+      "rect": {
+        "height": 32,
+        "width": 294,
+        "x": 21,
+        "y": 181
+      }
+    }
+  },
+  "final_local_origin": "http://educa-entry-local-proof-248.educa-dev-local-3490726.localhost:1355",
+  "viewports": {
+    "public_initial": {
+      "width": 1280,
+      "height": 720
+    },
+    "public_login": {
+      "width": 390,
+      "height": 844
+    },
+    "authenticated_desktop": {
+      "width": 1440,
+      "height": 900
+    },
+    "authenticated_mobile": {
+      "width": 390,
+      "height": 844,
+      "hasTouch": true
+    }
+  },
+  "cleanup": {
+    "runner_exit": 143,
+    "runner_message": "Local EDUCA environment removed.",
+    "project_id": "educa-dev-local.KWRWtM",
+    "containers_volumes_networks_remaining": 0,
+    "portless_routes_remaining": 0,
+    "lease_removed": true,
+    "project_directory_removed": true,
+    "proxy_exit": 0
+  }
+}

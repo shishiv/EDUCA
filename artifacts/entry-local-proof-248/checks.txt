@@ -1,0 +1,49 @@
+Unitários finais
+ Test Files  2 passed (2)
+      Tests  3 passed (3)
+Wall time: 2.32 seconds
+
+Demo final: focado e módulo completo
+> educa@1.0.0 test:e2e:public-entry <worktree>/app
+> playwright test --config playwright.public-entry.config.ts --grep 'visitor can move' --workers\=1
+Running 1 test using 1 worker
+  1 passed (19.8s)
+> educa@1.0.0 test:e2e:public-entry <worktree>/app
+> playwright test --config playwright.public-entry.config.ts public-visitor.spec.ts --workers\=1
+Running 8 tests using 1 worker
+  8 passed (30.6s)
+Wall time: 52.37 seconds
+
+Operacional final: focado e módulo completo
+> educa@1.0.0 test:e2e:public-entry <worktree>/app
+> playwright test --config playwright.public-entry.config.ts --grep 'visitor can move' --workers\=1
+Running 1 test using 1 worker
+  1 passed (12.5s)
+> educa@1.0.0 test:e2e:public-entry <worktree>/app
+> playwright test --config playwright.public-entry.config.ts public-visitor.spec.ts --workers\=1
+Running 8 tests using 1 worker
+  8 passed (30.0s)
+Wall time: 44.30 seconds
+
+Layout final: módulo completo com regressão de toque
+Running 4 tests using 1 worker
+  ✓  1 [chromium] › tests/e2e/flows/locale-layout.spec.ts:8:7 › keeps language and student form actions usable on desktop (1.7s)
+  ✓  2 [chromium] › tests/e2e/flows/locale-layout.spec.ts:8:7 › keeps language and student form actions usable on compact desktop (1.5s)
+  ✓  3 [chromium] › tests/e2e/flows/locale-layout.spec.ts:8:7 › keeps language and student form actions usable on mobile (1.9s)
+  ✓  4 [chromium] › tests/e2e/flows/locale-layout.spec.ts:38:7 › mobile school selection › selects a school by touch and restores focus when closing nested menus (3.2s)
+  4 passed (9.1s)
+Wall time: 9.92 seconds
+
+Typecheck final
+> educa@1.0.0 typecheck <worktree>/app
+> tsc --project tsconfig.typecheck.json --noEmit
+Wall time: 23.01 seconds
+
+Lint final
+> educa@1.0.0 lint <worktree>/app
+> pnpm lint:oxlint && pnpm lint:eslint
+> educa@1.0.0 lint:oxlint <worktree>/app
+> node tools/oxlint/run-oxlint.mjs
+> educa@1.0.0 lint:eslint <worktree>/app
+> eslint . --max-warnings 0
+Wall time: 20.85 seconds
