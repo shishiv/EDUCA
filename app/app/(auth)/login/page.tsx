@@ -139,6 +139,11 @@ function LoginForm() {
           <p className="auth-login__subtitle mb-4">
             {t(demoCredentials ? 'demoInvitation' : 'subtitle')}
           </p>
+          {demoCredentials && (
+            <p className="auth-login__subtitle mb-4 text-sm">
+              {t('demoFirstTask')}
+            </p>
+          )}
           <Link href="/" className="auth-login__back mb-4 inline-flex min-h-11 items-center text-sm font-medium">
             {t('backToHome')}
           </Link>
