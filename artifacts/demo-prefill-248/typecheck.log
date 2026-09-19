@@ -1,0 +1,3 @@
+
+> educa@1.0.0 typecheck /home/shiv/.treehouse/educa-7c556a/3/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit

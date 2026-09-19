@@ -1,0 +1,23 @@
+{
+  "authRequests": 0,
+  "emailPrefilled": true,
+  "invitation": "Experimente o EDUCA com dados de demonstração e ajude a melhorar o projeto",
+  "masked": true,
+  "noHorizontalOverflow": true,
+  "passwordPrefilled": true,
+  "query": "",
+  "submit": {
+    "bottom": 583.515625,
+    "height": 48,
+    "left": 24,
+    "right": 366,
+    "top": 535.515625,
+    "width": 342,
+    "x": 24,
+    "y": 535.515625
+  },
+  "viewport": {
+    "height": 844,
+    "width": 390
+  }
+}

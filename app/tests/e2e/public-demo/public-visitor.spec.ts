@@ -6,6 +6,7 @@
  * It performs NO mutations - read-only assertions only.
  * Safe to run against the shared sandbox.
  */
+import { createHash } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test.describe('J1: public visitor journey', () => {
@@ -26,13 +27,42 @@ test.describe('J1: public visitor journey', () => {
     await expect(page.getByRole('heading', { level: 1, name: /sandbox público do educa/i })).toBeVisible()
     await expect(page.getByText(/não insira dados pessoais ou escolares reais/i)).toBeVisible()
 
+    let signInRequests = 0
+    page.on('request', request => {
+      if (new URL(request.url()).pathname === '/auth/v1/token') signInRequests += 1
+    })
     await page.getByRole('link', { name: /continuar para o login do demo/i }).click()
     await expect(page).toHaveURL(/\/login\/?$/)
-    await expect(page.getByLabel('E-mail', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Senha', { exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Preencher credenciais demo' }).click()
-    await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('demo@educa.app.br')
-    await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('Demo@2026')
+    await page.setViewportSize({ width: 390, height: 844 })
+    const email = page.getByLabel('E-mail', { exact: true })
+    const password = page.getByLabel('Senha', { exact: true })
+    const fillDemo = page.getByRole('button', { name: 'Preencher credenciais demo' })
+    await expect(email).toBeInViewport()
+    await expect(password).toBeInViewport()
+    await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeInViewport()
+    if ((process.env.NEXT_PUBLIC_DEMO_SANDBOX ?? 'true') === 'true') {
+      await expect(page.getByText('Experimente o EDUCA com dados de demonstração e ajude a melhorar o projeto')).toBeInViewport()
+      await expect(email).toHaveValue('demo@educa.app.br')
+      // Pin the existing synthetic credential without exposing it in assertion output.
+      const initialPassword = await password.inputValue()
+      expect(createHash('sha256').update(initialPassword).digest('hex')).toBe('6269bdc44514c668efb1ee9442d68ac81c662367fa36c1883e3027ee197f4036')
+      expect(signInRequests).toBe(0)
+      // Initial values above are visible before interaction. Let the route's
+      // client scripts finish loading before testing its restore handler.
+      await page.waitForLoadState('networkidle')
+      await email.fill('edited@synthetic.invalid')
+      await password.fill('')
+      await fillDemo.click()
+      await expect(email).toHaveValue('demo@educa.app.br')
+      expect(await password.inputValue() === initialPassword).toBe(true)
+    } else {
+      await expect(page.getByRole('heading', { name: 'Entrar no sistema' })).toBeVisible()
+      await expect(email).toHaveValue('')
+      expect(await password.inputValue() === '').toBe(true)
+      await expect(fillDemo).toHaveCount(0)
+    }
+    expect(signInRequests).toBe(0)
+    await expect(page).toHaveURL(/\/login\/?$/)
     await expect(page.getByTestId('locale-switcher')).toHaveCount(0)
     await page.getByRole('link', { name: /voltar ao início/i }).click()
     await expect(page).toHaveURL(/\/$/)
