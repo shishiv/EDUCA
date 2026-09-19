@@ -1,12 +1,17 @@
-import { describe, expect, it } from 'vitest'
-import { showDemoCredentialButton } from '@/lib/demo-sandbox/login-demo-credentials'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { getDemoLoginCredentials } from '@/lib/demo-sandbox/login-demo-credentials'
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe('demo login credentials', () => {
-  it('shows the fill button only when the public sandbox flag is exactly true', () => {
-    expect(showDemoCredentialButton(undefined)).toBe(false)
-    expect(showDemoCredentialButton('')).toBe(false)
-    expect(showDemoCredentialButton('false')).toBe(false)
-    expect(showDemoCredentialButton('TRUE')).toBe(false)
-    expect(showDemoCredentialButton('true')).toBe(true)
+  it('provides the public sandbox persona only when the public flag is exactly true', () => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_SANDBOX', undefined)
+    vi.stubEnv('DEMO_SANDBOX', 'true')
+    for (const flag of [undefined, '', 'false', 'TRUE']) {
+      expect(getDemoLoginCredentials(flag)).toBeNull()
+    }
+    const credentials = getDemoLoginCredentials('true')
+    expect(credentials?.email).toBe('demo@educa.app.br')
+    expect(Boolean(credentials?.password)).toBe(true)
   })
 })

@@ -1,0 +1,16 @@
+
+> educa@1.0.0 test:e2e:public-entry /home/shiv/.treehouse/educa-7c556a/3/educa/app
+> playwright test --config playwright.public-entry.config.ts --grep 'visitor can move' --workers\=1
+
+(node:2460120) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:2464805) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+[WebServer] [browser] Service Worker registration blocked by Playwright (<anonymous>:3:87)
+  ✓  1 tests/e2e/public-demo/public-visitor.spec.ts:13:7 › J1: public visitor journey › visitor can move from landing to demo, login, and home (5.0s)
+
+  1 passed (11.7s)

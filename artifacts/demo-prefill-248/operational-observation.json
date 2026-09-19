@@ -1,0 +1,8 @@
+{
+  "authRequests": 0,
+  "emailEmpty": true,
+  "emptySubmitBlocked": true,
+  "fillButtonAbsent": true,
+  "focusAfterEmptySubmit": "email",
+  "passwordEmpty": true
+}

@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { BrandLogo } from '@/components/marketing/brand-logo'
-import { showDemoCredentialButton } from '@/lib/demo-sandbox/login-demo-credentials'
+import { getDemoLoginCredentials } from '@/lib/demo-sandbox/login-demo-credentials'
 import { postLoginDestination } from '@/lib/route-policy'
 
 async function loadProfileWithRetry(userId: string) {
@@ -43,15 +43,14 @@ export default function LoginPage() {
 
 function LoginForm() {
   const t = useTranslations('auth.login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const demoCredentials = getDemoLoginCredentials()
+  const [{ email, password }, setCredentials] = useState(() => demoCredentials ?? { email: '', password: '' })
   const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { signIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const demoCredentialButtonVisible = showDemoCredentialButton()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,17 +129,17 @@ function LoginForm() {
       {/* Right Panel - the credential task remains the visual and semantic focus. */}
       <div className="auth-login__access flex flex-col items-center justify-center p-6 sm:p-8">
         <div className="auth-login__form w-full max-w-[380px]">
-          <div className="auth-login__brand mb-10 text-center">
+          <div className="auth-login__brand mb-6 text-center">
             <BrandLogo priority />
           </div>
 
           <h2 className="auth-login__title font-display text-2xl font-semibold mb-2">
-            {t('title')}
+            {t(demoCredentials ? 'demoTitle' : 'title')}
           </h2>
-          <p className="auth-login__subtitle mb-8">
-            {t('subtitle')}
+          <p className="auth-login__subtitle mb-4">
+            {t(demoCredentials ? 'demoInvitation' : 'subtitle')}
           </p>
-          <Link href="/" className="auth-login__back mb-6 inline-flex min-h-11 items-center text-sm font-medium">
+          <Link href="/" className="auth-login__back mb-4 inline-flex min-h-11 items-center text-sm font-medium">
             {t('backToHome')}
           </Link>
 
@@ -159,7 +158,7 @@ function LoginForm() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setCredentials({ email: e.target.value, password })}
                 placeholder={t('emailPlaceholder')}
                 autoComplete="email"
                 required
@@ -175,7 +174,7 @@ function LoginForm() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setCredentials({ email, password: e.target.value })}
                 placeholder={t('passwordPlaceholder')}
                 autoComplete="current-password"
                 required
@@ -218,19 +217,21 @@ function LoginForm() {
                 </>
               )}
             </Button>
-            {demoCredentialButtonVisible && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setEmail('demo@educa.app.br')
-                  setPassword('Demo@2026')
-                  setError('')
-                }}
-                className="w-full"
-              >
-                {t('fillDemoCredentials')}
-              </Button>
+            {demoCredentials && (
+              <div className="space-y-3">
+                <p className="auth-login__subtitle text-sm">{t('demoCaution')}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setCredentials(demoCredentials)
+                    setError('')
+                  }}
+                  className="w-full min-h-11"
+                >
+                  {t('fillDemoCredentials')}
+                </Button>
+              </div>
             )}
           </form>
 

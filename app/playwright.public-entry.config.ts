@@ -20,12 +20,12 @@ export default defineConfig({
     serviceWorkers: 'block',
   },
   webServer: {
-    command: `./node_modules/.bin/next dev --webpack --port ${port}`,
+    command: `./node_modules/.bin/next dev --webpack --hostname 127.0.0.1 --port ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: {
-      NEXT_PUBLIC_DEMO_SANDBOX: 'true',
+      NEXT_PUBLIC_DEMO_SANDBOX: process.env.NEXT_PUBLIC_DEMO_SANDBOX ?? 'true',
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
       NEXT_PUBLIC_SUPABASE_ANON_KEY:
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
