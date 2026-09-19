@@ -1,11 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { describe, expect, it } from 'vitest'
 import { EducaLanding } from '@/components/marketing/educa-landing'
 import { PublicDemoExplainer } from '@/components/marketing/public-demo-explainer'
 import { PublicHeader } from '@/components/marketing/public-header'
-import { getMessagesForLocale } from '@/i18n/messages'
+import { getMessagesForLocale, type AppMessages } from '@/i18n/messages'
 import type { AppLocale } from '@/i18n/config'
+import platformEn from '@/messages/en/platform.json'
+import platformPtBr from '@/messages/pt-BR/platform.json'
 import publicEn from '@/messages/en/public.json'
 import publicPtBr from '@/messages/pt-BR/public.json'
 
@@ -20,15 +22,25 @@ type PublicMessages = {
   }
 }
 
+type DashboardMessages = {
+  averageAttendance: string
+  totalStudents: string
+  activeClasses: string
+  activeTeachers: string
+  myClasses: string
+  alertsTitle: string
+}
+
 type PublicContract = {
   locale: AppLocale
-  messages: ReturnType<typeof getMessagesForLocale>
+  messages: AppMessages
   publicMessages: PublicMessages
+  dashboardMessages: DashboardMessages
 }
 
 const publicContracts: PublicContract[] = [
-  { locale: 'pt-BR', messages: getMessagesForLocale('pt-BR'), publicMessages: publicPtBr },
-  { locale: 'en', messages: getMessagesForLocale('en'), publicMessages: publicEn },
+  { locale: 'pt-BR', messages: getMessagesForLocale('pt-BR'), publicMessages: publicPtBr, dashboardMessages: platformPtBr.dashboard },
+  { locale: 'en', messages: getMessagesForLocale('en'), publicMessages: publicEn, dashboardMessages: platformEn.dashboard },
 ]
 
 describe('redesign localization contract', () => {
@@ -62,6 +74,34 @@ describe('redesign localization contract', () => {
 
     const renderedText = document.body.textContent ?? ''
     expect(renderedText).not.toMatch(/measured impact|measured impact|adoption claim|production ready/i)
+  })
+
+  // The caption states the preview reproduces the Overview screen, so the
+  // preview reads its labels from that screen's catalog: four metrics, the
+  // class list and the alerts panel, and never a number nobody measured.
+  it.each(publicContracts)('mirrors the implemented Overview inside the $locale preview', ({ locale, messages, publicMessages, dashboardMessages }) => {
+    const { container } = render(
+      <NextIntlClientProvider locale={locale} messages={messages}>
+        <EducaLanding />
+      </NextIntlClientProvider>
+    )
+
+    const preview = container.querySelector('figure')
+    if (!preview) throw new Error('the landing hero must render the preview figure')
+    const board = within(preview)
+    for (const label of [
+      dashboardMessages.averageAttendance,
+      dashboardMessages.totalStudents,
+      dashboardMessages.activeClasses,
+      dashboardMessages.activeTeachers,
+      dashboardMessages.myClasses,
+      dashboardMessages.alertsTitle,
+    ]) {
+      expect(board.getByText(label)).toBeInTheDocument()
+    }
+    expect(preview.querySelectorAll('.landing-board__metric')).toHaveLength(4)
+    expect(board.getByText(publicMessages.landing.boardCaptionLead)).toBeInTheDocument()
+    expect(preview.textContent ?? '').not.toMatch(/\d/)
   })
 
   it.each(publicContracts)('renders the demo safety contract in $locale', ({ locale, messages, publicMessages }) => {
