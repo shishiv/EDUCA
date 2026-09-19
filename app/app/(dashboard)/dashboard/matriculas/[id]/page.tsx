@@ -48,7 +48,8 @@ import {
   summarizeCanonicalAttendanceFacts,
   type CanonicalAttendanceFact,
 } from '@/lib/api/canonical-attendance-facts'
-import { ATENCAO, CONFORMIDADE, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -71,6 +72,7 @@ interface Matricula {
     ativo: boolean | null
   }
   turmas: {
+    escola_id: string
     id: string
     nome: string
     serie: string
@@ -90,6 +92,7 @@ interface FrequenciaRecord {
 }
 
 interface AttendanceStats {
+  bands: AttendanceBands
   totalAulas: number
   presencas: number
   faltas: number
@@ -105,8 +108,8 @@ function isGovernedEnrollmentSituation(value: string): value is 'ativa' | 'trans
   return value === 'ativa' || value === 'transferida' || value === 'concluida' || value === 'cancelada'
 }
 
-function deriveEnrollmentAttendance(facts: CanonicalAttendanceFact[], enrollmentId: string) {
-  const summary = summarizeCanonicalAttendanceFacts(facts, [enrollmentId]).get(enrollmentId)
+function deriveEnrollmentAttendance(facts: CanonicalAttendanceFact[], enrollmentId: string, bands: AttendanceBands) {
+  const summary = summarizeCanonicalAttendanceFacts(facts, bands, [enrollmentId]).get(enrollmentId)
   const records = facts
     .map((fact) => ({
       id: fact.id,
@@ -119,6 +122,7 @@ function deriveEnrollmentAttendance(facts: CanonicalAttendanceFact[], enrollment
   return {
     records,
     stats: {
+      bands,
       totalAulas: summary?.total ?? 0,
       presencas: summary ? summary.presencas + summary.atestados : 0,
       faltas: summary?.faltas ?? 0,
@@ -428,8 +432,8 @@ function MatriculaStatusCard({
   )
 }
 
-function deriveAttendancePresentation(percentual: number) {
-  const status = getFrequencyPolicyStatus(percentual)
+function deriveAttendancePresentation(percentual: number, bands: AttendanceBands) {
+  const status = getFrequencyPolicyStatus(percentual, bands)
   if (status === 'CONFORME') return { status, color: 'text-green-600' }
   if (status === 'ATENCAO') return { status, color: 'text-yellow-600' }
   return { status, color: 'text-red-600' }
@@ -437,7 +441,7 @@ function deriveAttendancePresentation(percentual: number) {
 
 function MatriculaAttendanceCard({ stats }: { stats: AttendanceStats }) {
   const t = useTranslations('registry')
-  const presentation = deriveAttendancePresentation(stats.percentualPresenca)
+  const presentation = deriveAttendancePresentation(stats.percentualPresenca, stats.bands)
 
   return (
     <Card>
@@ -472,7 +476,7 @@ function MatriculaAttendanceCard({ stats }: { stats: AttendanceStats }) {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Não conformidade Bolsa Família: frequência abaixo de {CONFORMIDADE}%.
+              Frequência abaixo da referência municipal de {stats.bands.reference}%.
             </AlertDescription>
           </Alert>
         )}
@@ -480,7 +484,7 @@ function MatriculaAttendanceCard({ stats }: { stats: AttendanceStats }) {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Atenção preventiva municipal: frequência abaixo de {ATENCAO}%; condicionalidade atendida a partir de {CONFORMIDADE}%.
+              Atenção preventiva municipal: frequência abaixo de {stats.bands.attention}%.
             </AlertDescription>
           </Alert>
         )}
@@ -629,12 +633,7 @@ export default function MatriculaDetailsPage() {
   const [saving, setSaving] = useState(false)
   const [matricula, setMatricula] = useState<Matricula | null>(null)
   const [frequencia, setFrequencia] = useState<FrequenciaRecord[]>([])
-  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats>({
-    totalAulas: 0,
-    presencas: 0,
-    faltas: 0,
-    percentualPresenca: 0
-  })
+  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats | null>(null)
 
   const [formData, setFormData] = useState<EnrollmentFormData>({
     situacao: 'ativa',
@@ -657,6 +656,7 @@ export default function MatriculaDetailsPage() {
             ativo
           ),
           turmas (
+            escola_id,
             id,
             nome,
             serie,
@@ -686,7 +686,8 @@ export default function MatriculaDetailsPage() {
       })
 
       const attendanceFacts = await loadCanonicalAttendanceFacts(supabase, [id])
-      const attendance = deriveEnrollmentAttendance(attendanceFacts, id)
+      const bands = await resolveAttendanceBands(supabase, matriculaData.turmas.escola_id)
+      const attendance = deriveEnrollmentAttendance(attendanceFacts, id, bands)
       setFrequencia(attendance.records)
       setAttendanceStats(attendance.stats)
     } catch (error) {
@@ -749,7 +750,7 @@ export default function MatriculaDetailsPage() {
     )
   }
 
-  if (!matricula) {
+  if (!matricula || !attendanceStats) {
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />

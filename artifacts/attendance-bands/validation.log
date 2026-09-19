@@ -1,0 +1,249 @@
+F10 verification, 2026-09-19 UTC
+Runtime: /usr/bin/node v26.8.1, ABI 147; pnpm 9.15.9
+Only isolated local synthetic data. Log excerpts retain their content; trailing whitespace is trimmed.
+Build and E2E used the exclusive local Supabase project educa-f10-general.
+E2E used base playwright.config.ts with an external-server override and /usr/bin/chromium; no changed expectations, retries or timeout increases.
+
+=== pnpm typecheck ===
+
+> educa@1.0.0 typecheck /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> tsc --project tsconfig.typecheck.json --noEmit
+
+
+=== pnpm lint ===
+
+> educa@1.0.0 lint /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> pnpm lint:oxlint && pnpm lint:eslint
+
+
+> educa@1.0.0 lint:oxlint /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> node tools/oxlint/run-oxlint.mjs
+
+
+> educa@1.0.0 lint:eslint /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> eslint . --max-warnings 0
+
+
+=== pnpm run test --maxWorkers=2 ===
+(node:912409) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:912462) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:912985) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  134 passed | 5 skipped (139)
+      Tests  1388 passed | 29 skipped (1417)
+   Start at  22:18:48
+   Duration  55.60s (transform 2.03s, setup 5.07s, import 31.44s, tests 23.78s, environment 34.79s)
+
+
+=== pnpm build ===
+
+> educa@1.0.0 build /home/shiv/.treehouse/educa-7c556a/1/educa/app
+> next build --webpack
+
+▲ Next.js 16.3.0 (webpack)
+✓ Running next.config.js took 33ms
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 10.5s
+  Running TypeScript ...
+  Finished TypeScript in 2.4s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/71) ...
+  Generating static pages using 15 workers (17/71)
+  Generating static pages using 15 workers (35/71)
+  Generating static pages using 15 workers (53/71)
+✓ Generating static pages using 15 workers (71/71) in 952ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/attendance/trends
+├ ƒ /api/chamada/pendentes
+├ ƒ /api/compliance/warnings
+├ ƒ /api/configs
+├ ƒ /api/dashboard/alerts
+├ ƒ /api/demo/audit
+├ ƒ /api/frequencia/marcar
+├ ƒ /api/frequencia/sessao/[aula_id]
+├ ƒ /api/health
+├ ƒ /api/health/detail
+├ ƒ /api/pilot/audit
+├ ƒ /api/pilot/descriptive-reports/[reportId]/pdf
+├ ƒ /api/pilot/first-access
+├ ƒ /api/pilot/imports
+├ ƒ /api/pilot/imports/[batchId]/approval
+├ ƒ /api/pilot/imports/[batchId]/rollback
+├ ƒ /api/pilot/invitations
+├ ƒ /api/pilot/metrics
+├ ƒ /api/pilot/users/[userId]/revoke
+├ ƒ /api/school-settings/academic-year
+├ ƒ /api/school-settings/municipal
+├ ƒ /api/school-settings/periods
+├ ƒ /api/search
+├ ƒ /api/sessoes/aula/[id]/cancelar
+├ ƒ /api/sessoes/aula/[id]/frequencia/batch
+├ ƒ /api/sessoes/aula/[id]/status
+├ ƒ /api/sessoes/aula/abrir
+├ ƒ /api/turmas/minhas
+├ ƒ /api/users/[userId]
+├ ƒ /api/users/[userId]/status
+├ ƒ /api/users/me
+├ ƒ /api/vivencias
+├ ƒ /api/vivencias/[id]
+├ ƒ /api/whatsapp/notify
+├ ƒ /api/whatsapp/opt-in
+├ ƒ /api/whatsapp/webhook
+├ ○ /apple-icon.png
+├ ƒ /blog
+├ ƒ /blog/[slug]
+├ ƒ /dashboard
+├ ƒ /dashboard/alunos
+├ ƒ /dashboard/alunos/[id]
+├ ƒ /dashboard/alunos/[id]/boletim
+├ ƒ /dashboard/alunos/[id]/diario
+├ ƒ /dashboard/alunos/[id]/diario/novo
+├ ƒ /dashboard/alunos/[id]/diario/relatorio
+├ ƒ /dashboard/alunos/[id]/editar
+├ ƒ /dashboard/alunos/novo
+├ ƒ /dashboard/atribuicoes
+├ ƒ /dashboard/calendario
+├ ƒ /dashboard/configuracoes
+├ ƒ /dashboard/diario
+├ ƒ /dashboard/escolas
+├ ƒ /dashboard/escolas/[id]
+├ ƒ /dashboard/escolas/[id]/editar
+├ ƒ /dashboard/escolas/nova
+├ ƒ /dashboard/flags
+├ ƒ /dashboard/matriculas
+├ ƒ /dashboard/matriculas/[id]
+├ ƒ /dashboard/matriculas/nova
+├ ƒ /dashboard/notas
+├ ƒ /dashboard/perfil
+├ ƒ /dashboard/relatorios
+├ ƒ /dashboard/responsaveis
+├ ƒ /dashboard/responsaveis/[id]
+├ ƒ /dashboard/responsaveis/novo
+├ ƒ /dashboard/sessoes
+├ ƒ /dashboard/turmas
+├ ƒ /dashboard/turmas/[id]
+├ ƒ /dashboard/turmas/[id]/chamada
+├ ƒ /dashboard/turmas/[id]/editar
+├ ƒ /dashboard/turmas/nova
+├ ƒ /dashboard/usuarios
+├ ƒ /dashboard/usuarios/[id]
+├ ƒ /dashboard/usuarios/novo
+├ ƒ /demo
+├ ƒ /diario
+├ ƒ /diario/frequencia
+├ ƒ /diario/relatorios/[alunoId]
+├ ○ /icon.png
+├ ƒ /login
+├ ƒ /offline
+├ ○ /opengraph-image.png
+├ ƒ /politica-privacidade
+├ ƒ /primeiro-acesso
+├ ƒ /relatorios/bolsa-familia
+├ ƒ /relatorios/conteudo
+├ ƒ /relatorios/frequencia
+├ ƒ /reset-password
+├ ƒ /reset-password/complete
+└ ƒ /unauthorized
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+=== supabase/tests/database/run.sh ===
+DO
+              set_config
+--------------------------------------
+ 12000000-0000-0000-0000-000000000011
+(1 row)
+
+ assert_true
+-------------
+
+(1 row)
+
+RESET
+ROLLBACK
+ATTENDANCE_CONDITIONALITY_DATABASE_CONTRACT_OK: isolated PostgreSQL legal floors, municipality margins, fallback, precedence, completion derivation, and audit passed
+Database migration tests passed
+
+=== pnpm demo:verify-sql ===
+NOTICE:  truncate cascades to table "anos_letivos"
+NOTICE:  truncate cascades to table "school_schema_registry"
+NOTICE:  truncate cascades to table "vivencias"
+NOTICE:  truncate cascades to table "vivencias_campos_experiencia"
+NOTICE:  truncate cascades to table "relatorios_descritivos_vivencias"
+NOTICE:  truncate cascades to table "school_schema_versions"
+OK: fingerprints identicos apos reset repetido
+    escolas c9105e63e151981d9780642cbbf80331
+    users d3397b0daca575800fd16e22d235ae24
+    turmas d7999618533081eadf4af07b593814b6
+    matriculas a0a15b8c410db6afbf5526ffedc6b14b
+    sessoes_aula 99a57c6c3c1719c4cdc589927e5ee45d
+    conteudo_aula f0e223875b9f12bae1805475665bd31d
+    frequencia 16b3e1509fed7bc1d15c0f80fd922f0e
+    certificado_emissores eb50c1250cbe1d9db745b68848e47af2
+    certificado_atividades 990495902e743db87caeae00de90bc83
+    certificado_atividade_sessoes b080f499537e4094740a5216962c1507
+    certificados_emitidos af5498798870485f2950c0540bfbb3ce
+
+Validacao offline do seed demo PASSED (ancora 2026-07-01)
+
+=== Playwright dashboard-metrics + reports/frequency; chromium, workers=1, retries=0 ===
+(node:557223) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+E2E seed ready: 5 roles, 3 schools, 3 classes, 5 students
+
+Running 27 tests using 1 worker
+
+(node:557930) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓   1 [setup] › tests/e2e/auth.setup.ts:124:8 › authenticate as admin (233ms)
+  ✓   2 [setup] › tests/e2e/auth.setup.ts:172:8 › authenticate all roles (2.2s)
+(node:560063) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓   3 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:16:7 › Dashboard - Page Loads › dashboard renders greeting and network heading (846ms)
+  ✓   4 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:21:7 › Dashboard - Page Loads › dashboard shows quick-access actions for admin (780ms)
+  ✓   5 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:33:7 › Dashboard - Stat Cards › should display Total de Alunos stat card (692ms)
+  ✓   6 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:37:7 › Dashboard - Stat Cards › should display Turmas Ativas stat card (707ms)
+  ✓   7 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:42:7 › Dashboard - Stat Cards › should display Frequencia Media stat card (692ms)
+  ✓   8 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:46:7 › Dashboard - Stat Cards › should display Professores Ativos stat card (746ms)
+  ✓   9 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:50:7 › Dashboard - Stat Cards › F09 exact metrics survive school changes and reloads in two academic years (5.7s)
+  ✓  10 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:91:7 › Dashboard - Stat Cards › F10 school override survives reload without leaking or hiding missing configuration (4.6s)
+  ✓  11 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:124:7 › Dashboard - Stat Cards › F09 a failed dashboard query is not presented as valid zero metrics (2.8s)
+  ✓  12 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:172:7 › Dashboard - Navigation › quick-access Novo Aluno navigates to alunos/novo (791ms)
+  ✓  13 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:179:7 › Dashboard - Navigation › quick-access Nova Turma navigates to turmas/nova (804ms)
+  ✓  14 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:185:7 › Dashboard - Navigation › Relatórios hub links to the implemented report routes (1.3s)
+  ✓  15 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:201:7 › Dashboard - Navigation › Diário page loads from the shared navigation (925ms)
+  ✓  16 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:208:7 › Dashboard - Navigation › Configurações page loads (822ms)
+  ✓  17 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:217:7 › Dashboard - Minhas Turmas section › Minhas Turmas card is visible (676ms)
+  ✓  18 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:222:7 › Dashboard - Minhas Turmas section › Turmas ativas description is visible (657ms)
+  ✓  19 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:234:7 › Dashboard - Mobile Navigation › bottom navigation exposes only implemented routes (693ms)
+  ✓  20 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:241:7 › Dashboard - Mobile Navigation › drawer opens, exposes role-allowed links and closes (989ms)
+  ✓  21 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:251:7 › Dashboard - Sidebar Navigation › sidebar nav links are present (652ms)
+  ✓  22 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:257:7 › Dashboard - Sidebar Navigation › navigate to Alunos via sidebar (833ms)
+  ✓  23 [chromium] › tests/e2e/flows/dashboard-metrics.spec.ts:264:7 › Dashboard - Sidebar Navigation › shared shell keeps route context on a secondary screen (839ms)
+  ✓  24 [chromium] › tests/e2e/reports/frequency.spec.ts:186:7 › Relatório de frequência › shows the implemented filters, custom dates, and pre-generation export guard (1.2s)
+  ✓  25 [chromium] › tests/e2e/reports/frequency.spec.ts:205:7 › Relatório de frequência › renders persisted canonical attendance and the implemented table and chart states (1.6s)
+  ✓  26 [chromium] › tests/e2e/reports/frequency.spec.ts:231:7 › Relatório de frequência › downloads Excel and PDF exports with the generated attendance row and F10 school override (2.2s)
+  ✓  27 [chromium] › tests/e2e/reports/frequency.spec.ts:302:7 › Relatório de frequência › keeps filters and the real report usable at 390px (1.3s)
+
+  27 passed (39.5s)
+
+=== Supabase exclusive project cleanup ===
+{"project_id_filter":"educa-f10-general","backup":false,"message":"Stopped supabase local development setup."}
+PILOT_SUPABASE_CLEANUP_VERIFY: no resources remain for project=educa-f10-general

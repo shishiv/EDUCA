@@ -20,8 +20,7 @@ import type {
   MunicipalMarginResolution,
 } from '@/lib/reports/bolsa-familia-reports';
 import {
-  ATENCAO,
-  CONFORMIDADE,
+  type AttendanceBands,
   getFrequencyPolicyLabel,
   getFrequencyPolicyStatus,
 } from '@/lib/attendance/attendance-policy';
@@ -117,8 +116,8 @@ async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string): Promi
 /**
  * Get status text based on percentage
  */
-function getStatusText(percentual: number): string {
-  return getFrequencyPolicyLabel(getFrequencyPolicyStatus(percentual));
+function getStatusText(percentual: number, bands: AttendanceBands): string {
+  return getFrequencyPolicyLabel(getFrequencyPolicyStatus(percentual, bands));
 }
 
 const BOLSA_STATUS_LABELS = {
@@ -227,7 +226,7 @@ export async function generateAttendanceReportExcel(
       student.atestados,
       student.totalAulas,
       student.percentual,
-      getStatusText(student.percentual),
+      getStatusText(student.percentual, report.bands),
     ]);
 
     // Alternate row colors
@@ -242,7 +241,7 @@ export async function generateAttendanceReportExcel(
     }
 
     // Highlight policy bands
-    if (student.percentual < CONFORMIDADE) {
+    if (student.percentual < report.bands.reference) {
       row.eachCell((cell) => {
         cell.fill = {
           type: 'pattern',
@@ -250,7 +249,7 @@ export async function generateAttendanceReportExcel(
           fgColor: { argb: 'FFFEE2E2' },
         };
       });
-    } else if (student.percentual < ATENCAO) {
+    } else if (student.percentual < report.bands.attention) {
       row.eachCell((cell) => {
         cell.fill = {
           type: 'pattern',
@@ -262,7 +261,7 @@ export async function generateAttendanceReportExcel(
   });
 
   worksheet.addRow([]); // Empty row
-  worksheet.addRow([`Legenda: P = Presença, F = Falta, A = Atestado. Não conformidade = frequência < ${CONFORMIDADE}%; atenção preventiva = ${CONFORMIDADE}% a < ${ATENCAO}%.`]);
+  worksheet.addRow([`Legenda: P = Presença, F = Falta, A = Atestado. Referência municipal: ${report.bands.reference}%; atenção preventiva até ${report.bands.attention}%.`]);
   worksheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
 
   // Set column widths

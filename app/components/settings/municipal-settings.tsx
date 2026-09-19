@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Building2, Save } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -18,6 +19,7 @@ function municipalDescriptionKey(canEdit: boolean, schoolId: string | null) {
 
 export function MunicipalSettings() {
   const t = useTranslations('platform.settings')
+  const queryClient = useQueryClient()
   const { userProfile } = useAuth()
   const { selectedEscolaId } = useEscola()
   const year = new Date().getFullYear()
@@ -30,6 +32,8 @@ export function MunicipalSettings() {
     dpoEmail: '',
     dpoAddress: '',
     educacensoDeadline: '',
+    attendanceReference: '',
+    attendanceAttention: '',
   })
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState('')
@@ -45,6 +49,8 @@ export function MunicipalSettings() {
       dpoEmail: settings.dpo_email,
       dpoAddress: settings.dpo_address,
       educacensoDeadline: settings.educacenso_deadline ?? '',
+      attendanceReference: String(settings.attendance_bands.reference),
+      attendanceAttention: String(settings.attendance_bands.attention),
     })
   }, [settings])
 
@@ -55,9 +61,21 @@ export function MunicipalSettings() {
       const response = await fetch('/api/school-settings/municipal', {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...form, schoolId: selectedEscolaId, educacensoYear: year, educacensoDeadline: form.educacensoDeadline || null }),
+        body: JSON.stringify({
+          municipalityName: form.municipalityName,
+          educationDepartmentName: form.educationDepartmentName,
+          state: form.state, contactPhone: form.contactPhone,
+          dpoEmail: form.dpoEmail, dpoAddress: form.dpoAddress,
+          schoolId: selectedEscolaId, educacensoYear: year,
+          educacensoDeadline: form.educacensoDeadline || null,
+          attendanceBands: { reference: Number(form.attendanceReference), attention: Number(form.attendanceAttention) },
+        }),
       })
       if (!response.ok) throw new Error()
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['municipal-settings'] }),
+        queryClient.invalidateQueries({ queryKey: ['attendance-bands'] }),
+      ])
       setStatus(t('municipalSaved'))
     } catch {
       setStatus(t('municipalSaveError'))
@@ -85,6 +103,9 @@ export function MunicipalSettings() {
             <Field label={t('dpoEmail')} type="email" value={form.dpoEmail} onChange={value => setForm({ ...form, dpoEmail: value })} disabled={!canEdit} />
             <Field label={t('dpoAddress')} value={form.dpoAddress} onChange={value => setForm({ ...form, dpoAddress: value })} disabled={!canEdit} />
             <Field label={t('educacensoDeadline', { year })} type="date" value={form.educacensoDeadline} onChange={value => setForm({ ...form, educacensoDeadline: value })} disabled={!canEdit} />
+            <Field label="Referência municipal de frequência (%)" type="number" value={form.attendanceReference} onChange={value => setForm({ ...form, attendanceReference: value })} disabled={!canEdit} />
+            <Field label="Limite de atenção preventiva (%)" type="number" value={form.attendanceAttention} onChange={value => setForm({ ...form, attendanceAttention: value })} disabled={!canEdit} />
+            <p className="text-sm text-muted-foreground sm:col-span-2">Faixas de acompanhamento geral. Não definem aprovação escolar nem elegibilidade Bolsa Família. A referência deve ser menor que o limite preventivo.</p>
             {canEdit && <div className="flex items-end"><Button type="submit" disabled={saving}><Save className="mr-2 h-4 w-4" aria-hidden="true" />{saving ? t('saving') : t('municipalSave')}</Button></div>}
           </form>
         )}
@@ -96,5 +117,5 @@ export function MunicipalSettings() {
 
 function Field({ label, value, onChange, disabled, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; disabled: boolean; type?: string }) {
   const id = label.replaceAll(' ', '-').toLowerCase()
-  return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><Input id={id} type={type} value={value} onChange={event => onChange(event.target.value)} disabled={disabled} /></div>
+  return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><Input id={id} type={type} min={type === 'number' ? 0 : undefined} max={type === 'number' ? 100 : undefined} step={type === 'number' ? 'any' : undefined} required={type === 'number'} value={value} onChange={event => onChange(event.target.value)} disabled={disabled} /></div>
 }

@@ -10,6 +10,7 @@ import type { ClassDiaryEntry } from '@/lib/api/class-diary'
 import { renderWithMessages as render } from '../render-with-messages'
 
 const diaryEntry = {
+  bands: { reference: 80, attention: 85 },
   id: 'session-1',
   data_aula: '2026-09-08',
   turma_id: 'class-1',

@@ -32,7 +32,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
+import { supabase } from '@/lib/supabase'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
 import type { AttendanceReopenRequest } from '@/lib/services/attendance-reopen'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
@@ -44,6 +46,8 @@ interface Student {
 }
 
 interface Turma {
+  bands: AttendanceBands
+  escola_id: string
   id: string
   nome: string
   serie: string
@@ -75,15 +79,15 @@ function getInitials(nome: string): string {
   return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase()
 }
 
-function getFrequencyColor(percentage: number): string {
-  const status = getFrequencyPolicyStatus(percentage)
+function getFrequencyColor(percentage: number, bands: AttendanceBands): string {
+  const status = getFrequencyPolicyStatus(percentage, bands)
   if (status === 'CONFORME') return 'text-green-600'
   if (status === 'ATENCAO') return 'text-amber-600'
   return 'text-red-600'
 }
 
-function getFrequencyBgColor(percentage: number): string {
-  const status = getFrequencyPolicyStatus(percentage)
+function getFrequencyBgColor(percentage: number, bands: AttendanceBands): string {
+  const status = getFrequencyPolicyStatus(percentage, bands)
   if (status === 'CONFORME') return ''
   if (status === 'ATENCAO') return 'bg-amber-50'
   return 'bg-red-50'
@@ -259,6 +263,7 @@ function EmptySessionCard({
 }
 
 function AttendanceSessionContent({
+  bands,
   loading,
   selectedSession,
   students,
@@ -273,6 +278,7 @@ function AttendanceSessionContent({
   onStatusChange,
   onJustificationNeeded,
 }: {
+  bands: AttendanceBands
   loading: boolean
   selectedSession: AttendanceSession | null
   students: Student[]
@@ -326,13 +332,13 @@ function AttendanceSessionContent({
             <div className="space-y-2">
               {students.map(student => {
                 const record = attendance.get(student.matriculaId)
-                const policyStatus = getFrequencyPolicyStatus(student.frequencia)
+                const policyStatus = getFrequencyPolicyStatus(student.frequencia, bands)
                 return (
                   <div
                     key={student.matriculaId}
                     className={cn(
                       'flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-muted/50',
-                      getFrequencyBgColor(student.frequencia)
+                      getFrequencyBgColor(student.frequencia, bands)
                     )}
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -350,7 +356,7 @@ function AttendanceSessionContent({
                             </Badge>
                           )}
                         </div>
-                        <p className={cn('text-sm tabular-nums', getFrequencyColor(student.frequencia))}>
+                        <p className={cn('text-sm tabular-nums', getFrequencyColor(student.frequencia, bands))}>
                           {student.frequencia.toFixed(1)}% de frequência
                         </p>
                       </div>
@@ -509,7 +515,7 @@ export default function ChamadaPage() {
   const loadTurma = useCallback(async () => {
     const data = await classesApi.getClassWithSchool(turmaId)
     if (!data) throw new Error('Turma não encontrada')
-    setTurma(data)
+    setTurma({ ...data, bands: await resolveAttendanceBands(supabase, data.escola_id) })
   }, [turmaId])
 
   const loadStudents = useCallback(async () => {
@@ -842,7 +848,7 @@ export default function ChamadaPage() {
         isClosing={isClosing}
         loadingReopenRequest={loadingReopenRequest}
         header={{
-          turma, date: currentDate, studentCount: students.length, presentCount,
+          bands: turma.bands, turma, date: currentDate, studentCount: students.length, presentCount,
           hasUnsavedChanges, isLocked, lockReason: disabledReason,
           onSave: handleSave, isSaving, onClose: () => setCloseDialogOpen(true),
           canEdit: canEditSelectedSession,
@@ -861,6 +867,7 @@ export default function ChamadaPage() {
         onSessionChange={handleSessionChange}
       />
       <AttendanceSessionContent
+        bands={turma.bands}
         loading={loadingSessions || loadingAttendance}
         selectedSession={selectedSession}
         students={students}

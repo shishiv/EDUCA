@@ -611,6 +611,11 @@ INSERT INTO configs (id,chave,valor,categoria,descricao,tipo_valor,valor_padrao,
 ('00000000-0000-0000-0000-000000000956','dias_letivos_ano','200','academico','Total de dias letivos no ano','string','200',true,'2026-02-03 08:00:00-03'),
 ('00000000-0000-0000-0000-000000000957','carga_horaria_diaria','5','academico','Carga horaria diaria em horas','string','5',true,'2026-02-03 08:00:00-03');
 
+-- Reset truncates configs; fresh-schema verification already has the migration seed.
+INSERT INTO configs (id,chave,valor,categoria,descricao,tipo_valor,valor_padrao,ativo,created_at) VALUES
+('00000000-0000-0000-0000-000000000964','attendance_alert_bands','{"reference":80,"attention":85}','municipal','Faixas gerais, sem efeito sobre elegibilidade Bolsa Família','json','{"reference":80,"attention":85}',true,'2026-02-03 08:00:00-03')
+ON CONFLICT DO NOTHING;
+
 -- 12. ATUALIZAR DIRETORES
 UPDATE escolas SET diretor_id = '00000000-0000-0000-0000-000000000011' WHERE id = '00000000-0000-0000-0000-000000000001';
 UPDATE escolas SET diretor_id = '00000000-0000-0000-0000-000000000015' WHERE id = '00000000-0000-0000-0000-000000000002';

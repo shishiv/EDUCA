@@ -22,7 +22,7 @@ describe('municipal report branding', () => {
         municipalityName="Município de Prova"
         printMode
       />
-      <AttendanceReportTable data={[]} municipalityName="Município de Prova" printMode />
+      <AttendanceReportTable bands={{ reference: 80, attention: 85 }} data={[]} municipalityName="Município de Prova" printMode />
     </></NextIntlClientProvider>)
 
     expect(screen.getAllByText('Município de Prova')).toHaveLength(3)

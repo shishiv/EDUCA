@@ -40,7 +40,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ClassDiaryEntry } from '@/lib/api/class-diary'
-import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+
+function DiaryAttendancePercentage({ percentage, bands }: { percentage: number; bands: AttendanceBands }) {
+  const status = getFrequencyPolicyStatus(percentage, bands)
+  const color = status === 'CONFORME' ? 'text-green-600' : status === 'ATENCAO' ? 'text-amber-600' : 'text-red-600'
+  return <span className={`font-semibold ${color}`}>{percentage}%</span>
+}
 
 interface ClassDiaryListProps {
   entries: ClassDiaryEntry[]
@@ -217,13 +223,7 @@ export function ClassDiaryList({
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span
-                      className={`font-semibold ${
-                        getFrequencyPolicyStatus(percentage) === 'CONFORME' ? 'text-green-600' : getFrequencyPolicyStatus(percentage) === 'ATENCAO' ? 'text-amber-600' : 'text-red-600'
-                      }`}
-                    >
-                      {percentage}%
-                    </span>
+                    <DiaryAttendancePercentage percentage={percentage} bands={entry.bands} />
                   </TableCell>
                   <TableCell>
                     {entry.bloqueado && <Lock className="h-4 w-4 text-muted-foreground" />}
@@ -292,13 +292,7 @@ export function ClassDiaryList({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`text-sm font-semibold ${
-                          getFrequencyPolicyStatus(percentage) === 'CONFORME' ? 'text-green-600' : getFrequencyPolicyStatus(percentage) === 'ATENCAO' ? 'text-amber-600' : 'text-red-600'
-                        }`}
-                      >
-                        {percentage}% freq.
-                      </span>
+                      <DiaryAttendancePercentage percentage={percentage} bands={entry.bands} />
                       {entry.bloqueado && (
                         <Lock className="h-4 w-4 text-muted-foreground" />
                       )}

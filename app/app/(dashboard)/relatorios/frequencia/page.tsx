@@ -74,7 +74,6 @@ import {
   generateAttendanceReportPDF,
   generateAttendanceReportExcel,
 } from '@/lib/export'
-import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
 import { useMunicipalSettings } from '@/hooks/use-municipal-settings'
 
 // ============================================================================
@@ -212,7 +211,6 @@ export default function AttendanceReportsPage() {
       const filters: AttendanceReportFilters = {
         startDate: formatDateApi(dateRange.from),
         endDate: formatDateApi(dateRange.to),
-        riskThreshold: CONFORMIDADE,
       }
 
       const result = await generateClassAttendanceReport(supabase, selectedTurma, filters)
@@ -314,7 +312,7 @@ export default function AttendanceReportsPage() {
             <span className="sm:hidden">{t('attendance.mobileSubtitle')}</span>
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            {t('attendance.policy', { threshold: CONFORMIDADE, attention: ATENCAO })}
+            {reportData && t('attendance.policy', { threshold: reportData.bands.reference, attention: reportData.bands.attention })}
           </p>
         </div>
 
@@ -524,7 +522,7 @@ export default function AttendanceReportsPage() {
                       : undefined
                   }
                   periodoLabel={periodoLabel}
-                  riskThreshold={CONFORMIDADE}
+                  bands={reportData.bands}
                   isLoading={isLoadingReport}
                   printMode={printMode}
                   onRowClick={handleRowClick}

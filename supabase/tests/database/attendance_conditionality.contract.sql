@@ -521,6 +521,33 @@ SELECT pg_temp.assert_true(
    )),
   'municipal secretariat reads all active scoped municipality rows through the RPC'
 );
+-- General alert edits must never move any benefit floor, status or margin.
+DO $$
+DECLARE
+  baseline jsonb;
+  after_edit jsonb;
+  settings record;
+  scope uuid;
+  bands jsonb;
+BEGIN
+  SELECT jsonb_agg(to_jsonb(r) ORDER BY r.matricula_id) INTO baseline
+  FROM public.get_attendance_conditionality(DATE '2026-08-01', DATE '2026-08-31', NULL, NULL) r;
+  FOREACH scope IN ARRAY ARRAY[NULL::uuid, '12000000-0000-0000-0000-000000000001'::uuid] LOOP
+    SELECT * INTO STRICT settings FROM public.get_municipal_settings(scope, 2026);
+    FOREACH bands IN ARRAY ARRAY['{"reference":10,"attention":20}'::jsonb, '{"reference":95,"attention":99}'::jsonb] LOOP
+      PERFORM public.set_municipal_settings(scope, settings.municipality_name, settings.education_department_name,
+        settings.state, settings.contact_phone, settings.dpo_email, settings.dpo_address, 2026,
+        settings.educacenso_deadline, bands);
+      PERFORM pg_temp.assert_true((SELECT attendance_bands = bands FROM public.get_municipal_settings(scope, 2026)),
+        'general default or school override actually persisted');
+      SELECT jsonb_agg(to_jsonb(r) ORDER BY r.matricula_id) INTO after_edit
+      FROM public.get_attendance_conditionality(DATE '2026-08-01', DATE '2026-08-31', NULL, NULL) r;
+      PERFORM pg_temp.assert_true(after_edit = baseline, 'all Bolsa Familia rows remain unchanged after general alert edits');
+    END LOOP;
+  END LOOP;
+END;
+$$;
+
 SELECT set_config('request.jwt.claim.sub','12000000-0000-0000-0000-000000000011',true);
 SELECT pg_temp.assert_true(
   (SELECT count(*) = 0

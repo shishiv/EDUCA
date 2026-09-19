@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../support/diagnostics'
-import { createDashboardFixture, readDashboardOracle } from './dashboard-fixture'
+import { createDashboardFixture, readDashboardOracle, setFixtureAttendanceBands } from './dashboard-fixture'
 import { navigateToDashboard } from '../utils/test-helpers'
 
 /**
@@ -83,6 +83,39 @@ test.describe('Dashboard - Stat Cards', () => {
       await expectDashboardMetrics(page, 2026, { students: 2, classes: 1, teachers: 1, attendance: 33.3 })
     } finally {
       await testInfo.attach('f09-dashboard-cleanup.json', {
+        body: JSON.stringify(await fixture.cleanup()), contentType: 'application/json',
+      })
+    }
+  })
+
+  test('F10 school override survives reload without leaking or hiding missing configuration', async ({ page }, testInfo) => {
+    const fixture = await createDashboardFixture()
+    try {
+      await page.clock.setFixedTime(new Date('2026-09-17T12:00:00Z'))
+      await setFixtureAttendanceBands(page.request, fixture.schoolA, { reference: 20, attention: 30 })
+      await page.reload()
+      await selectDashboardSchool(page, fixture.schoolAName)
+      const attendance = page.getByRole('article').filter({ hasText: 'Frequência Média' })
+      await expect(attendance.locator('strong')).toHaveText('33.3%')
+      await expect(attendance).toHaveAttribute('data-tone', 'teal')
+      await page.reload()
+      await expect(attendance).toHaveAttribute('data-tone', 'teal')
+      await selectDashboardSchool(page, fixture.schoolBName)
+      await expect(attendance.locator('strong')).toHaveText('20%')
+      await expect(attendance).toHaveAttribute('data-tone', 'warning')
+      await setFixtureAttendanceBands(page.request, fixture.schoolA, { reference: 40, attention: 50 })
+      await selectDashboardSchool(page, fixture.schoolAName)
+      await page.reload()
+      await expect(attendance.locator('strong')).toHaveText('33.3%')
+      await expect(attendance).toHaveAttribute('data-tone', 'warning')
+      await page.route('**/rest/v1/rpc/get_municipal_settings', route => route.fulfill({
+        contentType: 'application/json', body: JSON.stringify([{ attendance_bands: null }]),
+      }))
+      await page.reload()
+      await expect(page.getByRole('alert').filter({ hasText: 'Configuração de frequência indisponível' })).toBeVisible()
+      await expect(page.locator('.app-metric strong')).toHaveCount(0)
+    } finally {
+      await testInfo.attach('f10-dashboard-cleanup.json', {
         body: JSON.stringify(await fixture.cleanup()), contentType: 'application/json',
       })
     }

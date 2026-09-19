@@ -6,7 +6,7 @@
  * Features:
  * - Table with: student name, presences, absences, attestados, percentage
  * - Column sorting
- * - Highlight for at-risk students (< 80%)
+ * - Highlight using the report's resolved school attendance bands
  * - Responsive design
  * - Print-optimized layout
  *
@@ -49,10 +49,7 @@ import {
 	Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-	ATENCAO,
-	CONFORMIDADE,
-} from "@/lib/attendance/attendance-policy";
+import type { AttendanceBands } from "@/lib/attendance/attendance-policy";
 
 // ============================================================================
 // TYPES
@@ -78,8 +75,8 @@ export interface AttendanceReportTableProps {
 	turmaName?: string;
 	/** Period description */
 	periodoLabel?: string;
-	/** Compliance threshold percentage. The canonical default is 80. */
-	riskThreshold?: number;
+	/** Same resolved policy carried by the report and its exports. */
+	bands: AttendanceBands;
 	/** Whether the table is loading */
 	isLoading?: boolean;
 	/** Whether to show NIS column (for Bolsa Família) */
@@ -104,7 +101,6 @@ type SortDirection = "asc" | "desc";
 // CONSTANTS
 // ============================================================================
 
-const DEFAULT_RISK_THRESHOLD = CONFORMIDADE;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -115,21 +111,21 @@ const DEFAULT_RISK_THRESHOLD = CONFORMIDADE;
  */
 function getAttendanceBadgeClass(
 	percentual: number,
-	threshold: number,
+	bands: AttendanceBands,
 ): string {
-	if (percentual < threshold) return "bg-red-100 text-red-800 border-red-300";
-	if (percentual < ATENCAO) return "bg-yellow-100 text-yellow-800 border-yellow-300";
+	if (percentual < bands.reference) return "bg-red-100 text-red-800 border-red-300";
+	if (percentual < bands.attention) return "bg-yellow-100 text-yellow-800 border-yellow-300";
 	return "bg-green-100 text-green-800 border-green-300";
 }
 
 /**
  * Get row highlight class based on risk status
  */
-function getRowClass(percentual: number, threshold: number): string {
-	if (percentual < threshold) {
+function getRowClass(percentual: number, bands: AttendanceBands): string {
+	if (percentual < bands.reference) {
 		return "bg-red-50 hover:bg-red-100";
 	}
-	if (percentual < ATENCAO) {
+	if (percentual < bands.attention) {
 		return "bg-yellow-50 hover:bg-yellow-100";
 	}
 	return "hover:bg-gray-50";
@@ -190,17 +186,18 @@ function SortableHeader({
  */
 function SummaryBar({
 	data,
-	riskThreshold,
+	bands,
 }: {
 	data: AttendanceTableRow[];
-	riskThreshold: number;
+	bands: AttendanceBands;
 }) {
   const t = useTranslations('platform')
+  const riskThreshold = bands.reference
 	const stats = useMemo(() => {
 		const total = data.length;
 		const critical = data.filter((row) => row.percentual < riskThreshold).length;
 		const preventiveAttention = data.filter(
-			(row) => row.percentual >= riskThreshold && row.percentual < ATENCAO,
+			(row) => row.percentual >= riskThreshold && row.percentual < bands.attention,
 		).length;
 		const healthy = data.filter((row) => row.percentual >= riskThreshold).length;
 
@@ -210,7 +207,7 @@ function SummaryBar({
 				: 0;
 
 		return { total, critical, preventiveAttention, healthy, avgAttendance };
-	}, [data, riskThreshold]);
+	}, [data, riskThreshold, bands.attention]);
 
 	return (
 		<section aria-label={t('components.attendance.summary')} className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 print:grid-cols-5 print:gap-2">
@@ -251,7 +248,7 @@ function SummaryBar({
 			<div
 				className={cn(
 					"p-3 rounded-lg text-center",
-					stats.avgAttendance >= ATENCAO
+					stats.avgAttendance >= bands.attention
 						? "bg-green-100"
 						: stats.avgAttendance >= riskThreshold
 							? "bg-yellow-100"
@@ -318,7 +315,7 @@ export function AttendanceReportTable({
 	data,
 	turmaName,
 	periodoLabel,
-	riskThreshold = DEFAULT_RISK_THRESHOLD,
+	bands,
 	isLoading = false,
 	showNis = false,
 	printMode = false,
@@ -329,6 +326,7 @@ export function AttendanceReportTable({
 	municipalityName,
 }: AttendanceReportTableProps) {
   const t = useTranslations('platform')
+  const riskThreshold = bands.reference
 	const [sortField, setSortField] = useState<SortField>("nome");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -432,7 +430,7 @@ export function AttendanceReportTable({
 			{(() => (
 			<CardContent>
 				{/* Summary Statistics */}
-				<SummaryBar data={data} riskThreshold={riskThreshold} />
+				<SummaryBar data={data} bands={bands} />
 
 				{/* Table */}
 				{data.length === 0 ? (
@@ -496,13 +494,13 @@ export function AttendanceReportTable({
 							<TableBody>
 								{sortedData.map((row, index) => {
 									const isAtRisk = row.percentual < riskThreshold;
-									const isPreventiveAttention = !isAtRisk && row.percentual < ATENCAO;
+									const isPreventiveAttention = !isAtRisk && row.percentual < bands.attention;
 
 									return (
 										<TableRow
 											key={row.matriculaId}
 											className={cn(
-												getRowClass(row.percentual, riskThreshold),
+												getRowClass(row.percentual, bands),
 												onRowClick && "cursor-pointer",
 											)}
 											onClick={() => onRowClick?.(row)}
@@ -542,7 +540,7 @@ export function AttendanceReportTable({
 														"font-semibold",
 														getAttendanceBadgeClass(
 															row.percentual,
-															riskThreshold,
+															bands,
 														),
 													)}
 												>
@@ -577,7 +575,7 @@ export function AttendanceReportTable({
 					<div className="flex items-center gap-1">
 						<span className="h-3 w-3 rounded bg-yellow-500" />
 						<span>
-							{t('components.attendance.preventiveWithThreshold', { threshold: riskThreshold, attention: Math.max(ATENCAO, riskThreshold) })}
+							{t('components.attendance.preventiveWithThreshold', { threshold: riskThreshold, attention: bands.attention })}
 						</span>
 					</div>
 					<div className="flex items-center gap-1">

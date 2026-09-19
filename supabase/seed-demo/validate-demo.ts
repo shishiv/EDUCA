@@ -7,7 +7,7 @@
  *
  *  1. Contagens do contrato: 3 escolas, 5 turmas, 10 professores + 1 admin,
  *     50 alunos, 50 responsaveis, 50 vinculos, 50 matriculas, 300 notas,
- *     15 eventos de calendario, 12 configs, e a frequencia/aulas/conteudos
+ *     15 eventos de calendario, 13 configs, e a frequencia/aulas/conteudos
  *     gerados para a janela ancorada (20 dias letivos).
  *  2. Contrato descritivo: cada sessao fechada tem um conteudo completo,
  *     distribuido nas cinco disciplinas e conferido por fingerprint fixo.
@@ -57,7 +57,6 @@ import {
   isPresentOn,
   LOW_ATTENDANCE_MATRICULA_ID,
 } from './attendance-generator'
-import { CONFORMIDADE } from '../../app/lib/attendance/attendance-policy'
 import {
   DEMO_CERTIFICATE_ACTIVITY_ID,
   DEMO_CERTIFICATE_EMITTER_ID,
@@ -81,14 +80,13 @@ const STATIC_COUNTS = {
   matriculas: 50,
   notas: 300,
   calendario_escolar: 15,
-  configs: 12, // 8 configs + 3 marcadores (960/961/962) + demo_seed_anchor_date (963) gravado pelo reset
+  configs: 13, // 8 configs + 3 marcadores + âncora + faixas gerais persistidas
   certificado_emissores: 1,
   certificado_atividades: 1,
   certificados_emitidos: 1,
 }
 
 const EXPECTED_SYNTHETIC_MARKER = 'SYNTHETIC-EDUCA-DEMO'
-const ALERT_THRESHOLD = CONFORMIDADE
 
 // Receipt for the five canonical disciplines used by the generated sessions.
 // Each discipline owns one seeded turma and therefore one content row per day.
@@ -469,6 +467,13 @@ async function recordRelationshipChecks(client: PgClient, schoolDays: string[]):
   record('rel_certificado_verificavel', Number(certificate.unverifiable) === 0 && Number(certificate.hash_faults) === 0, `${certificate.unverifiable} fontes ou ${certificate.hash_faults} hashes de certificado invalidos`)
 }
 
+async function readDemoAlertThreshold(client: PgClient): Promise<number> {
+  const result = await client.query<ConfigValueRow>("SELECT valor FROM configs WHERE chave = 'demo_alert_threshold' AND ativo = true")
+  const threshold = Number(firstRow(result.rows, 'demo_alert_threshold').valor)
+  if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 100) throw new Error('DEMO_ALERT_THRESHOLD_INVALID')
+  return threshold
+}
+
 async function recordSyntheticChecksAndFingerprints(client: PgClient, schoolDays: string[]): Promise<{ fingerprintTables: string[]; fingerprints: Map<string, string> }> {
   // ---------------------------------------------------------------------
   // 3. Marcadores synthetic-only
@@ -487,6 +492,7 @@ async function recordSyntheticChecksAndFingerprints(client: PgClient, schoolDays
   // ---------------------------------------------------------------------
   // 4. Caso de alerta Bolsa Familia (< 80%)
   // ---------------------------------------------------------------------
+  const alertThreshold = await readDemoAlertThreshold(client)
   const alertCase = await client.query(`
     SELECT m.id AS matricula_id,
            round(100.0 * count(*) FILTER (WHERE f.presente) / count(*), 2) AS percentual
@@ -498,13 +504,13 @@ async function recordSyntheticChecksAndFingerprints(client: PgClient, schoolDays
     HAVING 100.0 * count(*) FILTER (WHERE f.presente) / count(*) < $1
     ORDER BY percentual
     LIMIT 5
-  `, [ALERT_THRESHOLD])
+  `, [alertThreshold])
   record(
     'alerta_bolsa_familia',
     alertCase.rows.length >= 1,
     alertCase.rows.length >= 1
-      ? `${alertCase.rows.length} caso(s) synthetic de frequencia abaixo de ${ALERT_THRESHOLD}%`
-      : `nenhum caso synthetic abaixo de ${ALERT_THRESHOLD}%`
+      ? `${alertCase.rows.length} caso(s) synthetic de frequencia abaixo de ${alertThreshold}%`
+      : `nenhum caso synthetic abaixo de ${alertThreshold}%`
   )
   const alertIsDesignated = alertCase.rows.some(r => r.matricula_id === LOW_ATTENDANCE_MATRICULA_ID)
   record('alerta_caso_designado', alertIsDesignated, alertIsDesignated ? 'caso de alerta designado presente' : 'caso de alerta designado ausente')

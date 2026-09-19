@@ -28,6 +28,8 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import type { AttendanceBands } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
 import type { Database } from '@/types/database'
 import type { AttendanceStatusUI } from '@/types/attendance'
 import { uiStatusToDB, dbStatusToUI } from '@/types/attendance'
@@ -151,6 +153,7 @@ export function AttendanceGrid({
   const [students, setStudents] = useState<Student[]>([])
   const [attendance, setAttendance] = useState<Map<string, AttendanceRecord>>(new Map())
   const [loading, setLoading] = useState(true)
+  const [bands, setBands] = useState<AttendanceBands | null>(null)
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
@@ -203,6 +206,9 @@ export function AttendanceGrid({
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
+      const { data: turma, error: turmaError } = await supabase.from('turmas').select('escola_id').eq('id', turmaId).single()
+      if (turmaError) throw turmaError
+      const resolvedBands = await resolveAttendanceBands(supabase, turma.escola_id)
 
       const { data: studentsData, error: studentsError } = await supabase
         .from('alunos')
@@ -242,10 +248,12 @@ export function AttendanceGrid({
       })
 
       setAttendance(attendanceMap)
+      setBands(resolvedBands)
 
     } catch (error) {
       logger.error('Erro ao carregar dados:', error instanceof Error ? error : new Error(String(error)))
       toast.error('Erro ao carregar dados dos alunos')
+      setBands(null)
     } finally {
       setLoading(false)
     }
@@ -484,9 +492,12 @@ export function AttendanceGrid({
     )
   }
 
+  if (!bands) return <p role="alert">Dados ou configuração de frequência indisponíveis. Recarregue a página.</p>
+
   return (
     <Card className="w-full">
       <AttendanceGridHeader
+        bands={bands}
         stats={stats}
         lockInfo={lockInfo}
         isEffectivelyReadonly={isEffectivelyReadonly}

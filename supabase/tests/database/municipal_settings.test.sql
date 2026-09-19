@@ -68,7 +68,7 @@ DO $$
 BEGIN
   PERFORM * FROM public.set_municipal_settings(
     '97000000-0000-0000-0000-000000000001', 'Direção não autorizada', 'Secretaria', 'UF', '', '', '',
-    EXTRACT(YEAR FROM CURRENT_DATE)::integer, NULL
+    EXTRACT(YEAR FROM CURRENT_DATE)::integer, NULL, '{"reference":80,"attention":85}'::jsonb
   );
   RAISE EXCEPTION 'director changed municipal settings';
 EXCEPTION
@@ -81,12 +81,12 @@ SELECT set_config('request.jwt.claim.sub', '97100000-0000-0000-0000-000000000001
 
 SELECT public.set_municipal_settings(
   NULL, 'Município Configurado', 'Secretaria Configurada', 'SP', '11999990000', 'dpo@synthetic.invalid', 'Rua Sintética',
-  EXTRACT(YEAR FROM CURRENT_DATE)::integer, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 8, 31)
+  EXTRACT(YEAR FROM CURRENT_DATE)::integer, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 8, 31), '{"reference":80,"attention":85}'::jsonb
 );
 
 SELECT public.set_municipal_settings(
   '97000000-0000-0000-0000-000000000002', 'Município Escola B', 'Secretaria Escola B', 'SP', '', '', '',
-  EXTRACT(YEAR FROM CURRENT_DATE)::integer, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 9, 15)
+  EXTRACT(YEAR FROM CURRENT_DATE)::integer, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 9, 15), '{"reference":80,"attention":85}'::jsonb
 );
 
 SELECT pg_temp.assert_true(

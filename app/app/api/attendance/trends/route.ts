@@ -6,7 +6,8 @@ import {
   loadCanonicalAttendanceFacts,
   type CanonicalAttendanceFact,
 } from '@/lib/api/canonical-attendance-facts'
-import { CONFORMIDADE, ATENCAO } from '@/lib/attendance/attendance-policy'
+import { type AttendanceBands, getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
 import type { Database, Tables } from '@/types/database'
 
 interface TrendDataPoint {
@@ -44,14 +45,12 @@ function groupDailyAttendance(records: CanonicalAttendanceFact[]) {
   return dailyData
 }
 
-function getComplianceStatus(overallPercentage: number) {
-  return {
-    conformePoliticaGeral: overallPercentage >= CONFORMIDADE,
-    atencaoPreventiva: overallPercentage >= CONFORMIDADE && overallPercentage < ATENCAO,
-  }
+function getComplianceStatus(overallPercentage: number, bands: AttendanceBands) {
+  const status = getFrequencyPolicyStatus(overallPercentage, bands)
+  return { conformePoliticaGeral: status !== 'CRITICO', atencaoPreventiva: status === 'ATENCAO' }
 }
 
-function getTrendStatistics(trendData: TrendDataPoint[]) {
+function getTrendStatistics(trendData: TrendDataPoint[], bands: AttendanceBands) {
   const totalPresent = trendData.reduce((sum, day) => sum + day.presents, 0)
   const totalAbsent = trendData.reduce((sum, day) => sum + day.absences, 0)
   const totalAttendanceRecords = totalPresent + totalAbsent
@@ -64,7 +63,7 @@ function getTrendStatistics(trendData: TrendDataPoint[]) {
     totalDays: trendData.length,
     totalPresent,
     totalAbsent,
-    complianceStatus: getComplianceStatus(overallPercentage),
+    complianceStatus: getComplianceStatus(overallPercentage, bands),
   }
 }
 
@@ -122,7 +121,7 @@ async function getStudentTrends(
 ) {
   const { data: matriculas, error } = await supabase
     .from('matriculas')
-    .select('id, turma_id')
+    .select('id, turma_id, turma:turmas!inner(escola_id)')
     .eq('aluno_id', studentId)
     .eq('situacao', 'ativa')
 
@@ -159,7 +158,7 @@ async function getStudentTrends(
   return NextResponse.json({
     success: true,
     data,
-    statistics: getTrendStatistics(data),
+    statistics: getTrendStatistics(data, await resolveAttendanceBands(supabase, matriculas[0].turma.escola_id)),
   })
 }
 
@@ -198,7 +197,7 @@ async function getClassTrends(
 ) {
   const { data: matriculas, error } = await supabase
     .from('matriculas')
-    .select('id, aluno_id')
+    .select('id, aluno_id, turma:turmas!inner(escola_id)')
     .eq('turma_id', turmaId)
     .eq('situacao', 'ativa')
 
@@ -228,7 +227,7 @@ async function getClassTrends(
     { startDate, endDate },
   )
   const data = buildClassTrendData(records, matriculas)
-  const statistics = getTrendStatistics(data)
+  const statistics = getTrendStatistics(data, await resolveAttendanceBands(supabase, matriculas[0].turma.escola_id))
 
   return NextResponse.json({
     success: true,
@@ -273,7 +272,7 @@ export async function GET(request: NextRequest) {
     const endDateStr = endDate.toISOString().split('T')[0]
 
     if (studentId) {
-      return getStudentTrends(
+      return await getStudentTrends(
         supabase,
         studentId,
         turmaId,
@@ -284,7 +283,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (turmaId) {
-      return getClassTrends(supabase, turmaId, startDateStr, endDateStr)
+      return await getClassTrends(supabase, turmaId, startDateStr, endDateStr)
     }
 
     return NextResponse.json({

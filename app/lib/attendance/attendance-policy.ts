@@ -1,44 +1,35 @@
-/**
- * General municipal frequency alert bands.
- *
- * These bands classify the general attendance projection. Benefit-specific
- * eligibility uses the separately authorized conditionality read model.
- */
-export const CONFORMIDADE = 80
-export const ATENCAO = 85
+import { z } from 'zod'
 
-export const FREQUENCIA_THRESHOLDS = {
-  CONFORMIDADE,
-  ATENCAO,
-} as const
+/** General alert bands only. Bolsa Família uses its separate conditionality model. */
+export const attendanceBandsSchema = z.object({
+  reference: z.number().finite().positive().max(100),
+  attention: z.number().finite().positive().max(100),
+}).strict().refine(bands => bands.reference < bands.attention, {
+  message: 'ATTENDANCE_BANDS_INVALID: reference must be below attention',
+})
 
+export type AttendanceBands = z.infer<typeof attendanceBandsSchema>
 export type FrequencyPolicyStatus = 'CONFORME' | 'ATENCAO' | 'CRITICO'
 
-/** Classifies a percentage using the municipal reference and attention bands. */
-export function getFrequencyPolicyStatus(percentual: number): FrequencyPolicyStatus {
-  if (percentual < CONFORMIDADE) return 'CRITICO'
-  if (percentual < ATENCAO) return 'ATENCAO'
+/** Requires a resolved database policy, never an application default. */
+export function getFrequencyPolicyStatus(percentual: number, bands: AttendanceBands): FrequencyPolicyStatus {
+  if (percentual < bands.reference) return 'CRITICO'
+  if (percentual < bands.attention) return 'ATENCAO'
   return 'CONFORME'
 }
 
-/** Returns whether the general municipal attendance reference is met. */
-export function isAttendanceCompliant(percentual: number): boolean {
-  return percentual >= CONFORMIDADE
+export function isAttendanceCompliant(percentual: number, bands: AttendanceBands): boolean {
+  return percentual >= bands.reference
 }
 
-/** Returns whether the percentage needs preventive municipal attention. */
-export function needsPreventiveAttendanceAttention(percentual: number): boolean {
-  return percentual >= CONFORMIDADE && percentual < ATENCAO
+export function needsPreventiveAttendanceAttention(percentual: number, bands: AttendanceBands): boolean {
+  return getFrequencyPolicyStatus(percentual, bands) === 'ATENCAO'
 }
 
-/** Copy labels keep the two meanings visible to staff and exported readers. */
 export function getFrequencyPolicyLabel(status: FrequencyPolicyStatus): string {
   switch (status) {
-    case 'CRITICO':
-      return 'Abaixo da referência municipal'
-    case 'ATENCAO':
-      return 'Atenção preventiva'
-    case 'CONFORME':
-      return 'Referência municipal atendida'
+    case 'CRITICO': return 'Abaixo da referência municipal'
+    case 'ATENCAO': return 'Atenção preventiva'
+    case 'CONFORME': return 'Referência municipal atendida'
   }
 }

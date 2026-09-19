@@ -19,9 +19,11 @@ import {
   type CanonicalAttendanceSummary,
 } from '@/lib/api/canonical-attendance-facts';
 import {
-  CONFORMIDADE,
+  type AttendanceBands,
   type FrequencyPolicyStatus,
 } from '@/lib/attendance/attendance-policy';
+
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands';
 
 export { calculateAttendancePercentage } from '@/lib/attendance/attendance-calculations';
 
@@ -32,11 +34,10 @@ export { calculateAttendancePercentage } from '@/lib/attendance/attendance-calcu
 export interface AttendanceReportFilters {
   startDate: string;
   endDate: string;
-  /** Kept as an explicit report filter, with the canonical policy as default. */
-  riskThreshold?: number;
 }
 
 export interface StudentAttendanceReport {
+  bands: AttendanceBands;
   matriculaId: string;
   alunoId?: string;
   alunoNome?: string;
@@ -56,6 +57,7 @@ export interface StudentAttendanceReport {
 }
 
 export interface ClassAttendanceReport {
+  bands: AttendanceBands;
   turmaId: string;
   turmaNome: string;
   turmaSerie?: string;
@@ -123,13 +125,13 @@ function buildClassAttendanceReport(
   matriculas: ActiveEnrollment[],
   summaries: Map<string, CanonicalAttendanceSummary>,
   filters: AttendanceReportFilters,
-  riskThreshold: number,
+  bands: AttendanceBands,
 ): ClassAttendanceReport {
   const students = matriculas
     .map((matricula) => toClassAttendanceStudent(
       matricula,
       summaries.get(matricula.id),
-      riskThreshold,
+      bands.reference,
     ))
     .filter(isClassAttendanceStudent)
     .sort((left, right) => left.nome.localeCompare(right.nome, 'pt-BR'));
@@ -137,6 +139,7 @@ function buildClassAttendanceReport(
   const totalPercentage = percentages.reduce((total, student) => total + student.percentual, 0);
 
   return {
+    bands,
     turmaId: turma.id,
     turmaNome: turma.nome,
     turmaSerie: turma.serie,
@@ -186,13 +189,14 @@ export async function generateStudentAttendanceReport(
       startDate: filters.startDate,
       endDate: filters.endDate,
     });
-    const summary = summarizeCanonicalAttendanceFacts(records, [matriculaId]).get(matriculaId);
+    const summary = (await loadCanonicalAttendanceSummaries(supabase, [matriculaId], filters)).get(matriculaId);
 
     if (!summary) {
       return { data: null, error: 'Não foi possível calcular a frequência' };
     }
 
     const report: StudentAttendanceReport = {
+      bands: summary.bands,
       matriculaId,
       presencas: summary.presencas,
       faltas: summary.faltas,
@@ -244,8 +248,6 @@ export async function generateClassAttendanceReport(
   filters: AttendanceReportFilters
 ): Promise<ReportResult<ClassAttendanceReport>> {
   try {
-    const riskThreshold = filters.riskThreshold ?? CONFORMIDADE;
-
     logger.info('Generating class attendance report', {
       feature: 'attendance-reports',
       action: 'generate_class_report',
@@ -253,14 +255,13 @@ export async function generateClassAttendanceReport(
         turmaId,
         startDate: filters.startDate,
         endDate: filters.endDate,
-        riskThreshold,
       }
     });
 
     // General attendance reads use ordinary RLS and only active enrollments.
     const { data: turmaData, error: turmaError } = await supabase
       .from('turmas')
-      .select('id, nome, serie')
+      .select('id, nome, serie, escola_id')
       .eq('id', turmaId)
       .single();
 
@@ -293,17 +294,15 @@ export async function generateClassAttendanceReport(
     const activeMatriculas = matriculas ?? [];
     const matriculaIds = activeMatriculas.map((matricula) => matricula.id);
 
-    const attendanceByStudent = await loadCanonicalAttendanceSummaries(
-      supabase,
-      matriculaIds,
-      { startDate: filters.startDate, endDate: filters.endDate }
-    );
+    const bands = await resolveAttendanceBands(supabase, turmaData.escola_id);
+    const facts = await loadCanonicalAttendanceFacts(supabase, matriculaIds, filters);
+    const attendanceByStudent = summarizeCanonicalAttendanceFacts(facts, bands, matriculaIds);
     const report = buildClassAttendanceReport(
       turmaData,
       activeMatriculas,
       attendanceByStudent,
       filters,
-      riskThreshold,
+      bands,
     );
 
     logger.info('Class attendance report generated', {

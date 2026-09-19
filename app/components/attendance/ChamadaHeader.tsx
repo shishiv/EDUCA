@@ -13,13 +13,14 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Lock, Save } from 'lucide-react'
-import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { getFrequencyPolicyStatus, type AttendanceBands } from '@/lib/attendance/attendance-policy'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface ChamadaHeaderProps {
+  bands: AttendanceBands
   turma: {
     nome: string
     serie: string
@@ -135,10 +136,11 @@ function TurmaHeaderInfo({
 function AttendanceRate({
   presentCount,
   studentCount,
-}: Pick<ChamadaHeaderProps, 'presentCount' | 'studentCount'>) {
+  bands,
+}: Pick<ChamadaHeaderProps, 'presentCount' | 'studentCount' | 'bands'>) {
   const t = useClassroomTranslations()
   const attendanceRate = studentCount > 0 ? Math.round((presentCount / studentCount) * 100) : 0
-  const status = getFrequencyPolicyStatus(attendanceRate)
+  const status = getFrequencyPolicyStatus(attendanceRate, bands)
   const color = status === 'CONFORME' ? 'text-green-600' : status === 'ATENCAO' ? 'text-amber-600' : 'text-red-600'
   return (
     <div className="text-right">
@@ -156,6 +158,7 @@ function AttendanceRate({
 // ============================================================================
 
 export function ChamadaHeader({
+  bands,
   turma,
   studentCount,
   presentCount,
@@ -174,7 +177,7 @@ export function ChamadaHeader({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <TurmaHeaderInfo {...{ turma, isLocked, lockReason }} />
         <div className="flex items-center gap-4">
-          <AttendanceRate {...{ presentCount, studentCount }} />
+          <AttendanceRate {...{ presentCount, studentCount, bands }} />
 
           <ChamadaActions
             {...{ canEdit, onClose, closeDisabled, isSaving, onSave, hasUnsavedChanges, isLocked }}

@@ -8,8 +8,9 @@ import { createStudentAdmission } from './student-admission'
 import { supabase, Tables } from '@/lib/supabase'
 import type { StudentFormData } from '@/lib/validation/brazilian'
 import { logger } from '@/lib/logger'
-import { loadCanonicalAttendanceFacts, summarizeCanonicalAttendanceFacts } from './canonical-attendance-facts'
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import { loadCanonicalAttendanceFacts } from './canonical-attendance-facts'
+import { countAttendanceRecords } from '@/lib/attendance/attendance-calculations'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
 import {
   getAuthorizedStudentProfiles,
   type AuthorizedStudentProfile,
@@ -176,17 +177,10 @@ export class StudentsApiService extends BaseApiService<'alunos'> {
         startDate: period?.start,
         endDate: period?.end,
       })
-      const summaries = summarizeCanonicalAttendanceFacts(records, matriculaIds)
-      const summary = matriculaIds.reduce((total, matriculaId) => {
-        const enrollment = summaries.get(matriculaId)
-        if (!enrollment) return total
-        return {
-          total: total.total + enrollment.total,
-          presencas: total.presencas + enrollment.presencas,
-          faltas: total.faltas + enrollment.faltas,
-          atestados: total.atestados + enrollment.atestados,
-        }
-      }, { total: 0, presencas: 0, faltas: 0, atestados: 0 })
+      const summary = countAttendanceRecords(records.map(record => ({
+        presente: record.presente,
+        status_presenca: record.statusPresenca,
+      })))
       const attendanceRate = summary.total > 0
         ? Math.round(((summary.presencas + summary.atestados) / summary.total) * 100)
         : 0
@@ -204,19 +198,20 @@ export class StudentsApiService extends BaseApiService<'alunos'> {
     }
   }
 
-  // Get at-risk students (below 80% attendance)
-  async getAtRiskStudents(schoolId?: string, threshold: number = CONFORMIDADE) {
+  // Each student's school resolves its own general attendance reference.
+  async getAtRiskStudents(schoolId?: string) {
     try {
       // This is a complex query that would need to be implemented as a database view
       // or stored procedure for optimal performance
-      const students = await this.getStudentsWithDetails({ activeOnly: true })
+      const students = await this.getStudentsWithDetails({ schoolId, activeOnly: true })
 
       const atRiskStudents = []
 
       for (const student of students) {
         const summary = await this.getStudentAttendanceSummary(student.id)
 
-        if (summary.attendanceRate < threshold) {
+        const bands = await resolveAttendanceBands(supabase, student.escola_id)
+        if (summary.attendanceRate < bands.reference) {
           atRiskStudents.push({
             ...student,
             attendanceRate: summary.attendanceRate,

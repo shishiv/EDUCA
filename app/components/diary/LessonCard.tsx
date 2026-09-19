@@ -27,7 +27,7 @@ import { ptBR } from 'date-fns/locale'
 import { Calendar, Users, ChevronRight, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { getFrequencyPolicyStatus, type AttendanceBands } from '@/lib/attendance/attendance-policy'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
@@ -35,6 +35,7 @@ import { useClassroomTranslations } from '@/i18n/classroom'
 // ============================================================================
 
 export interface LessonCardData {
+  bands: AttendanceBands
   id: string
   data_aula: string
   tema: string
@@ -64,8 +65,8 @@ interface LessonCardProps {
 /**
  * Get attendance rate badge color with WCAG 2.1 AA contrast
  */
-function getRateColor(rate: number): string {
-  const status = getFrequencyPolicyStatus(rate)
+function getRateColor(rate: number, bands: AttendanceBands): string {
+  const status = getFrequencyPolicyStatus(rate, bands)
   if (status === 'CONFORME') return 'text-green-700 bg-green-100 border-green-200'
   if (status === 'ATENCAO') return 'text-amber-700 bg-amber-100 border-amber-200'
   return 'text-red-700 bg-red-100 border-red-200'
@@ -209,7 +210,7 @@ export function LessonCard({
             </p>
           )}
 
-          <LessonAttendanceSummary lesson={lesson} attendanceRate={attendanceRate} />
+          <LessonAttendanceSummary lesson={lesson} attendanceRate={attendanceRate} bands={lesson.bands} />
         </div>
 
         {/* Mobile chevron indicator with animation */}
@@ -234,7 +235,7 @@ export function LessonCard({
   )
 }
 
-function LessonAttendanceSummary({ lesson, attendanceRate }: { lesson: LessonCardData; attendanceRate: number }) {
+function LessonAttendanceSummary({ lesson, attendanceRate, bands }: { lesson: LessonCardData; attendanceRate: number; bands: AttendanceBands }) {
   const t = useClassroomTranslations()
   return (
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -267,7 +268,7 @@ function LessonAttendanceSummary({ lesson, attendanceRate }: { lesson: LessonCar
                 'text-xs font-semibold flex-shrink-0',
                 // Smooth transition for color change
                 'transition-colors duration-200',
-                getRateColor(attendanceRate)
+                getRateColor(attendanceRate, bands)
               )}
               aria-label={`Taxa de frequência: ${attendanceRate}%`}
             >

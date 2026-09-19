@@ -48,7 +48,7 @@ import {
   User,
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
-import { CONFORMIDADE } from '@/lib/attendance/attendance-policy'
+import type { AttendanceBands } from '@/lib/attendance/attendance-policy'
 import {
   formatGrade,
   getGradeColor,
@@ -94,6 +94,7 @@ export interface DisciplineGrade {
  * Attendance summary for the report
  */
 export interface AttendanceSummary {
+  bands: AttendanceBands
   totalAulas: number
   presencas: number
   faltas: number
@@ -135,10 +136,9 @@ export interface StudentReportProps {
  */
 const PASSING_GRADE = 6.0
 
-/**
- * Minimum attendance percentage
- */
-const MINIMUM_ATTENDANCE = CONFORMIDADE
+// Deliberately separate from general alerts. Changing the report-card floor
+// requires its own product decision, not a municipal alert configuration change.
+const REPORT_CARD_ATTENDANCE_FLOOR = 80
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -165,7 +165,7 @@ function calculateStatus(
   }
 
   // Check attendance
-  if (attendance && attendance.percentual < MINIMUM_ATTENDANCE) {
+  if (attendance && attendance.percentual < REPORT_CARD_ATTENDANCE_FLOOR) {
     return 'reprovado'
   }
 
@@ -411,7 +411,7 @@ function AttendanceSummaryCard({
   printMode?: boolean
 }) {
   const t = useTranslations('platform')
-  const isAttendanceOk = attendance.percentual >= MINIMUM_ATTENDANCE
+  const isAttendanceOk = attendance.percentual >= attendance.bands.reference
 
   return (
     <Card className={cn('border-gray-200', printMode && 'print:border print:shadow-none')}>
@@ -467,7 +467,7 @@ function AttendanceSummaryCard({
         {!isAttendanceOk && (
           <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-sm text-red-700">
             <AlertTriangle className="h-4 w-4" />
-            {t('components.studentReport.municipalWarning', { threshold: CONFORMIDADE })}
+            {t('components.studentReport.municipalWarning', { threshold: attendance.bands.reference })}
           </div>
         )}
       </CardContent>
@@ -521,7 +521,7 @@ function ReportSummary({
                   <div
                     className={cn(
                       'text-3xl font-bold',
-                      attendance.percentual >= MINIMUM_ATTENDANCE
+                      attendance.percentual >= REPORT_CARD_ATTENDANCE_FLOOR
                         ? 'text-green-700'
                         : 'text-red-700'
                     )}

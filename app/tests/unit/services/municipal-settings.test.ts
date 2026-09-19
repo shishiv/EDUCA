@@ -9,6 +9,7 @@ const settings: MunicipalSettings = {
   dpo_email: '',
   dpo_address: '',
   educacenso_deadline: null,
+  attendance_bands: { reference: 80, attention: 85 },
 }
 
 describe('municipal settings service', () => {
@@ -38,6 +39,7 @@ describe('municipal settings service', () => {
       p_dpo_address: settings.dpo_address,
       p_educacenso_year: 2026,
       p_educacenso_deadline: null,
+      p_attendance_bands: settings.attendance_bands,
     })
   })
 

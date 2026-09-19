@@ -18,8 +18,7 @@
  *
  * ## Policy thresholds
  *
- * - `CONFORMIDADE = 80%` - general attendance policy
- * - `ATENCAO = 85%` - preventive general-policy margin
+ * General bands are resolved from the municipal getter for each enrollment's school.
  *
  * Legal Bolsa Família floors remain in the separate conditionality RPC.
  *
@@ -31,6 +30,8 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Tables } from '@/types/database'
+import type { AttendanceBands } from '@/lib/attendance/attendance-policy'
+import { resolveAttendanceBands } from '@/lib/attendance/resolve-attendance-bands'
 import {
   countAttendanceRecords,
   summarizeAttendanceCounts,
@@ -55,6 +56,7 @@ export interface CanonicalAttendanceQueryOptions {
 }
 
 export interface CanonicalAttendanceSummary extends AttendancePolicySummary {
+  bands: AttendanceBands
   matriculaId: string
 }
 
@@ -136,10 +138,11 @@ export async function loadCanonicalAttendanceFacts(
 
 /**
  * Aggregates canonical facts once so every caller applies the same attendance
- * counting rules and the same CONFORMIDADE/ATENCAO policy.
+ * counting rules and the resolved school policy.
  */
 export function summarizeCanonicalAttendanceFacts(
   facts: CanonicalAttendanceFact[],
+  bands: AttendanceBands,
   matriculaIds: string[] = [...new Set(facts.map((fact) => fact.matriculaId))]
 ): Map<string, CanonicalAttendanceSummary> {
   const recordsByMatricula = new Map<string, CanonicalAttendanceFact[]>()
@@ -160,7 +163,7 @@ export function summarizeCanonicalAttendanceFacts(
         presente: record.presente,
         status_presenca: record.statusPresenca,
       })))
-      return [matriculaId, { matriculaId, ...summarizeAttendanceCounts(counts) }]
+      return [matriculaId, { matriculaId, bands, ...summarizeAttendanceCounts(counts, bands) }]
     })
   )
 }
@@ -171,6 +174,24 @@ export async function loadCanonicalAttendanceSummaries(
   matriculaIds: string[],
   options: CanonicalAttendanceQueryOptions = {}
 ): Promise<Map<string, CanonicalAttendanceSummary>> {
+  if (matriculaIds.length === 0) return new Map()
+  const { data: enrollments, error } = await supabase.from('matriculas')
+    .select('id, turma:turmas!inner(escola_id)').in('id', matriculaIds)
+  if (error) throw error
+  const idsBySchool = new Map<string, string[]>()
+  for (const enrollment of enrollments ?? []) {
+    const schoolId = enrollment.turma.escola_id
+    const ids = idsBySchool.get(schoolId) ?? []
+    ids.push(enrollment.id)
+    idsBySchool.set(schoolId, ids)
+  }
   const facts = await loadCanonicalAttendanceFacts(supabase, matriculaIds, options)
-  return summarizeCanonicalAttendanceFacts(facts, matriculaIds)
+  const summaries = new Map<string, CanonicalAttendanceSummary>()
+  for (const [schoolId, ids] of idsBySchool) {
+    const bands = await resolveAttendanceBands(supabase, schoolId)
+    const schoolIds = new Set(ids)
+    const schoolFacts = facts.filter(fact => schoolIds.has(fact.matriculaId))
+    for (const [id, summary] of summarizeCanonicalAttendanceFacts(schoolFacts, bands, ids)) summaries.set(id, summary)
+  }
+  return summaries
 }

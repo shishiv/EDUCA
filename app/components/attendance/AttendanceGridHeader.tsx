@@ -38,7 +38,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AttendanceStats, SessionLockInfo } from './AttendanceGridTypes'
-import { getFrequencyPolicyStatus } from '@/lib/attendance/attendance-policy'
+import { getFrequencyPolicyStatus, type AttendanceBands } from '@/lib/attendance/attendance-policy'
 import { useClassroomTranslations } from '@/i18n/classroom'
 
 // ============================================================================
@@ -46,6 +46,7 @@ import { useClassroomTranslations } from '@/i18n/classroom'
 // ============================================================================
 
 export interface AttendanceGridHeaderProps {
+  bands: AttendanceBands
   /** Attendance statistics for display */
   stats: AttendanceStats
   /** Lock information for the session */
@@ -74,14 +75,9 @@ export interface AttendanceGridHeaderProps {
 // Helper Functions
 // ============================================================================
 
-/**
- * Get attendance rate badge color
- * - Green >= 85%
- * - Yellow 80% to < 85%
- * - Red < 80%
- */
-function getAttendanceRateBadgeClass(rate: number): string {
-  const status = getFrequencyPolicyStatus(rate)
+/** Color follows the resolved school policy. */
+function getAttendanceRateBadgeClass(rate: number, bands: AttendanceBands): string {
+  const status = getFrequencyPolicyStatus(rate, bands)
   if (status === 'CONFORME') return 'bg-green-100 border-green-600 text-green-700'
   if (status === 'ATENCAO') return 'bg-yellow-100 border-yellow-600 text-yellow-700'
   return 'bg-red-100 border-red-600 text-red-700'
@@ -156,6 +152,7 @@ function AttendanceLockNotices({ lockInfo }: Pick<AttendanceGridHeaderProps, 'lo
 // ============================================================================
 
 export function AttendanceGridHeader({
+  bands,
   stats,
   lockInfo,
   isEffectivelyReadonly,
@@ -240,7 +237,7 @@ export function AttendanceGridHeader({
             variant="outline"
             className={cn(
               'flex items-center space-x-1 font-semibold',
-              getAttendanceRateBadgeClass(stats.attendanceRate)
+              getAttendanceRateBadgeClass(stats.attendanceRate, bands)
             )}
           >
             <span>Taxa: {stats.attendanceRate}%</span>

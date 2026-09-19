@@ -4086,6 +4086,7 @@ export type Database = {
       get_municipal_settings: {
         Args: { p_ano: number; p_escola_id: string }
         Returns: {
+          attendance_bands: Json
           contact_phone: string
           dpo_address: string
           dpo_email: string
@@ -4340,6 +4341,7 @@ export type Database = {
       }
       set_municipal_settings: {
         Args: {
+          p_attendance_bands: Json
           p_contact_phone: string
           p_dpo_address: string
           p_dpo_email: string
@@ -4351,6 +4353,7 @@ export type Database = {
           p_state: string
         }
         Returns: {
+          attendance_bands: Json
           contact_phone: string
           dpo_address: string
           dpo_email: string

@@ -18,6 +18,7 @@ it('downloads the generated workbook with its explicit filename and releases the
     filenames.push(this.download)
   })
   await generateAttendanceReportExcel({
+    bands: { reference: 80, attention: 85 },
     turmaId: 'synthetic-class', turmaNome: 'Turma sintética', totalAlunos: 0,
     mediaFrequencia: 0, alunosEmRisco: 0, students: [],
     periodo: { inicio: '2026-09-01', fim: '2026-09-30' },
